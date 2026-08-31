@@ -178,7 +178,7 @@ export function TaskConfigFields({
               name="prompt"
               rows={3}
               defaultValue={(initialConfig?.prompt as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -187,7 +187,7 @@ export function TaskConfigFields({
               name="criteria"
               rows={2}
               defaultValue={(initialConfig?.criteria as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
         </div>
@@ -234,7 +234,7 @@ export function TaskConfigFields({
             <input
               name="link_label"
               defaultValue={(initialConfig?.label as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
           <div className="flex flex-col gap-1">

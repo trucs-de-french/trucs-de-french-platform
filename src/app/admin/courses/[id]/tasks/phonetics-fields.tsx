@@ -55,7 +55,7 @@ export function PhoneticsFields({
               value={item.text}
               onChange={(e) => updateItem(i, "text", e.target.value)}
               placeholder="Репліка (французькою)"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <button
               type="button"
@@ -69,7 +69,7 @@ export function PhoneticsFields({
             value={item.transcription}
             onChange={(e) => updateItem(i, "transcription", e.target.value)}
             placeholder="Транскрипція (напр. [ʒə vɛ bjɛ̃])"
-            className="rounded-md border px-2 py-1 text-sm"
+            className="rounded-md border px-2 py-1 text-base font-medium"
           />
           <input
             value={item.mediaUrl ?? ""}

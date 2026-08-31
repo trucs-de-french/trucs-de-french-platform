@@ -73,7 +73,7 @@ export const ReorderFields = forwardRef<
             value={item}
             onChange={(e) => updateItem(i, e.target.value)}
             placeholder="Елемент"
-            className="flex-1 rounded-md border px-2 py-1 text-sm"
+            className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
           />
           <button
             type="button"

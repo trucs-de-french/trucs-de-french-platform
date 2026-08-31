@@ -34,7 +34,7 @@ export function OpenAnswerFields({
           name="open_answer_question"
           defaultValue={initialConfig?.question ?? ""}
           placeholder="напр. Як буде французькою 'дякую'?"
-          className="rounded-md border px-2 py-1.5 text-sm"
+          className="rounded-md border px-2 py-1.5 text-base font-medium"
         />
       </div>
 
@@ -48,7 +48,7 @@ export function OpenAnswerFields({
               value={a}
               onChange={(e) => updateAnswer(i, e.target.value)}
               placeholder="Варіант відповіді"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <button
               type="button"

@@ -110,7 +110,7 @@ export function ListeningFields({
                 value={q.question}
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="Текст питання"
-                className="flex-1 rounded-md border px-2 py-1 text-sm"
+                className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
               />
               <button
                 type="button"
@@ -134,7 +134,7 @@ export function ListeningFields({
                     value={o.text}
                     onChange={(e) => updateOptionText(q.id, o.id, e.target.value)}
                     placeholder="Варіант відповіді"
-                    className="flex-1 rounded-md border px-2 py-1 text-sm"
+                    className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
                   />
                   <button
                     type="button"

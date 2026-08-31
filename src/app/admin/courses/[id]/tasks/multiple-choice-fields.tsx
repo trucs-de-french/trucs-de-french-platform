@@ -43,7 +43,7 @@ export function MultipleChoiceFields({
           name="mc_question"
           rows={2}
           defaultValue={initialConfig?.question ?? ""}
-          className="rounded-md border px-2 py-1.5 text-sm"
+          className="rounded-md border px-2 py-1.5 text-base font-medium"
         />
       </div>
 
@@ -75,7 +75,7 @@ export function MultipleChoiceFields({
               value={o.text}
               onChange={(e) => updateText(o.id, e.target.value)}
               placeholder="Текст варіанту"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <button
               type="button"

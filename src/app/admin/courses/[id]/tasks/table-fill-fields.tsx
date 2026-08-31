@@ -71,7 +71,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[0]}
             onChange={(e) => setColumnLabels(([, right]) => [e.target.value, right])}
-            className="rounded-md border px-2 py-1 text-sm"
+            className="rounded-md border px-2 py-1 text-base font-medium"
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
@@ -79,7 +79,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[1]}
             onChange={(e) => setColumnLabels(([left]) => [left, e.target.value])}
-            className="rounded-md border px-2 py-1 text-sm"
+            className="rounded-md border px-2 py-1 text-base font-medium"
           />
         </div>
       </div>
@@ -97,7 +97,7 @@ export const TableFillFields = forwardRef<
               value={row.left}
               onChange={(e) => updateRow(row.id, "left", e.target.value)}
               placeholder={columnLabels[0]}
-              className="rounded-md border px-2 py-1 text-sm"
+              className="rounded-md border px-2 py-1 text-base font-medium"
             />
             <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
               <input
@@ -113,7 +113,7 @@ export const TableFillFields = forwardRef<
               value={row.right}
               onChange={(e) => updateRow(row.id, "right", e.target.value)}
               placeholder={columnLabels[1]}
-              className="rounded-md border px-2 py-1 text-sm"
+              className="rounded-md border px-2 py-1 text-base font-medium"
             />
             <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
               <input

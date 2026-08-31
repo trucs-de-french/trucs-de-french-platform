@@ -75,7 +75,7 @@ export const ImageMatchFields = forwardRef<
             value={item.name}
             onChange={(e) => updateItem(item.id, "name", e.target.value)}
             placeholder="Правильна назва"
-            className="flex-1 rounded-md border px-2 py-1 text-sm"
+            className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
           />
           <button
             type="button"

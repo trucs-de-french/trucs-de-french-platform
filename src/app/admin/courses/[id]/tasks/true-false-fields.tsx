@@ -54,7 +54,7 @@ export function TrueFalseFields({
               value={s.text}
               onChange={(e) => updateText(s.id, e.target.value)}
               placeholder="Текст твердження"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <select
               value={String(s.answer)}

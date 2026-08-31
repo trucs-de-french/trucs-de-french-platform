@@ -4,14 +4,17 @@ import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
+// cyrillic — обов'язково, увесь текст сайту українською; без цієї
+// підмножини кирилиця йшла б фолбеком в Arial, а не Geist (саме це й було
+// причиною багу — body раніше ще й ігнорував --font-geist-sans узагалі).
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 export const metadata: Metadata = {

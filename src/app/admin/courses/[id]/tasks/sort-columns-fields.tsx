@@ -88,7 +88,7 @@ export const SortColumnsFields = forwardRef<
               value={c.label}
               onChange={(e) => updateColumnLabel(c.id, e.target.value)}
               placeholder="Назва колонки"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <button
               type="button"
@@ -118,7 +118,7 @@ export const SortColumnsFields = forwardRef<
               value={item.text}
               onChange={(e) => updateItemText(item.id, e.target.value)}
               placeholder="Текст елементу"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <select
               value={item.columnId}

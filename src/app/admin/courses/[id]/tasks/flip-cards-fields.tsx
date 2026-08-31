@@ -63,14 +63,14 @@ export const FlipCardsFields = forwardRef<
               value={card.front}
               onChange={(e) => updateCard(i, "front", e.target.value)}
               placeholder="Перед"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <span className="text-neutral-400 dark:text-neutral-500">→</span>
             <input
               value={card.back}
               onChange={(e) => updateCard(i, "back", e.target.value)}
               placeholder="Зад"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
             />
             <button
               type="button"
