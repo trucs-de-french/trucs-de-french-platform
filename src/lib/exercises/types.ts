@@ -77,6 +77,16 @@ export type TableFillConfig = {
   rows: TableFillRow[];
 };
 
+// image_match — кілька зображень, під кожним слот для перетягування назви;
+// рівно одна правильна назва на зображення (без pipe-альтернатив — назва
+// береться з фіксованого банку, а не вільним текстом, тож альтернативи не
+// мають сенсу, як і в drag_drop).
+export type ImageMatchItem = { id: string; imageUrl: string; name: string };
+export type ImageMatchConfig = {
+  instructions?: string;
+  items: ImageMatchItem[];
+};
+
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється),
 // тому повна конфігурація й публічна — одне й те саме, sanitize не потрібен.
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
@@ -175,6 +185,12 @@ export type TableFillPublic = {
   rows: { id: string; left: string | null; right: string | null }[]; // null = прихована клітинка
 };
 
+export type ImageMatchPublic = {
+  instructions?: string;
+  items: { id: string; imageUrl: string }[];
+  bank: string[]; // перемішані name з усіх items
+};
+
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
@@ -187,6 +203,7 @@ export type DragDropAnswer = string[]; // по одному слову з бан
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = string;
 export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
+export type ImageMatchAnswer = { itemId: string; name: string }[];
 
 // Детальний результат перевірки — саме він показує "де помилка".
 
@@ -256,6 +273,16 @@ export type TableFillDetail = {
   }[];
 };
 
+export type ImageMatchDetail = {
+  items: {
+    id: string;
+    imageUrl: string;
+    correctName: string;
+    studentName: string;
+    isCorrect: boolean;
+  }[];
+};
+
 export type GradeResult =
   | { correct: boolean; score: number; detail: FillBlankDetail }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail }
@@ -265,4 +292,5 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: ReorderDetail }
   | { correct: boolean; score: number; detail: SortColumnsDetail }
   | { correct: boolean; score: number; detail: OpenAnswerDetail }
-  | { correct: boolean; score: number; detail: TableFillDetail };
+  | { correct: boolean; score: number; detail: TableFillDetail }
+  | { correct: boolean; score: number; detail: ImageMatchDetail };

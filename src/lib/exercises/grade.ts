@@ -29,6 +29,9 @@ import type {
   TableFillConfig,
   TableFillAnswer,
   TableFillDetail,
+  ImageMatchConfig,
+  ImageMatchAnswer,
+  ImageMatchDetail,
   GradeResult,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
@@ -236,6 +239,31 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   };
 }
 
+// Просте порівняння по id (як gradeSortColumns), а не трюк gradeDragDrop
+// із синтетичним {{}}-шаблоном — тут рівно один правильний варіант на
+// картинку, без pipe-альтернатив, тож текстовий шаблон тільки ускладнив би.
+function gradeImageMatch(config: ImageMatchConfig, answer: ImageMatchAnswer): GradeResult {
+  const answerByItem = new Map(answer.map((a) => [a.itemId, a.name]));
+
+  const items: ImageMatchDetail["items"] = config.items.map((item) => {
+    const studentName = answerByItem.get(item.id) ?? "";
+    return {
+      id: item.id,
+      imageUrl: item.imageUrl,
+      correctName: item.name,
+      studentName,
+      isCorrect: normalize(studentName) === normalize(item.name),
+    };
+  });
+
+  const correctCount = items.filter((i) => i.isCorrect).length;
+  return {
+    correct: correctCount === items.length && items.length > 0,
+    score: percentage(correctCount, items.length),
+    detail: { items },
+  };
+}
+
 export function gradeAnswer(
   type: GradableTaskType,
   config: Record<string, unknown>,
@@ -265,6 +293,8 @@ export function gradeAnswer(
       return gradeOpenAnswer(config as unknown as OpenAnswerConfig, answer as OpenAnswerAnswer);
     case "table_fill":
       return gradeTableFill(config as unknown as TableFillConfig, answer as TableFillAnswer);
+    case "image_match":
+      return gradeImageMatch(config as unknown as ImageMatchConfig, answer as ImageMatchAnswer);
     default:
       return assertNeverGradableType(type);
   }

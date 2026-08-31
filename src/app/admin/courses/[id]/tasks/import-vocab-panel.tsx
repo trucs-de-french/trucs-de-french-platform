@@ -11,7 +11,7 @@ export function ImportVocabPanel({
   onImport,
 }: {
   sceneVocab: VocabItem[];
-  onImport?: (words: { word: string; translation: string }[]) => void;
+  onImport?: (words: { word: string; translation: string; image_url?: string }[]) => void;
 }) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [customWord, setCustomWord] = useState("");
@@ -48,7 +48,16 @@ export function ImportVocabPanel({
 
   function handleImport() {
     if (selected.length === 0 || !onImport) return;
-    onImport(selected.map((v) => ({ word: v.word, translation: v.translation })));
+    // custom-терміни (вписані вручну тут же) не мають image_url — це поле
+    // передається лише для елементів з sceneVocab, де воно вже могло бути
+    // заповнене в редакторі скрипту сцени (dialogue-editor.tsx).
+    onImport(
+      selected.map((v) => ({
+        word: v.word,
+        translation: v.translation,
+        image_url: (v as VocabItem).image_url,
+      }))
+    );
     setChecked(new Set());
     setCustom([]);
   }

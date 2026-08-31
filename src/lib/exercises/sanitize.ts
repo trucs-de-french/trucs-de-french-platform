@@ -19,6 +19,8 @@ import type {
   OpenAnswerPublic,
   TableFillConfig,
   TableFillPublic,
+  ImageMatchConfig,
+  ImageMatchPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
@@ -114,6 +116,14 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   };
 }
 
+export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
+  return {
+    instructions: config.instructions,
+    items: config.items.map(({ id, imageUrl }) => ({ id, imageUrl })),
+    bank: shuffle(config.items.map((i) => i.name)),
+  };
+}
+
 export function sanitizeConfigForStudent(
   type: GradableTaskType,
   config: Record<string, unknown>
@@ -139,6 +149,8 @@ export function sanitizeConfigForStudent(
       return sanitizeOpenAnswer(config as unknown as OpenAnswerConfig);
     case "table_fill":
       return sanitizeTableFill(config as unknown as TableFillConfig);
+    case "image_match":
+      return sanitizeImageMatch(config as unknown as ImageMatchConfig);
     default:
       return assertNeverGradableType(type);
   }

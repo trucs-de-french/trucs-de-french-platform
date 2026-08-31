@@ -15,6 +15,7 @@ import type {
   CalloutConfig,
   PhoneticsConfig,
   TableFillConfig,
+  ImageMatchConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import { MultipleChoiceFields } from "./multiple-choice-fields";
@@ -30,6 +31,7 @@ import { OpenAnswerFields } from "./open-answer-fields";
 import { CalloutFields } from "./callout-fields";
 import { PhoneticsFields } from "./phonetics-fields";
 import { TableFillFields } from "./table-fill-fields";
+import { ImageMatchFields } from "./image-match-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import type { ImportableFieldsHandle } from "./importable-fields";
 
@@ -42,6 +44,7 @@ const IMPORT_ENABLED_TYPES = [
   "sort_columns",
   "reorder",
   "table_fill",
+  "image_match",
 ];
 
 const TYPE_OPTIONS = [
@@ -64,6 +67,7 @@ const TYPE_OPTIONS = [
   { value: "callout", label: "Текстовий блок (callout)" },
   { value: "phonetics", label: "Фонетика" },
   { value: "table_fill", label: "Заповніть таблицю" },
+  { value: "image_match", label: "Перетягніть назви під картинки" },
 ];
 
 type Props = {
@@ -301,7 +305,14 @@ export function TaskConfigFields({
 
       {IMPORT_ENABLED_TYPES.includes(type) && (
         <ImportVocabPanel
-          sceneVocab={sceneVocab ?? []}
+          // Для image_match показуємо лише слова з уже заповненим image_url
+          // (у dialogue-editor.tsx) — без картинки слово тут однаково
+          // непридатне.
+          sceneVocab={
+            type === "image_match"
+              ? (sceneVocab ?? []).filter((v) => v.image_url)
+              : (sceneVocab ?? [])
+          }
           onImport={(words) => importRef.current?.importWords(words)}
         />
       )}
@@ -357,6 +368,10 @@ export function TaskConfigFields({
 
       {type === "table_fill" && (
         <TableFillFields ref={importRef} initialConfig={initialConfig as Partial<TableFillConfig>} />
+      )}
+
+      {type === "image_match" && (
+        <ImageMatchFields ref={importRef} initialConfig={initialConfig as Partial<ImageMatchConfig>} />
       )}
     </>
   );

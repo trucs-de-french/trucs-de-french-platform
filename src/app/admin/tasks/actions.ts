@@ -106,6 +106,11 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
         rows: parseJsonField(formData.get("table_fill_rows")),
       };
+    case "image_match":
+      return {
+        instructions: (formData.get("image_match_instructions") as string) || "",
+        items: parseJsonField(formData.get("image_match_items")),
+      };
     case "vocab_quiz":
       return {
         sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),

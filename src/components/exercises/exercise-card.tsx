@@ -9,6 +9,7 @@ import type {
   SortColumnsPublic,
   OpenAnswerPublic,
   TableFillPublic,
+  ImageMatchPublic,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
@@ -21,6 +22,7 @@ import { DragDropExercise } from "./drag-drop";
 import { SortColumnsExercise } from "./sort-columns";
 import { OpenAnswerCheckExercise } from "./open-answer-check";
 import { TableFillExercise } from "./table-fill";
+import { ImageMatchExercise } from "./image-match";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -63,6 +65,8 @@ export function ExerciseCard({
       );
     case "table_fill":
       return <TableFillExercise taskId={taskId} config={config as unknown as TableFillPublic} />;
+    case "image_match":
+      return <ImageMatchExercise taskId={taskId} config={config as unknown as ImageMatchPublic} />;
     default:
       return null;
   }
