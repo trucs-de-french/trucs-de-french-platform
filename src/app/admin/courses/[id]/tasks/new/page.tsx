@@ -44,12 +44,16 @@ export default async function NewTaskPage({
 
         <TaskConfigFields scenes={scenes ?? []} sceneVocab={sceneVocab} />
 
-        <SubmitButton
-          pendingChildren="Створюю..."
-          className="self-start rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-        >
-          Створити
-        </SubmitButton>
+        {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,
+            бо ця форма редіректить (createTask), а не useActionState. */}
+        <div className="sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+          <SubmitButton
+            pendingChildren="Створюю..."
+            className="self-start rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          >
+            Створити
+          </SubmitButton>
+        </div>
       </form>
     </div>
   );

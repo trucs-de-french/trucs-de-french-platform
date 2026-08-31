@@ -52,6 +52,7 @@ export default async function EditTaskPage({
       <SaveForm
         action={updateTask.bind(null, task.id)}
         className="mt-4 flex flex-col gap-4 rounded-md border p-4"
+        sticky
       >
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
