@@ -35,7 +35,22 @@ export function ImageMatchExercise({
     <div>
       <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.image_match}</p>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="flex min-h-12 flex-wrap gap-2 rounded-md" {...bankDropProps()}>
+        {config.bank.map((name, bi) => (
+          <button
+            key={bi}
+            type="button"
+            {...bankDragProps(bi)}
+            onClick={() => clickBank(bi)}
+            disabled={locked || usedBankIndices.has(bi)}
+            className={bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {config.items.map((item, i) => (
           <div key={item.id} className="flex flex-col gap-1">
             <ImageOrPlaceholder
@@ -62,21 +77,6 @@ export function ImageMatchExercise({
               {placed[i] !== null ? config.bank[placed[i] as number] : ""}
             </span>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-3 flex min-h-12 flex-wrap gap-2 rounded-md" {...bankDropProps()}>
-        {config.bank.map((name, bi) => (
-          <button
-            key={bi}
-            type="button"
-            {...bankDragProps(bi)}
-            onClick={() => clickBank(bi)}
-            disabled={locked || usedBankIndices.has(bi)}
-            className={bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}
-          >
-            {name}
-          </button>
         ))}
       </div>
 
