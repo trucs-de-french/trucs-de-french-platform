@@ -51,7 +51,7 @@ export default async function AdminScenePage({
         .order("order_index"),
       supabase
         .from("tasks")
-        .select("id, type, title, order_index")
+        .select("id, type, title, config, order_index")
         .eq("scene_id", sceneId)
         .order("order_index"),
       supabase

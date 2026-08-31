@@ -10,7 +10,7 @@ import {
   getTaskTypeIcon,
 } from "@/lib/exercises/task-type-meta";
 
-type TaskRow = { id: string; type: string; title: string };
+type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
 
 function stripeClassFor(type: string): string {
   const category = getTaskTypeCategory(type);
@@ -22,6 +22,29 @@ function badgeClassFor(type: string): string {
   return category
     ? CATEGORY_COLORS[category].badge
     : "text-neutral-500 dark:text-neutral-400";
+}
+
+// Простий евристичний прев'ю без формату під кожен тип окремо (свідомо
+// узгоджений компроміс) — бере перше непорожнє з типових текстових полів.
+// Для типів, чий основний контент лежить у масивах (matching.pairs,
+// table_fill.rows тощо), прев'ю не покаже нічого змістовного, окрім хіба
+// instructions, якщо вчитель його заповнив — це прийнятне обмеження, а не
+// баг.
+const PREVIEW_FIELDS = ["instructions", "question", "template", "content", "prompt"] as const;
+const PREVIEW_MAX_LENGTH = 150;
+
+function getTaskPreview(config: Record<string, unknown> | null): string | null {
+  if (!config) return null;
+  for (const field of PREVIEW_FIELDS) {
+    const value = config[field];
+    if (typeof value === "string" && value.trim()) {
+      const trimmed = value.trim();
+      return trimmed.length > PREVIEW_MAX_LENGTH
+        ? `${trimmed.slice(0, PREVIEW_MAX_LENGTH)}…`
+        : trimmed;
+    }
+  }
+  return null;
 }
 
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList: ручка
@@ -45,6 +68,16 @@ export function TaskDragList({
   const [tasks, setTasks] = useState(initialTasks);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(taskId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }
 
   async function swap(fromId: string, toId: string) {
     if (fromId === toId) return;
@@ -79,6 +112,8 @@ export function TaskDragList({
       <ul className="flex flex-col gap-2">
         {tasks.map((task, i) => {
           const Icon = getTaskTypeIcon(task.type);
+          const preview = getTaskPreview(task.config);
+          const isExpanded = expanded.has(task.id);
           return (
           <li
             key={task.id}
@@ -94,7 +129,7 @@ export function TaskDragList({
               const fromId = e.dataTransfer.getData("text/plain");
               if (fromId) void swap(fromId, task.id);
             }}
-            className={`flex items-center justify-between rounded-md border p-3 transition-colors ${stripeClassFor(
+            className={`flex flex-col rounded-md border p-3 transition-colors ${stripeClassFor(
               task.type
             )} ${
               dragOver === task.id
@@ -102,6 +137,7 @@ export function TaskDragList({
                 : ""
             }`}
           >
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
                 draggable
@@ -111,6 +147,17 @@ export function TaskDragList({
               >
                 ⠿
               </span>
+              {preview && (
+                <button
+                  type="button"
+                  onClick={() => toggleExpanded(task.id)}
+                  aria-expanded={isExpanded}
+                  aria-label={isExpanded ? "Згорнути прев'ю" : "Розгорнути прев'ю"}
+                  className="text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+                >
+                  {isExpanded ? "▾" : "▸"}
+                </button>
+              )}
               <div>
                 <span
                   className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase ${badgeClassFor(
@@ -154,6 +201,12 @@ export function TaskDragList({
                 </SubmitButton>
               </form>
             </div>
+            </div>
+            {isExpanded && preview && (
+              <p className="mt-2 border-t pt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                {preview}
+              </p>
+            )}
           </li>
           );
         })}
