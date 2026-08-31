@@ -4,8 +4,21 @@ import { useState, type DragEvent } from "react";
 import Link from "next/link";
 import { deleteTask, moveTask, reorderTasks } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
 
 type TaskRow = { id: string; type: string; title: string };
+
+function stripeClassFor(type: string): string {
+  const category = getTaskTypeCategory(type);
+  return category ? CATEGORY_COLORS[category].stripe : "";
+}
+
+function badgeClassFor(type: string): string {
+  const category = getTaskTypeCategory(type);
+  return category
+    ? CATEGORY_COLORS[category].badge
+    : "text-neutral-500 dark:text-neutral-400";
+}
 
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList: ручка
 // (⠿) — джерело drag, увесь <li> — ціль drop. Swap-семантика (перетягнута
@@ -75,7 +88,9 @@ export function TaskDragList({
               const fromId = e.dataTransfer.getData("text/plain");
               if (fromId) void swap(fromId, task.id);
             }}
-            className={`flex items-center justify-between rounded-md border p-3 transition-colors ${
+            className={`flex items-center justify-between rounded-md border p-3 transition-colors ${stripeClassFor(
+              task.type
+            )} ${
               dragOver === task.id
                 ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
                 : ""
@@ -91,7 +106,11 @@ export function TaskDragList({
                 ⠿
               </span>
               <div>
-                <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                <span
+                  className={`inline-block rounded px-1.5 py-0.5 text-xs uppercase ${badgeClassFor(
+                    task.type
+                  )}`}
+                >
                   {task.type}
                 </span>
                 <Link

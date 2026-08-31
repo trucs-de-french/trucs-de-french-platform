@@ -34,6 +34,7 @@ import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { CATEGORY_COLORS, CATEGORY_LABELS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -93,11 +94,21 @@ export function TaskConfigFields({
   // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
   // type), тож один спільний ref завжди вказує саме на активну.
   const importRef = useRef<ImportableFieldsHandle>(null);
+  const taskTypeCategory = getTaskTypeCategory(type);
 
   return (
     <>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
+          {taskTypeCategory && (
+            <span
+              className={`rounded px-1.5 py-0.5 text-xs ${CATEGORY_COLORS[taskTypeCategory].badge}`}
+            >
+              {CATEGORY_LABELS[taskTypeCategory]}
+            </span>
+          )}
+        </div>
         <select
           name="type"
           value={type}
