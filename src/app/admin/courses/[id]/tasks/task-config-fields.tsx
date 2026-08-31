@@ -33,6 +33,7 @@ import { PhoneticsFields } from "./phonetics-fields";
 import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
+import { TaskTypeCombobox } from "./task-type-combobox";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import {
   CATEGORY_COLORS,
@@ -121,18 +122,8 @@ export function TaskConfigFields({
             </span>
           )}
         </div>
-        <select
-          name="type"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="rounded-md border px-3 py-2"
-        >
-          {TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <input type="hidden" name="type" value={type} readOnly />
+        <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={setType} />
       </div>
 
       <div className="flex gap-4">
