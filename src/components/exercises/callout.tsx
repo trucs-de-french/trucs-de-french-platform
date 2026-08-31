@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 
 // Не "use client" — це чистий, неінтерактивний блок тексту, рендериться
@@ -27,7 +27,7 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
   // від того, що вже мало бути санітизовано при збереженні. Захист і від
   // майбутніх редакторів бази в обхід адмінки, і від зміни правил санітизації
   // заднім числом для вже збереженого контенту.
-  const safeHtml = DOMPurify.sanitize(config.content ?? "");
+  const safeHtml = sanitizeCalloutHtml(config.content ?? "");
 
   return (
     <div className={`flex gap-2 rounded-md border-2 p-3 ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>

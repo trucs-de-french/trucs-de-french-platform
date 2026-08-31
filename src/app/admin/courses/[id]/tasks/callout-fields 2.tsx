@@ -6,7 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
 import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
-import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
+import DOMPurify from "isomorphic-dompurify";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 
 const STYLE_OPTIONS: { value: CalloutStyle; label: string; icon: string; className: string }[] = [
@@ -56,7 +56,7 @@ export function CalloutFields({
       // Клієнтська санітизація — лише для швидкого відгуку/про всяк
       // випадок; остаточна, обов'язкова санітизація — на сервері при
       // збереженні (buildConfig), бо саме туди дані реально записуються.
-      setHtml(sanitizeCalloutHtml(editor.getHTML()));
+      setHtml(DOMPurify.sanitize(editor.getHTML()));
     },
     editorProps: {
       attributes: {

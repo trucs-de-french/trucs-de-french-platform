@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
@@ -93,7 +93,7 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
       // відгуку, їй не можна довіряти як єдиному захисту).
       return {
         style: (formData.get("callout_style") as string) || "none",
-        content: DOMPurify.sanitize((formData.get("callout_content") as string) || ""),
+        content: sanitizeCalloutHtml((formData.get("callout_content") as string) || ""),
       };
     case "phonetics":
       return {
