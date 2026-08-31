@@ -80,3 +80,60 @@ export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
 export function getTaskTypeCategory(type: string): TaskTypeCategory | null {
   return TASK_TYPE_CATEGORY[type] ?? null;
 }
+
+// Іконка на ТИП (не на категорію, на відміну від кольорів вище) — усі назви
+// перевірені напряму в node_modules/lucide-react/dist/lucide-react.d.ts
+// (кілька очікуваних імен виявились перейменованими бібліотекою: HelpCircle
+// -> CircleQuestionMark, AlertCircle -> CircleAlert, Code2 -> CodeXml).
+import {
+  PenLine,
+  ListChecks,
+  SquareCheck,
+  ArrowLeftRight,
+  ArrowUpDown,
+  Move,
+  Columns3,
+  Table,
+  Images,
+  CircleQuestionMark,
+  MessageSquare,
+  Info,
+  Volume2,
+  Layers,
+  FileText,
+  Sparkles,
+  Gamepad2,
+  Link2,
+  CodeXml,
+  Headphones,
+  CircleAlert,
+  type LucideIcon,
+} from "lucide-react";
+
+export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
+  fill_blank: PenLine,
+  multiple_choice: ListChecks,
+  true_false: SquareCheck,
+  matching: ArrowLeftRight,
+  reorder: ArrowUpDown,
+  drag_drop: Move,
+  sort_columns: Columns3,
+  table_fill: Table,
+  image_match: Images,
+  vocab_quiz: CircleQuestionMark,
+  open_answer: MessageSquare,
+  callout: Info,
+  phonetics: Volume2,
+  flip_cards: Layers,
+  essay_check: FileText,
+  ai_examiner: Sparkles,
+  game: Gamepad2,
+  link: Link2,
+  embed: CodeXml,
+  listening: Headphones,
+  error_correction: CircleAlert,
+};
+
+export function getTaskTypeIcon(type: string): LucideIcon | null {
+  return TASK_TYPE_ICON[type] ?? null;
+}

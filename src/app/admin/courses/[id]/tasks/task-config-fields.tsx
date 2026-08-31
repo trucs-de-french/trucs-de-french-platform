@@ -34,7 +34,12 @@ import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import type { ImportableFieldsHandle } from "./importable-fields";
-import { CATEGORY_COLORS, CATEGORY_LABELS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import {
+  CATEGORY_COLORS,
+  CATEGORY_LABELS,
+  TASK_TYPE_ICON,
+  getTaskTypeCategory,
+} from "@/lib/exercises/task-type-meta";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -95,6 +100,12 @@ export function TaskConfigFields({
   // type), тож один спільний ref завжди вказує саме на активну.
   const importRef = useRef<ImportableFieldsHandle>(null);
   const taskTypeCategory = getTaskTypeCategory(type);
+  // TASK_TYPE_ICON[type] напряму (не через функцію getTaskTypeIcon) — react
+  // hooks eslint-плагін помилково трактує "змінна = виклик функції, потім
+  // <Змінна/> у JSX" як "компонент створюється під час рендеру", навіть
+  // якщо функція — чистий пошук у мапі; пряме звернення до об'єкта цю
+  // евристику не зачіпає (перевірено в вихідному коді плагіна).
+  const TypeIcon = TASK_TYPE_ICON[type];
 
   return (
     <>
@@ -103,8 +114,9 @@ export function TaskConfigFields({
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
           {taskTypeCategory && (
             <span
-              className={`rounded px-1.5 py-0.5 text-xs ${CATEGORY_COLORS[taskTypeCategory].badge}`}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${CATEGORY_COLORS[taskTypeCategory].badge}`}
             >
+              {TypeIcon && <TypeIcon className="h-3 w-3" aria-hidden />}
               {CATEGORY_LABELS[taskTypeCategory]}
             </span>
           )}

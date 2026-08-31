@@ -4,7 +4,11 @@ import { useState, type DragEvent } from "react";
 import Link from "next/link";
 import { deleteTask, moveTask, reorderTasks } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import {
+  CATEGORY_COLORS,
+  getTaskTypeCategory,
+  getTaskTypeIcon,
+} from "@/lib/exercises/task-type-meta";
 
 type TaskRow = { id: string; type: string; title: string };
 
@@ -73,7 +77,9 @@ export function TaskDragList({
       )}
 
       <ul className="flex flex-col gap-2">
-        {tasks.map((task, i) => (
+        {tasks.map((task, i) => {
+          const Icon = getTaskTypeIcon(task.type);
+          return (
           <li
             key={task.id}
             onDragOver={(e: DragEvent) => e.preventDefault()}
@@ -107,10 +113,11 @@ export function TaskDragList({
               </span>
               <div>
                 <span
-                  className={`inline-block rounded px-1.5 py-0.5 text-xs uppercase ${badgeClassFor(
+                  className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase ${badgeClassFor(
                     task.type
                   )}`}
                 >
+                  {Icon && <Icon className="h-3 w-3" aria-hidden />}
                   {task.type}
                 </span>
                 <Link
@@ -148,7 +155,8 @@ export function TaskDragList({
               </form>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
       {tasks.length === 0 && (
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Завдань ще немає.</p>
