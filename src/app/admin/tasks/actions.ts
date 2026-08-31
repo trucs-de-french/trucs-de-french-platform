@@ -1,0 +1,341 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
+import { createClient } from "@/lib/supabase/server";
+import { detectPlatform } from "@/lib/platform";
+import type { ActionState } from "@/lib/action-state";
+
+// Перед додаванням нової мутуючої дії сюди — дивись чеклист
+// "redirect() vs revalidatePath() vs {ok,error}" на початку
+// ../scenes/actions.ts. Найчастіша причина "зберіглось, але не видно без
+// F5" — саме пропущений крок із цього чеклиста.
+
+function buildConfig(type: string, formData: FormData): Record<string, unknown> {
+  switch (type) {
+    case "essay_check":
+      return {
+        prompt: (formData.get("prompt") as string) || "",
+        criteria: (formData.get("criteria") as string) || "",
+      };
+    case "open_answer":
+      return {
+        question: (formData.get("open_answer_question") as string) || "",
+        answers: parseJsonField(formData.get("open_answer_answers")),
+      };
+    case "embed":
+      return {
+        url: (formData.get("embed_url") as string) || "",
+        height: Number(formData.get("embed_height")) || 480,
+      };
+    case "link": {
+      const url = (formData.get("link_url") as string) || "";
+      const rawPlatform = (formData.get("link_platform") as string) || "auto";
+      return {
+        url,
+        label: (formData.get("link_label") as string) || "",
+        platform: rawPlatform === "auto" ? detectPlatform(url) : rawPlatform,
+        download: formData.get("link_download") === "true",
+      };
+    }
+    case "fill_blank":
+      return {
+        instructions: (formData.get("fill_blank_instructions") as string) || "",
+        template: (formData.get("fill_blank_template") as string) || "",
+      };
+    case "multiple_choice":
+      return {
+        question: (formData.get("mc_question") as string) || "",
+        display: (formData.get("mc_display") as string) || "buttons",
+        options: parseJsonField(formData.get("mc_options")),
+      };
+    case "true_false":
+      return {
+        instructions: (formData.get("tf_instructions") as string) || "",
+        statements: parseJsonField(formData.get("tf_statements")),
+      };
+    case "matching":
+      return {
+        instructions: (formData.get("matching_instructions") as string) || "",
+        pairs: parseJsonField(formData.get("matching_pairs")),
+      };
+    case "listening":
+      return {
+        instructions: (formData.get("listening_instructions") as string) || "",
+        audioUrl: (formData.get("listening_audio_url") as string) || "",
+        questions: parseJsonField(formData.get("listening_questions")),
+      };
+    case "reorder":
+      return {
+        instructions: (formData.get("reorder_instructions") as string) || "",
+        items: parseJsonField(formData.get("reorder_items")),
+      };
+    case "drag_drop":
+      return {
+        instructions: (formData.get("drag_drop_instructions") as string) || "",
+        template: (formData.get("drag_drop_template") as string) || "",
+        bank: parseJsonField(formData.get("drag_drop_bank")),
+      };
+    case "sort_columns":
+      return {
+        instructions: (formData.get("sort_columns_instructions") as string) || "",
+        columns: parseJsonField(formData.get("sort_columns_columns")),
+        items: parseJsonField(formData.get("sort_columns_items")),
+      };
+    case "flip_cards":
+      return {
+        instructions: (formData.get("flip_cards_instructions") as string) || "",
+        cards: parseJsonField(formData.get("flip_cards_cards")),
+      };
+    case "callout":
+      // Основна санітизація — саме тут, на межі збереження в базу
+      // (клієнтська санітизація в CalloutFields — лише для швидкого
+      // відгуку, їй не можна довіряти як єдиному захисту).
+      return {
+        style: (formData.get("callout_style") as string) || "none",
+        content: DOMPurify.sanitize((formData.get("callout_content") as string) || ""),
+      };
+    case "phonetics":
+      return {
+        instructions: (formData.get("phonetics_instructions") as string) || "",
+        items: parseJsonField(formData.get("phonetics_items")),
+      };
+    case "vocab_quiz":
+      return {
+        sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),
+      };
+    default:
+      return {};
+  }
+}
+
+function parseJsonField(value: FormDataEntryValue | null): unknown[] {
+  try {
+    const parsed = JSON.parse((value as string) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function syncGameRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  taskId: string,
+  type: string,
+  formData: FormData
+) {
+  if (type !== "game") {
+    await supabase.from("games").delete().eq("task_id", taskId);
+    return;
+  }
+
+  const { error } = await supabase.from("games").upsert({
+    task_id: taskId,
+    provider: (formData.get("game_provider") as string) || "internal",
+    embed_url: (formData.get("game_embed_url") as string) || null,
+    game_type: (formData.get("game_type") as string) || null,
+  });
+
+  if (error) throw error;
+}
+
+export async function createTask(formData: FormData) {
+  const supabase = await createClient();
+
+  const productId = formData.get("product_id") as string;
+  const sceneId = (formData.get("scene_id") as string) || null;
+  const type = formData.get("type") as string;
+  const title = formData.get("title") as string;
+
+  let scopeQuery = supabase
+    .from("tasks")
+    .select("order_index")
+    .eq("product_id", productId);
+  scopeQuery = sceneId ? scopeQuery.eq("scene_id", sceneId) : scopeQuery.is("scene_id", null);
+
+  const { data: last } = await scopeQuery
+    .order("order_index", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: task, error } = await supabase
+    .from("tasks")
+    .insert({
+      product_id: productId,
+      scene_id: sceneId,
+      type,
+      title,
+      order_index: (last?.order_index ?? 0) + 1,
+      config: buildConfig(type, formData),
+      image_url: (formData.get("task_image_url") as string) || null,
+      audio_url: (formData.get("task_audio_url") as string) || null,
+    })
+    .select()
+    .single();
+
+  if (error || !task) throw error;
+
+  await syncGameRow(supabase, task.id, type, formData);
+
+  redirect(
+    sceneId
+      ? `/admin/courses/${productId}/scenes/${sceneId}`
+      : `/admin/courses/${productId}`
+  );
+}
+
+export async function updateTask(
+  taskId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  const type = formData.get("type") as string;
+  const title = formData.get("title") as string;
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({
+      type,
+      title,
+      config: buildConfig(type, formData),
+      image_url: (formData.get("task_image_url") as string) || null,
+      audio_url: (formData.get("task_audio_url") as string) || null,
+    })
+    .eq("id", taskId);
+
+  if (error) return { ok: false, error: error.message };
+
+  try {
+    await syncGameRow(supabase, taskId, type, formData);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Не вдалося зберегти гру" };
+  }
+
+  return { ok: true };
+}
+
+export async function deleteTask(taskId: string) {
+  const supabase = await createClient();
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("product_id, scene_id")
+    .eq("id", taskId)
+    .single();
+  if (!task) return;
+
+  const backPath = task.scene_id
+    ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
+    : `/admin/courses/${task.product_id}`;
+
+  const { data: deleted, error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", taskId)
+    .select("id");
+
+  if (error || !deleted?.length) {
+    redirect(
+      `${backPath}?error=${encodeURIComponent(error?.message ?? "Не вдалося видалити завдання")}`
+    );
+  }
+
+  redirect(backPath);
+}
+
+export async function moveTask(taskId: string, direction: "up" | "down") {
+  const supabase = await createClient();
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("id, product_id, scene_id, order_index")
+    .eq("id", taskId)
+    .single();
+  if (!task) return;
+
+  let query = supabase.from("tasks").select("id, order_index").eq("product_id", task.product_id);
+  query = task.scene_id ? query.eq("scene_id", task.scene_id) : query.is("scene_id", null);
+
+  const { data: neighbor } =
+    direction === "up"
+      ? await query
+          .lt("order_index", task.order_index)
+          .order("order_index", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : await query
+          .gt("order_index", task.order_index)
+          .order("order_index", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+  if (!neighbor) return;
+
+  const backPath = task.scene_id
+    ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
+    : `/admin/courses/${task.product_id}`;
+
+  const { data: updated1, error: error1 } = await supabase
+    .from("tasks")
+    .update({ order_index: neighbor.order_index })
+    .eq("id", task.id)
+    .select("id");
+  const { data: updated2, error: error2 } = await supabase
+    .from("tasks")
+    .update({ order_index: task.order_index })
+    .eq("id", neighbor.id)
+    .select("id");
+
+  const error = error1 ?? error2;
+  if (error || !updated1?.length || !updated2?.length) {
+    redirect(
+      `${backPath}?error=${encodeURIComponent(error?.message ?? "Не вдалося змінити порядок завдань")}`
+    );
+  }
+
+  redirect(backPath);
+}
+
+// Drag-and-drop усередині групи "Завдання" — доповнює стрілки ↑/↓ (moveTask),
+// не замінює їх. Викликається напряму з клієнтського компонента (не через
+// <form>), тому — на відміну від moveTask — не редіректить, а повертає
+// {ok, error}, щоб клієнт міг відкотити оптимістичний локальний порядок при
+// невдачі. Перевіряє error і кількість реально змінених рядків на кожному
+// UPDATE — той самий захист, якого спершу бракувало в reorderSceneBlocks.
+export async function reorderTasks(
+  sceneId: string,
+  orderedTaskIds: string[]
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const results = await Promise.all(
+    orderedTaskIds.map(async (taskId, index) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ order_index: index })
+        .eq("id", taskId)
+        .eq("scene_id", sceneId)
+        .select("id");
+      return { taskId, error, affected: data?.length ?? 0 };
+    })
+  );
+
+  const dbError = results.find((r) => r.error)?.error;
+  if (dbError) {
+    console.error(`reorderTasks: помилка запису для сцени ${sceneId}:`, dbError.message);
+    return { ok: false, error: dbError.message };
+  }
+
+  const missing = results.filter((r) => r.affected === 0);
+  if (missing.length > 0) {
+    console.error(
+      `reorderTasks: 0 рядків оновлено для завдань ${missing
+        .map((r) => r.taskId)
+        .join(", ")} у сцені ${sceneId}.`
+    );
+    return { ok: false, error: "Не вдалося зберегти порядок частини завдань" };
+  }
+
+  return { ok: true };
+}
