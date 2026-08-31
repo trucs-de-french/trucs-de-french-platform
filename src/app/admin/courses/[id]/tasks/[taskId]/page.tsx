@@ -47,19 +47,19 @@ export default async function EditTaskPage({
 
   return (
     <div>
-      <h1 className="text-xl font-semibold">Редагування завдання</h1>
+      <h1 className="text-2xl font-bold">Редагування завдання</h1>
 
       <SaveForm
         action={updateTask.bind(null, task.id)}
         className="mt-4 flex flex-col gap-4 rounded-md border p-4"
       >
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Назва</label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
           <input
             name="title"
             defaultValue={task.title}
             required
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 text-base font-medium"
           />
         </div>
 

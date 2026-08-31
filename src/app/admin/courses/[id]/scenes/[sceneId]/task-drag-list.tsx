@@ -96,7 +96,7 @@ export function TaskDragList({
                 </span>
                 <Link
                   href={`/admin/courses/${productId}/tasks/${task.id}`}
-                  className="block font-medium hover:underline"
+                  className="block text-base font-semibold hover:underline"
                 >
                   {task.title}
                 </Link>

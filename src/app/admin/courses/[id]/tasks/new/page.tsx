@@ -27,15 +27,19 @@ export default async function NewTaskPage({
 
   return (
     <div>
-      <h1 className="text-xl font-semibold">Нове завдання</h1>
+      <h1 className="text-2xl font-bold">Нове завдання</h1>
 
       <form action={createTask} className="mt-4 flex flex-col gap-4 rounded-md border p-4">
         <input type="hidden" name="product_id" value={productId} />
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Назва</label>
-          <input name="title" required className="rounded-md border px-3 py-2" />
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+          <input
+            name="title"
+            required
+            className="rounded-md border px-3 py-2 text-base font-medium"
+          />
         </div>
 
         <TaskConfigFields scenes={scenes ?? []} sceneVocab={sceneVocab} />

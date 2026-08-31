@@ -55,6 +55,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Roboto — лише в адмінці (admin/layout.tsx), студентська частина сайту
+   лишається на дефолтному шрифті body вище — свідоме звуження масштабу
+   цього етапу типографіки саме до адмінки, як просив вчитель. */
+.admin-root {
+  font-family: var(--font-roboto), Arial, Helvetica, sans-serif;
+}
+
 /* Мінімальна типографіка для TipTap-контенту (callout-завдання) — без
    @tailwindcss/typography (не встановлений у проєкті, і не варто заради
    пари тегів): Preflight скидає заголовки/списки до вигляду звичайного

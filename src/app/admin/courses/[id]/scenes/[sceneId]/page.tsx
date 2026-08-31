@@ -192,7 +192,7 @@ export default async function AdminScenePage({
       <Link href={`/admin/courses/${productId}`} className="text-sm underline">
         ← До курсу
       </Link>
-      <h1 className="mt-2 text-xl font-semibold">Редагування сцени</h1>
+      <h1 className="mt-2 text-2xl font-bold">Редагування сцени</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

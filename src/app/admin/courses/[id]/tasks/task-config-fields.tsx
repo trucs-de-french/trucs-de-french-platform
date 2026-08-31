@@ -97,7 +97,7 @@ export function TaskConfigFields({
   return (
     <>
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium">Тип завдання</label>
+        <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
         <select
           name="type"
           value={type}
@@ -285,7 +285,7 @@ export function TaskConfigFields({
               name="fill_blank_template"
               rows={3}
               defaultValue={(initialConfig?.template as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
           {/* Довідковий режим (без onImport) — тут не можна автоматично

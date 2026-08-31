@@ -10,7 +10,7 @@ export default async function NewCoursePage({
 
   return (
     <div>
-      <h1 className="text-xl font-semibold">Новий курс</h1>
+      <h1 className="text-2xl font-bold">Новий курс</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

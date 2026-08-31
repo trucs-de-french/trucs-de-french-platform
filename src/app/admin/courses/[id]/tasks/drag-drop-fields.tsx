@@ -60,7 +60,7 @@ export const DragDropFields = forwardRef<
           name="drag_drop_template"
           rows={3}
           defaultValue={initialConfig?.template ?? ""}
-          className="rounded-md border px-2 py-1.5 text-sm"
+          className="rounded-md border px-2 py-1.5 text-base font-medium"
         />
       </div>
 

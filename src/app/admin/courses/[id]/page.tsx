@@ -52,7 +52,7 @@ export default async function AdminCoursePage({
       </Link>
 
       <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{product.title}</h1>
+        <h1 className="text-2xl font-bold">{product.title}</h1>
         <form action={togglePublish.bind(null, product.id, !product.is_published)}>
           <SubmitButton
             pendingChildren="..."
@@ -120,7 +120,7 @@ export default async function AdminCoursePage({
       {isFilm ? (
         <section className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Сцени</h2>
+            <h2 className="text-xl font-bold">Сцени</h2>
             <form action={createScene.bind(null, product.id)}>
               <SubmitButton
                 pendingChildren="Створюю..."
@@ -187,7 +187,7 @@ export default async function AdminCoursePage({
       ) : (
         <section className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">Завдання</h2>
+            <h2 className="text-xl font-bold">Завдання</h2>
             <Link
               href={`/admin/courses/${product.id}/tasks/new`}
               className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"

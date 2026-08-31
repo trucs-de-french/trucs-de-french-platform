@@ -11,7 +11,7 @@ export default async function AdminCoursesPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Курси</h1>
+        <h1 className="text-2xl font-bold">Курси</h1>
         <Link
           href="/admin/courses/new"
           className="rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
