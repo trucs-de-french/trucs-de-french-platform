@@ -26,7 +26,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="Перемкнути тему"
-      className="fixed bottom-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border bg-white text-lg shadow-md hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+      className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border bg-white text-lg shadow-md hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800"
     >
       <span suppressHydrationWarning>{isDark ? "☀️" : "🌙"}</span>
     </button>
