@@ -4,6 +4,10 @@
 /node_modules
 /.pnp
 .pnp.*
+# .npmrc тут може містити абсолютний шлях до кешу npm, специфічний для
+# локальної машини/сесії розробки (напр. cache=/private/tmp/...) — такий
+# шлях не існує на серверах збірки (Netlify) і ламає npm install там.
+.npmrc
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
