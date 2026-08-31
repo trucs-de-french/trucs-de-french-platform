@@ -8,6 +8,7 @@ import type {
   DragDropPublic,
   SortColumnsPublic,
   OpenAnswerPublic,
+  TableFillPublic,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
@@ -19,6 +20,7 @@ import { ReorderExercise } from "./reorder";
 import { DragDropExercise } from "./drag-drop";
 import { SortColumnsExercise } from "./sort-columns";
 import { OpenAnswerCheckExercise } from "./open-answer-check";
+import { TableFillExercise } from "./table-fill";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -59,6 +61,8 @@ export function ExerciseCard({
       return (
         <OpenAnswerCheckExercise taskId={taskId} config={config as unknown as OpenAnswerPublic} />
       );
+    case "table_fill":
+      return <TableFillExercise taskId={taskId} config={config as unknown as TableFillPublic} />;
     default:
       return null;
   }

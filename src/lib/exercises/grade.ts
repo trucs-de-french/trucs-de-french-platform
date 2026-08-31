@@ -26,6 +26,9 @@ import type {
   OpenAnswerConfig,
   OpenAnswerAnswer,
   OpenAnswerDetail,
+  TableFillConfig,
+  TableFillAnswer,
+  TableFillDetail,
   GradeResult,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
@@ -208,6 +211,31 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
   };
 }
 
+function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): GradeResult {
+  const answerMap = new Map(answer.map((a) => [`${a.rowId}:${a.side}`, a.value]));
+
+  const blanks: TableFillDetail["blanks"] = [];
+  for (const row of config.rows) {
+    (["left", "right"] as const).forEach((side) => {
+      const hidden = side === "left" ? row.leftHidden : row.rightHidden;
+      if (!hidden) return;
+
+      const rawValue = side === "left" ? row.left : row.right;
+      const accepted = rawValue.split("|").map((s) => normalize(s));
+      const studentAnswer = answerMap.get(`${row.id}:${side}`) ?? "";
+      const isCorrect = accepted.includes(normalize(studentAnswer));
+      blanks.push({ rowId: row.id, side, studentAnswer, correctAnswers: accepted, isCorrect });
+    });
+  }
+
+  const correctCount = blanks.filter((b) => b.isCorrect).length;
+  return {
+    correct: correctCount === blanks.length && blanks.length > 0,
+    score: percentage(correctCount, blanks.length),
+    detail: { blanks },
+  };
+}
+
 export function gradeAnswer(
   type: GradableTaskType,
   config: Record<string, unknown>,
@@ -235,6 +263,8 @@ export function gradeAnswer(
       return gradeSortColumns(config as unknown as SortColumnsConfig, answer as SortColumnsAnswer);
     case "open_answer":
       return gradeOpenAnswer(config as unknown as OpenAnswerConfig, answer as OpenAnswerAnswer);
+    case "table_fill":
+      return gradeTableFill(config as unknown as TableFillConfig, answer as TableFillAnswer);
     default:
       return assertNeverGradableType(type);
   }

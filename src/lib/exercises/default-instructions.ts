@@ -17,4 +17,5 @@ export const DEFAULT_INSTRUCTIONS = {
   open_answer: "Дайте коротку відповідь",
   vocab_quiz: "Оберіть правильний переклад",
   error_correction: "Натисніть на помилку, щоб перейти до завдання і виправити відповідь",
+  table_fill: "Заповніть порожні клітинки таблиці",
 } as const;

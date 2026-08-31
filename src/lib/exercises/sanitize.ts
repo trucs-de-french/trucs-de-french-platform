@@ -17,6 +17,8 @@ import type {
   SortColumnsPublic,
   OpenAnswerConfig,
   OpenAnswerPublic,
+  TableFillConfig,
+  TableFillPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
@@ -100,6 +102,18 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   return { question: config.question };
 }
 
+export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
+  return {
+    instructions: config.instructions,
+    columnLabels: config.columnLabels,
+    rows: config.rows.map((r) => ({
+      id: r.id,
+      left: r.leftHidden ? null : r.left,
+      right: r.rightHidden ? null : r.right,
+    })),
+  };
+}
+
 export function sanitizeConfigForStudent(
   type: GradableTaskType,
   config: Record<string, unknown>
@@ -123,6 +137,8 @@ export function sanitizeConfigForStudent(
       return sanitizeSortColumns(config as unknown as SortColumnsConfig);
     case "open_answer":
       return sanitizeOpenAnswer(config as unknown as OpenAnswerConfig);
+    case "table_fill":
+      return sanitizeTableFill(config as unknown as TableFillConfig);
     default:
       return assertNeverGradableType(type);
   }

@@ -14,6 +14,7 @@ import type {
   OpenAnswerConfig,
   CalloutConfig,
   PhoneticsConfig,
+  TableFillConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import { MultipleChoiceFields } from "./multiple-choice-fields";
@@ -28,12 +29,20 @@ import { VocabQuizFields } from "./vocab-quiz-fields";
 import { OpenAnswerFields } from "./open-answer-fields";
 import { CalloutFields } from "./callout-fields";
 import { PhoneticsFields } from "./phonetics-fields";
+import { TableFillFields } from "./table-fill-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import type { ImportableFieldsHandle } from "./importable-fields";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
-const IMPORT_ENABLED_TYPES = ["matching", "flip_cards", "drag_drop", "sort_columns", "reorder"];
+const IMPORT_ENABLED_TYPES = [
+  "matching",
+  "flip_cards",
+  "drag_drop",
+  "sort_columns",
+  "reorder",
+  "table_fill",
+];
 
 const TYPE_OPTIONS = [
   { value: "game", label: "Гра" },
@@ -54,6 +63,7 @@ const TYPE_OPTIONS = [
   { value: "flip_cards", label: "Фліп-картки" },
   { value: "callout", label: "Текстовий блок (callout)" },
   { value: "phonetics", label: "Фонетика" },
+  { value: "table_fill", label: "Заповніть таблицю" },
 ];
 
 type Props = {
@@ -343,6 +353,10 @@ export function TaskConfigFields({
 
       {type === "phonetics" && (
         <PhoneticsFields initialConfig={initialConfig as Partial<PhoneticsConfig>} />
+      )}
+
+      {type === "table_fill" && (
+        <TableFillFields ref={importRef} initialConfig={initialConfig as Partial<TableFillConfig>} />
       )}
     </>
   );

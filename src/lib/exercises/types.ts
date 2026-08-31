@@ -60,6 +60,23 @@ export type SortColumnsConfig = {
   items: SortColumnsItem[];
 };
 
+// table_fill — таблиця з 2 колонками (довільні назви); для кожної клітинки
+// в рядку вчитель окремо вирішує, чи вона показана текстом, чи прихована
+// (поле для введення). Якщо hidden — value може містити кілька допустимих
+// варіантів через "|" (той самий синтаксис, що в fill_blank).
+export type TableFillRow = {
+  id: string;
+  left: string;
+  right: string;
+  leftHidden: boolean;
+  rightHidden: boolean;
+};
+export type TableFillConfig = {
+  instructions?: string;
+  columnLabels: [string, string];
+  rows: TableFillRow[];
+};
+
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється),
 // тому повна конфігурація й публічна — одне й те саме, sanitize не потрібен.
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
@@ -152,6 +169,12 @@ export type OpenAnswerPublic = {
   question: string;
 };
 
+export type TableFillPublic = {
+  instructions?: string;
+  columnLabels: [string, string];
+  rows: { id: string; left: string | null; right: string | null }[]; // null = прихована клітинка
+};
+
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
@@ -163,6 +186,7 @@ export type ReorderAnswer = string[]; // запропонований студе
 export type DragDropAnswer = string[]; // по одному слову з банку на пропуск, за порядком
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = string;
+export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
 
 // Детальний результат перевірки — саме він показує "де помилка".
 
@@ -222,6 +246,16 @@ export type OpenAnswerDetail = {
   isCorrect: boolean;
 };
 
+export type TableFillDetail = {
+  blanks: {
+    rowId: string;
+    side: "left" | "right";
+    studentAnswer: string;
+    correctAnswers: string[];
+    isCorrect: boolean;
+  }[];
+};
+
 export type GradeResult =
   | { correct: boolean; score: number; detail: FillBlankDetail }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail }
@@ -230,4 +264,5 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: ListeningDetail }
   | { correct: boolean; score: number; detail: ReorderDetail }
   | { correct: boolean; score: number; detail: SortColumnsDetail }
-  | { correct: boolean; score: number; detail: OpenAnswerDetail };
+  | { correct: boolean; score: number; detail: OpenAnswerDetail }
+  | { correct: boolean; score: number; detail: TableFillDetail };

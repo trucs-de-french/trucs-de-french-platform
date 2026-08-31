@@ -13,6 +13,7 @@ export const GRADABLE_TASK_TYPES = [
   "drag_drop",
   "sort_columns",
   "open_answer",
+  "table_fill",
 ] as const;
 
 export type GradableTaskType = (typeof GRADABLE_TASK_TYPES)[number];

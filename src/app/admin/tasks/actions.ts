@@ -100,6 +100,12 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         instructions: (formData.get("phonetics_instructions") as string) || "",
         items: parseJsonField(formData.get("phonetics_items")),
       };
+    case "table_fill":
+      return {
+        instructions: (formData.get("table_fill_instructions") as string) || "",
+        columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
+        rows: parseJsonField(formData.get("table_fill_rows")),
+      };
     case "vocab_quiz":
       return {
         sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),
