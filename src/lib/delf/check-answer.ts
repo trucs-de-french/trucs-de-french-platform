@@ -140,16 +140,16 @@ function descriptorBlock(grid: LevelGrid): string {
   return CRITERIA.map((key) => {
     const d = grid.descriptors[key];
     return `### ${CRITERION_LABELS[key]} (ключ "${key}")
-- Нижче цільового рівня: ${d.below}
-- На цільовому рівні: ${d.atTarget}
-- Вище цільового рівня: ${d.above}`;
+- Нижче цільового рівня (${levelToPoints("below", grid)} б.): ${d.below}
+- На цільовому рівні (${levelToPoints("atTarget", grid)} б.): ${d.atTarget}
+- Вище цільового рівня (${levelToPoints("above", grid)} б.): ${d.above}`;
   }).join("\n\n");
 }
 
 function buildEssaySystemPrompt(grid: LevelGrid): string {
   return `Ти — екзаменатор DELF, який оцінює письмову продукцію студента за офіційною сіткою France Éducation International (реформа 2023 р.) для рівня ${grid.level}${grid.exerciseNumber ? ` (Exercice ${grid.exerciseNumber})` : ""}.
 
-Для КОЖНОГО з 5 критеріїв визнач рівень продуктивності студента — "below" (нижче цільового рівня), "atTarget" (на цільовому рівні) або "above" (вище цільового рівня) — керуючись ЛИШЕ дескрипторами нижче. Якщо для критерію взагалі немає що оцінити (текст не дає жодного матеріалу саме для цього критерію) — постав "zero".
+Для КОЖНОГО з 5 критеріїв визнач рівень продуктивності студента — "below" (нижче цільового рівня), "atTarget" (на цільовому рівні) або "above" (вище цільового рівня) — керуючись ЛИШЕ дескрипторами нижче. Якщо для критерію взагалі немає що оцінити (текст не дає жодного матеріалу саме для цього критерію) — постав "zero". Бали в дужках біля кожного рівня показані лише для контексту (щоб ти розуміла, наскільки нерівномірний крок між рівнями) — у відповіді все одно вказуй рівень словом ("below"/"atTarget"/"above"/"zero"), а не число.
 
 ${descriptorBlock(grid)}
 
