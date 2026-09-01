@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluation-grids";
 import type {
   MultipleChoiceConfig,
   TrueFalseConfig,
@@ -103,6 +104,46 @@ export function TaskConfigFields({
   const [essayExerciseNumber, setEssayExerciseNumber] = useState(
     initialConfig?.exerciseNumber ? String(initialConfig.exerciseNumber) : ""
   );
+  const initialCriteria = (initialConfig?.criteria as string) ?? "";
+  const [criteria, setCriteria] = useState(() => {
+    if (initialCriteria) return initialCriteria;
+    // Нове завдання (нічого не збережено) — одразу підставляємо шаблон для
+    // вже обраного дефолтного рівня, якщо він не формуляр/неоднозначний.
+    if (essayLevel === "A1" && essayExerciseNumber === "1") return "";
+    if (essayLevel === "A2" && essayExerciseNumber === "") return "";
+    const exerciseNumber = essayExerciseNumber ? (Number(essayExerciseNumber) as 1 | 2) : undefined;
+    return summarizeCriteriaForTeacher(essayLevel as DelfLevel, exerciseNumber);
+  });
+  // true, якщо збережений текст НЕ збігається з шаблоном для поточного
+  // рівня/вправи — захищає вже існуючі essay_check-завдання зі своїм
+  // текстом критеріїв від мовчазного перезапису (без потреби в міграції:
+  // якщо текст ніколи не був автопідставленим шаблоном, він завжди
+  // вважається "кастомним").
+  const [criteriaDirty, setCriteriaDirty] = useState(() => {
+    if (!initialCriteria) return false;
+    const exerciseNumber = essayExerciseNumber ? (Number(essayExerciseNumber) as 1 | 2) : undefined;
+    return initialCriteria !== summarizeCriteriaForTeacher(essayLevel as DelfLevel, exerciseNumber);
+  });
+  // A2 з ще не обраною вправою — шаблон неоднозначний (Ex.1 і Ex.2 мають
+  // різні дескриптори "Réalisation de la tâche"), тож чекаємо на вибір.
+  const criteriaTemplateAmbiguous = essayLevel === "A2" && essayExerciseNumber === "";
+
+  // Викликається з onChange селекторів рівня/вправи (не з ефекту — та сама
+  // подія, що й міняє essayLevel/essayExerciseNumber), щоб не чіпати
+  // криитерії, які вчитель уже відредагував вручну (criteriaDirty).
+  function maybeAutofillCriteria(level: string, exerciseNumberStr: string) {
+    if (level === "A1" && exerciseNumberStr === "1") return; // формуляр, поля критеріїв нема
+    if (level === "A2" && exerciseNumberStr === "") return; // неоднозначно, чекаємо на вибір вправи
+    if (criteriaDirty) return;
+    const exerciseNumber = exerciseNumberStr ? (Number(exerciseNumberStr) as 1 | 2) : undefined;
+    setCriteria(summarizeCriteriaForTeacher(level as DelfLevel, exerciseNumber));
+  }
+
+  function applyCriteriaTemplate() {
+    const exerciseNumber = essayExerciseNumber ? (Number(essayExerciseNumber) as 1 | 2) : undefined;
+    setCriteria(summarizeCriteriaForTeacher(essayLevel as DelfLevel, exerciseNumber));
+    setCriteriaDirty(false);
+  }
   // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
   // type), тож один спільний ref завжди вказує саме на активну.
   const importRef = useRef<ImportableFieldsHandle>(null);
@@ -203,6 +244,7 @@ export function TaskConfigFields({
                 onChange={(e) => {
                   setEssayLevel(e.target.value);
                   setEssayExerciseNumber("");
+                  maybeAutofillCriteria(e.target.value, "");
                 }}
                 className="rounded-md border px-2 py-1.5 text-sm"
               >
@@ -218,7 +260,10 @@ export function TaskConfigFields({
                 <select
                   name="essay_exercise_number"
                   value={essayExerciseNumber}
-                  onChange={(e) => setEssayExerciseNumber(e.target.value)}
+                  onChange={(e) => {
+                    setEssayExerciseNumber(e.target.value);
+                    maybeAutofillCriteria(essayLevel, e.target.value);
+                  }}
                   className="rounded-md border px-2 py-1.5 text-sm"
                 >
                   <option value="">—</option>
@@ -256,13 +301,28 @@ export function TaskConfigFields({
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Критерії перевірки
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Критерії перевірки
+                  </label>
+                  {criteriaDirty && !criteriaTemplateAmbiguous && (
+                    <button
+                      type="button"
+                      onClick={applyCriteriaTemplate}
+                      className="text-xs text-blue-700 hover:underline dark:text-blue-400"
+                    >
+                      Оновити з шаблону критеріїв
+                    </button>
+                  )}
+                </div>
                 <textarea
                   name="criteria"
                   rows={2}
-                  defaultValue={(initialConfig?.criteria as string) ?? ""}
+                  value={criteria}
+                  onChange={(e) => {
+                    setCriteria(e.target.value);
+                    setCriteriaDirty(true);
+                  }}
                   className="rounded-md border px-2 py-1.5 text-base font-medium"
                 />
               </div>
