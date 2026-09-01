@@ -267,16 +267,17 @@ export function getLevelGrid(level: DelfLevel, exerciseNumber?: 1 | 2): LevelGri
 }
 
 /**
- * Стисле резюме критеріїв для адмін-форми (поле "Критерії перевірки") —
- * лише рівень "на цільовому рівні" (atTarget) по кожному з 5 критеріїв,
+ * Резюме критеріїв для адмін-форми (поле "Критерії перевірки") — усі 3
+ * рівні дескриптора (below/atTarget/above) по кожному з 5 критеріїв,
  * дослівно з дескрипторів вище (жодного окремого "стислого" тексту, що
  * міг би розійтись з тим, що йде в промпт checkEssayAnswer).
  */
 export function summarizeCriteriaForTeacher(level: DelfLevel, exerciseNumber?: 1 | 2): string {
   const grid = getLevelGrid(level, exerciseNumber);
-  return CRITERIA.map(
-    (key) => `- ${CRITERION_LABELS[key]}: ${grid.descriptors[key].atTarget}`
-  ).join("\n");
+  return CRITERIA.map((key) => {
+    const d = grid.descriptors[key];
+    return `${CRITERION_LABELS[key]}:\n- Нижче рівня: ${d.below}\n- На рівні: ${d.atTarget}\n- Вище рівня: ${d.above}`;
+  }).join("\n\n");
 }
 
 // A1 Exercice 1 (формуляр) — не есе: фактологічна перевірка полів консигни,

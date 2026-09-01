@@ -317,7 +317,7 @@ export function TaskConfigFields({
                 </div>
                 <textarea
                   name="criteria"
-                  rows={2}
+                  rows={16}
                   value={criteria}
                   onChange={(e) => {
                     setCriteria(e.target.value);
