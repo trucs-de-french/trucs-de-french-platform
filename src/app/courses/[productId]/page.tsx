@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DelfModeTabs } from "./delf-mode-tabs";
+import { DelfEntrainementTasks } from "./delf-entrainement-tasks";
 
 export default async function CoursePage({
   params,
@@ -28,7 +29,10 @@ export default async function CoursePage({
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
         )}
-        <DelfModeTabs level={product.level} />
+        <DelfModeTabs
+          level={product.level}
+          entrainementContent={<DelfEntrainementTasks productId={productId} />}
+        />
       </main>
     );
   }

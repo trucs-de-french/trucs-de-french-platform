@@ -39,7 +39,7 @@ export default async function AdminCoursePage({
   const { data: tasks } = !isFilm
     ? await supabase
         .from("tasks")
-        .select("id, type, title, order_index")
+        .select("id, type, title, order_index, delf_section, delf_mode")
         .eq("product_id", id)
         .is("scene_id", null)
         .order("order_index")
@@ -115,6 +115,18 @@ export default async function AdminCoursePage({
             className="rounded-md border px-3 py-2"
           />
         </div>
+
+        {product.type === "delf" && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Рівень DELF</label>
+            <select name="level" required defaultValue={product.level ?? "A1"} className="rounded-md border px-3 py-2">
+              <option value="A1">A1</option>
+              <option value="A2">A2</option>
+              <option value="B1">B1</option>
+              <option value="B2">B2</option>
+            </select>
+          </div>
+        )}
       </SaveForm>
 
       {isFilm ? (
@@ -205,6 +217,8 @@ export default async function AdminCoursePage({
                 <div>
                   <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
                     {task.type}
+                    {task.delf_section && ` · ${task.delf_section}`}
+                    {task.delf_mode && ` · ${task.delf_mode}`}
                   </span>
                   <Link
                     href={`/admin/courses/${product.id}/tasks/${task.id}`}

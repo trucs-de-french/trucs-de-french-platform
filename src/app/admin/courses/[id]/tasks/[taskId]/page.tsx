@@ -14,6 +14,8 @@ type TaskDetail = {
   image_url: string | null;
   audio_url: string | null;
   scene_id: string | null;
+  delf_section: string | null;
+  delf_mode: string | null;
   games: { provider: string; embed_url: string | null; game_type: string | null } | null;
 };
 
@@ -25,15 +27,16 @@ export default async function EditTaskPage({
   const { id: productId, taskId } = await params;
   const supabase = await createClient();
 
-  const [{ data: task }, { data: scenes }] = await Promise.all([
+  const [{ data: task }, { data: scenes }, { data: product }] = await Promise.all([
     supabase
       .from("tasks")
       .select(
-        "id, type, title, config, image_url, audio_url, scene_id, games(provider, embed_url, game_type)"
+        "id, type, title, config, image_url, audio_url, scene_id, delf_section, delf_mode, games(provider, embed_url, game_type)"
       )
       .eq("id", taskId)
       .single<TaskDetail>(),
     supabase.from("scenes").select("id, title").eq("product_id", productId).order("order_index"),
+    supabase.from("products").select("type").eq("id", productId).single(),
   ]);
 
   if (!task) notFound();
@@ -72,6 +75,9 @@ export default async function EditTaskPage({
           initialAudioUrl={task.audio_url}
           scenes={scenes ?? []}
           sceneVocab={sceneVocab}
+          productType={product?.type}
+          initialDelfSection={task.delf_section}
+          initialDelfMode={task.delf_mode}
         />
       </SaveForm>
 

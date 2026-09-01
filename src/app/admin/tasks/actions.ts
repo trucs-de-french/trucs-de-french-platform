@@ -196,6 +196,11 @@ export async function createTask(formData: FormData) {
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
       audio_url: (formData.get("task_audio_url") as string) || null,
+      // Присутні у formData лише коли батьківський продукт type='delf'
+      // (TaskConfigFields рендерить ці селекти умовно) — для film-задач
+      // просто null.
+      delf_section: (formData.get("delf_section") as string) || null,
+      delf_mode: (formData.get("delf_mode") as string) || null,
     })
     .select()
     .single();
@@ -229,6 +234,8 @@ export async function updateTask(
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
       audio_url: (formData.get("task_audio_url") as string) || null,
+      delf_section: (formData.get("delf_section") as string) || null,
+      delf_mode: (formData.get("delf_mode") as string) || null,
     })
     .eq("id", taskId);
 

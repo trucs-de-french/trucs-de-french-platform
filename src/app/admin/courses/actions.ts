@@ -7,10 +7,16 @@ import type { ActionState } from "@/lib/action-state";
 export async function createProduct(formData: FormData) {
   const supabase = await createClient();
 
+  const type = formData.get("type") as string;
+
   const { data: product, error } = await supabase
     .from("products")
     .insert({
-      type: formData.get("type") as string,
+      type,
+      // level стосується лише DELF — поле рендериться (і, отже, шле щось у
+      // formData) лише коли обрано type="delf" (CourseTypeFields), але
+      // перевіряємо ще й тут, а не лише довіряємо клієнту.
+      level: type === "delf" ? (formData.get("level") as string) || null : null,
       title: formData.get("title") as string,
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price") || 0),
@@ -40,6 +46,10 @@ export async function updateProduct(
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price") || 0),
       cover_image_url: (formData.get("cover_image_url") as string) || null,
+      // type незмінний після створення (форма його не показує), тож поле
+      // level рендериться лише для вже-DELF продуктів — для film-продуктів
+      // його просто нема у formData, і сюди пише null (коректно й так).
+      level: (formData.get("level") as string) || null,
     })
     .eq("id", productId);
 

@@ -1,5 +1,6 @@
 import { createProduct } from "../actions";
 import { SubmitButton } from "@/components/submit-button";
+import { CourseTypeFields } from "./course-type-fields";
 
 export default async function NewCoursePage({
   searchParams,
@@ -19,13 +20,7 @@ export default async function NewCoursePage({
       )}
 
       <form action={createProduct} className="mt-4 flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Тип курсу</label>
-          <select name="type" required className="rounded-md border px-3 py-2">
-            <option value="film">Фільм/серіал</option>
-            <option value="delf">DELF</option>
-          </select>
-        </div>
+        <CourseTypeFields />
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Назва</label>

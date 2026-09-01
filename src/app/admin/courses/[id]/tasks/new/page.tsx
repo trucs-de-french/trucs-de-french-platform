@@ -15,11 +15,12 @@ export default async function NewTaskPage({
   const { sceneId } = await searchParams;
 
   const supabase = await createClient();
-  const [{ data: scenes }, { data: sceneRow }] = await Promise.all([
+  const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
     supabase.from("scenes").select("id, title").eq("product_id", productId).order("order_index"),
     sceneId
       ? supabase.from("scenes").select("dialogue").eq("id", sceneId).single()
       : Promise.resolve({ data: null }),
+    supabase.from("products").select("type").eq("id", productId).single(),
   ]);
   const sceneVocab: VocabItem[] = sceneRow
     ? collectSceneVocab((sceneRow.dialogue ?? []) as { vocab?: VocabItem[] }[])
@@ -42,7 +43,11 @@ export default async function NewTaskPage({
           />
         </div>
 
-        <TaskConfigFields scenes={scenes ?? []} sceneVocab={sceneVocab} />
+        <TaskConfigFields
+          scenes={scenes ?? []}
+          sceneVocab={sceneVocab}
+          productType={product?.type}
+        />
 
         {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,
             бо ця форма редіректить (createTask), а не useActionState. */}

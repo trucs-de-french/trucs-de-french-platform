@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 const TABS: { value: "entrainement" | "examen"; label: string }[] = [
   { value: "entrainement", label: "Entraînement" },
   { value: "examen", label: "Examen" },
 ];
 
-export function DelfModeTabs({ level }: { level: string | null }) {
+export function DelfModeTabs({
+  level,
+  entrainementContent,
+}: {
+  level: string | null;
+  entrainementContent: ReactNode;
+}) {
   const [tab, setTab] = useState<"entrainement" | "examen">("entrainement");
 
   return (
@@ -29,11 +35,13 @@ export function DelfModeTabs({ level }: { level: string | null }) {
         ))}
       </div>
 
-      <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-        {tab === "entrainement"
-          ? `Практика DELF ${level ?? ""} — з'явиться на наступному етапі.`
-          : `Симуляція іспиту DELF ${level ?? ""} — з'явиться на наступному етапі.`}
-      </p>
+      {tab === "entrainement" ? (
+        entrainementContent
+      ) : (
+        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
+          Симуляція іспиту DELF {level ?? ""} — з&apos;явиться на наступному етапі.
+        </p>
+      )}
     </div>
   );
 }
