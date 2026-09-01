@@ -89,10 +89,10 @@ type Props = {
   initialAudioUrl?: string | null;
   scenes?: { id: string; title: string }[];
   sceneVocab?: VocabItem[];
-  /** Тип батьківського продукту — коли 'delf', показуємо секцію/режим DELF. */
+  /** Тип батьківського продукту — коли 'delf', показуємо секцію/номер тесту DELF. */
   productType?: string;
   initialDelfSection?: string | null;
-  initialDelfMode?: string | null;
+  initialDelfTestNumber?: number | null;
 };
 
 export function TaskConfigFields({
@@ -105,7 +105,7 @@ export function TaskConfigFields({
   sceneVocab,
   productType,
   initialDelfSection,
-  initialDelfMode,
+  initialDelfTestNumber,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
   // essay_check за визначенням завжди PE — розумний дефолт, який лишається
@@ -113,7 +113,9 @@ export function TaskConfigFields({
   const [delfSection, setDelfSection] = useState(
     initialDelfSection ?? (initialType === "essay_check" || initialType === "ai_examiner" ? "PE" : "")
   );
-  const [delfMode, setDelfMode] = useState(initialDelfMode ?? "entrainement");
+  const [delfTestNumber, setDelfTestNumber] = useState(
+    initialDelfTestNumber ? String(initialDelfTestNumber) : ""
+  );
   const [essayLevel, setEssayLevel] = useState((initialConfig?.level as string) ?? "B1");
   const [essayExerciseNumber, setEssayExerciseNumber] = useState(
     initialConfig?.exerciseNumber ? String(initialConfig.exerciseNumber) : ""
@@ -207,17 +209,19 @@ export function TaskConfigFields({
             </select>
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Режим</label>
-            <select
-              name="delf_mode"
+            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              № тесту (1-30)
+            </label>
+            <input
+              name="delf_test_number"
+              type="number"
+              min={1}
+              max={30}
               required
-              value={delfMode}
-              onChange={(e) => setDelfMode(e.target.value)}
+              value={delfTestNumber}
+              onChange={(e) => setDelfTestNumber(e.target.value)}
               className="rounded-md border px-2 py-1.5 text-sm"
-            >
-              <option value="entrainement">Entraînement</option>
-              <option value="examen">Examen</option>
-            </select>
+            />
           </div>
         </div>
       )}

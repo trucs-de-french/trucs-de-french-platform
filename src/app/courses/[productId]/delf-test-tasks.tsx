@@ -7,7 +7,7 @@ import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
 import type { CalloutConfig } from "@/lib/exercises/types";
 
-type EntrainementTask = {
+type TestTask = {
   id: string;
   type: string;
   title: string;
@@ -17,35 +17,46 @@ type EntrainementTask = {
   delf_section: string | null;
 };
 
-// Рендер вправ Entraînement — той самий набір компонентів і той самий
-// sanitizeConfigForStudent (не пускати правильні відповіді на клієнт), що й
-// у сценах фільмів (scenes/[sceneId]/page.tsx), але звужений до типів,
-// релевантних CO/CE/PE: essay_check, callout (текст для CE) і всі
+// Рендер задач ОДНОГО тесту (CO+CE+PE+PO) — той самий набір компонентів і
+// той самий sanitizeConfigForStudent (не пускати правильні відповіді на
+// клієнт), що й у сценах фільмів (scenes/[sceneId]/page.tsx), але звужений
+// до типів, релевантних CO/CE/PE: essay_check, callout (текст для CE) і всі
 // auto-graded типи через ExerciseCard. vocab_quiz/error_correction/game/
 // link/embed тут не мають сенсу (прив'язані до сцен фільмів) — свідомо не
 // підтримуються.
-export async function DelfEntrainementTasks({ productId }: { productId: string }) {
+//
+// Той самий список задач рендериться і для Entraînement, і (пізніше) для
+// Examen blanc — режим це спосіб проходження (таймер/фідбек), обраний
+// студентом, а не окремо авторений контент (delf_mode на tasks був хибним
+// припущенням і видалений).
+export async function DelfTestTasks({
+  productId,
+  testNumber,
+}: {
+  productId: string;
+  testNumber: number;
+}) {
   const supabase = await createClient();
   const { data: tasks } = await supabase
     .from("tasks")
     .select("id, type, title, config, image_url, audio_url, delf_section")
     .eq("product_id", productId)
+    .eq("delf_test_number", testNumber)
     .is("scene_id", null)
-    .eq("delf_mode", "entrainement")
     .order("order_index")
-    .returns<EntrainementTask[]>();
+    .returns<TestTask[]>();
 
   if (!tasks || tasks.length === 0) {
     return (
       <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-        Поки що немає вправ для практики.
+        Для цього тесту ще немає задач.
       </p>
     );
   }
 
-  const bySection = new Map<ExamSection, EntrainementTask[]>();
+  const bySection = new Map<ExamSection, TestTask[]>();
   for (const section of EXAM_SECTIONS) bySection.set(section, []);
-  const noSection: EntrainementTask[] = [];
+  const noSection: TestTask[] = [];
   for (const task of tasks) {
     if (EXAM_SECTIONS.includes(task.delf_section as ExamSection)) {
       bySection.get(task.delf_section as ExamSection)!.push(task);
@@ -91,7 +102,7 @@ export async function DelfEntrainementTasks({ productId }: { productId: string }
   );
 }
 
-function TaskExercise({ task }: { task: EntrainementTask }) {
+function TaskExercise({ task }: { task: TestTask }) {
   return (
     <>
       <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />

@@ -39,7 +39,7 @@ export default async function AdminCoursePage({
   const { data: tasks } = !isFilm
     ? await supabase
         .from("tasks")
-        .select("id, type, title, order_index, delf_section, delf_mode")
+        .select("id, type, title, order_index, delf_section, delf_test_number")
         .eq("product_id", id)
         .is("scene_id", null)
         .order("order_index")
@@ -217,8 +217,8 @@ export default async function AdminCoursePage({
                 <div>
                   <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
                     {task.type}
+                    {task.delf_test_number && ` · Тест ${task.delf_test_number}`}
                     {task.delf_section && ` · ${task.delf_section}`}
-                    {task.delf_mode && ` · ${task.delf_mode}`}
                   </span>
                   <Link
                     href={`/admin/courses/${product.id}/tasks/${task.id}`}

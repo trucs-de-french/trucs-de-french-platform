@@ -1,0 +1,57 @@
+"use client";
+
+import { useState, type ReactNode } from "react";
+
+const TABS = [
+  { value: "tests", label: "Тести" },
+  { value: "materials", label: "Матеріали" },
+  { value: "recommendations", label: "Рекомендації" },
+  { value: "progress", label: "Прогрес" },
+] as const;
+
+type Tab = (typeof TABS)[number]["value"];
+
+export function DelfCourseTabs({ testsContent }: { testsContent: ReactNode }) {
+  const [tab, setTab] = useState<Tab>("tests");
+
+  return (
+    <div className="mt-6">
+      <div className="flex gap-1 border-b">
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTab(t.value)}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === t.value
+                ? "border-b-2 border-black text-black dark:border-white dark:text-white"
+                : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "tests" && testsContent}
+
+      {tab === "materials" && (
+        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
+          Матеріали (PDF-гайди) — з&apos;являться на наступному етапі.
+        </p>
+      )}
+
+      {tab === "recommendations" && (
+        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
+          Рекомендації за вашими помилками — з&apos;являться на наступному етапі.
+        </p>
+      )}
+
+      {tab === "progress" && (
+        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
+          Календар занять і планова дата іспиту — з&apos;являться на наступному етапі.
+        </p>
+      )}
+    </div>
+  );
+}
