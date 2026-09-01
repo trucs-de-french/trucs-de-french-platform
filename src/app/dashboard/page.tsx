@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "../login/actions";
+import { CourseTabs } from "./course-tabs";
 
 export default async function DashboardPage({
   searchParams,
@@ -65,26 +66,7 @@ export default async function DashboardPage({
       )}
 
       <h2 className="mt-8 text-lg font-medium">Мої курси</h2>
-      {enrollments && enrollments.length > 0 ? (
-        <ul className="mt-4 flex flex-col gap-2">
-          {enrollments.map((e) => (
-            <li key={e.id}>
-              {e.products && (
-                <Link
-                  href={`/courses/${e.products.id}`}
-                  className="block rounded-md border p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                >
-                  {e.products.title}
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-          У вас поки немає активних курсів.
-        </p>
-      )}
+      <CourseTabs enrollments={enrollments ?? []} />
     </main>
   );
 }
