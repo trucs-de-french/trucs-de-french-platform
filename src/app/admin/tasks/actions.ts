@@ -13,11 +13,27 @@ import type { ActionState } from "@/lib/action-state";
 
 function buildConfig(type: string, formData: FormData): Record<string, unknown> {
   switch (type) {
-    case "essay_check":
+    case "essay_check": {
+      const level = (formData.get("essay_level") as string) || "B1";
+      const exerciseNumberRaw = formData.get("essay_exercise_number") as string | null;
+      const exerciseNumber = exerciseNumberRaw ? (Number(exerciseNumberRaw) as 1 | 2) : undefined;
+
+      if (level === "A1" && exerciseNumber === 1) {
+        return {
+          level,
+          exerciseNumber,
+          instructions: (formData.get("essay_formulaire_instructions") as string) || "",
+          fields: parseJsonField(formData.get("essay_formulaire_fields")),
+        };
+      }
+
       return {
         prompt: (formData.get("prompt") as string) || "",
         criteria: (formData.get("criteria") as string) || "",
+        level,
+        exerciseNumber,
       };
+    }
     case "open_answer":
       return {
         question: (formData.get("open_answer_question") as string) || "",

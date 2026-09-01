@@ -14,6 +14,32 @@ export type OpenAnswerConfig = {
   answers: string[];
 };
 
+// essay_check — AI-перевірка есе за офіційною сіткою DELF (див.
+// src/lib/delf/evaluation-grids.ts). level відсутній у config старих завдань
+// (до цієї фічі) — читати як `config.level ?? "B1"`. exerciseNumber
+// обов'язковий для A1/A2 (по одному task-запису на вправу — Ex.1/Ex.2 не
+// об'єднуються в один запис), не використовується для B1/B2 (одна вправа).
+// level "A1" + exerciseNumber 1 — особливий випадок: це не есе, а формуляр
+// (див. EssayFormulaireConfig нижче), config цього task-запису має форму
+// EssayFormulaireConfig, а не EssayCheckConfig.
+export type EssayCheckConfig = {
+  prompt: string;
+  criteria: string;
+  level: "A1" | "A2" | "B1" | "B2";
+  exerciseNumber?: 1 | 2;
+};
+
+// A1 Exercice 1 (формуляр) — фактологічна перевірка полів консигни, без
+// дескрипторів продуктивності. Кожне поле — один пункт консигни (напр.
+// "Prénom", "Date de naissance").
+export type EssayFormulaireField = { id: string; label: string };
+export type EssayFormulaireConfig = {
+  level: "A1";
+  exerciseNumber: 1;
+  instructions?: string;
+  fields: EssayFormulaireField[];
+};
+
 export type MultipleChoiceOption = { id: string; text: string; correct: boolean };
 export type MultipleChoiceConfig = {
   question: string;

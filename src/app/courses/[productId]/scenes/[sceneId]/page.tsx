@@ -346,6 +346,7 @@ export default async function ScenePage({
                   <EssayCheckExercise
                     taskId={task.id}
                     prompt={(task.config as { prompt?: string } | null)?.prompt}
+                    config={(task.config ?? {}) as Record<string, unknown>}
                   />
                 </div>
               )}

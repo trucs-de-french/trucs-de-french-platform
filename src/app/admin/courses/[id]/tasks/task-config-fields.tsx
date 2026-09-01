@@ -18,7 +18,9 @@ import type {
   ImageMatchConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
+import type { EssayFormulaireConfig } from "@/lib/exercises/types";
 import { MultipleChoiceFields } from "./multiple-choice-fields";
+import { EssayFormulaireFields } from "./essay-formulaire-fields";
 import { TrueFalseFields } from "./true-false-fields";
 import { MatchingFields } from "./matching-fields";
 import { ListeningFields } from "./listening-fields";
@@ -97,6 +99,10 @@ export function TaskConfigFields({
   sceneVocab,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
+  const [essayLevel, setEssayLevel] = useState((initialConfig?.level as string) ?? "B1");
+  const [essayExerciseNumber, setEssayExerciseNumber] = useState(
+    initialConfig?.exerciseNumber ? String(initialConfig.exerciseNumber) : ""
+  );
   // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
   // type), тож один спільний ref завжди вказує саме на активну.
   const importRef = useRef<ImportableFieldsHandle>(null);
@@ -186,24 +192,82 @@ export function TaskConfigFields({
 
       {type === "essay_check" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Завдання (prompt)</label>
-            <textarea
-              name="prompt"
-              rows={3}
-              defaultValue={(initialConfig?.prompt as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-base font-medium"
-            />
+          <div className="flex gap-4">
+            <div className="flex flex-1 flex-col gap-1">
+              <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                Рівень DELF (сітка оцінювання)
+              </label>
+              <select
+                name="essay_level"
+                value={essayLevel}
+                onChange={(e) => {
+                  setEssayLevel(e.target.value);
+                  setEssayExerciseNumber("");
+                }}
+                className="rounded-md border px-2 py-1.5 text-sm"
+              >
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+              </select>
+            </div>
+            {(essayLevel === "A1" || essayLevel === "A2") && (
+              <div className="flex flex-1 flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">Вправа</label>
+                <select
+                  name="essay_exercise_number"
+                  value={essayExerciseNumber}
+                  onChange={(e) => setEssayExerciseNumber(e.target.value)}
+                  className="rounded-md border px-2 py-1.5 text-sm"
+                >
+                  <option value="">—</option>
+                  {essayLevel === "A1" ? (
+                    <>
+                      <option value="1">Ex.1 — Формуляр</option>
+                      <option value="2">Ex.2 — Особисте повідомлення</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="1">Ex.1 — Розповідь про подію</option>
+                      <option value="2">Ex.2 — Лист-відповідь</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Критерії перевірки</label>
-            <textarea
-              name="criteria"
-              rows={2}
-              defaultValue={(initialConfig?.criteria as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-base font-medium"
+
+          {essayLevel === "A1" && essayExerciseNumber === "1" ? (
+            <EssayFormulaireFields
+              initialConfig={initialConfig as Partial<EssayFormulaireConfig>}
             />
-          </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Завдання (prompt)
+                </label>
+                <textarea
+                  name="prompt"
+                  rows={3}
+                  defaultValue={(initialConfig?.prompt as string) ?? ""}
+                  className="rounded-md border px-2 py-1.5 text-base font-medium"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Критерії перевірки
+                </label>
+                <textarea
+                  name="criteria"
+                  rows={2}
+                  defaultValue={(initialConfig?.criteria as string) ?? ""}
+                  className="rounded-md border px-2 py-1.5 text-base font-medium"
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 
