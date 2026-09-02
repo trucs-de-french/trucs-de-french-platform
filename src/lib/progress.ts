@@ -2,6 +2,18 @@ import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
+// essay_check — єдиний тип, чий Detail містить errors[] (жоден інший тип у
+// exercises/types.ts цього поля не має) — тож ця перевірка нічого, крім
+// essay_check, не зачіпає. Дозволяє писати в mistakes навіть коли
+// result.correct === true (напр. 17/25 — зараховано, але 5 граматичних
+// помилок усе одно є), інакше вкладка "Рекомендації" не мала б джерела
+// даних для таких спроб.
+function hasReportableErrors(detail: unknown): boolean {
+  if (!detail || typeof detail !== "object") return false;
+  const errors = (detail as { errors?: unknown }).errors;
+  return Array.isArray(errors) && errors.length > 0;
+}
+
 export async function recordTaskAttempt(
   supabase: SupabaseServerClient,
   userId: string,
@@ -19,7 +31,7 @@ export async function recordTaskAttempt(
   });
   if (progressError) throw progressError;
 
-  if (!result.correct) {
+  if (!result.correct || hasReportableErrors(result.detail)) {
     await supabase.from("mistakes").insert({
       user_id: userId,
       task_id: taskId,

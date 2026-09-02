@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DelfCourseTabs } from "./delf-course-tabs";
 import { DelfTestGrid } from "./delf-test-grid";
 import { DelfMaterials } from "./delf-materials";
+import { DelfRecommendations } from "./delf-recommendations";
 
 export default async function CoursePage({
   params,
@@ -33,6 +34,7 @@ export default async function CoursePage({
         <DelfCourseTabs
           testsContent={<DelfTestGrid productId={productId} />}
           materialsContent={<DelfMaterials productId={productId} />}
+          recommendationsContent={<DelfRecommendations productId={productId} />}
         />
       </main>
     );
