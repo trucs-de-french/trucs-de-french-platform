@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEssayAnswer, checkFormulaireAnswer } from "@/lib/delf/check-answer";
+import { generateRemedialExercises } from "@/lib/delf/remedial-exercises";
 import { recordTaskAttempt } from "@/lib/progress";
 import type { EssayCheckConfig, EssayFormulaireConfig } from "@/lib/exercises/types";
 
@@ -81,12 +82,33 @@ export async function POST(request: Request) {
     exerciseNumber: config.exerciseNumber,
   });
 
-  await recordTaskAttempt(supabase, user.id, task.id, {
+  const { mistakeId } = await recordTaskAttempt(supabase, user.id, task.id, {
     correct: result.correct,
     score: Math.round((result.totalScore / result.maxScore) * 100),
     studentAnswer: answer,
     detail: result,
   });
+
+  // Автоматично, без кнопки — одразу після перевірки. Чекаємо синхронно в
+  // тому самому запиті: у serverless-середовищі "fire-and-forget" ненадійний
+  // (функція може завершитись раніше, ніж встигне записати результат), тож
+  // чесніше повільніша відповідь, ніж ризик мовчки загубити генерацію.
+  if (mistakeId && result.errors.length > 0) {
+    const generated = await generateRemedialExercises(result.errors);
+    if (generated.length > 0) {
+      await supabase.from("remedial_exercises").insert(
+        generated.flatMap((cat) =>
+          cat.exercises.map((ex) => ({
+            user_id: user.id,
+            mistake_id: mistakeId,
+            category: cat.category,
+            review: cat.review,
+            config: ex,
+          }))
+        )
+      );
+    }
+  }
 
   return NextResponse.json(result);
 }

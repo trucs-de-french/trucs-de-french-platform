@@ -12,6 +12,7 @@ import {
   type LevelGrid,
   type TopicAnomaly,
 } from "./evaluation-grids";
+import { callGeminiJSON } from "./gemini-client";
 import type { EssayFormulaireField } from "@/lib/exercises/types";
 
 export type EssayErrorCategory = "Grammaire" | "Lexique" | "Orthographe" | "Cohérence" | "Registre";
@@ -66,11 +67,6 @@ type CheckFormulaireInput = {
   studentAnswer: Record<string, string>;
 };
 
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-
 // Бал, з якого спроба вважається "correct" для progress/mistakes —
 // внутрішній поріг платформи (НЕ офіційний прохідний бал DELF-сертифікації,
 // той рахується інакше й по сукупності 4 навичок). 50% від maxScore цього
@@ -81,59 +77,6 @@ function countWords(text: string): number {
   const trimmed = text.trim();
   if (!trimmed) return 0;
   return trimmed.split(/\s+/).length;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function callGemini(systemPrompt: string, userContent: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY не налаштований");
-  }
-
-  const body = JSON.stringify({
-    system_instruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ role: "user", parts: [{ text: userContent }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
-  });
-
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const res = await fetch(GEMINI_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "x-goog-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-      body,
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const parts = data?.candidates?.[0]?.content?.parts ?? [];
-      const text = parts.map((part: { text?: string }) => part.text ?? "").join("");
-      if (!text) {
-        throw new Error("Gemini повернув порожню відповідь");
-      }
-      return text;
-    }
-
-    if (res.status === 429 || res.status === 503) {
-      lastError = new Error(`Gemini API ${res.status}: ${await res.text()}`);
-      if (attempt < MAX_RETRIES - 1) {
-        await sleep(RETRY_DELAY_MS * (attempt + 1));
-        continue;
-      }
-      throw lastError;
-    }
-
-    throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
-  }
-
-  throw lastError ?? new Error("Gemini API: невідома помилка");
 }
 
 function descriptorBlock(grid: LevelGrid): string {
@@ -228,7 +171,7 @@ export async function checkEssayAnswer(input: CheckEssayInput): Promise<CheckAns
   }
 
   try {
-    const text = await callGemini(buildEssaySystemPrompt(grid), buildEssayUserContent(input));
+    const text = await callGeminiJSON(buildEssaySystemPrompt(grid), buildEssayUserContent(input));
     const parsed = JSON.parse(text) as {
       criteriaLevels?: Record<string, string>;
       anomalyFlags?: string[];
@@ -337,7 +280,7 @@ export async function checkFormulaireAnswer(
   }
 
   try {
-    const text = await callGemini(buildFormulaireSystemPrompt(), buildFormulaireUserContent(input));
+    const text = await callGeminiJSON(buildFormulaireSystemPrompt(), buildFormulaireUserContent(input));
     const parsed = JSON.parse(text) as {
       fields?: { id?: string; correct?: boolean; comment?: string }[];
     };
