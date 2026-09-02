@@ -9,6 +9,7 @@ import {
   moveScene,
 } from "@/app/admin/scenes/actions";
 import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
+import { createMaterial, deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -43,6 +44,16 @@ export default async function AdminCoursePage({
         .eq("product_id", id)
         .is("scene_id", null)
         .order("order_index")
+    : { data: null };
+
+  const { data: materials } = !isFilm
+    ? await supabase
+        .from("materials")
+        .select("id, title, file_url")
+        .eq("product_id", id)
+        .is("scene_id", null)
+        .eq("file_type", "pdf")
+        .order("uploaded_at", { ascending: false })
     : { data: null };
 
   return (
@@ -197,54 +208,86 @@ export default async function AdminCoursePage({
           )}
         </section>
       ) : (
-        <section className="mt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Завдання</h2>
-            <Link
-              href={`/admin/courses/${product.id}/tasks/new`}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            >
-              + Нове завдання
-            </Link>
-          </div>
-
-          <ul className="mt-3 flex flex-col gap-2">
-            {tasks?.map((task, i) => (
-              <li
-                key={task.id}
-                className="flex items-center justify-between rounded-md border p-3"
+        <>
+          <section className="mt-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Завдання</h2>
+              <Link
+                href={`/admin/courses/${product.id}/tasks/new`}
+                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
-                <div>
-                  <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                    {task.type}
-                    {task.delf_test_number && ` · Тест ${task.delf_test_number}`}
-                    {task.delf_section && ` · ${task.delf_section}`}
-                  </span>
-                  <Link
-                    href={`/admin/courses/${product.id}/tasks/${task.id}`}
-                    className="block font-medium hover:underline"
+                + Нове завдання
+              </Link>
+            </div>
+
+            <ul className="mt-3 flex flex-col gap-2">
+              {tasks?.map((task, i) => (
+                <li
+                  key={task.id}
+                  className="flex items-center justify-between rounded-md border p-3"
+                >
+                  <div>
+                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                      {task.type}
+                      {task.delf_test_number && ` · Тест ${task.delf_test_number}`}
+                      {task.delf_section && ` · ${task.delf_section}`}
+                    </span>
+                    <Link
+                      href={`/admin/courses/${product.id}/tasks/${task.id}`}
+                      className="block font-medium hover:underline"
+                    >
+                      {task.title}
+                    </Link>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <form action={moveTask.bind(null, task.id, "up")}>
+                      <SubmitButton
+                        disabled={i === 0}
+                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                      >
+                        ↑
+                      </SubmitButton>
+                    </form>
+                    <form action={moveTask.bind(null, task.id, "down")}>
+                      <SubmitButton
+                        disabled={i === tasks.length - 1}
+                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                      >
+                        ↓
+                      </SubmitButton>
+                    </form>
+                    <form action={deleteTask.bind(null, task.id)}>
+                      <SubmitButton
+                        pendingChildren="..."
+                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                      >
+                        Видалити
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {(!tasks || tasks.length === 0) && (
+              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Завдань ще немає.</p>
+            )}
+          </section>
+
+          <section className="mt-6">
+            <h2 className="text-xl font-bold">Матеріали</h2>
+
+            <ul className="mt-3 flex flex-col gap-2">
+              {materials?.map((m) => (
+                <li key={m.id} className="flex items-center justify-between rounded-md border p-3">
+                  <a
+                    href={m.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline"
                   >
-                    {task.title}
-                  </Link>
-                </div>
-                <div className="flex items-center gap-1">
-                  <form action={moveTask.bind(null, task.id, "up")}>
-                    <SubmitButton
-                      disabled={i === 0}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↑
-                    </SubmitButton>
-                  </form>
-                  <form action={moveTask.bind(null, task.id, "down")}>
-                    <SubmitButton
-                      disabled={i === tasks.length - 1}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↓
-                    </SubmitButton>
-                  </form>
-                  <form action={deleteTask.bind(null, task.id)}>
+                    {m.title || m.file_url}
+                  </a>
+                  <form action={deleteMaterial.bind(null, m.id, product.id)}>
                     <SubmitButton
                       pendingChildren="..."
                       className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
@@ -252,14 +295,36 @@ export default async function AdminCoursePage({
                       Видалити
                     </SubmitButton>
                   </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {(!tasks || tasks.length === 0) && (
-            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Завдань ще немає.</p>
-          )}
-        </section>
+                </li>
+              ))}
+            </ul>
+            {(!materials || materials.length === 0) && (
+              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Матеріалів ще немає.</p>
+            )}
+
+            <form
+              action={createMaterial.bind(null, product.id)}
+              className="mt-3 flex flex-col gap-2 rounded-md border p-3"
+            >
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+                <input name="title" required className="rounded-md border px-2 py-1.5 text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Посилання на PDF (URL)
+                </label>
+                <input name="file_url" type="url" required className="rounded-md border px-2 py-1.5 text-sm" />
+              </div>
+              <SubmitButton
+                pendingChildren="Додаю..."
+                className="self-start rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              >
+                + Новий матеріал
+              </SubmitButton>
+            </form>
+          </section>
+        </>
       )}
     </div>
   );

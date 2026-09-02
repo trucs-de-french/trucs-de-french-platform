@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DelfCourseTabs } from "./delf-course-tabs";
 import { DelfTestGrid } from "./delf-test-grid";
+import { DelfMaterials } from "./delf-materials";
 
 export default async function CoursePage({
   params,
@@ -29,7 +30,10 @@ export default async function CoursePage({
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
         )}
-        <DelfCourseTabs testsContent={<DelfTestGrid productId={productId} />} />
+        <DelfCourseTabs
+          testsContent={<DelfTestGrid productId={productId} />}
+          materialsContent={<DelfMaterials productId={productId} />}
+        />
       </main>
     );
   }

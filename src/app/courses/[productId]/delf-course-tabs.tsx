@@ -11,7 +11,13 @@ const TABS = [
 
 type Tab = (typeof TABS)[number]["value"];
 
-export function DelfCourseTabs({ testsContent }: { testsContent: ReactNode }) {
+export function DelfCourseTabs({
+  testsContent,
+  materialsContent,
+}: {
+  testsContent: ReactNode;
+  materialsContent: ReactNode;
+}) {
   const [tab, setTab] = useState<Tab>("tests");
 
   return (
@@ -35,11 +41,7 @@ export function DelfCourseTabs({ testsContent }: { testsContent: ReactNode }) {
 
       {tab === "tests" && testsContent}
 
-      {tab === "materials" && (
-        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-          Матеріали (PDF-гайди) — з&apos;являться на наступному етапі.
-        </p>
-      )}
+      {tab === "materials" && materialsContent}
 
       {tab === "recommendations" && (
         <p className="mt-4 text-neutral-500 dark:text-neutral-400">
