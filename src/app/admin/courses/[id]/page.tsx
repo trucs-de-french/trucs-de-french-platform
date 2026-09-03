@@ -9,7 +9,7 @@ import {
   moveScene,
 } from "@/app/admin/scenes/actions";
 import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
-import { createMaterial, deleteMaterial } from "@/app/admin/materials/actions";
+import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -275,7 +275,15 @@ export default async function AdminCoursePage({
           </section>
 
           <section className="mt-6">
-            <h2 className="text-xl font-bold">Матеріали</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Матеріали</h2>
+              <Link
+                href={`/admin/courses/${product.id}/materials/new`}
+                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              >
+                + Новий матеріал
+              </Link>
+            </div>
 
             <ul className="mt-3 flex flex-col gap-2">
               {materials?.map((m) => (
@@ -288,14 +296,12 @@ export default async function AdminCoursePage({
                           ? "Загальні рекомендації"
                           : "Без категорії"}
                     </span>
-                    <a
-                      href={m.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href={`/admin/courses/${product.id}/materials/${m.id}`}
                       className="block font-medium hover:underline"
                     >
-                      {m.title || m.file_url}
-                    </a>
+                      {m.title || m.file_url || "Без назви"}
+                    </Link>
                   </div>
                   <form action={deleteMaterial.bind(null, m.id, product.id)}>
                     <SubmitButton
@@ -311,35 +317,6 @@ export default async function AdminCoursePage({
             {(!materials || materials.length === 0) && (
               <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Матеріалів ще немає.</p>
             )}
-
-            <form
-              action={createMaterial.bind(null, product.id)}
-              className="mt-3 flex flex-col gap-2 rounded-md border p-3"
-            >
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
-                <input name="title" required className="rounded-md border px-2 py-1.5 text-sm" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Посилання на PDF (URL)
-                </label>
-                <input name="file_url" type="url" required className="rounded-md border px-2 py-1.5 text-sm" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">Категорія</label>
-                <select name="category" required className="rounded-md border px-2 py-1.5 text-sm">
-                  <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
-                  <option value="general_tip">Загальні рекомендації (типові помилки)</option>
-                </select>
-              </div>
-              <SubmitButton
-                pendingChildren="Додаю..."
-                className="self-start rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-              >
-                + Новий матеріал
-              </SubmitButton>
-            </form>
           </section>
         </>
       )}
