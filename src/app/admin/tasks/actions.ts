@@ -61,9 +61,9 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
       };
     case "multiple_choice":
       return {
-        question: (formData.get("mc_question") as string) || "",
+        instructions: (formData.get("mc_instructions") as string) || "",
         display: (formData.get("mc_display") as string) || "buttons",
-        options: parseJsonField(formData.get("mc_options")),
+        items: parseJsonField(formData.get("mc_items")),
       };
     case "true_false":
       return {

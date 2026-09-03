@@ -45,11 +45,20 @@ export type EssayFormulaireConfig = {
   fields: EssayFormulaireField[];
 };
 
+// Кілька речень під однією спільною instructions і спільним display — той
+// самий принцип, що listening.questions. sentence для dropdown містить
+// РІВНО ОДИН "{{}}" (лише позиція вибору, без альтернатив-через-| — це не
+// той механізм, що BLANK_RE/gradeFillBlank: правильність і всі варіанти,
+// правильні й неправильні, лишаються в options, а не у вільному тексті).
+// Стара пласка форма ({question, display, options}, без items) —
+// виродковий випадок нової, нормалізується на льоту (getMultipleChoiceItems),
+// без міграції БД.
 export type MultipleChoiceOption = { id: string; text: string; correct: boolean };
+export type MultipleChoiceItem = { id: string; sentence: string; options: MultipleChoiceOption[] };
 export type MultipleChoiceConfig = {
-  question: string;
+  instructions?: string;
   display: "buttons" | "dropdown";
-  options: MultipleChoiceOption[];
+  items: MultipleChoiceItem[];
 };
 
 export type TrueFalseStatement = { id: string; text: string; answer: boolean };
@@ -179,11 +188,15 @@ export type FillBlankPublic = {
 };
 
 export type MultipleChoicePublic = {
-  question: string;
+  instructions?: string;
   display: "buttons" | "dropdown";
-  multiple: boolean; // чи більше однієї правильної відповіді (для radio/checkbox)
-  correctCount: number; // скільки саме — для підказки студенту, напр. "2 варіанти"
-  options: { id: string; text: string }[];
+  items: {
+    id: string;
+    sentence: string;
+    multiple: boolean; // чи більше однієї правильної відповіді (для radio/checkbox)
+    correctCount: number; // скільки саме — для підказки студенту, напр. "2 варіанти"
+    options: { id: string; text: string }[];
+  }[];
 };
 
 export type TrueFalsePublic = {
@@ -240,7 +253,7 @@ export type ImageMatchPublic = {
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
-export type MultipleChoiceAnswer = string[]; // вибрані option.id
+export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
@@ -258,7 +271,10 @@ export type FillBlankDetail = {
 };
 
 export type MultipleChoiceDetail = {
-  options: { id: string; text: string; correct: boolean; selected: boolean }[];
+  items: {
+    id: string;
+    options: { id: string; text: string; correct: boolean; selected: boolean }[];
+  }[];
 };
 
 export type TrueFalseDetail = {

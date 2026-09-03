@@ -1,49 +1,97 @@
 "use client";
 
 import { useState } from "react";
-import type { MultipleChoiceConfig, MultipleChoiceOption } from "@/lib/exercises/types";
+import type { MultipleChoiceConfig, MultipleChoiceItem } from "@/lib/exercises/types";
+
+function emptyItem(): MultipleChoiceItem {
+  return {
+    id: crypto.randomUUID(),
+    sentence: "",
+    options: [
+      { id: crypto.randomUUID(), text: "", correct: true },
+      { id: crypto.randomUUID(), text: "", correct: false },
+    ],
+  };
+}
 
 export function MultipleChoiceFields({
   initialConfig,
 }: {
   initialConfig?: Partial<MultipleChoiceConfig>;
 }) {
-  const [options, setOptions] = useState<MultipleChoiceOption[]>(
-    initialConfig?.options?.length
-      ? initialConfig.options
-      : [
-          { id: crypto.randomUUID(), text: "", correct: true },
-          { id: crypto.randomUUID(), text: "", correct: false },
-        ]
+  const [display, setDisplay] = useState<"buttons" | "dropdown">(
+    initialConfig?.display ?? "buttons"
+  );
+  const [items, setItems] = useState<MultipleChoiceItem[]>(
+    initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
 
-  function addOption() {
-    setOptions((prev) => [...prev, { id: crypto.randomUUID(), text: "", correct: false }]);
+  function addItem() {
+    setItems((prev) => [...prev, emptyItem()]);
   }
 
-  function removeOption(id: string) {
-    setOptions((prev) => prev.filter((o) => o.id !== id));
+  function removeItem(id: string) {
+    setItems((prev) => prev.filter((it) => it.id !== id));
   }
 
-  function updateText(id: string, text: string) {
-    setOptions((prev) => prev.map((o) => (o.id === id ? { ...o, text } : o)));
+  function updateSentence(id: string, sentence: string) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, sentence } : it)));
   }
 
-  function toggleCorrect(id: string) {
-    setOptions((prev) => prev.map((o) => (o.id === id ? { ...o, correct: !o.correct } : o)));
+  function addOption(itemId: string) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? { ...it, options: [...it.options, { id: crypto.randomUUID(), text: "", correct: false }] }
+          : it
+      )
+    );
+  }
+
+  function removeOption(itemId: string, optId: string) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId ? { ...it, options: it.options.filter((o) => o.id !== optId) } : it
+      )
+    );
+  }
+
+  function updateOptionText(itemId: string, optId: string, text: string) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? { ...it, options: it.options.map((o) => (o.id === optId ? { ...o, text } : o)) }
+          : it
+      )
+    );
+  }
+
+  function toggleCorrect(itemId: string, optId: string) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? {
+              ...it,
+              options: it.options.map((o) => (o.id === optId ? { ...o, correct: !o.correct } : o)),
+            }
+          : it
+      )
+    );
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
-      <input type="hidden" name="mc_options" value={JSON.stringify(options)} readOnly />
+      <input type="hidden" name="mc_items" value={JSON.stringify(items)} readOnly />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Питання</label>
-        <textarea
-          name="mc_question"
-          rows={2}
-          defaultValue={initialConfig?.question ?? ""}
-          className="rounded-md border px-2 py-1.5 text-base font-medium"
+        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          Інструкція для студента
+        </label>
+        <input
+          name="mc_instructions"
+          defaultValue={initialConfig?.instructions ?? ""}
+          placeholder="напр. Оберіть правильний варіант"
+          className="rounded-md border px-2 py-1.5 text-sm"
         />
       </div>
 
@@ -51,7 +99,8 @@ export function MultipleChoiceFields({
         <label className="text-xs text-neutral-500 dark:text-neutral-400">Подання</label>
         <select
           name="mc_display"
-          defaultValue={initialConfig?.display ?? "buttons"}
+          value={display}
+          onChange={(e) => setDisplay(e.target.value as "buttons" | "dropdown")}
           className="rounded-md border px-2 py-1.5 text-sm"
         >
           <option value="buttons">Варіанти видно одразу</option>
@@ -59,39 +108,75 @@ export function MultipleChoiceFields({
         </select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Варіанти (позначте правильні)
-        </label>
-        {options.map((o) => (
-          <div key={o.id} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={o.correct}
-              onChange={() => toggleCorrect(o.id)}
-              title="Правильний варіант"
+      <div className="flex flex-col gap-3">
+        {items.map((item, ii) => (
+          <div key={item.id} className="rounded-md border p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Речення {ii + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeItem(item.id)}
+                className="text-xs text-red-600 hover:underline dark:text-red-400"
+              >
+                видалити речення
+              </button>
+            </div>
+            <textarea
+              value={item.sentence}
+              onChange={(e) => updateSentence(item.id, e.target.value)}
+              rows={2}
+              placeholder={
+                display === "dropdown"
+                  ? "напр. Je {{}} au cinéma. — {{}} позначає, де буде випадаючий список"
+                  : "Текст речення"
+              }
+              className="mt-2 w-full rounded-md border px-2 py-1 text-base font-medium"
             />
-            <input
-              value={o.text}
-              onChange={(e) => updateText(o.id, e.target.value)}
-              placeholder="Текст варіанту"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
-            />
-            <button
-              type="button"
-              onClick={() => removeOption(o.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
-            >
-              видалити
-            </button>
+            <div className="mt-2 flex flex-col gap-1 pl-2">
+              <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                Варіанти (позначте правильні)
+              </label>
+              {item.options.map((o) => (
+                <div key={o.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={o.correct}
+                    onChange={() => toggleCorrect(item.id, o.id)}
+                    title="Правильний варіант"
+                  />
+                  <input
+                    value={o.text}
+                    onChange={(e) => updateOptionText(item.id, o.id, e.target.value)}
+                    placeholder="Текст варіанту"
+                    className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeOption(item.id, o.id)}
+                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                  >
+                    видалити
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => addOption(item.id)}
+                className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+              >
+                + варіант
+              </button>
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={addOption}
-          className="mt-1 self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+          onClick={addItem}
+          className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
         >
-          + варіант
+          + речення
         </button>
       </div>
     </div>

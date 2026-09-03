@@ -1,4 +1,10 @@
-import { BLANK_RE, getOpenAnswerQuestions, getReorderSequences, getDragDropSentences } from "./sanitize";
+import {
+  BLANK_RE,
+  getOpenAnswerQuestions,
+  getReorderSequences,
+  getDragDropSentences,
+  getMultipleChoiceItems,
+} from "./sanitize";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -65,23 +71,33 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
   };
 }
 
+// Атомарна одиниця часткового заліку — ціле речення (усередині нього нема
+// під-структури для розбиття, на відміну від пропусків у drag_drop), той
+// самий принцип, що gradeListening.
 function gradeMultipleChoice(
   config: MultipleChoiceConfig,
   answer: MultipleChoiceAnswer
 ): GradeResult {
-  const selected = new Set(answer);
-  const options: MultipleChoiceDetail["options"] = config.options.map((o) => ({
-    id: o.id,
-    text: o.text,
-    correct: o.correct,
-    selected: selected.has(o.id),
-  }));
+  const items = getMultipleChoiceItems(config);
+  const answerByItem = new Map((answer ?? []).map((a) => [a.itemId, new Set(a.selected)]));
 
-  const isCorrect = options.every((o) => o.correct === o.selected);
+  const itemsDetail: MultipleChoiceDetail["items"] = items.map((item) => {
+    const selected = answerByItem.get(item.id) ?? new Set<string>();
+    const options = item.options.map((o) => ({
+      id: o.id,
+      text: o.text,
+      correct: o.correct,
+      selected: selected.has(o.id),
+    }));
+    return { id: item.id, options };
+  });
+
+  const correctCount = itemsDetail.filter((it) => it.options.every((o) => o.correct === o.selected))
+    .length;
   return {
-    correct: isCorrect,
-    score: isCorrect ? 100 : 0,
-    detail: { options },
+    correct: correctCount === itemsDetail.length && itemsDetail.length > 0,
+    score: percentage(correctCount, itemsDetail.length),
+    detail: { items: itemsDetail },
   };
 }
 

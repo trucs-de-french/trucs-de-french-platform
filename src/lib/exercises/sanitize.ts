@@ -3,6 +3,7 @@ import type {
   FillBlankPublic,
   MultipleChoiceConfig,
   MultipleChoicePublic,
+  MultipleChoiceItem,
   TrueFalseConfig,
   TrueFalsePublic,
   MatchingConfig,
@@ -45,14 +46,32 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   };
 }
 
+// Стара пласка форма ({question, display, options}, до багатореченнєвої
+// версії) — виродковий випадок нової: одне речення без явного id;
+// instructions у старих даних не було взагалі, лишається порожнім.
+export function getMultipleChoiceItems(config: MultipleChoiceConfig): MultipleChoiceItem[] {
+  if (config.items?.length) return config.items;
+  const legacy = config as unknown as { question?: string; options?: MultipleChoiceItem["options"] };
+  if (legacy.question !== undefined) {
+    return [{ id: "legacy", sentence: legacy.question, options: legacy.options ?? [] }];
+  }
+  return [];
+}
+
 export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleChoicePublic {
-  const correctCount = config.options.filter((o) => o.correct).length;
   return {
-    question: config.question,
+    instructions: config.instructions,
     display: config.display,
-    multiple: correctCount > 1,
-    correctCount,
-    options: config.options.map(({ id, text }) => ({ id, text })),
+    items: getMultipleChoiceItems(config).map((item) => {
+      const correctCount = item.options.filter((o) => o.correct).length;
+      return {
+        id: item.id,
+        sentence: item.sentence,
+        multiple: correctCount > 1,
+        correctCount,
+        options: item.options.map(({ id, text }) => ({ id, text })),
+      };
+    }),
   };
 }
 

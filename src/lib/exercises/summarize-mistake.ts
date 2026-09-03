@@ -67,12 +67,20 @@ export function summarizeMistake(feedback: unknown): string {
         : "Всі елементи розкладено правильно.";
     }
 
-    // reorder: { text, correctIndex, studentIndex, isCorrect }
+    // reorder (стара однопослідовна форма): { text, correctIndex, studentIndex, isCorrect }
     if ("correctIndex" in first) {
       const sorted = [...(items as { text: string; correctIndex: number }[])].sort(
         (a, b) => a.correctIndex - b.correctIndex
       );
       return `Правильний порядок: ${sorted.map((i) => i.text).join(" → ")}`;
+    }
+
+    // multiple_choice (багатореченнєва форма): { options: [{correct, selected, text}] }
+    if ("options" in first) {
+      const wrong = (
+        items as { options: { correct: boolean; selected: boolean; text: string }[] }[]
+      ).filter((it) => it.options.some((o) => o.correct !== o.selected));
+      return wrong.length ? `Неправильних відповідей: ${wrong.length}` : "Всі відповіді правильні.";
     }
   }
 
