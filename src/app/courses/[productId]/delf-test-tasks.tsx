@@ -43,6 +43,7 @@ export async function DelfTestTasks({
     .eq("product_id", productId)
     .eq("delf_test_number", testNumber)
     .is("scene_id", null)
+    .is("material_id", null)
     .order("order_index")
     .returns<TestTask[]>();
 

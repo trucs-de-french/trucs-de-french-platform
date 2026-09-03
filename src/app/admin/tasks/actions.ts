@@ -171,14 +171,25 @@ export async function createTask(formData: FormData) {
 
   const productId = formData.get("product_id") as string;
   const sceneId = (formData.get("scene_id") as string) || null;
+  const materialId = (formData.get("material_id") as string) || null;
   const type = formData.get("type") as string;
   const title = formData.get("title") as string;
 
+  // Три можливі скоупи для order_index: у межах сцени, у межах матеріалу,
+  // або "вільні" product-level задачі (scene_id і material_id обидва null —
+  // напр. DELF entraînement). Одночасно sceneId і materialId не приходять
+  // (форма показує лише один hidden-інпут залежно від контексту виклику).
   let scopeQuery = supabase
     .from("tasks")
     .select("order_index")
     .eq("product_id", productId);
-  scopeQuery = sceneId ? scopeQuery.eq("scene_id", sceneId) : scopeQuery.is("scene_id", null);
+  if (sceneId) {
+    scopeQuery = scopeQuery.eq("scene_id", sceneId);
+  } else if (materialId) {
+    scopeQuery = scopeQuery.eq("material_id", materialId);
+  } else {
+    scopeQuery = scopeQuery.is("scene_id", null).is("material_id", null);
+  }
 
   const { data: last } = await scopeQuery
     .order("order_index", { ascending: false })
@@ -190,6 +201,7 @@ export async function createTask(formData: FormData) {
     .insert({
       product_id: productId,
       scene_id: sceneId,
+      material_id: materialId,
       type,
       title,
       order_index: (last?.order_index ?? 0) + 1,
@@ -214,7 +226,9 @@ export async function createTask(formData: FormData) {
   redirect(
     sceneId
       ? `/admin/courses/${productId}/scenes/${sceneId}`
-      : `/admin/courses/${productId}`
+      : materialId
+        ? `/admin/courses/${productId}/materials/${materialId}`
+        : `/admin/courses/${productId}`
   );
 }
 
@@ -258,14 +272,16 @@ export async function deleteTask(taskId: string) {
   const supabase = await createClient();
   const { data: task } = await supabase
     .from("tasks")
-    .select("product_id, scene_id")
+    .select("product_id, scene_id, material_id")
     .eq("id", taskId)
     .single();
   if (!task) return;
 
   const backPath = task.scene_id
     ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
-    : `/admin/courses/${task.product_id}`;
+    : task.material_id
+      ? `/admin/courses/${task.product_id}/materials/${task.material_id}`
+      : `/admin/courses/${task.product_id}`;
 
   const { data: deleted, error } = await supabase
     .from("tasks")
@@ -287,13 +303,19 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, product_id, scene_id, order_index")
+    .select("id, product_id, scene_id, material_id, order_index")
     .eq("id", taskId)
     .single();
   if (!task) return;
 
   let query = supabase.from("tasks").select("id, order_index").eq("product_id", task.product_id);
-  query = task.scene_id ? query.eq("scene_id", task.scene_id) : query.is("scene_id", null);
+  if (task.scene_id) {
+    query = query.eq("scene_id", task.scene_id);
+  } else if (task.material_id) {
+    query = query.eq("material_id", task.material_id);
+  } else {
+    query = query.is("scene_id", null).is("material_id", null);
+  }
 
   const { data: neighbor } =
     direction === "up"
@@ -312,7 +334,9 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   const backPath = task.scene_id
     ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
-    : `/admin/courses/${task.product_id}`;
+    : task.material_id
+      ? `/admin/courses/${task.product_id}/materials/${task.material_id}`
+      : `/admin/courses/${task.product_id}`;
 
   const { data: updated1, error: error1 } = await supabase
     .from("tasks")

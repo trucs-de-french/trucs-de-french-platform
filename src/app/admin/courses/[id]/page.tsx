@@ -43,6 +43,7 @@ export default async function AdminCoursePage({
         .select("id, type, title, order_index, delf_section, delf_test_number")
         .eq("product_id", id)
         .is("scene_id", null)
+        .is("material_id", null)
         .order("order_index")
     : { data: null };
 

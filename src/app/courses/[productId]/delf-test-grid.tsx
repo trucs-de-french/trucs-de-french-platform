@@ -25,6 +25,7 @@ export async function DelfTestGrid({ productId }: { productId: string }) {
     .select("id, delf_test_number")
     .eq("product_id", productId)
     .not("delf_test_number", "is", null)
+    .is("material_id", null)
     .returns<{ id: string; delf_test_number: number }[]>();
 
   const taskIds = (tasks ?? []).map((t) => t.id);
