@@ -18,7 +18,7 @@ export async function DelfTestTasks({
   const supabase = await createClient();
   const { data: tasks } = await supabase
     .from("tasks")
-    .select("id, type, title, config, image_url, audio_url, delf_section")
+    .select("id, type, title, config, image_url, audio_url, delf_section, games(embed_url, provider)")
     .eq("product_id", productId)
     .eq("delf_test_number", testNumber)
     .is("scene_id", null)
