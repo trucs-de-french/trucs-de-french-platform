@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateProduct, togglePublish } from "../actions";
+import { updateProduct, togglePublish, toggleArchive } from "../actions";
 import {
   createScene,
   deleteScene,
@@ -63,19 +63,36 @@ export default async function AdminCoursePage({
       </Link>
 
       <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{product.title}</h1>
-        <form action={togglePublish.bind(null, product.id, !product.is_published)}>
-          <SubmitButton
-            pendingChildren="..."
-            className={
-              product.is_published
-                ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                : "rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-            }
-          >
-            {product.is_published ? "Зняти з публікації" : "Опублікувати"}
-          </SubmitButton>
-        </form>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">{product.title}</h1>
+          {product.archived_at && (
+            <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+              Архівовано
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <form action={togglePublish.bind(null, product.id, !product.is_published)}>
+            <SubmitButton
+              pendingChildren="..."
+              className={
+                product.is_published
+                  ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  : "rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+              }
+            >
+              {product.is_published ? "Зняти з публікації" : "Опублікувати"}
+            </SubmitButton>
+          </form>
+          <form action={toggleArchive.bind(null, product.id, !product.archived_at)}>
+            <SubmitButton
+              pendingChildren="..."
+              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              {product.archived_at ? "Відновити курс" : "Архівувати"}
+            </SubmitButton>
+          </form>
+        </div>
       </div>
 
       {error && (
