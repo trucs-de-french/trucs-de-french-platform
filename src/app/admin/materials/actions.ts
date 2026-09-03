@@ -8,11 +8,14 @@ import { createClient } from "@/lib/supabase/server";
 export async function createMaterial(productId: string, formData: FormData) {
   const supabase = await createClient();
 
+  const category = (formData.get("category") as string) || null;
+
   const { error } = await supabase.from("materials").insert({
     product_id: productId,
     file_url: (formData.get("file_url") as string) || "",
     file_type: "pdf",
     title: (formData.get("title") as string) || null,
+    category: category === "delf_guide" || category === "general_tip" ? category : null,
   });
 
   if (error) {

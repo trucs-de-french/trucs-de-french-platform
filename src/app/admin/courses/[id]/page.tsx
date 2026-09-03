@@ -49,7 +49,7 @@ export default async function AdminCoursePage({
   const { data: materials } = !isFilm
     ? await supabase
         .from("materials")
-        .select("id, title, file_url")
+        .select("id, title, file_url, category")
         .eq("product_id", id)
         .is("scene_id", null)
         .eq("file_type", "pdf")
@@ -279,14 +279,23 @@ export default async function AdminCoursePage({
             <ul className="mt-3 flex flex-col gap-2">
               {materials?.map((m) => (
                 <li key={m.id} className="flex items-center justify-between rounded-md border p-3">
-                  <a
-                    href={m.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium hover:underline"
-                  >
-                    {m.title || m.file_url}
-                  </a>
+                  <div>
+                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                      {m.category === "delf_guide"
+                        ? "Рекомендації DELF"
+                        : m.category === "general_tip"
+                          ? "Загальні рекомендації"
+                          : "Без категорії"}
+                    </span>
+                    <a
+                      href={m.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block font-medium hover:underline"
+                    >
+                      {m.title || m.file_url}
+                    </a>
+                  </div>
                   <form action={deleteMaterial.bind(null, m.id, product.id)}>
                     <SubmitButton
                       pendingChildren="..."
@@ -315,6 +324,13 @@ export default async function AdminCoursePage({
                   Посилання на PDF (URL)
                 </label>
                 <input name="file_url" type="url" required className="rounded-md border px-2 py-1.5 text-sm" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-neutral-500 dark:text-neutral-400">Категорія</label>
+                <select name="category" required className="rounded-md border px-2 py-1.5 text-sm">
+                  <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
+                  <option value="general_tip">Загальні рекомендації (типові помилки)</option>
+                </select>
               </div>
               <SubmitButton
                 pendingChildren="Додаю..."

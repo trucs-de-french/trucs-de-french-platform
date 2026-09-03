@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BookOpen } from "lucide-react";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import {
   CRITERIA,
@@ -22,6 +23,7 @@ type EssayResult = {
   criteria: Record<CriterionKey, number>;
   errors: EssayError[];
   advice: string;
+  materialRecommendation: string | null;
   totalScore: number;
   maxScore: number;
   anomalyFlags: string[];
@@ -126,6 +128,13 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
 
       {result.advice && (
         <p className="text-sm text-neutral-700 dark:text-neutral-300">{result.advice}</p>
+      )}
+
+      {result.materialRecommendation && (
+        <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+          <BookOpen className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{result.materialRecommendation}</span>
+        </div>
       )}
     </div>
   );

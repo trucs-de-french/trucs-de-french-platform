@@ -31,6 +31,8 @@ export type CheckAnswerResult = {
   advice: string;
   /** = advice, підтримка src/lib/exercises/summarize-mistake.ts (шукає f.feedback) */
   feedback: string;
+  /** null, коли нема помилок (нема чого рекомендувати) або на anomaly-шляхах */
+  materialRecommendation: string | null;
   totalScore: number;
   maxScore: number;
   anomalyFlags: string[];
@@ -106,6 +108,8 @@ ${descriptorBlock(grid)}
 
 Наостанок дай 2-3 речення загальних порад з покращення (advice), українською мовою.
 
+Якщо є хоча б одна помилка, визнач ОДНУ головну граматичну чи лексичну ТЕМУ, яку варто підтягнути (materialTopic) — лише назва теми французькою (напр. "Accord des adjectifs", "Présent Simple"), без речень і без посилань на конкретні файли чи назви матеріалів (їх ти не бачиш і бачити не повинна). Якщо помилок немає — не додавай це поле.
+
 Поверни ЛИШЕ JSON (без markdown) такої форми:
 {
   "criteriaLevels": {
@@ -117,7 +121,8 @@ ${descriptorBlock(grid)}
   },
   "anomalyFlags": [],
   "errors": [{"original": "...", "fix": "...", "category": "...", "rule": "...", "explanation": "..."}],
-  "advice": "..."
+  "advice": "...",
+  "materialTopic": "..."
 }`;
 }
 
@@ -147,6 +152,7 @@ function zeroResult(grid: LevelGrid, message: string, anomalyFlag: string): Chec
     errors: [],
     advice: message,
     feedback: message,
+    materialRecommendation: null,
     totalScore: 0,
     maxScore: grid.maxScore,
     anomalyFlags: [anomalyFlag],
@@ -177,6 +183,7 @@ export async function checkEssayAnswer(input: CheckEssayInput): Promise<CheckAns
       anomalyFlags?: string[];
       errors?: Partial<EssayError>[];
       advice?: string;
+      materialTopic?: string;
     };
 
     const rawLevels = parsed.criteriaLevels ?? {};
@@ -215,11 +222,20 @@ export async function checkEssayAnswer(input: CheckEssayInput): Promise<CheckAns
     const advice = typeof parsed.advice === "string" ? parsed.advice : "";
     const totalScore = CRITERIA.reduce((sum, key) => sum + criteria[key], 0);
 
+    // Фінальне формулювання складаємо тут, у коді — контрольовано й
+    // однаково в усіх відповідях, а не покладаємось на те, що Gemini щоразу
+    // сформулює речення однаково.
+    const materialRecommendation =
+      errors.length > 0 && typeof parsed.materialTopic === "string" && parsed.materialTopic.trim()
+        ? `Перегляньте матеріали по темі: ${parsed.materialTopic.trim()}`
+        : null;
+
     return {
       criteria,
       errors,
       advice,
       feedback: advice,
+      materialRecommendation,
       totalScore,
       maxScore: grid.maxScore,
       anomalyFlags,
@@ -234,6 +250,7 @@ export async function checkEssayAnswer(input: CheckEssayInput): Promise<CheckAns
       errors: [],
       advice: message,
       feedback: message,
+      materialRecommendation: null,
       totalScore: 0,
       maxScore: grid.maxScore,
       anomalyFlags: [],
