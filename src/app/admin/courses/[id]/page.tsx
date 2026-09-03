@@ -308,14 +308,22 @@ export default async function AdminCoursePage({
                       {m.title || m.file_url || "Без назви"}
                     </Link>
                   </div>
-                  <form action={deleteMaterial.bind(null, m.id, product.id)}>
-                    <SubmitButton
-                      pendingChildren="..."
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={`/admin/courses/${product.id}/materials/${m.id}/copy`}
+                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
                     >
-                      Видалити
-                    </SubmitButton>
-                  </form>
+                      Копіювати
+                    </Link>
+                    <form action={deleteMaterial.bind(null, m.id, product.id)}>
+                      <SubmitButton
+                        pendingChildren="..."
+                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                      >
+                        Видалити
+                      </SubmitButton>
+                    </form>
+                  </div>
                 </li>
               ))}
             </ul>
