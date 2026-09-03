@@ -401,3 +401,50 @@ export async function reorderTasks(
 
   return { ok: true };
 }
+
+// Копіювання з ІНШИМ власником (сцена/DELF-тест/матеріал) — на відміну від
+// звичайного дублювання, оригінал лишається незмінним. Один атомарний RPC
+// (copy_task, 0025_copy_task.sql), той самий патерн, що duplicate_scene.
+export async function copyTask(taskId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("id, product_id")
+    .eq("id", taskId)
+    .single();
+  if (!task) return;
+
+  const destination = formData.get("destination") as string;
+  const sceneId = destination === "scene" ? (formData.get("scene_id") as string) || null : null;
+  const materialId = destination === "material" ? (formData.get("material_id") as string) || null : null;
+  const delfSection = destination === "test" ? (formData.get("delf_section") as string) || null : null;
+  const delfTestNumber =
+    destination === "test" && formData.get("delf_test_number")
+      ? Number(formData.get("delf_test_number"))
+      : null;
+
+  const { data: newTaskId, error } = await supabase.rpc("copy_task", {
+    p_task_id: taskId,
+    p_scene_id: sceneId,
+    p_material_id: materialId,
+    p_delf_section: delfSection,
+    p_delf_test_number: delfTestNumber,
+  });
+
+  if (error || !newTaskId) {
+    redirect(
+      `/admin/courses/${task.product_id}/tasks/${taskId}/copy?error=${encodeURIComponent(
+        error?.message ?? "Не вдалося скопіювати завдання"
+      )}`
+    );
+  }
+
+  redirect(
+    sceneId
+      ? `/admin/courses/${task.product_id}/scenes/${sceneId}`
+      : materialId
+        ? `/admin/courses/${task.product_id}/materials/${materialId}`
+        : `/admin/courses/${task.product_id}`
+  );
+}
