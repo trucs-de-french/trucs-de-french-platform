@@ -68,3 +68,15 @@ export async function togglePublish(productId: string, next: boolean) {
     redirect(`/admin/courses/${productId}?error=${encodeURIComponent(error.message)}`);
   }
 }
+
+export async function toggleArchive(productId: string, next: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ archived_at: next ? new Date().toISOString() : null })
+    .eq("id", productId);
+
+  if (error) {
+    redirect(`/admin/courses/${productId}?error=${encodeURIComponent(error.message)}`);
+  }
+}
