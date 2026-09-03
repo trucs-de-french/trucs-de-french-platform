@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { PREVIEW_COOKIE, previewCookieOptions } from "@/lib/course-preview";
 import type { ActionState } from "@/lib/action-state";
 
 export async function createProduct(formData: FormData) {
@@ -79,4 +81,19 @@ export async function toggleArchive(productId: string, next: boolean) {
   if (error) {
     redirect(`/admin/courses/${productId}?error=${encodeURIComponent(error.message)}`);
   }
+}
+
+// "Переглянути як студент" — прив'язуємо куку до конкретного productId, щоб
+// перегляд іншого курсу без явного натискання кнопки на ньому лишався
+// звичайним вчительським доступом (детальніше — @/lib/course-preview).
+export async function startStudentPreview(productId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(PREVIEW_COOKIE, productId, previewCookieOptions);
+  redirect(`/courses/${productId}`);
+}
+
+export async function endStudentPreview(productId: string) {
+  const cookieStore = await cookies();
+  cookieStore.delete(PREVIEW_COOKIE);
+  redirect(`/admin/courses/${productId}`);
 }
