@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateProduct, togglePublish, toggleArchive } from "../actions";
+import { updateProduct, togglePublish, toggleArchive, startStudentPreview } from "../actions";
 import {
   createScene,
   deleteScene,
@@ -72,6 +72,14 @@ export default async function AdminCoursePage({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <form action={startStudentPreview.bind(null, product.id)}>
+            <SubmitButton
+              pendingChildren="..."
+              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              Переглянути як студент
+            </SubmitButton>
+          </form>
           <form action={togglePublish.bind(null, product.id, !product.is_published)}>
             <SubmitButton
               pendingChildren="..."
