@@ -36,7 +36,10 @@ export default async function EditMaterialPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Редагування матеріалу</h1>
+      <Link href={`/admin/courses/${productId}#materials`} className="text-sm underline">
+        ← Назад до матеріалів
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Редагування матеріалу</h1>
 
       <SaveForm
         action={updateMaterial.bind(null, material.id)}
