@@ -192,6 +192,12 @@ export function TaskDragList({
                   ↓
                 </SubmitButton>
               </form>
+              <Link
+                href={`/admin/courses/${productId}/tasks/${task.id}/copy`}
+                className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              >
+                Копіювати
+              </Link>
               <form action={deleteTask.bind(null, task.id)}>
                 <SubmitButton
                   pendingChildren="..."
