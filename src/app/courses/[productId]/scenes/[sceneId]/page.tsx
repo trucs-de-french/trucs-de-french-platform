@@ -2,6 +2,8 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
+import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { toEmbedUrl } from "@/lib/video";
 import { resolvePlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/platform-icon";
@@ -86,6 +88,30 @@ export default async function ScenePage({
 
   if (!scene) {
     notFound();
+  }
+
+  const previewCourseId = await getPreviewCourseId();
+  const isPreviewing = previewCourseId === productId;
+  let previewBlocked = false;
+  if (isPreviewing) {
+    const { data: previewProduct } = await supabase
+      .from("products")
+      .select("is_published, archived_at")
+      .eq("id", productId)
+      .single();
+    previewBlocked = !previewProduct || !isVisibleToEnrolledStudent(previewProduct);
+  }
+
+  if (previewBlocked) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <Link href={`/courses/${productId}`} className="text-sm underline">
+          ← До курсу
+        </Link>
+        <h1 className="mt-2 text-2xl font-semibold">{scene.title}</h1>
+        <PreviewBlocked productId={productId} />
+      </main>
+    );
   }
 
   const [
@@ -441,6 +467,7 @@ export default async function ScenePage({
       <Link href={`/courses/${productId}`} className="text-sm underline">
         ← До курсу
       </Link>
+      {isPreviewing && <PreviewBanner productId={productId} />}
       <h1 className="mt-2 text-2xl font-semibold">{scene.title}</h1>
 
       {blockOrder.map((type) => (

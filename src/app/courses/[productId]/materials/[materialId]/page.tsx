@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { STYLE_CLASSES, STYLE_ICONS } from "@/components/exercises/callout";
 import type { CalloutStyle } from "@/lib/exercises/types";
+import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
+import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 
 export default async function MaterialPage({
@@ -22,6 +24,30 @@ export default async function MaterialPage({
 
   if (!material || material.product_id !== productId) {
     notFound();
+  }
+
+  const previewCourseId = await getPreviewCourseId();
+  const isPreviewing = previewCourseId === productId;
+  let previewBlocked = false;
+  if (isPreviewing) {
+    const { data: previewProduct } = await supabase
+      .from("products")
+      .select("is_published, archived_at")
+      .eq("id", productId)
+      .single();
+    previewBlocked = !previewProduct || !isVisibleToEnrolledStudent(previewProduct);
+  }
+
+  if (previewBlocked) {
+    return (
+      <main className="mx-auto max-w-2xl p-6">
+        <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
+          ← До матеріалів
+        </Link>
+        <h1 className="mt-2 text-2xl font-semibold">{material.title ?? "Матеріал"}</h1>
+        <PreviewBlocked productId={productId} />
+      </main>
+    );
   }
 
   // Категорійна різниця лише у вправах: "Рекомендації DELF" — без вправ,
@@ -51,6 +77,8 @@ export default async function MaterialPage({
       <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
         ← До матеріалів
       </Link>
+
+      {isPreviewing && <PreviewBanner productId={productId} />}
 
       <h1 className="mt-2 text-2xl font-semibold">{material.title ?? "Матеріал"}</h1>
 

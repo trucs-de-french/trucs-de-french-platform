@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
+import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { DelfCourseTabs } from "./delf-course-tabs";
 import { DelfTestGrid } from "./delf-test-grid";
 import { DelfMaterials } from "./delf-materials";
@@ -16,12 +18,28 @@ export default async function CoursePage({
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, title, description, type, level")
+    .select("id, title, description, type, level, is_published, archived_at")
     .eq("id", productId)
     .single();
 
   if (!product) {
     notFound();
+  }
+
+  const previewCourseId = await getPreviewCourseId();
+  const isPreviewing = previewCourseId === productId;
+  const previewBlocked = isPreviewing && !isVisibleToEnrolledStudent(product);
+
+  if (previewBlocked) {
+    return (
+      <main className="mx-auto max-w-2xl p-6">
+        <Link href="/dashboard" className="text-sm underline">
+          ← До кабінету
+        </Link>
+        <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
+        <PreviewBlocked productId={productId} />
+      </main>
+    );
   }
 
   if (product.type === "delf") {
@@ -30,6 +48,7 @@ export default async function CoursePage({
         <Link href="/dashboard" className="text-sm underline">
           ← До кабінету
         </Link>
+        {isPreviewing && <PreviewBanner productId={productId} />}
         <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
@@ -54,6 +73,7 @@ export default async function CoursePage({
       <Link href="/dashboard" className="text-sm underline">
         ← До кабінету
       </Link>
+      {isPreviewing && <PreviewBanner productId={productId} />}
       <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
       {product.description && (
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
