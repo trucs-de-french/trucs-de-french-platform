@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateMaterial, deleteMaterial } from "@/app/admin/materials/actions";
+import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { MaterialArticleFields } from "../material-article-fields";
@@ -20,6 +22,17 @@ export default async function EditMaterialPage({
     .single();
 
   if (!material) notFound();
+
+  // Секція "Вправи" — лише для general_tip (за задумом delf_guide вправ не
+  // має взагалі, не просто показує порожній список).
+  const { data: exercises } =
+    material.category === "general_tip"
+      ? await supabase
+          .from("tasks")
+          .select("id, type, title, order_index")
+          .eq("material_id", materialId)
+          .order("order_index")
+      : { data: null };
 
   return (
     <div>
@@ -66,6 +79,69 @@ export default async function EditMaterialPage({
 
         <MaterialArticleFields initialContent={material.content} initialStyle={material.style} />
       </SaveForm>
+
+      {material.category === "general_tip" && (
+        <section className="mt-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Вправи</h2>
+            <Link
+              href={`/admin/courses/${productId}/tasks/new?materialId=${material.id}`}
+              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              + Нове завдання
+            </Link>
+          </div>
+
+          <ul className="mt-3 flex flex-col gap-2">
+            {exercises?.map((task, i) => (
+              <li key={task.id} className="flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    {task.type}
+                  </span>
+                  <Link
+                    href={`/admin/courses/${productId}/tasks/${task.id}`}
+                    className="block font-medium hover:underline"
+                  >
+                    {task.title}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-1">
+                  <form action={moveTask.bind(null, task.id, "up")}>
+                    <SubmitButton
+                      disabled={i === 0}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↑
+                    </SubmitButton>
+                  </form>
+                  <form action={moveTask.bind(null, task.id, "down")}>
+                    <SubmitButton
+                      disabled={i === exercises.length - 1}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↓
+                    </SubmitButton>
+                  </form>
+                  <form action={deleteTask.bind(null, task.id)}>
+                    <SubmitButton
+                      pendingChildren="..."
+                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                    >
+                      Видалити
+                    </SubmitButton>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {(!exercises || exercises.length === 0) && (
+            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+              Вправ ще немає.
+            </p>
+          )}
+        </section>
+      )}
 
       <form action={deleteMaterial.bind(null, material.id, productId)} className="mt-3">
         <SubmitButton
