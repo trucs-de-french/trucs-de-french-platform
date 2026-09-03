@@ -24,11 +24,9 @@ export default async function MaterialPage({
     notFound();
   }
 
-  // Категорійні правила відображення: "Рекомендації DELF" — стаття + PDF,
-  // без вправ; "Загальні рекомендації" — стаття + вправи, без PDF.
-  // Без категорії ("Інше") — без обмежень, показуємо все, що є (немає
-  // заявленого типу матеріалу, немає підстав щось ховати).
-  const showPdf = material.category !== "general_tip";
+  // Категорійна різниця лише у вправах: "Рекомендації DELF" — без вправ,
+  // "Загальні рекомендації" — з вправами. PDF показується для обох
+  // категорій (і для нетегованих "Інше"), якщо file_url заповнений.
   const showExercises = material.category !== "delf_guide";
 
   const { data: exercises } = showExercises
@@ -45,7 +43,7 @@ export default async function MaterialPage({
   // принцип, що в CalloutExercise, незалежно від того, що вже мало бути
   // санітизовано при збереженні.
   const safeHtml = material.content ? sanitizeCalloutHtml(material.content) : null;
-  const hasPdf = showPdf && !!material.file_url;
+  const hasPdf = !!material.file_url;
   const hasExercises = showExercises && !!exercises && exercises.length > 0;
 
   return (
