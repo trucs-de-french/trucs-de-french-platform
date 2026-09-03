@@ -36,8 +36,8 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
     }
     case "open_answer":
       return {
-        question: (formData.get("open_answer_question") as string) || "",
-        answers: parseJsonField(formData.get("open_answer_answers")),
+        instructions: (formData.get("open_answer_instructions") as string) || "",
+        questions: parseJsonField(formData.get("open_answer_questions")),
       };
     case "embed":
       return {

@@ -62,11 +62,29 @@ export function summarizeMistake(feedback: unknown): string {
     }
   }
 
-  if (Array.isArray(f.questions)) {
-    const wrong = (
-      f.questions as { options: { correct: boolean; selected: boolean; text: string }[] }[]
-    ).filter((q) => q.options.some((o) => o.correct !== o.selected));
-    return wrong.length ? `Неправильних відповідей: ${wrong.length}` : "Всі відповіді правильні.";
+  if (Array.isArray(f.questions) && f.questions.length > 0) {
+    const questions = f.questions as Record<string, unknown>[];
+    const first = questions[0];
+
+    // listening: { options: [{correct, selected, text}] }
+    if ("options" in first) {
+      const wrong = (
+        questions as { options: { correct: boolean; selected: boolean; text: string }[] }[]
+      ).filter((q) => q.options.some((o) => o.correct !== o.selected));
+      return wrong.length
+        ? `Неправильних відповідей: ${wrong.length}`
+        : "Всі відповіді правильні.";
+    }
+
+    // open_answer: { question, correctAnswers, isCorrect }
+    if ("correctAnswers" in first) {
+      const wrong = (
+        questions as { correctAnswers: string[]; isCorrect: boolean }[]
+      ).filter((q) => !q.isCorrect);
+      return wrong.length
+        ? `Правильно: ${wrong.map((q) => q.correctAnswers.join(" / ")).join("; ")}`
+        : "Усі питання правильні.";
+    }
   }
 
   if (typeof f.feedback === "string") {

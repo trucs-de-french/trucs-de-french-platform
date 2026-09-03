@@ -1,4 +1,4 @@
-import { BLANK_RE } from "./sanitize";
+import { BLANK_RE, getOpenAnswerQuestions } from "./sanitize";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -198,19 +198,25 @@ function gradeSortColumns(config: SortColumnsConfig, answer: SortColumnsAnswer):
 }
 
 function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): GradeResult {
-  const accepted = config.answers.map((a) => normalize(a));
-  const studentAnswer = answer ?? "";
-  const isCorrect = accepted.includes(normalize(studentAnswer));
+  const answerByQuestion = new Map((answer ?? []).map((a) => [a.questionId, a.value]));
 
-  const detail: OpenAnswerDetail = {
-    studentAnswer,
-    correctAnswers: config.answers,
-    isCorrect,
-  };
+  const questions: OpenAnswerDetail["questions"] = getOpenAnswerQuestions(config).map((q) => {
+    const accepted = q.answers.map((a) => normalize(a));
+    const studentAnswer = answerByQuestion.get(q.id) ?? "";
+    return {
+      id: q.id,
+      question: q.question,
+      studentAnswer,
+      correctAnswers: q.answers,
+      isCorrect: accepted.includes(normalize(studentAnswer)),
+    };
+  });
+
+  const correctCount = questions.filter((q) => q.isCorrect).length;
   return {
-    correct: isCorrect,
-    score: isCorrect ? 100 : 0,
-    detail,
+    correct: correctCount === questions.length && questions.length > 0,
+    score: percentage(correctCount, questions.length),
+    detail: { questions },
   };
 }
 

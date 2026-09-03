@@ -17,6 +17,7 @@ import type {
   SortColumnsPublic,
   OpenAnswerConfig,
   OpenAnswerPublic,
+  OpenAnswerQuestion,
   TableFillConfig,
   TableFillPublic,
   ImageMatchConfig,
@@ -100,8 +101,24 @@ export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPubli
   };
 }
 
+// Стара пласка форма ({question, answers}, до багатопитальної версії) —
+// виродковий випадок нової: одне питання без явного id. Нормалізується тут
+// (не в БД), і grade.ts, і sanitize.ts викликають цю саму функцію — той самий
+// принцип спільного імпорту з sanitize.ts, що вже є для BLANK_RE.
+export function getOpenAnswerQuestions(config: OpenAnswerConfig): OpenAnswerQuestion[] {
+  if (config.questions?.length) return config.questions;
+  const legacy = config as unknown as { question?: string; answers?: string[] };
+  if (legacy.question !== undefined) {
+    return [{ id: "legacy", question: legacy.question, answers: legacy.answers ?? [] }];
+  }
+  return [];
+}
+
 export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
-  return { question: config.question };
+  return {
+    instructions: config.instructions,
+    questions: getOpenAnswerQuestions(config).map(({ id, question }) => ({ id, question })),
+  };
 }
 
 export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {

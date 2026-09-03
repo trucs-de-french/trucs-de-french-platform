@@ -9,9 +9,14 @@ export type FillBlankConfig = {
 // це essay_check). Нормалізація/порівняння — той самий принцип, що для
 // одного пропуску у fill_blank: правильно, якщо збігається з ОДНИМ з answers
 // після trim+lowercase.
+// Кілька питань під однією спільною instructions — той самий принцип, що
+// listening.questions, з частковим заліком по кожному питанню. Стара пласка
+// форма ({question, answers} без questions) — виродковий випадок нової,
+// нормалізується на льоту в grade.ts/sanitize.ts, без міграції БД.
+export type OpenAnswerQuestion = { id: string; question: string; answers: string[] };
 export type OpenAnswerConfig = {
-  question: string;
-  answers: string[];
+  instructions?: string;
+  questions: OpenAnswerQuestion[];
 };
 
 // essay_check — AI-перевірка есе за офіційною сіткою DELF (див.
@@ -202,7 +207,8 @@ export type SortColumnsPublic = {
 };
 
 export type OpenAnswerPublic = {
-  question: string;
+  instructions?: string;
+  questions: { id: string; question: string }[];
 };
 
 export type TableFillPublic = {
@@ -227,7 +233,7 @@ export type ListeningAnswer = { questionId: string; optionId: string }[];
 export type ReorderAnswer = string[]; // запропонований студентом порядок
 export type DragDropAnswer = string[]; // по одному слову з банку на пропуск, за порядком
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
-export type OpenAnswerAnswer = string;
+export type OpenAnswerAnswer = { questionId: string; value: string }[];
 export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
 export type ImageMatchAnswer = { itemId: string; name: string }[];
 
@@ -284,9 +290,13 @@ export type SortColumnsDetail = {
 };
 
 export type OpenAnswerDetail = {
-  studentAnswer: string;
-  correctAnswers: string[];
-  isCorrect: boolean;
+  questions: {
+    id: string;
+    question: string;
+    studentAnswer: string;
+    correctAnswers: string[];
+    isCorrect: boolean;
+  }[];
 };
 
 export type TableFillDetail = {
