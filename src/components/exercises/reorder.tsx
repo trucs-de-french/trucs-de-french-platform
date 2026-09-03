@@ -6,31 +6,33 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 
+type SequenceDetail = ReorderDetail["sequences"][number];
+
 // Один ряд плиток у перемішаному порядку — жодного окремого банку чи
 // порожніх слотів (на відміну від drag_drop, де банк доречний через текст
 // із пропусками). Клік/drag однієї плитки на іншу міняє їх місцями напряму
-// в цьому ж ряду.
-export function ReorderExercise({
-  taskId,
-  config,
+// в цьому ж ряду. Контрольований компонент — батько (ReorderExercise) тримає
+// поточний порядок кожної послідовності, тут лише локальний UI-стан
+// (виділення/drag-hover), непотрібний при сабміті.
+function ReorderSequenceTiles({
+  order,
+  onChange,
+  detail,
+  locked,
 }: {
-  taskId: string;
-  config: ReorderPublic;
+  order: string[];
+  onChange: (next: string[]) => void;
+  detail?: SequenceDetail;
+  locked: boolean;
 }) {
-  const [order, setOrder] = useState<string[]>(config.items);
   const [selected, setSelected] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as ReorderDetail | undefined;
-  const locked = !!result;
 
   function swap(i: number, j: number) {
     if (locked || i === j) return;
-    setOrder((prev) => {
-      const next = [...prev];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
+    const next = [...order];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
   }
 
   function clickTile(i: number) {
@@ -63,8 +65,6 @@ export function ReorderExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.reorder}</p>
-
       <div className="flex flex-wrap gap-2">
         {order.map((text, i) => (
           <button
@@ -103,11 +103,46 @@ export function ReorderExercise({
             .join(" → ")}
         </p>
       )}
+    </div>
+  );
+}
+
+export function ReorderExercise({
+  taskId,
+  config,
+}: {
+  taskId: string;
+  config: ReorderPublic;
+}) {
+  const [orders, setOrders] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
+  );
+  const { submit, pending, result, error } = useExerciseCheck(taskId);
+  const detail = result?.detail as ReorderDetail | undefined;
+  const locked = !!result;
+
+  return (
+    <div>
+      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.reorder}</p>
+
+      <div className="flex flex-col gap-4">
+        {config.sequences.map((seq) => (
+          <ReorderSequenceTiles
+            key={seq.id}
+            order={orders[seq.id] ?? seq.items}
+            onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
+            detail={detail?.sequences.find((d) => d.id === seq.id)}
+            locked={locked}
+          />
+        ))}
+      </div>
 
       {!result ? (
         <button
           type="button"
-          onClick={() => submit(order)}
+          onClick={() =>
+            submit(config.sequences.map((s) => ({ sequenceId: s.id, order: orders[s.id] ?? [] })))
+          }
           disabled={pending}
           className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >

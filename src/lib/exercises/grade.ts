@@ -1,4 +1,4 @@
-import { BLANK_RE, getOpenAnswerQuestions } from "./sanitize";
+import { BLANK_RE, getOpenAnswerQuestions, getReorderSequences } from "./sanitize";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -151,19 +151,29 @@ function gradeListening(config: ListeningConfig, answer: ListeningAnswer): Grade
 }
 
 function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult {
-  // Порівняння за позицією, а не пошуком тексту (answer.indexOf) — items
-  // можуть містити дублікати (той самий текст двічі), і пошук за значенням
-  // завжди знаходить лише перше входження, ігноруючи решту.
-  const items: ReorderDetail["items"] = config.items.map((text, correctIndex) => {
-    const studentIndex = correctIndex;
-    return { text, correctIndex, studentIndex, isCorrect: answer[correctIndex] === text };
+  const sequences = getReorderSequences(config);
+  const answerBySequence = new Map((answer ?? []).map((a) => [a.sequenceId, a.order]));
+
+  const sequencesDetail: ReorderDetail["sequences"] = sequences.map((seq) => {
+    const studentOrder = answerBySequence.get(seq.id) ?? [];
+    // Порівняння за позицією, а не пошуком тексту (indexOf) — items можуть
+    // містити дублікати (той самий текст двічі), і пошук за значенням
+    // завжди знаходить лише перше входження, ігноруючи решту.
+    const items = seq.items.map((text, correctIndex) => {
+      const studentIndex = correctIndex;
+      return { text, correctIndex, studentIndex, isCorrect: studentOrder[correctIndex] === text };
+    });
+    return { id: seq.id, items };
   });
 
-  const correctCount = items.filter((i) => i.isCorrect).length;
+  // Атомарна одиниця часткового заліку — кожна плитка-позиція через УСІ
+  // послідовності разом, а не "послідовність повністю правильна чи ні".
+  const allItems = sequencesDetail.flatMap((s) => s.items);
+  const correctCount = allItems.filter((i) => i.isCorrect).length;
   return {
-    correct: correctCount === items.length && items.length > 0,
-    score: percentage(correctCount, items.length),
-    detail: { items },
+    correct: correctCount === allItems.length && allItems.length > 0,
+    score: percentage(correctCount, allItems.length),
+    detail: { sequences: sequencesDetail },
   };
 }
 

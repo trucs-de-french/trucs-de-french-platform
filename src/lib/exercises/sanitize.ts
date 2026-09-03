@@ -11,6 +11,7 @@ import type {
   ListeningPublic,
   ReorderConfig,
   ReorderPublic,
+  ReorderSequence,
   DragDropConfig,
   DragDropPublic,
   SortColumnsConfig,
@@ -81,8 +82,25 @@ export function sanitizeListening(config: ListeningConfig): ListeningPublic {
   };
 }
 
+// Стара пласка форма ({instructions?, items}, до багатопослідовної версії) —
+// виродковий випадок нової: одна послідовність без явного id. Той самий
+// принцип, що getOpenAnswerQuestions.
+export function getReorderSequences(config: ReorderConfig): ReorderSequence[] {
+  if (config.sequences?.length) return config.sequences;
+  const legacy = config as unknown as { items?: string[] };
+  if (legacy.items !== undefined) {
+    return [{ id: "legacy", items: legacy.items }];
+  }
+  return [];
+}
+
 export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
-  return { instructions: config.instructions, items: shuffle(config.items) };
+  return {
+    instructions: config.instructions,
+    // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
+    // перемішалися б між собою.
+    sequences: getReorderSequences(config).map((s) => ({ id: s.id, items: shuffle(s.items) })),
+  };
 }
 
 export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {

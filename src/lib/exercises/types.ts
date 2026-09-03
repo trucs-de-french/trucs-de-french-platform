@@ -72,9 +72,15 @@ export type ListeningConfig = {
   questions: ListeningQuestion[];
 };
 
+// Кілька окремих послідовностей для впорядкування під однією спільною
+// instructions — той самий принцип, що listening.questions/
+// open_answer.questions. Стара пласка форма ({instructions?, items}, без
+// sequences) — виродковий випадок нової, нормалізується на льоту в
+// grade.ts/sanitize.ts (getReorderSequences), без міграції БД.
+export type ReorderSequence = { id: string; items: string[] }; // items — правильний порядок
 export type ReorderConfig = {
   instructions?: string;
-  items: string[]; // у правильному порядку
+  sequences: ReorderSequence[];
 };
 
 export type DragDropConfig = {
@@ -191,7 +197,7 @@ export type ListeningPublic = {
 
 export type ReorderPublic = {
   instructions?: string;
-  items: string[]; // перемішано
+  sequences: { id: string; items: string[] }[]; // items перемішано, окремо на кожну послідовність
 };
 
 export type DragDropPublic = {
@@ -230,7 +236,7 @@ export type MultipleChoiceAnswer = string[]; // вибрані option.id
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
-export type ReorderAnswer = string[]; // запропонований студентом порядок
+export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // порядок на кожну послідовність
 export type DragDropAnswer = string[]; // по одному слову з банку на пропуск, за порядком
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = { questionId: string; value: string }[];
@@ -271,7 +277,10 @@ export type ListeningDetail = {
 };
 
 export type ReorderDetail = {
-  items: { text: string; correctIndex: number; studentIndex: number; isCorrect: boolean }[];
+  sequences: {
+    id: string;
+    items: { text: string; correctIndex: number; studentIndex: number; isCorrect: boolean }[];
+  }[];
 };
 
 // drag_drop — по суті fill_blank з одним варіантом на пропуск і словами з

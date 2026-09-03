@@ -62,6 +62,26 @@ export function summarizeMistake(feedback: unknown): string {
     }
   }
 
+  // reorder (багатопослідовна форма): { sequences: [{ items: [...] }] } —
+  // окремий ключ верхнього рівня від старої { items: [...] } вище, тож стара
+  // збережена детальна форма (до цієї фічі) і далі розпізнається тим блоком.
+  if (Array.isArray(f.sequences) && f.sequences.length > 0) {
+    const sequences = f.sequences as {
+      items: { text: string; correctIndex: number; isCorrect: boolean }[];
+    }[];
+    const parts = sequences
+      .filter((s) => s.items.some((i) => !i.isCorrect))
+      .map((s) =>
+        [...s.items]
+          .sort((a, b) => a.correctIndex - b.correctIndex)
+          .map((i) => i.text)
+          .join(" → ")
+      );
+    return parts.length
+      ? `Правильний порядок: ${parts.join("; ")}`
+      : "Усі елементи розкладено у правильному порядку.";
+  }
+
   if (Array.isArray(f.questions) && f.questions.length > 0) {
     const questions = f.questions as Record<string, unknown>[];
     const first = questions[0];

@@ -84,7 +84,7 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
     case "reorder":
       return {
         instructions: (formData.get("reorder_instructions") as string) || "",
-        items: parseJsonField(formData.get("reorder_items")),
+        sequences: parseJsonField(formData.get("reorder_sequences")),
       };
     case "drag_drop":
       return {
