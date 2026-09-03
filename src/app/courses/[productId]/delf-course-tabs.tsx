@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 
 const TABS = [
   { value: "tests", label: "Тести" },
@@ -11,6 +12,8 @@ const TABS = [
 
 type Tab = (typeof TABS)[number]["value"];
 
+const TAB_VALUES: Tab[] = TABS.map((t) => t.value);
+
 export function DelfCourseTabs({
   testsContent,
   materialsContent,
@@ -20,7 +23,13 @@ export function DelfCourseTabs({
   materialsContent: ReactNode;
   recommendationsContent: ReactNode;
 }) {
-  const [tab, setTab] = useState<Tab>("tests");
+  const searchParams = useSearchParams();
+  // ?tab=... дозволяє посиланням ззовні (напр. "← До матеріалів" зі
+  // сторінки матеріалу) відкривати конкретну вкладку, а не завжди першу.
+  const initialTab = searchParams.get("tab");
+  const [tab, setTab] = useState<Tab>(
+    TAB_VALUES.includes(initialTab as Tab) ? (initialTab as Tab) : "tests"
+  );
 
   return (
     <div className="mt-6">

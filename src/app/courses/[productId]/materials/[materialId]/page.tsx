@@ -48,7 +48,7 @@ export default async function MaterialPage({
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <Link href={`/courses/${productId}`} className="text-sm underline">
+      <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
         ← До матеріалів
       </Link>
 
