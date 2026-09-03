@@ -76,3 +76,36 @@ export async function deleteMaterial(materialId: string, productId: string) {
   await supabase.from("materials").delete().eq("id", materialId);
   redirect(`/admin/courses/${productId}`);
 }
+
+// Копіювання РАЗОМ з усіма прив'язаними вправами, з можливістю обрати
+// інший продукт призначення — один атомарний RPC (copy_material,
+// 0026_copy_material.sql), той самий патерн, що copyTask/duplicateScene.
+export async function copyMaterial(materialId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: material } = await supabase
+    .from("materials")
+    .select("id, product_id")
+    .eq("id", materialId)
+    .single();
+  if (!material) return;
+
+  const targetProductId = (formData.get("target_product_id") as string) || null;
+
+  const { data: newMaterialId, error } = targetProductId
+    ? await supabase.rpc("copy_material", {
+        p_material_id: materialId,
+        p_target_product_id: targetProductId,
+      })
+    : { data: null, error: { message: "Оберіть курс призначення" } };
+
+  if (error || !newMaterialId || !targetProductId) {
+    redirect(
+      `/admin/courses/${material.product_id}/materials/${materialId}/copy?error=${encodeURIComponent(
+        error?.message ?? "Не вдалося скопіювати матеріал"
+      )}`
+    );
+  }
+
+  redirect(`/admin/courses/${targetProductId}/materials/${newMaterialId}`);
+}
