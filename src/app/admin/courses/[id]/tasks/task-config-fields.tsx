@@ -94,9 +94,8 @@ type Props = {
   initialDelfSection?: string | null;
   initialDelfTestNumber?: number | null;
   /**
-   * Задача вбудована в матеріал (нова чи вже існуюча) — секція/номер тесту
-   * DELF тут не мають сенсу (вправа не належить конкретному CO/CE/PE/PO
-   * тесту), гейт на це — Крок B.
+   * Задача вбудована в матеріал (нова чи вже існуюча) — ховає секцію/номер
+   * тесту DELF (вправа не належить конкретному CO/CE/PE/PO тесту).
    */
   materialId?: string | null;
 };
@@ -196,7 +195,7 @@ export function TaskConfigFields({
         <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={setType} />
       </div>
 
-      {productType === "delf" && (
+      {productType === "delf" && !materialId && (
         <div className="flex gap-4">
           <div className="flex flex-1 flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">Секція іспиту</label>
