@@ -4,7 +4,7 @@ import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 // Не "use client" — це чистий, неінтерактивний блок тексту, рендериться
 // повністю на сервері (RSC), жодного JS студенту не надсилається.
 
-const STYLE_CLASSES: Record<CalloutStyle, string> = {
+export const STYLE_CLASSES: Record<CalloutStyle, string> = {
   none: "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900",
   info: "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
   tip: "border-yellow-300 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/40",
@@ -13,7 +13,7 @@ const STYLE_CLASSES: Record<CalloutStyle, string> = {
   special: "border-purple-300 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/40",
 };
 
-const STYLE_ICONS: Record<CalloutStyle, string> = {
+export const STYLE_ICONS: Record<CalloutStyle, string> = {
   none: "▪️",
   info: "ℹ️",
   tip: "💡",

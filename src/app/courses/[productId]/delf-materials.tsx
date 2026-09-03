@@ -1,25 +1,24 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
-type Material = { id: string; title: string | null; file_url: string; category: string | null };
+type Material = { id: string; title: string | null; file_url: string | null; category: string | null };
 
 const SECTIONS: { category: "delf_guide" | "general_tip"; label: string }[] = [
   { category: "delf_guide", label: "Рекомендації DELF" },
   { category: "general_tip", label: "Загальні рекомендації" },
 ];
 
-function MaterialList({ materials }: { materials: Material[] }) {
+function MaterialList({ productId, materials }: { productId: string; materials: Material[] }) {
   return (
     <ul className="mt-2 flex flex-col gap-2">
       {materials.map((m) => (
         <li key={m.id}>
-          <a
-            href={m.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/courses/${productId}/materials/${m.id}`}
             className="block rounded-md border p-3 font-medium hover:bg-neutral-50 hover:underline dark:hover:bg-neutral-800"
           >
-            {m.title || m.file_url}
-          </a>
+            {m.title || m.file_url || "Матеріал"}
+          </Link>
         </li>
       ))}
     </ul>
@@ -33,7 +32,6 @@ export async function DelfMaterials({ productId }: { productId: string }) {
     .select("id, title, file_url, category")
     .eq("product_id", productId)
     .is("scene_id", null)
-    .eq("file_type", "pdf")
     .order("uploaded_at", { ascending: false })
     .returns<Material[]>();
 
@@ -53,7 +51,7 @@ export async function DelfMaterials({ productId }: { productId: string }) {
         return (
           <section key={category}>
             <h2 className="text-lg font-medium">{label}</h2>
-            <MaterialList materials={list} />
+            <MaterialList productId={productId} materials={list} />
           </section>
         );
       })}
@@ -61,7 +59,7 @@ export async function DelfMaterials({ productId }: { productId: string }) {
       {uncategorized.length > 0 && (
         <section>
           <h2 className="text-lg font-medium">Інше</h2>
-          <MaterialList materials={uncategorized} />
+          <MaterialList productId={productId} materials={uncategorized} />
         </section>
       )}
     </div>

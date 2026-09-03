@@ -1,0 +1,88 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
+import { STYLE_CLASSES, STYLE_ICONS } from "@/components/exercises/callout";
+import type { CalloutStyle } from "@/lib/exercises/types";
+import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
+
+export default async function MaterialPage({
+  params,
+}: {
+  params: Promise<{ productId: string; materialId: string }>;
+}) {
+  const { productId, materialId } = await params;
+  const supabase = await createClient();
+
+  const { data: material } = await supabase
+    .from("materials")
+    .select("id, product_id, title, file_url, content, style")
+    .eq("id", materialId)
+    .single();
+
+  if (!material || material.product_id !== productId) {
+    notFound();
+  }
+
+  const { data: exercises } = await supabase
+    .from("tasks")
+    .select("id, type, title, config, image_url, audio_url")
+    .eq("material_id", materialId)
+    .order("order_index")
+    .returns<ExerciseTask[]>();
+
+  const style = (material.style as CalloutStyle) ?? "none";
+  // Друга (визначальна для показу) санітизація — на межі рендеру, той самий
+  // принцип, що в CalloutExercise, незалежно від того, що вже мало бути
+  // санітизовано при збереженні.
+  const safeHtml = material.content ? sanitizeCalloutHtml(material.content) : null;
+
+  return (
+    <main className="mx-auto max-w-2xl p-6">
+      <Link href={`/courses/${productId}`} className="text-sm underline">
+        ← До матеріалів
+      </Link>
+
+      <h1 className="mt-2 text-2xl font-semibold">{material.title ?? "Матеріал"}</h1>
+
+      {safeHtml && (
+        <div className={`mt-4 flex gap-2 rounded-md border-2 p-3 ${STYLE_CLASSES[style]}`}>
+          <span aria-hidden className="shrink-0">
+            {STYLE_ICONS[style]}
+          </span>
+          <div className="rich-text" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+        </div>
+      )}
+
+      {material.file_url && (
+        <a
+          href={material.file_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          Завантажити PDF
+        </a>
+      )}
+
+      {exercises && exercises.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-lg font-medium">Вправи</h2>
+          <ul className="mt-2 flex flex-col gap-3">
+            {exercises.map((task) => (
+              <li key={task.id} className="rounded-md border p-3">
+                <ExerciseBlock task={task} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!safeHtml && !material.file_url && (!exercises || exercises.length === 0) && (
+        <p className="mt-4 text-neutral-500 dark:text-neutral-400">
+          Цей матеріал поки порожній.
+        </p>
+      )}
+    </main>
+  );
+}

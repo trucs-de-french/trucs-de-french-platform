@@ -53,7 +53,6 @@ export default async function AdminCoursePage({
         .select("id, title, file_url, category")
         .eq("product_id", id)
         .is("scene_id", null)
-        .eq("file_type", "pdf")
         .order("uploaded_at", { ascending: false })
     : { data: null };
 
