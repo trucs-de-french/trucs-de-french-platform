@@ -79,7 +79,7 @@ export default async function MaterialPage({
           <h2 className="text-lg font-medium">Вправи</h2>
           <ul className="mt-2 flex flex-col gap-3">
             {exercises!.map((task) => (
-              <li key={task.id} className="rounded-md border p-3">
+              <li key={task.id} className={task.type === "callout" ? "" : "rounded-md border p-3"}>
                 <ExerciseBlock task={task} />
               </li>
             ))}

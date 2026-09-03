@@ -280,7 +280,11 @@ export default async function ScenePage({
           const config = (task.config ?? {}) as LinkEmbedConfig;
 
           return (
-            <li key={task.id} id={`task-${task.id}`} className="scroll-mt-4 rounded-md border p-3">
+            <li
+              key={task.id}
+              id={`task-${task.id}`}
+              className={`scroll-mt-4 ${task.type === "callout" ? "" : "rounded-md border p-3"}`}
+            >
               {TYPES_WITH_BADGE.includes(task.type) && (
                 <>
                   <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
