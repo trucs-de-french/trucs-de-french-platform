@@ -17,6 +17,20 @@ export function summarizeMistake(feedback: unknown): string {
       : "Всі пропуски правильні.";
   }
 
+  // drag_drop (багатореченнєва форма): { sentences: [{ blanks: [...] }] } —
+  // окремий ключ верхнього рівня від старої пласкої { blanks: [...] } вище,
+  // тож стара збережена детальна форма (до цієї фічі) і далі розпізнається
+  // тим блоком.
+  if (Array.isArray(f.sentences) && f.sentences.length > 0) {
+    const sentences = f.sentences as {
+      blanks: { isCorrect: boolean; correctAnswers: string[] }[];
+    }[];
+    const wrong = sentences.flatMap((s) => s.blanks.filter((b) => !b.isCorrect));
+    return wrong.length
+      ? `Правильно: ${wrong.map((b) => b.correctAnswers.join(" / ")).join("; ")}`
+      : "Усі пропуски правильні.";
+  }
+
   if (Array.isArray(f.options)) {
     const missed = (
       f.options as { correct: boolean; selected: boolean; text: string }[]

@@ -14,6 +14,7 @@ import type {
   ReorderSequence,
   DragDropConfig,
   DragDropPublic,
+  DragDropSentence,
   SortColumnsConfig,
   SortColumnsPublic,
   OpenAnswerConfig,
@@ -103,10 +104,26 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
   };
 }
 
+// Стара пласка форма ({instructions?, template, bank}, до багатореченнєвої
+// версії) — виродковий випадок нової: одне речення без явного id. bank у
+// цій формі вже плаский, нормалізації не потребує.
+export function getDragDropSentences(config: DragDropConfig): DragDropSentence[] {
+  if (config.sentences?.length) return config.sentences;
+  const legacy = config as unknown as { template?: string };
+  if (legacy.template !== undefined) {
+    return [{ id: "legacy", template: legacy.template }];
+  }
+  return [];
+}
+
 export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   return {
     instructions: config.instructions,
-    template: config.template.replace(BLANK_RE, "{{}}"),
+    sentences: getDragDropSentences(config).map((s) => ({
+      id: s.id,
+      template: s.template.replace(BLANK_RE, "{{}}"),
+    })),
+    // Один спільний банк на всю вправу (не по реченню) — свідоме рішення.
     bank: shuffle(config.bank),
   };
 }

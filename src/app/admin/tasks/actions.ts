@@ -89,7 +89,7 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
     case "drag_drop":
       return {
         instructions: (formData.get("drag_drop_instructions") as string) || "",
-        template: (formData.get("drag_drop_template") as string) || "",
+        sentences: parseJsonField(formData.get("drag_drop_sentences")),
         bank: parseJsonField(formData.get("drag_drop_bank")),
       };
     case "sort_columns":

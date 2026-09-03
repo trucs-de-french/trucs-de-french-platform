@@ -83,9 +83,17 @@ export type ReorderConfig = {
   sequences: ReorderSequence[];
 };
 
+// Кілька окремих речень із пропусками під однією спільною instructions —
+// той самий принцип, що reorder.sequences. Банк слів СПІЛЬНИЙ на всю
+// вправу (свідоме рішення, не per-речення) — слово, використане в одному
+// реченні, недоступне для решти. Стара пласка форма ({instructions?,
+// template, bank}, без sentences) — виродковий випадок нової,
+// нормалізується на льоту (getDragDropSentences), без міграції БД; bank
+// лишається пласким полем в обох формах, нормалізації не потребує.
+export type DragDropSentence = { id: string; template: string }; // "Je {{vais}} au cinéma."
 export type DragDropConfig = {
   instructions?: string;
-  template: string; // "Je {{vais}} au cinéma." — один варіант на пропуск
+  sentences: DragDropSentence[];
   bank: string[]; // слова для банку (правильні +, за бажанням, дистрактори)
 };
 
@@ -202,8 +210,8 @@ export type ReorderPublic = {
 
 export type DragDropPublic = {
   instructions?: string;
-  template: string; // з {{}} замість {{слово}}
-  bank: string[]; // перемішано
+  sentences: { id: string; template: string }[]; // з {{}} замість {{слово}}
+  bank: string[]; // перемішано, один спільний
 };
 
 export type SortColumnsPublic = {
@@ -237,7 +245,7 @@ export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
 export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // порядок на кожну послідовність
-export type DragDropAnswer = string[]; // по одному слову з банку на пропуск, за порядком
+export type DragDropAnswer = { sentenceId: string; words: string[] }[]; // слова на кожен пропуск, за реченням
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = { questionId: string; value: string }[];
 export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
@@ -284,8 +292,15 @@ export type ReorderDetail = {
 };
 
 // drag_drop — по суті fill_blank з одним варіантом на пропуск і словами з
-// фіксованого банку замість вільного вводу, тому форма деталізації та сама.
-export type DragDropDetail = FillBlankDetail;
+// фіксованого банку замість вільного вводу (звідси й перевикористання
+// gradeFillBlank у grade.ts, по одному разу на речення), але з кількома
+// реченнями форма деталізації вже не та сама пласка, що FillBlankDetail.
+export type DragDropDetail = {
+  sentences: {
+    id: string;
+    blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean }[];
+  }[];
+};
 
 export type SortColumnsDetail = {
   items: {
@@ -335,6 +350,7 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: MatchingDetail }
   | { correct: boolean; score: number; detail: ListeningDetail }
   | { correct: boolean; score: number; detail: ReorderDetail }
+  | { correct: boolean; score: number; detail: DragDropDetail }
   | { correct: boolean; score: number; detail: SortColumnsDetail }
   | { correct: boolean; score: number; detail: OpenAnswerDetail }
   | { correct: boolean; score: number; detail: TableFillDetail }

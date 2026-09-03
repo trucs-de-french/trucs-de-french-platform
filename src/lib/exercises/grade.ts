@@ -1,4 +1,4 @@
-import { BLANK_RE, getOpenAnswerQuestions, getReorderSequences } from "./sanitize";
+import { BLANK_RE, getOpenAnswerQuestions, getReorderSequences, getDragDropSentences } from "./sanitize";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -20,6 +20,7 @@ import type {
   ReorderDetail,
   DragDropConfig,
   DragDropAnswer,
+  DragDropDetail,
   SortColumnsConfig,
   SortColumnsAnswer,
   SortColumnsDetail,
@@ -177,10 +178,28 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
   };
 }
 
-// drag_drop — той самий алгоритм, що fill_blank (один правильний варіант на
-// пропуск, вбудований у template); поле bank на перевірку не впливає.
+// drag_drop — кожне речення перевіряється тим самим алгоритмом, що
+// fill_blank (один правильний варіант на пропуск, вбудований у template);
+// поле bank на перевірку не впливає. Атомарна одиниця часткового заліку —
+// кожен пропуск через УСІ речення разом, не "речення повністю правильне чи
+// ні" — той самий принцип, що для reorder.
 function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeResult {
-  return gradeFillBlank({ template: config.template }, answer);
+  const sentences = getDragDropSentences(config);
+  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, a.words]));
+
+  const sentencesDetail: DragDropDetail["sentences"] = sentences.map((s) => {
+    const words = answerBySentence.get(s.id) ?? [];
+    const fbResult = gradeFillBlank({ template: s.template }, words);
+    return { id: s.id, blanks: (fbResult.detail as FillBlankDetail).blanks };
+  });
+
+  const allBlanks = sentencesDetail.flatMap((s) => s.blanks);
+  const correctCount = allBlanks.filter((b) => b.isCorrect).length;
+  return {
+    correct: correctCount === allBlanks.length && allBlanks.length > 0,
+    score: percentage(correctCount, allBlanks.length),
+    detail: { sentences: sentencesDetail },
+  };
 }
 
 function gradeSortColumns(config: SortColumnsConfig, answer: SortColumnsAnswer): GradeResult {
