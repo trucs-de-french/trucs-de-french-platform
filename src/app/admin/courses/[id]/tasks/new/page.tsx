@@ -9,10 +9,10 @@ export default async function NewTaskPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sceneId?: string }>;
+  searchParams: Promise<{ sceneId?: string; materialId?: string }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId } = await searchParams;
+  const { sceneId, materialId } = await searchParams;
 
   const supabase = await createClient();
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
@@ -33,6 +33,7 @@ export default async function NewTaskPage({
       <form action={createTask} className="mt-4 flex flex-col gap-4 rounded-md border p-4">
         <input type="hidden" name="product_id" value={productId} />
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
+        {materialId && <input type="hidden" name="material_id" value={materialId} />}
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
@@ -47,6 +48,7 @@ export default async function NewTaskPage({
           scenes={scenes ?? []}
           sceneVocab={sceneVocab}
           productType={product?.type}
+          materialId={materialId}
         />
 
         {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,

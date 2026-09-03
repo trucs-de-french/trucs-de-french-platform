@@ -93,6 +93,12 @@ type Props = {
   productType?: string;
   initialDelfSection?: string | null;
   initialDelfTestNumber?: number | null;
+  /**
+   * Задача вбудована в матеріал (нова чи вже існуюча) — секція/номер тесту
+   * DELF тут не мають сенсу (вправа не належить конкретному CO/CE/PE/PO
+   * тесту), гейт на це — Крок B.
+   */
+  materialId?: string | null;
 };
 
 export function TaskConfigFields({
@@ -106,6 +112,7 @@ export function TaskConfigFields({
   productType,
   initialDelfSection,
   initialDelfTestNumber,
+  materialId,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
   // essay_check за визначенням завжди PE — розумний дефолт, який лишається
