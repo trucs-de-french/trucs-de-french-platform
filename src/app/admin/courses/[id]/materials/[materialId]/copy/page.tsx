@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { copyMaterial } from "@/app/admin/materials/actions";
@@ -25,7 +26,12 @@ export default async function CopyMaterialPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Копіювати матеріал «{material.title ?? "Без назви"}»</h1>
+      <Link href={`/admin/courses/${productId}#materials`} className="text-sm underline">
+        ← До матеріалів
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">
+        Копіювати матеріал «{material.title ?? "Без назви"}»
+      </h1>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Оригінал лишиться незмінним — створюється копія разом з усіма прив&apos;язаними вправами.
       </p>

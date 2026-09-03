@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createProduct } from "../actions";
 import { SubmitButton } from "@/components/submit-button";
 import { CourseTypeFields } from "./course-type-fields";
@@ -11,7 +12,10 @@ export default async function NewCoursePage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Новий курс</h1>
+      <Link href="/admin/courses" className="text-sm underline">
+        ← До списку курсів
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Новий курс</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

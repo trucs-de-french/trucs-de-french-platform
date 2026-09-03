@@ -209,7 +209,7 @@ export default async function AdminCoursePage({
         </section>
       ) : (
         <>
-          <section className="mt-6">
+          <section id="tasks" className="mt-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">Завдання</h2>
               <Link

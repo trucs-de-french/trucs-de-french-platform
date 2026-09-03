@@ -27,7 +27,10 @@ export default async function CoursePage({
   if (product.type === "delf") {
     return (
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="text-2xl font-semibold">{product.title}</h1>
+        <Link href="/dashboard" className="text-sm underline">
+          ← До кабінету
+        </Link>
+        <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
         )}
@@ -48,7 +51,10 @@ export default async function CoursePage({
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-2xl font-semibold">{product.title}</h1>
+      <Link href="/dashboard" className="text-sm underline">
+        ← До кабінету
+      </Link>
+      <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
       {product.description && (
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
       )}

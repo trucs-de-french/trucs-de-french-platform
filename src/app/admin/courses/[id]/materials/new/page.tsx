@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { MaterialArticleFields } from "../material-article-fields";
@@ -14,7 +15,10 @@ export default async function NewMaterialPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Новий матеріал</h1>
+      <Link href={`/admin/courses/${productId}#materials`} className="text-sm underline">
+        ← До матеріалів
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Новий матеріал</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

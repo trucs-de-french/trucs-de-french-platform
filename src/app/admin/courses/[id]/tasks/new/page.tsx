@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createTask } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -26,9 +27,21 @@ export default async function NewTaskPage({
     ? collectSceneVocab((sceneRow.dialogue ?? []) as { vocab?: VocabItem[] }[])
     : [];
 
+  // Контекст, з якого прийшли, відомий одразу з searchParams — вправа,
+  // прив'язана до сцени/матеріалу, повертає саме туди, а не на курс.
+  const backHref = sceneId
+    ? `/admin/courses/${productId}/scenes/${sceneId}`
+    : materialId
+      ? `/admin/courses/${productId}/materials/${materialId}`
+      : `/admin/courses/${productId}#tasks`;
+  const backLabel = sceneId ? "← До сцени" : materialId ? "← До матеріалу" : "← До курсу";
+
   return (
     <div>
-      <h1 className="text-2xl font-bold">Нове завдання</h1>
+      <Link href={backHref} className="text-sm underline">
+        {backLabel}
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Нове завдання</h1>
 
       <form action={createTask} className="mt-4 flex flex-col gap-4 rounded-md border p-4">
         <input type="hidden" name="product_id" value={productId} />

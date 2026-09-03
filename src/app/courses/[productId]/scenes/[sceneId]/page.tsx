@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { toEmbedUrl } from "@/lib/video";
@@ -437,7 +438,10 @@ export default async function ScenePage({
 
   return (
     <main className="mx-auto max-w-3xl p-6">
-      <h1 className="text-2xl font-semibold">{scene.title}</h1>
+      <Link href={`/courses/${productId}`} className="text-sm underline">
+        ← До курсу
+      </Link>
+      <h1 className="mt-2 text-2xl font-semibold">{scene.title}</h1>
 
       {blockOrder.map((type) => (
         <Fragment key={type}>{nodeByBlockType[type]}</Fragment>

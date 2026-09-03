@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { copyTask } from "@/app/admin/tasks/actions";
@@ -16,13 +17,27 @@ export default async function CopyTaskPage({
   const supabase = await createClient();
 
   const [{ data: task }, { data: product }] = await Promise.all([
-    supabase.from("tasks").select("id, title").eq("id", taskId).single(),
+    supabase
+      .from("tasks")
+      .select("id, title, scene_id, material_id")
+      .eq("id", taskId)
+      .single(),
     supabase.from("products").select("type").eq("id", productId).single(),
   ]);
 
   if (!task || !product) notFound();
 
   const isFilm = product.type === "film";
+
+  // Копіювання вправи доступне з трьох місць (список сцени, список
+  // матеріалу, "вільні" завдання на сторінці курсу) — назад веде саме туди,
+  // звідки прийшли, а не на сторінку редагування.
+  const backHref = task.scene_id
+    ? `/admin/courses/${productId}/scenes/${task.scene_id}`
+    : task.material_id
+      ? `/admin/courses/${productId}/materials/${task.material_id}`
+      : `/admin/courses/${productId}#tasks`;
+  const backLabel = task.scene_id ? "← До сцени" : task.material_id ? "← До матеріалу" : "← До курсу";
 
   const [{ data: scenes }, { data: materials }] = await Promise.all([
     isFilm
@@ -40,7 +55,10 @@ export default async function CopyTaskPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Копіювати завдання «{task.title}»</h1>
+      <Link href={backHref} className="text-sm underline">
+        {backLabel}
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Копіювати завдання «{task.title}»</h1>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Оригінал лишиться незмінним — створюється копія з обраним власником.
       </p>

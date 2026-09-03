@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateTask, deleteTask } from "@/app/admin/tasks/actions";
@@ -49,9 +50,21 @@ export default async function EditTaskPage({
     ? collectSceneVocab((sceneRow.dialogue ?? []) as { vocab?: VocabItem[] }[])
     : [];
 
+  // Вправа, прив'язана до сцени/матеріалу, повертає саме туди, а не на
+  // курс — той самий розподіл, що й на сторінці створення завдання.
+  const backHref = task.scene_id
+    ? `/admin/courses/${productId}/scenes/${task.scene_id}`
+    : task.material_id
+      ? `/admin/courses/${productId}/materials/${task.material_id}`
+      : `/admin/courses/${productId}#tasks`;
+  const backLabel = task.scene_id ? "← До сцени" : task.material_id ? "← До матеріалу" : "← До курсу";
+
   return (
     <div>
-      <h1 className="text-2xl font-bold">Редагування завдання</h1>
+      <Link href={backHref} className="text-sm underline">
+        {backLabel}
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Редагування завдання</h1>
 
       <SaveForm
         action={updateTask.bind(null, task.id)}
