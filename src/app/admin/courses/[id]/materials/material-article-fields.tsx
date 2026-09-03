@@ -7,12 +7,22 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
+import type { CalloutStyle } from "@/lib/exercises/types";
 
-// Той самий TipTap-набір розширень і той самий sanitizeCalloutHtml, що вже
-// в callout-fields.tsx — окремий компонент, а не спільний з CalloutFields,
-// бо тут немає style-піктограми (це специфічно для callout-блоку) і не
-// хочеться ризикувати вже робочим, задеплоєним компонентом заради невеликого
-// скорочення дублювання тулбару.
+// Той самий TipTap-набір розширень, той самий sanitizeCalloutHtml і той
+// самий набір стилів блоку, що вже в callout-fields.tsx — окремий
+// компонент, а не спільний з CalloutFields, бо не хочеться ризикувати вже
+// робочим, задеплоєним компонентом заради невеликого скорочення
+// дублювання.
+const STYLE_OPTIONS: { value: CalloutStyle; label: string; icon: string; className: string }[] = [
+  { value: "none", label: "Без виділення", icon: "▪️", className: "border-neutral-300 dark:border-neutral-700" },
+  { value: "info", label: "Інфо", icon: "ℹ️", className: "border-blue-400 dark:border-blue-700" },
+  { value: "tip", label: "Порада", icon: "💡", className: "border-yellow-400 dark:border-yellow-700" },
+  { value: "warning", label: "Увага", icon: "⚠️", className: "border-red-400 dark:border-red-700" },
+  { value: "success", label: "Успіх", icon: "✅", className: "border-green-400 dark:border-green-700" },
+  { value: "special", label: "Особливий", icon: "✨", className: "border-purple-400 dark:border-purple-700" },
+];
+
 const HIGHLIGHT_COLORS: { value: string; label: string }[] = [
   { value: "#fef08a", label: "Жовтий" },
   { value: "#bbf7d0", label: "Зелений" },
@@ -28,8 +38,15 @@ const FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Comic Sans MS', 'Brush Script MT', cursive", label: "Рукописний" },
 ];
 
-export function MaterialArticleFields({ initialContent }: { initialContent?: string | null }) {
+export function MaterialArticleFields({
+  initialContent,
+  initialStyle,
+}: {
+  initialContent?: string | null;
+  initialStyle?: CalloutStyle | null;
+}) {
   const [html, setHtml] = useState(initialContent ?? "");
+  const [style, setStyle] = useState<CalloutStyle>(initialStyle ?? "none");
 
   const editor = useEditor({
     // Обов'язково false у Next.js — інакше редактор рендериться на сервері
@@ -64,90 +81,114 @@ export function MaterialArticleFields({ initialContent }: { initialContent?: str
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs text-neutral-500 dark:text-neutral-400">
-        Текст статті (необов&apos;язково)
-      </label>
-      <input type="hidden" name="content" value={html} readOnly />
+    <div className="flex flex-col gap-3">
+      <input type="hidden" name="style" value={style} readOnly />
 
-      {editor && (
-        <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-white p-1 dark:bg-neutral-950">
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`rounded px-2 py-1 text-xs font-bold ${
-              editor.isActive("bold") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
-          >
-            B
-          </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`rounded px-2 py-1 text-xs italic ${
-              editor.isActive("italic") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
-          >
-            I
-          </button>
-          <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">Підсвітка:</span>
-          {HIGHLIGHT_COLORS.map((c) => (
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-neutral-500 dark:text-neutral-400">Стиль блоку</label>
+        <div className="flex flex-wrap gap-2">
+          {STYLE_OPTIONS.map((opt) => (
             <button
-              key={c.value}
+              key={opt.value}
               type="button"
-              title={c.label}
-              onClick={() => editor.chain().focus().setHighlight({ color: c.value }).run()}
-              style={{ backgroundColor: c.value }}
-              className={`h-5 w-5 rounded border-2 ${
-                editor.isActive("highlight", { color: c.value })
-                  ? "border-black dark:border-white"
-                  : "border-transparent"
+              onClick={() => setStyle(opt.value)}
+              className={`rounded-md border-2 px-2 py-1 text-xs ${opt.className} ${
+                style === opt.value
+                  ? "bg-neutral-100 font-medium dark:bg-neutral-800"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
               }`}
-            />
+            >
+              {opt.icon} {opt.label}
+            </button>
           ))}
-          <button
-            type="button"
-            title="Прибрати підсвітку"
-            onClick={() => editor.chain().focus().unsetHighlight().run()}
-            className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-          >
-            ✕
-          </button>
-          <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`rounded px-2 py-1 text-xs ${
-              editor.isActive("heading", { level: 2 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
-          >
-            H2
-          </button>
-          <button
-            type="button"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`rounded px-2 py-1 text-xs ${
-              editor.isActive("heading", { level: 3 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
-          >
-            H3
-          </button>
-          <select
-            onChange={(e) => toggleFont(e.target.value)}
-            defaultValue=""
-            className="rounded border px-1.5 py-1 text-xs"
-          >
-            {FONT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
         </div>
-      )}
+      </div>
 
-      <EditorContent editor={editor} className="rounded-b-md" />
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          Текст статті (необов&apos;язково)
+        </label>
+        <input type="hidden" name="content" value={html} readOnly />
+
+        {editor && (
+          <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-white p-1 dark:bg-neutral-950">
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`rounded px-2 py-1 text-xs font-bold ${
+                editor.isActive("bold") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`rounded px-2 py-1 text-xs italic ${
+                editor.isActive("italic") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              I
+            </button>
+            <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">Підсвітка:</span>
+            {HIGHLIGHT_COLORS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                title={c.label}
+                onClick={() => editor.chain().focus().setHighlight({ color: c.value }).run()}
+                style={{ backgroundColor: c.value }}
+                className={`h-5 w-5 rounded border-2 ${
+                  editor.isActive("highlight", { color: c.value })
+                    ? "border-black dark:border-white"
+                    : "border-transparent"
+                }`}
+              />
+            ))}
+            <button
+              type="button"
+              title="Прибрати підсвітку"
+              onClick={() => editor.chain().focus().unsetHighlight().run()}
+              className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            >
+              ✕
+            </button>
+            <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`rounded px-2 py-1 text-xs ${
+                editor.isActive("heading", { level: 2 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              H2
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={`rounded px-2 py-1 text-xs ${
+                editor.isActive("heading", { level: 3 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              H3
+            </button>
+            <select
+              onChange={(e) => toggleFont(e.target.value)}
+              defaultValue=""
+              className="rounded border px-1.5 py-1 text-xs"
+            >
+              {FONT_OPTIONS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <EditorContent editor={editor} className="rounded-b-md" />
+      </div>
     </div>
   );
 }

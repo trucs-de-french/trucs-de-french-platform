@@ -15,7 +15,7 @@ export default async function EditMaterialPage({
 
   const { data: material } = await supabase
     .from("materials")
-    .select("id, title, file_url, category, content")
+    .select("id, title, file_url, category, content, style")
     .eq("id", materialId)
     .single();
 
@@ -64,7 +64,7 @@ export default async function EditMaterialPage({
           />
         </div>
 
-        <MaterialArticleFields initialContent={material.content} />
+        <MaterialArticleFields initialContent={material.content} initialStyle={material.style} />
       </SaveForm>
 
       <form action={deleteMaterial.bind(null, material.id, productId)} className="mt-3">

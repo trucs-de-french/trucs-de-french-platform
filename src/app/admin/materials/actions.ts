@@ -4,9 +4,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { ActionState } from "@/lib/action-state";
+import type { CalloutStyle } from "@/lib/exercises/types";
 
 function normalizeCategory(value: FormDataEntryValue | null): "delf_guide" | "general_tip" | null {
   return value === "delf_guide" || value === "general_tip" ? value : null;
+}
+
+const VALID_STYLES: CalloutStyle[] = ["none", "info", "tip", "warning", "success", "special"];
+
+function normalizeStyle(value: FormDataEntryValue | null): CalloutStyle {
+  return VALID_STYLES.includes(value as CalloutStyle) ? (value as CalloutStyle) : "none";
 }
 
 // "Лише URL" для PDF — той самий принцип, що для video_url/task_image_url/
@@ -26,6 +33,7 @@ export async function createMaterial(productId: string, formData: FormData) {
     file_url: fileUrl,
     file_type: fileUrl ? "pdf" : null,
     content: content ? sanitizeCalloutHtml(content) : null,
+    style: normalizeStyle(formData.get("style")),
   });
 
   if (error) {
@@ -55,6 +63,7 @@ export async function updateMaterial(
       file_url: fileUrl,
       file_type: fileUrl ? "pdf" : null,
       content: content ? sanitizeCalloutHtml(content) : null,
+      style: normalizeStyle(formData.get("style")),
     })
     .eq("id", materialId);
 
