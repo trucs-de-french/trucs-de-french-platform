@@ -25,12 +25,12 @@ export function MaterialSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800"
       >
-        <h2 className="text-lg font-medium">{label}</h2>
         <span aria-hidden className="text-neutral-500 dark:text-neutral-400">
           {open ? "▾" : "▸"}
         </span>
+        <h2 className="text-lg font-medium">{label}</h2>
       </button>
 
       {open && (
