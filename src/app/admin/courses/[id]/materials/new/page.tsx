@@ -1,6 +1,7 @@
 import { createMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { MaterialArticleFields } from "../material-article-fields";
+import { MaterialCategoryFileFields } from "../material-category-file-fields";
 
 export default async function NewMaterialPage({
   params,
@@ -35,21 +36,7 @@ export default async function NewMaterialPage({
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Категорія</label>
-          <select name="category" defaultValue="" className="rounded-md border px-2 py-1.5 text-sm">
-            <option value="">— Без категорії —</option>
-            <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
-            <option value="general_tip">Загальні рекомендації (типові помилки)</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
-            Посилання на PDF (URL, необов&apos;язково)
-          </label>
-          <input name="file_url" type="url" className="rounded-md border px-2 py-1.5 text-sm" />
-        </div>
+        <MaterialCategoryFileFields />
 
         <MaterialArticleFields />
 

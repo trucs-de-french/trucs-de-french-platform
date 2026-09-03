@@ -16,7 +16,7 @@ export default async function MaterialPage({
 
   const { data: material } = await supabase
     .from("materials")
-    .select("id, product_id, title, file_url, content, style")
+    .select("id, product_id, title, file_url, content, style, category")
     .eq("id", materialId)
     .single();
 
@@ -24,18 +24,29 @@ export default async function MaterialPage({
     notFound();
   }
 
-  const { data: exercises } = await supabase
-    .from("tasks")
-    .select("id, type, title, config, image_url, audio_url")
-    .eq("material_id", materialId)
-    .order("order_index")
-    .returns<ExerciseTask[]>();
+  // Категорійні правила відображення: "Рекомендації DELF" — стаття + PDF,
+  // без вправ; "Загальні рекомендації" — стаття + вправи, без PDF.
+  // Без категорії ("Інше") — без обмежень, показуємо все, що є (немає
+  // заявленого типу матеріалу, немає підстав щось ховати).
+  const showPdf = material.category !== "general_tip";
+  const showExercises = material.category !== "delf_guide";
+
+  const { data: exercises } = showExercises
+    ? await supabase
+        .from("tasks")
+        .select("id, type, title, config, image_url, audio_url")
+        .eq("material_id", materialId)
+        .order("order_index")
+        .returns<ExerciseTask[]>()
+    : { data: null };
 
   const style = (material.style as CalloutStyle) ?? "none";
   // Друга (визначальна для показу) санітизація — на межі рендеру, той самий
   // принцип, що в CalloutExercise, незалежно від того, що вже мало бути
   // санітизовано при збереженні.
   const safeHtml = material.content ? sanitizeCalloutHtml(material.content) : null;
+  const hasPdf = showPdf && !!material.file_url;
+  const hasExercises = showExercises && !!exercises && exercises.length > 0;
 
   return (
     <main className="mx-auto max-w-2xl p-6">
@@ -54,9 +65,9 @@ export default async function MaterialPage({
         </div>
       )}
 
-      {material.file_url && (
+      {hasPdf && (
         <a
-          href={material.file_url}
+          href={material.file_url!}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-block rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -65,11 +76,11 @@ export default async function MaterialPage({
         </a>
       )}
 
-      {exercises && exercises.length > 0 && (
+      {hasExercises && (
         <section className="mt-6">
           <h2 className="text-lg font-medium">Вправи</h2>
           <ul className="mt-2 flex flex-col gap-3">
-            {exercises.map((task) => (
+            {exercises!.map((task) => (
               <li key={task.id} className="rounded-md border p-3">
                 <ExerciseBlock task={task} />
               </li>
@@ -78,7 +89,7 @@ export default async function MaterialPage({
         </section>
       )}
 
-      {!safeHtml && !material.file_url && (!exercises || exercises.length === 0) && (
+      {!safeHtml && !hasPdf && !hasExercises && (
         <p className="mt-4 text-neutral-500 dark:text-neutral-400">
           Цей матеріал поки порожній.
         </p>
