@@ -97,3 +97,34 @@ export async function endStudentPreview(productId: string) {
   cookieStore.delete(PREVIEW_COOKIE);
   redirect(`/admin/courses/${productId}`);
 }
+
+// Каскадне безповоротне видалення — уся схема вже on delete cascade
+// (products → scenes/tasks/materials → scene_links/games/progress/mistakes),
+// тож звичайний DELETE, без окремого RPC. Архівування лишається
+// обов'язковим проміжним кроком: сервер сам перевіряє archived_at, а не
+// довіряє тому, що кнопка прихована на клієнті.
+export async function deleteProductPermanently(productId: string) {
+  const supabase = await createClient();
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("archived_at")
+    .eq("id", productId)
+    .single();
+
+  if (!product?.archived_at) {
+    redirect(
+      `/admin/courses/${productId}?error=${encodeURIComponent(
+        "Видалити назавжди можна лише архівований курс"
+      )}`
+    );
+  }
+
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+
+  if (error) {
+    redirect(`/admin/courses/${productId}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/admin/courses");
+}
