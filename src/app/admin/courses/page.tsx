@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { toggleArchive } from "./actions";
+import { toggleArchive, deleteProductPermanently } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
+import { ConfirmForm } from "@/components/confirm-form";
 
 export default async function AdminCoursesPage({
   searchParams,
@@ -78,14 +79,27 @@ export default async function AdminCoursesPage({
                 {p.is_published ? "Опубліковано" : "Чернетка"}
               </span>
               {showArchived && (
-                <form action={toggleArchive.bind(null, p.id, false)}>
-                  <SubmitButton
-                    pendingChildren="..."
-                    className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                <>
+                  <form action={toggleArchive.bind(null, p.id, false)}>
+                    <SubmitButton
+                      pendingChildren="..."
+                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    >
+                      Відновити
+                    </SubmitButton>
+                  </form>
+                  <ConfirmForm
+                    action={deleteProductPermanently.bind(null, p.id)}
+                    message="Курс і весь вміст (сцени, тести, матеріали, завдання) буде видалено назавжди. Це незворотно. Ви впевнені?"
                   >
-                    Відновити
-                  </SubmitButton>
-                </form>
+                    <SubmitButton
+                      pendingChildren="..."
+                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                    >
+                      Видалити назавжди
+                    </SubmitButton>
+                  </ConfirmForm>
+                </>
               )}
             </div>
           </li>
