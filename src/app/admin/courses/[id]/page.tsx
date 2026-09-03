@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateProduct, togglePublish, toggleArchive, startStudentPreview } from "../actions";
+import {
+  updateProduct,
+  togglePublish,
+  toggleArchive,
+  startStudentPreview,
+  deleteProductPermanently,
+} from "../actions";
 import {
   createScene,
   deleteScene,
@@ -12,6 +18,7 @@ import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
+import { ConfirmForm } from "@/components/confirm-form";
 
 export default async function AdminCoursePage({
   params,
@@ -100,6 +107,19 @@ export default async function AdminCoursePage({
               {product.archived_at ? "Відновити курс" : "Архівувати"}
             </SubmitButton>
           </form>
+          {product.archived_at && (
+            <ConfirmForm
+              action={deleteProductPermanently.bind(null, product.id)}
+              message="Курс і весь вміст (сцени, тести, матеріали, завдання) буде видалено назавжди. Це незворотно. Ви впевнені?"
+            >
+              <SubmitButton
+                pendingChildren="..."
+                className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+              >
+                Видалити назавжди
+              </SubmitButton>
+            </ConfirmForm>
+          )}
         </div>
       </div>
 
