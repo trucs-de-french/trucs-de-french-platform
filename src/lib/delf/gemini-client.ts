@@ -1,8 +1,8 @@
 // Спільний низькорівневий виклик Gemini (нативний ендпоінт, x-goog-api-key
 // у заголовку — перевірений робочим патерн, НЕ ?key= query-параметр і НЕ
-// OpenAI-сумісна обгортка). Винесено з check-answer.ts, коли з'явився другий
-// реальний виклик (remedial-exercises.ts) — дублювати retry/backoff-логіку
-// вдруге не було сенсу.
+// OpenAI-сумісна обгортка). Винесено з check-answer.ts окремим модулем, щоб
+// retry/backoff-логіку можна було перевикористати з інших місць платформи
+// без дублювання.
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;

@@ -19,7 +19,7 @@ export async function recordTaskAttempt(
   userId: string,
   taskId: string,
   result: { correct: boolean; score: number; studentAnswer?: unknown; detail?: unknown }
-): Promise<{ mistakeId: string | null }> {
+) {
   // атомарний upsert на рівні БД (INSERT ... ON CONFLICT DO UPDATE
   // attempts = attempts + 1) — виключає втрату інкременту при
   // паралельних/швидких повторних сабмітах, на відміну від
@@ -32,25 +32,14 @@ export async function recordTaskAttempt(
   if (progressError) throw progressError;
 
   if (!result.correct || hasReportableErrors(result.detail)) {
-    // .select("id").single() — потрібен id щойно вставленого рядка, щоб
-    // essay_check-роут міг прив'язати remedial_exercises.mistake_id саме
-    // до ЦІЄЇ спроби, а не шукати її окремим запитом.
-    const { data: mistake, error: mistakeError } = await supabase
-      .from("mistakes")
-      .insert({
-        user_id: userId,
-        task_id: taskId,
-        student_answer:
-          typeof result.studentAnswer === "string"
-            ? result.studentAnswer
-            : JSON.stringify(result.studentAnswer ?? null),
-        ai_feedback: result.detail ?? null,
-      })
-      .select("id")
-      .single();
-    if (mistakeError) throw mistakeError;
-    return { mistakeId: mistake?.id ?? null };
+    await supabase.from("mistakes").insert({
+      user_id: userId,
+      task_id: taskId,
+      student_answer:
+        typeof result.studentAnswer === "string"
+          ? result.studentAnswer
+          : JSON.stringify(result.studentAnswer ?? null),
+      ai_feedback: result.detail ?? null,
+    });
   }
-
-  return { mistakeId: null };
 }
