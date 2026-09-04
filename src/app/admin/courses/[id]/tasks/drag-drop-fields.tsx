@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptySentence(): DragDropSentence {
   return { id: crypto.randomUUID(), template: "" };
@@ -63,17 +64,18 @@ export const DragDropFields = forwardRef<
       <input type="hidden" name="drag_drop_sentences" value={JSON.stringify(sentences)} readOnly />
       <input type="hidden" name="drag_drop_bank" value={JSON.stringify(bank)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="drag_drop_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Перетягніть слова у пропуски"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="drag_drop_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="drag_drop_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex flex-col gap-2">
         <label className="text-xs text-neutral-500 dark:text-neutral-400">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { MultipleChoiceConfig, MultipleChoiceItem } from "@/lib/exercises/types";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyItem(): MultipleChoiceItem {
   return {
@@ -87,17 +88,18 @@ export function MultipleChoiceFields({
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="mc_items" value={JSON.stringify(items)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="mc_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Оберіть правильний варіант"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="mc_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="mc_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-neutral-500 dark:text-neutral-400">Подання</label>

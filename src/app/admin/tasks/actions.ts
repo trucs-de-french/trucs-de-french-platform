@@ -36,11 +36,16 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         exerciseNumber,
       };
     }
-    case "open_answer":
+    case "open_answer": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("open_answer_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("open_answer_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         questions: parseJsonField(formData.get("open_answer_questions")),
       };
+    }
     case "embed":
       return {
         url: (formData.get("embed_url") as string) || "",
@@ -58,8 +63,12 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
     }
     case "fill_blank": {
       const wordBank = parseJsonField(formData.get("fill_blank_word_bank")) as string[];
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("fill_blank_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("fill_blank_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("fill_blank_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         template: (formData.get("fill_blank_template") as string) || "",
         points: Number(formData.get("fill_blank_points")) || 1,
         // Порожній банк -> wordBank взагалі відсутній у config, а не "[]" —
@@ -68,12 +77,17 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         ...(wordBank.length > 0 ? { wordBank } : {}),
       };
     }
-    case "multiple_choice":
+    case "multiple_choice": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("mc_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("mc_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("mc_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         display: (formData.get("mc_display") as string) || "buttons",
         items: parseJsonField(formData.get("mc_items")),
       };
+    }
     case "true_false": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""
@@ -84,39 +98,73 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         statements: parseJsonField(formData.get("tf_statements")),
       };
     }
-    case "matching":
+    case "matching": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("matching_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("matching_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("matching_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         pairs: parseJsonField(formData.get("matching_pairs")),
       };
-    case "listening":
+    }
+    case "listening": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("listening_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("listening_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("listening_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         audioUrl: (formData.get("listening_audio_url") as string) || "",
         questions: parseJsonField(formData.get("listening_questions")),
       };
-    case "reorder":
+    }
+    case "reorder": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("reorder_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("reorder_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("reorder_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         sequences: parseJsonField(formData.get("reorder_sequences")),
       };
-    case "drag_drop":
+    }
+    case "drag_drop": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("drag_drop_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("drag_drop_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("drag_drop_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         sentences: parseJsonField(formData.get("drag_drop_sentences")),
         bank: parseJsonField(formData.get("drag_drop_bank")),
       };
-    case "sort_columns":
+    }
+    case "sort_columns": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("sort_columns_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("sort_columns_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("sort_columns_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
         columns: parseJsonField(formData.get("sort_columns_columns")),
         items: parseJsonField(formData.get("sort_columns_items")),
       };
-    case "flip_cards":
+    }
+    case "flip_cards": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("flip_cards_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("flip_cards_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("flip_cards_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
         cards: parseJsonField(formData.get("flip_cards_cards")),
       };
+    }
     case "callout":
       // Основна санітизація — саме тут, на межі збереження в базу
       // (клієнтська санітизація в CalloutFields — лише для швидкого
@@ -125,22 +173,41 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         style: (formData.get("callout_style") as string) || "none",
         content: sanitizeCalloutHtml((formData.get("callout_content") as string) || ""),
       };
-    case "phonetics":
+    case "phonetics": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("phonetics_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("phonetics_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("phonetics_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         items: parseJsonField(formData.get("phonetics_items")),
       };
-    case "table_fill":
+    }
+    case "table_fill": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("table_fill_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("table_fill_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("table_fill_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
         columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
         rows: parseJsonField(formData.get("table_fill_rows")),
       };
-    case "image_match":
+    }
+    case "image_match": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("image_match_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("image_match_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("image_match_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
         items: parseJsonField(formData.get("image_match_items")),
       };
+    }
     case "vocab_quiz":
       return {
         sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),

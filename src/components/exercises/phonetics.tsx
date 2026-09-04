@@ -2,6 +2,7 @@ import type { PhoneticsConfig } from "@/lib/exercises/types";
 import { isYouTubeUrl, toEmbedUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { InstructionsText } from "./instructions-text";
 
 // Не "use client" — довідковий блок без взаємодії, що вимагала б стану
 // (як callout/flip_cards); AudioPlayer/iframe усередині самі "use client".
@@ -17,7 +18,11 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (
           <div key={i} className="flex flex-col gap-1 rounded-md border p-3">

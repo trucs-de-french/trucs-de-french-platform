@@ -10,6 +10,7 @@
 // цілком, лише якщо ВСІ пропуски правильні (correct === true).
 export type FillBlankConfig = {
   instructions?: string; // текст-інструкція над вправою, напр. "Заповніть пропуски"
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   template: string; // "Je {{vais|vais bien}} au cinéma."
   points?: number;
   // Опційний банк слів-підказок (бульбашки) поруч зі вправою — суто
@@ -32,6 +33,7 @@ export type FillBlankConfig = {
 export type OpenAnswerQuestion = { id: string; question: string; answers: string[]; points?: number };
 export type OpenAnswerConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   questions: OpenAnswerQuestion[];
 };
 
@@ -80,6 +82,7 @@ export type MultipleChoiceItem = {
 };
 export type MultipleChoiceConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   display: "buttons" | "dropdown";
   items: MultipleChoiceItem[];
 };
@@ -111,6 +114,7 @@ export type TrueFalseConfig = {
 export type MatchingPair = { id?: string; left: string; right: string; points?: number };
 export type MatchingConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   pairs: MatchingPair[];
 };
 
@@ -125,6 +129,7 @@ export type ListeningQuestion = {
 };
 export type ListeningConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   audioUrl: string;
   questions: ListeningQuestion[];
 };
@@ -144,6 +149,7 @@ export type ListeningConfig = {
 export type ReorderSequence = { id: string; items: string[]; points?: number }; // items — правильний порядок
 export type ReorderConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   sequences: ReorderSequence[];
 };
 
@@ -163,6 +169,7 @@ export type ReorderConfig = {
 export type DragDropSentence = { id: string; template: string; points?: number }; // "Je {{vais}} au cinéma."
 export type DragDropConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   sentences: DragDropSentence[];
   bank: string[]; // слова для банку (правильні +, за бажанням, дистрактори)
 };
@@ -173,6 +180,7 @@ export type SortColumn = { id: string; label: string };
 export type SortColumnsItem = { id: string; text: string; columnId: string; points?: number };
 export type SortColumnsConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   columns: SortColumn[];
   items: SortColumnsItem[];
 };
@@ -197,6 +205,7 @@ export type TableFillRow = {
 };
 export type TableFillConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   columnLabels: [string, string];
   rows: TableFillRow[];
 };
@@ -210,6 +219,7 @@ export type TableFillConfig = {
 export type ImageMatchItem = { id: string; imageUrl: string; name: string; points?: number };
 export type ImageMatchConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   items: ImageMatchItem[];
 };
 
@@ -218,6 +228,7 @@ export type ImageMatchConfig = {
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
 export type FlipCardsConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   cards: FlipCard[];
 };
 
@@ -241,6 +252,7 @@ export type PhoneticsItem = {
 };
 export type PhoneticsConfig = {
   instructions?: string;
+  subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   items: PhoneticsItem[];
 };
 
@@ -256,6 +268,7 @@ export type VocabQuizConfig = {
 
 export type FillBlankPublic = {
   instructions?: string;
+  subInstructions?: string;
   template: string; // з {{}} замість {{вар1|вар2}}
   points: number; // на всю вправу, не на пропуск
   wordBank?: string[]; // довідкові бульбашки, не тасується
@@ -263,6 +276,7 @@ export type FillBlankPublic = {
 
 export type MultipleChoicePublic = {
   instructions?: string;
+  subInstructions?: string;
   display: "buttons" | "dropdown";
   items: {
     id: string;
@@ -282,6 +296,7 @@ export type TrueFalsePublic = {
 
 export type MatchingPublic = {
   instructions?: string;
+  subInstructions?: string;
   left: string[];
   right: string[]; // перемішано, без зв'язку з left
   // ДОДАТКОВЕ поле лише для показу балів (не замінює left/right вище і не
@@ -293,6 +308,7 @@ export type MatchingPublic = {
 
 export type ListeningPublic = {
   instructions?: string;
+  subInstructions?: string;
   audioUrl: string;
   questions: {
     id: string;
@@ -304,34 +320,40 @@ export type ListeningPublic = {
 
 export type ReorderPublic = {
   instructions?: string;
+  subInstructions?: string;
   sequences: { id: string; items: string[]; points: number }[]; // items перемішано, окремо на кожну послідовність
 };
 
 export type DragDropPublic = {
   instructions?: string;
+  subInstructions?: string;
   sentences: { id: string; template: string; points: number }[]; // з {{}} замість {{слово}}
   bank: string[]; // перемішано, один спільний
 };
 
 export type SortColumnsPublic = {
   instructions?: string;
+  subInstructions?: string;
   columns: SortColumn[];
   items: { id: string; text: string; points: number }[]; // без columnId, перемішано
 };
 
 export type OpenAnswerPublic = {
   instructions?: string;
+  subInstructions?: string;
   questions: { id: string; question: string; points: number }[];
 };
 
 export type TableFillPublic = {
   instructions?: string;
+  subInstructions?: string;
   columnLabels: [string, string];
   rows: { id: string; left: string | null; right: string | null; points: number }[]; // null = прихована клітинка
 };
 
 export type ImageMatchPublic = {
   instructions?: string;
+  subInstructions?: string;
   items: { id: string; imageUrl: string; points: number }[];
   bank: string[]; // перемішані name з усіх items
 };

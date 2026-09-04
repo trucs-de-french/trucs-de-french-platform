@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyCard(): FlipCard {
   return { front: "", back: "", image_url: "", audio_url: "" };
@@ -44,17 +45,18 @@ export const FlipCardsFields = forwardRef<
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="flip_cards_cards" value={JSON.stringify(cards)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="flip_cards_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Клікніть картку, щоб перевернути"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="flip_cards_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="flip_cards_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       {cards.map((card, i) => (
         <div key={i} className="flex flex-col gap-1 rounded-md border p-2">

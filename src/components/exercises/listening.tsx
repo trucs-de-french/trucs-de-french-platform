@@ -8,6 +8,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 export function ListeningExercise({
   taskId,
@@ -26,7 +27,11 @@ export function ListeningExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.listening}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.listening}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       {isYouTubeUrl(config.audioUrl) ? (
         <div className="aspect-video w-full overflow-hidden rounded-md bg-black">

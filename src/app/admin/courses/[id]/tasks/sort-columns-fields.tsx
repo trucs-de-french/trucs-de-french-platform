@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle,
@@ -72,17 +73,18 @@ export const SortColumnsFields = forwardRef<
       <input type="hidden" name="sort_columns_columns" value={JSON.stringify(columns)} readOnly />
       <input type="hidden" name="sort_columns_items" value={JSON.stringify(items)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="sort_columns_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Розкладіть слова по колонках"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="sort_columns_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="sort_columns_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-neutral-500 dark:text-neutral-400">Колонки</label>

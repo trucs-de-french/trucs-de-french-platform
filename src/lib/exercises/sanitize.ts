@@ -55,6 +55,7 @@ export function resolveFillBlankPoints(config: FillBlankConfig): number {
 export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     template: config.template.replace(BLANK_RE, "{{}}"),
     points: resolveFillBlankPoints(config),
     // Довідкові бульбашки — пропускаємо як є, не тасуємо (той самий
@@ -83,6 +84,7 @@ export function resolveMultipleChoicePoints(item: MultipleChoiceItem): number {
 export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleChoicePublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     display: config.display,
     items: getMultipleChoiceItems(config).map((item) => {
       const correctCount = item.options.filter((o) => o.correct).length;
@@ -134,6 +136,7 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   const pairs = getMatchingPairs(config);
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     left: config.pairs.map((p) => p.left),
     right: shuffle(config.pairs.map((p) => p.right)),
     // left тут НЕ перемішаний — той самий порядок, що в left[] вище.
@@ -149,6 +152,7 @@ export function resolveListeningPoints(question: ListeningQuestion): number {
 export function sanitizeListening(config: ListeningConfig): ListeningPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     audioUrl: config.audioUrl,
     questions: config.questions.map((q) => ({
       id: q.id,
@@ -179,6 +183,7 @@ export function resolveReorderPoints(sequence: ReorderSequence): number {
 export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
     // перемішалися б між собою.
     sequences: getReorderSequences(config).map((s) => ({
@@ -209,6 +214,7 @@ export function resolveDragDropPoints(sentence: DragDropSentence): number {
 export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     sentences: getDragDropSentences(config).map((s) => ({
       id: s.id,
       template: s.template.replace(BLANK_RE, "{{}}"),
@@ -227,6 +233,7 @@ export function resolveSortColumnsPoints(item: SortColumnsItem): number {
 export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     columns: config.columns,
     items: shuffle(
       config.items.map((i) => ({ id: i.id, text: i.text, points: resolveSortColumnsPoints(i) }))
@@ -255,6 +262,7 @@ export function resolveOpenAnswerPoints(question: OpenAnswerQuestion): number {
 export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     questions: getOpenAnswerQuestions(config).map((q) => ({
       id: q.id,
       question: q.question,
@@ -271,6 +279,7 @@ export function resolveTableFillPoints(row: TableFillRow): number {
 export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     columnLabels: config.columnLabels,
     rows: config.rows.map((r) => ({
       id: r.id,
@@ -289,6 +298,7 @@ export function resolveImageMatchPoints(item: ImageMatchItem): number {
 export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     items: config.items.map((i) => ({
       id: i.id,
       imageUrl: i.imageUrl,

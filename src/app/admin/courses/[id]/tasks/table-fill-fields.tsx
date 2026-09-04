@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyRow(): TableFillRow {
   return { id: crypto.randomUUID(), left: "", right: "", leftHidden: false, rightHidden: true };
@@ -57,17 +58,18 @@ export const TableFillFields = forwardRef<
       <input type="hidden" name="table_fill_column_labels" value={JSON.stringify(columnLabels)} readOnly />
       <input type="hidden" name="table_fill_rows" value={JSON.stringify(rows)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="table_fill_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Заповніть порожні клітинки таблиці"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="table_fill_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="table_fill_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex items-end gap-2">
         <div className="flex flex-1 flex-col gap-1">

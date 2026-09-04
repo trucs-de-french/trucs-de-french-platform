@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyItem(): PhoneticsItem {
   return { text: "", transcription: "", mediaUrl: "" };
@@ -36,17 +37,18 @@ export function PhoneticsFields({
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="phonetics_items" value={JSON.stringify(items)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="phonetics_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Прослухайте й повторіть вимову"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="phonetics_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="phonetics_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       {items.map((item, i) => (
         <div key={i} className="flex flex-col gap-1 rounded-md border p-2">

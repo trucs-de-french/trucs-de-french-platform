@@ -6,6 +6,7 @@ import { useColumnSort } from "./use-column-sort";
 import { bankTileClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 export function SortColumnsExercise({
   taskId,
@@ -60,7 +61,11 @@ export function SortColumnsExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div
         {...poolDropProps()}

@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
 
@@ -142,7 +143,11 @@ export function ReorderExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.reorder}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div className="flex flex-col gap-4">
         {config.sequences.map((seq) => (

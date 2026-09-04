@@ -6,6 +6,7 @@ import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 export function DragDropExercise({
   taskId,
@@ -53,7 +54,11 @@ export function DragDropExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div className="flex flex-col gap-3">
         {config.sentences.map((s, si) => {

@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptySequence(): ReorderSequence {
   return { id: crypto.randomUUID(), items: ["", ""] };
@@ -85,17 +86,18 @@ export const ReorderFields = forwardRef<
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="reorder_sequences" value={JSON.stringify(sequences)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="reorder_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Розкладіть речення у правильному порядку"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="reorder_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="reorder_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
         Порядок елементів у кожній послідовності нижче — це і є правильна відповідь. Студенту

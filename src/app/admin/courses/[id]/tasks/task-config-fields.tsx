@@ -38,6 +38,7 @@ import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import {
   CATEGORY_COLORS,
@@ -498,17 +499,19 @@ export function TaskConfigFields({
 
       {type === "fill_blank" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
-              Інструкція для студента
-            </label>
-            <input
-              name="fill_blank_instructions"
-              defaultValue={(initialConfig?.instructions as string) ?? ""}
-              placeholder="напр. Заповніть пропуски"
-              className="rounded-md border px-2 py-1.5 text-sm"
-            />
-          </div>
+          <InstructionsRichTextField
+            name="fill_blank_instructions"
+            label="Інструкція для студента"
+            initialValue={(initialConfig?.instructions as string) ?? ""}
+          />
+
+          <InstructionsRichTextField
+            name="fill_blank_sub_instructions"
+            label="Додаткові інструкції (опційно)"
+            initialValue={(initialConfig?.subInstructions as string) ?? ""}
+            compact
+          />
+
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">
               Текст із пропусками — правильні варіанти пишіть прямо у {"{{ }}"} через

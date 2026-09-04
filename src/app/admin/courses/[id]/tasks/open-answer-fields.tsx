@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyQuestion(): OpenAnswerQuestion {
   return { id: crypto.randomUUID(), question: "", answers: [""] };
@@ -65,17 +66,18 @@ export function OpenAnswerFields({
         readOnly
       />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="open_answer_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Дайте коротку відповідь"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="open_answer_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="open_answer_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex flex-col gap-3">
         {questions.map((q) => (

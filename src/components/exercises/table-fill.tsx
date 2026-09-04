@@ -5,6 +5,7 @@ import type { TableFillPublic, TableFillDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -78,7 +79,11 @@ export function TableFillExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full max-w-md border-collapse text-sm">

@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -150,7 +151,11 @@ export function MultipleChoiceExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div className="flex flex-col gap-4">{config.items.map(renderItem)}</div>
 

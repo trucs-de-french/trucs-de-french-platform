@@ -5,6 +5,7 @@ import type { FlipCard as FlipCardType } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { InstructionsText } from "./instructions-text";
 
 function FlipCardTile({ card }: { card: FlipCardType }) {
   const [flipped, setFlipped] = useState(false);
@@ -41,7 +42,7 @@ function FlipCardTile({ card }: { card: FlipCardType }) {
 export function FlipCardsExercise({
   config,
 }: {
-  config: { instructions?: string; cards: FlipCardType[] };
+  config: { instructions?: string; subInstructions?: string; cards: FlipCardType[] };
 }) {
   if (config.cards.length === 0) {
     return (
@@ -53,7 +54,11 @@ export function FlipCardsExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {config.cards.map((card, i) => (
           <FlipCardTile key={i} card={card} />

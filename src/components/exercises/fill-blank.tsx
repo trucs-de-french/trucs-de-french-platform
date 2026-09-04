@@ -5,6 +5,7 @@ import type { FillBlankPublic, FillBlankDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 
 export function FillBlankExercise({
   taskId,
@@ -37,18 +38,31 @@ export function FillBlankExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">
-        {config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank}
+      {/* flex-ряд, не вкладений текст у <p> — санітизований instructions
+          сам може містити <p> (TipTap), а <p> у <p> невалідний HTML (той
+          самий принцип, що InstructionsText). */}
+      <div className="mb-2 flex flex-wrap items-baseline gap-2 font-medium">
+        <div
+          dangerouslySetInnerHTML={{
+            __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank),
+          }}
+        />
         {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
             pointsVisible, після — завжди. */}
         {(pointsVisible || detail) && (
-          <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+          <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
             {detail
               ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
               : `${config.points} ${pluralizePoints(config.points)}`}
           </span>
         )}
-      </p>
+      </div>
+      {config.subInstructions && (
+        <div
+          className="mb-2 -mt-1 text-sm text-neutral-500 dark:text-neutral-400"
+          dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+        />
+      )}
 
       {/* Опційний банк слів-підказок — суто довідковий, клік лише
           викреслює/повертає слово візуально для самого студента, ніяк не

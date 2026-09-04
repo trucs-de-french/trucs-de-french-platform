@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -81,17 +82,18 @@ export function ListeningFields({
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="listening_questions" value={JSON.stringify(questions)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="listening_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. Прослухайте аудіо і дайте відповідь на запитання"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="listening_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="listening_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-neutral-500 dark:text-neutral-400">URL аудіо/відео</label>

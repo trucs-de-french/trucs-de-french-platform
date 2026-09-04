@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyPair(): MatchingPair {
   return { id: crypto.randomUUID(), left: "", right: "" };
@@ -56,17 +57,18 @@ export const MatchingFields = forwardRef<
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="matching_pairs" value={JSON.stringify(pairs)} readOnly />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
-          Інструкція для студента
-        </label>
-        <input
-          name="matching_instructions"
-          defaultValue={initialConfig?.instructions ?? ""}
-          placeholder="напр. З'єднайте слово з перекладом"
-          className="rounded-md border px-2 py-1.5 text-sm"
-        />
-      </div>
+      <InstructionsRichTextField
+        name="matching_instructions"
+        label="Інструкція для студента"
+        initialValue={initialConfig?.instructions ?? ""}
+      />
+
+      <InstructionsRichTextField
+        name="matching_sub_instructions"
+        label="Додаткові інструкції (опційно)"
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
 
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
         Уникайте однакового тексту зліва і справа в різних парах — це заважає перевірці.

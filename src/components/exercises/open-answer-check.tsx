@@ -5,6 +5,7 @@ import type { OpenAnswerPublic, OpenAnswerDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
 // розгорнутого тексту), тут коротка відповідь звіряється з фіксованим
@@ -28,7 +29,11 @@ export function OpenAnswerCheckExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer}
+        subText={config.subInstructions}
+        className="mb-2 font-medium"
+      />
 
       <div className="flex flex-col gap-3">
         {config.questions.map((q) => {
