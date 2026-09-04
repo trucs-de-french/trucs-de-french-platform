@@ -11,6 +11,7 @@ import {
   resolveSortColumnsPoints,
   resolveImageMatchPoints,
   resolveListeningPoints,
+  resolveDragDropPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -243,15 +244,30 @@ function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeRes
   const sentencesDetail: DragDropDetail["sentences"] = sentences.map((s) => {
     const words = answerBySentence.get(s.id) ?? [];
     const fbResult = gradeFillBlank({ template: s.template }, words);
-    return { id: s.id, blanks: (fbResult.detail as FillBlankDetail).blanks };
+    return {
+      id: s.id,
+      blanks: (fbResult.detail as FillBlankDetail).blanks,
+      points: resolveDragDropPoints(s),
+    };
   });
 
   const allBlanks = sentencesDetail.flatMap((s) => s.blanks);
   const correctCount = allBlanks.filter((b) => b.isCorrect).length;
+  // POINTS — окремий вимір, свідомо іншої гранулярності за SCORE (див.
+  // reorder): бали речення зараховуються, лише якщо ВОНО повністю
+  // правильне (усі пропуски), тоді як score рахує кожен пропуск атомарно
+  // через усі речення разом.
+  const pointsPossible = sentencesDetail.reduce((sum, s) => sum + s.points, 0);
+  const pointsEarned = sentencesDetail
+    .filter((s) => s.blanks.every((b) => b.isCorrect))
+    .reduce((sum, s) => sum + s.points, 0);
+
   return {
     correct: correctCount === allBlanks.length && allBlanks.length > 0,
     score: percentage(correctCount, allBlanks.length),
     detail: { sentences: sentencesDetail },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

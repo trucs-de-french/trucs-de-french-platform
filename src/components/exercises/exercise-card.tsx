@@ -76,7 +76,13 @@ export function ExerciseCard({
         />
       );
     case "drag_drop":
-      return <DragDropExercise taskId={taskId} config={config as unknown as DragDropPublic} />;
+      return (
+        <DragDropExercise
+          taskId={taskId}
+          config={config as unknown as DragDropPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "sort_columns":
       return (
         <SortColumnsExercise

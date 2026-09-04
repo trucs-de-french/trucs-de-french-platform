@@ -128,7 +128,13 @@ export type ReorderConfig = {
 // template, bank}, без sentences) — виродковий випадок нової,
 // нормалізується на льоту (getDragDropSentences), без міграції БД; bank
 // лишається пласким полем в обох формах, нормалізації не потребує.
-export type DragDropSentence = { id: string; template: string }; // "Je {{vais}} au cinéma."
+// points — пілот системи балів, Група B (див. TrueFalseStatement/
+// ReorderSequence) — дефолт 1 (resolveDragDropPoints у sanitize.ts).
+// Свідомо на рівні РЕЧЕННЯ, не окремого пропуску — зараховується цілком,
+// лише якщо ВСІ пропуски цього речення правильні. Той самий принцип, що
+// вже підтверджений для reorder.sequences: score і points незалежні
+// виміри різної гранулярності.
+export type DragDropSentence = { id: string; template: string; points?: number }; // "Je {{vais}} au cinéma."
 export type DragDropConfig = {
   instructions?: string;
   sentences: DragDropSentence[];
@@ -262,7 +268,7 @@ export type ReorderPublic = {
 
 export type DragDropPublic = {
   instructions?: string;
-  sentences: { id: string; template: string }[]; // з {{}} замість {{слово}}
+  sentences: { id: string; template: string; points: number }[]; // з {{}} замість {{слово}}
   bank: string[]; // перемішано, один спільний
 };
 
@@ -358,6 +364,7 @@ export type DragDropDetail = {
   sentences: {
     id: string;
     blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean }[];
+    points: number;
   }[];
 };
 

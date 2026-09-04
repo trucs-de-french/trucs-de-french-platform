@@ -172,12 +172,18 @@ export function getDragDropSentences(config: DragDropConfig): DragDropSentence[]
   return [];
 }
 
+// Пілот системи балів, Група B (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveDragDropPoints(sentence: DragDropSentence): number {
+  return sentence.points ?? 1;
+}
+
 export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   return {
     instructions: config.instructions,
     sentences: getDragDropSentences(config).map((s) => ({
       id: s.id,
       template: s.template.replace(BLANK_RE, "{{}}"),
+      points: resolveDragDropPoints(s),
     })),
     // Один спільний банк на всю вправу (не по реченню) — свідоме рішення.
     bank: shuffle(config.bank),

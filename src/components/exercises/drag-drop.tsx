@@ -9,9 +9,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 export function DragDropExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: DragDropPublic;
+  pointsVisible: boolean;
 }) {
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
   // живуть в одному спільному "слот-просторі" одного useTilePlacement, а не
@@ -58,9 +60,20 @@ export function DragDropExercise({
           const blankCount = blankCounts[si];
           const offset = offsets[si];
           const sentDetail = detail?.sentences.find((d) => d.id === s.id);
+          // До перевірки — лише якщо pointsVisible; після — завжди. Бали
+          // речення зараховуються, лише якщо ВСІ його пропуски правильні
+          // (не по окремому пропуску, як score) — 0/points, а не часткове.
+          const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
           return (
             <div key={s.id}>
+              {(pointsVisible || sentDetail) && (
+                <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
+                  {sentDetail
+                    ? `${sentenceCorrect ? s.points : 0}/${s.points} балів`
+                    : `${s.points} ${s.points === 1 ? "бал" : "балів"}`}
+                </p>
+              )}
               <p className="leading-8">
                 {segments.map((seg, i) => (
                   <span key={i}>
@@ -150,6 +163,11 @@ export function DragDropExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

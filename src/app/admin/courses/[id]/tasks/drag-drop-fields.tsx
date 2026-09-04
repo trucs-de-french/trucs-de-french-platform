@@ -42,6 +42,10 @@ export const DragDropFields = forwardRef<
     setSentences((prev) => prev.map((s) => (s.id === id ? { ...s, template } : s)));
   }
 
+  function updateSentencePoints(id: string, points: number) {
+    setSentences((prev) => prev.map((s) => (s.id === id ? { ...s, points } : s)));
+  }
+
   function addWord() {
     setBank((prev) => [...prev, ""]);
   }
@@ -86,6 +90,15 @@ export const DragDropFields = forwardRef<
               onChange={(e) => updateSentence(s.id, e.target.value)}
               rows={2}
               className="flex-1 rounded-md border px-2 py-1.5 text-base font-medium"
+            />
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={s.points ?? 1}
+              onChange={(e) => updateSentencePoints(s.id, Number(e.target.value))}
+              title="Бали за все речення (зараховуються, лише якщо воно повністю правильне)"
+              className="mt-1.5 w-16 rounded-md border px-2 py-1 text-sm"
             />
             <button
               type="button"
