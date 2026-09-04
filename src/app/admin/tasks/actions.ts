@@ -215,9 +215,9 @@ export async function createTask(formData: FormData) {
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
       audio_url: (formData.get("task_audio_url") as string) || null,
-      // Пілот системи балів — поки рендериться лише для type === "true_false"
-      // (TaskConfigFields), для решти типів чекбоксу нема у formData взагалі,
-      // тож тут завжди коректно піде false.
+      // Чекбокс рендериться лише для POINTS_SUPPORTED_TASK_TYPES
+      // (TaskConfigFields, isPointsSupportedTaskType) — для решти типів
+      // його нема у formData взагалі, тож тут коректно піде false.
       points_visible: formData.get("points_visible") === "true",
       // Присутні у formData лише коли батьківський продукт type='delf'
       // (TaskConfigFields рендерить ці селекти умовно) — для film-задач

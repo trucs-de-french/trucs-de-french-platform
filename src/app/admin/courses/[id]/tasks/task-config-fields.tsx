@@ -118,6 +118,18 @@ export function TaskConfigFields({
   initialPointsVisible,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
+  // Контрольований (не defaultChecked) — React 19 скидає неконтрольовані
+  // поля форми до значення на момент монтування одразу після успішного
+  // form action (SaveForm/useActionState), тож defaultChecked показував би
+  // щойно збережене значення як "знятий" чекбокс. Синхронізація з пропом —
+  // не через useEffect (react-hooks/set-state-in-effect), а через
+  // "adjust state during render" (react.dev/learn/you-might-not-need-an-effect).
+  const [pointsVisible, setPointsVisible] = useState(initialPointsVisible ?? false);
+  const [prevInitialPointsVisible, setPrevInitialPointsVisible] = useState(initialPointsVisible);
+  if (initialPointsVisible !== prevInitialPointsVisible) {
+    setPrevInitialPointsVisible(initialPointsVisible);
+    setPointsVisible(initialPointsVisible ?? false);
+  }
   // Опційний банк слів-підказок для fill_blank — суто довідковий UI,
   // жодного зв'язку з gradeFillBlank. Порожній за замовчуванням (не
   // "[""]") — банк не показується студенту взагалі, поки вчитель не додав
@@ -653,7 +665,8 @@ export function TaskConfigFields({
             name="points_visible"
             value="true"
             id="points_visible"
-            defaultChecked={initialPointsVisible ?? false}
+            checked={pointsVisible}
+            onChange={(e) => setPointsVisible(e.target.checked)}
           />
           <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
             Показувати бали студенту заздалегідь (до виконання)
