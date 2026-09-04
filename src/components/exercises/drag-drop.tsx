@@ -5,6 +5,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function DragDropExercise({
   taskId,
@@ -70,8 +71,8 @@ export function DragDropExercise({
               {(pointsVisible || sentDetail) && (
                 <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
                   {sentDetail
-                    ? `${sentenceCorrect ? s.points : 0}/${s.points} балів`
-                    : `${s.points} ${s.points === 1 ? "бал" : "балів"}`}
+                    ? `${sentenceCorrect ? s.points : 0}/${s.points} ${pluralizePoints(s.points)}`
+                    : `${s.points} ${pluralizePoints(s.points)}`}
                 </p>
               )}
               <p className="leading-8">
@@ -165,7 +166,7 @@ export function DragDropExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

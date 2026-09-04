@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { OpenAnswerPublic, OpenAnswerDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
 // розгорнутого тексту), тут коротка відповідь звіряється з фіксованим
@@ -40,8 +41,8 @@ export function OpenAnswerCheckExercise({
                 {(pointsVisible || qDetail) && (
                   <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">
                     {qDetail
-                      ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} балів`
-                      : `${q.points} ${q.points === 1 ? "бал" : "балів"}`}
+                      ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} ${pluralizePoints(qDetail.points)}`
+                      : `${q.points} ${pluralizePoints(q.points)}`}
                   </span>
                 )}
               </p>
@@ -88,7 +89,7 @@ export function OpenAnswerCheckExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

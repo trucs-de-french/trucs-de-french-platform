@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FillBlankPublic, FillBlankDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function FillBlankExercise({
   taskId,
@@ -43,8 +44,8 @@ export function FillBlankExercise({
         {(pointsVisible || detail) && (
           <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
             {detail
-              ? `${result?.correct ? config.points : 0}/${config.points} балів`
-              : `${config.points} ${config.points === 1 ? "бал" : "балів"}`}
+              ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+              : `${config.points} ${pluralizePoints(config.points)}`}
           </span>
         )}
       </p>
@@ -124,7 +125,7 @@ export function FillBlankExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

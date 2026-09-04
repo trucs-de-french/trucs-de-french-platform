@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TableFillPublic, TableFillDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -48,9 +49,9 @@ export function TableFillExercise({
 
     if (rowBlanks?.length) {
       const isCorrect = rowBlanks.every((b) => b.isCorrect);
-      return `${isCorrect ? row.points : 0}/${row.points} балів`;
+      return `${isCorrect ? row.points : 0}/${row.points} ${pluralizePoints(row.points)}`;
     }
-    return `${row.points} ${row.points === 1 ? "бал" : "балів"}`;
+    return `${row.points} ${pluralizePoints(row.points)}`;
   }
 
   function renderCell(rowId: string, side: "left" | "right", value: string | null) {
@@ -120,7 +121,7 @@ export function TableFillExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

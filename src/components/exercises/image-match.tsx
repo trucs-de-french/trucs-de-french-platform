@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function ImageMatchExercise({
   taskId,
@@ -66,8 +67,8 @@ export function ImageMatchExercise({
             {(pointsVisible || itemDetail) && (
               <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
                 {itemDetail
-                  ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} балів`
-                  : `${item.points} ${item.points === 1 ? "бал" : "балів"}`}
+                  ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} ${pluralizePoints(item.points)}`
+                  : `${item.points} ${pluralizePoints(item.points)}`}
               </p>
             )}
             <span
@@ -118,7 +119,7 @@ export function ImageMatchExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

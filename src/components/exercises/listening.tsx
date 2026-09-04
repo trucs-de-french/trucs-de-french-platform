@@ -7,6 +7,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function ListeningExercise({
   taskId,
@@ -50,8 +51,8 @@ export function ListeningExercise({
                 {(pointsVisible || qDetail) && (
                   <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
                     {qDetail
-                      ? `${qDetail.options.every((o) => o.correct === o.selected) ? q.points : 0}/${q.points} балів`
-                      : `${q.points} ${q.points === 1 ? "бал" : "балів"}`}
+                      ? `${qDetail.options.every((o) => o.correct === o.selected) ? q.points : 0}/${q.points} ${pluralizePoints(q.points)}`
+                      : `${q.points} ${pluralizePoints(q.points)}`}
                   </span>
                 )}
               </p>
@@ -107,7 +108,7 @@ export function ListeningExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

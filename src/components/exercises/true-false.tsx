@@ -5,6 +5,7 @@ import type { TrueFalsePublic, TrueFalseDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function TrueFalseExercise({
   taskId,
@@ -38,8 +39,8 @@ export function TrueFalseExercise({
               {(pointsVisible || d) && (
                 <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
                   {d
-                    ? `${d.isCorrect ? d.points : 0}/${d.points} балів`
-                    : `${s.points} ${s.points === 1 ? "бал" : "балів"}`}
+                    ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`
+                    : `${s.points} ${pluralizePoints(s.points)}`}
                 </span>
               )}
             </span>
@@ -90,7 +91,7 @@ export function TrueFalseExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

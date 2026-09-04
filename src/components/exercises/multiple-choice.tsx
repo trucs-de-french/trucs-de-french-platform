@@ -5,6 +5,7 @@ import type { MultipleChoicePublic, MultipleChoiceDetail } from "@/lib/exercises
 import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -60,13 +61,13 @@ export function MultipleChoiceExercise({
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
       return (
         <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
-          {isCorrect ? item.points : 0}/{item.points} балів
+          {isCorrect ? item.points : 0}/{item.points} {pluralizePoints(item.points)}
         </span>
       );
     }
     return (
       <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
-        {item.points} {item.points === 1 ? "бал" : "балів"}
+        {item.points} {pluralizePoints(item.points)}
       </span>
     );
   }
@@ -173,7 +174,7 @@ export function MultipleChoiceExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

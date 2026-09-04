@@ -5,6 +5,7 @@ import type { ReorderPublic, ReorderDetail } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
 
@@ -77,8 +78,8 @@ function ReorderSequenceTiles({
       {(pointsVisible || detail) && (
         <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
           {detail
-            ? `${sequenceCorrect ? points : 0}/${points} балів`
-            : `${points} ${points === 1 ? "бал" : "балів"}`}
+            ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
+            : `${points} ${pluralizePoints(points)}`}
         </p>
       )}
       <div className="flex flex-wrap gap-2">
@@ -177,7 +178,7 @@ export function ReorderExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>

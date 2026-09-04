@@ -5,6 +5,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useColumnSort } from "./use-column-sort";
 import { bankTileClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export function SortColumnsExercise({
   taskId,
@@ -43,7 +44,7 @@ export function SortColumnsExercise({
     if (!pointsVisible && !d) return item.text;
     const suffix = d
       ? `${d.isCorrect ? item.points : 0}/${item.points}`
-      : `${item.points} ${item.points === 1 ? "бал" : "балів"}`;
+      : `${item.points} ${pluralizePoints(item.points)}`;
     return `${item.text} (${suffix})`;
   }
 
@@ -163,7 +164,7 @@ export function SortColumnsExercise({
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
           {result.pointsPossible !== undefined && (
             <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} балів)
+              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
             </span>
           )}
         </p>
