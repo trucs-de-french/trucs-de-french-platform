@@ -47,6 +47,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "listening",
   "drag_drop",
   "table_fill",
+  "matching",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

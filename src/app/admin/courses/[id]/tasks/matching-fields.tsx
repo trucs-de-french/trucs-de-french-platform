@@ -4,12 +4,22 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 
+function emptyPair(): MatchingPair {
+  return { id: crypto.randomUUID(), left: "", right: "" };
+}
+
 export const MatchingFields = forwardRef<
   ImportableFieldsHandle,
   { initialConfig?: Partial<MatchingConfig> }
 >(function MatchingFields({ initialConfig }, ref) {
+  // Старі пари (до пілоту балів) не мали id — тут, на відміну від
+  // sanitize.ts (getMatchingPairs, стабільний `pair-${index}`), можна
+  // згенерувати справжній id саме зараз: після першого збереження цієї
+  // форми пара матиме постійний id у БД, "самозцілення" застарілих даних.
   const [pairs, setPairs] = useState<MatchingPair[]>(
-    initialConfig?.pairs?.length ? initialConfig.pairs : [{ left: "", right: "" }]
+    initialConfig?.pairs?.length
+      ? initialConfig.pairs.map((p) => ({ ...p, id: p.id ?? crypto.randomUUID() }))
+      : [emptyPair()]
   );
 
   useImperativeHandle(ref, () => ({
@@ -20,14 +30,14 @@ export const MatchingFields = forwardRef<
         const withoutEmpty = prev.filter((p) => p.left.trim() || p.right.trim());
         return [
           ...withoutEmpty,
-          ...words.map((w) => ({ left: w.word, right: w.translation })),
+          ...words.map((w) => ({ id: crypto.randomUUID(), left: w.word, right: w.translation })),
         ];
       });
     },
   }));
 
   function addPair() {
-    setPairs((prev) => [...prev, { left: "", right: "" }]);
+    setPairs((prev) => [...prev, emptyPair()]);
   }
 
   function removePair(i: number) {
@@ -36,6 +46,10 @@ export const MatchingFields = forwardRef<
 
   function updatePair(i: number, field: "left" | "right", value: string) {
     setPairs((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)));
+  }
+
+  function updatePoints(i: number, points: number) {
+    setPairs((prev) => prev.map((p, idx) => (idx === i ? { ...p, points } : p)));
   }
 
   return (
@@ -59,7 +73,7 @@ export const MatchingFields = forwardRef<
       </p>
 
       {pairs.map((p, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={p.id} className="flex items-center gap-2">
           <input
             value={p.left}
             onChange={(e) => updatePair(i, "left", e.target.value)}
@@ -72,6 +86,15 @@ export const MatchingFields = forwardRef<
             onChange={(e) => updatePair(i, "right", e.target.value)}
             placeholder="Правий елемент"
             className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+          />
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={p.points ?? 1}
+            onChange={(e) => updatePoints(i, Number(e.target.value))}
+            title="Бали за цю пару"
+            className="w-16 rounded-md border px-2 py-1 text-sm"
           />
           <button
             type="button"

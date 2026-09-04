@@ -8,6 +8,7 @@ import type {
   TrueFalsePublic,
   TrueFalseStatement,
   MatchingConfig,
+  MatchingPair,
   MatchingPublic,
   ListeningConfig,
   ListeningQuestion,
@@ -105,11 +106,26 @@ export function sanitizeTrueFalse(config: TrueFalseConfig): TrueFalsePublic {
   };
 }
 
+// Стара форма (пари без id, до пілоту балів) — виродковий випадок нової:
+// стабільний синтетичний id за позицією. НЕ рандомний (crypto.randomUUID
+// на кожне читання зламав би адресацію балів між рендерами).
+export function getMatchingPairs(config: MatchingConfig): (MatchingPair & { id: string })[] {
+  return config.pairs.map((p, i) => ({ ...p, id: p.id ?? `pair-${i}` }));
+}
+
+// Пілот системи балів, Група B (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveMatchingPoints(pair: MatchingPair): number {
+  return pair.points ?? 1;
+}
+
 export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
+  const pairs = getMatchingPairs(config);
   return {
     instructions: config.instructions,
     left: config.pairs.map((p) => p.left),
     right: shuffle(config.pairs.map((p) => p.right)),
+    // left тут НЕ перемішаний — той самий порядок, що в left[] вище.
+    pairs: pairs.map((p) => ({ id: p.id, left: p.left, points: resolveMatchingPoints(p) })),
   };
 }
 

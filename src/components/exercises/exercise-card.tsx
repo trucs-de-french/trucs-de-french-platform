@@ -58,7 +58,13 @@ export function ExerciseCard({
         />
       );
     case "matching":
-      return <MatchingExercise taskId={taskId} config={config as unknown as MatchingPublic} />;
+      return (
+        <MatchingExercise
+          taskId={taskId}
+          config={config as unknown as MatchingPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "listening":
       return (
         <ListeningExercise

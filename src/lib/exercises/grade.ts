@@ -13,6 +13,8 @@ import {
   resolveListeningPoints,
   resolveDragDropPoints,
   resolveTableFillPoints,
+  getMatchingPairs,
+  resolveMatchingPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -158,10 +160,27 @@ function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeRes
   }));
 
   const correctCount = studentPairs.filter((p) => p.isCorrect).length;
+
+  // POINTS — окремий прохід, зі СПРОТИВНОГО напрямку за studentPairs вище
+  // (по config-парах, а не по відповідях студента): для кожної пари з
+  // getMatchingPairs (уже з id) перевіряємо, чи вона є серед відповідей
+  // студента. Пара — вже атомарна одиниця (без під-структури), тож бали
+  // просто по парі, як у true_false/sort_columns.
+  const pairPoints: MatchingDetail["pairPoints"] = getMatchingPairs(config).map((p) => ({
+    id: p.id,
+    left: p.left,
+    points: resolveMatchingPoints(p),
+    isCorrect: answer.some((a) => a.left === p.left && a.right === p.right),
+  }));
+  const pointsPossible = pairPoints.reduce((sum, p) => sum + p.points, 0);
+  const pointsEarned = pairPoints.filter((p) => p.isCorrect).reduce((sum, p) => sum + p.points, 0);
+
   return {
     correct: correctCount === config.pairs.length && studentPairs.length === config.pairs.length,
     score: percentage(correctCount, config.pairs.length),
-    detail: { correctPairs: config.pairs, studentPairs },
+    detail: { correctPairs: config.pairs, studentPairs, pairPoints },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

@@ -9,9 +9,11 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 export function MatchingExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: MatchingPublic;
+  pointsVisible: boolean;
 }) {
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
@@ -65,6 +67,18 @@ export function MatchingExercise({
     return detail?.studentPairs.find((p) => p.left === left && p.right === right);
   }
 
+  // До перевірки — лише якщо pointsVisible; після — завжди. left тут НЕ
+  // перемішаний (config.pairs у тому самому порядку), тож можна знайти
+  // бали цієї пари напряму за текстом лівого елемента.
+  function pointsLabel(left: string) {
+    const pd = detail?.pairPoints.find((p) => p.left === left);
+    const points = config.pairs.find((p) => p.left === left)?.points;
+    if (points === undefined) return "";
+    if (!pointsVisible && !pd) return "";
+    if (pd) return ` (${pd.isCorrect ? pd.points : 0}/${pd.points} балів)`;
+    return ` (${points} ${points === 1 ? "бал" : "балів"})`;
+  }
+
   return (
     <div>
       <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.matching}</p>
@@ -93,6 +107,9 @@ export function MatchingExercise({
               >
                 {left}
                 {right ? ` → ${right}` : ""}
+                <span className="italic text-neutral-500 dark:text-neutral-400">
+                  {pointsLabel(left)}
+                </span>
               </button>
             );
           })}
@@ -144,6 +161,11 @@ export function MatchingExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

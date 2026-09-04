@@ -82,7 +82,13 @@ export type TrueFalseConfig = {
   statements: TrueFalseStatement[];
 };
 
-export type MatchingPair = { left: string; right: string };
+// id/points — пілот системи балів, Група B. На відміну від інших типів,
+// пари ніколи не мали id взагалі (адресація й правильність — за змістом
+// left/right, не за id). Стара форма (без id) — виродковий випадок нової,
+// нормалізується на льоту (getMatchingPairs, стабільний синтетичний
+// `pair-${index}`), без міграції БД. Бали — на рівні ПАРИ (уже атомарна
+// одиниця, без під-структури).
+export type MatchingPair = { id?: string; left: string; right: string; points?: number };
 export type MatchingConfig = {
   instructions?: string;
   pairs: MatchingPair[];
@@ -255,6 +261,11 @@ export type MatchingPublic = {
   instructions?: string;
   left: string[];
   right: string[]; // перемішано, без зв'язку з left
+  // ДОДАТКОВЕ поле лише для показу балів (не замінює left/right вище і не
+  // чіпає взаємодію "клікнути ліве, клікнути праве") — left тут НЕ
+  // перемішаний (той самий порядок, що в left[] вище), тож студент бачить
+  // бали навпроти кожного лівого елемента.
+  pairs: { id: string; left: string; points: number }[];
 };
 
 export type ListeningPublic = {
@@ -344,6 +355,9 @@ export type TrueFalseDetail = {
 export type MatchingDetail = {
   correctPairs: MatchingPair[];
   studentPairs: { left: string; right: string; isCorrect: boolean }[];
+  // ДОДАТКОВЕ поле лише для підрахунку/показу балів — незалежне від
+  // correctPairs/studentPairs вище (їх рендер не змінюється).
+  pairPoints: { id: string; left: string; points: number; isCorrect: boolean }[];
 };
 
 export type ListeningDetail = {
