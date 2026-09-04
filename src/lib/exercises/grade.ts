@@ -7,6 +7,7 @@ import {
   resolveTrueFalsePoints,
   resolveOpenAnswerPoints,
   resolveMultipleChoicePoints,
+  resolveReorderPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -198,17 +199,26 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
       const studentIndex = correctIndex;
       return { text, correctIndex, studentIndex, isCorrect: studentOrder[correctIndex] === text };
     });
-    return { id: seq.id, items };
+    return { id: seq.id, items, points: resolveReorderPoints(seq) };
   });
 
-  // Атомарна одиниця часткового заліку — кожна плитка-позиція через УСІ
-  // послідовності разом, а не "послідовність повністю правильна чи ні".
+  // Атомарна одиниця часткового заліку для SCORE — кожна плитка-позиція
+  // через УСІ послідовності разом, а не "послідовність повністю правильна
+  // чи ні". POINTS — окремий вимір, свідомо іншої гранулярності: бали
+  // послідовності зараховуються, лише якщо вона ВСЯ правильна.
   const allItems = sequencesDetail.flatMap((s) => s.items);
   const correctCount = allItems.filter((i) => i.isCorrect).length;
+  const pointsPossible = sequencesDetail.reduce((sum, s) => sum + s.points, 0);
+  const pointsEarned = sequencesDetail
+    .filter((s) => s.items.every((i) => i.isCorrect))
+    .reduce((sum, s) => sum + s.points, 0);
+
   return {
     correct: correctCount === allItems.length && allItems.length > 0,
     score: percentage(correctCount, allItems.length),
     detail: { sequences: sequencesDetail },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

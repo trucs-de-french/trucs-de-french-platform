@@ -101,7 +101,14 @@ export type ListeningConfig = {
 // open_answer.questions. Стара пласка форма ({instructions?, items}, без
 // sequences) — виродковий випадок нової, нормалізується на льоту в
 // grade.ts/sanitize.ts (getReorderSequences), без міграції БД.
-export type ReorderSequence = { id: string; items: string[] }; // items — правильний порядок
+// points — пілот системи балів (дефолт 1, resolveReorderPoints у
+// sanitize.ts) — свідомо на рівні ПОСЛІДОВНОСТІ, не окремої плитки:
+// зараховується цілком, лише якщо ВСЯ послідовність зібрана правильно.
+// Це відрізняється гранулярністю від score (атомарний по плитках через усі
+// послідовності) — свідоме рішення, score і points незалежні виміри, і не
+// вимагає id для кожного елемента items: string[] (що перевело б reorder у
+// складність Групи B).
+export type ReorderSequence = { id: string; items: string[]; points?: number }; // items — правильний порядок
 export type ReorderConfig = {
   instructions?: string;
   sequences: ReorderSequence[];
@@ -234,7 +241,7 @@ export type ListeningPublic = {
 
 export type ReorderPublic = {
   instructions?: string;
-  sequences: { id: string; items: string[] }[]; // items перемішано, окремо на кожну послідовність
+  sequences: { id: string; items: string[]; points: number }[]; // items перемішано, окремо на кожну послідовність
 };
 
 export type DragDropPublic = {
@@ -322,6 +329,7 @@ export type ReorderDetail = {
   sequences: {
     id: string;
     items: { text: string; correctIndex: number; studentIndex: number; isCorrect: boolean }[];
+    points: number;
   }[];
 };
 

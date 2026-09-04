@@ -19,11 +19,15 @@ function ReorderSequenceTiles({
   onChange,
   detail,
   locked,
+  points,
+  pointsVisible,
 }: {
   order: string[];
   onChange: (next: string[]) => void;
   detail?: SequenceDetail;
   locked: boolean;
+  points: number;
+  pointsVisible: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -63,8 +67,20 @@ function ReorderSequenceTiles({
     return "hover:bg-neutral-50 dark:hover:bg-neutral-800";
   }
 
+  // До перевірки — лише якщо pointsVisible; після — завжди. Бали
+  // послідовності зараховуються, лише якщо ВСЯ вона правильна (не по
+  // окремій плитці, як score) — 0/points, а не часткове.
+  const sequenceCorrect = detail?.items.every((i) => i.isCorrect) ?? false;
+
   return (
     <div>
+      {(pointsVisible || detail) && (
+        <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
+          {detail
+            ? `${sequenceCorrect ? points : 0}/${points} балів`
+            : `${points} ${points === 1 ? "бал" : "балів"}`}
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {order.map((text, i) => (
           <button
@@ -110,9 +126,11 @@ function ReorderSequenceTiles({
 export function ReorderExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: ReorderPublic;
+  pointsVisible: boolean;
 }) {
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
@@ -133,6 +151,8 @@ export function ReorderExercise({
             onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
             detail={detail?.sequences.find((d) => d.id === seq.id)}
             locked={locked}
+            points={seq.points}
+            pointsVisible={pointsVisible}
           />
         ))}
       </div>
@@ -155,6 +175,11 @@ export function ReorderExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

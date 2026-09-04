@@ -62,7 +62,13 @@ export function ExerciseCard({
     case "listening":
       return <ListeningExercise taskId={taskId} config={config as unknown as ListeningPublic} />;
     case "reorder":
-      return <ReorderExercise taskId={taskId} config={config as unknown as ReorderPublic} />;
+      return (
+        <ReorderExercise
+          taskId={taskId}
+          config={config as unknown as ReorderPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "drag_drop":
       return <DragDropExercise taskId={taskId} config={config as unknown as DragDropPublic} />;
     case "sort_columns":

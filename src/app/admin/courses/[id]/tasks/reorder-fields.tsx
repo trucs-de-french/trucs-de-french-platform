@@ -64,6 +64,10 @@ export const ReorderFields = forwardRef<
     );
   }
 
+  function updatePoints(seqId: string, points: number) {
+    setSequences((prev) => prev.map((s) => (s.id === seqId ? { ...s, points } : s)));
+  }
+
   function moveItem(seqId: string, i: number, dir: -1 | 1) {
     setSequences((prev) =>
       prev.map((s) => {
@@ -105,13 +109,24 @@ export const ReorderFields = forwardRef<
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
                 Послідовність {si + 1}
               </span>
-              <button
-                type="button"
-                onClick={() => removeSequence(seq.id)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
-              >
-                видалити послідовність
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={seq.points ?? 1}
+                  onChange={(e) => updatePoints(seq.id, Number(e.target.value))}
+                  title="Бали за всю послідовність (зараховуються, лише якщо вона повністю правильна)"
+                  className="w-16 rounded-md border px-2 py-1 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSequence(seq.id)}
+                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                >
+                  видалити послідовність
+                </button>
+              </div>
             </div>
             <div className="mt-2 flex flex-col gap-1">
               {seq.items.map((item, i) => (

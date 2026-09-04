@@ -133,12 +133,21 @@ export function getReorderSequences(config: ReorderConfig): ReorderSequence[] {
   return [];
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveReorderPoints(sequence: ReorderSequence): number {
+  return sequence.points ?? 1;
+}
+
 export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
   return {
     instructions: config.instructions,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
     // перемішалися б між собою.
-    sequences: getReorderSequences(config).map((s) => ({ id: s.id, items: shuffle(s.items) })),
+    sequences: getReorderSequences(config).map((s) => ({
+      id: s.id,
+      items: shuffle(s.items),
+      points: resolveReorderPoints(s),
+    })),
   };
 }
 

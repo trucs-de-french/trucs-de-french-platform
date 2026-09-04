@@ -37,7 +37,12 @@ export function assertNeverGradableType(value: never): never {
 // task-config-fields.tsx рендериться лише для типів із цього списку —
 // свідомо не для всіх GRADABLE_TASK_TYPES одразу, щоб не показувати
 // перемикач, який ще нічого не робить для типу, який ще не підтримує бали.
-export const POINTS_SUPPORTED_TASK_TYPES = ["true_false", "open_answer", "multiple_choice"] as const;
+export const POINTS_SUPPORTED_TASK_TYPES = [
+  "true_false",
+  "open_answer",
+  "multiple_choice",
+  "reorder",
+] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {
   return (POINTS_SUPPORTED_TASK_TYPES as readonly string[]).includes(type);
