@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluation-grids";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import type {
@@ -126,7 +126,19 @@ export function TaskConfigFields({
   // "adjust state during render" (react.dev/learn/you-might-not-need-an-effect).
   const [pointsVisible, setPointsVisible] = useState(initialPointsVisible ?? false);
   const [prevInitialPointsVisible, setPrevInitialPointsVisible] = useState(initialPointsVisible);
+
+  // ===== TEMP DEBUG: points_visible checkbox timing — видалити після діагностики =====
+  const dbg = (label: string, ...data: unknown[]) => {
+    if (typeof window === "undefined") return;
+    console.log(`[PV ${performance.now().toFixed(1)}ms] ${label}`, ...data);
+  };
+  // =====================================================================================
+
   if (initialPointsVisible !== prevInitialPointsVisible) {
+    dbg("GUARD FIRED: новий initialPointsVisible-проп від сервера (revalidatePath)", {
+      старий_prevInitialPointsVisible: prevInitialPointsVisible,
+      новий_initialPointsVisible: initialPointsVisible,
+    });
     setPrevInitialPointsVisible(initialPointsVisible);
     setPointsVisible(initialPointsVisible ?? false);
   }
@@ -143,12 +155,33 @@ export function TaskConfigFields({
   useEffect(() => {
     const form = pointsVisibleRef.current?.form;
     if (!form) return;
+    dbg("EFFECT (RE)SUBSCRIBE: reset-listener підписано з pointsVisible у замиканні =", pointsVisible);
     function handleReset() {
+      dbg("NATIVE 'reset' FIRED: DOM checked ДО виправлення =", pointsVisibleRef.current?.checked);
       if (pointsVisibleRef.current) pointsVisibleRef.current.checked = pointsVisible;
+      dbg("NATIVE 'reset' HANDLED: DOM checked ПІСЛЯ виправлення =", pointsVisibleRef.current?.checked, {
+        застосоване_значення_pointsVisible: pointsVisible,
+      });
+    }
+    function handleSubmit() {
+      dbg("NATIVE 'submit' FIRED (форма сабмітиться)");
     }
     form.addEventListener("reset", handleReset);
-    return () => form.removeEventListener("reset", handleReset);
+    form.addEventListener("submit", handleSubmit);
+    return () => {
+      form.removeEventListener("reset", handleReset);
+      form.removeEventListener("submit", handleSubmit);
+    };
   }, [pointsVisible]);
+  // TEMP DEBUG: ground truth — фактичне значення checked у DOM одразу після
+  // КОЖНОГО коміту (useLayoutEffect спрацьовує синхронно після пофарбування,
+  // без deps — тобто на кожен рендер), незалежно від того, що React "думає"
+  // про стан. Порівняння цього логу з рештою дає точну картину гонитви.
+  useLayoutEffect(() => {
+    dbg("COMMIT: DOM checked фактично =", pointsVisibleRef.current?.checked, {
+      React_pointsVisible_стан: pointsVisible,
+    });
+  });
   // Опційний банк слів-підказок для fill_blank — суто довідковий UI,
   // жодного зв'язку з gradeFillBlank. Порожній за замовчуванням (не
   // "[""]") — банк не показується студенту взагалі, поки вчитель не додав
@@ -686,7 +719,10 @@ export function TaskConfigFields({
             value="true"
             id="points_visible"
             checked={pointsVisible}
-            onChange={(e) => setPointsVisible(e.target.checked)}
+            onChange={(e) => {
+              dbg("USER CLICK: чекбокс змінено на =", e.target.checked); // TEMP DEBUG
+              setPointsVisible(e.target.checked);
+            }}
           />
           <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
             Показувати бали студенту заздалегідь (до виконання)
