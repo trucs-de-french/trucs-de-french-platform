@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
@@ -244,6 +245,7 @@ export async function createTask(formData: FormData) {
 }
 
 export async function updateTask(
+  productId: string,
   taskId: string,
   _prevState: ActionState,
   formData: FormData
@@ -276,6 +278,15 @@ export async function updateTask(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Не вдалося зберегти гру" };
   }
+
+  // Без цього — класична "зберіглось у базу, але не видно без F5" (див.
+  // чеклист на початку ../scenes/actions.ts, сценарій 1: inline useActionState
+  // + SaveForm, без навігації). Без свіжих серверних пропів TaskConfigFields
+  // ніколи не перерендериться після сабміту (React пропускає це піддерево,
+  // бо children-елемент лишається тим самим об'єктом), тож React 19 не встигає
+  // повторно застосувати checked/value поверх свого ж native form.reset()
+  // (useActionState скидає неконтрольовані поля форми при кожному сабміті).
+  revalidatePath(`/admin/courses/${productId}/tasks/${taskId}`);
 
   return { ok: true };
 }

@@ -68,7 +68,7 @@ export default async function EditTaskPage({
       <h1 className="mt-2 text-2xl font-bold">Редагування завдання</h1>
 
       <SaveForm
-        action={updateTask.bind(null, task.id)}
+        action={updateTask.bind(null, productId, task.id)}
         className="mt-4 flex flex-col gap-4 rounded-md border p-4"
         sticky
       >
