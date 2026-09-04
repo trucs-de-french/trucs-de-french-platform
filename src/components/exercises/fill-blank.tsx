@@ -17,8 +17,22 @@ export function FillBlankExercise({
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
   const [answers, setAnswers] = useState<string[]>(() => Array(blankCount).fill(""));
+  // Довідкові бульбашки — суто локальний UI-стан на сесію проходження, не
+  // зберігається на сервері й не впливає на перевірку. За ІНДЕКСОМ у
+  // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
+  // однакове слово, якщо вчитель вписав його двічі.
+  const [crossedOut, setCrossedOut] = useState<Set<number>>(new Set());
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
+
+  function toggleCrossedOut(i: number) {
+    setCrossedOut((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
 
   return (
     <div>
@@ -57,6 +71,28 @@ export function FillBlankExercise({
           </span>
         ))}
       </p>
+
+      {/* Опційний банк слів-підказок — суто довідковий, клік лише
+          викреслює/повертає слово візуально для самого студента, ніяк не
+          впливає на answers/submit. */}
+      {config.wordBank && config.wordBank.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {config.wordBank.map((word, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggleCrossedOut(i)}
+              className={`rounded-full border px-3 py-1 text-sm ${
+                crossedOut.has(i)
+                  ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {word}
+            </button>
+          ))}
+        </div>
+      )}
 
       {detail && (
         <ul className="mt-2 flex flex-col gap-1 text-sm">

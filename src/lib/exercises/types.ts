@@ -12,6 +12,11 @@ export type FillBlankConfig = {
   instructions?: string; // текст-інструкція над вправою, напр. "Заповніть пропуски"
   template: string; // "Je {{vais|vais bien}} au cinéma."
   points?: number;
+  // Опційний банк слів-підказок (бульбашки) поруч зі вправою — суто
+  // довідковий UI, студент і далі сам вписує відповідь в <input>. Не
+  // тасується (той самий порядок, що вписав вчитель), не впливає на
+  // gradeFillBlank жодним чином.
+  wordBank?: string[];
 };
 
 // Звичайна відкрита відповідь з автоматичною текстовою перевіркою (без AI —
@@ -247,6 +252,7 @@ export type FillBlankPublic = {
   instructions?: string;
   template: string; // з {{}} замість {{вар1|вар2}}
   points: number; // на всю вправу, не на пропуск
+  wordBank?: string[]; // довідкові бульбашки, не тасується
 };
 
 export type MultipleChoicePublic = {

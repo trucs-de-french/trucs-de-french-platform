@@ -54,12 +54,18 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         download: formData.get("link_download") === "true",
       };
     }
-    case "fill_blank":
+    case "fill_blank": {
+      const wordBank = parseJsonField(formData.get("fill_blank_word_bank")) as string[];
       return {
         instructions: (formData.get("fill_blank_instructions") as string) || "",
         template: (formData.get("fill_blank_template") as string) || "",
         points: Number(formData.get("fill_blank_points")) || 1,
+        // Порожній банк -> wordBank взагалі відсутній у config, а не "[]" —
+        // студентський рендер уже й так коректно ховає порожній масив
+        // (config.wordBank?.length), але так конфіг чистіший для читання.
+        ...(wordBank.length > 0 ? { wordBank } : {}),
       };
+    }
     case "multiple_choice":
       return {
         instructions: (formData.get("mc_instructions") as string) || "",

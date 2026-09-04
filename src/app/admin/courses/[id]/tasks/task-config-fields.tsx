@@ -118,6 +118,13 @@ export function TaskConfigFields({
   initialPointsVisible,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
+  // Опційний банк слів-підказок для fill_blank — суто довідковий UI,
+  // жодного зв'язку з gradeFillBlank. Порожній за замовчуванням (не
+  // "[""]") — банк не показується студенту взагалі, поки вчитель не додав
+  // хоч одне слово.
+  const [fillBlankWordBank, setFillBlankWordBank] = useState<string[]>(
+    (initialConfig?.wordBank as string[] | undefined) ?? []
+  );
   // essay_check за визначенням завжди PE — розумний дефолт, який лишається
   // редагованим.
   const [delfSection, setDelfSection] = useState(
@@ -169,6 +176,18 @@ export function TaskConfigFields({
     const exerciseNumber = essayExerciseNumber ? (Number(essayExerciseNumber) as 1 | 2) : undefined;
     setCriteria(summarizeCriteriaForTeacher(essayLevel as DelfLevel, exerciseNumber));
     setCriteriaDirty(false);
+  }
+
+  function addFillBlankWord() {
+    setFillBlankWordBank((prev) => [...prev, ""]);
+  }
+
+  function removeFillBlankWord(i: number) {
+    setFillBlankWordBank((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function updateFillBlankWord(i: number, value: string) {
+    setFillBlankWordBank((prev) => prev.map((w, idx) => (idx === i ? value : w)));
   }
   // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
   // type), тож один спільний ref завжди вказує саме на активну.
@@ -501,6 +520,42 @@ export function TaskConfigFields({
               defaultValue={(initialConfig?.points as number) ?? 1}
               className="w-24 rounded-md border px-2 py-1.5 text-sm"
             />
+          </div>
+          <div className="flex flex-col gap-1">
+            <input
+              type="hidden"
+              name="fill_blank_word_bank"
+              value={JSON.stringify(fillBlankWordBank)}
+              readOnly
+            />
+            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              Банк слів-підказок (необов&apos;язково — якщо порожній, студент не побачить
+              жодних бульбашок; студент і так сам вписує відповідь, це лише підказка)
+            </label>
+            {fillBlankWordBank.map((word, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={word}
+                  onChange={(e) => updateFillBlankWord(i, e.target.value)}
+                  placeholder="Слово"
+                  className="flex-1 rounded-md border px-2 py-1 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeFillBlankWord(i)}
+                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                >
+                  видалити
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addFillBlankWord}
+              className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+            >
+              + слово
+            </button>
           </div>
           {/* Довідковий режим (без onImport) — тут не можна автоматично
               вписати слово в шаблон, тож просто показуємо список для

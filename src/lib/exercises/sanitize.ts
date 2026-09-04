@@ -57,6 +57,9 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
     instructions: config.instructions,
     template: config.template.replace(BLANK_RE, "{{}}"),
     points: resolveFillBlankPoints(config),
+    // Довідкові бульбашки — пропускаємо як є, не тасуємо (той самий
+    // порядок, що вписав вчитель), нема що приховувати.
+    wordBank: config.wordBank,
   };
 }
 
