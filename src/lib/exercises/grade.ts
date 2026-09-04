@@ -4,6 +4,7 @@ import {
   getReorderSequences,
   getDragDropSentences,
   getMultipleChoiceItems,
+  resolveTrueFalsePoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -101,6 +102,8 @@ function gradeMultipleChoice(
   };
 }
 
+// Пілот системи балів — pointsEarned/pointsPossible рахуються ПОРЯД зі
+// score (не замість): score лишається тим самим percentage, що й завжди.
 function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): GradeResult {
   const answerById = new Map(answer.map((a) => [a.id, a.value]));
 
@@ -112,14 +115,22 @@ function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): Grade
       correctAnswer: s.answer,
       studentAnswer,
       isCorrect: studentAnswer === s.answer,
+      points: resolveTrueFalsePoints(s),
     };
   });
 
   const correctCount = statements.filter((s) => s.isCorrect).length;
+  const pointsPossible = statements.reduce((sum, s) => sum + s.points, 0);
+  const pointsEarned = statements
+    .filter((s) => s.isCorrect)
+    .reduce((sum, s) => sum + s.points, 0);
+
   return {
     correct: correctCount === statements.length && statements.length > 0,
     score: percentage(correctCount, statements.length),
     detail: { statements },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

@@ -6,6 +6,7 @@ import type {
   MultipleChoiceItem,
   TrueFalseConfig,
   TrueFalsePublic,
+  TrueFalseStatement,
   MatchingConfig,
   MatchingPublic,
   ListeningConfig,
@@ -75,10 +76,22 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
   };
 }
 
+// Пілот системи балів (points_visible на tasks) — дефолт 1 бал для
+// тверджень без явного значення, щоб наявні задачі й далі мали сенс без
+// ретроактивного заповнення. grade.ts викликає цю саму функцію, той самий
+// cross-import принцип, що вже є для getOpenAnswerQuestions/BLANK_RE.
+export function resolveTrueFalsePoints(statement: TrueFalseStatement): number {
+  return statement.points ?? 1;
+}
+
 export function sanitizeTrueFalse(config: TrueFalseConfig): TrueFalsePublic {
   return {
     instructions: config.instructions,
-    statements: config.statements.map(({ id, text }) => ({ id, text })),
+    statements: config.statements.map((s) => ({
+      id: s.id,
+      text: s.text,
+      points: resolveTrueFalsePoints(s),
+    })),
   };
 }
 

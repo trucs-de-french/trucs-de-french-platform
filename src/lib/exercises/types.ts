@@ -61,7 +61,13 @@ export type MultipleChoiceConfig = {
   items: MultipleChoiceItem[];
 };
 
-export type TrueFalseStatement = { id: string; text: string; answer: boolean };
+// points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
+// sanitize.ts) для тверджень без явного значення, щоб наявні задачі й далі
+// мали сенс без ретроактивного заповнення. Це пілот системи балів
+// (points_visible на tasks) — score/percentage у grade.ts лишається
+// незмінним джерелом правди для прогресу/pass-fail, points — окремий шар
+// лише для показу студенту.
+export type TrueFalseStatement = { id: string; text: string; answer: boolean; points?: number };
 export type TrueFalseConfig = {
   instructions?: string;
   statements: TrueFalseStatement[];
@@ -201,7 +207,7 @@ export type MultipleChoicePublic = {
 
 export type TrueFalsePublic = {
   instructions?: string;
-  statements: { id: string; text: string }[];
+  statements: { id: string; text: string; points: number }[]; // points завжди присутні — не секрет, як answer
 };
 
 export type MatchingPublic = {
@@ -284,6 +290,7 @@ export type TrueFalseDetail = {
     correctAnswer: boolean;
     studentAnswer: boolean | null;
     isCorrect: boolean;
+    points: number;
   }[];
 };
 
@@ -359,15 +366,21 @@ export type ImageMatchDetail = {
   }[];
 };
 
+// pointsEarned/pointsPossible — опційний шар балів ПОРЯД зі score (не
+// заміна): score/percentage лишається джерелом правди для прогресу/
+// pass-fail (напр. DelfTestGrid уже рахує pass/fail як middle 0-100 score),
+// points — лише для показу студенту. Спільні на весь union, щоб додавання
+// підтримки балів для наступного типу не вимагало знову чіпати цей тип —
+// поки що їх заповнює лише gradeTrueFalse (пілот), решта лишають undefined.
 export type GradeResult =
-  | { correct: boolean; score: number; detail: FillBlankDetail }
-  | { correct: boolean; score: number; detail: MultipleChoiceDetail }
-  | { correct: boolean; score: number; detail: TrueFalseDetail }
-  | { correct: boolean; score: number; detail: MatchingDetail }
-  | { correct: boolean; score: number; detail: ListeningDetail }
-  | { correct: boolean; score: number; detail: ReorderDetail }
-  | { correct: boolean; score: number; detail: DragDropDetail }
-  | { correct: boolean; score: number; detail: SortColumnsDetail }
-  | { correct: boolean; score: number; detail: OpenAnswerDetail }
-  | { correct: boolean; score: number; detail: TableFillDetail }
-  | { correct: boolean; score: number; detail: ImageMatchDetail };
+  | { correct: boolean; score: number; detail: FillBlankDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: ReorderDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: DragDropDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: SortColumnsDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: OpenAnswerDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number };
