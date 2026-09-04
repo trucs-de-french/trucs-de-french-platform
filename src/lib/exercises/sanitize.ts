@@ -26,6 +26,7 @@ import type {
   TableFillConfig,
   TableFillPublic,
   ImageMatchConfig,
+  ImageMatchItem,
   ImageMatchPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
@@ -232,10 +233,19 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   };
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveImageMatchPoints(item: ImageMatchItem): number {
+  return item.points ?? 1;
+}
+
 export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
   return {
     instructions: config.instructions,
-    items: config.items.map(({ id, imageUrl }) => ({ id, imageUrl })),
+    items: config.items.map((i) => ({
+      id: i.id,
+      imageUrl: i.imageUrl,
+      points: resolveImageMatchPoints(i),
+    })),
     bank: shuffle(config.items.map((i) => i.name)),
   };
 }

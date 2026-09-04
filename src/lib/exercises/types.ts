@@ -159,7 +159,9 @@ export type TableFillConfig = {
 // рівно одна правильна назва на зображення (без pipe-альтернатив — назва
 // береться з фіксованого банку, а не вільним текстом, тож альтернативи не
 // мають сенсу, як і в drag_drop).
-export type ImageMatchItem = { id: string; imageUrl: string; name: string };
+// points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
+// (resolveImageMatchPoints у sanitize.ts).
+export type ImageMatchItem = { id: string; imageUrl: string; name: string; points?: number };
 export type ImageMatchConfig = {
   instructions?: string;
   items: ImageMatchItem[];
@@ -271,7 +273,7 @@ export type TableFillPublic = {
 
 export type ImageMatchPublic = {
   instructions?: string;
-  items: { id: string; imageUrl: string }[];
+  items: { id: string; imageUrl: string; points: number }[];
   bank: string[]; // перемішані name з усіх items
 };
 
@@ -386,6 +388,7 @@ export type ImageMatchDetail = {
     correctName: string;
     studentName: string;
     isCorrect: boolean;
+    points: number;
   }[];
 };
 

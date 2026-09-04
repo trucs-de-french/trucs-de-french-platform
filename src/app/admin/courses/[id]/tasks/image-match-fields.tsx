@@ -47,6 +47,10 @@ export const ImageMatchFields = forwardRef<
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
   }
 
+  function updatePoints(id: string, points: number) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, points } : it)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="image_match_items" value={JSON.stringify(items)} readOnly />
@@ -76,6 +80,15 @@ export const ImageMatchFields = forwardRef<
             onChange={(e) => updateItem(item.id, "name", e.target.value)}
             placeholder="Правильна назва"
             className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+          />
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={item.points ?? 1}
+            onChange={(e) => updatePoints(item.id, Number(e.target.value))}
+            title="Бали за це зображення"
+            className="w-16 rounded-md border px-2 py-1 text-sm"
           />
           <button
             type="button"

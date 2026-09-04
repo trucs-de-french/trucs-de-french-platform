@@ -9,6 +9,7 @@ import {
   resolveMultipleChoicePoints,
   resolveReorderPoints,
   resolveSortColumnsPoints,
+  resolveImageMatchPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -345,14 +346,20 @@ function gradeImageMatch(config: ImageMatchConfig, answer: ImageMatchAnswer): Gr
       correctName: item.name,
       studentName,
       isCorrect: normalize(studentName) === normalize(item.name),
+      points: resolveImageMatchPoints(item),
     };
   });
 
   const correctCount = items.filter((i) => i.isCorrect).length;
+  const pointsPossible = items.reduce((sum, i) => sum + i.points, 0);
+  const pointsEarned = items.filter((i) => i.isCorrect).reduce((sum, i) => sum + i.points, 0);
+
   return {
     correct: correctCount === items.length && items.length > 0,
     score: percentage(correctCount, items.length),
     detail: { items },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

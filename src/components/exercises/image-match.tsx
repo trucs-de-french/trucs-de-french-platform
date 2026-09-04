@@ -10,9 +10,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 export function ImageMatchExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: ImageMatchPublic;
+  pointsVisible: boolean;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
@@ -51,13 +53,23 @@ export function ImageMatchExercise({
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {config.items.map((item, i) => (
+        {config.items.map((item, i) => {
+          const itemDetail = detail?.items[i];
+          return (
           <div key={item.id} className="flex flex-col gap-1">
             <ImageOrPlaceholder
               src={item.imageUrl}
               alt=""
               className="h-24 w-full rounded-md object-cover"
             />
+            {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
+            {(pointsVisible || itemDetail) && (
+              <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
+                {itemDetail
+                  ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} балів`
+                  : `${item.points} ${item.points === 1 ? "бал" : "балів"}`}
+              </p>
+            )}
             <span
               onClick={() => clickSlot(i)}
               {...slotDragProps(i)}
@@ -77,7 +89,8 @@ export function ImageMatchExercise({
               {placed[i] !== null ? config.bank[placed[i] as number] : ""}
             </span>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {!result ? (
@@ -103,6 +116,11 @@ export function ImageMatchExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

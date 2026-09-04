@@ -90,7 +90,13 @@ export function ExerciseCard({
     case "table_fill":
       return <TableFillExercise taskId={taskId} config={config as unknown as TableFillPublic} />;
     case "image_match":
-      return <ImageMatchExercise taskId={taskId} config={config as unknown as ImageMatchPublic} />;
+      return (
+        <ImageMatchExercise
+          taskId={taskId}
+          config={config as unknown as ImageMatchPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     default:
       return null;
   }
