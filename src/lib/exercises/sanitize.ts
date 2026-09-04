@@ -59,6 +59,11 @@ export function getMultipleChoiceItems(config: MultipleChoiceConfig): MultipleCh
   return [];
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveMultipleChoicePoints(item: MultipleChoiceItem): number {
+  return item.points ?? 1;
+}
+
 export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleChoicePublic {
   return {
     instructions: config.instructions,
@@ -71,6 +76,7 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
         multiple: correctCount > 1,
         correctCount,
         options: item.options.map(({ id, text }) => ({ id, text })),
+        points: resolveMultipleChoicePoints(item),
       };
     }),
   };

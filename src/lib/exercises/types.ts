@@ -56,7 +56,14 @@ export type EssayFormulaireConfig = {
 // виродковий випадок нової, нормалізується на льоту (getMultipleChoiceItems),
 // без міграції БД.
 export type MultipleChoiceOption = { id: string; text: string; correct: boolean };
-export type MultipleChoiceItem = { id: string; sentence: string; options: MultipleChoiceOption[] };
+// points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
+// (resolveMultipleChoicePoints у sanitize.ts).
+export type MultipleChoiceItem = {
+  id: string;
+  sentence: string;
+  options: MultipleChoiceOption[];
+  points?: number;
+};
 export type MultipleChoiceConfig = {
   instructions?: string;
   display: "buttons" | "dropdown";
@@ -204,6 +211,7 @@ export type MultipleChoicePublic = {
     multiple: boolean; // чи більше однієї правильної відповіді (для radio/checkbox)
     correctCount: number; // скільки саме — для підказки студенту, напр. "2 варіанти"
     options: { id: string; text: string }[];
+    points: number;
   }[];
 };
 
@@ -282,6 +290,7 @@ export type MultipleChoiceDetail = {
   items: {
     id: string;
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
+    points: number;
   }[];
 };
 

@@ -6,6 +6,7 @@ import {
   getMultipleChoiceItems,
   resolveTrueFalsePoints,
   resolveOpenAnswerPoints,
+  resolveMultipleChoicePoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -91,15 +92,20 @@ function gradeMultipleChoice(
       correct: o.correct,
       selected: selected.has(o.id),
     }));
-    return { id: item.id, options };
+    return { id: item.id, options, points: resolveMultipleChoicePoints(item) };
   });
 
-  const correctCount = itemsDetail.filter((it) => it.options.every((o) => o.correct === o.selected))
-    .length;
+  const fullyCorrect = itemsDetail.filter((it) => it.options.every((o) => o.correct === o.selected));
+  const correctCount = fullyCorrect.length;
+  const pointsPossible = itemsDetail.reduce((sum, it) => sum + it.points, 0);
+  const pointsEarned = fullyCorrect.reduce((sum, it) => sum + it.points, 0);
+
   return {
     correct: correctCount === itemsDetail.length && itemsDetail.length > 0,
     score: percentage(correctCount, itemsDetail.length),
     detail: { items: itemsDetail },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

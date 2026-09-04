@@ -46,6 +46,7 @@ export function ExerciseCard({
         <MultipleChoiceExercise
           taskId={taskId}
           config={config as unknown as MultipleChoicePublic}
+          pointsVisible={pointsVisible ?? false}
         />
       );
     case "true_false":

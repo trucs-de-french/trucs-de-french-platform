@@ -12,9 +12,11 @@ type ItemDetail = MultipleChoiceDetail["items"][number];
 export function MultipleChoiceExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: MultipleChoicePublic;
+  pointsVisible: boolean;
 }) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -50,6 +52,25 @@ export function MultipleChoiceExercise({
     return "opacity-60";
   }
 
+  // До перевірки — лише якщо pointsVisible; після — завжди. Речення
+  // зараховується цілком (atomic unit = item), тому 0/points — не часткове.
+  function pointsBadge(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
+    if (!pointsVisible && !itemDetail) return null;
+    if (itemDetail) {
+      const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
+      return (
+        <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
+          {isCorrect ? item.points : 0}/{item.points} балів
+        </span>
+      );
+    }
+    return (
+      <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
+        {item.points} {item.points === 1 ? "бал" : "балів"}
+      </span>
+    );
+  }
+
   function renderItem(item: MultipleChoicePublicItem) {
     const itemDetail = detail?.items.find((d) => d.id === item.id);
     const sel = selections[item.id] ?? [];
@@ -57,7 +78,10 @@ export function MultipleChoiceExercise({
     if (config.display === "buttons") {
       return (
         <div key={item.id}>
-          <p className="font-medium">{item.sentence}</p>
+          <p className="font-medium">
+            {item.sentence}
+            {pointsBadge(item, itemDetail)}
+          </p>
           {item.multiple && (
             <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
@@ -110,6 +134,7 @@ export function MultipleChoiceExercise({
             ))}
           </select>
           {after ?? ""}
+          {pointsBadge(item, itemDetail)}
         </p>
         {item.multiple && (
           <p className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-400">
@@ -146,6 +171,11 @@ export function MultipleChoiceExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

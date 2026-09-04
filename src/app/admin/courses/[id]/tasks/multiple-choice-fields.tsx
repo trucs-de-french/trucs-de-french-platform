@@ -66,6 +66,10 @@ export function MultipleChoiceFields({
     );
   }
 
+  function updatePoints(itemId: string, points: number) {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, points } : it)));
+  }
+
   function toggleCorrect(itemId: string, optId: string) {
     setItems((prev) =>
       prev.map((it) =>
@@ -115,13 +119,24 @@ export function MultipleChoiceFields({
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
                 Речення {ii + 1}
               </span>
-              <button
-                type="button"
-                onClick={() => removeItem(item.id)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
-              >
-                видалити речення
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={item.points ?? 1}
+                  onChange={(e) => updatePoints(item.id, Number(e.target.value))}
+                  title="Бали за це речення"
+                  className="w-16 rounded-md border px-2 py-1 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.id)}
+                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                >
+                  видалити речення
+                </button>
+              </div>
             </div>
             <textarea
               value={item.sentence}
