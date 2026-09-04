@@ -5,6 +5,7 @@ import {
   getDragDropSentences,
   getMultipleChoiceItems,
   resolveTrueFalsePoints,
+  resolveOpenAnswerPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -265,14 +266,20 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
       studentAnswer,
       correctAnswers: q.answers,
       isCorrect: accepted.includes(normalize(studentAnswer)),
+      points: resolveOpenAnswerPoints(q),
     };
   });
 
   const correctCount = questions.filter((q) => q.isCorrect).length;
+  const pointsPossible = questions.reduce((sum, q) => sum + q.points, 0);
+  const pointsEarned = questions.filter((q) => q.isCorrect).reduce((sum, q) => sum + q.points, 0);
+
   return {
     correct: correctCount === questions.length && questions.length > 0,
     score: percentage(correctCount, questions.length),
     detail: { questions },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

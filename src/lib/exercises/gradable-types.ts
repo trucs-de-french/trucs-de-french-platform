@@ -30,3 +30,15 @@ export function isGradableTaskType(type: string): type is GradableTaskType {
 export function assertNeverGradableType(value: never): never {
   throw new Error(`Немає обробки для типу завдання "${value}"`);
 }
+
+// Пілот системи балів (points_visible на tasks) — типи, чиї config/grade.ts
+// уже рахують pointsEarned/pointsPossible поряд зі score. Розширюється по
+// одному типу за раз (Група A); чекбокс "Показувати бали заздалегідь" у
+// task-config-fields.tsx рендериться лише для типів із цього списку —
+// свідомо не для всіх GRADABLE_TASK_TYPES одразу, щоб не показувати
+// перемикач, який ще нічого не робить для типу, який ще не підтримує бали.
+export const POINTS_SUPPORTED_TASK_TYPES = ["true_false", "open_answer"] as const;
+
+export function isPointsSupportedTaskType(type: string): boolean {
+  return (POINTS_SUPPORTED_TASK_TYPES as readonly string[]).includes(type);
+}

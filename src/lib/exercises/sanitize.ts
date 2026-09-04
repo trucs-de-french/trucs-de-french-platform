@@ -181,10 +181,19 @@ export function getOpenAnswerQuestions(config: OpenAnswerConfig): OpenAnswerQues
   return [];
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveOpenAnswerPoints(question: OpenAnswerQuestion): number {
+  return question.points ?? 1;
+}
+
 export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   return {
     instructions: config.instructions,
-    questions: getOpenAnswerQuestions(config).map(({ id, question }) => ({ id, question })),
+    questions: getOpenAnswerQuestions(config).map((q) => ({
+      id: q.id,
+      question: q.question,
+      points: resolveOpenAnswerPoints(q),
+    })),
   };
 }
 

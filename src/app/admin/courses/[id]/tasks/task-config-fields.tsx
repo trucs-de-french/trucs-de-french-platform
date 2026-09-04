@@ -45,6 +45,7 @@ import {
   TASK_TYPE_ICON,
   getTaskTypeCategory,
 } from "@/lib/exercises/task-type-meta";
+import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -69,7 +70,7 @@ const TYPE_OPTIONS = [
   { value: "link", label: "Посилання-кнопка" },
   { value: "fill_blank", label: "Заповніть пропуск" },
   { value: "multiple_choice", label: "Оберіть правильний варіант" },
-  { value: "true_false", label: "Оберіть True чи False" },
+  { value: "true_false", label: "Оберіть Vrai чи Faux" },
   { value: "matching", label: "З'єднайте елементи" },
   { value: "reorder", label: "Розкладіть у правильному порядку" },
   { value: "drag_drop", label: "Перетягніть слова" },
@@ -98,7 +99,7 @@ type Props = {
    * тесту DELF (вправа не належить конкретному CO/CE/PE/PO тесту).
    */
   materialId?: string | null;
-  /** Пілот системи балів — поки лише для type === "true_false". */
+  /** Пілот системи балів — лише для типів із POINTS_SUPPORTED_TASK_TYPES. */
   initialPointsVisible?: boolean;
 };
 
@@ -500,21 +501,7 @@ export function TaskConfigFields({
       )}
 
       {type === "true_false" && (
-        <>
-          <TrueFalseFields initialConfig={initialConfig as Partial<TrueFalseConfig>} />
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="points_visible"
-              value="true"
-              id="points_visible"
-              defaultChecked={initialPointsVisible ?? false}
-            />
-            <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
-              Показувати бали студенту заздалегідь (до виконання)
-            </label>
-          </div>
-        </>
+        <TrueFalseFields initialConfig={initialConfig as Partial<TrueFalseConfig>} />
       )}
 
       {IMPORT_ENABLED_TYPES.includes(type) && (
@@ -586,6 +573,24 @@ export function TaskConfigFields({
 
       {type === "image_match" && (
         <ImageMatchFields ref={importRef} initialConfig={initialConfig as Partial<ImageMatchConfig>} />
+      )}
+
+      {/* Пілот системи балів — один спільний чекбокс для всіх типів, що вже
+          рахують pointsEarned/pointsPossible (POINTS_SUPPORTED_TASK_TYPES),
+          а не окремий блок на кожен тип. */}
+      {isPointsSupportedTaskType(type) && (
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="points_visible"
+            value="true"
+            id="points_visible"
+            defaultChecked={initialPointsVisible ?? false}
+          />
+          <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
+            Показувати бали студенту заздалегідь (до виконання)
+          </label>
+        </div>
       )}
     </>
   );

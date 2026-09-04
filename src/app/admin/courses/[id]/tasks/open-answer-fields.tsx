@@ -52,6 +52,10 @@ export function OpenAnswerFields({
     );
   }
 
+  function updatePoints(qId: string, points: number) {
+    setQuestions((prev) => prev.map((q) => (q.id === qId ? { ...q, points } : q)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input
@@ -82,6 +86,15 @@ export function OpenAnswerFields({
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="напр. Як буде французькою 'дякую'?"
                 className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              />
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={q.points ?? 1}
+                onChange={(e) => updatePoints(q.id, Number(e.target.value))}
+                title="Бали за це питання"
+                className="w-16 rounded-md border px-2 py-1 text-sm"
               />
               <button
                 type="button"

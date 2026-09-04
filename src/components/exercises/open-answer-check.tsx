@@ -13,9 +13,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 export function OpenAnswerCheckExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: OpenAnswerPublic;
+  pointsVisible: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -32,7 +34,17 @@ export function OpenAnswerCheckExercise({
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
             <div key={q.id}>
-              <p className="text-sm font-medium">{q.question}</p>
+              <p className="text-sm font-medium">
+                {q.question}
+                {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
+                {(pointsVisible || qDetail) && (
+                  <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">
+                    {qDetail
+                      ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} балів`
+                      : `${q.points} ${q.points === 1 ? "бал" : "балів"}`}
+                  </span>
+                )}
+              </p>
               <input
                 value={answers[q.id] ?? ""}
                 onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
@@ -74,6 +86,11 @@ export function OpenAnswerCheckExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

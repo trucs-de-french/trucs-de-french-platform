@@ -70,7 +70,11 @@ export function ExerciseCard({
       );
     case "open_answer":
       return (
-        <OpenAnswerCheckExercise taskId={taskId} config={config as unknown as OpenAnswerPublic} />
+        <OpenAnswerCheckExercise
+          taskId={taskId}
+          config={config as unknown as OpenAnswerPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
       );
     case "table_fill":
       return <TableFillExercise taskId={taskId} config={config as unknown as TableFillPublic} />;

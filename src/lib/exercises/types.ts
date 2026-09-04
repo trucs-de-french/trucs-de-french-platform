@@ -13,7 +13,9 @@ export type FillBlankConfig = {
 // listening.questions, з частковим заліком по кожному питанню. Стара пласка
 // форма ({question, answers} без questions) — виродковий випадок нової,
 // нормалізується на льоту в grade.ts/sanitize.ts, без міграції БД.
-export type OpenAnswerQuestion = { id: string; question: string; answers: string[] };
+// points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
+// (resolveOpenAnswerPoints у sanitize.ts).
+export type OpenAnswerQuestion = { id: string; question: string; answers: string[]; points?: number };
 export type OpenAnswerConfig = {
   instructions?: string;
   questions: OpenAnswerQuestion[];
@@ -241,7 +243,7 @@ export type SortColumnsPublic = {
 
 export type OpenAnswerPublic = {
   instructions?: string;
-  questions: { id: string; question: string }[];
+  questions: { id: string; question: string; points: number }[];
 };
 
 export type TableFillPublic = {
@@ -343,6 +345,7 @@ export type OpenAnswerDetail = {
     studentAnswer: string;
     correctAnswers: string[];
     isCorrect: boolean;
+    points: number;
   }[];
 };
 
