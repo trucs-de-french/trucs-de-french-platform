@@ -15,6 +15,7 @@ import {
   resolveTableFillPoints,
   getMatchingPairs,
   resolveMatchingPoints,
+  resolveFillBlankPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -75,10 +76,18 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
   });
 
   const correctCount = blanks.filter((b) => b.isCorrect).length;
+  const correct = correctCount === blanks.length && blanks.length > 0;
+  // POINTS — на всю вправу (не на пропуск, підтверджений компроміс, бо
+  // template — вільний текст без структурної адресації пропусків):
+  // зараховується цілком, лише якщо ВСІ пропуски правильні.
+  const points = resolveFillBlankPoints(config);
+
   return {
-    correct: correctCount === blanks.length && blanks.length > 0,
+    correct,
     score: percentage(correctCount, blanks.length),
     detail: { blanks },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
   };
 }
 

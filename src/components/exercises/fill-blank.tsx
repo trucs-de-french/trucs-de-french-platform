@@ -8,9 +8,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 export function FillBlankExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: FillBlankPublic;
+  pointsVisible: boolean;
 }) {
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
@@ -20,7 +22,18 @@ export function FillBlankExercise({
 
   return (
     <div>
-      <p className="mb-2 font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank}</p>
+      <p className="mb-2 font-medium">
+        {config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank}
+        {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
+            pointsVisible, після — завжди. */}
+        {(pointsVisible || detail) && (
+          <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+            {detail
+              ? `${result?.correct ? config.points : 0}/${config.points} балів`
+              : `${config.points} ${config.points === 1 ? "бал" : "балів"}`}
+          </span>
+        )}
+      </p>
       <p className="leading-8">
         {segments.map((seg, i) => (
           <span key={i}>
@@ -73,6 +86,11 @@ export function FillBlankExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

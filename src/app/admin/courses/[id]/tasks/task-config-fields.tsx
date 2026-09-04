@@ -489,6 +489,19 @@ export function TaskConfigFields({
               className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              Бали за всю вправу (зараховуються, лише якщо всі пропуски правильні)
+            </label>
+            <input
+              type="number"
+              name="fill_blank_points"
+              min={0}
+              step={0.5}
+              defaultValue={(initialConfig?.points as number) ?? 1}
+              className="w-24 rounded-md border px-2 py-1.5 text-sm"
+            />
+          </div>
           {/* Довідковий режим (без onImport) — тут не можна автоматично
               вписати слово в шаблон, тож просто показуємо список для
               копіювання вручну. */}

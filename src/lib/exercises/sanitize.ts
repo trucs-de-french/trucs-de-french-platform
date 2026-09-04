@@ -45,10 +45,18 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+// Пілот системи балів, Група B, останній тип (див. resolveTrueFalsePoints)
+// — дефолт 1. На відміну від решти resolveXxxPoints, приймає ЦІЛИЙ config,
+// не елемент масиву — тут узагалі нема масиву, бали на всю вправу.
+export function resolveFillBlankPoints(config: FillBlankConfig): number {
+  return config.points ?? 1;
+}
+
 export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   return {
     instructions: config.instructions,
     template: config.template.replace(BLANK_RE, "{{}}"),
+    points: resolveFillBlankPoints(config),
   };
 }
 

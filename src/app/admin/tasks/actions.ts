@@ -58,6 +58,7 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
       return {
         instructions: (formData.get("fill_blank_instructions") as string) || "",
         template: (formData.get("fill_blank_template") as string) || "",
+        points: Number(formData.get("fill_blank_points")) || 1,
       };
     case "multiple_choice":
       return {

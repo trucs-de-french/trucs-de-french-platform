@@ -40,7 +40,13 @@ export function ExerciseCard({
 }) {
   switch (type) {
     case "fill_blank":
-      return <FillBlankExercise taskId={taskId} config={config as unknown as FillBlankPublic} />;
+      return (
+        <FillBlankExercise
+          taskId={taskId}
+          config={config as unknown as FillBlankPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "multiple_choice":
       return (
         <MultipleChoiceExercise
