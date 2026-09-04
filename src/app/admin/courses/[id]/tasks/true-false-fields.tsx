@@ -30,6 +30,10 @@ export function TrueFalseFields({
     setStatements((prev) => prev.map((s) => (s.id === id ? { ...s, answer } : s)));
   }
 
+  function updatePoints(id: string, points: number) {
+    setStatements((prev) => prev.map((s) => (s.id === id ? { ...s, points } : s)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="tf_statements" value={JSON.stringify(statements)} readOnly />
@@ -64,6 +68,15 @@ export function TrueFalseFields({
               <option value="true">True</option>
               <option value="false">False</option>
             </select>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={s.points ?? 1}
+              onChange={(e) => updatePoints(s.id, Number(e.target.value))}
+              title="Бали за це твердження"
+              className="w-16 rounded-md border px-2 py-1 text-sm"
+            />
             <button
               type="button"
               onClick={() => removeStatement(s.id)}

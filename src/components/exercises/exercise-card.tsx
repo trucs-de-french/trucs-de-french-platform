@@ -30,10 +30,13 @@ export function ExerciseCard({
   taskId,
   type,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   type: string;
   config: Record<string, unknown>;
+  // Пілот системи балів — поки має ефект лише для type === "true_false".
+  pointsVisible?: boolean;
 }) {
   switch (type) {
     case "fill_blank":
@@ -46,7 +49,13 @@ export function ExerciseCard({
         />
       );
     case "true_false":
-      return <TrueFalseExercise taskId={taskId} config={config as unknown as TrueFalsePublic} />;
+      return (
+        <TrueFalseExercise
+          taskId={taskId}
+          config={config as unknown as TrueFalsePublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "matching":
       return <MatchingExercise taskId={taskId} config={config as unknown as MatchingPublic} />;
     case "listening":

@@ -58,7 +58,9 @@ export default async function MaterialPage({
   const { data: exercises } = showExercises
     ? await supabase
         .from("tasks")
-        .select("id, type, title, config, image_url, audio_url, games(embed_url, provider)")
+        .select(
+          "id, type, title, config, image_url, audio_url, points_visible, games(embed_url, provider)"
+        )
         .eq("material_id", materialId)
         .order("order_index")
         .returns<ExerciseTask[]>()

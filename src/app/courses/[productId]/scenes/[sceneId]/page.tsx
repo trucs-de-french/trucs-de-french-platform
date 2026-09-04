@@ -48,6 +48,7 @@ type TaskRow = {
   config: Record<string, unknown> | null;
   image_url: string | null;
   audio_url: string | null;
+  points_visible: boolean;
   games: { embed_url: string | null; provider: string } | null;
 };
 
@@ -126,7 +127,9 @@ export default async function ScenePage({
       .order("order_index"),
     supabase
       .from("tasks")
-      .select("id, type, title, config, image_url, audio_url, games(embed_url, provider)")
+      .select(
+        "id, type, title, config, image_url, audio_url, points_visible, games(embed_url, provider)"
+      )
       .eq("scene_id", sceneId)
       .order("order_index")
       .returns<TaskRow[]>(),
@@ -402,6 +405,7 @@ export default async function ScenePage({
                     taskId={task.id}
                     type={task.type}
                     config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                    pointsVisible={task.points_visible}
                   />
                 </div>
               )}

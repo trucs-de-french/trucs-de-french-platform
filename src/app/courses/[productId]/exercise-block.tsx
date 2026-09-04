@@ -14,6 +14,7 @@ export type ExerciseTask = {
   config: Record<string, unknown> | null;
   image_url: string | null;
   audio_url: string | null;
+  points_visible?: boolean;
   games?: { embed_url: string | null; provider: string } | null;
 };
 
@@ -72,6 +73,7 @@ export function ExerciseBlock({ task }: { task: ExerciseTask }) {
           taskId={task.id}
           type={task.type}
           config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+          pointsVisible={task.points_visible}
         />
       )}
 

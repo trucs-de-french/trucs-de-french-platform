@@ -18,6 +18,7 @@ type TaskDetail = {
   material_id: string | null;
   delf_section: string | null;
   delf_test_number: number | null;
+  points_visible: boolean;
   games: { provider: string; embed_url: string | null; game_type: string | null } | null;
 };
 
@@ -33,7 +34,7 @@ export default async function EditTaskPage({
     supabase
       .from("tasks")
       .select(
-        "id, type, title, config, image_url, audio_url, scene_id, material_id, delf_section, delf_test_number, games(provider, embed_url, game_type)"
+        "id, type, title, config, image_url, audio_url, scene_id, material_id, delf_section, delf_test_number, points_visible, games(provider, embed_url, game_type)"
       )
       .eq("id", taskId)
       .single<TaskDetail>(),
@@ -93,6 +94,7 @@ export default async function EditTaskPage({
           initialDelfSection={task.delf_section}
           initialDelfTestNumber={task.delf_test_number}
           materialId={task.material_id}
+          initialPointsVisible={task.points_visible}
         />
       </SaveForm>
 

@@ -98,6 +98,8 @@ type Props = {
    * тесту DELF (вправа не належить конкретному CO/CE/PE/PO тесту).
    */
   materialId?: string | null;
+  /** Пілот системи балів — поки лише для type === "true_false". */
+  initialPointsVisible?: boolean;
 };
 
 export function TaskConfigFields({
@@ -112,6 +114,7 @@ export function TaskConfigFields({
   initialDelfSection,
   initialDelfTestNumber,
   materialId,
+  initialPointsVisible,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
   // essay_check за визначенням завжди PE — розумний дефолт, який лишається
@@ -497,7 +500,21 @@ export function TaskConfigFields({
       )}
 
       {type === "true_false" && (
-        <TrueFalseFields initialConfig={initialConfig as Partial<TrueFalseConfig>} />
+        <>
+          <TrueFalseFields initialConfig={initialConfig as Partial<TrueFalseConfig>} />
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="points_visible"
+              value="true"
+              id="points_visible"
+              defaultChecked={initialPointsVisible ?? false}
+            />
+            <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
+              Показувати бали студенту заздалегідь (до виконання)
+            </label>
+          </div>
+        </>
       )}
 
       {IMPORT_ENABLED_TYPES.includes(type) && (

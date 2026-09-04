@@ -9,9 +9,11 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 export function TrueFalseExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: TrueFalsePublic;
+  pointsVisible: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -29,7 +31,18 @@ export function TrueFalseExercise({
             key={s.id}
             className="flex items-center justify-between gap-3 rounded-md border p-2"
           >
-            <span className="text-sm">{s.text}</span>
+            <span className="text-sm">
+              {s.text}
+              {/* До перевірки — лише якщо pointsVisible; після — завжди,
+                  ваше підтверджене рішення. */}
+              {(pointsVisible || d) && (
+                <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  {d
+                    ? `${d.isCorrect ? d.points : 0}/${d.points} балів`
+                    : `${s.points} ${s.points === 1 ? "бал" : "балів"}`}
+                </span>
+              )}
+            </span>
             <div className="flex gap-1">
               {[true, false].map((val) => (
                 <button
@@ -75,6 +88,11 @@ export function TrueFalseExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 
