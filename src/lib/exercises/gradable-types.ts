@@ -42,6 +42,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "open_answer",
   "multiple_choice",
   "reorder",
+  "sort_columns",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

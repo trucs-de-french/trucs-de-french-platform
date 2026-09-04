@@ -9,9 +9,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 export function SortColumnsExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: SortColumnsPublic;
+  pointsVisible: boolean;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as SortColumnsDetail | undefined;
@@ -34,6 +36,16 @@ export function SortColumnsExercise({
 
   const pool = config.items.filter((i) => !assignment[i.id]);
   const allPlaced = pool.length === 0;
+
+  // До перевірки — лише якщо pointsVisible; після — завжди.
+  function itemLabel(item: SortColumnsPublic["items"][number]) {
+    const d = detail?.items.find((x) => x.id === item.id);
+    if (!pointsVisible && !d) return item.text;
+    const suffix = d
+      ? `${d.isCorrect ? item.points : 0}/${item.points}`
+      : `${item.points} ${item.points === 1 ? "бал" : "балів"}`;
+    return `${item.text} (${suffix})`;
+  }
 
   function itemClass(id: string) {
     const d = detail?.items.find((x) => x.id === id);
@@ -70,7 +82,7 @@ export function SortColumnsExercise({
               }}
               className={itemClass(item.id)}
             >
-              {item.text}
+              {itemLabel(item)}
             </button>
           ))
         )}
@@ -105,7 +117,7 @@ export function SortColumnsExercise({
                     }}
                     className={itemClass(item.id)}
                   >
-                    {item.text}
+                    {itemLabel(item)}
                   </button>
                 ))}
               </div>
@@ -149,6 +161,11 @@ export function SortColumnsExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

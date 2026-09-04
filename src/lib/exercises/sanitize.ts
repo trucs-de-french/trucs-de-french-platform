@@ -18,6 +18,7 @@ import type {
   DragDropPublic,
   DragDropSentence,
   SortColumnsConfig,
+  SortColumnsItem,
   SortColumnsPublic,
   OpenAnswerConfig,
   OpenAnswerPublic,
@@ -175,11 +176,18 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   };
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveSortColumnsPoints(item: SortColumnsItem): number {
+  return item.points ?? 1;
+}
+
 export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPublic {
   return {
     instructions: config.instructions,
     columns: config.columns,
-    items: shuffle(config.items.map(({ id, text }) => ({ id, text }))),
+    items: shuffle(
+      config.items.map((i) => ({ id: i.id, text: i.text, points: resolveSortColumnsPoints(i) }))
+    ),
   };
 }
 

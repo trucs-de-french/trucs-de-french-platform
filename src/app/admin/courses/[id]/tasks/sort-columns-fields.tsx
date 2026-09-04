@@ -63,6 +63,10 @@ export const SortColumnsFields = forwardRef<
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, columnId } : i)));
   }
 
+  function updateItemPoints(id: string, points: number) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, points } : i)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="sort_columns_columns" value={JSON.stringify(columns)} readOnly />
@@ -132,6 +136,15 @@ export const SortColumnsFields = forwardRef<
                 </option>
               ))}
             </select>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={item.points ?? 1}
+              onChange={(e) => updateItemPoints(item.id, Number(e.target.value))}
+              title="Бали за цей елемент"
+              className="w-16 rounded-md border px-2 py-1 text-sm"
+            />
             <button
               type="button"
               onClick={() => removeItem(item.id)}

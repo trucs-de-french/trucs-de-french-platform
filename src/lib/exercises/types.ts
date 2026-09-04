@@ -129,7 +129,9 @@ export type DragDropConfig = {
 };
 
 export type SortColumn = { id: string; label: string };
-export type SortColumnsItem = { id: string; text: string; columnId: string };
+// points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
+// (resolveSortColumnsPoints у sanitize.ts).
+export type SortColumnsItem = { id: string; text: string; columnId: string; points?: number };
 export type SortColumnsConfig = {
   instructions?: string;
   columns: SortColumn[];
@@ -253,7 +255,7 @@ export type DragDropPublic = {
 export type SortColumnsPublic = {
   instructions?: string;
   columns: SortColumn[];
-  items: { id: string; text: string }[]; // без columnId, перемішано
+  items: { id: string; text: string; points: number }[]; // без columnId, перемішано
 };
 
 export type OpenAnswerPublic = {
@@ -352,6 +354,7 @@ export type SortColumnsDetail = {
     correctColumnLabel: string;
     studentColumnId: string | null;
     isCorrect: boolean;
+    points: number;
   }[];
 };
 
