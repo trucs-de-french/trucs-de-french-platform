@@ -1,9 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useState, useTransition } from "react";
 import type { ActionState } from "@/lib/action-state";
-import { SubmitButton } from "./submit-button";
 
+// Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
+// (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
+// при кожному сабміті САМЕ через <form action>-інтеграцію (extractEvents$1
+// у react-dom: автоматичний reset прив'язаний до native "submit" на формі,
+// чий action-проп — функція). Пряма виклик дії тут узагалі не проходить
+// через цей код, тож reset ніколи не відбувається — ані для контрольованих
+// полів (напр. Vrai/Faux select), ані для неконтрольованих (defaultValue
+// інструкцій), без потреби в reset-listener/queueMicrotask на кожному полі.
 export function SaveForm({
   action,
   children,
@@ -22,23 +29,25 @@ export function SaveForm({
   // Для коротких форм (назва сцени, посилання тощо) стікі-бар був би зайвим.
   sticky?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, null);
+  const [state, setState] = useState<ActionState>(null);
+  const [pending, startTransition] = useTransition();
   const [showSaved, setShowSaved] = useState(false);
-  const wasPending = useRef(false);
 
-  useEffect(() => {
-    const justFinished = wasPending.current && !pending;
-    wasPending.current = pending;
-
-    if (justFinished && state?.ok) {
-      setShowSaved(true);
-      const timer = setTimeout(() => setShowSaved(false), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [pending, state]);
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const result = await action(state, formData);
+      setState(result);
+      if (result?.ok) {
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 1500);
+      }
+    });
+  }
 
   return (
-    <form action={formAction} className={className}>
+    <form onSubmit={handleSubmit} className={className}>
       {children}
       <div
         className={`mt-2 flex items-center gap-3 ${
@@ -47,12 +56,13 @@ export function SaveForm({
             : ""
         }`}
       >
-        <SubmitButton
-          pendingChildren="Зберігаю..."
+        <button
+          type="submit"
+          disabled={pending}
           className="self-start rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
         >
-          {saveLabel}
-        </SubmitButton>
+          {pending ? "Зберігаю..." : saveLabel}
+        </button>
         {showSaved && (
           <span className="text-sm font-medium text-green-600 dark:text-green-400">
             {savedLabel}

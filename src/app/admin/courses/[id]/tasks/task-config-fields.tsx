@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluation-grids";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import type {
@@ -118,41 +118,19 @@ export function TaskConfigFields({
   initialPointsVisible,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
-  // Контрольований (не defaultChecked) — React 19 скидає неконтрольовані
-  // поля форми до значення на момент монтування одразу після успішного
-  // form action (SaveForm/useActionState), тож defaultChecked показував би
-  // щойно збережене значення як "знятий" чекбокс. Синхронізація з пропом —
-  // не через useEffect (react-hooks/set-state-in-effect), а через
-  // "adjust state during render" (react.dev/learn/you-might-not-need-an-effect).
+  // Контрольований чекбокс, синхронізований з пропом від сервера
+  // (points_visible оновлюється через revalidatePath в updateTask) — не
+  // через useEffect (react-hooks/set-state-in-effect), а через "adjust
+  // state during render" (react.dev/learn/you-might-not-need-an-effect).
+  // SaveForm сабмітить через onSubmit (не <form action>), тож React 19 тут
+  // ніколи не викликає нативний form.reset() — жодного reset-listener на
+  // цьому чи будь-якому іншому полі форми не потрібно.
   const [pointsVisible, setPointsVisible] = useState(initialPointsVisible ?? false);
   const [prevInitialPointsVisible, setPrevInitialPointsVisible] = useState(initialPointsVisible);
   if (initialPointsVisible !== prevInitialPointsVisible) {
     setPrevInitialPointsVisible(initialPointsVisible);
     setPointsVisible(initialPointsVisible ?? false);
   }
-  // React 19 диспатчить нативну подію 'reset' СИНХРОННО зсередини власної
-  // commit-фази (виклик form.reset() — частина того самого проходу, що
-  // комітить решту мутацій цього рендеру). Тож пряме присвоєння .checked
-  // прямо в обробнику 'reset' одразу перезаписується React'ом, який ще не
-  // закінчив цей коміт — підтверджено діагностичним логуванням: наше
-  // виправлення застосовувалось коректно, але вже наступний коміт (<1мс
-  // по тому) знову показував старе значення в DOM, хоча React-стан
-  // (pointsVisible) лишався правильним увесь час. queueMicrotask відкладає
-  // виправлення до моменту, коли поточний синхронний стек викликів
-  // (включно з рештою роботи цього коміту) повністю розгорнеться —
-  // мікрозадачі в JS завжди виконуються строго після синхронного коду.
-  const pointsVisibleRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    const form = pointsVisibleRef.current?.form;
-    if (!form) return;
-    function handleReset() {
-      queueMicrotask(() => {
-        if (pointsVisibleRef.current) pointsVisibleRef.current.checked = pointsVisible;
-      });
-    }
-    form.addEventListener("reset", handleReset);
-    return () => form.removeEventListener("reset", handleReset);
-  }, [pointsVisible]);
   // Опційний банк слів-підказок для fill_blank — суто довідковий UI,
   // жодного зв'язку з gradeFillBlank. Порожній за замовчуванням (не
   // "[""]") — банк не показується студенту взагалі, поки вчитель не додав
@@ -684,7 +662,6 @@ export function TaskConfigFields({
       {isPointsSupportedTaskType(type) && (
         <div className="flex items-center gap-2">
           <input
-            ref={pointsVisibleRef}
             type="checkbox"
             name="points_visible"
             value="true"
