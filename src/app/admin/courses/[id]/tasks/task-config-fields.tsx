@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluation-grids";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import type {
@@ -130,6 +130,25 @@ export function TaskConfigFields({
     setPrevInitialPointsVisible(initialPointsVisible);
     setPointsVisible(initialPointsVisible ?? false);
   }
+  // React 19 викликає нативний form.reset() при КОЖНОМУ сабміті useActionState-форми
+  // (SaveForm), синхронно, ще до відповіді сервера — це повертає чекбокс до
+  // defaultChecked, зафіксованого один раз при монтуванні сторінки. Який саме
+  // рендер (цей reset чи наш власний, з pointsVisible) закомітиться в DOM
+  // останнім — перегони, що не гарантовано виграються (звідси видима
+  // асиметрія true->false проти false->true після сабміту). 'reset' —
+  // нативна подія, яка за специфікацією спрацьовує СТРОГО після того, як
+  // браузер уже застосував reset до всіх полів, тож тут завжди останнє
+  // слово, незалежно від напрямку.
+  const pointsVisibleRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const form = pointsVisibleRef.current?.form;
+    if (!form) return;
+    function handleReset() {
+      if (pointsVisibleRef.current) pointsVisibleRef.current.checked = pointsVisible;
+    }
+    form.addEventListener("reset", handleReset);
+    return () => form.removeEventListener("reset", handleReset);
+  }, [pointsVisible]);
   // Опційний банк слів-підказок для fill_blank — суто довідковий UI,
   // жодного зв'язку з gradeFillBlank. Порожній за замовчуванням (не
   // "[""]") — банк не показується студенту взагалі, поки вчитель не додав
@@ -661,6 +680,7 @@ export function TaskConfigFields({
       {isPointsSupportedTaskType(type) && (
         <div className="flex items-center gap-2">
           <input
+            ref={pointsVisibleRef}
             type="checkbox"
             name="points_visible"
             value="true"
