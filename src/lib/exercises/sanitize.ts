@@ -109,6 +109,7 @@ export function resolveTrueFalsePoints(statement: TrueFalseStatement): number {
 export function sanitizeTrueFalse(config: TrueFalseConfig): TrueFalsePublic {
   return {
     instructions: config.instructions,
+    subInstructions: config.subInstructions,
     statements: config.statements.map((s) => ({
       id: s.id,
       text: s.text,

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
@@ -73,11 +74,16 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         display: (formData.get("mc_display") as string) || "buttons",
         items: parseJsonField(formData.get("mc_items")),
       };
-    case "true_false":
+    case "true_false": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("tf_sub_instructions") as string) || ""
+      );
       return {
-        instructions: (formData.get("tf_instructions") as string) || "",
+        instructions: sanitizeInstructionsHtml((formData.get("tf_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
         statements: parseJsonField(formData.get("tf_statements")),
       };
+    }
     case "matching":
       return {
         instructions: (formData.get("matching_instructions") as string) || "",

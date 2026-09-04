@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { InstructionsText } from "./instructions-text";
 
 export function TrueFalseExercise({
   taskId,
@@ -24,7 +25,11 @@ export function TrueFalseExercise({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="font-medium">{config.instructions ?? DEFAULT_INSTRUCTIONS.true_false}</p>
+      <InstructionsText
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false}
+        subText={config.subInstructions}
+        className="font-medium"
+      />
       {config.statements.map((s) => {
         const d = detail?.statements.find((x) => x.id === s.id);
         return (

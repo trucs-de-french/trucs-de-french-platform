@@ -93,6 +93,12 @@ export type MultipleChoiceConfig = {
 export type TrueFalseStatement = { id: string; text: string; answer: boolean; points?: number };
 export type TrueFalseConfig = {
   instructions?: string;
+  // Опційні додаткові інструкції — окреме поле, не частина instructions,
+  // щоб коротка головна інструкція лишалась короткою, а довші пояснення
+  // (за потреби) не змушували її розтягуватись. Форматований HTML (жирний/
+  // курсив/підсвітка) — санітизується і при збереженні, і при рендері
+  // (sanitizeInstructionsHtml), той самий double-sanitize принцип, що callout.
+  subInstructions?: string;
   statements: TrueFalseStatement[];
 };
 
@@ -270,6 +276,7 @@ export type MultipleChoicePublic = {
 
 export type TrueFalsePublic = {
   instructions?: string;
+  subInstructions?: string;
   statements: { id: string; text: string; points: number }[]; // points завжди присутні — не секрет, як answer
 };
 
