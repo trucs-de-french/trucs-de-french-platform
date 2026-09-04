@@ -62,7 +62,7 @@ export function TrueFalseExercise({
                         : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   }`}
                 >
-                  {val ? "True" : "False"}
+                  {val ? "Vrai" : "Faux"}
                 </button>
               ))}
             </div>

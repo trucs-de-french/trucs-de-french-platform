@@ -65,8 +65,8 @@ export function TrueFalseFields({
               onChange={(e) => updateAnswer(s.id, e.target.value === "true")}
               className="rounded-md border px-2 py-1 text-sm"
             >
-              <option value="true">True</option>
-              <option value="false">False</option>
+              <option value="true">Vrai</option>
+              <option value="false">Faux</option>
             </select>
             <input
               type="number"

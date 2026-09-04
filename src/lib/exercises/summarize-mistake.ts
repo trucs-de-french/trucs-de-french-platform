@@ -43,7 +43,7 @@ export function summarizeMistake(feedback: unknown): string {
       f.statements as { isCorrect: boolean; text: string; correctAnswer: boolean }[]
     ).filter((s) => !s.isCorrect);
     return wrong.length
-      ? wrong.map((s) => `«${s.text}» — ${s.correctAnswer ? "True" : "False"}`).join("; ")
+      ? wrong.map((s) => `«${s.text}» — ${s.correctAnswer ? "Vrai" : "Faux"}`).join("; ")
       : "Всі твердження правильні.";
   }
 
