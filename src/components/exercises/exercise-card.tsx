@@ -100,7 +100,13 @@ export function ExerciseCard({
         />
       );
     case "table_fill":
-      return <TableFillExercise taskId={taskId} config={config as unknown as TableFillPublic} />;
+      return (
+        <TableFillExercise
+          taskId={taskId}
+          config={config as unknown as TableFillPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "image_match":
       return (
         <ImageMatchExercise

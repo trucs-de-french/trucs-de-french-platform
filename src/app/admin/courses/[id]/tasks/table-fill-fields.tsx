@@ -48,6 +48,10 @@ export const TableFillFields = forwardRef<
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   }
 
+  function updateRowPoints(id: string, points: number) {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, points } : r)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="table_fill_column_labels" value={JSON.stringify(columnLabels)} readOnly />
@@ -124,6 +128,15 @@ export const TableFillFields = forwardRef<
               приховати
             </label>
           </div>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={row.points ?? 1}
+            onChange={(e) => updateRowPoints(row.id, Number(e.target.value))}
+            title="Бали за весь рядок (зараховуються, лише якщо всі приховані клітинки правильні)"
+            className="w-16 self-start rounded-md border px-2 py-1 text-sm"
+          />
           <button
             type="button"
             onClick={() => removeRow(row.id)}

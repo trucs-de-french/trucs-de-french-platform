@@ -12,6 +12,7 @@ import {
   resolveImageMatchPoints,
   resolveListeningPoints,
   resolveDragDropPoints,
+  resolveTableFillPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -335,6 +336,7 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
 
   const blanks: TableFillDetail["blanks"] = [];
   for (const row of config.rows) {
+    const rowPoints = resolveTableFillPoints(row);
     (["left", "right"] as const).forEach((side) => {
       const hidden = side === "left" ? row.leftHidden : row.rightHidden;
       if (!hidden) return;
@@ -343,15 +345,42 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
       const accepted = rawValue.split("|").map((s) => normalize(s));
       const studentAnswer = answerMap.get(`${row.id}:${side}`) ?? "";
       const isCorrect = accepted.includes(normalize(studentAnswer));
-      blanks.push({ rowId: row.id, side, studentAnswer, correctAnswers: accepted, isCorrect });
+      blanks.push({
+        rowId: row.id,
+        side,
+        studentAnswer,
+        correctAnswers: accepted,
+        isCorrect,
+        points: rowPoints,
+      });
     });
   }
 
   const correctCount = blanks.filter((b) => b.isCorrect).length;
+
+  // POINTS — на рівні РЯДКА (не клітинки), окремий вимір за score: рядок
+  // зараховується цілком, лише якщо ВСІ його приховані клітинки правильні.
+  // Рядки без жодної прихованої клітинки взагалі не потрапляють у blanks
+  // вище, тому не впливають ні на pointsEarned, ні на pointsPossible.
+  const blanksByRow = new Map<string, TableFillDetail["blanks"]>();
+  for (const b of blanks) {
+    const arr = blanksByRow.get(b.rowId) ?? [];
+    arr.push(b);
+    blanksByRow.set(b.rowId, arr);
+  }
+  let pointsPossible = 0;
+  let pointsEarned = 0;
+  for (const rowBlanks of blanksByRow.values()) {
+    pointsPossible += rowBlanks[0].points;
+    if (rowBlanks.every((b) => b.isCorrect)) pointsEarned += rowBlanks[0].points;
+  }
+
   return {
     correct: correctCount === blanks.length && blanks.length > 0,
     score: percentage(correctCount, blanks.length),
     detail: { blanks },
+    pointsEarned,
+    pointsPossible,
   };
 }
 

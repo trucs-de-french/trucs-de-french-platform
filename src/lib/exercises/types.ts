@@ -155,12 +155,19 @@ export type SortColumnsConfig = {
 // в рядку вчитель окремо вирішує, чи вона показана текстом, чи прихована
 // (поле для введення). Якщо hidden — value може містити кілька допустимих
 // варіантів через "|" (той самий синтаксис, що в fill_blank).
+// points — пілот системи балів, Група B (див. DragDropSentence) — дефолт 1
+// (resolveTableFillPoints у sanitize.ts). На рівні РЯДКА (не клітинки):
+// зараховується цілком, лише якщо ВСІ приховані клітинки цього рядка (1
+// чи 2 — leftHidden/rightHidden незалежні) правильні. Рядки без жодної
+// прихованої клітинки не мають чого оцінювати й не впливають ні на
+// pointsEarned, ні на pointsPossible.
 export type TableFillRow = {
   id: string;
   left: string;
   right: string;
   leftHidden: boolean;
   rightHidden: boolean;
+  points?: number;
 };
 export type TableFillConfig = {
   instructions?: string;
@@ -286,7 +293,7 @@ export type OpenAnswerPublic = {
 export type TableFillPublic = {
   instructions?: string;
   columnLabels: [string, string];
-  rows: { id: string; left: string | null; right: string | null }[]; // null = прихована клітинка
+  rows: { id: string; left: string | null; right: string | null; points: number }[]; // null = прихована клітинка
 };
 
 export type ImageMatchPublic = {
@@ -398,6 +405,7 @@ export type TableFillDetail = {
     studentAnswer: string;
     correctAnswers: string[];
     isCorrect: boolean;
+    points: number; // однакове для обох клітинок одного рядка — бали на рядок, не на клітинку
   }[];
 };
 

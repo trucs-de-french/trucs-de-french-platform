@@ -12,9 +12,11 @@ function cellKey(rowId: string, side: "left" | "right") {
 export function TableFillExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: TableFillPublic;
+  pointsVisible: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -31,6 +33,24 @@ export function TableFillExercise({
     return blank.isCorrect
       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
       : "border-red-500 bg-red-50 dark:bg-red-950/30";
+  }
+
+  // Рядки без жодної прихованої клітинки нема чого оцінювати — бали для них
+  // не показуємо взагалі. До перевірки — лише якщо pointsVisible; після —
+  // завжди. Бали рядка зараховуються, лише якщо ВСІ його приховані
+  // клітинки (1 або 2) правильні — не по клітинці, як score.
+  function rowPointsLabel(row: TableFillPublic["rows"][number]) {
+    const hasHidden = row.left === null || row.right === null;
+    if (!hasHidden) return null;
+
+    const rowBlanks = detail?.blanks.filter((b) => b.rowId === row.id);
+    if (!pointsVisible && !rowBlanks?.length) return null;
+
+    if (rowBlanks?.length) {
+      const isCorrect = rowBlanks.every((b) => b.isCorrect);
+      return `${isCorrect ? row.points : 0}/${row.points} балів`;
+    }
+    return `${row.points} ${row.points === 1 ? "бал" : "балів"}`;
   }
 
   function renderCell(rowId: string, side: "left" | "right", value: string | null) {
@@ -64,14 +84,18 @@ export function TableFillExercise({
           <thead>
             <tr className="border-b text-left text-neutral-500 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium">{config.columnLabels[0]}</th>
-              <th className="py-1 font-medium">{config.columnLabels[1]}</th>
+              <th className="py-1 pr-2 font-medium">{config.columnLabels[1]}</th>
+              <th className="py-1 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {config.rows.map((row) => (
               <tr key={row.id} className="border-b last:border-0">
                 <td className="py-1 pr-2">{renderCell(row.id, "left", row.left)}</td>
-                <td className="py-1">{renderCell(row.id, "right", row.right)}</td>
+                <td className="py-1 pr-2">{renderCell(row.id, "right", row.right)}</td>
+                <td className="py-1 text-xs italic text-neutral-500 dark:text-neutral-400">
+                  {rowPointsLabel(row)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -94,6 +118,11 @@ export function TableFillExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

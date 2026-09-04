@@ -25,6 +25,7 @@ import type {
   OpenAnswerPublic,
   OpenAnswerQuestion,
   TableFillConfig,
+  TableFillRow,
   TableFillPublic,
   ImageMatchConfig,
   ImageMatchItem,
@@ -234,6 +235,11 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   };
 }
 
+// Пілот системи балів, Група B (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveTableFillPoints(row: TableFillRow): number {
+  return row.points ?? 1;
+}
+
 export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   return {
     instructions: config.instructions,
@@ -242,6 +248,7 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
       id: r.id,
       left: r.leftHidden ? null : r.left,
       right: r.rightHidden ? null : r.right,
+      points: resolveTableFillPoints(r),
     })),
   };
 }
