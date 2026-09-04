@@ -49,6 +49,30 @@ export function FillBlankExercise({
           </span>
         )}
       </p>
+
+      {/* Опційний банк слів-підказок — суто довідковий, клік лише
+          викреслює/повертає слово візуально для самого студента, ніяк не
+          впливає на answers/submit. Перед реченням, а не після — щоб
+          студент бачив підказки одразу, до того як почне вписувати слова. */}
+      {config.wordBank && config.wordBank.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {config.wordBank.map((word, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => toggleCrossedOut(i)}
+              className={`rounded-full border px-3 py-1 text-sm ${
+                crossedOut.has(i)
+                  ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {word}
+            </button>
+          ))}
+        </div>
+      )}
+
       <p className="leading-8">
         {segments.map((seg, i) => (
           <span key={i}>
@@ -72,28 +96,6 @@ export function FillBlankExercise({
           </span>
         ))}
       </p>
-
-      {/* Опційний банк слів-підказок — суто довідковий, клік лише
-          викреслює/повертає слово візуально для самого студента, ніяк не
-          впливає на answers/submit. */}
-      {config.wordBank && config.wordBank.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {config.wordBank.map((word, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => toggleCrossedOut(i)}
-              className={`rounded-full border px-3 py-1 text-sm ${
-                crossedOut.has(i)
-                  ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
-                  : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
-              }`}
-            >
-              {word}
-            </button>
-          ))}
-        </div>
-      )}
 
       {detail && (
         <ul className="mt-2 flex flex-col gap-1 text-sm">
