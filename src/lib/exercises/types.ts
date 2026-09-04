@@ -89,7 +89,14 @@ export type MatchingConfig = {
 };
 
 export type ListeningOption = { id: string; text: string; correct: boolean };
-export type ListeningQuestion = { id: string; question: string; options: ListeningOption[] };
+// points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
+// (resolveListeningPoints у sanitize.ts).
+export type ListeningQuestion = {
+  id: string;
+  question: string;
+  options: ListeningOption[];
+  points?: number;
+};
 export type ListeningConfig = {
   instructions?: string;
   audioUrl: string;
@@ -240,7 +247,12 @@ export type MatchingPublic = {
 export type ListeningPublic = {
   instructions?: string;
   audioUrl: string;
-  questions: { id: string; question: string; options: { id: string; text: string }[] }[];
+  questions: {
+    id: string;
+    question: string;
+    options: { id: string; text: string }[];
+    points: number;
+  }[];
 };
 
 export type ReorderPublic = {
@@ -326,6 +338,7 @@ export type ListeningDetail = {
     id: string;
     question: string;
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
+    points: number;
   }[];
 };
 

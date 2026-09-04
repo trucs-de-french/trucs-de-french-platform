@@ -44,6 +44,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "reorder",
   "sort_columns",
   "image_match",
+  "listening",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

@@ -60,7 +60,13 @@ export function ExerciseCard({
     case "matching":
       return <MatchingExercise taskId={taskId} config={config as unknown as MatchingPublic} />;
     case "listening":
-      return <ListeningExercise taskId={taskId} config={config as unknown as ListeningPublic} />;
+      return (
+        <ListeningExercise
+          taskId={taskId}
+          config={config as unknown as ListeningPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
     case "reorder":
       return (
         <ReorderExercise

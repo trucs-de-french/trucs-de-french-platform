@@ -10,6 +10,7 @@ import type {
   MatchingConfig,
   MatchingPublic,
   ListeningConfig,
+  ListeningQuestion,
   ListeningPublic,
   ReorderConfig,
   ReorderPublic,
@@ -111,6 +112,11 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   };
 }
 
+// Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
+export function resolveListeningPoints(question: ListeningQuestion): number {
+  return question.points ?? 1;
+}
+
 export function sanitizeListening(config: ListeningConfig): ListeningPublic {
   return {
     instructions: config.instructions,
@@ -119,6 +125,7 @@ export function sanitizeListening(config: ListeningConfig): ListeningPublic {
       id: q.id,
       question: q.question,
       options: q.options.map(({ id, text }) => ({ id, text })),
+      points: resolveListeningPoints(q),
     })),
   };
 }

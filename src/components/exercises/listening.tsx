@@ -11,9 +11,11 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 export function ListeningExercise({
   taskId,
   config,
+  pointsVisible,
 }: {
   taskId: string;
   config: ListeningPublic;
+  pointsVisible: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -42,7 +44,17 @@ export function ListeningExercise({
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
             <div key={q.id}>
-              <p className="text-sm font-medium">{q.question}</p>
+              <p className="text-sm font-medium">
+                {q.question}
+                {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
+                {(pointsVisible || qDetail) && (
+                  <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+                    {qDetail
+                      ? `${qDetail.options.every((o) => o.correct === o.selected) ? q.points : 0}/${q.points} балів`
+                      : `${q.points} ${q.points === 1 ? "бал" : "балів"}`}
+                  </span>
+                )}
+              </p>
               <div className="mt-1 flex flex-col gap-1">
                 {q.options.map((o) => {
                   const od = qDetail?.options.find((x) => x.id === o.id);
@@ -93,6 +105,11 @@ export function ListeningExercise({
           }`}
         >
           {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+          {result.pointsPossible !== undefined && (
+            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              ({result.pointsEarned} з {result.pointsPossible} балів)
+            </span>
+          )}
         </p>
       )}
 

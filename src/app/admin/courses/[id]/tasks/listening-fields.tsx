@@ -35,6 +35,10 @@ export function ListeningFields({
     setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, question: text } : q)));
   }
 
+  function updateQuestionPoints(id: string, points: number) {
+    setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, points } : q)));
+  }
+
   function addOption(qId: string) {
     setQuestions((prev) =>
       prev.map((q) =>
@@ -111,6 +115,15 @@ export function ListeningFields({
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="Текст питання"
                 className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              />
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={q.points ?? 1}
+                onChange={(e) => updateQuestionPoints(q.id, Number(e.target.value))}
+                title="Бали за це питання"
+                className="w-16 rounded-md border px-2 py-1 text-sm"
               />
               <button
                 type="button"

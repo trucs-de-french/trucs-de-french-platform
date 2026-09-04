@@ -10,6 +10,7 @@ import {
   resolveReorderPoints,
   resolveSortColumnsPoints,
   resolveImageMatchPoints,
+  resolveListeningPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -176,15 +177,21 @@ function gradeListening(config: ListeningConfig, answer: ListeningAnswer): Grade
         correct: o.correct,
         selected: o.id === selectedId,
       })),
+      points: resolveListeningPoints(q),
     };
   });
 
-  const correctCount = questions.filter((q) => q.options.every((o) => o.correct === o.selected))
-    .length;
+  const fullyCorrect = questions.filter((q) => q.options.every((o) => o.correct === o.selected));
+  const correctCount = fullyCorrect.length;
+  const pointsPossible = questions.reduce((sum, q) => sum + q.points, 0);
+  const pointsEarned = fullyCorrect.reduce((sum, q) => sum + q.points, 0);
+
   return {
     correct: correctCount === questions.length && questions.length > 0,
     score: percentage(correctCount, questions.length),
     detail: { questions },
+    pointsEarned,
+    pointsPossible,
   };
 }
 
