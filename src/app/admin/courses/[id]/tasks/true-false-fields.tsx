@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
-import { FormattedTextField } from "./formatted-text-field";
+import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 export function TrueFalseFields({
   initialConfig,
@@ -39,19 +39,17 @@ export function TrueFalseFields({
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="tf_statements" value={JSON.stringify(statements)} readOnly />
 
-      <FormattedTextField
+      <InstructionsRichTextField
         name="tf_instructions"
         label="Інструкція для студента"
-        defaultValue={initialConfig?.instructions ?? ""}
-        placeholder="напр. Оберіть, чи твердження правильне"
+        initialValue={initialConfig?.instructions ?? ""}
       />
 
-      <FormattedTextField
+      <InstructionsRichTextField
         name="tf_sub_instructions"
         label="Додаткові інструкції (опційно)"
-        defaultValue={initialConfig?.subInstructions ?? ""}
-        placeholder="Додаткові пояснення для студента"
-        multiline
+        initialValue={initialConfig?.subInstructions ?? ""}
+        compact
       />
 
       <div className="flex flex-col gap-1">

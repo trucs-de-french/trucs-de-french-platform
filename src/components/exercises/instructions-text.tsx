@@ -18,11 +18,15 @@ export function InstructionsText({
   const safeText = sanitizeInstructionsHtml(text);
   const safeSub = subText ? sanitizeInstructionsHtml(subText) : null;
 
+  // <div>, не <p> — санітизований HTML тепер сам може містити <p> (TipTap
+  // завжди огортає вміст у <p>), а вкладений <p> усередині <p> — невалідний
+  // HTML, який браузер розриває й ламає стилізацію. Той самий підхід, що
+  // вже в callout.tsx.
   return (
     <>
-      <p className={className} dangerouslySetInnerHTML={{ __html: safeText }} />
+      <div className={className} dangerouslySetInnerHTML={{ __html: safeText }} />
       {safeSub && (
-        <p
+        <div
           className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400"
           dangerouslySetInnerHTML={{ __html: safeSub }}
         />
