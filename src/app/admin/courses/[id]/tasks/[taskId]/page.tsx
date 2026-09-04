@@ -60,6 +60,20 @@ export default async function EditTaskPage({
       : `/admin/courses/${productId}#tasks`;
   const backLabel = task.scene_id ? "← До сцени" : task.material_id ? "← До матеріалу" : "← До курсу";
 
+  // Студентська сторінка, де ця вправа реально відображається — той самий
+  // розподіл, що й backHref, але веде на публічну сторону (scenes/materials
+  // спільні з backHref, DELF — окремо: сторінка тесту фільтрує задачі за
+  // product_id+delf_test_number, а не delf_section, тож URL будується з
+  // номера тесту). null — коли для задачі взагалі немає валідного
+  // студентського місця (задача-сирота без номера DELF-тесту).
+  const studentHref = task.scene_id
+    ? `/courses/${productId}/scenes/${task.scene_id}`
+    : task.material_id
+      ? `/courses/${productId}/materials/${task.material_id}`
+      : task.delf_test_number
+        ? `/courses/${productId}/tests/${task.delf_test_number}`
+        : null;
+
   return (
     <div>
       <Link href={backHref} className="text-sm underline">
@@ -71,6 +85,8 @@ export default async function EditTaskPage({
         action={updateTask.bind(null, productId, task.id)}
         className="mt-4 flex flex-col gap-4 rounded-md border p-4"
         sticky
+        backLink={{ href: backHref, label: backLabel }}
+        previewLink={studentHref ? { productId, href: studentHref } : undefined}
       >
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>

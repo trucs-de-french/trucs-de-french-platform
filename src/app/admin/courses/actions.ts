@@ -86,10 +86,22 @@ export async function toggleArchive(productId: string, next: boolean) {
 // "Переглянути як студент" — прив'язуємо куку до конкретного productId, щоб
 // перегляд іншого курсу без явного натискання кнопки на ньому лишався
 // звичайним вчительським доступом (детальніше — @/lib/course-preview).
-export async function startStudentPreview(productId: string) {
+// Усі місця виклику прив'язують ОБИДВА параметри через .bind() (навіть
+// коли path не потрібен — тоді явно undefined) — <form action={fn}>
+// дописує FormData ще одним аргументом при виклику; якби path лишався
+// неприв'язаним, FormData потрапила б саме туди.
+export async function startStudentPreview(productId: string, path?: string) {
   const cookieStore = await cookies();
   cookieStore.set(PREVIEW_COOKIE, productId, previewCookieOptions);
-  redirect(`/courses/${productId}`);
+  redirect(path ?? `/courses/${productId}`);
+}
+
+// Без redirect — для прямого виклику з клієнтського компонента (не через
+// <form action>), коли навігацію (напр. відкриття нової вкладки без втрати
+// поточної сторінки) веде сам клієнт, а не сервер-екшн.
+export async function setStudentPreviewCookie(productId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(PREVIEW_COOKIE, productId, previewCookieOptions);
 }
 
 export async function endStudentPreview(productId: string) {

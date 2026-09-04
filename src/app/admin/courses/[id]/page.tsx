@@ -79,7 +79,7 @@ export default async function AdminCoursePage({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <form action={startStudentPreview.bind(null, product.id)}>
+          <form action={startStudentPreview.bind(null, product.id, undefined)}>
             <SubmitButton
               pendingChildren="..."
               className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
