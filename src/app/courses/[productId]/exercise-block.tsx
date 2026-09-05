@@ -26,10 +26,15 @@ type LinkEmbedConfig = {
   download?: boolean;
 };
 
-// Для цих типів студенту потрібно бачити, що саме це за посилання/гра —
-// решта типів вправ показують власну інструкцію замість технічної назви.
-// Той самий список, що вже в scenes/[sceneId]/page.tsx.
-const TYPES_WITH_BADGE = ["link", "game", "embed"];
+// Для цих типів студенту потрібно бачити заголовок замість власної
+// інструкції (як в решти типів вправ). Той самий список, що вже в
+// scenes/[sceneId]/page.tsx.
+const TYPES_WITH_TITLE = ["link", "game", "embed"];
+// Технічна назва типу (напр. "embed") — лише для link/game, де вона реально
+// підказує студенту, із чим він має справу (зовнішнє посилання/гра). Для
+// embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
+// вміст, службова назва типу йому не потрібна.
+const TYPES_WITH_TYPE_BADGE = ["link", "game"];
 
 // Рендер ОДНІЄЇ задачі — той самий набір компонентів і той самий
 // sanitizeConfigForStudent (не пускати правильні відповіді на клієнт), що й
@@ -45,11 +50,13 @@ export function ExerciseBlock({ task }: { task: ExerciseTask }) {
 
   return (
     <>
-      {TYPES_WITH_BADGE.includes(task.type) && (
+      {TYPES_WITH_TITLE.includes(task.type) && (
         <>
-          <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
-            {task.type}
-          </span>
+          {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
+            <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+              {task.type}
+            </span>
+          )}
           <p className="font-medium">{task.title}</p>
         </>
       )}
