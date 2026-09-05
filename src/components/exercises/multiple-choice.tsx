@@ -103,7 +103,7 @@ export function MultipleChoiceExercise({
                   <ImageOrPlaceholder
                     src={o.imageUrl}
                     alt={o.text || ""}
-                    className="mb-1 h-20 w-full rounded object-cover"
+                    className="mx-auto mb-1 h-20 w-20 rounded object-contain"
                   />
                 )}
                 {o.text && <span>{o.text}</span>}
