@@ -112,12 +112,24 @@ export function ExerciseBlock({ task }: { task: ExerciseTask }) {
       )}
 
       {task.type === "embed" && config.url && (
-        <div
-          className="mt-2 overflow-hidden rounded-md border"
-          style={{ height: config.height ?? 480 }}
-        >
-          <iframe src={config.url} className="h-full w-full" allowFullScreen />
-        </div>
+        <>
+          <div
+            className="mt-2 overflow-hidden rounded-md border"
+            style={{ height: config.height ?? 480 }}
+          >
+            <iframe src={config.url} className="h-full w-full" allowFullScreen />
+          </div>
+          {/* Завжди видимий резервний варіант — не опційний, без перемикача
+              вимкнення (напр. якщо стороннній сервіс блокує вбудовування
+              в iframe, як уже траплялось із Wordwall). */}
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Якщо відео (гра) не відкривається,{" "}
+            <a href={config.url} target="_blank" rel="noopener noreferrer" className="underline">
+              перейдіть за посиланням
+            </a>
+            .
+          </p>
+        </>
       )}
     </>
   );
