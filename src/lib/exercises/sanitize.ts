@@ -34,6 +34,9 @@ import type {
   CheckboxGridConfig,
   CheckboxGridRow,
   CheckboxGridPublic,
+  ChronologicalOrderConfig,
+  ChronologicalOrderItem,
+  ChronologicalOrderPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
@@ -330,6 +333,32 @@ export function sanitizeCheckboxGrid(config: CheckboxGridConfig): CheckboxGridPu
   };
 }
 
+// Той самий пілот, що resolveImageMatchPoints — дефолт 1, на рівні елемента
+// (тут кожен елемент самодостатній, немає групування по "рядку").
+export function resolveChronologicalOrderPoints(item: ChronologicalOrderItem): number {
+  return item.points ?? 1;
+}
+
+export function sanitizeChronologicalOrder(
+  config: ChronologicalOrderConfig
+): ChronologicalOrderPublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    mode: config.mode,
+    // Перемішуємо самі елементи (не окремий "банк", як image_match) — тут
+    // немає окремого набору відповідей, порядок показу і є тим, що
+    // приховує правильну хронологію.
+    items: shuffle(
+      config.items.map((i) => ({
+        id: i.id,
+        content: i.content,
+        points: resolveChronologicalOrderPoints(i),
+      }))
+    ),
+  };
+}
+
 export function sanitizeConfigForStudent(
   type: GradableTaskType,
   config: Record<string, unknown>
@@ -359,6 +388,8 @@ export function sanitizeConfigForStudent(
       return sanitizeCheckboxGrid(config as unknown as CheckboxGridConfig);
     case "image_match":
       return sanitizeImageMatch(config as unknown as ImageMatchConfig);
+    case "chronological_order":
+      return sanitizeChronologicalOrder(config as unknown as ChronologicalOrderConfig);
     default:
       return assertNeverGradableType(type);
   }

@@ -11,6 +11,7 @@ import type {
   TableFillPublic,
   ImageMatchPublic,
   CheckboxGridPublic,
+  ChronologicalOrderPublic,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
@@ -25,6 +26,7 @@ import { OpenAnswerCheckExercise } from "./open-answer-check";
 import { TableFillExercise } from "./table-fill";
 import { ImageMatchExercise } from "./image-match";
 import { CheckboxGridExercise } from "./checkbox-grid";
+import { ChronologicalOrderExercise } from "./chronological-order";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -134,6 +136,14 @@ export function ExerciseCard({
         <CheckboxGridExercise
           taskId={taskId}
           config={config as unknown as CheckboxGridPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
+    case "chronological_order":
+      return (
+        <ChronologicalOrderExercise
+          taskId={taskId}
+          config={config as unknown as ChronologicalOrderPublic}
           pointsVisible={pointsVisible ?? false}
         />
       );

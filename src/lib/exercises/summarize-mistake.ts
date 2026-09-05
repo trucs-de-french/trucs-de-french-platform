@@ -67,6 +67,14 @@ export function summarizeMistake(feedback: unknown): string {
     const items = f.items as Record<string, unknown>[];
     const first = items[0];
 
+    // chronological_order: { content, correctPosition, studentPosition, isCorrect }
+    if ("correctPosition" in first) {
+      const sorted = [
+        ...(items as { content: string; correctPosition: number }[]),
+      ].sort((a, b) => a.correctPosition - b.correctPosition);
+      return `Правильний порядок: ${sorted.map((i) => i.content).join(" → ")}`;
+    }
+
     // sort_columns: { text, correctColumnLabel, isCorrect, ... }
     if ("correctColumnLabel" in first) {
       const wrong = (

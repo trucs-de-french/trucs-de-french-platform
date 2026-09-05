@@ -221,6 +221,19 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         rows: parseJsonField(formData.get("checkbox_grid_rows")),
       };
     }
+    case "chronological_order": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("chronological_order_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("chronological_order_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        mode: (formData.get("chronological_order_mode") as string) || "image",
+        items: parseJsonField(formData.get("chronological_order_items")),
+      };
+    }
     case "vocab_quiz":
       return {
         sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),

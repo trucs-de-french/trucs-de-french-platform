@@ -17,6 +17,7 @@ import {
   resolveMatchingPoints,
   resolveFillBlankPoints,
   resolveCheckboxGridPoints,
+  resolveChronologicalOrderPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -55,6 +56,9 @@ import type {
   CheckboxGridConfig,
   CheckboxGridAnswer,
   CheckboxGridDetail,
+  ChronologicalOrderConfig,
+  ChronologicalOrderAnswer,
+  ChronologicalOrderDetail,
   GradeResult,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
@@ -498,6 +502,43 @@ function gradeImageMatch(config: ImageMatchConfig, answer: ImageMatchAnswer): Gr
   };
 }
 
+// chronological_order — правильна позиція елемента = його індекс у
+// config.items (масив УЖЕ в правильному хронологічному порядку, перемішаний
+// лише в sanitizeChronologicalOrder для показу). Кожен елемент
+// самодостатній, той самий item-рівень, що gradeImageMatch — без
+// групування по "рядку", на відміну від table_fill/checkbox_grid.
+function gradeChronologicalOrder(
+  config: ChronologicalOrderConfig,
+  answer: ChronologicalOrderAnswer
+): GradeResult {
+  const answerByItem = new Map(answer.map((a) => [a.itemId, a.position]));
+
+  const items: ChronologicalOrderDetail["items"] = config.items.map((item, index) => {
+    const correctPosition = index + 1;
+    const studentPosition = answerByItem.get(item.id) ?? null;
+    return {
+      id: item.id,
+      content: item.content,
+      correctPosition,
+      studentPosition,
+      isCorrect: studentPosition === correctPosition,
+      points: resolveChronologicalOrderPoints(item),
+    };
+  });
+
+  const correctCount = items.filter((i) => i.isCorrect).length;
+  const pointsPossible = items.reduce((sum, i) => sum + i.points, 0);
+  const pointsEarned = items.filter((i) => i.isCorrect).reduce((sum, i) => sum + i.points, 0);
+
+  return {
+    correct: correctCount === items.length && items.length > 0,
+    score: percentage(correctCount, items.length),
+    detail: { items },
+    pointsEarned,
+    pointsPossible,
+  };
+}
+
 export function gradeAnswer(
   type: GradableTaskType,
   config: Record<string, unknown>,
@@ -533,6 +574,11 @@ export function gradeAnswer(
       return gradeCheckboxGrid(
         config as unknown as CheckboxGridConfig,
         answer as CheckboxGridAnswer
+      );
+    case "chronological_order":
+      return gradeChronologicalOrder(
+        config as unknown as ChronologicalOrderConfig,
+        answer as ChronologicalOrderAnswer
       );
     default:
       return assertNeverGradableType(type);

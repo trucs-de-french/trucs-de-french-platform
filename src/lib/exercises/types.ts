@@ -256,6 +256,22 @@ export type ImageMatchConfig = {
   items: ImageMatchItem[];
 };
 
+// chronological_order — набір елементів (картинки АБО текстові твердження,
+// перемикається одним mode на всю вправу, той самий принцип, що
+// MultipleChoiceConfig.display), студент вписує число-позицію для кожного.
+// ПОРЯДОК МАСИВУ items = правильний хронологічний порядок — окремого поля
+// correctPosition свідомо нема (той самий принцип, що ReorderSequence.items:
+// string[]): дублювати індекс окремим полем означало б тримати їх
+// синхронними вручну. В адмінці тому потрібні кнопки ↑/↓ для зміни порядку
+// (єдиний тип, де порядок елементів у списку має змістовне значення).
+export type ChronologicalOrderItem = { id: string; content: string; points?: number };
+export type ChronologicalOrderConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  mode: "image" | "text";
+  items: ChronologicalOrderItem[];
+};
+
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється),
 // тому повна конфігурація й публічна — одне й те саме, sanitize не потрібен.
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
@@ -398,6 +414,15 @@ export type ImageMatchPublic = {
   bank: string[]; // перемішані name з усіх items
 };
 
+export type ChronologicalOrderPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  mode: "image" | "text";
+  // Перемішано (shuffle) — буква-мітка (A, B, C...) рахується на боці
+  // студента з індексу в цьому вже перемішаному масиві, не зберігається тут.
+  items: { id: string; content: string; points: number }[];
+};
+
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
@@ -412,6 +437,7 @@ export type OpenAnswerAnswer = { questionId: string; value: string }[];
 export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
 export type CheckboxGridAnswer = { rowId: string; columnIds: string[] }[]; // позначені колонки на кожен рядок
 export type ImageMatchAnswer = { itemId: string; name: string }[];
+export type ChronologicalOrderAnswer = { itemId: string; position: number }[];
 
 // Детальний результат перевірки — саме він показує "де помилка".
 
@@ -535,6 +561,17 @@ export type ImageMatchDetail = {
   }[];
 };
 
+export type ChronologicalOrderDetail = {
+  items: {
+    id: string;
+    content: string;
+    correctPosition: number;
+    studentPosition: number | null;
+    isCorrect: boolean;
+    points: number;
+  }[];
+};
+
 // pointsEarned/pointsPossible — опційний шар балів ПОРЯД зі score (не
 // заміна): score/percentage лишається джерелом правди для прогресу/
 // pass-fail (напр. DelfTestGrid уже рахує pass/fail як middle 0-100 score),
@@ -553,4 +590,5 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: OpenAnswerDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number };
+  | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: ChronologicalOrderDetail; pointsEarned?: number; pointsPossible?: number };
