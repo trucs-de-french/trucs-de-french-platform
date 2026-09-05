@@ -93,7 +93,7 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
         sentence: item.sentence,
         multiple: correctCount > 1,
         correctCount,
-        options: item.options.map(({ id, text }) => ({ id, text })),
+        options: item.options.map(({ id, text, imageUrl }) => ({ id, text, imageUrl })),
         points: resolveMultipleChoicePoints(item),
       };
     }),
@@ -157,7 +157,7 @@ export function sanitizeListening(config: ListeningConfig): ListeningPublic {
     questions: config.questions.map((q) => ({
       id: q.id,
       question: q.question,
-      options: q.options.map(({ id, text }) => ({ id, text })),
+      options: q.options.map(({ id, text, imageUrl }) => ({ id, text, imageUrl })),
       points: resolveListeningPoints(q),
     })),
   };

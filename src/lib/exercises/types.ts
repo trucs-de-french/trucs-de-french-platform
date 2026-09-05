@@ -71,7 +71,12 @@ export type EssayFormulaireConfig = {
 // Стара пласка форма ({question, display, options}, без items) —
 // виродковий випадок нової, нормалізується на льоту (getMultipleChoiceItems),
 // без міграції БД.
-export type MultipleChoiceOption = { id: string; text: string; correct: boolean };
+// imageUrl — опційно, лише для display: "buttons" (dropdown рендерить
+// нативний <option>, картинку показати не може). Без валідації/санітизації
+// URL — той самий підхід, що ImageMatchItem.imageUrl/FlipCard.image_url:
+// єдиний захист клієнтський (ImageOrPlaceholder), <img src> не виконує
+// javascript:-URL у сучасних браузерах.
+export type MultipleChoiceOption = { id: string; text: string; correct: boolean; imageUrl?: string };
 // points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
 // (resolveMultipleChoicePoints у sanitize.ts).
 export type MultipleChoiceItem = {
@@ -118,7 +123,8 @@ export type MatchingConfig = {
   pairs: MatchingPair[];
 };
 
-export type ListeningOption = { id: string; text: string; correct: boolean };
+// imageUrl — опційно (див. MultipleChoiceOption — той самий принцип).
+export type ListeningOption = { id: string; text: string; correct: boolean; imageUrl?: string };
 // points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
 // (resolveListeningPoints у sanitize.ts).
 export type ListeningQuestion = {
@@ -283,7 +289,7 @@ export type MultipleChoicePublic = {
     sentence: string;
     multiple: boolean; // чи більше однієї правильної відповіді (для radio/checkbox)
     correctCount: number; // скільки саме — для підказки студенту, напр. "2 варіанти"
-    options: { id: string; text: string }[];
+    options: { id: string; text: string; imageUrl?: string }[];
     points: number;
   }[];
 };
@@ -313,7 +319,7 @@ export type ListeningPublic = {
   questions: {
     id: string;
     question: string;
-    options: { id: string; text: string }[];
+    options: { id: string; text: string; imageUrl?: string }[];
     points: number;
   }[];
 };

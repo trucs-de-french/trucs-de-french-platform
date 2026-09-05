@@ -7,6 +7,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -98,7 +99,14 @@ export function MultipleChoiceExercise({
                 disabled={!!result}
                 className={`rounded-md border px-3 py-1.5 text-left text-sm transition-none ${optionClass(item.id, o.id, itemDetail)}`}
               >
-                {o.text}
+                {o.imageUrl && (
+                  <ImageOrPlaceholder
+                    src={o.imageUrl}
+                    alt={o.text || ""}
+                    className="mb-1 h-20 w-full rounded object-cover"
+                  />
+                )}
+                {o.text && <span>{o.text}</span>}
               </button>
             ))}
           </div>

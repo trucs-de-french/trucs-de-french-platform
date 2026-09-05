@@ -68,6 +68,16 @@ export function ListeningFields({
     );
   }
 
+  function updateOptionImageUrl(qId: string, oId: string, imageUrl: string) {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === qId
+          ? { ...q, options: q.options.map((o) => (o.id === oId ? { ...o, imageUrl } : o)) }
+          : q
+      )
+    );
+  }
+
   function setCorrectOption(qId: string, oId: string) {
     setQuestions((prev) =>
       prev.map((q) =>
@@ -150,6 +160,12 @@ export function ListeningFields({
                     onChange={(e) => updateOptionText(q.id, o.id, e.target.value)}
                     placeholder="Варіант відповіді"
                     className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                  />
+                  <input
+                    value={o.imageUrl ?? ""}
+                    onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
+                    placeholder="URL картинки (опційно)"
+                    className="flex-1 rounded-md border px-2 py-1 text-sm"
                   />
                   <button
                     type="button"

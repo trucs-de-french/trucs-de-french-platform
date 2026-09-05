@@ -9,6 +9,7 @@ import { AudioPlayer } from "@/components/audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 
 export function ListeningExercise({
   taskId,
@@ -83,7 +84,14 @@ export function ListeningExercise({
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
                       className={`rounded-md border px-3 py-1.5 text-left text-sm ${cls}`}
                     >
-                      {o.text}
+                      {o.imageUrl && (
+                        <ImageOrPlaceholder
+                          src={o.imageUrl}
+                          alt={o.text || ""}
+                          className="mb-1 h-20 w-full rounded object-cover"
+                        />
+                      )}
+                      {o.text && <span>{o.text}</span>}
                     </button>
                   );
                 })}

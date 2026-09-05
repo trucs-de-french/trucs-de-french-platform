@@ -67,6 +67,16 @@ export function MultipleChoiceFields({
     );
   }
 
+  function updateOptionImageUrl(itemId: string, optId: string, imageUrl: string) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === itemId
+          ? { ...it, options: it.options.map((o) => (o.id === optId ? { ...o, imageUrl } : o)) }
+          : it
+      )
+    );
+  }
+
   function updatePoints(itemId: string, points: number) {
     setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, points } : it)));
   }
@@ -168,6 +178,12 @@ export function MultipleChoiceFields({
                     onChange={(e) => updateOptionText(item.id, o.id, e.target.value)}
                     placeholder="Текст варіанту"
                     className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                  />
+                  <input
+                    value={o.imageUrl ?? ""}
+                    onChange={(e) => updateOptionImageUrl(item.id, o.id, e.target.value)}
+                    placeholder="URL картинки (опційно)"
+                    className="flex-1 rounded-md border px-2 py-1 text-sm"
                   />
                   <button
                     type="button"
