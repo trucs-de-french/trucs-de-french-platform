@@ -62,7 +62,10 @@ export function ListeningExercise({
                   </span>
                 )}
               </p>
-              <div className="mt-1 flex flex-col gap-1">
+              {/* grid, не суворо один стовпчик — на вузькому екрані природно
+                  переходить в один стовпчик (вертикально), на широкому —
+                  кілька поруч (горизонтально). */}
+              <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
                 {q.options.map((o) => {
                   const od = qDetail?.options.find((x) => x.id === o.id);
                   const cls = od
@@ -76,6 +79,49 @@ export function ListeningExercise({
                     : answers[q.id] === o.id
                       ? SELECTED_OPTION_CLASS
                       : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+
+                  if (o.imageUrl) {
+                    // Той самий принцип, що в multiple-choice.tsx: підсвічення
+                    // йде на маленький квадратик-чекбокс, а не на всю кнопку.
+                    const indicator = !od
+                      ? {
+                          mark: answers[q.id] === o.id ? "✓" : "",
+                          className:
+                            answers[q.id] === o.id
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-neutral-300 dark:border-neutral-600",
+                        }
+                      : od.correct
+                        ? { mark: "✓", className: "border-green-600 bg-green-600 text-white" }
+                        : od.selected
+                          ? { mark: "✕", className: "border-red-600 bg-red-600 text-white" }
+                          : { mark: "", className: "border-neutral-300 opacity-60 dark:border-neutral-600" };
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        disabled={!!result}
+                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
+                        className="rounded-md border border-neutral-200 p-2 text-left text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                      >
+                        <ImageOrPlaceholder
+                          src={o.imageUrl}
+                          alt={o.text || ""}
+                          className="mx-auto h-20 w-20 rounded object-contain"
+                        />
+                        <div className="mt-1 flex items-center justify-center gap-1.5">
+                          <span
+                            aria-hidden
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${indicator.className}`}
+                          >
+                            {indicator.mark}
+                          </span>
+                          {o.text && <span>{o.text}</span>}
+                        </div>
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       key={o.id}
@@ -84,14 +130,7 @@ export function ListeningExercise({
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
                       className={`rounded-md border px-3 py-1.5 text-left text-sm ${cls}`}
                     >
-                      {o.imageUrl && (
-                        <ImageOrPlaceholder
-                          src={o.imageUrl}
-                          alt={o.text || ""}
-                          className="mx-auto mb-1 h-20 w-20 rounded object-contain"
-                        />
-                      )}
-                      {o.text && <span>{o.text}</span>}
+                      {o.text}
                     </button>
                   );
                 })}

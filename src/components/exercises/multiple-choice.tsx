@@ -55,6 +55,31 @@ export function MultipleChoiceExercise({
     return "opacity-60";
   }
 
+  // Для варіантів із картинкою підсвічення переноситься з усієї кнопки
+  // (як для текстових варіантів вище) на маленький квадратик-чекбокс поруч
+  // із текстом — та сама інформація (обрано/правильно/неправильно), лише
+  // менш нав'язливо на тлі картинки. Кнопка сама лишається нейтральною.
+  function imageOptionIndicator(itemId: string, optionId: string, itemDetail?: ItemDetail) {
+    if (!itemDetail) {
+      const sel = selections[itemId] ?? [];
+      const selected = sel.includes(optionId);
+      return {
+        mark: selected ? "✓" : "",
+        className: selected
+          ? "border-blue-600 bg-blue-600 text-white"
+          : "border-neutral-300 dark:border-neutral-600",
+      };
+    }
+    const opt = itemDetail.options.find((o) => o.id === optionId);
+    if (opt?.correct) {
+      return { mark: "✓", className: "border-green-600 bg-green-600 text-white" };
+    }
+    if (opt?.selected) {
+      return { mark: "✕", className: "border-red-600 bg-red-600 text-white" };
+    }
+    return { mark: "", className: "border-neutral-300 opacity-60 dark:border-neutral-600" };
+  }
+
   // До перевірки — лише якщо pointsVisible; після — завжди. Речення
   // зараховується цілком (atomic unit = item), тому 0/points — не часткове.
   function pointsBadge(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
@@ -90,25 +115,46 @@ export function MultipleChoiceExercise({
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
           )}
-          <div className="mt-2 flex flex-col gap-2">
-            {item.options.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => toggle(item.id, o.id, item.multiple)}
-                disabled={!!result}
-                className={`rounded-md border px-3 py-1.5 text-left text-sm transition-none ${optionClass(item.id, o.id, itemDetail)}`}
-              >
-                {o.imageUrl && (
+          {/* grid, не суворо один стовпчик — на вузькому екрані природно
+              переходить в один стовпчик (вертикально), на широкому — кілька
+              поруч (горизонтально). */}
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {item.options.map((o) =>
+              o.imageUrl ? (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => toggle(item.id, o.id, item.multiple)}
+                  disabled={!!result}
+                  className="rounded-md border border-neutral-200 p-2 text-left text-sm transition-none hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                >
                   <ImageOrPlaceholder
                     src={o.imageUrl}
                     alt={o.text || ""}
-                    className="mx-auto mb-1 h-20 w-20 rounded object-contain"
+                    className="mx-auto h-20 w-20 rounded object-contain"
                   />
-                )}
-                {o.text && <span>{o.text}</span>}
-              </button>
-            ))}
+                  <div className="mt-1 flex items-center justify-center gap-1.5">
+                    <span
+                      aria-hidden
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${imageOptionIndicator(item.id, o.id, itemDetail).className}`}
+                    >
+                      {imageOptionIndicator(item.id, o.id, itemDetail).mark}
+                    </span>
+                    {o.text && <span>{o.text}</span>}
+                  </div>
+                </button>
+              ) : (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => toggle(item.id, o.id, item.multiple)}
+                  disabled={!!result}
+                  className={`rounded-md border px-3 py-1.5 text-left text-sm transition-none ${optionClass(item.id, o.id, itemDetail)}`}
+                >
+                  {o.text}
+                </button>
+              )
+            )}
           </div>
         </div>
       );
