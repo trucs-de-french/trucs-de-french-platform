@@ -216,6 +216,33 @@ export type TableFillConfig = {
   rows: TableFillRow[];
 };
 
+// checkbox_grid — довільна кількість рядків (тверджень/питань) і колонок
+// (не жорстко "Так"/"Ні" — вчитель редагує підписи, той самий редактор
+// колонок, що вже в SortColumnsConfig). Студент може позначити КІЛЬКА
+// клітинок в одному рядку (не radio, вільний мультивибір) — тому
+// correctColumnIds масив, а не одне columnId. Не тримаємо cells[] у
+// кожному рядку (як обговорювалось) — лише список ID правильних колонок,
+// той самий принцип, що SortColumnsItem.columnId, лише множинний.
+export type CheckboxGridColumn = { id: string; label: string };
+// points — той самий пілот, що інших типів (дефолт 1,
+// resolveCheckboxGridPoints у sanitize.ts). На рівні РЯДКА (не клітинки,
+// той самий компроміс, що вже підтверджений для TableFillRow): рядок
+// зараховується цілком, лише якщо ВСІ його клітинки (позначені й
+// непозначені) збігаються з очікуваним станом. Score, на відміну від
+// points, атомарний по клітинках — незалежний, дрібніший вимір.
+export type CheckboxGridRow = {
+  id: string;
+  label: string;
+  correctColumnIds: string[];
+  points?: number;
+};
+export type CheckboxGridConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  columns: CheckboxGridColumn[];
+  rows: CheckboxGridRow[];
+};
+
 // image_match — кілька зображень, під кожним слот для перетягування назви;
 // рівно одна правильна назва на зображення (без pipe-альтернатив — назва
 // береться з фіксованого банку, а не вільним текстом, тож альтернативи не
@@ -357,6 +384,13 @@ export type TableFillPublic = {
   rows: { id: string; left: string | null; right: string | null; points: number }[]; // null = прихована клітинка
 };
 
+export type CheckboxGridPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  columns: CheckboxGridColumn[];
+  rows: { id: string; label: string; points: number }[]; // correctColumnIds прихований
+};
+
 export type ImageMatchPublic = {
   instructions?: string;
   subInstructions?: string;
@@ -376,6 +410,7 @@ export type DragDropAnswer = { sentenceId: string; words: string[] }[]; // сл�
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = { questionId: string; value: string }[];
 export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
+export type CheckboxGridAnswer = { rowId: string; columnIds: string[] }[]; // позначені колонки на кожен рядок
 export type ImageMatchAnswer = { itemId: string; name: string }[];
 
 // Детальний результат перевірки — саме він показує "де помилка".
@@ -474,6 +509,21 @@ export type TableFillDetail = {
   }[];
 };
 
+// Плаский список cells (по одному на кожну клітинку рядок×колонка) — той
+// самий принцип, що TableFillDetail.blanks. isCorrect === (studentChecked
+// === correctChecked): і хибний позитив (позначив зайве), і хибний
+// негатив (не позначив потрібне) — обидва неправильні.
+export type CheckboxGridDetail = {
+  cells: {
+    rowId: string;
+    columnId: string;
+    studentChecked: boolean;
+    correctChecked: boolean;
+    isCorrect: boolean;
+    points: number; // однакове для всіх клітинок одного рядка — бали на рядок, не на клітинку
+  }[];
+};
+
 export type ImageMatchDetail = {
   items: {
     id: string;
@@ -502,4 +552,5 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: SortColumnsDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: OpenAnswerDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number };
+  | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number };

@@ -208,6 +208,19 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         items: parseJsonField(formData.get("image_match_items")),
       };
     }
+    case "checkbox_grid": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("checkbox_grid_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("checkbox_grid_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        columns: parseJsonField(formData.get("checkbox_grid_columns")),
+        rows: parseJsonField(formData.get("checkbox_grid_rows")),
+      };
+    }
     case "vocab_quiz":
       return {
         sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),

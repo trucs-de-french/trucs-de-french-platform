@@ -31,6 +31,9 @@ import type {
   ImageMatchConfig,
   ImageMatchItem,
   ImageMatchPublic,
+  CheckboxGridConfig,
+  CheckboxGridRow,
+  CheckboxGridPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
@@ -308,6 +311,25 @@ export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
   };
 }
 
+// Той самий пілот, що resolveTrueFalsePoints — дефолт 1. На рівні РЯДКА
+// (не клітинки, той самий компроміс, що resolveTableFillPoints).
+export function resolveCheckboxGridPoints(row: CheckboxGridRow): number {
+  return row.points ?? 1;
+}
+
+export function sanitizeCheckboxGrid(config: CheckboxGridConfig): CheckboxGridPublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    columns: config.columns,
+    rows: config.rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      points: resolveCheckboxGridPoints(r),
+    })),
+  };
+}
+
 export function sanitizeConfigForStudent(
   type: GradableTaskType,
   config: Record<string, unknown>
@@ -333,6 +355,8 @@ export function sanitizeConfigForStudent(
       return sanitizeOpenAnswer(config as unknown as OpenAnswerConfig);
     case "table_fill":
       return sanitizeTableFill(config as unknown as TableFillConfig);
+    case "checkbox_grid":
+      return sanitizeCheckboxGrid(config as unknown as CheckboxGridConfig);
     case "image_match":
       return sanitizeImageMatch(config as unknown as ImageMatchConfig);
     default:

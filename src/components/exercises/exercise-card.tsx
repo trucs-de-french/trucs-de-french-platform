@@ -10,6 +10,7 @@ import type {
   OpenAnswerPublic,
   TableFillPublic,
   ImageMatchPublic,
+  CheckboxGridPublic,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
@@ -23,6 +24,7 @@ import { SortColumnsExercise } from "./sort-columns";
 import { OpenAnswerCheckExercise } from "./open-answer-check";
 import { TableFillExercise } from "./table-fill";
 import { ImageMatchExercise } from "./image-match";
+import { CheckboxGridExercise } from "./checkbox-grid";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -124,6 +126,14 @@ export function ExerciseCard({
         <ImageMatchExercise
           taskId={taskId}
           config={config as unknown as ImageMatchPublic}
+          pointsVisible={pointsVisible ?? false}
+        />
+      );
+    case "checkbox_grid":
+      return (
+        <CheckboxGridExercise
+          taskId={taskId}
+          config={config as unknown as CheckboxGridPublic}
           pointsVisible={pointsVisible ?? false}
         />
       );

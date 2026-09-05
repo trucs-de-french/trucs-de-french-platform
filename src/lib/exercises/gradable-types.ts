@@ -15,6 +15,7 @@ export const GRADABLE_TASK_TYPES = [
   "open_answer",
   "table_fill",
   "image_match",
+  "checkbox_grid",
 ] as const;
 
 export type GradableTaskType = (typeof GRADABLE_TASK_TYPES)[number];
@@ -49,6 +50,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "table_fill",
   "matching",
   "fill_blank",
+  "checkbox_grid",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

@@ -18,6 +18,7 @@ import type {
   PhoneticsConfig,
   TableFillConfig,
   ImageMatchConfig,
+  CheckboxGridConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
@@ -36,6 +37,7 @@ import { CalloutFields } from "./callout-fields";
 import { PhoneticsFields } from "./phonetics-fields";
 import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
+import { CheckboxGridFields } from "./checkbox-grid-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -81,6 +83,7 @@ const TYPE_OPTIONS = [
   { value: "phonetics", label: "Фонетика" },
   { value: "table_fill", label: "Заповніть таблицю" },
   { value: "image_match", label: "Перетягніть назви під картинки" },
+  { value: "checkbox_grid", label: "Таблиця вибору" },
 ];
 
 type Props = {
@@ -657,6 +660,10 @@ export function TaskConfigFields({
 
       {type === "image_match" && (
         <ImageMatchFields ref={importRef} initialConfig={initialConfig as Partial<ImageMatchConfig>} />
+      )}
+
+      {type === "checkbox_grid" && (
+        <CheckboxGridFields initialConfig={initialConfig as Partial<CheckboxGridConfig>} />
       )}
 
       {/* Пілот системи балів — один спільний чекбокс для всіх типів, що вже

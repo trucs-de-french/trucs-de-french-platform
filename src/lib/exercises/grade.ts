@@ -16,6 +16,7 @@ import {
   getMatchingPairs,
   resolveMatchingPoints,
   resolveFillBlankPoints,
+  resolveCheckboxGridPoints,
 } from "./sanitize";
 import type {
   FillBlankConfig,
@@ -51,6 +52,9 @@ import type {
   ImageMatchConfig,
   ImageMatchAnswer,
   ImageMatchDetail,
+  CheckboxGridConfig,
+  CheckboxGridAnswer,
+  CheckboxGridDetail,
   GradeResult,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
@@ -412,6 +416,57 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   };
 }
 
+// checkbox_grid — той самий принцип, що gradeTableFill: плаский список
+// клітинок (тут — усі рядок×колонка, не лише "приховані"), score атомарний
+// по клітинках, points групуються по рядку (зараховується цілком, лише
+// якщо ВСІ клітинки рядка збігаються з очікуваним станом — і хибний
+// позитив, і хибний негатив псують рядок).
+function gradeCheckboxGrid(config: CheckboxGridConfig, answer: CheckboxGridAnswer): GradeResult {
+  const answerByRow = new Map(answer.map((a) => [a.rowId, new Set(a.columnIds)]));
+
+  const cells: CheckboxGridDetail["cells"] = [];
+  for (const row of config.rows) {
+    const rowPoints = resolveCheckboxGridPoints(row);
+    const studentColumnIds = answerByRow.get(row.id) ?? new Set<string>();
+    const correctColumnIds = new Set(row.correctColumnIds);
+    for (const column of config.columns) {
+      const studentChecked = studentColumnIds.has(column.id);
+      const correctChecked = correctColumnIds.has(column.id);
+      cells.push({
+        rowId: row.id,
+        columnId: column.id,
+        studentChecked,
+        correctChecked,
+        isCorrect: studentChecked === correctChecked,
+        points: rowPoints,
+      });
+    }
+  }
+
+  const correctCount = cells.filter((c) => c.isCorrect).length;
+
+  const cellsByRow = new Map<string, CheckboxGridDetail["cells"]>();
+  for (const c of cells) {
+    const arr = cellsByRow.get(c.rowId) ?? [];
+    arr.push(c);
+    cellsByRow.set(c.rowId, arr);
+  }
+  let pointsPossible = 0;
+  let pointsEarned = 0;
+  for (const rowCells of cellsByRow.values()) {
+    pointsPossible += rowCells[0].points;
+    if (rowCells.every((c) => c.isCorrect)) pointsEarned += rowCells[0].points;
+  }
+
+  return {
+    correct: correctCount === cells.length && cells.length > 0,
+    score: percentage(correctCount, cells.length),
+    detail: { cells },
+    pointsEarned,
+    pointsPossible,
+  };
+}
+
 // Просте порівняння по id (як gradeSortColumns), а не трюк gradeDragDrop
 // із синтетичним {{}}-шаблоном — тут рівно один правильний варіант на
 // картинку, без pipe-альтернатив, тож текстовий шаблон тільки ускладнив би.
@@ -474,6 +529,11 @@ export function gradeAnswer(
       return gradeTableFill(config as unknown as TableFillConfig, answer as TableFillAnswer);
     case "image_match":
       return gradeImageMatch(config as unknown as ImageMatchConfig, answer as ImageMatchAnswer);
+    case "checkbox_grid":
+      return gradeCheckboxGrid(
+        config as unknown as CheckboxGridConfig,
+        answer as CheckboxGridAnswer
+      );
     default:
       return assertNeverGradableType(type);
   }

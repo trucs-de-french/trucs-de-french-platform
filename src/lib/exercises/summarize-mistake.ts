@@ -53,6 +53,16 @@ export function summarizeMistake(feedback: unknown): string {
       .join(", ")}`;
   }
 
+  // checkbox_grid: { cells: [{ rowId, columnId, studentChecked, correctChecked, isCorrect, points }] } —
+  // клітинки не несуть людських підписів (лише id рядка/колонки), тож
+  // підсумок — кількість, як і для інших "мережевих" форм (options/questions) нижче.
+  if (Array.isArray(f.cells)) {
+    const wrong = (f.cells as { isCorrect: boolean }[]).filter((c) => !c.isCorrect);
+    return wrong.length
+      ? `Неправильних клітинок: ${wrong.length}`
+      : "Усі клітинки позначено правильно.";
+  }
+
   if (Array.isArray(f.items) && f.items.length > 0) {
     const items = f.items as Record<string, unknown>[];
     const first = items[0];
