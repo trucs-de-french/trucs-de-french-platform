@@ -176,16 +176,37 @@ export default async function ScenePage({
   } = await supabase.auth.getUser();
 
   const taskIds = (tasks ?? []).map((t) => t.id);
-  const { data: rawMistakes } =
+  // mistakes і progress не мають прямого FK одна на одну (обидві лише на
+  // task_id/user_id окремо) — Supabase/PostgREST не виразить це одним
+  // embed-запитом, тож два паралельні. progress має unique(user_id, task_id)
+  // — один рядок на завдання, який ЗАВЖДИ перезаписується останньою спробою
+  // (record_task_attempt RPC, викликається на кожній перевірці до mistakes-
+  // insert) — тож не треба порівнювати часові мітки з mistakes.created_at:
+  // score===100 у progress вже й так означає "остання спроба правильна",
+  // а будь-який mistakes-рядок на це завдання — заздалегідь застарілий.
+  const [{ data: rawMistakes }, { data: latestProgress }] =
     user && taskIds.length > 0
-      ? await supabase
-          .from("mistakes")
-          .select("id, task_id, ai_feedback, created_at, tasks(title)")
-          .eq("user_id", user.id)
-          .in("task_id", taskIds)
-          .order("created_at", { ascending: false })
-          .returns<MistakeRow[]>()
-      : { data: null };
+      ? await Promise.all([
+          supabase
+            .from("mistakes")
+            .select("id, task_id, ai_feedback, created_at, tasks(title)")
+            .eq("user_id", user.id)
+            .in("task_id", taskIds)
+            .order("created_at", { ascending: false })
+            .returns<MistakeRow[]>(),
+          supabase
+            .from("progress")
+            .select("task_id, score")
+            .eq("user_id", user.id)
+            .in("task_id", taskIds)
+            .returns<{ task_id: string; score: number | null }[]>(),
+        ])
+      : [{ data: null }, { data: null }];
+
+  const latestScoreByTask = new Map<string, number | null>();
+  for (const p of latestProgress ?? []) {
+    latestScoreByTask.set(p.task_id, p.score);
+  }
 
   // одна найсвіжіша помилка на завдання — не показуємо всю історію спроб
   const latestMistakeByTask = new Map<string, MistakeRow>();
@@ -194,7 +215,12 @@ export default async function ScenePage({
       latestMistakeByTask.set(m.task_id, m);
     }
   }
-  const sceneMistakes = [...latestMistakeByTask.values()];
+  // Якщо остання спроба на це завдання (за progress, не за mistakes) уже
+  // повністю правильна — не показуємо давню помилку, ніби вона й досі
+  // актуальна.
+  const sceneMistakes = [...latestMistakeByTask.values()].filter(
+    (m) => latestScoreByTask.get(m.task_id) !== 100
+  );
 
   // vocab_quiz бере лексику не лише з поточної сцени, а з будь-яких сцен
   // курсу, обраних вчителем у config.sceneIds — підвантажуємо їхній dialogue
