@@ -38,31 +38,36 @@ export function FillBlankExercise({
 
   return (
     <div>
-      {/* flex-ряд, не вкладений текст у <p> — санітизований instructions
-          сам може містити <p> (TipTap), а <p> у <p> невалідний HTML (той
-          самий принцип, що InstructionsText). */}
-      <div className="mb-2 flex flex-wrap items-baseline gap-2 font-medium">
-        <div
-          dangerouslySetInnerHTML={{
-            __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank),
-          }}
-        />
-        {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
-            pointsVisible, після — завжди. */}
-        {(pointsVisible || detail) && (
-          <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
-            {detail
-              ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-              : `${config.points} ${pluralizePoints(config.points)}`}
-          </span>
+      {/* Один зовнішній mb-2-контейнер (не окремі mb-2 на title/subText) —
+          відступ ПІСЛЯ всього блоку (перед самим завданням), а не між
+          заголовком і підзаголовком: той самий принцип, що InstructionsText. */}
+      <div className="mb-2">
+        {/* flex-ряд, не вкладений текст у <p> — санітизований instructions
+            сам може містити <p> (TipTap), а <p> у <p> невалідний HTML (той
+            самий принцип, що InstructionsText). */}
+        <div className="flex flex-wrap items-baseline gap-2 font-medium">
+          <div
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank),
+            }}
+          />
+          {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
+              pointsVisible, після — завжди. */}
+          {(pointsVisible || detail) && (
+            <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+              {detail
+                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                : `${config.points} ${pluralizePoints(config.points)}`}
+            </span>
+          )}
+        </div>
+        {config.subInstructions && (
+          <div
+            className="mt-0.5 text-sm font-normal text-neutral-500 dark:text-neutral-400"
+            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+          />
         )}
       </div>
-      {config.subInstructions && (
-        <div
-          className="mb-2 -mt-1 text-sm text-neutral-500 dark:text-neutral-400"
-          dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
-        />
-      )}
 
       {/* Опційний банк слів-підказок — суто довідковий, клік лише
           викреслює/повертає слово візуально для самого студента, ніяк не
