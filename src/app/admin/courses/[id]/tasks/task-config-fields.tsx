@@ -106,6 +106,12 @@ type Props = {
    * тесту DELF (вправа не належить конкретному CO/CE/PE/PO тесту).
    */
   materialId?: string | null;
+  /**
+   * Задача вбудована в блок (task_groups) — так само ховає секцію/номер
+   * тесту DELF, той самий принцип, що materialId (успадковує їх від блоку,
+   * не задає власних).
+   */
+  taskGroupId?: string | null;
   /** Пілот системи балів — лише для типів із POINTS_SUPPORTED_TASK_TYPES. */
   initialPointsVisible?: boolean;
 };
@@ -122,6 +128,7 @@ export function TaskConfigFields({
   initialDelfSection,
   initialDelfTestNumber,
   materialId,
+  taskGroupId,
   initialPointsVisible,
 }: Props) {
   const [type, setType] = useState(initialType ?? "game");
@@ -238,7 +245,7 @@ export function TaskConfigFields({
         <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={setType} />
       </div>
 
-      {productType === "delf" && !materialId && (
+      {productType === "delf" && !materialId && !taskGroupId && (
         <div className="flex gap-4">
           <div className="flex flex-1 flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">Секція іспиту</label>

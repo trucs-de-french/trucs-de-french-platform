@@ -7,6 +7,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
+import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -312,38 +313,18 @@ export async function createTask(formData: FormData) {
   const materialId = (formData.get("material_id") as string) || null;
   // Задача, прив'язана до блоку (task_groups) — успадковує батьківський
   // контекст від групи, тож власні scene_id/material_id тут null (див.
-  // коментар у 0031_task_groups.sql). Формою поки не подається (UI з'явиться
-  // разом з адмінкою блоку) — до того часу завжди null, як і раніше.
+  // коментар у 0031_task_groups.sql). Подається з форми "Нова задача",
+  // відкритої зі сторінки блоку (?taskGroupId=...).
   const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
   const title = formData.get("title") as string;
 
-  // Чотири можливі скоупи для order_index: у межах сцени, у межах матеріалу,
-  // у межах блоку, або "вільні" product-level задачі (усі батьківські поля
-  // null — напр. DELF entraînement). Одночасно приходить не більше одного з
-  // sceneId/materialId/taskGroupId (форма показує лише один hidden-інпут
-  // залежно від контексту виклику).
-  let scopeQuery = supabase
-    .from("tasks")
-    .select("order_index")
-    .eq("product_id", productId);
-  if (sceneId) {
-    scopeQuery = scopeQuery.eq("scene_id", sceneId);
-  } else if (materialId) {
-    scopeQuery = scopeQuery.eq("material_id", materialId);
-  } else if (taskGroupId) {
-    scopeQuery = scopeQuery.eq("task_group_id", taskGroupId);
-  } else {
-    scopeQuery = scopeQuery
-      .is("scene_id", null)
-      .is("material_id", null)
-      .is("task_group_id", null);
-  }
-
-  const { data: last } = await scopeQuery
-    .order("order_index", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const orderIndex = await nextOrderIndex(supabase, {
+    productId,
+    sceneId,
+    materialId,
+    taskGroupId,
+  });
 
   const { data: task, error } = await supabase
     .from("tasks")
@@ -354,7 +335,7 @@ export async function createTask(formData: FormData) {
       task_group_id: taskGroupId,
       type,
       title,
-      order_index: (last?.order_index ?? 0) + 1,
+      order_index: orderIndex,
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
       audio_url: (formData.get("task_audio_url") as string) || null,
@@ -470,29 +451,20 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
     .single();
   if (!task) return;
 
-  let query = supabase.from("tasks").select("id, order_index").eq("product_id", task.product_id);
-  if (task.scene_id) {
-    query = query.eq("scene_id", task.scene_id);
-  } else if (task.material_id) {
-    query = query.eq("material_id", task.material_id);
-  } else if (task.task_group_id) {
-    query = query.eq("task_group_id", task.task_group_id);
-  } else {
-    query = query.is("scene_id", null).is("material_id", null).is("task_group_id", null);
-  }
-
-  const { data: neighbor } =
-    direction === "up"
-      ? await query
-          .lt("order_index", task.order_index)
-          .order("order_index", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : await query
-          .gt("order_index", task.order_index)
-          .order("order_index", { ascending: true })
-          .limit(1)
-          .maybeSingle();
+  // Сусід шукається серед задач І блоків того самого контексту (одна
+  // спільна послідовність order_index, див. task-order.ts) — стрілка може
+  // перемістити задачу повз сусідній блок, не лише повз іншу задачу.
+  const neighbor = await findNeighbor(
+    supabase,
+    {
+      productId: task.product_id,
+      sceneId: task.scene_id,
+      materialId: task.material_id,
+      taskGroupId: task.task_group_id,
+    },
+    task.order_index,
+    direction
+  );
 
   if (!neighbor) return;
 
@@ -504,7 +476,7 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
     .eq("id", task.id)
     .select("id");
   const { data: updated2, error: error2 } = await supabase
-    .from("tasks")
+    .from(neighbor.kind === "task" ? "tasks" : "task_groups")
     .update({ order_index: task.order_index })
     .eq("id", neighbor.id)
     .select("id");

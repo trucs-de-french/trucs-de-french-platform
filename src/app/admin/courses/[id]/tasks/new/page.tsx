@@ -10,10 +10,10 @@ export default async function NewTaskPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sceneId?: string; materialId?: string }>;
+  searchParams: Promise<{ sceneId?: string; materialId?: string; taskGroupId?: string }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId, materialId } = await searchParams;
+  const { sceneId, materialId, taskGroupId } = await searchParams;
 
   const supabase = await createClient();
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
@@ -28,13 +28,23 @@ export default async function NewTaskPage({
     : [];
 
   // Контекст, з якого прийшли, відомий одразу з searchParams — вправа,
-  // прив'язана до сцени/матеріалу, повертає саме туди, а не на курс.
-  const backHref = sceneId
-    ? `/admin/courses/${productId}/scenes/${sceneId}`
-    : materialId
-      ? `/admin/courses/${productId}/materials/${materialId}`
-      : `/admin/courses/${productId}#tasks`;
-  const backLabel = sceneId ? "← До сцени" : materialId ? "← До матеріалу" : "← До курсу";
+  // прив'язана до сцени/матеріалу/блоку, повертає саме туди, а не на курс.
+  // Задача блоку повертається на сторінку самого блоку (не на сцену/
+  // матеріал блоку) — там і видно решту його задач.
+  const backHref = taskGroupId
+    ? `/admin/courses/${productId}/task-groups/${taskGroupId}`
+    : sceneId
+      ? `/admin/courses/${productId}/scenes/${sceneId}`
+      : materialId
+        ? `/admin/courses/${productId}/materials/${materialId}`
+        : `/admin/courses/${productId}#tasks`;
+  const backLabel = taskGroupId
+    ? "← До блоку"
+    : sceneId
+      ? "← До сцени"
+      : materialId
+        ? "← До матеріалу"
+        : "← До курсу";
 
   return (
     <div>
@@ -47,6 +57,7 @@ export default async function NewTaskPage({
         <input type="hidden" name="product_id" value={productId} />
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
         {materialId && <input type="hidden" name="material_id" value={materialId} />}
+        {taskGroupId && <input type="hidden" name="task_group_id" value={taskGroupId} />}
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
@@ -62,6 +73,7 @@ export default async function NewTaskPage({
           sceneVocab={sceneVocab}
           productType={product?.type}
           materialId={materialId}
+          taskGroupId={taskGroupId}
         />
 
         {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,

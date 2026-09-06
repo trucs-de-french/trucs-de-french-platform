@@ -1,0 +1,213 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import {
+  updateTaskGroup,
+  deleteTaskGroup,
+  detachTask,
+  attachTaskToGroup,
+} from "@/app/admin/task-groups/actions";
+import { moveTask, deleteTask } from "@/app/admin/tasks/actions";
+import { SaveForm } from "@/components/save-form";
+import { SubmitButton } from "@/components/submit-button";
+import { ConfirmForm } from "@/components/confirm-form";
+import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
+
+type GroupDetail = TaskGroupInitial & {
+  id: string;
+  product_id: string;
+  scene_id: string | null;
+  material_id: string | null;
+};
+
+type MemberTask = { id: string; type: string; title: string; order_index: number };
+
+export default async function EditTaskGroupPage({
+  params,
+}: {
+  params: Promise<{ id: string; groupId: string }>;
+}) {
+  const { id: productId, groupId } = await params;
+  const supabase = await createClient();
+
+  const [{ data: group }, { data: product }] = await Promise.all([
+    supabase
+      .from("task_groups")
+      .select(
+        "id, product_id, scene_id, material_id, delf_section, delf_test_number, title, content_type, content_text, media_url, media_provider, points_mode, flat_points"
+      )
+      .eq("id", groupId)
+      .single<GroupDetail>(),
+    supabase.from("products").select("type").eq("id", productId).single(),
+  ]);
+
+  if (!group) notFound();
+
+  const backHref = group.scene_id
+    ? `/admin/courses/${productId}/scenes/${group.scene_id}`
+    : group.material_id
+      ? `/admin/courses/${productId}/materials/${group.material_id}`
+      : `/admin/courses/${productId}#tasks`;
+  const backLabel = group.scene_id ? "← До сцени" : group.material_id ? "← До матеріалу" : "← До курсу";
+
+  const { data: members } = await supabase
+    .from("tasks")
+    .select("id, type, title, order_index")
+    .eq("task_group_id", groupId)
+    .order("order_index")
+    .returns<MemberTask[]>();
+
+  // Кандидати для "додати наявну задачу" — вільні задачі (без свого блоку)
+  // того самого батьківського контексту, що й сам блок.
+  let candidateQuery = supabase
+    .from("tasks")
+    .select("id, type, title")
+    .eq("product_id", productId)
+    .is("task_group_id", null);
+  if (group.scene_id) {
+    candidateQuery = candidateQuery.eq("scene_id", group.scene_id);
+  } else if (group.material_id) {
+    candidateQuery = candidateQuery.eq("material_id", group.material_id);
+  } else {
+    candidateQuery = candidateQuery
+      .is("scene_id", null)
+      .is("material_id", null)
+      .eq("delf_section", group.delf_section ?? "")
+      .eq("delf_test_number", group.delf_test_number ?? -1);
+  }
+  const { data: candidates } = await candidateQuery.order("order_index");
+
+  return (
+    <div>
+      <Link href={backHref} className="text-sm underline">
+        {backLabel}
+      </Link>
+      <h1 className="mt-2 text-2xl font-bold">Редагування блоку</h1>
+
+      <SaveForm
+        action={updateTaskGroup.bind(null, productId, group.id)}
+        className="mt-4 flex flex-col gap-4 rounded-md border p-4"
+        sticky
+        backLink={{ href: backHref, label: backLabel }}
+      >
+        <TaskGroupFields initialGroup={group} productType={product?.type} materialId={group.material_id} />
+      </SaveForm>
+
+      <section className="mt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Задачі блоку</h2>
+          <Link
+            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}`}
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          >
+            + Нова задача в блоці
+          </Link>
+        </div>
+
+        <ul className="mt-3 flex flex-col gap-2">
+          {members?.map((task, i) => (
+            <li key={task.id} className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                  {task.type}
+                </span>
+                <Link
+                  href={`/admin/courses/${productId}/tasks/${task.id}`}
+                  className="block font-medium hover:underline"
+                >
+                  {task.title}
+                </Link>
+              </div>
+              <div className="flex items-center gap-1">
+                <form action={moveTask.bind(null, task.id, "up")}>
+                  <SubmitButton
+                    disabled={i === 0}
+                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                  >
+                    ↑
+                  </SubmitButton>
+                </form>
+                <form action={moveTask.bind(null, task.id, "down")}>
+                  <SubmitButton
+                    disabled={i === members.length - 1}
+                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                  >
+                    ↓
+                  </SubmitButton>
+                </form>
+                <form action={detachTask.bind(null, task.id)}>
+                  <SubmitButton
+                    pendingChildren="..."
+                    className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    Прибрати з блоку
+                  </SubmitButton>
+                </form>
+                <form action={deleteTask.bind(null, task.id)}>
+                  <SubmitButton
+                    pendingChildren="..."
+                    className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                  >
+                    Видалити
+                  </SubmitButton>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+        {(!members || members.length === 0) && (
+          <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+            У блоці ще немає задач.
+          </p>
+        )}
+
+        {candidates && candidates.length > 0 && (
+          <form action={attachTaskToGroup} className="mt-3 flex items-center gap-2">
+            <input type="hidden" name="task_group_id" value={group.id} />
+            <select
+              name="task_id"
+              required
+              defaultValue=""
+              className="flex-1 rounded-md border px-2 py-1.5 text-sm"
+            >
+              <option value="" disabled>
+                — обрати наявну задачу —
+              </option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  [{c.type}] {c.title}
+                </option>
+              ))}
+            </select>
+            <SubmitButton
+              pendingChildren="Додаю..."
+              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              Додати до блоку
+            </SubmitButton>
+          </form>
+        )}
+      </section>
+
+      <section className="mt-6 rounded-md border border-red-200 p-4 dark:border-red-900">
+        <h2 className="text-lg font-medium text-red-700 dark:text-red-400">Небезпечна зона</h2>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          Видалення блоку не видаляє задачі всередині — вони повертаються туди, де живе сам блок
+          (сцена/матеріал/DELF-тест), і лишаються редагованими окремо.
+        </p>
+        <ConfirmForm
+          action={deleteTaskGroup.bind(null, group.id)}
+          message="Блок буде видалено. Задачі всередині НЕ видаляться — повернуться в контекст блоку. Продовжити?"
+          className="mt-2"
+        >
+          <SubmitButton
+            pendingChildren="..."
+            className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+          >
+            Видалити блок
+          </SubmitButton>
+        </ConfirmForm>
+      </section>
+    </div>
+  );
+}

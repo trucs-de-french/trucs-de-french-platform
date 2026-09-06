@@ -12,6 +12,8 @@ import { DialogueEditor } from "./dialogue-editor";
 import { SceneBlockList } from "./scene-block-list";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
+import { SubmitButton } from "@/components/submit-button";
+import { moveTaskGroup, deleteTaskGroup } from "@/app/admin/task-groups/actions";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -42,7 +44,7 @@ export default async function AdminScenePage({
 
   if (!scene) notFound();
 
-  const [{ data: links }, { data: tasks }, { data: blocks, error: blocksError }] =
+  const [{ data: links }, { data: tasks }, { data: taskGroups }, { data: blocks, error: blocksError }] =
     await Promise.all([
       supabase
         .from("scene_links")
@@ -52,6 +54,11 @@ export default async function AdminScenePage({
       supabase
         .from("tasks")
         .select("id, type, title, config, order_index")
+        .eq("scene_id", sceneId)
+        .order("order_index"),
+      supabase
+        .from("task_groups")
+        .select("id, title, content_type, order_index")
         .eq("scene_id", sceneId)
         .order("order_index"),
       supabase
@@ -155,7 +162,13 @@ export default async function AdminScenePage({
 
   const taskContent = (
     <div key="task">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        <Link
+          href={`/admin/courses/${productId}/task-groups/new?sceneId=${sceneId}`}
+          className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          + Блок
+        </Link>
         <Link
           href={`/admin/courses/${productId}/tasks/new?sceneId=${sceneId}`}
           className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -172,6 +185,62 @@ export default async function AdminScenePage({
           initialTasks={tasks ?? []}
         />
       </div>
+
+      {/* Блоки — окремим списком, не змішані з TaskDragList (drag-and-drop
+          там працює лише в межах tasks). Порядок відносно окремих задач
+          все одно коректно рахується через order_index (task-order.ts) і
+          побачить студент — тут це лише порядок блоків МІЖ СОБОЮ. */}
+      {taskGroups && taskGroups.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Блоки</h3>
+          <ul className="mt-2 flex flex-col gap-2">
+            {taskGroups.map((group, i) => (
+              <li
+                key={group.id}
+                className="flex items-center justify-between rounded-md border-2 border-dashed p-3"
+              >
+                <div>
+                  <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    Блок · {group.content_type}
+                  </span>
+                  <Link
+                    href={`/admin/courses/${productId}/task-groups/${group.id}`}
+                    className="block font-medium hover:underline"
+                  >
+                    {group.title || "Без назви"}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-1">
+                  <form action={moveTaskGroup.bind(null, group.id, "up")}>
+                    <SubmitButton
+                      disabled={i === 0}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↑
+                    </SubmitButton>
+                  </form>
+                  <form action={moveTaskGroup.bind(null, group.id, "down")}>
+                    <SubmitButton
+                      disabled={i === taskGroups.length - 1}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↓
+                    </SubmitButton>
+                  </form>
+                  <form action={deleteTaskGroup.bind(null, group.id)}>
+                    <SubmitButton
+                      pendingChildren="..."
+                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                    >
+                      Видалити
+                    </SubmitButton>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 
