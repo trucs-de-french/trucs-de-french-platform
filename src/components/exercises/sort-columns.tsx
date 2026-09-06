@@ -1,6 +1,7 @@
 "use client";
 
-import type { SortColumnsPublic, SortColumnsDetail } from "@/lib/exercises/types";
+import { useEffect } from "react";
+import type { SortColumnsPublic, SortColumnsDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useColumnSort } from "./use-column-sort";
 import { bankTileClass } from "./tile-styles";
@@ -12,14 +13,20 @@ export function SortColumnsExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: SortColumnsPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as SortColumnsDetail | undefined;
   const locked = !!result;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const {
     assignment,

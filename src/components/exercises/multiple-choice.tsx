@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { MultipleChoicePublic, MultipleChoiceDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -16,14 +16,20 @@ export function MultipleChoiceExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: MultipleChoicePublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as MultipleChoiceDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   function toggle(itemId: string, optionId: string, multiple: boolean) {
     if (result) return;

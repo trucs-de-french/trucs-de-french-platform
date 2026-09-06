@@ -5,7 +5,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
-import type { CalloutConfig } from "@/lib/exercises/types";
+import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 
 export type ExerciseTask = {
   id: string;
@@ -45,7 +45,16 @@ const TYPES_WITH_TYPE_BADGE = ["link", "game"];
 // саме тієї сцени) — свідомо не підтримуються тут.
 // Спільний для delf-test-tasks.tsx і сторінки матеріалу — третє місце
 // використання того самого блоку вже виправдовує винесення.
-export function ExerciseBlock({ task }: { task: ExerciseTask }) {
+export function ExerciseBlock({
+  task,
+  onResult,
+}: {
+  task: ExerciseTask;
+  // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
+  // балів усіх задач блоку (режим "сума"). Прокидається без змін в
+  // ExerciseCard, звідти — у відповідний gradable-компонент.
+  onResult?: (result: GradeResult) => void;
+}) {
   const config = (task.config ?? {}) as LinkEmbedConfig;
 
   return (
@@ -81,6 +90,7 @@ export function ExerciseBlock({ task }: { task: ExerciseTask }) {
           type={task.type}
           config={sanitizeConfigForStudent(task.type, task.config ?? {})}
           pointsVisible={task.points_visible}
+          onResult={onResult}
         />
       )}
 

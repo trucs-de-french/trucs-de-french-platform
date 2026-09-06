@@ -1,6 +1,7 @@
 "use client";
 
-import type { DragDropPublic, DragDropDetail } from "@/lib/exercises/types";
+import { useEffect } from "react";
+import type { DragDropPublic, DragDropDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass } from "./tile-styles";
@@ -12,10 +13,12 @@ export function DragDropExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: DragDropPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
   // живуть в одному спільному "слот-просторі" одного useTilePlacement, а не
@@ -38,6 +41,10 @@ export function DragDropExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as DragDropDetail | undefined;
   const locked = !!result;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const {
     placed,

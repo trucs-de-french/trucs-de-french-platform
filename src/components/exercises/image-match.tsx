@@ -1,6 +1,7 @@
 "use client";
 
-import type { ImageMatchPublic, ImageMatchDetail } from "@/lib/exercises/types";
+import { useEffect } from "react";
+import type { ImageMatchPublic, ImageMatchDetail, GradeResult } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
@@ -13,14 +14,20 @@ export function ImageMatchExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: ImageMatchPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
   const locked = !!result;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const {
     placed,

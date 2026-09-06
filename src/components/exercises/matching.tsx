@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { MatchingPublic, MatchingDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { MatchingPublic, MatchingDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
@@ -12,15 +12,21 @@ export function MatchingExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: MatchingPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as MatchingDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const usedRights = new Set(Object.values(pairs));
 

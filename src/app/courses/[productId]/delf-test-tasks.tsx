@@ -45,7 +45,9 @@ export async function DelfTestTasks({
       .returns<(TestTask & { order_index: number })[]>(),
     supabase
       .from("task_groups")
-      .select("id, content_type, content_text, media_url, media_provider, delf_section, order_index")
+      .select(
+        "id, content_type, content_text, media_url, media_provider, points_mode, delf_section, order_index"
+      )
       .eq("product_id", productId)
       .eq("delf_test_number", testNumber)
       .is("scene_id", null)

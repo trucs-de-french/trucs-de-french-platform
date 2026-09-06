@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type {
   CheckboxGridPublic,
   CheckboxGridDetail,
   CheckboxGridAnswer,
+  GradeResult,
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -15,14 +16,20 @@ export function CheckboxGridExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: CheckboxGridPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, Set<string>>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as CheckboxGridDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   function toggleCell(rowId: string, columnId: string) {
     setAnswers((prev) => {

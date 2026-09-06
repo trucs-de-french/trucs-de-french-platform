@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { ListeningPublic, ListeningDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { ListeningPublic, ListeningDetail, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, toEmbedUrl } from "@/lib/video";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -15,14 +15,20 @@ export function ListeningExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: ListeningPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ListeningDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const allAnswered = config.questions.every((q) => answers[q.id]);
 

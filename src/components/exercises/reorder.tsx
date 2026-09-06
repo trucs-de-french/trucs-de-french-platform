@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type DragEvent } from "react";
-import type { ReorderPublic, ReorderDetail } from "@/lib/exercises/types";
+import { useState, useEffect, type DragEvent } from "react";
+import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
@@ -129,10 +129,12 @@ export function ReorderExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: ReorderPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
@@ -140,6 +142,10 @@ export function ReorderExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ReorderDetail | undefined;
   const locked = !!result;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   return (
     <div>

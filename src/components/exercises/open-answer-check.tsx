@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { OpenAnswerPublic, OpenAnswerDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -16,14 +16,20 @@ export function OpenAnswerCheckExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: OpenAnswerPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as OpenAnswerDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const allAnswered = config.questions.every((q) => answers[q.id]?.trim());
 

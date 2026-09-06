@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { TableFillPublic, TableFillDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { TableFillPublic, TableFillDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -15,14 +15,20 @@ export function TableFillExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: TableFillPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as TableFillDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   function updateAnswer(rowId: string, side: "left" | "right", value: string) {
     setAnswers((prev) => ({ ...prev, [cellKey(rowId, side)]: value }));

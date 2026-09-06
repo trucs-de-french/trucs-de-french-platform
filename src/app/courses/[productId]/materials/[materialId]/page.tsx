@@ -69,7 +69,7 @@ export default async function MaterialPage({
           .returns<(ExerciseTask & { order_index: number })[]>(),
         supabase
           .from("task_groups")
-          .select("id, content_type, content_text, media_url, media_provider, order_index")
+          .select("id, content_type, content_text, media_url, media_provider, points_mode, order_index")
           .eq("material_id", materialId)
           .order("order_index")
           .returns<(TaskGroupData & { order_index: number })[]>(),

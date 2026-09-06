@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { TrueFalsePublic, TrueFalseDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
@@ -12,14 +12,23 @@ export function TrueFalseExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: TrueFalsePublic;
   pointsVisible: boolean;
+  // Опційний — для блоків (task_group_id), щоб TaskGroupBlock рахував
+  // живий підсумок балів усіх задач блоку (режим "сума"). Не впливає на
+  // жодну поведінку самої вправи поза блоками.
+  onResult?: (result: GradeResult) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as TrueFalseDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   const allAnswered = config.statements.every((s) => answers[s.id] !== undefined);
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { FillBlankPublic, FillBlankDetail } from "@/lib/exercises/types";
+import { useState, useEffect } from "react";
+import type { FillBlankPublic, FillBlankDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -11,10 +11,12 @@ export function FillBlankExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: FillBlankPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
@@ -26,6 +28,10 @@ export function FillBlankExercise({
   const [crossedOut, setCrossedOut] = useState<Set<number>>(new Set());
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   function toggleCrossedOut(i: number) {
     setCrossedOut((prev) => {

@@ -12,6 +12,7 @@ import type {
   ImageMatchPublic,
   CheckboxGridPublic,
   ChronologicalOrderPublic,
+  GradeResult,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
@@ -35,12 +36,17 @@ export function ExerciseCard({
   type,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   type: string;
   config: Record<string, unknown>;
   // Пілот системи балів — поки має ефект лише для type === "true_false".
   pointsVisible?: boolean;
+  // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
+  // балів усіх задач блоку (режим "сума"). Прокидається без змін у кожен
+  // з 13 gradable-компонентів нижче.
+  onResult?: (result: GradeResult) => void;
 }) {
   switch (type) {
     case "fill_blank":
@@ -49,6 +55,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as FillBlankPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "multiple_choice":
@@ -57,6 +64,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as MultipleChoicePublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "true_false":
@@ -65,6 +73,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as TrueFalsePublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "matching":
@@ -73,6 +82,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as MatchingPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "listening":
@@ -81,6 +91,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as ListeningPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "reorder":
@@ -89,6 +100,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as ReorderPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "drag_drop":
@@ -97,6 +109,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as DragDropPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "sort_columns":
@@ -105,6 +118,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as SortColumnsPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "open_answer":
@@ -113,6 +127,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as OpenAnswerPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "table_fill":
@@ -121,6 +136,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as TableFillPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "image_match":
@@ -129,6 +145,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as ImageMatchPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "checkbox_grid":
@@ -137,6 +154,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as CheckboxGridPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     case "chronological_order":
@@ -145,6 +163,7 @@ export function ExerciseCard({
           taskId={taskId}
           config={config as unknown as ChronologicalOrderPublic}
           pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
         />
       );
     default:

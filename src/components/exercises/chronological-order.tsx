@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type {
   ChronologicalOrderPublic,
   ChronologicalOrderDetail,
   ChronologicalOrderAnswer,
+  GradeResult,
 } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -31,14 +32,20 @@ export function ChronologicalOrderExercise({
   taskId,
   config,
   pointsVisible,
+  onResult,
 }: {
   taskId: string;
   config: ChronologicalOrderPublic;
   pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
 }) {
   const [positions, setPositions] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ChronologicalOrderDetail | undefined;
+
+  useEffect(() => {
+    if (result) onResult?.(result);
+  }, [result, onResult]);
 
   function updatePosition(itemId: string, value: string) {
     setPositions((prev) => ({ ...prev, [itemId]: value }));
