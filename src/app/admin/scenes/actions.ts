@@ -22,7 +22,7 @@ import type { ActionState } from "@/lib/action-state";
 //    куди користувач згодом поверне ся (кнопкою "назад"), може віддати
 //    застарілий Router Cache.
 // 4. Дія викликається НАПРЯМУ з клієнтського компонента (не через <form>,
-//    напр. reorderSceneBlocks/reorderTasks/reorderLinks) -> ні redirect(),
+//    напр. reorderSceneBlocks/reorderSceneRows/reorderLinks) -> ні redirect(),
 //    ні revalidatePath() не допоможуть (клієнтський useState їх не бачить)
 //    -> повертай {ok, error}, клієнт сам оновлює/відкочує локальний стан.
 //

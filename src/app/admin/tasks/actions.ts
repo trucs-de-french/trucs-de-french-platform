@@ -497,38 +497,46 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 // {ok, error}, щоб клієнт міг відкотити оптимістичний локальний порядок при
 // невдачі. Перевіряє error і кількість реально змінених рядків на кожному
 // UPDATE — той самий захист, якого спершу бракувало в reorderSceneBlocks.
-export async function reorderTasks(
+// Задачі й блоки ділять один спільний перетягуваний список на сторінці
+// сцени (TaskDragList) — оновлює order_index в ОБОХ таблицях за наданим
+// порядком, а не лише tasks (звідси й генералізована назва замість
+// колишньої reorderTasks — єдиний виклик цієї функції, той самий
+// TaskDragList, тож нема сенсу тримати дві паралельні версії).
+// .eq("scene_id", sceneId) на кожному UPDATE — захист від застарілого/
+// підробленого списку id з клієнта: перезаписує лише рядки, що й справді
+// належать цій сцені.
+export async function reorderSceneRows(
   sceneId: string,
-  orderedTaskIds: string[]
+  orderedRows: { id: string; kind: "task" | "task_group" }[]
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
 
   const results = await Promise.all(
-    orderedTaskIds.map(async (taskId, index) => {
+    orderedRows.map(async (row, index) => {
       const { data, error } = await supabase
-        .from("tasks")
+        .from(row.kind === "task" ? "tasks" : "task_groups")
         .update({ order_index: index })
-        .eq("id", taskId)
+        .eq("id", row.id)
         .eq("scene_id", sceneId)
         .select("id");
-      return { taskId, error, affected: data?.length ?? 0 };
+      return { id: row.id, error, affected: data?.length ?? 0 };
     })
   );
 
   const dbError = results.find((r) => r.error)?.error;
   if (dbError) {
-    console.error(`reorderTasks: помилка запису для сцени ${sceneId}:`, dbError.message);
+    console.error(`reorderSceneRows: помилка запису для сцени ${sceneId}:`, dbError.message);
     return { ok: false, error: dbError.message };
   }
 
   const missing = results.filter((r) => r.affected === 0);
   if (missing.length > 0) {
     console.error(
-      `reorderTasks: 0 рядків оновлено для завдань ${missing
-        .map((r) => r.taskId)
+      `reorderSceneRows: 0 рядків оновлено для ${missing
+        .map((r) => r.id)
         .join(", ")} у сцені ${sceneId}.`
     );
-    return { ok: false, error: "Не вдалося зберегти порядок частини завдань" };
+    return { ok: false, error: "Не вдалося зберегти порядок частини списку" };
   }
 
   return { ok: true };
