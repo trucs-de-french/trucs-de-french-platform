@@ -7,6 +7,7 @@ import type { CalloutStyle } from "@/lib/exercises/types";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
+import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 
 export default async function MaterialPage({
   params,
@@ -55,16 +56,61 @@ export default async function MaterialPage({
   // категорій (і для нетегованих "Інше"), якщо file_url заповнений.
   const showExercises = material.category !== "delf_guide";
 
-  const { data: exercises } = showExercises
-    ? await supabase
-        .from("tasks")
-        .select(
-          "id, type, title, config, image_url, audio_url, points_visible, games(embed_url, provider)"
-        )
-        .eq("material_id", materialId)
-        .order("order_index")
-        .returns<ExerciseTask[]>()
-    : { data: null };
+  const [{ data: exercises }, { data: taskGroups }] = showExercises
+    ? await Promise.all([
+        supabase
+          .from("tasks")
+          .select(
+            "id, type, title, config, image_url, audio_url, points_visible, order_index, games(embed_url, provider)"
+          )
+          .eq("material_id", materialId)
+          .is("task_group_id", null)
+          .order("order_index")
+          .returns<(ExerciseTask & { order_index: number })[]>(),
+        supabase
+          .from("task_groups")
+          .select("id, content_type, content_text, media_url, media_provider, order_index")
+          .eq("material_id", materialId)
+          .order("order_index")
+          .returns<(TaskGroupData & { order_index: number })[]>(),
+      ])
+    : [{ data: null }, { data: null }];
+
+  const groupIds = (taskGroups ?? []).map((g) => g.id);
+  const { data: groupMembers } =
+    groupIds.length > 0
+      ? await supabase
+          .from("tasks")
+          .select(
+            "id, type, title, config, image_url, audio_url, points_visible, task_group_id, games(embed_url, provider)"
+          )
+          .in("task_group_id", groupIds)
+          .order("order_index")
+          .returns<(ExerciseTask & { task_group_id: string })[]>()
+      : { data: null };
+
+  const membersByGroup = new Map<string, ExerciseTask[]>();
+  for (const m of groupMembers ?? []) {
+    const arr = membersByGroup.get(m.task_group_id) ?? [];
+    arr.push(m);
+    membersByGroup.set(m.task_group_id, arr);
+  }
+
+  // Блоки без жодної задачі-члена не рендеримо взагалі студенту — той самий
+  // принцип, що вже в delf-test-tasks.tsx.
+  type Row =
+    | { kind: "task"; task: ExerciseTask & { order_index: number } }
+    | { kind: "group"; group: TaskGroupData & { order_index: number }; members: ExerciseTask[] };
+  const rows: Row[] = [
+    ...(exercises ?? []).map((task): Row => ({ kind: "task", task })),
+    ...(taskGroups ?? [])
+      .filter((g) => (membersByGroup.get(g.id) ?? []).length > 0)
+      .map((group): Row => ({ kind: "group", group, members: membersByGroup.get(group.id)! })),
+  ].sort((a, b) => {
+    const aIndex = a.kind === "task" ? a.task.order_index : a.group.order_index;
+    const bIndex = b.kind === "task" ? b.task.order_index : b.group.order_index;
+    return aIndex - bIndex;
+  });
 
   const style = (material.style as CalloutStyle) ?? "none";
   // Друга (визначальна для показу) санітизація — на межі рендеру, той самий
@@ -72,7 +118,7 @@ export default async function MaterialPage({
   // санітизовано при збереженні.
   const safeHtml = material.content ? sanitizeCalloutHtml(material.content) : null;
   const hasPdf = !!material.file_url;
-  const hasExercises = showExercises && !!exercises && exercises.length > 0;
+  const hasExercises = showExercises && rows.length > 0;
 
   return (
     <main className="mx-auto max-w-2xl p-6">
@@ -108,11 +154,20 @@ export default async function MaterialPage({
         <section className="mt-6">
           <h2 className="text-lg font-medium">Вправи</h2>
           <ul className="mt-2 flex flex-col gap-3">
-            {exercises!.map((task) => (
-              <li key={task.id} className={task.type === "callout" ? "" : "rounded-md border p-3"}>
-                <ExerciseBlock task={task} />
-              </li>
-            ))}
+            {rows.map((row) =>
+              row.kind === "group" ? (
+                <li key={`group-${row.group.id}`}>
+                  <TaskGroupBlock group={row.group} tasks={row.members} />
+                </li>
+              ) : (
+                <li
+                  key={row.task.id}
+                  className={row.task.type === "callout" ? "" : "rounded-md border p-3"}
+                >
+                  <ExerciseBlock task={row.task} />
+                </li>
+              )
+            )}
           </ul>
         </section>
       )}

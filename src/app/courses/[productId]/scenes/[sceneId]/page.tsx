@@ -26,6 +26,8 @@ import type {
 } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { ScriptSection } from "./script-section";
+import type { ExerciseTask } from "../../exercise-block";
+import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 
 type DialogueEntry = {
   speaker: string;
@@ -124,6 +126,7 @@ export default async function ScenePage({
   const [
     { data: links },
     { data: tasks, error: tasksError },
+    { data: taskGroups },
     { data: blocks, error: blocksError },
   ] = await Promise.all([
     supabase
@@ -134,11 +137,17 @@ export default async function ScenePage({
     supabase
       .from("tasks")
       .select(
-        "id, type, title, config, image_url, audio_url, points_visible, games(embed_url, provider)"
+        "id, type, title, config, image_url, audio_url, points_visible, order_index, games(embed_url, provider)"
       )
       .eq("scene_id", sceneId)
       .order("order_index")
-      .returns<TaskRow[]>(),
+      .returns<(TaskRow & { order_index: number })[]>(),
+    supabase
+      .from("task_groups")
+      .select("id, content_type, content_text, media_url, media_provider, order_index")
+      .eq("scene_id", sceneId)
+      .order("order_index")
+      .returns<(TaskGroupData & { order_index: number })[]>(),
     supabase
       .from("scene_blocks")
       .select("block_type")
@@ -146,6 +155,57 @@ export default async function ScenePage({
       .order("position")
       .returns<SceneBlockRow[]>(),
   ]);
+
+  const taskGroupIds = (taskGroups ?? []).map((g) => g.id);
+  const { data: groupMembers } =
+    taskGroupIds.length > 0
+      ? await supabase
+          .from("tasks")
+          .select(
+            "id, type, title, config, image_url, audio_url, points_visible, task_group_id, games(embed_url, provider)"
+          )
+          .in("task_group_id", taskGroupIds)
+          .order("order_index")
+          .returns<(ExerciseTask & { task_group_id: string })[]>()
+      : { data: null };
+
+  const membersByGroup = new Map<string, ExerciseTask[]>();
+  for (const m of groupMembers ?? []) {
+    const arr = membersByGroup.get(m.task_group_id) ?? [];
+    arr.push(m);
+    membersByGroup.set(m.task_group_id, arr);
+  }
+
+  // Блоки без жодної задачі-члена не рендеримо взагалі — той самий принцип,
+  // що вже в delf-test-tasks.tsx/materials-сторінці.
+  //
+  // vocab_quiz/error_correction (нижче, у tasksNode) — свідомо ЛИШЕ для
+  // задач верхнього рівня сцени, не всередині блоків: обидва типи
+  // потребують vocabForQuiz/sceneMistakes, специфічних для ЦІЄЇ сцени
+  // closures, яких немає (і не повинно бути) у ExerciseBlock/
+  // TaskGroupBlock — той самий, уже задокументований у exercise-block.tsx
+  // принцип: "vocab_quiz/error_correction... свідомо не підтримуються тут".
+  // Якщо вчитель покладе такий тип у блок, він просто не відрендериться —
+  // наявне, а не нове обмеження ExerciseBlock.
+  type SceneRow =
+    | { kind: "task"; task: TaskRow & { order_index: number } }
+    | {
+        kind: "group";
+        group: TaskGroupData & { order_index: number };
+        members: ExerciseTask[];
+      };
+  const sceneRows: SceneRow[] = [
+    ...(tasks ?? []).map((task): SceneRow => ({ kind: "task", task })),
+    ...(taskGroups ?? [])
+      .filter((g) => (membersByGroup.get(g.id) ?? []).length > 0)
+      .map(
+        (group): SceneRow => ({ kind: "group", group, members: membersByGroup.get(group.id)! })
+      ),
+  ].sort((a, b) => {
+    const aIndex = a.kind === "task" ? a.task.order_index : a.group.order_index;
+    const bIndex = b.kind === "task" ? b.task.order_index : b.group.order_index;
+    return aIndex - bIndex;
+  });
 
   if (tasksError) {
     // не даємо помилці запиту мовчки ховати весь блок вправ — принаймні
@@ -334,11 +394,20 @@ export default async function ScenePage({
     </section>
   );
 
-  const tasksNode = tasks && tasks.length > 0 && (
+  const tasksNode = sceneRows.length > 0 && (
     <section className="mt-6">
       <h2 className="text-lg font-medium">Завдання</h2>
       <ul className="mt-2 flex flex-col gap-2">
-        {tasks.map((task) => {
+        {sceneRows.map((row) => {
+          if (row.kind === "group") {
+            return (
+              <li key={`group-${row.group.id}`}>
+                <TaskGroupBlock group={row.group} tasks={row.members} />
+              </li>
+            );
+          }
+
+          const task = row.task;
           const config = (task.config ?? {}) as LinkEmbedConfig;
 
           return (
