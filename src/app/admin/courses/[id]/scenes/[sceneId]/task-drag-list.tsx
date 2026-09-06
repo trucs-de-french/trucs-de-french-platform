@@ -3,7 +3,7 @@
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
 import { deleteTask, moveTask, reorderSceneRows } from "@/app/admin/tasks/actions";
-import { deleteTaskGroup, moveTaskGroup } from "@/app/admin/task-groups/actions";
+import { deleteTaskGroup, moveTaskGroup, attachTaskToGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import {
   CATEGORY_COLORS,
@@ -78,8 +78,15 @@ export function TaskDragList({
 }) {
   const [rows, setRows] = useState(initialRows);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  // Яка задача/блок зараз тягнеться — потрібно ЗАЗДАЛЕГІДЬ (під час
+  // dragover, до drop), щоб показати іншу підсвітку для "прикріпити" на
+  // блок, а не лише "поміняти місцями". dataTransfer.getData() тут не
+  // підходить — за специфікацією HTML5 вона надійно читається лише в
+  // самому onDrop, не в onDragOver/onDragEnter.
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const draggingRow = rows.find((r) => r.id === draggingId) ?? null;
 
   function toggleExpanded(id: string) {
     setExpanded((prev) => {
@@ -112,6 +119,35 @@ export function TaskDragList({
     }
   }
 
+  // Кинути задачу САМЕ на рядок блоку — прикріпити її до блоку (той самий
+  // ефект, що вже робить пікер на сторінці блоку), а не поміняти місцями.
+  // attachTaskToGroup — server action під <form action>, тут викликається
+  // напряму з побудованим FormData (той самий спосіб, що вже й
+  // reorderSceneRows викликається напряму з клієнта, не через <form>); дія
+  // сама редіректить, тож локальний rows-стан оптимістично не чіпаємо —
+  // сторінка сцени оновиться свіжими серверними даними після редіректу.
+  async function attach(taskId: string, taskGroupId: string) {
+    setError(null);
+    const formData = new FormData();
+    formData.set("task_id", taskId);
+    formData.set("task_group_id", taskGroupId);
+    try {
+      await attachTaskToGroup(formData);
+    } catch (e) {
+      // redirect() у server action кидає спеціальний виняток із
+      // error.digest = "NEXT_REDIRECT;...", НЕ в error.message (перевірено
+      // в node_modules/next/dist/client/components/redirect-error.js) —
+      // це очікувана частина успішного шляху, Next перехоплює його сам і
+      // виконує клієнтську навігацію, тож обов'язково прокидаємо його далі
+      // не чіпаючи. Тут ловимо лише СПРАВЖНІ помилки (мережа тощо).
+      const digest = (e as { digest?: unknown } | null)?.digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        throw e;
+      }
+      setError("Не вдалося прикріпити задачу до блоку");
+    }
+  }
+
   return (
     <div>
       {error && (
@@ -122,6 +158,11 @@ export function TaskDragList({
 
       <ul className="flex flex-col gap-2">
         {rows.map((row, i) => {
+          // Кинути задачу САМЕ на блок = прикріпити, не поміняти місцями —
+          // усі інші комбінації (задача на задачу, блок на будь-що)
+          // лишаються звичайним swap, як і раніше.
+          const willAttach = row.kind === "group" && draggingRow?.kind === "task";
+
           const dragProps = {
             onDragOver: (e: DragEvent) => e.preventDefault(),
             onDragEnter: (e: DragEvent) => {
@@ -133,13 +174,27 @@ export function TaskDragList({
               e.preventDefault();
               setDragOver(null);
               const fromId = e.dataTransfer.getData("text/plain");
-              if (fromId) void swap(fromId, row.id);
+              setDraggingId(null);
+              if (!fromId || fromId === row.id) return;
+              const fromRow = rows.find((r) => r.id === fromId);
+              if (fromRow?.kind === "task" && row.kind === "group") {
+                void attach(fromId, row.id);
+              } else {
+                void swap(fromId, row.id);
+              }
             },
           };
           const handle = (
             <span
               draggable
-              onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", row.id)}
+              onDragStart={(e: DragEvent) => {
+                setDraggingId(row.id);
+                e.dataTransfer.setData("text/plain", row.id);
+              }}
+              onDragEnd={() => {
+                setDraggingId(null);
+                setDragOver(null);
+              }}
               className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
               aria-hidden
             >
@@ -154,10 +209,17 @@ export function TaskDragList({
                 {...dragProps}
                 className={`flex flex-col rounded-md border-2 border-dashed p-3 transition-colors ${
                   dragOver === row.id
-                    ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+                    ? willAttach
+                      ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
+                      : "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
                     : ""
                 }`}
               >
+                {dragOver === row.id && willAttach && (
+                  <p className="mb-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    Відпустіть, щоб прикріпити задачу до цього блоку
+                  </p>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {handle}
