@@ -340,3 +340,46 @@ export async function moveTaskGroup(groupId: string, direction: "up" | "down") {
 
   redirect(backPath);
 }
+
+// Drag-and-drop у списку членів блоку (GroupMemberDragList) — той самий
+// принцип, що reorderSceneRows на сторінці сцени, але простіше: усередині
+// блоку лише задачі (блоки не вкладаються одне в одне), тож без розгалуження
+// по таблицях. Викликається напряму з клієнта (не через <form>), тож
+// {ok,error}, не redirect — та сама причина, що вже й у reorderSceneRows/
+// attachTaskInline (клієнтський useState не побачив би ні redirect, ні
+// revalidatePath). .eq("task_group_id", groupId) на кожному UPDATE —
+// захист від застарілого/підробленого списку id з клієнта.
+export async function reorderGroupMembers(
+  groupId: string,
+  orderedTaskIds: string[]
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const results = await Promise.all(
+    orderedTaskIds.map(async (taskId, index) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ order_index: index })
+        .eq("id", taskId)
+        .eq("task_group_id", groupId)
+        .select("id");
+      return { id: taskId, error, affected: data?.length ?? 0 };
+    })
+  );
+
+  const dbError = results.find((r) => r.error)?.error;
+  if (dbError) {
+    console.error(`reorderGroupMembers: помилка запису для блоку ${groupId}:`, dbError.message);
+    return { ok: false, error: dbError.message };
+  }
+
+  const missing = results.filter((r) => r.affected === 0);
+  if (missing.length > 0) {
+    console.error(
+      `reorderGroupMembers: 0 рядків оновлено для ${missing.map((r) => r.id).join(", ")} у блоці ${groupId}.`
+    );
+    return { ok: false, error: "Не вдалося зберегти порядок частини списку" };
+  }
+
+  return { ok: true };
+}

@@ -4,14 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import {
   updateTaskGroup,
   deleteTaskGroup,
-  detachTask,
   attachTaskToGroup,
 } from "@/app/admin/task-groups/actions";
-import { moveTask, deleteTask } from "@/app/admin/tasks/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
+import { GroupMemberDragList } from "../group-member-drag-list";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -104,62 +103,12 @@ export default async function EditTaskGroupPage({
           </Link>
         </div>
 
-        <ul className="mt-3 flex flex-col gap-2">
-          {members?.map((task, i) => (
-            <li key={task.id} className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                  {task.type}
-                </span>
-                <Link
-                  href={`/admin/courses/${productId}/tasks/${task.id}`}
-                  className="block font-medium hover:underline"
-                >
-                  {task.title}
-                </Link>
-              </div>
-              <div className="flex items-center gap-1">
-                <form action={moveTask.bind(null, task.id, "up")}>
-                  <SubmitButton
-                    disabled={i === 0}
-                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                  >
-                    ↑
-                  </SubmitButton>
-                </form>
-                <form action={moveTask.bind(null, task.id, "down")}>
-                  <SubmitButton
-                    disabled={i === members.length - 1}
-                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                  >
-                    ↓
-                  </SubmitButton>
-                </form>
-                <form action={detachTask.bind(null, task.id)}>
-                  <SubmitButton
-                    pendingChildren="..."
-                    className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  >
-                    Прибрати з блоку
-                  </SubmitButton>
-                </form>
-                <form action={deleteTask.bind(null, task.id)}>
-                  <SubmitButton
-                    pendingChildren="..."
-                    className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                  >
-                    Видалити
-                  </SubmitButton>
-                </form>
-              </div>
-            </li>
-          ))}
-        </ul>
-        {(!members || members.length === 0) && (
-          <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
-            У блоці ще немає задач.
-          </p>
-        )}
+        <GroupMemberDragList
+          key={members?.map((m) => m.id).join(",") ?? ""}
+          groupId={group.id}
+          productId={productId}
+          initialMembers={members ?? []}
+        />
 
         {candidates && candidates.length > 0 && (
           <form action={attachTaskToGroup} className="mt-3 flex items-center gap-2">
