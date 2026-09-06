@@ -273,19 +273,56 @@ async function syncGameRow(
   if (error) throw error;
 }
 
+// Куди повертатись (редірект) для задачі з даним батьківським контекстом —
+// спільна для moveTask/deleteTask, щоб не тримати ту саму 3-4-гілкову логіку
+// в кожній окремо. Задача в блоці (task_group_id) сама має null scene_id/
+// material_id (успадковує контекст від групи, див. 0031_task_groups.sql),
+// тож для неї доводиться підвантажити батьківський контекст самої групи —
+// адмінської сторінки блоку ще нема (з'явиться в CRUD-етапі), тож у гіршому
+// разі повертаємось на флет-список курсу.
+async function resolveTaskParentPath(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  task: {
+    product_id: string;
+    scene_id: string | null;
+    material_id: string | null;
+    task_group_id: string | null;
+  }
+): Promise<string> {
+  if (task.scene_id) return `/admin/courses/${task.product_id}/scenes/${task.scene_id}`;
+  if (task.material_id) return `/admin/courses/${task.product_id}/materials/${task.material_id}`;
+  if (task.task_group_id) {
+    const { data: group } = await supabase
+      .from("task_groups")
+      .select("scene_id, material_id")
+      .eq("id", task.task_group_id)
+      .single();
+    if (group?.scene_id) return `/admin/courses/${task.product_id}/scenes/${group.scene_id}`;
+    if (group?.material_id)
+      return `/admin/courses/${task.product_id}/materials/${group.material_id}`;
+  }
+  return `/admin/courses/${task.product_id}`;
+}
+
 export async function createTask(formData: FormData) {
   const supabase = await createClient();
 
   const productId = formData.get("product_id") as string;
   const sceneId = (formData.get("scene_id") as string) || null;
   const materialId = (formData.get("material_id") as string) || null;
+  // Задача, прив'язана до блоку (task_groups) — успадковує батьківський
+  // контекст від групи, тож власні scene_id/material_id тут null (див.
+  // коментар у 0031_task_groups.sql). Формою поки не подається (UI з'явиться
+  // разом з адмінкою блоку) — до того часу завжди null, як і раніше.
+  const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
   const title = formData.get("title") as string;
 
-  // Три можливі скоупи для order_index: у межах сцени, у межах матеріалу,
-  // або "вільні" product-level задачі (scene_id і material_id обидва null —
-  // напр. DELF entraînement). Одночасно sceneId і materialId не приходять
-  // (форма показує лише один hidden-інпут залежно від контексту виклику).
+  // Чотири можливі скоупи для order_index: у межах сцени, у межах матеріалу,
+  // у межах блоку, або "вільні" product-level задачі (усі батьківські поля
+  // null — напр. DELF entraînement). Одночасно приходить не більше одного з
+  // sceneId/materialId/taskGroupId (форма показує лише один hidden-інпут
+  // залежно від контексту виклику).
   let scopeQuery = supabase
     .from("tasks")
     .select("order_index")
@@ -294,8 +331,13 @@ export async function createTask(formData: FormData) {
     scopeQuery = scopeQuery.eq("scene_id", sceneId);
   } else if (materialId) {
     scopeQuery = scopeQuery.eq("material_id", materialId);
+  } else if (taskGroupId) {
+    scopeQuery = scopeQuery.eq("task_group_id", taskGroupId);
   } else {
-    scopeQuery = scopeQuery.is("scene_id", null).is("material_id", null);
+    scopeQuery = scopeQuery
+      .is("scene_id", null)
+      .is("material_id", null)
+      .is("task_group_id", null);
   }
 
   const { data: last } = await scopeQuery
@@ -309,6 +351,7 @@ export async function createTask(formData: FormData) {
       product_id: productId,
       scene_id: sceneId,
       material_id: materialId,
+      task_group_id: taskGroupId,
       type,
       title,
       order_index: (last?.order_index ?? 0) + 1,
@@ -335,11 +378,12 @@ export async function createTask(formData: FormData) {
   await syncGameRow(supabase, task.id, type, formData);
 
   redirect(
-    sceneId
-      ? `/admin/courses/${productId}/scenes/${sceneId}`
-      : materialId
-        ? `/admin/courses/${productId}/materials/${materialId}`
-        : `/admin/courses/${productId}`
+    await resolveTaskParentPath(supabase, {
+      product_id: productId,
+      scene_id: sceneId,
+      material_id: materialId,
+      task_group_id: taskGroupId,
+    })
   );
 }
 
@@ -394,16 +438,12 @@ export async function deleteTask(taskId: string) {
   const supabase = await createClient();
   const { data: task } = await supabase
     .from("tasks")
-    .select("product_id, scene_id, material_id")
+    .select("product_id, scene_id, material_id, task_group_id")
     .eq("id", taskId)
     .single();
   if (!task) return;
 
-  const backPath = task.scene_id
-    ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
-    : task.material_id
-      ? `/admin/courses/${task.product_id}/materials/${task.material_id}`
-      : `/admin/courses/${task.product_id}`;
+  const backPath = await resolveTaskParentPath(supabase, task);
 
   const { data: deleted, error } = await supabase
     .from("tasks")
@@ -425,7 +465,7 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, product_id, scene_id, material_id, order_index")
+    .select("id, product_id, scene_id, material_id, task_group_id, order_index")
     .eq("id", taskId)
     .single();
   if (!task) return;
@@ -435,8 +475,10 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
     query = query.eq("scene_id", task.scene_id);
   } else if (task.material_id) {
     query = query.eq("material_id", task.material_id);
+  } else if (task.task_group_id) {
+    query = query.eq("task_group_id", task.task_group_id);
   } else {
-    query = query.is("scene_id", null).is("material_id", null);
+    query = query.is("scene_id", null).is("material_id", null).is("task_group_id", null);
   }
 
   const { data: neighbor } =
@@ -454,11 +496,7 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   if (!neighbor) return;
 
-  const backPath = task.scene_id
-    ? `/admin/courses/${task.product_id}/scenes/${task.scene_id}`
-    : task.material_id
-      ? `/admin/courses/${task.product_id}/materials/${task.material_id}`
-      : `/admin/courses/${task.product_id}`;
+  const backPath = await resolveTaskParentPath(supabase, task);
 
   const { data: updated1, error: error1 } = await supabase
     .from("tasks")
