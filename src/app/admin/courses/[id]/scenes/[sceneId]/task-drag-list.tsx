@@ -2,8 +2,8 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { deleteTask, moveTask, reorderSceneRows } from "@/app/admin/tasks/actions";
-import { deleteTaskGroup, moveTaskGroup, attachTaskToGroup } from "@/app/admin/task-groups/actions";
+import { deleteTask, reorderSceneRows } from "@/app/admin/tasks/actions";
+import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import {
   CATEGORY_COLORS,
@@ -60,9 +60,20 @@ function getTaskPreview(config: Record<string, unknown> | null): string | null {
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList: ручка
 // (⠿) — джерело drag, увесь <li> — ціль drop. Swap-семантика (перетягнута
 // картка міняється місцями з тією, на яку кинута) — узгоджено з
-// SceneBlockList/reorder.tsx, а не insert-shift. Стрілки ↑/↓ (moveTask/
-// moveTaskGroup) лишаються паралельно — обидва механізми пишуть у той
-// самий order_index.
+// SceneBlockList/reorder.tsx, а не insert-shift.
+//
+// Стрілки ↑/↓ НЕ ходять через moveTask/moveTaskGroup (form + redirect) —
+// свідоме рішення: цей список уже повністю клієнтський (rows у useState),
+// і клік по стрілці — це рівно та сама операція, що drag на сусідній
+// рядок відсортованого масиву (сусід — rows[i±1], уже відомий клієнту, не
+// треба навіть звертатись по нього на сервер). Раніше стрілки йшли через
+// <form action={moveTask.bind(...)}> з redirect() на ту саму сторінку —
+// технічно не порушення чекліста (redirect на той самий шлях — "досить"),
+// але на фоні миттєвого клієнтського drag-оновлення в цьому самому списку
+// такий full-page refresh відчувався як регресія/перезавантаження.
+// moveTask/moveTaskGroup лишаються НЕЗМІННИМИ — і далі коректно
+// обслуговують форми-стрілки на флет-списку курсу, сторінці матеріалу й
+// (поки) списку членів блоку, де немає клієнтського rows-стану.
 //
 // useState(initialRows) бере пропс лише як початкове значення — якщо
 // колись цю сторінку почне revalidatePath-ити, компонент сам не підхопить
@@ -121,30 +132,19 @@ export function TaskDragList({
 
   // Кинути задачу САМЕ на рядок блоку — прикріпити її до блоку (той самий
   // ефект, що вже робить пікер на сторінці блоку), а не поміняти місцями.
-  // attachTaskToGroup — server action під <form action>, тут викликається
-  // напряму з побудованим FormData (той самий спосіб, що вже й
-  // reorderSceneRows викликається напряму з клієнта, не через <form>); дія
-  // сама редіректить, тож локальний rows-стан оптимістично не чіпаємо —
-  // сторінка сцени оновиться свіжими серверними даними після редіректу.
+  // attachTaskInline (на відміну від attachTaskToGroup, яка й далі
+  // обслуговує форму на сторінці блоку) повертає {ok,error} замість
+  // redirect — той самий сценарій 4 чекліста, що вже reorderSceneRows.
+  // Задача, яку прикріпили, більше не належить сцені на верхньому рівні
+  // (її scene_id обнулився), тож прибираємо її рядок з локального списку —
+  // це саме те, що показав би і повний рефреш, лише без нього.
   async function attach(taskId: string, taskGroupId: string) {
     setError(null);
-    const formData = new FormData();
-    formData.set("task_id", taskId);
-    formData.set("task_group_id", taskGroupId);
-    try {
-      await attachTaskToGroup(formData);
-    } catch (e) {
-      // redirect() у server action кидає спеціальний виняток із
-      // error.digest = "NEXT_REDIRECT;...", НЕ в error.message (перевірено
-      // в node_modules/next/dist/client/components/redirect-error.js) —
-      // це очікувана частина успішного шляху, Next перехоплює його сам і
-      // виконує клієнтську навігацію, тож обов'язково прокидаємо його далі
-      // не чіпаючи. Тут ловимо лише СПРАВЖНІ помилки (мережа тощо).
-      const digest = (e as { digest?: unknown } | null)?.digest;
-      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
-        throw e;
-      }
-      setError("Не вдалося прикріпити задачу до блоку");
+    const result = await attachTaskInline(taskId, taskGroupId);
+    if (result.ok) {
+      setRows((prev) => prev.filter((r) => r.id !== taskId));
+    } else {
+      setError(result.error ?? "Не вдалося прикріпити задачу до блоку");
     }
   }
 
@@ -236,22 +236,22 @@ export function TaskDragList({
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <form action={moveTaskGroup.bind(null, row.id, "up")}>
-                      <SubmitButton
-                        disabled={i === 0}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                      >
-                        ↑
-                      </SubmitButton>
-                    </form>
-                    <form action={moveTaskGroup.bind(null, row.id, "down")}>
-                      <SubmitButton
-                        disabled={i === rows.length - 1}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                      >
-                        ↓
-                      </SubmitButton>
-                    </form>
+                    <button
+                      type="button"
+                      onClick={() => void swap(row.id, rows[i - 1].id)}
+                      disabled={i === 0}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void swap(row.id, rows[i + 1].id)}
+                      disabled={i === rows.length - 1}
+                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    >
+                      ↓
+                    </button>
                     <form action={deleteTaskGroup.bind(null, row.id)}>
                       <SubmitButton
                         pendingChildren="..."
@@ -313,22 +313,22 @@ export function TaskDragList({
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <form action={moveTask.bind(null, row.id, "up")}>
-                    <SubmitButton
-                      disabled={i === 0}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↑
-                    </SubmitButton>
-                  </form>
-                  <form action={moveTask.bind(null, row.id, "down")}>
-                    <SubmitButton
-                      disabled={i === rows.length - 1}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↓
-                    </SubmitButton>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => void swap(row.id, rows[i - 1].id)}
+                    disabled={i === 0}
+                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void swap(row.id, rows[i + 1].id)}
+                    disabled={i === rows.length - 1}
+                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                  >
+                    ↓
+                  </button>
                   <Link
                     href={`/admin/courses/${productId}/tasks/${row.id}/copy`}
                     className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"

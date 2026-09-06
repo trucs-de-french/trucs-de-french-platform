@@ -193,18 +193,24 @@ export async function detachTask(taskId: string) {
 // блоку — задача переходить під task_group_id, її власні
 // scene_id/material_id/delf_section/delf_test_number обнуляються
 // (успадковує їх від групи, як і будь-яка інша задача всередині блоку).
-export async function attachTaskToGroup(formData: FormData) {
-  const supabase = await createClient();
-  const taskId = formData.get("task_id") as string;
-  const taskGroupId = formData.get("task_group_id") as string;
-  if (!taskId || !taskGroupId) return;
+// Спільна мутація для обох способів виклику нижче — форми (сторінка
+// блоку) і прямого клієнтського виклику (drag-to-attach у TaskDragList).
+// Перевіряє error і кількість РЕАЛЬНО оновлених рядків (чекліст
+// ../scenes/actions.ts) — оригінальна версія цього не робила, RLS міг би
+// мовчки заблокувати запис без жодної помітної ознаки.
+async function attachTaskCore(
+  supabase: Supa,
+  taskId: string,
+  taskGroupId: string
+): Promise<{ ok: boolean; error?: string; group?: GroupParent }> {
+  if (!taskId || !taskGroupId) return { ok: false, error: "Не вказано задачу або блок" };
 
   const { data: group } = await supabase
     .from("task_groups")
     .select("product_id, scene_id, material_id")
     .eq("id", taskGroupId)
     .single();
-  if (!group) return;
+  if (!group) return { ok: false, error: "Блок не знайдено" };
 
   const orderIndex = await nextOrderIndex(supabase, {
     productId: group.product_id,
@@ -213,7 +219,7 @@ export async function attachTaskToGroup(formData: FormData) {
     taskGroupId,
   });
 
-  await supabase
+  const { data, error } = await supabase
     .from("tasks")
     .update({
       task_group_id: taskGroupId,
@@ -223,9 +229,43 @@ export async function attachTaskToGroup(formData: FormData) {
       delf_test_number: null,
       order_index: orderIndex,
     })
-    .eq("id", taskId);
+    .eq("id", taskId)
+    .select("id");
 
-  redirect(resolveGroupParentPath(group));
+  if (error || !data?.length) {
+    return { ok: false, error: error?.message ?? "Не вдалося прикріпити задачу до блоку" };
+  }
+
+  return { ok: true, group };
+}
+
+// Виклик через <form action> (пікер на сторінці блоку) — навігація на ту
+// саму сторінку блоку після додавання, той самий сценарій 2 з чекліста
+// ../scenes/actions.ts (redirect на ту саму сторінку — досить).
+export async function attachTaskToGroup(formData: FormData) {
+  const supabase = await createClient();
+  const taskId = formData.get("task_id") as string;
+  const taskGroupId = formData.get("task_group_id") as string;
+
+  const result = await attachTaskCore(supabase, taskId, taskGroupId);
+  if (!result.ok || !result.group) return;
+
+  redirect(resolveGroupParentPath(result.group));
+}
+
+// Прямий виклик з клієнта (drag-to-attach у TaskDragList на сторінці
+// сцени) — сценарій 4 з чекліста: дія викликається НЕ через <form>, тож
+// redirect()/revalidatePath() не допоможуть (клієнтський useState їх не
+// побачить) — повертає {ok, error}, компонент сам прибирає рядок задачі
+// зі свого локального списку (вона й справді покидає плаский список
+// сцени, ставши членом блоку).
+export async function attachTaskInline(
+  taskId: string,
+  taskGroupId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const result = await attachTaskCore(supabase, taskId, taskGroupId);
+  return { ok: result.ok, error: result.error };
 }
 
 // Видалення блоку НЕ видаляє його задачі (не покладаємось на схемний
