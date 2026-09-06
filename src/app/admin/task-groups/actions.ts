@@ -250,7 +250,11 @@ export async function attachTaskToGroup(formData: FormData) {
   const result = await attachTaskCore(supabase, taskId, taskGroupId);
   if (!result.ok || !result.group) return;
 
-  redirect(resolveGroupParentPath(result.group));
+  // Сторінка САМОГО блоку (не resolveGroupParentPath — той веде на
+  // батьківський контекст блоку, правильно для detachTask/deleteTaskGroup,
+  // де рядок ПОКИДАЄ поточний контекст, але не тут: пікер живе на сторінці
+  // блоку, і додавання задачі не повинно нікуди "виносити" вчителя).
+  redirect(`/admin/courses/${result.group.product_id}/task-groups/${taskGroupId}`);
 }
 
 // Прямий виклик з клієнта (drag-to-attach у TaskDragList на сторінці
