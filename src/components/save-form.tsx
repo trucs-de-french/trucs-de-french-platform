@@ -93,9 +93,26 @@ export function SaveForm({
     // localStorage.getItem("theme") порожній і в обох).
     const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
     const href = withThemeParam(previewLink.href, theme);
+    // ТИМЧАСОВЕ ДІАГНОСТИЧНЕ ЛОГУВАННЯ — прибрати після діагностики бага з
+    // темою в новій вкладці прев'ю.
+    console.log("[preview-debug] handlePreviewClick", {
+      documentElementClassList: Array.from(document.documentElement.classList),
+      resolvedTheme: theme,
+      previewLinkHref: previewLink.href,
+      finalHref: href,
+      newTabIsNull: newTab === null,
+    });
     startPreviewTransition(async () => {
-      await setStudentPreviewCookie(previewLink.productId);
-      if (newTab) newTab.location.href = href;
+      try {
+        await setStudentPreviewCookie(previewLink.productId);
+        console.log("[preview-debug] cookie set, navigating newTab", {
+          newTabIsNull: newTab === null,
+          href,
+        });
+        if (newTab) newTab.location.href = href;
+      } catch (e) {
+        console.error("[preview-debug] handlePreviewClick failed", e);
+      }
     });
   }
 

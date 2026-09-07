@@ -15,6 +15,9 @@ import Script from "next/script";
 // перемикав тему вручну (localStorage порожній), фолбек міг розійтися.
 // Параметр з URL, коли є, перекриває обидва джерела і одразу записується в
 // localStorage — подальша навігація студента вже йде звичайним шляхом.
+// ТИМЧАСОВЕ ДІАГНОСТИЧНЕ ЛОГУВАННЯ всередині — прибрати після діагностики
+// бага з темою в новій вкладці прев'ю (console.log/console.error виклики,
+// позначені [preview-debug]).
 const THEME_SCRIPT = `
 (function () {
   try {
@@ -28,9 +31,19 @@ const THEME_SCRIPT = `
       stored = localStorage.getItem("theme");
     }
     var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    console.log("[preview-debug] theme-script", {
+      href: window.location.href,
+      search: window.location.search,
+      fromUrl: fromUrl,
+      storedDecision: stored,
+      matchMediaDark: window.matchMedia("(prefers-color-scheme: dark)").matches,
+      isDark: isDark
+    });
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.classList.toggle("light", !isDark);
-  } catch (e) {}
+  } catch (e) {
+    console.error("[preview-debug] theme-script threw", e);
+  }
 })();
 `;
 
