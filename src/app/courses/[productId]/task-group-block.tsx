@@ -15,10 +15,11 @@ export type TaskGroupData = {
   content_text: string | null;
   media_url: string | null;
   media_provider: string | null;
-  // "flat" (один загальний бал) обробляється окремо (Крок 5) — тут лише
-  // ховаємо підсумок-суму нижче для блоків, які вже перемкнули режим,
-  // щоб не показати одразу два суперечливі підсумки на одному блоці.
   points_mode: string;
+  // Лише для points_mode === "flat" — один загальний бал за блок, зароблений
+  // пропорційно середньому score% усіх задач блоку (узгоджене з учителем
+  // рішення, Крок 5). Може бути null для блоків у режимі "сума".
+  flat_points: number | null;
 };
 
 // "use client" — потрібен локальний стан для живого підсумку балів
@@ -51,11 +52,20 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   const gradableIds = tasks.filter((t) => isExerciseType(t.type)).map((t) => t.id);
   const allAnswered = gradableIds.length > 0 && gradableIds.every((id) => id in results);
 
-  const pointsEarned = Object.values(results).reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
-  const pointsPossible = Object.values(results).reduce(
-    (sum, r) => sum + (r.pointsPossible ?? 0),
-    0
-  );
+  const resultValues = Object.values(results);
+  const pointsEarned = resultValues.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
+  const pointsPossible = resultValues.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0);
+
+  // Режим "фіксовано": score є в КОЖНОМУ GradeResult завжди (на відміну від
+  // pointsEarned/pointsPossible, які лише для types із підтримкою балів),
+  // тож середнє score% рахується однаково для будь-якого gradable-типу
+  // всередині блоку, незалежно від того, чи він узагалі підтримує бали.
+  const averageScore =
+    resultValues.length > 0
+      ? resultValues.reduce((sum, r) => sum + r.score, 0) / resultValues.length
+      : 0;
+  const flatPoints = group.flat_points ?? 0;
+  const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
   return (
     <section className="rounded-md border p-3">
@@ -105,11 +115,20 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         ))}
       </div>
 
-      {group.points_mode !== "flat" && allAnswered && pointsPossible > 0 && (
+      {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
         <p className="mt-3 border-t pt-3 text-sm font-medium">
           Підсумок блоку:{" "}
           <span className="font-normal text-neutral-500 dark:text-neutral-400">
             {pointsEarned} з {pointsPossible} {pluralizePoints(pointsPossible)}
+          </span>
+        </p>
+      )}
+
+      {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
+        <p className="mt-3 border-t pt-3 text-sm font-medium">
+          Підсумок блоку:{" "}
+          <span className="font-normal text-neutral-500 dark:text-neutral-400">
+            {flatEarned} з {flatPoints} {pluralizePoints(flatPoints)}
           </span>
         </p>
       )}

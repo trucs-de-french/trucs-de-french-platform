@@ -144,7 +144,9 @@ export default async function ScenePage({
       .returns<(TaskRow & { order_index: number })[]>(),
     supabase
       .from("task_groups")
-      .select("id, content_type, content_text, media_url, media_provider, points_mode, order_index")
+      .select(
+        "id, content_type, content_text, media_url, media_provider, points_mode, flat_points, order_index"
+      )
       .eq("scene_id", sceneId)
       .order("order_index")
       .returns<(TaskGroupData & { order_index: number })[]>(),
