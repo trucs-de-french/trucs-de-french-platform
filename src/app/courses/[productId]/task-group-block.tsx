@@ -58,7 +58,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   );
 
   return (
-    <section className="rounded-md border-2 border-dashed p-3">
+    <section className="rounded-md border p-3">
       {group.content_type === "text" && group.content_text && (
         <InstructionsText text={group.content_text} className="mb-3" />
       )}
