@@ -41,6 +41,17 @@ const THEME_SCRIPT = `
     });
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.classList.toggle("light", !isDark);
+    console.log("[preview-debug] theme-script AFTER toggle", {
+      htmlClassName: document.documentElement.className
+    });
+    // Перевірка ЩЕ РАЗ пізніше (після можливої React-гідратації) — чи клас
+    // досі той самий, чи щось його зняло/перезаписало вже після
+    // beforeInteractive-фази.
+    window.addEventListener("load", function () {
+      console.log("[preview-debug] theme-script on window load", {
+        htmlClassName: document.documentElement.className
+      });
+    });
   } catch (e) {
     console.error("[preview-debug] theme-script threw", e);
   }
