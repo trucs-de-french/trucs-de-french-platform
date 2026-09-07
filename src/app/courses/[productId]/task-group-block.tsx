@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toEmbedUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { InstructionsText } from "@/components/exercises/instructions-text";
@@ -43,6 +43,35 @@ export type TaskGroupData = {
 // блок студенту.
 export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: ExerciseTask[] }) {
   const [results, setResults] = useState<Record<string, GradeResult>>({});
+
+  // Один стабільний onResult-колбек НА КОЖЕН task.id, мемоізований через
+  // useMemo (не нова inline-стрілка в .map() нижче на кожен рендер, і не
+  // мутація ref під час рендеру — react-hooks/refs забороняє це саме тому,
+  // що рендер, відкинутий React без коміту, лишив би застарілий кеш).
+  // Без стабільного колбеку useEffect([result, onResult]) у кожній
+  // gradable-вправі (fill-blank.tsx тощо) перезапускався б на кожен рендер
+  // TaskGroupBlock (реф onResult змінювався б), кожен виклик onResult робив
+  // би НОВИЙ об'єкт results (spread завжди створює новий референс, навіть
+  // коли значення під task.id не змінилось) → React не бейлаутиться за
+  // референсом → ре-рендер TaskGroupBlock → НОВІ inline-стрілки для ВСІХ
+  // задач блоку → їхні ефекти знову спрацьовують → знову setResults →
+  // самопідтримний цикл. Найпомітніше на drag_drop (useTilePlacement
+  // перемальовує розкладку плиток на кожен рендер), хоча цикл однаково
+  // зачіпав би будь-який гейдований тип у блоці.
+  //
+  // Залежність — лише tasks (стабільний пропс від сервера для одного
+  // монтування компонента, не міняється через внутрішні setResults) —
+  // setResults навмисно не в масиві залежностей: сеттер useState
+  // гарантовано стабільний між рендерами.
+  const onResultCallbacks = useMemo(() => {
+    const map: Record<string, (result: GradeResult) => void> = {};
+    for (const task of tasks) {
+      map[task.id] = (result: GradeResult) => {
+        setResults((prev) => ({ ...prev, [task.id]: result }));
+      };
+    }
+    return map;
+  }, [tasks]);
 
   // Підсумок рахуємо лише коли ВІДПОВІЛИ на всі задачі блоку, що взагалі
   // мають бали (essay_check/callout/embed/link/game серед tasks ніколи не
@@ -107,11 +136,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
 
       <div className="flex flex-col gap-4 border-t pt-3">
         {tasks.map((task) => (
-          <ExerciseBlock
-            key={task.id}
-            task={task}
-            onResult={(result) => setResults((prev) => ({ ...prev, [task.id]: result }))}
-          />
+          <ExerciseBlock key={task.id} task={task} onResult={onResultCallbacks[task.id]} />
         ))}
       </div>
 
