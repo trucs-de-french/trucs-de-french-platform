@@ -1,7 +1,20 @@
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+
+// mode ("image" | "text") НЕ зберігається в самому detail (ChronologicalOrderDetail
+// містить лише content: string, агностичний до режиму) — тож розрізняємо
+// евристично за формою значення. mode єдиний на всю вправу (не по елементу),
+// тож досить перевірити перший елемент послідовності.
+function looksLikeImageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
 // Короткий людський підсумок ai_feedback для віджета "Робота над помилками".
 // Розпізнає форму detail з grade.ts для кожного типу; для DELF-заглушки
-// ({correct, feedback}) показує її текст; інакше — узагальнено.
-export function summarizeMistake(feedback: unknown): string {
+// ({correct, feedback}) показує її текст; інакше — узагальнено. Повертає
+// React.ReactNode (не string) — chronological_order у image-режимі показує
+// мініатюри замість сирого URL-тексту, решта гілок і далі повертають
+// звичайний рядок (валідний ReactNode).
+export function summarizeMistake(feedback: unknown): React.ReactNode {
   if (!feedback || typeof feedback !== "object") {
     return "Спробуйте ще раз.";
   }
@@ -67,11 +80,33 @@ export function summarizeMistake(feedback: unknown): string {
     const items = f.items as Record<string, unknown>[];
     const first = items[0];
 
-    // chronological_order: { content, correctPosition, studentPosition, isCorrect }
+    // chronological_order: { content, correctPosition, studentPosition, isCorrect } —
+    // content у режимі "image" — URL зображення, не текст для показу як є
+    // (той самий недолік, який щойно виправлено тут же для reorder-подібних
+    // гілок, попереджено одразу).
     if ("correctPosition" in first) {
       const sorted = [
         ...(items as { content: string; correctPosition: number }[]),
       ].sort((a, b) => a.correctPosition - b.correctPosition);
+
+      if (sorted.length > 0 && looksLikeImageUrl(sorted[0].content)) {
+        return (
+          <span className="inline-flex flex-wrap items-center gap-1 align-middle">
+            Правильний порядок:
+            {sorted.map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-1">
+                {i > 0 && <span aria-hidden>→</span>}
+                <ImageOrPlaceholder
+                  src={item.content}
+                  alt=""
+                  className="h-8 w-8 shrink-0 rounded object-cover"
+                />
+              </span>
+            ))}
+          </span>
+        );
+      }
+
       return `Правильний порядок: ${sorted.map((i) => i.content).join(" → ")}`;
     }
 
@@ -85,7 +120,10 @@ export function summarizeMistake(feedback: unknown): string {
         : "Всі елементи розкладено правильно.";
     }
 
-    // reorder (стара однопослідовна форма): { text, correctIndex, studentIndex, isCorrect }
+    // reorder (стара однопослідовна форма): { text, correctIndex, studentIndex, isCorrect } —
+    // items тут завжди звичайний текст (ReorderSequence.items: string[] у
+    // types.ts — жодного image-режиму в reorder немає, на відміну від
+    // chronological_order вище), тож URL-евристика тут не потрібна.
     if ("correctIndex" in first) {
       const sorted = [...(items as { text: string; correctIndex: number }[])].sort(
         (a, b) => a.correctIndex - b.correctIndex
@@ -105,6 +143,7 @@ export function summarizeMistake(feedback: unknown): string {
   // reorder (багатопослідовна форма): { sequences: [{ items: [...] }] } —
   // окремий ключ верхнього рівня від старої { items: [...] } вище, тож стара
   // збережена детальна форма (до цієї фічі) і далі розпізнається тим блоком.
+  // Той самий принцип, що й вище — items тут завжди текст, без image-режиму.
   if (Array.isArray(f.sequences) && f.sequences.length > 0) {
     const sequences = f.sequences as {
       items: { text: string; correctIndex: number; isCorrect: boolean }[];
