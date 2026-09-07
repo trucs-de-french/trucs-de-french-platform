@@ -401,7 +401,7 @@ export default async function ScenePage({
         {sceneRows.map((row) => {
           if (row.kind === "group") {
             return (
-              <li key={`group-${row.group.id}`}>
+              <li key={`group-${row.group.id}`} id={`group-${row.group.id}`} className="scroll-mt-4">
                 <TaskGroupBlock group={row.group} tasks={row.members} />
               </li>
             );

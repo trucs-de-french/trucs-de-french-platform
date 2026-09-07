@@ -49,6 +49,21 @@ export default async function EditTaskGroupPage({
       : `/admin/courses/${productId}#tasks`;
   const backLabel = group.scene_id ? "← До сцени" : group.material_id ? "← До матеріалу" : "← До курсу";
 
+  // Студентська сторінка, де цей блок реально відображається — той самий
+  // розподіл, що backHref, але веде на публічну сторону (сцени/матеріали
+  // спільні з backHref, DELF — окремо, за номером тесту, той самий принцип,
+  // що вже на сторінці редагування задачі). #group-{id} — якір на сам блок
+  // (не лише на батьківську сторінку загалом), доданий на всіх трьох
+  // студентських рендер-сайтах (Крок 3). null — коли для блоку взагалі
+  // немає валідного студентського місця (сирота без номера DELF-тесту).
+  const studentHref = group.scene_id
+    ? `/courses/${productId}/scenes/${group.scene_id}#group-${group.id}`
+    : group.material_id
+      ? `/courses/${productId}/materials/${group.material_id}#group-${group.id}`
+      : group.delf_test_number
+        ? `/courses/${productId}/tests/${group.delf_test_number}#group-${group.id}`
+        : null;
+
   const { data: members } = await supabase
     .from("tasks")
     .select("id, type, title, order_index")
@@ -88,6 +103,7 @@ export default async function EditTaskGroupPage({
         className="mt-4 flex flex-col gap-4 rounded-md border p-4"
         sticky
         backLink={{ href: backHref, label: backLabel }}
+        previewLink={studentHref ? { productId, href: studentHref } : undefined}
       >
         <TaskGroupFields initialGroup={group} productType={product?.type} materialId={group.material_id} />
       </SaveForm>

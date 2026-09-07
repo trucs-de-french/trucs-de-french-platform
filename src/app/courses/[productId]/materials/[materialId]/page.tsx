@@ -156,7 +156,7 @@ export default async function MaterialPage({
           <ul className="mt-2 flex flex-col gap-3">
             {rows.map((row) =>
               row.kind === "group" ? (
-                <li key={`group-${row.group.id}`}>
+                <li key={`group-${row.group.id}`} id={`group-${row.group.id}`} className="scroll-mt-4">
                   <TaskGroupBlock group={row.group} tasks={row.members} />
                 </li>
               ) : (
