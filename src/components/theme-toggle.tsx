@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { setThemeCookie } from "@/lib/theme-cookie";
 
 const POSITION_STORAGE_KEY = "theme-toggle-position";
 const BUTTON_SIZE = 40; // h-10 w-10
@@ -61,6 +62,10 @@ export function ThemeToggle() {
     } catch {
       // localStorage недоступний (приватний режим тощо) — тема просто не збережеться
     }
+    // Кука — щоб СЕРВЕР бачив вибір теми на наступному рендері (layout.tsx)
+    // і одразу вставляв правильний клас у <html>, без клієнтського
+    // мутування, яке гідратація потім скидає.
+    setThemeCookie(next ? "dark" : "light");
   }
 
   function handlePointerDown(e: ReactPointerEvent<HTMLButtonElement>) {

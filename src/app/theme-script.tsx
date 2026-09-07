@@ -1,60 +1,23 @@
 import Script from "next/script";
 
+// Фолбек ЛИШЕ для першого візиту (кука ще не виставлена, layout.tsx не
+// зміг порахувати клас на сервері) — повторно перевіряє localStorage і
+// matchMedia. Для будь-якого наступного візиту (кука вже є) layout.tsx уже
+// вставив правильний клас на сервері, і цей скрипт просто підтверджує те
+// саме значення (без ефекту — toggle на вже наявний клас — no-op).
+//
 // Виконується синхронно до першого фарбування сторінки (strategy="beforeInteractive"
 // -> Next.js вставляє скрипт у початковий HTML, у <head>), щоб виставити клас
 // .dark ще до рендеру React і уникнути "блимання" не тією темою. Не залежить
 // від React/гідратації.
-//
-// ?theme=dark|light у URL — явно передана тема з батьківської вкладки, лише
-// для "Переглянути в режимі учня" (SaveForm.handlePreviewClick), яке
-// відкриває студентську сторінку в НОВІЙ вкладці через window.open. Нове
-// вікно за специфікацією має той самий доступ до localStorage цього origin,
-// що й батьківське — але спостережено, що щойно створене popup-вікно може
-// резолвити prefers-color-scheme інакше за батьківську вкладку (платформна
-// непослідовність, не залежить від коду тут), тож коли вчитель ще ніколи не
-// перемикав тему вручну (localStorage порожній), фолбек міг розійтися.
-// Параметр з URL, коли є, перекриває обидва джерела і одразу записується в
-// localStorage — подальша навігація студента вже йде звичайним шляхом.
-// ТИМЧАСОВЕ ДІАГНОСТИЧНЕ ЛОГУВАННЯ всередині — прибрати після діагностики
-// бага з темою в новій вкладці прев'ю (console.log/console.error виклики,
-// позначені [preview-debug]).
 const THEME_SCRIPT = `
 (function () {
   try {
-    var params = new URLSearchParams(window.location.search);
-    var fromUrl = params.get("theme");
-    var stored;
-    if (fromUrl === "dark" || fromUrl === "light") {
-      stored = fromUrl;
-      localStorage.setItem("theme", fromUrl);
-    } else {
-      stored = localStorage.getItem("theme");
-    }
+    var stored = localStorage.getItem("theme");
     var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    console.log("[preview-debug] theme-script", {
-      href: window.location.href,
-      search: window.location.search,
-      fromUrl: fromUrl,
-      storedDecision: stored,
-      matchMediaDark: window.matchMedia("(prefers-color-scheme: dark)").matches,
-      isDark: isDark
-    });
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.classList.toggle("light", !isDark);
-    console.log("[preview-debug] theme-script AFTER toggle", {
-      htmlClassName: document.documentElement.className
-    });
-    // Перевірка ЩЕ РАЗ пізніше (після можливої React-гідратації) — чи клас
-    // досі той самий, чи щось його зняло/перезаписало вже після
-    // beforeInteractive-фази.
-    window.addEventListener("load", function () {
-      console.log("[preview-debug] theme-script on window load", {
-        htmlClassName: document.documentElement.className
-      });
-    });
-  } catch (e) {
-    console.error("[preview-debug] theme-script threw", e);
-  }
+  } catch (e) {}
 })();
 `;
 

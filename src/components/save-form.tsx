@@ -4,18 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
 import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
-
-// Вставляє ?theme=... ПЕРЕД #fragment (не після — інакше він потрапив би
-// всередину hash, а не в query string, і сервер/theme-script його не
-// побачили б). href — завжди відносний шлях (/courses/...), тож
-// String-маніпуляція без URL API безпечна й не потребує знання origin.
-function withThemeParam(href: string, theme: "dark" | "light"): string {
-  const hashIndex = href.indexOf("#");
-  const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
-  const hash = hashIndex === -1 ? "" : href.slice(hashIndex);
-  const separator = base.includes("?") ? "&" : "?";
-  return `${base}${separator}theme=${theme}${hash}`;
-}
+import { setThemeCookie } from "@/lib/theme-cookie";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -86,33 +75,19 @@ export function SaveForm({
     // навігацію в неї застосовуємо вже після того, як кука прев'ю
     // виставиться на сервері.
     const newTab = window.open("", "_blank");
-    // Явно передаємо ВЖЕ резолвлену тему поточної вкладки через ?theme=
-    // (theme-script.tsx читає його першим) — щойно відкрите popup-вікно
-    // спостережено інакше резолвить prefers-color-scheme за батьківську
-    // вкладку, коли вчитель ще не перемикав тему вручну (тоді
-    // localStorage.getItem("theme") порожній і в обох).
+    // Кука теми (не URL-параметр) — той самий origin, тож нова вкладка
+    // отримає її автоматично в заголовку Cookie свого ж запиту, і
+    // layout.tsx вставить правильний клас у <html> ВЖЕ на сервері, до будь-
+    // якого клієнтського JS. Раніше тема передавалась через ?theme=, але
+    // це не рятувало від кореневої причини: theme-script.tsx й далі мутував
+    // <html> ДО гідратації, а React під час гідратації звіряв className з
+    // тим, що сам порахував (без теми, бо сервер її не знав) і перезаписував
+    // назад — підтверджено логом "on window load" без класу теми.
     const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-    const href = withThemeParam(previewLink.href, theme);
-    // ТИМЧАСОВЕ ДІАГНОСТИЧНЕ ЛОГУВАННЯ — прибрати після діагностики бага з
-    // темою в новій вкладці прев'ю.
-    console.log("[preview-debug] handlePreviewClick", {
-      documentElementClassList: Array.from(document.documentElement.classList),
-      resolvedTheme: theme,
-      previewLinkHref: previewLink.href,
-      finalHref: href,
-      newTabIsNull: newTab === null,
-    });
+    setThemeCookie(theme);
     startPreviewTransition(async () => {
-      try {
-        await setStudentPreviewCookie(previewLink.productId);
-        console.log("[preview-debug] cookie set, navigating newTab", {
-          newTabIsNull: newTab === null,
-          href,
-        });
-        if (newTab) newTab.location.href = href;
-      } catch (e) {
-        console.error("[preview-debug] handlePreviewClick failed", e);
-      }
+      await setStudentPreviewCookie(previewLink.productId);
+      if (newTab) newTab.location.href = previewLink.href;
     });
   }
 
