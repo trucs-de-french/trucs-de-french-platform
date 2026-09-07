@@ -5,6 +5,18 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
 import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
 
+// Вставляє ?theme=... ПЕРЕД #fragment (не після — інакше він потрапив би
+// всередину hash, а не в query string, і сервер/theme-script його не
+// побачили б). href — завжди відносний шлях (/courses/...), тож
+// String-маніпуляція без URL API безпечна й не потребує знання origin.
+function withThemeParam(href: string, theme: "dark" | "light"): string {
+  const hashIndex = href.indexOf("#");
+  const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : href.slice(hashIndex);
+  const separator = base.includes("?") ? "&" : "?";
+  return `${base}${separator}theme=${theme}${hash}`;
+}
+
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
 // при кожному сабміті САМЕ через <form action>-інтеграцію (extractEvents$1
@@ -74,9 +86,16 @@ export function SaveForm({
     // навігацію в неї застосовуємо вже після того, як кука прев'ю
     // виставиться на сервері.
     const newTab = window.open("", "_blank");
+    // Явно передаємо ВЖЕ резолвлену тему поточної вкладки через ?theme=
+    // (theme-script.tsx читає його першим) — щойно відкрите popup-вікно
+    // спостережено інакше резолвить prefers-color-scheme за батьківську
+    // вкладку, коли вчитель ще не перемикав тему вручну (тоді
+    // localStorage.getItem("theme") порожній і в обох).
+    const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+    const href = withThemeParam(previewLink.href, theme);
     startPreviewTransition(async () => {
       await setStudentPreviewCookie(previewLink.productId);
-      if (newTab) newTab.location.href = previewLink.href;
+      if (newTab) newTab.location.href = href;
     });
   }
 
