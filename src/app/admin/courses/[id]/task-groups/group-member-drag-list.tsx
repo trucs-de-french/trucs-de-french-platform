@@ -3,7 +3,7 @@
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
 import { deleteTask } from "@/app/admin/tasks/actions";
-import { detachTask, reorderGroupMembers } from "@/app/admin/task-groups/actions";
+import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 
 type MemberRow = { id: string; type: string; title: string };
@@ -49,6 +49,36 @@ export function GroupMemberDragList({
     if (!result.ok) {
       setMembers(prev);
       setError(result.error ?? "Не вдалося зберегти новий порядок");
+    }
+  }
+
+  // Копія одразу в цьому самому блоці, без пікера — вставляємо в локальний
+  // список ПІСЛЯ оригіналу і одразу перезаписуємо order_index через уже
+  // наявний reorderGroupMembers (той самий трюк, що swap()), щоб позиція
+  // реально збереглась, а не лишилась там, де RPC поставив order_index
+  // (max+1 у блоці — кінець списку). На відміну від swap() — якщо
+  // reorderGroupMembers тут впаде, members НЕ відкочуємо: копія вже
+  // реально створена в БД, приховати її локально було б оманливо (пропала
+  // б із виду, хоча існує), лише повідомляємо про проблему з порядком.
+  async function copy(taskId: string) {
+    setError(null);
+    const result = await copyTaskInGroup(taskId, groupId);
+    if (!result.ok || !result.task) {
+      setError(result.error ?? "Не вдалося скопіювати задачу");
+      return;
+    }
+
+    const index = members.findIndex((m) => m.id === taskId);
+    const next = [...members];
+    next.splice(index + 1, 0, result.task);
+    setMembers(next);
+
+    const reorderResult = await reorderGroupMembers(
+      groupId,
+      next.map((m) => m.id)
+    );
+    if (!reorderResult.ok) {
+      setError(reorderResult.error ?? "Задачу скопійовано, але не вдалося зберегти порядок");
     }
   }
 
@@ -119,6 +149,13 @@ export function GroupMemberDragList({
                 className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
               >
                 ↓
+              </button>
+              <button
+                type="button"
+                onClick={() => void copy(task.id)}
+                className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              >
+                Копіювати
               </button>
               <form action={detachTask.bind(null, task.id)}>
                 <SubmitButton

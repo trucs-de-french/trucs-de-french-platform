@@ -275,6 +275,40 @@ export async function attachTaskInline(
   return { ok: result.ok, error: result.error };
 }
 
+// Кнопка "Копіювати" на сторінці блоку (GroupMemberDragList) — фіксоване
+// призначення "той самий блок", без пікера scene/material/DELF (на
+// відміну від copyTask у ../tasks/actions.ts, який веде на окрему сторінку
+// вибору). Викликається напряму з клієнта (GroupMemberDragList керує
+// власним members-станом), тож {ok,error}, не redirect — той самий
+// сценарій 4 чекліста, що вже attachTaskInline/reorderGroupMembers.
+// Повертає щойно створений рядок (id/type/title), щоб компонент одразу
+// вставив копію у свій локальний список без перезавантаження сторінки.
+export async function copyTaskInGroup(
+  taskId: string,
+  taskGroupId: string
+): Promise<{ ok: boolean; error?: string; task?: { id: string; type: string; title: string } }> {
+  const supabase = await createClient();
+
+  const { data: newTaskId, error } = await supabase.rpc("copy_task", {
+    p_task_id: taskId,
+    p_task_group_id: taskGroupId,
+  });
+  if (error || !newTaskId) {
+    return { ok: false, error: error?.message ?? "Не вдалося скопіювати задачу" };
+  }
+
+  const { data: newTask, error: fetchError } = await supabase
+    .from("tasks")
+    .select("id, type, title")
+    .eq("id", newTaskId)
+    .single();
+  if (fetchError || !newTask) {
+    return { ok: false, error: fetchError?.message ?? "Задачу скопійовано, але не вдалося її завантажити" };
+  }
+
+  return { ok: true, task: newTask };
+}
+
 // Видалення блоку НЕ видаляє його задачі (не покладаємось на схемний
 // on delete cascade, який є лише запобіжником) — спершу повертає кожну з
 // них у батьківський контекст блоку, той самий шлях, що detachTask.
