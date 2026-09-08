@@ -115,7 +115,7 @@ export function ListeningExercise({
                         <ImageOrPlaceholder
                           src={o.imageUrl}
                           alt={o.text || ""}
-                          className="mx-auto h-20 w-20 rounded object-contain"
+                          className="mx-auto h-20 w-20 rounded object-cover"
                         />
                         <div className="mt-1 flex items-center justify-center gap-1.5">
                           <span
