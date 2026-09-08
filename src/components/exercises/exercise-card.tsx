@@ -37,6 +37,7 @@ export function ExerciseCard({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   type: string;
@@ -47,6 +48,10 @@ export function ExerciseCard({
   // балів усіх задач блоку (режим "сума"). Прокидається без змін у кожен
   // з 13 gradable-компонентів нижче.
   onResult?: (result: GradeResult) => void;
+  // Опційний — для блоків у режимі "фіксовано" (TaskGroupBlock), щоб
+  // безумовно ховати індивідуальний бал задачі (і до, і після перевірки),
+  // коли на рівні блоку показується лише один загальний підсумок.
+  hidePoints?: boolean;
 }) {
   switch (type) {
     case "fill_blank":
@@ -56,6 +61,7 @@ export function ExerciseCard({
           config={config as unknown as FillBlankPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "multiple_choice":
@@ -65,6 +71,7 @@ export function ExerciseCard({
           config={config as unknown as MultipleChoicePublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "true_false":
@@ -74,6 +81,7 @@ export function ExerciseCard({
           config={config as unknown as TrueFalsePublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "matching":
@@ -83,6 +91,7 @@ export function ExerciseCard({
           config={config as unknown as MatchingPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "listening":
@@ -92,6 +101,7 @@ export function ExerciseCard({
           config={config as unknown as ListeningPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "reorder":
@@ -101,6 +111,7 @@ export function ExerciseCard({
           config={config as unknown as ReorderPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "drag_drop":
@@ -110,6 +121,7 @@ export function ExerciseCard({
           config={config as unknown as DragDropPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "sort_columns":
@@ -119,6 +131,7 @@ export function ExerciseCard({
           config={config as unknown as SortColumnsPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "open_answer":
@@ -128,6 +141,7 @@ export function ExerciseCard({
           config={config as unknown as OpenAnswerPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "table_fill":
@@ -137,6 +151,7 @@ export function ExerciseCard({
           config={config as unknown as TableFillPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "image_match":
@@ -146,6 +161,7 @@ export function ExerciseCard({
           config={config as unknown as ImageMatchPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "checkbox_grid":
@@ -155,6 +171,7 @@ export function ExerciseCard({
           config={config as unknown as CheckboxGridPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     case "chronological_order":
@@ -164,6 +181,7 @@ export function ExerciseCard({
           config={config as unknown as ChronologicalOrderPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       );
     default:

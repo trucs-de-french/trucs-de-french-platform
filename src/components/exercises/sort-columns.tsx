@@ -14,11 +14,13 @@ export function SortColumnsExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: SortColumnsPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as SortColumnsDetail | undefined;
@@ -48,6 +50,7 @@ export function SortColumnsExercise({
 
   // До перевірки — лише якщо pointsVisible; після — завжди.
   function itemLabel(item: SortColumnsPublic["items"][number]) {
+    if (hidePoints) return item.text;
     const d = detail?.items.find((x) => x.id === item.id);
     if (!pointsVisible && !d) return item.text;
     const suffix = d

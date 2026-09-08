@@ -17,11 +17,13 @@ export function MultipleChoiceExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: MultipleChoicePublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -89,6 +91,7 @@ export function MultipleChoiceExercise({
   // До перевірки — лише якщо pointsVisible; після — завжди. Речення
   // зараховується цілком (atomic unit = item), тому 0/points — не часткове.
   function pointsBadge(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
+    if (hidePoints) return null;
     if (!pointsVisible && !itemDetail) return null;
     if (itemDetail) {
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);

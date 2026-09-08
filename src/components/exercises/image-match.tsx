@@ -15,11 +15,13 @@ export function ImageMatchExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: ImageMatchPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
@@ -76,7 +78,7 @@ export function ImageMatchExercise({
               className="h-24 w-full rounded-md object-cover"
             />
             {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-            {(pointsVisible || itemDetail) && (
+            {!hidePoints && (pointsVisible || itemDetail) && (
               <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
                 {itemDetail
                   ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} ${pluralizePoints(item.points)}`

@@ -14,11 +14,13 @@ export function DragDropExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: DragDropPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
   // живуть в одному спільному "слот-просторі" одного useTilePlacement, а не
@@ -80,7 +82,7 @@ export function DragDropExercise({
 
           return (
             <div key={s.id}>
-              {(pointsVisible || sentDetail) && (
+              {!hidePoints && (pointsVisible || sentDetail) && (
                 <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
                   {sentDetail
                     ? `${sentenceCorrect ? s.points : 0}/${s.points} ${pluralizePoints(s.points)}`

@@ -17,11 +17,13 @@ export function CheckboxGridExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: CheckboxGridPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, Set<string>>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -49,6 +51,7 @@ export function CheckboxGridExercise({
   // Бали рахуються на рядок (не на клітинку): рядок зараховується цілком,
   // лише якщо ВСІ його клітинки збігаються з очікуваним станом.
   function rowPointsLabel(row: CheckboxGridPublic["rows"][number]) {
+    if (hidePoints) return null;
     const rowCells = detail?.cells.filter((c) => c.rowId === row.id);
     if (!pointsVisible && !rowCells?.length) return null;
 

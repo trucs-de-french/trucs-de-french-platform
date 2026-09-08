@@ -12,11 +12,17 @@ export function FillBlankExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: FillBlankPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  // Опційний — для блоків у режимі "фіксовано" (TaskGroupBlock), щоб
+  // ховати індивідуальний бал задачі БЕЗУМОВНО (і до, і після перевірки),
+  // коли на рівні блоку показується лише один загальний підсумок. На
+  // відміну від pointsVisible, не має винятку "після перевірки — завжди".
+  hidePoints?: boolean;
 }) {
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
@@ -59,7 +65,7 @@ export function FillBlankExercise({
           />
           {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
               pointsVisible, після — завжди. */}
-          {(pointsVisible || detail) && (
+          {!hidePoints && (pointsVisible || detail) && (
             <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
               {detail
                 ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`

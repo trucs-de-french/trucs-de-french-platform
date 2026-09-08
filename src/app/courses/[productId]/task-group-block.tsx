@@ -136,7 +136,17 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
 
       <div className="flex flex-col gap-4 border-t pt-3">
         {tasks.map((task) => (
-          <ExerciseBlock key={task.id} task={task} onResult={onResultCallbacks[task.id]} />
+          <ExerciseBlock
+            key={task.id}
+            task={task}
+            onResult={onResultCallbacks[task.id]}
+            // Режим "фіксовано" — індивідуальний бал на кожній задачі
+            // безумовно ховається, бо сума окремих балів природно НЕ
+            // дорівнює flat_points (формула тут — flat_points × середній %,
+            // не сума) і виглядала б для вчителя як нестикування чисел.
+            // Лишається видимим лише один загальний підсумок блоку нижче.
+            hidePoints={group.points_mode === "flat"}
+          />
         ))}
       </div>
 

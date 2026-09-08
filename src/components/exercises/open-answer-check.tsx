@@ -17,11 +17,13 @@ export function OpenAnswerCheckExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: OpenAnswerPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -49,7 +51,7 @@ export function OpenAnswerCheckExercise({
               <p className="text-sm font-medium">
                 {q.question}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-                {(pointsVisible || qDetail) && (
+                {!hidePoints && (pointsVisible || qDetail) && (
                   <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400">
                     {qDetail
                       ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} ${pluralizePoints(qDetail.points)}`

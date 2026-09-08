@@ -13,6 +13,7 @@ export function TrueFalseExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: TrueFalsePublic;
@@ -21,6 +22,9 @@ export function TrueFalseExercise({
   // живий підсумок балів усіх задач блоку (режим "сума"). Не впливає на
   // жодну поведінку самої вправи поза блоками.
   onResult?: (result: GradeResult) => void;
+  // Опційний — для блоків у режимі "фіксовано", щоб ховати індивідуальний
+  // бал задачі безумовно (і до, і після перевірки).
+  hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -50,7 +54,7 @@ export function TrueFalseExercise({
               {s.text}
               {/* До перевірки — лише якщо pointsVisible; після — завжди,
                   ваше підтверджене рішення. */}
-              {(pointsVisible || d) && (
+              {!hidePoints && (pointsVisible || d) && (
                 <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
                   {d
                     ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`

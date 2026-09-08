@@ -16,11 +16,13 @@ export function ListeningExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: ListeningPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -60,7 +62,7 @@ export function ListeningExercise({
               <p className="text-sm font-medium">
                 {q.question}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-                {(pointsVisible || qDetail) && (
+                {!hidePoints && (pointsVisible || qDetail) && (
                   <span className="ml-2 text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
                     {qDetail
                       ? `${qDetail.options.every((o) => o.correct === o.selected) ? q.points : 0}/${q.points} ${pluralizePoints(q.points)}`

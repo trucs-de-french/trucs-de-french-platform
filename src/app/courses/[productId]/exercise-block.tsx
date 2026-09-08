@@ -48,12 +48,16 @@ const TYPES_WITH_TYPE_BADGE = ["link", "game"];
 export function ExerciseBlock({
   task,
   onResult,
+  hidePoints,
 }: {
   task: ExerciseTask;
   // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
   // балів усіх задач блоку (режим "сума"). Прокидається без змін в
   // ExerciseCard, звідти — у відповідний gradable-компонент.
   onResult?: (result: GradeResult) => void;
+  // Опційний — для блоків у режимі "фіксовано", щоб безумовно ховати
+  // індивідуальний бал задачі. Прокидається без змін в ExerciseCard.
+  hidePoints?: boolean;
 }) {
   const config = (task.config ?? {}) as LinkEmbedConfig;
 
@@ -91,6 +95,7 @@ export function ExerciseBlock({
           config={sanitizeConfigForStudent(task.type, task.config ?? {})}
           pointsVisible={task.points_visible}
           onResult={onResult}
+          hidePoints={hidePoints}
         />
       )}
 

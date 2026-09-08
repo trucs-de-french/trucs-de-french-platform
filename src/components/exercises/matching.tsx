@@ -13,11 +13,13 @@ export function MatchingExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: MatchingPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
@@ -79,6 +81,7 @@ export function MatchingExercise({
   // перемішаний (config.pairs у тому самому порядку), тож можна знайти
   // бали цієї пари напряму за текстом лівого елемента.
   function pointsLabel(left: string) {
+    if (hidePoints) return "";
     const pd = detail?.pairPoints.find((p) => p.left === left);
     const points = config.pairs.find((p) => p.left === left)?.points;
     if (points === undefined) return "";

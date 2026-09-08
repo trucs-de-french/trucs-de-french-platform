@@ -23,6 +23,7 @@ function ReorderSequenceTiles({
   locked,
   points,
   pointsVisible,
+  hidePoints,
 }: {
   order: string[];
   onChange: (next: string[]) => void;
@@ -30,6 +31,7 @@ function ReorderSequenceTiles({
   locked: boolean;
   points: number;
   pointsVisible: boolean;
+  hidePoints?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -76,7 +78,7 @@ function ReorderSequenceTiles({
 
   return (
     <div>
-      {(pointsVisible || detail) && (
+      {!hidePoints && (pointsVisible || detail) && (
         <p className="mb-1 text-xs italic text-neutral-500 dark:text-neutral-400">
           {detail
             ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
@@ -130,11 +132,13 @@ export function ReorderExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: ReorderPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
@@ -165,6 +169,7 @@ export function ReorderExercise({
             locked={locked}
             points={seq.points}
             pointsVisible={pointsVisible}
+            hidePoints={hidePoints}
           />
         ))}
       </div>

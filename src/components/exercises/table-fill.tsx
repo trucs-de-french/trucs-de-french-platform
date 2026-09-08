@@ -16,11 +16,13 @@ export function TableFillExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: TableFillPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -48,6 +50,7 @@ export function TableFillExercise({
   // завжди. Бали рядка зараховуються, лише якщо ВСІ його приховані
   // клітинки (1 або 2) правильні — не по клітинці, як score.
   function rowPointsLabel(row: TableFillPublic["rows"][number]) {
+    if (hidePoints) return null;
     const hasHidden = row.left === null || row.right === null;
     if (!hasHidden) return null;
 

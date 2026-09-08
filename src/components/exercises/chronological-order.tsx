@@ -33,11 +33,13 @@ export function ChronologicalOrderExercise({
   config,
   pointsVisible,
   onResult,
+  hidePoints,
 }: {
   taskId: string;
   config: ChronologicalOrderPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
 }) {
   const [positions, setPositions] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -64,6 +66,7 @@ export function ChronologicalOrderExercise({
   }
 
   function pointsLabel(itemId: string, points: number) {
+    if (hidePoints) return null;
     const d = itemDetail(itemId);
     if (!pointsVisible && !d) return null;
     if (d) {
@@ -123,7 +126,7 @@ export function ChronologicalOrderExercise({
                 </span>
                 {numberInput(item.id)}
               </div>
-              {pointsVisible || itemDetail(item.id) ? (
+              {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
                 <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
                   {pointsLabel(item.id, item.points)}
                 </p>
@@ -140,7 +143,7 @@ export function ChronologicalOrderExercise({
               </span>
               <span className="flex-1 text-sm">{item.content}</span>
               {numberInput(item.id)}
-              {(pointsVisible || itemDetail(item.id)) && (
+              {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
                 <span className="w-16 text-right text-xs italic text-neutral-500 dark:text-neutral-400">
                   {pointsLabel(item.id, item.points)}
                 </span>
