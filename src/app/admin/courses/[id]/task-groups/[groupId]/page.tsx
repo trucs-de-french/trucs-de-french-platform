@@ -6,9 +6,11 @@ import {
   deleteTaskGroup,
   attachTaskToGroup,
 } from "@/app/admin/task-groups/actions";
+import { resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
+import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
 
@@ -19,7 +21,13 @@ type GroupDetail = TaskGroupInitial & {
   material_id: string | null;
 };
 
-type MemberTask = { id: string; type: string; title: string; order_index: number };
+type MemberTask = {
+  id: string;
+  type: string;
+  title: string;
+  order_index: number;
+  config: Record<string, unknown> | null;
+};
 
 export default async function EditTaskGroupPage({
   params,
@@ -66,10 +74,12 @@ export default async function EditTaskGroupPage({
 
   const { data: members } = await supabase
     .from("tasks")
-    .select("id, type, title, order_index")
+    .select("id, type, title, order_index, config")
     .eq("task_group_id", groupId)
     .order("order_index")
     .returns<MemberTask[]>();
+
+  const maxPoints = resolveGroupMaxPoints(group, members ?? []);
 
   // Кандидати для "додати наявну задачу" — вільні задачі (без свого блоку)
   // того самого батьківського контексту, що й сам блок.
@@ -96,7 +106,14 @@ export default async function EditTaskGroupPage({
       <Link href={backHref} className="text-sm underline">
         {backLabel}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Редагування блоку</h1>
+      <div className="mt-2 flex items-center gap-2">
+        <h1 className="text-2xl font-bold">Редагування блоку</h1>
+        {maxPoints > 0 && (
+          <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+            Максимум: {maxPoints} {pluralizePoints(maxPoints)}
+          </span>
+        )}
+      </div>
 
       <SaveForm
         action={updateTaskGroup.bind(null, productId, group.id)}

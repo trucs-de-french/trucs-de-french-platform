@@ -4,8 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { updateMaterial, deleteMaterial } from "@/app/admin/materials/actions";
 import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, moveTaskGroup } from "@/app/admin/task-groups/actions";
+import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
+import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
 
 export default async function EditMaterialPage({
@@ -40,20 +42,33 @@ export default async function EditMaterialPage({
     material.category === "general_tip"
       ? await supabase
           .from("task_groups")
-          .select("id, title, content_type, order_index")
+          .select("id, title, content_type, points_mode, flat_points, order_index")
           .eq("material_id", materialId)
           .order("order_index")
       : { data: null };
+
+  // Максимум балів блоку (для бейджа поруч із назвою) — той самий принцип,
+  // що на флет-списку курсу (admin/courses/[id]/page.tsx).
+  const memberTasksByGroup = await fetchGroupMemberTasks(
+    supabase,
+    (exerciseGroups ?? []).map((g) => g.id)
+  );
 
   // Задачі й блоки конкурують за одну спільну послідовність order_index
   // (task-order.ts) — зливаємо для рендеру в один список, той самий принцип,
   // що на флет-списку курсу (admin/courses/[id]/page.tsx).
   type Row =
     | { kind: "task"; id: string; order_index: number; type: string; title: string }
-    | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string };
+    | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string; maxPoints: number };
   const rows: Row[] = [
     ...(exercises ?? []).map((t): Row => ({ kind: "task", ...t })),
-    ...(exerciseGroups ?? []).map((g): Row => ({ kind: "group", ...g })),
+    ...(exerciseGroups ?? []).map(
+      (g): Row => ({
+        kind: "group",
+        ...g,
+        maxPoints: resolveGroupMaxPoints(g, memberTasksByGroup[g.id] ?? []),
+      })
+    ),
   ].sort((a, b) => a.order_index - b.order_index);
 
   return (
@@ -135,6 +150,7 @@ export default async function EditMaterialPage({
                   <div>
                     <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
                       Блок · {row.content_type}
+                      {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
                     </span>
                     <Link
                       href={`/admin/courses/${productId}/task-groups/${row.id}`}

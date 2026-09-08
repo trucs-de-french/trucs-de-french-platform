@@ -7,6 +7,7 @@ import {
   updateSceneDialogue,
   addLink,
 } from "@/app/admin/scenes/actions";
+import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { DialogueEditor } from "./dialogue-editor";
 import { SceneBlockList } from "./scene-block-list";
@@ -56,7 +57,7 @@ export default async function AdminScenePage({
         .order("order_index"),
       supabase
         .from("task_groups")
-        .select("id, title, content_type, order_index")
+        .select("id, title, content_type, points_mode, flat_points, order_index")
         .eq("scene_id", sceneId)
         .order("order_index"),
       supabase
@@ -76,6 +77,13 @@ export default async function AdminScenePage({
     );
   }
 
+  // Максимум балів блоку (для бейджа поруч із назвою) — той самий принцип,
+  // що на флет-списку курсу й сторінці матеріалу.
+  const memberTasksByGroup = await fetchGroupMemberTasks(
+    supabase,
+    (taskGroups ?? []).map((g) => g.id)
+  );
+
   // Задачі й блоки ділять одну спільну послідовність order_index у межах
   // сцени (task-order.ts) — зливаємо їх в один список для TaskDragList,
   // той самий принцип, що вже на флет-списку курсу й сторінці матеріалу
@@ -89,10 +97,23 @@ export default async function AdminScenePage({
         config: Record<string, unknown> | null;
         order_index: number;
       }
-    | { kind: "group"; id: string; title: string | null; content_type: string; order_index: number };
+    | {
+        kind: "group";
+        id: string;
+        title: string | null;
+        content_type: string;
+        order_index: number;
+        maxPoints: number;
+      };
   const sceneRows: SceneRow[] = [
     ...(tasks ?? []).map((t): SceneRow => ({ kind: "task", ...t })),
-    ...(taskGroups ?? []).map((g): SceneRow => ({ kind: "group", ...g })),
+    ...(taskGroups ?? []).map(
+      (g): SceneRow => ({
+        kind: "group",
+        ...g,
+        maxPoints: resolveGroupMaxPoints(g, memberTasksByGroup[g.id] ?? []),
+      })
+    ),
   ].sort((a, b) => a.order_index - b.order_index);
 
   const blockTypes =

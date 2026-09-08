@@ -10,9 +10,10 @@ import {
   getTaskTypeCategory,
   getTaskTypeIcon,
 } from "@/lib/exercises/task-type-meta";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
-type GroupRow = { id: string; title: string | null; content_type: string };
+type GroupRow = { id: string; title: string | null; content_type: string; maxPoints: number };
 // Задачі й блоки ділять одну спільну послідовність order_index у межах
 // сцени (task-order.ts) — тут вони так само ділять один спільний
 // перетягуваний список, а не дві окремі секції (як тимчасово було до
@@ -226,6 +227,7 @@ export function TaskDragList({
                     <div>
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase text-neutral-500 dark:text-neutral-400">
                         Блок · {row.content_type}
+                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
                       </span>
                       <Link
                         href={`/admin/courses/${productId}/task-groups/${row.id}`}

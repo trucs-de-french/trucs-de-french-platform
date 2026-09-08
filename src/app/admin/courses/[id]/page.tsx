@@ -17,9 +17,11 @@ import {
 import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, moveTaskGroup } from "@/app/admin/task-groups/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
+import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 export default async function AdminCoursePage({
   params,
@@ -59,12 +61,22 @@ export default async function AdminCoursePage({
   const { data: taskGroups } = !isFilm
     ? await supabase
         .from("task_groups")
-        .select("id, title, content_type, order_index, delf_section, delf_test_number")
+        .select(
+          "id, title, content_type, points_mode, flat_points, order_index, delf_section, delf_test_number"
+        )
         .eq("product_id", id)
         .is("scene_id", null)
         .is("material_id", null)
         .order("order_index")
     : { data: null };
+
+  // Максимум балів блоку (для бейджа поруч із назвою) — лише для режиму
+  // "сума" потрібні config-и членів, тож окремий запит одразу по всіх
+  // блоках цього списку (уникає N+1 на кожен рядок).
+  const memberTasksByGroup = await fetchGroupMemberTasks(
+    supabase,
+    (taskGroups ?? []).map((g) => g.id)
+  );
 
   // Задачі й блоки конкурують за одну спільну послідовність order_index
   // (task-order.ts) — зливаємо для рендеру в один список, відсортований за
@@ -72,10 +84,16 @@ export default async function AdminCoursePage({
   // побачить студент.
   type Row =
     | { kind: "task"; id: string; order_index: number; type: string; title: string; delf_section: string | null; delf_test_number: number | null }
-    | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string; delf_section: string | null; delf_test_number: number | null };
+    | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string; delf_section: string | null; delf_test_number: number | null; maxPoints: number };
   const rows: Row[] = [
     ...(tasks ?? []).map((t): Row => ({ kind: "task", ...t })),
-    ...(taskGroups ?? []).map((g): Row => ({ kind: "group", ...g })),
+    ...(taskGroups ?? []).map(
+      (g): Row => ({
+        kind: "group",
+        ...g,
+        maxPoints: resolveGroupMaxPoints(g, memberTasksByGroup[g.id] ?? []),
+      })
+    ),
   ].sort((a, b) => a.order_index - b.order_index);
 
   const { data: materials } = !isFilm
@@ -309,6 +327,7 @@ export default async function AdminCoursePage({
                         Блок · {row.content_type}
                         {row.delf_test_number && ` · Тест ${row.delf_test_number}`}
                         {row.delf_section && ` · ${row.delf_section}`}
+                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
                       </span>
                       <Link
                         href={`/admin/courses/${product.id}/task-groups/${row.id}`}
