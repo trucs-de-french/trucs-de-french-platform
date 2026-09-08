@@ -128,11 +128,9 @@ export function TaskGroupFields({
         </div>
       )}
 
-      {contentType === "video" && (
+      {(contentType === "video" || contentType === "audio") && (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
-            Платформа відео
-          </label>
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа</label>
           <select
             name="media_provider"
             defaultValue={initialGroup?.media_provider ?? "youtube"}

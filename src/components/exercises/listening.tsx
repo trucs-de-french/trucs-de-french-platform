@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { ListeningPublic, ListeningDetail, GradeResult } from "@/lib/exercises/types";
-import { isYouTubeUrl, toEmbedUrl } from "@/lib/video";
+import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
@@ -49,6 +49,23 @@ export function ListeningExercise({
             className="h-full w-full"
             allowFullScreen
           />
+        </div>
+      ) : isGdriveUrl(config.audioUrl) ? (
+        <div>
+          <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
+            <iframe
+              src={toEmbedUrl(config.audioUrl, "gdrive")}
+              className="h-full w-full"
+              allow="autoplay"
+            />
+          </div>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Якщо аудіо не відкривається,{" "}
+            <a href={config.audioUrl} target="_blank" rel="noopener noreferrer" className="underline">
+              перейдіть за посиланням
+            </a>
+            .
+          </p>
         </div>
       ) : (
         <AudioPlayer src={config.audioUrl} />

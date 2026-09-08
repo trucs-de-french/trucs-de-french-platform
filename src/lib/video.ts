@@ -2,6 +2,14 @@ export function isYouTubeUrl(url: string) {
   return /youtube\.com|youtu\.be/.test(url);
 }
 
+// Для шляхів без власного поля-провайдера в БД (task.audio_url,
+// listening.config.audioUrl) — визначення gdrive лише за виглядом URL,
+// той самий принцип, що isYouTubeUrl. task_groups.media_provider, де таке
+// поле є, лишається джерелом правди першим, це — лише fallback.
+export function isGdriveUrl(url: string) {
+  return /drive\.google\.com/.test(url);
+}
+
 export function toEmbedUrl(
   url: string,
   provider: "youtube" | "gdrive" | null

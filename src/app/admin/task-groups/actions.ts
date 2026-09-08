@@ -34,7 +34,10 @@ function buildContentFields(formData: FormData) {
         ? sanitizeInstructionsHtml((formData.get("content_text") as string) || "")
         : null,
     media_url: contentType !== "text" ? (formData.get("media_url") as string) || null : null,
-    media_provider: contentType === "video" ? (formData.get("media_provider") as string) || null : null,
+    media_provider:
+      contentType === "video" || contentType === "audio"
+        ? (formData.get("media_provider") as string) || null
+        : null,
   };
 }
 

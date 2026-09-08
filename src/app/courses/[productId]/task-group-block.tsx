@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { toEmbedUrl } from "@/lib/video";
+import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { InstructionsText } from "@/components/exercises/instructions-text";
 import { isExerciseType } from "@/components/exercises/exercise-card";
@@ -102,9 +102,50 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         <InstructionsText text={group.content_text} className="mb-3" />
       )}
 
-      {group.content_type === "audio" && group.media_url && (
-        <AudioPlayer src={group.media_url} className="mb-3" />
-      )}
+      {group.content_type === "audio" &&
+        group.media_url &&
+        (() => {
+          // media_provider — джерело правди, коли заповнене; isGdriveUrl —
+          // fallback за виглядом URL для записів, збережених до того, як
+          // селектор платформи з'явився для аудіо (media_provider лишився
+          // null, хоча URL уже вказує на Google Drive) — інакше зіпсований
+          // запис лишався б зламаним, поки вчитель вручну не перезбереже
+          // блок.
+          const provider =
+            (group.media_provider as "youtube" | "gdrive" | null) ??
+            (isGdriveUrl(group.media_url) ? "gdrive" : null);
+
+          if (!provider) {
+            return <AudioPlayer src={group.media_url} className="mb-3" />;
+          }
+
+          return (
+            <div className="mb-3">
+              <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
+                <iframe
+                  src={toEmbedUrl(group.media_url, provider)}
+                  className="h-full w-full"
+                  allow="autoplay"
+                />
+              </div>
+              {/* Той самий завжди видимий резервний варіант, що video/embed
+                  вище — gdrive iframe не гарантовано вбудовується (приватні
+                  файли тощо). */}
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Якщо аудіо не відкривається,{" "}
+                <a
+                  href={group.media_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  перейдіть за посиланням
+                </a>
+                .
+              </p>
+            </div>
+          );
+        })()}
 
       {group.content_type === "video" && group.media_url && (
         <div className="mb-3 aspect-video w-full overflow-hidden rounded-md bg-black">
