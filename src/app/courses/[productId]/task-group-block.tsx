@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
+import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { InstructionsText } from "@/components/exercises/instructions-text";
 import { isExerciseType } from "@/components/exercises/exercise-card";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -115,36 +116,42 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
             (group.media_provider as "youtube" | "gdrive" | null) ??
             (isGdriveUrl(group.media_url) ? "gdrive" : null);
 
-          if (!provider) {
-            return <AudioPlayer src={group.media_url} className="mb-3" />;
+          if (provider === "gdrive") {
+            // Гібрид: пряме gdrive-посилання в наш AudioPlayer (кнопки
+            // швидкості), iframe — лише резерв при провалі. Деталі й
+            // залишковий ризик — коментар у самому GdriveAudioPlayer.
+            return <GdriveAudioPlayer url={group.media_url} className="mb-3" />;
           }
 
-          return (
-            <div className="mb-3">
-              <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
-                <iframe
-                  src={toEmbedUrl(group.media_url, provider)}
-                  className="h-full w-full"
-                  allow="autoplay"
-                />
+          if (provider === "youtube") {
+            // YouTube не має аналогічного прямого-посилання трюку (і не
+            // повинен мати) — лишається iframe, як і для відео.
+            return (
+              <div className="mb-3">
+                <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
+                  <iframe
+                    src={toEmbedUrl(group.media_url, "youtube")}
+                    className="h-full w-full"
+                    allow="autoplay"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  Якщо аудіо не відкривається,{" "}
+                  <a
+                    href={group.media_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    перейдіть за посиланням
+                  </a>
+                  .
+                </p>
               </div>
-              {/* Той самий завжди видимий резервний варіант, що video/embed
-                  вище — gdrive iframe не гарантовано вбудовується (приватні
-                  файли тощо). */}
-              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                Якщо аудіо не відкривається,{" "}
-                <a
-                  href={group.media_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  перейдіть за посиланням
-                </a>
-                .
-              </p>
-            </div>
-          );
+            );
+          }
+
+          return <AudioPlayer src={group.media_url} className="mb-3" />;
         })()}
 
       {group.content_type === "video" && group.media_url && (
