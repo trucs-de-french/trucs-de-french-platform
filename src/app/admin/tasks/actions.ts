@@ -8,28 +8,19 @@ import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
-import { uploadAudioFile } from "@/app/admin/audio-upload";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
 // ../scenes/actions.ts. Найчастіша причина "зберіглось, але не видно без
 // F5" — саме пропущений крок із цього чеклиста.
 
-type Supa = Awaited<ReturnType<typeof createClient>>;
-
-// task_audio_file (Storage upload) перекриває task_audio_url (текстове
-// поле), якщо файл обрано — той самий принцип, що buildContentFields у
-// ../task-groups/actions.ts, тут простіше: tasks.audio_url не має власного
-// поля-провайдера (isGdriveUrl визначає gdrive лише за виглядом URL), тож
-// нічого додатково скидати не треба.
-async function resolveAudioUrl(
-  supabase: Supa,
-  formData: FormData
-): Promise<{ url: string | null; error?: string }> {
-  const upload = await uploadAudioFile(supabase, formData, "task_audio_file");
-  if (upload.url) return { url: upload.url };
-  if (upload.error) return { url: (formData.get("task_audio_url") as string) || null, error: upload.error };
-  return { url: (formData.get("task_audio_url") as string) || null };
+// task_audio_file_url — приховане поле AudioFileUpload (client-side
+// завантаження напряму в Storage, вже завершене до сабміту форми) —
+// перекриває task_audio_url (текстове поле), якщо файл обрано. Синхронна:
+// жодного завантаження на сервері тут більше немає.
+function resolveAudioUrl(formData: FormData): string | null {
+  const uploadedUrl = (formData.get("task_audio_file_url") as string) || "";
+  return uploadedUrl || (formData.get("task_audio_url") as string) || null;
 }
 
 function buildConfig(type: string, formData: FormData): Record<string, unknown> {
@@ -344,14 +335,6 @@ export async function createTask(formData: FormData) {
     taskGroupId,
   });
 
-  // Провал завантаження не блокує створення задачі (форма без {ok,error}-
-  // інфраструктури, лише redirect) — той самий компроміс, що
-  // createTaskGroup у ../task-groups/actions.ts.
-  const audioResult = await resolveAudioUrl(supabase, formData);
-  if (audioResult.error) {
-    console.error(`createTask: не вдалося завантажити аудіофайл:`, audioResult.error);
-  }
-
   const { data: task, error } = await supabase
     .from("tasks")
     .insert({
@@ -364,7 +347,7 @@ export async function createTask(formData: FormData) {
       order_index: orderIndex,
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
-      audio_url: audioResult.url,
+      audio_url: resolveAudioUrl(formData),
       // Чекбокс рендериться лише для POINTS_SUPPORTED_TASK_TYPES
       // (TaskConfigFields, isPointsSupportedTaskType) — для решти типів
       // його нема у formData взагалі, тож тут коректно піде false.
@@ -405,13 +388,6 @@ export async function updateTask(
   const type = formData.get("type") as string;
   const title = formData.get("title") as string;
 
-  // На відміну від createTask — тут уже є {ok,error}-інфраструктура
-  // (ActionState), тож провал завантаження реально показуємо вчителю.
-  const audioResult = await resolveAudioUrl(supabase, formData);
-  if (audioResult.error) {
-    return { ok: false, error: `Не вдалося завантажити аудіофайл: ${audioResult.error}` };
-  }
-
   const { error } = await supabase
     .from("tasks")
     .update({
@@ -419,7 +395,7 @@ export async function updateTask(
       title,
       config: buildConfig(type, formData),
       image_url: (formData.get("task_image_url") as string) || null,
-      audio_url: audioResult.url,
+      audio_url: resolveAudioUrl(formData),
       points_visible: formData.get("points_visible") === "true",
       delf_section: (formData.get("delf_section") as string) || null,
       delf_test_number: formData.get("delf_test_number")
