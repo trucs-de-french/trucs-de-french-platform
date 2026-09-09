@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyPair(): MatchingPair {
@@ -10,7 +11,7 @@ function emptyPair(): MatchingPair {
 }
 
 export const MatchingFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>,
   { initialConfig?: Partial<MatchingConfig> }
 >(function MatchingFields({ initialConfig }, ref) {
   // Старі пари (до пілоту балів) не мали id — тут, на відміну від
@@ -35,6 +36,11 @@ export const MatchingFields = forwardRef<
         ];
       });
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      pairs,
+    }),
   }));
 
   function addPair() {

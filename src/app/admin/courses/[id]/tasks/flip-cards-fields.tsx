@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyCard(): FlipCard {
@@ -10,7 +11,7 @@ function emptyCard(): FlipCard {
 }
 
 export const FlipCardsFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<FlipCardsConfig>,
   { initialConfig?: Partial<FlipCardsConfig> }
 >(function FlipCardsFields({ initialConfig }, ref) {
   const [cards, setCards] = useState<FlipCard[]>(
@@ -27,6 +28,11 @@ export const FlipCardsFields = forwardRef<
         ];
       });
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      cards,
+    }),
   }));
 
   function addCard() {

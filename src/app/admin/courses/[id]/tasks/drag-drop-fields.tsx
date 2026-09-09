@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptySentence(): DragDropSentence {
@@ -10,7 +11,7 @@ function emptySentence(): DragDropSentence {
 }
 
 export const DragDropFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>,
   { initialConfig?: Partial<DragDropConfig> }
 >(function DragDropFields({ initialConfig }, ref) {
   const [sentences, setSentences] = useState<DragDropSentence[]>(
@@ -29,6 +30,12 @@ export const DragDropFields = forwardRef<
         return [...withoutEmpty, ...words.map((w) => w.word)];
       });
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      sentences,
+      bank,
+    }),
   }));
 
   function addSentence() {

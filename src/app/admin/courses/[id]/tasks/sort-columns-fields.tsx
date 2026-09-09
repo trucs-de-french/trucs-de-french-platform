@@ -3,10 +3,11 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 export const SortColumnsFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
   { initialConfig?: Partial<SortColumnsConfig> }
 >(function SortColumnsFields({ initialConfig }, ref) {
   const [columns, setColumns] = useState<SortColumn[]>(
@@ -30,6 +31,12 @@ export const SortColumnsFields = forwardRef<
         ...words.map((w) => ({ id: crypto.randomUUID(), text: w.word, columnId: "" })),
       ]);
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      columns,
+      items,
+    }),
   }));
 
   function addColumn() {

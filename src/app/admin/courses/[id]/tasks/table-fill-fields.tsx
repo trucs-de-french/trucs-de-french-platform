@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptyRow(): TableFillRow {
@@ -10,7 +11,7 @@ function emptyRow(): TableFillRow {
 }
 
 export const TableFillFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>,
   { initialConfig?: Partial<TableFillConfig> }
 >(function TableFillFields({ initialConfig }, ref) {
   const [columnLabels, setColumnLabels] = useState<[string, string]>(
@@ -35,6 +36,12 @@ export const TableFillFields = forwardRef<
         })),
       ]);
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      columnLabels,
+      rows,
+    }),
   }));
 
   function addRow() {

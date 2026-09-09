@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 
 function emptyRow(): CheckboxGridRow {
   return { id: crypto.randomUUID(), label: "", correctColumnIds: [] };
 }
 
-export function CheckboxGridFields({
-  initialConfig,
-}: {
-  initialConfig?: Partial<CheckboxGridConfig>;
-}) {
+export const CheckboxGridFields = forwardRef<
+  TypeSwitchHandle<CheckboxGridConfig>,
+  { initialConfig?: Partial<CheckboxGridConfig> }
+>(function CheckboxGridFields({ initialConfig }, ref) {
   const [columns, setColumns] = useState<CheckboxGridColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -24,6 +24,15 @@ export function CheckboxGridFields({
   const [rows, setRows] = useState<CheckboxGridRow[]>(
     initialConfig?.rows?.length ? initialConfig.rows : [emptyRow()]
   );
+
+  useImperativeHandle(ref, () => ({
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      columns,
+      rows,
+    }),
+  }));
 
   function addColumn() {
     setColumns((prev) => [...prev, { id: crypto.randomUUID(), label: "" }]);
@@ -174,4 +183,4 @@ export function CheckboxGridFields({
       </div>
     </div>
   );
-}
+});

@@ -1,25 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 
 function emptyItem(): PhoneticsItem {
   return { text: "", transcription: "", mediaUrl: "" };
 }
 
-// Без forwardRef/ImportableFieldsHandle — навмисно без імпорту лексики:
-// vocab дає лише {word, translation}, без транскрипції й медіа, а
-// phonetics про фрази з транскрипцією, тож слово-в-слово імпорт більше
-// плутав би, ніж допомагав.
-export function PhoneticsFields({
-  initialConfig,
-}: {
-  initialConfig?: Partial<PhoneticsConfig>;
-}) {
+// Без ImportableFieldsHandle — навмисно без імпорту лексики: vocab дає лише
+// {word, translation}, без транскрипції й медіа, а phonetics про фрази з
+// транскрипцією, тож слово-в-слово імпорт більше плутав би, ніж допомагав.
+// forwardRef тут лише для TypeSwitchHandle (перенос при зміні типу ↔
+// flip_cards), не для імпорту.
+export const PhoneticsFields = forwardRef<
+  TypeSwitchHandle<PhoneticsConfig>,
+  { initialConfig?: Partial<PhoneticsConfig> }
+>(function PhoneticsFields({ initialConfig }, ref) {
   const [items, setItems] = useState<PhoneticsItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
+
+  useImperativeHandle(ref, () => ({
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      items,
+    }),
+  }));
 
   function addItem() {
     setItems((prev) => [...prev, emptyItem()]);
@@ -90,4 +99,4 @@ export function PhoneticsFields({
       </button>
     </div>
   );
-}
+});

@@ -219,28 +219,33 @@ export function TaskConfigFields({
   function updateFillBlankWord(i: number, value: string) {
     setFillBlankWordBank((prev) => prev.map((w, idx) => (idx === i ? value : w)));
   }
-  // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
-  // type), тож один спільний ref завжди вказує саме на активну. getValue —
-  // опційний (Partial), бо лише деякі з компонентів, що ділять цей ref,
-  // задіяні в переносі даних при зміні типу (Крок 1: лише reorder).
+  // Лише ОДНА з форм нижче реально змонтована одночасно (залежно від type),
+  // тож один спільний ref завжди вказує саме на активну. getValue —
+  // опційний (Partial), бо не всі типи, що ділять цей ref, задіяні в
+  // переносі даних при зміні типу (лише ті, що мають пару в
+  // type-compatibility.ts: reorder, sort_columns, matching, table_fill,
+  // drag_drop, flip_cards — image_match лишається без пари).
   const importRef = useRef<ImportableFieldsHandle & Partial<TypeSwitchHandle<unknown>>>(null);
   // Окремий ref для типів без імпорту лексики, задіяних у переносі даних
-  // при зміні типу (multiple_choice, listening, chronological_order) —
-  // той самий принцип поділу ОДНОГО ref між кількома взаємовиключними
-  // типами, що вже importRef.
+  // при зміні типу (multiple_choice, listening, chronological_order,
+  // checkbox_grid, phonetics) — той самий принцип поділу ОДНОГО ref між
+  // кількома взаємовиключними типами, що вже importRef.
   const typeSwitchRef = useRef<TypeSwitchHandle<unknown>>(null);
-  // link/embed — неконтрольовані поля прямо в цьому файлі (не окремий
-  // *-fields.tsx компонент), тож для переносу даних при зміні типу читаємо
-  // їх напряму з DOM через звичайні DOM-ref-и, а не через getValue().
+  // link/embed/fill_blank — неконтрольовані поля прямо в цьому файлі (не
+  // окремий *-fields.tsx компонент), тож для переносу даних при зміні типу
+  // читаємо їх напряму з DOM через звичайні DOM-ref-и, а не через getValue().
+  // fill_blank_word_bank — виняток: це вже стан батька (fillBlankWordBank),
+  // ref для нього не потрібен.
   const linkUrlRef = useRef<HTMLInputElement>(null);
   const linkLabelRef = useRef<HTMLInputElement>(null);
   const linkPlatformRef = useRef<HTMLSelectElement>(null);
   const linkDownloadRef = useRef<HTMLInputElement>(null);
   const embedUrlRef = useRef<HTMLInputElement>(null);
   const embedHeightRef = useRef<HTMLInputElement>(null);
+  const fillBlankTemplateRef = useRef<HTMLTextAreaElement>(null);
+  const fillBlankPointsRef = useRef<HTMLInputElement>(null);
 
-  // Перенос сумісних даних при зміні типу (Крок 1: multiple_choice/
-  // listening, reorder/chronological_order, link/embed — див.
+  // Перенос сумісних даних при зміні типу (усі 7 пар — див.
   // type-compatibility.ts) — pendingSeed підставляється замість initialConfig
   // ЛИШЕ для типу, у який щойно перемкнулись (forType), і лише один раз:
   // наступна зміна типу або перезаписує його заново, або скидає в null,
@@ -252,8 +257,23 @@ export function TaskConfigFields({
   const [transferWarning, setTransferWarning] = useState<string | null>(null);
 
   function getCurrentValueForTransform(): unknown {
-    if (type === "reorder") return importRef.current?.getValue?.();
-    if (type === "multiple_choice" || type === "listening" || type === "chronological_order") {
+    if (
+      type === "reorder" ||
+      type === "sort_columns" ||
+      type === "matching" ||
+      type === "table_fill" ||
+      type === "drag_drop" ||
+      type === "flip_cards"
+    ) {
+      return importRef.current?.getValue?.();
+    }
+    if (
+      type === "multiple_choice" ||
+      type === "listening" ||
+      type === "chronological_order" ||
+      type === "checkbox_grid" ||
+      type === "phonetics"
+    ) {
       return typeSwitchRef.current?.getValue?.();
     }
     if (type === "link") {
@@ -272,6 +292,13 @@ export function TaskConfigFields({
       };
       return value;
     }
+    if (type === "fill_blank") {
+      return {
+        template: fillBlankTemplateRef.current?.value ?? "",
+        points: fillBlankPointsRef.current?.value ? Number(fillBlankPointsRef.current.value) : undefined,
+        wordBank: fillBlankWordBank,
+      };
+    }
     return undefined;
   }
 
@@ -280,8 +307,16 @@ export function TaskConfigFields({
     const currentValue = transform ? getCurrentValueForTransform() : undefined;
     if (transform && currentValue !== undefined) {
       const result = transform(currentValue as never);
-      setPendingSeed({ forType: newType, config: result.config as Record<string, unknown> });
+      const config = result.config as Record<string, unknown>;
+      setPendingSeed({ forType: newType, config });
       setTransferWarning(result.warning ?? null);
+      // fillBlankWordBank — стан САМОГО цього батьківського компонента (не
+      // дочірнього, що перемонтовується), тож на відміну від template/points
+      // (неконтрольовані defaultValue, підхоплюють pendingSeed автоматично
+      // при перемонтуванні fill_blank-блоку) його потрібно оновити явно.
+      if (newType === "fill_blank" && Array.isArray(config.wordBank)) {
+        setFillBlankWordBank(config.wordBank as string[]);
+      }
     } else {
       setPendingSeed(null);
       setTransferWarning(null);
@@ -625,9 +660,14 @@ export function TaskConfigFields({
               &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma.
             </label>
             <textarea
+              ref={fillBlankTemplateRef}
               name="fill_blank_template"
               rows={3}
-              defaultValue={(initialConfig?.template as string) ?? ""}
+              defaultValue={
+                (pendingSeed?.forType === "fill_blank"
+                  ? (pendingSeed.config as { template?: string }).template
+                  : (initialConfig?.template as string)) ?? ""
+              }
               className="rounded-md border px-2 py-1.5 text-base font-medium"
             />
           </div>
@@ -636,11 +676,16 @@ export function TaskConfigFields({
               Бали за всю вправу (зараховуються, лише якщо всі пропуски правильні)
             </label>
             <input
+              ref={fillBlankPointsRef}
               type="number"
               name="fill_blank_points"
               min={0}
               step={0.5}
-              defaultValue={(initialConfig?.points as number) ?? 1}
+              defaultValue={
+                (pendingSeed?.forType === "fill_blank"
+                  ? (pendingSeed.config as { points?: number }).points
+                  : (initialConfig?.points as number)) ?? 1
+              }
               className="w-24 rounded-md border px-2 py-1.5 text-sm"
             />
           </div>
@@ -715,7 +760,12 @@ export function TaskConfigFields({
       )}
 
       {type === "matching" && (
-        <MatchingFields ref={importRef} initialConfig={initialConfig as Partial<MatchingConfig>} />
+        <MatchingFields
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "matching" ? pendingSeed.config : initialConfig) as Partial<MatchingConfig>
+          }
+        />
       )}
 
       {type === "listening" && (
@@ -751,18 +801,30 @@ export function TaskConfigFields({
       )}
 
       {type === "drag_drop" && (
-        <DragDropFields ref={importRef} initialConfig={initialConfig as Partial<DragDropConfig>} />
+        <DragDropFields
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "drag_drop" ? pendingSeed.config : initialConfig) as Partial<DragDropConfig>
+          }
+        />
       )}
 
       {type === "sort_columns" && (
         <SortColumnsFields
-          ref={importRef}
-          initialConfig={initialConfig as Partial<SortColumnsConfig>}
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "sort_columns" ? pendingSeed.config : initialConfig) as Partial<SortColumnsConfig>
+          }
         />
       )}
 
       {type === "flip_cards" && (
-        <FlipCardsFields ref={importRef} initialConfig={initialConfig as Partial<FlipCardsConfig>} />
+        <FlipCardsFields
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<FlipCardsConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "flip_cards" ? pendingSeed.config : initialConfig) as Partial<FlipCardsConfig>
+          }
+        />
       )}
 
       {type === "callout" && (
@@ -770,11 +832,21 @@ export function TaskConfigFields({
       )}
 
       {type === "phonetics" && (
-        <PhoneticsFields initialConfig={initialConfig as Partial<PhoneticsConfig>} />
+        <PhoneticsFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<PhoneticsConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "phonetics" ? pendingSeed.config : initialConfig) as Partial<PhoneticsConfig>
+          }
+        />
       )}
 
       {type === "table_fill" && (
-        <TableFillFields ref={importRef} initialConfig={initialConfig as Partial<TableFillConfig>} />
+        <TableFillFields
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "table_fill" ? pendingSeed.config : initialConfig) as Partial<TableFillConfig>
+          }
+        />
       )}
 
       {type === "image_match" && (
@@ -782,7 +854,12 @@ export function TaskConfigFields({
       )}
 
       {type === "checkbox_grid" && (
-        <CheckboxGridFields initialConfig={initialConfig as Partial<CheckboxGridConfig>} />
+        <CheckboxGridFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<CheckboxGridConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "checkbox_grid" ? pendingSeed.config : initialConfig) as Partial<CheckboxGridConfig>
+          }
+        />
       )}
 
       {type === "chronological_order" && (
