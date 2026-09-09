@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluation-grids";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import type {
@@ -44,6 +44,8 @@ import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
+import { getTypeTransform, type LinkEmbedFields } from "./type-compatibility";
 import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
@@ -218,8 +220,75 @@ export function TaskConfigFields({
     setFillBlankWordBank((prev) => prev.map((w, idx) => (idx === i ? value : w)));
   }
   // Лише ОДНА з 5 форм нижче реально змонтована одночасно (залежно від
-  // type), тож один спільний ref завжди вказує саме на активну.
-  const importRef = useRef<ImportableFieldsHandle>(null);
+  // type), тож один спільний ref завжди вказує саме на активну. getValue —
+  // опційний (Partial), бо лише деякі з компонентів, що ділять цей ref,
+  // задіяні в переносі даних при зміні типу (Крок 1: лише reorder).
+  const importRef = useRef<ImportableFieldsHandle & Partial<TypeSwitchHandle<unknown>>>(null);
+  // Окремий ref для типів без імпорту лексики, задіяних у переносі даних
+  // при зміні типу (multiple_choice, listening, chronological_order) —
+  // той самий принцип поділу ОДНОГО ref між кількома взаємовиключними
+  // типами, що вже importRef.
+  const typeSwitchRef = useRef<TypeSwitchHandle<unknown>>(null);
+  // link/embed — неконтрольовані поля прямо в цьому файлі (не окремий
+  // *-fields.tsx компонент), тож для переносу даних при зміні типу читаємо
+  // їх напряму з DOM через звичайні DOM-ref-и, а не через getValue().
+  const linkUrlRef = useRef<HTMLInputElement>(null);
+  const linkLabelRef = useRef<HTMLInputElement>(null);
+  const linkPlatformRef = useRef<HTMLSelectElement>(null);
+  const linkDownloadRef = useRef<HTMLInputElement>(null);
+  const embedUrlRef = useRef<HTMLInputElement>(null);
+  const embedHeightRef = useRef<HTMLInputElement>(null);
+
+  // Перенос сумісних даних при зміні типу (Крок 1: multiple_choice/
+  // listening, reorder/chronological_order, link/embed — див.
+  // type-compatibility.ts) — pendingSeed підставляється замість initialConfig
+  // ЛИШЕ для типу, у який щойно перемкнулись (forType), і лише один раз:
+  // наступна зміна типу або перезаписує його заново, або скидає в null,
+  // якщо пари нема — жодного "залипання" застарілого seed між кількома
+  // перемиканнями.
+  const [pendingSeed, setPendingSeed] = useState<{ forType: string; config: Record<string, unknown> } | null>(
+    null
+  );
+  const [transferWarning, setTransferWarning] = useState<string | null>(null);
+
+  function getCurrentValueForTransform(): unknown {
+    if (type === "reorder") return importRef.current?.getValue?.();
+    if (type === "multiple_choice" || type === "listening" || type === "chronological_order") {
+      return typeSwitchRef.current?.getValue?.();
+    }
+    if (type === "link") {
+      const value: LinkEmbedFields = {
+        url: linkUrlRef.current?.value,
+        label: linkLabelRef.current?.value,
+        platform: linkPlatformRef.current?.value,
+        download: linkDownloadRef.current?.checked,
+      };
+      return value;
+    }
+    if (type === "embed") {
+      const value: LinkEmbedFields = {
+        url: embedUrlRef.current?.value,
+        height: embedHeightRef.current?.value ? Number(embedHeightRef.current.value) : undefined,
+      };
+      return value;
+    }
+    return undefined;
+  }
+
+  function handleTypeChange(newType: string) {
+    const transform = getTypeTransform(type, newType);
+    const currentValue = transform ? getCurrentValueForTransform() : undefined;
+    if (transform && currentValue !== undefined) {
+      const result = transform(currentValue as never);
+      setPendingSeed({ forType: newType, config: result.config as Record<string, unknown> });
+      setTransferWarning(result.warning ?? null);
+    } else {
+      setPendingSeed(null);
+      setTransferWarning(null);
+    }
+    setType(newType);
+  }
+
   const taskTypeCategory = getTaskTypeCategory(type);
   // TASK_TYPE_ICON[type] напряму (не через функцію getTaskTypeIcon) — react
   // hooks eslint-плагін помилково трактує "змінна = виклик функції, потім
@@ -243,8 +312,14 @@ export function TaskConfigFields({
           )}
         </div>
         <input type="hidden" name="type" value={type} readOnly />
-        <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={setType} />
+        <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={handleTypeChange} />
       </div>
+
+      {transferWarning && (
+        <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          ⚠ {transferWarning}
+        </p>
+      )}
 
       {productType === "delf" && !materialId && !taskGroupId && (
         <div className="flex gap-4">
@@ -454,14 +529,20 @@ export function TaskConfigFields({
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">URL для вбудовування (iframe)</label>
             <input
+              ref={embedUrlRef}
               name="embed_url"
-              defaultValue={(initialConfig?.url as string) ?? ""}
+              defaultValue={
+                (pendingSeed?.forType === "embed"
+                  ? (pendingSeed.config as LinkEmbedFields).url
+                  : (initialConfig?.url as string)) ?? ""
+              }
               className="rounded-md border px-2 py-1.5 text-sm"
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">Висота (px)</label>
             <input
+              ref={embedHeightRef}
               name="embed_height"
               type="number"
               defaultValue={(initialConfig?.height as number) ?? 480}
@@ -476,14 +557,20 @@ export function TaskConfigFields({
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">URL</label>
             <input
+              ref={linkUrlRef}
               name="link_url"
-              defaultValue={(initialConfig?.url as string) ?? ""}
+              defaultValue={
+                (pendingSeed?.forType === "link"
+                  ? (pendingSeed.config as LinkEmbedFields).url
+                  : (initialConfig?.url as string)) ?? ""
+              }
               className="rounded-md border px-2 py-1.5 text-sm"
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">Текст кнопки</label>
             <input
+              ref={linkLabelRef}
               name="link_label"
               defaultValue={(initialConfig?.label as string) ?? ""}
               className="rounded-md border px-2 py-1.5 text-base font-medium"
@@ -492,6 +579,7 @@ export function TaskConfigFields({
           <div className="flex flex-col gap-1">
             <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа (іконка)</label>
             <select
+              ref={linkPlatformRef}
               name="link_platform"
               defaultValue={(initialConfig?.platform as string) ?? "auto"}
               className="rounded-md border px-2 py-1.5 text-sm"
@@ -505,6 +593,7 @@ export function TaskConfigFields({
           </div>
           <label className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
             <input
+              ref={linkDownloadRef}
               type="checkbox"
               name="link_download"
               value="true"
@@ -599,7 +688,12 @@ export function TaskConfigFields({
       )}
 
       {type === "multiple_choice" && (
-        <MultipleChoiceFields initialConfig={initialConfig as Partial<MultipleChoiceConfig>} />
+        <MultipleChoiceFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<MultipleChoiceConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "multiple_choice" ? pendingSeed.config : initialConfig) as Partial<MultipleChoiceConfig>
+          }
+        />
       )}
 
       {type === "true_false" && (
@@ -625,7 +719,12 @@ export function TaskConfigFields({
       )}
 
       {type === "listening" && (
-        <ListeningFields initialConfig={initialConfig as Partial<ListeningConfig>} />
+        <ListeningFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<ListeningConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "listening" ? pendingSeed.config : initialConfig) as Partial<ListeningConfig>
+          }
+        />
       )}
 
       {type === "vocab_quiz" && (
@@ -643,7 +742,12 @@ export function TaskConfigFields({
       )}
 
       {type === "reorder" && (
-        <ReorderFields ref={importRef} initialConfig={initialConfig as Partial<ReorderConfig>} />
+        <ReorderFields
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>) | null>}
+          initialConfig={
+            (pendingSeed?.forType === "reorder" ? pendingSeed.config : initialConfig) as Partial<ReorderConfig>
+          }
+        />
       )}
 
       {type === "drag_drop" && (
@@ -683,7 +787,12 @@ export function TaskConfigFields({
 
       {type === "chronological_order" && (
         <ChronologicalOrderFields
-          initialConfig={initialConfig as Partial<ChronologicalOrderConfig>}
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<ChronologicalOrderConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "chronological_order"
+              ? pendingSeed.config
+              : initialConfig) as Partial<ChronologicalOrderConfig>
+          }
         />
       )}
 

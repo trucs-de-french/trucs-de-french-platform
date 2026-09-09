@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MultipleChoiceConfig, MultipleChoiceItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 
 function emptyItem(): MultipleChoiceItem {
   return {
@@ -15,17 +16,33 @@ function emptyItem(): MultipleChoiceItem {
   };
 }
 
-export function MultipleChoiceFields({
-  initialConfig,
-}: {
-  initialConfig?: Partial<MultipleChoiceConfig>;
-}) {
+export const MultipleChoiceFields = forwardRef<
+  TypeSwitchHandle<MultipleChoiceConfig>,
+  { initialConfig?: Partial<MultipleChoiceConfig> }
+>(function MultipleChoiceFields({ initialConfig }, ref) {
   const [display, setDisplay] = useState<"buttons" | "dropdown">(
     initialConfig?.display ?? "buttons"
   );
   const [items, setItems] = useState<MultipleChoiceItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
+
+  // Для переносу сумісних даних при зміні типу (напр. → listening) —
+  // читається в task-config-fields.tsx ПЕРЕД розмонтуванням цього
+  // компонента, той самий принцип, що ImportableFieldsHandle. instructions/
+  // subInstructions беруться з initialConfig (не живий стан) —
+  // InstructionsRichTextField не віддає своє поточне значення назовні, тож
+  // тут переноситься те, що було в БД до відкриття форми, а не щойно
+  // введені редагування — прийнятний компроміс, головна цінність цього
+  // переносу — масив items/questions, не текст інструкції.
+  useImperativeHandle(ref, () => ({
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      display,
+      items,
+    }),
+  }));
 
   function addItem() {
     setItems((prev) => [...prev, emptyItem()]);
@@ -214,4 +231,4 @@ export function MultipleChoiceFields({
       </div>
     </div>
   );
-}
+});

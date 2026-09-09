@@ -3,14 +3,18 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 
 function emptySequence(): ReorderSequence {
   return { id: crypto.randomUUID(), items: ["", ""] };
 }
 
+// Єдиний ref віддає ОБИДВА контракти одночасно (importWords і getValue) —
+// компонент може мати лише один forwardRef, тож handle-об'єкт поєднує їх,
+// а не два окремі ref-и.
 export const ReorderFields = forwardRef<
-  ImportableFieldsHandle,
+  ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>,
   { initialConfig?: Partial<ReorderConfig> }
 >(function ReorderFields({ initialConfig }, ref) {
   const [sequences, setSequences] = useState<ReorderSequence[]>(
@@ -33,6 +37,11 @@ export const ReorderFields = forwardRef<
         return next;
       });
     },
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      sequences,
+    }),
   }));
 
   function addSequence() {

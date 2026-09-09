@@ -1,22 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
 }
 
-export function ChronologicalOrderFields({
-  initialConfig,
-}: {
-  initialConfig?: Partial<ChronologicalOrderConfig>;
-}) {
+export const ChronologicalOrderFields = forwardRef<
+  TypeSwitchHandle<ChronologicalOrderConfig>,
+  { initialConfig?: Partial<ChronologicalOrderConfig> }
+>(function ChronologicalOrderFields({ initialConfig }, ref) {
   const [mode, setMode] = useState<"image" | "text">(initialConfig?.mode ?? "image");
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
   );
+
+  useImperativeHandle(ref, () => ({
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      mode,
+      items,
+    }),
+  }));
 
   function addItem() {
     setItems((prev) => [...prev, emptyItem()]);
@@ -155,4 +164,4 @@ export function ChronologicalOrderFields({
       </button>
     </div>
   );
-}
+});

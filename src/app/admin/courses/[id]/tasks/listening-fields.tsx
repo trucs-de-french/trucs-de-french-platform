@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { TypeSwitchHandle } from "./type-switch-handle";
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -15,14 +16,24 @@ function emptyQuestion(): ListeningQuestion {
   };
 }
 
-export function ListeningFields({
-  initialConfig,
-}: {
-  initialConfig?: Partial<ListeningConfig>;
-}) {
+export const ListeningFields = forwardRef<
+  TypeSwitchHandle<ListeningConfig>,
+  { initialConfig?: Partial<ListeningConfig> }
+>(function ListeningFields({ initialConfig }, ref) {
   const [questions, setQuestions] = useState<ListeningQuestion[]>(
     initialConfig?.questions?.length ? initialConfig.questions : [emptyQuestion()]
   );
+
+  // audioUrl — неконтрольований input (defaultValue), живого стану нема,
+  // тож не переноситься нікуди при зміні типу — той самий компроміс, що
+  // instructions у MultipleChoiceFields.
+  useImperativeHandle(ref, () => ({
+    getValue: () => ({
+      instructions: initialConfig?.instructions,
+      subInstructions: initialConfig?.subInstructions,
+      questions,
+    }),
+  }));
 
   function addQuestion() {
     setQuestions((prev) => [...prev, emptyQuestion()]);
@@ -196,4 +207,4 @@ export function ListeningFields({
       </div>
     </div>
   );
-}
+});
