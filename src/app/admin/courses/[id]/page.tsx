@@ -14,14 +14,12 @@ import {
   duplicateScene,
   moveScene,
 } from "@/app/admin/scenes/actions";
-import { deleteTask, moveTask } from "@/app/admin/tasks/actions";
-import { deleteTaskGroup, moveTaskGroup } from "@/app/admin/task-groups/actions";
+import { deleteTest } from "@/app/admin/tests/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
-import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { GoToTestForm } from "./go-to-test-form";
 
 export default async function AdminCoursePage({
   params,
@@ -47,54 +45,57 @@ export default async function AdminCoursePage({
         .order("order_index")
     : { data: null };
 
-  const { data: tasks } = !isFilm
+  // Флет-список задач замінено сіткою тестів (Крок 3) — DELF-контент тепер
+  // живе на окремих сторінках /tests/[testNumber] (Крок 2), тут потрібні
+  // лише к-сть задач/блоків на кожен номер тесту, не самі рядки. Той самий
+  // принцип, що вже в студентському DelfTestGrid — жодної окремої таблиці
+  // "тестів", номер існує лише як delf_test_number на задачах/блоках.
+  // .is("task_group_id", null) на tasks — самостійні задачі тесту, БЕЗ
+  // членів блоків (ті мають delf_test_number=null на собі, успадковують
+  // номер від групи, і тому й так не потрапили б у цей підрахунок).
+  const { data: delfTasks } = !isFilm
     ? await supabase
         .from("tasks")
-        .select("id, type, title, order_index, delf_section, delf_test_number")
+        .select("delf_test_number")
         .eq("product_id", id)
         .is("scene_id", null)
         .is("material_id", null)
         .is("task_group_id", null)
-        .order("order_index")
+        .not("delf_test_number", "is", null)
     : { data: null };
 
-  const { data: taskGroups } = !isFilm
+  const { data: delfTaskGroups } = !isFilm
     ? await supabase
         .from("task_groups")
-        .select(
-          "id, title, content_type, points_mode, flat_points, order_index, delf_section, delf_test_number"
-        )
+        .select("delf_test_number")
         .eq("product_id", id)
         .is("scene_id", null)
         .is("material_id", null)
-        .order("order_index")
+        .not("delf_test_number", "is", null)
     : { data: null };
 
-  // Максимум балів блоку (для бейджа поруч із назвою) — лише для режиму
-  // "сума" потрібні config-и членів, тож окремий запит одразу по всіх
-  // блоках цього списку (уникає N+1 на кожен рядок).
-  const memberTasksByGroup = await fetchGroupMemberTasks(
-    supabase,
-    (taskGroups ?? []).map((g) => g.id)
-  );
-
-  // Задачі й блоки конкурують за одну спільну послідовність order_index
-  // (task-order.ts) — зливаємо для рендеру в один список, відсортований за
-  // тим самим полем, щоб порядок в адмінці збігався з тим, що реально
-  // побачить студент.
-  type Row =
-    | { kind: "task"; id: string; order_index: number; type: string; title: string; delf_section: string | null; delf_test_number: number | null }
-    | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string; delf_section: string | null; delf_test_number: number | null; maxPoints: number };
-  const rows: Row[] = [
-    ...(tasks ?? []).map((t): Row => ({ kind: "task", ...t })),
-    ...(taskGroups ?? []).map(
-      (g): Row => ({
-        kind: "group",
-        ...g,
-        maxPoints: resolveGroupMaxPoints(g, memberTasksByGroup[g.id] ?? []),
-      })
-    ),
-  ].sort((a, b) => a.order_index - b.order_index);
+  const taskCountByTest = new Map<number, number>();
+  for (const row of delfTasks ?? []) {
+    const n = row.delf_test_number as number;
+    taskCountByTest.set(n, (taskCountByTest.get(n) ?? 0) + 1);
+  }
+  const groupCountByTest = new Map<number, number>();
+  for (const row of delfTaskGroups ?? []) {
+    const n = row.delf_test_number as number;
+    groupCountByTest.set(n, (groupCountByTest.get(n) ?? 0) + 1);
+  }
+  const testNumbers = [
+    ...new Set([...taskCountByTest.keys(), ...groupCountByTest.keys()]),
+  ].sort((a, b) => a - b);
+  // Наступний вільний номер у діапазоні 1-30 — null, якщо всі зайняті
+  // (доповнює ручне введення в GoToTestForm, не єдиний спосіб додати тест).
+  let nextFreeTestNumber: number | null = null;
+  for (let n = 1; n <= 30; n++) {
+    if (!testNumbers.includes(n)) {
+      nextFreeTestNumber = n;
+      break;
+    }
+  }
 
   const { data: materials } = !isFilm
     ? await supabase
@@ -296,129 +297,57 @@ export default async function AdminCoursePage({
         </section>
       ) : (
         <>
-          <section id="tasks" className="mt-6">
+          <section id="tests" className="mt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Завдання</h2>
-              <div className="flex gap-2">
-                <Link
-                  href={`/admin/courses/${product.id}/task-groups/new`}
-                  className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                >
-                  + Блок
-                </Link>
-                <Link
-                  href={`/admin/courses/${product.id}/tasks/new`}
-                  className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                >
-                  + Нове завдання
-                </Link>
+              <h2 className="text-xl font-bold">Тести</h2>
+              <div className="flex items-center gap-2">
+                <GoToTestForm productId={product.id} />
+                {nextFreeTestNumber && (
+                  <Link
+                    href={`/admin/courses/${product.id}/tests/${nextFreeTestNumber}`}
+                    className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    + Новий тест ({nextFreeTestNumber})
+                  </Link>
+                )}
               </div>
             </div>
 
             <ul className="mt-3 flex flex-col gap-2">
-              {rows.map((row, i) =>
-                row.kind === "group" ? (
+              {testNumbers.map((n) => {
+                const taskCount = taskCountByTest.get(n) ?? 0;
+                const groupCount = groupCountByTest.get(n) ?? 0;
+                return (
                   <li
-                    key={`group-${row.id}`}
-                    className="flex items-center justify-between rounded-md border-2 border-dashed p-3"
-                  >
-                    <div>
-                      <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                        Блок · {row.content_type}
-                        {row.delf_test_number && ` · Тест ${row.delf_test_number}`}
-                        {row.delf_section && ` · ${row.delf_section}`}
-                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
-                      </span>
-                      <Link
-                        href={`/admin/courses/${product.id}/task-groups/${row.id}`}
-                        className="block font-medium hover:underline"
-                      >
-                        {row.title || "Без назви"}
-                      </Link>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <form action={moveTaskGroup.bind(null, row.id, "up")}>
-                        <SubmitButton
-                          disabled={i === 0}
-                          className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                        >
-                          ↑
-                        </SubmitButton>
-                      </form>
-                      <form action={moveTaskGroup.bind(null, row.id, "down")}>
-                        <SubmitButton
-                          disabled={i === rows.length - 1}
-                          className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                        >
-                          ↓
-                        </SubmitButton>
-                      </form>
-                      <form action={deleteTaskGroup.bind(null, row.id)}>
-                        <SubmitButton
-                          pendingChildren="..."
-                          className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                        >
-                          Видалити
-                        </SubmitButton>
-                      </form>
-                    </div>
-                  </li>
-                ) : (
-                  <li
-                    key={`task-${row.id}`}
+                    key={n}
                     className="flex items-center justify-between rounded-md border p-3"
                   >
-                    <div>
-                      <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                        {row.type}
-                        {row.delf_test_number && ` · Тест ${row.delf_test_number}`}
-                        {row.delf_section && ` · ${row.delf_section}`}
+                    <Link
+                      href={`/admin/courses/${product.id}/tests/${n}`}
+                      className="font-medium hover:underline"
+                    >
+                      Тест {n}
+                      <span className="ml-2 text-xs font-normal uppercase text-neutral-500 dark:text-neutral-400">
+                        {taskCount} задач{groupCount > 0 && `, ${groupCount} блоків`}
                       </span>
-                      <Link
-                        href={`/admin/courses/${product.id}/tasks/${row.id}`}
-                        className="block font-medium hover:underline"
+                    </Link>
+                    <ConfirmForm
+                      action={deleteTest.bind(null, product.id, n)}
+                      message={`Тест ${n} і всі його задачі (${taskCount + groupCount}) буде видалено назавжди. Це незворотно. Ви впевнені?`}
+                    >
+                      <SubmitButton
+                        pendingChildren="..."
+                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
                       >
-                        {row.title}
-                      </Link>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <form action={moveTask.bind(null, row.id, "up")}>
-                        <SubmitButton
-                          disabled={i === 0}
-                          className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                        >
-                          ↑
-                        </SubmitButton>
-                      </form>
-                      <form action={moveTask.bind(null, row.id, "down")}>
-                        <SubmitButton
-                          disabled={i === rows.length - 1}
-                          className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                        >
-                          ↓
-                        </SubmitButton>
-                      </form>
-                      <Link
-                        href={`/admin/courses/${product.id}/tasks/${row.id}/copy`}
-                        className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                      >
-                        Копіювати
-                      </Link>
-                      <form action={deleteTask.bind(null, row.id)}>
-                        <SubmitButton
-                          pendingChildren="..."
-                          className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                        >
-                          Видалити
-                        </SubmitButton>
-                      </form>
-                    </div>
+                        Видалити тест
+                      </SubmitButton>
+                    </ConfirmForm>
                   </li>
-                )
-              )}
+                );
+              })}
             </ul>
-            {rows.length === 0 && (
-              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Завдань ще немає.</p>
+            {testNumbers.length === 0 && (
+              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Тестів ще немає.</p>
             )}
           </section>
 
