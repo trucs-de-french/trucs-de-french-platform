@@ -297,6 +297,7 @@ async function resolveTaskParentPath(
     scene_id: string | null;
     material_id: string | null;
     task_group_id: string | null;
+    delf_test_number?: number | null;
   }
 ): Promise<string> {
   if (task.scene_id) return `/admin/courses/${task.product_id}/scenes/${task.scene_id}`;
@@ -304,13 +305,16 @@ async function resolveTaskParentPath(
   if (task.task_group_id) {
     const { data: group } = await supabase
       .from("task_groups")
-      .select("scene_id, material_id")
+      .select("scene_id, material_id, delf_test_number")
       .eq("id", task.task_group_id)
       .single();
     if (group?.scene_id) return `/admin/courses/${task.product_id}/scenes/${group.scene_id}`;
     if (group?.material_id)
       return `/admin/courses/${task.product_id}/materials/${group.material_id}`;
+    if (group?.delf_test_number)
+      return `/admin/courses/${task.product_id}/tests/${group.delf_test_number}`;
   }
+  if (task.delf_test_number) return `/admin/courses/${task.product_id}/tests/${task.delf_test_number}`;
   return `/admin/courses/${task.product_id}`;
 }
 
@@ -377,6 +381,7 @@ export async function createTask(formData: FormData) {
       scene_id: sceneId,
       material_id: materialId,
       task_group_id: taskGroupId,
+      delf_test_number: delfTestNumber,
     })
   );
 }
@@ -432,7 +437,7 @@ export async function deleteTask(taskId: string) {
   const supabase = await createClient();
   const { data: task } = await supabase
     .from("tasks")
-    .select("product_id, scene_id, material_id, task_group_id")
+    .select("product_id, scene_id, material_id, task_group_id, delf_test_number")
     .eq("id", taskId)
     .single();
   if (!task) return;
@@ -552,6 +557,57 @@ export async function reorderSceneRows(
       `reorderSceneRows: 0 рядків оновлено для ${missing
         .map((r) => r.id)
         .join(", ")} у сцені ${sceneId}.`
+    );
+    return { ok: false, error: "Не вдалося зберегти порядок частини списку" };
+  }
+
+  return { ok: true };
+}
+
+// Той самий принцип, що reorderSceneRows вище (окрема сестринська функція,
+// не узагальнення — сцена й DELF-тест ідентифікуються геть по-різному:
+// одним id проти пари секція+номер), для сторінки DELF-тесту
+// (TestSectionDragList). Кожна секція (CO/CE/PE/PO) — окремий перетягуваний
+// список зі своєю незалежною послідовністю order_index (task-order.ts),
+// тож викликається per-секція, не на весь тест разом.
+// .eq("delf_section", delfSection).eq("delf_test_number", testNumber) на
+// кожному UPDATE — той самий захист від застарілого/підробленого списку id
+// з клієнта, що вже reorderSceneRows.
+export async function reorderTestRows(
+  delfSection: string,
+  testNumber: number,
+  orderedRows: { id: string; kind: "task" | "task_group" }[]
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const results = await Promise.all(
+    orderedRows.map(async (row, index) => {
+      const { data, error } = await supabase
+        .from(row.kind === "task" ? "tasks" : "task_groups")
+        .update({ order_index: index })
+        .eq("id", row.id)
+        .eq("delf_section", delfSection)
+        .eq("delf_test_number", testNumber)
+        .select("id");
+      return { id: row.id, error, affected: data?.length ?? 0 };
+    })
+  );
+
+  const dbError = results.find((r) => r.error)?.error;
+  if (dbError) {
+    console.error(
+      `reorderTestRows: помилка запису для тесту ${testNumber} (${delfSection}):`,
+      dbError.message
+    );
+    return { ok: false, error: dbError.message };
+  }
+
+  const missing = results.filter((r) => r.affected === 0);
+  if (missing.length > 0) {
+    console.error(
+      `reorderTestRows: 0 рядків оновлено для ${missing
+        .map((r) => r.id)
+        .join(", ")} у тесті ${testNumber} (${delfSection}).`
     );
     return { ok: false, error: "Не вдалося зберегти порядок частини списку" };
   }

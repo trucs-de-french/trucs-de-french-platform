@@ -10,10 +10,16 @@ export default async function NewTaskPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sceneId?: string; materialId?: string; taskGroupId?: string }>;
+  searchParams: Promise<{
+    sceneId?: string;
+    materialId?: string;
+    taskGroupId?: string;
+    delfSection?: string;
+    delfTestNumber?: string;
+  }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId, materialId, taskGroupId } = await searchParams;
+  const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber } = await searchParams;
 
   const supabase = await createClient();
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
@@ -28,23 +34,27 @@ export default async function NewTaskPage({
     : [];
 
   // Контекст, з якого прийшли, відомий одразу з searchParams — вправа,
-  // прив'язана до сцени/матеріалу/блоку, повертає саме туди, а не на курс.
-  // Задача блоку повертається на сторінку самого блоку (не на сцену/
-  // матеріал блоку) — там і видно решту його задач.
+  // прив'язана до сцени/матеріалу/блоку/DELF-тесту, повертає саме туди, а
+  // не на курс. Задача блоку повертається на сторінку самого блоку (не на
+  // сцену/матеріал/тест блоку) — там і видно решту його задач.
   const backHref = taskGroupId
     ? `/admin/courses/${productId}/task-groups/${taskGroupId}`
     : sceneId
       ? `/admin/courses/${productId}/scenes/${sceneId}`
       : materialId
         ? `/admin/courses/${productId}/materials/${materialId}`
-        : `/admin/courses/${productId}#tasks`;
+        : delfTestNumber
+          ? `/admin/courses/${productId}/tests/${delfTestNumber}`
+          : `/admin/courses/${productId}#tasks`;
   const backLabel = taskGroupId
     ? "← До блоку"
     : sceneId
       ? "← До сцени"
       : materialId
         ? "← До матеріалу"
-        : "← До курсу";
+        : delfTestNumber
+          ? "← До тесту"
+          : "← До курсу";
 
   return (
     <div>
@@ -74,6 +84,8 @@ export default async function NewTaskPage({
           productType={product?.type}
           materialId={materialId}
           taskGroupId={taskGroupId}
+          initialDelfSection={delfSection}
+          initialDelfTestNumber={delfTestNumber ? Number(delfTestNumber) : undefined}
         />
 
         {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,

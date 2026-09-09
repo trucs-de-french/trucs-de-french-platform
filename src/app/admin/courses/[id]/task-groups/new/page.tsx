@@ -9,10 +9,15 @@ export default async function NewTaskGroupPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sceneId?: string; materialId?: string }>;
+  searchParams: Promise<{
+    sceneId?: string;
+    materialId?: string;
+    delfSection?: string;
+    delfTestNumber?: string;
+  }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId, materialId } = await searchParams;
+  const { sceneId, materialId, delfSection, delfTestNumber } = await searchParams;
 
   const supabase = await createClient();
   const { data: product } = await supabase
@@ -25,8 +30,16 @@ export default async function NewTaskGroupPage({
     ? `/admin/courses/${productId}/scenes/${sceneId}`
     : materialId
       ? `/admin/courses/${productId}/materials/${materialId}`
-      : `/admin/courses/${productId}#tasks`;
-  const backLabel = sceneId ? "← До сцени" : materialId ? "← До матеріалу" : "← До курсу";
+      : delfTestNumber
+        ? `/admin/courses/${productId}/tests/${delfTestNumber}`
+        : `/admin/courses/${productId}#tasks`;
+  const backLabel = sceneId
+    ? "← До сцени"
+    : materialId
+      ? "← До матеріалу"
+      : delfTestNumber
+        ? "← До тесту"
+        : "← До курсу";
 
   return (
     <div>
@@ -47,7 +60,18 @@ export default async function NewTaskGroupPage({
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
         {materialId && <input type="hidden" name="material_id" value={materialId} />}
 
-        <TaskGroupFields productType={product?.type} materialId={materialId} />
+        <TaskGroupFields
+          productType={product?.type}
+          materialId={materialId}
+          initialGroup={
+            delfSection || delfTestNumber
+              ? {
+                  delf_section: delfSection ?? null,
+                  delf_test_number: delfTestNumber ? Number(delfTestNumber) : null,
+                }
+              : undefined
+          }
+        />
 
         <div className="sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
           <SubmitButton

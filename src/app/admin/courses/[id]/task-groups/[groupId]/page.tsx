@@ -54,8 +54,16 @@ export default async function EditTaskGroupPage({
     ? `/admin/courses/${productId}/scenes/${group.scene_id}`
     : group.material_id
       ? `/admin/courses/${productId}/materials/${group.material_id}`
-      : `/admin/courses/${productId}#tasks`;
-  const backLabel = group.scene_id ? "← До сцени" : group.material_id ? "← До матеріалу" : "← До курсу";
+      : group.delf_test_number
+        ? `/admin/courses/${productId}/tests/${group.delf_test_number}`
+        : `/admin/courses/${productId}#tasks`;
+  const backLabel = group.scene_id
+    ? "← До сцени"
+    : group.material_id
+      ? "← До матеріалу"
+      : group.delf_test_number
+        ? "← До тесту"
+        : "← До курсу";
 
   // Студентська сторінка, де цей блок реально відображається — той самий
   // розподіл, що backHref, але веде на публічну сторону (сцени/матеріали

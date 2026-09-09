@@ -57,8 +57,16 @@ export default async function EditTaskPage({
     ? `/admin/courses/${productId}/scenes/${task.scene_id}`
     : task.material_id
       ? `/admin/courses/${productId}/materials/${task.material_id}`
-      : `/admin/courses/${productId}#tasks`;
-  const backLabel = task.scene_id ? "← До сцени" : task.material_id ? "← До матеріалу" : "← До курсу";
+      : task.delf_test_number
+        ? `/admin/courses/${productId}/tests/${task.delf_test_number}`
+        : `/admin/courses/${productId}#tasks`;
+  const backLabel = task.scene_id
+    ? "← До сцени"
+    : task.material_id
+      ? "← До матеріалу"
+      : task.delf_test_number
+        ? "← До тесту"
+        : "← До курсу";
 
   // Студентська сторінка, де ця вправа реально відображається — той самий
   // розподіл, що й backHref, але веде на публічну сторону (scenes/materials

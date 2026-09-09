@@ -13,7 +13,12 @@ import { nextOrderIndex, findNeighbor, type ParentScope } from "@/app/admin/task
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
 
-type GroupParent = { product_id: string; scene_id: string | null; material_id: string | null };
+type GroupParent = {
+  product_id: string;
+  scene_id: string | null;
+  material_id: string | null;
+  delf_test_number?: number | null;
+};
 
 // Куди повертатись для блоку з даним батьківським контекстом — блок сам
 // несе scene_id/material_id (на відміну від задачі всередині нього), тож,
@@ -22,6 +27,7 @@ type GroupParent = { product_id: string; scene_id: string | null; material_id: s
 function resolveGroupParentPath(group: GroupParent): string {
   if (group.scene_id) return `/admin/courses/${group.product_id}/scenes/${group.scene_id}`;
   if (group.material_id) return `/admin/courses/${group.product_id}/materials/${group.material_id}`;
+  if (group.delf_test_number) return `/admin/courses/${group.product_id}/tests/${group.delf_test_number}`;
   return `/admin/courses/${group.product_id}`;
 }
 
@@ -203,7 +209,7 @@ export async function detachTask(taskId: string) {
   if (task.task_group_id) {
     const { data: group } = await supabase
       .from("task_groups")
-      .select("scene_id, material_id")
+      .select("scene_id, material_id, delf_test_number")
       .eq("id", task.task_group_id)
       .single();
     if (group) {
@@ -211,6 +217,7 @@ export async function detachTask(taskId: string) {
         product_id: task.product_id,
         scene_id: group.scene_id,
         material_id: group.material_id,
+        delf_test_number: group.delf_test_number,
       });
     }
   }
@@ -344,7 +351,7 @@ export async function deleteTaskGroup(groupId: string) {
   const supabase = await createClient();
   const { data: group } = await supabase
     .from("task_groups")
-    .select("product_id, scene_id, material_id")
+    .select("product_id, scene_id, material_id, delf_test_number")
     .eq("id", groupId)
     .single();
   if (!group) return;
