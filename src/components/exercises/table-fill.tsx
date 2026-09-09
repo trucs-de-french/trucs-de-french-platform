@@ -117,6 +117,23 @@ export function TableFillExercise({
         </table>
       </div>
 
+      {/* Той самий патерн, що fill-blank.tsx — список неправильних
+          клітинок з правильною відповіддю під таблицею. rowIndex+сторона
+          (назва колонки), бо на відміну від fill-blank тут кілька рядків і
+          дві можливі приховані клітинки на рядок, самого "Пропуск N" було б
+          недостатньо, щоб зрозуміти, про яку клітинку йдеться. */}
+      {detail && (
+        <ul className="mt-2 flex flex-col gap-1 text-sm">
+          {detail.blanks.map((b, i) =>
+            b.isCorrect ? null : (
+              <li key={i} className="text-red-600 dark:text-red-400">
+                Рядок {config.rows.findIndex((r) => r.id === b.rowId) + 1}, {config.columnLabels[b.side === "left" ? 0 : 1]}: правильно — {b.correctAnswers.join(" / ")}
+              </li>
+            )
+          )}
+        </ul>
+      )}
+
       {!result ? (
         <button
           type="button"
