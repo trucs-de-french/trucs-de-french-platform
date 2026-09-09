@@ -107,7 +107,11 @@ export async function createTaskGroup(formData: FormData) {
 
   if (error || !group) throw error;
 
-  redirect(resolveGroupParentPath(group));
+  // Не resolveGroupParentPath (батьківський контекст — сцена/матеріал/курс)
+  // — після створення блоку вчитель одразу додає в нього задачі, тож
+  // лишаємось на сторінці самого нового блоку, а не відкидаємо назад туди,
+  // звідки прийшли.
+  redirect(`/admin/courses/${group.product_id}/task-groups/${group.id}`);
 }
 
 export async function updateTaskGroup(
