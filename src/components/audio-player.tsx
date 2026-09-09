@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -8,26 +8,27 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 // швидкості (Chrome/Firefox — не показують, Safari — показує), хоча сам
 // HTMLMediaElement.playbackRate підтримується всюди однаково. Тому власний
 // рядок кнопок замість покладання на рідний UI.
-export function AudioPlayer({
-  src,
-  className,
-  onError,
-  onStalled,
-  onLoadedMetadata,
-}: {
+export const AudioPlayer = forwardRef<HTMLAudioElement, {
   src: string;
   className?: string;
   // Опційні — для GdriveAudioPlayer, щоб виявити провал прямого
   // gdrive-стріму (звичайні прямі mp3-посилання їх не передають, тож
   // поведінка AudioPlayer для них не змінюється). Прості прокидання
-  // нативних подій <audio>, без жодної логіки тут — AudioPlayer лишається
-  // "дурним" компонентом, уся евристика провалу — на боці викликача.
-  onError?: () => void;
-  onStalled?: () => void;
-  onLoadedMetadata?: () => void;
-}) {
+  // нативних подій <audio> (з самою подією — викликачу потрібен доступ до
+  // e.currentTarget.error/.networkState/.readyState для діагностики), без
+  // жодної логіки тут — AudioPlayer лишається "дурним" компонентом, уся
+  // евристика провалу — на боці викликача.
+  onError?: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
+  onStalled?: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
+  onLoadedMetadata?: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
+}>(function AudioPlayer({ src, className, onError, onStalled, onLoadedMetadata }, forwardedRef) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [speed, setSpeed] = useState(1);
+  // forwardedRef — опційний, потрібен лише GdriveAudioPlayer (щоб читати
+  // networkState/readyState з таймера провалу, де немає React-події з
+  // currentTarget) — інші виклювачі (task-media.tsx, listening.tsx для
+  // прямих файлів) ref не передають, і це нічого не змінює для них.
+  useImperativeHandle(forwardedRef, () => audioRef.current as HTMLAudioElement);
 
   function setPlaybackRate(rate: number) {
     setSpeed(rate);
@@ -65,4 +66,4 @@ export function AudioPlayer({
       </div>
     </div>
   );
-}
+});
