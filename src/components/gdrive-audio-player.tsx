@@ -6,49 +6,6 @@ import { toDirectDownloadUrl, toEmbedUrl } from "@/lib/video";
 
 const STALL_TIMEOUT_MS = 8000;
 
-// ТИМЧАСОВЕ діагностичне логування — той самий підхід, що вже спрацював
-// для theme-бага раніше цієї сесії (console.log + збір з консолі
-// браузера), для діагностики стабільного падіння конкретного gdrive-файлу
-// ("Exercice 2"), яке curl не відтворив (мережевий рівень для цього файлу
-// виглядає ідентичним до робочого файлу "CO Test 1" — отже причина десь
-// між реальним браузерним запитом і рендером <audio>). Прибрати після
-// діагностики.
-const MEDIA_ERROR_CODES: Record<number, string> = {
-  1: "MEDIA_ERR_ABORTED",
-  2: "MEDIA_ERR_NETWORK",
-  3: "MEDIA_ERR_DECODE",
-  4: "MEDIA_ERR_SRC_NOT_SUPPORTED",
-};
-const NETWORK_STATES: Record<number, string> = {
-  0: "NETWORK_EMPTY",
-  1: "NETWORK_IDLE",
-  2: "NETWORK_LOADING",
-  3: "NETWORK_NO_SOURCE",
-};
-const READY_STATES: Record<number, string> = {
-  0: "HAVE_NOTHING",
-  1: "HAVE_METADATA",
-  2: "HAVE_CURRENT_DATA",
-  3: "HAVE_FUTURE_DATA",
-  4: "HAVE_ENOUGH_DATA",
-};
-
-function logMediaState(label: string, url: string, startedAt: number, audio: HTMLAudioElement | null) {
-  const elapsedMs = Date.now() - startedAt;
-  const err = audio?.error;
-  console.log(`[gdrive-audio-debug] ${label}`, {
-    url,
-    directSrc: audio?.currentSrc,
-    elapsedMs,
-    networkState: audio ? `${audio.networkState} (${NETWORK_STATES[audio.networkState] ?? "?"})` : undefined,
-    readyState: audio ? `${audio.readyState} (${READY_STATES[audio.readyState] ?? "?"})` : undefined,
-    errorCode: err ? `${err.code} (${MEDIA_ERROR_CODES[err.code] ?? "?"})` : null,
-    errorMessage: err?.message || null,
-    currentTime: audio?.currentTime,
-    duration: audio?.duration,
-  });
-}
-
 // Гібрид, дослідження перед стартом (для контексту, чому саме так):
 // пряме gdrive-посилання (uc?export=download) — неофіційний метод, не
 // задокументований Google API. Надійний для файлів, що влазять у ліміт
@@ -79,29 +36,14 @@ function logMediaState(label: string, url: string, startedAt: number, audio: HTM
 export function GdriveAudioPlayer({ url, className }: { url: string; className?: string }) {
   const [failed, setFailed] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startedAtRef = useRef(0);
-  // Потрібен, щоб таймер (нижче) міг залогувати networkState/readyState —
-  // на відміну від onError/onStalled, таймер не отримує React-подію з
-  // currentTarget, тож без цього рефу ми бачили б лише "таймер спрацював",
-  // без жодних деталей про стан аудіо в цей момент.
-  const audioElRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (failed) return;
-    startedAtRef.current = Date.now();
-    console.log("[gdrive-audio-debug] mount, starting direct-play attempt", {
-      url,
-      directSrc: toDirectDownloadUrl(url),
-      timeoutMs: STALL_TIMEOUT_MS,
-    });
-    timeoutRef.current = setTimeout(() => {
-      logMediaState("STALL TIMEOUT fired — no loadedmetadata within timeoutMs, switching to iframe", url, startedAtRef.current, audioElRef.current);
-      setFailed(true);
-    }, STALL_TIMEOUT_MS);
+    timeoutRef.current = setTimeout(() => setFailed(true), STALL_TIMEOUT_MS);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [failed, url]);
+  }, [failed]);
 
   function clearStallTimeout() {
     if (timeoutRef.current) {
@@ -114,20 +56,10 @@ export function GdriveAudioPlayer({ url, className }: { url: string; className?:
     <div className={className}>
       {!failed ? (
         <AudioPlayer
-          ref={audioElRef}
           src={toDirectDownloadUrl(url)}
-          onError={(e) => {
-            logMediaState("ERROR event — switching to iframe", url, startedAtRef.current, e.currentTarget);
-            setFailed(true);
-          }}
-          onStalled={(e) => {
-            logMediaState("STALLED event — switching to iframe", url, startedAtRef.current, e.currentTarget);
-            setFailed(true);
-          }}
-          onLoadedMetadata={(e) => {
-            logMediaState("loadedmetadata OK — direct play succeeded", url, startedAtRef.current, e.currentTarget);
-            clearStallTimeout();
-          }}
+          onError={() => setFailed(true)}
+          onStalled={() => setFailed(true)}
+          onLoadedMetadata={clearStallTimeout}
         />
       ) : (
         <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
