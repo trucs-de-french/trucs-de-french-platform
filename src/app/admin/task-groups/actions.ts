@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor, type ParentScope } from "@/app/admin/task-order";
+import { uploadAudioFile } from "@/app/admin/audio-upload";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -25,19 +26,51 @@ function resolveGroupParentPath(group: GroupParent): string {
   return `/admin/courses/${group.product_id}`;
 }
 
-function buildContentFields(formData: FormData) {
+// Асинхронна — для content_type "audio" пробує завантажений файл
+// (media_audio_file) у Storage ДО побудови полів; якщо файл є, його
+// публічний URL перекриває text-поле media_url незалежно від того, що там
+// вписано (додатковий, не єдиний спосіб — text-поле лишається робочим,
+// якщо файл не обрано). media_provider ПРИМУСОВО null при успішному
+// завантаженні — інакше, якщо вчитель раніше лишив селектор платформи на
+// "youtube"/"gdrive", а тепер завантажив файл у Storage, TaskGroupBlock
+// спробував би вбудувати supabase.co URL як youtube/gdrive iframe.
+async function buildContentFields(
+  supabase: Supa,
+  formData: FormData
+): Promise<{
+  content_type: string;
+  content_text: string | null;
+  media_url: string | null;
+  media_provider: string | null;
+  audioUploadError?: string;
+}> {
   const contentType = (formData.get("content_type") as string) || "text";
+  let mediaUrl = contentType !== "text" ? (formData.get("media_url") as string) || null : null;
+  let mediaProvider =
+    contentType === "video" || contentType === "audio"
+      ? (formData.get("media_provider") as string) || null
+      : null;
+  let audioUploadError: string | undefined;
+
+  if (contentType === "audio") {
+    const upload = await uploadAudioFile(supabase, formData, "media_audio_file");
+    if (upload.url) {
+      mediaUrl = upload.url;
+      mediaProvider = null;
+    } else if (upload.error) {
+      audioUploadError = upload.error;
+    }
+  }
+
   return {
     content_type: contentType,
     content_text:
       contentType === "text"
         ? sanitizeInstructionsHtml((formData.get("content_text") as string) || "")
         : null,
-    media_url: contentType !== "text" ? (formData.get("media_url") as string) || null : null,
-    media_provider:
-      contentType === "video" || contentType === "audio"
-        ? (formData.get("media_provider") as string) || null
-        : null,
+    media_url: mediaUrl,
+    media_provider: mediaProvider,
+    audioUploadError,
   };
 }
 
@@ -69,6 +102,16 @@ export async function createTaskGroup(formData: FormData) {
     taskGroupId: null,
   });
 
+  // audioUploadError не блокує створення блоку (форма без {ok,error}-
+  // інфраструктури, лише redirect) — при провалі завантаження блок все
+  // одно створюється, просто без аудіо; логуємо серверно для діагностики,
+  // той самий компроміс, що вже прийнятий для відсутньої валідації URL-
+  // полів по всьому проєкту.
+  const { audioUploadError, ...contentFields } = await buildContentFields(supabase, formData);
+  if (audioUploadError) {
+    console.error(`createTaskGroup: не вдалося завантажити аудіофайл:`, audioUploadError);
+  }
+
   const { data: group, error } = await supabase
     .from("task_groups")
     .insert({
@@ -79,7 +122,7 @@ export async function createTaskGroup(formData: FormData) {
       delf_test_number: delfTestNumber,
       title,
       order_index: orderIndex,
-      ...buildContentFields(formData),
+      ...contentFields,
       ...buildPointsFields(formData),
     })
     .select()
@@ -100,11 +143,19 @@ export async function updateTaskGroup(
 
   const title = (formData.get("title") as string) || null;
 
+  // На відміну від createTaskGroup — тут уже є {ok,error}-інфраструктура
+  // (ActionState), тож провал завантаження аудіо реально показуємо
+  // вчителю, замість мовчазного fallback на текстове поле.
+  const { audioUploadError, ...contentFields } = await buildContentFields(supabase, formData);
+  if (audioUploadError) {
+    return { ok: false, error: `Не вдалося завантажити аудіофайл: ${audioUploadError}` };
+  }
+
   const { error } = await supabase
     .from("task_groups")
     .update({
       title,
-      ...buildContentFields(formData),
+      ...contentFields,
       ...buildPointsFields(formData),
     })
     .eq("id", groupId);

@@ -304,6 +304,10 @@ export function TaskConfigFields({
             placeholder="показується над завданням, якщо заповнено"
             className="rounded-md border px-2 py-1.5 text-sm"
           />
+          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
+          </label>
+          <input type="file" name="task_audio_file" accept="audio/*" className="text-sm" />
         </div>
       </div>
 

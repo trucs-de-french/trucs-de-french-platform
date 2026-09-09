@@ -128,6 +128,15 @@ export function TaskGroupFields({
         </div>
       )}
 
+      {contentType === "audio" && (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
+          </label>
+          <input type="file" name="media_audio_file" accept="audio/*" className="text-sm" />
+        </div>
+      )}
+
       {(contentType === "video" || contentType === "audio") && (
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа</label>
