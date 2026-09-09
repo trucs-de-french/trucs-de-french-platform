@@ -87,6 +87,8 @@ export async function createTaskGroup(formData: FormData) {
     sceneId,
     materialId,
     taskGroupId: null,
+    delfSection,
+    delfTestNumber,
   });
 
   const { data: group, error } = await supabase
@@ -167,6 +169,8 @@ async function detachTaskFromGroup(supabase: Supa, taskId: string): Promise<void
     sceneId: group.scene_id,
     materialId: group.material_id,
     taskGroupId: null,
+    delfSection: group.delf_section,
+    delfTestNumber: group.delf_test_number,
   };
   const orderIndex = await nextOrderIndex(supabase, scope);
 
@@ -365,7 +369,7 @@ export async function moveTaskGroup(groupId: string, direction: "up" | "down") {
 
   const { data: group } = await supabase
     .from("task_groups")
-    .select("id, product_id, scene_id, material_id, order_index")
+    .select("id, product_id, scene_id, material_id, delf_section, delf_test_number, order_index")
     .eq("id", groupId)
     .single();
   if (!group) return;
@@ -377,6 +381,8 @@ export async function moveTaskGroup(groupId: string, direction: "up" | "down") {
       sceneId: group.scene_id,
       materialId: group.material_id,
       taskGroupId: null,
+      delfSection: group.delf_section,
+      delfTestNumber: group.delf_test_number,
     },
     group.order_index,
     direction

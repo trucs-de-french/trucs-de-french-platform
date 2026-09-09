@@ -327,12 +327,18 @@ export async function createTask(formData: FormData) {
   const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
   const title = formData.get("title") as string;
+  const delfSection = (formData.get("delf_section") as string) || null;
+  const delfTestNumber = formData.get("delf_test_number")
+    ? Number(formData.get("delf_test_number"))
+    : null;
 
   const orderIndex = await nextOrderIndex(supabase, {
     productId,
     sceneId,
     materialId,
     taskGroupId,
+    delfSection,
+    delfTestNumber,
   });
 
   const { data: task, error } = await supabase
@@ -355,10 +361,8 @@ export async function createTask(formData: FormData) {
       // Присутні у formData лише коли батьківський продукт type='delf'
       // (TaskConfigFields рендерить ці селекти умовно) — для film-задач
       // просто null.
-      delf_section: (formData.get("delf_section") as string) || null,
-      delf_test_number: formData.get("delf_test_number")
-        ? Number(formData.get("delf_test_number"))
-        : null,
+      delf_section: delfSection,
+      delf_test_number: delfTestNumber,
     })
     .select()
     .single();
@@ -455,7 +459,9 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, product_id, scene_id, material_id, task_group_id, order_index")
+    .select(
+      "id, product_id, scene_id, material_id, task_group_id, delf_section, delf_test_number, order_index"
+    )
     .eq("id", taskId)
     .single();
   if (!task) return;
@@ -470,6 +476,8 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
       sceneId: task.scene_id,
       materialId: task.material_id,
       taskGroupId: task.task_group_id,
+      delfSection: task.delf_section,
+      delfTestNumber: task.delf_test_number,
     },
     task.order_index,
     direction
