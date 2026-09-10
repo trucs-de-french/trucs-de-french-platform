@@ -53,7 +53,7 @@ import {
   getTaskTypeCategory,
 } from "@/lib/exercises/task-type-meta";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
-import { AudioFileUpload } from "@/components/audio-file-upload";
+import { FileUpload } from "@/components/file-upload";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -418,7 +418,7 @@ export function TaskConfigFields({
           <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
           </label>
-          <AudioFileUpload name="task_audio_file_url" />
+          <FileUpload kind="audio" name="task_audio_file_url" />
         </div>
       </div>
 

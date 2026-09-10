@@ -31,8 +31,8 @@ function resolveGroupParentPath(group: GroupParent): string {
   return `/admin/courses/${group.product_id}`;
 }
 
-// media_audio_file_url — приховане поле AudioFileUpload (client-side
-// завантаження напряму в Storage, вже ЗАВЕРШЕНЕ до сабміту форми; тут лише
+// media_audio_file_url — приховане поле FileUpload (kind="audio",
+// client-side завантаження напряму в R2, вже ЗАВЕРШЕНЕ до сабміту форми; тут лише
 // читаємо готовий рядок, жодного завантаження на сервері більше немає).
 // Якщо заповнене — перекриває text-поле media_url незалежно від того, що
 // там вписано (додатковий, не єдиний спосіб — text-поле лишається робочим,

@@ -14,8 +14,8 @@ import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 // ../scenes/actions.ts. Найчастіша причина "зберіглось, але не видно без
 // F5" — саме пропущений крок із цього чеклиста.
 
-// task_audio_file_url — приховане поле AudioFileUpload (client-side
-// завантаження напряму в Storage, вже завершене до сабміту форми) —
+// task_audio_file_url — приховане поле FileUpload (kind="audio",
+// client-side завантаження напряму в R2, вже завершене до сабміту форми) —
 // перекриває task_audio_url (текстове поле), якщо файл обрано. Синхронна:
 // жодного завантаження на сервері тут більше немає.
 function resolveAudioUrl(formData: FormData): string | null {

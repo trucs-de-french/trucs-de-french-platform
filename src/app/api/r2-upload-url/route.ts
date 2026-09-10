@@ -6,8 +6,23 @@ import { buildPresignedUploadUrl } from "@/lib/r2-client";
 // проєкту (напр. /api/scenes/[sceneId]/vocab-pdf).
 export const runtime = "nodejs";
 
-const BUCKET = process.env.R2_BUCKET_NAME;
-const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+type UploadKind = "audio" | "image";
+
+// Один спільний bucket на весь акаунт "не коштував" би нічого зайвого
+// (безкоштовний ліміт R2 рахується на акаунт, не на bucket), але окремі
+// task-audio/task-images дають чистішу організацію в дашборді — свідомий
+// вибір, підтверджений з учителем перед реалізацією.
+const BUCKETS: Record<UploadKind, { bucket?: string; publicUrl?: string }> = {
+  audio: { bucket: process.env.R2_BUCKET_NAME, publicUrl: process.env.R2_PUBLIC_URL },
+  image: {
+    bucket: process.env.R2_IMAGES_BUCKET_NAME,
+    publicUrl: process.env.R2_IMAGES_PUBLIC_URL,
+  },
+};
+
+function isUploadKind(value: unknown): value is UploadKind {
+  return value === "audio" || value === "image";
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -31,24 +46,35 @@ export async function POST(request: Request) {
     return Response.json({ error: "Доступ лише для викладача" }, { status: 403 });
   }
 
-  if (!BUCKET || !PUBLIC_URL) {
+  const body = (await request.json()) as {
+    filename?: string;
+    contentType?: string;
+    kind?: string;
+  };
+
+  if (!isUploadKind(body.kind)) {
+    return Response.json({ error: 'kind має бути "audio" або "image"' }, { status: 400 });
+  }
+
+  const { bucket, publicUrl } = BUCKETS[body.kind];
+  if (!bucket || !publicUrl) {
     return Response.json(
-      { error: "R2_BUCKET_NAME/R2_PUBLIC_URL не налаштовані на сервері" },
+      { error: `R2 для kind="${body.kind}" не налаштований на сервері (бракує env-змінних)` },
       { status: 500 }
     );
   }
 
-  const body = (await request.json()) as { filename?: string; contentType?: string };
   const filename = body.filename ?? "";
   const contentType = body.contentType || "application/octet-stream";
 
-  const ext = filename.includes(".") ? filename.split(".").pop() : "mp3";
+  const fallbackExt = body.kind === "image" ? "jpg" : "mp3";
+  const ext = filename.includes(".") ? filename.split(".").pop() : fallbackExt;
   const key = `${crypto.randomUUID()}.${ext}`;
 
   try {
-    const uploadUrl = await buildPresignedUploadUrl(BUCKET, key, contentType);
-    const publicUrl = `${PUBLIC_URL.replace(/\/$/, "")}/${key}`;
-    return Response.json({ uploadUrl, publicUrl, contentType });
+    const uploadUrl = await buildPresignedUploadUrl(bucket, key, contentType);
+    const fileUrl = `${publicUrl.replace(/\/$/, "")}/${key}`;
+    return Response.json({ uploadUrl, publicUrl: fileUrl, contentType });
   } catch (error) {
     console.error("r2-upload-url: не вдалося підписати URL", error);
     return Response.json({ error: "Не вдалося підготувати завантаження" }, { status: 500 });

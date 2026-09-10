@@ -2,28 +2,45 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type UploadKind = "audio" | "image";
+
+const ACCEPT_BY_KIND: Record<UploadKind, string> = {
+  audio: "audio/*",
+  image: "image/*",
+};
+
 // Завантаження НАПРЯМУ з браузера в Cloudflare R2 (не через наш
 // сервер/Server Action) — обходить і ліміт розміру тіла Server Actions
 // (1MB за замовчуванням), і буфер proxy-шару Next.js 16 (src/proxy.ts,
 // 10MB), і жорсткий ліміт payload serverless-функції Netlify (~6MB) —
 // жоден з них не застосовується, бо байти файлу йдуть напряму на
-// *.r2.cloudflarestorage.com, а не на наш домен. Той самий принцип, що
-// раніше був реалізований для Supabase Storage (звідки й мігрували —
-// R2 не має плати за egress-трафік, вигідніше на очікуваному масштабі).
+// *.r2.cloudflarestorage.com, а не на наш домен.
 //
 // На відміну від Supabase (де браузер сам генерує підписаний URL через
 // сесію), R2/S3 presigned URL можна згенерувати лише на сервері — секретний
 // ключ ніяк не можна віддати браузеру. Тому тут два кроки замість одного:
-// 1) POST /api/r2-upload-url — крихітний запит (ім'я файлу + MIME-тип),
-//    повертає підписаний URL; 2) PUT напряму на *.r2.cloudflarestorage.com
-//    з байтами файлу. Лише крок 2 несе вагу файлу, і саме він обходить наш
-//    сервер повністю.
+// 1) POST /api/r2-upload-url (ім'я файлу + MIME-тип + kind) — повертає
+//    підписаний URL; 2) PUT напряму на *.r2.cloudflarestorage.com з
+//    байтами файлу. Лише крок 2 несе вагу файлу.
 //
-// Ручний fetch(), не бібліотека — та сама причина, що раніше для Supabase:
-// реальний % прогресу вимагав би XMLHttpRequest з відстеженням progress-
-// подій, що не протестовано наживо тут. Індикатор нижче — лише "процес
-// іде" (анімація + секундомір), без обіцянки byte-accurate прогресу.
-export function AudioFileUpload({ name }: { name: string }) {
+// Два режими виводу результату — не через два окремі компоненти, а через
+// два опційні пропи:
+// - `name` — прихований <input>, для полів, які сервер читає напряму з
+//   FormData при сабміті (task_image_url, cover_image_url тощо).
+// - `onUploaded` — callback, для полів УСЕРЕДИНІ масиву в React-стані
+//   (варіанти multiple_choice, картки flip_cards тощо) — там немає
+//   окремого named form-field, весь масив серіалізується в один JSON при
+//   сабміті, тож URL потрібно записати прямо в стан батьківського
+//   компонента, а не в прихований input.
+export function FileUpload({
+  kind,
+  name,
+  onUploaded,
+}: {
+  kind: UploadKind;
+  name?: string;
+  onUploaded?: (url: string) => void;
+}) {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState("");
@@ -50,6 +67,7 @@ export function AudioFileUpload({ name }: { name: string }) {
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type || "application/octet-stream",
+          kind,
         }),
       });
       const prep = (await prepRes.json()) as {
@@ -79,6 +97,7 @@ export function AudioFileUpload({ name }: { name: string }) {
       }
 
       setUploadedUrl(prep.publicUrl);
+      onUploaded?.(prep.publicUrl);
       setStatus("done");
     } catch (error) {
       setStatus("error");
@@ -91,7 +110,7 @@ export function AudioFileUpload({ name }: { name: string }) {
       <input
         ref={inputRef}
         type="file"
-        accept="audio/*"
+        accept={ACCEPT_BY_KIND[kind]}
         disabled={status === "uploading"}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -128,10 +147,11 @@ export function AudioFileUpload({ name }: { name: string }) {
           </button>
         </div>
       )}
-      {/* Порожній рядок — коректно (== "нічого не завантажено"), сервер
-          трактує через `|| null`/truthy-перевірку так само, як порожнє
-          текстове поле URL. */}
-      <input type="hidden" name={name} value={uploadedUrl} />
+      {/* Лише в режимі name= — у режимі onUploaded= прихований input не
+          потрібен, URL уже записаний у стан батьківського компонента. */}
+      {name && (
+        <input type="hidden" name={name} value={uploadedUrl} readOnly />
+      )}
     </div>
   );
 }

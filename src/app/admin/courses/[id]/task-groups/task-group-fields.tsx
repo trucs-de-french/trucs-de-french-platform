@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
-import { AudioFileUpload } from "@/components/audio-file-upload";
+import { FileUpload } from "@/components/file-upload";
 
 export type TaskGroupInitial = {
   title?: string | null;
@@ -134,7 +134,7 @@ export function TaskGroupFields({
           <label className="text-xs text-neutral-500 dark:text-neutral-400">
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
           </label>
-          <AudioFileUpload name="media_audio_file_url" />
+          <FileUpload kind="audio" name="media_audio_file_url" />
         </div>
       )}
 
