@@ -1,29 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
-const BUCKET = "task-audio";
-
-// Завантаження НАПРЯМУ з браузера в Supabase Storage (не через наш
+// Завантаження НАПРЯМУ з браузера в Cloudflare R2 (не через наш
 // сервер/Server Action) — обходить і ліміт розміру тіла Server Actions
 // (1MB за замовчуванням), і буфер proxy-шару Next.js 16 (src/proxy.ts,
 // 10MB), і жорсткий ліміт payload serverless-функції Netlify (~6MB) —
 // жоден з них не застосовується, бо байти файлу йдуть напряму на
-// *.supabase.co, а не на наш домен. Це й було причиною краху сторінки при
-// завантаженні великих (десятки MB) mp3 через попередній підхід (файл ішов
-// через FormData у Server Action).
+// *.r2.cloudflarestorage.com, а не на наш домен. Той самий принцип, що
+// раніше був реалізований для Supabase Storage (звідки й мігрували —
+// R2 не має плати за egress-трафік, вигідніше на очікуваному масштабі).
 //
-// uploadToSignedUrl() (офіційний метод @supabase/storage-js), НЕ
-// самописний XMLHttpRequest — свідомий вибір: реальний % прогресу
-// потребував би відтворення внутрішнього формату запиту бібліотеки
-// вручну, без можливості перевірити це наживо тут. Гарантована коректність
-// важливіша за точний відсоток — індикатор нижче лише повідомляє "процес
+// На відміну від Supabase (де браузер сам генерує підписаний URL через
+// сесію), R2/S3 presigned URL можна згенерувати лише на сервері — секретний
+// ключ ніяк не можна віддати браузеру. Тому тут два кроки замість одного:
+// 1) POST /api/r2-upload-url — крихітний запит (ім'я файлу + MIME-тип),
+//    повертає підписаний URL; 2) PUT напряму на *.r2.cloudflarestorage.com
+//    з байтами файлу. Лише крок 2 несе вагу файлу, і саме він обходить наш
+//    сервер повністю.
+//
+// Ручний fetch(), не бібліотека — та сама причина, що раніше для Supabase:
+// реальний % прогресу вимагав би XMLHttpRequest з відстеженням progress-
+// подій, що не протестовано наживо тут. Індикатор нижче — лише "процес
 // іде" (анімація + секундомір), без обіцянки byte-accurate прогресу.
-//
-// RLS на storage.objects (0033_task_audio_storage.sql, is_teacher()) діє
-// однаково незалежно від того, викликає це сервер чи браузер — той самий
-// автентифікований сеанс вчителя, жодних додаткових прав не треба.
 export function AudioFileUpload({ name }: { name: string }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -44,31 +43,47 @@ export function AudioFileUpload({ name }: { name: string }) {
     setErrorMessage("");
     setFileName(file.name);
 
-    const supabase = createClient();
-    const ext = file.name.split(".").pop() || "mp3";
-    const path = `${crypto.randomUUID()}.${ext}`;
+    try {
+      const prepRes = await fetch("/api/r2-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+      const prep = (await prepRes.json()) as {
+        uploadUrl?: string;
+        publicUrl?: string;
+        contentType?: string;
+        error?: string;
+      };
+      if (!prepRes.ok || !prep.uploadUrl || !prep.publicUrl) {
+        setStatus("error");
+        setErrorMessage(prep.error ?? "Не вдалося підготувати завантаження");
+        return;
+      }
 
-    const { data: signed, error: signError } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUploadUrl(path);
-    if (signError || !signed) {
+      // contentType — саме те значення, яке сервер щойно використав для
+      // підпису URL (не file.type напряму) — гарантує точний збіг між
+      // підписом і фактичним запитом.
+      const uploadRes = await fetch(prep.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": prep.contentType ?? file.type },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        setStatus("error");
+        setErrorMessage(`R2 повернув помилку (${uploadRes.status})`);
+        return;
+      }
+
+      setUploadedUrl(prep.publicUrl);
+      setStatus("done");
+    } catch (error) {
       setStatus("error");
-      setErrorMessage(signError?.message ?? "Не вдалося підготувати завантаження");
-      return;
+      setErrorMessage(error instanceof Error ? error.message : "Невідома помилка мережі");
     }
-
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .uploadToSignedUrl(path, signed.token, file);
-    if (uploadError) {
-      setStatus("error");
-      setErrorMessage(uploadError.message);
-      return;
-    }
-
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    setUploadedUrl(data.publicUrl);
-    setStatus("done");
   }
 
   return (

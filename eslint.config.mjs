@@ -7,8 +7,11 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
+    // Default ignores of eslint-config-next — "**/" префікс (не лише
+    // кореневий ".next/**") навмисно додано: без нього згенеровані типи
+    // Next.js у .next вкладених worktree (.claude/worktrees/*/.next/types)
+    // не виключались і засмічували lint тисячами нерелевантних помилок.
+    "**/.next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
