@@ -76,7 +76,7 @@ export function LinkDragList({
             className={`flex items-center justify-between rounded-md border p-3 text-sm transition-colors ${
               dragOver === link.id
                 ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : ""
+                : "bg-white dark:bg-neutral-800"
             }`}
           >
             <span className="flex items-center gap-2">

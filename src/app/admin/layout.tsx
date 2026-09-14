@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Roboto } from "next/font/google";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -37,21 +36,12 @@ export default async function AdminLayout({
     );
   }
 
+  // Ні лого, ні "До кабінету" тут більше нема — обидва розкладені по
+  // конкретних місцях використання: CourseSwitcherSidebar (усередині курсу)
+  // і локально на courses/page.tsx/courses/new/page.tsx (де sidebar нема).
+  // Спільного "верхнього nav" для всієї адмінки більше не існує.
   return (
     <div className={`admin-root mx-auto max-w-4xl p-6 ${roboto.variable}`}>
-      {/* Лого ("Trucs de French"/"Адмінка") переїхало в CourseSwitcherSidebar
-          (видиме лише всередині курсу) — тут лишається тільки "До кабінету".
-          На courses/page.tsx і courses/new/page.tsx (де sidebar нема) лого
-          тепер узагалі не показується — прямий наслідок "перенести", не
-          "продублювати". pr-14 — той самий резерв під плаваючу ThemeToggle-
-          кнопку (position: fixed, top-4 right-4, у кореневому layout.tsx),
-          що й раніше: на viewport вужчому за max-w-4xl права межа nav
-          збігається з правою межею viewport. */}
-      <nav className="mb-6 flex items-center justify-end gap-4 border-b pb-4 pr-14">
-        <Link href="/dashboard" className="text-sm underline">
-          До кабінету
-        </Link>
-      </nav>
       {children}
     </div>
   );

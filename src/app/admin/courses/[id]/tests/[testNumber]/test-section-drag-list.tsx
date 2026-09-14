@@ -171,7 +171,7 @@ export function TestSectionDragList({
                     ? willAttach
                       ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
                       : "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                    : ""
+                    : "bg-white dark:bg-neutral-800"
                 }`}
               >
                 {dragOver === row.id && willAttach && (
@@ -237,7 +237,7 @@ export function TestSectionDragList({
               )} ${
                 dragOver === row.id
                   ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                  : ""
+                  : "bg-white dark:bg-neutral-800"
               }`}
             >
               <div className="flex items-center justify-between">

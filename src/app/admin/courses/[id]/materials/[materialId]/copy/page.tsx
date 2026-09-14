@@ -45,7 +45,7 @@ export default async function CopyMaterialPage({
 
       <form
         action={copyMaterial.bind(null, materialId)}
-        className="mt-4 flex flex-col gap-4 rounded-md border p-4"
+        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Курс</label>

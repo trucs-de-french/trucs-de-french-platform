@@ -64,7 +64,10 @@ export default async function NewTaskPage({
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Нове завдання</h1>
 
-      <form action={createTask} className="mt-4 flex flex-col gap-4 rounded-md border p-4">
+      <form
+        action={createTask}
+        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
+      >
         <input type="hidden" name="product_id" value={productId} />
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
         {materialId && <input type="hidden" name="material_id" value={materialId} />}

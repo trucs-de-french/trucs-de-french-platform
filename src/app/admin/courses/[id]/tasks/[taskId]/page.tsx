@@ -92,7 +92,7 @@ export default async function EditTaskPage({
 
       <SaveForm
         action={updateTask.bind(null, productId, task.id)}
-        className="mt-4 flex flex-col gap-4 rounded-md border p-4"
+        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
         sticky
         backLink={{ href: backHref, label: backLabel }}
         previewLink={studentHref ? { productId, href: studentHref } : undefined}

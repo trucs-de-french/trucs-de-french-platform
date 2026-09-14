@@ -25,9 +25,16 @@ export default async function AdminCoursesPage({
 
   return (
     <div>
-      <div className="mb-6 border-b pb-4">
+      {/* pr-14 — резерв під плаваючу ThemeToggle-кнопку (position: fixed,
+          top-4 right-4, у кореневому layout.tsx) — той самий, що раніше був
+          у спільному admin/layout.tsx nav, перенесений сюди разом з "До
+          кабінету" (admin/layout.tsx більше не рендерить жодного nav). */}
+      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
         <AdminLogo />
-      </div>
+        <Link href="/dashboard" className="text-sm underline">
+          До кабінету
+        </Link>
+      </nav>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Курси</h1>
         <Link

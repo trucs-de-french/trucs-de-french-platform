@@ -187,7 +187,7 @@ export default async function AdminCoursePage({
 
       <SaveForm
         action={updateProduct.bind(null, product.id)}
-        className="mt-4 flex flex-col gap-4 rounded-md border p-4"
+        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Назва</label>
@@ -263,7 +263,7 @@ export default async function AdminCoursePage({
             {scenes?.map((scene, i) => (
               <li
                 key={scene.id}
-                className="flex items-center justify-between rounded-md border p-3"
+                className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
               >
                 <Link
                   href={`/admin/courses/${product.id}/scenes/${scene.id}`}
@@ -383,7 +383,10 @@ export default async function AdminCoursePage({
 
             <ul className="mt-3 flex flex-col gap-2">
               {materials?.map((m) => (
-                <li key={m.id} className="flex items-center justify-between rounded-md border p-3">
+                <li
+                  key={m.id}
+                  className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
+                >
                   <div>
                     <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
                       {m.category === "delf_guide"

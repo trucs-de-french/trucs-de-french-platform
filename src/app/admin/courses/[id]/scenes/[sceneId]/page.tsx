@@ -255,7 +255,7 @@ export default async function AdminScenePage({
       <SaveForm
         action={updateSceneTitle.bind(null, sceneId)}
         saveLabel="Зберегти назву"
-        className="mt-4 flex flex-col gap-1 rounded-md border p-4"
+        className="mt-4 flex flex-col gap-1 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
         <label className="text-sm font-medium">Назва сцени</label>
         <input

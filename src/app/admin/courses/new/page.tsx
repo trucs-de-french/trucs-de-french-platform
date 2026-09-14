@@ -15,9 +15,14 @@ export default async function NewCoursePage({
 
   return (
     <div>
-      <div className="mb-6 border-b pb-4">
+      {/* pr-14 — той самий резерв під плаваючу ThemeToggle-кнопку, що був у
+          спільному admin/layout.tsx nav (тепер видаленому). */}
+      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
         <AdminLogo />
-      </div>
+        <Link href="/dashboard" className="text-sm underline">
+          До кабінету
+        </Link>
+      </nav>
       <Link href="/admin/courses" className="text-sm underline">
         ← До списку курсів
       </Link>

@@ -107,7 +107,9 @@ export default async function CourseLayout({
     <div className="mx-[calc(50%-50vw)] w-screen px-6">
       <div className="mx-auto flex max-w-6xl items-start gap-6">
         <CourseSwitcherSidebar courses={sidebarCourses} currentCourseId={id} />
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1 rounded-lg bg-slate-50 p-4 dark:bg-neutral-900">
+          {children}
+        </div>
       </div>
     </div>
   );
