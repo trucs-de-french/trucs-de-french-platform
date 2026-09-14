@@ -27,7 +27,9 @@ import {
   BUTTON_WARNING,
   BUTTON_DANGER,
   BUTTON_DANGER_SM,
+  BUTTON_PREVIEW,
 } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export default async function AdminCoursePage({
   params,
@@ -143,10 +145,7 @@ export default async function AdminCoursePage({
         </div>
         <div className="flex items-center gap-2">
           <form action={startStudentPreview.bind(null, product.id, undefined)}>
-            <SubmitButton
-              pendingChildren="..."
-              className={BUTTON_SECONDARY}
-            >
+            <SubmitButton pendingChildren="..." className={BUTTON_PREVIEW}>
               Переглянути як студент
             </SubmitButton>
           </form>
@@ -185,57 +184,72 @@ export default async function AdminCoursePage({
         </p>
       )}
 
-      <SaveForm
-        action={updateProduct.bind(null, product.id)}
-        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
-      >
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Назва</label>
-          <input
-            name="title"
-            defaultValue={product.title}
-            required
-            className="rounded-md border px-3 py-2"
-          />
+      <SaveForm action={updateProduct.bind(null, product.id)} className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+          <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+            Основна інформація
+          </p>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Назва</label>
+            <input
+              name="title"
+              defaultValue={product.title}
+              required
+              className={`${INPUT_BORDER} px-3 py-2`}
+            />
+          </div>
+          <div className="mt-3 flex flex-col gap-1">
+            <label className="text-sm font-medium">Опис</label>
+            <textarea
+              name="description"
+              defaultValue={product.description ?? ""}
+              rows={3}
+              className={`${INPUT_BORDER} px-3 py-2`}
+            />
+          </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Опис</label>
-          <textarea
-            name="description"
-            defaultValue={product.description ?? ""}
-            rows={3}
-            className="rounded-md border px-3 py-2"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Ціна (грн)</label>
-          <input
-            name="price"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={product.price}
-            className="rounded-md border px-3 py-2"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Обкладинка (URL)</label>
-          <input
-            name="cover_image_url"
-            type="url"
-            defaultValue={product.cover_image_url ?? ""}
-            className="rounded-md border px-3 py-2"
-          />
-          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Або завантажити картинку (перекриє URL вище, якщо вибрано)
-          </label>
-          <FileUpload kind="image" name="cover_image_file_url" />
+
+        <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+          <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+            Ціна та обкладинка
+          </p>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Ціна (грн)</label>
+            <input
+              name="price"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={product.price}
+              className={`${INPUT_BORDER} px-3 py-2`}
+            />
+          </div>
+          <div className="mt-3 flex flex-col gap-1">
+            <label className="text-sm font-medium">Обкладинка (URL)</label>
+            <input
+              name="cover_image_url"
+              type="url"
+              defaultValue={product.cover_image_url ?? ""}
+              className={`${INPUT_BORDER} px-3 py-2`}
+            />
+            <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Або завантажити картинку (перекриє URL вище, якщо вибрано)
+            </label>
+            <FileUpload kind="image" name="cover_image_file_url" />
+          </div>
         </div>
 
         {product.type === "delf" && (
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Рівень DELF</label>
-            <select name="level" required defaultValue={product.level ?? "A1"} className="rounded-md border px-3 py-2">
+          <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+              Рівень DELF
+            </p>
+            <select
+              name="level"
+              required
+              defaultValue={product.level ?? "A1"}
+              className={`${INPUT_BORDER} px-3 py-2`}
+            >
               <option value="A1">A1</option>
               <option value="A2">A2</option>
               <option value="B1">B1</option>

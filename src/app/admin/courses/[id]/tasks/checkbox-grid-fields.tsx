@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyRow(): CheckboxGridRow {
   return { id: crypto.randomUUID(), label: "", correctColumnIds: [] };
@@ -103,7 +104,7 @@ export const CheckboxGridFields = forwardRef<
               value={c.label}
               onChange={(e) => updateColumnLabel(c.id, e.target.value)}
               placeholder="Назва колонки"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <button
               type="button"
@@ -137,7 +138,7 @@ export const CheckboxGridFields = forwardRef<
                 value={row.label}
                 onChange={(e) => updateRowLabel(row.id, e.target.value)}
                 placeholder="Твердження / питання"
-                className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
               />
               <input
                 type="number"
@@ -146,7 +147,7 @@ export const CheckboxGridFields = forwardRef<
                 value={row.points ?? 1}
                 onChange={(e) => updateRowPoints(row.id, Number(e.target.value))}
                 title="Бали за весь рядок (зараховуються, лише якщо всі клітинки рядка правильні)"
-                className="w-16 rounded-md border px-2 py-1 text-sm"
+                className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
               />
               <button
                 type="button"

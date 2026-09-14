@@ -5,6 +5,7 @@ import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exerc
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
@@ -101,7 +102,7 @@ export const SortColumnsFields = forwardRef<
               value={c.label}
               onChange={(e) => updateColumnLabel(c.id, e.target.value)}
               placeholder="Назва колонки"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <button
               type="button"
@@ -131,12 +132,12 @@ export const SortColumnsFields = forwardRef<
               value={item.text}
               onChange={(e) => updateItemText(item.id, e.target.value)}
               placeholder="Текст елементу"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <select
               value={item.columnId}
               onChange={(e) => updateItemColumn(item.id, e.target.value)}
-              className="rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1 text-sm`}
             >
               <option value="">— колонка —</option>
               {columns.map((c) => (
@@ -152,7 +153,7 @@ export const SortColumnsFields = forwardRef<
               value={item.points ?? 1}
               onChange={(e) => updateItemPoints(item.id, Number(e.target.value))}
               title="Бали за цей елемент"
-              className="w-16 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
             />
             <button
               type="button"

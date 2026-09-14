@@ -5,6 +5,7 @@ import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptySequence(): ReorderSequence {
   return { id: crypto.randomUUID(), items: ["", ""] };
@@ -128,7 +129,7 @@ export const ReorderFields = forwardRef<
                   value={seq.points ?? 1}
                   onChange={(e) => updatePoints(seq.id, Number(e.target.value))}
                   title="Бали за всю послідовність (зараховуються, лише якщо вона повністю правильна)"
-                  className="w-16 rounded-md border px-2 py-1 text-sm"
+                  className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
                 />
                 <button
                   type="button"
@@ -149,7 +150,7 @@ export const ReorderFields = forwardRef<
                     value={item}
                     onChange={(e) => updateItem(seq.id, i, e.target.value)}
                     placeholder="Елемент"
-                    className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
                   />
                   <button
                     type="button"

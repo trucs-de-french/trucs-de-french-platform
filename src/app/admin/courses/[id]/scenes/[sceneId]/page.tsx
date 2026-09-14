@@ -14,6 +14,7 @@ import { SceneBlockList } from "./scene-block-list";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -138,7 +139,7 @@ export default async function AdminScenePage({
           <input
             name="video_url"
             defaultValue={scene.video_url ?? ""}
-            className="rounded-md border px-3 py-2"
+            className={`${INPUT_BORDER} px-3 py-2`}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -146,7 +147,7 @@ export default async function AdminScenePage({
           <select
             name="video_provider"
             defaultValue={scene.video_provider ?? "youtube"}
-            className="rounded-md border px-3 py-2"
+            className={`${INPUT_BORDER} px-3 py-2`}
           >
             <option value="youtube">YouTube</option>
             <option value="gdrive">Google Drive</option>
@@ -182,18 +183,18 @@ export default async function AdminScenePage({
       >
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа</label>
-          <select name="platform" className="rounded-md border px-2 py-1.5 text-sm">
+          <select name="platform" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
             <option value="quizlet">Quizlet</option>
             <option value="wordwall">Wordwall</option>
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">URL</label>
-          <input name="url" required className="rounded-md border px-2 py-1.5 text-sm" />
+          <input name="url" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Мітка</label>
-          <input name="label" className="rounded-md border px-2 py-1.5 text-sm" />
+          <input name="label" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
         </div>
       </SaveForm>
     </div>
@@ -262,7 +263,7 @@ export default async function AdminScenePage({
           name="title"
           defaultValue={scene.title}
           required
-          className="rounded-md border px-3 py-2"
+          className={`${INPUT_BORDER} px-3 py-2`}
         />
       </SaveForm>
 

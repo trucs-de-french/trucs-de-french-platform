@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 const DELF_LEVELS = ["A1", "A2", "B1", "B2"];
 
@@ -16,7 +17,7 @@ export function CourseTypeFields() {
           required
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="rounded-md border px-3 py-2"
+          className={`${INPUT_BORDER} px-3 py-2`}
         >
           <option value="film">Фільм/серіал</option>
           <option value="delf">DELF</option>
@@ -26,7 +27,7 @@ export function CourseTypeFields() {
       {type === "delf" && (
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Рівень DELF</label>
-          <select name="level" required defaultValue="A1" className="rounded-md border px-3 py-2">
+          <select name="level" required defaultValue="A1" className={`${INPUT_BORDER} px-3 py-2`}>
             {DELF_LEVELS.map((l) => (
               <option key={l} value={l}>
                 {l}

@@ -5,6 +5,7 @@ import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyRow(): TableFillRow {
   return { id: crypto.randomUUID(), left: "", right: "", leftHidden: false, rightHidden: true };
@@ -84,7 +85,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[0]}
             onChange={(e) => setColumnLabels(([, right]) => [e.target.value, right])}
-            className="rounded-md border px-2 py-1 text-base font-medium"
+            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
@@ -92,7 +93,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[1]}
             onChange={(e) => setColumnLabels(([left]) => [left, e.target.value])}
-            className="rounded-md border px-2 py-1 text-base font-medium"
+            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
           />
         </div>
       </div>
@@ -110,7 +111,7 @@ export const TableFillFields = forwardRef<
               value={row.left}
               onChange={(e) => updateRow(row.id, "left", e.target.value)}
               placeholder={columnLabels[0]}
-              className="rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
             />
             <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
               <input
@@ -126,7 +127,7 @@ export const TableFillFields = forwardRef<
               value={row.right}
               onChange={(e) => updateRow(row.id, "right", e.target.value)}
               placeholder={columnLabels[1]}
-              className="rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
             />
             <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
               <input
@@ -144,7 +145,7 @@ export const TableFillFields = forwardRef<
             value={row.points ?? 1}
             onChange={(e) => updateRowPoints(row.id, Number(e.target.value))}
             title="Бали за весь рядок (зараховуються, лише якщо всі приховані клітинки правильні)"
-            className="w-16 self-start rounded-md border px-2 py-1 text-sm"
+            className={`${INPUT_BORDER} w-16 self-start px-2 py-1 text-sm`}
           />
           <button
             type="button"

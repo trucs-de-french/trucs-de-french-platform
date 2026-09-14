@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export default async function NewTaskPage({
   params,
@@ -78,7 +79,7 @@ export default async function NewTaskPage({
           <input
             name="title"
             required
-            className="rounded-md border px-3 py-2 text-base font-medium"
+            className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
           />
         </div>
 

@@ -5,6 +5,7 @@ import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptySentence(): DragDropSentence {
   return { id: crypto.randomUUID(), template: "" };
@@ -98,7 +99,7 @@ export const DragDropFields = forwardRef<
               value={s.template}
               onChange={(e) => updateSentence(s.id, e.target.value)}
               rows={2}
-              className="flex-1 rounded-md border px-2 py-1.5 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-base font-medium`}
             />
             <input
               type="number"
@@ -107,7 +108,7 @@ export const DragDropFields = forwardRef<
               value={s.points ?? 1}
               onChange={(e) => updateSentencePoints(s.id, Number(e.target.value))}
               title="Бали за все речення (зараховуються, лише якщо воно повністю правильне)"
-              className="mt-1.5 w-16 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} mt-1.5 w-16 px-2 py-1 text-sm`}
             />
             <button
               type="button"
@@ -138,7 +139,7 @@ export const DragDropFields = forwardRef<
               value={word}
               onChange={(e) => updateWord(i, e.target.value)}
               placeholder="Слово"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
             />
             <button
               type="button"

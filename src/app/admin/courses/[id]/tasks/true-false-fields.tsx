@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export function TrueFalseFields({
   initialConfig,
@@ -60,12 +61,12 @@ export function TrueFalseFields({
               value={s.text}
               onChange={(e) => updateText(s.id, e.target.value)}
               placeholder="Текст твердження"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <select
               value={String(s.answer)}
               onChange={(e) => updateAnswer(s.id, e.target.value === "true")}
-              className="rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1 text-sm`}
             >
               <option value="true">Vrai</option>
               <option value="false">Faux</option>
@@ -77,7 +78,7 @@ export function TrueFalseFields({
               value={s.points ?? 1}
               onChange={(e) => updatePoints(s.id, Number(e.target.value))}
               title="Бали за це твердження"
-              className="w-16 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
             />
             <button
               type="button"

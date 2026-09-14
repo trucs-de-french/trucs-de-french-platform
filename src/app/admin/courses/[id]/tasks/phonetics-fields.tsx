@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyItem(): PhoneticsItem {
   return { text: "", transcription: "", mediaUrl: "" };
@@ -66,7 +67,7 @@ export const PhoneticsFields = forwardRef<
               value={item.text}
               onChange={(e) => updateItem(i, "text", e.target.value)}
               placeholder="Репліка (французькою)"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <button
               type="button"
@@ -80,13 +81,13 @@ export const PhoneticsFields = forwardRef<
             value={item.transcription}
             onChange={(e) => updateItem(i, "transcription", e.target.value)}
             placeholder="Транскрипція (напр. [ʒə vɛ bjɛ̃])"
-            className="rounded-md border px-2 py-1 text-base font-medium"
+            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
           />
           <input
             value={item.mediaUrl ?? ""}
             onChange={(e) => updateItem(i, "mediaUrl", e.target.value)}
             placeholder="Аудіо або відео (URL, необов'язково)"
-            className="rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+            className={`${INPUT_BORDER} px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
           />
         </div>
       ))}

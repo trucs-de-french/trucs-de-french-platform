@@ -8,6 +8,7 @@ import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { CalloutStyle } from "@/lib/exercises/types";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 // Той самий TipTap-набір розширень, той самий sanitizeCalloutHtml і той
 // самий набір стилів блоку, що вже в callout-fields.tsx — окремий
@@ -176,7 +177,7 @@ export function MaterialArticleFields({
             <select
               onChange={(e) => toggleFont(e.target.value)}
               defaultValue=""
-              className="rounded border px-1.5 py-1 text-xs"
+              className={`${INPUT_BORDER} px-1.5 py-1 text-xs`}
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f.value} value={f.value}>

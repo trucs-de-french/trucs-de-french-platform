@@ -4,6 +4,7 @@ import { useState, type DragEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
 import { BUTTON_SECONDARY, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 type Line = { speaker: string; text: string; vocab: VocabItem[] };
 
@@ -104,14 +105,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               placeholder="Спікер"
               value={line.speaker}
               onChange={(e) => updateLine(i, "speaker", e.target.value)}
-              className="w-32 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} w-32 px-2 py-1 text-sm`}
             />
             <textarea
               placeholder="Текст репліки"
               value={line.text}
               onChange={(e) => updateLine(i, "text", e.target.value)}
               rows={2}
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
             />
             <button
               type="button"
@@ -130,14 +131,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     placeholder="Слово/фраза"
                     value={v.word}
                     onChange={(e) => updateVocab(i, vi, "word", e.target.value)}
-                    className="w-40 rounded-md border px-2 py-1 text-sm"
+                    className={`${INPUT_BORDER} w-40 px-2 py-1 text-sm`}
                   />
                   <span className="text-neutral-400 dark:text-neutral-500">→</span>
                   <input
                     placeholder="Переклад"
                     value={v.translation}
                     onChange={(e) => updateVocab(i, vi, "translation", e.target.value)}
-                    className="w-48 rounded-md border px-2 py-1 text-sm"
+                    className={`${INPUT_BORDER} w-48 px-2 py-1 text-sm`}
                   />
                   <button
                     type="button"
@@ -151,7 +152,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                   placeholder="Посилання на картинку (необов'язково)"
                   value={v.image_url ?? ""}
                   onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
-                  className="ml-0 w-full max-w-md rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+                  className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
                 />
                 <FileUpload
                   kind="image"

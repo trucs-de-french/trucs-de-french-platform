@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_DANGER } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 type TaskDetail = {
   id: string;
@@ -103,7 +104,7 @@ export default async function EditTaskPage({
             name="title"
             defaultValue={task.title}
             required
-            className="rounded-md border px-3 py-2 text-base font-medium"
+            className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
           />
         </div>
 

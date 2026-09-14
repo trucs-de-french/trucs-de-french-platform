@@ -14,6 +14,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -159,7 +160,7 @@ export default async function EditTaskGroupPage({
               name="task_id"
               required
               defaultValue=""
-              className="flex-1 rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-sm`}
             >
               <option value="" disabled>
                 — обрати наявну задачу —

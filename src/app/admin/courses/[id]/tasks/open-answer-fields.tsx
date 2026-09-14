@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyQuestion(): OpenAnswerQuestion {
   return { id: crypto.randomUUID(), question: "", answers: [""] };
@@ -87,7 +88,7 @@ export function OpenAnswerFields({
                 value={q.question}
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="напр. Як буде французькою 'дякую'?"
-                className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
               />
               <input
                 type="number"
@@ -96,7 +97,7 @@ export function OpenAnswerFields({
                 value={q.points ?? 1}
                 onChange={(e) => updatePoints(q.id, Number(e.target.value))}
                 title="Бали за це питання"
-                className="w-16 rounded-md border px-2 py-1 text-sm"
+                className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
               />
               <button
                 type="button"
@@ -116,7 +117,7 @@ export function OpenAnswerFields({
                     value={a}
                     onChange={(e) => updateAnswer(q.id, i, e.target.value)}
                     placeholder="Варіант відповіді"
-                    className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
                   />
                   <button
                     type="button"

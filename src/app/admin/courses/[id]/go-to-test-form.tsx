@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 // Ручне введення номера тесту (1-30) — доповнює "+ Новий тест" (наступний
 // вільний номер), а не замінює: вчитель може хотіти конкретний номер, не
@@ -29,7 +30,7 @@ export function GoToTestForm({ productId }: { productId: string }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="№"
-        className="w-16 rounded-md border px-2 py-1.5 text-sm"
+        className={`${INPUT_BORDER} w-16 px-2 py-1.5 text-sm`}
       />
       <button
         type="submit"

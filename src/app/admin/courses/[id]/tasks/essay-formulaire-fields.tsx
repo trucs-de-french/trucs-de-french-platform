@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { EssayFormulaireConfig, EssayFormulaireField } from "@/lib/exercises/types";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export function EssayFormulaireFields({
   initialConfig,
@@ -37,7 +38,7 @@ export function EssayFormulaireFields({
           rows={2}
           defaultValue={initialConfig?.instructions ?? ""}
           placeholder="напр. Заповніть формуляр реєстрації"
-          className="rounded-md border px-2 py-1.5 text-sm"
+          className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
         />
       </div>
 
@@ -51,7 +52,7 @@ export function EssayFormulaireFields({
               value={f.label}
               onChange={(e) => updateLabel(f.id, e.target.value)}
               placeholder="напр. Prénom"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <button
               type="button"

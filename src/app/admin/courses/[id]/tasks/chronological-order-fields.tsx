@@ -5,6 +5,7 @@ import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exe
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
@@ -85,7 +86,7 @@ export const ChronologicalOrderFields = forwardRef<
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as "image" | "text")}
-          className="w-fit rounded-md border px-2 py-1 text-sm"
+          className={`${INPUT_BORDER} w-fit px-2 py-1 text-sm`}
         >
           <option value="image">Зображення (URL)</option>
           <option value="text">Текстові твердження</option>
@@ -129,7 +130,7 @@ export const ChronologicalOrderFields = forwardRef<
                 value={item.content}
                 onChange={(e) => updateContent(item.id, e.target.value)}
                 placeholder="URL зображення"
-                className="rounded-md border px-2 py-1 text-sm"
+                className={`${INPUT_BORDER} px-2 py-1 text-sm`}
               />
               <FileUpload
                 kind="image"
@@ -141,7 +142,7 @@ export const ChronologicalOrderFields = forwardRef<
               value={item.content}
               onChange={(e) => updateContent(item.id, e.target.value)}
               placeholder="Текст твердження"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
           )}
           <input
@@ -151,7 +152,7 @@ export const ChronologicalOrderFields = forwardRef<
             value={item.points ?? 1}
             onChange={(e) => updatePoints(item.id, Number(e.target.value))}
             title="Бали за цей елемент"
-            className="w-16 rounded-md border px-2 py-1 text-sm"
+            className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
           />
           <button
             type="button"

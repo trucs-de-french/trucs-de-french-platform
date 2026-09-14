@@ -31,6 +31,15 @@ export const BUTTON_WARNING =
 export const BUTTON_WARNING_SM =
   "rounded border border-amber-300 px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/50 disabled:opacity-50";
 
+// Перегляд очима студента ("Переглянути як студент"/"Переглянути в режимі
+// учня") — окрема роль, не BUTTON_SECONDARY: indigo конфліктував з
+// сусідніми amber-кнопками (Зняти з публікації/Архівувати). Cyan (--color-
+// accent) — той самий токен, що вже використовується для "опубліковано".
+// Залита (не контурна) — щоб виділялась як окрема дія, а не зливалась з
+// рештою обведених ролей (secondary/warning/danger) поруч.
+export const BUTTON_PREVIEW =
+  "rounded-md bg-accent px-3 py-1.5 text-sm text-white hover:bg-accent-hover disabled:opacity-50";
+
 // Незворотна дія (видалити назавжди).
 export const BUTTON_DANGER =
   "rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50 disabled:opacity-50";

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 // onImport відсутній -> "довідковий" режим (напр. fill_blank): показує
 // обрані терміни текстом для ручного копіювання в шаблон, без кнопки
@@ -92,7 +93,7 @@ export function ImportVocabPanel({
           <input
             value={customWord}
             onChange={(e) => setCustomWord(e.target.value)}
-            className="rounded-md border px-2 py-1 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1 text-sm`}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -100,7 +101,7 @@ export function ImportVocabPanel({
           <input
             value={customTranslation}
             onChange={(e) => setCustomTranslation(e.target.value)}
-            className="rounded-md border px-2 py-1 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1 text-sm`}
           />
         </div>
         <button

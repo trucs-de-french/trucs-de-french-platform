@@ -54,6 +54,7 @@ import {
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileUpload } from "@/components/file-upload";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -359,7 +360,7 @@ export function TaskConfigFields({
               required
               value={delfSection}
               onChange={(e) => setDelfSection(e.target.value)}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             >
               <option value="">—</option>
               {EXAM_SECTIONS.map((s) => (
@@ -381,7 +382,7 @@ export function TaskConfigFields({
               required
               value={delfTestNumber}
               onChange={(e) => setDelfTestNumber(e.target.value)}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
         </div>
@@ -396,7 +397,7 @@ export function TaskConfigFields({
             name="task_image_url"
             defaultValue={initialImageUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className="rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           />
           <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Або завантажити картинку (перекриє URL вище, якщо вибрано)
@@ -411,7 +412,7 @@ export function TaskConfigFields({
             name="task_audio_url"
             defaultValue={initialAudioUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className="rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           />
           <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
@@ -427,7 +428,7 @@ export function TaskConfigFields({
             <select
               name="game_provider"
               defaultValue={initialGame?.provider ?? "wordwall"}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             >
               <option value="wordwall">Wordwall</option>
               <option value="quizlet">Quizlet</option>
@@ -439,7 +440,7 @@ export function TaskConfigFields({
             <input
               name="game_embed_url"
               defaultValue={initialGame?.embed_url ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -447,7 +448,7 @@ export function TaskConfigFields({
             <input
               name="game_type"
               defaultValue={initialGame?.game_type ?? ""}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
         </div>
@@ -468,7 +469,7 @@ export function TaskConfigFields({
                   setEssayExerciseNumber("");
                   maybeAutofillCriteria(e.target.value, "");
                 }}
-                className="rounded-md border px-2 py-1.5 text-sm"
+                className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
               >
                 <option value="A1">A1</option>
                 <option value="A2">A2</option>
@@ -486,7 +487,7 @@ export function TaskConfigFields({
                     setEssayExerciseNumber(e.target.value);
                     maybeAutofillCriteria(essayLevel, e.target.value);
                   }}
-                  className="rounded-md border px-2 py-1.5 text-sm"
+                  className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
                 >
                   <option value="">—</option>
                   {essayLevel === "A1" ? (
@@ -519,7 +520,7 @@ export function TaskConfigFields({
                   name="prompt"
                   rows={3}
                   defaultValue={(initialConfig?.prompt as string) ?? ""}
-                  className="rounded-md border px-2 py-1.5 text-base font-medium"
+                  className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -545,7 +546,7 @@ export function TaskConfigFields({
                     setCriteria(e.target.value);
                     setCriteriaDirty(true);
                   }}
-                  className="rounded-md border px-2 py-1.5 text-base font-medium"
+                  className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
                 />
               </div>
             </>
@@ -569,7 +570,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as LinkEmbedFields).url
                   : (initialConfig?.url as string)) ?? ""
               }
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -579,7 +580,7 @@ export function TaskConfigFields({
               name="embed_height"
               type="number"
               defaultValue={(initialConfig?.height as number) ?? 480}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
         </div>
@@ -597,7 +598,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as LinkEmbedFields).url
                   : (initialConfig?.url as string)) ?? ""
               }
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -606,7 +607,7 @@ export function TaskConfigFields({
               ref={linkLabelRef}
               name="link_label"
               defaultValue={(initialConfig?.label as string) ?? ""}
-              className="rounded-md border px-2 py-1.5 text-base font-medium"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -615,7 +616,7 @@ export function TaskConfigFields({
               ref={linkPlatformRef}
               name="link_platform"
               defaultValue={(initialConfig?.platform as string) ?? "auto"}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             >
               <option value="auto">Визначити автоматично по URL</option>
               <option value="youtube">YouTube</option>
@@ -666,7 +667,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as { template?: string }).template
                   : (initialConfig?.template as string)) ?? ""
               }
-              className="rounded-md border px-2 py-1.5 text-base font-medium"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -684,7 +685,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as { points?: number }).points
                   : (initialConfig?.points as number)) ?? 1
               }
-              className="w-24 rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} w-24 px-2 py-1.5 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -704,7 +705,7 @@ export function TaskConfigFields({
                   value={word}
                   onChange={(e) => updateFillBlankWord(i, e.target.value)}
                   placeholder="Слово"
-                  className="flex-1 rounded-md border px-2 py-1 text-sm"
+                  className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
                 />
                 <button
                   type="button"

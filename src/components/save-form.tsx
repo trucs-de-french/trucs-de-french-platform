@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
 import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
 import { setThemeCookie } from "@/lib/theme-cookie";
-import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY } from "@/lib/button-styles";
+import { BUTTON_PRIMARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -120,7 +120,7 @@ export function SaveForm({
             type="button"
             onClick={handlePreviewClick}
             disabled={disabled || previewPending}
-            className={BUTTON_SECONDARY}
+            className={BUTTON_PREVIEW}
           >
             Переглянути в режимі учня
           </button>

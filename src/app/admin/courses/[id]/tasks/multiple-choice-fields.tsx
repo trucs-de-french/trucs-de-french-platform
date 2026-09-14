@@ -5,6 +5,7 @@ import type { MultipleChoiceConfig, MultipleChoiceItem } from "@/lib/exercises/t
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyItem(): MultipleChoiceItem {
   return {
@@ -135,7 +136,7 @@ export const MultipleChoiceFields = forwardRef<
           name="mc_display"
           value={display}
           onChange={(e) => setDisplay(e.target.value as "buttons" | "dropdown")}
-          className="rounded-md border px-2 py-1.5 text-sm"
+          className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
         >
           <option value="buttons">Варіанти видно одразу</option>
           <option value="dropdown">Випадаючий список</option>
@@ -157,7 +158,7 @@ export const MultipleChoiceFields = forwardRef<
                   value={item.points ?? 1}
                   onChange={(e) => updatePoints(item.id, Number(e.target.value))}
                   title="Бали за це речення"
-                  className="w-16 rounded-md border px-2 py-1 text-sm"
+                  className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
                 />
                 <button
                   type="button"
@@ -177,7 +178,7 @@ export const MultipleChoiceFields = forwardRef<
                   ? "напр. Je {{}} au cinéma. — {{}} позначає, де буде випадаючий список"
                   : "Текст речення"
               }
-              className="mt-2 w-full rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium`}
             />
             <div className="mt-2 flex flex-col gap-1 pl-2">
               <label className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -195,14 +196,14 @@ export const MultipleChoiceFields = forwardRef<
                     value={o.text}
                     onChange={(e) => updateOptionText(item.id, o.id, e.target.value)}
                     placeholder="Текст варіанту"
-                    className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
                   />
                   <div className="flex flex-1 flex-col gap-1">
                     <input
                       value={o.imageUrl ?? ""}
                       onChange={(e) => updateOptionImageUrl(item.id, o.id, e.target.value)}
                       placeholder="URL картинки (опційно)"
-                      className="rounded-md border px-2 py-1 text-sm"
+                      className={`${INPUT_BORDER} px-2 py-1 text-sm`}
                     />
                     <FileUpload
                       kind="image"

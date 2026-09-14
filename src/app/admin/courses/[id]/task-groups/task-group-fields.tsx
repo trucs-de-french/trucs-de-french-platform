@@ -4,6 +4,7 @@ import { useState } from "react";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
 import { FileUpload } from "@/components/file-upload";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export type TaskGroupInitial = {
   title?: string | null;
@@ -46,7 +47,7 @@ export function TaskGroupFields({
           name="title"
           defaultValue={initialGroup?.title ?? ""}
           placeholder="напр. CO — Situations du quotidien"
-          className="rounded-md border px-3 py-2 text-base font-medium"
+          className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
         />
       </div>
 
@@ -59,7 +60,7 @@ export function TaskGroupFields({
               required
               value={delfSection}
               onChange={(e) => setDelfSection(e.target.value)}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             >
               <option value="">—</option>
               {EXAM_SECTIONS.map((s) => (
@@ -81,7 +82,7 @@ export function TaskGroupFields({
               required
               value={delfTestNumber}
               onChange={(e) => setDelfTestNumber(e.target.value)}
-              className="rounded-md border px-2 py-1.5 text-sm"
+              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
             />
           </div>
         </div>
@@ -95,7 +96,7 @@ export function TaskGroupFields({
           name="content_type"
           value={contentType}
           onChange={(e) => setContentType(e.target.value)}
-          className="w-fit rounded-md border px-2 py-1.5 text-sm"
+          className={`${INPUT_BORDER} w-fit px-2 py-1.5 text-sm`}
         >
           <option value="text">Текст</option>
           <option value="audio">Аудіо</option>
@@ -124,7 +125,7 @@ export function TaskGroupFields({
           <input
             name="media_url"
             defaultValue={initialGroup?.media_url ?? ""}
-            className="rounded-md border px-3 py-2 text-sm"
+            className={`${INPUT_BORDER} px-3 py-2 text-sm`}
           />
         </div>
       )}
@@ -144,7 +145,7 @@ export function TaskGroupFields({
           <select
             name="media_provider"
             defaultValue={initialGroup?.media_provider ?? "youtube"}
-            className="w-fit rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} w-fit px-2 py-1.5 text-sm`}
           >
             <option value="youtube">YouTube</option>
             <option value="gdrive">Google Drive</option>
@@ -160,7 +161,7 @@ export function TaskGroupFields({
           name="points_mode"
           value={pointsMode}
           onChange={(e) => setPointsMode(e.target.value)}
-          className="w-fit rounded-md border px-2 py-1.5 text-sm"
+          className={`${INPUT_BORDER} w-fit px-2 py-1.5 text-sm`}
         >
           <option value="sum">Сума балів окремих завдань</option>
           <option value="flat">Один загальний бал на весь блок</option>
@@ -179,7 +180,7 @@ export function TaskGroupFields({
             min={0}
             step={0.5}
             defaultValue={initialGroup?.flat_points ?? 1}
-            className="w-24 rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} w-24 px-2 py-1.5 text-sm`}
           />
         </div>
       )}

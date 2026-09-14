@@ -8,6 +8,7 @@ import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 const STYLE_OPTIONS: { value: CalloutStyle; label: string; icon: string; className: string }[] = [
   { value: "none", label: "Без виділення", icon: "▪️", className: "border-neutral-300 dark:border-neutral-700" },
@@ -168,7 +169,7 @@ export function CalloutFields({
             <select
               onChange={(e) => toggleFont(e.target.value)}
               defaultValue=""
-              className="rounded border px-1.5 py-1 text-xs"
+              className={`${INPUT_BORDER} px-1.5 py-1 text-xs`}
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f.value} value={f.value}>

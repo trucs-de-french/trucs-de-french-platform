@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { FileUpload } from "@/components/file-upload";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyCard(): FlipCard {
   return { front: "", back: "", image_url: "", audio_url: "" };
@@ -72,14 +73,14 @@ export const FlipCardsFields = forwardRef<
               value={card.front}
               onChange={(e) => updateCard(i, "front", e.target.value)}
               placeholder="Перед"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <span className="text-neutral-400 dark:text-neutral-500">→</span>
             <input
               value={card.back}
               onChange={(e) => updateCard(i, "back", e.target.value)}
               placeholder="Зад"
-              className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
             />
             <button
               type="button"
@@ -93,14 +94,14 @@ export const FlipCardsFields = forwardRef<
             value={card.image_url ?? ""}
             onChange={(e) => updateCard(i, "image_url", e.target.value)}
             placeholder="Картинка (URL, необов'язково)"
-            className="ml-0 w-full max-w-md rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
           />
           <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
           <input
             value={card.audio_url ?? ""}
             onChange={(e) => updateCard(i, "audio_url", e.target.value)}
             placeholder="Аудіо (URL, необов'язково)"
-            className="ml-0 w-full max-w-md rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
           />
         </div>
       ))}

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { copyMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export default async function CopyMaterialPage({
   params,
@@ -53,7 +54,7 @@ export default async function CopyMaterialPage({
             name="target_product_id"
             defaultValue={productId}
             required
-            className="rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           >
             {products?.map((p) => (
               <option key={p.id} value={p.id}>

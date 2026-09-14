@@ -5,6 +5,7 @@ import { FileUpload } from "@/components/file-upload";
 import { CourseTypeFields } from "./course-type-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export default async function NewCoursePage({
   searchParams,
@@ -39,12 +40,12 @@ export default async function NewCoursePage({
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Назва</label>
-          <input name="title" required className="rounded-md border px-3 py-2" />
+          <input name="title" required className={`${INPUT_BORDER} px-3 py-2`} />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Опис</label>
-          <textarea name="description" rows={3} className="rounded-md border px-3 py-2" />
+          <textarea name="description" rows={3} className={`${INPUT_BORDER} px-3 py-2`} />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -55,13 +56,13 @@ export default async function NewCoursePage({
             min="0"
             step="0.01"
             defaultValue="0"
-            className="rounded-md border px-3 py-2"
+            className={`${INPUT_BORDER} px-3 py-2`}
           />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Обкладинка (URL)</label>
-          <input name="cover_image_url" type="url" className="rounded-md border px-3 py-2" />
+          <input name="cover_image_url" type="url" className={`${INPUT_BORDER} px-3 py-2`} />
           <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Або завантажити картинку (перекриє URL вище, якщо вибрано)
           </label>

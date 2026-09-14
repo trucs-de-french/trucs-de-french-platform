@@ -10,6 +10,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_SECONDARY_SM, BUTTON_DANGER, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 export default async function EditMaterialPage({
   params,
@@ -89,7 +90,7 @@ export default async function EditMaterialPage({
             name="title"
             defaultValue={material.title ?? ""}
             required
-            className="rounded-md border px-3 py-2 text-base font-medium"
+            className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
           />
         </div>
 
@@ -98,7 +99,7 @@ export default async function EditMaterialPage({
           <select
             name="category"
             defaultValue={material.category ?? ""}
-            className="rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           >
             <option value="">— Без категорії —</option>
             <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
@@ -114,7 +115,7 @@ export default async function EditMaterialPage({
             name="file_url"
             type="url"
             defaultValue={material.file_url ?? ""}
-            className="rounded-md border px-2 py-1.5 text-sm"
+            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           />
         </div>
 
