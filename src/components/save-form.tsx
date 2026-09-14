@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
 import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
 import { setThemeCookie } from "@/lib/theme-cookie";
+import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY } from "@/lib/button-styles";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -103,11 +104,7 @@ export function SaveForm({
             : ""
         }`}
       >
-        <button
-          type="submit"
-          disabled={pending}
-          className="self-start rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-        >
+        <button type="submit" disabled={pending} className={`self-start ${BUTTON_PRIMARY_LG}`}>
           {pending ? "Зберігаю..." : saveLabel}
         </button>
         {backLink &&
@@ -123,7 +120,7 @@ export function SaveForm({
             type="button"
             onClick={handlePreviewClick}
             disabled={disabled || previewPending}
-            className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 disabled:opacity-50 dark:hover:bg-neutral-800"
+            className={BUTTON_SECONDARY}
           >
             Переглянути в режимі учня
           </button>

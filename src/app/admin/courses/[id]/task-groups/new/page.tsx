@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createTaskGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskGroupFields } from "../task-group-fields";
+import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 
 export default async function NewTaskGroupPage({
   params,
@@ -76,7 +77,7 @@ export default async function NewTaskGroupPage({
         <div className="sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
           <SubmitButton
             pendingChildren="Створюю..."
-            className="self-start rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`self-start ${BUTTON_PRIMARY_LG}`}
           >
             Створити
           </SubmitButton>

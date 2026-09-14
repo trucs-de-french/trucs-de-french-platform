@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
+import { BUTTON_SECONDARY } from "@/lib/button-styles";
 
 // onImport відсутній -> "довідковий" режим (напр. fill_blank): показує
 // обрані терміни текстом для ручного копіювання в шаблон, без кнопки
@@ -135,7 +136,7 @@ export function ImportVocabPanel({
           type="button"
           onClick={handleImport}
           disabled={selected.length === 0}
-          className="self-start rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 disabled:opacity-40 dark:hover:bg-neutral-800"
+          className={`self-start ${BUTTON_SECONDARY}`}
         >
           Імпортувати {selected.length > 0 ? `(${selected.length})` : ""}
         </button>

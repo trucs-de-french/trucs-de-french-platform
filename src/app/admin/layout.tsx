@@ -39,15 +39,15 @@ export default async function AdminLayout({
 
   return (
     <div className={`admin-root mx-auto max-w-4xl p-6 ${roboto.variable}`}>
-      {/* pr-14 — резерв під плаваючу ThemeToggle-кнопку (position: fixed,
-          top-4 right-4, у кореневому layout.tsx): на viewport вужчому за
-          max-w-4xl права межа nav збігається з правою межею viewport, і без
-          цього відступу кнопка лягає прямо на "До кабінету". */}
-      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
-        <Link href="/admin/courses" className="flex flex-col leading-tight">
-          <span className="text-lg font-semibold">Trucs de French</span>
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">Адмінка</span>
-        </Link>
+      {/* Лого ("Trucs de French"/"Адмінка") переїхало в CourseSwitcherSidebar
+          (видиме лише всередині курсу) — тут лишається тільки "До кабінету".
+          На courses/page.tsx і courses/new/page.tsx (де sidebar нема) лого
+          тепер узагалі не показується — прямий наслідок "перенести", не
+          "продублювати". pr-14 — той самий резерв під плаваючу ThemeToggle-
+          кнопку (position: fixed, top-4 right-4, у кореневому layout.tsx),
+          що й раніше: на viewport вужчому за max-w-4xl права межа nav
+          збігається з правою межею viewport. */}
+      <nav className="mb-6 flex items-center justify-end gap-4 border-b pb-4 pr-14">
         <Link href="/dashboard" className="text-sm underline">
           До кабінету
         </Link>

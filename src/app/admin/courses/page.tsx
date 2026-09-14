@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { toggleArchive, deleteProductPermanently } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
+import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { AdminLogo } from "@/components/admin-logo";
 
 export default async function AdminCoursesPage({
   searchParams,
@@ -23,11 +25,14 @@ export default async function AdminCoursesPage({
 
   return (
     <div>
+      <div className="mb-6 border-b pb-4">
+        <AdminLogo />
+      </div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Курси</h1>
         <Link
           href="/admin/courses/new"
-          className="rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover"
+          className={BUTTON_PRIMARY_LG}
         >
           + Новий курс
         </Link>
@@ -83,7 +88,7 @@ export default async function AdminCoursesPage({
                   <form action={toggleArchive.bind(null, p.id, false)}>
                     <SubmitButton
                       pendingChildren="..."
-                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className={BUTTON_SECONDARY_SM}
                     >
                       Відновити
                     </SubmitButton>
@@ -94,7 +99,7 @@ export default async function AdminCoursesPage({
                   >
                     <SubmitButton
                       pendingChildren="..."
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                      className={BUTTON_DANGER_SM}
                     >
                       Видалити назавжди
                     </SubmitButton>

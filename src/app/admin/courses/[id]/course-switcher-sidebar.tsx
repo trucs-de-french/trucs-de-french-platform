@@ -11,6 +11,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { AdminLogo } from "@/components/admin-logo";
 
 export type SidebarCourseChild = { key: string; label: string; href: string };
 export type SidebarCourse = {
@@ -50,6 +51,8 @@ export function CourseSwitcherSidebar({
       return next;
     });
   }
+
+  const logo = <AdminLogo onClick={() => setMobileOpen(false)} />;
 
   const q = query.trim().toLowerCase();
   const filtered = q ? courses.filter((c) => c.title.toLowerCase().includes(q)) : courses;
@@ -106,7 +109,7 @@ export function CourseSwitcherSidebar({
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-72 max-w-[80vw] overflow-y-auto bg-white p-4 dark:bg-neutral-950">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-semibold">Курси</span>
+              {logo}
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
@@ -121,7 +124,8 @@ export function CourseSwitcherSidebar({
         </div>
       )}
 
-      <aside className="hidden w-56 shrink-0 lg:sticky lg:top-6 lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:self-start">
+      <aside className="hidden w-56 shrink-0 lg:sticky lg:top-6 lg:flex lg:max-h-[calc(100vh-3rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:self-start">
+        {logo}
         {list}
       </aside>
     </>

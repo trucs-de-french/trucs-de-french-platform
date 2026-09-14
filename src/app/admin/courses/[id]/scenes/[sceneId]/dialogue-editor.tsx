@@ -3,6 +3,7 @@
 import { useState, type DragEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
+import { BUTTON_SECONDARY, BUTTON_DANGER_SM } from "@/lib/button-styles";
 
 type Line = { speaker: string; text: string; vocab: VocabItem[] };
 
@@ -115,7 +116,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
             <button
               type="button"
               onClick={() => removeLine(i)}
-              className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+              className={BUTTON_DANGER_SM}
             >
               Видалити
             </button>
@@ -172,7 +173,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
       <button
         type="button"
         onClick={addLine}
-        className="self-start rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        className={`self-start ${BUTTON_SECONDARY}`}
       >
         + Репліка
       </button>

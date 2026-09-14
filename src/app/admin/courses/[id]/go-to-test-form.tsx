@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BUTTON_SECONDARY } from "@/lib/button-styles";
 
 // Ручне введення номера тесту (1-30) — доповнює "+ Новий тест" (наступний
 // вільний номер), а не замінює: вчитель може хотіти конкретний номер, не
@@ -32,7 +33,7 @@ export function GoToTestForm({ productId }: { productId: string }) {
       />
       <button
         type="submit"
-        className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        className={BUTTON_SECONDARY}
       >
         Перейти
       </button>

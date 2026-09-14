@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { copyMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 
 export default async function CopyMaterialPage({
   params,
@@ -65,7 +66,7 @@ export default async function CopyMaterialPage({
 
         <SubmitButton
           pendingChildren="Копіюю..."
-          className="self-start rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`self-start ${BUTTON_PRIMARY_LG}`}
         >
           Копіювати
         </SubmitButton>

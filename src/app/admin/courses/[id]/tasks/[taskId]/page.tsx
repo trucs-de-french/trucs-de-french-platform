@@ -6,6 +6,7 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { BUTTON_DANGER } from "@/lib/button-styles";
 
 type TaskDetail = {
   id: string;
@@ -125,7 +126,7 @@ export default async function EditTaskPage({
       <form action={deleteTask.bind(null, task.id)} className="mt-3">
         <SubmitButton
           pendingChildren="Видаляю..."
-          className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+          className={BUTTON_DANGER}
         >
           Видалити завдання
         </SubmitButton>

@@ -3,6 +3,8 @@ import { createProduct } from "../actions";
 import { SubmitButton } from "@/components/submit-button";
 import { FileUpload } from "@/components/file-upload";
 import { CourseTypeFields } from "./course-type-fields";
+import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
+import { AdminLogo } from "@/components/admin-logo";
 
 export default async function NewCoursePage({
   searchParams,
@@ -13,6 +15,9 @@ export default async function NewCoursePage({
 
   return (
     <div>
+      <div className="mb-6 border-b pb-4">
+        <AdminLogo />
+      </div>
       <Link href="/admin/courses" className="text-sm underline">
         ← До списку курсів
       </Link>
@@ -60,7 +65,7 @@ export default async function NewCoursePage({
 
         <SubmitButton
           pendingChildren="Створюю..."
-          className="self-start rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`self-start ${BUTTON_PRIMARY_LG}`}
         >
           Створити
         </SubmitButton>

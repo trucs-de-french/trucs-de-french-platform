@@ -20,6 +20,14 @@ import { SubmitButton } from "@/components/submit-button";
 import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
+import {
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
+  BUTTON_SECONDARY_SM,
+  BUTTON_WARNING,
+  BUTTON_DANGER,
+  BUTTON_DANGER_SM,
+} from "@/lib/button-styles";
 
 export default async function AdminCoursePage({
   params,
@@ -137,7 +145,7 @@ export default async function AdminCoursePage({
           <form action={startStudentPreview.bind(null, product.id, undefined)}>
             <SubmitButton
               pendingChildren="..."
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={BUTTON_SECONDARY}
             >
               Переглянути як студент
             </SubmitButton>
@@ -145,11 +153,7 @@ export default async function AdminCoursePage({
           <form action={togglePublish.bind(null, product.id, !product.is_published)}>
             <SubmitButton
               pendingChildren="..."
-              className={
-                product.is_published
-                  ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  : "rounded-md bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-hover"
-              }
+              className={product.is_published ? BUTTON_WARNING : BUTTON_PRIMARY}
             >
               {product.is_published ? "Зняти з публікації" : "Опублікувати"}
             </SubmitButton>
@@ -157,7 +161,7 @@ export default async function AdminCoursePage({
           <form action={toggleArchive.bind(null, product.id, !product.archived_at)}>
             <SubmitButton
               pendingChildren="..."
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={product.archived_at ? BUTTON_SECONDARY : BUTTON_WARNING}
             >
               {product.archived_at ? "Відновити курс" : "Архівувати"}
             </SubmitButton>
@@ -167,10 +171,7 @@ export default async function AdminCoursePage({
               action={deleteProductPermanently.bind(null, product.id)}
               message="Курс і весь вміст (сцени, тести, матеріали, завдання) буде видалено назавжди. Це незворотно. Ви впевнені?"
             >
-              <SubmitButton
-                pendingChildren="..."
-                className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-              >
+              <SubmitButton pendingChildren="..." className={BUTTON_DANGER}>
                 Видалити назавжди
               </SubmitButton>
             </ConfirmForm>
@@ -251,7 +252,7 @@ export default async function AdminCoursePage({
             <form action={createScene.bind(null, product.id)}>
               <SubmitButton
                 pendingChildren="Створюю..."
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Нова сцена
               </SubmitButton>
@@ -290,16 +291,13 @@ export default async function AdminCoursePage({
                   <form action={duplicateScene.bind(null, scene.id)}>
                     <SubmitButton
                       pendingChildren="Копіюю..."
-                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className={BUTTON_SECONDARY_SM}
                     >
                       Копіювати
                     </SubmitButton>
                   </form>
                   <form action={deleteScene.bind(null, scene.id)}>
-                    <SubmitButton
-                      pendingChildren="..."
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                    >
+                    <SubmitButton pendingChildren="..." className={BUTTON_DANGER_SM}>
                       Видалити
                     </SubmitButton>
                   </form>
@@ -321,7 +319,7 @@ export default async function AdminCoursePage({
                 {nextFreeTestNumber && (
                   <Link
                     href={`/admin/courses/${product.id}/tests/${nextFreeTestNumber}`}
-                    className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    className={BUTTON_SECONDARY}
                   >
                     + Новий тест ({nextFreeTestNumber})
                   </Link>
@@ -377,7 +375,7 @@ export default async function AdminCoursePage({
               <h2 className="text-xl font-bold">Матеріали</h2>
               <Link
                 href={`/admin/courses/${product.id}/materials/new`}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Новий матеріал
               </Link>
@@ -404,15 +402,12 @@ export default async function AdminCoursePage({
                   <div className="flex items-center gap-1">
                     <Link
                       href={`/admin/courses/${product.id}/materials/${m.id}/copy`}
-                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className={BUTTON_SECONDARY_SM}
                     >
                       Копіювати
                     </Link>
                     <form action={deleteMaterial.bind(null, m.id, product.id)}>
-                      <SubmitButton
-                        pendingChildren="..."
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                      >
+                      <SubmitButton pendingChildren="..." className={BUTTON_DANGER_SM}>
                         Видалити
                       </SubmitButton>
                     </form>

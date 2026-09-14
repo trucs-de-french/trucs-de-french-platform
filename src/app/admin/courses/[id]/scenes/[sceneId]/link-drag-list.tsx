@@ -3,6 +3,7 @@
 import { useState, type DragEvent } from "react";
 import { deleteLink, reorderLinks } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { BUTTON_DANGER_SM } from "@/lib/button-styles";
 
 type LinkRow = { id: string; platform: string; url: string; label: string | null };
 
@@ -92,7 +93,7 @@ export function LinkDragList({
             <form action={deleteLink.bind(null, link.id)}>
               <SubmitButton
                 pendingChildren="..."
-                className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                className={BUTTON_DANGER_SM}
               >
                 Видалити
               </SubmitButton>

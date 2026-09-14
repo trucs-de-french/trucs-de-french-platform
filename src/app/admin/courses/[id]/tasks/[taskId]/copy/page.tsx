@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { copyTask } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyTaskDestinationFields } from "./copy-task-destination-fields";
+import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 
 export default async function CopyTaskPage({
   params,
@@ -96,7 +97,7 @@ export default async function CopyTaskPage({
 
           <SubmitButton
             pendingChildren="Копіюю..."
-            className="self-start rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50"
+            className={`self-start ${BUTTON_PRIMARY_LG}`}
           >
             Копіювати
           </SubmitButton>

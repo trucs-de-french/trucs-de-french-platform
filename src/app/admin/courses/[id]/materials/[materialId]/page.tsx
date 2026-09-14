@@ -9,6 +9,7 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
+import { BUTTON_SECONDARY, BUTTON_SECONDARY_SM, BUTTON_DANGER, BUTTON_DANGER_SM } from "@/lib/button-styles";
 
 export default async function EditMaterialPage({
   params,
@@ -127,13 +128,13 @@ export default async function EditMaterialPage({
             <div className="flex gap-2">
               <Link
                 href={`/admin/courses/${productId}/task-groups/new?materialId=${material.id}`}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Блок
               </Link>
               <Link
                 href={`/admin/courses/${productId}/tasks/new?materialId=${material.id}`}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Нове завдання
               </Link>
@@ -179,7 +180,7 @@ export default async function EditMaterialPage({
                     <form action={deleteTaskGroup.bind(null, row.id)}>
                       <SubmitButton
                         pendingChildren="..."
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                        className={BUTTON_DANGER_SM}
                       >
                         Видалити
                       </SubmitButton>
@@ -221,14 +222,14 @@ export default async function EditMaterialPage({
                     </form>
                     <Link
                       href={`/admin/courses/${productId}/tasks/${row.id}/copy`}
-                      className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className={BUTTON_SECONDARY_SM}
                     >
                       Копіювати
                     </Link>
                     <form action={deleteTask.bind(null, row.id)}>
                       <SubmitButton
                         pendingChildren="..."
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                        className={BUTTON_DANGER_SM}
                       >
                         Видалити
                       </SubmitButton>
@@ -249,7 +250,7 @@ export default async function EditMaterialPage({
       <form action={deleteMaterial.bind(null, material.id, productId)} className="mt-3">
         <SubmitButton
           pendingChildren="Видаляю..."
-          className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+          className={BUTTON_DANGER}
         >
           Видалити матеріал
         </SubmitButton>

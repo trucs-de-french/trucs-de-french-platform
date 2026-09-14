@@ -6,6 +6,7 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf
 import { deleteTest, toggleTestPublish } from "@/app/admin/tests/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_WARNING, BUTTON_DANGER } from "@/lib/button-styles";
 import { TestSectionDragList } from "./test-section-drag-list";
 
 // Сторінка ОДНОГО DELF-тесту (номер 1-30) — той самий принцип, що сторінка
@@ -126,11 +127,7 @@ export default async function AdminTestPage({
           <form action={toggleTestPublish.bind(null, productId, testNumber, !isTestPublished)}>
             <SubmitButton
               pendingChildren="..."
-              className={
-                isTestPublished
-                  ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  : "rounded-md bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-hover"
-              }
+              className={isTestPublished ? BUTTON_WARNING : BUTTON_PRIMARY}
             >
               {isTestPublished ? "Зняти з публікації" : "Опублікувати"}
             </SubmitButton>
@@ -139,10 +136,7 @@ export default async function AdminTestPage({
             action={deleteTest.bind(null, productId, testNumber)}
             message={`Тест ${testNumber} і всі його задачі (${(tasks?.length ?? 0) + (taskGroups?.length ?? 0)}) буде видалено назавжди. Це незворотно. Ви впевнені?`}
           >
-            <SubmitButton
-              pendingChildren="..."
-              className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-            >
+            <SubmitButton pendingChildren="..." className={BUTTON_DANGER}>
               Видалити тест
             </SubmitButton>
           </ConfirmForm>
@@ -158,13 +152,13 @@ export default async function AdminTestPage({
             <div className="flex gap-2">
               <Link
                 href={`/admin/courses/${productId}/task-groups/new?delfSection=${section}&delfTestNumber=${testNumber}`}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Блок
               </Link>
               <Link
                 href={`/admin/courses/${productId}/tasks/new?delfSection=${section}&delfTestNumber=${testNumber}`}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                className={BUTTON_SECONDARY}
               >
                 + Нове завдання
               </Link>

@@ -13,6 +13,7 @@ import { DialogueEditor } from "./dialogue-editor";
 import { SceneBlockList } from "./scene-block-list";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
+import { BUTTON_SECONDARY } from "@/lib/button-styles";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -203,13 +204,13 @@ export default async function AdminScenePage({
       <div className="flex items-center justify-end gap-2">
         <Link
           href={`/admin/courses/${productId}/task-groups/new?sceneId=${sceneId}`}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={BUTTON_SECONDARY}
         >
           + Блок
         </Link>
         <Link
           href={`/admin/courses/${productId}/tasks/new?sceneId=${sceneId}`}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={BUTTON_SECONDARY}
         >
           + Нове завдання
         </Link>

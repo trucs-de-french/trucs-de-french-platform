@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { MaterialArticleFields } from "../material-article-fields";
+import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 
 export default async function NewMaterialPage({
   params,
@@ -59,7 +60,7 @@ export default async function NewMaterialPage({
 
         <SubmitButton
           pendingChildren="Створюю..."
-          className="self-start rounded-md bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50"
+          className={`self-start ${BUTTON_PRIMARY_LG}`}
         >
           Створити
         </SubmitButton>

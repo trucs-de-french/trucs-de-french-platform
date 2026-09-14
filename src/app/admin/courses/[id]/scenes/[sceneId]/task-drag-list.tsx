@@ -8,6 +8,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
 type GroupRow = { id: string; title: string | null; content_type: string; maxPoints: number };
@@ -254,7 +255,7 @@ export function TaskDragList({
                     <form action={deleteTaskGroup.bind(null, row.id)}>
                       <SubmitButton
                         pendingChildren="..."
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                        className={BUTTON_DANGER_SM}
                       >
                         Видалити
                       </SubmitButton>
@@ -329,14 +330,14 @@ export function TaskDragList({
                   </button>
                   <Link
                     href={`/admin/courses/${productId}/tasks/${row.id}/copy`}
-                    className="rounded border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    className={BUTTON_SECONDARY_SM}
                   >
                     Копіювати
                   </Link>
                   <form action={deleteTask.bind(null, row.id)}>
                     <SubmitButton
                       pendingChildren="..."
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                      className={BUTTON_DANGER_SM}
                     >
                       Видалити
                     </SubmitButton>

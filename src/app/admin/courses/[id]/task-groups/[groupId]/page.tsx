@@ -13,6 +13,7 @@ import { ConfirmForm } from "@/components/confirm-form";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
+import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -138,7 +139,7 @@ export default async function EditTaskGroupPage({
           <h2 className="text-xl font-bold">Задачі блоку</h2>
           <Link
             href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}`}
-            className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className={BUTTON_SECONDARY}
           >
             + Нова задача в блоці
           </Link>
@@ -171,7 +172,7 @@ export default async function EditTaskGroupPage({
             </select>
             <SubmitButton
               pendingChildren="Додаю..."
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={BUTTON_SECONDARY}
             >
               Додати до блоку
             </SubmitButton>
@@ -192,7 +193,7 @@ export default async function EditTaskGroupPage({
         >
           <SubmitButton
             pendingChildren="..."
-            className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+            className={BUTTON_DANGER}
           >
             Видалити блок
           </SubmitButton>
