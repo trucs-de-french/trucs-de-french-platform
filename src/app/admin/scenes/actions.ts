@@ -271,57 +271,46 @@ export async function duplicateScene(sceneId: string) {
   redirect(`/admin/courses/${scene.product_id}`);
 }
 
-export async function moveScene(sceneId: string, direction: "up" | "down") {
+// Drag-and-drop у списку сцен на сторінці курсу — той самий патерн, що
+// reorderLinks/reorderSceneRows: викликається напряму з клієнта (не через
+// <form>), тому {ok, error}, не redirect. Замінює колишню moveScene
+// (up/down через <form>+redirect) — єдине місце виклику, повний рефреш
+// сторінки на кожен клік відчувався зайвим поряд із миттєвим drag.
+export async function reorderScenes(
+  productId: string,
+  orderedSceneIds: string[]
+): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
 
-  const { data: scene } = await supabase
-    .from("scenes")
-    .select("id, product_id, order_index")
-    .eq("id", sceneId)
-    .single();
-  if (!scene) return;
+  const results = await Promise.all(
+    orderedSceneIds.map(async (id, index) => {
+      const { data, error } = await supabase
+        .from("scenes")
+        .update({ order_index: index })
+        .eq("id", id)
+        .eq("product_id", productId)
+        .select("id");
+      return { id, error, affected: data?.length ?? 0 };
+    })
+  );
 
-  const query = supabase
-    .from("scenes")
-    .select("id, order_index")
-    .eq("product_id", scene.product_id);
-
-  const { data: neighbor } =
-    direction === "up"
-      ? await query
-          .lt("order_index", scene.order_index)
-          .order("order_index", { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : await query
-          .gt("order_index", scene.order_index)
-          .order("order_index", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-
-  if (!neighbor) return;
-
-  const { data: updated1, error: error1 } = await supabase
-    .from("scenes")
-    .update({ order_index: neighbor.order_index })
-    .eq("id", scene.id)
-    .select("id");
-  const { data: updated2, error: error2 } = await supabase
-    .from("scenes")
-    .update({ order_index: scene.order_index })
-    .eq("id", neighbor.id)
-    .select("id");
-
-  const error = error1 ?? error2;
-  if (error || !updated1?.length || !updated2?.length) {
-    redirect(
-      `/admin/courses/${scene.product_id}?error=${encodeURIComponent(
-        error?.message ?? "Не вдалося змінити порядок сцен"
-      )}`
-    );
+  const dbError = results.find((r) => r.error)?.error;
+  if (dbError) {
+    console.error(`reorderScenes: помилка запису для курсу ${productId}:`, dbError.message);
+    return { ok: false, error: dbError.message };
   }
 
-  redirect(`/admin/courses/${scene.product_id}`);
+  const missing = results.filter((r) => r.affected === 0);
+  if (missing.length > 0) {
+    console.error(
+      `reorderScenes: 0 рядків оновлено для сцен ${missing
+        .map((r) => r.id)
+        .join(", ")} у курсі ${productId}.`
+    );
+    return { ok: false, error: "Не вдалося зберегти новий порядок сцен" };
+  }
+
+  return { ok: true };
 }
 
 export async function addLink(

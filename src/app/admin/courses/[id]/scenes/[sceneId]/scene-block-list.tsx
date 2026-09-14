@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type DragEvent, type ReactNode } from "react";
+import { GripVertical } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 
 type Block = { type: string; label: string };
@@ -105,7 +106,10 @@ export function SceneBlockList({
                 : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
             }`}
           >
-            <span aria-hidden>⠿</span> {block.label}
+            <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
+              <GripVertical size={14} />
+            </span>
+            {block.label}
           </button>
           {contentByType[block.type]}
         </div>

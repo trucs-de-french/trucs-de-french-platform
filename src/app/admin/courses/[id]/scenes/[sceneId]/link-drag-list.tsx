@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
+import { GripVertical } from "lucide-react";
 import { deleteLink, reorderLinks } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_DANGER_SM } from "@/lib/button-styles";
@@ -8,7 +9,7 @@ import { BUTTON_DANGER_SM } from "@/lib/button-styles";
 type LinkRow = { id: string; platform: string; url: string; label: string | null };
 
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList/TaskDragList:
-// ручка (⠿) — джерело drag, увесь <li> — ціль drop, swap-семантика.
+// ручка (GripVertical) — джерело drag, увесь <li> — ціль drop, swap-семантика.
 //
 // useState(initialLinks) бере пропс лише як ПОЧАТКОВЕ значення — якщо
 // revalidatePath (напр. з addLink) принесе свіжий initialLinks, цей
@@ -86,7 +87,7 @@ export function LinkDragList({
                 className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
                 aria-hidden
               >
-                ⠿
+                <GripVertical size={16} />
               </span>
               {link.platform}: {link.label ?? link.url}
             </span>

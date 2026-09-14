@@ -8,18 +8,14 @@ import {
   startStudentPreview,
   deleteProductPermanently,
 } from "../actions";
-import {
-  createScene,
-  deleteScene,
-  duplicateScene,
-  moveScene,
-} from "@/app/admin/scenes/actions";
+import { createScene } from "@/app/admin/scenes/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
+import { SceneDragList } from "./scene-drag-list";
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
@@ -273,55 +269,13 @@ export default async function AdminCoursePage({
             </form>
           </div>
 
-          <ul className="mt-3 flex flex-col gap-2">
-            {scenes?.map((scene, i) => (
-              <li
-                key={scene.id}
-                className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
-              >
-                <Link
-                  href={`/admin/courses/${product.id}/scenes/${scene.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {scene.title}
-                </Link>
-                <div className="flex items-center gap-1">
-                  <form action={moveScene.bind(null, scene.id, "up")}>
-                    <SubmitButton
-                      disabled={i === 0}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↑
-                    </SubmitButton>
-                  </form>
-                  <form action={moveScene.bind(null, scene.id, "down")}>
-                    <SubmitButton
-                      disabled={i === scenes.length - 1}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
-                    >
-                      ↓
-                    </SubmitButton>
-                  </form>
-                  <form action={duplicateScene.bind(null, scene.id)}>
-                    <SubmitButton
-                      pendingChildren="Копіюю..."
-                      className={BUTTON_SECONDARY_SM}
-                    >
-                      Копіювати
-                    </SubmitButton>
-                  </form>
-                  <form action={deleteScene.bind(null, scene.id)}>
-                    <SubmitButton pendingChildren="..." className={BUTTON_DANGER_SM}>
-                      Видалити
-                    </SubmitButton>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {(!scenes || scenes.length === 0) && (
-            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Сцен ще немає.</p>
-          )}
+          <div className="mt-3">
+            <SceneDragList
+              key={scenes?.map((s) => s.id).join(",") ?? ""}
+              productId={product.id}
+              initialScenes={scenes ?? []}
+            />
+          </div>
         </section>
       ) : (
         <>

@@ -2,6 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
+import { GripVertical } from "lucide-react";
 import { deleteTask, reorderTestRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -157,7 +158,7 @@ export function TestSectionDragList({
               className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
               aria-hidden
             >
-              ⠿
+              <GripVertical size={16} />
             </span>
           );
 

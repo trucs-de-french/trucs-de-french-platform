@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
+import { GripVertical } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
 import { BUTTON_SECONDARY, BUTTON_DANGER_SM } from "@/lib/button-styles";
@@ -99,7 +100,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               className="mt-1.5 cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
               aria-hidden
             >
-              ⠿
+              <GripVertical size={16} />
             </span>
             <input
               placeholder="Спікер"

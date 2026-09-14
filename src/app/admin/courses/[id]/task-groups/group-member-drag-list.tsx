@@ -2,6 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
+import { GripVertical } from "lucide-react";
 import { deleteTask } from "@/app/admin/tasks/actions";
 import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -10,7 +11,7 @@ import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
 type MemberRow = { id: string; type: string; title: string };
 
 // Той самий native HTML5 drag-патерн, що TaskDragList на сторінці сцени
-// (ручка ⠿ — джерело drag, увесь <li> — ціль drop, swap-семантика), але
+// (ручка GripVertical — джерело drag, увесь <li> — ціль drop, swap-семантика), але
 // простіше: усередині блоку лише задачі (блоки не вкладаються одне в
 // одне), тож без розгалуження по kind і без "attach"-гілки. Стрілки ↑/↓
 // одразу спроєктовані як клієнтські (swap із сусідом у вже відомому
@@ -120,7 +121,7 @@ export function GroupMemberDragList({
                 className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
                 aria-hidden
               >
-                ⠿
+                <GripVertical size={16} />
               </span>
               <div>
                 <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">

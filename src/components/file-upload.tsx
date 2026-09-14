@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 type UploadKind = "audio" | "image";
 
 const ACCEPT_BY_KIND: Record<UploadKind, string> = {
   audio: "audio/*",
   image: "image/*",
+};
+
+const LABEL_BY_KIND: Record<UploadKind, string> = {
+  audio: "📎 Завантажити аудіо",
+  image: "📎 Завантажити зображення",
 };
 
 // Завантаження НАПРЯМУ з браузера в Cloudflare R2 (не через наш
@@ -47,6 +52,7 @@ export function FileUpload({
   const [fileName, setFileName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
 
   useEffect(() => {
     if (status !== "uploading") return;
@@ -107,8 +113,14 @@ export function FileUpload({
 
   return (
     <div className="flex flex-col gap-1">
+      {/* sr-only, не hidden — приховано лише візуально, лишається доступним
+          з клавіатури/скрінрідера. <label htmlFor> відкриває системний
+          діалог вибору файлу без жодного JS — стандартна HTML-поведінка,
+          що не спрацьовує лише коли сам input вимкнений (status
+          "uploading"), тому лейбл нижче додатково притлумлений тоді ж. */}
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
         accept={ACCEPT_BY_KIND[kind]}
         disabled={status === "uploading"}
@@ -116,8 +128,16 @@ export function FileUpload({
           const file = e.target.files?.[0];
           if (file) void handleFileChange(file);
         }}
-        className="text-sm"
+        className="sr-only"
       />
+      <label
+        htmlFor={inputId}
+        className={`w-fit rounded-md bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${
+          status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
+        }`}
+      >
+        {LABEL_BY_KIND[kind]}
+      </label>
       {status === "uploading" && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           <span className="inline-block animate-pulse">⏳</span> Завантажую &laquo;{fileName}
