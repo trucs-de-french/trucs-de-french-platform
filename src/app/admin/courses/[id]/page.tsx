@@ -137,7 +137,7 @@ export default async function AdminCoursePage({
               className={
                 product.is_published
                   ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  : "rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+                  : "rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
               }
             >
               {product.is_published ? "Зняти з публікації" : "Опублікувати"}

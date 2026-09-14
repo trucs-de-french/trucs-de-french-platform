@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import {
+  Clapperboard,
+  ChevronDown,
+  ChevronRight,
+  GraduationCap,
+  Menu,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 export type SidebarCourseChild = { key: string; label: string; href: string };
 export type SidebarCourse = {
@@ -54,10 +62,11 @@ export function CourseSwitcherSidebar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Пошук курсу..."
-        className="rounded-md border px-2 py-1.5 text-sm"
+        className="rounded-md border px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
       />
       <CourseGroup
         label="Кіно"
+        icon={Clapperboard}
         courses={film}
         currentCourseId={currentCourseId}
         expanded={expanded}
@@ -66,6 +75,7 @@ export function CourseSwitcherSidebar({
       />
       <CourseGroup
         label="DELF"
+        icon={GraduationCap}
         courses={delf}
         currentCourseId={currentCourseId}
         expanded={expanded}
@@ -120,6 +130,7 @@ export function CourseSwitcherSidebar({
 
 function CourseGroup({
   label,
+  icon: Icon,
   courses,
   currentCourseId,
   expanded,
@@ -127,6 +138,7 @@ function CourseGroup({
   onNavigate,
 }: {
   label: string;
+  icon: LucideIcon;
   courses: SidebarCourse[];
   currentCourseId: string;
   expanded: Set<string>;
@@ -137,10 +149,11 @@ function CourseGroup({
 
   return (
     <div>
-      <p className="mb-1 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+        <Icon size={14} className="shrink-0" />
         {label}
       </p>
-      <ul className="flex flex-col gap-0.5">
+      <ul className="flex flex-col gap-1">
         {courses.map((c) => {
           const isOpen = expanded.has(c.id) && c.children.length > 0;
           return (
@@ -151,16 +164,16 @@ function CourseGroup({
                   onClick={() => onToggleExpanded(c.id)}
                   disabled={c.children.length === 0}
                   aria-label={isOpen ? "Згорнути" : "Розгорнути"}
-                  className="shrink-0 rounded p-1 text-neutral-400 hover:text-black disabled:opacity-0 dark:hover:text-white"
+                  className="shrink-0 rounded p-1 text-indigo-400 hover:text-indigo-600 disabled:opacity-0 dark:hover:text-indigo-400"
                 >
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
                 <Link
                   href={`/admin/courses/${c.id}`}
                   onClick={onNavigate}
-                  className={`block flex-1 truncate rounded-md px-2 py-1.5 text-sm ${
+                  className={`block flex-1 truncate rounded-lg px-2 py-2 text-sm ${
                     c.id === currentCourseId
-                      ? "bg-neutral-100 font-medium dark:bg-neutral-900"
+                      ? "bg-indigo-50 font-medium text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                       : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-900/50"
                   }`}
                 >

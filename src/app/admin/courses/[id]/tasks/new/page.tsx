@@ -93,7 +93,7 @@ export default async function NewTaskPage({
         <div className="sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
           <SubmitButton
             pendingChildren="Створюю..."
-            className="self-start rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+            className="self-start rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
           >
             Створити
           </SubmitButton>

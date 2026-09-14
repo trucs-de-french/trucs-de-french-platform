@@ -49,9 +49,9 @@ import { getTypeTransform, type LinkEmbedFields } from "./type-compatibility";
 import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
-  TASK_TYPE_ICON,
   getTaskTypeCategory,
 } from "@/lib/exercises/task-type-meta";
+import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileUpload } from "@/components/file-upload";
 
@@ -325,23 +325,17 @@ export function TaskConfigFields({
   }
 
   const taskTypeCategory = getTaskTypeCategory(type);
-  // TASK_TYPE_ICON[type] напряму (не через функцію getTaskTypeIcon) — react
-  // hooks eslint-плагін помилково трактує "змінна = виклик функції, потім
-  // <Змінна/> у JSX" як "компонент створюється під час рендеру", навіть
-  // якщо функція — чистий пошук у мапі; пряме звернення до об'єкта цю
-  // евристику не зачіпає (перевірено в вихідному коді плагіна).
-  const TypeIcon = TASK_TYPE_ICON[type];
 
   return (
     <>
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
+          <TaskTypeIconBadge type={type} size="xs" />
           {taskTypeCategory && (
             <span
               className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${CATEGORY_COLORS[taskTypeCategory].badge}`}
             >
-              {TypeIcon && <TypeIcon className="h-3 w-3" aria-hidden />}
               {CATEGORY_LABELS[taskTypeCategory]}
             </span>
           )}

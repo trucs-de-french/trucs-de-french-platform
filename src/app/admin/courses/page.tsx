@@ -27,7 +27,7 @@ export default async function AdminCoursesPage({
         <h1 className="text-2xl font-bold">Курси</h1>
         <Link
           href="/admin/courses/new"
-          className="rounded-md bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
         >
           + Новий курс
         </Link>
@@ -38,7 +38,7 @@ export default async function AdminCoursesPage({
           href="/admin/courses"
           className={`px-3 py-2 text-sm font-medium ${
             !showArchived
-              ? "border-b-2 border-black text-black dark:border-white dark:text-white"
+              ? "border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
               : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
           }`}
         >
@@ -48,7 +48,7 @@ export default async function AdminCoursesPage({
           href="/admin/courses?archived=1"
           className={`px-3 py-2 text-sm font-medium ${
             showArchived
-              ? "border-b-2 border-black text-black dark:border-white dark:text-white"
+              ? "border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
               : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
           }`}
         >

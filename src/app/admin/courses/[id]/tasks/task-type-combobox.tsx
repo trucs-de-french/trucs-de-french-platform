@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CATEGORY_COLORS, TASK_TYPE_ICON, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 
 // Кастомний searchable-комбобокс замість нативного <select> — щоб додати
 // пошук у довгому списку (20+ типів) і показати іконку/колір категорії на
@@ -40,7 +41,6 @@ export function TaskTypeCombobox({
   }, []);
 
   const selected = options.find((o) => o.value === value);
-  const SelectedIcon = selected ? TASK_TYPE_ICON[selected.value] : undefined;
 
   const normalizedQuery = query.trim().toLowerCase();
   const filtered = normalizedQuery
@@ -73,7 +73,7 @@ export function TaskTypeCombobox({
         className="flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
       >
         <span className="flex items-center gap-2">
-          {SelectedIcon && <SelectedIcon className="h-4 w-4" aria-hidden />}
+          {selected && <TaskTypeIconBadge type={selected.value} size="sm" />}
           {selected?.label ?? "Оберіть тип"}
         </span>
         <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
@@ -98,7 +98,6 @@ export function TaskTypeCombobox({
               </li>
             )}
             {filtered.map((opt) => {
-              const Icon = TASK_TYPE_ICON[opt.value];
               const category = getTaskTypeCategory(opt.value);
               return (
                 <li key={opt.value} role="option" aria-selected={opt.value === value}>
@@ -109,13 +108,13 @@ export function TaskTypeCombobox({
                       opt.value === value ? "bg-neutral-100 dark:bg-neutral-800" : ""
                     }`}
                   >
+                    <TaskTypeIconBadge type={opt.value} size="xs" />
                     {category && (
                       <span
                         className={`h-2 w-2 shrink-0 rounded-full ${CATEGORY_COLORS[category].dot}`}
                         aria-hidden
                       />
                     )}
-                    {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden />}
                     {opt.label}
                   </button>
                 </li>

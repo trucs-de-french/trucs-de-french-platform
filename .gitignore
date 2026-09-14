@@ -44,3 +44,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 supabase/.temp/
+
+# локальні дизайн-референси (скріншоти тощо) — лише для розробки, не для репо
+/design-refs/

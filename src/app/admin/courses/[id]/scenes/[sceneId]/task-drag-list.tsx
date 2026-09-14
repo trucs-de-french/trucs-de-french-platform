@@ -5,11 +5,8 @@ import Link from "next/link";
 import { deleteTask, reorderSceneRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
-import {
-  CATEGORY_COLORS,
-  getTaskTypeCategory,
-  getTaskTypeIcon,
-} from "@/lib/exercises/task-type-meta";
+import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
@@ -268,7 +265,6 @@ export function TaskDragList({
             );
           }
 
-          const Icon = getTaskTypeIcon(row.type);
           const preview = getTaskPreview(row.config);
           const isExpanded = expanded.has(row.id);
           return (
@@ -297,13 +293,13 @@ export function TaskDragList({
                       {isExpanded ? "▾" : "▸"}
                     </button>
                   )}
+                  <TaskTypeIconBadge type={row.type} />
                   <div>
                     <span
                       className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase ${badgeClassFor(
                         row.type
                       )}`}
                     >
-                      {Icon && <Icon className="h-3 w-3" aria-hidden />}
                       {row.type}
                     </span>
                     <Link
