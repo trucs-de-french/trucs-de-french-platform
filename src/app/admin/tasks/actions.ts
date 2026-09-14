@@ -23,6 +23,13 @@ function resolveAudioUrl(formData: FormData): string | null {
   return uploadedUrl || (formData.get("task_audio_url") as string) || null;
 }
 
+// Той самий принцип, що resolveAudioUrl — task_image_file_url (FileUpload
+// kind="image") перекриває task_image_url (текстове поле), якщо файл обрано.
+function resolveImageUrl(formData: FormData): string | null {
+  const uploadedUrl = (formData.get("task_image_file_url") as string) || "";
+  return uploadedUrl || (formData.get("task_image_url") as string) || null;
+}
+
 function buildConfig(type: string, formData: FormData): Record<string, unknown> {
   switch (type) {
     case "essay_check": {
@@ -356,7 +363,7 @@ export async function createTask(formData: FormData) {
       title,
       order_index: orderIndex,
       config: buildConfig(type, formData),
-      image_url: (formData.get("task_image_url") as string) || null,
+      image_url: resolveImageUrl(formData),
       audio_url: resolveAudioUrl(formData),
       // Чекбокс рендериться лише для POINTS_SUPPORTED_TASK_TYPES
       // (TaskConfigFields, isPointsSupportedTaskType) — для решти типів
@@ -403,7 +410,7 @@ export async function updateTask(
       type,
       title,
       config: buildConfig(type, formData),
-      image_url: (formData.get("task_image_url") as string) || null,
+      image_url: resolveImageUrl(formData),
       audio_url: resolveAudioUrl(formData),
       points_visible: formData.get("points_visible") === "true",
       delf_section: (formData.get("delf_section") as string) || null,

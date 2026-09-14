@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createProduct } from "../actions";
 import { SubmitButton } from "@/components/submit-button";
+import { FileUpload } from "@/components/file-upload";
 import { CourseTypeFields } from "./course-type-fields";
 
 export default async function NewCoursePage({
@@ -51,6 +52,10 @@ export default async function NewCoursePage({
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Обкладинка (URL)</label>
           <input name="cover_image_url" type="url" className="rounded-md border px-3 py-2" />
+          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Або завантажити картинку (перекриє URL вище, якщо вибрано)
+          </label>
+          <FileUpload kind="image" name="cover_image_file_url" />
         </div>
 
         <SubmitButton

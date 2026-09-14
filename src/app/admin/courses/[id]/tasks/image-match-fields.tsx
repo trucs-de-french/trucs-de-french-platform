@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ImageMatchConfig, ImageMatchItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { FileUpload } from "@/components/file-upload";
 
 function emptyItem(): ImageMatchItem {
   return { id: crypto.randomUUID(), imageUrl: "", name: "" };
@@ -71,12 +72,21 @@ export const ImageMatchFields = forwardRef<
 
       {items.map((item) => (
         <div key={item.id} className="flex items-center gap-2 rounded-md border p-2">
-          <input
-            value={item.imageUrl}
-            onChange={(e) => updateItem(item.id, "imageUrl", e.target.value)}
-            placeholder="URL зображення"
-            className="flex-1 rounded-md border px-2 py-1 text-sm"
-          />
+          <div className="flex flex-1 flex-col gap-1">
+            <input
+              value={item.imageUrl}
+              onChange={(e) => updateItem(item.id, "imageUrl", e.target.value)}
+              placeholder="URL зображення"
+              className="rounded-md border px-2 py-1 text-sm"
+            />
+            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              Або завантажити картинку (перекриє URL вище, якщо вибрано)
+            </label>
+            <FileUpload
+              kind="image"
+              onUploaded={(url) => updateItem(item.id, "imageUrl", url)}
+            />
+          </div>
           <input
             value={item.name}
             onChange={(e) => updateItem(item.id, "name", e.target.value)}

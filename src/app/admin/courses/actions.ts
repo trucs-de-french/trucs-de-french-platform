@@ -6,6 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 import { PREVIEW_COOKIE, previewCookieOptions } from "@/lib/course-preview";
 import type { ActionState } from "@/lib/action-state";
 
+// Той самий принцип, що resolveAudioUrl/resolveImageUrl у
+// admin/tasks/actions.ts — cover_image_file_url (FileUpload kind="image")
+// перекриває cover_image_url (текстове поле), якщо файл обрано.
+function resolveCoverImageUrl(formData: FormData): string | null {
+  const uploadedUrl = (formData.get("cover_image_file_url") as string) || "";
+  return uploadedUrl || (formData.get("cover_image_url") as string) || null;
+}
+
 export async function createProduct(formData: FormData) {
   const supabase = await createClient();
 
@@ -22,7 +30,7 @@ export async function createProduct(formData: FormData) {
       title: formData.get("title") as string,
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price") || 0),
-      cover_image_url: (formData.get("cover_image_url") as string) || null,
+      cover_image_url: resolveCoverImageUrl(formData),
     })
     .select()
     .single();
@@ -47,7 +55,7 @@ export async function updateProduct(
       title: formData.get("title") as string,
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price") || 0),
-      cover_image_url: (formData.get("cover_image_url") as string) || null,
+      cover_image_url: resolveCoverImageUrl(formData),
       // type незмінний після створення (форма його не показує), тож поле
       // level рендериться лише для вже-DELF продуктів — для film-продуктів
       // його просто нема у formData, і сюди пише null (коректно й так).

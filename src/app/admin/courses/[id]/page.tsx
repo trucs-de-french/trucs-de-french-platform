@@ -18,6 +18,7 @@ import { deleteTest } from "@/app/admin/tests/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
+import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 
@@ -213,6 +214,10 @@ export default async function AdminCoursePage({
             defaultValue={product.cover_image_url ?? ""}
             className="rounded-md border px-3 py-2"
           />
+          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Або завантажити картинку (перекриє URL вище, якщо вибрано)
+          </label>
+          <FileUpload kind="image" name="cover_image_file_url" />
         </div>
 
         {product.type === "delf" && (
