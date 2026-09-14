@@ -20,9 +20,21 @@ export function AdminLogo({
   size?: "sm" | "lg";
 }) {
   return (
-    <Link href="/admin/courses" className="flex flex-col leading-tight" onClick={onClick}>
+    <Link
+      href="/admin/courses"
+      className={size === "sm" ? "flex flex-col leading-tight" : "flex items-center leading-tight"}
+      onClick={onClick}
+    >
       <PlatformWordmark size={size} />
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">Адмінка</span>
+      <span
+        className={
+          size === "sm"
+            ? "text-xs text-neutral-500 dark:text-neutral-400"
+            : "ml-3 rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent"
+        }
+      >
+        Адмінка
+      </span>
     </Link>
   );
 }

@@ -18,9 +18,12 @@ export default async function NewCoursePage({
     <div>
       {/* pr-14 — той самий резерв під плаваючу ThemeToggle-кнопку, що був у
           спільному admin/layout.tsx nav (тепер видаленому). */}
-      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
+      <nav className="mb-8 flex items-center justify-between gap-4 border-b border-gray-200 pb-4 pr-14 dark:border-neutral-800">
         <AdminLogo />
-        <Link href="/dashboard" className="text-sm underline">
+        <Link
+          href="/dashboard"
+          className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
+        >
           До кабінету
         </Link>
       </nav>

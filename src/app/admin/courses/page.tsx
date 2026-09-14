@@ -29,9 +29,12 @@ export default async function AdminCoursesPage({
           top-4 right-4, у кореневому layout.tsx) — той самий, що раніше був
           у спільному admin/layout.tsx nav, перенесений сюди разом з "До
           кабінету" (admin/layout.tsx більше не рендерить жодного nav). */}
-      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
+      <nav className="mb-8 flex items-center justify-between gap-4 border-b border-gray-200 pb-4 pr-14 dark:border-neutral-800">
         <AdminLogo />
-        <Link href="/dashboard" className="text-sm underline">
+        <Link
+          href="/dashboard"
+          className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
+        >
           До кабінету
         </Link>
       </nav>
@@ -45,23 +48,23 @@ export default async function AdminCoursesPage({
         </Link>
       </div>
 
-      <div className="mt-4 flex gap-1 border-b">
+      <div className="mt-4 flex gap-1 border-b border-gray-200 dark:border-neutral-800">
         <Link
           href="/admin/courses"
-          className={`px-3 py-2 text-sm font-medium ${
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
             !showArchived
-              ? "border-b-2 border-brand text-brand"
-              : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+              ? "border-brand text-brand"
+              : "border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300"
           }`}
         >
           Активні
         </Link>
         <Link
           href="/admin/courses?archived=1"
-          className={`px-3 py-2 text-sm font-medium ${
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
             showArchived
-              ? "border-b-2 border-brand text-brand"
-              : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+              ? "border-brand text-brand"
+              : "border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300"
           }`}
         >
           Архівні
@@ -72,7 +75,7 @@ export default async function AdminCoursesPage({
         {products?.map((p) => (
           <li
             key={p.id}
-            className="flex items-center justify-between rounded-md border p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-indigo-700 dark:hover:bg-neutral-700"
           >
             <Link href={`/admin/courses/${p.id}`} className="flex-1">
               <p className="font-medium">{p.title}</p>
