@@ -3,15 +3,21 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
+import { deleteTest, toggleTestPublish } from "@/app/admin/tests/actions";
+import { SubmitButton } from "@/components/submit-button";
+import { ConfirmForm } from "@/components/confirm-form";
 import { TestSectionDragList } from "./test-section-drag-list";
 
 // Сторінка ОДНОГО DELF-тесту (номер 1-30) — той самий принцип, що сторінка
 // сцени фільму, лише замість однієї спільної послідовності задач тут ЧОТИРИ
 // незалежні секції (CO/CE/PE/PO, EXAM_SECTIONS), кожна зі своїм власним
 // order_index-скоупом (task-order.ts, Крок 1) і власним перетягуваним
-// списком. Жодної окремої таблиці "тестів" нема — номер тесту існує лише
-// як значення delf_test_number на задачах/блоках, той самий підхід, що вже
-// в студентському DelfTestGrid.
+// списком. Досі немає окремої таблиці для самого поняття "тест" — номер
+// існує лише як значення delf_test_number на задачах/блоках (той самий
+// підхід, що в студентському DelfTestGrid); є лише delf_tests
+// (0035_delf_test_published.sql) — суто візуальний прапорець
+// опубліковано/чернетка для сітки на сторінці курсу, не джерело істини про
+// існування тесту.
 export default async function AdminTestPage({
   params,
 }: {
@@ -23,23 +29,31 @@ export default async function AdminTestPage({
 
   const supabase = await createClient();
 
-  const [{ data: product }, { data: tasks }, { data: taskGroups }] = await Promise.all([
-    supabase.from("products").select("id, title, type, level").eq("id", productId).single(),
-    supabase
-      .from("tasks")
-      .select("id, type, title, config, order_index, delf_section")
-      .eq("product_id", productId)
-      .eq("delf_test_number", testNumber)
-      .order("order_index"),
-    supabase
-      .from("task_groups")
-      .select(
-        "id, title, content_type, points_mode, flat_points, order_index, delf_section"
-      )
-      .eq("product_id", productId)
-      .eq("delf_test_number", testNumber)
-      .order("order_index"),
-  ]);
+  const [{ data: product }, { data: tasks }, { data: taskGroups }, { data: delfTest }] =
+    await Promise.all([
+      supabase.from("products").select("id, title, type, level").eq("id", productId).single(),
+      supabase
+        .from("tasks")
+        .select("id, type, title, config, order_index, delf_section")
+        .eq("product_id", productId)
+        .eq("delf_test_number", testNumber)
+        .order("order_index"),
+      supabase
+        .from("task_groups")
+        .select(
+          "id, title, content_type, points_mode, flat_points, order_index, delf_section"
+        )
+        .eq("product_id", productId)
+        .eq("delf_test_number", testNumber)
+        .order("order_index"),
+      supabase
+        .from("delf_tests")
+        .select("is_published")
+        .eq("product_id", productId)
+        .eq("test_number", testNumber)
+        .maybeSingle(),
+    ]);
+  const isTestPublished = delfTest?.is_published ?? false;
 
   // type !== "delf" — сторінка тесту не має сенсу для фільмів (немає
   // delf_section/delf_test_number), той самий guard, що isFilm на сторінці
@@ -99,14 +113,41 @@ export default async function AdminTestPage({
       <Link href={`/admin/courses/${productId}#tasks`} className="text-sm underline">
         ← До курсу
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">
-        Тест {testNumber}
-        {product.level && (
-          <span className="ml-2 text-base font-normal text-neutral-500 dark:text-neutral-400">
-            {product.level}
-          </span>
-        )}
-      </h1>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="font-heading text-2xl font-bold">
+          Тест {testNumber}
+          {product.level && (
+            <span className="ml-2 text-base font-normal text-neutral-500 dark:text-neutral-400">
+              {product.level}
+            </span>
+          )}
+        </h1>
+        <div className="flex items-center gap-2">
+          <form action={toggleTestPublish.bind(null, productId, testNumber, !isTestPublished)}>
+            <SubmitButton
+              pendingChildren="..."
+              className={
+                isTestPublished
+                  ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  : "rounded-md bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-hover"
+              }
+            >
+              {isTestPublished ? "Зняти з публікації" : "Опублікувати"}
+            </SubmitButton>
+          </form>
+          <ConfirmForm
+            action={deleteTest.bind(null, productId, testNumber)}
+            message={`Тест ${testNumber} і всі його задачі (${(tasks?.length ?? 0) + (taskGroups?.length ?? 0)}) буде видалено назавжди. Це незворотно. Ви впевнені?`}
+          >
+            <SubmitButton
+              pendingChildren="..."
+              className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+            >
+              Видалити тест
+            </SubmitButton>
+          </ConfirmForm>
+        </div>
+      </div>
 
       {EXAM_SECTIONS.map((section) => (
         <section key={section} className="mt-6">

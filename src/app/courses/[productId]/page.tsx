@@ -36,7 +36,7 @@ export default async function CoursePage({
         <Link href="/dashboard" className="text-sm underline">
           ← До кабінету
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
+        <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
         <PreviewBlocked productId={productId} />
       </main>
     );
@@ -49,7 +49,7 @@ export default async function CoursePage({
           ← До кабінету
         </Link>
         {isPreviewing && <PreviewBanner productId={productId} />}
-        <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
+        <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
         )}
@@ -74,7 +74,7 @@ export default async function CoursePage({
         ← До кабінету
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 text-2xl font-semibold">{product.title}</h1>
+      <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
       {product.description && (
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
       )}

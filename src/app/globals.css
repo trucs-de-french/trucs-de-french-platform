@@ -19,8 +19,8 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f5fa;
+  --foreground: #1b1b2e;
 }
 
 /* Без JS (чи до першого виконання theme-script.ts) клас .dark/.light ніколи
@@ -47,6 +47,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Лише для заголовків курсів/сцен/тестів (клас font-heading, точково на
+     ~6-8 h1) — решта UI лишається на Geist Sans/Roboto, як і було. */
+  --font-heading: var(--font-serif-heading);
+
+  /* Точні hex із дизайн-документа (не наближені Tailwind-класи, як на
+     попередньому етапі) — один відтінок на обидві теми: обидва кольори
+     достатньо контрастні і на світлому, і на темному тлі, м'які фони
+     активних станів роблять прозорістю (bg-brand/10 тощо), не другим hex. */
+  --color-brand: #8b3fa0;
+  --color-brand-hover: #763688;
+  --color-accent: #2ec4d6;
 }
 
 body {

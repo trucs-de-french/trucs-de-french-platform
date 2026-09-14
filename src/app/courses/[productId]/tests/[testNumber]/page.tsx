@@ -39,7 +39,7 @@ export default async function DelfTestPage({
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До тестів
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">
+        <h1 className="mt-2 font-heading text-2xl font-semibold">
           {product.title} — Тест {testNumber}
         </h1>
         <PreviewBlocked productId={productId} />
@@ -53,7 +53,7 @@ export default async function DelfTestPage({
         ← До тестів
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 text-2xl font-semibold">
+      <h1 className="mt-2 font-heading text-2xl font-semibold">
         {product.title} — Тест {testNumber}
       </h1>
 

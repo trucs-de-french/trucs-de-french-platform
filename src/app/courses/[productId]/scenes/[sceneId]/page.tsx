@@ -117,7 +117,7 @@ export default async function ScenePage({
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До курсу
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{scene.title}</h1>
+        <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
         <PreviewBlocked productId={productId} />
       </main>
     );
@@ -595,7 +595,7 @@ export default async function ScenePage({
         ← До курсу
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 text-2xl font-semibold">{scene.title}</h1>
+      <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
 
       {blockOrder.map((type) => (
         <Fragment key={type}>{nodeByBlockType[type]}</Fragment>

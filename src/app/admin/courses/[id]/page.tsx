@@ -14,7 +14,6 @@ import {
   duplicateScene,
   moveScene,
 } from "@/app/admin/scenes/actions";
-import { deleteTest } from "@/app/admin/tests/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
@@ -98,6 +97,18 @@ export default async function AdminCoursePage({
     }
   }
 
+  // Суто візуальний статус для плиток сітки (0035_delf_test_published.sql)
+  // — відсутній рядок трактується як чернетка, ніколи як "заблоковано";
+  // "заблоковано" визначається окремо, лише відсутністю в testNumbers.
+  const { data: publishedTests } = !isFilm
+    ? await supabase
+        .from("delf_tests")
+        .select("test_number")
+        .eq("product_id", id)
+        .eq("is_published", true)
+    : { data: null };
+  const publishedTestNumbers = new Set((publishedTests ?? []).map((r) => r.test_number));
+
   const { data: materials } = !isFilm
     ? await supabase
         .from("materials")
@@ -115,7 +126,7 @@ export default async function AdminCoursePage({
 
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{product.title}</h1>
+          <h1 className="font-heading text-2xl font-bold">{product.title}</h1>
           {product.archived_at && (
             <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
               Архівовано
@@ -137,7 +148,7 @@ export default async function AdminCoursePage({
               className={
                 product.is_published
                   ? "rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  : "rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  : "rounded-md bg-brand px-3 py-1.5 text-sm text-white hover:bg-brand-hover"
               }
             >
               {product.is_published ? "Зняти з публікації" : "Опублікувати"}
@@ -318,42 +329,47 @@ export default async function AdminCoursePage({
               </div>
             </div>
 
-            <ul className="mt-3 flex flex-col gap-2">
-              {testNumbers.map((n) => {
+            <div className="mt-3 grid grid-cols-6 gap-2 sm:grid-cols-10">
+              {Array.from({ length: 30 }, (_, i) => i + 1).map((n) => {
+                const exists = testNumbers.includes(n);
+                const published = publishedTestNumbers.has(n);
                 const taskCount = taskCountByTest.get(n) ?? 0;
                 const groupCount = groupCountByTest.get(n) ?? 0;
                 return (
-                  <li
+                  <Link
                     key={n}
-                    className="flex items-center justify-between rounded-md border p-3"
+                    href={`/admin/courses/${product.id}/tests/${n}`}
+                    title={
+                      !exists
+                        ? `Тест ${n} — ще не створено`
+                        : `Тест ${n} — ${taskCount} задач${groupCount > 0 ? `, ${groupCount} блоків` : ""} (${published ? "опубліковано" : "чернетка"})`
+                    }
+                    className={`flex aspect-square items-center justify-center rounded-md text-sm font-medium ${
+                      !exists
+                        ? "bg-neutral-100 text-neutral-400 hover:bg-neutral-200 dark:bg-neutral-900 dark:text-neutral-600 dark:hover:bg-neutral-800"
+                        : published
+                          ? "bg-accent text-white hover:opacity-90"
+                          : "bg-brand text-white hover:opacity-90"
+                    }`}
                   >
-                    <Link
-                      href={`/admin/courses/${product.id}/tests/${n}`}
-                      className="font-medium hover:underline"
-                    >
-                      Тест {n}
-                      <span className="ml-2 text-xs font-normal uppercase text-neutral-500 dark:text-neutral-400">
-                        {taskCount} задач{groupCount > 0 && `, ${groupCount} блоків`}
-                      </span>
-                    </Link>
-                    <ConfirmForm
-                      action={deleteTest.bind(null, product.id, n)}
-                      message={`Тест ${n} і всі його задачі (${taskCount + groupCount}) буде видалено назавжди. Це незворотно. Ви впевнені?`}
-                    >
-                      <SubmitButton
-                        pendingChildren="..."
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
-                      >
-                        Видалити тест
-                      </SubmitButton>
-                    </ConfirmForm>
-                  </li>
+                    {n}
+                  </Link>
                 );
               })}
-            </ul>
-            {testNumbers.length === 0 && (
-              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Тестів ще немає.</p>
-            )}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
+              <span className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-sm bg-accent" /> Опубліковано
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-sm bg-brand" /> Чернетка
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-sm bg-neutral-100 dark:bg-neutral-900" /> Заблоковано
+                (ще не відкрито)
+              </span>
+            </div>
           </section>
 
           <section id="materials" className="mt-6">

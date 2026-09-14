@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
@@ -16,6 +16,22 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin", "cyrillic"],
+});
+
+// Лише для заголовків назв курсів/сцен/тестів (font-heading, globals.css) —
+// не замінює Geist Sans як основний шрифт UI, той самий принцип, що вже
+// застосований до Roboto в admin/layout.tsx (окрема variable, вузьке
+// призначення, не сайт-вайд основний шрифт).
+//
+// Playfair Display, не Fraunces — Fraunces/Newsreader (варіанти з
+// дизайн-документа) НЕ мають кириличного підсету в Google Fonts (лише
+// latin/latin-ext/vietnamese), а назви курсів/сцен/тестів переважно
+// українською; без кирилиці шрифт просто не застосувався б до реального
+// контенту. Playfair Display — найближчий за характером (виразний,
+// високий контраст) варіант із повною кириличною підтримкою.
+const playfairDisplay = Playfair_Display({
+  variable: "--font-serif-heading",
   subsets: ["latin", "cyrillic"],
 });
 
@@ -39,7 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

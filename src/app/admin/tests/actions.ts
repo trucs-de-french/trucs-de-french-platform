@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 // Видаляє ВЕСЬ DELF-тест — усі задачі й блоки з цим product_id+
@@ -37,4 +38,28 @@ export async function deleteTest(productId: string, testNumber: number) {
   }
 
   redirect(`/admin/courses/${productId}`);
+}
+
+// Суто візуальний статус для сітки тестів на сторінці курсу (delf_tests,
+// 0035_delf_test_published.sql) — НЕ впливає на реальний доступ студентів
+// (той і далі керується лише products.is_published). Викликається зі
+// сторінки ОКРЕМОГО тесту, тож без revalidatePath курс-сторінка (де й видно
+// сітку) лишалась би зі старим кольором плитки до наступного повного заходу.
+export async function toggleTestPublish(productId: string, testNumber: number, next: boolean) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("delf_tests")
+    .upsert(
+      { product_id: productId, test_number: testNumber, is_published: next },
+      { onConflict: "product_id,test_number" }
+    );
+
+  if (error) {
+    redirect(
+      `/admin/courses/${productId}/tests/${testNumber}?error=${encodeURIComponent(error.message)}`
+    );
+  }
+
+  revalidatePath(`/admin/courses/${productId}`);
 }

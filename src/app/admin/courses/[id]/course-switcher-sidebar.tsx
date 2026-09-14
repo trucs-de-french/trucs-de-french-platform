@@ -62,7 +62,7 @@ export function CourseSwitcherSidebar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Пошук курсу..."
-        className="rounded-md border px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="rounded-md border px-2 py-1.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
       />
       <CourseGroup
         label="Кіно"
@@ -164,7 +164,7 @@ function CourseGroup({
                   onClick={() => onToggleExpanded(c.id)}
                   disabled={c.children.length === 0}
                   aria-label={isOpen ? "Згорнути" : "Розгорнути"}
-                  className="shrink-0 rounded p-1 text-indigo-400 hover:text-indigo-600 disabled:opacity-0 dark:hover:text-indigo-400"
+                  className="shrink-0 rounded p-1 text-brand/60 hover:text-brand disabled:opacity-0"
                 >
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
@@ -173,7 +173,7 @@ function CourseGroup({
                   onClick={onNavigate}
                   className={`block flex-1 truncate rounded-lg px-2 py-2 text-sm ${
                     c.id === currentCourseId
-                      ? "bg-indigo-50 font-medium text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
+                      ? "bg-brand/10 font-medium text-brand"
                       : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-900/50"
                   }`}
                 >
