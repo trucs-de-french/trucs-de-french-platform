@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PlatformWordmark } from "./platform-wordmark";
 
 // Єдине джерело розмітки лого адмінки — використовується і в
 // CourseSwitcherSidebar (сторінки всередині курсу), і напряму на
@@ -6,10 +7,21 @@ import Link from "next/link";
 // sidebar, де інакше лого не показувалось би взагалі). admin/layout.tsx
 // свідомо його не рендерить — лого живе рівно в одному з цих місць на
 // будь-якій конкретній сторінці, ніде не дублюється.
-export function AdminLogo({ onClick }: { onClick?: () => void }) {
+//
+// "Адмінка"-підпис — навмисно поза PlatformWordmark (він лише про назву
+// платформи, не про те, що це саме адмінка) — єдине місце, яке каже
+// вчителю "ви в адмінці".
+export function AdminLogo({
+  onClick,
+  size = "lg",
+}: {
+  onClick?: () => void;
+  // "sm" — для вузького sidebar (w-56), де "lg" не влазить/переноситься.
+  size?: "sm" | "lg";
+}) {
   return (
     <Link href="/admin/courses" className="flex flex-col leading-tight" onClick={onClick}>
-      <span className="text-lg font-semibold">Trucs de French</span>
+      <PlatformWordmark size={size} />
       <span className="text-xs text-neutral-500 dark:text-neutral-400">Адмінка</span>
     </Link>
   );

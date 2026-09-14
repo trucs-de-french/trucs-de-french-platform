@@ -53,7 +53,7 @@ export function CourseSwitcherSidebar({
     });
   }
 
-  const logo = <AdminLogo onClick={() => setMobileOpen(false)} />;
+  const logo = <AdminLogo onClick={() => setMobileOpen(false)} size="sm" />;
   const backToDashboard = (
     <Link
       href="/dashboard"

@@ -50,6 +50,9 @@
   /* Лише для заголовків курсів/сцен/тестів (клас font-heading, точково на
      ~6-8 h1) — решта UI лишається на Geist Sans/Roboto, як і було. */
   --font-heading: var(--font-serif-heading);
+  /* Лише для вордмарку "Trucs d'French" (platform-wordmark.tsx). */
+  --font-brand-sans: var(--font-montserrat);
+  --font-brand-serif: var(--font-cormorant);
 
   /* Відкочено з точних hex дизайн-документа (#8B3FA0/#2EC4D6) назад на
      Tailwind indigo-600/cyan-400 — вчителю більше сподобався попередній

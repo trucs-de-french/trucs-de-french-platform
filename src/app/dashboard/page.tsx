@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "../login/actions";
 import { CourseTabs } from "./course-tabs";
+import { PlatformWordmark } from "@/components/platform-wordmark";
 
 export default async function DashboardPage({
   searchParams,
@@ -38,9 +39,7 @@ export default async function DashboardPage({
     <main className="mx-auto max-w-2xl p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-            Trucs de French
-          </p>
+          <PlatformWordmark size="sm" />
           <h1 className="text-2xl font-semibold">Мій кабінет</h1>
         </div>
         <div className="flex items-center gap-4">

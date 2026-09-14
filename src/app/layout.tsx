@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond } from "next/font/google";
 import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
@@ -35,6 +35,21 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin", "cyrillic"],
 });
 
+// Обидва — лише для вордмарку "Trucs d'French" (platform-wordmark.tsx),
+// фіксованого латинського тексту — кирилиця не потрібна (на відміну від
+// Playfair Display вище, який рендерить реальні українські назви курсів).
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  weight: ["800"],
+  subsets: ["latin"],
+});
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  weight: ["500"],
+  style: ["italic"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Trucs de French",
   description: "Платформа для вивчення французької мови через кіно та DELF",
@@ -55,7 +70,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
