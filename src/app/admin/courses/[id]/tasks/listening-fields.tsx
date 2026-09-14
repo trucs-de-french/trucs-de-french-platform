@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { FileUpload } from "@/components/file-upload";
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -172,12 +173,18 @@ export const ListeningFields = forwardRef<
                     placeholder="Варіант відповіді"
                     className="flex-1 rounded-md border px-2 py-1 text-base font-medium"
                   />
-                  <input
-                    value={o.imageUrl ?? ""}
-                    onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
-                    placeholder="URL картинки (опційно)"
-                    className="flex-1 rounded-md border px-2 py-1 text-sm"
-                  />
+                  <div className="flex flex-1 flex-col gap-1">
+                    <input
+                      value={o.imageUrl ?? ""}
+                      onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
+                      placeholder="URL картинки (опційно)"
+                      className="rounded-md border px-2 py-1 text-sm"
+                    />
+                    <FileUpload
+                      kind="image"
+                      onUploaded={(url) => updateOptionImageUrl(q.id, o.id, url)}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeOption(q.id, o.id)}

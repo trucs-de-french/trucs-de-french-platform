@@ -5,6 +5,7 @@ import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { FileUpload } from "@/components/file-upload";
 
 function emptyCard(): FlipCard {
   return { front: "", back: "", image_url: "", audio_url: "" };
@@ -94,6 +95,7 @@ export const FlipCardsFields = forwardRef<
             placeholder="Картинка (URL, необов'язково)"
             className="ml-0 w-full max-w-md rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
           />
+          <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
           <input
             value={card.audio_url ?? ""}
             onChange={(e) => updateCard(i, "audio_url", e.target.value)}

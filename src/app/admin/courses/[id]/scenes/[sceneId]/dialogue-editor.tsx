@@ -2,6 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
+import { FileUpload } from "@/components/file-upload";
 
 type Line = { speaker: string; text: string; vocab: VocabItem[] };
 
@@ -150,6 +151,10 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                   value={v.image_url ?? ""}
                   onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
                   className="ml-0 w-full max-w-md rounded-md border px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400"
+                />
+                <FileUpload
+                  kind="image"
+                  onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
                 />
               </div>
             ))}

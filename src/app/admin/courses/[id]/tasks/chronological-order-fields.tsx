@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { FileUpload } from "@/components/file-upload";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
@@ -123,12 +124,18 @@ export const ChronologicalOrderFields = forwardRef<
             {index + 1}
           </span>
           {mode === "image" ? (
-            <input
-              value={item.content}
-              onChange={(e) => updateContent(item.id, e.target.value)}
-              placeholder="URL зображення"
-              className="flex-1 rounded-md border px-2 py-1 text-sm"
-            />
+            <div className="flex flex-1 flex-col gap-1">
+              <input
+                value={item.content}
+                onChange={(e) => updateContent(item.id, e.target.value)}
+                placeholder="URL зображення"
+                className="rounded-md border px-2 py-1 text-sm"
+              />
+              <FileUpload
+                kind="image"
+                onUploaded={(url) => updateContent(item.id, url)}
+              />
+            </div>
           ) : (
             <input
               value={item.content}
