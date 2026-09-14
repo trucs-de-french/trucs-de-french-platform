@@ -2,19 +2,28 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 
-type Course = { id: string; title: string; type: string };
+export type SidebarCourseChild = { key: string; label: string; href: string };
+export type SidebarCourse = {
+  id: string;
+  title: string;
+  type: string;
+  children: SidebarCourseChild[];
+};
 
 export function CourseSwitcherSidebar({
   courses,
   currentCourseId,
 }: {
-  courses: Course[];
+  courses: SidebarCourse[];
   currentCourseId: string;
 }) {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Поточний курс розгорнутий одразу — користувач і так у ньому; можна
+  // розгорнути кілька курсів одночасно (не строгий accordion "лише один").
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set([currentCourseId]));
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -24,6 +33,15 @@ export function CourseSwitcherSidebar({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const q = query.trim().toLowerCase();
   const filtered = q ? courses.filter((c) => c.title.toLowerCase().includes(q)) : courses;
@@ -42,12 +60,16 @@ export function CourseSwitcherSidebar({
         label="Кіно"
         courses={film}
         currentCourseId={currentCourseId}
+        expanded={expanded}
+        onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
       />
       <CourseGroup
         label="DELF"
         courses={delf}
         currentCourseId={currentCourseId}
+        expanded={expanded}
+        onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
       />
       {filtered.length === 0 && (
@@ -89,7 +111,7 @@ export function CourseSwitcherSidebar({
         </div>
       )}
 
-      <aside className="hidden w-56 shrink-0 lg:sticky lg:top-6 lg:block lg:self-start">
+      <aside className="hidden w-56 shrink-0 lg:sticky lg:top-6 lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto lg:self-start">
         {list}
       </aside>
     </>
@@ -100,11 +122,15 @@ function CourseGroup({
   label,
   courses,
   currentCourseId,
+  expanded,
+  onToggleExpanded,
   onNavigate,
 }: {
   label: string;
-  courses: Course[];
+  courses: SidebarCourse[];
   currentCourseId: string;
+  expanded: Set<string>;
+  onToggleExpanded: (id: string) => void;
   onNavigate: () => void;
 }) {
   if (courses.length === 0) return null;
@@ -115,21 +141,50 @@ function CourseGroup({
         {label}
       </p>
       <ul className="flex flex-col gap-0.5">
-        {courses.map((c) => (
-          <li key={c.id}>
-            <Link
-              href={`/admin/courses/${c.id}`}
-              onClick={onNavigate}
-              className={`block rounded-md px-2 py-1.5 text-sm ${
-                c.id === currentCourseId
-                  ? "bg-neutral-100 font-medium dark:bg-neutral-900"
-                  : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-900/50"
-              }`}
-            >
-              {c.title}
-            </Link>
-          </li>
-        ))}
+        {courses.map((c) => {
+          const isOpen = expanded.has(c.id) && c.children.length > 0;
+          return (
+            <li key={c.id}>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => onToggleExpanded(c.id)}
+                  disabled={c.children.length === 0}
+                  aria-label={isOpen ? "Згорнути" : "Розгорнути"}
+                  className="shrink-0 rounded p-1 text-neutral-400 hover:text-black disabled:opacity-0 dark:hover:text-white"
+                >
+                  {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+                <Link
+                  href={`/admin/courses/${c.id}`}
+                  onClick={onNavigate}
+                  className={`block flex-1 truncate rounded-md px-2 py-1.5 text-sm ${
+                    c.id === currentCourseId
+                      ? "bg-neutral-100 font-medium dark:bg-neutral-900"
+                      : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-900/50"
+                  }`}
+                >
+                  {c.title}
+                </Link>
+              </div>
+              {isOpen && (
+                <ul className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l pl-2">
+                  {c.children.map((child) => (
+                    <li key={child.key}>
+                      <Link
+                        href={child.href}
+                        onClick={onNavigate}
+                        className="block truncate rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900/50 dark:hover:text-neutral-200"
+                      >
+                        {child.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

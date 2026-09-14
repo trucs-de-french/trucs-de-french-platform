@@ -39,7 +39,11 @@ export default async function AdminLayout({
 
   return (
     <div className={`admin-root mx-auto max-w-4xl p-6 ${roboto.variable}`}>
-      <nav className="mb-6 flex items-center justify-between border-b pb-4">
+      {/* pr-14 — резерв під плаваючу ThemeToggle-кнопку (position: fixed,
+          top-4 right-4, у кореневому layout.tsx): на viewport вужчому за
+          max-w-4xl права межа nav збігається з правою межею viewport, і без
+          цього відступу кнопка лягає прямо на "До кабінету". */}
+      <nav className="mb-6 flex items-center justify-between gap-4 border-b pb-4 pr-14">
         <Link href="/admin/courses" className="flex flex-col leading-tight">
           <span className="text-lg font-semibold">Trucs de French</span>
           <span className="text-xs text-neutral-500 dark:text-neutral-400">Адмінка</span>
