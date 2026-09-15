@@ -6,6 +6,7 @@ import { CourseTypeFields } from "./course-type-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function NewCoursePage({
   searchParams,
@@ -27,7 +28,7 @@ export default async function NewCoursePage({
           До кабінету
         </Link>
       </nav>
-      <Link href="/admin/courses" className="text-sm underline">
+      <Link href="/admin/courses" className={BREADCRUMB_LINK}>
         ← До списку курсів
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Новий курс</h1>

@@ -8,6 +8,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 type TaskDetail = {
   id: string;
@@ -86,7 +87,7 @@ export default async function EditTaskPage({
 
   return (
     <div>
-      <Link href={backHref} className="text-sm underline">
+      <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Редагування завдання</h1>

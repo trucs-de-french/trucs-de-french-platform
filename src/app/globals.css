@@ -53,6 +53,10 @@
   /* Лише для вордмарку "Trucs d'French" (platform-wordmark.tsx). */
   --font-brand-sans: var(--font-montserrat);
   --font-brand-serif: var(--font-cormorant);
+  /* Лише для полів навчального контенту (клас font-content) — інфраструктура
+     готова, застосування до конкретних полів (текст діалогу, варіанти
+     відповідей) — окремий етап, поки що клас ніде не використовується. */
+  --font-content: var(--font-lora);
 
   /* Відкочено з точних hex дизайн-документа (#8B3FA0/#2EC4D6) назад на
      Tailwind indigo-600/cyan-400 — вчителю більше сподобався попередній

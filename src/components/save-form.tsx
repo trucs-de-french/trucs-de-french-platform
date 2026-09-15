@@ -6,6 +6,7 @@ import type { ActionState } from "@/lib/action-state";
 import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
 import { setThemeCookie } from "@/lib/theme-cookie";
 import { BUTTON_PRIMARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -111,7 +112,7 @@ export function SaveForm({
           (disabled ? (
             <span className="text-sm text-neutral-400 dark:text-neutral-600">{backLink.label}</span>
           ) : (
-            <Link href={backLink.href} className="text-sm underline">
+            <Link href={backLink.href} className={BREADCRUMB_LINK}>
               {backLink.label}
             </Link>
           ))}

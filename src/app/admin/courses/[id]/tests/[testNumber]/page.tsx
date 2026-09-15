@@ -7,6 +7,7 @@ import { deleteTest, toggleTestPublish } from "@/app/admin/tests/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_WARNING, BUTTON_DANGER } from "@/lib/button-styles";
+import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 import { TestSectionDragList } from "./test-section-drag-list";
 
 // Сторінка ОДНОГО DELF-тесту (номер 1-30) — той самий принцип, що сторінка
@@ -111,7 +112,7 @@ export default async function AdminTestPage({
 
   return (
     <div>
-      <Link href={`/admin/courses/${productId}#tasks`} className="text-sm underline">
+      <Link href={`/admin/courses/${productId}#tasks`} className={BREADCRUMB_LINK}>
         ← До курсу
       </Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -146,7 +147,7 @@ export default async function AdminTestPage({
       {EXAM_SECTIONS.map((section) => (
         <section key={section} className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">
+            <h2 className={H2_TEXT}>
               {section} — {EXAM_SECTION_LABELS[section]}
             </h2>
             <div className="flex gap-2">

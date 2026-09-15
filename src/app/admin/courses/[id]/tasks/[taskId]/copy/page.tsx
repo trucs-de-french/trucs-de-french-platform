@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { CopyTaskDestinationFields } from "./copy-task-destination-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function CopyTaskPage({
   params,
@@ -57,7 +58,7 @@ export default async function CopyTaskPage({
 
   return (
     <div>
-      <Link href={backHref} className="text-sm underline">
+      <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Копіювати завдання «{task.title}»</h1>

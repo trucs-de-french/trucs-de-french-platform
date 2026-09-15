@@ -11,6 +11,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_SECONDARY_SM, BUTTON_DANGER, BUTTON_DANGER_SM } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function EditMaterialPage({
   params,
@@ -75,7 +76,7 @@ export default async function EditMaterialPage({
 
   return (
     <div>
-      <Link href={`/admin/courses/${productId}#materials`} className="text-sm underline">
+      <Link href={`/admin/courses/${productId}#materials`} className={BREADCRUMB_LINK}>
         ← Назад до матеріалів
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Редагування матеріалу</h1>
@@ -125,7 +126,7 @@ export default async function EditMaterialPage({
       {material.category === "general_tip" && (
         <section className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Вправи</h2>
+            <h2 className={H2_TEXT}>Вправи</h2>
             <div className="flex gap-2">
               <Link
                 href={`/admin/courses/${productId}/task-groups/new?materialId=${material.id}`}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
 import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
@@ -50,6 +50,16 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
 });
 
+// Лише для полів навчального контенту (текст репліки діалогу, варіанти
+// відповідей вправ) — клас font-content (globals.css), той самий вузько-
+// скопований принцип, що Roboto/Playfair Display вище: окрема змінна, не
+// замінює жодного наявного шрифту. Застосування до конкретних полів — окремий
+// етап, тут лише інфраструктура (шрифт підключено, клас ще ніде не використано).
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin", "cyrillic"],
+});
+
 export const metadata: Metadata = {
   title: "Trucs de French",
   description: "Платформа для вивчення французької мови через кіно та DELF",
@@ -70,7 +80,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

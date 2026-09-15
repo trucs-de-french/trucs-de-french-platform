@@ -5,6 +5,7 @@ import { copyMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function CopyMaterialPage({
   params,
@@ -28,7 +29,7 @@ export default async function CopyMaterialPage({
 
   return (
     <div>
-      <Link href={`/admin/courses/${productId}#materials`} className="text-sm underline">
+      <Link href={`/admin/courses/${productId}#materials`} className={BREADCRUMB_LINK}>
         ← До матеріалів
       </Link>
       <h1 className="mt-2 text-2xl font-bold">

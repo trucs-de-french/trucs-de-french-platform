@@ -4,6 +4,7 @@ import { createTaskGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskGroupFields } from "../task-group-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function NewTaskGroupPage({
   params,
@@ -44,7 +45,7 @@ export default async function NewTaskGroupPage({
 
   return (
     <div>
-      <Link href={backHref} className="text-sm underline">
+      <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Новий блок</h1>

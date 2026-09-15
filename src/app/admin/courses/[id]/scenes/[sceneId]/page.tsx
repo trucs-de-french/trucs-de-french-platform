@@ -15,6 +15,7 @@ import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -242,7 +243,7 @@ export default async function AdminScenePage({
 
   return (
     <div>
-      <Link href={`/admin/courses/${productId}`} className="text-sm underline">
+      <Link href={`/admin/courses/${productId}`} className={BREADCRUMB_LINK}>
         ← До курсу
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Редагування сцени</h1>

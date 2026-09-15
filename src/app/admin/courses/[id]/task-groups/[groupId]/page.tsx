@@ -15,6 +15,7 @@ import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -113,7 +114,7 @@ export default async function EditTaskGroupPage({
 
   return (
     <div>
-      <Link href={backHref} className="text-sm underline">
+      <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
       <div className="mt-2 flex items-center gap-2">
@@ -137,7 +138,7 @@ export default async function EditTaskGroupPage({
 
       <section className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Задачі блоку</h2>
+          <h2 className={H2_TEXT}>Задачі блоку</h2>
           <Link
             href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}`}
             className={BUTTON_SECONDARY}

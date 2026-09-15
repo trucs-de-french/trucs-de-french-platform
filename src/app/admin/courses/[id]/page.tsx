@@ -16,6 +16,7 @@ import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
+import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
@@ -126,7 +127,7 @@ export default async function AdminCoursePage({
 
   return (
     <div>
-      <Link href="/admin/courses" className="text-sm underline">
+      <Link href="/admin/courses" className={BREADCRUMB_LINK}>
         ← До списку курсів
       </Link>
 
@@ -258,7 +259,7 @@ export default async function AdminCoursePage({
       {isFilm ? (
         <section className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Сцени</h2>
+            <h2 className={H2_TEXT}>Сцени</h2>
             <form action={createScene.bind(null, product.id)}>
               <SubmitButton
                 pendingChildren="Створюю..."
@@ -281,7 +282,7 @@ export default async function AdminCoursePage({
         <>
           <section id="tests" className="mt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Тести</h2>
+              <h2 className={H2_TEXT}>Тести</h2>
               <div className="flex items-center gap-2">
                 <GoToTestForm productId={product.id} />
                 {nextFreeTestNumber && (
@@ -340,7 +341,7 @@ export default async function AdminCoursePage({
 
           <section id="materials" className="mt-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Матеріали</h2>
+              <h2 className={H2_TEXT}>Матеріали</h2>
               <Link
                 href={`/admin/courses/${product.id}/materials/new`}
                 className={BUTTON_SECONDARY}
