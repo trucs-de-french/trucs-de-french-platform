@@ -178,25 +178,17 @@ export default async function AdminScenePage({
 
       <SaveForm
         action={addLink.bind(null, sceneId)}
-        saveLabel="+ Додати"
+        saveLabel="+ Додати посилання"
+        saveVariant="link"
         savedLabel="Додано ✓"
-        className="mt-3 flex flex-wrap items-end gap-2"
+        className="mt-3 flex flex-wrap items-center gap-2"
       >
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Платформа</label>
-          <select name="platform" className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
-            <option value="quizlet">Quizlet</option>
-            <option value="wordwall">Wordwall</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>URL</label>
-          <input name="url" required className={`${INPUT_BORDER} px-2 py-2 text-sm`} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Мітка</label>
-          <input name="label" className={`${INPUT_BORDER} px-2 py-2 text-sm`} />
-        </div>
+        <select name="platform" aria-label="Платформа" className={`${INPUT_BORDER} h-10 px-2 text-sm`}>
+          <option value="quizlet">Quizlet</option>
+          <option value="wordwall">Wordwall</option>
+        </select>
+        <input name="url" placeholder="URL" required className={`${INPUT_BORDER} h-10 px-2 text-sm`} />
+        <input name="label" placeholder="Мітка" className={`${INPUT_BORDER} h-10 px-2 text-sm`} />
       </SaveForm>
     </div>
   );

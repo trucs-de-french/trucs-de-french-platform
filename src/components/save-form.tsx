@@ -21,6 +21,7 @@ export function SaveForm({
   children,
   className,
   saveLabel = "Зберегти",
+  saveVariant = "button",
   savedLabel = "Збережено ✓",
   sticky = false,
   backLink,
@@ -30,6 +31,9 @@ export function SaveForm({
   children: React.ReactNode;
   className?: string;
   saveLabel?: string;
+  // "link" — для швидких компактних форм (напр. додавання посилання сцени),
+  // де важка залита кнопка виглядає непропорційно поруч із рядком полів.
+  saveVariant?: "button" | "link";
   savedLabel?: string;
   // За замовчуванням false — вмикати лише для довгих форм (напр. редагування
   // завдання), де інакше довелось би прокручувати аж донизу заради кнопки.
@@ -105,7 +109,15 @@ export function SaveForm({
             : ""
         }`}
       >
-        <button type="submit" disabled={pending} className={`self-start ${BUTTON_PRIMARY_LG}`}>
+        <button
+          type="submit"
+          disabled={pending}
+          className={
+            saveVariant === "link"
+              ? "self-start text-sm text-brand hover:underline disabled:opacity-50"
+              : `self-start ${BUTTON_PRIMARY_LG}`
+          }
+        >
           {pending ? "Зберігаю..." : saveLabel}
         </button>
         {backLink &&

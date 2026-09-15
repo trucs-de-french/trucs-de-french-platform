@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, ExternalLink } from "lucide-react";
 import { deleteLink, reorderLinks } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -76,7 +76,7 @@ export function LinkDragList({
             className={`flex items-center justify-between rounded-md border p-3 text-sm transition-colors ${
               dragOver === link.id
                 ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : "bg-white dark:bg-neutral-800"
+                : "border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800"
             }`}
           >
             <span className="flex items-center gap-2">
@@ -88,6 +88,7 @@ export function LinkDragList({
               >
                 <GripVertical size={16} />
               </span>
+              <ExternalLink size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
               {link.platform}: {link.label ?? link.url}
             </span>
             <form action={deleteLink.bind(null, link.id)}>

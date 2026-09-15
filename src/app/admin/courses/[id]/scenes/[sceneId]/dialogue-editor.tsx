@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, ArrowRight } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
@@ -106,14 +106,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               placeholder="Спікер"
               value={line.speaker}
               onChange={(e) => updateLine(i, "speaker", e.target.value)}
-              className={`${INPUT_BORDER} w-32 px-2 py-2 text-sm`}
+              className={`${INPUT_BORDER} h-10 w-32 bg-slate-50 px-2 text-sm dark:bg-neutral-800/50`}
             />
             <textarea
               placeholder="Текст репліки"
               value={line.text}
               onChange={(e) => updateLine(i, "text", e.target.value)}
-              rows={2}
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm font-content`}
+              rows={1}
+              className={`${INPUT_BORDER} h-10 flex-1 px-2 text-sm font-content`}
             />
             <button
               type="button"
@@ -136,7 +136,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     onChange={(e) => updateVocab(i, vi, "word", e.target.value)}
                     className={`${INPUT_BORDER} w-40 px-2 py-2 text-sm font-content`}
                   />
-                  <span className="text-neutral-400 dark:text-neutral-500">→</span>
+                  <ArrowRight size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
                   <input
                     placeholder="Переклад"
                     value={v.translation}
