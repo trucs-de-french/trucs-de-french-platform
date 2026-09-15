@@ -149,6 +149,7 @@ export default async function AdminScenePage({
       id="scene-video-form"
       action={updateSceneVideo.bind(null, sceneId)}
       className="flex flex-col gap-4"
+      saveButtonStyle="secondary"
     >
       <div className="flex gap-4">
         <div className="flex flex-1 flex-col gap-1">
@@ -180,6 +181,7 @@ export default async function AdminScenePage({
       id="scene-script-form"
       action={updateSceneDialogue.bind(null, sceneId)}
       className="flex flex-col gap-2"
+      saveButtonStyle="secondary"
     >
       <DialogueEditor initialDialogue={scene.dialogue ?? []} />
     </SaveForm>
@@ -267,6 +269,7 @@ export default async function AdminScenePage({
         id="scene-title-form"
         action={updateSceneTitle.bind(null, sceneId)}
         saveLabel="Зберегти назву"
+        saveButtonStyle="secondary"
         className="mt-4 flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
       >
         <label className={LABEL_TEXT}>Назва сцени</label>

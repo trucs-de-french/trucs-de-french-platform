@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
 import { useStudentPreview } from "@/lib/use-student-preview";
-import { BUTTON_PRIMARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
+import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
 import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
@@ -22,6 +22,7 @@ export function SaveForm({
   id,
   saveLabel = "Зберегти",
   saveVariant = "button",
+  saveButtonStyle = "primary",
   savedLabel = "Збережено ✓",
   sticky = false,
   backLink,
@@ -39,6 +40,11 @@ export function SaveForm({
   // "link" — для швидких компактних форм (напр. додавання посилання сцени),
   // де важка залита кнопка виглядає непропорційно поруч із рядком полів.
   saveVariant?: "button" | "link";
+  // "secondary" — коли ЦЯ кнопка вже не головна дія на сторінці (напр.
+  // окремі "Зберегти" в блоках сцени, тепер другорядні поряд із закріпленою
+  // "Зберегти все"). Стосується лише saveVariant === "button" — "link" і так
+  // не залитий.
+  saveButtonStyle?: "primary" | "secondary";
   savedLabel?: string;
   // За замовчуванням false — вмикати лише для довгих форм (напр. редагування
   // завдання), де інакше довелось би прокручувати аж донизу заради кнопки.
@@ -101,7 +107,7 @@ export function SaveForm({
           className={
             saveVariant === "link"
               ? "self-start text-sm text-brand hover:underline disabled:opacity-50"
-              : `self-start ${BUTTON_PRIMARY_LG}`
+              : `self-start ${saveButtonStyle === "secondary" ? BUTTON_SECONDARY_LG : BUTTON_PRIMARY_LG}`
           }
         >
           {pending ? "Зберігаю..." : saveLabel}

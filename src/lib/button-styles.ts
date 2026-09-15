@@ -22,6 +22,12 @@ export const BUTTON_SECONDARY =
   "rounded-md border border-brand px-3 py-1.5 text-sm text-brand hover:bg-brand/10 disabled:opacity-50";
 export const BUTTON_SECONDARY_SM =
   "rounded border border-brand px-2 py-1 text-xs text-brand hover:bg-brand/10 disabled:opacity-50";
+// Той самий розмір, що BUTTON_PRIMARY_LG (px-4 py-2) — для випадків, коли
+// самостійна CTA-кнопка (SaveForm тощо) має стати другорядною ПОРЯД із
+// важливішою залитою дією десь-інде на сторінці (напр. окремі "Зберегти"
+// в блоках сцени проти закріпленої "Зберегти все"), без зміни розміру.
+export const BUTTON_SECONDARY_LG =
+  "rounded-md border border-brand px-4 py-2 text-sm text-brand hover:bg-brand/10 disabled:opacity-50";
 
 // Реверсивна попереджувальна дія (зняти з публікації, архівувати) —
 // амбер, не червоний: сигналізує "обережно", не "незворотно", на відміну
