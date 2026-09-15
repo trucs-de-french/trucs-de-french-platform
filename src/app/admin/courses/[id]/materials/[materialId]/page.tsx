@@ -259,8 +259,9 @@ export default async function EditMaterialPage({
       <form action={deleteMaterial.bind(null, material.id, productId)} className="mt-3">
         <SubmitButton
           pendingChildren="Видаляю..."
-          className={BUTTON_DANGER}
+          className={`inline-flex items-center gap-1.5 ${BUTTON_DANGER}`}
         >
+          <Trash2 size={16} />
           Видалити матеріал
         </SubmitButton>
       </form>

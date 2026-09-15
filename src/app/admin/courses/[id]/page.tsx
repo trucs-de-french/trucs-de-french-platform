@@ -166,7 +166,11 @@ export default async function AdminCoursePage({
               action={deleteProductPermanently.bind(null, product.id)}
               message="Курс і весь вміст (сцени, тести, матеріали, завдання) буде видалено назавжди. Це незворотно. Ви впевнені?"
             >
-              <SubmitButton pendingChildren="..." className={BUTTON_DANGER}>
+              <SubmitButton
+                pendingChildren="..."
+                className={`inline-flex items-center gap-1.5 ${BUTTON_DANGER}`}
+              >
+                <Trash2 size={16} />
                 Видалити назавжди
               </SubmitButton>
             </ConfirmForm>

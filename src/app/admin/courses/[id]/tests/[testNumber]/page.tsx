@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
@@ -137,7 +138,11 @@ export default async function AdminTestPage({
             action={deleteTest.bind(null, productId, testNumber)}
             message={`Тест ${testNumber} і всі його задачі (${(tasks?.length ?? 0) + (taskGroups?.length ?? 0)}) буде видалено назавжди. Це незворотно. Ви впевнені?`}
           >
-            <SubmitButton pendingChildren="..." className={BUTTON_DANGER}>
+            <SubmitButton
+              pendingChildren="..."
+              className={`inline-flex items-center gap-1.5 ${BUTTON_DANGER}`}
+            >
+              <Trash2 size={16} />
               Видалити тест
             </SubmitButton>
           </ConfirmForm>

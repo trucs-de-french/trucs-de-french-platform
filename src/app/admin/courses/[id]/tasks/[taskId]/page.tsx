@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateTask, deleteTask } from "@/app/admin/tasks/actions";
@@ -128,8 +129,9 @@ export default async function EditTaskPage({
       <form action={deleteTask.bind(null, task.id)} className="mt-3">
         <SubmitButton
           pendingChildren="Видаляю..."
-          className={BUTTON_DANGER}
+          className={`inline-flex items-center gap-1.5 ${BUTTON_DANGER}`}
         >
+          <Trash2 size={16} />
           Видалити завдання
         </SubmitButton>
       </form>
