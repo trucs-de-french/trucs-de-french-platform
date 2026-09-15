@@ -105,7 +105,7 @@ export function SaveForm({
       <div
         className={`mt-4 mb-6 flex items-center gap-3 ${
           sticky
-            ? "sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:bg-neutral-950 dark:border-neutral-800"
+            ? "sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950"
             : ""
         }`}
       >

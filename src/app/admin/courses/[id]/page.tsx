@@ -357,7 +357,7 @@ export default async function AdminCoursePage({
               {materials?.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
+                  className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
                 >
                   <div>
                     <span className={`uppercase ${HINT_TEXT}`}>

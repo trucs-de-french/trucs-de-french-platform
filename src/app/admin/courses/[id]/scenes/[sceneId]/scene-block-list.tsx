@@ -89,7 +89,7 @@ export function SceneBlockList({
             const fromType = e.dataTransfer.getData("text/plain");
             if (fromType) void swap(fromType, block.type);
           }}
-          className={`rounded-md border-2 p-3 transition-colors ${
+          className={`rounded-md border-2 p-4 transition-colors ${
             dragOver === block.type
               ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
               : "border-transparent"

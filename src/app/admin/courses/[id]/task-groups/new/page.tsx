@@ -56,7 +56,7 @@ export default async function NewTaskGroupPage({
 
       <form
         action={createTaskGroup}
-        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
+        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 shadow-sm dark:bg-neutral-800"
       >
         <input type="hidden" name="product_id" value={productId} />
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
@@ -75,7 +75,7 @@ export default async function NewTaskGroupPage({
           }
         />
 
-        <div className="sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+        <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950">
           <SubmitButton
             pendingChildren="Створюю..."
             className={`self-start ${BUTTON_PRIMARY_LG}`}
