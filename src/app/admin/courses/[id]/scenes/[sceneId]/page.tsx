@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -7,17 +8,23 @@ import {
   updateSceneDialogue,
   addLink,
 } from "@/app/admin/scenes/actions";
+import {
+  updateSceneContentBlock,
+  deleteSceneContentBlock,
+} from "@/app/admin/scene-content-blocks/actions";
 import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
+import { SubmitButton } from "@/components/submit-button";
+import { ConfirmForm } from "@/components/confirm-form";
 import { DialogueEditor } from "./dialogue-editor";
 import { SceneBlockList } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
-import { BUTTON_SECONDARY } from "@/lib/button-styles";
+import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
+import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT, H2_TEXT, HINT_TEXT } from "@/lib/typography-styles";
-import { TASK_GROUP_CONTENT_ICON, TASK_GROUP_CONTENT_COLORS } from "@/lib/exercises/task-type-meta";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -72,16 +79,16 @@ export default async function AdminScenePage({
       .order("order_index"),
     supabase
       .from("scene_blocks")
-      .select("block_type")
+      .select("block_type, ref_id")
       .eq("scene_id", sceneId)
       .order("position")
-      .returns<{ block_type: SceneBlockType }[]>(),
-    // Крок 1 (без drag) — окремий, незалежний від scene_blocks список,
-    // упорядкований лише за created_at; повна інтеграція в спільне
-    // впорядкування — окремий наступний захід.
+      .returns<{ block_type: SceneBlockType | "content"; ref_id: string | null }[]>(),
+    // Крок 2: сам порядок (включно з довільними content-блоками) визначає
+    // scene_blocks вище, ref_id -> id тут; order за created_at — лише для
+    // фолбек-гілки нижче (коли scene_blocks порожній/впав).
     supabase
       .from("scene_content_blocks")
-      .select("id, title, content_type")
+      .select("id, title, content_type, content_text, media_url, media_provider")
       .eq("scene_id", sceneId)
       .order("created_at"),
   ]);
@@ -134,13 +141,33 @@ export default async function AdminScenePage({
     ),
   ].sort((a, b) => a.order_index - b.order_index);
 
-  const blockTypes =
-    blocks && blocks.length > 0 ? blocks.map((b) => b.block_type) : [...DEFAULT_BLOCK_ORDER];
+  const contentBlocksById = new Map((contentBlocks ?? []).map((b) => [b.id, b]));
+
+  type BlockEntry = { type: string; refId: string | null; label: string; contentType?: string };
+
+  const orderedBlockRows: { block_type: SceneBlockType | "content"; ref_id: string | null }[] =
+    blocks && blocks.length > 0
+      ? blocks
+      : DEFAULT_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
+
+  const sceneBlocks: BlockEntry[] = orderedBlockRows.map((row) => {
+    if (row.block_type === "content") {
+      const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
+      return {
+        type: "content",
+        refId: row.ref_id,
+        label: content?.title || "Додатковий блок",
+        contentType: content?.content_type,
+      };
+    }
+    return { type: row.block_type, refId: null, label: BLOCK_LABELS[row.block_type] };
+  });
+
   // 'video' може ще не мати рядка в scene_blocks (з'являється лише коли
   // заповнено URL) — але поле для введення URL має бути видиме й
   // перетягувано в адмінці завжди, тому додаємо його в кінець, якщо нема.
-  if (!blockTypes.includes("video")) {
-    blockTypes.push("video");
+  if (!sceneBlocks.some((b) => b.type === "video")) {
+    sceneBlocks.push({ type: "video", refId: null, label: "Відео" });
   }
 
   const videoContent = (
@@ -240,17 +267,45 @@ export default async function AdminScenePage({
     </div>
   );
 
-  const contentByType: Record<SceneBlockType, React.ReactNode> = {
+  const contentByKey: Record<string, React.ReactNode> = {
     video: videoContent,
     script: scriptContent,
     link: linkContent,
     task: taskContent,
   };
 
-  const sceneBlocks = blockTypes.map((type) => ({
-    type,
-    label: BLOCK_LABELS[type],
-  }));
+  // Інлайн-редагування контент-блоку прямо в SceneBlockList (Крок 2) — та
+  // сама форма полів, що на своїй окремій сторінці не так давно, просто
+  // рендериться тут, у своєї картки в спільному drag-списку.
+  for (const block of sceneBlocks) {
+    if (block.type !== "content" || !block.refId) continue;
+    const content = contentBlocksById.get(block.refId);
+    if (!content) continue;
+
+    contentByKey[`content:${block.refId}`] = (
+      <div className="flex flex-col gap-3">
+        <SaveForm
+          action={updateSceneContentBlock.bind(null, productId, sceneId, block.refId)}
+          className="flex flex-col gap-4"
+          saveButtonStyle="secondary"
+        >
+          <ContentBlockFields initialBlock={content} />
+        </SaveForm>
+        <ConfirmForm
+          action={deleteSceneContentBlock.bind(null, productId, sceneId, block.refId)}
+          message="Видалити цей блок? Цю дію не можна скасувати."
+        >
+          <SubmitButton
+            pendingChildren="Видаляю..."
+            className={`inline-flex items-center gap-1.5 self-start ${BUTTON_DANGER}`}
+          >
+            <Trash2 size={16} />
+            Видалити блок
+          </SubmitButton>
+        </ConfirmForm>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -283,53 +338,20 @@ export default async function AdminScenePage({
 
       <div className="mt-6">
         <SceneBlockList
-          key={blockTypes.join(",")}
+          key={sceneBlocks.map((b) => b.refId ?? b.type).join(",")}
           sceneId={sceneId}
           initialBlocks={sceneBlocks}
-          contentByType={contentByType}
+          contentByKey={contentByKey}
         />
       </div>
 
-      <div className="mt-6">
-        <div className="flex items-center justify-between">
-          <h2 className={H2_TEXT}>Додаткові блоки</h2>
-          <Link
-            href={`/admin/courses/${productId}/scene-content-blocks/new?sceneId=${sceneId}`}
-            className={BUTTON_SECONDARY}
-          >
-            + Додати блок
-          </Link>
-        </div>
-        <p className={`mt-1 ${HINT_TEXT}`}>
-          Крок 1: без перетягування — завжди в кінці сторінки сцени, і в адмінці, і студенту.
-        </p>
-
-        {(contentBlocks ?? []).length > 0 && (
-          <ul className="mt-2 flex flex-col gap-2">
-            {(contentBlocks ?? []).map((block) => {
-              const ContentIcon = TASK_GROUP_CONTENT_ICON[block.content_type];
-              return (
-                <li key={block.id}>
-                  <Link
-                    href={`/admin/courses/${productId}/scene-content-blocks/${block.id}`}
-                    className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white p-3 shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700/50"
-                  >
-                    {ContentIcon && (
-                      <ContentIcon
-                        size={16}
-                        className={`shrink-0 ${
-                          TASK_GROUP_CONTENT_COLORS[block.content_type]?.iconColor ?? "text-neutral-400"
-                        }`}
-                      />
-                    )}
-                    <span className={`uppercase ${HINT_TEXT}`}>{block.content_type}</span>
-                    <span className="font-medium">{block.title || "Без назви"}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+      <div className="mt-2">
+        <Link
+          href={`/admin/courses/${productId}/scene-content-blocks/new?sceneId=${sceneId}`}
+          className={BUTTON_SECONDARY}
+        >
+          + Додати блок
+        </Link>
       </div>
 
       <SceneStickyActions productId={productId} sceneId={sceneId} />

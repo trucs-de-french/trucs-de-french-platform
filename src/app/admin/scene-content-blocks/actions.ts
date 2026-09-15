@@ -59,6 +59,24 @@ export async function createSceneContentBlock(formData: FormData) {
 
   if (error || !block) throw error;
 
+  // Реєструємо блок у спільному впорядкуванні сцени (0037) — max(position)+1,
+  // той самий принцип, що вже в updateSceneVideo (../scenes/actions.ts).
+  const { data: maxRow } = await supabase
+    .from("scene_blocks")
+    .select("position")
+    .eq("scene_id", sceneId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error: blockRowError } = await supabase.from("scene_blocks").insert({
+    scene_id: sceneId,
+    block_type: "content",
+    ref_id: block.id,
+    position: (maxRow?.position ?? -1) + 1,
+  });
+  if (blockRowError) throw blockRowError;
+
   redirect(`/admin/courses/${productId}/scenes/${sceneId}`);
 }
 
@@ -83,7 +101,9 @@ export async function updateSceneContentBlock(
 
   if (error) return { ok: false, error: error.message };
 
-  revalidatePath(`/admin/courses/${productId}/scene-content-blocks/${blockId}`);
+  // Редагування тепер інлайн у SceneBlockList на сторінці сцени (Крок 2) —
+  // окремої сторінки /scene-content-blocks/[blockId] більше немає.
+  revalidatePath(`/admin/courses/${productId}/scenes/${sceneId}`);
 
   return { ok: true };
 }

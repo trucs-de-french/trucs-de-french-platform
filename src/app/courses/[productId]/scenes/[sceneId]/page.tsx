@@ -74,7 +74,7 @@ type MistakeRow = {
 };
 
 type SceneBlockType = "video" | "script" | "link" | "task";
-type SceneBlockRow = { block_type: SceneBlockType };
+type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | null };
 
 // Фолбек на випадок, якщо scene_blocks порожній для сцени (напр. міграцію
 // ще не застосовано) — відтворює порядок, який був жорстко закодований до
@@ -154,17 +154,16 @@ export default async function ScenePage({
       .returns<(TaskGroupData & { order_index: number })[]>(),
     supabase
       .from("scene_blocks")
-      .select("block_type")
+      .select("block_type, ref_id")
       .eq("scene_id", sceneId)
       .order("position")
       .returns<SceneBlockRow[]>(),
-    // Крок 1 (без drag) — завжди в кінці сторінки, за created_at; окремо від
-    // scene_blocks.position, той самий тимчасовий принцип, що в адмінці.
+    // Крок 2: сам порядок (включно з довільними content-блоками) визначає
+    // scene_blocks вище, ref_id -> id тут.
     supabase
       .from("scene_content_blocks")
       .select("id, content_type, content_text, media_url, media_provider")
       .eq("scene_id", sceneId)
-      .order("created_at")
       .returns<SceneContentBlockData[]>(),
   ]);
 
@@ -235,8 +234,12 @@ export default async function ScenePage({
     );
   }
 
-  const blockOrder =
-    blocks && blocks.length > 0 ? blocks.map((b) => b.block_type) : DEFAULT_BLOCK_ORDER;
+  const orderedBlockRows: SceneBlockRow[] =
+    blocks && blocks.length > 0
+      ? blocks
+      : DEFAULT_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
+
+  const contentBlocksById = new Map((sceneContentBlocks ?? []).map((b) => [b.id, b]));
 
   const dialogue = (scene.dialogue ?? []) as DialogueEntry[];
   // Для блоку "Словник" у "Практиці" — лише лексика ЦІЄЇ сцени (на відміну
@@ -607,15 +610,18 @@ export default async function ScenePage({
       {isPreviewing && <PreviewBanner productId={productId} />}
       <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
 
-      {blockOrder.map((type) => (
-        <Fragment key={type}>{nodeByBlockType[type]}</Fragment>
-      ))}
-
-      {(sceneContentBlocks ?? []).map((block) => (
-        <section key={block.id} className="mt-6">
-          <SceneContentBlock block={block} />
-        </section>
-      ))}
+      {orderedBlockRows.map((row, i) => {
+        if (row.block_type === "content") {
+          const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
+          if (!content) return null;
+          return (
+            <section key={`content-${row.ref_id}`} className="mt-6">
+              <SceneContentBlock block={content} />
+            </section>
+          );
+        }
+        return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
+      })}
     </main>
   );
 }

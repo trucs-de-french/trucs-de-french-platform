@@ -174,21 +174,28 @@ export async function updateSceneDialogue(
 // мають існувати завжди) — це ознака реальної проблеми (напр. RLS мовчки
 // відхилив запис), тому логуємо і повертаємо помилку клієнту, замість
 // мовчки "губити" зміну, як робив попередній варіант без перевірки .error.
+// refId: null — один із 4 фіксованих типів (video/script/link/task, рівно
+// один рядок на сцену, ref_id завжди null); непорожній — конкретний
+// scene_content_blocks-екземпляр типу 'content' (0037), кількох таких може
+// бути скільки завгодно на сцену, тому type сам по собі більше не унікальний
+// ключ для типу 'content' — розрізняємо саме за ref_id.
 export async function reorderSceneBlocks(
   sceneId: string,
-  orderedTypes: string[]
+  items: { type: string; refId: string | null }[]
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
 
   const results = await Promise.all(
-    orderedTypes.map(async (type, index) => {
-      const { data, error } = await supabase
+    items.map(async ({ type, refId }, index) => {
+      const query = supabase
         .from("scene_blocks")
         .update({ position: index })
         .eq("scene_id", sceneId)
-        .eq("block_type", type)
-        .select("id");
-      return { type, error, affected: data?.length ?? 0 };
+        .eq("block_type", type);
+      const { data, error } = await (refId ? query.eq("ref_id", refId) : query.is("ref_id", null)).select(
+        "id"
+      );
+      return { type, refId, error, affected: data?.length ?? 0 };
     })
   );
 
@@ -201,6 +208,11 @@ export async function reorderSceneBlocks(
     return { ok: false, error: dbError.message };
   }
 
+  // 'video' — єдиний фіксований тип, чий рядок може ще не існувати (див.
+  // updateSceneVideo вище) — 0 affected для нього не помилка. Для 'content'
+  // рядок ЗАВЖДИ мав би існувати (створюється разом із самим блоком,
+  // createSceneContentBlock) — 0 affected там так само підозріле, як і для
+  // script/link/task.
   const unexpectedlyMissing = results.filter((r) => r.type !== "video" && r.affected === 0);
   if (unexpectedlyMissing.length > 0) {
     console.error(
