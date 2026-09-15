@@ -28,6 +28,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { ScriptSection } from "./script-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
+import { SceneContentBlock, type SceneContentBlockData } from "../../scene-content-block";
 
 type DialogueEntry = {
   speaker: string;
@@ -128,6 +129,7 @@ export default async function ScenePage({
     { data: tasks, error: tasksError },
     { data: taskGroups },
     { data: blocks, error: blocksError },
+    { data: sceneContentBlocks },
   ] = await Promise.all([
     supabase
       .from("scene_links")
@@ -156,6 +158,14 @@ export default async function ScenePage({
       .eq("scene_id", sceneId)
       .order("position")
       .returns<SceneBlockRow[]>(),
+    // Крок 1 (без drag) — завжди в кінці сторінки, за created_at; окремо від
+    // scene_blocks.position, той самий тимчасовий принцип, що в адмінці.
+    supabase
+      .from("scene_content_blocks")
+      .select("id, content_type, content_text, media_url, media_provider")
+      .eq("scene_id", sceneId)
+      .order("created_at")
+      .returns<SceneContentBlockData[]>(),
   ]);
 
   const taskGroupIds = (taskGroups ?? []).map((g) => g.id);
@@ -599,6 +609,12 @@ export default async function ScenePage({
 
       {blockOrder.map((type) => (
         <Fragment key={type}>{nodeByBlockType[type]}</Fragment>
+      ))}
+
+      {(sceneContentBlocks ?? []).map((block) => (
+        <section key={block.id} className="mt-6">
+          <SceneContentBlock block={block} />
+        </section>
       ))}
     </main>
   );

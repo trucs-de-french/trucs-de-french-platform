@@ -16,7 +16,8 @@ import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT, H2_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { TASK_GROUP_CONTENT_ICON, TASK_GROUP_CONTENT_COLORS } from "@/lib/exercises/task-type-meta";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -47,30 +48,43 @@ export default async function AdminScenePage({
 
   if (!scene) notFound();
 
-  const [{ data: links }, { data: tasks }, { data: taskGroups }, { data: blocks, error: blocksError }] =
-    await Promise.all([
-      supabase
-        .from("scene_links")
-        .select("id, platform, url, label")
-        .eq("scene_id", sceneId)
-        .order("order_index"),
-      supabase
-        .from("tasks")
-        .select("id, type, title, config, order_index")
-        .eq("scene_id", sceneId)
-        .order("order_index"),
-      supabase
-        .from("task_groups")
-        .select("id, title, content_type, points_mode, flat_points, order_index")
-        .eq("scene_id", sceneId)
-        .order("order_index"),
-      supabase
-        .from("scene_blocks")
-        .select("block_type")
-        .eq("scene_id", sceneId)
-        .order("position")
-        .returns<{ block_type: SceneBlockType }[]>(),
-    ]);
+  const [
+    { data: links },
+    { data: tasks },
+    { data: taskGroups },
+    { data: blocks, error: blocksError },
+    { data: contentBlocks },
+  ] = await Promise.all([
+    supabase
+      .from("scene_links")
+      .select("id, platform, url, label")
+      .eq("scene_id", sceneId)
+      .order("order_index"),
+    supabase
+      .from("tasks")
+      .select("id, type, title, config, order_index")
+      .eq("scene_id", sceneId)
+      .order("order_index"),
+    supabase
+      .from("task_groups")
+      .select("id, title, content_type, points_mode, flat_points, order_index")
+      .eq("scene_id", sceneId)
+      .order("order_index"),
+    supabase
+      .from("scene_blocks")
+      .select("block_type")
+      .eq("scene_id", sceneId)
+      .order("position")
+      .returns<{ block_type: SceneBlockType }[]>(),
+    // Крок 1 (без drag) — окремий, незалежний від scene_blocks список,
+    // упорядкований лише за created_at; повна інтеграція в спільне
+    // впорядкування — окремий наступний захід.
+    supabase
+      .from("scene_content_blocks")
+      .select("id, title, content_type")
+      .eq("scene_id", sceneId)
+      .order("created_at"),
+  ]);
 
   if (blocksError) {
     // раніше ця помилка мовчки ховалась за фолбеком DEFAULT_BLOCK_ORDER —
@@ -271,6 +285,48 @@ export default async function AdminScenePage({
           initialBlocks={sceneBlocks}
           contentByType={contentByType}
         />
+      </div>
+
+      <div className="mt-6">
+        <div className="flex items-center justify-between">
+          <h2 className={H2_TEXT}>Додаткові блоки</h2>
+          <Link
+            href={`/admin/courses/${productId}/scene-content-blocks/new?sceneId=${sceneId}`}
+            className={BUTTON_SECONDARY}
+          >
+            + Додати блок
+          </Link>
+        </div>
+        <p className={`mt-1 ${HINT_TEXT}`}>
+          Крок 1: без перетягування — завжди в кінці сторінки сцени, і в адмінці, і студенту.
+        </p>
+
+        {(contentBlocks ?? []).length > 0 && (
+          <ul className="mt-2 flex flex-col gap-2">
+            {(contentBlocks ?? []).map((block) => {
+              const ContentIcon = TASK_GROUP_CONTENT_ICON[block.content_type];
+              return (
+                <li key={block.id}>
+                  <Link
+                    href={`/admin/courses/${productId}/scene-content-blocks/${block.id}`}
+                    className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white p-3 shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700/50"
+                  >
+                    {ContentIcon && (
+                      <ContentIcon
+                        size={16}
+                        className={`shrink-0 ${
+                          TASK_GROUP_CONTENT_COLORS[block.content_type]?.iconColor ?? "text-neutral-400"
+                        }`}
+                      />
+                    )}
+                    <span className={`uppercase ${HINT_TEXT}`}>{block.content_type}</span>
+                    <span className="font-medium">{block.title || "Без назви"}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <SceneStickyActions productId={productId} sceneId={sceneId} />
