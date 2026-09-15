@@ -1,14 +1,5 @@
-import { Roboto } from "next/font/google";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-// cyrillic — обов'язково, увесь текст адмінки українською; без цього
-// підмножина шрифт вантажився б, але кирилиця йшла б фолбеком, а не Roboto.
-const roboto = Roboto({
-  weight: ["400", "500", "700"],
-  subsets: ["latin", "cyrillic"],
-  variable: "--font-roboto",
-});
 
 export default async function AdminLayout({
   children,
@@ -41,7 +32,7 @@ export default async function AdminLayout({
   // і локально на courses/page.tsx/courses/new/page.tsx (де sidebar нема).
   // Спільного "верхнього nav" для всієї адмінки більше не існує.
   return (
-    <div className={`admin-root mx-auto max-w-4xl p-6 ${roboto.variable}`}>
+    <div className="mx-auto max-w-4xl p-6">
       {children}
     </div>
   );

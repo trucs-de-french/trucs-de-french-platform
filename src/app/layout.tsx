@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
+import { Roboto, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
 import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
 import "./globals.css";
 
-// cyrillic — обов'язково, увесь текст сайту українською; без цієї
-// підмножини кирилиця йшла б фолбеком в Arial, а не Geist (саме це й було
-// причиною багу — body раніше ще й ігнорував --font-geist-sans узагалі).
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Той самий Roboto, що раніше був звужений лише на адмінку
+// (admin/layout.tsx) — тепер дефолтний шрифт усього сайту (--font-sans,
+// globals.css), замінює Geist Sans. cyrillic — обов'язково, увесь текст
+// сайту українською.
+const roboto = Roboto({
+  variable: "--font-roboto",
+  weight: ["400", "500", "700"],
   subsets: ["latin", "cyrillic"],
 });
 
@@ -80,7 +82,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${roboto.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
