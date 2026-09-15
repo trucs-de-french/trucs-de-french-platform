@@ -33,7 +33,7 @@ export function TaskTypeIconBadge({
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border-2 border-brand bg-white dark:bg-neutral-950 ${box}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-brand bg-white dark:bg-neutral-950 ${box}`}
       aria-hidden
     >
       <Icon size={icon} strokeWidth={2.5} className="text-brand" />

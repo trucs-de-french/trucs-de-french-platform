@@ -149,7 +149,7 @@ export default async function EditMaterialPage({
               row.kind === "group" ? (
                 <li
                   key={`group-${row.id}`}
-                  className="flex items-center justify-between rounded-md border-2 border-dashed bg-white p-3 dark:bg-neutral-800"
+                  className="flex items-center justify-between rounded-md border border-indigo-100 bg-indigo-50/30 p-3 dark:border-indigo-900 dark:bg-indigo-950/20"
                 >
                   <div>
                     <span className={`uppercase ${HINT_TEXT}`}>

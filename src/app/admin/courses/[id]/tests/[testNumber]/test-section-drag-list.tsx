@@ -166,12 +166,12 @@ export function TestSectionDragList({
               <li
                 key={row.id}
                 {...dragProps}
-                className={`flex flex-col rounded-md border-2 border-dashed p-3 transition-colors ${
+                className={`flex flex-col rounded-md border p-3 transition-colors ${
                   dragOver === row.id
                     ? willAttach
                       ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
                       : "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                    : "bg-white dark:bg-neutral-800"
+                    : "border-indigo-100 bg-indigo-50/30 dark:border-indigo-900 dark:bg-indigo-950/20"
                 }`}
               >
                 {dragOver === row.id && willAttach && (
