@@ -106,7 +106,7 @@ export const TableFillFields = forwardRef<
       </p>
 
       {rows.map((row) => (
-        <div key={row.id} className="flex items-center gap-2 rounded-md border p-2">
+        <div key={row.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
           <div className="flex flex-1 flex-col gap-1">
             <input
               value={row.left}

@@ -101,7 +101,7 @@ export const ChronologicalOrderFields = forwardRef<
       </p>
 
       {items.map((item, index) => (
-        <div key={item.id} className="flex items-center gap-2 rounded-md border p-2">
+        <div key={item.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
           <div className="flex flex-col">
             <button
               type="button"

@@ -31,7 +31,7 @@ export default async function NewMaterialPage({
 
       <form
         action={createMaterial.bind(null, productId)}
-        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 shadow-sm dark:bg-neutral-800"
+        className="mt-4 flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
       >
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Назва</label>

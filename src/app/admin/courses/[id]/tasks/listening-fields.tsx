@@ -134,7 +134,7 @@ export const ListeningFields = forwardRef<
           Питання (одна правильна відповідь на питання)
         </label>
         {questions.map((q) => (
-          <div key={q.id} className="rounded-md border p-2">
+          <div key={q.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
             <div className="flex items-center gap-2">
               <input
                 value={q.question}

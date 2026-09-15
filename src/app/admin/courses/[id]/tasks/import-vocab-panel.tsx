@@ -66,7 +66,7 @@ export function ImportVocabPanel({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-dashed p-3">
+    <div className="flex flex-col gap-2 rounded-md border border-dashed border-gray-100 p-3 dark:border-neutral-700">
       <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
         Імпортувати лексику зі скрипту сцени
       </p>

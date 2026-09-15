@@ -82,7 +82,7 @@ export function TaskTypeCombobox({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border bg-white shadow-lg dark:bg-neutral-950">
+        <div className="absolute z-20 mt-1 w-full rounded-md border border-gray-100 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-950">
           <input
             autoFocus
             value={query}

@@ -133,7 +133,7 @@ export const CheckboxGridFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Рядки</label>
         {rows.map((row) => (
-          <div key={row.id} className="flex flex-col gap-2 rounded-md border p-2">
+          <div key={row.id} className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
             <div className="flex items-center gap-2">
               <input
                 value={row.label}

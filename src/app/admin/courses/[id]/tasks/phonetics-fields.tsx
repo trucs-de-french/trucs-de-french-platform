@@ -61,7 +61,7 @@ export const PhoneticsFields = forwardRef<
       />
 
       {items.map((item, i) => (
-        <div key={i} className="flex flex-col gap-1 rounded-md border p-2">
+        <div key={i} className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
           <div className="flex items-center gap-2">
             <input
               value={item.text}

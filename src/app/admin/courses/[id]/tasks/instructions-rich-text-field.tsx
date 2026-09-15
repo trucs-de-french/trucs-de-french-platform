@@ -84,7 +84,7 @@ export function InstructionsRichTextField({
       <input type="hidden" name={name} value={html} readOnly />
 
       {editor && (
-        <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-neutral-50 p-1 dark:bg-neutral-900">
+        <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-white p-1 dark:bg-neutral-950">
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}

@@ -112,7 +112,7 @@ export function GroupMemberDragList({
             className={`flex items-center justify-between rounded-md border p-3 transition-colors ${
               dragOver === task.id
                 ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : "bg-white dark:bg-neutral-800"
+                : "border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800"
             }`}
           >
             <div className="flex items-center gap-2">

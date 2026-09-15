@@ -79,7 +79,7 @@ export default async function CopyTaskPage({
       ) : (
         <form
           action={copyTask.bind(null, taskId)}
-          className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 shadow-sm dark:bg-neutral-800"
+          className="mt-4 flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
           {isFilm ? (
             <div className="flex flex-col gap-1">

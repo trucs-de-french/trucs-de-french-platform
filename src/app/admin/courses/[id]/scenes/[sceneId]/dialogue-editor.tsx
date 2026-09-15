@@ -90,7 +90,9 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
             if (!Number.isNaN(from)) swapLines(from, i);
           }}
           className={`rounded-md border p-3 transition-colors ${
-            dragOverIndex === i ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30" : ""
+            dragOverIndex === i
+              ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+              : "border-gray-100 dark:border-neutral-700"
           }`}
         >
           <div className="flex items-start gap-2">

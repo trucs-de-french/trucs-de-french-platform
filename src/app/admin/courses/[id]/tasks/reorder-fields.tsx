@@ -117,7 +117,7 @@ export const ReorderFields = forwardRef<
 
       <div className="flex flex-col gap-3">
         {sequences.map((seq, si) => (
-          <div key={seq.id} className="rounded-md border p-2">
+          <div key={seq.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
             <div className="flex items-center justify-between">
               <span className={HINT_TEXT}>
                 Послідовність {si + 1}

@@ -84,7 +84,7 @@ export default async function EditMaterialPage({
 
       <SaveForm
         action={updateMaterial.bind(null, material.id)}
-        className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 shadow-sm dark:bg-neutral-800"
+        className="mt-4 flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
         sticky
       >
         <div className="flex flex-col gap-1">
