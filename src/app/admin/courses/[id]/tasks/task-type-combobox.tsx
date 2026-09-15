@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import { TASK_TYPE_COLORS } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 
 // Кастомний searchable-комбобокс замість нативного <select> — щоб додати
@@ -98,7 +98,7 @@ export function TaskTypeCombobox({
               </li>
             )}
             {filtered.map((opt) => {
-              const category = getTaskTypeCategory(opt.value);
+              const dot = TASK_TYPE_COLORS[opt.value]?.dot;
               return (
                 <li key={opt.value} role="option" aria-selected={opt.value === value}>
                   <button
@@ -109,12 +109,7 @@ export function TaskTypeCombobox({
                     }`}
                   >
                     <TaskTypeIconBadge type={opt.value} size="xs" />
-                    {category && (
-                      <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${CATEGORY_COLORS[category].dot}`}
-                        aria-hidden
-                      />
-                    )}
+                    {dot && <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden />}
                     {opt.label}
                   </button>
                 </li>

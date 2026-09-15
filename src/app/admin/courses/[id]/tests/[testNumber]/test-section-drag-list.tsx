@@ -6,7 +6,11 @@ import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react
 import { deleteTask, reorderTestRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { CATEGORY_COLORS, getTaskTypeCategory } from "@/lib/exercises/task-type-meta";
+import {
+  TASK_TYPE_COLORS,
+  TASK_GROUP_CONTENT_COLORS,
+  TASK_GROUP_CONTENT_ICON,
+} from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
 
@@ -15,20 +19,15 @@ type GroupRow = { id: string; title: string | null; content_type: string; maxPoi
 type Row = ({ kind: "task" } & TaskRow) | ({ kind: "group" } & GroupRow);
 
 function stripeClassFor(type: string): string {
-  const category = getTaskTypeCategory(type);
-  return category ? CATEGORY_COLORS[category].stripe : "";
+  return TASK_TYPE_COLORS[type]?.stripe ?? "";
 }
 
 function badgeClassFor(type: string): string {
-  const category = getTaskTypeCategory(type);
-  return category
-    ? CATEGORY_COLORS[category].badge
-    : "text-neutral-500 dark:text-neutral-400";
+  return TASK_TYPE_COLORS[type]?.badge ?? "text-neutral-500 dark:text-neutral-400";
 }
 
 function shadowClassFor(type: string): string {
-  const category = getTaskTypeCategory(type);
-  return category ? CATEGORY_COLORS[category].shadow : "";
+  return TASK_TYPE_COLORS[type]?.shadow ?? "";
 }
 
 const PREVIEW_FIELDS = ["instructions", "question", "template", "content", "prompt"] as const;
@@ -167,6 +166,7 @@ export function TestSectionDragList({
           );
 
           if (row.kind === "group") {
+            const ContentIcon = TASK_GROUP_CONTENT_ICON[row.content_type];
             return (
               <li
                 key={row.id}
@@ -187,6 +187,16 @@ export function TestSectionDragList({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {handle}
+                    {ContentIcon && (
+                      <span
+                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.badge ?? ""
+                        }`}
+                        aria-hidden
+                      >
+                        <ContentIcon size={14} />
+                      </span>
+                    )}
                     <div>
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase text-neutral-500 dark:text-neutral-400">
                         Блок · {row.content_type}

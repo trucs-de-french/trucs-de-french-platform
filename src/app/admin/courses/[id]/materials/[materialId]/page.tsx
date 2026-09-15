@@ -13,6 +13,7 @@ import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { TASK_GROUP_CONTENT_COLORS, TASK_GROUP_CONTENT_ICON } from "@/lib/exercises/task-type-meta";
 
 export default async function EditMaterialPage({
   params,
@@ -146,23 +147,37 @@ export default async function EditMaterialPage({
           </div>
 
           <ul className="mt-3 flex flex-col gap-2">
-            {rows.map((row, i) =>
-              row.kind === "group" ? (
+            {rows.map((row, i) => {
+              if (row.kind === "group") {
+                const ContentIcon = TASK_GROUP_CONTENT_ICON[row.content_type];
+                return (
                 <li
                   key={`group-${row.id}`}
                   className="flex items-center justify-between rounded-md border border-indigo-100 bg-indigo-50/30 p-3 dark:border-indigo-900 dark:bg-indigo-950/20"
                 >
-                  <div>
-                    <span className={`uppercase ${HINT_TEXT}`}>
-                      Блок · {row.content_type}
-                      {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
-                    </span>
-                    <Link
-                      href={`/admin/courses/${productId}/task-groups/${row.id}`}
-                      className="block font-medium hover:underline"
-                    >
-                      {row.title || "Без назви"}
-                    </Link>
+                  <div className="flex items-center gap-2">
+                    {ContentIcon && (
+                      <span
+                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.badge ?? ""
+                        }`}
+                        aria-hidden
+                      >
+                        <ContentIcon size={14} />
+                      </span>
+                    )}
+                    <div>
+                      <span className={`uppercase ${HINT_TEXT}`}>
+                        Блок · {row.content_type}
+                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
+                      </span>
+                      <Link
+                        href={`/admin/courses/${productId}/task-groups/${row.id}`}
+                        className="block font-medium hover:underline"
+                      >
+                        {row.title || "Без назви"}
+                      </Link>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <form action={moveTaskGroup.bind(null, row.id, "up")}>
@@ -197,7 +212,9 @@ export default async function EditMaterialPage({
                     </form>
                   </div>
                 </li>
-              ) : (
+                );
+              }
+              return (
                 <li
                   key={`task-${row.id}`}
                   className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
@@ -254,8 +271,8 @@ export default async function EditMaterialPage({
                     </form>
                   </div>
                 </li>
-              )
-            )}
+              );
+            })}
           </ul>
           {rows.length === 0 && (
             <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">

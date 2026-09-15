@@ -47,7 +47,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { getTypeTransform, type LinkEmbedFields } from "./type-compatibility";
 import {
-  CATEGORY_COLORS,
+  TASK_TYPE_COLORS,
   CATEGORY_LABELS,
   getTaskTypeCategory,
 } from "@/lib/exercises/task-type-meta";
@@ -336,7 +336,7 @@ export function TaskConfigFields({
           <TaskTypeIconBadge type={type} size="xs" />
           {taskTypeCategory && (
             <span
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${CATEGORY_COLORS[taskTypeCategory].badge}`}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs ${TASK_TYPE_COLORS[type]?.badge ?? ""}`}
             >
               {CATEGORY_LABELS[taskTypeCategory]}
             </span>

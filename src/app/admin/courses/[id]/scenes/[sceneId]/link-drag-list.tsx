@@ -7,6 +7,18 @@ import { SubmitButton } from "@/components/submit-button";
 
 type LinkRow = { id: string; platform: string; url: string; label: string | null };
 
+const LINK_TEXT_MAX_LENGTH = 40;
+
+// Без парсингу URL (new URL(...) кине виняток на кривому/неповному вводі) —
+// просте обрізання рядка. {platform}: попереду вже дає контекст (Quizlet/
+// Wordwall), тож сам домен у скороченому тексті не критичний.
+function shortLinkText(link: LinkRow): string {
+  if (link.label) return link.label;
+  return link.url.length > LINK_TEXT_MAX_LENGTH
+    ? `${link.url.slice(0, LINK_TEXT_MAX_LENGTH)}…`
+    : link.url;
+}
+
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList/TaskDragList:
 // ручка (GripVertical) — джерело drag, увесь <li> — ціль drop, swap-семантика.
 //
@@ -89,7 +101,7 @@ export function LinkDragList({
                 <GripVertical size={16} />
               </span>
               <ExternalLink size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
-              {link.platform}: {link.label ?? link.url}
+              {link.platform}: {shortLinkText(link)}
             </span>
             <form action={deleteLink.bind(null, link.id)}>
               <SubmitButton
