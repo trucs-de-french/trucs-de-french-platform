@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Copy, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateMaterial, deleteMaterial } from "@/app/admin/materials/actions";
@@ -9,7 +10,7 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
-import { BUTTON_SECONDARY, BUTTON_SECONDARY_SM, BUTTON_DANGER, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -181,10 +182,12 @@ export default async function EditMaterialPage({
                     </form>
                     <form action={deleteTaskGroup.bind(null, row.id)}>
                       <SubmitButton
-                        pendingChildren="..."
-                        className={BUTTON_DANGER_SM}
+                        pendingChildren="…"
+                        aria-label="Видалити блок"
+                        title="Видалити"
+                        className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                       >
-                        Видалити
+                        <Trash2 size={16} />
                       </SubmitButton>
                     </form>
                   </div>
@@ -224,16 +227,20 @@ export default async function EditMaterialPage({
                     </form>
                     <Link
                       href={`/admin/courses/${productId}/tasks/${row.id}/copy`}
-                      className={BUTTON_SECONDARY_SM}
+                      aria-label="Копіювати задачу"
+                      title="Копіювати"
+                      className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
                     >
-                      Копіювати
+                      <Copy size={16} />
                     </Link>
                     <form action={deleteTask.bind(null, row.id)}>
                       <SubmitButton
-                        pendingChildren="..."
-                        className={BUTTON_DANGER_SM}
+                        pendingChildren="…"
+                        aria-label="Видалити задачу"
+                        title="Видалити"
+                        className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                       >
-                        Видалити
+                        <Trash2 size={16} />
                       </SubmitButton>
                     </form>
                   </div>

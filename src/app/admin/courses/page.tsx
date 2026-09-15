@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { toggleArchive, deleteProductPermanently } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
-import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
 
 export default async function AdminCoursesPage({
@@ -108,10 +109,12 @@ export default async function AdminCoursesPage({
                     message="Курс і весь вміст (сцени, тести, матеріали, завдання) буде видалено назавжди. Це незворотно. Ви впевнені?"
                   >
                     <SubmitButton
-                      pendingChildren="..."
-                      className={BUTTON_DANGER_SM}
+                      pendingChildren="…"
+                      aria-label="Видалити курс назавжди"
+                      title="Видалити назавжди"
+                      className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                     >
-                      Видалити назавжди
+                      <Trash2 size={16} />
                     </SubmitButton>
                   </ConfirmForm>
                 </>

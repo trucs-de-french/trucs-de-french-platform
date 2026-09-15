@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import { deleteLink, reorderLinks } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { BUTTON_DANGER_SM } from "@/lib/button-styles";
 
 type LinkRow = { id: string; platform: string; url: string; label: string | null };
 
@@ -93,10 +92,12 @@ export function LinkDragList({
             </span>
             <form action={deleteLink.bind(null, link.id)}>
               <SubmitButton
-                pendingChildren="..."
-                className={BUTTON_DANGER_SM}
+                pendingChildren="…"
+                aria-label="Видалити посилання"
+                title="Видалити"
+                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
               >
-                Видалити
+                <Trash2 size={16} />
               </SubmitButton>
             </form>
           </li>

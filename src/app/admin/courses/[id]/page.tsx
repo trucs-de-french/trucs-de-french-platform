@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Copy, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -20,10 +21,8 @@ import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typograph
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
-  BUTTON_SECONDARY_SM,
   BUTTON_WARNING,
   BUTTON_DANGER,
-  BUTTON_DANGER_SM,
   BUTTON_PREVIEW,
 } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -374,13 +373,20 @@ export default async function AdminCoursePage({
                   <div className="flex items-center gap-1">
                     <Link
                       href={`/admin/courses/${product.id}/materials/${m.id}/copy`}
-                      className={BUTTON_SECONDARY_SM}
+                      aria-label="Копіювати матеріал"
+                      title="Копіювати"
+                      className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
                     >
-                      Копіювати
+                      <Copy size={16} />
                     </Link>
                     <form action={deleteMaterial.bind(null, m.id, product.id)}>
-                      <SubmitButton pendingChildren="..." className={BUTTON_DANGER_SM}>
-                        Видалити
+                      <SubmitButton
+                        pendingChildren="…"
+                        aria-label="Видалити матеріал"
+                        title="Видалити"
+                        className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                      >
+                        <Trash2 size={16} />
                       </SubmitButton>
                     </form>
                   </div>

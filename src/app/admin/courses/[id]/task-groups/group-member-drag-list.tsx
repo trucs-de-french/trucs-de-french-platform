@@ -2,11 +2,11 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Copy, Trash2 } from "lucide-react";
 import { deleteTask } from "@/app/admin/tasks/actions";
 import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 
 type MemberRow = { id: string; type: string; title: string };
@@ -156,9 +156,11 @@ export function GroupMemberDragList({
               <button
                 type="button"
                 onClick={() => void copy(task.id)}
-                className={BUTTON_SECONDARY_SM}
+                aria-label="Копіювати задачу"
+                title="Копіювати"
+                className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
               >
-                Копіювати
+                <Copy size={16} />
               </button>
               <form action={detachTask.bind(null, task.id)}>
                 <SubmitButton
@@ -170,10 +172,12 @@ export function GroupMemberDragList({
               </form>
               <form action={deleteTask.bind(null, task.id)}>
                 <SubmitButton
-                  pendingChildren="..."
-                  className={BUTTON_DANGER_SM}
+                  pendingChildren="…"
+                  aria-label="Видалити задачу"
+                  title="Видалити"
+                  className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                 >
-                  Видалити
+                  <Trash2 size={16} />
                 </SubmitButton>
               </form>
             </div>

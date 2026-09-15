@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
-import { BUTTON_SECONDARY, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
 type Line = { speaker: string; text: string; vocab: VocabItem[] };
@@ -118,9 +118,11 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
             <button
               type="button"
               onClick={() => removeLine(i)}
-              className={BUTTON_DANGER_SM}
+              aria-label="Видалити репліку"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              Видалити
+              <Trash2 size={16} />
             </button>
           </div>
 
