@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -102,6 +103,7 @@ export const DragDropFields = forwardRef<
               rows={2}
               className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-base font-medium font-content`}
             />
+            <span className={`mt-1.5 ${HINT_TEXT}`}>Бали</span>
             <input
               type="number"
               min={0}
@@ -114,9 +116,11 @@ export const DragDropFields = forwardRef<
             <button
               type="button"
               onClick={() => removeSentence(s.id)}
-              className="mt-1.5 text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити речення"
+              title="Видалити"
+              className="mt-1.5 rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
@@ -145,9 +149,11 @@ export const DragDropFields = forwardRef<
             <button
               type="button"
               onClick={() => removeWord(i)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити слово"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}

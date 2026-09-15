@@ -1,11 +1,13 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { FileUpload } from "@/components/file-upload";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyCard(): FlipCard {
@@ -85,18 +87,29 @@ export const FlipCardsFields = forwardRef<
             <button
               type="button"
               onClick={() => removeCard(i)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити картку"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
-          <input
-            value={card.image_url ?? ""}
-            onChange={(e) => updateCard(i, "image_url", e.target.value)}
-            placeholder="Картинка (URL, необов'язково)"
-            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-          />
-          <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
+          <div className="flex items-start gap-1">
+            <div className="flex w-full max-w-md flex-col gap-1">
+              <input
+                value={card.image_url ?? ""}
+                onChange={(e) => updateCard(i, "image_url", e.target.value)}
+                placeholder="Картинка (URL, необов'язково)"
+                className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+              />
+              <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
+            </div>
+            <ImageOrPlaceholder
+              src={card.image_url}
+              alt="Прев'ю"
+              className="h-12 w-12 shrink-0 rounded object-cover"
+            />
+          </div>
           <input
             value={card.audio_url ?? ""}
             onChange={(e) => updateCard(i, "audio_url", e.target.value)}

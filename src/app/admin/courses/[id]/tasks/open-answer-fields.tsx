@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT } from "@/lib/typography-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyQuestion(): OpenAnswerQuestion {
   return { id: crypto.randomUUID(), question: "", answers: [""] };
@@ -91,6 +92,7 @@ export function OpenAnswerFields({
                 placeholder="напр. Як буде французькою 'дякую'?"
                 className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
+              <span className={HINT_TEXT}>Бали</span>
               <input
                 type="number"
                 min={0}
@@ -103,9 +105,11 @@ export function OpenAnswerFields({
               <button
                 type="button"
                 onClick={() => removeQuestion(q.id)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
+                aria-label="Видалити питання"
+                title="Видалити питання"
+                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
               >
-                видалити питання
+                <Trash2 size={16} />
               </button>
             </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
@@ -123,9 +127,11 @@ export function OpenAnswerFields({
                   <button
                     type="button"
                     onClick={() => removeAnswer(q.id, i)}
-                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                    aria-label="Видалити варіант"
+                    title="Видалити"
+                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                   >
-                    видалити
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}

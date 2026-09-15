@@ -1,12 +1,14 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT } from "@/lib/typography-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -142,6 +144,7 @@ export const ListeningFields = forwardRef<
                 placeholder="Текст питання"
                 className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
+              <span className={HINT_TEXT}>Бали</span>
               <input
                 type="number"
                 min={0}
@@ -154,14 +157,21 @@ export const ListeningFields = forwardRef<
               <button
                 type="button"
                 onClick={() => removeQuestion(q.id)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
+                aria-label="Видалити питання"
+                title="Видалити питання"
+                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
               >
-                видалити питання
+                <Trash2 size={16} />
               </button>
             </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
               {q.options.map((o) => (
-                <div key={o.id} className="flex items-center gap-2">
+                <div
+                  key={o.id}
+                  className={`flex items-center gap-2 rounded-md p-1 ${
+                    o.correct ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                  }`}
+                >
                   <input
                     type="radio"
                     name={`listening_correct_${q.id}`}
@@ -175,24 +185,33 @@ export const ListeningFields = forwardRef<
                     placeholder="Варіант відповіді"
                     className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
-                  <div className="flex flex-1 flex-col gap-1">
-                    <input
-                      value={o.imageUrl ?? ""}
-                      onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
-                      placeholder="URL картинки (опційно)"
-                      className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-                    />
-                    <FileUpload
-                      kind="image"
-                      onUploaded={(url) => updateOptionImageUrl(q.id, o.id, url)}
+                  <div className="flex flex-1 items-start gap-1">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <input
+                        value={o.imageUrl ?? ""}
+                        onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
+                        placeholder="URL картинки (опційно)"
+                        className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+                      />
+                      <FileUpload
+                        kind="image"
+                        onUploaded={(url) => updateOptionImageUrl(q.id, o.id, url)}
+                      />
+                    </div>
+                    <ImageOrPlaceholder
+                      src={o.imageUrl}
+                      alt="Прев'ю"
+                      className="h-12 w-12 shrink-0 rounded object-cover"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => removeOption(q.id, o.id)}
-                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                    aria-label="Видалити варіант"
+                    title="Видалити"
+                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                   >
-                    видалити
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}

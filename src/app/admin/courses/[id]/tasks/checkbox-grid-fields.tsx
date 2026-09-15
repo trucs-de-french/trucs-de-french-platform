@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -110,9 +111,11 @@ export const CheckboxGridFields = forwardRef<
             <button
               type="button"
               onClick={() => removeColumn(c.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити колонку"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
@@ -141,6 +144,7 @@ export const CheckboxGridFields = forwardRef<
                 placeholder="Твердження / питання"
                 className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
+              <span className={HINT_TEXT}>Бали</span>
               <input
                 type="number"
                 min={0}
@@ -153,25 +157,32 @@ export const CheckboxGridFields = forwardRef<
               <button
                 type="button"
                 onClick={() => removeRow(row.id)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
+                aria-label="Видалити рядок"
+                title="Видалити"
+                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
               >
-                видалити
+                <Trash2 size={16} />
               </button>
             </div>
             <div className="flex flex-wrap gap-3 pl-2">
-              {columns.map((c) => (
-                <label
-                  key={c.id}
-                  className="flex items-center gap-1 text-sm text-neutral-700 dark:text-neutral-300"
-                >
-                  <input
-                    type="checkbox"
-                    checked={row.correctColumnIds.includes(c.id)}
-                    onChange={(e) => toggleCell(row.id, c.id, e.target.checked)}
-                  />
-                  {c.label || "(без назви)"}
-                </label>
-              ))}
+              {columns.map((c) => {
+                const isCorrect = row.correctColumnIds.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className={`flex items-center gap-1 rounded px-1 text-sm text-neutral-700 dark:text-neutral-300 ${
+                      isCorrect ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isCorrect}
+                      onChange={(e) => toggleCell(row.id, c.id, e.target.checked)}
+                    />
+                    {c.label || "(без назви)"}
+                  </label>
+                );
+              })}
             </div>
           </div>
         ))}

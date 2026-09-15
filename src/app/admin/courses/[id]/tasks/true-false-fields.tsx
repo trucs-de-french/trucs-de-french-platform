@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT } from "@/lib/typography-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 export function TrueFalseFields({
   initialConfig,
@@ -72,6 +73,7 @@ export function TrueFalseFields({
               <option value="true">Vrai</option>
               <option value="false">Faux</option>
             </select>
+            <span className={HINT_TEXT}>Бали</span>
             <input
               type="number"
               min={0}
@@ -84,9 +86,11 @@ export function TrueFalseFields({
             <button
               type="button"
               onClick={() => removeStatement(s.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити твердження"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}

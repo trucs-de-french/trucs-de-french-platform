@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -123,6 +124,7 @@ export const ReorderFields = forwardRef<
                 Послідовність {si + 1}
               </span>
               <div className="flex items-center gap-2">
+                <span className={HINT_TEXT}>Бали</span>
                 <input
                   type="number"
                   min={0}
@@ -135,9 +137,11 @@ export const ReorderFields = forwardRef<
                 <button
                   type="button"
                   onClick={() => removeSequence(seq.id)}
-                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                  aria-label="Видалити послідовність"
+                  title="Видалити послідовність"
+                  className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                 >
-                  видалити послідовність
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
@@ -172,9 +176,11 @@ export const ReorderFields = forwardRef<
                   <button
                     type="button"
                     onClick={() => removeItem(seq.id, i)}
-                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                    aria-label="Видалити елемент"
+                    title="Видалити"
+                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                   >
-                    видалити
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}

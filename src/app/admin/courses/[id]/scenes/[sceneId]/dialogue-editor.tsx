@@ -4,6 +4,7 @@ import { useState, type DragEvent } from "react";
 import { GripVertical, Trash2, ArrowRight } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
@@ -148,21 +149,32 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                   <button
                     type="button"
                     onClick={() => removeVocab(i, vi)}
-                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                    aria-label="Видалити слово"
+                    title="Видалити"
+                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                   >
-                    видалити
+                    <Trash2 size={16} />
                   </button>
                 </div>
-                <input
-                  placeholder="Посилання на картинку (необов'язково)"
-                  value={v.image_url ?? ""}
-                  onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
-                  className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-                />
-                <FileUpload
-                  kind="image"
-                  onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
-                />
+                <div className="flex items-start gap-1">
+                  <div className="flex w-full max-w-md flex-col gap-1">
+                    <input
+                      placeholder="Посилання на картинку (необов'язково)"
+                      value={v.image_url ?? ""}
+                      onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
+                      className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+                    />
+                    <FileUpload
+                      kind="image"
+                      onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
+                    />
+                  </div>
+                  <ImageOrPlaceholder
+                    src={v.image_url}
+                    alt="Прев'ю"
+                    className="h-12 w-12 shrink-0 rounded object-cover"
+                  />
+                </div>
               </div>
             ))}
             <button

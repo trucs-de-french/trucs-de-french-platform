@@ -1,10 +1,12 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { MultipleChoiceConfig, MultipleChoiceItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -152,6 +154,7 @@ export const MultipleChoiceFields = forwardRef<
                 Речення {ii + 1}
               </span>
               <div className="flex items-center gap-2">
+                <span className={HINT_TEXT}>Бали</span>
                 <input
                   type="number"
                   min={0}
@@ -164,9 +167,11 @@ export const MultipleChoiceFields = forwardRef<
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                  aria-label="Видалити речення"
+                  title="Видалити речення"
+                  className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                 >
-                  видалити речення
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
@@ -186,7 +191,12 @@ export const MultipleChoiceFields = forwardRef<
                 Варіанти (позначте правильні)
               </label>
               {item.options.map((o) => (
-                <div key={o.id} className="flex items-center gap-2">
+                <div
+                  key={o.id}
+                  className={`flex items-center gap-2 rounded-md p-1 ${
+                    o.correct ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={o.correct}
@@ -199,24 +209,33 @@ export const MultipleChoiceFields = forwardRef<
                     placeholder="Текст варіанту"
                     className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
-                  <div className="flex flex-1 flex-col gap-1">
-                    <input
-                      value={o.imageUrl ?? ""}
-                      onChange={(e) => updateOptionImageUrl(item.id, o.id, e.target.value)}
-                      placeholder="URL картинки (опційно)"
-                      className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-                    />
-                    <FileUpload
-                      kind="image"
-                      onUploaded={(url) => updateOptionImageUrl(item.id, o.id, url)}
+                  <div className="flex flex-1 items-start gap-1">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <input
+                        value={o.imageUrl ?? ""}
+                        onChange={(e) => updateOptionImageUrl(item.id, o.id, e.target.value)}
+                        placeholder="URL картинки (опційно)"
+                        className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+                      />
+                      <FileUpload
+                        kind="image"
+                        onUploaded={(url) => updateOptionImageUrl(item.id, o.id, url)}
+                      />
+                    </div>
+                    <ImageOrPlaceholder
+                      src={o.imageUrl}
+                      alt="Прев'ю"
+                      className="h-12 w-12 shrink-0 rounded object-cover"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => removeOption(item.id, o.id)}
-                    className="text-xs text-red-600 hover:underline dark:text-red-400"
+                    aria-label="Видалити варіант"
+                    title="Видалити"
+                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
                   >
-                    видалити
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}

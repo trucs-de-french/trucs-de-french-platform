@@ -1,12 +1,13 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT } from "@/lib/typography-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
@@ -108,9 +109,11 @@ export const SortColumnsFields = forwardRef<
             <button
               type="button"
               onClick={() => removeColumn(c.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити колонку"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
@@ -147,6 +150,7 @@ export const SortColumnsFields = forwardRef<
                 </option>
               ))}
             </select>
+            <span className={HINT_TEXT}>Бали</span>
             <input
               type="number"
               min={0}
@@ -159,9 +163,11 @@ export const SortColumnsFields = forwardRef<
             <button
               type="button"
               onClick={() => removeItem(item.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити елемент"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}

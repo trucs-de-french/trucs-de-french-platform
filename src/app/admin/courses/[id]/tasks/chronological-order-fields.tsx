@@ -1,10 +1,12 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -126,16 +128,23 @@ export const ChronologicalOrderFields = forwardRef<
             {index + 1}
           </span>
           {mode === "image" ? (
-            <div className="flex flex-1 flex-col gap-1">
-              <input
-                value={item.content}
-                onChange={(e) => updateContent(item.id, e.target.value)}
-                placeholder="URL зображення"
-                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-              />
-              <FileUpload
-                kind="image"
-                onUploaded={(url) => updateContent(item.id, url)}
+            <div className="flex flex-1 items-start gap-1">
+              <div className="flex flex-1 flex-col gap-1">
+                <input
+                  value={item.content}
+                  onChange={(e) => updateContent(item.id, e.target.value)}
+                  placeholder="URL зображення"
+                  className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+                />
+                <FileUpload
+                  kind="image"
+                  onUploaded={(url) => updateContent(item.id, url)}
+                />
+              </div>
+              <ImageOrPlaceholder
+                src={item.content}
+                alt="Прев'ю"
+                className="h-12 w-12 shrink-0 rounded object-cover"
               />
             </div>
           ) : (
@@ -146,6 +155,7 @@ export const ChronologicalOrderFields = forwardRef<
               className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
             />
           )}
+          <span className={HINT_TEXT}>Бали</span>
           <input
             type="number"
             min={0}
@@ -158,9 +168,11 @@ export const ChronologicalOrderFields = forwardRef<
           <button
             type="button"
             onClick={() => removeItem(item.id)}
-            className="text-xs text-red-600 hover:underline dark:text-red-400"
+            aria-label="Видалити елемент"
+            title="Видалити"
+            className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
           >
-            видалити
+            <Trash2 size={16} />
           </button>
         </div>
       ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -139,6 +140,7 @@ export const TableFillFields = forwardRef<
               приховати
             </label>
           </div>
+          <span className={`self-start ${HINT_TEXT}`}>Бали</span>
           <input
             type="number"
             min={0}
@@ -151,9 +153,11 @@ export const TableFillFields = forwardRef<
           <button
             type="button"
             onClick={() => removeRow(row.id)}
-            className="self-start text-xs text-red-600 hover:underline dark:text-red-400"
+            aria-label="Видалити рядок"
+            title="Видалити"
+            className="self-start rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
           >
-            видалити
+            <Trash2 size={16} />
           </button>
         </div>
       ))}

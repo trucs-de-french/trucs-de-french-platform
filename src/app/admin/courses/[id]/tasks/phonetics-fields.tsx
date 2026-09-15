@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -72,9 +73,11 @@ export const PhoneticsFields = forwardRef<
             <button
               type="button"
               onClick={() => removeItem(i)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити репліку"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
           <input

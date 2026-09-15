@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { EssayFormulaireConfig, EssayFormulaireField } from "@/lib/exercises/types";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
@@ -58,9 +59,11 @@ export function EssayFormulaireFields({
             <button
               type="button"
               onClick={() => removeField(f.id)}
-              className="text-xs text-red-600 hover:underline dark:text-red-400"
+              aria-label="Видалити пункт"
+              title="Видалити"
+              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
             >
-              видалити
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
