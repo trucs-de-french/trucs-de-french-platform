@@ -30,7 +30,7 @@ export function GoToTestForm({ productId }: { productId: string }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="№"
-        className={`${INPUT_BORDER} w-16 px-2 py-1.5 text-sm`}
+        className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
       />
       <button
         type="submit"

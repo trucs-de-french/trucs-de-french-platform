@@ -109,7 +109,7 @@ export const DragDropFields = forwardRef<
               value={s.points ?? 1}
               onChange={(e) => updateSentencePoints(s.id, Number(e.target.value))}
               title="Бали за все речення (зараховуються, лише якщо воно повністю правильне)"
-              className={`${INPUT_BORDER} mt-1.5 w-16 px-2 py-1 text-sm`}
+              className={`${INPUT_BORDER} mt-1.5 w-16 px-2 py-2 text-sm`}
             />
             <button
               type="button"
@@ -140,7 +140,7 @@ export const DragDropFields = forwardRef<
               value={word}
               onChange={(e) => updateWord(i, e.target.value)}
               placeholder="Слово"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm font-content`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm font-content`}
             />
             <button
               type="button"

@@ -85,7 +85,7 @@ export default async function CopyTaskPage({
             <div className="flex flex-col gap-1">
               <label className={LABEL_TEXT}>Сцена</label>
               <input type="hidden" name="destination" value="scene" />
-              <select name="scene_id" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
+              <select name="scene_id" required className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
                 {scenes!.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.title}

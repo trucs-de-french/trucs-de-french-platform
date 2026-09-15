@@ -361,7 +361,7 @@ export function TaskConfigFields({
               required
               value={delfSection}
               onChange={(e) => setDelfSection(e.target.value)}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             >
               <option value="">—</option>
               {EXAM_SECTIONS.map((s) => (
@@ -383,7 +383,7 @@ export function TaskConfigFields({
               required
               value={delfTestNumber}
               onChange={(e) => setDelfTestNumber(e.target.value)}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
         </div>
@@ -398,7 +398,7 @@ export function TaskConfigFields({
             name="task_image_url"
             defaultValue={initialImageUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
           <label className={`mt-1 ${LABEL_TEXT}`}>
             Або завантажити картинку (перекриє URL вище, якщо вибрано)
@@ -413,7 +413,7 @@ export function TaskConfigFields({
             name="task_audio_url"
             defaultValue={initialAudioUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
           <label className={`mt-1 ${LABEL_TEXT}`}>
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
@@ -429,7 +429,7 @@ export function TaskConfigFields({
             <select
               name="game_provider"
               defaultValue={initialGame?.provider ?? "wordwall"}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             >
               <option value="wordwall">Wordwall</option>
               <option value="quizlet">Quizlet</option>
@@ -441,7 +441,7 @@ export function TaskConfigFields({
             <input
               name="game_embed_url"
               defaultValue={initialGame?.embed_url ?? ""}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -449,7 +449,7 @@ export function TaskConfigFields({
             <input
               name="game_type"
               defaultValue={initialGame?.game_type ?? ""}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
         </div>
@@ -470,7 +470,7 @@ export function TaskConfigFields({
                   setEssayExerciseNumber("");
                   maybeAutofillCriteria(e.target.value, "");
                 }}
-                className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
               >
                 <option value="A1">A1</option>
                 <option value="A2">A2</option>
@@ -488,7 +488,7 @@ export function TaskConfigFields({
                     setEssayExerciseNumber(e.target.value);
                     maybeAutofillCriteria(essayLevel, e.target.value);
                   }}
-                  className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+                  className={`${INPUT_BORDER} px-2 py-2 text-sm`}
                 >
                   <option value="">—</option>
                   {essayLevel === "A1" ? (
@@ -571,7 +571,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as LinkEmbedFields).url
                   : (initialConfig?.url as string)) ?? ""
               }
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -581,7 +581,7 @@ export function TaskConfigFields({
               name="embed_height"
               type="number"
               defaultValue={(initialConfig?.height as number) ?? 480}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
         </div>
@@ -599,7 +599,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as LinkEmbedFields).url
                   : (initialConfig?.url as string)) ?? ""
               }
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -608,7 +608,7 @@ export function TaskConfigFields({
               ref={linkLabelRef}
               name="link_label"
               defaultValue={(initialConfig?.label as string) ?? ""}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
+              className={`${INPUT_BORDER} px-2 py-2 text-base font-medium`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -617,7 +617,7 @@ export function TaskConfigFields({
               ref={linkPlatformRef}
               name="link_platform"
               defaultValue={(initialConfig?.platform as string) ?? "auto"}
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             >
               <option value="auto">Визначити автоматично по URL</option>
               <option value="youtube">YouTube</option>
@@ -686,7 +686,7 @@ export function TaskConfigFields({
                   ? (pendingSeed.config as { points?: number }).points
                   : (initialConfig?.points as number)) ?? 1
               }
-              className={`${INPUT_BORDER} w-24 px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -706,7 +706,7 @@ export function TaskConfigFields({
                   value={word}
                   onChange={(e) => updateFillBlankWord(i, e.target.value)}
                   placeholder="Слово"
-                  className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
+                  className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
                 />
                 <button
                   type="button"

@@ -55,7 +55,7 @@ export default async function CopyMaterialPage({
             name="target_product_id"
             defaultValue={productId}
             required
-            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           >
             {products?.map((p) => (
               <option key={p.id} value={p.id}>

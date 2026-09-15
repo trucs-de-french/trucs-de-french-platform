@@ -53,7 +53,7 @@ export function EssayFormulaireFields({
               value={f.label}
               onChange={(e) => updateLabel(f.id, e.target.value)}
               placeholder="напр. Prénom"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium`}
             />
             <button
               type="button"

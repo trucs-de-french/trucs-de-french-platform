@@ -88,14 +88,14 @@ export const MatchingFields = forwardRef<
             value={p.left}
             onChange={(e) => updatePair(i, "left", e.target.value)}
             placeholder="Лівий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
           />
           <span className="text-neutral-400 dark:text-neutral-500">→</span>
           <input
             value={p.right}
             onChange={(e) => updatePair(i, "right", e.target.value)}
             placeholder="Правий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
           />
           <input
             type="number"
@@ -104,7 +104,7 @@ export const MatchingFields = forwardRef<
             value={p.points ?? 1}
             onChange={(e) => updatePoints(i, Number(e.target.value))}
             title="Бали за цю пару"
-            className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+            className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
           />
           <button
             type="button"

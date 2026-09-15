@@ -101,7 +101,7 @@ export default async function EditMaterialPage({
           <select
             name="category"
             defaultValue={material.category ?? ""}
-            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           >
             <option value="">— Без категорії —</option>
             <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
@@ -117,7 +117,7 @@ export default async function EditMaterialPage({
             name="file_url"
             type="url"
             defaultValue={material.file_url ?? ""}
-            className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
         </div>
 

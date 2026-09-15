@@ -86,7 +86,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[0]}
             onChange={(e) => setColumnLabels(([, right]) => [e.target.value, right])}
-            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
+            className={`${INPUT_BORDER} px-2 py-2 text-base font-medium`}
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
@@ -94,7 +94,7 @@ export const TableFillFields = forwardRef<
           <input
             value={columnLabels[1]}
             onChange={(e) => setColumnLabels(([left]) => [left, e.target.value])}
-            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
+            className={`${INPUT_BORDER} px-2 py-2 text-base font-medium`}
           />
         </div>
       </div>
@@ -112,7 +112,7 @@ export const TableFillFields = forwardRef<
               value={row.left}
               onChange={(e) => updateRow(row.id, "left", e.target.value)}
               placeholder={columnLabels[0]}
-              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
@@ -128,7 +128,7 @@ export const TableFillFields = forwardRef<
               value={row.right}
               onChange={(e) => updateRow(row.id, "right", e.target.value)}
               placeholder={columnLabels[1]}
-              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
@@ -146,7 +146,7 @@ export const TableFillFields = forwardRef<
             value={row.points ?? 1}
             onChange={(e) => updateRowPoints(row.id, Number(e.target.value))}
             title="Бали за весь рядок (зараховуються, лише якщо всі приховані клітинки правильні)"
-            className={`${INPUT_BORDER} w-16 self-start px-2 py-1 text-sm`}
+            className={`${INPUT_BORDER} w-16 self-start px-2 py-2 text-sm`}
           />
           <button
             type="button"

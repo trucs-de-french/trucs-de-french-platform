@@ -94,7 +94,7 @@ export function ImportVocabPanel({
           <input
             value={customWord}
             onChange={(e) => setCustomWord(e.target.value)}
-            className={`${INPUT_BORDER} px-2 py-1 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -102,7 +102,7 @@ export function ImportVocabPanel({
           <input
             value={customTranslation}
             onChange={(e) => setCustomTranslation(e.target.value)}
-            className={`${INPUT_BORDER} px-2 py-1 text-sm`}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
         </div>
         <button

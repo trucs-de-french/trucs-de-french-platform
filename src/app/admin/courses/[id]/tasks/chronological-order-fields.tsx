@@ -87,7 +87,7 @@ export const ChronologicalOrderFields = forwardRef<
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as "image" | "text")}
-          className={`${INPUT_BORDER} w-fit px-2 py-1 text-sm`}
+          className={`${INPUT_BORDER} w-fit px-2 py-2 text-sm`}
         >
           <option value="image">Зображення (URL)</option>
           <option value="text">Текстові твердження</option>
@@ -131,7 +131,7 @@ export const ChronologicalOrderFields = forwardRef<
                 value={item.content}
                 onChange={(e) => updateContent(item.id, e.target.value)}
                 placeholder="URL зображення"
-                className={`${INPUT_BORDER} px-2 py-1 text-sm`}
+                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
               />
               <FileUpload
                 kind="image"
@@ -143,7 +143,7 @@ export const ChronologicalOrderFields = forwardRef<
               value={item.content}
               onChange={(e) => updateContent(item.id, e.target.value)}
               placeholder="Текст твердження"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
             />
           )}
           <input
@@ -153,7 +153,7 @@ export const ChronologicalOrderFields = forwardRef<
             value={item.points ?? 1}
             onChange={(e) => updatePoints(item.id, Number(e.target.value))}
             title="Бали за цей елемент"
-            className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+            className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
           />
           <button
             type="button"

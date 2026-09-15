@@ -184,18 +184,18 @@ export default async function AdminScenePage({
       >
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Платформа</label>
-          <select name="platform" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
+          <select name="platform" className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
             <option value="quizlet">Quizlet</option>
             <option value="wordwall">Wordwall</option>
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>URL</label>
-          <input name="url" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
+          <input name="url" required className={`${INPUT_BORDER} px-2 py-2 text-sm`} />
         </div>
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Мітка</label>
-          <input name="label" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
+          <input name="label" className={`${INPUT_BORDER} px-2 py-2 text-sm`} />
         </div>
       </SaveForm>
     </div>

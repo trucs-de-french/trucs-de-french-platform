@@ -89,7 +89,7 @@ export function OpenAnswerFields({
                 value={q.question}
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="напр. Як буде французькою 'дякую'?"
-                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
               <input
                 type="number"
@@ -98,7 +98,7 @@ export function OpenAnswerFields({
                 value={q.points ?? 1}
                 onChange={(e) => updatePoints(q.id, Number(e.target.value))}
                 title="Бали за це питання"
-                className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+                className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
               />
               <button
                 type="button"
@@ -118,7 +118,7 @@ export function OpenAnswerFields({
                     value={a}
                     onChange={(e) => updateAnswer(q.id, i, e.target.value)}
                     placeholder="Варіант відповіді"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
                   <button
                     type="button"

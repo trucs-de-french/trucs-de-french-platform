@@ -105,7 +105,7 @@ export const CheckboxGridFields = forwardRef<
               value={c.label}
               onChange={(e) => updateColumnLabel(c.id, e.target.value)}
               placeholder="Назва колонки"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium`}
             />
             <button
               type="button"
@@ -139,7 +139,7 @@ export const CheckboxGridFields = forwardRef<
                 value={row.label}
                 onChange={(e) => updateRowLabel(row.id, e.target.value)}
                 placeholder="Твердження / питання"
-                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
               <input
                 type="number"
@@ -148,7 +148,7 @@ export const CheckboxGridFields = forwardRef<
                 value={row.points ?? 1}
                 onChange={(e) => updateRowPoints(row.id, Number(e.target.value))}
                 title="Бали за весь рядок (зараховуються, лише якщо всі клітинки рядка правильні)"
-                className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+                className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
               />
               <button
                 type="button"

@@ -137,7 +137,7 @@ export const MultipleChoiceFields = forwardRef<
           name="mc_display"
           value={display}
           onChange={(e) => setDisplay(e.target.value as "buttons" | "dropdown")}
-          className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
         >
           <option value="buttons">Варіанти видно одразу</option>
           <option value="dropdown">Випадаючий список</option>
@@ -159,7 +159,7 @@ export const MultipleChoiceFields = forwardRef<
                   value={item.points ?? 1}
                   onChange={(e) => updatePoints(item.id, Number(e.target.value))}
                   title="Бали за це речення"
-                  className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+                  className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
                 />
                 <button
                   type="button"
@@ -197,14 +197,14 @@ export const MultipleChoiceFields = forwardRef<
                     value={o.text}
                     onChange={(e) => updateOptionText(item.id, o.id, e.target.value)}
                     placeholder="Текст варіанту"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
                   <div className="flex flex-1 flex-col gap-1">
                     <input
                       value={o.imageUrl ?? ""}
                       onChange={(e) => updateOptionImageUrl(item.id, o.id, e.target.value)}
                       placeholder="URL картинки (опційно)"
-                      className={`${INPUT_BORDER} px-2 py-1 text-sm`}
+                      className={`${INPUT_BORDER} px-2 py-2 text-sm`}
                     />
                     <FileUpload
                       kind="image"

@@ -73,14 +73,14 @@ export const FlipCardsFields = forwardRef<
               value={card.front}
               onChange={(e) => updateCard(i, "front", e.target.value)}
               placeholder="Перед"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
             />
             <span className="text-neutral-400 dark:text-neutral-500">→</span>
             <input
               value={card.back}
               onChange={(e) => updateCard(i, "back", e.target.value)}
               placeholder="Зад"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
             />
             <button
               type="button"
@@ -94,14 +94,14 @@ export const FlipCardsFields = forwardRef<
             value={card.image_url ?? ""}
             onChange={(e) => updateCard(i, "image_url", e.target.value)}
             placeholder="Картинка (URL, необов'язково)"
-            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
+            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
           />
           <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
           <input
             value={card.audio_url ?? ""}
             onChange={(e) => updateCard(i, "audio_url", e.target.value)}
             placeholder="Аудіо (URL, необов'язково)"
-            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
+            className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
           />
         </div>
       ))}

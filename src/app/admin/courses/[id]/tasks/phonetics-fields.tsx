@@ -67,7 +67,7 @@ export const PhoneticsFields = forwardRef<
               value={item.text}
               onChange={(e) => updateItem(i, "text", e.target.value)}
               placeholder="Репліка (французькою)"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
             />
             <button
               type="button"
@@ -81,13 +81,13 @@ export const PhoneticsFields = forwardRef<
             value={item.transcription}
             onChange={(e) => updateItem(i, "transcription", e.target.value)}
             placeholder="Транскрипція (напр. [ʒə vɛ bjɛ̃])"
-            className={`${INPUT_BORDER} px-2 py-1 text-base font-medium font-content`}
+            className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
           />
           <input
             value={item.mediaUrl ?? ""}
             onChange={(e) => updateItem(i, "mediaUrl", e.target.value)}
             placeholder="Аудіо або відео (URL, необов'язково)"
-            className={`${INPUT_BORDER} px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
+            className={`${INPUT_BORDER} px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
           />
         </div>
       ))}

@@ -106,7 +106,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               placeholder="Спікер"
               value={line.speaker}
               onChange={(e) => updateLine(i, "speaker", e.target.value)}
-              className={`${INPUT_BORDER} w-32 px-2 py-1 text-sm`}
+              className={`${INPUT_BORDER} w-32 px-2 py-2 text-sm`}
             />
             <textarea
               placeholder="Текст репліки"
@@ -134,14 +134,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     placeholder="Слово/фраза"
                     value={v.word}
                     onChange={(e) => updateVocab(i, vi, "word", e.target.value)}
-                    className={`${INPUT_BORDER} w-40 px-2 py-1 text-sm font-content`}
+                    className={`${INPUT_BORDER} w-40 px-2 py-2 text-sm font-content`}
                   />
                   <span className="text-neutral-400 dark:text-neutral-500">→</span>
                   <input
                     placeholder="Переклад"
                     value={v.translation}
                     onChange={(e) => updateVocab(i, vi, "translation", e.target.value)}
-                    className={`${INPUT_BORDER} w-48 px-2 py-1 text-sm font-content`}
+                    className={`${INPUT_BORDER} w-48 px-2 py-2 text-sm font-content`}
                   />
                   <button
                     type="button"
@@ -155,7 +155,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                   placeholder="Посилання на картинку (необов'язково)"
                   value={v.image_url ?? ""}
                   onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
-                  className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-1 text-xs text-neutral-600 dark:text-neutral-400`}
+                  className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
                 />
                 <FileUpload
                   kind="image"

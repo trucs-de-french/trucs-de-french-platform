@@ -14,5 +14,11 @@
 // className — виграє те, що останнє в СКОМПІЛЬОВАНОМУ CSS, не в атрибуті).
 // Кожне місце виклику дописує свій наявний розмір поверх цього базового
 // рядка — так само, як BUTTON_* у button-styles.ts.
+// pl-3 тут навмисно, а не в padding-виключенні вище — це БЕЗПЕЧний виняток:
+// в Tailwind однобічні pl-*/pr-*/pt-*/pb-* у згенерованому CSS йдуть ПІСЛЯ
+// двобічних px-*/py-* (звідси стандартний ідіом px-4 pl-2), тож pl-3 тут
+// надійно переможе будь-який локальний px-2/px-3 лише на лівому боці, не
+// займаючи правий, — на відміну від py-* (та сама "родина", що місцевий
+// py-*, переможець непередбачуваний).
 export const INPUT_BORDER =
-  "rounded-md border border-gray-200 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
+  "rounded-md border border-gray-200 pl-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";

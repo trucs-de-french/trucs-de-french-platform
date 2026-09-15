@@ -162,7 +162,7 @@ export default async function EditTaskGroupPage({
               name="task_id"
               required
               defaultValue=""
-              className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
             >
               <option value="" disabled>
                 — обрати наявну задачу —

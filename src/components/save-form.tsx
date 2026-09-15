@@ -99,7 +99,7 @@ export function SaveForm({
     <form onSubmit={handleSubmit} onChange={() => setDirty(true)} className={className}>
       {children}
       <div
-        className={`mt-2 flex items-center gap-3 ${
+        className={`mt-4 mb-6 flex items-center gap-3 ${
           sticky
             ? "sticky bottom-0 -mx-4 border-t bg-white px-4 py-3 dark:bg-neutral-950 dark:border-neutral-800"
             : ""

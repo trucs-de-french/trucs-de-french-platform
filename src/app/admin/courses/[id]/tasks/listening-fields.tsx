@@ -125,7 +125,7 @@ export const ListeningFields = forwardRef<
           name="listening_audio_url"
           defaultValue={initialConfig?.audioUrl ?? ""}
           placeholder="пряме посилання на mp3 або YouTube"
-          className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
         />
       </div>
 
@@ -140,7 +140,7 @@ export const ListeningFields = forwardRef<
                 value={q.question}
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="Текст питання"
-                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
               <input
                 type="number"
@@ -149,7 +149,7 @@ export const ListeningFields = forwardRef<
                 value={q.points ?? 1}
                 onChange={(e) => updateQuestionPoints(q.id, Number(e.target.value))}
                 title="Бали за це питання"
-                className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+                className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
               />
               <button
                 type="button"
@@ -173,14 +173,14 @@ export const ListeningFields = forwardRef<
                     value={o.text}
                     onChange={(e) => updateOptionText(q.id, o.id, e.target.value)}
                     placeholder="Варіант відповіді"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
                   <div className="flex flex-1 flex-col gap-1">
                     <input
                       value={o.imageUrl ?? ""}
                       onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
                       placeholder="URL картинки (опційно)"
-                      className={`${INPUT_BORDER} px-2 py-1 text-sm`}
+                      className={`${INPUT_BORDER} px-2 py-2 text-sm`}
                     />
                     <FileUpload
                       kind="image"

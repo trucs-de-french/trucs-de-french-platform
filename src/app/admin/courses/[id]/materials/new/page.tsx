@@ -44,7 +44,7 @@ export default async function NewMaterialPage({
 
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Категорія</label>
-          <select name="category" defaultValue="" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
+          <select name="category" defaultValue="" className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
             <option value="">— Без категорії —</option>
             <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
             <option value="general_tip">Загальні рекомендації (типові помилки)</option>
@@ -55,7 +55,7 @@ export default async function NewMaterialPage({
           <label className={LABEL_TEXT}>
             Посилання на PDF (URL, необов&apos;язково)
           </label>
-          <input name="file_url" type="url" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
+          <input name="file_url" type="url" className={`${INPUT_BORDER} px-2 py-2 text-sm`} />
         </div>
 
         <MaterialArticleFields />

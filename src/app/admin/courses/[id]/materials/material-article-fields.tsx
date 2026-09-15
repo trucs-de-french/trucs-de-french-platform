@@ -178,7 +178,7 @@ export function MaterialArticleFields({
             <select
               onChange={(e) => toggleFont(e.target.value)}
               defaultValue=""
-              className={`${INPUT_BORDER} px-1.5 py-1 text-xs`}
+              className={`${INPUT_BORDER} px-1.5 py-2 text-xs`}
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f.value} value={f.value}>

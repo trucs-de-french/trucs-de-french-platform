@@ -48,7 +48,7 @@ export function CopyTaskDestinationFields({
         <div className="flex gap-4">
           <div className="flex flex-1 flex-col gap-1">
             <label className={LABEL_TEXT}>Секція іспиту</label>
-            <select name="delf_section" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
+            <select name="delf_section" required className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
               {EXAM_SECTIONS.map((s) => (
                 <option key={s} value={s}>
                   {s} — {EXAM_SECTION_LABELS[s]}
@@ -64,7 +64,7 @@ export function CopyTaskDestinationFields({
               min={1}
               max={30}
               required
-              className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
         </div>
@@ -73,7 +73,7 @@ export function CopyTaskDestinationFields({
       {destination === "material" && materials.length > 0 && (
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Матеріал</label>
-          <select name="material_id" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
+          <select name="material_id" required className={`${INPUT_BORDER} px-2 py-2 text-sm`}>
             {materials.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.title ?? "Матеріал"}

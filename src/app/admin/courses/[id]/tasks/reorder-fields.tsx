@@ -130,7 +130,7 @@ export const ReorderFields = forwardRef<
                   value={seq.points ?? 1}
                   onChange={(e) => updatePoints(seq.id, Number(e.target.value))}
                   title="Бали за всю послідовність (зараховуються, лише якщо вона повністю правильна)"
-                  className={`${INPUT_BORDER} w-16 px-2 py-1 text-sm`}
+                  className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
                 />
                 <button
                   type="button"
@@ -151,7 +151,7 @@ export const ReorderFields = forwardRef<
                     value={item}
                     onChange={(e) => updateItem(seq.id, i, e.target.value)}
                     placeholder="Елемент"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
                   <button
                     type="button"
