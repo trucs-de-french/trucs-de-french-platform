@@ -1,10 +1,41 @@
 "use client";
 
 import { useState, type DragEvent, type ReactNode } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Video, MessageSquare, Link2, ListChecks, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 
 type Block = { type: string; label: string };
+
+// Колір за типом БЛОКУ сцени (video/script/link/task) — інший, паралельний
+// домен, ніж CATEGORY_COLORS у task-type-meta.ts (там кольори за
+// категорією ТИПУ ВПРАВИ, тут — за фіксованим набором із 4 блоків самої
+// сцени). Не варто ані розширювати task-type-meta.ts, ані виносити цю мапу
+// в окремий спільний файл — єдиний споживач саме цей компонент.
+const BLOCK_COLORS: Record<string, { icon: LucideIcon; badge: string; tint: string }> = {
+  video: {
+    icon: Video,
+    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+    tint: "bg-indigo-50/30 dark:bg-indigo-950/20",
+  },
+  script: {
+    icon: MessageSquare,
+    badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300",
+    tint: "bg-cyan-50/30 dark:bg-cyan-950/20",
+  },
+  // Link2, не PlayCircle — блок веде на зовнішні тренажери (Quizlet/
+  // Wordwall), той самий глиф, що вже для типу вправи "link" у
+  // task-type-meta.ts.
+  link: {
+    icon: Link2,
+    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    tint: "bg-emerald-50/30 dark:bg-emerald-950/20",
+  },
+  task: {
+    icon: ListChecks,
+    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    tint: "bg-amber-50/30 dark:bg-amber-950/20",
+  },
+};
 
 // Той самий click+drag swap-патерн, що й у студентській вправі reorder.tsx —
 // клік на ручку однієї групи, потім клік на ручку іншої міняє їх місцями;
@@ -74,7 +105,10 @@ export function SceneBlockList({
           {error}
         </p>
       )}
-      {blocks.map((block) => (
+      {blocks.map((block) => {
+        const color = BLOCK_COLORS[block.type];
+        const BlockIcon = color?.icon;
+        return (
         <div
           key={block.type}
           onDragOver={(e: DragEvent) => e.preventDefault()}
@@ -92,7 +126,7 @@ export function SceneBlockList({
           className={`rounded-md border-2 p-4 transition-colors ${
             dragOver === block.type
               ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-              : "border-transparent"
+              : `border-transparent ${color?.tint ?? ""}`
           }`}
         >
           <button
@@ -109,11 +143,20 @@ export function SceneBlockList({
             <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
               <GripVertical size={14} />
             </span>
+            {color && BlockIcon && (
+              <span
+                className={`mr-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${color.badge}`}
+                aria-hidden
+              >
+                <BlockIcon size={14} />
+              </span>
+            )}
             {block.label}
           </button>
           {contentByType[block.type]}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
