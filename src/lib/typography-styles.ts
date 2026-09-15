@@ -24,3 +24,11 @@ export const LABEL_TEXT = "text-sm font-medium text-gray-700 dark:text-neutral-3
 // "Блок · {type}") — 12px/normal/gray-500, той самий вигляд, що вже був до
 // централізації, просто іменована константа замість розкиданого рядка.
 export const HINT_TEXT = "text-xs text-neutral-500 dark:text-neutral-400";
+
+// Заголовок групи полів усередині форми (напр. "Основна інформація", "Ціна
+// та обкладинка") — легкий орієнтир, не має конкурувати за увагу з LABEL_TEXT
+// ("Назва", "Опис") у самій групі. Був text-neutral-500 font-medium (майже
+// той самий колір, що тут, просто ще й жирний) — саме uppercase+font-medium
+// разом робили напис "гучним" попри світлий колір; прибрала font-medium і
+// трохи світліше за HINT_TEXT, щоб дійсно відступав на другий план.
+export const CARD_GROUP_LABEL = "text-xs uppercase text-gray-400 dark:text-neutral-500";

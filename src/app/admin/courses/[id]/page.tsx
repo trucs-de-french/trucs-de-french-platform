@@ -17,7 +17,7 @@ import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
-import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT, CARD_GROUP_LABEL } from "@/lib/typography-styles";
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
@@ -186,7 +186,7 @@ export default async function AdminCoursePage({
 
       <SaveForm action={updateProduct.bind(null, product.id)} className="mt-4 flex flex-col gap-4">
         <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+          <p className={`mb-2 ${CARD_GROUP_LABEL}`}>
             Основна інформація
           </p>
           <div className="flex flex-col gap-1">
@@ -210,7 +210,7 @@ export default async function AdminCoursePage({
         </div>
 
         <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+          <p className={`mb-2 ${CARD_GROUP_LABEL}`}>
             Ціна та обкладинка
           </p>
           <div className="flex flex-col gap-1">
