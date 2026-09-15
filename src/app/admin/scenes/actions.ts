@@ -325,17 +325,28 @@ export async function reorderScenes(
   return { ok: true };
 }
 
+// contentBlockId — null для фіксованої Практики сцени (як і завжди);
+// непорожній — конкретний додатковий блок типу 'links' (0038). order_index
+// рахується СЕРЕД ЛИШЕ ЦЬОГО скоупу ("is not distinct from"-подібно, той
+// самий принцип, що вже в copy_task/task-order.ts) — інакше нова сцена й
+// новий блок ділили б один і той самий лічильник без жодного зв'язку між
+// собою.
 export async function addLink(
   sceneId: string,
+  contentBlockId: string | null,
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
 
-  const { data: last } = await supabase
+  const lastQuery = supabase
     .from("scene_links")
     .select("order_index")
-    .eq("scene_id", sceneId)
+    .eq("scene_id", sceneId);
+  const { data: last } = await (contentBlockId
+    ? lastQuery.eq("content_block_id", contentBlockId)
+    : lastQuery.is("content_block_id", null)
+  )
     .order("order_index", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -348,6 +359,7 @@ export async function addLink(
 
   const { error } = await supabase.from("scene_links").insert({
     scene_id: sceneId,
+    content_block_id: contentBlockId,
     platform: formData.get("platform") as string,
     url: formData.get("url") as string,
     label: (formData.get("label") as string) || null,

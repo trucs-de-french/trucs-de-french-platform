@@ -3,14 +3,15 @@
 import { useState, type DragEvent, type ReactNode } from "react";
 import { GripVertical, Video, MessageSquare, Link2, ListChecks, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
-import { TASK_GROUP_CONTENT_ICON, TASK_GROUP_CONTENT_COLORS } from "@/lib/exercises/task-type-meta";
+import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
 // що відрізняє один довільний блок від іншого (їх може бути скільки
 // завгодно, на відміну від фіксованих). contentType — лише для "content"
-// (text/audio/video/embed, домен TASK_GROUP_CONTENT_*), визначає іконку/
-// колір цього конкретного блоку.
+// (text/audio/video/embed/script/links, домен SCENE_CONTENT_BLOCK_*, НЕ
+// TASK_GROUP_CONTENT_* — той про інший домен, task_groups.content_type),
+// визначає іконку/колір цього конкретного блоку.
 type Block = { type: string; refId: string | null; label: string; contentType?: string };
 
 // Унікальний ключ блоку для React key/DnD/lookup — type сам по собі більше
@@ -133,13 +134,13 @@ export function SceneBlockList({
         const key = blockKey(block);
         const isContent = block.type === "content";
         const BlockIcon = isContent
-          ? TASK_GROUP_CONTENT_ICON[block.contentType ?? ""]
+          ? SCENE_CONTENT_BLOCK_ICON[block.contentType ?? ""]
           : BLOCK_COLORS[block.type]?.icon;
         const border = isContent
-          ? TASK_GROUP_CONTENT_COLORS[block.contentType ?? ""]?.border
+          ? SCENE_CONTENT_BLOCK_COLORS[block.contentType ?? ""]?.border
           : BLOCK_COLORS[block.type]?.border;
         const iconColor = isContent
-          ? TASK_GROUP_CONTENT_COLORS[block.contentType ?? ""]?.iconColor
+          ? SCENE_CONTENT_BLOCK_COLORS[block.contentType ?? ""]?.iconColor
           : BLOCK_COLORS[block.type]?.iconColor;
         return (
         <div

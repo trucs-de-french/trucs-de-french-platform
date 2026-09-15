@@ -28,7 +28,11 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { ScriptSection } from "./script-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
-import { SceneContentBlock, type SceneContentBlockData } from "../../scene-content-block";
+import {
+  SceneContentBlock,
+  type SceneContentBlockData,
+  type SceneContentLink,
+} from "../../scene-content-block";
 
 type DialogueEntry = {
   speaker: string;
@@ -131,10 +135,13 @@ export default async function ScenePage({
     { data: blocks, error: blocksError },
     { data: sceneContentBlocks },
   ] = await Promise.all([
+    // is("content_block_id", null) — фіксована Практика сцени, не посилання
+    // додаткових блоків типу 'links' (0038, підвантажуються окремо нижче).
     supabase
       .from("scene_links")
       .select("id, platform, url, label")
       .eq("scene_id", sceneId)
+      .is("content_block_id", null)
       .order("order_index"),
     supabase
       .from("tasks")
@@ -162,10 +169,32 @@ export default async function ScenePage({
     // scene_blocks вище, ref_id -> id тут.
     supabase
       .from("scene_content_blocks")
-      .select("id, content_type, content_text, media_url, media_provider")
+      .select("id, content_type, content_text, media_url, media_provider, dialogue")
       .eq("scene_id", sceneId)
       .returns<SceneContentBlockData[]>(),
   ]);
+
+  // Посилання для додаткових блоків типу 'links' — окремий запит (не
+  // фіксована Практика вище), той самий принцип пакетного підвантаження, що
+  // groupMembers/membersByGroup нижче.
+  const linksBlockIds = (sceneContentBlocks ?? [])
+    .filter((b) => b.content_type === "links")
+    .map((b) => b.id);
+  const { data: blockLinks } =
+    linksBlockIds.length > 0
+      ? await supabase
+          .from("scene_links")
+          .select("id, platform, url, label, content_block_id")
+          .in("content_block_id", linksBlockIds)
+          .order("order_index")
+          .returns<(SceneContentLink & { content_block_id: string })[]>()
+      : { data: null };
+  const linksByBlockId = new Map<string, SceneContentLink[]>();
+  for (const link of blockLinks ?? []) {
+    const arr = linksByBlockId.get(link.content_block_id) ?? [];
+    arr.push(link);
+    linksByBlockId.set(link.content_block_id, arr);
+  }
 
   const taskGroupIds = (taskGroups ?? []).map((g) => g.id);
   const { data: groupMembers } =
@@ -614,9 +643,13 @@ export default async function ScenePage({
         if (row.block_type === "content") {
           const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
           if (!content) return null;
+          const block =
+            content.content_type === "links"
+              ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
+              : content;
           return (
             <section key={`content-${row.ref_id}`} className="mt-6">
-              <SceneContentBlock block={content} />
+              <SceneContentBlock block={block} />
             </section>
           );
         }

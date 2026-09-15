@@ -2,6 +2,20 @@ import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { InstructionsText } from "@/components/exercises/instructions-text";
+import { ScriptSection } from "./scenes/[sceneId]/script-section";
+import type { VocabItem } from "@/lib/vocab";
+
+// Той самий локальний тип, що DialogueEntry в script-section.tsx (не
+// експортований звідти) — структурно сумісний, ScriptSection не переймається
+// звідки прийшов масив.
+type ScriptDialogueLine = { speaker: string; text: string; vocab: VocabItem[] };
+
+export type SceneContentLink = {
+  id: string;
+  url: string;
+  platform: string;
+  label: string | null;
+};
 
 export type SceneContentBlockData = {
   id: string;
@@ -9,18 +23,41 @@ export type SceneContentBlockData = {
   content_text: string | null;
   media_url: string | null;
   media_provider: string | null;
+  dialogue?: ScriptDialogueLine[] | null;
+  links?: SceneContentLink[];
 };
 
 // Рендер text/audio/video/embed дубльований з task-group-block.tsx (той
 // самий шматок, той самий домен content_type) — навмисно, не спільний
-// компонент (див. коментар у 0036_scene_content_blocks.sql). Не "use
-// client" — на відміну від TaskGroupBlock, тут немає задач/балів, що
-// потребують клієнтського стану, весь блок рендериться на сервері.
+// компонент (див. коментар у 0036_scene_content_blocks.sql). script/links
+// (0038) перевикористовують уже наявні ScriptSection/просту розмітку
+// посилань фіксованої Практики — не дублюють їх. Не "use client" — на
+// відміну від TaskGroupBlock, тут немає задач/балів, що потребують
+// клієнтського стану, весь блок рендериться на сервері (ScriptSection сам
+// по собі "use client" — це нормально всередині Server Component).
 export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
   return (
     <section className="rounded-md border p-3">
       {block.content_type === "text" && block.content_text && (
         <InstructionsText text={block.content_text} />
+      )}
+
+      {block.content_type === "script" && <ScriptSection dialogue={block.dialogue ?? []} />}
+
+      {block.content_type === "links" && (block.links ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {(block.links ?? []).map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            >
+              {link.label ?? link.platform}
+            </a>
+          ))}
+        </div>
       )}
 
       {block.content_type === "audio" &&

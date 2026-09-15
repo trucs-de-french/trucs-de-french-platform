@@ -46,6 +46,8 @@ export function ContentBlockFields({ initialBlock }: { initialBlock?: ContentBlo
           <option value="audio">Аудіо</option>
           <option value="video">Відео</option>
           <option value="embed">Вбудований контент (iframe)</option>
+          <option value="script">Скрипт (діалог)</option>
+          <option value="links">Практика (посилання)</option>
         </select>
       </div>
 

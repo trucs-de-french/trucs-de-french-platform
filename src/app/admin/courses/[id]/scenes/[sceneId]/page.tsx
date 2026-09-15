@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/scenes/actions";
 import {
   updateSceneContentBlock,
+  updateScriptContentBlock,
   deleteSceneContentBlock,
 } from "@/app/admin/scene-content-blocks/actions";
 import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
@@ -88,7 +89,7 @@ export default async function AdminScenePage({
     // фолбек-гілки нижче (коли scene_blocks порожній/впав).
     supabase
       .from("scene_content_blocks")
-      .select("id, title, content_type, content_text, media_url, media_provider")
+      .select("id, title, content_type, content_text, media_url, media_provider, dialogue")
       .eq("scene_id", sceneId)
       .order("created_at"),
   ]);
@@ -142,6 +143,28 @@ export default async function AdminScenePage({
   ].sort((a, b) => a.order_index - b.order_index);
 
   const contentBlocksById = new Map((contentBlocks ?? []).map((b) => [b.id, b]));
+
+  // Посилання для додаткових блоків типу 'links' — не в тому самому запиті,
+  // що фіксована Практика (content_block_id null): той самий принцип
+  // пакетного підвантаження, що вже groupMembers/membersByGroup вище.
+  const linksBlockIds = (contentBlocks ?? [])
+    .filter((b) => b.content_type === "links")
+    .map((b) => b.id);
+  const { data: blockLinks } =
+    linksBlockIds.length > 0
+      ? await supabase
+          .from("scene_links")
+          .select("id, platform, url, label, content_block_id")
+          .in("content_block_id", linksBlockIds)
+          .order("order_index")
+      : { data: null };
+  const linksByBlockId = new Map<string, NonNullable<typeof blockLinks>>();
+  for (const link of blockLinks ?? []) {
+    if (!link.content_block_id) continue;
+    const arr = linksByBlockId.get(link.content_block_id) ?? [];
+    arr.push(link);
+    linksByBlockId.set(link.content_block_id, arr);
+  }
 
   type BlockEntry = { type: string; refId: string | null; label: string; contentType?: string };
 
@@ -223,7 +246,7 @@ export default async function AdminScenePage({
       />
 
       <SaveForm
-        action={addLink.bind(null, sceneId)}
+        action={addLink.bind(null, sceneId, null)}
         saveLabel="+ Додати посилання"
         saveVariant="link"
         savedLabel="Додано ✓"
@@ -276,14 +299,64 @@ export default async function AdminScenePage({
 
   // Інлайн-редагування контент-блоку прямо в SceneBlockList (Крок 2) — та
   // сама форма полів, що на своїй окремій сторінці не так давно, просто
-  // рендериться тут, у своєї картки в спільному drag-списку.
+  // рендериться тут, у своєї картки в спільному drag-списку. 'script'/
+  // 'links' — геть інший редактор (DialogueEditor/LinkDragList), не
+  // ContentBlockFields — фактичний вміст лежить не в content_text/media_url.
   for (const block of sceneBlocks) {
     if (block.type !== "content" || !block.refId) continue;
     const content = contentBlocksById.get(block.refId);
     if (!content) continue;
 
-    contentByKey[`content:${block.refId}`] = (
-      <div className="flex flex-col gap-3">
+    let editor: React.ReactNode;
+    if (content.content_type === "script") {
+      editor = (
+        <SaveForm
+          action={updateScriptContentBlock.bind(null, productId, sceneId, block.refId)}
+          className="flex flex-col gap-2"
+          saveButtonStyle="secondary"
+        >
+          <DialogueEditor initialDialogue={content.dialogue ?? []} />
+        </SaveForm>
+      );
+    } else if (content.content_type === "links") {
+      editor = (
+        <div>
+          <LinkDragList
+            key={(linksByBlockId.get(block.refId) ?? []).map((l) => l.id).join(",")}
+            sceneId={sceneId}
+            initialLinks={linksByBlockId.get(block.refId) ?? []}
+          />
+          <SaveForm
+            action={addLink.bind(null, sceneId, block.refId)}
+            saveLabel="+ Додати посилання"
+            saveVariant="link"
+            savedLabel="Додано ✓"
+            className="mt-3 flex flex-wrap items-center gap-2"
+          >
+            <select
+              name="platform"
+              aria-label="Платформа"
+              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
+            >
+              <option value="quizlet">Quizlet</option>
+              <option value="wordwall">Wordwall</option>
+            </select>
+            <input
+              name="url"
+              placeholder="URL"
+              required
+              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
+            />
+            <input
+              name="label"
+              placeholder="Мітка"
+              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
+            />
+          </SaveForm>
+        </div>
+      );
+    } else {
+      editor = (
         <SaveForm
           action={updateSceneContentBlock.bind(null, productId, sceneId, block.refId)}
           className="flex flex-col gap-4"
@@ -291,6 +364,12 @@ export default async function AdminScenePage({
         >
           <ContentBlockFields initialBlock={content} />
         </SaveForm>
+      );
+    }
+
+    contentByKey[`content:${block.refId}`] = (
+      <div className="flex flex-col gap-3">
+        {editor}
         <ConfirmForm
           action={deleteSceneContentBlock.bind(null, productId, sceneId, block.refId)}
           message="Видалити цей блок? Цю дію не можна скасувати."

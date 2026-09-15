@@ -410,3 +410,49 @@ export const TASK_GROUP_CONTENT_COLORS: Record<string, { border: string; iconCol
     iconColor: "text-purple-500",
   },
 };
+
+// Четвертий домен кольорів — тип ДОДАТКОВОГО БЛОКУ СЦЕНИ (scene_content_
+// blocks.content_type: 'text'|'audio'|'video'|'embed'|'script'|'links',
+// обмеження 0036/0038) — НЕ те саме, що TASK_GROUP_CONTENT_* вище (той
+// домен суворо про task_groups.content_type, лише 4 значення, ніколи не
+// матиме 'script'/'links' — звідси окрема мапа, не розширення наявної).
+// text/audio/video/embed навмисно дублюють кольори TASK_GROUP_CONTENT_*
+// (візуальна консистентність між двома схожими, але різними доменами).
+// script/links — той самий колір, що їхні концептуальні "оригінали" серед
+// фіксованих блоків сцени (BLOCK_COLORS у scene-block-list.tsx: script —
+// teal, link — green), той самий принцип, що вже застосований до video.
+export const SCENE_CONTENT_BLOCK_ICON: Record<string, LucideIcon> = {
+  text: FileText,
+  audio: Volume2,
+  video: Video,
+  embed: CodeXml,
+  script: MessageSquare,
+  links: Link2,
+};
+
+export const SCENE_CONTENT_BLOCK_COLORS: Record<string, { border: string; iconColor: string }> = {
+  text: {
+    border: "border-t-amber-500",
+    iconColor: "text-amber-500",
+  },
+  audio: {
+    border: "border-t-teal-500",
+    iconColor: "text-teal-500",
+  },
+  video: {
+    border: "border-t-violet-500",
+    iconColor: "text-violet-500",
+  },
+  embed: {
+    border: "border-t-purple-500",
+    iconColor: "text-purple-500",
+  },
+  script: {
+    border: "border-t-teal-500",
+    iconColor: "text-teal-500",
+  },
+  links: {
+    border: "border-t-green-500",
+    iconColor: "text-green-500",
+  },
+};

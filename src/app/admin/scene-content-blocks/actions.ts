@@ -47,11 +47,17 @@ export async function createSceneContentBlock(formData: FormData) {
   const sceneId = formData.get("scene_id") as string;
   const title = (formData.get("title") as string) || null;
 
+  const contentType = (formData.get("content_type") as string) || "text";
+
   const { data: block, error } = await supabase
     .from("scene_content_blocks")
     .insert({
       scene_id: sceneId,
       title,
+      // 'script' стартує з порожнього діалогу, редагованого інлайн одразу
+      // після створення (DialogueEditor) — той самий принцип, що 'text'/
+      // 'audio'/... стартують з порожніх content_text/media_url.
+      dialogue: contentType === "script" ? [] : null,
       ...buildContentFields(formData),
     })
     .select()
@@ -103,6 +109,39 @@ export async function updateSceneContentBlock(
 
   // Редагування тепер інлайн у SceneBlockList на сторінці сцени (Крок 2) —
   // окремої сторінки /scene-content-blocks/[blockId] більше немає.
+  revalidatePath(`/admin/courses/${productId}/scenes/${sceneId}`);
+
+  return { ok: true };
+}
+
+// Окрема дія для content_type === 'script' — DialogueEditor сабмітить один
+// hidden-інпут "dialogue" (весь масив цілком, як і scenes.dialogue), геть
+// іншу форму полів, ніж buildContentFields/ContentBlockFields. Дзеркалить
+// updateSceneDialogue (scenes/actions.ts), лише ціль — рядок
+// scene_content_blocks, не scenes.
+export async function updateScriptContentBlock(
+  productId: string,
+  sceneId: string,
+  blockId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  let dialogue: unknown = [];
+  try {
+    dialogue = JSON.parse((formData.get("dialogue") as string) || "[]");
+  } catch {
+    dialogue = [];
+  }
+
+  const { error } = await supabase
+    .from("scene_content_blocks")
+    .update({ dialogue })
+    .eq("id", blockId);
+
+  if (error) return { ok: false, error: error.message };
+
   revalidatePath(`/admin/courses/${productId}/scenes/${sceneId}`);
 
   return { ok: true };
