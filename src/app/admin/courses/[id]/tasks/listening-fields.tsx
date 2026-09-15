@@ -140,7 +140,7 @@ export const ListeningFields = forwardRef<
                 value={q.question}
                 onChange={(e) => updateQuestionText(q.id, e.target.value)}
                 placeholder="Текст питання"
-                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
               />
               <input
                 type="number"
@@ -173,7 +173,7 @@ export const ListeningFields = forwardRef<
                     value={o.text}
                     onChange={(e) => updateOptionText(q.id, o.id, e.target.value)}
                     placeholder="Варіант відповіді"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
                   />
                   <div className="flex flex-1 flex-col gap-1">
                     <input

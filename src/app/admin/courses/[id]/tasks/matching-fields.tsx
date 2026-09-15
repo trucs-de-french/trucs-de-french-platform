@@ -88,14 +88,14 @@ export const MatchingFields = forwardRef<
             value={p.left}
             onChange={(e) => updatePair(i, "left", e.target.value)}
             placeholder="Лівий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
           />
           <span className="text-neutral-400 dark:text-neutral-500">→</span>
           <input
             value={p.right}
             onChange={(e) => updatePair(i, "right", e.target.value)}
             placeholder="Правий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
           />
           <input
             type="number"

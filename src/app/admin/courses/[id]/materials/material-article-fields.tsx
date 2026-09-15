@@ -68,7 +68,7 @@ export function MaterialArticleFields({
     },
     editorProps: {
       attributes: {
-        class: "rich-text min-h-48 rounded-md border px-3 py-2 text-sm focus:outline-none",
+        class: "rich-text min-h-48 rounded-md border px-3 py-2 text-sm font-content focus:outline-none",
       },
     },
   });

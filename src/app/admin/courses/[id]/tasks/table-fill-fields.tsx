@@ -112,7 +112,7 @@ export const TableFillFields = forwardRef<
               value={row.left}
               onChange={(e) => updateRow(row.id, "left", e.target.value)}
               placeholder={columnLabels[0]}
-              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
@@ -128,7 +128,7 @@ export const TableFillFields = forwardRef<
               value={row.right}
               onChange={(e) => updateRow(row.id, "right", e.target.value)}
               placeholder={columnLabels[1]}
-              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} px-2 py-1 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input

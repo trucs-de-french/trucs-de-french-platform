@@ -151,7 +151,7 @@ export const ReorderFields = forwardRef<
                     value={item}
                     onChange={(e) => updateItem(seq.id, i, e.target.value)}
                     placeholder="Елемент"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
                   />
                   <button
                     type="button"

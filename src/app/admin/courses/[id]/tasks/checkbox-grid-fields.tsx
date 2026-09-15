@@ -139,7 +139,7 @@ export const CheckboxGridFields = forwardRef<
                 value={row.label}
                 onChange={(e) => updateRowLabel(row.id, e.target.value)}
                 placeholder="Твердження / питання"
-                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+                className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
               />
               <input
                 type="number"

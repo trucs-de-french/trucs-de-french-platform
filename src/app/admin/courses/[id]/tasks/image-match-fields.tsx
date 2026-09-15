@@ -93,7 +93,7 @@ export const ImageMatchFields = forwardRef<
             value={item.name}
             onChange={(e) => updateItem(item.id, "name", e.target.value)}
             placeholder="Правильна назва"
-            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+            className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
           />
           <input
             type="number"

@@ -100,7 +100,7 @@ export const DragDropFields = forwardRef<
               value={s.template}
               onChange={(e) => updateSentence(s.id, e.target.value)}
               rows={2}
-              className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-base font-medium`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-1.5 text-base font-medium font-content`}
             />
             <input
               type="number"
@@ -140,7 +140,7 @@ export const DragDropFields = forwardRef<
               value={word}
               onChange={(e) => updateWord(i, e.target.value)}
               placeholder="Слово"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm font-content`}
             />
             <button
               type="button"

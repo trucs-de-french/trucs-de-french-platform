@@ -179,7 +179,7 @@ export const MultipleChoiceFields = forwardRef<
                   ? "напр. Je {{}} au cinéma. — {{}} позначає, де буде випадаючий список"
                   : "Текст речення"
               }
-              className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium font-content`}
             />
             <div className="mt-2 flex flex-col gap-1 pl-2">
               <label className={LABEL_TEXT}>
@@ -197,7 +197,7 @@ export const MultipleChoiceFields = forwardRef<
                     value={o.text}
                     onChange={(e) => updateOptionText(item.id, o.id, e.target.value)}
                     placeholder="Текст варіанту"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+                    className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
                   />
                   <div className="flex flex-1 flex-col gap-1">
                     <input

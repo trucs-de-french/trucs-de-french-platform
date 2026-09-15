@@ -113,7 +113,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               value={line.text}
               onChange={(e) => updateLine(i, "text", e.target.value)}
               rows={2}
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-sm font-content`}
             />
             <button
               type="button"
@@ -134,14 +134,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     placeholder="Слово/фраза"
                     value={v.word}
                     onChange={(e) => updateVocab(i, vi, "word", e.target.value)}
-                    className={`${INPUT_BORDER} w-40 px-2 py-1 text-sm`}
+                    className={`${INPUT_BORDER} w-40 px-2 py-1 text-sm font-content`}
                   />
                   <span className="text-neutral-400 dark:text-neutral-500">→</span>
                   <input
                     placeholder="Переклад"
                     value={v.translation}
                     onChange={(e) => updateVocab(i, vi, "translation", e.target.value)}
-                    className={`${INPUT_BORDER} w-48 px-2 py-1 text-sm`}
+                    className={`${INPUT_BORDER} w-48 px-2 py-1 text-sm font-content`}
                   />
                   <button
                     type="button"

@@ -133,7 +133,7 @@ export const SortColumnsFields = forwardRef<
               value={item.text}
               onChange={(e) => updateItemText(item.id, e.target.value)}
               placeholder="Текст елементу"
-              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium`}
+              className={`${INPUT_BORDER} flex-1 px-2 py-1 text-base font-medium font-content`}
             />
             <select
               value={item.columnId}
