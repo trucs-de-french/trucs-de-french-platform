@@ -11,6 +11,7 @@ import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-
 import { SaveForm } from "@/components/save-form";
 import { DialogueEditor } from "./dialogue-editor";
 import { SceneBlockList } from "./scene-block-list";
+import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
@@ -131,6 +132,7 @@ export default async function AdminScenePage({
   const videoContent = (
     <SaveForm
       key="video"
+      id="scene-video-form"
       action={updateSceneVideo.bind(null, sceneId)}
       className="flex flex-col gap-4"
     >
@@ -161,9 +163,9 @@ export default async function AdminScenePage({
   const scriptContent = (
     <SaveForm
       key="script"
+      id="scene-script-form"
       action={updateSceneDialogue.bind(null, sceneId)}
       className="flex flex-col gap-2"
-      sticky
     >
       <DialogueEditor initialDialogue={scene.dialogue ?? []} />
     </SaveForm>
@@ -248,6 +250,7 @@ export default async function AdminScenePage({
       )}
 
       <SaveForm
+        id="scene-title-form"
         action={updateSceneTitle.bind(null, sceneId)}
         saveLabel="Зберегти назву"
         className="mt-4 flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
@@ -269,6 +272,8 @@ export default async function AdminScenePage({
           contentByType={contentByType}
         />
       </div>
+
+      <SceneStickyActions productId={productId} sceneId={sceneId} />
     </div>
   );
 }

@@ -3,8 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import type { ActionState } from "@/lib/action-state";
-import { setStudentPreviewCookie } from "@/app/admin/courses/actions";
-import { setThemeCookie } from "@/lib/theme-cookie";
+import { useStudentPreview } from "@/lib/use-student-preview";
 import { BUTTON_PRIMARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
 import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 
@@ -20,6 +19,7 @@ export function SaveForm({
   action,
   children,
   className,
+  id,
   saveLabel = "Зберегти",
   saveVariant = "button",
   savedLabel = "Збережено ✓",
@@ -30,6 +30,11 @@ export function SaveForm({
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   children: React.ReactNode;
   className?: string;
+  // Потрібен зовнішнім кнопкам поза формою (напр. глобальне "Зберегти все"
+  // на сторінці сцени), щоб знайти форму через document.getElementById і
+  // викликати requestSubmit() — форма сабмітить через onSubmit нижче
+  // незалежно від того, як саме викликаний submit.
+  id?: string;
   saveLabel?: string;
   // "link" — для швидких компактних форм (напр. додавання посилання сцени),
   // де важка залита кнопка виглядає непропорційно поруч із рядком полів.
@@ -57,7 +62,12 @@ export function SaveForm({
   // без потреби чіпати кожне окремо) — делегування onChange з самої форми:
   // будь-яка зміна будь-якого input/select/textarea всередині випливає сюди.
   const [dirty, setDirty] = useState(false);
-  const [previewPending, startPreviewTransition] = useTransition();
+  // Хук викликається безумовно (правило хуків) навіть коли previewLink нема —
+  // порожні рядки нешкідливі, бо кнопка нижче тоді просто не рендериться.
+  const { pending: previewPending, handleClick: handlePreviewClick } = useStudentPreview(
+    previewLink?.productId ?? "",
+    previewLink?.href ?? ""
+  );
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -73,34 +83,10 @@ export function SaveForm({
     });
   }
 
-  function handlePreviewClick() {
-    if (!previewLink) return;
-    // window.open МАЄ бути синхронним усередині обробника кліка — інакше
-    // браузер трактує його як програмний popup (не "у відповідь на дію
-    // користувача") і блокує. Тому відкриваємо порожню вкладку одразу, а
-    // навігацію в неї застосовуємо вже після того, як кука прев'ю
-    // виставиться на сервері.
-    const newTab = window.open("", "_blank");
-    // Кука теми (не URL-параметр) — той самий origin, тож нова вкладка
-    // отримає її автоматично в заголовку Cookie свого ж запиту, і
-    // layout.tsx вставить правильний клас у <html> ВЖЕ на сервері, до будь-
-    // якого клієнтського JS. Раніше тема передавалась через ?theme=, але
-    // це не рятувало від кореневої причини: theme-script.tsx й далі мутував
-    // <html> ДО гідратації, а React під час гідратації звіряв className з
-    // тим, що сам порахував (без теми, бо сервер її не знав) і перезаписував
-    // назад — підтверджено логом "on window load" без класу теми.
-    const theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-    setThemeCookie(theme);
-    startPreviewTransition(async () => {
-      await setStudentPreviewCookie(previewLink.productId);
-      if (newTab) newTab.location.href = previewLink.href;
-    });
-  }
-
   const disabled = dirty || pending;
 
   return (
-    <form onSubmit={handleSubmit} onChange={() => setDirty(true)} className={className}>
+    <form id={id} onSubmit={handleSubmit} onChange={() => setDirty(true)} className={className}>
       {children}
       <div
         className={`mt-4 mb-6 flex items-center gap-3 ${
