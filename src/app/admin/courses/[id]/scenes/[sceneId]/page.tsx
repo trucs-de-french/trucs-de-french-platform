@@ -15,7 +15,7 @@ import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -136,7 +136,7 @@ export default async function AdminScenePage({
     >
       <div className="flex gap-4">
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-sm font-medium">URL відео</label>
+          <label className={LABEL_TEXT}>URL відео</label>
           <input
             name="video_url"
             defaultValue={scene.video_url ?? ""}
@@ -144,7 +144,7 @@ export default async function AdminScenePage({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Джерело</label>
+          <label className={LABEL_TEXT}>Джерело</label>
           <select
             name="video_provider"
             defaultValue={scene.video_provider ?? "youtube"}
@@ -183,18 +183,18 @@ export default async function AdminScenePage({
         className="mt-3 flex flex-wrap items-end gap-2"
       >
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа</label>
+          <label className={LABEL_TEXT}>Платформа</label>
           <select name="platform" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
             <option value="quizlet">Quizlet</option>
             <option value="wordwall">Wordwall</option>
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">URL</label>
+          <label className={LABEL_TEXT}>URL</label>
           <input name="url" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Мітка</label>
+          <label className={LABEL_TEXT}>Мітка</label>
           <input name="label" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />
         </div>
       </SaveForm>
@@ -259,7 +259,7 @@ export default async function AdminScenePage({
         saveLabel="Зберегти назву"
         className="mt-4 flex flex-col gap-1 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
-        <label className="text-sm font-medium">Назва сцени</label>
+        <label className={LABEL_TEXT}>Назва сцени</label>
         <input
           name="title"
           defaultValue={scene.title}

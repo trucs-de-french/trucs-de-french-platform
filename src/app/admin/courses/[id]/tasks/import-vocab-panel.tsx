@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 // onImport відсутній -> "довідковий" режим (напр. fill_blank): показує
 // обрані терміни текстом для ручного копіювання в шаблон, без кнопки
@@ -82,14 +83,14 @@ export function ImportVocabPanel({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p className={HINT_TEXT}>
           У скрипті цієї сцени ще немає позначеної лексики.
         </p>
       )}
 
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Свій термін — слово</label>
+          <label className={LABEL_TEXT}>Свій термін — слово</label>
           <input
             value={customWord}
             onChange={(e) => setCustomWord(e.target.value)}
@@ -97,7 +98,7 @@ export function ImportVocabPanel({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Переклад</label>
+          <label className={LABEL_TEXT}>Переклад</label>
           <input
             value={customTranslation}
             onChange={(e) => setCustomTranslation(e.target.value)}

@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { HINT_TEXT } from "@/lib/typography-styles";
 
 function emptySequence(): ReorderSequence {
   return { id: crypto.randomUUID(), items: ["", ""] };
@@ -109,7 +110,7 @@ export const ReorderFields = forwardRef<
         compact
       />
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className={HINT_TEXT}>
         Порядок елементів у кожній послідовності нижче — це і є правильна відповідь. Студенту
         список покажеться перемішаним.
       </p>
@@ -118,7 +119,7 @@ export const ReorderFields = forwardRef<
         {sequences.map((seq, si) => (
           <div key={seq.id} className="rounded-md border p-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              <span className={HINT_TEXT}>
                 Послідовність {si + 1}
               </span>
               <div className="flex items-center gap-2">
@@ -143,7 +144,7 @@ export const ReorderFields = forwardRef<
             <div className="mt-2 flex flex-col gap-1">
               {seq.items.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="w-5 text-xs text-neutral-400 dark:text-neutral-500">
+                  <span className={`w-5 ${HINT_TEXT}`}>
                     {i + 1}.
                   </span>
                   <input

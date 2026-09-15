@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
@@ -95,7 +96,7 @@ export const SortColumnsFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Колонки</label>
+        <label className={LABEL_TEXT}>Колонки</label>
         {columns.map((c) => (
           <div key={c.id} className="flex items-center gap-2">
             <input
@@ -123,7 +124,7 @@ export const SortColumnsFields = forwardRef<
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Елементи (з правильною колонкою)
         </label>
         {items.map((item) => (

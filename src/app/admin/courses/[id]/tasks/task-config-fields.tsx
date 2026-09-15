@@ -55,6 +55,7 @@ import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -331,7 +332,7 @@ export function TaskConfigFields({
     <>
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип завдання</label>
+          <label className={LABEL_TEXT}>Тип завдання</label>
           <TaskTypeIconBadge type={type} size="xs" />
           {taskTypeCategory && (
             <span
@@ -354,7 +355,7 @@ export function TaskConfigFields({
       {productType === "delf" && !materialId && !taskGroupId && (
         <div className="flex gap-4">
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Секція іспиту</label>
+            <label className={LABEL_TEXT}>Секція іспиту</label>
             <select
               name="delf_section"
               required
@@ -371,7 +372,7 @@ export function TaskConfigFields({
             </select>
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               № тесту (1-30)
             </label>
             <input
@@ -390,7 +391,7 @@ export function TaskConfigFields({
 
       <div className="flex gap-4">
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Картинка (URL, необов&apos;язково)
           </label>
           <input
@@ -399,13 +400,13 @@ export function TaskConfigFields({
             placeholder="показується над завданням, якщо заповнено"
             className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           />
-          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={`mt-1 ${LABEL_TEXT}`}>
             Або завантажити картинку (перекриє URL вище, якщо вибрано)
           </label>
           <FileUpload kind="image" name="task_image_file_url" />
         </div>
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Аудіо (URL, необов&apos;язково)
           </label>
           <input
@@ -414,7 +415,7 @@ export function TaskConfigFields({
             placeholder="показується над завданням, якщо заповнено"
             className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
           />
-          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={`mt-1 ${LABEL_TEXT}`}>
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
           </label>
           <FileUpload kind="audio" name="task_audio_file_url" />
@@ -424,7 +425,7 @@ export function TaskConfigFields({
       {type === "game" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа гри</label>
+            <label className={LABEL_TEXT}>Платформа гри</label>
             <select
               name="game_provider"
               defaultValue={initialGame?.provider ?? "wordwall"}
@@ -436,7 +437,7 @@ export function TaskConfigFields({
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Посилання на гру</label>
+            <label className={LABEL_TEXT}>Посилання на гру</label>
             <input
               name="game_embed_url"
               defaultValue={initialGame?.embed_url ?? ""}
@@ -444,7 +445,7 @@ export function TaskConfigFields({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип гри (довільно)</label>
+            <label className={LABEL_TEXT}>Тип гри (довільно)</label>
             <input
               name="game_type"
               defaultValue={initialGame?.game_type ?? ""}
@@ -458,7 +459,7 @@ export function TaskConfigFields({
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
           <div className="flex gap-4">
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              <label className={LABEL_TEXT}>
                 Рівень DELF (сітка оцінювання)
               </label>
               <select
@@ -479,7 +480,7 @@ export function TaskConfigFields({
             </div>
             {(essayLevel === "A1" || essayLevel === "A2") && (
               <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">Вправа</label>
+                <label className={LABEL_TEXT}>Вправа</label>
                 <select
                   name="essay_exercise_number"
                   value={essayExerciseNumber}
@@ -513,7 +514,7 @@ export function TaskConfigFields({
           ) : (
             <>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                <label className={LABEL_TEXT}>
                   Завдання (prompt)
                 </label>
                 <textarea
@@ -525,7 +526,7 @@ export function TaskConfigFields({
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2">
-                  <label className="text-xs text-neutral-500 dark:text-neutral-400">
+                  <label className={LABEL_TEXT}>
                     Критерії перевірки
                   </label>
                   {criteriaDirty && !criteriaTemplateAmbiguous && (
@@ -561,7 +562,7 @@ export function TaskConfigFields({
       {type === "embed" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">URL для вбудовування (iframe)</label>
+            <label className={LABEL_TEXT}>URL для вбудовування (iframe)</label>
             <input
               ref={embedUrlRef}
               name="embed_url"
@@ -574,7 +575,7 @@ export function TaskConfigFields({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Висота (px)</label>
+            <label className={LABEL_TEXT}>Висота (px)</label>
             <input
               ref={embedHeightRef}
               name="embed_height"
@@ -589,7 +590,7 @@ export function TaskConfigFields({
       {type === "link" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">URL</label>
+            <label className={LABEL_TEXT}>URL</label>
             <input
               ref={linkUrlRef}
               name="link_url"
@@ -602,7 +603,7 @@ export function TaskConfigFields({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Текст кнопки</label>
+            <label className={LABEL_TEXT}>Текст кнопки</label>
             <input
               ref={linkLabelRef}
               name="link_label"
@@ -611,7 +612,7 @@ export function TaskConfigFields({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа (іконка)</label>
+            <label className={LABEL_TEXT}>Платформа (іконка)</label>
             <select
               ref={linkPlatformRef}
               name="link_platform"
@@ -625,7 +626,7 @@ export function TaskConfigFields({
               <option value="custom">Інше</option>
             </select>
           </div>
-          <label className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
             <input
               ref={linkDownloadRef}
               type="checkbox"
@@ -654,7 +655,7 @@ export function TaskConfigFields({
           />
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               Текст із пропусками — правильні варіанти пишіть прямо у {"{{ }}"} через
               &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma.
             </label>
@@ -671,7 +672,7 @@ export function TaskConfigFields({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               Бали за всю вправу (зараховуються, лише якщо всі пропуски правильні)
             </label>
             <input
@@ -695,7 +696,7 @@ export function TaskConfigFields({
               value={JSON.stringify(fillBlankWordBank)}
               readOnly
             />
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               Банк слів-підказок (необов&apos;язково — якщо порожній, студент не побачить
               жодних бульбашок; студент і так сам вписує відповідь, це лише підказка)
             </label>
@@ -885,7 +886,7 @@ export function TaskConfigFields({
             checked={pointsVisible}
             onChange={(e) => setPointsVisible(e.target.checked)}
           />
-          <label htmlFor="points_visible" className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label htmlFor="points_visible" className={LABEL_TEXT}>
             Показувати бали студенту заздалегідь (до виконання)
           </label>
         </div>

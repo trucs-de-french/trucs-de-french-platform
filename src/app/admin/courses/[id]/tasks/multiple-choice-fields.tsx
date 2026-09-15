@@ -6,6 +6,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): MultipleChoiceItem {
   return {
@@ -131,7 +132,7 @@ export const MultipleChoiceFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Подання</label>
+        <label className={LABEL_TEXT}>Подання</label>
         <select
           name="mc_display"
           value={display}
@@ -147,7 +148,7 @@ export const MultipleChoiceFields = forwardRef<
         {items.map((item, ii) => (
           <div key={item.id} className="rounded-md border p-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              <span className={HINT_TEXT}>
                 Речення {ii + 1}
               </span>
               <div className="flex items-center gap-2">
@@ -181,7 +182,7 @@ export const MultipleChoiceFields = forwardRef<
               className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium`}
             />
             <div className="mt-2 flex flex-col gap-1 pl-2">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              <label className={LABEL_TEXT}>
                 Варіанти (позначте правильні)
               </label>
               {item.options.map((o) => (

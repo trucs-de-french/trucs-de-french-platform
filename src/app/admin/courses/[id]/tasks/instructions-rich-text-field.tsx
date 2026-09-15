@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 const HIGHLIGHT_COLORS: { value: string; label: string }[] = [
   { value: "#fef08a", label: "Жовтий" },
@@ -79,7 +80,7 @@ export function InstructionsRichTextField({
 
   return (
     <div className="flex flex-col gap-1">
-      {label && <label className="text-xs text-neutral-500 dark:text-neutral-400">{label}</label>}
+      {label && <label className={LABEL_TEXT}>{label}</label>}
       <input type="hidden" name={name} value={html} readOnly />
 
       {editor && (

@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyPair(): MatchingPair {
   return { id: crypto.randomUUID(), left: "", right: "" };
@@ -77,7 +78,7 @@ export const MatchingFields = forwardRef<
         compact
       />
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className={HINT_TEXT}>
         Уникайте однакового тексту зліва і справа в різних парах — це заважає перевірці.
       </p>
 

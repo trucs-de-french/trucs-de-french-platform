@@ -6,6 +6,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
@@ -82,7 +83,7 @@ export const ChronologicalOrderFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Тип елементів</label>
+        <label className={LABEL_TEXT}>Тип елементів</label>
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as "image" | "text")}
@@ -93,7 +94,7 @@ export const ChronologicalOrderFields = forwardRef<
         </select>
       </div>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className={HINT_TEXT}>
         Додайте елементи у ПРАВИЛЬНОМУ хронологічному порядку — саме цей порядок і є правильною
         відповіддю. Студент побачить їх перемішаними, позначеними літерами (A, B, C...), і впише
         число-позицію для кожного. Кнопками ↑/↓ можна виправити порядок, не видаляючи елементи.

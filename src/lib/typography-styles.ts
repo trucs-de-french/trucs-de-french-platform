@@ -12,3 +12,15 @@ export const H2_TEXT = "text-lg font-semibold text-gray-800 dark:text-neutral-20
 // на hover замість підкреслення як єдиного сигналу інтерактивності.
 export const BREADCRUMB_LINK =
   "text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand";
+
+// Назва поля форми (напр. "Назва", "Тип завдання") — 14px/medium/gray-700,
+// темніший і важчий за HINT_TEXT, щоб лейбл читався окремо від підказки під
+// полем. Кожне місце виклику саме дописує свій layout-префікс (mt-1, flex
+// items-center gap-N) поверх цього рядка — той самий принцип, що INPUT_BORDER
+// свідомо без padding.
+export const LABEL_TEXT = "text-sm font-medium text-gray-700 dark:text-neutral-300";
+
+// Допоміжний текст/підказка під полем, і дрібні капшени в списках (напр.
+// "Блок · {type}") — 12px/normal/gray-500, той самий вигляд, що вже був до
+// централізації, просто іменована константа замість розкиданого рядка.
+export const HINT_TEXT = "text-xs text-neutral-500 dark:text-neutral-400";

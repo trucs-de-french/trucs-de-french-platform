@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyRow(): TableFillRow {
   return { id: crypto.randomUUID(), left: "", right: "", leftHidden: false, rightHidden: true };
@@ -81,7 +82,7 @@ export const TableFillFields = forwardRef<
 
       <div className="flex items-end gap-2">
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва лівої колонки</label>
+          <label className={LABEL_TEXT}>Назва лівої колонки</label>
           <input
             value={columnLabels[0]}
             onChange={(e) => setColumnLabels(([, right]) => [e.target.value, right])}
@@ -89,7 +90,7 @@ export const TableFillFields = forwardRef<
           />
         </div>
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва правої колонки</label>
+          <label className={LABEL_TEXT}>Назва правої колонки</label>
           <input
             value={columnLabels[1]}
             onChange={(e) => setColumnLabels(([left]) => [left, e.target.value])}
@@ -98,7 +99,7 @@ export const TableFillFields = forwardRef<
         </div>
       </div>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className={HINT_TEXT}>
         Для прихованої клітинки можна вказати кілька допустимих варіантів через &quot;|&quot;,
         напр. chat|chats. Приховані клітинки студент заповнює сам — видимі показуються одразу
         як текст.
@@ -113,7 +114,7 @@ export const TableFillFields = forwardRef<
               placeholder={columnLabels[0]}
               className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
             />
-            <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
                 type="checkbox"
                 checked={row.leftHidden}
@@ -129,7 +130,7 @@ export const TableFillFields = forwardRef<
               placeholder={columnLabels[1]}
               className={`${INPUT_BORDER} px-2 py-1 text-base font-medium`}
             />
-            <label className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
                 type="checkbox"
                 checked={row.rightHidden}

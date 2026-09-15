@@ -5,6 +5,7 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 export type TaskGroupInitial = {
   title?: string | null;
@@ -40,7 +41,7 @@ export function TaskGroupFields({
   return (
     <>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Назва блоку (для адмінки, студент не бачить)
         </label>
         <input
@@ -54,7 +55,7 @@ export function TaskGroupFields({
       {productType === "delf" && !materialId && (
         <div className="flex gap-4">
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">Секція іспиту</label>
+            <label className={LABEL_TEXT}>Секція іспиту</label>
             <select
               name="delf_section"
               required
@@ -71,7 +72,7 @@ export function TaskGroupFields({
             </select>
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               № тесту (1-30)
             </label>
             <input
@@ -89,7 +90,7 @@ export function TaskGroupFields({
       )}
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Тип спільного контенту
         </label>
         <select
@@ -115,7 +116,7 @@ export function TaskGroupFields({
 
       {(contentType === "audio" || contentType === "video" || contentType === "embed") && (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             {contentType === "audio"
               ? "URL аудіо"
               : contentType === "video"
@@ -132,7 +133,7 @@ export function TaskGroupFields({
 
       {contentType === "audio" && (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
           </label>
           <FileUpload kind="audio" name="media_audio_file_url" />
@@ -141,7 +142,7 @@ export function TaskGroupFields({
 
       {(contentType === "video" || contentType === "audio") && (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Платформа</label>
+          <label className={LABEL_TEXT}>Платформа</label>
           <select
             name="media_provider"
             defaultValue={initialGroup?.media_provider ?? "youtube"}
@@ -154,7 +155,7 @@ export function TaskGroupFields({
       )}
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Підсумок балів блоку
         </label>
         <select
@@ -170,7 +171,7 @@ export function TaskGroupFields({
 
       {pointsMode === "flat" && (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Загальний бал за блок (зараховується пропорційно середньому % правильності всіх
             завдань блоку)
           </label>

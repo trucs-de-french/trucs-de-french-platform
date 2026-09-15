@@ -7,6 +7,7 @@ import { deleteTask } from "@/app/admin/tasks/actions";
 import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { HINT_TEXT } from "@/lib/typography-styles";
 
 type MemberRow = { id: string; type: string; title: string };
 
@@ -124,7 +125,7 @@ export function GroupMemberDragList({
                 <GripVertical size={16} />
               </span>
               <div>
-                <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                <span className={`uppercase ${HINT_TEXT}`}>
                   {task.type}
                 </span>
                 <Link

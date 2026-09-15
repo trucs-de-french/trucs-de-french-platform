@@ -4,7 +4,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function NewMaterialPage({
   params,
@@ -34,7 +34,7 @@ export default async function NewMaterialPage({
         className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+          <label className={LABEL_TEXT}>Назва</label>
           <input
             name="title"
             required
@@ -43,7 +43,7 @@ export default async function NewMaterialPage({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Категорія</label>
+          <label className={LABEL_TEXT}>Категорія</label>
           <select name="category" defaultValue="" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
             <option value="">— Без категорії —</option>
             <option value="delf_guide">Рекомендації DELF (як здати іспит)</option>
@@ -52,7 +52,7 @@ export default async function NewMaterialPage({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Посилання на PDF (URL, необов&apos;язково)
           </label>
           <input name="file_url" type="url" className={`${INPUT_BORDER} px-2 py-1.5 text-sm`} />

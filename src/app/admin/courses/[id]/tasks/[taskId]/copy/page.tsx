@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { CopyTaskDestinationFields } from "./copy-task-destination-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function CopyTaskPage({
   params,
@@ -83,7 +83,7 @@ export default async function CopyTaskPage({
         >
           {isFilm ? (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">Сцена</label>
+              <label className={LABEL_TEXT}>Сцена</label>
               <input type="hidden" name="destination" value="scene" />
               <select name="scene_id" required className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}>
                 {scenes!.map((s) => (

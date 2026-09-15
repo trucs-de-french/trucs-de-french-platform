@@ -16,7 +16,7 @@ import { FileUpload } from "@/components/file-upload";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
-import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
@@ -187,7 +187,7 @@ export default async function AdminCoursePage({
             Основна інформація
           </p>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Назва</label>
+            <label className={LABEL_TEXT}>Назва</label>
             <input
               name="title"
               defaultValue={product.title}
@@ -196,7 +196,7 @@ export default async function AdminCoursePage({
             />
           </div>
           <div className="mt-3 flex flex-col gap-1">
-            <label className="text-sm font-medium">Опис</label>
+            <label className={LABEL_TEXT}>Опис</label>
             <textarea
               name="description"
               defaultValue={product.description ?? ""}
@@ -211,7 +211,7 @@ export default async function AdminCoursePage({
             Ціна та обкладинка
           </p>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Ціна (грн)</label>
+            <label className={LABEL_TEXT}>Ціна (грн)</label>
             <input
               name="price"
               type="number"
@@ -222,14 +222,14 @@ export default async function AdminCoursePage({
             />
           </div>
           <div className="mt-3 flex flex-col gap-1">
-            <label className="text-sm font-medium">Обкладинка (URL)</label>
+            <label className={LABEL_TEXT}>Обкладинка (URL)</label>
             <input
               name="cover_image_url"
               type="url"
               defaultValue={product.cover_image_url ?? ""}
               className={`${INPUT_BORDER} px-3 py-2`}
             />
-            <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={`mt-1 ${LABEL_TEXT}`}>
               Або завантажити картинку (перекриє URL вище, якщо вибрано)
             </label>
             <FileUpload kind="image" name="cover_image_file_url" />
@@ -357,7 +357,7 @@ export default async function AdminCoursePage({
                   className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
                 >
                   <div>
-                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    <span className={`uppercase ${HINT_TEXT}`}>
                       {m.category === "delf_guide"
                         ? "Рекомендації DELF"
                         : m.category === "general_tip"

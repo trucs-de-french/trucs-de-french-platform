@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { VocabQuizConfig } from "@/lib/exercises/types";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 export function VocabQuizFields({
   initialConfig,
@@ -21,7 +22,7 @@ export function VocabQuizFields({
       <input type="hidden" name="vocab_quiz_scene_ids" value={JSON.stringify(sceneIds)} readOnly />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Джерело лексики — сцени курсу
         </label>
         {scenes.length === 0 ? (
@@ -42,7 +43,7 @@ export function VocabQuizFields({
             ))}
           </div>
         )}
-        <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+        <p className={`mt-1 ${HINT_TEXT}`}>
           Лексика тягнеться автоматично зі скрипту обраних сцен (позначені слова в діалозі).
           Рекомендовано обирати сцени, що разом дають щонайменше 4 слова — інакше кількість
           варіантів відповіді автоматично зменшиться.

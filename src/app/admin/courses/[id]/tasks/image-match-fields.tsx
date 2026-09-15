@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): ImageMatchItem {
   return { id: crypto.randomUUID(), imageUrl: "", name: "" };
@@ -80,7 +81,7 @@ export const ImageMatchFields = forwardRef<
               placeholder="URL зображення"
               className={`${INPUT_BORDER} px-2 py-1 text-sm`}
             />
-            <label className="text-xs text-neutral-500 dark:text-neutral-400">
+            <label className={LABEL_TEXT}>
               Або завантажити картинку (перекриє URL вище, якщо вибрано)
             </label>
             <FileUpload

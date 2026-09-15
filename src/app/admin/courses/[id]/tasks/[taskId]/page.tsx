@@ -8,7 +8,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 type TaskDetail = {
   id: string;
@@ -100,7 +100,7 @@ export default async function EditTaskPage({
         previewLink={studentHref ? { productId, href: studentHref } : undefined}
       >
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+          <label className={LABEL_TEXT}>Назва</label>
           <input
             name="title"
             defaultValue={task.title}

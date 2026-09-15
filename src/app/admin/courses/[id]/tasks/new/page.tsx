@@ -6,7 +6,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function NewTaskPage({
   params,
@@ -76,7 +76,7 @@ export default async function NewTaskPage({
         {taskGroupId && <input type="hidden" name="task_group_id" value={taskGroupId} />}
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+          <label className={LABEL_TEXT}>Назва</label>
           <input
             name="title"
             required

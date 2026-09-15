@@ -6,6 +6,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptySentence(): DragDropSentence {
   return { id: crypto.randomUUID(), template: "" };
@@ -86,13 +87,13 @@ export const DragDropFields = forwardRef<
       />
 
       <div className="flex flex-col gap-2">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Речення з пропусками — правильне слово пишіть прямо у {"{{ }}"}, напр. Je{" "}
           {"{{vais}}"} au cinéma (один варіант на пропуск, бо це фіксоване слово з банку).
         </label>
         {sentences.map((s, si) => (
           <div key={s.id} className="flex items-start gap-2">
-            <span className="mt-1.5 w-5 text-xs text-neutral-400 dark:text-neutral-500">
+            <span className={`mt-1.5 w-5 ${HINT_TEXT}`}>
               {si + 1}.
             </span>
             <textarea
@@ -129,7 +130,7 @@ export const DragDropFields = forwardRef<
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Банк слів (спільний на всі речення вище — додайте всі правильні +, за бажанням,
           зайві слова-дистрактори)
         </label>

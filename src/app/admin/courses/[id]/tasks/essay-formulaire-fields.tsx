@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EssayFormulaireConfig, EssayFormulaireField } from "@/lib/exercises/types";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 export function EssayFormulaireFields({
   initialConfig,
@@ -30,7 +31,7 @@ export function EssayFormulaireFields({
       <input type="hidden" name="essay_formulaire_fields" value={JSON.stringify(fields)} readOnly />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Інструкція для студента
         </label>
         <textarea
@@ -43,7 +44,7 @@ export function EssayFormulaireFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Пункти консигни (кожен = 1 бал)
         </label>
         {fields.map((f) => (

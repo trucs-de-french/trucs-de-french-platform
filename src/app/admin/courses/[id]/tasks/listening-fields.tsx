@@ -6,6 +6,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -119,7 +120,7 @@ export const ListeningFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">URL аудіо/відео</label>
+        <label className={LABEL_TEXT}>URL аудіо/відео</label>
         <input
           name="listening_audio_url"
           defaultValue={initialConfig?.audioUrl ?? ""}
@@ -129,7 +130,7 @@ export const ListeningFields = forwardRef<
       </div>
 
       <div className="flex flex-col gap-3">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Питання (одна правильна відповідь на питання)
         </label>
         {questions.map((q) => (

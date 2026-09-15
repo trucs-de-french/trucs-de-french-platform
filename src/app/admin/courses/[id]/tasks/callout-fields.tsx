@@ -9,6 +9,7 @@ import Highlight from "@tiptap/extension-highlight";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 const STYLE_OPTIONS: { value: CalloutStyle; label: string; icon: string; className: string }[] = [
   { value: "none", label: "Без виділення", icon: "▪️", className: "border-neutral-300 dark:border-neutral-700" },
@@ -81,7 +82,7 @@ export function CalloutFields({
       <input type="hidden" name="callout_content" value={html} readOnly />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Стиль блоку</label>
+        <label className={LABEL_TEXT}>Стиль блоку</label>
         <div className="flex flex-wrap gap-2">
           {STYLE_OPTIONS.map((opt) => (
             <button
@@ -101,7 +102,7 @@ export function CalloutFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Текст</label>
+        <label className={LABEL_TEXT}>Текст</label>
 
         {editor && (
           <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-white p-1 dark:bg-neutral-950">
@@ -124,7 +125,7 @@ export function CalloutFields({
               I
             </button>
             <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">Підсвітка:</span>
+            <span className={HINT_TEXT}>Підсвітка:</span>
             {HIGHLIGHT_COLORS.map((c) => (
               <button
                 key={c.value}

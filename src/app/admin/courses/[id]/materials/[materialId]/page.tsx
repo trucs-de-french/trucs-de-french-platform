@@ -11,7 +11,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_SECONDARY_SM, BUTTON_DANGER, BUTTON_DANGER_SM } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 export default async function EditMaterialPage({
   params,
@@ -86,7 +86,7 @@ export default async function EditMaterialPage({
         className="mt-4 flex flex-col gap-4 rounded-md border bg-white p-4 dark:bg-neutral-800"
       >
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Назва</label>
+          <label className={LABEL_TEXT}>Назва</label>
           <input
             name="title"
             defaultValue={material.title ?? ""}
@@ -96,7 +96,7 @@ export default async function EditMaterialPage({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">Категорія</label>
+          <label className={LABEL_TEXT}>Категорія</label>
           <select
             name="category"
             defaultValue={material.category ?? ""}
@@ -109,7 +109,7 @@ export default async function EditMaterialPage({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={LABEL_TEXT}>
             Посилання на PDF (URL, необов&apos;язково)
           </label>
           <input
@@ -151,7 +151,7 @@ export default async function EditMaterialPage({
                   className="flex items-center justify-between rounded-md border-2 border-dashed bg-white p-3 dark:bg-neutral-800"
                 >
                   <div>
-                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    <span className={`uppercase ${HINT_TEXT}`}>
                       Блок · {row.content_type}
                       {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
                     </span>
@@ -195,7 +195,7 @@ export default async function EditMaterialPage({
                   className="flex items-center justify-between rounded-md border bg-white p-3 dark:bg-neutral-800"
                 >
                   <div>
-                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    <span className={`uppercase ${HINT_TEXT}`}>
                       {row.type}
                     </span>
                     <Link

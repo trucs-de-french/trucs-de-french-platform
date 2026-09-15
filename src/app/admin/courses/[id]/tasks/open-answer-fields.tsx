@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 function emptyQuestion(): OpenAnswerQuestion {
   return { id: crypto.randomUUID(), question: "", answers: [""] };
@@ -108,7 +109,7 @@ export function OpenAnswerFields({
               </button>
             </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">
+              <label className={LABEL_TEXT}>
                 Прийнятні відповіді (будь-яка з них зараховується правильною)
               </label>
               {q.answers.map((a, i) => (

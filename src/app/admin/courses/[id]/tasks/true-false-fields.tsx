@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 export function TrueFalseFields({
   initialConfig,
@@ -54,7 +55,7 @@ export function TrueFalseFields({
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Твердження</label>
+        <label className={LABEL_TEXT}>Твердження</label>
         {statements.map((s) => (
           <div key={s.id} className="flex items-center gap-2">
             <input

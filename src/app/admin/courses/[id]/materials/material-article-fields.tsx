@@ -9,6 +9,7 @@ import Highlight from "@tiptap/extension-highlight";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { CalloutStyle } from "@/lib/exercises/types";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 // Той самий TipTap-набір розширень, той самий sanitizeCalloutHtml і той
 // самий набір стилів блоку, що вже в callout-fields.tsx — окремий
@@ -86,7 +87,7 @@ export function MaterialArticleFields({
       <input type="hidden" name="style" value={style} readOnly />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Стиль блоку</label>
+        <label className={LABEL_TEXT}>Стиль блоку</label>
         <div className="flex flex-wrap gap-2">
           {STYLE_OPTIONS.map((opt) => (
             <button
@@ -106,7 +107,7 @@ export function MaterialArticleFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">
+        <label className={LABEL_TEXT}>
           Текст статті (необов&apos;язково)
         </label>
         <input type="hidden" name="content" value={html} readOnly />
@@ -132,7 +133,7 @@ export function MaterialArticleFields({
               I
             </button>
             <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">Підсвітка:</span>
+            <span className={HINT_TEXT}>Підсвітка:</span>
             {HIGHLIGHT_COLORS.map((c) => (
               <button
                 key={c.value}

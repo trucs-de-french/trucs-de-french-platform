@@ -6,7 +6,7 @@ import { CourseTypeFields } from "./course-type-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function NewCoursePage({
   searchParams,
@@ -43,17 +43,17 @@ export default async function NewCoursePage({
         <CourseTypeFields />
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Назва</label>
+          <label className={LABEL_TEXT}>Назва</label>
           <input name="title" required className={`${INPUT_BORDER} px-3 py-2`} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Опис</label>
+          <label className={LABEL_TEXT}>Опис</label>
           <textarea name="description" rows={3} className={`${INPUT_BORDER} px-3 py-2`} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Ціна (грн)</label>
+          <label className={LABEL_TEXT}>Ціна (грн)</label>
           <input
             name="price"
             type="number"
@@ -65,9 +65,9 @@ export default async function NewCoursePage({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Обкладинка (URL)</label>
+          <label className={LABEL_TEXT}>Обкладинка (URL)</label>
           <input name="cover_image_url" type="url" className={`${INPUT_BORDER} px-3 py-2`} />
-          <label className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <label className={`mt-1 ${LABEL_TEXT}`}>
             Або завантажити картинку (перекриє URL вище, якщо вибрано)
           </label>
           <FileUpload kind="image" name="cover_image_file_url" />

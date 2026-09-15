@@ -5,6 +5,7 @@ import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyRow(): CheckboxGridRow {
   return { id: crypto.randomUUID(), label: "", correctColumnIds: [] };
@@ -97,7 +98,7 @@ export const CheckboxGridFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Колонки</label>
+        <label className={LABEL_TEXT}>Колонки</label>
         {columns.map((c) => (
           <div key={c.id} className="flex items-center gap-2">
             <input
@@ -124,13 +125,13 @@ export const CheckboxGridFields = forwardRef<
         </button>
       </div>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className={HINT_TEXT}>
         Позначте чекбоксом клітинки, які мають бути правильними для кожного рядка. Студент зможе
         позначати декілька клітинок в одному рядку одночасно.
       </p>
 
       <div className="flex flex-col gap-2">
-        <label className="text-xs text-neutral-500 dark:text-neutral-400">Рядки</label>
+        <label className={LABEL_TEXT}>Рядки</label>
         {rows.map((row) => (
           <div key={row.id} className="flex flex-col gap-2 rounded-md border p-2">
             <div className="flex items-center gap-2">
