@@ -1,13 +1,12 @@
-import { TASK_TYPE_ICON } from "./task-type-meta";
+import { TASK_TYPE_ICON, CATEGORY_COLORS, getTaskTypeCategory } from "./task-type-meta";
 
-// Кругла товстоконтурна іконка типу завдання (референс 2 нового дизайну) —
-// обгортка над звичайною lucide-іконкою (stroke="currentColor", підтримує
-// strokeWidth), без нової бібліотеки. Кільце-ОБВІДКА (не залита заливка) —
-// у реальних файлах референсу (design-refs/image.png) іконки всередині кола
-// це кастомні двоколірні (фіолет+бірюза) плоскі піктограми на прозорому/
-// білому тлі, не суцільний колір; товста фіолетова рамка + один lucide-гліф
-// усередині — найближче наближення без переходу на кастомні SVG per тип
-// (те, що обговорювалось з користувачем як окремий, значно більший крок).
+// Кругла тонкоконтурна іконка типу завдання — обгортка над звичайною
+// lucide-іконкою (stroke="currentColor", підтримує strokeWidth), без нової
+// бібліотеки. Кільце тепер кольору КАТЕГОРІЇ типу (те саме, що ліва смужка
+// й бейдж на рядку задачі, CATEGORY_COLORS.icon*) — раніше було завжди
+// indigo/brand незалежно від категорії; свідомо змінено на запит користувача,
+// щоб іконка й бейдж читались як один колір. Фолбек на brand — типів поза
+// TASK_TYPE_CATEGORY немає, але про всяк випадок.
 // Розмір "xs" — для щільних списків (task-drag-list, test-section-drag-
 // list), "sm" — для комбобоксу/бейджа вибору типу, де іконка трохи більша.
 const SIZE = {
@@ -30,13 +29,16 @@ export function TaskTypeIconBadge({
   if (!Icon) return null;
 
   const { box, icon } = SIZE[size];
+  const category = getTaskTypeCategory(type);
+  const iconBorder = category ? CATEGORY_COLORS[category].iconBorder : "border-brand";
+  const iconText = category ? CATEGORY_COLORS[category].iconText : "text-brand";
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-brand bg-white dark:bg-neutral-950 ${box}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border ${iconBorder} bg-white dark:bg-neutral-950 ${box}`}
       aria-hidden
     >
-      <Icon size={icon} strokeWidth={2.5} className="text-brand" />
+      <Icon size={icon} strokeWidth={2.5} className={iconText} />
     </span>
   );
 }

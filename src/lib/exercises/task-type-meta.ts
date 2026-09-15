@@ -24,30 +24,45 @@ export const CATEGORY_LABELS: Record<TaskTypeCategory, string> = {
 
 export const CATEGORY_COLORS: Record<
   TaskTypeCategory,
-  { stripe: string; badge: string; dot: string }
+  { stripe: string; badge: string; dot: string; iconBorder: string; iconText: string; shadow: string }
 > = {
   // border-l-{color} (не border-{color}) навмисно — щоб перефарбувати ЛИШЕ
   // ліву смужку, а не всі 4 сторони поверх наявного className="border" на
   // картці (border задає колір з дефолтної теми на решті сторін).
+  // iconBorder/iconText — те саме кільце TaskTypeIconBadge, тепер за
+  // категорією, а не завжди indigo; shadow — легка кольорова тінь на
+  // рядку задачі (з shadow-sm), той самий тон, що й badge/stripe.
   auto_graded: {
     stripe: "border-l-4 border-l-blue-500",
     badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
     dot: "bg-blue-500",
+    iconBorder: "border-blue-500",
+    iconText: "text-blue-500",
+    shadow: "shadow-blue-100/50",
   },
   reference: {
     stripe: "border-l-4 border-l-violet-500",
     badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
     dot: "bg-violet-500",
+    iconBorder: "border-violet-500",
+    iconText: "text-violet-500",
+    shadow: "shadow-violet-100/50",
   },
   delf: {
     stripe: "border-l-4 border-l-amber-500",
     badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     dot: "bg-amber-500",
+    iconBorder: "border-amber-500",
+    iconText: "text-amber-500",
+    shadow: "shadow-amber-100/50",
   },
   media: {
     stripe: "border-l-4 border-l-teal-500",
     badge: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
     dot: "bg-teal-500",
+    iconBorder: "border-teal-500",
+    iconText: "text-teal-500",
+    shadow: "shadow-teal-100/50",
   },
 };
 

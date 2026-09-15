@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateMaterial, deleteMaterial } from "@/app/admin/materials/actions";
@@ -168,17 +168,21 @@ export default async function EditMaterialPage({
                     <form action={moveTaskGroup.bind(null, row.id, "up")}>
                       <SubmitButton
                         disabled={i === 0}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                        aria-label="Перемістити вище"
+                        title="Перемістити вище"
+                        className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                       >
-                        ↑
+                        <ChevronUp size={16} />
                       </SubmitButton>
                     </form>
                     <form action={moveTaskGroup.bind(null, row.id, "down")}>
                       <SubmitButton
                         disabled={i === rows.length - 1}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                        aria-label="Перемістити нижче"
+                        title="Перемістити нижче"
+                        className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                       >
-                        ↓
+                        <ChevronDown size={16} />
                       </SubmitButton>
                     </form>
                     <form action={deleteTaskGroup.bind(null, row.id)}>
@@ -213,17 +217,21 @@ export default async function EditMaterialPage({
                     <form action={moveTask.bind(null, row.id, "up")}>
                       <SubmitButton
                         disabled={i === 0}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                        aria-label="Перемістити вище"
+                        title="Перемістити вище"
+                        className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                       >
-                        ↑
+                        <ChevronUp size={16} />
                       </SubmitButton>
                     </form>
                     <form action={moveTask.bind(null, row.id, "down")}>
                       <SubmitButton
                         disabled={i === rows.length - 1}
-                        className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                        aria-label="Перемістити нижче"
+                        title="Перемістити нижче"
+                        className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                       >
-                        ↓
+                        <ChevronDown size={16} />
                       </SubmitButton>
                     </form>
                     <Link

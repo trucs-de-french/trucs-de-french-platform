@@ -2,7 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical, Copy, Trash2 } from "lucide-react";
+import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { deleteTask, reorderSceneRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -29,6 +29,11 @@ function badgeClassFor(type: string): string {
   return category
     ? CATEGORY_COLORS[category].badge
     : "text-neutral-500 dark:text-neutral-400";
+}
+
+function shadowClassFor(type: string): string {
+  const category = getTaskTypeCategory(type);
+  return category ? CATEGORY_COLORS[category].shadow : "";
 }
 
 // Простий евристичний прев'ю без формату під кожен тип окремо (свідомо
@@ -240,17 +245,21 @@ export function TaskDragList({
                       type="button"
                       onClick={() => void swap(row.id, rows[i - 1].id)}
                       disabled={i === 0}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                      aria-label="Перемістити вище"
+                      title="Перемістити вище"
+                      className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                     >
-                      ↑
+                      <ChevronUp size={16} />
                     </button>
                     <button
                       type="button"
                       onClick={() => void swap(row.id, rows[i + 1].id)}
                       disabled={i === rows.length - 1}
-                      className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                      aria-label="Перемістити нижче"
+                      title="Перемістити нижче"
+                      className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                     >
-                      ↓
+                      <ChevronDown size={16} />
                     </button>
                     <form action={deleteTaskGroup.bind(null, row.id)}>
                       <SubmitButton
@@ -279,7 +288,7 @@ export function TaskDragList({
               )} ${
                 dragOver === row.id
                   ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                  : "bg-white dark:bg-neutral-800"
+                  : `border-gray-200 bg-white shadow-sm ${shadowClassFor(row.type)} dark:border-neutral-700 dark:bg-neutral-800`
               }`}
             >
               <div className="flex items-center justify-between">
@@ -318,17 +327,21 @@ export function TaskDragList({
                     type="button"
                     onClick={() => void swap(row.id, rows[i - 1].id)}
                     disabled={i === 0}
-                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    aria-label="Перемістити вище"
+                    title="Перемістити вище"
+                    className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                   >
-                    ↑
+                    <ChevronUp size={16} />
                   </button>
                   <button
                     type="button"
                     onClick={() => void swap(row.id, rows[i + 1].id)}
                     disabled={i === rows.length - 1}
-                    className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
+                    aria-label="Перемістити нижче"
+                    title="Перемістити нижче"
+                    className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 disabled:opacity-30 dark:text-neutral-500 dark:hover:text-neutral-200"
                   >
-                    ↓
+                    <ChevronDown size={16} />
                   </button>
                   <Link
                     href={`/admin/courses/${productId}/tasks/${row.id}/copy`}
