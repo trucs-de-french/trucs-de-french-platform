@@ -11,29 +11,36 @@ type Block = { type: string; label: string };
 // категорією ТИПУ ВПРАВИ, тут — за фіксованим набором із 4 блоків самої
 // сцени). Не варто ані розширювати task-type-meta.ts, ані виносити цю мапу
 // в окремий спільний файл — єдиний споживач саме цей компонент.
-const BLOCK_COLORS: Record<string, { icon: LucideIcon; badge: string; tint: string }> = {
+//
+// border — колір верхньої лінії картки (border-t-4); iconColor — той самий
+// колір на іконці типу блоку. Картка лишається білою/нейтральною (без
+// кольорового відтінку фону) — кольорові лише лінія й іконка. iconColor без
+// dark-варіанту — той самий принцип, що iconText у TASK_TYPE_COLORS
+// (task-type-meta.ts): кольорова іконка на нейтральному фоні картки не
+// потребує окремого відтінку для темної теми.
+const BLOCK_COLORS: Record<string, { icon: LucideIcon; border: string; iconColor: string }> = {
   video: {
     icon: Video,
-    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-    tint: "bg-indigo-50/30 dark:bg-indigo-950/20",
+    border: "border-t-violet-500",
+    iconColor: "text-violet-500",
   },
   script: {
     icon: MessageSquare,
-    badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300",
-    tint: "bg-cyan-50/30 dark:bg-cyan-950/20",
+    border: "border-t-teal-500",
+    iconColor: "text-teal-500",
   },
   // Link2, не PlayCircle — блок веде на зовнішні тренажери (Quizlet/
   // Wordwall), той самий глиф, що вже для типу вправи "link" у
   // task-type-meta.ts.
   link: {
     icon: Link2,
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-    tint: "bg-emerald-50/30 dark:bg-emerald-950/20",
+    border: "border-t-green-500",
+    iconColor: "text-green-500",
   },
   task: {
     icon: ListChecks,
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-    tint: "bg-amber-50/30 dark:bg-amber-950/20",
+    border: "border-t-amber-500",
+    iconColor: "text-amber-500",
   },
 };
 
@@ -123,10 +130,10 @@ export function SceneBlockList({
             const fromType = e.dataTransfer.getData("text/plain");
             if (fromType) void swap(fromType, block.type);
           }}
-          className={`rounded-md border-2 p-4 transition-colors ${
+          className={`rounded-lg border border-t-4 bg-white p-4 shadow-sm transition-colors dark:bg-neutral-800 ${
             dragOver === block.type
               ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-              : `border-transparent ${color?.tint ?? ""}`
+              : `border-gray-100 dark:border-neutral-700 ${color?.border ?? ""}`
           }`}
         >
           <button
@@ -143,13 +150,12 @@ export function SceneBlockList({
             <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
               <GripVertical size={14} />
             </span>
-            {color && BlockIcon && (
-              <span
-                className={`mr-1.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${color.badge}`}
+            {BlockIcon && (
+              <BlockIcon
+                size={14}
+                className={`mr-1.5 shrink-0 ${color?.iconColor ?? "text-neutral-400 dark:text-neutral-500"}`}
                 aria-hidden
-              >
-                <BlockIcon size={14} />
-              </span>
+              />
             )}
             {block.label}
           </button>

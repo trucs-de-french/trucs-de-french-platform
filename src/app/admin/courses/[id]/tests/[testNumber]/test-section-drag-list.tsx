@@ -171,12 +171,14 @@ export function TestSectionDragList({
               <li
                 key={row.id}
                 {...dragProps}
-                className={`flex flex-col rounded-md border p-3 transition-colors ${
+                className={`flex flex-col rounded-md border border-t-4 bg-white p-3 shadow-sm transition-colors dark:bg-neutral-800 ${
                   dragOver === row.id
                     ? willAttach
                       ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
                       : "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                    : "border-indigo-100 bg-indigo-50/30 dark:border-indigo-900 dark:bg-indigo-950/20"
+                    : `border-gray-200 dark:border-neutral-700 ${
+                        TASK_GROUP_CONTENT_COLORS[row.content_type]?.border ?? ""
+                      }`
                 }`}
               >
                 {dragOver === row.id && willAttach && (
@@ -188,14 +190,13 @@ export function TestSectionDragList({
                   <div className="flex items-center gap-2">
                     {handle}
                     {ContentIcon && (
-                      <span
-                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.badge ?? ""
+                      <ContentIcon
+                        size={14}
+                        className={`shrink-0 ${
+                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.iconColor ?? "text-neutral-400 dark:text-neutral-500"
                         }`}
                         aria-hidden
-                      >
-                        <ContentIcon size={14} />
-                      </span>
+                      />
                     )}
                     <div>
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase text-neutral-500 dark:text-neutral-400">

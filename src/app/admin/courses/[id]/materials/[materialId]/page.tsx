@@ -153,18 +153,19 @@ export default async function EditMaterialPage({
                 return (
                 <li
                   key={`group-${row.id}`}
-                  className="flex items-center justify-between rounded-md border border-indigo-100 bg-indigo-50/30 p-3 dark:border-indigo-900 dark:bg-indigo-950/20"
+                  className={`flex items-center justify-between rounded-md border border-t-4 border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 ${
+                    TASK_GROUP_CONTENT_COLORS[row.content_type]?.border ?? ""
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     {ContentIcon && (
-                      <span
-                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.badge ?? ""
+                      <ContentIcon
+                        size={14}
+                        className={`shrink-0 ${
+                          TASK_GROUP_CONTENT_COLORS[row.content_type]?.iconColor ?? "text-neutral-400 dark:text-neutral-500"
                         }`}
                         aria-hidden
-                      >
-                        <ContentIcon size={14} />
-                      </span>
+                      />
                     )}
                     <div>
                       <span className={`uppercase ${HINT_TEXT}`}>

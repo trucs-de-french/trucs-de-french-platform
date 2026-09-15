@@ -375,10 +375,16 @@ export function getTaskTypeIcon(type: string): LucideIcon | null {
 // Окремий, третій домен кольорів — тип КОНТЕНТУ БЛОКУ ЗАДАЧ (task_group.
 // content_type: 'text'|'audio'|'video'|'embed', обмеження 0031_task_groups.sql)
 // — НЕ ті самі значення, що SceneBlockType (video/script/link/task) у
-// scene-block-list.tsx, і не типи вправ вище. video навмисно теж indigo —
-// той самий колір, що відео-блок сцени, бо це концептуально той самий
-// вміст. 3 споживачі (рядок блоку в task-drag-list/test-section-drag-list/
-// materials-сторінці) — тому спільний файл, а не локальна мапа.
+// scene-block-list.tsx, і не типи вправ вище. video навмисно той самий
+// violet, що відео-блок сцени (BLOCK_COLORS у scene-block-list.tsx) — той
+// самий принцип: це концептуально той самий вміст. Інші значення
+// (text/audio/embed) відповідника серед блоків сцени не мають, кольори
+// довільні. 3 споживачі (рядок блоку в task-drag-list/test-section-drag-
+// list/materials-сторінці) — тому спільний файл, а не локальна мапа.
+//
+// border — колір верхньої лінії рядка (border-t-4); iconColor — той самий
+// колір на іконці content_type. Рядок лишається білим/нейтральним, той
+// самий патерн, що BLOCK_COLORS у scene-block-list.tsx.
 export const TASK_GROUP_CONTENT_ICON: Record<string, LucideIcon> = {
   text: FileText,
   audio: Volume2,
@@ -386,17 +392,21 @@ export const TASK_GROUP_CONTENT_ICON: Record<string, LucideIcon> = {
   embed: CodeXml,
 };
 
-export const TASK_GROUP_CONTENT_COLORS: Record<string, { badge: string }> = {
+export const TASK_GROUP_CONTENT_COLORS: Record<string, { border: string; iconColor: string }> = {
   text: {
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    border: "border-t-amber-500",
+    iconColor: "text-amber-500",
   },
   audio: {
-    badge: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+    border: "border-t-teal-500",
+    iconColor: "text-teal-500",
   },
   video: {
-    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+    border: "border-t-violet-500",
+    iconColor: "text-violet-500",
   },
   embed: {
-    badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+    border: "border-t-purple-500",
+    iconColor: "text-purple-500",
   },
 };
