@@ -100,10 +100,10 @@ export function SceneBlockList({
             draggable
             onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", block.type)}
             onClick={() => clickHandle(block.type)}
-            className={`mb-3 flex w-full cursor-grab items-center gap-2 rounded-md border px-3 py-1.5 text-left text-sm font-semibold active:cursor-grabbing ${
+            className={`mb-3 flex w-full cursor-grab items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-sm font-semibold shadow-sm shadow-cyan-100/50 active:cursor-grabbing dark:shadow-none ${
               selected === block.type
-                ? "border-black bg-neutral-100 dark:border-white dark:bg-neutral-800"
-                : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                ? "border-brand bg-brand/5 dark:border-brand dark:bg-neutral-800"
+                : "border-gray-200 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
             }`}
           >
             <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
