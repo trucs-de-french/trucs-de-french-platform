@@ -7,11 +7,74 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function buildVocabRegex(vocab: VocabItem[]) {
-  const alternatives = [...vocab]
-    .sort((a, b) => b.word.length - a.word.length)
-    .map((v) => escapeRegExp(v.word));
+// Спільний будівник для обох напрямків підсвітки — оригінал (за word) і
+// переклад (за translatedForm, нижче) — той самий принцип "найдовший
+// варіант першим" (щоб довша фраза не "з'їдалась" коротшим словом, що є
+// її частиною).
+//
+// Порожні/пробільні слова відфільтровуються ТУТ, а не покладаються на
+// виклик уже відфільтрувати — порожній рядок у альтернативах регулярки
+// (напр. vocab-запис {word: ""}, залишений ненавмисно) дає ПОРОЖНЮ групу
+// захоплення (new RegExp("()")), яка матчить нульової довжини рядок УСЮДИ
+// (між кожною парою символів) — text.split на такому regex розбиває
+// репліку по одній літері, і кожен проміжок після цього хибно "знаходить"
+// той самий порожній vocab-запис і рендериться як окремий підсвічений
+// елемент — саме так репліка "Lumos Maxima" рендерилась літера-за-літерою.
+// null — сигнал викликачу, що підсвічувати нічого (замість регулярки, що
+// матчить порожній рядок скрізь).
+function buildHighlightRegex(words: string[]): RegExp | null {
+  const meaningful = words.map((w) => w.trim()).filter((w) => w.length > 0);
+  if (meaningful.length === 0) return null;
+  const alternatives = [...meaningful].sort((a, b) => b.length - a.length).map(escapeRegExp);
   return new RegExp(`(${alternatives.join("|")})`, "giu");
+}
+
+function buildVocabRegex(vocab: VocabItem[]): RegExp | null {
+  return buildHighlightRegex(vocab.map((v) => v.word));
+}
+
+// "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
+// тієї самої евристики, що вже в script-import/parse.ts (там — для
+// парсингу файлів сценарію, тут — для рендеру: translationUk вільний
+// рядок, який учителька пише сама, і перекладене ім'я спікера в ньому НЕ
+// збігається з line.speaker з оригіналу, тож жирний спікер перекладу можна
+// отримати лише розпізнаванням усередині самого тексту).
+const TRANSLATION_SPEAKER_PREFIX = /^\s*([A-ZÀ-ÖØ-ÞА-ЯІЇҐ][\w' -]{0,39}):\s*(.*)$/u;
+
+export function splitTranslationSpeaker(text: string): { speaker: string | null; rest: string } {
+  const match = text.match(TRANSLATION_SPEAKER_PREFIX);
+  if (!match) return { speaker: null, rest: text };
+  return { speaker: match[1].trim(), rest: match[2].trim() };
+}
+
+// Підсвітка translatedForm у перекладеному тексті — та сама механіка
+// спліт-і-підсвітка, що DialogueLine нижче для оригіналу, але БЕЗ
+// клікабельності/спливаючого перекладу (однобічний візуальний натяк, не
+// інтерактивний елемент — переклад слова вже показаний ліворуч).
+export function TranslatedText({ text, vocab }: { text: string; vocab: VocabItem[] }) {
+  const withForm = vocab.filter((v) => v.translatedForm?.trim());
+  const regex = buildHighlightRegex(withForm.map((v) => v.translatedForm as string));
+  if (!regex) return <>{text}</>;
+
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = withForm.find((v) => v.translatedForm?.trim().toLowerCase() === part.toLowerCase());
+        return match ? (
+          <span
+            key={i}
+            className="mx-0.5 rounded bg-blue-100 px-1 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-200"
+          >
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        );
+      })}
+    </>
+  );
 }
 
 // Контрольований ззовні (ScriptSection) — сам не тримає стан "показано чи
@@ -89,7 +152,10 @@ export function DialogueLine({
   openId: string | null;
   onWordClick: (id: string) => void;
 }) {
-  if (vocab.length === 0) {
+  const meaningfulVocab = vocab.filter((v) => v.word.trim());
+  const regex = buildVocabRegex(meaningfulVocab);
+
+  if (!regex) {
     return (
       <p>
         <TimecodeBadge start={start} videoLink={videoLink} />
@@ -98,14 +164,14 @@ export function DialogueLine({
     );
   }
 
-  const parts = text.split(buildVocabRegex(vocab));
+  const parts = text.split(regex);
 
   return (
     <p>
       <TimecodeBadge start={start} videoLink={videoLink} />
       <span className="font-semibold">{speaker}:</span>{" "}
       {parts.map((part, i) => {
-        const match = vocab.find(
+        const match = meaningfulVocab.find(
           (v) => v.word.toLowerCase() === part.toLowerCase()
         );
         const id = `${lineIndex}-${i}`;

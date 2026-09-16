@@ -162,7 +162,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
   function updateVocab(
     i: number,
     vi: number,
-    field: "word" | "translation" | "image_url",
+    field: "word" | "translation" | "image_url" | "translatedForm",
     value: string
   ) {
     setLines((prev) =>
@@ -289,9 +289,21 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
     setTranslationError(null);
   }
 
+  // Порожні/недописані vocab-записи (word лише з пробілів чи порожній —
+  // напр. "+ слово в лексику" натиснуто, але так і не заповнено) не
+  // потрапляють у збережений dialogue: такий запис ламає підсвітку в
+  // рендері (порожня альтернатива regex матчить усюди — детальніше в
+  // dialogue-line.tsx). Фільтрація лише ТУТ, у серіалізації для збереження
+  // — не в самому lines-стані, щоб рядок не зникав із форми просто через
+  // порожнє поле під час набору.
+  const dialogueToSave = lines.map((line) => ({
+    ...line,
+    vocab: line.vocab.filter((v) => v.word.trim() !== ""),
+  }));
+
   return (
     <div className="flex flex-col gap-4">
-      <input type="hidden" name="dialogue" value={JSON.stringify(lines)} readOnly />
+      <input type="hidden" name="dialogue" value={JSON.stringify(dialogueToSave)} readOnly />
 
       {lines.map((line, i) => (
         <div
@@ -411,6 +423,14 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     className="h-12 w-12 shrink-0 rounded object-cover"
                   />
                 </div>
+                {line.translationUk && (
+                  <input
+                    placeholder="Форма в перекладі (як виглядає у translationUk цієї репліки)"
+                    value={v.translatedForm ?? ""}
+                    onChange={(e) => updateVocab(i, vi, "translatedForm", e.target.value)}
+                    className={`${INPUT_BORDER} w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+                  />
+                )}
               </div>
             ))}
             <button

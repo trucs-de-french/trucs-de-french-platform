@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
-import { DialogueLine } from "./dialogue-line";
+import { DialogueLine, TranslatedText, splitTranslationSpeaker } from "./dialogue-line";
 
 type DialogueEntry = {
   speaker: string;
@@ -14,6 +14,20 @@ type DialogueEntry = {
 };
 
 const HIDE_DELAY_MS = 3500;
+
+// Жирний спікер (розпізнаний усередині самого перекладеного тексту, не
+// line.speaker з оригіналу — див. коментар у dialogue-line.tsx) + підсвітка
+// слів словника, для яких заповнений translatedForm.
+function TranslationCell({ text, vocab }: { text: string; vocab: VocabItem[] }) {
+  const { speaker, rest } = splitTranslationSpeaker(text);
+  return (
+    <p>
+      {speaker && <span className="font-semibold">{speaker}:</span>}
+      {speaker && " "}
+      <TranslatedText text={rest} vocab={vocab} />
+    </p>
+  );
+}
 
 // Стан "яке слово зараз відкрите" живе тут (не в кожному VocabWord окремо),
 // щоб клік на інше слово одразу ховав попередній переклад — на весь скрипт
@@ -73,11 +87,13 @@ export function ScriptSection({ dialogue }: { dialogue: DialogueEntry[] }) {
                 openId={openId}
                 onWordClick={openWord}
               />
-              <p className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
-                {line.translationUk || (
+              <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
+                {line.translationUk ? (
+                  <TranslationCell text={line.translationUk} vocab={line.vocab ?? []} />
+                ) : (
                   <span className="italic text-neutral-400 dark:text-neutral-600">—</span>
                 )}
-              </p>
+              </div>
             </Fragment>
           ))}
         </div>
