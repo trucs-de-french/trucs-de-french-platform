@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { Paperclip } from "lucide-react";
 
 type UploadKind = "audio" | "image";
 
@@ -41,10 +42,16 @@ export function FileUpload({
   kind,
   name,
   onUploaded,
+  variant = "button",
 }: {
   kind: UploadKind;
   name?: string;
   onUploaded?: (url: string) => void;
+  // "icon" — компактний тригер (скрепка, без тексту) для розміщення в
+  // одному рядку поруч з іншим полем (напр. URL картинки словника) — той
+  // самий icon-only рецепт, що вже Copy/Trash2 по платформі. За
+  // замовчуванням "button" — усі наявні виклики лишаються без змін.
+  variant?: "button" | "icon";
 }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -132,11 +139,19 @@ export function FileUpload({
       />
       <label
         htmlFor={inputId}
-        className={`w-fit rounded-md bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${
-          status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
-        }`}
+        title={variant === "icon" ? LABEL_BY_KIND[kind] : undefined}
+        aria-label={variant === "icon" ? LABEL_BY_KIND[kind] : undefined}
+        className={
+          variant === "icon"
+            ? `inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 ${
+                status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
+              }`
+            : `w-fit rounded-md bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${
+                status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
+              }`
+        }
       >
-        {LABEL_BY_KIND[kind]}
+        {variant === "icon" ? <Paperclip size={16} /> : LABEL_BY_KIND[kind]}
       </label>
       {status === "uploading" && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">

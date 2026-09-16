@@ -452,25 +452,6 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <div className="flex items-start gap-1">
-                  <div className="flex w-full max-w-md flex-col gap-1">
-                    <input
-                      placeholder="Посилання на картинку (необов'язково)"
-                      value={v.image_url ?? ""}
-                      onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
-                      className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-                    />
-                    <FileUpload
-                      kind="image"
-                      onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
-                    />
-                  </div>
-                  <ImageOrPlaceholder
-                    src={v.image_url}
-                    alt="Прев'ю"
-                    className="h-12 w-12 shrink-0 rounded object-cover"
-                  />
-                </div>
                 {line.translationUk && (
                   <div className="flex items-center gap-1">
                     <input
@@ -488,6 +469,26 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                     </button>
                   </div>
                 )}
+                <div className="flex items-start gap-1">
+                  <div className="flex w-full max-w-md items-center gap-1">
+                    <input
+                      placeholder="Посилання на картинку (необов'язково)"
+                      value={v.image_url ?? ""}
+                      onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
+                      className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+                    />
+                    <FileUpload
+                      kind="image"
+                      variant="icon"
+                      onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
+                    />
+                  </div>
+                  <ImageOrPlaceholder
+                    src={v.image_url}
+                    alt="Прев'ю"
+                    className="h-12 w-12 shrink-0 rounded object-cover"
+                  />
+                </div>
               </div>
             ))}
             <button
@@ -519,15 +520,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
           className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY}`}
         >
           <Upload size={14} />
-          {parsing ? "Розпізнаю..." : "Завантажити файл сценарію"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowPasteBox((v) => !v)}
-          className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY}`}
-        >
-          <Clipboard size={14} />
-          Вставити транскрипт
+          {parsing ? "Розпізнаю..." : "Завантажити fr .srt"}
         </button>
         <input
           ref={translationFileInputRef}
@@ -543,7 +536,15 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
           className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY}`}
         >
           <Languages size={14} />
-          {translationParsing ? "Зіставляю..." : "Завантажити переклад (.srt/.vtt)"}
+          {translationParsing ? "Зіставляю..." : "Завантажити переклад srt"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowPasteBox((v) => !v)}
+          className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY}`}
+        >
+          <Clipboard size={14} />
+          Скрипт Google Диск
         </button>
       </div>
 
