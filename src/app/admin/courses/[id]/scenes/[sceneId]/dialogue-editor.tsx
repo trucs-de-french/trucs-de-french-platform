@@ -109,8 +109,12 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
     setLines((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  function updateLine(i: number, field: "speaker" | "text", value: string) {
-    setLines((prev) => prev.map((line, idx) => (idx === i ? { ...line, [field]: value } : line)));
+  function updateLine(i: number, field: "speaker" | "text" | "translationUk", value: string) {
+    setLines((prev) =>
+      prev.map((line, idx) =>
+        idx === i ? { ...line, [field]: field === "translationUk" ? value || null : value } : line
+      )
+    );
   }
 
   function updateLineOptionalField(i: number, field: "start" | "end" | "videoLink", value: string) {
@@ -341,13 +345,22 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               onChange={(e) => updateLine(i, "speaker", e.target.value)}
               className={`${INPUT_BORDER} h-10 w-32 bg-slate-50 px-2 text-sm dark:bg-neutral-800/50`}
             />
-            <textarea
-              placeholder="Текст репліки"
-              value={line.text}
-              onChange={(e) => updateLine(i, "text", e.target.value)}
-              rows={1}
-              className={`${INPUT_BORDER} h-10 flex-1 px-2 text-sm font-content`}
-            />
+            <div className="flex flex-1 flex-col gap-1">
+              <textarea
+                placeholder="Текст репліки"
+                value={line.text}
+                onChange={(e) => updateLine(i, "text", e.target.value)}
+                rows={1}
+                className={`${INPUT_BORDER} h-10 px-2 text-sm font-content`}
+              />
+              <textarea
+                placeholder="Переклад (українською)"
+                value={line.translationUk ?? ""}
+                onChange={(e) => updateLine(i, "translationUk", e.target.value)}
+                rows={1}
+                className={`${INPUT_BORDER} h-10 px-2 text-sm font-content`}
+              />
+            </div>
             <button
               type="button"
               onClick={() => toggleExpanded(i)}
