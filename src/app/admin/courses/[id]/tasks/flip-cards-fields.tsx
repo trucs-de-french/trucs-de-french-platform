@@ -6,7 +6,7 @@ import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
@@ -95,15 +95,13 @@ export const FlipCardsFields = forwardRef<
             </button>
           </div>
           <div className="flex items-start gap-1">
-            <div className="flex w-full max-w-md flex-col gap-1">
-              <input
-                value={card.image_url ?? ""}
-                onChange={(e) => updateCard(i, "image_url", e.target.value)}
-                placeholder="Картинка (URL, необов'язково)"
-                className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-              />
-              <FileUpload kind="image" onUploaded={(url) => updateCard(i, "image_url", url)} />
-            </div>
+            <FileOrLinkField
+              kind="image"
+              mode="controlled"
+              value={card.image_url ?? ""}
+              onChange={(url) => updateCard(i, "image_url", url)}
+              placeholder="Картинка (URL, необов'язково)"
+            />
             <ImageOrPlaceholder
               src={card.image_url}
               alt="Прев'ю"

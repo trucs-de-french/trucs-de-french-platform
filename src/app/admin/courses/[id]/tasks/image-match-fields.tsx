@@ -5,10 +5,10 @@ import { Trash2 } from "lucide-react";
 import type { ImageMatchConfig, ImageMatchItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): ImageMatchItem {
   return { id: crypto.randomUUID(), imageUrl: "", name: "" };
@@ -77,21 +77,13 @@ export const ImageMatchFields = forwardRef<
       {items.map((item) => (
         <div key={item.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
           <div className="flex flex-1 items-start gap-1">
-            <div className="flex flex-1 flex-col gap-1">
-              <input
-                value={item.imageUrl}
-                onChange={(e) => updateItem(item.id, "imageUrl", e.target.value)}
-                placeholder="URL зображення"
-                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-              />
-              <label className={LABEL_TEXT}>
-                Або завантажити картинку (перекриє URL вище, якщо вибрано)
-              </label>
-              <FileUpload
-                kind="image"
-                onUploaded={(url) => updateItem(item.id, "imageUrl", url)}
-              />
-            </div>
+            <FileOrLinkField
+              kind="image"
+              mode="controlled"
+              value={item.imageUrl}
+              onChange={(url) => updateItem(item.id, "imageUrl", url)}
+              placeholder="URL зображення"
+            />
             <ImageOrPlaceholder
               src={item.imageUrl}
               alt="Прев'ю"

@@ -53,7 +53,7 @@ import {
 } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -392,33 +392,29 @@ export function TaskConfigFields({
       <div className="flex gap-4">
         <div className="flex flex-1 flex-col gap-1">
           <label className={LABEL_TEXT}>
-            Картинка (URL, необов&apos;язково)
+            Картинка (необов&apos;язково)
           </label>
-          <input
-            name="task_image_url"
+          <FileOrLinkField
+            kind="image"
+            mode="name"
+            urlName="task_image_url"
+            uploadName="task_image_file_url"
             defaultValue={initialImageUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
-          <label className={`mt-1 ${LABEL_TEXT}`}>
-            Або завантажити картинку (перекриє URL вище, якщо вибрано)
-          </label>
-          <FileUpload kind="image" name="task_image_file_url" />
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <label className={LABEL_TEXT}>
-            Аудіо (URL, необов&apos;язково)
+            Аудіо (необов&apos;язково)
           </label>
-          <input
-            name="task_audio_url"
+          <FileOrLinkField
+            kind="audio"
+            mode="name"
+            urlName="task_audio_url"
+            uploadName="task_audio_file_url"
             defaultValue={initialAudioUrl ?? ""}
             placeholder="показується над завданням, якщо заповнено"
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
-          <label className={`mt-1 ${LABEL_TEXT}`}>
-            Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
-          </label>
-          <FileUpload kind="audio" name="task_audio_file_url" />
         </div>
       </div>
 

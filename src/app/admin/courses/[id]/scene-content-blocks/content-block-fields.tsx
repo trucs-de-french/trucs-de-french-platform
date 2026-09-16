@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -59,29 +59,30 @@ export function ContentBlockFields({ initialBlock }: { initialBlock?: ContentBlo
         />
       )}
 
-      {(contentType === "audio" || contentType === "video" || contentType === "embed") && (
+      {contentType === "audio" && (
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Аудіо</label>
+          <FileOrLinkField
+            kind="audio"
+            mode="name"
+            urlName="media_url"
+            uploadName="media_audio_file_url"
+            defaultValue={initialBlock?.media_url ?? ""}
+            placeholder="URL аудіо"
+          />
+        </div>
+      )}
+
+      {(contentType === "video" || contentType === "embed") && (
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>
-            {contentType === "audio"
-              ? "URL аудіо"
-              : contentType === "video"
-                ? "URL відео"
-                : "URL для вбудовування (iframe src)"}
+            {contentType === "video" ? "URL відео" : "URL для вбудовування (iframe src)"}
           </label>
           <input
             name="media_url"
             defaultValue={initialBlock?.media_url ?? ""}
             className={`${INPUT_BORDER} px-3 py-2 text-sm`}
           />
-        </div>
-      )}
-
-      {contentType === "audio" && (
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>
-            Або завантажити аудіофайл (перекриє URL вище, якщо вибрано)
-          </label>
-          <FileUpload kind="audio" name="media_audio_file_url" />
         </div>
       )}
 

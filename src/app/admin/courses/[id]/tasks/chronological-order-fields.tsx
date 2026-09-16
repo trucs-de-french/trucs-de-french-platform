@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -129,18 +129,13 @@ export const ChronologicalOrderFields = forwardRef<
           </span>
           {mode === "image" ? (
             <div className="flex flex-1 items-start gap-1">
-              <div className="flex flex-1 flex-col gap-1">
-                <input
-                  value={item.content}
-                  onChange={(e) => updateContent(item.id, e.target.value)}
-                  placeholder="URL зображення"
-                  className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-                />
-                <FileUpload
-                  kind="image"
-                  onUploaded={(url) => updateContent(item.id, url)}
-                />
-              </div>
+              <FileOrLinkField
+                kind="image"
+                mode="controlled"
+                value={item.content}
+                onChange={(url) => updateContent(item.id, url)}
+                placeholder="URL зображення"
+              />
               <ImageOrPlaceholder
                 src={item.content}
                 alt="Прев'ю"

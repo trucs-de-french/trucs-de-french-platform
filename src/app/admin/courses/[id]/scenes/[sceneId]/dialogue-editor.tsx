@@ -1,9 +1,7 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { GripVertical, Trash2, ArrowRight, ChevronDown, ChevronUp, Upload, Clipboard, Languages } from "lucide-react";
-import { FileUpload } from "@/components/file-upload";
-import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { GripVertical, Trash2, ChevronDown, ChevronUp, Upload, Clipboard, Languages } from "lucide-react";
 import { parseScriptFile, parseTranslationFile } from "@/lib/script-import/actions";
 import { parsePastedTranscript, type ParsedLine, type TranslationCue } from "@/lib/script-import/parse";
 import { matchTranslations, type TranslationMatch } from "@/lib/script-import/match-translations";
@@ -12,6 +10,7 @@ import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { useDialogueState, type Line } from "./dialogue-state";
+import { VocabItemRow } from "./vocab-item-row";
 
 function parsedLineToLine(p: ParsedLine): Line {
   return { speaker: p.speaker, text: p.text, vocab: [], start: p.start, end: p.end, videoLink: null };
@@ -81,7 +80,7 @@ function OptionalFieldsPanel({
 }
 
 export function DialogueEditor() {
-  const { lines, setLines, updateVocab, removeVocab } = useDialogueState();
+  const { lines, setLines, updateVocab } = useDialogueState();
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
 
@@ -394,67 +393,11 @@ export function DialogueEditor() {
           <div className="mt-2 flex flex-col gap-1 pl-2">
             {line.vocab.map((v, vi) => (
               <div key={v.id ?? vi} className="flex flex-col gap-1 rounded-md border border-transparent p-1">
-                <div className="flex items-center gap-2">
-                  <input
-                    placeholder="Слово/фраза"
-                    value={v.word}
-                    onChange={(e) => updateVocab(i, vi, "word", e.target.value)}
-                    className={`${INPUT_BORDER} w-40 px-2 py-2 text-sm font-content`}
-                  />
-                  <ArrowRight size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  <input
-                    placeholder="Переклад"
-                    value={v.translation}
-                    onChange={(e) => updateVocab(i, vi, "translation", e.target.value)}
-                    className={`${INPUT_BORDER} w-48 px-2 py-2 text-sm font-content`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeVocab(i, vi)}
-                    aria-label="Видалити слово"
-                    title="Видалити"
-                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                {line.translationUk && (
-                  <div className="flex items-center gap-1">
-                    <input
-                      placeholder="Форма в перекладі (як виглядає у translationUk цієї репліки)"
-                      value={v.translatedForm ?? ""}
-                      onChange={(e) => updateVocab(i, vi, "translatedForm", e.target.value)}
-                      className={`${INPUT_BORDER} w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => takeTranslationSelection(i, vi)}
-                      className="shrink-0 whitespace-nowrap text-xs text-blue-700 hover:underline dark:text-blue-400"
-                    >
-                      Взяти виділене
-                    </button>
-                  </div>
-                )}
-                <div className="flex items-start gap-1">
-                  <div className="flex w-full max-w-md items-center gap-1">
-                    <input
-                      placeholder="Посилання на картинку (необов'язково)"
-                      value={v.image_url ?? ""}
-                      onChange={(e) => updateVocab(i, vi, "image_url", e.target.value)}
-                      className={`${INPUT_BORDER} ml-0 w-full px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-                    />
-                    <FileUpload
-                      kind="image"
-                      variant="icon"
-                      onUploaded={(url) => updateVocab(i, vi, "image_url", url)}
-                    />
-                  </div>
-                  <ImageOrPlaceholder
-                    src={v.image_url}
-                    alt="Прев'ю"
-                    className="h-12 w-12 shrink-0 rounded object-cover"
-                  />
-                </div>
+                <VocabItemRow
+                  lineIndex={i}
+                  vocabIndex={vi}
+                  onTakeTranslationSelection={() => takeTranslationSelection(i, vi)}
+                />
               </div>
             ))}
             <button

@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -186,18 +186,13 @@ export const ListeningFields = forwardRef<
                     className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
                   />
                   <div className="flex flex-1 items-start gap-1">
-                    <div className="flex flex-1 flex-col gap-1">
-                      <input
-                        value={o.imageUrl ?? ""}
-                        onChange={(e) => updateOptionImageUrl(q.id, o.id, e.target.value)}
-                        placeholder="URL картинки (опційно)"
-                        className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-                      />
-                      <FileUpload
-                        kind="image"
-                        onUploaded={(url) => updateOptionImageUrl(q.id, o.id, url)}
-                      />
-                    </div>
+                    <FileOrLinkField
+                      kind="image"
+                      mode="controlled"
+                      value={o.imageUrl ?? ""}
+                      onChange={(url) => updateOptionImageUrl(q.id, o.id, url)}
+                      placeholder="URL картинки (опційно)"
+                    />
                     <ImageOrPlaceholder
                       src={o.imageUrl}
                       alt="Прев'ю"

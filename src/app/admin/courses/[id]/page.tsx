@@ -13,7 +13,7 @@ import { createScene } from "@/app/admin/scenes/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
-import { FileUpload } from "@/components/file-upload";
+import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
@@ -225,17 +225,15 @@ export default async function AdminCoursePage({
             />
           </div>
           <div className="mt-3 flex flex-col gap-1">
-            <label className={LABEL_TEXT}>Обкладинка (URL)</label>
-            <input
-              name="cover_image_url"
-              type="url"
+            <label className={LABEL_TEXT}>Обкладинка</label>
+            <FileOrLinkField
+              kind="image"
+              mode="name"
+              urlName="cover_image_url"
+              uploadName="cover_image_file_url"
               defaultValue={product.cover_image_url ?? ""}
-              className={`${INPUT_BORDER} px-3 py-2`}
+              placeholder="URL картинки"
             />
-            <label className={`mt-1 ${LABEL_TEXT}`}>
-              Або завантажити картинку (перекриє URL вище, якщо вибрано)
-            </label>
-            <FileUpload kind="image" name="cover_image_file_url" />
           </div>
         </div>
 
