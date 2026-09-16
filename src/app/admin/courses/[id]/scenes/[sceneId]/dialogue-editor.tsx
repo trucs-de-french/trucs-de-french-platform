@@ -33,6 +33,17 @@ function parseNullableNumber(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Клік на кнопку (mousedown) забирає фокус із textarea, але
+// selectionStart/selectionEnd/value на самому DOM-елементі НЕ скидаються
+// при втраті фокусу — виділення залишається читаним у onClick кнопки без
+// жодних preventDefault-трюків.
+function getSelectedText(textarea: HTMLTextAreaElement | null | undefined): string {
+  if (!textarea) return "";
+  const { selectionStart, selectionEnd, value } = textarea;
+  if (selectionStart == null || selectionEnd == null || selectionStart === selectionEnd) return "";
+  return value.slice(selectionStart, selectionEnd);
+}
+
 // Час початку/кінця (с) + посилання на відео — спільна підпанель, що
 // перевикористовується і в основному списку (згорнута за замовчуванням,
 // щоб не заважати базовому ручному вводу), і в прев'ю імпорту (розгорнута
@@ -101,6 +112,12 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
   const [translationParsing, setTranslationParsing] = useState(false);
   const translationFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Доступ до textarea конкретного рядка для читання виділення мишкою —
+  // ключ - індекс репліки, той самий принцип, що вже й для реплік загалом
+  // (не мають власного id).
+  const textRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
+  const translationRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
+
   function addLine() {
     setLines((prev) => [...prev, { speaker: "", text: "", vocab: [] }]);
   }
@@ -148,9 +165,12 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
   }
 
   function addVocab(i: number) {
+    // Виділення у французькому textarea цієї репліки — якщо є, стає word
+    // одразу; якщо нема, точно як раніше (порожній word, вписується вручну).
+    const selected = getSelectedText(textRefs.current[i]);
     setLines((prev) =>
       prev.map((line, idx) =>
-        idx === i ? { ...line, vocab: [...line.vocab, { word: "", translation: "" }] } : line
+        idx === i ? { ...line, vocab: [...line.vocab, { word: selected, translation: "" }] } : line
       )
     );
   }
@@ -161,6 +181,15 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
         idx === i ? { ...line, vocab: line.vocab.filter((_, vidx) => vidx !== vi) } : line
       )
     );
+  }
+
+  // Виділення в textarea перекладу цієї репліки -> translatedForm КОНКРЕТНОГО
+  // vocab-запису. Без виділення — нічого не робимо (підтверджено з учителькою,
+  // без спливаючої підказки).
+  function takeTranslationSelection(i: number, vi: number) {
+    const selected = getSelectedText(translationRefs.current[i]);
+    if (!selected) return;
+    updateVocab(i, vi, "translatedForm", selected);
   }
 
   function updateVocab(
@@ -347,6 +376,9 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
             />
             <div className="flex flex-1 flex-col gap-1">
               <textarea
+                ref={(el) => {
+                  textRefs.current[i] = el;
+                }}
                 placeholder="Текст репліки"
                 value={line.text}
                 onChange={(e) => updateLine(i, "text", e.target.value)}
@@ -354,6 +386,9 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                 className={`${INPUT_BORDER} h-10 px-2 text-sm font-content`}
               />
               <textarea
+                ref={(el) => {
+                  translationRefs.current[i] = el;
+                }}
                 placeholder="Переклад (українською)"
                 value={line.translationUk ?? ""}
                 onChange={(e) => updateLine(i, "translationUk", e.target.value)}
@@ -437,12 +472,21 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
                   />
                 </div>
                 {line.translationUk && (
-                  <input
-                    placeholder="Форма в перекладі (як виглядає у translationUk цієї репліки)"
-                    value={v.translatedForm ?? ""}
-                    onChange={(e) => updateVocab(i, vi, "translatedForm", e.target.value)}
-                    className={`${INPUT_BORDER} w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-                  />
+                  <div className="flex items-center gap-1">
+                    <input
+                      placeholder="Форма в перекладі (як виглядає у translationUk цієї репліки)"
+                      value={v.translatedForm ?? ""}
+                      onChange={(e) => updateVocab(i, vi, "translatedForm", e.target.value)}
+                      className={`${INPUT_BORDER} w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => takeTranslationSelection(i, vi)}
+                      className="shrink-0 whitespace-nowrap text-xs text-blue-700 hover:underline dark:text-blue-400"
+                    >
+                      Взяти виділене
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
