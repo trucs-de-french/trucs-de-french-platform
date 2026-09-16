@@ -5,13 +5,113 @@ import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
-import { FileOrLinkField } from "@/components/file-or-link-field";
+import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
+}
+
+// Окремий компонент (не інлайн у .map()) — useFileOrLink це хук, викликати
+// його всередині callback .map() було б порушенням правил хуків. Хук
+// викликається завжди, навіть у text-режимі (просто його вивід тоді не
+// рендериться) — умовний виклик хука порушив би правила хуків.
+function ChronologicalOrderItemRow({
+  item,
+  index,
+  itemsCount,
+  mode,
+  onMove,
+  onUpdateContent,
+  onUpdatePoints,
+  onRemove,
+}: {
+  item: ChronologicalOrderItem;
+  index: number;
+  itemsCount: number;
+  mode: "image" | "text";
+  onMove: (direction: 1 | -1) => void;
+  onUpdateContent: (value: string) => void;
+  onUpdatePoints: (points: number) => void;
+  onRemove: () => void;
+}) {
+  const { icons, input } = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: item.content,
+    onChange: onUpdateContent,
+    placeholder: "URL зображення",
+  });
+
+  return (
+    <div className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            className="px-1 text-xs text-neutral-500 hover:text-black disabled:opacity-30 dark:text-neutral-400 dark:hover:text-white"
+            title="Перемістити вище"
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={index === itemsCount - 1}
+            className="px-1 text-xs text-neutral-500 hover:text-black disabled:opacity-30 dark:text-neutral-400 dark:hover:text-white"
+            title="Перемістити нижче"
+          >
+            ▼
+          </button>
+        </div>
+        <span className="w-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
+          {index + 1}
+        </span>
+        {mode === "text" && (
+          <input
+            value={item.content}
+            onChange={(e) => onUpdateContent(e.target.value)}
+            placeholder="Текст твердження"
+            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+          />
+        )}
+        <span className={HINT_TEXT}>Бали</span>
+        <input
+          type="number"
+          min={0}
+          step={0.5}
+          value={item.points ?? 1}
+          onChange={(e) => onUpdatePoints(Number(e.target.value))}
+          title="Бали за цей елемент"
+          className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
+        />
+        {mode === "image" && icons}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Видалити елемент"
+          title="Видалити"
+          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      {mode === "image" && (
+        <div className="flex items-start gap-1 pl-8">
+          {input}
+          <ImageOrPlaceholder
+            src={item.content}
+            alt="Прев'ю"
+            className="h-12 w-12 shrink-0 rounded object-cover"
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const ChronologicalOrderFields = forwardRef<
@@ -103,73 +203,17 @@ export const ChronologicalOrderFields = forwardRef<
       </p>
 
       {items.map((item, index) => (
-        <div key={item.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
-          <div className="flex flex-col">
-            <button
-              type="button"
-              onClick={() => moveItem(index, -1)}
-              disabled={index === 0}
-              className="px-1 text-xs text-neutral-500 hover:text-black disabled:opacity-30 dark:text-neutral-400 dark:hover:text-white"
-              title="Перемістити вище"
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              onClick={() => moveItem(index, 1)}
-              disabled={index === items.length - 1}
-              className="px-1 text-xs text-neutral-500 hover:text-black disabled:opacity-30 dark:text-neutral-400 dark:hover:text-white"
-              title="Перемістити нижче"
-            >
-              ▼
-            </button>
-          </div>
-          <span className="w-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
-            {index + 1}
-          </span>
-          {mode === "image" ? (
-            <div className="flex flex-1 items-start gap-1">
-              <FileOrLinkField
-                kind="image"
-                mode="controlled"
-                value={item.content}
-                onChange={(url) => updateContent(item.id, url)}
-                placeholder="URL зображення"
-              />
-              <ImageOrPlaceholder
-                src={item.content}
-                alt="Прев'ю"
-                className="h-12 w-12 shrink-0 rounded object-cover"
-              />
-            </div>
-          ) : (
-            <input
-              value={item.content}
-              onChange={(e) => updateContent(item.id, e.target.value)}
-              placeholder="Текст твердження"
-              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-            />
-          )}
-          <span className={HINT_TEXT}>Бали</span>
-          <input
-            type="number"
-            min={0}
-            step={0.5}
-            value={item.points ?? 1}
-            onChange={(e) => updatePoints(item.id, Number(e.target.value))}
-            title="Бали за цей елемент"
-            className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
-          />
-          <button
-            type="button"
-            onClick={() => removeItem(item.id)}
-            aria-label="Видалити елемент"
-            title="Видалити"
-            className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+        <ChronologicalOrderItemRow
+          key={item.id}
+          item={item}
+          index={index}
+          itemsCount={items.length}
+          mode={mode}
+          onMove={(direction) => moveItem(index, direction)}
+          onUpdateContent={(value) => updateContent(item.id, value)}
+          onUpdatePoints={(points) => updatePoints(item.id, points)}
+          onRemove={() => removeItem(item.id)}
+        />
       ))}
       <button
         type="button"

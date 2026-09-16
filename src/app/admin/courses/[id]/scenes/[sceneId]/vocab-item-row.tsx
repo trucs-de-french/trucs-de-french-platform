@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Trash2 } from "lucide-react";
-import { FileOrLinkField } from "@/components/file-or-link-field";
+import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { useDialogueState } from "./dialogue-state";
@@ -30,6 +30,13 @@ export function VocabItemRow({
   const { lines, updateVocab, removeVocab } = useDialogueState();
   const line = lines[lineIndex];
   const v = line.vocab[vocabIndex];
+  const { icons, input } = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: v.image_url ?? "",
+    onChange: (url) => updateVocab(lineIndex, vocabIndex, "image_url", url),
+    placeholder: "Посилання на картинку",
+  });
 
   return (
     <>
@@ -66,6 +73,7 @@ export function VocabItemRow({
             )}
           </>
         )}
+        {icons}
         <button
           type="button"
           onClick={() => removeVocab(lineIndex, vocabIndex)}
@@ -77,13 +85,7 @@ export function VocabItemRow({
         </button>
       </div>
       <div className="flex items-start gap-1">
-        <FileOrLinkField
-          kind="image"
-          mode="controlled"
-          value={v.image_url ?? ""}
-          onChange={(url) => updateVocab(lineIndex, vocabIndex, "image_url", url)}
-          placeholder="Посилання на картинку"
-        />
+        {input}
         <ImageOrPlaceholder
           src={v.image_url}
           alt="Прев'ю"

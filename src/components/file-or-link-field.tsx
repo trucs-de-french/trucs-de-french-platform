@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link2 } from "lucide-react";
 import { FileUpload } from "./file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -29,52 +29,72 @@ type FileOrLinkFieldProps =
       defaultValue?: string;
     };
 
-// Дві окремі icon-only кнопки замість однієї скрепки: Paperclip (як і
-// раніше) відкриває завантаження файлу; Link2 лише тоглить видимість поля
-// прямого URL — саме поле за замовчуванням сховане, крім випадку, коли
-// значення вже заповнене (щоб не ховати наявні дані за зайвим кліком).
-export function FileOrLinkField(props: FileOrLinkFieldProps) {
+// Примітив: дві icon-only кнопки (Link2 — тоглить видимість поля прямого
+// URL; Paperclip/FileUpload — відкриває завантаження файлу) окремо від
+// самого поля URL — повертає обидва шматки JSX окремо, щоб викликач міг
+// розмістити іконки в ОДНОМУ рядку (напр. поруч із кнопкою "видалити" цього
+// елемента), а поле URL/прев'ю — в іншому. Стан "показано/сховано" (showUrl)
+// живе тут ОДИН раз, а не дублюється в кожному з місць виклику.
+//
+// showUrl за замовчуванням = true, якщо значення вже заповнене (щоб не
+// ховати наявні дані за зайвим кліком), інакше false.
+export function useFileOrLink(props: FileOrLinkFieldProps): { icons: ReactNode; input: ReactNode } {
   const initialValue = props.mode === "controlled" ? props.value : (props.defaultValue ?? "");
   const [showUrl, setShowUrl] = useState(() => Boolean(initialValue));
 
+  const icons = (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => setShowUrl((v) => !v)}
+        aria-label={showUrl ? "Сховати поле посилання" : "Вставити посилання"}
+        title={showUrl ? "Сховати посилання" : "Вставити посилання"}
+        className={`inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 ${
+          showUrl
+            ? "text-brand"
+            : "text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+        }`}
+      >
+        <Link2 size={16} />
+      </button>
+      {props.mode === "controlled" ? (
+        <FileUpload kind={props.kind} variant="icon" onUploaded={props.onChange} />
+      ) : (
+        <FileUpload kind={props.kind} variant="icon" name={props.uploadName} />
+      )}
+    </div>
+  );
+
+  const input = showUrl ? (
+    props.mode === "controlled" ? (
+      <input
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        placeholder={props.placeholder ?? "Посилання на файл"}
+        className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+      />
+    ) : (
+      <input
+        name={props.urlName}
+        defaultValue={props.defaultValue ?? ""}
+        placeholder={props.placeholder ?? "Посилання на файл"}
+        className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+      />
+    )
+  ) : null;
+
+  return { icons, input };
+}
+
+// Тонка обгортка над useFileOrLink для місць БЕЗ сусідньої кнопки видалення
+// (напр. обкладинка курсу) — іконки й поле рендеряться одне під одним, як і
+// раніше.
+export function FileOrLinkField(props: FileOrLinkFieldProps) {
+  const { icons, input } = useFileOrLink(props);
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
-        {props.mode === "controlled" ? (
-          <FileUpload kind={props.kind} variant="icon" onUploaded={props.onChange} />
-        ) : (
-          <FileUpload kind={props.kind} variant="icon" name={props.uploadName} />
-        )}
-        <button
-          type="button"
-          onClick={() => setShowUrl((v) => !v)}
-          aria-label={showUrl ? "Сховати поле посилання" : "Вставити посилання"}
-          title={showUrl ? "Сховати посилання" : "Вставити посилання"}
-          className={`inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 ${
-            showUrl
-              ? "text-brand"
-              : "text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-          }`}
-        >
-          <Link2 size={16} />
-        </button>
-      </div>
-      {showUrl &&
-        (props.mode === "controlled" ? (
-          <input
-            value={props.value}
-            onChange={(e) => props.onChange(e.target.value)}
-            placeholder={props.placeholder ?? "Посилання на файл"}
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-          />
-        ) : (
-          <input
-            name={props.urlName}
-            defaultValue={props.defaultValue ?? ""}
-            placeholder={props.placeholder ?? "Посилання на файл"}
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-          />
-        ))}
+      {icons}
+      {input}
     </div>
   );
 }

@@ -5,13 +5,76 @@ import { Trash2 } from "lucide-react";
 import type { ImageMatchConfig, ImageMatchItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
-import { FileOrLinkField } from "@/components/file-or-link-field";
+import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyItem(): ImageMatchItem {
   return { id: crypto.randomUUID(), imageUrl: "", name: "" };
+}
+
+// Окремий компонент (не інлайн у .map()) — useFileOrLink це хук, викликати
+// його всередині callback .map() було б порушенням правил хуків.
+function ImageMatchItemRow({
+  item,
+  onUpdate,
+  onUpdatePoints,
+  onRemove,
+}: {
+  item: ImageMatchItem;
+  onUpdate: (field: "imageUrl" | "name", value: string) => void;
+  onUpdatePoints: (points: number) => void;
+  onRemove: () => void;
+}) {
+  const { icons, input } = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: item.imageUrl,
+    onChange: (url) => onUpdate("imageUrl", url),
+    placeholder: "URL зображення",
+  });
+
+  return (
+    <div className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+      <div className="flex items-center gap-2">
+        <input
+          value={item.name}
+          onChange={(e) => onUpdate("name", e.target.value)}
+          placeholder="Правильна назва"
+          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+        />
+        <span className={HINT_TEXT}>Бали</span>
+        <input
+          type="number"
+          min={0}
+          step={0.5}
+          value={item.points ?? 1}
+          onChange={(e) => onUpdatePoints(Number(e.target.value))}
+          title="Бали за це зображення"
+          className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
+        />
+        {icons}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Видалити зображення"
+          title="Видалити"
+          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      <div className="flex items-start gap-1">
+        {input}
+        <ImageOrPlaceholder
+          src={item.imageUrl}
+          alt="Прев'ю"
+          className="h-12 w-12 shrink-0 rounded object-cover"
+        />
+      </div>
+    </div>
+  );
 }
 
 export const ImageMatchFields = forwardRef<
@@ -75,47 +138,13 @@ export const ImageMatchFields = forwardRef<
       />
 
       {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
-          <div className="flex flex-1 items-start gap-1">
-            <FileOrLinkField
-              kind="image"
-              mode="controlled"
-              value={item.imageUrl}
-              onChange={(url) => updateItem(item.id, "imageUrl", url)}
-              placeholder="URL зображення"
-            />
-            <ImageOrPlaceholder
-              src={item.imageUrl}
-              alt="Прев'ю"
-              className="h-12 w-12 shrink-0 rounded object-cover"
-            />
-          </div>
-          <input
-            value={item.name}
-            onChange={(e) => updateItem(item.id, "name", e.target.value)}
-            placeholder="Правильна назва"
-            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-          />
-          <span className={HINT_TEXT}>Бали</span>
-          <input
-            type="number"
-            min={0}
-            step={0.5}
-            value={item.points ?? 1}
-            onChange={(e) => updatePoints(item.id, Number(e.target.value))}
-            title="Бали за це зображення"
-            className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
-          />
-          <button
-            type="button"
-            onClick={() => removeItem(item.id)}
-            aria-label="Видалити зображення"
-            title="Видалити"
-            className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+        <ImageMatchItemRow
+          key={item.id}
+          item={item}
+          onUpdate={(field, value) => updateItem(item.id, field, value)}
+          onUpdatePoints={(points) => updatePoints(item.id, points)}
+          onRemove={() => removeItem(item.id)}
+        />
       ))}
       <button
         type="button"

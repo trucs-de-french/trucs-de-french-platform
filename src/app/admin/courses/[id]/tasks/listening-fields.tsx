@@ -2,13 +2,81 @@
 
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
-import type { ListeningConfig, ListeningQuestion } from "@/lib/exercises/types";
+import type { ListeningConfig, ListeningQuestion, ListeningOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
-import { FileOrLinkField } from "@/components/file-or-link-field";
+import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+
+// Окремий компонент (не інлайн у .map()) — useFileOrLink це хук, викликати
+// його всередині callback .map() було б порушенням правил хуків.
+function ListeningOptionRow({
+  option,
+  questionId,
+  onSetCorrect,
+  onUpdateText,
+  onUpdateImageUrl,
+  onRemove,
+}: {
+  option: ListeningOption;
+  questionId: string;
+  onSetCorrect: () => void;
+  onUpdateText: (value: string) => void;
+  onUpdateImageUrl: (url: string) => void;
+  onRemove: () => void;
+}) {
+  const { icons, input } = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: option.imageUrl ?? "",
+    onChange: onUpdateImageUrl,
+    placeholder: "URL картинки (опційно)",
+  });
+
+  return (
+    <div
+      className={`flex flex-col gap-1 rounded-md p-1 ${
+        option.correct ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <input
+          type="radio"
+          name={`listening_correct_${questionId}`}
+          checked={option.correct}
+          onChange={onSetCorrect}
+          title="Правильна відповідь"
+        />
+        <input
+          value={option.text}
+          onChange={(e) => onUpdateText(e.target.value)}
+          placeholder="Варіант відповіді"
+          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+        />
+        {icons}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Видалити варіант"
+          title="Видалити"
+          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      <div className="flex items-start gap-1 pl-6">
+        {input}
+        <ImageOrPlaceholder
+          src={option.imageUrl}
+          alt="Прев'ю"
+          className="h-12 w-12 shrink-0 rounded object-cover"
+        />
+      </div>
+    </div>
+  );
+}
 
 function emptyQuestion(): ListeningQuestion {
   return {
@@ -166,49 +234,15 @@ export const ListeningFields = forwardRef<
             </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
               {q.options.map((o) => (
-                <div
+                <ListeningOptionRow
                   key={o.id}
-                  className={`flex items-center gap-2 rounded-md p-1 ${
-                    o.correct ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`listening_correct_${q.id}`}
-                    checked={o.correct}
-                    onChange={() => setCorrectOption(q.id, o.id)}
-                    title="Правильна відповідь"
-                  />
-                  <input
-                    value={o.text}
-                    onChange={(e) => updateOptionText(q.id, o.id, e.target.value)}
-                    placeholder="Варіант відповіді"
-                    className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-                  />
-                  <div className="flex flex-1 items-start gap-1">
-                    <FileOrLinkField
-                      kind="image"
-                      mode="controlled"
-                      value={o.imageUrl ?? ""}
-                      onChange={(url) => updateOptionImageUrl(q.id, o.id, url)}
-                      placeholder="URL картинки (опційно)"
-                    />
-                    <ImageOrPlaceholder
-                      src={o.imageUrl}
-                      alt="Прев'ю"
-                      className="h-12 w-12 shrink-0 rounded object-cover"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeOption(q.id, o.id)}
-                    aria-label="Видалити варіант"
-                    title="Видалити"
-                    className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                  option={o}
+                  questionId={q.id}
+                  onSetCorrect={() => setCorrectOption(q.id, o.id)}
+                  onUpdateText={(text) => updateOptionText(q.id, o.id, text)}
+                  onUpdateImageUrl={(url) => updateOptionImageUrl(q.id, o.id, url)}
+                  onRemove={() => removeOption(q.id, o.id)}
+                />
               ))}
               <button
                 type="button"
