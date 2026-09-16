@@ -15,7 +15,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
-import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { collectSceneVocab, firstVocabVariant, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
 import type {
   FlipCardsConfig,
@@ -434,7 +434,7 @@ export default async function ScenePage({
             <tbody>
               {sceneVocab.map((v) => (
                 <tr key={v.word} className="border-b last:border-0">
-                  <td className="py-1 pr-2">{v.word}</td>
+                  <td className="py-1 pr-2">{firstVocabVariant(v.word)}</td>
                   <td className="py-1">{v.translation}</td>
                 </tr>
               ))}

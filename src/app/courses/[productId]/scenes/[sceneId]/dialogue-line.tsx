@@ -29,8 +29,34 @@ function buildHighlightRegex(words: string[]): RegExp | null {
   return new RegExp(`(${alternatives.join("|")})`, "giu");
 }
 
+// Кілька варіантів одного слова через кому в полі word (напр. "signer,
+// signe") — вчителька вписує їх вручну, кожен варіант підсвічується
+// незалежно, якщо трапляється в тексті репліки.
+function splitVariants(word: string): string[] {
+  return word
+    .split(",")
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
+}
+
 function buildVocabRegex(vocab: VocabItem[]): RegExp | null {
-  return buildHighlightRegex(vocab.map((v) => v.word));
+  return buildHighlightRegex(vocab.flatMap((v) => splitVariants(v.word)));
+}
+
+// Зворотне зіставлення "варіант -> VocabItem", щоб клік на підсвічений
+// фрагмент показував переклад ТОГО item, якому цей варіант належить (а не
+// завжди першого item зі списку). Якщо два items випадково діляться
+// однаковим варіантом — виграє перший за порядком масиву (map.has не дає
+// перезаписати), детерміновано, без падіння.
+function buildVariantMap(vocab: VocabItem[]): Map<string, VocabItem> {
+  const map = new Map<string, VocabItem>();
+  for (const v of vocab) {
+    for (const variant of splitVariants(v.word)) {
+      const key = variant.toLowerCase();
+      if (!map.has(key)) map.set(key, v);
+    }
+  }
+  return map;
 }
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
@@ -154,6 +180,7 @@ export function DialogueLine({
 }) {
   const meaningfulVocab = vocab.filter((v) => v.word.trim());
   const regex = buildVocabRegex(meaningfulVocab);
+  const variantMap = buildVariantMap(meaningfulVocab);
 
   if (!regex) {
     return (
@@ -171,9 +198,7 @@ export function DialogueLine({
       <TimecodeBadge start={start} videoLink={videoLink} />
       <span className="font-semibold">{speaker}:</span>{" "}
       {parts.map((part, i) => {
-        const match = meaningfulVocab.find(
-          (v) => v.word.toLowerCase() === part.toLowerCase()
-        );
+        const match = variantMap.get(part.toLowerCase());
         const id = `${lineIndex}-${i}`;
         return match ? (
           <VocabWord

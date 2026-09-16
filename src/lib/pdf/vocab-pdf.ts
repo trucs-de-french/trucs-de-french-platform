@@ -2,7 +2,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { VocabItem } from "@/lib/vocab";
+import { firstVocabVariant, type VocabItem } from "@/lib/vocab";
 
 // PT Sans (OFL) — на відміну від стандартних PDF-шрифтів (Helvetica тощо),
 // підтримує і кирилицю (переклад), і французьку латиницю з діакритикою.
@@ -64,7 +64,7 @@ export async function buildVocabPdf(vocab: VocabItem[], sceneTitle: string): Pro
     if (y < MARGIN + ROW_HEIGHT) {
       startNewPage();
     }
-    page.drawText(item.word, { x: COL_FR_X, y, size: 11, font: regular, maxWidth: 200 });
+    page.drawText(firstVocabVariant(item.word), { x: COL_FR_X, y, size: 11, font: regular, maxWidth: 200 });
     page.drawText(item.translation, { x: COL_TR_X, y, size: 11, font: regular, maxWidth: 300 });
     y -= ROW_HEIGHT;
   }
