@@ -96,8 +96,10 @@ export function SceneBlockList({
   // щоб не скидати внутрішній стан (DialogueEditor/VocabTable через
   // DialogueStateProvider, LinkDragList, TaskDragList тощо) і щоб приховані
   // форми й надалі коректно сабмітились через requestSubmit() ("Зберегти
-  // все"). Порожній Set — усе розгорнуто за замовчуванням.
-  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set());
+  // все"). Усі ключі одразу в Set — усе згорнуто за замовчуванням.
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(
+    () => new Set(initialBlocks.map(blockKey))
+  );
 
   function toggleCollapsed(key: string) {
     setCollapsedKeys((prev) => {
