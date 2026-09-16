@@ -77,7 +77,8 @@ export function SaveForm({
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const formData = new FormData(formEl);
     startTransition(async () => {
       const result = await action(state, formData);
       setState(result);
@@ -86,6 +87,11 @@ export function SaveForm({
         setDirty(false);
         setTimeout(() => setShowSaved(false), 1500);
       }
+      // Подія на самій формі — зовнішнім кнопкам, що тригернули requestSubmit()
+      // (напр. глобальне "Зберегти все" на сторінці сцени), більше нема як
+      // дізнатись, коли САМЕ ця форма завершила свій запит: requestSubmit()
+      // лише синхронно диспетчерить "submit", уся async-робота тут, усередині.
+      formEl.dispatchEvent(new CustomEvent("saveform:done", { detail: { ok: result?.ok ?? false } }));
     });
   }
 
