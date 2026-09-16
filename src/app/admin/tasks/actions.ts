@@ -312,7 +312,7 @@ async function resolveTaskParentPath(
   if (task.task_group_id) {
     const { data: group } = await supabase
       .from("task_groups")
-      .select("scene_id, material_id, delf_test_number")
+      .select("scene_id, material_id, delf_test_number, scene_content_block_id")
       .eq("id", task.task_group_id)
       .single();
     if (group?.scene_id) return `/admin/courses/${task.product_id}/scenes/${group.scene_id}`;
@@ -320,6 +320,19 @@ async function resolveTaskParentPath(
       return `/admin/courses/${task.product_id}/materials/${group.material_id}`;
     if (group?.delf_test_number)
       return `/admin/courses/${task.product_id}/tests/${group.delf_test_number}`;
+    // Група, прикріплена до scene_content_block (0040), не має власного
+    // scene_id — резолвимо через сам content-блок, щоб задача коректно
+    // повертала вчителя на сторінку сцени, а не на голу сторінку курсу.
+    if (group?.scene_content_block_id) {
+      const { data: contentBlock } = await supabase
+        .from("scene_content_blocks")
+        .select("scene_id")
+        .eq("id", group.scene_content_block_id)
+        .single();
+      if (contentBlock?.scene_id) {
+        return `/admin/courses/${task.product_id}/scenes/${contentBlock.scene_id}`;
+      }
+    }
   }
   if (task.delf_test_number) return `/admin/courses/${task.product_id}/tests/${task.delf_test_number}`;
   return `/admin/courses/${task.product_id}`;

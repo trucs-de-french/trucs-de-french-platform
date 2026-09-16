@@ -13,6 +13,11 @@ import {
   updateScriptContentBlock,
   deleteSceneContentBlock,
 } from "@/app/admin/scene-content-blocks/actions";
+import {
+  attachTaskGroupToContentBlock,
+  attachTaskToGroup,
+  deleteTaskGroup,
+} from "@/app/admin/task-groups/actions";
 import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-points";
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
@@ -22,10 +27,12 @@ import { SceneBlockList } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
+import { GroupMemberDragList } from "../../task-groups/group-member-drag-list";
 import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { pluralizePoints } from "@/lib/pluralize-points";
 
 type SceneBlockType = "video" | "script" | "link" | "task";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
@@ -165,6 +172,51 @@ export default async function AdminScenePage({
     arr.push(link);
     linksByBlockId.set(link.content_block_id, arr);
   }
+
+  // Опційно прикріплений набір вправ (0040) — будь-який content-блок може
+  // мати щонайбільше один такий task_group (unique partial index), той
+  // самий батьківський домен, що вже задачі "Завдання", лише інше
+  // батьківство (scene_content_block_id, не scene_id).
+  const contentBlockIds = (contentBlocks ?? []).map((b) => b.id);
+  const { data: attachedGroups } =
+    contentBlockIds.length > 0
+      ? await supabase
+          .from("task_groups")
+          .select("id, scene_content_block_id, points_mode, flat_points")
+          .in("scene_content_block_id", contentBlockIds)
+      : { data: null };
+  const attachedGroupByContentBlockId = new Map(
+    (attachedGroups ?? [])
+      .filter((g) => g.scene_content_block_id)
+      .map((g) => [g.scene_content_block_id as string, g])
+  );
+  // Одним запитом — і повний список членів (id/type/title, для
+  // GroupMemberDragList), і дані для resolveGroupMaxPoints (type/config) —
+  // не fetchGroupMemberTasks (block-points.ts), той вибирає лише
+  // type/config, без id/title, тут потрібні обидва набори полів разом.
+  const attachedGroupIds = (attachedGroups ?? []).map((g) => g.id);
+  const { data: attachedGroupMembers } =
+    attachedGroupIds.length > 0
+      ? await supabase
+          .from("tasks")
+          .select("id, type, title, config, task_group_id")
+          .in("task_group_id", attachedGroupIds)
+          .order("order_index")
+      : { data: null };
+  const membersByAttachedGroupId = new Map<
+    string,
+    { id: string; type: string; title: string; config: Record<string, unknown> | null }[]
+  >();
+  for (const m of attachedGroupMembers ?? []) {
+    if (!m.task_group_id) continue;
+    const arr = membersByAttachedGroupId.get(m.task_group_id) ?? [];
+    arr.push({ id: m.id, type: m.type, title: m.title, config: m.config });
+    membersByAttachedGroupId.set(m.task_group_id, arr);
+  }
+  // Кандидати "+ Наявна задача" для будь-якого прикріпленого блоку — вільні
+  // задачі ЦІЄЇ Ж сцени (той самий список, що вже sceneRows нижче будує з
+  // tasks); окремого запиту не треба.
+  const freeSceneTaskCandidates = (tasks ?? []).map((t) => ({ id: t.id, type: t.type, title: t.title }));
 
   type BlockEntry = { type: string; refId: string | null; label: string; contentType?: string };
 
@@ -367,9 +419,85 @@ export default async function AdminScenePage({
       );
     }
 
+    // Опційний прикріплений набір вправ (0040) — будь-який тип content-
+    // блоку може мати щонайбільше один такий task_group.
+    const attachedGroup = attachedGroupByContentBlockId.get(block.refId);
+    const exercisesSection = attachedGroup ? (
+      <div className="flex flex-col gap-2 border-t border-gray-100 pt-3 dark:border-neutral-700">
+        <div className="flex items-center justify-between">
+          <span className={`uppercase ${HINT_TEXT}`}>
+            Вправи блоку
+            {(() => {
+              const maxPoints = resolveGroupMaxPoints(
+                attachedGroup,
+                membersByAttachedGroupId.get(attachedGroup.id) ?? []
+              );
+              return maxPoints > 0 ? ` · ${maxPoints} ${pluralizePoints(maxPoints)}` : "";
+            })()}
+          </span>
+          <Link
+            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${attachedGroup.id}`}
+            className={BUTTON_SECONDARY}
+          >
+            + Нова задача
+          </Link>
+        </div>
+
+        <GroupMemberDragList
+          key={(membersByAttachedGroupId.get(attachedGroup.id) ?? []).map((t) => t.id).join(",")}
+          groupId={attachedGroup.id}
+          productId={productId}
+          initialMembers={membersByAttachedGroupId.get(attachedGroup.id) ?? []}
+        />
+
+        {freeSceneTaskCandidates.length > 0 && (
+          <form action={attachTaskToGroup} className="flex items-center gap-2">
+            <input type="hidden" name="task_group_id" value={attachedGroup.id} />
+            <select
+              name="task_id"
+              required
+              defaultValue=""
+              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
+            >
+              <option value="" disabled>
+                — обрати наявну задачу сцени —
+              </option>
+              {freeSceneTaskCandidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  [{c.type}] {c.title}
+                </option>
+              ))}
+            </select>
+            <SubmitButton pendingChildren="Додаю..." className={BUTTON_SECONDARY}>
+              Додати до блоку
+            </SubmitButton>
+          </form>
+        )}
+
+        <ConfirmForm
+          action={deleteTaskGroup.bind(null, attachedGroup.id)}
+          message="Вправи блоку буде відкріплено — вони НЕ видаляться, повернуться у звичайний список Завдань сцени. Продовжити?"
+        >
+          <SubmitButton pendingChildren="..." className="self-start text-sm text-red-600 hover:underline dark:text-red-400">
+            Видалити вправи блоку
+          </SubmitButton>
+        </ConfirmForm>
+      </div>
+    ) : (
+      <form
+        action={attachTaskGroupToContentBlock.bind(null, productId, sceneId, block.refId)}
+        className="border-t border-gray-100 pt-3 dark:border-neutral-700"
+      >
+        <SubmitButton pendingChildren="Додаю..." className={BUTTON_SECONDARY}>
+          + Додати вправи до цього блоку
+        </SubmitButton>
+      </form>
+    );
+
     contentByKey[`content:${block.refId}`] = (
       <div className="flex flex-col gap-3">
         {editor}
+        {exercisesSection}
         <ConfirmForm
           action={deleteSceneContentBlock.bind(null, productId, sceneId, block.refId)}
           message="Видалити цей блок? Цю дію не можна скасувати."

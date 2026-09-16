@@ -31,6 +31,25 @@ function resolveGroupParentPath(group: GroupParent): string {
   return `/admin/courses/${group.product_id}`;
 }
 
+// Група, прикріплена до scene_content_block (0040), не має власного
+// scene_id — резолвимо його через сам content-блок, щоб detach/delete
+// коректно повертали задачу у звичайний флет-список "Завдання" сцени (а не
+// осиротили її в контексті "нічого") і щоб backPath вів на правильну
+// сторінку сцени, а не на фолбек "сторінка курсу".
+async function resolveEffectiveSceneId(
+  supabase: Supa,
+  sceneId: string | null,
+  sceneContentBlockId: string | null | undefined
+): Promise<string | null> {
+  if (sceneId || !sceneContentBlockId) return sceneId;
+  const { data } = await supabase
+    .from("scene_content_blocks")
+    .select("scene_id")
+    .eq("id", sceneContentBlockId)
+    .single();
+  return data?.scene_id ?? null;
+}
+
 // media_audio_file_url — приховане поле FileUpload (kind="audio",
 // client-side завантаження напряму в R2, вже ЗАВЕРШЕНЕ до сабміту форми; тут лише
 // читаємо готовий рядок, жодного завантаження на сервері більше немає).
@@ -122,6 +141,35 @@ export async function createTaskGroup(formData: FormData) {
   redirect(`/admin/courses/${group.product_id}/task-groups/${group.id}`);
 }
 
+// Прикріплення набору вправ до scene_content_block (0040) — 4-й, мутуально-
+// виключний варіант батьківства task_group, окремий від
+// scene_id/material_id/delf-пари. Не createTaskGroup: форма полів там не
+// потрібна (content_type/content_text/media_url лишаються заглушкою —
+// справжній вміст уже показує сам content-блок), і немає вибору
+// батьківського контексту (рівно один можливий прикріплений блок на
+// content-блок, unique partial index у 0040).
+export async function attachTaskGroupToContentBlock(
+  productId: string,
+  sceneId: string,
+  sceneContentBlockId: string
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("task_groups").insert({
+    product_id: productId,
+    scene_content_block_id: sceneContentBlockId,
+    content_type: "text",
+    points_mode: "sum",
+  });
+
+  const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
+  if (error) {
+    redirect(`${backPath}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(backPath);
+}
+
 export async function updateTaskGroup(
   productId: string,
   groupId: string,
@@ -165,14 +213,16 @@ async function detachTaskFromGroup(supabase: Supa, taskId: string): Promise<void
 
   const { data: group } = await supabase
     .from("task_groups")
-    .select("product_id, scene_id, material_id, delf_section, delf_test_number")
+    .select("product_id, scene_id, material_id, delf_section, delf_test_number, scene_content_block_id")
     .eq("id", task.task_group_id)
     .single();
   if (!group) return;
 
+  const sceneId = await resolveEffectiveSceneId(supabase, group.scene_id, group.scene_content_block_id);
+
   const scope: ParentScope = {
     productId: group.product_id,
-    sceneId: group.scene_id,
+    sceneId,
     materialId: group.material_id,
     taskGroupId: null,
     delfSection: group.delf_section,
@@ -184,7 +234,7 @@ async function detachTaskFromGroup(supabase: Supa, taskId: string): Promise<void
     .from("tasks")
     .update({
       task_group_id: null,
-      scene_id: group.scene_id,
+      scene_id: sceneId,
       material_id: group.material_id,
       delf_section: group.delf_section,
       delf_test_number: group.delf_test_number,
@@ -209,13 +259,18 @@ export async function detachTask(taskId: string) {
   if (task.task_group_id) {
     const { data: group } = await supabase
       .from("task_groups")
-      .select("scene_id, material_id, delf_test_number")
+      .select("scene_id, material_id, delf_test_number, scene_content_block_id")
       .eq("id", task.task_group_id)
       .single();
     if (group) {
+      const sceneId = await resolveEffectiveSceneId(
+        supabase,
+        group.scene_id,
+        group.scene_content_block_id
+      );
       backPath = resolveGroupParentPath({
         product_id: task.product_id,
-        scene_id: group.scene_id,
+        scene_id: sceneId,
         material_id: group.material_id,
         delf_test_number: group.delf_test_number,
       });
@@ -351,12 +406,13 @@ export async function deleteTaskGroup(groupId: string) {
   const supabase = await createClient();
   const { data: group } = await supabase
     .from("task_groups")
-    .select("product_id, scene_id, material_id, delf_test_number")
+    .select("product_id, scene_id, material_id, delf_test_number, scene_content_block_id")
     .eq("id", groupId)
     .single();
   if (!group) return;
 
-  const backPath = resolveGroupParentPath(group);
+  const sceneId = await resolveEffectiveSceneId(supabase, group.scene_id, group.scene_content_block_id);
+  const backPath = resolveGroupParentPath({ ...group, scene_id: sceneId });
 
   const { data: members } = await supabase.from("tasks").select("id").eq("task_group_id", groupId);
   for (const member of members ?? []) {

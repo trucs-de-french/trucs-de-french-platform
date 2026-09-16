@@ -196,7 +196,30 @@ export default async function ScenePage({
     linksByBlockId.set(link.content_block_id, arr);
   }
 
-  const taskGroupIds = (taskGroups ?? []).map((g) => g.id);
+  // Опційно прикріплений набір вправ (0040) — будь-який content-блок може
+  // мати щонайбільше один такий task_group, батьківство scene_content_
+  // block_id, не scene_id (тому НЕ в taskGroups вище, окремий запит). Його
+  // id додається в taskGroupIds нижче — той самий groupMembers/membersByGroup
+  // запит обслуговує обидва джерела task_groups.
+  const contentBlockIds = (sceneContentBlocks ?? []).map((b) => b.id);
+  const { data: attachedGroups } =
+    contentBlockIds.length > 0
+      ? await supabase
+          .from("task_groups")
+          .select(
+            "id, scene_content_block_id, content_type, content_text, media_url, media_provider, points_mode, flat_points"
+          )
+          .in("scene_content_block_id", contentBlockIds)
+          .returns<(TaskGroupData & { scene_content_block_id: string })[]>()
+      : { data: null };
+  const attachedGroupByContentBlockId = new Map(
+    (attachedGroups ?? []).map((g) => [g.scene_content_block_id, g])
+  );
+
+  const taskGroupIds = [
+    ...(taskGroups ?? []).map((g) => g.id),
+    ...(attachedGroups ?? []).map((g) => g.id),
+  ];
   const { data: groupMembers } =
     taskGroupIds.length > 0
       ? await supabase
@@ -647,9 +670,18 @@ export default async function ScenePage({
             content.content_type === "links"
               ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
               : content;
+          const attachedGroup = attachedGroupByContentBlockId.get(content.id);
+          const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
           return (
             <section key={`content-${row.ref_id}`} className="mt-6">
               <SceneContentBlock block={block} />
+              {/* Той самий принцип, що вже в "Завданнях" — блок без жодної
+                  задачі-члена не рендеримо взагалі. */}
+              {attachedGroup && attachedMembers.length > 0 && (
+                <div className="mt-3">
+                  <TaskGroupBlock group={attachedGroup} tasks={attachedMembers} />
+                </div>
+              )}
             </section>
           );
         }

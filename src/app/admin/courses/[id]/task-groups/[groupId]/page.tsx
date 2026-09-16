@@ -23,6 +23,7 @@ type GroupDetail = TaskGroupInitial & {
   product_id: string;
   scene_id: string | null;
   material_id: string | null;
+  scene_content_block_id: string | null;
 };
 
 type MemberTask = {
@@ -45,7 +46,7 @@ export default async function EditTaskGroupPage({
     supabase
       .from("task_groups")
       .select(
-        "id, product_id, scene_id, material_id, delf_section, delf_test_number, title, content_type, content_text, media_url, media_provider, points_mode, flat_points"
+        "id, product_id, scene_id, material_id, delf_section, delf_test_number, scene_content_block_id, title, content_type, content_text, media_url, media_provider, points_mode, flat_points"
       )
       .eq("id", groupId)
       .single<GroupDetail>(),
@@ -54,14 +55,28 @@ export default async function EditTaskGroupPage({
 
   if (!group) notFound();
 
-  const backHref = group.scene_id
-    ? `/admin/courses/${productId}/scenes/${group.scene_id}`
+  // Ця сторінка — не основний UI для груп, прикріплених до scene_content_
+  // block (0040, той UI — інлайн на сторінці сцени), лише запасний прямий
+  // маршрут (напр. якщо хтось відкрив старе посилання) — тому не власний
+  // scene_id, а резолвиться через сам content-блок.
+  let effectiveSceneId = group.scene_id;
+  if (!effectiveSceneId && group.scene_content_block_id) {
+    const { data: contentBlock } = await supabase
+      .from("scene_content_blocks")
+      .select("scene_id")
+      .eq("id", group.scene_content_block_id)
+      .single();
+    effectiveSceneId = contentBlock?.scene_id ?? null;
+  }
+
+  const backHref = effectiveSceneId
+    ? `/admin/courses/${productId}/scenes/${effectiveSceneId}`
     : group.material_id
       ? `/admin/courses/${productId}/materials/${group.material_id}`
       : group.delf_test_number
         ? `/admin/courses/${productId}/tests/${group.delf_test_number}`
         : `/admin/courses/${productId}#tasks`;
-  const backLabel = group.scene_id
+  const backLabel = effectiveSceneId
     ? "← До сцени"
     : group.material_id
       ? "← До матеріалу"
@@ -76,8 +91,8 @@ export default async function EditTaskGroupPage({
   // (не лише на батьківську сторінку загалом), доданий на всіх трьох
   // студентських рендер-сайтах (Крок 3). null — коли для блоку взагалі
   // немає валідного студентського місця (сирота без номера DELF-тесту).
-  const studentHref = group.scene_id
-    ? `/courses/${productId}/scenes/${group.scene_id}#group-${group.id}`
+  const studentHref = effectiveSceneId
+    ? `/courses/${productId}/scenes/${effectiveSceneId}#group-${group.id}`
     : group.material_id
       ? `/courses/${productId}/materials/${group.material_id}#group-${group.id}`
       : group.delf_test_number
