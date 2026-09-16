@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Clapperboard,
   ChevronDown,
@@ -29,6 +30,7 @@ export function CourseSwitcherSidebar({
   courses: SidebarCourse[];
   currentCourseId: string;
 }) {
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   // Поточний курс розгорнутий одразу — користувач і так у ньому; можна
@@ -87,6 +89,7 @@ export function CourseSwitcherSidebar({
         icon={Clapperboard}
         courses={film}
         currentCourseId={currentCourseId}
+        pathname={pathname}
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
@@ -96,6 +99,7 @@ export function CourseSwitcherSidebar({
         icon={GraduationCap}
         courses={delf}
         currentCourseId={currentCourseId}
+        pathname={pathname}
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
@@ -154,6 +158,7 @@ function CourseGroup({
   icon: Icon,
   courses,
   currentCourseId,
+  pathname,
   expanded,
   onToggleExpanded,
   onNavigate,
@@ -162,6 +167,7 @@ function CourseGroup({
   icon: LucideIcon;
   courses: SidebarCourse[];
   currentCourseId: string;
+  pathname: string;
   expanded: Set<string>;
   onToggleExpanded: (id: string) => void;
   onNavigate: () => void;
@@ -208,7 +214,11 @@ function CourseGroup({
                       <Link
                         href={child.href}
                         onClick={onNavigate}
-                        className="block truncate rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900/50 dark:hover:text-neutral-200"
+                        className={`block truncate rounded-md px-2 py-1 text-xs ${
+                          pathname === child.href
+                            ? "bg-brand/10 font-medium text-brand"
+                            : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900/50 dark:hover:text-neutral-200"
+                        }`}
                       >
                         {child.label}
                       </Link>
