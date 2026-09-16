@@ -161,3 +161,36 @@ export function parseScriptContent(filename: string, content: string): ParseResu
 
   return parser(content);
 }
+
+export type TranslationCue = { start: number; end: number; text: string };
+export type TranslationParseResult =
+  | { ok: true; cues: TranslationCue[] }
+  | { ok: false; error: string };
+
+// Переклад — лише .srt/.vtt (на відміну від сценарію, без .txt): немає
+// сенсу для суцільного тексту без власного розбиття на репліки з часом,
+// саме час і є ключем зіставлення (match-translations.ts). Перевикористовує
+// parseSrtOrVtt буквально — спікер, якщо евристика "Ім'я:" хибно щось
+// виловить із перекладеного тексту, тут просто ігнорується (рідкісний
+// крайній випадок, виправний у прев'ю зіставлення).
+export function parseTranslationContent(filename: string, content: string): TranslationParseResult {
+  if (!content.trim()) {
+    return { ok: false, error: "Файл порожній." };
+  }
+
+  const extension = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (extension !== "srt" && extension !== "vtt") {
+    return {
+      ok: false,
+      error: `Переклад підтримується лише у форматі .srt/.vtt (отримано "${extension || filename}").`,
+    };
+  }
+
+  const result = parseSrtOrVtt(content);
+  if (!result.ok) return result;
+
+  return {
+    ok: true,
+    cues: result.lines.map((l) => ({ start: l.start ?? 0, end: l.end ?? l.start ?? 0, text: l.text })),
+  };
+}

@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { GripVertical, Trash2, ArrowRight, ChevronDown, ChevronUp, Upload, Clipboard } from "lucide-react";
+import { GripVertical, Trash2, ArrowRight, ChevronDown, ChevronUp, Upload, Clipboard, Languages } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { parseScriptFile } from "@/lib/script-import/actions";
-import { parsePastedTranscript, type ParsedLine } from "@/lib/script-import/parse";
+import { parseScriptFile, parseTranslationFile } from "@/lib/script-import/actions";
+import { parsePastedTranscript, type ParsedLine, type TranslationCue } from "@/lib/script-import/parse";
+import { matchTranslations, type TranslationMatch } from "@/lib/script-import/match-translations";
+import { formatTimecode } from "@/lib/format-timecode";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
@@ -18,6 +20,7 @@ type Line = {
   start?: number | null;
   end?: number | null;
   videoLink?: string | null;
+  translationUk?: string | null;
 };
 
 function parsedLineToLine(p: ParsedLine): Line {
@@ -87,6 +90,16 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
   const [showPasteBox, setShowPasteBox] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Прев'ю зіставлення перекладу — окреме від прев'ю імпорту сценарію вище:
+  // це не додавання/заміна реплік, а заповнення translationUk в УЖЕ наявних
+  // рядках. translationDraft — один запис на кожну репліку сценарію (той
+  // самий порядок/довжина, що lines), редагований до підтвердження.
+  const [translationDraft, setTranslationDraft] = useState<TranslationMatch[] | null>(null);
+  const [translationUnmatched, setTranslationUnmatched] = useState<TranslationCue[]>([]);
+  const [translationError, setTranslationError] = useState<string | null>(null);
+  const [translationParsing, setTranslationParsing] = useState(false);
+  const translationFileInputRef = useRef<HTMLInputElement>(null);
 
   function addLine() {
     setLines((prev) => [...prev, { speaker: "", text: "", vocab: [] }]);
@@ -225,6 +238,55 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
   function cancelPreview() {
     setPreview(null);
     setPreviewError(null);
+  }
+
+  async function handleTranslationFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setTranslationParsing(true);
+    setTranslationError(null);
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await parseTranslationFile(formData);
+    setTranslationParsing(false);
+
+    if (!result.ok) {
+      setTranslationError(result.error);
+      return;
+    }
+    const { matches, unmatchedCues } = matchTranslations(lines, result.cues);
+    setTranslationDraft(matches);
+    setTranslationUnmatched(unmatchedCues);
+  }
+
+  function updateTranslationDraft(lineIndex: number, value: string) {
+    setTranslationDraft((prev) =>
+      prev ? prev.map((m) => (m.lineIndex === lineIndex ? { ...m, translation: value || null } : m)) : prev
+    );
+  }
+
+  function applyTranslationMatches() {
+    if (!translationDraft) return;
+    setLines((prev) =>
+      prev.map((line, idx) => {
+        const match = translationDraft.find((m) => m.lineIndex === idx);
+        // Немає значення для цього рядка (не має таймкоду, чи не зіставилось,
+        // і вчителька не вписала вручну) — лишаємо наявний translationUk як
+        // є, не затираємо його порожнім.
+        if (!match || match.translation == null) return line;
+        return { ...line, translationUk: match.translation };
+      })
+    );
+    setTranslationDraft(null);
+    setTranslationUnmatched([]);
+  }
+
+  function cancelTranslationPreview() {
+    setTranslationDraft(null);
+    setTranslationUnmatched([]);
+    setTranslationError(null);
   }
 
   return (
@@ -390,6 +452,22 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
           <Clipboard size={14} />
           Вставити транскрипт
         </button>
+        <input
+          ref={translationFileInputRef}
+          type="file"
+          accept=".srt,.vtt"
+          onChange={handleTranslationFileSelected}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => translationFileInputRef.current?.click()}
+          disabled={translationParsing}
+          className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY}`}
+        >
+          <Languages size={14} />
+          {translationParsing ? "Зіставляю..." : "Завантажити переклад (.srt/.vtt)"}
+        </button>
       </div>
 
       {showPasteBox && (
@@ -485,6 +563,79 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
               </button>
             )}
             <button type="button" onClick={cancelPreview} className="text-sm text-neutral-500 hover:underline dark:text-neutral-400">
+              Скасувати
+            </button>
+          </div>
+        </div>
+      )}
+
+      {translationError && (
+        <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+          {translationError}
+        </p>
+      )}
+
+      {translationDraft && (
+        <div className="flex flex-col gap-3 rounded-md border border-brand/30 bg-brand/5 p-3">
+          <p className="text-sm font-medium">Зіставлення перекладу</p>
+
+          {translationDraft.map((match) => {
+            const line = lines[match.lineIndex];
+            if (!match.hasTimecode) {
+              return (
+                <div
+                  key={match.lineIndex}
+                  className="rounded-md border border-gray-100 bg-neutral-50 p-2 text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400"
+                >
+                  <span className="font-medium">{line.speaker || "—"}:</span> {line.text}
+                  <span className="ml-2 italic">Без таймкоду — переклад не зіставлено</span>
+                </div>
+              );
+            }
+            return (
+              <div
+                key={match.lineIndex}
+                className="flex flex-col gap-1 rounded-md border border-gray-100 bg-white p-2 dark:border-neutral-700 dark:bg-neutral-900"
+              >
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  <span className="font-medium">{line.speaker || "—"}:</span> {line.text}
+                </p>
+                {match.conflict && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    ⚠ Кілька рядків перекладу претендують на цю репліку — перевірте вручну
+                  </p>
+                )}
+                <textarea
+                  value={match.translation ?? ""}
+                  onChange={(e) => updateTranslationDraft(match.lineIndex, e.target.value)}
+                  placeholder="Пару не знайдено — можна вписати переклад вручну"
+                  rows={1}
+                  className={`${INPUT_BORDER} px-2 py-1.5 text-sm`}
+                />
+              </div>
+            );
+          })}
+
+          {translationUnmatched.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <p className={HINT_TEXT}>Рядки перекладу без пари ({translationUnmatched.length})</p>
+              {translationUnmatched.map((cue, i) => (
+                <p key={i} className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {formatTimecode(cue.start)}–{formatTimecode(cue.end)}: {cue.text}
+                </p>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={applyTranslationMatches} className={BUTTON_SECONDARY}>
+              Застосувати
+            </button>
+            <button
+              type="button"
+              onClick={cancelTranslationPreview}
+              className="text-sm text-neutral-500 hover:underline dark:text-neutral-400"
+            >
               Скасувати
             </button>
           </div>

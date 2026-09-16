@@ -1,6 +1,6 @@
 "use server";
 
-import { parseScriptContent, type ParseResult } from "./parse";
+import { parseScriptContent, parseTranslationContent, type ParseResult, type TranslationParseResult } from "./parse";
 
 // Ліміт лише для файлового шляху (тут є реальний File-об'єкт, вартий
 // перевірки на сервері) — вставлений транскрипт це просто рядок, уже в
@@ -20,4 +20,17 @@ export async function parseScriptFile(formData: FormData): Promise<ParseResult> 
 
   const content = await file.text();
   return parseScriptContent(file.name, content);
+}
+
+export async function parseTranslationFile(formData: FormData): Promise<TranslationParseResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Файл порожній." };
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return { ok: false, error: "Файл завеликий (максимум 300 КБ)." };
+  }
+
+  const content = await file.text();
+  return parseTranslationContent(file.name, content);
 }

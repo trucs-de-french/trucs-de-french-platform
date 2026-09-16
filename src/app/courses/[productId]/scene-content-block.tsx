@@ -14,6 +14,7 @@ type ScriptDialogueLine = {
   vocab: VocabItem[];
   start?: number | null;
   videoLink?: string | null;
+  translationUk?: string | null;
 };
 
 export type SceneContentLink = {

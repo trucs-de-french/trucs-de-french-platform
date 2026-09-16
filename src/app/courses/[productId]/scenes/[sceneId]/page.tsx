@@ -40,6 +40,7 @@ type DialogueEntry = {
   vocab: VocabItem[];
   start?: number | null;
   videoLink?: string | null;
+  translationUk?: string | null;
 };
 
 type LinkEmbedConfig = {
