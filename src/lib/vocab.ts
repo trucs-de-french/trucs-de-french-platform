@@ -35,8 +35,10 @@ export const PART_OF_SPEECH_ORDER: PartOfSpeech[] = [
   "idiome",
 ];
 
-// Французькі підписи — у select конструктора (вчителька класифікує
-// французьке слово, природніше бачити французький термін).
+// Французькі підписи — і в select конструктора, і як назви груп на
+// студентській сторінці/у PDF (легасі-група без категорії — виняток,
+// лишається "Інше" українською, бо для неї немає французького відповідника
+// в природній системі категорій).
 export const PART_OF_SPEECH_LABELS_FR: Record<PartOfSpeech, string> = {
   nom: "Nom",
   verbe: "Verbe",
@@ -44,16 +46,6 @@ export const PART_OF_SPEECH_LABELS_FR: Record<PartOfSpeech, string> = {
   adverbe_locution: "Adverbe / locution",
   phrase: "Phrase",
   idiome: "Idiome",
-};
-
-// Українські назви груп — заголовки на студентській сторінці й у PDF.
-export const PART_OF_SPEECH_LABELS_UK: Record<PartOfSpeech, string> = {
-  nom: "Іменники",
-  verbe: "Дієслова",
-  adjectif: "Прикметники",
-  adverbe_locution: "Прислівники / сталі вирази",
-  phrase: "Фрази",
-  idiome: "Ідіоми",
 };
 
 // dot — Tailwind-клас кольорової крапки (веб); rgb — той самий колір

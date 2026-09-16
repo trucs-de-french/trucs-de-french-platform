@@ -6,7 +6,7 @@ import {
   firstVocabVariant,
   groupVocabByPartOfSpeech,
   PART_OF_SPEECH_ORDER,
-  PART_OF_SPEECH_LABELS_UK,
+  PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
   type VocabItem,
 } from "@/lib/vocab";
@@ -86,7 +86,7 @@ export async function buildVocabPdf(vocab: VocabItem[], sceneTitle: string): Pro
   const groups = groupVocabByPartOfSpeech(vocab);
   for (const group of groups) {
     ensureSpace(2);
-    const label = group.partOfSpeech ? PART_OF_SPEECH_LABELS_UK[group.partOfSpeech] : "Інше";
+    const label = group.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[group.partOfSpeech] : "Інше";
     if (group.partOfSpeech) {
       drawColorDot(PART_OF_SPEECH_COLORS[group.partOfSpeech].rgb);
       page.drawText(label, { x: COL_FR_X + DOT_SIZE + 5, y, size: 11, font: bold });
@@ -124,7 +124,7 @@ export async function buildVocabPdf(vocab: VocabItem[], sceneTitle: string): Pro
   for (const pos of PART_OF_SPEECH_ORDER) {
     ensureSpace(1);
     drawColorDot(PART_OF_SPEECH_COLORS[pos].rgb);
-    page.drawText(PART_OF_SPEECH_LABELS_UK[pos], {
+    page.drawText(PART_OF_SPEECH_LABELS_FR[pos], {
       x: COL_FR_X + DOT_SIZE + 5,
       y,
       size: 9,

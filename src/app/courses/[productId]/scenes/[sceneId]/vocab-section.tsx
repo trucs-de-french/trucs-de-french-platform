@@ -7,7 +7,7 @@ import {
   firstVocabVariant,
   groupVocabByPartOfSpeech,
   PART_OF_SPEECH_ORDER,
-  PART_OF_SPEECH_LABELS_UK,
+  PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab";
 
@@ -19,7 +19,7 @@ function Legend() {
       {PART_OF_SPEECH_ORDER.map((pos) => (
         <span key={pos} className="inline-flex items-center gap-1">
           <span className={`h-2 w-2 shrink-0 rounded-full ${PART_OF_SPEECH_COLORS[pos].dot}`} aria-hidden />
-          {PART_OF_SPEECH_LABELS_UK[pos]}
+          {PART_OF_SPEECH_LABELS_FR[pos]}
         </span>
       ))}
     </div>
@@ -34,7 +34,7 @@ function VocabGroupTable({
   items: VocabItem[];
 }) {
   const dotClass = partOfSpeech ? PART_OF_SPEECH_COLORS[partOfSpeech].dot : null;
-  const label = partOfSpeech ? PART_OF_SPEECH_LABELS_UK[partOfSpeech] : "Інше";
+  const label = partOfSpeech ? PART_OF_SPEECH_LABELS_FR[partOfSpeech] : "Інше";
 
   return (
     <div>
