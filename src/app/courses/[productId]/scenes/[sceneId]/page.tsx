@@ -401,10 +401,7 @@ export default async function ScenePage({
 
   const scriptNode = (
     <section className="mt-6">
-      <h2 className="text-lg font-medium">Скрипт</h2>
-      <div className="mt-2">
-        <ScriptSection dialogue={dialogue} />
-      </div>
+      <ScriptSection dialogue={dialogue} title="Скрипт" />
     </section>
   );
 
