@@ -37,7 +37,7 @@ import { BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles"
 import { pluralizePoints } from "@/lib/pluralize-points";
 
 type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task", "vocab"];
+const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "vocab", "link", "task"];
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
   video: "Відео",
   script: "Скрипт",

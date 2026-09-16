@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent, type ReactNode } from "react";
-import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, type LucideIcon } from "lucide-react";
+import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
 
@@ -91,6 +91,22 @@ export function SceneBlockList({
   const [selected, setSelected] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Акордеон-згортання — суто візуальне (Tailwind "hidden", не умовний
+  // рендер): контент кожного блоку лишається змонтованим, коли згорнутий,
+  // щоб не скидати внутрішній стан (DialogueEditor/VocabTable через
+  // DialogueStateProvider, LinkDragList, TaskDragList тощо) і щоб приховані
+  // форми й надалі коректно сабмітились через requestSubmit() ("Зберегти
+  // все"). Порожній Set — усе розгорнуто за замовчуванням.
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set());
+
+  function toggleCollapsed(key: string) {
+    setCollapsedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   async function swap(fromKey: string, toKey: string) {
     if (fromKey === toKey) return;
@@ -168,30 +184,44 @@ export function SceneBlockList({
               : `border-gray-100 dark:border-neutral-700 ${border ?? ""}`
           }`}
         >
-          <button
-            type="button"
-            draggable
-            onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", key)}
-            onClick={() => clickHandle(key)}
-            className={`mb-3 flex w-full cursor-grab items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-sm font-semibold shadow-sm shadow-cyan-100/50 active:cursor-grabbing dark:shadow-none ${
-              selected === key
-                ? "border-brand bg-brand/5 dark:border-brand dark:bg-neutral-800"
-                : "border-gray-200 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-            }`}
-          >
-            <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
-              <GripVertical size={14} />
-            </span>
-            {BlockIcon && (
-              <BlockIcon
-                size={14}
-                className={`mr-1.5 shrink-0 ${iconColor ?? "text-neutral-400 dark:text-neutral-500"}`}
-                aria-hidden
+          <div className="mb-3 flex items-center gap-2">
+            <button
+              type="button"
+              draggable
+              onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", key)}
+              onClick={() => clickHandle(key)}
+              className={`flex flex-1 cursor-grab items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-sm font-semibold shadow-sm shadow-cyan-100/50 active:cursor-grabbing dark:shadow-none ${
+                selected === key
+                  ? "border-brand bg-brand/5 dark:border-brand dark:bg-neutral-800"
+                  : "border-gray-200 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              }`}
+            >
+              <span className="mr-1.5 inline-flex align-text-bottom" aria-hidden>
+                <GripVertical size={14} />
+              </span>
+              {BlockIcon && (
+                <BlockIcon
+                  size={14}
+                  className={`mr-1.5 shrink-0 ${iconColor ?? "text-neutral-400 dark:text-neutral-500"}`}
+                  aria-hidden
+                />
+              )}
+              {block.label}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleCollapsed(key)}
+              aria-label={collapsedKeys.has(key) ? "Розгорнути блок" : "Згорнути блок"}
+              title={collapsedKeys.has(key) ? "Розгорнути" : "Згорнути"}
+              className="shrink-0 rounded p-1.5 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
+            >
+              <ChevronDown
+                size={16}
+                className={`transition-transform ${collapsedKeys.has(key) ? "" : "rotate-180"}`}
               />
-            )}
-            {block.label}
-          </button>
-          {contentByKey[key]}
+            </button>
+          </div>
+          <div className={collapsedKeys.has(key) ? "hidden" : ""}>{contentByKey[key]}</div>
         </div>
         );
       })}

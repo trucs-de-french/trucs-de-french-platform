@@ -87,7 +87,7 @@ type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | 
 // Фолбек на випадок, якщо scene_blocks порожній для сцени (напр. міграцію
 // ще не застосовано) — відтворює порядок, який був жорстко закодований до
 // впровадження scene_blocks.
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task", "vocab"];
+const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "vocab", "link", "task"];
 
 export default async function ScenePage({
   params,
