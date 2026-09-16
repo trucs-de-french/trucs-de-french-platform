@@ -15,7 +15,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
-import { collectSceneVocab, firstVocabVariant, type VocabItem } from "@/lib/vocab";
+import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
 import type {
   FlipCardsConfig,
@@ -26,6 +26,7 @@ import type {
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { toEmbedUrl } from "@/lib/video";
 import { ScriptSection } from "./script-section";
+import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import {
@@ -80,13 +81,13 @@ type MistakeRow = {
   tasks: { title: string } | null;
 };
 
-type SceneBlockType = "video" | "script" | "link" | "task";
+type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
 type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | null };
 
 // Фолбек на випадок, якщо scene_blocks порожній для сцени (напр. міграцію
 // ще не застосовано) — відтворює порядок, який був жорстко закодований до
 // впровадження scene_blocks.
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
+const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task", "vocab"];
 
 export default async function ScenePage({
   params,
@@ -409,55 +410,28 @@ export default async function ScenePage({
   const hasLinks = linkList.length > 0;
   const hasVocab = sceneVocab.length > 0;
 
-  const linksNode = (hasLinks || hasVocab) && (
+  const linksNode = hasLinks && (
     <section className="mt-6">
       <h2 className="text-lg font-medium">Практика</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {linkList.map((link) => (
+          <a
+            key={link.id}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          >
+            {link.label ?? link.platform}
+          </a>
+        ))}
+      </div>
+    </section>
+  );
 
-      {hasVocab && (
-        <div className="mt-2">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium">Словник</h3>
-            <a
-              href={`/api/scenes/${sceneId}/vocab-pdf`}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            >
-              Завантажити PDF
-            </a>
-          </div>
-          <table className="mt-2 w-full max-w-md border-collapse text-sm">
-            <thead>
-              <tr className="border-b text-left text-neutral-500 dark:text-neutral-400">
-                <th className="py-1 pr-2 font-medium">Французька</th>
-                <th className="py-1 font-medium">Переклад</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sceneVocab.map((v) => (
-                <tr key={v.word} className="border-b last:border-0">
-                  <td className="py-1 pr-2">{firstVocabVariant(v.word)}</td>
-                  <td className="py-1">{v.translation}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {hasLinks && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {linkList.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            >
-              {link.label ?? link.platform}
-            </a>
-          ))}
-        </div>
-      )}
+  const vocabNode = hasVocab && (
+    <section className="mt-6">
+      <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} />
     </section>
   );
 
@@ -652,6 +626,7 @@ export default async function ScenePage({
     script: scriptNode,
     link: linksNode,
     task: tasksNode,
+    vocab: vocabNode,
   };
 
   return (

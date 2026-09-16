@@ -23,6 +23,8 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { DialogueEditor } from "./dialogue-editor";
+import { DialogueStateProvider } from "./dialogue-state";
+import { VocabTable } from "./vocab-table";
 import { SceneBlockList } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
@@ -34,13 +36,14 @@ import { INPUT_BORDER } from "@/lib/input-styles";
 import { BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
 
-type SceneBlockType = "video" | "script" | "link" | "task";
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task"];
+type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
+const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "link", "task", "vocab"];
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
   video: "Відео",
   script: "Скрипт",
   link: "Практика",
   task: "Завдання",
+  vocab: "Вокабуляр",
 };
 
 export default async function AdminScenePage({
@@ -282,11 +285,23 @@ export default async function AdminScenePage({
       key="script"
       id="scene-script-form"
       action={updateSceneDialogue.bind(null, sceneId)}
+      saveLabel="Зберегти скрипт і вокабуляр"
       className="flex flex-col gap-2"
       saveButtonStyle="secondary"
     >
-      <DialogueEditor initialDialogue={scene.dialogue ?? []} />
+      <DialogueEditor />
     </SaveForm>
+  );
+
+  // Немає власної форми/кнопки збереження: мутує ТОЙ САМИЙ lines-стан, що
+  // й DialogueEditor вище (спільний DialogueStateProvider навколо
+  // SceneBlockList нижче) — зберігається разом зі "Скрипт", без другого
+  // незалежного знімка dialogue, що міг би мовчки перезаписати перший.
+  const vocabContent = (
+    <div key="vocab" className="flex flex-col gap-2">
+      <VocabTable />
+      <p className={HINT_TEXT}>Зберігається разом зі &quot;Скрипт&quot;.</p>
+    </div>
   );
 
   const linkContent = (
@@ -347,6 +362,7 @@ export default async function AdminScenePage({
     script: scriptContent,
     link: linkContent,
     task: taskContent,
+    vocab: vocabContent,
   };
 
   // Інлайн-редагування контент-блоку прямо в SceneBlockList (Крок 2) — та
@@ -367,7 +383,12 @@ export default async function AdminScenePage({
           className="flex flex-col gap-2"
           saveButtonStyle="secondary"
         >
-          <DialogueEditor initialDialogue={content.dialogue ?? []} />
+          {/* Незалежний dialogue цього конкретного додаткового блоку — своя
+              окрема ізоляція, НЕ спільна з "Вокабуляром" (той агрегує лише
+              scene.dialogue, не dialogue додаткових script-блоків). */}
+          <DialogueStateProvider initialDialogue={content.dialogue ?? []}>
+            <DialogueEditor />
+          </DialogueStateProvider>
         </SaveForm>
       );
     } else if (content.content_type === "links") {
@@ -544,12 +565,14 @@ export default async function AdminScenePage({
       </SaveForm>
 
       <div className="mt-6">
-        <SceneBlockList
-          key={sceneBlocks.map((b) => b.refId ?? b.type).join(",")}
-          sceneId={sceneId}
-          initialBlocks={sceneBlocks}
-          contentByKey={contentByKey}
-        />
+        <DialogueStateProvider initialDialogue={scene.dialogue ?? []}>
+          <SceneBlockList
+            key={sceneBlocks.map((b) => b.refId ?? b.type).join(",")}
+            sceneId={sceneId}
+            initialBlocks={sceneBlocks}
+            contentByKey={contentByKey}
+          />
+        </DialogueStateProvider>
       </div>
 
       <div className="mt-2">

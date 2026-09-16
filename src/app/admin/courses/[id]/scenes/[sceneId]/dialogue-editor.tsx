@@ -2,7 +2,6 @@
 
 import { useRef, useState, type DragEvent } from "react";
 import { GripVertical, Trash2, ArrowRight, ChevronDown, ChevronUp, Upload, Clipboard, Languages } from "lucide-react";
-import type { VocabItem } from "@/lib/vocab";
 import { FileUpload } from "@/components/file-upload";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { parseScriptFile, parseTranslationFile } from "@/lib/script-import/actions";
@@ -12,16 +11,7 @@ import { formatTimecode } from "@/lib/format-timecode";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
-
-type Line = {
-  speaker: string;
-  text: string;
-  vocab: VocabItem[];
-  start?: number | null;
-  end?: number | null;
-  videoLink?: string | null;
-  translationUk?: string | null;
-};
+import { useDialogueState, type Line } from "./dialogue-state";
 
 function parsedLineToLine(p: ParsedLine): Line {
   return { speaker: p.speaker, text: p.text, vocab: [], start: p.start, end: p.end, videoLink: null };
@@ -90,8 +80,8 @@ function OptionalFieldsPanel({
   );
 }
 
-export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] }) {
-  const [lines, setLines] = useState<Line[]>(initialDialogue);
+export function DialogueEditor() {
+  const { lines, setLines, updateVocab, removeVocab } = useDialogueState();
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
 
@@ -170,15 +160,9 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
     const selected = getSelectedText(textRefs.current[i]);
     setLines((prev) =>
       prev.map((line, idx) =>
-        idx === i ? { ...line, vocab: [...line.vocab, { word: selected, translation: "" }] } : line
-      )
-    );
-  }
-
-  function removeVocab(i: number, vi: number) {
-    setLines((prev) =>
-      prev.map((line, idx) =>
-        idx === i ? { ...line, vocab: line.vocab.filter((_, vidx) => vidx !== vi) } : line
+        idx === i
+          ? { ...line, vocab: [...line.vocab, { id: crypto.randomUUID(), word: selected, translation: "" }] }
+          : line
       )
     );
   }
@@ -190,24 +174,6 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
     const selected = getSelectedText(translationRefs.current[i]);
     if (!selected) return;
     updateVocab(i, vi, "translatedForm", selected);
-  }
-
-  function updateVocab(
-    i: number,
-    vi: number,
-    field: "word" | "translation" | "image_url" | "translatedForm",
-    value: string
-  ) {
-    setLines((prev) =>
-      prev.map((line, idx) =>
-        idx === i
-          ? {
-              ...line,
-              vocab: line.vocab.map((v, vidx) => (vidx === vi ? { ...v, [field]: value } : v)),
-            }
-          : line
-      )
-    );
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -427,7 +393,7 @@ export function DialogueEditor({ initialDialogue }: { initialDialogue: Line[] })
 
           <div className="mt-2 flex flex-col gap-1 pl-2">
             {line.vocab.map((v, vi) => (
-              <div key={vi} className="flex flex-col gap-1 rounded-md border border-transparent p-1">
+              <div key={v.id ?? vi} className="flex flex-col gap-1 rounded-md border border-transparent p-1">
                 <div className="flex items-center gap-2">
                   <input
                     placeholder="Слово/фраза"

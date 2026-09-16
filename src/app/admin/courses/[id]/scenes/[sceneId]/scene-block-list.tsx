@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent, type ReactNode } from "react";
-import { GripVertical, Video, MessageSquare, Link2, ListChecks, type LucideIcon } from "lucide-react";
+import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
 
@@ -56,6 +56,11 @@ const BLOCK_COLORS: Record<string, { icon: LucideIcon; border: string; iconColor
     icon: ListChecks,
     border: "border-t-amber-500",
     iconColor: "text-amber-500",
+  },
+  vocab: {
+    icon: BookOpen,
+    border: "border-t-rose-500",
+    iconColor: "text-rose-500",
   },
 };
 

@@ -54,14 +54,15 @@ export async function createScene(productId: string) {
 
   if (error || !scene) throw error;
 
-  // 'script'/'link'/'task' — фіксовані групи, що існують завжди, навіть
-  // порожні (щоб їх можна було перетягувати ще до наповнення). 'video' не
-  // створюємо тут — нова сцена завжди без video_url, ця група з'являється
-  // синхронно з полем у updateSceneVideo.
+  // 'script'/'link'/'task'/'vocab' — фіксовані групи, що існують завжди,
+  // навіть порожні (щоб їх можна було перетягувати ще до наповнення).
+  // 'video' не створюємо тут — нова сцена завжди без video_url, ця група
+  // з'являється синхронно з полем у updateSceneVideo.
   const { error: blocksError } = await supabase.from("scene_blocks").insert([
     { scene_id: scene.id, block_type: "script", position: 0 },
     { scene_id: scene.id, block_type: "link", position: 1 },
     { scene_id: scene.id, block_type: "task", position: 2 },
+    { scene_id: scene.id, block_type: "vocab", position: 3 },
   ]);
   if (blocksError) throw blocksError;
 

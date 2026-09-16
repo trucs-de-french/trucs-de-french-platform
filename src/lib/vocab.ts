@@ -1,4 +1,10 @@
 export type VocabItem = {
+  // Стабільний ідентифікатор — потрібен, щоб плоска агрегована таблиця
+  // "Вокабуляр" (vocab-table.tsx) могла зіставляти рядок із джерельною
+  // реплікою надійніше за позиційний React key. Генерується один раз при
+  // створенні запису (dialogue-editor.tsx addVocab); існуючі записи без id —
+  // до одноразового бекфілу.
+  id?: string;
   word: string;
   translation: string;
   note?: string;
