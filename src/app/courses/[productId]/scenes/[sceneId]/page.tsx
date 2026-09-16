@@ -38,6 +38,8 @@ type DialogueEntry = {
   speaker: string;
   text: string;
   vocab: VocabItem[];
+  start?: number | null;
+  videoLink?: string | null;
 };
 
 type LinkEmbedConfig = {

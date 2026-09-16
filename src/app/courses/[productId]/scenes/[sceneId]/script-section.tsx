@@ -8,6 +8,8 @@ type DialogueEntry = {
   speaker: string;
   text: string;
   vocab: VocabItem[];
+  start?: number | null;
+  videoLink?: string | null;
 };
 
 const HIDE_DELAY_MS = 3500;
@@ -44,6 +46,8 @@ export function ScriptSection({ dialogue }: { dialogue: DialogueEntry[] }) {
           speaker={line.speaker}
           text={line.text}
           vocab={line.vocab ?? []}
+          start={line.start}
+          videoLink={line.videoLink}
           openId={openId}
           onWordClick={openWord}
         />

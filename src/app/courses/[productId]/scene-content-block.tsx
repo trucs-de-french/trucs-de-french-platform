@@ -8,7 +8,13 @@ import type { VocabItem } from "@/lib/vocab";
 // Той самий локальний тип, що DialogueEntry в script-section.tsx (не
 // експортований звідти) — структурно сумісний, ScriptSection не переймається
 // звідки прийшов масив.
-type ScriptDialogueLine = { speaker: string; text: string; vocab: VocabItem[] };
+type ScriptDialogueLine = {
+  speaker: string;
+  text: string;
+  vocab: VocabItem[];
+  start?: number | null;
+  videoLink?: string | null;
+};
 
 export type SceneContentLink = {
   id: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import type { VocabItem } from "@/lib/vocab";
+import { formatTimecode } from "@/lib/format-timecode";
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -45,11 +46,37 @@ function VocabWord({
   );
 }
 
+// Бейдж часу — окремий елемент ПЕРЕД спікером, не обгортка над усією
+// реплікою: текст репліки вже має власну клік-взаємодію (VocabWord вище),
+// обгортання всього рядка в <a> конфліктувало б із нею. Клікабельний лише
+// коли є videoLink; сам по собі start без videoLink — звичайний нейтральний
+// текст. Немає жодного з двох — нічого не рендериться (без "0:00"-заглушки).
+function TimecodeBadge({ start, videoLink }: { start: number | null | undefined; videoLink: string | null | undefined }) {
+  if (start == null && !videoLink) return null;
+  const label = start != null ? formatTimecode(start) : "▶";
+
+  if (videoLink) {
+    return (
+      <a
+        href={videoLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mr-1.5 text-xs font-normal text-blue-600 hover:underline dark:text-blue-400"
+      >
+        {label}
+      </a>
+    );
+  }
+  return <span className="mr-1.5 text-xs font-normal text-neutral-400 dark:text-neutral-500">{label}</span>;
+}
+
 export function DialogueLine({
   lineIndex,
   speaker,
   text,
   vocab,
+  start,
+  videoLink,
   openId,
   onWordClick,
 }: {
@@ -57,12 +84,15 @@ export function DialogueLine({
   speaker: string;
   text: string;
   vocab: VocabItem[];
+  start?: number | null;
+  videoLink?: string | null;
   openId: string | null;
   onWordClick: (id: string) => void;
 }) {
   if (vocab.length === 0) {
     return (
       <p>
+        <TimecodeBadge start={start} videoLink={videoLink} />
         <span className="font-semibold">{speaker}:</span> {text}
       </p>
     );
@@ -72,6 +102,7 @@ export function DialogueLine({
 
   return (
     <p>
+      <TimecodeBadge start={start} videoLink={videoLink} />
       <span className="font-semibold">{speaker}:</span>{" "}
       {parts.map((part, i) => {
         const match = vocab.find(
