@@ -3,7 +3,7 @@ import { PlatformWordmark } from "@/components/platform-wordmark";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-6 p-6 text-center">
+    <main className="mx-auto w-full flex min-h-screen max-w-lg flex-col items-center justify-center gap-6 p-6 text-center">
       <PlatformWordmark size="xl" />
       <p className="text-xl font-medium text-neutral-700 dark:text-neutral-300">
         Французьке кіно — вивчаємо мову

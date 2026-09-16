@@ -10,7 +10,7 @@ export default async function LoginPage({
   const { error, message } = await searchParams;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
+    <main className="mx-auto w-full flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
       <h1 className="text-2xl font-semibold">Вхід</h1>
 
       {message && (

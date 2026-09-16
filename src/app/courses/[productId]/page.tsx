@@ -32,7 +32,7 @@ export default async function CoursePage({
 
   if (previewBlocked) {
     return (
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto w-full max-w-2xl p-6">
         <Link href="/dashboard" className="text-sm underline">
           ← До кабінету
         </Link>
@@ -44,7 +44,7 @@ export default async function CoursePage({
 
   if (product.type === "delf") {
     return (
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto w-full max-w-4xl p-6">
         <Link href="/dashboard" className="text-sm underline">
           ← До кабінету
         </Link>
@@ -69,7 +69,7 @@ export default async function CoursePage({
     .order("order_index");
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl p-6">
       <Link href="/dashboard" className="text-sm underline">
         ← До кабінету
       </Link>

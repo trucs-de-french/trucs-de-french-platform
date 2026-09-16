@@ -35,7 +35,7 @@ export default async function DelfTestPage({
 
   if (previewBlocked) {
     return (
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto w-full max-w-2xl p-6">
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До тестів
         </Link>
@@ -48,7 +48,7 @@ export default async function DelfTestPage({
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl p-6">
       <Link href={`/courses/${productId}`} className="text-sm underline">
         ← До тестів
       </Link>

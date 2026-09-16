@@ -32,7 +32,7 @@ export default async function AdminLayout({
   // і локально на courses/page.tsx/courses/new/page.tsx (де sidebar нема).
   // Спільного "верхнього nav" для всієї адмінки більше не існує.
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto w-full max-w-4xl p-6">
       {children}
     </div>
   );

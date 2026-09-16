@@ -41,7 +41,7 @@ export default async function MaterialPage({
 
   if (previewBlocked) {
     return (
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto w-full max-w-2xl p-6">
         <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
           ← До матеріалів
         </Link>
@@ -123,7 +123,7 @@ export default async function MaterialPage({
   const hasExercises = showExercises && rows.length > 0;
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl p-6">
       <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
         ← До матеріалів
       </Link>

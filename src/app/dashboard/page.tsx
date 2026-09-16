@@ -36,7 +36,7 @@ export default async function DashboardPage({
     >();
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl p-6">
       <div className="flex items-center justify-between">
         <div>
           <PlatformWordmark size="sm" />

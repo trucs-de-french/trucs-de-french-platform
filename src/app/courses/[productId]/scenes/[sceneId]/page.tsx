@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
-import { toEmbedUrl } from "@/lib/video";
 import { resolvePlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/platform-icon";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
@@ -25,6 +24,7 @@ import type {
   PhoneticsConfig,
 } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { toEmbedUrl } from "@/lib/video";
 import { ScriptSection } from "./script-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
@@ -121,7 +121,7 @@ export default async function ScenePage({
 
   if (previewBlocked) {
     return (
-      <main className="mx-auto max-w-3xl p-6">
+      <main className="mx-auto w-full max-w-3xl p-6">
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До курсу
         </Link>
@@ -655,7 +655,7 @@ export default async function ScenePage({
   };
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto w-full max-w-3xl p-6">
       <Link href={`/courses/${productId}`} className="text-sm underline">
         ← До курсу
       </Link>
