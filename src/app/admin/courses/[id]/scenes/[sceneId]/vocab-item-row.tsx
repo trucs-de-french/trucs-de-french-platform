@@ -4,6 +4,7 @@ import { ArrowRight, Trash2 } from "lucide-react";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab";
 import { useDialogueState } from "./dialogue-state";
 
 // Спільні поля одного VocabItem — раніше буквально задубльовані в
@@ -54,6 +55,19 @@ export function VocabItemRow({
           onChange={(e) => updateVocab(lineIndex, vocabIndex, "translation", e.target.value)}
           className={`${INPUT_BORDER} w-48 px-2 py-2 text-sm font-content`}
         />
+        <select
+          value={v.partOfSpeech ?? ""}
+          onChange={(e) => updateVocab(lineIndex, vocabIndex, "partOfSpeech", e.target.value)}
+          title="Частина мови"
+          className={`${INPUT_BORDER} w-28 px-1 py-2 text-xs`}
+        >
+          <option value="">—</option>
+          {PART_OF_SPEECH_ORDER.map((pos) => (
+            <option key={pos} value={pos}>
+              {PART_OF_SPEECH_LABELS_FR[pos]}
+            </option>
+          ))}
+        </select>
         {line.translationUk && (
           <>
             <input

@@ -19,7 +19,7 @@ type DialogueState = {
   updateVocab: (
     lineIndex: number,
     vocabIndex: number,
-    field: "word" | "translation" | "image_url" | "translatedForm",
+    field: "word" | "translation" | "image_url" | "translatedForm" | "partOfSpeech",
     value: string
   ) => void;
   removeVocab: (lineIndex: number, vocabIndex: number) => void;
@@ -46,7 +46,7 @@ export function DialogueStateProvider({
   function updateVocab(
     lineIndex: number,
     vocabIndex: number,
-    field: "word" | "translation" | "image_url" | "translatedForm",
+    field: "word" | "translation" | "image_url" | "translatedForm" | "partOfSpeech",
     value: string
   ) {
     setLines((prev) =>

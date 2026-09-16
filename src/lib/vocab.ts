@@ -1,3 +1,5 @@
+export type PartOfSpeech = "nom" | "verbe" | "adjectif" | "adverbe_locution" | "phrase" | "idiome";
+
 export type VocabItem = {
   // Стабільний ідентифікатор — потрібен, щоб плоска агрегована таблиця
   // "Вокабуляр" (vocab-table.tsx) могла зіставляти рядок із джерельною
@@ -15,6 +17,54 @@ export type VocabItem = {
   // вручну, використовується лише для підсвітки в перекладеній колонці
   // (dialogue-line.tsx), ніяк не пов'язана з автоматичним зіставленням.
   translatedForm?: string | null;
+  // Частина мови — обирається вручну в конструкторі (vocab-item-row.tsx),
+  // використовується для групування студентської таблиці/PDF
+  // (groupVocabByPartOfSpeech нижче). Відсутнє/порожній рядок — легасі-
+  // записи без класифікації, потрапляють в окрему групу "Інше".
+  partOfSpeech?: PartOfSpeech | null;
+};
+
+// Порядок групування на студентській сторінці й у PDF: Іменники → Дієслова
+// → Прикметники → Прислівники/сталі вирази → Фрази → Ідіоми.
+export const PART_OF_SPEECH_ORDER: PartOfSpeech[] = [
+  "nom",
+  "verbe",
+  "adjectif",
+  "adverbe_locution",
+  "phrase",
+  "idiome",
+];
+
+// Французькі підписи — у select конструктора (вчителька класифікує
+// французьке слово, природніше бачити французький термін).
+export const PART_OF_SPEECH_LABELS_FR: Record<PartOfSpeech, string> = {
+  nom: "Nom",
+  verbe: "Verbe",
+  adjectif: "Adjectif",
+  adverbe_locution: "Adverbe / locution",
+  phrase: "Phrase",
+  idiome: "Idiome",
+};
+
+// Українські назви груп — заголовки на студентській сторінці й у PDF.
+export const PART_OF_SPEECH_LABELS_UK: Record<PartOfSpeech, string> = {
+  nom: "Іменники",
+  verbe: "Дієслова",
+  adjectif: "Прикметники",
+  adverbe_locution: "Прислівники / сталі вирази",
+  phrase: "Фрази",
+  idiome: "Ідіоми",
+};
+
+// dot — Tailwind-клас кольорової крапки (веб); rgb — той самий колір
+// (0–1 на канал) для pdf-lib, який не читає CSS-класи.
+export const PART_OF_SPEECH_COLORS: Record<PartOfSpeech, { dot: string; rgb: [number, number, number] }> = {
+  nom: { dot: "bg-orange-500", rgb: [0.976, 0.451, 0.086] },
+  verbe: { dot: "bg-red-500", rgb: [0.937, 0.267, 0.267] },
+  adjectif: { dot: "bg-green-500", rgb: [0.133, 0.773, 0.369] },
+  adverbe_locution: { dot: "bg-violet-500", rgb: [0.545, 0.361, 0.965] },
+  phrase: { dot: "bg-blue-500", rgb: [0.231, 0.51, 0.965] },
+  idiome: { dot: "bg-cyan-500", rgb: [0.024, 0.714, 0.831] },
 };
 
 type DialogueLine = {
@@ -45,4 +95,32 @@ export function collectSceneVocab(dialogue: DialogueLine[]): VocabItem[] {
   }
 
   return [...seen.values()];
+}
+
+export type VocabGroup = { partOfSpeech: PartOfSpeech | null; items: VocabItem[] };
+
+// Групування для студентської таблиці "Вокабуляр"/PDF — за PART_OF_SPEECH_ORDER,
+// легасі-записи без класифікації (partOfSpeech відсутнє/порожній рядок) —
+// окрема група null, завжди останньою. Порядок слів У МЕЖАХ групи — той
+// самий, що у вхідному vocab (простий прохід + додавання в кошик Map, без
+// sort()), тож стабільний за конструкцією.
+export function groupVocabByPartOfSpeech(vocab: VocabItem[]): VocabGroup[] {
+  const buckets = new Map<PartOfSpeech | null, VocabItem[]>();
+
+  for (const v of vocab) {
+    const key = v.partOfSpeech || null;
+    const arr = buckets.get(key) ?? [];
+    arr.push(v);
+    buckets.set(key, arr);
+  }
+
+  const groups: VocabGroup[] = [];
+  for (const pos of PART_OF_SPEECH_ORDER) {
+    const items = buckets.get(pos);
+    if (items && items.length > 0) groups.push({ partOfSpeech: pos, items });
+  }
+  const legacy = buckets.get(null);
+  if (legacy && legacy.length > 0) groups.push({ partOfSpeech: null, items: legacy });
+
+  return groups;
 }
