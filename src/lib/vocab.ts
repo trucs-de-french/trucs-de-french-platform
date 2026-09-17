@@ -40,12 +40,12 @@ export const PART_OF_SPEECH_ORDER: PartOfSpeech[] = [
 // лишається "Інше" українською, бо для неї немає французького відповідника
 // в природній системі категорій).
 export const PART_OF_SPEECH_LABELS_FR: Record<PartOfSpeech, string> = {
-  nom: "Nom",
-  verbe: "Verbe",
-  adjectif: "Adjectif",
-  adverbe_locution: "Adverbe / locution",
-  phrase: "Phrase",
-  idiome: "Idiome",
+  nom: "Noms",
+  verbe: "Verbes",
+  adjectif: "Adjectifs",
+  adverbe_locution: "Adverbes / Locutions",
+  phrase: "Phrases",
+  idiome: "Idiomes",
 };
 
 // dot — Tailwind-клас кольорової крапки (веб); rgb — той самий колір
