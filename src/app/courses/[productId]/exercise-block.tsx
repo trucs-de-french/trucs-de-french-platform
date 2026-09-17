@@ -104,7 +104,7 @@ export function ExerciseBlock({
           href={task.games.embed_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 inline-block text-sm underline"
+          className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
         >
           Відкрити гру ({task.games.provider})
         </a>
