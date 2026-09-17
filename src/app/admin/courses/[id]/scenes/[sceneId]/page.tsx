@@ -29,6 +29,7 @@ import { SceneBlockList } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
+import { AddLinkFields } from "./add-link-fields";
 import { GroupMemberDragList } from "../../task-groups/group-member-drag-list";
 import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
@@ -319,12 +320,7 @@ export default async function AdminScenePage({
         savedLabel="Додано ✓"
         className="mt-3 flex flex-wrap items-center gap-2"
       >
-        <select name="platform" aria-label="Платформа" className={`${INPUT_BORDER} h-10 px-2 text-sm`}>
-          <option value="quizlet">Quizlet</option>
-          <option value="wordwall">Wordwall</option>
-        </select>
-        <input name="url" placeholder="URL" required className={`${INPUT_BORDER} h-10 px-2 text-sm`} />
-        <input name="label" placeholder="Мітка" className={`${INPUT_BORDER} h-10 px-2 text-sm`} />
+        <AddLinkFields />
       </SaveForm>
     </div>
   );
@@ -406,25 +402,7 @@ export default async function AdminScenePage({
             savedLabel="Додано ✓"
             className="mt-3 flex flex-wrap items-center gap-2"
           >
-            <select
-              name="platform"
-              aria-label="Платформа"
-              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
-            >
-              <option value="quizlet">Quizlet</option>
-              <option value="wordwall">Wordwall</option>
-            </select>
-            <input
-              name="url"
-              placeholder="URL"
-              required
-              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
-            />
-            <input
-              name="label"
-              placeholder="Мітка"
-              className={`${INPUT_BORDER} h-10 px-2 text-sm`}
-            />
+            <AddLinkFields />
           </SaveForm>
         </div>
       );

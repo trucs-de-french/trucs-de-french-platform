@@ -6,22 +6,26 @@ import { buildPresignedUploadUrl } from "@/lib/r2-client";
 // проєкту (напр. /api/scenes/[sceneId]/vocab-pdf).
 export const runtime = "nodejs";
 
-type UploadKind = "audio" | "image";
+type UploadKind = "audio" | "image" | "html";
 
 // Один спільний bucket на весь акаунт "не коштував" би нічого зайвого
 // (безкоштовний ліміт R2 рахується на акаунт, не на bucket), але окремі
-// task-audio/task-images дають чистішу організацію в дашборді — свідомий
-// вибір, підтверджений з учителем перед реалізацією.
+// task-audio/task-images/task-html-games дають чистішу організацію в
+// дашборді — свідомий вибір, підтверджений з учителем перед реалізацією.
 const BUCKETS: Record<UploadKind, { bucket?: string; publicUrl?: string }> = {
   audio: { bucket: process.env.R2_BUCKET_NAME, publicUrl: process.env.R2_PUBLIC_URL },
   image: {
     bucket: process.env.R2_IMAGES_BUCKET_NAME,
     publicUrl: process.env.R2_IMAGES_PUBLIC_URL,
   },
+  html: {
+    bucket: process.env.R2_HTML_GAMES_BUCKET_NAME,
+    publicUrl: process.env.R2_HTML_GAMES_PUBLIC_URL,
+  },
 };
 
 function isUploadKind(value: unknown): value is UploadKind {
-  return value === "audio" || value === "image";
+  return value === "audio" || value === "image" || value === "html";
 }
 
 export async function POST(request: Request) {
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
   };
 
   if (!isUploadKind(body.kind)) {
-    return Response.json({ error: 'kind має бути "audio" або "image"' }, { status: 400 });
+    return Response.json({ error: 'kind має бути "audio", "image" або "html"' }, { status: 400 });
   }
 
   const { bucket, publicUrl } = BUCKETS[body.kind];
@@ -67,7 +71,7 @@ export async function POST(request: Request) {
   const filename = body.filename ?? "";
   const contentType = body.contentType || "application/octet-stream";
 
-  const fallbackExt = body.kind === "image" ? "jpg" : "mp3";
+  const fallbackExt = body.kind === "image" ? "jpg" : body.kind === "html" ? "html" : "mp3";
   const ext = filename.includes(".") ? filename.split(".").pop() : fallbackExt;
   const key = `${crypto.randomUUID()}.${ext}`;
 

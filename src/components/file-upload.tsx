@@ -3,17 +3,24 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
 
-type UploadKind = "audio" | "image";
+type UploadKind = "audio" | "image" | "html";
 
 const ACCEPT_BY_KIND: Record<UploadKind, string> = {
   audio: "audio/*",
   image: "image/*",
+  html: ".html,.htm",
 };
 
 const LABEL_BY_KIND: Record<UploadKind, string> = {
   audio: "📎 Завантажити аудіо",
   image: "📎 Завантажити зображення",
+  html: "📎 Завантажити HTML-гру",
 };
+
+// Лише для kind="html" — самодостатня гра/вправа, не файл довільного
+// розміру: кілька МБ вистачає навіть з інлайновими стилями/скриптами.
+// audio/image свідомо БЕЗ ліміту тут — не чіпаю наявну поведінку.
+const MAX_HTML_BYTES = 5 * 1024 * 1024;
 
 // Завантаження НАПРЯМУ з браузера в Cloudflare R2 (не через наш
 // сервер/Server Action) — обходить і ліміт розміру тіла Server Actions
@@ -68,10 +75,31 @@ export function FileUpload({
   }, [status]);
 
   async function handleFileChange(file: File) {
+    // Базова перевірка типу файлу — лише для html: не даємо завантажити
+    // щось інше під виглядом .html. Розширення файлу — надійніший сигнал,
+    // ніж file.type (браузер часто повертає порожній/сторонній MIME для
+    // локальних .html на macOS). Аудіо/картинка — без цієї перевірки, як
+    // і раніше.
+    if (kind === "html" && !/\.html?$/i.test(file.name)) {
+      setStatus("error");
+      setErrorMessage("Очікується файл .html");
+      return;
+    }
+    if (kind === "html" && file.size > MAX_HTML_BYTES) {
+      setStatus("error");
+      setErrorMessage(`Файл завеликий (максимум ${MAX_HTML_BYTES / (1024 * 1024)} МБ)`);
+      return;
+    }
+
     setStatus("uploading");
     setElapsedSeconds(0);
     setErrorMessage("");
     setFileName(file.name);
+
+    // Для html — завжди "text/html" явно, а не file.type (ненадійний для
+    // локальних .html-файлів) — гарантує збіг підписаного й фактичного
+    // Content-Type незалежно від того, що визначив браузер/ОС.
+    const declaredContentType = kind === "html" ? "text/html" : file.type || "application/octet-stream";
 
     try {
       const prepRes = await fetch("/api/r2-upload-url", {
@@ -79,7 +107,7 @@ export function FileUpload({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           filename: file.name,
-          contentType: file.type || "application/octet-stream",
+          contentType: declaredContentType,
           kind,
         }),
       });
@@ -100,7 +128,7 @@ export function FileUpload({
       // підписом і фактичним запитом.
       const uploadRes = await fetch(prep.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": prep.contentType ?? file.type },
+        headers: { "Content-Type": prep.contentType ?? declaredContentType },
         body: file,
       });
       if (!uploadRes.ok) {
