@@ -145,7 +145,7 @@ export function ExerciseBlock({
               вимкнення (напр. якщо стороннній сервіс блокує вбудовування
               в iframe, як уже траплялось із Wordwall). */}
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Якщо відео (гра) не відкривається,{" "}
+            Якщо гра чи відео не відкривається (браузер міг заблокувати сторонній вміст),{" "}
             <a href={config.url} target="_blank" rel="noopener noreferrer" className="underline">
               перейдіть за посиланням
             </a>

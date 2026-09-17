@@ -601,7 +601,7 @@ export default async function ScenePage({
                       блокує вбудовування в iframe, як уже траплялось із
                       Wordwall). Той самий фрагмент, що в exercise-block.tsx. */}
                   <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    Якщо відео (гра) не відкривається,{" "}
+                    Якщо гра чи відео не відкривається (браузер міг заблокувати сторонній вміст),{" "}
                     <a
                       href={config.url}
                       target="_blank"
