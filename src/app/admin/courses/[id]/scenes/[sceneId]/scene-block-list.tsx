@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type Drag
 import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
+import { blockDomId } from "./block-dom-id";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
@@ -19,15 +20,6 @@ type Block = { type: string; refId: string | null; label: string; contentType?: 
 // на одну сцену), тому ключ = refId, коли він є, інакше type.
 function blockKey(block: Block): string {
   return block.refId ? `content:${block.refId}` : block.type;
-}
-
-// DOM-безпечна форма blockKey() — id-атрибут/URL-хеш і двокрапка в
-// "content:{refId}" не завжди дружать (обходимо, а не ризикуємо), тому "-"
-// замість ":". Той самий рядок використовує page.tsx, коли будує anchor=
-// для посилань "+ Нова задача" (щоб redirect() з createTask повертав саме
-// на цей блок, а не на верх сторінки) — звідси export.
-export function blockDomId(key: string): string {
-  return key.replace(":", "-");
 }
 
 // sessionStorage-backed collapsedKeys — через useSyncExternalStore, не
