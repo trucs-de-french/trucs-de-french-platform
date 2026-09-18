@@ -94,6 +94,18 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         ...(wordBank.length > 0 ? { wordBank } : {}),
       };
     }
+
+    case "letter_gaps": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("letter_gaps_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml((formData.get("letter_gaps_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
+        words: parseJsonField(formData.get("letter_gaps_words")),
+        points: Number(formData.get("letter_gaps_points")) || 1,
+      };
+    }
     case "multiple_choice": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("mc_sub_instructions") as string) || ""

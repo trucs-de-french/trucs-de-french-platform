@@ -1,6 +1,8 @@
 import type {
   FillBlankConfig,
   FillBlankPublic,
+  LetterGapsConfig,
+  LetterGapsPublic,
   MultipleChoiceConfig,
   MultipleChoicePublic,
   MultipleChoiceItem,
@@ -67,6 +69,26 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
     // Довідкові бульбашки — пропускаємо як є, не тасуємо (той самий
     // порядок, що вписав вчитель), нема що приховувати.
     wordBank: config.wordBank,
+  };
+}
+
+export function resolveLetterGapsPoints(config: LetterGapsConfig): number {
+  return config.points ?? 1;
+}
+
+// Явна маска на рівні символів (null на прихованих позиціях) — не просто
+// word+hiddenIndices, бо це віддало б студенту прямий доступ до прихованих
+// літер через сам word.
+export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    points: resolveLetterGapsPoints(config),
+    words: config.words.map((w) => ({
+      chars: w.word.split("").map((c, i) => (w.hiddenIndices.includes(i) ? null : c)),
+      hintType: w.hintType,
+      hintText: w.hintText,
+    })),
   };
 }
 
@@ -366,6 +388,8 @@ export function sanitizeConfigForStudent(
   switch (type) {
     case "fill_blank":
       return sanitizeFillBlank(config as unknown as FillBlankConfig);
+    case "letter_gaps":
+      return sanitizeLetterGaps(config as unknown as LetterGapsConfig);
     case "multiple_choice":
       return sanitizeMultipleChoice(config as unknown as MultipleChoiceConfig);
     case "true_false":

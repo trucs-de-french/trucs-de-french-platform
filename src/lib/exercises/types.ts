@@ -20,6 +20,26 @@ export type FillBlankConfig = {
   wordBank?: string[];
 };
 
+// Пропущені літери — вчителька вручну клікає окремі символи слова (будь-
+// які, без обмежень: апостроф/дефіс так само можна ховати), студент вводить
+// кожну приховану позицію в окреме однолітерне поле. hiddenIndices —
+// позиції символів у word (як у string, 0-based), не обов'язково
+// відсортовані при редагуванні, але порядок читання завжди зліва направо —
+// забезпечується самим word.split(""), не hiddenIndices. Один бал на все
+// завдання (як fill_blank) — усі слова мають бути повністю правильні.
+export type LetterGapsWord = {
+  word: string;
+  hiddenIndices: number[];
+  hintType: "definition" | "sentence";
+  hintText: string;
+};
+export type LetterGapsConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  words: LetterGapsWord[];
+  points?: number;
+};
+
 // Звичайна відкрита відповідь з автоматичною текстовою перевіркою (без AI —
 // це essay_check). Нормалізація/порівняння — той самий принцип, що для
 // одного пропуску у fill_blank: правильно, якщо збігається з ОДНИМ з answers
@@ -323,6 +343,21 @@ export type FillBlankPublic = {
   wordBank?: string[]; // довідкові бульбашки, не тасується
 };
 
+// chars — явна маска на рівні символів (null на прихованих позиціях, сам
+// символ на видимих), а не word+hiddenIndices — інакше студент прочитав би
+// приховані літери прямо з word.
+export type LetterGapsPublicWord = {
+  chars: (string | null)[];
+  hintType: "definition" | "sentence";
+  hintText: string;
+};
+export type LetterGapsPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  words: LetterGapsPublicWord[];
+  points: number;
+};
+
 export type MultipleChoicePublic = {
   instructions?: string;
   subInstructions?: string;
@@ -426,6 +461,9 @@ export type ChronologicalOrderPublic = {
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
+// Зовнішній масив — по слову, у порядку config.words; внутрішній — по
+// одній літері на кожну приховану позицію, зліва направо.
+export type LetterGapsAnswer = string[][];
 export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
@@ -443,6 +481,10 @@ export type ChronologicalOrderAnswer = { itemId: string; position: number }[];
 
 export type FillBlankDetail = {
   blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean }[];
+};
+
+export type LetterGapsDetail = {
+  words: { studentLetters: string[]; correctLetters: string[]; isCorrect: boolean }[];
 };
 
 export type MultipleChoiceDetail = {
@@ -580,6 +622,7 @@ export type ChronologicalOrderDetail = {
 // поки що їх заповнює лише gradeTrueFalse (пілот), решта лишають undefined.
 export type GradeResult =
   | { correct: boolean; score: number; detail: FillBlankDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: LetterGapsDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }

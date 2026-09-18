@@ -90,6 +90,19 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-blue-500",
     shadow: "shadow-blue-100/50",
   },
+  // Усі 16 придатних кольорів Tailwind (без червоного — зарезервований під
+  // видалення) уже розподілені між наявними 23 типами — для 24-го вільного
+  // кольору фізично немає. Ділить lime із callout (reference, текстовий
+  // блок) — не з іншим auto_graded-типом, той самий принцип, що інші пари
+  // в цьому файлі.
+  letter_gaps: {
+    stripe: "border-l-4 border-l-lime-500",
+    badge: "bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300",
+    dot: "bg-lime-500",
+    iconBorder: "border-lime-500",
+    iconText: "text-lime-500",
+    shadow: "shadow-lime-100/50",
+  },
   multiple_choice: {
     stripe: "border-l-4 border-l-indigo-500",
     badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
@@ -282,6 +295,7 @@ export const TASK_TYPE_COLORS: Record<
 // але додана тут заздалегідь, щоб не забути, коли/якщо стане вибірною.
 export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   fill_blank: "auto_graded",
+  letter_gaps: "auto_graded",
   multiple_choice: "auto_graded",
   true_false: "auto_graded",
   matching: "auto_graded",
@@ -316,6 +330,7 @@ export function getTaskTypeCategory(type: string): TaskTypeCategory | null {
 // -> CircleQuestionMark, AlertCircle -> CircleAlert, Code2 -> CodeXml).
 import {
   PenLine,
+  SpellCheck,
   ListChecks,
   SquareCheck,
   ArrowLeftRight,
@@ -344,6 +359,7 @@ import {
 
 export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   fill_blank: PenLine,
+  letter_gaps: SpellCheck,
   multiple_choice: ListChecks,
   true_false: SquareCheck,
   matching: ArrowLeftRight,

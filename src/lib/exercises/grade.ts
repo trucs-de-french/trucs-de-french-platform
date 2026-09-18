@@ -16,6 +16,7 @@ import {
   getMatchingPairs,
   resolveMatchingPoints,
   resolveFillBlankPoints,
+  resolveLetterGapsPoints,
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
 } from "./sanitize";
@@ -23,6 +24,9 @@ import type {
   FillBlankConfig,
   FillBlankAnswer,
   FillBlankDetail,
+  LetterGapsConfig,
+  LetterGapsAnswer,
+  LetterGapsDetail,
   MultipleChoiceConfig,
   MultipleChoiceAnswer,
   MultipleChoiceDetail,
@@ -94,6 +98,34 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
     correct,
     score: percentage(correctCount, blanks.length),
     detail: { blanks },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
+  };
+}
+
+// Той самий принцип, що gradeFillBlank: один бал на все завдання, а не на
+// слово/літеру — зараховується цілком, лише якщо ВСІ слова повністю
+// правильні. normalize() (trim+lowercase) — та сама конвенція, що для
+// текстових пропусків, коректно працює з французькими діакритичними
+// символами.
+function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): GradeResult {
+  const words: LetterGapsDetail["words"] = config.words.map((w, wi) => {
+    const correctLetters = w.hiddenIndices.map((idx) => w.word[idx]);
+    const studentLetters = answer[wi] ?? [];
+    const isCorrect = correctLetters.every(
+      (c, li) => normalize(c) === normalize(studentLetters[li] ?? "")
+    );
+    return { studentLetters, correctLetters, isCorrect };
+  });
+
+  const correctCount = words.filter((w) => w.isCorrect).length;
+  const correct = correctCount === words.length && words.length > 0;
+  const points = resolveLetterGapsPoints(config);
+
+  return {
+    correct,
+    score: percentage(correctCount, words.length),
+    detail: { words },
     pointsEarned: correct ? points : 0,
     pointsPossible: points,
   };
@@ -547,6 +579,8 @@ export function gradeAnswer(
   switch (type) {
     case "fill_blank":
       return gradeFillBlank(config as unknown as FillBlankConfig, answer as FillBlankAnswer);
+    case "letter_gaps":
+      return gradeLetterGaps(config as unknown as LetterGapsConfig, answer as LetterGapsAnswer);
     case "multiple_choice":
       return gradeMultipleChoice(
         config as unknown as MultipleChoiceConfig,

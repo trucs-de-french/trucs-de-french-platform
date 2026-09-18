@@ -20,6 +20,7 @@ import type {
   ImageMatchConfig,
   CheckboxGridConfig,
   ChronologicalOrderConfig,
+  LetterGapsConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
@@ -40,6 +41,7 @@ import { TableFillFields } from "./table-fill-fields";
 import { ImageMatchFields } from "./image-match-fields";
 import { CheckboxGridFields } from "./checkbox-grid-fields";
 import { ChronologicalOrderFields } from "./chronological-order-fields";
+import { LetterGapsFields } from "./letter-gaps-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -87,6 +89,7 @@ const TYPE_OPTIONS = [
   { value: "embed", label: "Вбудований контент (iframe)" },
   { value: "link", label: "Посилання-кнопка" },
   { value: "fill_blank", label: "Заповніть пропуск" },
+  { value: "letter_gaps", label: "Пропущені літери" },
   { value: "multiple_choice", label: "Оберіть правильний варіант" },
   { value: "true_false", label: "Оберіть Vrai чи Faux" },
   { value: "matching", label: "З'єднайте елементи" },
@@ -734,6 +737,15 @@ export function TaskConfigFields({
               копіювання вручну. */}
           <ImportVocabPanel sceneVocab={sceneVocab ?? []} />
         </div>
+      )}
+
+      {type === "letter_gaps" && (
+        <LetterGapsFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<LetterGapsConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "letter_gaps" ? pendingSeed.config : initialConfig) as Partial<LetterGapsConfig>
+          }
+        />
       )}
 
       {type === "multiple_choice" && (
