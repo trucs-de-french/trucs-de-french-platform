@@ -127,7 +127,7 @@ export default async function EditMaterialPage({
       </SaveForm>
 
       {material.category === "general_tip" && (
-        <section className="mt-6">
+        <section id="tasks-section" className="mt-6">
           <div className="flex items-center justify-between">
             <h2 className={H2_TEXT}>Вправи</h2>
             <div className="flex gap-2">
@@ -138,7 +138,7 @@ export default async function EditMaterialPage({
                 + Блок
               </Link>
               <Link
-                href={`/admin/courses/${productId}/tasks/new?materialId=${material.id}`}
+                href={`/admin/courses/${productId}/tasks/new?materialId=${material.id}&anchor=tasks-section`}
                 className={BUTTON_SECONDARY}
               >
                 + Нове завдання

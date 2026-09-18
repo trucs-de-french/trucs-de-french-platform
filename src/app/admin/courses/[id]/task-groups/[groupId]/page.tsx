@@ -152,11 +152,11 @@ export default async function EditTaskGroupPage({
         <TaskGroupFields initialGroup={group} productType={product?.type} materialId={group.material_id} />
       </SaveForm>
 
-      <section className="mt-6">
+      <section id="tasks-section" className="mt-6">
         <div className="flex items-center justify-between">
           <h2 className={H2_TEXT}>Задачі блоку</h2>
           <Link
-            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}`}
+            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}&anchor=tasks-section`}
             className={BUTTON_SECONDARY}
           >
             + Нова задача в блоці

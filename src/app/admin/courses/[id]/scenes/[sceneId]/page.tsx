@@ -25,7 +25,7 @@ import { ConfirmForm } from "@/components/confirm-form";
 import { DialogueEditor } from "./dialogue-editor";
 import { DialogueStateProvider } from "./dialogue-state";
 import { VocabTable } from "./vocab-table";
-import { SceneBlockList } from "./scene-block-list";
+import { SceneBlockList, blockDomId } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
@@ -329,7 +329,7 @@ export default async function AdminScenePage({
           + Блок
         </Link>
         <Link
-          href={`/admin/courses/${productId}/tasks/new?sceneId=${sceneId}`}
+          href={`/admin/courses/${productId}/tasks/new?sceneId=${sceneId}&anchor=${blockDomId("task")}`}
           className={BUTTON_SECONDARY}
         >
           + Нове завдання
@@ -423,7 +423,7 @@ export default async function AdminScenePage({
             })()}
           </span>
           <Link
-            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${attachedGroup.id}`}
+            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${attachedGroup.id}&anchor=${blockDomId(`content:${block.refId}`)}`}
             className={BUTTON_SECONDARY}
           >
             + Нова задача

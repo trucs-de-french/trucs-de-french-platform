@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type DragEvent, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type DragEvent, type ReactNode } from "react";
 import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
@@ -19,6 +19,68 @@ type Block = { type: string; refId: string | null; label: string; contentType?: 
 // на одну сцену), тому ключ = refId, коли він є, інакше type.
 function blockKey(block: Block): string {
   return block.refId ? `content:${block.refId}` : block.type;
+}
+
+// DOM-безпечна форма blockKey() — id-атрибут/URL-хеш і двокрапка в
+// "content:{refId}" не завжди дружать (обходимо, а не ризикуємо), тому "-"
+// замість ":". Той самий рядок використовує page.tsx, коли будує anchor=
+// для посилань "+ Нова задача" (щоб redirect() з createTask повертав саме
+// на цей блок, а не на верх сторінки) — звідси export.
+export function blockDomId(key: string): string {
+  return key.replace(":", "-");
+}
+
+// sessionStorage-backed collapsedKeys — через useSyncExternalStore, не
+// useState+useEffect: sessionStorage недоступний під час SSR, тож просте
+// "прочитати в ефекті й setState" дало б і hydration mismatch (сервер
+// рендерить дефолт, клієнтський перший рендер — уже інше), і саму лінтер-
+// помилку react-hooks/set-state-in-effect. useSyncExternalStore — офіційно
+// призначений саме для синхронізації зі сховищем, недоступним на сервері
+// (getServerSnapshot повертає null — SSR завжди бачить лише дефолт).
+// Підписка — власний мінімальний pub-sub (не подія "storage": та не
+// спрацьовує для змін у тій самій вкладці, яка сама їх і зробила).
+function useCollapsedKeys(storageKey: string, defaultKeys: () => Set<string>) {
+  const listenersRef = useRef(new Set<() => void>());
+
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    listenersRef.current.add(onStoreChange);
+    return () => listenersRef.current.delete(onStoreChange);
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    try {
+      return sessionStorage.getItem(storageKey);
+    } catch {
+      return null;
+    }
+  }, [storageKey]);
+
+  const getServerSnapshot = useCallback(() => null, []);
+
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const collapsedKeys = useMemo(() => {
+    if (raw == null) return defaultKeys();
+    try {
+      return new Set<string>(JSON.parse(raw) as string[]);
+    } catch {
+      return defaultKeys();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raw]);
+
+  function setCollapsedKeys(updater: (prev: Set<string>) => Set<string>) {
+    const next = updater(collapsedKeys);
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify([...next]));
+    } catch {
+      // sessionStorage недоступний (приватний режим тощо) — далі не пишемо,
+      // але й не падаємо
+    }
+    listenersRef.current.forEach((onStoreChange) => onStoreChange());
+  }
+
+  return [collapsedKeys, setCollapsedKeys] as const;
 }
 
 // Колір за типом БЛОКУ сцени (video/script/link/task) — інший, паралельний
@@ -96,8 +158,12 @@ export function SceneBlockList({
   // щоб не скидати внутрішній стан (DialogueEditor/VocabTable через
   // DialogueStateProvider, LinkDragList, TaskDragList тощо) і щоб приховані
   // форми й надалі коректно сабмітились через requestSubmit() ("Зберегти
-  // все"). Усі ключі одразу в Set — усе згорнуто за замовчуванням.
-  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(
+  // все"). Зберігається в sessionStorage по сцені (useCollapsedKeys вище) —
+  // щоб redirect() назад із "+ Нова задача" (окрема сторінка /tasks/new) не
+  // скидав акордеон до дефолту "усе згорнуто", а повертав саме той стан,
+  // який був перед переходом.
+  const [collapsedKeys, setCollapsedKeys] = useCollapsedKeys(
+    `scene-blocks-collapsed:${sceneId}`,
     () => new Set(initialBlocks.map(blockKey))
   );
 
@@ -168,6 +234,7 @@ export function SceneBlockList({
         return (
         <div
           key={key}
+          id={blockDomId(key)}
           onDragOver={(e: DragEvent) => e.preventDefault()}
           onDragEnter={(e: DragEvent) => {
             e.preventDefault();

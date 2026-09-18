@@ -150,7 +150,7 @@ export default async function AdminTestPage({
       </div>
 
       {EXAM_SECTIONS.map((section) => (
-        <section key={section} className="mt-6">
+        <section key={section} id={`section-${section}`} className="mt-6">
           <div className="flex items-center justify-between">
             <h2 className={H2_TEXT}>
               {section} — {EXAM_SECTION_LABELS[section]}
@@ -163,7 +163,7 @@ export default async function AdminTestPage({
                 + Блок
               </Link>
               <Link
-                href={`/admin/courses/${productId}/tasks/new?delfSection=${section}&delfTestNumber=${testNumber}`}
+                href={`/admin/courses/${productId}/tasks/new?delfSection=${section}&delfTestNumber=${testNumber}&anchor=section-${section}`}
                 className={BUTTON_SECONDARY}
               >
                 + Нове завдання

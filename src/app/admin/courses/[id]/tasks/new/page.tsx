@@ -19,10 +19,11 @@ export default async function NewTaskPage({
     taskGroupId?: string;
     delfSection?: string;
     delfTestNumber?: string;
+    anchor?: string;
   }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber } = await searchParams;
+  const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber, anchor } = await searchParams;
 
   const supabase = await createClient();
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
@@ -74,6 +75,12 @@ export default async function NewTaskPage({
         {sceneId && <input type="hidden" name="scene_id" value={sceneId} />}
         {materialId && <input type="hidden" name="material_id" value={materialId} />}
         {taskGroupId && <input type="hidden" name="task_group_id" value={taskGroupId} />}
+        {/* Куди саме повернути скрол після redirect() у createTask — той
+            самий блок/секцію, звідки прийшли (SceneBlockList картка,
+            секція "Вправи"/"Задачі блоку"/DELF-секція), не просто дефолт
+            "верх сторінки". Непрозорий рядок — сервер лише проносить його
+            далі, не інтерпретує. */}
+        {anchor && <input type="hidden" name="anchor" value={anchor} />}
 
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Назва</label>

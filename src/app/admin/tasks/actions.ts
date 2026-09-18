@@ -395,15 +395,20 @@ export async function createTask(formData: FormData) {
 
   await syncGameRow(supabase, task.id, type, formData);
 
-  redirect(
-    await resolveTaskParentPath(supabase, {
-      product_id: productId,
-      scene_id: sceneId,
-      material_id: materialId,
-      task_group_id: taskGroupId,
-      delf_test_number: delfTestNumber,
-    })
-  );
+  const parentPath = await resolveTaskParentPath(supabase, {
+    product_id: productId,
+    scene_id: sceneId,
+    material_id: materialId,
+    task_group_id: taskGroupId,
+    delf_test_number: delfTestNumber,
+  });
+  // anchor — непрозорий id блоку/секції, з якої прийшли (див. tasks/new/
+  // page.tsx) — приносить redirect() назад саме туди, а не на верх
+  // сторінки, і на сторінці сцени зберігає розгорнутим потрібний блок
+  // акордеона (sessionStorage-стан у SceneBlockList не скидається окремо,
+  // просто елемент з таким id уже опиняється в полі зору).
+  const anchor = (formData.get("anchor") as string) || null;
+  redirect(anchor ? `${parentPath}#${anchor}` : parentPath);
 }
 
 export async function updateTask(
