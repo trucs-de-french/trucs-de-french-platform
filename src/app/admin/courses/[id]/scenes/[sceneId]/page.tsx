@@ -29,7 +29,7 @@ import { SceneBlockList } from "./scene-block-list";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";
-import { AddLinkFields } from "./add-link-fields";
+import { AddLinkForm } from "./add-link-form";
 import { GroupMemberDragList } from "../../task-groups/group-member-drag-list";
 import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
@@ -313,15 +313,9 @@ export default async function AdminScenePage({
         initialLinks={links ?? []}
       />
 
-      <SaveForm
-        action={addLink.bind(null, sceneId, null)}
-        saveLabel="+ Додати посилання"
-        saveVariant="link"
-        savedLabel="Додано ✓"
-        className="mt-3 flex flex-wrap items-center gap-2"
-      >
-        <AddLinkFields />
-      </SaveForm>
+      <div className="mt-3">
+        <AddLinkForm action={addLink.bind(null, sceneId, null)} />
+      </div>
     </div>
   );
 
@@ -395,15 +389,9 @@ export default async function AdminScenePage({
             sceneId={sceneId}
             initialLinks={linksByBlockId.get(block.refId) ?? []}
           />
-          <SaveForm
-            action={addLink.bind(null, sceneId, block.refId)}
-            saveLabel="+ Додати посилання"
-            saveVariant="link"
-            savedLabel="Додано ✓"
-            className="mt-3 flex flex-wrap items-center gap-2"
-          >
-            <AddLinkFields />
-          </SaveForm>
+          <div className="mt-3">
+            <AddLinkForm action={addLink.bind(null, sceneId, block.refId)} />
+          </div>
         </div>
       );
     } else {
