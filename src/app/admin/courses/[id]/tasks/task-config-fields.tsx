@@ -21,6 +21,7 @@ import type {
   CheckboxGridConfig,
   ChronologicalOrderConfig,
   LetterGapsConfig,
+  LetterRearrangementConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
@@ -42,6 +43,7 @@ import { ImageMatchFields } from "./image-match-fields";
 import { CheckboxGridFields } from "./checkbox-grid-fields";
 import { ChronologicalOrderFields } from "./chronological-order-fields";
 import { LetterGapsFields } from "./letter-gaps-fields";
+import { LetterRearrangementFields } from "./letter-rearrangement-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -72,6 +74,7 @@ const IMPORT_ENABLED_TYPES = [
   "checkbox_grid",
   "chronological_order",
   "letter_gaps",
+  "letter_rearrangement",
 ];
 
 // Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
@@ -91,6 +94,7 @@ const TYPE_OPTIONS = [
   { value: "link", label: "Посилання-кнопка" },
   { value: "fill_blank", label: "Заповніть пропуск" },
   { value: "letter_gaps", label: "Пропущені літери" },
+  { value: "letter_rearrangement", label: "Переставити літери" },
   { value: "multiple_choice", label: "Оберіть правильний варіант" },
   { value: "true_false", label: "Оберіть Vrai чи Faux" },
   { value: "matching", label: "З'єднайте елементи" },
@@ -745,6 +749,21 @@ export function TaskConfigFields({
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>) | null>}
           initialConfig={
             (pendingSeed?.forType === "letter_gaps" ? pendingSeed.config : initialConfig) as Partial<LetterGapsConfig>
+          }
+        />
+      )}
+
+      {type === "letter_rearrangement" && (
+        <LetterRearrangementFields
+          ref={
+            importRef as RefObject<
+              (ImportableFieldsHandle & TypeSwitchHandle<LetterRearrangementConfig>) | null
+            >
+          }
+          initialConfig={
+            (pendingSeed?.forType === "letter_rearrangement"
+              ? pendingSeed.config
+              : initialConfig) as Partial<LetterRearrangementConfig>
           }
         />
       )}

@@ -106,6 +106,19 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         points: Number(formData.get("letter_gaps_points")) || 1,
       };
     }
+    case "letter_rearrangement": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("letter_rearrangement_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("letter_rearrangement_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        words: parseJsonField(formData.get("letter_rearrangement_words")),
+        points: Number(formData.get("letter_rearrangement_points")) || 1,
+      };
+    }
     case "multiple_choice": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("mc_sub_instructions") as string) || ""

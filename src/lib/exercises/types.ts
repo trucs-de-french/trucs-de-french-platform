@@ -42,6 +42,24 @@ export type LetterGapsConfig = {
   points?: number;
 };
 
+// Переставити ВСЕ слово (не лише приховані позиції, як LetterGaps) —
+// hiddenIndices тут не потрібен. Перемішаний порядок для показу студенту
+// живе лише в Public-формі (shuffledLetters), не в конфігу — конфіг завжди
+// зберігає word у правильному порядку.
+export type LetterRearrangementWord = {
+  word: string;
+  hintType: "definition" | "sentence";
+  hintText: string;
+  imageUrl?: string;
+  audioUrl?: string;
+};
+export type LetterRearrangementConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  words: LetterRearrangementWord[];
+  points?: number;
+};
+
 // Звичайна відкрита відповідь з автоматичною текстовою перевіркою (без AI —
 // це essay_check). Нормалізація/порівняння — той самий принцип, що для
 // одного пропуску у fill_blank: правильно, якщо збігається з ОДНИМ з answers
@@ -362,6 +380,24 @@ export type LetterGapsPublic = {
   points: number;
 };
 
+// shuffledLetters — word.split("") перемішаний на сервері (sanitize.ts),
+// одне перемішування на показ. Порівняння при перевірці — позиційне за
+// значенням (як ReorderAnswer), не за identity літери, тож дублікати літер
+// (напр. "chocolat") коректно обробляються без додаткової розмітки.
+export type LetterRearrangementPublicWord = {
+  shuffledLetters: string[];
+  hintType: "definition" | "sentence";
+  hintText: string;
+  imageUrl?: string;
+  audioUrl?: string;
+};
+export type LetterRearrangementPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  words: LetterRearrangementPublicWord[];
+  points: number;
+};
+
 export type MultipleChoicePublic = {
   instructions?: string;
   subInstructions?: string;
@@ -468,6 +504,10 @@ export type FillBlankAnswer = string[]; // по одному рядку на п�
 // Зовнішній масив — по слову, у порядку config.words; внутрішній — по
 // одній літері на кожну приховану позицію, зліва направо.
 export type LetterGapsAnswer = string[][];
+// Той самий принцип — за індексом слова, не id (LetterRearrangementWord теж
+// без id). Внутрішній масив — поточне (переставлене студентом) розташування
+// ВСІХ літер слова, а не лише прихованих.
+export type LetterRearrangementAnswer = string[][];
 export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
@@ -489,6 +529,12 @@ export type FillBlankDetail = {
 
 export type LetterGapsDetail = {
   words: { studentLetters: string[]; correctLetters: string[]; isCorrect: boolean }[];
+};
+
+// letters[i].correctIndex === i завжди (масив побудований по позиції, як
+// ReorderDetail.items) — SwappableTileRow індексує напряму, без пошуку.
+export type LetterRearrangementDetail = {
+  words: { letters: { text: string; correctIndex: number; isCorrect: boolean }[]; isCorrect: boolean }[];
 };
 
 export type MultipleChoiceDetail = {
@@ -627,6 +673,7 @@ export type ChronologicalOrderDetail = {
 export type GradeResult =
   | { correct: boolean; score: number; detail: FillBlankDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: LetterGapsDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: LetterRearrangementDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }

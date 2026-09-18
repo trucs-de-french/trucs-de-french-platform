@@ -3,6 +3,8 @@ import type {
   FillBlankPublic,
   LetterGapsConfig,
   LetterGapsPublic,
+  LetterRearrangementConfig,
+  LetterRearrangementPublic,
   MultipleChoiceConfig,
   MultipleChoicePublic,
   MultipleChoiceItem,
@@ -86,6 +88,29 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
     points: resolveLetterGapsPoints(config),
     words: config.words.map((w) => ({
       chars: w.word.split("").map((c, i) => (w.hiddenIndices.includes(i) ? null : c)),
+      hintType: w.hintType,
+      hintText: w.hintText,
+      imageUrl: w.imageUrl,
+      audioUrl: w.audioUrl,
+    })),
+  };
+}
+
+export function resolveLetterRearrangementPoints(config: LetterRearrangementConfig): number {
+  return config.points ?? 1;
+}
+
+// shuffle() — той самий Fisher-Yates, що вже sanitizeReorder — одне
+// перемішування на кожен виклик sanitize (тобто на кожен SSR-рендер
+// студентської сторінки), не збережене в БД. Успадковує ту саму властивість
+// reorder: теоретично може випадково повернути вже правильний порядок.
+export function sanitizeLetterRearrangement(config: LetterRearrangementConfig): LetterRearrangementPublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    points: resolveLetterRearrangementPoints(config),
+    words: config.words.map((w) => ({
+      shuffledLetters: shuffle(w.word.split("")),
       hintType: w.hintType,
       hintText: w.hintText,
       imageUrl: w.imageUrl,
@@ -392,6 +417,8 @@ export function sanitizeConfigForStudent(
       return sanitizeFillBlank(config as unknown as FillBlankConfig);
     case "letter_gaps":
       return sanitizeLetterGaps(config as unknown as LetterGapsConfig);
+    case "letter_rearrangement":
+      return sanitizeLetterRearrangement(config as unknown as LetterRearrangementConfig);
     case "multiple_choice":
       return sanitizeMultipleChoice(config as unknown as MultipleChoiceConfig);
     case "true_false":

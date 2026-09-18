@@ -17,6 +17,7 @@ import {
   resolveMatchingPoints,
   resolveFillBlankPoints,
   resolveLetterGapsPoints,
+  resolveLetterRearrangementPoints,
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
 } from "./sanitize";
@@ -27,6 +28,9 @@ import type {
   LetterGapsConfig,
   LetterGapsAnswer,
   LetterGapsDetail,
+  LetterRearrangementConfig,
+  LetterRearrangementAnswer,
+  LetterRearrangementDetail,
   MultipleChoiceConfig,
   MultipleChoiceAnswer,
   MultipleChoiceDetail,
@@ -121,6 +125,40 @@ function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): Gr
   const correctCount = words.filter((w) => w.isCorrect).length;
   const correct = correctCount === words.length && words.length > 0;
   const points = resolveLetterGapsPoints(config);
+
+  return {
+    correct,
+    score: percentage(correctCount, words.length),
+    detail: { words },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
+  };
+}
+
+// Той самий принцип, що gradeReorder: порівняння ПОЗИЦІЙНЕ (studentOrder[i]
+// === correctWord[i]), не пошуком значення — коректно для дублікатів літер
+// (напр. "chocolat"), без додаткової розмітки identity. Без normalize() —
+// на відміну від gradeLetterGaps, студент тут не типить, а лише пересуває
+// вже готові плитки з точними символами, регістр не є UX-невизначеністю.
+// Один бал на все завдання (як gradeLetterGaps), не на слово.
+function gradeLetterRearrangement(
+  config: LetterRearrangementConfig,
+  answer: LetterRearrangementAnswer
+): GradeResult {
+  const words: LetterRearrangementDetail["words"] = config.words.map((w, wi) => {
+    const correctWord = w.word.split("");
+    const studentOrder = answer[wi] ?? [];
+    const letters = correctWord.map((text, correctIndex) => ({
+      text,
+      correctIndex,
+      isCorrect: studentOrder[correctIndex] === text,
+    }));
+    return { letters, isCorrect: letters.every((l) => l.isCorrect) };
+  });
+
+  const correctCount = words.filter((w) => w.isCorrect).length;
+  const correct = correctCount === words.length && words.length > 0;
+  const points = resolveLetterRearrangementPoints(config);
 
   return {
     correct,
@@ -581,6 +619,11 @@ export function gradeAnswer(
       return gradeFillBlank(config as unknown as FillBlankConfig, answer as FillBlankAnswer);
     case "letter_gaps":
       return gradeLetterGaps(config as unknown as LetterGapsConfig, answer as LetterGapsAnswer);
+    case "letter_rearrangement":
+      return gradeLetterRearrangement(
+        config as unknown as LetterRearrangementConfig,
+        answer as LetterRearrangementAnswer
+      );
     case "multiple_choice":
       return gradeMultipleChoice(
         config as unknown as MultipleChoiceConfig,

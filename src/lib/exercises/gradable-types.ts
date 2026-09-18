@@ -18,6 +18,7 @@ export const GRADABLE_TASK_TYPES = [
   "checkbox_grid",
   "chronological_order",
   "letter_gaps",
+  "letter_rearrangement",
 ] as const;
 
 export type GradableTaskType = (typeof GRADABLE_TASK_TYPES)[number];
@@ -55,6 +56,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "checkbox_grid",
   "chronological_order",
   "letter_gaps",
+  "letter_rearrangement",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

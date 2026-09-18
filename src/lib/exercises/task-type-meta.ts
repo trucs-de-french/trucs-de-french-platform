@@ -103,6 +103,17 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-lime-500",
     shadow: "shadow-lime-100/50",
   },
+  // 25-й тип, палітра з 16 кольорів так само вичерпана. Ділить emerald із
+  // flip_cards (reference, картки-довідник) — не з іншим auto_graded-типом,
+  // той самий принцип, що letter_gaps/callout.
+  letter_rearrangement: {
+    stripe: "border-l-4 border-l-emerald-500",
+    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+    iconBorder: "border-emerald-500",
+    iconText: "text-emerald-500",
+    shadow: "shadow-emerald-100/50",
+  },
   multiple_choice: {
     stripe: "border-l-4 border-l-indigo-500",
     badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
@@ -296,6 +307,7 @@ export const TASK_TYPE_COLORS: Record<
 export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   fill_blank: "auto_graded",
   letter_gaps: "auto_graded",
+  letter_rearrangement: "auto_graded",
   multiple_choice: "auto_graded",
   true_false: "auto_graded",
   matching: "auto_graded",
@@ -354,12 +366,14 @@ import {
   Headphones,
   CircleAlert,
   Video,
+  Shuffle,
   type LucideIcon,
 } from "lucide-react";
 
 export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   fill_blank: PenLine,
   letter_gaps: SpellCheck,
+  letter_rearrangement: Shuffle,
   multiple_choice: ListChecks,
   true_false: SquareCheck,
   matching: ArrowLeftRight,

@@ -13,6 +13,7 @@ import type {
   CheckboxGridPublic,
   ChronologicalOrderPublic,
   LetterGapsPublic,
+  LetterRearrangementPublic,
   GradeResult,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
@@ -30,6 +31,7 @@ import { ImageMatchExercise } from "./image-match";
 import { CheckboxGridExercise } from "./checkbox-grid";
 import { ChronologicalOrderExercise } from "./chronological-order";
 import { LetterGapsExercise } from "./letter-gaps";
+import { LetterRearrangementExercise } from "./letter-rearrangement";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -71,6 +73,16 @@ export function ExerciseCard({
         <LetterGapsExercise
           taskId={taskId}
           config={config as unknown as LetterGapsPublic}
+          pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
+          hidePoints={hidePoints}
+        />
+      );
+    case "letter_rearrangement":
+      return (
+        <LetterRearrangementExercise
+          taskId={taskId}
+          config={config as unknown as LetterRearrangementPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, type DragEvent } from "react";
+import { useState, useEffect } from "react";
 import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { SwappableTileRow } from "./swappable-tile-row";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 
@@ -12,10 +12,9 @@ type SequenceDetail = ReorderDetail["sequences"][number];
 
 // Один ряд плиток у перемішаному порядку — жодного окремого банку чи
 // порожніх слотів (на відміну від drag_drop, де банк доречний через текст
-// із пропусками). Клік/drag однієї плитки на іншу міняє їх місцями напряму
-// в цьому ж ряду. Контрольований компонент — батько (ReorderExercise) тримає
-// поточний порядок кожної послідовності, тут лише локальний UI-стан
-// (виділення/drag-hover), непотрібний при сабміті.
+// із пропусками). Сам DnD/click-swap — у спільному SwappableTileRow
+// (той самий код, що й letter_rearrangement). Контрольований компонент —
+// батько (ReorderExercise) тримає поточний порядок кожної послідовності.
 function ReorderSequenceTiles({
   order,
   onChange,
@@ -33,42 +32,11 @@ function ReorderSequenceTiles({
   pointsVisible: boolean;
   hidePoints?: boolean;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  function swap(i: number, j: number) {
-    if (locked || i === j) return;
-    const next = [...order];
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange(next);
-  }
-
-  function clickTile(i: number) {
-    if (locked) return;
-    if (selected === null) {
-      setSelected(i);
-    } else if (selected === i) {
-      setSelected(null);
-    } else {
-      swap(selected, i);
-      setSelected(null);
-    }
-  }
-
-  function tileClass(i: number, text: string) {
-    if (detail) {
-      const match = detail.items.find((x) => x.text === text && x.studentIndex === i);
-      return match?.isCorrect
-        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-        : "border-red-500 bg-red-50 dark:bg-red-950/30";
-    }
-    if (selected === i) {
-      return SELECTED_OPTION_CLASS;
-    }
-    if (dragOverIndex === i) {
-      return "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30";
-    }
-    return "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+  // detail.items[i].correctIndex === i завжди (масив побудований по
+  // позиції) — пряма індексація, не пошук за текстом/studentIndex.
+  function tileState(i: number): "correct" | "incorrect" | undefined {
+    if (!detail) return undefined;
+    return detail.items[i]?.isCorrect ? "correct" : "incorrect";
   }
 
   // До перевірки — лише якщо pointsVisible; після — завжди. Бали
@@ -85,34 +53,7 @@ function ReorderSequenceTiles({
             : `${points} ${pluralizePoints(points)}`}
         </p>
       )}
-      <div className="flex flex-wrap gap-2">
-        {order.map((text, i) => (
-          <button
-            key={i}
-            type="button"
-            draggable={!locked}
-            onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", String(i))}
-            onDragOver={(e: DragEvent) => e.preventDefault()}
-            onDragEnter={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOverIndex(i);
-            }}
-            onDragLeave={() => setDragOverIndex((prev) => (prev === i ? null : prev))}
-            onDragEnd={() => setDragOverIndex(null)}
-            onDrop={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOverIndex(null);
-              const from = Number(e.dataTransfer.getData("text/plain"));
-              if (!Number.isNaN(from)) swap(from, i);
-            }}
-            onClick={() => clickTile(i)}
-            disabled={locked}
-            className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i, text)}`}
-          >
-            {text}
-          </button>
-        ))}
-      </div>
+      <SwappableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
 
       {detail && (
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
