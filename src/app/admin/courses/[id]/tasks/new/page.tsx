@@ -26,10 +26,37 @@ export default async function NewTaskPage({
   const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber, anchor } = await searchParams;
 
   const supabase = await createClient();
+
+  // sceneId відсутній у URL, коли завдання створюється через "+ Нова
+  // задача" в прикріпленому блоці вправ додаткового content-блоку чи
+  // "+ Нова задача в блоці" (обидва передають лише taskGroupId) — але
+  // сцена, якій належить група, однозначно відома на сервері (напряму або
+  // через scene_content_block). Той самий двоступеневий резолв, що вже й у
+  // createTask -> resolveTaskParentPath (admin/tasks/actions.ts), лише в
+  // інший бік — тут для sceneVocab, там для шляху редиректу.
+  let effectiveSceneId = sceneId ?? null;
+  if (!effectiveSceneId && taskGroupId) {
+    const { data: group } = await supabase
+      .from("task_groups")
+      .select("scene_id, scene_content_block_id")
+      .eq("id", taskGroupId)
+      .single();
+    if (group?.scene_id) {
+      effectiveSceneId = group.scene_id;
+    } else if (group?.scene_content_block_id) {
+      const { data: contentBlock } = await supabase
+        .from("scene_content_blocks")
+        .select("scene_id")
+        .eq("id", group.scene_content_block_id)
+        .single();
+      effectiveSceneId = contentBlock?.scene_id ?? null;
+    }
+  }
+
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
     supabase.from("scenes").select("id, title").eq("product_id", productId).order("order_index"),
-    sceneId
-      ? supabase.from("scenes").select("dialogue").eq("id", sceneId).single()
+    effectiveSceneId
+      ? supabase.from("scenes").select("dialogue").eq("id", effectiveSceneId).single()
       : Promise.resolve({ data: null }),
     supabase.from("products").select("type").eq("id", productId).single(),
   ]);
