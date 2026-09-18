@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { LetterGapsConfig, LetterGapsWord } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -110,7 +111,7 @@ function LetterGapsWordRow({
 }
 
 export const LetterGapsFields = forwardRef<
-  TypeSwitchHandle<LetterGapsConfig>,
+  ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>,
   { initialConfig?: Partial<LetterGapsConfig> }
 >(function LetterGapsFields({ initialConfig }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
@@ -120,6 +121,25 @@ export const LetterGapsFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
+    // Плаский тип, як sort_columns/reorder/checkbox_grid — беремо лише
+    // французьке слово, переклад ігноруємо. hiddenIndices порожній і
+    // hintText порожній навмисно: вчителька клікає літери й вписує підказку
+    // вручну вже ПІСЛЯ імпорту.
+    importWords(imported) {
+      setWords((prev) => {
+        const withoutEmpty = prev.filter((w) => w.word.trim());
+        return [
+          ...withoutEmpty,
+          ...imported.map((w) => ({
+            id: crypto.randomUUID(),
+            word: w.word,
+            hiddenIndices: [],
+            hintType: "definition" as const,
+            hintText: "",
+          })),
+        ];
+      });
+    },
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,

@@ -71,6 +71,7 @@ const IMPORT_ENABLED_TYPES = [
   "image_match",
   "checkbox_grid",
   "chronological_order",
+  "letter_gaps",
 ];
 
 // Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
@@ -741,7 +742,7 @@ export function TaskConfigFields({
 
       {type === "letter_gaps" && (
         <LetterGapsFields
-          ref={typeSwitchRef as RefObject<TypeSwitchHandle<LetterGapsConfig> | null>}
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>) | null>}
           initialConfig={
             (pendingSeed?.forType === "letter_gaps" ? pendingSeed.config : initialConfig) as Partial<LetterGapsConfig>
           }
