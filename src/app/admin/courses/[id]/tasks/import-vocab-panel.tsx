@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { VocabItem } from "@/lib/vocab";
+import { firstVocabVariant, type VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -56,7 +56,7 @@ export function ImportVocabPanel({
     // заповнене в редакторі скрипту сцени (dialogue-editor.tsx).
     onImport(
       selected.map((v) => ({
-        word: v.word,
+        word: firstVocabVariant(v.word),
         translation: v.translation,
         image_url: (v as VocabItem).image_url,
       }))
@@ -77,7 +77,7 @@ export function ImportVocabPanel({
             <label key={v.word} className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={checked.has(v.word)} onChange={() => toggle(v.word)} />
               <span>
-                {v.word} — {v.translation}
+                {firstVocabVariant(v.word)} — {v.translation}
               </span>
             </label>
           ))}
@@ -150,7 +150,7 @@ export function ImportVocabPanel({
             </p>
             {selected.map((v, i) => (
               <p key={i}>
-                {v.word} — {v.translation}
+                {firstVocabVariant(v.word)} — {v.translation}
               </p>
             ))}
           </div>
