@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Image as ImageIcon, Volume2 } from "lucide-react";
 
 type UploadKind = "audio" | "image" | "html";
 
@@ -15,6 +15,16 @@ const LABEL_BY_KIND: Record<UploadKind, string> = {
   audio: "📎 Завантажити аудіо",
   image: "📎 Завантажити зображення",
   html: "📎 Завантажити HTML-гру",
+};
+
+// Лише variant="icon" — коли поруч на одному рядку є і картинка, і аудіо
+// (напр. letter_gaps), однакова скрепка для обох робила пари нерозрізненими
+// без кліку. Link2 (посилання) лишається спільним для всіх kind — це
+// універсальна дія, не специфічна для типу файлу.
+const ICON_BY_KIND: Record<UploadKind, typeof Paperclip> = {
+  audio: Volume2,
+  image: ImageIcon,
+  html: Paperclip,
 };
 
 // Лише для kind="html" — самодостатня гра/вправа, не файл довільного
@@ -146,6 +156,8 @@ export function FileUpload({
     }
   }
 
+  const UploadIcon = ICON_BY_KIND[kind];
+
   return (
     <div className="flex flex-col gap-1">
       {/* sr-only, не hidden — приховано лише візуально, лишається доступним
@@ -179,7 +191,7 @@ export function FileUpload({
               }`
         }
       >
-        {variant === "icon" ? <Paperclip size={16} /> : LABEL_BY_KIND[kind]}
+        {variant === "icon" ? <UploadIcon size={16} /> : LABEL_BY_KIND[kind]}
       </label>
       {status === "uploading" && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
