@@ -67,7 +67,15 @@ const IMPORT_ENABLED_TYPES = [
   "reorder",
   "table_fill",
   "image_match",
+  "checkbox_grid",
+  "chronological_order",
 ];
+
+// Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
+// плаский список слів) — ImportVocabPanel дозволяє позначити фр/укр
+// незалежно лише для цих трьох, решта IMPORT_ENABLED_TYPES ігнорують
+// переклад узагалі.
+const PAIR_TYPES = ["matching", "table_fill", "flip_cards"];
 
 const TYPE_OPTIONS = [
   { value: "game", label: "Гра" },
@@ -265,15 +273,15 @@ export function TaskConfigFields({
       type === "matching" ||
       type === "table_fill" ||
       type === "drag_drop" ||
-      type === "flip_cards"
+      type === "flip_cards" ||
+      type === "checkbox_grid" ||
+      type === "chronological_order"
     ) {
       return importRef.current?.getValue?.();
     }
     if (
       type === "multiple_choice" ||
       type === "listening" ||
-      type === "chronological_order" ||
-      type === "checkbox_grid" ||
       type === "phonetics"
     ) {
       return typeSwitchRef.current?.getValue?.();
@@ -752,6 +760,7 @@ export function TaskConfigFields({
               : (sceneVocab ?? [])
           }
           onImport={(words) => importRef.current?.importWords(words)}
+          pairMode={PAIR_TYPES.includes(type)}
         />
       )}
 
@@ -851,7 +860,7 @@ export function TaskConfigFields({
 
       {type === "checkbox_grid" && (
         <CheckboxGridFields
-          ref={typeSwitchRef as RefObject<TypeSwitchHandle<CheckboxGridConfig> | null>}
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<CheckboxGridConfig>) | null>}
           initialConfig={
             (pendingSeed?.forType === "checkbox_grid" ? pendingSeed.config : initialConfig) as Partial<CheckboxGridConfig>
           }
@@ -860,7 +869,7 @@ export function TaskConfigFields({
 
       {type === "chronological_order" && (
         <ChronologicalOrderFields
-          ref={typeSwitchRef as RefObject<TypeSwitchHandle<ChronologicalOrderConfig> | null>}
+          ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>) | null>}
           initialConfig={
             (pendingSeed?.forType === "chronological_order"
               ? pendingSeed.config

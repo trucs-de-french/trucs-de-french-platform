@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -115,7 +116,7 @@ function ChronologicalOrderItemRow({
 }
 
 export const ChronologicalOrderFields = forwardRef<
-  TypeSwitchHandle<ChronologicalOrderConfig>,
+  ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>,
   { initialConfig?: Partial<ChronologicalOrderConfig> }
 >(function ChronologicalOrderFields({ initialConfig }, ref) {
   const [mode, setMode] = useState<"image" | "text">(initialConfig?.mode ?? "image");
@@ -124,6 +125,16 @@ export const ChronologicalOrderFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
+    // Розраховано на текстовий режим (mode==="text") — той самий плоский
+    // патерн, що вже reorder/sort_columns. У режимі "Зображення" імпорт
+    // так само технічно спрацює, лише підставить слово як текст у поле URL
+    // (не варте, окремої перевірки для одного крайнього випадку).
+    importWords(words) {
+      setItems((prev) => {
+        const withoutEmpty = prev.filter((it) => it.content.trim());
+        return [...withoutEmpty, ...words.map((w) => ({ id: crypto.randomUUID(), content: w.word }))];
+      });
+    },
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,

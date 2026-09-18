@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -13,7 +14,7 @@ function emptyRow(): CheckboxGridRow {
 }
 
 export const CheckboxGridFields = forwardRef<
-  TypeSwitchHandle<CheckboxGridConfig>,
+  ImportableFieldsHandle & TypeSwitchHandle<CheckboxGridConfig>,
   { initialConfig?: Partial<CheckboxGridConfig> }
 >(function CheckboxGridFields({ initialConfig }, ref) {
   const [columns, setColumns] = useState<CheckboxGridColumn[]>(
@@ -29,6 +30,15 @@ export const CheckboxGridFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
+    importWords(words) {
+      setRows((prev) => {
+        const withoutEmpty = prev.filter((r) => r.label.trim());
+        return [
+          ...withoutEmpty,
+          ...words.map((w) => ({ id: crypto.randomUUID(), label: w.word, correctColumnIds: [] })),
+        ];
+      });
+    },
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,

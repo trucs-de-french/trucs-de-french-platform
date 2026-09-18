@@ -6,23 +6,46 @@ import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
+type ImportedWord = { word: string; translation: string; image_url?: string };
+
 // onImport відсутній -> "довідковий" режим (напр. fill_blank): показує
 // обрані терміни текстом для ручного копіювання в шаблон, без кнопки
 // імпорту й без зміни конфігу.
+//
+// pairMode — для типів, де ціль імпорту очікує ПАРУ word+translation разом
+// (matching/table_fill/flip_cards): дозволяє позначити лише одну колонку
+// (напр. тільки французьке слово) — інша сторона піде порожнім рядком,
+// вчителька дописує вручну. Для плоских типів (drag_drop/sort_columns/
+// reorder/image_match/checkbox_grid/chronological_order, за замовчуванням
+// pairMode=false) переклад узагалі не бере участі в імпорті — права колонка
+// й надалі клікабельна, просто нічого не змінює (найпростіший варіант —
+// без disabled/вимкнення).
 export function ImportVocabPanel({
   sceneVocab,
   onImport,
+  pairMode = false,
 }: {
   sceneVocab: VocabItem[];
-  onImport?: (words: { word: string; translation: string; image_url?: string }[]) => void;
+  onImport?: (words: ImportedWord[]) => void;
+  pairMode?: boolean;
 }) {
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [checkedFr, setCheckedFr] = useState<Set<string>>(new Set());
+  const [checkedUk, setCheckedUk] = useState<Set<string>>(new Set());
   const [customWord, setCustomWord] = useState("");
   const [customTranslation, setCustomTranslation] = useState("");
   const [custom, setCustom] = useState<{ word: string; translation: string }[]>([]);
 
-  function toggle(word: string) {
-    setChecked((prev) => {
+  function toggleFr(word: string) {
+    setCheckedFr((prev) => {
+      const next = new Set(prev);
+      if (next.has(word)) next.delete(word);
+      else next.add(word);
+      return next;
+    });
+  }
+
+  function toggleUk(word: string) {
+    setCheckedUk((prev) => {
       const next = new Set(prev);
       if (next.has(word)) next.delete(word);
       else next.add(word);
@@ -44,24 +67,32 @@ export function ImportVocabPanel({
     setCustom((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  const selected = [
-    ...sceneVocab.filter((v) => checked.has(v.word)),
-    ...custom,
-  ];
+  // Плоскі типи: лише позначені французькі слова (checkedUk не впливає).
+  // Парні типи: об'єднання обох колонок за спільним word-індексом —
+  // непозначена сторона піде порожнім рядком, а не парою з чужого рядка.
+  const fromScene: ImportedWord[] = pairMode
+    ? sceneVocab
+        .filter((v) => checkedFr.has(v.word) || checkedUk.has(v.word))
+        .map((v) => ({
+          word: checkedFr.has(v.word) ? firstVocabVariant(v.word) : "",
+          translation: checkedUk.has(v.word) ? v.translation : "",
+          image_url: v.image_url,
+        }))
+    : sceneVocab
+        .filter((v) => checkedFr.has(v.word))
+        .map((v) => ({
+          word: firstVocabVariant(v.word),
+          translation: v.translation,
+          image_url: v.image_url,
+        }));
+
+  const selected: ImportedWord[] = [...fromScene, ...custom];
 
   function handleImport() {
     if (selected.length === 0 || !onImport) return;
-    // custom-терміни (вписані вручну тут же) не мають image_url — це поле
-    // передається лише для елементів з sceneVocab, де воно вже могло бути
-    // заповнене в редакторі скрипту сцени (dialogue-editor.tsx).
-    onImport(
-      selected.map((v) => ({
-        word: firstVocabVariant(v.word),
-        translation: v.translation,
-        image_url: (v as VocabItem).image_url,
-      }))
-    );
-    setChecked(new Set());
+    onImport(selected);
+    setCheckedFr(new Set());
+    setCheckedUk(new Set());
     setCustom([]);
   }
 
@@ -73,13 +104,29 @@ export function ImportVocabPanel({
 
       {sceneVocab.length > 0 ? (
         <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <span>Французька</span>
+            <span>Переклад</span>
+          </div>
           {sceneVocab.map((v) => (
-            <label key={v.word} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={checked.has(v.word)} onChange={() => toggle(v.word)} />
-              <span>
-                {firstVocabVariant(v.word)} — {v.translation}
-              </span>
-            </label>
+            <div key={v.word} className="grid grid-cols-2 gap-2 text-sm">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={checkedFr.has(v.word)}
+                  onChange={() => toggleFr(v.word)}
+                />
+                <span>{firstVocabVariant(v.word)}</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={checkedUk.has(v.word)}
+                  onChange={() => toggleUk(v.word)}
+                />
+                <span>{v.translation}</span>
+              </label>
+            </div>
           ))}
         </div>
       ) : (
@@ -150,7 +197,7 @@ export function ImportVocabPanel({
             </p>
             {selected.map((v, i) => (
               <p key={i}>
-                {firstVocabVariant(v.word)} — {v.translation}
+                {v.word} — {v.translation}
               </p>
             ))}
           </div>
