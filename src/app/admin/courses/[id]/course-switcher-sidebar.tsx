@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Clapperboard,
   ChevronDown,
@@ -31,6 +31,14 @@ export function CourseSwitcherSidebar({
   currentCourseId: string;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // Сторінки типу /tasks/new не мають власного href, що збігається з
+  // жодною сценою/тестом (сам маршрут завжди один і той самий), але
+  // приходять з ?sceneId=/?delfTestNumber= — той самий id, що вже key
+  // пункту сайдбару. Без прив'язки до конкретного шаблону шляху: будь-яка
+  // сторінка, що дотримується цієї ж угоди про query-параметри, підсвітиться
+  // так само.
+  const activeKey = searchParams.get("sceneId") ?? searchParams.get("delfTestNumber");
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   // Поточний курс розгорнутий одразу — користувач і так у ньому; можна
@@ -90,6 +98,7 @@ export function CourseSwitcherSidebar({
         courses={film}
         currentCourseId={currentCourseId}
         pathname={pathname}
+        activeKey={activeKey}
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
@@ -100,6 +109,7 @@ export function CourseSwitcherSidebar({
         courses={delf}
         currentCourseId={currentCourseId}
         pathname={pathname}
+        activeKey={activeKey}
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         onNavigate={() => setMobileOpen(false)}
@@ -159,6 +169,7 @@ function CourseGroup({
   courses,
   currentCourseId,
   pathname,
+  activeKey,
   expanded,
   onToggleExpanded,
   onNavigate,
@@ -168,6 +179,7 @@ function CourseGroup({
   courses: SidebarCourse[];
   currentCourseId: string;
   pathname: string;
+  activeKey: string | null;
   expanded: Set<string>;
   onToggleExpanded: (id: string) => void;
   onNavigate: () => void;
@@ -215,7 +227,7 @@ function CourseGroup({
                         href={child.href}
                         onClick={onNavigate}
                         className={`block truncate rounded-md px-2 py-1 text-xs ${
-                          pathname === child.href
+                          pathname === child.href || (activeKey !== null && activeKey === child.key)
                             ? "bg-brand/10 font-medium text-brand"
                             : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-900/50 dark:hover:text-neutral-200"
                         }`}

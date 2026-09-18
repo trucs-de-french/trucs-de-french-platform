@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createTask } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -51,6 +52,22 @@ export default async function NewTaskPage({
         .single();
       effectiveSceneId = contentBlock?.scene_id ?? null;
     }
+  }
+
+  // Резолвлений через taskGroupId sceneId відсутній у самому URL — сайдбар
+  // (CourseSwitcherSidebar) підсвічує активну сцену через useSearchParams()
+  // на клієнті, тож без sceneId у query він нізвідки його не візьме.
+  // Один зайвий redirect-хоп лише для цього входу (блок без прямого
+  // sceneId) — після нього sceneId уже в URL, повторного редіректу не буде.
+  if (!sceneId && effectiveSceneId) {
+    const params = new URLSearchParams();
+    params.set("sceneId", effectiveSceneId);
+    if (materialId) params.set("materialId", materialId);
+    if (taskGroupId) params.set("taskGroupId", taskGroupId);
+    if (delfSection) params.set("delfSection", delfSection);
+    if (delfTestNumber) params.set("delfTestNumber", delfTestNumber);
+    if (anchor) params.set("anchor", anchor);
+    redirect(`/admin/courses/${productId}/tasks/new?${params.toString()}`);
   }
 
   const [{ data: scenes }, { data: sceneRow }, { data: product }] = await Promise.all([
