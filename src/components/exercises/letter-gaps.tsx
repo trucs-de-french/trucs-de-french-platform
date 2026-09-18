@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 
 export function LetterGapsExercise({
   taskId,
@@ -71,6 +72,16 @@ export function LetterGapsExercise({
           const wordDetail = detail?.words[wi];
           return (
             <div key={wi}>
+              {word.imageUrl && (
+                <ImageOrPlaceholder
+                  src={word.imageUrl}
+                  alt=""
+                  className="mb-1 h-20 w-20 rounded object-cover"
+                />
+              )}
+              {word.audioUrl && (
+                <audio controls src={word.audioUrl} className="mb-1 h-8 w-full max-w-xs" />
+              )}
               <p className="text-sm italic text-neutral-500 dark:text-neutral-400">
                 {word.hintType === "definition" ? "Визначення: " : "Речення: "}
                 {word.hintText}

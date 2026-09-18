@@ -6,17 +6,34 @@ import type { LetterGapsConfig, LetterGapsWord } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { useFileOrLink } from "@/components/file-or-link-field";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 type EditableWord = LetterGapsWord & { id: string };
 
 function emptyWord(): EditableWord {
-  return { id: crypto.randomUUID(), word: "", hiddenIndices: [], hintType: "definition", hintText: "" };
+  return {
+    id: crypto.randomUUID(),
+    word: "",
+    hiddenIndices: [],
+    hintType: "definition",
+    hintText: "",
+    imageUrl: "",
+    audioUrl: "",
+  };
 }
 
 function stripId(w: EditableWord): LetterGapsWord {
-  return { word: w.word, hiddenIndices: w.hiddenIndices, hintType: w.hintType, hintText: w.hintText };
+  return {
+    word: w.word,
+    hiddenIndices: w.hiddenIndices,
+    hintType: w.hintType,
+    hintText: w.hintText,
+    imageUrl: w.imageUrl,
+    audioUrl: w.audioUrl,
+  };
 }
 
 // Окремий компонент на рядок-слово (не інлайн у .map()) — той самий
@@ -28,6 +45,8 @@ function LetterGapsWordRow({
   onToggleIndex,
   onUpdateHintType,
   onUpdateHintText,
+  onUpdateImageUrl,
+  onUpdateAudioUrl,
   onRemove,
 }: {
   wordItem: EditableWord;
@@ -35,8 +54,25 @@ function LetterGapsWordRow({
   onToggleIndex: (index: number) => void;
   onUpdateHintType: (value: "definition" | "sentence") => void;
   onUpdateHintText: (value: string) => void;
+  onUpdateImageUrl: (url: string) => void;
+  onUpdateAudioUrl: (url: string) => void;
   onRemove: () => void;
 }) {
+  const image = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: wordItem.imageUrl ?? "",
+    onChange: onUpdateImageUrl,
+    placeholder: "Картинка (URL, необов'язково)",
+  });
+  const audio = useFileOrLink({
+    kind: "audio",
+    mode: "controlled",
+    value: wordItem.audioUrl ?? "",
+    onChange: onUpdateAudioUrl,
+    placeholder: "Аудіо (URL, необов'язково)",
+  });
+
   return (
     <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
       <div className="flex items-center gap-2">
@@ -46,6 +82,8 @@ function LetterGapsWordRow({
           placeholder="Слово"
           className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
+        {image.icons}
+        {audio.icons}
         <button
           type="button"
           onClick={onRemove}
@@ -56,6 +94,22 @@ function LetterGapsWordRow({
           <Trash2 size={16} />
         </button>
       </div>
+
+      {(image.input || audio.input) && (
+        <div className="flex flex-wrap items-start gap-2">
+          {image.input && (
+            <div className="flex items-start gap-1">
+              {image.input}
+              <ImageOrPlaceholder
+                src={wordItem.imageUrl}
+                alt="Прев'ю"
+                className="h-12 w-12 shrink-0 rounded object-cover"
+              />
+            </div>
+          )}
+          {audio.input && <div className="flex-1">{audio.input}</div>}
+        </div>
+      )}
 
       {wordItem.word && (
         <div className="flex flex-wrap gap-0.5">
@@ -192,6 +246,14 @@ export const LetterGapsFields = forwardRef<
     setWords((prev) => prev.map((w) => (w.id === id ? { ...w, hintText: value } : w)));
   }
 
+  function updateImageUrl(id: string, value: string) {
+    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, imageUrl: value } : w)));
+  }
+
+  function updateAudioUrl(id: string, value: string) {
+    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, audioUrl: value } : w)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input
@@ -222,6 +284,8 @@ export const LetterGapsFields = forwardRef<
           onToggleIndex={(index) => toggleIndex(w.id, index)}
           onUpdateHintType={(value) => updateHintType(w.id, value)}
           onUpdateHintText={(value) => updateHintText(w.id, value)}
+          onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}
+          onUpdateAudioUrl={(value) => updateAudioUrl(w.id, value)}
           onRemove={() => removeWord(w.id)}
         />
       ))}

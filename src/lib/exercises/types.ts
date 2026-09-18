@@ -32,6 +32,8 @@ export type LetterGapsWord = {
   hiddenIndices: number[];
   hintType: "definition" | "sentence";
   hintText: string;
+  imageUrl?: string;
+  audioUrl?: string;
 };
 export type LetterGapsConfig = {
   instructions?: string;
@@ -350,6 +352,8 @@ export type LetterGapsPublicWord = {
   chars: (string | null)[];
   hintType: "definition" | "sentence";
   hintText: string;
+  imageUrl?: string;
+  audioUrl?: string;
 };
 export type LetterGapsPublic = {
   instructions?: string;

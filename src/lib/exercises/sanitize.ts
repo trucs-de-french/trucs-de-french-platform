@@ -88,6 +88,8 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
       chars: w.word.split("").map((c, i) => (w.hiddenIndices.includes(i) ? null : c)),
       hintType: w.hintType,
       hintText: w.hintText,
+      imageUrl: w.imageUrl,
+      audioUrl: w.audioUrl,
     })),
   };
 }
