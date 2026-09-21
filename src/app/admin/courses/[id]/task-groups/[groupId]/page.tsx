@@ -168,6 +168,8 @@ export default async function EditTaskGroupPage({
           groupId={group.id}
           productId={productId}
           initialMembers={members ?? []}
+          sceneId={effectiveSceneId}
+          delfTestNumber={group.delf_test_number}
         />
 
         {candidates && candidates.length > 0 && (

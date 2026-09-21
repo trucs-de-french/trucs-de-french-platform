@@ -436,6 +436,7 @@ export default async function AdminScenePage({
           groupId={attachedGroup.id}
           productId={productId}
           initialMembers={membersByAttachedGroupId.get(attachedGroup.id) ?? []}
+          sceneId={sceneId}
         />
 
         {freeSceneTaskCandidates.length > 0 && (

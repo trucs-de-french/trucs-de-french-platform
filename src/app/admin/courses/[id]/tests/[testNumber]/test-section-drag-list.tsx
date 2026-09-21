@@ -286,7 +286,7 @@ export function TestSectionDragList({
                       {row.type}
                     </span>
                     <Link
-                      href={`/admin/courses/${productId}/tasks/${row.id}`}
+                      href={`/admin/courses/${productId}/tasks/${row.id}?delfTestNumber=${testNumber}`}
                       className="block text-base font-semibold hover:underline"
                     >
                       {row.title}

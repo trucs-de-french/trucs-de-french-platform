@@ -326,7 +326,7 @@ export function TaskDragList({
                       {row.type}
                     </span>
                     <Link
-                      href={`/admin/courses/${productId}/tasks/${row.id}`}
+                      href={`/admin/courses/${productId}/tasks/${row.id}?sceneId=${sceneId}`}
                       className="block text-base font-semibold hover:underline"
                     >
                       {row.title}

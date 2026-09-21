@@ -24,10 +24,19 @@ export function GroupMemberDragList({
   groupId,
   productId,
   initialMembers,
+  sceneId,
+  delfTestNumber,
 }: {
   groupId: string;
   productId: string;
   initialMembers: MemberRow[];
+  // Резолвлений батьківський контекст блоку (сцена/DELF-тест) — лише для
+  // підсвітки активної сцени/тесту в CourseSwitcherSidebar (query-параметр
+  // на посиланні задачі, той самий принцип, що task-drag-list.tsx/
+  // test-section-drag-list.tsx). Обидва опційні й взаємовиключні — блок
+  // може належати матеріалу, де підсвічувати нічого.
+  sceneId?: string | null;
+  delfTestNumber?: number | null;
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -85,6 +94,15 @@ export function GroupMemberDragList({
     }
   }
 
+  // Query-параметр лише для підсвітки в CourseSwitcherSidebar — той самий
+  // принцип, що task-drag-list.tsx/test-section-drag-list.tsx.
+  function taskHref(taskId: string) {
+    const base = `/admin/courses/${productId}/tasks/${taskId}`;
+    if (sceneId) return `${base}?sceneId=${sceneId}`;
+    if (delfTestNumber) return `${base}?delfTestNumber=${delfTestNumber}`;
+    return base;
+  }
+
   return (
     <div>
       {error && (
@@ -129,7 +147,7 @@ export function GroupMemberDragList({
                   {task.type}
                 </span>
                 <Link
-                  href={`/admin/courses/${productId}/tasks/${task.id}`}
+                  href={taskHref(task.id)}
                   className="block font-medium hover:underline"
                 >
                   {task.title}
