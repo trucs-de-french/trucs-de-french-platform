@@ -7,6 +7,7 @@ export const DEFAULT_INSTRUCTIONS = {
   fill_blank: "Заповніть пропуски",
   letter_gaps: "Впишіть пропущені літери",
   letter_rearrangement: "Переставте літери у правильному порядку",
+  word_choice: "Оберіть правильну форму в кожному реченні",
   multiple_choice: "Оберіть правильний варіант",
   true_false: "Оберіть, чи твердження правильне",
   matching: "З'єднайте слово з перекладом",

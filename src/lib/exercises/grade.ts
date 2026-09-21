@@ -18,6 +18,7 @@ import {
   resolveFillBlankPoints,
   resolveLetterGapsPoints,
   resolveLetterRearrangementPoints,
+  resolveWordChoicePoints,
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
 } from "./sanitize";
@@ -34,6 +35,9 @@ import type {
   MultipleChoiceConfig,
   MultipleChoiceAnswer,
   MultipleChoiceDetail,
+  WordChoiceConfig,
+  WordChoiceAnswer,
+  WordChoiceDetail,
   TrueFalseConfig,
   TrueFalseAnswer,
   TrueFalseDetail,
@@ -201,6 +205,42 @@ function gradeMultipleChoice(
     detail: { items: itemsDetail },
     pointsEarned,
     pointsPossible,
+  };
+}
+
+// Той самий принцип порівняння, що gradeMultipleChoice (options.every(o =>
+// o.correct === o.selected)) — це вже коректно звіряє МНОЖИНИ обраних/
+// правильних (не лише один-до-одного), тож підтримка кількох правильних на
+// речення не потребує нової логіки, лише Set замість одного id. Працює без
+// розгалуження по mode: студентський компонент сам звів обидва режими
+// (select/cross_out) до однієї selected[]-форми ще до сабміту. На відміну
+// від gradeMultipleChoice — бали НЕ на речення, а на всю вправу (як
+// gradeLetterGaps): зараховуються цілком, лише якщо ВСІ речення правильні;
+// score лишається per-речення відсотком (незалежний вимір).
+function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): GradeResult {
+  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, new Set(a.selected)]));
+
+  const sentences: WordChoiceDetail["sentences"] = config.sentences.map((s) => {
+    const selected = answerBySentence.get(s.id) ?? new Set<string>();
+    const options = s.options.map((o) => ({
+      id: o.id,
+      text: o.text,
+      correct: o.correct,
+      selected: selected.has(o.id),
+    }));
+    return { id: s.id, options, isCorrect: options.every((o) => o.correct === o.selected) };
+  });
+
+  const correctCount = sentences.filter((s) => s.isCorrect).length;
+  const correct = correctCount === sentences.length && sentences.length > 0;
+  const points = resolveWordChoicePoints(config);
+
+  return {
+    correct,
+    score: percentage(correctCount, sentences.length),
+    detail: { sentences },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
   };
 }
 
@@ -629,6 +669,8 @@ export function gradeAnswer(
         config as unknown as MultipleChoiceConfig,
         answer as MultipleChoiceAnswer
       );
+    case "word_choice":
+      return gradeWordChoice(config as unknown as WordChoiceConfig, answer as WordChoiceAnswer);
     case "true_false":
       return gradeTrueFalse(config as unknown as TrueFalseConfig, answer as TrueFalseAnswer);
     case "matching":

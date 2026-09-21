@@ -114,6 +114,16 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-emerald-500",
     shadow: "shadow-emerald-100/50",
   },
+  // 26-й тип. Ділить green із phonetics (reference, аудіо-вимова) — той
+  // самий принцип, що інші нові типи вище.
+  word_choice: {
+    stripe: "border-l-4 border-l-green-500",
+    badge: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    dot: "bg-green-500",
+    iconBorder: "border-green-500",
+    iconText: "text-green-500",
+    shadow: "shadow-green-100/50",
+  },
   multiple_choice: {
     stripe: "border-l-4 border-l-indigo-500",
     badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
@@ -308,6 +318,7 @@ export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   fill_blank: "auto_graded",
   letter_gaps: "auto_graded",
   letter_rearrangement: "auto_graded",
+  word_choice: "auto_graded",
   multiple_choice: "auto_graded",
   true_false: "auto_graded",
   matching: "auto_graded",
@@ -367,6 +378,7 @@ import {
   CircleAlert,
   Video,
   Shuffle,
+  Brackets,
   type LucideIcon,
 } from "lucide-react";
 
@@ -374,6 +386,7 @@ export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   fill_blank: PenLine,
   letter_gaps: SpellCheck,
   letter_rearrangement: Shuffle,
+  word_choice: Brackets,
   multiple_choice: ListChecks,
   true_false: SquareCheck,
   matching: ArrowLeftRight,

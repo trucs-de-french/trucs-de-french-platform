@@ -132,6 +132,26 @@ export type MultipleChoiceConfig = {
   items: MultipleChoiceItem[];
 };
 
+// Той самий "sentence з ОДНИМ {{}}" принцип, що MultipleChoiceConfig
+// (dropdown), але варіанти рендеряться інлайн як кнопки в самому тексті
+// (не <select>), і два режими взаємодії на ВЕСЬ Config (не на речення,
+// як display у MultipleChoiceConfig): "select" — клік обирає варіант;
+// "cross_out" — клік викреслює НЕправильні, відповідь — той, що лишився
+// незакресленим (без окремого поля/підтвердження, див. grade.ts).
+// points — на всю вправу (як LetterGapsConfig), не на речення — атомарний
+// залік лише якщо ВСІ речення правильні (score лишається per-речення
+// відсотком, ці два виміри незалежні, той самий принцип, що вже
+// підтверджений для reorder/letter_gaps).
+export type WordChoiceOption = { id: string; text: string; correct: boolean };
+export type WordChoiceSentence = { id: string; sentence: string; options: WordChoiceOption[] };
+export type WordChoiceConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  mode: "select" | "cross_out";
+  sentences: WordChoiceSentence[];
+  points?: number;
+};
+
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
 // sanitize.ts) для тверджень без явного значення, щоб наявні задачі й далі
 // мали сенс без ретроактивного заповнення. Це пілот системи балів
@@ -412,6 +432,27 @@ export type MultipleChoicePublic = {
   }[];
 };
 
+// correct-прапорці схованi (як у MultipleChoicePublic) — options лише
+// {id, text}. multiple/correctCount — похідні з options.filter(correct),
+// той самий принцип, що MultipleChoicePublic.items[].multiple/correctCount:
+// у Config немає окремого поля-перемикача, кількість правильних на речення
+// визначається просто тим, скільки options позначено correct:true.
+// correctCount використовується лише в mode "select" (підказка студенту
+// "Оберіть N варіантів") — у "cross_out" свідомо НЕ показується.
+export type WordChoicePublic = {
+  instructions?: string;
+  subInstructions?: string;
+  mode: "select" | "cross_out";
+  sentences: {
+    id: string;
+    sentence: string;
+    multiple: boolean;
+    correctCount: number;
+    options: { id: string; text: string }[];
+  }[];
+  points: number;
+};
+
 export type TrueFalsePublic = {
   instructions?: string;
   subInstructions?: string;
@@ -509,6 +550,11 @@ export type LetterGapsAnswer = string[][];
 // ВСІХ літер слова, а не лише прихованих.
 export type LetterRearrangementAnswer = string[][];
 export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
+// Множина optionId на речення (не одне значення) — підтримує кілька
+// правильних варіантів, незалежно від mode (select/cross_out); студентський
+// компонент сам зводить обидва режими до цієї форми перед сабмітом (у
+// cross_out — усе, що лишилось незакресленим).
+export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
@@ -542,6 +588,17 @@ export type MultipleChoiceDetail = {
     id: string;
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
     points: number;
+  }[];
+};
+
+// Без points на речення (points — на всю вправу, WordChoiceConfig.points) —
+// isCorrect тут лише для score (per-речення відсоток) і підсвітки, не для
+// заліку балів.
+export type WordChoiceDetail = {
+  sentences: {
+    id: string;
+    options: { id: string; text: string; correct: boolean; selected: boolean }[];
+    isCorrect: boolean;
   }[];
 };
 
@@ -675,6 +732,7 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: LetterGapsDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: LetterRearrangementDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: WordChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number }

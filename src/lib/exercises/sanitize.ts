@@ -8,6 +8,8 @@ import type {
   MultipleChoiceConfig,
   MultipleChoicePublic,
   MultipleChoiceItem,
+  WordChoiceConfig,
+  WordChoicePublic,
   TrueFalseConfig,
   TrueFalsePublic,
   TrueFalseStatement,
@@ -150,6 +152,34 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
         correctCount,
         options: item.options.map(({ id, text, imageUrl }) => ({ id, text, imageUrl })),
         points: resolveMultipleChoicePoints(item),
+      };
+    }),
+  };
+}
+
+// На всю вправу (як resolveLetterGapsPoints), не на речення — на відміну
+// від resolveMultipleChoicePoints.
+export function resolveWordChoicePoints(config: WordChoiceConfig): number {
+  return config.points ?? 1;
+}
+
+// correct ховається з options (як sanitizeMultipleChoice) — без mode-
+// специфічної обробки тут: обидва режими (select/cross_out) на клієнті
+// бачать той самий набір варіантів, різниться лише спосіб взаємодії.
+export function sanitizeWordChoice(config: WordChoiceConfig): WordChoicePublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    mode: config.mode,
+    points: resolveWordChoicePoints(config),
+    sentences: config.sentences.map((s) => {
+      const correctCount = s.options.filter((o) => o.correct).length;
+      return {
+        id: s.id,
+        sentence: s.sentence,
+        multiple: correctCount > 1,
+        correctCount,
+        options: s.options.map(({ id, text }) => ({ id, text })),
       };
     }),
   };
@@ -421,6 +451,8 @@ export function sanitizeConfigForStudent(
       return sanitizeLetterRearrangement(config as unknown as LetterRearrangementConfig);
     case "multiple_choice":
       return sanitizeMultipleChoice(config as unknown as MultipleChoiceConfig);
+    case "word_choice":
+      return sanitizeWordChoice(config as unknown as WordChoiceConfig);
     case "true_false":
       return sanitizeTrueFalse(config as unknown as TrueFalseConfig);
     case "matching":

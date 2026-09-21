@@ -5,6 +5,7 @@ import { summarizeCriteriaForTeacher, type DelfLevel } from "@/lib/delf/evaluati
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import type {
   MultipleChoiceConfig,
+  WordChoiceConfig,
   TrueFalseConfig,
   MatchingConfig,
   ListeningConfig,
@@ -26,6 +27,7 @@ import type {
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
 import { MultipleChoiceFields } from "./multiple-choice-fields";
+import { WordChoiceFields } from "./word-choice-fields";
 import { EssayFormulaireFields } from "./essay-formulaire-fields";
 import { TrueFalseFields } from "./true-false-fields";
 import { MatchingFields } from "./matching-fields";
@@ -96,6 +98,7 @@ const TYPE_OPTIONS = [
   { value: "letter_gaps", label: "Пропущені літери" },
   { value: "letter_rearrangement", label: "Переставити літери" },
   { value: "multiple_choice", label: "Оберіть правильний варіант" },
+  { value: "word_choice", label: "Вибір правильної форми" },
   { value: "true_false", label: "Оберіть Vrai чи Faux" },
   { value: "matching", label: "З'єднайте елементи" },
   { value: "reorder", label: "Розкладіть у правильному порядку" },
@@ -773,6 +776,15 @@ export function TaskConfigFields({
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<MultipleChoiceConfig> | null>}
           initialConfig={
             (pendingSeed?.forType === "multiple_choice" ? pendingSeed.config : initialConfig) as Partial<MultipleChoiceConfig>
+          }
+        />
+      )}
+
+      {type === "word_choice" && (
+        <WordChoiceFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<WordChoiceConfig> | null>}
+          initialConfig={
+            (pendingSeed?.forType === "word_choice" ? pendingSeed.config : initialConfig) as Partial<WordChoiceConfig>
           }
         />
       )}

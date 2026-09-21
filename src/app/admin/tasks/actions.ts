@@ -130,6 +130,20 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         items: parseJsonField(formData.get("mc_items")),
       };
     }
+    case "word_choice": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("word_choice_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("word_choice_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        mode: (formData.get("word_choice_mode") as string) || "select",
+        sentences: parseJsonField(formData.get("word_choice_sentences")),
+        points: Number(formData.get("word_choice_points")) || 1,
+      };
+    }
     case "true_false": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""
