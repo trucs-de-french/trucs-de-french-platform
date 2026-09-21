@@ -144,6 +144,24 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         points: Number(formData.get("word_choice_points")) || 1,
       };
     }
+    case "word_search": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("word_search_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("word_search_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        // Сітку й розміщення вже згенерувала й перевірила адмінка
+        // (word-search-fields.tsx) — сервер лише зберігає готовий
+        // результат, не перегенеровує.
+        words: parseJsonField(formData.get("word_search_words")),
+        grid: parseJsonField(formData.get("word_search_grid")),
+        placements: parseJsonField(formData.get("word_search_placements")),
+        points: Number(formData.get("word_search_points")) || 1,
+      };
+    }
     case "true_false": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""

@@ -212,6 +212,21 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-yellow-500",
     shadow: "shadow-yellow-100/50",
   },
+  // 28-й тип — палітра вичерпана НАСТІЛЬКИ, що вже й типи поза
+  // auto_graded (reference/media/delf) усі розібрані під попередні нові
+  // типи (letter_gaps/letter_rearrangement/word_choice). Це перший
+  // випадок, коли доводиться ділити колір з ІНШИМ auto_graded-типом
+  // (vocab_quiz) — свідомий виняток із принципу цього файлу, обрано
+  // vocab_quiz як порівняно рідкісний у списку тип, щоб мінімізувати шанс
+  // зустрітись поруч.
+  word_search: {
+    stripe: "border-l-4 border-l-yellow-500",
+    badge: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    dot: "bg-yellow-500",
+    iconBorder: "border-yellow-500",
+    iconText: "text-yellow-500",
+    shadow: "shadow-yellow-100/50",
+  },
   open_answer: {
     stripe: "border-l-4 border-l-orange-500",
     badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
@@ -330,6 +345,7 @@ export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   checkbox_grid: "auto_graded",
   chronological_order: "auto_graded",
   vocab_quiz: "auto_graded",
+  word_search: "auto_graded",
   open_answer: "auto_graded",
   callout: "reference",
   phonetics: "reference",
@@ -379,6 +395,7 @@ import {
   Video,
   Shuffle,
   Brackets,
+  Grid3x3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -387,6 +404,7 @@ export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   letter_gaps: SpellCheck,
   letter_rearrangement: Shuffle,
   word_choice: Brackets,
+  word_search: Grid3x3,
   multiple_choice: ListChecks,
   true_false: SquareCheck,
   matching: ArrowLeftRight,

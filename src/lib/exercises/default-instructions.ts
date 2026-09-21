@@ -8,6 +8,7 @@ export const DEFAULT_INSTRUCTIONS = {
   letter_gaps: "Впишіть пропущені літери",
   letter_rearrangement: "Переставте літери у правильному порядку",
   word_choice: "Оберіть правильну форму в кожному реченні",
+  word_search: "Знайдіть усі слова в сітці літер",
   multiple_choice: "Оберіть правильний варіант",
   true_false: "Оберіть, чи твердження правильне",
   matching: "З'єднайте слово з перекладом",

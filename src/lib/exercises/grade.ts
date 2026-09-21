@@ -19,6 +19,7 @@ import {
   resolveLetterGapsPoints,
   resolveLetterRearrangementPoints,
   resolveWordChoicePoints,
+  resolveWordSearchPoints,
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
 } from "./sanitize";
@@ -38,6 +39,9 @@ import type {
   WordChoiceConfig,
   WordChoiceAnswer,
   WordChoiceDetail,
+  WordSearchConfig,
+  WordSearchAnswer,
+  WordSearchDetail,
   TrueFalseConfig,
   TrueFalseAnswer,
   TrueFalseDetail,
@@ -73,6 +77,7 @@ import type {
   ChronologicalOrderDetail,
   GradeResult,
 } from "./types";
+import { placementCells } from "./word-search-grid";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
 function normalize(value: string): string {
@@ -239,6 +244,44 @@ function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): Gr
     correct,
     score: percentage(correctCount, sentences.length),
     detail: { sentences },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
+  };
+}
+
+function cellsMatch(a: { row: number; col: number }[], b: { row: number; col: number }[]): boolean {
+  return a.length === b.length && a.every((c, i) => c.row === b[i].row && c.col === b[i].col);
+}
+
+// Координати, не текст/клієнтський вердикт — той самий принцип, що
+// gradeReorder (порівняння позиційне, а не пошуком значення). Студент міг
+// виділити слово з БУДЬ-ЯКОГО кінця лінії (природний жест — не знає
+// наперед, з якого краю "правильний" початок), тож звіряємо з placement
+// АБО його реверсом. points — на всю вправу (як gradeLetterGaps), не на
+// слово: зараховується цілком, лише якщо ВСІ слова знайдені; found у
+// detail лишається per-слово — лише для візуального фідбеку/легенди, не
+// для заліку балів.
+function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): GradeResult {
+  const answerByWord = new Map((answer ?? []).map((a) => [a.word, a.cells]));
+
+  const words: WordSearchDetail["words"] = config.words.map((w) => {
+    const placement = config.placements.find((p) => p.word === w.word);
+    if (!placement) return { word: w.word, found: false };
+
+    const target = placementCells(placement, w.word.length);
+    const studentCells = answerByWord.get(w.word) ?? [];
+    const found = cellsMatch(studentCells, target) || cellsMatch(studentCells, [...target].reverse());
+    return { word: w.word, found };
+  });
+
+  const foundCount = words.filter((w) => w.found).length;
+  const correct = foundCount === words.length && words.length > 0;
+  const points = resolveWordSearchPoints(config);
+
+  return {
+    correct,
+    score: percentage(foundCount, words.length),
+    detail: { words },
     pointsEarned: correct ? points : 0,
     pointsPossible: points,
   };
@@ -671,6 +714,8 @@ export function gradeAnswer(
       );
     case "word_choice":
       return gradeWordChoice(config as unknown as WordChoiceConfig, answer as WordChoiceAnswer);
+    case "word_search":
+      return gradeWordSearch(config as unknown as WordSearchConfig, answer as WordSearchAnswer);
     case "true_false":
       return gradeTrueFalse(config as unknown as TrueFalseConfig, answer as TrueFalseAnswer);
     case "matching":

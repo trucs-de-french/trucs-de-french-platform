@@ -152,6 +152,33 @@ export type WordChoiceConfig = {
   points?: number;
 };
 
+// Сітка й розміщення слів генеруються ОДИН РАЗ в адмінці (word-search-
+// grid.ts), не на кожен рендер студентської сторінки, як shuffle() у
+// reorder — провал розміщення слова має бути видимим вчительці одразу
+// (попередження в адмінці), а не мовчки ламати вправу на випадковому показі
+// студенту. grid і placements зберігаються в config як звичайний JSON,
+// точно як їх згенерував генератор — sanitize лише прибирає placements.
+// points — на всю вправу (як LetterGapsConfig), не на слово: зараховується
+// цілком, лише якщо ВСІ слова знайдені правильно (той самий принцип, що
+// letter_gaps/letter_rearrangement), не частковий залік по слову.
+export type WordSearchWord = { word: string };
+// direction — лише вперед (без реверсу/діагоналей), той самий принцип, що
+// й в описі фічі; row/col — 0-based, верхній лівий кут сітки.
+export type WordSearchPlacement = {
+  word: string;
+  row: number;
+  col: number;
+  direction: "horizontal" | "vertical";
+};
+export type WordSearchConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  words: WordSearchWord[];
+  grid: string[][];
+  placements: WordSearchPlacement[];
+  points?: number;
+};
+
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
 // sanitize.ts) для тверджень без явного значення, щоб наявні задачі й далі
 // мали сенс без ретроактивного заповнення. Це пілот системи балів
@@ -453,6 +480,17 @@ export type WordChoicePublic = {
   points: number;
 };
 
+// grid — та сама сітка, що в Config, без змін (не секрет, студент і так
+// бачить усю сітку цілком). placements — ЄДИНЕ, що ховається (інакше
+// перевірка була б тривіальною).
+export type WordSearchPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  words: { word: string }[];
+  grid: string[][];
+  points: number;
+};
+
 export type TrueFalsePublic = {
   instructions?: string;
   subInstructions?: string;
@@ -555,6 +593,12 @@ export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // 
 // компонент сам зводить обидва режими до цієї форми перед сабмітом (у
 // cross_out — усе, що лишилось незакресленим).
 export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
+// Сирі координати клітинок, які студент виділив на кожне ЗНАЙДЕНЕ (на його
+// думку) слово — не клієнтський вердикт "знайдено/ні". Слова, яких студент
+// не знайшов, просто відсутні в масиві. Сервер (gradeWordSearch) сам звіряє
+// координати з placements — той самий принцип, що всюди в grade.ts
+// (ніколи не довіряти клієнтському boolean).
+export type WordSearchAnswer = { word: string; cells: { row: number; col: number }[] }[];
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
@@ -600,6 +644,14 @@ export type WordChoiceDetail = {
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
     isCorrect: boolean;
   }[];
+};
+
+// points — на кожне слово (не на всю вправу), як ReorderDetail.
+// points тут НЕ на слово (points — на всю вправу, WordSearchConfig.points)
+// — found лише для візуального фідбека/закреслення в легенді, не для
+// заліку балів.
+export type WordSearchDetail = {
+  words: { word: string; found: boolean }[];
 };
 
 export type TrueFalseDetail = {
@@ -733,6 +785,7 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: LetterRearrangementDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: WordChoiceDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: WordSearchDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number }

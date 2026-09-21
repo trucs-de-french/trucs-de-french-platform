@@ -10,6 +10,8 @@ import type {
   MultipleChoiceItem,
   WordChoiceConfig,
   WordChoicePublic,
+  WordSearchConfig,
+  WordSearchPublic,
   TrueFalseConfig,
   TrueFalsePublic,
   TrueFalseStatement,
@@ -182,6 +184,26 @@ export function sanitizeWordChoice(config: WordChoiceConfig): WordChoicePublic {
         options: s.options.map(({ id, text }) => ({ id, text })),
       };
     }),
+  };
+}
+
+// На кожне слово (як resolveReorderPoints), не на всю вправу — на відміну
+// від resolveWordChoicePoints.
+// На всю вправу (як resolveLetterGapsPoints), не на слово.
+export function resolveWordSearchPoints(config: WordSearchConfig): number {
+  return config.points ?? 1;
+}
+
+// placements — ЄДИНЕ, що ховається (координати відповідей); grid і words
+// передаються як є — не секрет, студент і так бачить усю сітку й список
+// слів для пошуку.
+export function sanitizeWordSearch(config: WordSearchConfig): WordSearchPublic {
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    grid: config.grid,
+    words: config.words.map((w) => ({ word: w.word })),
+    points: resolveWordSearchPoints(config),
   };
 }
 
@@ -453,6 +475,8 @@ export function sanitizeConfigForStudent(
       return sanitizeMultipleChoice(config as unknown as MultipleChoiceConfig);
     case "word_choice":
       return sanitizeWordChoice(config as unknown as WordChoiceConfig);
+    case "word_search":
+      return sanitizeWordSearch(config as unknown as WordSearchConfig);
     case "true_false":
       return sanitizeTrueFalse(config as unknown as TrueFalseConfig);
     case "matching":

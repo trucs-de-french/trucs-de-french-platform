@@ -2,6 +2,7 @@ import type {
   FillBlankPublic,
   MultipleChoicePublic,
   WordChoicePublic,
+  WordSearchPublic,
   TrueFalsePublic,
   MatchingPublic,
   ListeningPublic,
@@ -21,6 +22,7 @@ import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 import { FillBlankExercise } from "./fill-blank";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { WordChoiceExercise } from "./word-choice";
+import { WordSearchExercise } from "./word-search";
 import { TrueFalseExercise } from "./true-false";
 import { MatchingExercise } from "./matching";
 import { ListeningExercise } from "./listening";
@@ -105,6 +107,16 @@ export function ExerciseCard({
         <WordChoiceExercise
           taskId={taskId}
           config={config as unknown as WordChoicePublic}
+          pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
+          hidePoints={hidePoints}
+        />
+      );
+    case "word_search":
+      return (
+        <WordSearchExercise
+          taskId={taskId}
+          config={config as unknown as WordSearchPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
