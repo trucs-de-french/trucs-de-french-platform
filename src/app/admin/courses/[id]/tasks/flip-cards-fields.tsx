@@ -25,12 +25,19 @@ function FlipCardRow({
   onUpdate: (field: keyof FlipCard, value: string) => void;
   onRemove: () => void;
 }) {
-  const { icons, input } = useFileOrLink({
+  const image = useFileOrLink({
     kind: "image",
     mode: "controlled",
     value: card.image_url ?? "",
     onChange: (url) => onUpdate("image_url", url),
     placeholder: "Картинка (URL, необов'язково)",
+  });
+  const audio = useFileOrLink({
+    kind: "audio",
+    mode: "controlled",
+    value: card.audio_url ?? "",
+    onChange: (url) => onUpdate("audio_url", url),
+    placeholder: "Аудіо (URL, необов'язково)",
   });
 
   return (
@@ -49,7 +56,8 @@ function FlipCardRow({
           placeholder="Зад"
           className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
-        {icons}
+        {image.icons}
+        {audio.icons}
         <button
           type="button"
           onClick={onRemove}
@@ -60,20 +68,21 @@ function FlipCardRow({
           <Trash2 size={16} />
         </button>
       </div>
-      <div className="flex items-start gap-1">
-        {input}
-        <ImageOrPlaceholder
-          src={card.image_url}
-          alt="Прев'ю"
-          className="h-12 w-12 shrink-0 rounded object-cover"
-        />
-      </div>
-      <input
-        value={card.audio_url ?? ""}
-        onChange={(e) => onUpdate("audio_url", e.target.value)}
-        placeholder="Аудіо (URL, необов'язково)"
-        className={`${INPUT_BORDER} ml-0 w-full max-w-md px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-      />
+      {(image.input || audio.input) && (
+        <div className="flex flex-wrap items-start gap-2">
+          {image.input && (
+            <div className="flex items-start gap-1">
+              {image.input}
+              <ImageOrPlaceholder
+                src={card.image_url}
+                alt="Прев'ю"
+                className="h-12 w-12 shrink-0 rounded object-cover"
+              />
+            </div>
+          )}
+          {audio.input && <div className="flex-1">{audio.input}</div>}
+        </div>
+      )}
     </div>
   );
 }
