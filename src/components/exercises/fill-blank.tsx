@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function FillBlankExercise({
   taskId,
@@ -92,7 +93,7 @@ export function FillBlankExercise({
               key={i}
               type="button"
               onClick={() => toggleCrossedOut(i)}
-              className={`rounded-full border px-3 py-1 text-sm ${
+              className={`rounded-full border border-gray-300 px-3 py-1 text-sm dark:border-neutral-600 ${
                 crossedOut.has(i)
                   ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                   : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -120,7 +121,7 @@ export function FillBlankExercise({
                     ? detail.blanks[i]?.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                       : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                    : ""
+                    : "border-gray-300 dark:border-neutral-600"
                 }`}
               />
             )}
@@ -145,7 +146,7 @@ export function FillBlankExercise({
           type="button"
           onClick={() => submit(answers)}
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

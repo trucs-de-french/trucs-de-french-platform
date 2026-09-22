@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SwappableTileRow } from "./swappable-tile-row";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
 
@@ -122,7 +123,7 @@ export function ReorderExercise({
             submit(config.sequences.map((s) => ({ sequenceId: s.id, order: orders[s.id] ?? [] })))
           }
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

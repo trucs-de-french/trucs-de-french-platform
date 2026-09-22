@@ -11,6 +11,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function CheckboxGridExercise({
   taskId,
@@ -81,7 +82,7 @@ export function CheckboxGridExercise({
       <div className="overflow-x-auto">
         <table className="w-full max-w-xl border-collapse text-sm">
           <thead>
-            <tr className="border-b text-left text-neutral-500 dark:text-neutral-400">
+            <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium"></th>
               {config.columns.map((c) => (
                 <th key={c.id} className="px-2 py-1 text-center font-medium">
@@ -93,7 +94,7 @@ export function CheckboxGridExercise({
           </thead>
           <tbody>
             {config.rows.map((row) => (
-              <tr key={row.id} className="border-b last:border-0">
+              <tr key={row.id} className="border-b border-gray-200 last:border-0 dark:border-neutral-700">
                 <td className="py-1 pr-2">{row.label}</td>
                 {config.columns.map((c) => (
                   <td key={c.id} className={`px-2 py-1 text-center ${cellClass(row.id, c.id)}`}>
@@ -119,7 +120,7 @@ export function CheckboxGridExercise({
           type="button"
           onClick={handleSubmit}
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

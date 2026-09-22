@@ -7,6 +7,7 @@ import { DelfCourseTabs } from "./delf-course-tabs";
 import { DelfTestGrid } from "./delf-test-grid";
 import { DelfMaterials } from "./delf-materials";
 import { DelfRecommendations } from "./delf-recommendations";
+import { SCENE_CARD_CLASS } from "@/components/task-card-style";
 
 export default async function CoursePage({
   params,
@@ -84,7 +85,7 @@ export default async function CoursePage({
           <li key={scene.id}>
             <Link
               href={`/courses/${productId}/scenes/${scene.id}`}
-              className="block rounded-md border p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={`block ${SCENE_CARD_CLASS} p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/70`}
             >
               {scene.title}
             </Link>

@@ -10,6 +10,7 @@ import {
   PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab";
+import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 // Компактна легенда колір→категорія — над списком груп, щоб орієнтуватись,
 // не гортаючи до заголовка потрібної групи.
@@ -70,7 +71,7 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
-        className="flex w-full items-center gap-2 text-left"
+        className={STUDENT_TOGGLE_HEADER_BUTTON}
       >
         <ChevronDown
           size={18}
@@ -85,7 +86,7 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
         <>
           <a
             href={pdfHref}
-            className="self-start rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >
             Завантажити PDF
           </a>

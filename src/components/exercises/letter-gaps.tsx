@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function LetterGapsExercise({
   taskId,
@@ -98,12 +99,12 @@ export function LetterGapsExercise({
                       value={answers[wi][gi]}
                       onChange={(e) => updateLetter(wi, gi, e.target.value)}
                       disabled={!!result}
-                      className={`mx-0.5 w-6 rounded border px-0 py-0.5 text-center text-sm ${
+                      className={`m-0.5 inline-block w-9 rounded-md border px-1 py-1.5 text-center text-sm shadow-sm transition-colors ${
                         wordDetail
                           ? wordDetail.isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                             : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : ""
+                          : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
                       }`}
                     />
                   );
@@ -119,7 +120,7 @@ export function LetterGapsExercise({
           type="button"
           onClick={() => submit(answers)}
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

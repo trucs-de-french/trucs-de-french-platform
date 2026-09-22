@@ -3,6 +3,7 @@ import { isYouTubeUrl, toEmbedUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 
 // Не "use client" — довідковий блок без взаємодії, що вимагала б стану
 // (як callout/flip_cards); AudioPlayer/iframe усередині самі "use client".
@@ -25,7 +26,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
       />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (
-          <div key={i} className="flex flex-col gap-1 rounded-md border p-3">
+          <div key={i} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
             <span className="text-sm">{item.text}</span>
             <span className="text-sm text-neutral-500 dark:text-neutral-400">
               {item.transcription}

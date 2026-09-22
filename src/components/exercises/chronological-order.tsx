@@ -12,6 +12,8 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
@@ -59,7 +61,7 @@ export function ChronologicalOrderExercise({
 
   function inputClass(itemId: string) {
     const d = itemDetail(itemId);
-    if (!d) return "";
+    if (!d) return "border-gray-300 dark:border-neutral-600";
     return d.isCorrect
       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
       : "border-red-500 bg-red-50 dark:bg-red-950/30";
@@ -109,7 +111,7 @@ export function ChronologicalOrderExercise({
       {config.mode === "image" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {config.items.map((item, i) => (
-            <div key={item.id} className="flex flex-col gap-1">
+            <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
               <div className="relative">
                 <ImageOrPlaceholder
                   src={item.content}
@@ -137,7 +139,7 @@ export function ChronologicalOrderExercise({
       ) : (
         <div className="flex flex-col gap-2">
           {config.items.map((item, i) => (
-            <div key={item.id} className="flex items-center gap-2 rounded-md border p-2">
+            <div key={item.id} className={`flex items-center gap-2 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
               <span className="w-6 text-center text-sm font-medium text-neutral-500 dark:text-neutral-400">
                 {indexToLabel(i)}
               </span>
@@ -158,7 +160,7 @@ export function ChronologicalOrderExercise({
           type="button"
           onClick={handleSubmit}
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

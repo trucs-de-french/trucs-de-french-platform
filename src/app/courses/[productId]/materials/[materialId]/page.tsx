@@ -8,6 +8,7 @@ import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-pre
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 
 export default async function MaterialPage({
   params,
@@ -164,7 +165,7 @@ export default async function MaterialPage({
               ) : (
                 <li
                   key={row.task.id}
-                  className={row.task.type === "callout" ? "" : "rounded-md border p-3"}
+                  className={row.task.type === "callout" ? "" : `${EXERCISE_BLOCK_CLASS} p-3`}
                 >
                   <ExerciseBlock task={row.task} />
                 </li>

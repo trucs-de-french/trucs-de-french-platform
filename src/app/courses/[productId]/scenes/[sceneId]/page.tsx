@@ -29,6 +29,8 @@ import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import {
   SceneContentBlock,
   type SceneContentBlockData,
@@ -420,7 +422,7 @@ export default async function ScenePage({
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className={STUDENT_LINK_BUTTON}
           >
             {link.label ?? link.platform}
           </a>
@@ -455,7 +457,7 @@ export default async function ScenePage({
             <li
               key={task.id}
               id={`task-${task.id}`}
-              className={`scroll-mt-4 ${task.type === "callout" ? "" : "rounded-md border p-3"}`}
+              className={`scroll-mt-4 ${task.type === "callout" ? "" : `${EXERCISE_BLOCK_CLASS} p-3`}`}
             >
               {TYPES_WITH_TITLE.includes(task.type) && (
                 <>
@@ -559,7 +561,7 @@ export default async function ScenePage({
                   href={task.games.embed_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
                 >
                   Відкрити гру ({task.games.provider})
                 </a>
@@ -570,7 +572,7 @@ export default async function ScenePage({
                   href={config.url}
                   download
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
                 >
                   ⬇ {config.label ?? "Завантажити файл"}
                 </a>
@@ -581,7 +583,7 @@ export default async function ScenePage({
                   href={config.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
                 >
                   <PlatformIcon platform={resolvePlatform(config.url, config.platform)} />
                   {config.label ?? "Відкрити"}
@@ -591,7 +593,7 @@ export default async function ScenePage({
               {task.type === "embed" && config.url && (
                 <>
                   <div
-                    className="mt-2 overflow-hidden rounded-md border"
+                    className="mt-2 overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700"
                     style={{ height: config.height ?? 480 }}
                   >
                     <iframe src={config.url} className="h-full w-full" allowFullScreen />

@@ -8,6 +8,8 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
@@ -101,17 +103,13 @@ export function WordChoiceExercise({
       // завжди зелений, червоним — лише хибний вибір студента.
       if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
       if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-      return "opacity-60";
+      return `${ANSWER_CARD_DEFAULT} opacity-60`;
     }
     if (config.mode === "cross_out") {
       const isCrossedOut = (crossedOut[sentenceId] ?? new Set()).has(optionId);
-      return isCrossedOut
-        ? "text-neutral-400 opacity-60 dark:text-neutral-500"
-        : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+      return isCrossedOut ? `${ANSWER_CARD_DEFAULT} text-neutral-400 opacity-60 dark:text-neutral-500` : ANSWER_CARD_DEFAULT;
     }
-    return (selections[sentenceId] ?? []).includes(optionId)
-      ? SELECTED_OPTION_CLASS
-      : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+    return (selections[sentenceId] ?? []).includes(optionId) ? SELECTED_OPTION_CLASS : ANSWER_CARD_DEFAULT;
   }
 
   function pointsBadge() {
@@ -177,7 +175,7 @@ export function WordChoiceExercise({
                         : toggleCrossedOut(s.id, o.id)
                     }
                     disabled={locked}
-                    className={`mx-0.5 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-sm disabled:cursor-not-allowed ${optionClass(s.id, o.id, sentenceDetail)}`}
+                    className={`mx-0.5 inline-flex items-center gap-1 align-middle text-sm disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
                   >
                     {!sentenceDetail &&
                       config.mode === "cross_out" &&
@@ -201,7 +199,7 @@ export function WordChoiceExercise({
           type="button"
           onClick={handleSubmit}
           disabled={pending || !allAnswered}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

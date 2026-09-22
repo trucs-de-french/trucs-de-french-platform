@@ -8,6 +8,7 @@ import { bankTileClass, slotClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function DragDropExercise({
   taskId,
@@ -167,7 +168,7 @@ export function DragDropExercise({
             )
           }
           disabled={pending || placed.some((p) => p === null)}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

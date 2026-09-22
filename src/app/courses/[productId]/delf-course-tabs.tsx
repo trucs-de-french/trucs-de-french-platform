@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 
 const TABS = [
   { value: "tests", label: "Тести" },
@@ -73,7 +74,7 @@ export function DelfCourseTabs({
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={`flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
         >
           <Menu size={16} />
           {TABS.find((t) => t.value === tab)?.label}

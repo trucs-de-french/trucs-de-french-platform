@@ -7,6 +7,8 @@ import {
   MIN_VOCAB_FOR_QUIZ,
   type VocabQuizQuestion,
 } from "@/lib/exercises/vocab-quiz-logic";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function VocabQuizExercise({
   vocab,
@@ -52,7 +54,7 @@ export function VocabQuizExercise({
         <button
           type="button"
           onClick={restart}
-          className="mt-3 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           Пройти ще раз
         </button>
@@ -87,19 +89,19 @@ export function VocabQuizExercise({
           const isCorrect = option === question.correctTranslation;
           const isSelected = option === selected;
           const cls = !selected
-            ? "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            ? ANSWER_CARD_DEFAULT
             : isCorrect
               ? "border-green-500 bg-green-50 dark:bg-green-950/30"
               : isSelected
                 ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                : "opacity-60";
+                : `${ANSWER_CARD_DEFAULT} opacity-60`;
           return (
             <button
               key={option}
               type="button"
               onClick={() => choose(option)}
               disabled={!!selected}
-              className={`rounded-md border px-3 py-1.5 text-left text-sm ${cls}`}
+              className={`${ANSWER_CARD_BASE} ${cls}`}
             >
               {option}
             </button>
@@ -111,7 +113,7 @@ export function VocabQuizExercise({
         <button
           type="button"
           onClick={next}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           Далі
         </button>

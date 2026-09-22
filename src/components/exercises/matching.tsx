@@ -7,6 +7,8 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function MatchingExercise({
   taskId,
@@ -108,7 +110,7 @@ export function MatchingExercise({
                 type="button"
                 onClick={() => clickLeft(left)}
                 disabled={!!result}
-                className={`rounded-md border px-3 py-1.5 text-left text-sm ${
+                className={`${ANSWER_CARD_BASE} ${
                   d
                     ? d.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
@@ -117,7 +119,7 @@ export function MatchingExercise({
                       ? SELECTED_OPTION_CLASS
                       : right
                         ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                        : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        : ANSWER_CARD_DEFAULT
                 }`}
               >
                 {left}
@@ -137,8 +139,8 @@ export function MatchingExercise({
               type="button"
               onClick={() => clickRight(right)}
               disabled={!!result}
-              className={`rounded-md border px-3 py-1.5 text-left text-sm ${
-                usedRights.has(right) ? "opacity-50" : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} ${
+                usedRights.has(right) ? "opacity-50" : ""
               }`}
             >
               {right}
@@ -165,7 +167,7 @@ export function MatchingExercise({
           type="button"
           onClick={() => submit(Object.entries(pairs).map(([left, right]) => ({ left, right })))}
           disabled={pending || Object.keys(pairs).length !== config.left.length}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

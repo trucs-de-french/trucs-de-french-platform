@@ -4,6 +4,8 @@ import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { InstructionsText } from "@/components/exercises/instructions-text";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import type { VocabItem } from "@/lib/vocab";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 
 // Той самий локальний тип, що DialogueEntry в script-section.tsx (не
 // експортований звідти) — структурно сумісний, ScriptSection не переймається
@@ -44,7 +46,7 @@ export type SceneContentBlockData = {
 // по собі "use client" — це нормально всередині Server Component).
 export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
   return (
-    <section className="rounded-md border p-3">
+    <section className={`${EXERCISE_BLOCK_CLASS} p-3`}>
       {block.content_type === "text" && block.content_text && (
         <InstructionsText text={block.content_text} />
       )}
@@ -59,7 +61,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              className={STUDENT_LINK_BUTTON}
             >
               {link.label ?? link.platform}
             </a>
@@ -81,7 +83,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
           if (provider === "youtube") {
             return (
               <div>
-                <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
+                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 140 }}>
                   <iframe
                     src={toEmbedUrl(block.media_url, "youtube")}
                     className="h-full w-full"
@@ -120,7 +122,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
 
       {block.content_type === "embed" && block.media_url && (
         <div>
-          <div className="overflow-hidden rounded-md border" style={{ height: 480 }}>
+          <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 480 }}>
             <iframe src={block.media_url} className="h-full w-full" allowFullScreen />
           </div>
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">

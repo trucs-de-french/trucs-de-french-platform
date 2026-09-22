@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -37,9 +38,10 @@ export function TableFillExercise({
   }
 
   function inputClass(rowId: string, side: "left" | "right") {
-    if (!detail) return "";
+    const idle = "border-gray-300 dark:border-neutral-600";
+    if (!detail) return idle;
     const blank = detail.blanks.find((b) => b.rowId === rowId && b.side === side);
-    if (!blank) return "";
+    if (!blank) return idle;
     return blank.isCorrect
       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
       : "border-red-500 bg-red-50 dark:bg-red-950/30";
@@ -97,7 +99,7 @@ export function TableFillExercise({
       <div className="overflow-x-auto">
         <table className="w-full max-w-md border-collapse text-sm">
           <thead>
-            <tr className="border-b text-left text-neutral-500 dark:text-neutral-400">
+            <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium">{config.columnLabels[0]}</th>
               <th className="py-1 pr-2 font-medium">{config.columnLabels[1]}</th>
               <th className="py-1 font-medium"></th>
@@ -105,7 +107,7 @@ export function TableFillExercise({
           </thead>
           <tbody>
             {config.rows.map((row) => (
-              <tr key={row.id} className="border-b last:border-0">
+              <tr key={row.id} className="border-b border-gray-200 last:border-0 dark:border-neutral-700">
                 <td className="py-1 pr-2">{renderCell(row.id, "left", row.left)}</td>
                 <td className="py-1 pr-2">{renderCell(row.id, "right", row.right)}</td>
                 <td className="py-1 text-xs italic text-neutral-500 dark:text-neutral-400">
@@ -139,7 +141,7 @@ export function TableFillExercise({
           type="button"
           onClick={handleSubmit}
           disabled={pending}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

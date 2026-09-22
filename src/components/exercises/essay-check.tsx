@@ -10,6 +10,7 @@ import {
   type CriterionKey,
   type DelfLevel,
 } from "@/lib/delf/evaluation-grids";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 type EssayError = {
   original: string;
@@ -83,7 +84,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
 
   return (
     <div className="mt-3 flex flex-col gap-4">
-      <div className="rounded-md border p-3 text-sm leading-relaxed whitespace-pre-wrap">
+      <div className="rounded-md border border-gray-100 bg-white p-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {segments.map((seg, i) =>
           seg.errorIndex !== undefined ? (
             <mark
@@ -111,14 +112,14 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5 rounded-md border p-3 text-sm">
+      <div className="flex flex-col gap-1.5 rounded-md border border-gray-100 bg-white p-3 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {CRITERIA.map((key) => (
           <div key={key} className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{CRITERION_LABELS[key]}</span>
             <span className="font-medium">{result.criteria[key]}</span>
           </div>
         ))}
-        <div className="mt-1 flex items-center justify-between gap-2 border-t pt-1.5 font-semibold">
+        <div className="mt-1 flex items-center justify-between gap-2 border-t border-gray-200 pt-1.5 font-semibold dark:border-neutral-700">
           <span>Разом</span>
           <span>
             {result.totalScore} / {result.maxScore}
@@ -144,7 +145,7 @@ function FormulaireResultView({ result }: { result: FormulaireResult }) {
   return (
     <div className="mt-3 flex flex-col gap-2">
       {result.fields.map((f) => (
-        <div key={f.id} className="flex flex-col gap-0.5 rounded-md border p-2 text-sm">
+        <div key={f.id} className="flex flex-col gap-0.5 rounded-md border border-gray-100 bg-white p-2 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{f.label}</span>
             <span className={f.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
@@ -239,7 +240,7 @@ export function EssayCheckExercise({
                 value={formAnswer[f.id] ?? ""}
                 onChange={(e) => setFormAnswer((prev) => ({ ...prev, [f.id]: e.target.value }))}
                 disabled={submitted}
-                className="rounded-md border px-2 py-1.5 text-sm"
+                className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-neutral-600"
               />
             </div>
           ))}
@@ -250,7 +251,7 @@ export function EssayCheckExercise({
           onChange={(e) => setAnswer(e.target.value)}
           disabled={submitted}
           rows={8}
-          className="w-full rounded-md border px-2 py-1.5 text-sm"
+          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-neutral-600"
           placeholder="Ваша відповідь..."
         />
       )}
@@ -260,7 +261,7 @@ export function EssayCheckExercise({
           type="button"
           onClick={submit}
           disabled={pending || !canSubmit}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Надіслати"}
         </button>

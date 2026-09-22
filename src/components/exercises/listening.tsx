@@ -11,6 +11,8 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function ListeningExercise({
   taskId,
@@ -89,7 +91,7 @@ export function ListeningExercise({
                           : "opacity-60"
                     : answers[q.id] === o.id
                       ? SELECTED_OPTION_CLASS
-                      : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+                      : ANSWER_CARD_DEFAULT;
 
                   if (o.imageUrl) {
                     // Той самий принцип, що в multiple-choice.tsx: підсвічення
@@ -113,7 +115,7 @@ export function ListeningExercise({
                         type="button"
                         disabled={!!result}
                         onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                        className="rounded-md border border-neutral-200 p-2 text-left text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                        className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
                       >
                         <ImageOrPlaceholder
                           src={o.imageUrl}
@@ -139,7 +141,7 @@ export function ListeningExercise({
                       type="button"
                       disabled={!!result}
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                      className={`rounded-md border px-3 py-1.5 text-left text-sm ${cls}`}
+                      className={`${ANSWER_CARD_BASE} ${cls}`}
                     >
                       {o.text}
                     </button>
@@ -158,7 +160,7 @@ export function ListeningExercise({
             submit(config.questions.map((q) => ({ questionId: q.id, optionId: answers[q.id] })))
           }
           disabled={pending || !allAnswered}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

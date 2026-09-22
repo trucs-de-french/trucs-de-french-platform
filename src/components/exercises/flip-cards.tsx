@@ -6,6 +6,8 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 // variant "normal" — звичайний manual-режим (клікабельна, front/back).
 // "highlighted" — рулетка зараз "пробігає" через цю картку (лише бордюр,
@@ -27,10 +29,10 @@ function FlipCardTile({
   const shown = flipped ? oppositeSide(card, initialSide) : sideText(card, initialSide);
 
   const variantClass = {
-    normal: "hover:bg-neutral-50 dark:hover:bg-neutral-800",
+    normal: ANSWER_CARD_DEFAULT,
     highlighted: SELECTED_OPTION_CLASS,
     selected: `${SELECTED_OPTION_CLASS} z-10 scale-105 shadow-lg`,
-    dimmed: "opacity-30",
+    dimmed: `${ANSWER_CARD_DEFAULT} opacity-30`,
   }[variant];
 
   return (
@@ -38,7 +40,7 @@ function FlipCardTile({
       type="button"
       onClick={clickable ? () => setFlipped((f) => !f) : undefined}
       disabled={!clickable}
-      className={`flex flex-col items-start gap-2 rounded-md border p-3 text-left text-sm transition-all disabled:cursor-default ${variantClass}`}
+      className={`flex flex-col items-center gap-2 text-sm transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
     >
       <ImageOrPlaceholder
         src={card.image_url}
@@ -139,7 +141,7 @@ function RandomRevealFlipCards({
         type="button"
         onClick={spin}
         disabled={spinning}
-        className="self-start rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+        className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
       >
         {spinning ? "Крутимо..." : "Випадковий вибір"}
       </button>

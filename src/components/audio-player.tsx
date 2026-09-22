@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { STUDENT_BUTTON_SECONDARY_IDLE, STUDENT_BUTTON_SECONDARY_ACTIVE } from "@/lib/button-styles";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -53,11 +54,7 @@ export function AudioPlayer({
             key={s}
             type="button"
             onClick={() => setPlaybackRate(s)}
-            className={`rounded border px-2 py-0.5 text-xs font-medium transition-colors ${
-              speed === s
-                ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
-            }`}
+            className={speed === s ? STUDENT_BUTTON_SECONDARY_ACTIVE : STUDENT_BUTTON_SECONDARY_IDLE}
           >
             {s}x
           </button>

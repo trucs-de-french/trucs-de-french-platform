@@ -8,6 +8,8 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -49,9 +51,7 @@ export function MultipleChoiceExercise({
   function optionClass(itemId: string, optionId: string, itemDetail?: ItemDetail) {
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
-      return sel.includes(optionId)
-        ? SELECTED_OPTION_CLASS
-        : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+      return sel.includes(optionId) ? SELECTED_OPTION_CLASS : ANSWER_CARD_DEFAULT;
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
@@ -135,7 +135,7 @@ export function MultipleChoiceExercise({
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className="rounded-md border border-neutral-200 p-2 text-left text-sm transition-none hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                  className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
                 >
                   <ImageOrPlaceholder
                     src={o.imageUrl}
@@ -158,7 +158,7 @@ export function MultipleChoiceExercise({
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className={`rounded-md border px-3 py-1.5 text-left text-sm transition-none ${optionClass(item.id, o.id, itemDetail)}`}
+                  className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
                 >
                   {o.text}
                 </button>
@@ -188,7 +188,7 @@ export function MultipleChoiceExercise({
             }}
             disabled={!!result}
             className={`mx-1 rounded-md border px-2 py-1 text-sm align-middle ${
-              sel.length > 0 && sel[0] !== "" ? SELECTED_OPTION_CLASS : ""
+              sel.length > 0 && sel[0] !== "" ? SELECTED_OPTION_CLASS : "border-gray-300 dark:border-neutral-600"
             }`}
           >
             {!item.multiple && <option value="">— Оберіть —</option>}
@@ -229,7 +229,7 @@ export function MultipleChoiceExercise({
             submit(config.items.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] })))
           }
           disabled={pending || !allAnswered}
-          className="mt-4 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-4 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

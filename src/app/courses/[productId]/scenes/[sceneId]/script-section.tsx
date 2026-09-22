@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker } from "./dialogue-line";
+import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 
 type DialogueEntry = {
   speaker: string;
@@ -69,7 +70,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="flex w-full items-center gap-2 text-left"
+          className={STUDENT_TOGGLE_HEADER_BUTTON}
         >
           <ChevronDown
             size={18}
@@ -87,10 +88,10 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
             <button
               type="button"
               onClick={() => setShowTranslation((v) => !v)}
-              className={`mb-1 self-start rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              className={`mb-1 self-start rounded-md border border-brand px-3 py-1.5 text-sm shadow-sm transition-colors ${
                 showTranslation
-                  ? "border-brand bg-brand/10 text-brand"
-                  : "border-gray-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                  ? "bg-brand/10 text-brand"
+                  : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-700"
               }`}
             >
               {showTranslation ? "Сховати переклад" : "Показати переклад"}

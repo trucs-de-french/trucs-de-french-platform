@@ -8,6 +8,7 @@ import { bankTileClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function SortColumnsExercise({
   taskId,
@@ -80,7 +81,7 @@ export function SortColumnsExercise({
       <div
         {...poolDropProps()}
         onClick={clickPool}
-        className="mb-3 flex min-h-12 flex-wrap gap-2 rounded-md border border-dashed p-2"
+        className="mb-3 flex min-h-12 flex-wrap gap-2 rounded-md border border-dashed border-gray-300 p-2 dark:border-neutral-600"
       >
         {pool.length === 0 ? (
           <span className="text-xs text-neutral-400 dark:text-neutral-500">
@@ -115,7 +116,7 @@ export function SortColumnsExercise({
               className={`min-h-24 rounded-md border p-2 ${
                 dragOverColumn === col.id
                   ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                  : ""
+                  : "border-gray-300 dark:border-neutral-600"
               }`}
             >
               <p className="mb-1 text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
@@ -166,7 +167,7 @@ export function SortColumnsExercise({
             )
           }
           disabled={pending || !allPlaced}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

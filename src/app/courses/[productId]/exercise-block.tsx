@@ -6,6 +6,7 @@ import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
+import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 
 export type ExerciseTask = {
   id: string;
@@ -104,7 +105,7 @@ export function ExerciseBlock({
           href={task.games.embed_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
         >
           Відкрити гру ({task.games.provider})
         </a>
@@ -115,7 +116,7 @@ export function ExerciseBlock({
           href={config.url}
           download
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
         >
           ⬇ {config.label ?? "Завантажити файл"}
         </a>
@@ -126,7 +127,7 @@ export function ExerciseBlock({
           href={config.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+          className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
         >
           <PlatformIcon platform={resolvePlatform(config.url, config.platform)} />
           {config.label ?? "Відкрити"}
@@ -136,7 +137,7 @@ export function ExerciseBlock({
       {task.type === "embed" && config.url && (
         <>
           <div
-            className="mt-2 overflow-hidden rounded-md border"
+            className="mt-2 overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700"
             style={{ height: config.height ?? 480 }}
           >
             <iframe src={config.url} className="h-full w-full" allowFullScreen />

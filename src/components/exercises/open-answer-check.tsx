@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
 // розгорнутого тексту), тут коротка відповідь звіряється з фіксованим
@@ -68,7 +69,7 @@ export function OpenAnswerCheckExercise({
                     ? qDetail.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                       : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                    : ""
+                    : "border-gray-300 dark:border-neutral-600"
                 }`}
                 placeholder="Ваша відповідь..."
               />
@@ -89,7 +90,7 @@ export function OpenAnswerCheckExercise({
             submit(config.questions.map((q) => ({ questionId: q.id, value: answers[q.id] ?? "" })))
           }
           disabled={pending || !allAnswered}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

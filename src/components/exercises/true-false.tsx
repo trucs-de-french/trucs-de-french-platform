@@ -7,6 +7,8 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function TrueFalseExercise({
   taskId,
@@ -48,7 +50,7 @@ export function TrueFalseExercise({
         return (
           <div
             key={s.id}
-            className="flex items-center justify-between gap-3 rounded-md border p-2"
+            className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white p-2 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
           >
             <span className="text-sm">
               {s.text}
@@ -69,16 +71,16 @@ export function TrueFalseExercise({
                   type="button"
                   disabled={!!result}
                   onClick={() => setAnswers((prev) => ({ ...prev, [s.id]: val }))}
-                  className={`rounded border px-2 py-1 text-xs ${
+                  className={`text-xs ${ANSWER_CARD_BASE} ${
                     d
                       ? val === d.correctAnswer
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                         : val === d.studentAnswer
                           ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : ""
+                          : ANSWER_CARD_DEFAULT
                       : answers[s.id] === val
                         ? SELECTED_OPTION_CLASS
-                        : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        : ANSWER_CARD_DEFAULT
                   }`}
                 >
                   {val ? "Vrai" : "Faux"}
@@ -96,7 +98,7 @@ export function TrueFalseExercise({
             submit(config.statements.map((s) => ({ id: s.id, value: answers[s.id] })))
           }
           disabled={pending || !allAnswered}
-          className="mt-1 self-start rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-1 self-start ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

@@ -22,6 +22,10 @@ export function SwappableTileRow({
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  // Тінь на плитці ЛИШЕ в стані спокою — під час активного перетягування
+  // (сама плитка, не сусідня) тінь прибирається, щоб не заважати
+  // відчуттю "хапальності" (браузер і так додає власний drag-образ).
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   function swap(i: number, j: number) {
     if (locked || i === j) return;
@@ -44,11 +48,12 @@ export function SwappableTileRow({
 
   function tileClass(i: number) {
     const state = tileState?.(i);
-    if (state === "correct") return "border-green-500 bg-green-50 dark:bg-green-950/30";
-    if (state === "incorrect") return "border-red-500 bg-red-50 dark:bg-red-950/30";
-    if (selected === i) return SELECTED_OPTION_CLASS;
-    if (dragOverIndex === i) return "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30";
-    return "hover:bg-neutral-50 dark:hover:bg-neutral-800";
+    const shadow = draggingIndex === i ? "" : "shadow-sm";
+    if (state === "correct") return `${shadow} border-green-500 bg-green-50 dark:bg-green-950/30`;
+    if (state === "incorrect") return `${shadow} border-red-500 bg-red-50 dark:bg-red-950/30`;
+    if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
+    if (dragOverIndex === i) return `${shadow} border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30`;
+    return `${shadow} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
   }
 
   return (
@@ -58,14 +63,20 @@ export function SwappableTileRow({
           key={i}
           type="button"
           draggable={!locked}
-          onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", String(i))}
+          onDragStart={(e: DragEvent) => {
+            e.dataTransfer.setData("text/plain", String(i));
+            setDraggingIndex(i);
+          }}
           onDragOver={(e: DragEvent) => e.preventDefault()}
           onDragEnter={(e: DragEvent) => {
             e.preventDefault();
             setDragOverIndex(i);
           }}
           onDragLeave={() => setDragOverIndex((prev) => (prev === i ? null : prev))}
-          onDragEnd={() => setDragOverIndex(null)}
+          onDragEnd={() => {
+            setDragOverIndex(null);
+            setDraggingIndex(null);
+          }}
           onDrop={(e: DragEvent) => {
             e.preventDefault();
             setDragOverIndex(null);
@@ -74,7 +85,7 @@ export function SwappableTileRow({
           }}
           onClick={() => clickTile(i)}
           disabled={locked}
-          className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i)}`}
+          className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-center text-sm transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i)}`}
         >
           {text}
         </button>

@@ -9,6 +9,8 @@ import { bankTileClass, slotClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 
 export function ImageMatchExercise({
   taskId,
@@ -71,7 +73,7 @@ export function ImageMatchExercise({
         {config.items.map((item, i) => {
           const itemDetail = detail?.items[i];
           return (
-          <div key={item.id} className="flex flex-col gap-1">
+          <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
             <ImageOrPlaceholder
               src={item.imageUrl}
               alt=""
@@ -120,7 +122,7 @@ export function ImageMatchExercise({
             )
           }
           disabled={pending || placed.some((p) => p === null)}
-          className="mt-3 rounded-md bg-black px-3 py-1.5 text-sm text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
         >
           {pending ? "Перевіряю..." : "Перевірити"}
         </button>

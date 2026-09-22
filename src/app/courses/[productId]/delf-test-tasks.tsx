@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 
 type TestTask = ExerciseTask & { delf_section: string | null };
 type TestTaskGroup = TaskGroupData & {
@@ -129,7 +130,7 @@ export async function DelfTestTasks({
     }
     const task = row.task;
     return (
-      <li key={task.id} className={task.type === "callout" ? "" : "rounded-md border p-3"}>
+      <li key={task.id} className={task.type === "callout" ? "" : `${EXERCISE_BLOCK_CLASS} p-3`}>
         <ExerciseBlock task={task} />
       </li>
     );

@@ -9,6 +9,7 @@ import { isExerciseType } from "@/components/exercises/exercise-card";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 
 export type TaskGroupData = {
   id: string;
@@ -98,7 +99,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
   return (
-    <section className="rounded-md border p-3">
+    <section className={`${EXERCISE_BLOCK_CLASS} p-3`}>
       {group.content_type === "text" && group.content_text && (
         <InstructionsText text={group.content_text} className="mb-3" />
       )}
@@ -128,7 +129,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
             // повинен мати) — лишається iframe, як і для відео.
             return (
               <div className="mb-3">
-                <div className="overflow-hidden rounded-md border" style={{ height: 140 }}>
+                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 140 }}>
                   <iframe
                     src={toEmbedUrl(group.media_url, "youtube")}
                     className="h-full w-full"
@@ -167,7 +168,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
 
       {group.content_type === "embed" && group.media_url && (
         <div className="mb-3">
-          <div className="overflow-hidden rounded-md border" style={{ height: 480 }}>
+          <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 480 }}>
             <iframe src={group.media_url} className="h-full w-full" allowFullScreen />
           </div>
           {/* Завжди видимий резервний варіант — той самий принцип, що
@@ -182,7 +183,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         </div>
       )}
 
-      <div className="flex flex-col gap-4 border-t pt-3">
+      <div className="flex flex-col gap-4 border-t border-gray-200 pt-3 dark:border-neutral-700">
         {tasks.map((task) => (
           <ExerciseBlock
             key={task.id}
@@ -199,7 +200,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
       </div>
 
       {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
-        <p className="mt-3 border-t pt-3 text-sm font-medium">
+        <p className="mt-3 border-t border-gray-200 pt-3 text-sm font-medium dark:border-neutral-700">
           Підсумок блоку:{" "}
           <span className="font-normal text-neutral-500 dark:text-neutral-400">
             {pointsEarned} з {pointsPossible} {pluralizePoints(pointsPossible)}
@@ -208,7 +209,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
       )}
 
       {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
-        <p className="mt-3 border-t pt-3 text-sm font-medium">
+        <p className="mt-3 border-t border-gray-200 pt-3 text-sm font-medium dark:border-neutral-700">
           Підсумок блоку:{" "}
           <span className="font-normal text-neutral-500 dark:text-neutral-400">
             {flatEarned} з {flatPoints} {pluralizePoints(flatPoints)}
