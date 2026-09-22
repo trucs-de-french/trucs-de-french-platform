@@ -391,7 +391,7 @@ export default async function ScenePage({
   const videoNode = scene.video_url && (
     <section className="mt-6">
       <h2 className="text-lg font-medium">Відео</h2>
-      <div className="mt-2 aspect-video w-full overflow-hidden rounded-md bg-black">
+      <div className="mt-2 aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
         <iframe
           src={toEmbedUrl(scene.video_url, scene.video_provider)}
           className="h-full w-full"

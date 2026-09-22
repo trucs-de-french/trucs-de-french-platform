@@ -110,7 +110,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
         })()}
 
       {block.content_type === "video" && block.media_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
           <iframe
             src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
             className="h-full w-full"

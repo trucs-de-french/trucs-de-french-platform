@@ -156,7 +156,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         })()}
 
       {group.content_type === "video" && group.media_url && (
-        <div className="mb-3 aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="mb-3 aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
           <iframe
             src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
             className="h-full w-full"

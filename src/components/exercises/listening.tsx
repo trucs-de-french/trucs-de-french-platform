@@ -46,7 +46,7 @@ export function ListeningExercise({
       />
 
       {isYouTubeUrl(config.audioUrl) ? (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
           <iframe
             src={toEmbedUrl(config.audioUrl, "youtube")}
             className="h-full w-full"

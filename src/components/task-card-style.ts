@@ -5,8 +5,14 @@
 // відповіді (ANSWER_CARD_BASE) і клітинки/плитки (letter_gaps/
 // letter_rearrangement) усередині лишаються bg-white, тож мають виразно
 // виділятись на дещо темнішому тлі самого блока, а не зливатись із ним.
+// dark:bg-neutral-900 (НЕ neutral-800) — усі картки/тогли/плитки всередині
+// (ANSWER_CARD_DEFAULT, STUDENT_TOGGLE_HEADER_BUTTON, tile-styles.ts,
+// letter-gaps.tsx/swappable-tile-row.tsx) уже стоять на dark:bg-neutral-800;
+// якби контейнер лишався на тому самому відтінку, картки зливались би з
+// тлом у темній темі так само, як white-on-white до недавнього фіксу
+// letter_gaps у світлій.
 export const EXERCISE_BLOCK_CLASS =
-  "rounded-lg border border-gray-100 bg-neutral-50 shadow-sm dark:border-neutral-700 dark:bg-neutral-800";
+  "rounded-lg border border-gray-100 bg-neutral-50 shadow-sm dark:border-neutral-700 dark:bg-neutral-900";
 
 // Картка-посилання на сцену на дошці курсу (courses/[productId]/page.tsx) —
 // НЕ блок завдання (нема карток-відповідей усередині, які потребують

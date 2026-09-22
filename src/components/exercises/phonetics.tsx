@@ -33,7 +33,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
             </span>
             {item.mediaUrl &&
               (isYouTubeUrl(item.mediaUrl) ? (
-                <div className="mt-1 aspect-video w-full max-w-md overflow-hidden rounded-md bg-black">
+                <div className="mt-1 aspect-video w-full max-w-md overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
                   <iframe
                     src={toEmbedUrl(item.mediaUrl, "youtube")}
                     className="h-full w-full"
