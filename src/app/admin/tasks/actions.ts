@@ -237,6 +237,8 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         ),
         ...(subInstructions ? { subInstructions } : {}),
         cards: parseJsonField(formData.get("flip_cards_cards")),
+        mode: (formData.get("flip_cards_mode") as string) || "manual",
+        revealSide: (formData.get("flip_cards_reveal_side") as string) || "front",
       };
     }
     case "callout":

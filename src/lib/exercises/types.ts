@@ -369,10 +369,17 @@ export type ChronologicalOrderConfig = {
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється),
 // тому повна конфігурація й публічна — одне й те саме, sanitize не потрібен.
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
+// mode/revealSide — опційні (дефолт "manual"/"front" на рівні студентського
+// компонента, не тут) — наявні збережені завдання без цих полів лишаються
+// в manual-режимі без міграції. random_reveal — Wordwall Flip Tiles-стиль:
+// студент крутить "рулетку", яка випадково зупиняється на невиказаній
+// картці, показує лише revealSide, клік відкриває іншу сторону.
 export type FlipCardsConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   cards: FlipCard[];
+  mode?: "manual" | "random_reveal";
+  revealSide?: "front" | "back";
 };
 
 // callout — текстовий інформаційний блок (Notion-подібний), не вправа:

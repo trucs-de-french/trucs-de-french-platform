@@ -9,6 +9,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { LABEL_TEXT } from "@/lib/typography-styles";
 
 function emptyCard(): FlipCard {
   return { front: "", back: "", image_url: "", audio_url: "" };
@@ -94,6 +95,8 @@ export const FlipCardsFields = forwardRef<
   const [cards, setCards] = useState<FlipCard[]>(
     initialConfig?.cards?.length ? initialConfig.cards : [emptyCard()]
   );
+  const [mode, setMode] = useState<"manual" | "random_reveal">(initialConfig?.mode ?? "manual");
+  const [revealSide, setRevealSide] = useState<"front" | "back">(initialConfig?.revealSide ?? "front");
 
   useImperativeHandle(ref, () => ({
     importWords(words) {
@@ -109,6 +112,8 @@ export const FlipCardsFields = forwardRef<
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
       cards,
+      mode,
+      revealSide,
     }),
   }));
 
@@ -140,6 +145,35 @@ export const FlipCardsFields = forwardRef<
         initialValue={initialConfig?.subInstructions ?? ""}
         compact
       />
+
+      <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Режим</label>
+          <select
+            name="flip_cards_mode"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as "manual" | "random_reveal")}
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+          >
+            <option value="manual">Ручне гортання</option>
+            <option value="random_reveal">Випадковий вибір</option>
+          </select>
+        </div>
+        {mode === "random_reveal" && (
+          <div className="flex flex-col gap-1">
+            <label className={LABEL_TEXT}>Яка сторона показується першою</label>
+            <select
+              name="flip_cards_reveal_side"
+              value={revealSide}
+              onChange={(e) => setRevealSide(e.target.value as "front" | "back")}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+            >
+              <option value="front">Французька (перед)</option>
+              <option value="back">Переклад (зад)</option>
+            </select>
+          </div>
+        )}
+      </div>
 
       {cards.map((card, i) => (
         <FlipCardRow
