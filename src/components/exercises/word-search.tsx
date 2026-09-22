@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 
 type Cell = { row: number; col: number };
 
@@ -132,14 +133,19 @@ export function WordSearchExercise({
     return "";
   }
 
-  function wordLabelClass(word: string) {
-    if (detail) {
-      const w = detail.words.find((d) => d.word === word);
-      return w?.found
-        ? "text-green-600 line-through dark:text-green-400"
-        : "text-red-600 dark:text-red-400";
-    }
-    return foundWords.has(word) ? "text-green-600 line-through dark:text-green-400" : "";
+  function isFound(word: string): boolean {
+    if (detail) return detail.words.find((d) => d.word === word)?.found ?? false;
+    return foundWords.has(word);
+  }
+
+  // Одна підказка на слово, не кілька одночасно — картинка пріоритетніша за
+  // переклад, переклад пріоритетніший за саме слово (яке студент і так
+  // шукає, тож показувати його як "підказку" мало б сенс лише за
+  // відсутності кращих варіантів).
+  function hintKind(w: WordSearchPublic["words"][number]): "image" | "translation" | "word" {
+    if (w.imageUrl) return "image";
+    if (w.translation) return "translation";
+    return "word";
   }
 
   function handleSubmit() {
@@ -175,43 +181,81 @@ export function WordSearchExercise({
         )}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1">
-        {config.words.map((w) => (
-          <span key={w.word} className={`text-sm ${wordLabelClass(w.word)}`}>
-            {w.word}
-          </span>
-        ))}
-      </div>
+      <div className="mb-3 flex flex-col gap-4 md:flex-row md:items-start">
+        <div
+          ref={gridRef}
+          className="inline-block touch-none select-none"
+          onTouchMove={(e) => {
+            const cell = cellFromTouch(e.touches[0]);
+            if (cell) moveDrag(cell);
+          }}
+        >
+          <table className="border-collapse font-mono text-sm">
+            <tbody>
+              {config.grid.map((row, ri) => (
+                <tr key={ri}>
+                  {row.map((letter, ci) => (
+                    <td
+                      key={ci}
+                      data-row={ri}
+                      data-col={ci}
+                      onMouseDown={() => startDrag({ row: ri, col: ci })}
+                      onMouseEnter={() => moveDrag({ row: ri, col: ci })}
+                      onTouchStart={() => startDrag({ row: ri, col: ci })}
+                      className={`h-7 w-7 cursor-pointer border border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
+                    >
+                      {letter}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <div
-        ref={gridRef}
-        className="inline-block touch-none select-none"
-        onTouchMove={(e) => {
-          const cell = cellFromTouch(e.touches[0]);
-          if (cell) moveDrag(cell);
-        }}
-      >
-        <table className="border-collapse font-mono text-sm">
-          <tbody>
-            {config.grid.map((row, ri) => (
-              <tr key={ri}>
-                {row.map((letter, ci) => (
-                  <td
-                    key={ci}
-                    data-row={ri}
-                    data-col={ci}
-                    onMouseDown={() => startDrag({ row: ri, col: ci })}
-                    onMouseEnter={() => moveDrag({ row: ri, col: ci })}
-                    onTouchStart={() => startDrag({ row: ri, col: ci })}
-                    className={`h-7 w-7 cursor-pointer border border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
-                  >
-                    {letter}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Одна СПІЛЬНА сітка карток для ОБОХ видів підказки (картинка й
+            текст) — не два окремі grid-и, щоб легенда виглядала цілісно,
+            навіть коли в одному завданні є суміш обох. Однакові рамка/
+            заокруглення/тінь/відступ (CARD_BASE) на кожній картці, лише
+            вміст усередині різниться. minmax(5.5rem,1fr) — ширше, ніж чиста
+            картинка-плитка потребувала б, бо переклад буває довшим за одне
+            слово ("дозвіл, шкільний бланк") і має кудись загорнутись. */}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 md:w-72 md:shrink-0">
+          {config.words.map((w) => {
+            const found = isFound(w.word);
+            const kind = hintKind(w);
+            return (
+              <div
+                key={w.word}
+                className={`flex flex-col items-center justify-center gap-1 rounded-lg border p-3 text-center shadow-sm transition-colors ${
+                  found
+                    ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                    : "border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+                }`}
+              >
+                {kind === "image" ? (
+                  <>
+                    <ImageOrPlaceholder
+                      src={w.imageUrl}
+                      alt=""
+                      className="h-14 w-14 rounded object-cover"
+                    />
+                    {found && (
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                        {w.word}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className={`text-sm ${found ? "text-green-600 line-through dark:text-green-400" : ""}`}>
+                    {kind === "translation" ? w.translation : w.word}
+                  </span>
+                )}
+                {w.audioUrl && <audio controls src={w.audioUrl} className="h-6 w-full" />}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {!result ? (

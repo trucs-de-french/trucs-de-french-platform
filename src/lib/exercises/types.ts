@@ -161,7 +161,14 @@ export type WordChoiceConfig = {
 // points — на всю вправу (як LetterGapsConfig), не на слово: зараховується
 // цілком, лише якщо ВСІ слова знайдені правильно (той самий принцип, що
 // letter_gaps/letter_rearrangement), не частковий залік по слову.
-export type WordSearchWord = { word: string };
+// translation/imageUrl/audioUrl — опційні підказки студенту в легенді, не
+// секрет (на відміну від placements) — sanitize пропускає їх як є.
+export type WordSearchWord = {
+  word: string;
+  translation?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+};
 // direction — лише вперед (без реверсу/діагоналей), той самий принцип, що
 // й в описі фічі; row/col — 0-based, верхній лівий кут сітки.
 export type WordSearchPlacement = {
@@ -481,12 +488,13 @@ export type WordChoicePublic = {
 };
 
 // grid — та сама сітка, що в Config, без змін (не секрет, студент і так
-// бачить усю сітку цілком). placements — ЄДИНЕ, що ховається (інакше
-// перевірка була б тривіальною).
+// бачить усю сітку цілком). words — та сама форма, що WordSearchWord
+// (translation/imageUrl/audioUrl теж не секрет, це підказки). placements —
+// ЄДИНЕ, що ховається (інакше перевірка була б тривіальною).
 export type WordSearchPublic = {
   instructions?: string;
   subInstructions?: string;
-  words: { word: string }[];
+  words: WordSearchWord[];
   grid: string[][];
   points: number;
 };

@@ -79,6 +79,7 @@ const IMPORT_ENABLED_TYPES = [
   "chronological_order",
   "letter_gaps",
   "letter_rearrangement",
+  "word_search",
 ];
 
 // Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
@@ -794,7 +795,9 @@ export function TaskConfigFields({
 
       {type === "word_search" && (
         <WordSearchFields
-          ref={typeSwitchRef as RefObject<TypeSwitchHandle<WordSearchConfig> | null>}
+          ref={
+            importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>) | null>
+          }
           initialConfig={
             (pendingSeed?.forType === "word_search" ? pendingSeed.config : initialConfig) as Partial<WordSearchConfig>
           }

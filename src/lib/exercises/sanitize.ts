@@ -202,7 +202,10 @@ export function sanitizeWordSearch(config: WordSearchConfig): WordSearchPublic {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     grid: config.grid,
-    words: config.words.map((w) => ({ word: w.word })),
+    // translation/imageUrl/audioUrl передаються як є — не секрет, це
+    // підказки в легенді (на відміну від placements, який тут відсутній
+    // узагалі).
+    words: config.words,
     points: resolveWordSearchPoints(config),
   };
 }

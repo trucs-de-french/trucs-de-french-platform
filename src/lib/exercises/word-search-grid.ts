@@ -1,4 +1,4 @@
-import type { WordSearchPlacement } from "./types";
+import type { WordSearchPlacement, WordSearchWord } from "./types";
 
 // Лише два вектори — горизонталь праворуч і вертикаль вниз (без діагоналей
 // і без реверсу) — точно за описом фічі.
@@ -33,12 +33,15 @@ function computeGridSize(words: string[]): number {
 // придатна, якщо порожня АБО вже містить ТУ САМУ літеру — це дозволяє
 // словам перетинатись (як у справжніх філвордах), не лише вимушено
 // уникати одне одного.
-export function generateWordSearchGrid(rawWords: string[]): {
+// Приймає повні WordSearchWord (не string[]) — читає лише .word кожного
+// запису для розміщення в сітці; translation/imageUrl/audioUrl на
+// генерацію не впливають узагалі (це підказки в легенді, не сітка).
+export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
   grid: string[][];
   placements: WordSearchPlacement[];
   failedWords: string[];
 } {
-  const words = rawWords.map((w) => w.trim().toUpperCase()).filter(Boolean);
+  const words = rawWords.map((w) => w.word.trim().toUpperCase()).filter(Boolean);
   const size = computeGridSize(words);
   const grid: (string | null)[][] = Array.from({ length: size }, () => Array(size).fill(null));
   const placements: WordSearchPlacement[] = [];

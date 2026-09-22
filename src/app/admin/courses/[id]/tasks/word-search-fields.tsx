@@ -2,27 +2,116 @@
 
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
-import type { WordSearchConfig, WordSearchPlacement } from "@/lib/exercises/types";
+import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { useFileOrLink } from "@/components/file-or-link-field";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
-type EditableWord = { id: string; word: string };
+type EditableWord = WordSearchWord & { id: string };
 
 function emptyWord(): EditableWord {
-  return { id: crypto.randomUUID(), word: "" };
+  return { id: crypto.randomUUID(), word: "", translation: "", imageUrl: "", audioUrl: "" };
+}
+
+function stripId(w: EditableWord): WordSearchWord {
+  return { word: w.word, translation: w.translation, imageUrl: w.imageUrl, audioUrl: w.audioUrl };
+}
+
+// Окремий компонент на рядок-слово (не інлайн у .map()) — useFileOrLink це
+// хук, викликати його всередині callback .map() було б порушенням правил
+// хуків. translation/imageUrl/audioUrl не впливають на генерацію сітки —
+// лише на легенду, яку бачить студент (sanitizeWordSearch пропускає їх як
+// є, не секрет).
+function WordSearchWordRow({
+  wordItem,
+  onUpdateWord,
+  onUpdateTranslation,
+  onUpdateImageUrl,
+  onUpdateAudioUrl,
+  onRemove,
+}: {
+  wordItem: EditableWord;
+  onUpdateWord: (value: string) => void;
+  onUpdateTranslation: (value: string) => void;
+  onUpdateImageUrl: (url: string) => void;
+  onUpdateAudioUrl: (url: string) => void;
+  onRemove: () => void;
+}) {
+  const image = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: wordItem.imageUrl ?? "",
+    onChange: onUpdateImageUrl,
+    placeholder: "Картинка (URL, необов'язково)",
+  });
+  const audio = useFileOrLink({
+    kind: "audio",
+    mode: "controlled",
+    value: wordItem.audioUrl ?? "",
+    onChange: onUpdateAudioUrl,
+    placeholder: "Аудіо (URL, необов'язково)",
+  });
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+      <div className="flex items-center gap-2">
+        <input
+          value={wordItem.word}
+          onChange={(e) => onUpdateWord(e.target.value)}
+          placeholder="Слово"
+          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+        />
+        <input
+          value={wordItem.translation ?? ""}
+          onChange={(e) => onUpdateTranslation(e.target.value)}
+          placeholder="Переклад (опційно)"
+          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
+        />
+        {image.icons}
+        {audio.icons}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Видалити слово"
+          title="Видалити"
+          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+
+      {(image.input || audio.input) && (
+        <div className="flex flex-wrap items-start gap-2">
+          {image.input && (
+            <div className="flex items-start gap-1">
+              {image.input}
+              <ImageOrPlaceholder
+                src={wordItem.imageUrl}
+                alt="Прев'ю"
+                className="h-12 w-12 shrink-0 rounded object-cover"
+              />
+            </div>
+          )}
+          {audio.input && <div className="flex-1">{audio.input}</div>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const WordSearchFields = forwardRef<
-  TypeSwitchHandle<WordSearchConfig>,
+  ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>,
   { initialConfig?: Partial<WordSearchConfig> }
 >(function WordSearchFields({ initialConfig }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
-      ? initialConfig.words.map((w) => ({ id: crypto.randomUUID(), word: w.word }))
+      ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
       : [emptyWord()]
   );
   // grid/placements — результат ОСТАННЬОЇ генерації, не перераховуються на
@@ -36,10 +125,32 @@ export const WordSearchFields = forwardRef<
   const [failedWords, setFailedWords] = useState<string[]>([]);
 
   useImperativeHandle(ref, () => ({
+    // Плаский тип, як letter_gaps/letter_rearrangement (word_search НЕ в
+    // PAIR_TYPES — word завжди обов'язковий, ніколи порожній), але, на
+    // відміну від них, ТЕЖ підтягує translation, якщо вчителька позначила
+    // українську колонку для того самого рядка (ImportVocabPanel уже
+    // повертає його — умова "checkedUk для цього v" саме там, у
+    // import-vocab-panel.tsx). imageUrl/audioUrl усе одно порожні —
+    // картинку й аудіо вчителька додає вручну вже ПІСЛЯ імпорту.
+    importWords(imported) {
+      setWords((prev) => {
+        const withoutEmpty = prev.filter((w) => w.word.trim());
+        return [
+          ...withoutEmpty,
+          ...imported.map((w) => ({
+            id: crypto.randomUUID(),
+            word: w.word,
+            translation: w.translation,
+            imageUrl: "",
+            audioUrl: "",
+          })),
+        ];
+      });
+    },
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
-      words: words.map(({ word }) => ({ word })),
+      words: words.map(stripId),
       grid,
       placements,
       points: initialConfig?.points,
@@ -58,8 +169,20 @@ export const WordSearchFields = forwardRef<
     setWords((prev) => prev.map((w) => (w.id === id ? { ...w, word: value } : w)));
   }
 
+  function updateTranslation(id: string, value: string) {
+    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, translation: value } : w)));
+  }
+
+  function updateImageUrl(id: string, value: string) {
+    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, imageUrl: value } : w)));
+  }
+
+  function updateAudioUrl(id: string, value: string) {
+    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, audioUrl: value } : w)));
+  }
+
   function regenerate() {
-    const validWords = words.map((w) => w.word.trim()).filter(Boolean);
+    const validWords = words.filter((w) => w.word.trim());
     const result = generateWordSearchGrid(validWords);
     setGrid(result.grid);
     setPlacements(result.placements);
@@ -71,7 +194,7 @@ export const WordSearchFields = forwardRef<
       <input
         type="hidden"
         name="word_search_words"
-        value={JSON.stringify(words.map(({ word }) => ({ word })))}
+        value={JSON.stringify(words.map(stripId))}
         readOnly
       />
       <input type="hidden" name="word_search_grid" value={JSON.stringify(grid)} readOnly />
@@ -95,26 +218,18 @@ export const WordSearchFields = forwardRef<
         compact
       />
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
         {words.map((w) => (
-          <div key={w.id} className="flex items-center gap-2">
-            <input
-              value={w.word}
-              onChange={(e) => updateWord(w.id, e.target.value)}
-              placeholder="Слово"
-              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-            />
-            <button
-              type="button"
-              onClick={() => removeWord(w.id)}
-              aria-label="Видалити слово"
-              title="Видалити"
-              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
+          <WordSearchWordRow
+            key={w.id}
+            wordItem={w}
+            onUpdateWord={(value) => updateWord(w.id, value)}
+            onUpdateTranslation={(value) => updateTranslation(w.id, value)}
+            onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}
+            onUpdateAudioUrl={(value) => updateAudioUrl(w.id, value)}
+            onRemove={() => removeWord(w.id)}
+          />
         ))}
         <button
           type="button"
