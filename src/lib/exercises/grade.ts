@@ -265,7 +265,12 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
   const answerByWord = new Map((answer ?? []).map((a) => [a.word, a.cells]));
 
   const words: WordSearchDetail["words"] = config.words.map((w) => {
-    const placement = config.placements.find((p) => p.word === w.word);
+    // placement.word завжди ВЕРХНІМ регістром (word-search-grid.ts —
+    // генератор нормалізує перед розміщенням у сітці), а w.word лишається
+    // таким, як набрала вчителька (легенда показує саме його) — без
+    // .toUpperCase() тут === ніколи не збігався б, окрім слів, набраних
+    // капсом, і gradeWordSearch завжди повертав би found: false.
+    const placement = config.placements.find((p) => p.word === w.word.toUpperCase());
     if (!placement) return { word: w.word, found: false };
 
     const target = placementCells(placement, w.word.length);
