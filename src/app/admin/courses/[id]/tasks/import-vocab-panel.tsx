@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { firstVocabVariant, type VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
-import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { HINT_TEXT } from "@/lib/typography-styles";
 
 type ImportedWord = { word: string; translation: string; image_url?: string };
 
@@ -31,9 +30,6 @@ export function ImportVocabPanel({
 }) {
   const [checkedFr, setCheckedFr] = useState<Set<string>>(new Set());
   const [checkedUk, setCheckedUk] = useState<Set<string>>(new Set());
-  const [customWord, setCustomWord] = useState("");
-  const [customTranslation, setCustomTranslation] = useState("");
-  const [custom, setCustom] = useState<{ word: string; translation: string }[]>([]);
 
   function toggleFr(word: string) {
     setCheckedFr((prev) => {
@@ -53,21 +49,14 @@ export function ImportVocabPanel({
     });
   }
 
-  function addCustom() {
-    if (!customWord.trim() || !customTranslation.trim()) return;
-    setCustom((prev) => [
-      ...prev,
-      { word: customWord.trim(), translation: customTranslation.trim() },
-    ]);
-    setCustomWord("");
-    setCustomTranslation("");
-  }
-
-  function removeCustom(i: number) {
-    setCustom((prev) => prev.filter((_, idx) => idx !== i));
-  }
-
-  // Плоскі типи: лише позначені французькі слова (checkedUk не впливає).
+  // Плоскі типи: лише позначені французькі слова визначають, які рядки
+  // взагалі потраплять в імпорт (checkedUk не впливає на ФІЛЬТР — word
+  // завжди обов'язковий, жодних порожніх word, на відміну від pairMode).
+  // checkedUk усе одно впливає на translation того самого рядка (спільний
+  // індекс v) — переважна більшість плоских типів це поле просто
+  // відкидають у своєму importWords (тож для них ця умова непомітна), але
+  // типи, яким усе-таки потрібен опційний переклад разом зі словом (напр.
+  // word_search), отримують його безкоштовно, без нового прапорця.
   // Парні типи: об'єднання обох колонок за спільним word-індексом —
   // непозначена сторона піде порожнім рядком, а не парою з чужого рядка.
   const fromScene: ImportedWord[] = pairMode
@@ -82,18 +71,17 @@ export function ImportVocabPanel({
         .filter((v) => checkedFr.has(v.word))
         .map((v) => ({
           word: firstVocabVariant(v.word),
-          translation: v.translation,
+          translation: checkedUk.has(v.word) ? v.translation : "",
           image_url: v.image_url,
         }));
 
-  const selected: ImportedWord[] = [...fromScene, ...custom];
+  const selected: ImportedWord[] = fromScene;
 
   function handleImport() {
     if (selected.length === 0 || !onImport) return;
     onImport(selected);
     setCheckedFr(new Set());
     setCheckedUk(new Set());
-    setCustom([]);
   }
 
   return (
@@ -133,51 +121,6 @@ export function ImportVocabPanel({
         <p className={HINT_TEXT}>
           У скрипті цієї сцени ще немає позначеної лексики.
         </p>
-      )}
-
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Свій термін — слово</label>
-          <input
-            value={customWord}
-            onChange={(e) => setCustomWord(e.target.value)}
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Переклад</label>
-          <input
-            value={customTranslation}
-            onChange={(e) => setCustomTranslation(e.target.value)}
-            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={addCustom}
-          className="text-xs text-blue-700 hover:underline dark:text-blue-400"
-        >
-          + додати термін
-        </button>
-      </div>
-
-      {custom.length > 0 && (
-        <ul className="flex flex-col gap-1 text-sm">
-          {custom.map((c, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <span>
-                {c.word} — {c.translation}
-              </span>
-              <button
-                type="button"
-                onClick={() => removeCustom(i)}
-                className="text-xs text-red-600 hover:underline dark:text-red-400"
-              >
-                видалити
-              </button>
-            </li>
-          ))}
-        </ul>
       )}
 
       {onImport ? (
