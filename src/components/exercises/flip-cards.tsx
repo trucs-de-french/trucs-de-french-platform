@@ -40,7 +40,7 @@ function FlipCardTile({
       type="button"
       onClick={clickable ? () => setFlipped((f) => !f) : undefined}
       disabled={!clickable}
-      className={`flex flex-col items-center gap-2 text-sm transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
+      className={`flex flex-col items-center gap-2 text-base transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
     >
       <ImageOrPlaceholder
         src={card.image_url}

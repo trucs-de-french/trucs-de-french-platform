@@ -99,7 +99,7 @@ export function LetterGapsExercise({
                       value={answers[wi][gi]}
                       onChange={(e) => updateLetter(wi, gi, e.target.value)}
                       disabled={!!result}
-                      className={`m-0.5 inline-block w-9 rounded-md border px-1 py-1.5 text-center text-sm shadow-sm transition-colors ${
+                      className={`m-0.5 inline-block w-11 rounded-md border px-1 py-1.5 text-center text-base shadow-sm transition-colors ${
                         wordDetail
                           ? wordDetail.isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-950/30"

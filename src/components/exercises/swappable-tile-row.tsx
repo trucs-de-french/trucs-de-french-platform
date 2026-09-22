@@ -85,7 +85,7 @@ export function SwappableTileRow({
           }}
           onClick={() => clickTile(i)}
           disabled={locked}
-          className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-center text-sm transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i)}`}
+          className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-center text-base transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i)}`}
         >
           {text}
         </button>

@@ -191,7 +191,7 @@ export function WordSearchExercise({
             if (cell) moveDrag(cell);
           }}
         >
-          <table className="border-collapse font-mono text-sm">
+          <table className="border-collapse font-mono text-base">
             <tbody>
               {config.grid.map((row, ri) => (
                 <tr key={ri}>
@@ -203,7 +203,7 @@ export function WordSearchExercise({
                       onMouseDown={() => startDrag({ row: ri, col: ci })}
                       onMouseEnter={() => moveDrag({ row: ri, col: ci })}
                       onTouchStart={() => startDrag({ row: ri, col: ci })}
-                      className={`h-7 w-7 cursor-pointer border border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
+                      className={`h-7 w-7 cursor-pointer border border-neutral-200 text-center leading-7 dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
                     >
                       {letter}
                     </td>

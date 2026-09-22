@@ -5,7 +5,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 
 export function bankTileClass({ selected, used }: { selected: boolean; used: boolean }) {
   const base =
-    "cursor-grab select-none rounded-md border px-3 py-1.5 text-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";
+    "cursor-grab select-none rounded-md border px-3 py-1.5 text-base active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";
   if (used) return `${base} opacity-40`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
   return `${base} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;

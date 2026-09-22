@@ -49,7 +49,7 @@ export function OpenAnswerCheckExercise({
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
             <div key={q.id}>
-              <p className="text-sm font-medium">
+              <p className="font-medium">
                 {q.question}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                 {!hidePoints && (pointsVisible || qDetail) && (
@@ -64,7 +64,7 @@ export function OpenAnswerCheckExercise({
                 value={answers[q.id] ?? ""}
                 onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 disabled={!!result}
-                className={`mt-1 w-full rounded-md border px-2 py-1.5 text-sm ${
+                className={`mt-1 w-full rounded-md border px-2 py-1.5 text-base ${
                   qDetail
                     ? qDetail.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"

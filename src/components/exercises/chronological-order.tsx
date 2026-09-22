@@ -143,7 +143,7 @@ export function ChronologicalOrderExercise({
               <span className="w-6 text-center text-sm font-medium text-neutral-500 dark:text-neutral-400">
                 {indexToLabel(i)}
               </span>
-              <span className="flex-1 text-sm">{item.content}</span>
+              <span className="flex-1">{item.content}</span>
               {numberInput(item.id)}
               {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
                 <span className="w-16 text-right text-xs italic text-neutral-500 dark:text-neutral-400">

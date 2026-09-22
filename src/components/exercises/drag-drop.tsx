@@ -99,7 +99,7 @@ export function DragDropExercise({
                         onClick={() => clickSlot(offset + i)}
                         {...slotDragProps(offset + i)}
                         {...slotDropProps(offset + i)}
-                        className={`mx-1 inline-flex min-h-10 min-w-20 select-none items-center justify-center px-3 py-1.5 align-middle text-sm ${slotClass(
+                        className={`mx-1 inline-flex min-h-10 min-w-20 select-none items-center justify-center px-3 py-1.5 align-middle text-base ${slotClass(
                           sentDetail
                             ? sentDetail.blanks[i]?.isCorrect
                               ? "correct"

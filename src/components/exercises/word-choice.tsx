@@ -175,7 +175,7 @@ export function WordChoiceExercise({
                         : toggleCrossedOut(s.id, o.id)
                     }
                     disabled={locked}
-                    className={`mx-0.5 inline-flex items-center gap-1 align-middle text-sm disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
+                    className={`mx-0.5 inline-flex items-center gap-1 align-middle disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
                   >
                     {!sentenceDetail &&
                       config.mode === "cross_out" &&

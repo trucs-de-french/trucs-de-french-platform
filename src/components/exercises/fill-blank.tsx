@@ -116,7 +116,7 @@ export function FillBlankExercise({
                   setAnswers((prev) => prev.map((v, idx) => (idx === i ? e.target.value : v)))
                 }
                 disabled={!!result}
-                className={`mx-1 w-28 rounded border px-2 py-0.5 text-sm ${
+                className={`mx-1 w-28 rounded border px-2 py-0.5 text-base ${
                   detail
                     ? detail.blanks[i]?.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"

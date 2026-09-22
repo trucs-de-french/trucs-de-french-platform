@@ -80,7 +80,7 @@ export function CheckboxGridExercise({
       />
 
       <div className="overflow-x-auto">
-        <table className="w-full max-w-xl border-collapse text-sm">
+        <table className="w-full max-w-xl border-collapse text-base">
           <thead>
             <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium"></th>

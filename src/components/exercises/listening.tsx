@@ -64,7 +64,7 @@ export function ListeningExercise({
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
             <div key={q.id}>
-              <p className="text-sm font-medium">
+              <p className="font-medium">
                 {q.question}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                 {!hidePoints && (pointsVisible || qDetail) && (

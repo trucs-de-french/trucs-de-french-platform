@@ -91,7 +91,7 @@ export function ImageMatchExercise({
               onClick={() => clickSlot(i)}
               {...slotDragProps(i)}
               {...slotDropProps(i)}
-              className={`flex min-h-10 select-none items-center justify-center px-2 py-1.5 text-center text-sm ${slotClass(
+              className={`flex min-h-10 select-none items-center justify-center px-2 py-1.5 text-center text-base ${slotClass(
                 detail
                   ? detail.items[i]?.isCorrect
                     ? "correct"

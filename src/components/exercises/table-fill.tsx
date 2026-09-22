@@ -75,7 +75,7 @@ export function TableFillExercise({
         value={answers[cellKey(rowId, side)] ?? ""}
         onChange={(e) => updateAnswer(rowId, side, e.target.value)}
         disabled={!!result}
-        className={`w-full rounded border px-2 py-1 text-sm ${inputClass(rowId, side)}`}
+        className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side)}`}
       />
     );
   }
@@ -97,7 +97,7 @@ export function TableFillExercise({
       />
 
       <div className="overflow-x-auto">
-        <table className="w-full max-w-md border-collapse text-sm">
+        <table className="w-full max-w-md border-collapse text-base">
           <thead>
             <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium">{config.columnLabels[0]}</th>

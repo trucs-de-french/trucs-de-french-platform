@@ -52,7 +52,7 @@ export function TrueFalseExercise({
             key={s.id}
             className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white p-2 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
           >
-            <span className="text-sm">
+            <span>
               {s.text}
               {/* До перевірки — лише якщо pointsVisible; після — завжди,
                   ваше підтверджене рішення. */}

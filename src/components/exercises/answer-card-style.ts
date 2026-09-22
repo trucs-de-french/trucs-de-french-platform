@@ -12,10 +12,12 @@ export const ANSWER_CARD_DEFAULT =
 
 // Зменшений inline-варіант — для варіантів, вплетених прямо в текст
 // речення (word_choice), де повний ANSWER_CARD_BASE (p-3, rounded-lg)
-// виявився занадто важким у рядку з 3-4 варіантами підряд. Менший padding
-// (px-2 py-1, не p-3), rounded-md (не rounded-lg). shadow-sm — та сама
-// тінь, що на картках блоків платформи в адмінці (не порожньо, як у першій
-// версії: на практиці варіанти губились на тлі контейнера без неї).
+// виявився занадто важким у рядку з 3-4 варіантами підряд. rounded-md (не
+// rounded-lg), shadow-sm — та сама тінь, що на картках блоків платформи в
+// адмінці. Шрифт тепер text-base (як усюди на студентській сторінці, було
+// text-sm) — вагу компенсує ЗМЕНШЕНИЙ padding (px-1.5 py-0.5, не px-2 py-1),
+// а не менший шрифт: текст лишається того самого розміру, що й решта
+// сторінки, важкість регулюється лише відступом усередині картки.
 // Використовується ЛИШЕ в word_choice.tsx — усі інші типи (letter_gaps,
 // true_false, перша хвиля) лишаються на повному ANSWER_CARD_BASE.
-export const ANSWER_CARD_INLINE = "rounded-md border px-2 py-1 shadow-sm transition-colors";
+export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm transition-colors";
