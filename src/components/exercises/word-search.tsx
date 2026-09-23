@@ -182,10 +182,14 @@ export function WordSearchExercise({
         )}
       </div>
 
-      <div className="mb-3 flex flex-col gap-4 md:flex-row md:items-start">
+      {/* gap-3 (не gap-4) — той самий 12px, що padding блока завдання
+          (EXERCISE_BLOCK_CLASS + p-3): зазор між сіткою й панеллю карток має
+          дорівнювати відступу від зовнішньої межі блоку, інакше з одного
+          боку панель "притиснута" тісніше, ніж з інших. */}
+      <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-start">
         <div
           ref={gridRef}
-          className="inline-block touch-none select-none"
+          className="inline-block touch-none select-none shadow-md"
           onTouchMove={(e) => {
             const cell = cellFromTouch(e.touches[0]);
             if (cell) moveDrag(cell);
