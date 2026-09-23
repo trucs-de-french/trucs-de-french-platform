@@ -24,6 +24,7 @@ import type {
   ChronologicalOrderConfig,
   LetterGapsConfig,
   LetterRearrangementConfig,
+  CrosswordConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
@@ -48,6 +49,7 @@ import { CheckboxGridFields } from "./checkbox-grid-fields";
 import { ChronologicalOrderFields } from "./chronological-order-fields";
 import { LetterGapsFields } from "./letter-gaps-fields";
 import { LetterRearrangementFields } from "./letter-rearrangement-fields";
+import { CrosswordFields } from "./crossword-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -80,6 +82,7 @@ const IMPORT_ENABLED_TYPES = [
   "letter_gaps",
   "letter_rearrangement",
   "word_search",
+  "crossword",
 ];
 
 // Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
@@ -103,6 +106,7 @@ const TYPE_OPTIONS = [
   { value: "multiple_choice", label: "Оберіть правильний варіант" },
   { value: "word_choice", label: "Вибір правильної форми" },
   { value: "word_search", label: "Філворд" },
+  { value: "crossword", label: "Кросворд" },
   { value: "true_false", label: "Оберіть Vrai чи Faux" },
   { value: "matching", label: "З'єднайте елементи" },
   { value: "reorder", label: "Розкладіть у правильному порядку" },
@@ -800,6 +804,17 @@ export function TaskConfigFields({
           }
           initialConfig={
             (pendingSeed?.forType === "word_search" ? pendingSeed.config : initialConfig) as Partial<WordSearchConfig>
+          }
+        />
+      )}
+
+      {type === "crossword" && (
+        <CrosswordFields
+          ref={
+            importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>) | null>
+          }
+          initialConfig={
+            (pendingSeed?.forType === "crossword" ? pendingSeed.config : initialConfig) as Partial<CrosswordConfig>
           }
         />
       )}

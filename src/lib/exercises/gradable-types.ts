@@ -21,6 +21,7 @@ export const GRADABLE_TASK_TYPES = [
   "letter_rearrangement",
   "word_choice",
   "word_search",
+  "crossword",
 ] as const;
 
 export type GradableTaskType = (typeof GRADABLE_TASK_TYPES)[number];
@@ -61,6 +62,7 @@ export const POINTS_SUPPORTED_TASK_TYPES = [
   "letter_rearrangement",
   "word_choice",
   "word_search",
+  "crossword",
 ] as const;
 
 export function isPointsSupportedTaskType(type: string): boolean {

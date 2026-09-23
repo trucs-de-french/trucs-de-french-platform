@@ -16,6 +16,7 @@ import type {
   ChronologicalOrderPublic,
   LetterGapsPublic,
   LetterRearrangementPublic,
+  CrosswordPublic,
   GradeResult,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
@@ -23,6 +24,7 @@ import { FillBlankExercise } from "./fill-blank";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { WordChoiceExercise } from "./word-choice";
 import { WordSearchExercise } from "./word-search";
+import { CrosswordExercise } from "./crossword";
 import { TrueFalseExercise } from "./true-false";
 import { MatchingExercise } from "./matching";
 import { ListeningExercise } from "./listening";
@@ -117,6 +119,16 @@ export function ExerciseCard({
         <WordSearchExercise
           taskId={taskId}
           config={config as unknown as WordSearchPublic}
+          pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
+          hidePoints={hidePoints}
+        />
+      );
+    case "crossword":
+      return (
+        <CrosswordExercise
+          taskId={taskId}
+          config={config as unknown as CrosswordPublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}

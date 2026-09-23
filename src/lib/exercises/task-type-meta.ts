@@ -227,6 +227,18 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-yellow-500",
     shadow: "shadow-yellow-100/50",
   },
+  // 30-й тип. Ділить cyan із image_match — попри те, що обидва "сітка"/
+  // "картки" за формою, конкретний контент (кросворд-слова проти
+  // картинок) достатньо різний, щоб не плутатись поруч у списку; іконка
+  // (LayoutGrid проти Images) додатково рятує впізнаваність.
+  crossword: {
+    stripe: "border-l-4 border-l-cyan-500",
+    badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300",
+    dot: "bg-cyan-500",
+    iconBorder: "border-cyan-500",
+    iconText: "text-cyan-500",
+    shadow: "shadow-cyan-100/50",
+  },
   open_answer: {
     stripe: "border-l-4 border-l-orange-500",
     badge: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
@@ -346,6 +358,7 @@ export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   chronological_order: "auto_graded",
   vocab_quiz: "auto_graded",
   word_search: "auto_graded",
+  crossword: "auto_graded",
   open_answer: "auto_graded",
   callout: "reference",
   phonetics: "reference",
@@ -396,6 +409,7 @@ import {
   Shuffle,
   Brackets,
   Grid3x3,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 
@@ -405,6 +419,7 @@ export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   letter_rearrangement: Shuffle,
   word_choice: Brackets,
   word_search: Grid3x3,
+  crossword: LayoutGrid,
   multiple_choice: ListChecks,
   true_false: SquareCheck,
   matching: ArrowLeftRight,

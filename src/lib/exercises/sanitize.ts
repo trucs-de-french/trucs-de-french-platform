@@ -45,8 +45,11 @@ import type {
   ChronologicalOrderConfig,
   ChronologicalOrderItem,
   ChronologicalOrderPublic,
+  CrosswordConfig,
+  CrosswordPublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
+import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
@@ -207,6 +210,45 @@ export function sanitizeWordSearch(config: WordSearchConfig): WordSearchPublic {
     // узагалі).
     words: config.words,
     points: resolveWordSearchPoints(config),
+  };
+}
+
+export function resolveCrosswordPoints(config: CrosswordConfig): number {
+  return config.points ?? 1;
+}
+
+// На відміну від sanitizeWordSearch (де секрет — лише placements, сітка
+// літер видима повністю), тут секрет — САМІ ЛІТЕРИ: openCells/cellNumbers
+// синтезуються з placements (форма+номери, без жодної літери), across/down
+// будуються групуванням тих самих placements за напрямком, відсортованих
+// за вже пораховним number (generateCrosswordGrid). placements студенту не
+// передаються взагалі.
+export function sanitizeCrossword(config: CrosswordConfig): CrosswordPublic {
+  const { placements, gridWidth, gridHeight } = config;
+  const byDirection = (direction: "horizontal" | "vertical") =>
+    placements
+      .filter((p) => p.direction === direction)
+      .sort((a, b) => a.number - b.number)
+      .map((p) => ({
+        number: p.number,
+        clue: p.clue,
+        clueStyle: p.clueStyle,
+        length: p.word.length,
+        imageUrl: p.imageUrl,
+        audioUrl: p.audioUrl,
+      }));
+
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    gridWidth,
+    gridHeight,
+    openCells: buildCrosswordOpenCells(placements, gridWidth, gridHeight),
+    cellNumbers: buildCrosswordCellNumbers(placements, gridWidth, gridHeight),
+    solution: buildCrosswordSolution(placements, gridWidth, gridHeight),
+    across: byDirection("horizontal"),
+    down: byDirection("vertical"),
+    points: resolveCrosswordPoints(config),
   };
 }
 
@@ -480,6 +522,8 @@ export function sanitizeConfigForStudent(
       return sanitizeWordChoice(config as unknown as WordChoiceConfig);
     case "word_search":
       return sanitizeWordSearch(config as unknown as WordSearchConfig);
+    case "crossword":
+      return sanitizeCrossword(config as unknown as CrosswordConfig);
     case "true_false":
       return sanitizeTrueFalse(config as unknown as TrueFalseConfig);
     case "matching":

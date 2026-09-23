@@ -186,6 +186,58 @@ export type WordSearchConfig = {
   points?: number;
 };
 
+// Слово + підказка (означення) — на відміну від WordSearchWord, тут немає
+// translation/imageUrl/audioUrl: підказка ЗАВЖДИ текстова (clue), той самий
+// принцип, що LetterGapsWord.hintText, лише без варіанту "definition"/
+// "sentence" (кросворд-підказка — завжди коротке означення).
+// clueStyle — вчителька сама вирішує для КОЖНОГО слова, чи підказка
+// коротка (плаский текст у студентському рендері) чи довга/речення (стиль
+// картки) — незалежно від картинки/аудіо (ті завжди в картці). Дефолт
+// "short", якщо не вказано — зберігає сумісність із уже наявними
+// завданнями, збереженими до появи цього поля.
+export type CrosswordWord = {
+  word: string;
+  clue: string;
+  clueStyle?: "short" | "long";
+  imageUrl?: string;
+  audioUrl?: string;
+};
+// clue/clueStyle денормалізовано просто в placement (не шукається окремо в
+// CrosswordConfig.words за збігом word) — уникає крихкого JOIN, якщо
+// раптом у списку опиняться два однакові слова з різними підказками.
+// number — номер клітинки-початку слова (стандартна конвенція кросвордів:
+// одна нумерація на клітинку, спільна для гор./верт. слів, що починаються
+// в тій самій клітинці) — пораховано ОДИН РАЗ у generateCrosswordGrid(),
+// той самий принцип "генерація не на льоту", що вже є для word_search.
+export type CrosswordPlacement = {
+  word: string;
+  clue: string;
+  clueStyle?: "short" | "long";
+  imageUrl?: string;
+  audioUrl?: string;
+  row: number;
+  col: number;
+  direction: "horizontal" | "vertical";
+  number: number;
+};
+// gridWidth/gridHeight — похідний bounding-box розмір (не задається
+// вчителькою вручну) — природний побічний продукт generateCrosswordGrid():
+// алгоритм працює в розрідженій мапі координат (без наперед відомого
+// розміру), розмір обчислюється лише в кінці, після розміщення всіх слів.
+// На відміну від WordSearchConfig, тут немає окремого поля grid (масиву
+// літер) — заблоковані/відкриті клітинки й самі літери відновлюються з
+// placements там, де вони потрібні (санітизація, оцінювання, прев'ю в
+// адмінці), а не зберігаються повторно.
+export type CrosswordConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  words: CrosswordWord[];
+  placements: CrosswordPlacement[];
+  gridWidth: number;
+  gridHeight: number;
+  points?: number;
+};
+
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
 // sanitize.ts) для тверджень без явного значення, щоб наявні задачі й далі
 // мали сенс без ретроактивного заповнення. Це пілот системи балів
@@ -506,6 +558,40 @@ export type WordSearchPublic = {
   points: number;
 };
 
+// Не "конфіг мінус placements" — синтезована структура (sanitizeCrossword
+// будує openCells/cellNumbers/solution/across/down з placements, самі
+// placements студенту не йдуть, лише похідні від них форми).
+// length — довжина слова, суто інформаційна (студент бачить, скільки
+// клітинок відведено під слово, ще до першого вводу).
+export type CrosswordCluePublic = {
+  number: number;
+  clue: string;
+  clueStyle?: "short" | "long";
+  length: number;
+  imageUrl?: string;
+  audioUrl?: string;
+};
+export type CrosswordPublic = {
+  instructions?: string;
+  subInstructions?: string;
+  gridWidth: number;
+  gridHeight: number;
+  openCells: boolean[][]; // true — клітинка для вводу, false — заблокована
+  cellNumbers: (number | null)[][]; // номер у клітинці, що починає слово(а)
+  // Правильна літера на кожній відкритій клітинці ("" на заблокованих) —
+  // на відміну від WordSearchPublic/letter_gaps, тут СВІДОМО розкрито
+  // студенту (прийнятий компроміс: простіше технічно за живу
+  // серверну перевірку по кожній клітинці, ризик підглянути в мережі
+  // визнано прийнятним для цього типу завдання) — потрібно для живого
+  // клієнтського підсвічування без запиту на сервер. Кнопка "Перевірити" й
+  // grade.ts як джерело балів на це не зважають — лишаються незалежним
+  // фінальним кроком.
+  solution: string[][];
+  across: CrosswordCluePublic[];
+  down: CrosswordCluePublic[];
+  points: number;
+};
+
 export type TrueFalsePublic = {
   instructions?: string;
   subInstructions?: string;
@@ -614,6 +700,12 @@ export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
 // координати з placements — той самий принцип, що всюди в grade.ts
 // (ніколи не довіряти клієнтському boolean).
 export type WordSearchAnswer = { word: string; cells: { row: number; col: number }[] }[];
+// Єдина 2D-мапа клітинка→літера (row-major, ті самі виміри, що gridWidth×
+// gridHeight) — НЕ по слову, як LetterGapsAnswer: клітинки спільні між
+// словами, що перетинаються, тож ввід в одну клітинку одразу впливає на
+// обидва слова. Порожній рядок "" — клітинка ще не заповнена (або
+// заблокована, звідти студент і не міг нічого ввести).
+export type CrosswordAnswer = string[][];
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
@@ -667,6 +759,15 @@ export type WordChoiceDetail = {
 // заліку балів.
 export type WordSearchDetail = {
   words: { word: string; found: boolean }[];
+};
+
+// per-слово (не per-клітинка) — той самий рівень деталізації, що
+// WordSearchDetail: isCorrect лише для score/підсвітки підказки в списку,
+// не для заліку балів (points — на всю вправу, CrosswordConfig.points).
+// number+direction ідентифікують слово однозначно (пара може повторюватись
+// лише в межах одного напрямку, номер унікальний у своєму напрямку).
+export type CrosswordDetail = {
+  words: { number: number; direction: "horizontal" | "vertical"; word: string; isCorrect: boolean }[];
 };
 
 export type TrueFalseDetail = {
@@ -801,6 +902,7 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: WordChoiceDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: WordSearchDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: CrosswordDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number }

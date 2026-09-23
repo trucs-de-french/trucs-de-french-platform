@@ -162,6 +162,27 @@ function buildConfig(type: string, formData: FormData): Record<string, unknown> 
         points: Number(formData.get("word_search_points")) || 1,
       };
     }
+    case "crossword": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("crossword_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml(
+          (formData.get("crossword_instructions") as string) || ""
+        ),
+        ...(subInstructions ? { subInstructions } : {}),
+        // Розкладку вже згенерувала й перевірила адмінка
+        // (crossword-fields.tsx) — сервер лише зберігає готовий результат,
+        // не перегенеровує. Немає окремого поля "grid" (на відміну від
+        // word_search) — форма й літери відновлюються з placements там, де
+        // вони потрібні (sanitizeCrossword/gradeCrossword).
+        words: parseJsonField(formData.get("crossword_words")),
+        placements: parseJsonField(formData.get("crossword_placements")),
+        gridWidth: Number(formData.get("crossword_grid_width")) || 0,
+        gridHeight: Number(formData.get("crossword_grid_height")) || 0,
+        points: Number(formData.get("crossword_points")) || 1,
+      };
+    }
     case "true_false": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""

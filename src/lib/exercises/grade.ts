@@ -22,7 +22,9 @@ import {
   resolveWordSearchPoints,
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
+  resolveCrosswordPoints,
 } from "./sanitize";
+import { placementCells } from "./word-search-grid";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -42,6 +44,9 @@ import type {
   WordSearchConfig,
   WordSearchAnswer,
   WordSearchDetail,
+  CrosswordConfig,
+  CrosswordAnswer,
+  CrosswordDetail,
   TrueFalseConfig,
   TrueFalseAnswer,
   TrueFalseDetail,
@@ -77,7 +82,6 @@ import type {
   ChronologicalOrderDetail,
   GradeResult,
 } from "./types";
-import { placementCells } from "./word-search-grid";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
 function normalize(value: string): string {
@@ -286,6 +290,37 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
   return {
     correct,
     score: percentage(foundCount, words.length),
+    detail: { words },
+    pointsEarned: correct ? points : 0,
+    pointsPossible: points,
+  };
+}
+
+// На відміну від gradeWordSearch (координатна звірка — студент лише
+// виділяє вже готові літери), тут студент ТИПИТЬ, тож звірка — по
+// нормалізованому тексту (normalize(), як gradeLetterGaps), не по
+// координатах. Клітинки СПІЛЬНІ між словами, що перетинаються (answer —
+// єдина 2D-мапа клітинка→літера, не масив на слово), тож кожне слово читає
+// СВОЇ клітинки (placementCells, той самий генерик, що word_search) із
+// цієї спільної мапи — правильність клітинки на перетині автоматично
+// узгоджена для обох слів, бо адмінський генератор гарантує однакову
+// літеру там (crossword-grid.ts: fits() дозволяє перетин лише з тим самим
+// символом). Один бал на все завдання (як gradeWordSearch/gradeLetterGaps).
+function gradeCrossword(config: CrosswordConfig, answer: CrosswordAnswer): GradeResult {
+  const words: CrosswordDetail["words"] = config.placements.map((p) => {
+    const cells = placementCells(p, p.word.length);
+    const studentWord = cells.map(({ row, col }) => answer[row]?.[col] ?? "").join("");
+    const isCorrect = normalize(studentWord) === normalize(p.word);
+    return { number: p.number, direction: p.direction, word: p.word, isCorrect };
+  });
+
+  const correctCount = words.filter((w) => w.isCorrect).length;
+  const correct = correctCount === words.length && words.length > 0;
+  const points = resolveCrosswordPoints(config);
+
+  return {
+    correct,
+    score: percentage(correctCount, words.length),
     detail: { words },
     pointsEarned: correct ? points : 0,
     pointsPossible: points,
@@ -721,6 +756,8 @@ export function gradeAnswer(
       return gradeWordChoice(config as unknown as WordChoiceConfig, answer as WordChoiceAnswer);
     case "word_search":
       return gradeWordSearch(config as unknown as WordSearchConfig, answer as WordSearchAnswer);
+    case "crossword":
+      return gradeCrossword(config as unknown as CrosswordConfig, answer as CrosswordAnswer);
     case "true_false":
       return gradeTrueFalse(config as unknown as TrueFalseConfig, answer as TrueFalseAnswer);
     case "matching":
