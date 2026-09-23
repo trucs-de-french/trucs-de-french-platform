@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -26,6 +27,7 @@ export function TableFillExercise({
   hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as TableFillDetail | undefined;
 
@@ -70,10 +72,14 @@ export function TableFillExercise({
     if (value !== null) {
       return <span>{value}</span>;
     }
+    const key = cellKey(rowId, side);
     return (
       <input
-        value={answers[cellKey(rowId, side)] ?? ""}
+        ref={diacritics.fieldRef(key)}
+        value={answers[key] ?? ""}
         onChange={(e) => updateAnswer(rowId, side, e.target.value)}
+        onFocus={() => diacritics.onFocus(key)}
+        onBlur={diacritics.onBlur}
         disabled={!!result}
         className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side)}`}
       />
@@ -118,6 +124,21 @@ export function TableFillExercise({
           </tbody>
         </table>
       </div>
+
+      {diacritics.rect && !result && diacritics.activeKey && (
+        <DiacriticsPopup
+          rect={diacritics.rect}
+          onPick={(ch) => {
+            const key = diacritics.activeKey!;
+            const rowId = key.slice(0, key.lastIndexOf(":"));
+            const side = key.slice(key.lastIndexOf(":") + 1) as "left" | "right";
+            const el = diacritics.getElement(key);
+            const { value, cursor } = insertAtCursor(el, answers[key] ?? "", ch);
+            updateAnswer(rowId, side, value);
+            focusAndSetCursor(el, cursor);
+          }}
+        />
+      )}
 
       {/* Той самий патерн, що fill-blank.tsx — список неправильних
           клітинок з правильною відповіддю під таблицею. rowIndex+сторона

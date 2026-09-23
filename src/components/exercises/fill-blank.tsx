@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 
 export function FillBlankExercise({
   taskId,
@@ -33,12 +34,17 @@ export function FillBlankExercise({
   // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
   // однакове слово, якщо вчитель вписав його двічі.
   const [crossedOut, setCrossedOut] = useState<Set<number>>(new Set());
+  const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
 
   useEffect(() => {
     if (result) onResult?.(result);
   }, [result, onResult]);
+
+  function updateAnswer(i: number, value: string) {
+    setAnswers((prev) => prev.map((v, idx) => (idx === i ? value : v)));
+  }
 
   function toggleCrossedOut(i: number) {
     setCrossedOut((prev) => {
@@ -111,10 +117,11 @@ export function FillBlankExercise({
             {seg}
             {i < blankCount && (
               <input
+                ref={diacritics.fieldRef(String(i))}
                 value={answers[i]}
-                onChange={(e) =>
-                  setAnswers((prev) => prev.map((v, idx) => (idx === i ? e.target.value : v)))
-                }
+                onChange={(e) => updateAnswer(i, e.target.value)}
+                onFocus={() => diacritics.onFocus(String(i))}
+                onBlur={diacritics.onBlur}
                 disabled={!!result}
                 className={`mx-1 w-28 rounded border px-2 py-0.5 text-base ${
                   detail
@@ -128,6 +135,19 @@ export function FillBlankExercise({
           </span>
         ))}
       </p>
+
+      {diacritics.rect && !result && diacritics.activeKey && (
+        <DiacriticsPopup
+          rect={diacritics.rect}
+          onPick={(ch) => {
+            const i = Number(diacritics.activeKey);
+            const el = diacritics.getElement(String(i));
+            const { value, cursor } = insertAtCursor(el, answers[i], ch);
+            updateAnswer(i, value);
+            focusAndSetCursor(el, cursor);
+          }}
+        />
+      )}
 
       {detail && (
         <ul className="mt-2 flex flex-col gap-1 text-sm">

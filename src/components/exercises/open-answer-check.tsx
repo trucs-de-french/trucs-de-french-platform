@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
 // розгорнутого тексту), тут коротка відповідь звіряється з фіксованим
@@ -27,6 +28,7 @@ export function OpenAnswerCheckExercise({
   hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as OpenAnswerDetail | undefined;
 
@@ -61,8 +63,11 @@ export function OpenAnswerCheckExercise({
                 )}
               </p>
               <input
+                ref={diacritics.fieldRef(q.id)}
                 value={answers[q.id] ?? ""}
                 onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                onFocus={() => diacritics.onFocus(q.id)}
+                onBlur={diacritics.onBlur}
                 disabled={!!result}
                 className={`mt-1 w-full rounded-md border px-2 py-1.5 text-base ${
                   qDetail
@@ -82,6 +87,19 @@ export function OpenAnswerCheckExercise({
           );
         })}
       </div>
+
+      {diacritics.rect && !result && diacritics.activeKey && (
+        <DiacriticsPopup
+          rect={diacritics.rect}
+          onPick={(ch) => {
+            const id = diacritics.activeKey!;
+            const el = diacritics.getElement(id);
+            const { value, cursor } = insertAtCursor(el, answers[id] ?? "", ch);
+            setAnswers((prev) => ({ ...prev, [id]: value }));
+            focusAndSetCursor(el, cursor);
+          }}
+        />
+      )}
 
       {!result ? (
         <button

@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 
 export function LetterGapsExercise({
   taskId,
@@ -27,6 +28,7 @@ export function LetterGapsExercise({
   const [answers, setAnswers] = useState<string[][]>(() =>
     config.words.map((w) => Array(w.chars.filter((c) => c === null).length).fill(""))
   );
+  const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as LetterGapsDetail | undefined;
 
@@ -95,9 +97,12 @@ export function LetterGapsExercise({
                   return (
                     <input
                       key={ci}
+                      ref={diacritics.fieldRef(`${wi},${gi}`)}
                       maxLength={1}
                       value={answers[wi][gi]}
                       onChange={(e) => updateLetter(wi, gi, e.target.value)}
+                      onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                      onBlur={diacritics.onBlur}
                       disabled={!!result}
                       className={`m-0.5 inline-block w-11 rounded-md border px-1 py-1.5 text-center text-base shadow-sm transition-colors ${
                         wordDetail
@@ -114,6 +119,16 @@ export function LetterGapsExercise({
           );
         })}
       </div>
+
+      {diacritics.rect && !result && diacritics.activeKey && (
+        <DiacriticsPopup
+          rect={diacritics.rect}
+          onPick={(ch) => {
+            const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
+            updateLetter(wi, gi, ch);
+          }}
+        />
+      )}
 
       {!result ? (
         <button

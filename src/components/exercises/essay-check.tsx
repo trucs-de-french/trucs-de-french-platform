@@ -11,6 +11,13 @@ import {
   type DelfLevel,
 } from "@/lib/delf/evaluation-grids";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+
+// Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
+// одночасно (isFormulaire — взаємовиключна гілка нижче), тож один спільний
+// інстанс хука безпечний — фіксований ключ "essay" для textarea ніколи не
+// перетнеться з f.id формуляра.
+const ESSAY_KEY = "essay";
 
 type EssayError = {
   original: string;
@@ -180,6 +187,7 @@ export function EssayCheckExercise({
 
   const [answer, setAnswer] = useState("");
   const [formAnswer, setFormAnswer] = useState<Record<string, string>>({});
+  const diacritics = useDiacriticsPopup<string>();
   const [pending, setPending] = useState(false);
   const [essayResult, setEssayResult] = useState<EssayResult | null>(null);
   const [formulaireResult, setFormulaireResult] = useState<FormulaireResult | null>(null);
@@ -237,8 +245,11 @@ export function EssayCheckExercise({
             <div key={f.id} className="flex flex-col gap-1">
               <label className="text-xs text-neutral-500 dark:text-neutral-400">{f.label}</label>
               <input
+                ref={diacritics.fieldRef(f.id)}
                 value={formAnswer[f.id] ?? ""}
                 onChange={(e) => setFormAnswer((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                onFocus={() => diacritics.onFocus(f.id)}
+                onBlur={diacritics.onBlur}
                 disabled={submitted}
                 className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-neutral-600"
               />
@@ -247,12 +258,34 @@ export function EssayCheckExercise({
         </div>
       ) : (
         <textarea
+          ref={diacritics.fieldRef(ESSAY_KEY)}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          onFocus={() => diacritics.onFocus(ESSAY_KEY)}
+          onBlur={diacritics.onBlur}
           disabled={submitted}
           rows={8}
           className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-neutral-600"
           placeholder="Ваша відповідь..."
+        />
+      )}
+
+      {diacritics.rect && !submitted && diacritics.activeKey && (
+        <DiacriticsPopup
+          rect={diacritics.rect}
+          onPick={(ch) => {
+            const key = diacritics.activeKey!;
+            const el = diacritics.getElement(key);
+            if (key === ESSAY_KEY) {
+              const { value, cursor } = insertAtCursor(el, answer, ch);
+              setAnswer(value);
+              focusAndSetCursor(el, cursor);
+            } else {
+              const { value, cursor } = insertAtCursor(el, formAnswer[key] ?? "", ch);
+              setFormAnswer((prev) => ({ ...prev, [key]: value }));
+              focusAndSetCursor(el, cursor);
+            }
+          }}
         />
       )}
 
