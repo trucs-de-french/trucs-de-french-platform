@@ -182,14 +182,15 @@ export function WordSearchExercise({
         )}
       </div>
 
-      {/* gap-3 (не gap-4) — той самий 12px, що padding блока завдання
-          (EXERCISE_BLOCK_CLASS + p-3): зазор між сіткою й панеллю карток має
-          дорівнювати відступу від зовнішньої межі блоку, інакше з одного
-          боку панель "притиснута" тісніше, ніж з інших. */}
-      <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-start">
+      {/* gap-2 — той самий інтервал, що між картками легенди (gap-2 нижче),
+          щоб усі проміжки (сітка↔легенда, картка↔картка) візуально
+          збігались. Сітка НЕ стискається (shrink-0) і НЕ росте — легенда
+          (flex-1 min-w-0) забирає весь простір, що лишився праворуч від
+          сітки, аж до правого паддінгу блоку завдання. */}
+      <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-start">
         <div
           ref={gridRef}
-          className="inline-block touch-none select-none shadow-md"
+          className="inline-block shrink-0 touch-none select-none shadow-md"
           onTouchMove={(e) => {
             const cell = cellFromTouch(e.touches[0]);
             if (cell) moveDrag(cell);
@@ -224,8 +225,12 @@ export function WordSearchExercise({
             заокруглення/тінь/відступ (CARD_BASE) на кожній картці, лише
             вміст усередині різниться. minmax(5.5rem,1fr) — ширше, ніж чиста
             картинка-плитка потребувала б, бо переклад буває довшим за одне
-            слово ("дозвіл, шкільний бланк") і має кудись загорнутись. */}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 md:w-72 md:shrink-0">
+            слово ("дозвіл, шкільний бланк") і має кудись загорнутись.
+            flex-1 min-w-0 (замість фіксованого w-72) — легенда заповнює
+            ВЕСЬ простір, що лишився праворуч від сітки, а не застигає на
+            288px незалежно від ширини блоку; auto-fill сам домальовує
+            стільки колонок, скільки влізе в цю ширину. */}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 md:min-w-0 md:flex-1">
           {config.words.map((w) => {
             const found = isFound(w.word);
             const kind = hintKind(w);
