@@ -9,7 +9,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 export function MatchingExercise({
   taskId,
@@ -100,7 +100,7 @@ export function MatchingExercise({
         subText={config.subInstructions}
       />
       <div className="grid grid-cols-2 gap-4">
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+        <div className="flex flex-col gap-2">
           {config.left.map((left) => {
             const right = pairs[left];
             const d = right ? detailFor(left, right) : undefined;
@@ -132,7 +132,7 @@ export function MatchingExercise({
           })}
         </div>
 
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+        <div className="flex flex-col gap-2">
           {config.right.map((right) => (
             <button
               key={right}

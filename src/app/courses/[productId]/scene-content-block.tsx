@@ -1,11 +1,14 @@
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
-import { InstructionsText } from "@/components/exercises/instructions-text";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import type { VocabItem } from "@/lib/vocab";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
+import { EXERCISE_BODY } from "@/lib/typography-styles";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
+import { isBlankHtml } from "@/lib/html-text";
 
 // Той самий локальний тип, що DialogueEntry в script-section.tsx (не
 // експортований звідти) — структурно сумісний, ScriptSection не переймається
@@ -45,11 +48,53 @@ export type SceneContentBlockData = {
 // клієнтського стану, весь блок рендериться на сервері (ScriptSection сам
 // по собі "use client" — це нормально всередині Server Component).
 export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
+  // Обгортка (EXERCISE_BLOCK_CLASS) не має з'являтись, якщо для цього
+  // content_type немає жодного заповненого поля — інакше студент бачить
+  // голу рамку з padding, без вмісту (task-visibility.ts).
+  if (!contentBlockHasRenderableContent(block)) return null;
+
   return (
     <section className={EXERCISE_BLOCK_CLASS}>
-      {block.content_type === "text" && block.content_text && (
-        <InstructionsText text={block.content_text} />
-      )}
+      <SceneContentBlockContent block={block} />
+    </section>
+  );
+}
+
+// Сам вміст, БЕЗ зовнішньої секції/рамки — окремо від SceneContentBlock,
+// щоб сторінка сцени могла вставити його всередину ЧУЖОЇ рамки (спільної з
+// TaskGroupBlock), коли до цього content-блоку прикріплено набір вправ
+// (task_groups.scene_content_block_id) — тоді блок і вправи мають одну
+// спільну картку, не дві окремі (раніше саме тому й розпадались на дві).
+export function SceneContentBlockContent({
+  block,
+  panelForText = false,
+}: {
+  block: SceneContentBlockData;
+  // Підкладка (SHARED_CONTENT_PANEL, лише навколо тексту) — вмикається
+  // ЛИШЕ коли блок показується разом із прикріпленою групою вправ (сторінка
+  // сцени об'єднує SceneContentBlockContent + TaskGroupBlock в одну секцію,
+  // bare-режим TaskGroupBlock) — самостійний content-блок (SceneContentBlock
+  // вище, без жодної групи) лишається без підкладки навіть для тексту.
+  panelForText?: boolean;
+}) {
+  const textNode = !isBlankHtml(block.content_text) && (
+    // rich-text + EXERCISE_BODY (Lora, text-base, звичайна вага) — НЕ
+    // InstructionsText/EXERCISE_INSTRUCTION: це вільний пояснювальний текст
+    // довільної довжини (абзаци, виділення), не коротка імперативна
+    // інструкція вправи. instruction-text (і його правило strong→800)
+    // свідомо не застосовується тут — <strong> лишається звичайним 700, як
+    // і скрізь у .rich-text.
+    <div
+      className={`rich-text ${EXERCISE_BODY}`}
+      dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(block.content_text ?? "") }}
+    />
+  );
+
+  return (
+    <>
+      {block.content_type === "text" &&
+        textNode &&
+        (panelForText ? <div className={SHARED_CONTENT_PANEL}>{textNode}</div> : textNode)}
 
       {block.content_type === "script" && <ScriptSection dialogue={block.dialogue ?? []} />}
 
@@ -139,6 +184,6 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
           </p>
         </div>
       )}
-    </section>
+    </>
   );
 }

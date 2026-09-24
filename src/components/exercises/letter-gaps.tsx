@@ -113,16 +113,13 @@ export function LetterGapsExercise({
                 <audio controls src={word.audioUrl} className="h-8 w-full max-w-xs" />
               )}
               {word.hintText.trim() && (
-                <p className="text-base italic text-neutral-500 dark:text-neutral-400">
-                  {word.hintType === "definition" ? "Визначення: " : "Речення: "}
-                  {word.hintText}
-                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
               )}
               <div className="flex flex-wrap items-center gap-1">
                 {groupChars(word.chars).map((group, ci) => {
                   if (group.type === "letters")
                     return (
-                      <span key={ci} className="font-heading text-xl font-semibold">
+                      <span key={ci} className="font-heading text-lg font-medium">
                         {group.text}
                       </span>
                     );
@@ -138,12 +135,12 @@ export function LetterGapsExercise({
                       onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
                       onBlur={diacritics.onBlur}
                       disabled={!!result}
-                      // font-heading font-semibold text-xl прямо на input —
+                      // font-heading font-medium text-lg прямо на input —
                       // не лише для вирівнювання з видимими літерами, а й
                       // тому, що глобальне input{font-family:var(--font-heading)}
                       // (globals.css) саме по собі дає ЛИШЕ шрифт, не вагу/
                       // розмір — ті все одно треба задавати явно тут.
-                      className={`h-9 w-8 rounded-md border text-center font-heading text-xl font-semibold shadow-sm transition-colors ${
+                      className={`h-9 w-8 rounded-md border text-center font-heading text-lg font-medium shadow-sm transition-colors ${
                         wordDetail
                           ? wordDetail.isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-950/30"

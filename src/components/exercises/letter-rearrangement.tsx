@@ -91,10 +91,7 @@ export function LetterRearrangementExercise({
                 <audio controls src={word.audioUrl} className="h-8 w-full max-w-xs" />
               )}
               {word.hintText.trim() && (
-                <p className="text-base italic text-neutral-500 dark:text-neutral-400">
-                  {word.hintType === "definition" ? "Визначення: " : "Речення: "}
-                  {word.hintText}
-                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
               )}
               <SwappableTileRow
                 items={orders[wi]}

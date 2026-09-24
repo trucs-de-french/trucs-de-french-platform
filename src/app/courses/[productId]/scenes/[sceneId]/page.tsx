@@ -37,6 +37,7 @@ import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-st
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import {
   SceneContentBlock,
+  SceneContentBlockContent,
   type SceneContentBlockData,
   type SceneContentLink,
 } from "../../scene-content-block";
@@ -172,6 +173,13 @@ export default async function ScenePage({
         "id, type, title, config, image_url, audio_url, points_visible, order_index, games(embed_url, provider)"
       )
       .eq("scene_id", sceneId)
+      // Учасники task_group рендеряться ВСЕРЕДИНІ спільної рамки блоку
+      // (TaskGroupBlock, через membersByGroup нижче) — без цього фільтра
+      // (той самий, що вже є в delf-test-tasks.tsx і materials/page.tsx)
+      // та сама задача потрапляла б у sceneRows ЩЕ РАЗ як окремий "task"-рядок
+      // зі своєю власною EXERCISE_BLOCK_CLASS-рамкою — блок візуально
+      // розпадався б на дві картки замість однієї спільної.
+      .is("task_group_id", null)
       .order("order_index")
       .returns<(TaskRow & { order_index: number })[]>(),
     supabase
@@ -679,22 +687,42 @@ export default async function ScenePage({
             const attachedGroup = attachedGroupByContentBlockId.get(content.id);
             const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
             const hasAttachedContent = !!attachedGroup && attachedMembers.length > 0;
+            const blockHasOwnContent = contentBlockHasRenderableContent(block);
             // Сам content-блок порожній (нема заповненого поля для свого
             // content_type) І немає прикріпленого набору вправ — секцію
             // цілком пропускаємо, інакше лишається невидима "рамка" з
             // padding, а gap-8 батьківського flex усе одно додав би зазор
             // з обох боків порожнього елемента.
-            if (!contentBlockHasRenderableContent(block) && !hasAttachedContent) return null;
+            if (!blockHasOwnContent && !hasAttachedContent) return null;
+
+            // Прикріплена група — ОДНА спільна секція на контент блоку й
+            // вправи разом (bare-режим TaskGroupBlock, без його власної
+            // <section>) — інакше картка розпадається на дві (баг, що
+            // виправляє ця задача). panelForText на SceneContentBlockContent
+            // додає ту саму сіру підкладку з смугою зліва, що й для
+            // текстового контенту самого TaskGroupBlock — і сірий
+            // фон/смугу так само НЕ додає для аудіо/відео/embed/лінків.
+            if (hasAttachedContent) {
+              return (
+                <section key={`content-${row.ref_id}`} className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
+                  <TaskGroupBlock
+                    group={attachedGroup}
+                    tasks={attachedMembers}
+                    bare
+                    extraSharedContent={
+                      blockHasOwnContent ? <SceneContentBlockContent block={block} panelForText /> : null
+                    }
+                  />
+                </section>
+              );
+            }
+
+            // Без прикріпленої групи — звичайна окрема картка content-блоку,
+            // як і раніше (без підкладки, вона потрібна лише коли під
+            // матеріалом є вправи).
             return (
               <section key={`content-${row.ref_id}`}>
                 <SceneContentBlock block={block} />
-                {/* Той самий принцип, що вже в "Завданнях" — блок без жодної
-                    задачі-члена не рендеримо взагалі. */}
-                {hasAttachedContent && (
-                  <div className="mt-3">
-                    <TaskGroupBlock group={attachedGroup} tasks={attachedMembers} />
-                  </div>
-                )}
               </section>
             );
           }

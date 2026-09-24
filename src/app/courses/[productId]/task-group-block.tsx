@@ -8,8 +8,9 @@ import { isExerciseType } from "@/components/exercises/exercise-card";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import type { ReactNode } from "react";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { isBlankHtml } from "@/lib/html-text";
@@ -47,7 +48,27 @@ export type TaskGroupData = {
 // title блоку — свідомо НЕ рендериться (адмінська мітка, "студент не
 // бачить", task-group-fields.tsx) — сам контент і є тим, що ідентифікує
 // блок студенту.
-export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: ExerciseTask[] }) {
+export function TaskGroupBlock({
+  group,
+  tasks,
+  bare = false,
+  extraSharedContent = null,
+}: {
+  group: TaskGroupData;
+  tasks: ExerciseTask[];
+  // true — коли групу прикріплено до scene_content_block і сторінка сцени
+  // сама малює ОДНУ спільну <section className={EXERCISE_BLOCK_CLASS}>
+  // навколо контенту блоку + цього компонента: тоді TaskGroupBlock не додає
+  // власної секції/рамки, лише свій вміст (спільний контент групи, якщо є,
+  // список задач, підсумок балів) — інакше картка розпадалась би на дві
+  // (контент-блок окремо, група окремо), саме той баг, що виправляє ця
+  // задача.
+  bare?: boolean;
+  // Вміст САМОГО scene_content_block (SceneContentBlockContent з
+  // panelForText) — рендериться ПЕРЕД власним контентом групи, у межах
+  // тієї самої секції, лише коли bare (прикріплена група).
+  extraSharedContent?: ReactNode;
+}) {
   const [results, setResults] = useState<Record<string, GradeResult>>({});
 
   // Один стабільний onResult-колбек НА КОЖЕН task.id, мемоізований через
@@ -79,18 +100,19 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
     return map;
   }, [tasks]);
 
-  // Ті самі перевірки, що й для порожніх обгорток-задач/content-блоків
-  // (task-visibility.ts) — тут вирішують, чи є взагалі що показати
-  // (guard нижче) і чи потрібен border-t-роздільник над списком задач
-  // (лише коли спільний контент групи справді відрендерився вище).
+  // Та сама перевірка, що й для порожніх обгорток-задач/content-блоків
+  // (task-visibility.ts) — вирішує, чи є взагалі що показати (guard нижче).
   const visibleTasks = tasks.filter(taskHasRenderableContent);
-  const hasSharedContent = contentBlockHasRenderableContent(group);
+  const hasOwnSharedContent = contentBlockHasRenderableContent(group);
+  const hasSharedContent = hasOwnSharedContent || !!extraSharedContent;
 
-  // Ні спільного контенту, ні жодної задачі, що реально щось покаже —
-  // показувати голу рамку з border-t "нізвідки в нікуди" немає сенсу.
+  // Ні спільного контенту (ні свого, ні переданого зовні), ні жодної
+  // задачі, що реально щось покаже — показувати голу рамку немає сенсу.
+  // У bare-режимі викликач (сторінка сцени) і так уже перевірив те саме
+  // перед викликом — цей guard тут лише для звичайного (не bare) виклику.
   // Хуки (useState/useMemo) вище вже викликані безумовно — це не порушує
   // Rules of Hooks.
-  if (!hasSharedContent && visibleTasks.length === 0) return null;
+  if (!bare && !hasSharedContent && visibleTasks.length === 0) return null;
 
   // Підсумок рахуємо лише коли ВІДПОВІЛИ на всі задачі блоку, що взагалі
   // мають бали (essay_check/callout/embed/link/game серед tasks ніколи не
@@ -115,15 +137,22 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   const flatPoints = group.flat_points ?? 0;
   const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
-  return (
-    <section className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
-      {/* rich-text + EXERCISE_BODY — той самий фікс, що scene-content-block.tsx:
-          вільний пояснювальний текст блоку, не інструкція вправи. */}
+  // Підкладка (SHARED_CONTENT_PANEL) — лише навколо ТЕКСТОВОГО контенту:
+  // аудіо/відео/embed мають власний вигляд (плеєр/iframe із власним фоном),
+  // смуга+сірий фон навколо них були б зайвим подвійним обрамленням. Якщо
+  // прикріплений content-блок (extraSharedContent) теж текстовий — це вже
+  // ЙОГО власна підкладка (SceneContentBlockContent, panelForText),
+  // рендерена окремо ПЕРЕД цим — дві незалежні підкладки одна під одною,
+  // не одна об'єднана, якщо в обох текст.
+  const ownSharedContent = (
+    <>
       {group.content_type === "text" && !isBlankHtml(group.content_text) && (
-        <div
-          className={`rich-text ${EXERCISE_BODY}`}
-          dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(group.content_text ?? "") }}
-        />
+        <div className={SHARED_CONTENT_PANEL}>
+          <div
+            className={`rich-text ${EXERCISE_BODY}`}
+            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(group.content_text ?? "") }}
+          />
+        </div>
       )}
 
       {group.content_type === "audio" &&
@@ -204,6 +233,13 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
           </p>
         </div>
       )}
+    </>
+  );
+
+  const body = (
+    <>
+      {extraSharedContent}
+      {ownSharedContent}
 
       {/* Подвійний ритм (gap-8 md:gap-12) МІЖ задачами-членами — свідомо
           більший за звичайний EXERCISE_LIST_GAP: ці задачі йдуть БЕЗ власних
@@ -213,16 +249,13 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
           заголовок/медіа/тіло тієї Ж задачі), інакше фрагмент ExerciseBlock
           розсипав би title/media/тіло ОДНІЄЇ задачі як окремі елементи
           цього-таки списку — вони отримали б подвійний ритм МІЖ СОБОЮ,
-          а не лише між різними задачами. border-t/pt — одинарний ритм
-          (той самий, що padding EXERCISE_BLOCK_CLASS), не подвійний: лінія
-          відділяє спільний контент від СПИСКУ задач, а не одну задачу від
-          іншої. */}
+          а не лише між різними задачами. Відступ від контенту вище до
+          першої задачі — звичайний одинарний ритм EXERCISE_STACK зовнішньої
+          секції (bare чи ні — усі ці частини прості сиблінги в одному
+          flex-col). Жодної лінії-розділювача тут більше немає — підкладка
+          спільного контенту сама відділяє його фоном. */}
       {visibleTasks.length > 0 && (
-        <div
-          className={`flex flex-col gap-8 md:gap-12 ${
-            hasSharedContent ? "border-t border-gray-200 pt-4 md:pt-6 dark:border-neutral-700" : ""
-          }`}
-        >
+        <div className="flex flex-col gap-8 md:gap-12">
           {visibleTasks.map((task) => (
             <div key={task.id} className={EXERCISE_STACK}>
               <ExerciseBlock
@@ -257,6 +290,14 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
           </span>
         </p>
       )}
-    </section>
+    </>
   );
+
+  // bare — сторінка сцени сама малює зовнішню <section className={EXERCISE_BLOCK_CLASS}>
+  // навколо контенту прикріпленого scene_content_block і цього вмісту разом
+  // (одна спільна картка); інакше (звичайний виклик зі списку "Завдання") —
+  // TaskGroupBlock малює свою секцію сам, як і раніше.
+  if (bare) return body;
+
+  return <section className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>{body}</section>;
 }
