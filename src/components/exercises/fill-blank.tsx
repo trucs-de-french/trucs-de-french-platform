@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
 export function FillBlankExercise({
   taskId,
@@ -64,8 +65,9 @@ export function FillBlankExercise({
         {/* flex-ряд, не вкладений текст у <p> — санітизований instructions
             сам може містити <p> (TipTap), а <p> у <p> невалідний HTML (той
             самий принцип, що InstructionsText). */}
-        <div className="flex flex-wrap items-baseline gap-2 font-medium">
+        <div className="flex flex-wrap items-baseline gap-2">
           <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
               __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank),
             }}
@@ -82,7 +84,7 @@ export function FillBlankExercise({
         </div>
         {config.subInstructions && (
           <div
-            className="mt-0.5 text-sm font-normal text-neutral-500 dark:text-neutral-400"
+            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
@@ -99,7 +101,7 @@ export function FillBlankExercise({
               key={i}
               type="button"
               onClick={() => toggleCrossedOut(i)}
-              className={`rounded-full border border-gray-300 px-3 py-1 text-sm dark:border-neutral-600 ${
+              className={`rounded-full border border-gray-300 px-3 py-1 text-base dark:border-neutral-600 ${
                 crossedOut.has(i)
                   ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                   : "hover:bg-neutral-50 dark:hover:bg-neutral-800"

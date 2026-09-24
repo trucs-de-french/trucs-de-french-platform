@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker } from "./dialogue-line";
 import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
+import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 
 type DialogueEntry = {
   speaker: string;
@@ -78,7 +79,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
               collapsed ? "" : "rotate-180"
             }`}
           />
-          <h2 className="text-lg font-medium">{title}</h2>
+          <h2 className={STUDENT_SECTION_HEADING}>{title}</h2>
         </button>
       )}
 

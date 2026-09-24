@@ -8,6 +8,7 @@ import { DelfTestGrid } from "./delf-test-grid";
 import { DelfMaterials } from "./delf-materials";
 import { DelfRecommendations } from "./delf-recommendations";
 import { SCENE_CARD_CLASS } from "@/components/task-card-style";
+import { STUDENT_PAGE_TITLE } from "@/lib/typography-styles";
 
 export default async function CoursePage({
   params,
@@ -37,7 +38,7 @@ export default async function CoursePage({
         <Link href="/dashboard" className="text-sm underline">
           ← До кабінету
         </Link>
-        <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{product.title}</h1>
         <PreviewBlocked productId={productId} />
       </main>
     );
@@ -50,7 +51,7 @@ export default async function CoursePage({
           ← До кабінету
         </Link>
         {isPreviewing && <PreviewBanner productId={productId} />}
-        <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{product.title}</h1>
         {product.description && (
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
         )}
@@ -75,7 +76,7 @@ export default async function CoursePage({
         ← До кабінету
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 font-heading text-2xl font-semibold">{product.title}</h1>
+      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{product.title}</h1>
       {product.description && (
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">{product.description}</p>
       )}

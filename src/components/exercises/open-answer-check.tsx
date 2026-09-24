@@ -43,7 +43,7 @@ export function OpenAnswerCheckExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="flex flex-col gap-3">
@@ -62,6 +62,11 @@ export function OpenAnswerCheckExercise({
                   </span>
                 )}
               </p>
+              {/* py-3 (не py-1.5) — окреме поле відповіді, не вбудоване в
+                  речення, тож може собі дозволити комфортнішу висоту дотику
+                  (>=44px разом із text-base line-height); INPUT_BORDER
+                  (input-styles.ts) тут не використовується взагалі, тож
+                  правити нічого спільного не довелось. */}
               <input
                 ref={diacritics.fieldRef(q.id)}
                 value={answers[q.id] ?? ""}
@@ -69,7 +74,7 @@ export function OpenAnswerCheckExercise({
                 onFocus={() => diacritics.onFocus(q.id)}
                 onBlur={diacritics.onBlur}
                 disabled={!!result}
-                className={`mt-1 w-full rounded-md border px-2 py-1.5 text-base ${
+                className={`mt-1 w-full rounded-md border px-2 py-3 text-base ${
                   qDetail
                     ? qDetail.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"

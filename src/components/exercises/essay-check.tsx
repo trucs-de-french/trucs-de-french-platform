@@ -244,6 +244,11 @@ export function EssayCheckExercise({
           {fields.map((f) => (
             <div key={f.id} className="flex flex-col gap-1">
               <label className="text-xs text-neutral-500 dark:text-neutral-400">{f.label}</label>
+              {/* py-3 (не py-1.5) — окреме поле формуляра (Nom/Date тощо),
+                  не вбудоване в речення, тож 44px+ висота дотику доречна тут
+                  так само, як в open_answer_check. Textarea есе нижче НЕ
+                  чіпаю — рядкова висота там уже й так набагато більша за
+                  44px (rows=8), вимога стосується саме однорядкових полів. */}
               <input
                 ref={diacritics.fieldRef(f.id)}
                 value={formAnswer[f.id] ?? ""}
@@ -251,7 +256,7 @@ export function EssayCheckExercise({
                 onFocus={() => diacritics.onFocus(f.id)}
                 onBlur={diacritics.onBlur}
                 disabled={submitted}
-                className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-neutral-600"
+                className="rounded-md border border-gray-300 px-2 py-3 text-sm dark:border-neutral-600"
               />
             </div>
           ))}

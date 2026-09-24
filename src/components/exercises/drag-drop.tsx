@@ -67,7 +67,7 @@ export function DragDropExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="flex flex-col gap-3">

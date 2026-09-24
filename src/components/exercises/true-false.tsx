@@ -43,14 +43,14 @@ export function TrueFalseExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false}
         subText={config.subInstructions}
-        className="font-medium"
+        className="mb-2"
       />
       {config.statements.map((s) => {
         const d = detail?.statements.find((x) => x.id === s.id);
         return (
           <div
             key={s.id}
-            className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white p-2 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
+            className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white p-4 shadow-sm md:p-6 dark:border-neutral-700 dark:bg-neutral-800"
           >
             <span>
               {s.text}

@@ -75,7 +75,7 @@ export function SortColumnsExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div

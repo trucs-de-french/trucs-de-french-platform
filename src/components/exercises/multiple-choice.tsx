@@ -187,7 +187,7 @@ export function MultipleChoiceExercise({
               setSelections((prev) => ({ ...prev, [item.id]: next }));
             }}
             disabled={!!result}
-            className={`mx-1 rounded-md border px-2 py-1 text-sm align-middle ${
+            className={`mx-1 rounded-md border px-2 py-0.5 text-base align-middle ${
               sel.length > 0 && sel[0] !== "" ? SELECTED_OPTION_CLASS : "border-gray-300 dark:border-neutral-600"
             }`}
           >
@@ -217,7 +217,7 @@ export function MultipleChoiceExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="flex flex-col gap-4">{config.items.map(renderItem)}</div>

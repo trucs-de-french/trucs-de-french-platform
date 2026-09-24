@@ -76,7 +76,7 @@ export function CheckboxGridExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="overflow-x-auto">

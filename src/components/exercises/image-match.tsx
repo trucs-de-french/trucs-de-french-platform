@@ -51,7 +51,7 @@ export function ImageMatchExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="flex min-h-12 flex-wrap gap-2 rounded-md" {...bankDropProps()}>

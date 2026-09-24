@@ -97,7 +97,7 @@ export function MatchingExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.matching}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">

@@ -22,13 +22,13 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (
           <div key={i} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
             <span>{item.text}</span>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">
+            <span className="text-base text-neutral-500 dark:text-neutral-400">
               {item.transcription}
             </span>
             {item.mediaUrl &&

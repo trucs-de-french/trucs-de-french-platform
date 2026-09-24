@@ -105,7 +105,7 @@ export function ChronologicalOrderExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       {config.mode === "image" ? (

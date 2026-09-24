@@ -32,6 +32,7 @@ import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
+import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import {
   SceneContentBlock,
   type SceneContentBlockData,
@@ -129,7 +130,7 @@ export default async function ScenePage({
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До курсу
         </Link>
-        <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
         <PreviewBlocked productId={productId} />
       </main>
     );
@@ -391,7 +392,7 @@ export default async function ScenePage({
 
   const videoNode = scene.video_url && (
     <section>
-      <h2 className="text-lg font-medium">Відео</h2>
+      <h2 className={STUDENT_SECTION_HEADING}>Відео</h2>
       <div className={`${H2_TO_CONTENT} aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700`}>
         <iframe
           src={toEmbedUrl(scene.video_url, scene.video_provider)}
@@ -415,7 +416,7 @@ export default async function ScenePage({
 
   const linksNode = hasLinks && (
     <section>
-      <h2 className="text-lg font-medium">Практика</h2>
+      <h2 className={STUDENT_SECTION_HEADING}>Практика</h2>
       <div className={`${H2_TO_CONTENT} flex flex-wrap gap-2`}>
         {linkList.map((link) => (
           <a
@@ -440,7 +441,7 @@ export default async function ScenePage({
 
   const tasksNode = sceneRows.length > 0 && (
     <section>
-      <h2 className="text-lg font-medium">Завдання</h2>
+      <h2 className={STUDENT_SECTION_HEADING}>Завдання</h2>
       <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
         {sceneRows.map((row) => {
           if (row.kind === "group") {
@@ -638,7 +639,7 @@ export default async function ScenePage({
         ← До курсу
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
+      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
 
       {/* H1_TO_CONTENT — відступ від h1 до першої секції; gap-8 — той самий
           32px МІЖ секціями (Відео/Скрипт/Практика/Вокабуляр/Завдання/

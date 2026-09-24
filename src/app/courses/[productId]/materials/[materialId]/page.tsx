@@ -10,6 +10,7 @@ import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES } from "@/lib/spacing";
+import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 
 export default async function MaterialPage({
   params,
@@ -47,7 +48,7 @@ export default async function MaterialPage({
         <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
           ← До матеріалів
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{material.title ?? "Матеріал"}</h1>
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{material.title ?? "Матеріал"}</h1>
         <PreviewBlocked productId={productId} />
       </main>
     );
@@ -139,7 +140,7 @@ export default async function MaterialPage({
 
       {isPreviewing && <PreviewBanner productId={productId} />}
 
-      <h1 className="mt-2 text-2xl font-semibold">{material.title ?? "Матеріал"}</h1>
+      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{material.title ?? "Матеріал"}</h1>
 
       {/* H1_TO_CONTENT — одна спільна обгортка замість mt-4/mt-6 на КОЖНОМУ
           з можливих "перших" елементів статті (safeHtml і PDF не
@@ -187,7 +188,7 @@ export default async function MaterialPage({
           не впливає на результат. */}
       {hasExercises && (
         <section className={TEXT_TO_EXERCISES}>
-          <h2 className="text-lg font-medium">Вправи</h2>
+          <h2 className={STUDENT_SECTION_HEADING}>Вправи</h2>
           <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
             {rows.map((row) =>
               row.kind === "group" ? (

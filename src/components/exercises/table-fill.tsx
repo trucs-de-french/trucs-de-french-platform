@@ -99,7 +99,7 @@ export function TableFillExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       <div className="overflow-x-auto">

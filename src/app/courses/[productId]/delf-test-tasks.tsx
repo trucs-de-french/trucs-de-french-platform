@@ -4,6 +4,7 @@ import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
+import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 
 type TestTask = ExerciseTask & { delf_section: string | null };
 type TestTaskGroup = TaskGroupData & {
@@ -144,7 +145,7 @@ export async function DelfTestTasks({
         if (sectionRows.length === 0) return null;
         return (
           <section key={section}>
-            <h2 className="text-lg font-medium">
+            <h2 className={STUDENT_SECTION_HEADING}>
               {section} — {EXAM_SECTION_LABELS[section]}
             </h2>
             <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>{sectionRows.map(renderRow)}</ul>
@@ -154,7 +155,7 @@ export async function DelfTestTasks({
 
       {noSection.length > 0 && (
         <section>
-          <h2 className="text-lg font-medium">Без секції</h2>
+          <h2 className={STUDENT_SECTION_HEADING}>Без секції</h2>
           <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>{noSection.map(renderRow)}</ul>
         </section>
       )}

@@ -5,6 +5,7 @@ import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-pre
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { DelfModeTabs } from "../../delf-mode-tabs";
 import { DelfTestTasks } from "../../delf-test-tasks";
+import { STUDENT_PAGE_TITLE } from "@/lib/typography-styles";
 
 export default async function DelfTestPage({
   params,
@@ -39,7 +40,7 @@ export default async function DelfTestPage({
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До тестів
         </Link>
-        <h1 className="mt-2 font-heading text-2xl font-semibold">
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>
           {product.title} — Тест {testNumber}
         </h1>
         <PreviewBlocked productId={productId} />
@@ -53,7 +54,7 @@ export default async function DelfTestPage({
         ← До тестів
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className="mt-2 font-heading text-2xl font-semibold">
+      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>
         {product.title} — Тест {testNumber}
       </h1>
 

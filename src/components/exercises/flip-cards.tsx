@@ -184,7 +184,7 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
       {config.mode === "random_reveal" ? (
         <RandomRevealFlipCards cards={config.cards} revealSide={config.revealSide ?? "front"} />

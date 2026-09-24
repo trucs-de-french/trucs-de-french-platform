@@ -42,7 +42,7 @@ export function ListeningExercise({
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.listening}
         subText={config.subInstructions}
-        className="mb-2 font-medium"
+        className="mb-2"
       />
 
       {isYouTubeUrl(config.audioUrl) ? (

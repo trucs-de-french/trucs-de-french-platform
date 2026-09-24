@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
 type Cell = { row: number; col: number };
 
@@ -160,8 +161,9 @@ export function WordSearchExercise({
   return (
     <div>
       <div className="mb-2">
-        <div className="flex flex-wrap items-baseline gap-2 font-medium">
+        <div className="flex flex-wrap items-baseline gap-2">
           <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
               __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search),
             }}
@@ -176,7 +178,7 @@ export function WordSearchExercise({
         </div>
         {config.subInstructions && (
           <div
-            className="mt-0.5 text-sm font-normal text-neutral-500 dark:text-neutral-400"
+            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
@@ -198,7 +200,7 @@ export function WordSearchExercise({
             if (cell) moveDrag(cell);
           }}
         >
-          <table className="border-collapse font-mono text-base">
+          <table className="border-collapse font-heading font-semibold text-base">
             <tbody>
               {config.grid.map((row, ri) => (
                 <tr key={ri}>

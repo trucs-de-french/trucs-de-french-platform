@@ -10,6 +10,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -245,8 +246,8 @@ export function CrosswordExercise({
               : ANSWER_CARD_DEFAULT
         }`}
       >
-        <span className={`text-sm ${clueTextClass(liveStatus)}`}>
-          <span className="font-medium">{clue.number}.</span> {clue.clue}
+        <span className={`text-base ${clueTextClass(liveStatus)}`}>
+          <span className="font-semibold">{clue.number}.</span> {clue.clue}
         </span>
         {clue.imageUrl && (
           <ImageOrPlaceholder src={clue.imageUrl} alt="" className="h-14 w-14 rounded object-cover" />
@@ -259,8 +260,15 @@ export function CrosswordExercise({
   }
 
   // Плаский текст (без рамки/тіні) — для короткої підказки (clueStyle
-  // "short" чи не вказано) БЕЗ картинки/аудіо. Той самий вигляд, що був до
-  // повернення карток — компактний рядок у потоці, не в auto-fill сітці.
+  // "short" чи не вказано) БЕЗ картинки/аудіо. Рядкова розкладка (flex-wrap
+  // на батьківському контейнері, не вертикальний список) — номер БЕЗ
+  // фіксованої ширини/вирівнювання в колонку (це мало сенс лише у
+  // вертикальному списку, тут кожна підказка самостійний "чіп" у потоці),
+  // впритул до свого тексту (gap-1.5). Номер — whitespace-nowrap (сам по
+  // собі й так короткий, "3." ніколи не переноситься); текст підказки БЕЗ
+  // nowrap — якщо трапиться довгий, перенос відбудеться всередині самого
+  // тексту, а не між номером і текстом (номер — окремий флекс-елемент на
+  // початку рядка, лишається на місці, поки текст переноситься під ним).
   function renderClueFlat(direction: Direction, clue: CrosswordPublic["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
@@ -269,11 +277,12 @@ export function CrosswordExercise({
         key={clue.number}
         type="button"
         onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
-        className={`rounded px-1 py-0.5 text-sm transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+        className={`flex items-baseline gap-1.5 rounded px-1 py-0.5 text-left text-base transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
           isActive && !liveStatus ? "bg-blue-50 dark:bg-blue-950/40" : ""
         } ${clueTextClass(liveStatus)}`}
       >
-        <span className="font-medium">{clue.number}.</span> {clue.clue}
+        <span className="whitespace-nowrap font-semibold">{clue.number}.</span>
+        <span>{clue.clue}</span>
       </button>
     );
   }
@@ -282,8 +291,9 @@ export function CrosswordExercise({
   // ДВІ окремі однорідні ділянки в межах секції, не одна змішана сітка:
   // картка розрахована на мінімальну ширину 9rem, короткий текстовий рядок
   // у тій самій клітинці або розтягнувся б, або зламав вирівнювання —
-  // натомість короткі підказки йдуть суцільним потоком (flex-wrap) під
-  // блоком карток, як був старий плаский список.
+  // натомість короткі підказки йдуть рядком (flex-wrap) під блоком карток:
+  // gap-x-8 між підказками по горизонталі, gap-y-2 між рядками при переносі
+  // (не gap-y-0.5 впритул, як був проміжний варіант).
   function renderClueSection(direction: Direction, clues: CrosswordPublic["across"], title: string) {
     if (clues.length === 0) return null;
     const needsCard = (clue: CrosswordPublic["across"][number]) =>
@@ -292,14 +302,14 @@ export function CrosswordExercise({
     const flatClues = clues.filter((clue) => !needsCard(clue));
     return (
       <div className="w-full">
-        <p className="mb-2 text-sm font-semibold text-neutral-600 dark:text-neutral-400">{title}</p>
+        <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
         {cardClues.length > 0 && (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
             {cardClues.map((clue) => renderClueCard(direction, clue))}
           </div>
         )}
         {flatClues.length > 0 && (
-          <div className={`flex flex-wrap gap-x-4 gap-y-0.5 ${cardClues.length > 0 ? "mt-2" : ""}`}>
+          <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardClues.length > 0 ? "mt-2" : ""}`}>
             {flatClues.map((clue) => renderClueFlat(direction, clue))}
           </div>
         )}
@@ -310,8 +320,9 @@ export function CrosswordExercise({
   return (
     <div>
       <div className="mb-2">
-        <div className="flex flex-wrap items-baseline gap-2 font-medium">
+        <div className="flex flex-wrap items-baseline gap-2">
           <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
               __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.crossword),
             }}
@@ -326,7 +337,7 @@ export function CrosswordExercise({
         </div>
         {config.subInstructions && (
           <div
-            className="mt-0.5 text-sm font-normal text-neutral-500 dark:text-neutral-400"
+            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
@@ -349,15 +360,16 @@ export function CrosswordExercise({
               (лише сітка, без сусідніх елементів, — needed для того самого
               обходу border-collapse, що вже в word-search.tsx). */}
           <div className="inline-block drop-shadow-md">
-            {/* font-mono — той самий принцип, що word-search.tsx: моноширинна
-                сітка лишається як є, попри глобальне правило
-                "input { font-family: var(--font-heading) }" (globals.css,
-                заміна шрифтів). На <table> цього досить для номерів клітинок
-                (звичайний <span>, успадковує), але НЕ для самого <input>
-                нижче — глобальне правило звертається до input напряму
-                (не через успадкування), тож перемагає ancestor-класи; клас
-                font-mono треба продублювати прямо на className інпута. */}
-            <table className="border-collapse font-mono">
+            {/* font-heading — сітка тепер на тому самому шрифті, що інтерфейс
+                (Nunito), не на моноширинному Geist Mono. На <table> цього
+                досить для номерів клітинок (звичайний <span>, успадковує),
+                але НЕ для самого <input> нижче — глобальне правило
+                "input { font-family: var(--font-heading) }" (globals.css)
+                звертається до input НАПРЯМУ (не через успадкування), тож
+                клас однаково треба продублювати прямо на className інпута
+                (тут це вже той самий шрифт, тому дублювання суто заради
+                стабільності на випадок майбутньої зміни правила). */}
+            <table className="border-collapse font-heading">
               <tbody>
                 {config.openCells.map((row, ri) => (
                   <tr key={ri}>
@@ -394,7 +406,7 @@ export function CrosswordExercise({
                             }}
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
-                            className={`h-full w-full bg-white text-center font-mono text-base font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
+                            className={`h-full w-full bg-white text-center font-heading text-base font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
                               status === "correct"
                                 ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                                 : status === "incorrect"

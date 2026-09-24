@@ -262,7 +262,7 @@ export const WordSearchFields = forwardRef<
             Прев&apos;ю сітки ({grid.length}×{grid.length}) — те саме побачить студент
           </p>
           <div className="mt-1 overflow-x-auto">
-            <table className="border-collapse font-mono text-xs">
+            <table className="border-collapse font-heading font-semibold text-xs">
               <tbody>
                 {grid.map((row, ri) => (
                   <tr key={ri}>

@@ -9,6 +9,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SwappableTileRow } from "./swappable-tile-row";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
 export function LetterRearrangementExercise({
   taskId,
@@ -41,8 +42,9 @@ export function LetterRearrangementExercise({
   return (
     <div>
       <div className="mb-2">
-        <div className="flex flex-wrap items-baseline gap-2 font-medium">
+        <div className="flex flex-wrap items-baseline gap-2">
           <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
               __html: sanitizeInstructionsHtml(
                 config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement
@@ -59,7 +61,7 @@ export function LetterRearrangementExercise({
         </div>
         {config.subInstructions && (
           <div
-            className="mt-0.5 text-sm font-normal text-neutral-500 dark:text-neutral-400"
+            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
@@ -87,7 +89,7 @@ export function LetterRearrangementExercise({
               {word.audioUrl && (
                 <audio controls src={word.audioUrl} className="mb-1 h-8 w-full max-w-xs" />
               )}
-              <p className="mb-1 text-sm italic text-neutral-500 dark:text-neutral-400">
+              <p className="mb-1 text-base italic text-neutral-500 dark:text-neutral-400">
                 {word.hintType === "definition" ? "Визначення: " : "Речення: "}
                 {word.hintText}
               </p>

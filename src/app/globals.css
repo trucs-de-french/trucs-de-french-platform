@@ -45,7 +45,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-mono: var(--font-geist-mono);
   /* Nunito — заголовки й інтерфейс: h1-h6 (глобальне правило нижче),
      button/input/textarea/select/label/nav/aside (те саме, нижче) —
      будь-де через утиліту font-heading, і як --font-sans (дефолтний "сан"
@@ -93,12 +92,25 @@ h1, h2, h3, h4, h5, h6 {
 /* button/input/textarea/select/label — стандартні інтерактивні елементи
    форм; nav/aside — бічні панелі й навігація (course-switcher-sidebar.tsx,
    delf-course-tabs.tsx: єдині два місця в коді, де взагалі є <aside>).
-   Клас font-content (Lora, поля навчального контенту) чи font-mono
-   (моноширинні сітки word_search/crossword) на конкретному елементі
-   переважає це правило звичайною специфічністю CSS (клас сильніший за
-   голий тег) — жодних виключень тут прописувати не треба. */
+   Клас font-content (Lora, поля навчального контенту) на конкретному
+   елементі переважає це правило звичайною специфічністю CSS (клас
+   сильніший за голий тег) — жодних виключень тут прописувати не треба.
+   Сітки word_search/crossword теж на font-heading тепер (Geist Mono
+   прибрано повністю — див. коментар при Nunito вище). */
 button, input, textarea, select, label, nav, aside {
   font-family: var(--font-heading);
+}
+
+/* Виділення (<strong>/<b>) вчительки всередині WYSIWYG-інструкції вправи
+   (InstructionsText, клас instruction-text) — вже й так на жирному тлі
+   (EXERCISE_INSTRUCTION: font-bold), тож звичайний <strong> (теж 700) там
+   непомітний. font-extrabold (800) дає йому реально виділятись. Курсив і
+   кольорову підсвітку (інші теги/inline-стилі TipTap) не чіпаю — лише вагу
+   strong/b, і лише в ОСНОВНІЙ інструкції, не в підінструкції (там немає
+   цього класу). */
+.instruction-text strong,
+.instruction-text b {
+  font-weight: 800;
 }
 
 /* Мінімальна типографіка для TipTap-контенту (callout-завдання, статті

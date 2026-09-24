@@ -310,7 +310,7 @@ export const CrosswordFields = forwardRef<
             Прев&apos;ю кросворду ({gridWidth}×{gridHeight}) — студент побачить ту саму форму, без літер
           </p>
           <div className="mt-1 overflow-x-auto">
-            <table className="border-collapse font-mono text-xs">
+            <table className="border-collapse font-heading font-semibold text-xs">
               <tbody>
                 {previewLetters.map((row, ri) => (
                   <tr key={ri}>
