@@ -17,7 +17,7 @@ import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
-import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT, CARD_GROUP_LABEL } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT, CARD_GROUP_LABEL } from "@/lib/typography-styles";
 import {
   BUTTON_PRIMARY,
   BUTTON_SECONDARY,
@@ -132,7 +132,7 @@ export default async function AdminCoursePage({
 
       <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="font-heading text-2xl font-bold">{product.title}</h1>
+          <h1 className={ADMIN_PAGE_TITLE}>{product.title}</h1>
           {product.archived_at && (
             <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
               Архівовано

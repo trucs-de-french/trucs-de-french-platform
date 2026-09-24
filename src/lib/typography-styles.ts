@@ -3,11 +3,21 @@
 // className= будь-де. Мета та сама — наступна правка розміру/кольору ролі
 // це правка в ОДНОМУ файлі, а не в десятках.
 
+// Заголовок сторінки адмінки (h1: "Новий курс", "Редагування сцени" тощо)
+// — той самий розмір/вага, що STUDENT_PAGE_TITLE (рівень 0 нижче), той
+// самий шрифт (font-heading, Nunito) — навмисно БЕЗ uppercase/tracking-wide
+// STUDENT_SECTION_HEADING: адмінка лишається у звичайному регістрі, це
+// робочий інтерфейс, не студентська сторінка з "кричущими" заголовками
+// секцій. Свідоме рішення користувачки — порівнювали варіант з uppercase.
+export const ADMIN_PAGE_TITLE = "font-heading text-2xl font-bold md:text-3xl";
+
 // Заголовок секції сторінки (напр. "Сцени", "Тести", "Матеріали") —
-// 16-18px/semibold, менше й легше за page-title h1 (text-2xl font-bold).
-// АДМІНСЬКИЙ варіант — див. STUDENT_SECTION_HEADING нижче для студентської
-// сторінки (інший колір/вага, свідомо не той самий).
-export const H2_TEXT = "text-lg font-semibold text-gray-800 dark:text-neutral-200";
+// розмір/вага вирівняні з рівнем 1 студентської ієрархії
+// (STUDENT_SECTION_HEADING: text-xl font-bold, було text-lg font-semibold)
+// — той самий крок, БЕЗ uppercase/tracking-wide (те саме рішення, що вище,
+// для ADMIN_PAGE_TITLE). Колір (text-gray-800) лишився свій, адмінський —
+// про це не просили.
+export const H2_TEXT = "font-heading text-xl font-bold text-gray-800 dark:text-neutral-200";
 
 // ============================================================================
 // Типографічна ієрархія студентських сторінок (рівні 0-4) — п'ять ролей,

@@ -35,7 +35,7 @@ import { GroupMemberDragList } from "../../task-groups/group-member-drag-list";
 import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
 
 type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
@@ -508,7 +508,7 @@ export default async function AdminScenePage({
       <Link href={`/admin/courses/${productId}`} className={BREADCRUMB_LINK}>
         ← До курсу
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Редагування сцени</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Редагування сцени</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

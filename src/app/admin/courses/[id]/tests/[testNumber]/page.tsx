@@ -8,7 +8,7 @@ import { deleteTest, toggleTestPublish } from "@/app/admin/tests/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, BUTTON_WARNING, BUTTON_DANGER } from "@/lib/button-styles";
-import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 import { TestSectionDragList } from "./test-section-drag-list";
 
 // Сторінка ОДНОГО DELF-тесту (номер 1-30) — той самий принцип, що сторінка
@@ -117,7 +117,7 @@ export default async function AdminTestPage({
         ← До курсу
       </Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-heading text-2xl font-bold">
+        <h1 className={ADMIN_PAGE_TITLE}>
           Тест {testNumber}
           {product.level && (
             <span className="ml-2 text-base font-normal text-neutral-500 dark:text-neutral-400">

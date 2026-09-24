@@ -7,7 +7,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function NewTaskPage({
   params,
@@ -109,7 +109,7 @@ export default async function NewTaskPage({
       <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Нове завдання</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Нове завдання</h1>
 
       <form
         action={createTask}

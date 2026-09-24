@@ -6,7 +6,7 @@ import { CourseTypeFields } from "./course-type-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function NewCoursePage({
   searchParams,
@@ -31,7 +31,7 @@ export default async function NewCoursePage({
       <Link href="/admin/courses" className={BREADCRUMB_LINK}>
         ← До списку курсів
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Новий курс</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Новий курс</h1>
 
       {error && (
         <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

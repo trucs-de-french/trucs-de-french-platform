@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { AdminLogo } from "@/components/admin-logo";
+import { ADMIN_PAGE_TITLE } from "@/lib/typography-styles";
 
 export default async function AdminCoursesPage({
   searchParams,
@@ -40,7 +41,7 @@ export default async function AdminCoursesPage({
         </Link>
       </nav>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Курси</h1>
+        <h1 className={ADMIN_PAGE_TITLE}>Курси</h1>
         <Link
           href="/admin/courses/new"
           className={BUTTON_PRIMARY_LG}

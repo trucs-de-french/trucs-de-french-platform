@@ -16,7 +16,7 @@ import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -134,7 +134,7 @@ export default async function EditTaskGroupPage({
         {backLabel}
       </Link>
       <div className="mt-2 flex items-center gap-2">
-        <h1 className="text-2xl font-bold">Редагування блоку</h1>
+        <h1 className={ADMIN_PAGE_TITLE}>Редагування блоку</h1>
         {maxPoints > 0 && (
           <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
             Максимум: {maxPoints} {pluralizePoints(maxPoints)}

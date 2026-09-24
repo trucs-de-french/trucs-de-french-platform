@@ -9,7 +9,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 type TaskDetail = {
   id: string;
@@ -91,7 +91,7 @@ export default async function EditTaskPage({
       <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Редагування завдання</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Редагування завдання</h1>
 
       <SaveForm
         action={updateTask.bind(null, productId, task.id)}

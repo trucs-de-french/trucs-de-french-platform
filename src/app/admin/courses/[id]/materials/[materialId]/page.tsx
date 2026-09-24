@@ -12,7 +12,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { TASK_GROUP_CONTENT_COLORS, TASK_GROUP_CONTENT_ICON } from "@/lib/exercises/task-type-meta";
 
 export default async function EditMaterialPage({
@@ -81,7 +81,7 @@ export default async function EditMaterialPage({
       <Link href={`/admin/courses/${productId}#materials`} className={BREADCRUMB_LINK}>
         ← Назад до матеріалів
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Редагування матеріалу</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Редагування матеріалу</h1>
 
       <SaveForm
         action={updateMaterial.bind(null, material.id)}

@@ -5,7 +5,7 @@ import { copyMaterial } from "@/app/admin/materials/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
 
 export default async function CopyMaterialPage({
   params,
@@ -32,7 +32,7 @@ export default async function CopyMaterialPage({
       <Link href={`/admin/courses/${productId}#materials`} className={BREADCRUMB_LINK}>
         ← До матеріалів
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>
         Копіювати матеріал «{material.title ?? "Без назви"}»
       </h1>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">

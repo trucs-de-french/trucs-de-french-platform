@@ -4,7 +4,7 @@ import { createTaskGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskGroupFields } from "../task-group-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
-import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 export default async function NewTaskGroupPage({
   params,
@@ -48,7 +48,7 @@ export default async function NewTaskGroupPage({
       <Link href={backHref} className={BREADCRUMB_LINK}>
         {backLabel}
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Новий блок</h1>
+      <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Новий блок</h1>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Спільний контент (текст/аудіо/відео/embed), під яким рендеряться кілька задач одним
         цілим, без окремих рамок навколо кожної.
