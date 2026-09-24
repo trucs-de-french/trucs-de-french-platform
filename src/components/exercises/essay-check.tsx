@@ -12,6 +12,7 @@ import {
 } from "@/lib/delf/evaluation-grids";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 // Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
 // одночасно (isFormulaire — взаємовиключна гілка нижче), тож один спільний
@@ -90,7 +91,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
   const activeError = activeErrorIndex !== null ? result.errors[activeErrorIndex] : null;
 
   return (
-    <div className="mt-3 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="rounded-md border border-gray-100 bg-white p-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {segments.map((seg, i) =>
           seg.errorIndex !== undefined ? (
@@ -150,7 +151,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
 
 function FormulaireResultView({ result }: { result: FormulaireResult }) {
   return (
-    <div className="mt-3 flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {result.fields.map((f) => (
         <div key={f.id} className="flex flex-col gap-0.5 rounded-md border border-gray-100 bg-white p-2 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div className="flex items-center justify-between gap-2">
@@ -229,26 +230,28 @@ export function EssayCheckExercise({
     : !!answer.trim();
 
   return (
-    <div>
-      <p className="mb-2 font-medium">{prompt ?? DEFAULT_INSTRUCTIONS.essay_check}</p>
-      {grid && (
-        <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-          Рівень {level}
-          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {grid.maxScore} балів
-          {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
-        </p>
-      )}
+    <div className={EXERCISE_STACK}>
+      <div>
+        <p className="font-medium">{prompt ?? DEFAULT_INSTRUCTIONS.essay_check}</p>
+        {grid && (
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Рівень {level}
+            {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {grid.maxScore} балів
+            {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
+          </p>
+        )}
+      </div>
 
       {isFormulaire ? (
         <div className="flex flex-col gap-2">
           {fields.map((f) => (
             <div key={f.id} className="flex flex-col gap-1">
               <label className="text-xs text-neutral-500 dark:text-neutral-400">{f.label}</label>
-              {/* py-3 (не py-1.5) — окреме поле формуляра (Nom/Date тощо),
-                  не вбудоване в речення, тож 44px+ висота дотику доречна тут
-                  так само, як в open_answer_check. Textarea есе нижче НЕ
-                  чіпаю — рядкова висота там уже й так набагато більша за
-                  44px (rows=8), вимога стосується саме однорядкових полів. */}
+              {/* px-4 py-2.5 — та сама компактність, що картка твердження
+                  true_false / поле open_answer_check; bg-white — як у карток
+                  відповідей. Textarea есе нижче НЕ чіпаю — рядкова висота там
+                  уже й так набагато більша (rows=8), вимога стосується лише
+                  однорядкових полів формуляра. */}
               <input
                 ref={diacritics.fieldRef(f.id)}
                 value={formAnswer[f.id] ?? ""}
@@ -256,7 +259,7 @@ export function EssayCheckExercise({
                 onFocus={() => diacritics.onFocus(f.id)}
                 onBlur={diacritics.onBlur}
                 disabled={submitted}
-                className="rounded-md border border-gray-300 px-2 py-3 text-sm dark:border-neutral-600"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm dark:border-neutral-600 dark:bg-neutral-800"
               />
             </div>
           ))}
@@ -294,21 +297,23 @@ export function EssayCheckExercise({
         />
       )}
 
-      {!submitted && (
-        <button
-          type="button"
-          onClick={submit}
-          disabled={pending || !canSubmit}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Надіслати"}
-        </button>
-      )}
+      <div className="flex flex-col gap-3">
+        {!submitted && (
+          <button
+            type="button"
+            onClick={submit}
+            disabled={pending || !canSubmit}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Надіслати"}
+          </button>
+        )}
 
-      {isFormulaire && formulaireResult && <FormulaireResultView result={formulaireResult} />}
-      {!isFormulaire && essayResult && <EssayResultView studentAnswer={answer} result={essayResult} />}
+        {isFormulaire && formulaireResult && <FormulaireResultView result={formulaireResult} />}
+        {!isFormulaire && essayResult && <EssayResultView studentAnswer={answer} result={essayResult} />}
 
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/exercises/vocab-quiz-logic";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 export function VocabQuizExercise({
   vocab,
@@ -47,14 +48,14 @@ export function VocabQuizExercise({
 
   if (index >= questions.length) {
     return (
-      <div>
+      <div className={EXERCISE_STACK}>
         <p className="font-medium">
           Результат: {correctCount} з {questions.length}
         </p>
         <button
           type="button"
           onClick={restart}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
+          className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
         >
           Пройти ще раз
         </button>
@@ -78,11 +79,13 @@ export function VocabQuizExercise({
   }
 
   return (
-    <div>
-      <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
-        Питання {index + 1} з {questions.length}
-      </p>
-      <p className="mb-3 text-lg font-medium">{question.word}</p>
+    <div className={EXERCISE_STACK}>
+      <div>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          Питання {index + 1} з {questions.length}
+        </p>
+        <p className="mt-1 text-lg font-medium">{question.word}</p>
+      </div>
 
       <div className="flex flex-col gap-2">
         {question.options.map((option) => {
@@ -113,7 +116,7 @@ export function VocabQuizExercise({
         <button
           type="button"
           onClick={next}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
+          className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
         >
           Далі
         </button>

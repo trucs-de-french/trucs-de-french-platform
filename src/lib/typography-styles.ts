@@ -55,12 +55,24 @@ export const STUDENT_SECTION_HEADING = "font-heading text-xl font-bold uppercase
 export const EXERCISE_INSTRUCTION = "font-heading text-lg font-bold";
 
 // Рівень 3 — підінструкція вправи (додаткове уточнення під основною
-// інструкцією, дрібніше й сірим — той самий контраст, що вже був).
-export const EXERCISE_SUBINSTRUCTION = "font-body text-base text-neutral-600 dark:text-neutral-400";
+// інструкцією, дрібніше й сірим — той самий контраст, що вже був). text-sm
+// (не text-base) — свідомо менша за основну інструкцію (EXERCISE_INSTRUCTION,
+// text-lg) І за тіло вправи (EXERCISE_BODY, text-base), щоб рівень 3 читався
+// як найдрібніший текст вправи, а не як абзац нарівні з контентом.
+export const EXERCISE_SUBINSTRUCTION = "font-body text-sm text-neutral-600 dark:text-neutral-400";
 
 // Рівень 4 — сам контент вправи (твердження, варіанти відповідей, слова
 // підказок тощо) — Lora, там де контент ще не на text-base з інших причин.
 export const EXERCISE_BODY = "font-body text-base";
+
+// Текст підказки філворда/кросворда (легенда word-search, короткий/картковий
+// список підказок crossword) — свідомо менший за EXERCISE_BODY (text-sm, не
+// text-base): підказка завжди коротка (слово/переклад/один рядок ключа), не
+// абзац. font-body тут явний, а не лишений на успадкування — у crossword ці
+// підказки лежать усередині <button>, а globals.css форсує font-heading на
+// button НАПРЯМУ (бере тег, не успадкування), тож без явного класу текст
+// підказки поїхав би на Nunito замість Lora.
+export const CLUE_TEXT = "font-body text-sm";
 
 // Посилання "назад" угорі сторінки (напр. "← До списку курсів") і "До
 // кабінету" — без підкреслення, нейтральний сірий у спокої, колір бренду

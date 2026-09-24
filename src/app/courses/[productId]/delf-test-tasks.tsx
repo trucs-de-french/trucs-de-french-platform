@@ -3,8 +3,9 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
-import { H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
+import { H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
 
 type TestTask = ExerciseTask & { delf_section: string | null };
 type TestTaskGroup = TaskGroupData & {
@@ -131,8 +132,9 @@ export async function DelfTestTasks({
       );
     }
     const task = row.task;
+    if (!taskHasRenderableContent(task)) return null;
     return (
-      <li key={task.id} className={task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}>
+      <li key={task.id} className={`${EXERCISE_STACK} ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}>
         <ExerciseBlock task={task} />
       </li>
     );

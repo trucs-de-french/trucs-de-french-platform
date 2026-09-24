@@ -8,7 +8,8 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 type Cell = { row: number; col: number };
 
@@ -159,8 +160,8 @@ export function WordSearchExercise({
   }
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className={EXERCISE_STACK}>
+      <div>
         <div className="flex flex-wrap items-baseline gap-2">
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
@@ -178,20 +179,20 @@ export function WordSearchExercise({
         </div>
         {config.subInstructions && (
           <div
-            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
       </div>
 
-      {/* gap-4 md:gap-6 — той самий внутрішній padding, що тепер в
-          EXERCISE_BLOCK_CLASS (p-4 md:p-6): зазор сітка↔легенда має
-          дорівнювати відступу від зовнішньої межі блоку. Gap МІЖ картками
-          легенди (gap-2 нижче) — окреме, внутрішнє значення, не входить у
-          цю систему. Сітка НЕ стискається (shrink-0) і НЕ росте — легенда
-          (flex-1 min-w-0) забирає весь простір, що лишився праворуч від
-          сітки, аж до правого паддінгу блоку завдання. */}
-      <div className="mb-3 flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+      {/* gap-4 md:gap-6 — той самий ритм, що тепер EXERCISE_STACK на корені
+          (spacing.ts): зазор сітка↔легенда має дорівнювати відступу від
+          зовнішньої межі блоку. Gap МІЖ картками легенди (gap-2 нижче) —
+          окреме, внутрішнє значення, не входить у цю систему. Сітка НЕ
+          стискається (shrink-0) і НЕ росте — легенда (flex-1 min-w-0)
+          забирає весь простір, що лишився праворуч від сітки, аж до правого
+          паддінгу блоку завдання. */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
         <div
           ref={gridRef}
           className="inline-block shrink-0 touch-none select-none shadow-md"
@@ -261,7 +262,7 @@ export function WordSearchExercise({
                     )}
                   </>
                 ) : (
-                  <span className={`text-sm ${found ? "text-green-600 line-through dark:text-green-400" : ""}`}>
+                  <span className={`${CLUE_TEXT} ${found ? "text-green-600 line-through dark:text-green-400" : ""}`}>
                     {kind === "translation" ? w.translation : w.word}
                   </span>
                 )}
@@ -272,31 +273,32 @@ export function WordSearchExercise({
         </div>
       </div>
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

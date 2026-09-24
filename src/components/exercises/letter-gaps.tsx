@@ -10,6 +10,31 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP, EXERCISE_LABEL_GAP } from "@/lib/spacing";
+
+type CharGroup = { type: "letters"; text: string } | { type: "gap" };
+
+// Сусідні видимі літери без пропуску між ними ("b"+"e" у "be") — в ОДИН
+// <span>, а не по одному на символ, щоб вони стояли впритул, як звичайне
+// слово, а не розсувались через gap-1 контейнера. Пропуски (null) свідомо
+// НЕ об'єднуються між собою — кожен лишається окремим полем уводу, як і
+// раніше (одна прихована літера = один <input>).
+function groupChars(chars: (string | null)[]): CharGroup[] {
+  const groups: CharGroup[] = [];
+  for (const char of chars) {
+    if (char === null) {
+      groups.push({ type: "gap" });
+      continue;
+    }
+    const last = groups[groups.length - 1];
+    if (last?.type === "letters") {
+      last.text += char;
+    } else {
+      groups.push({ type: "letters", text: char });
+    }
+  }
+  return groups;
+}
 
 export function LetterGapsExercise({
   taskId,
@@ -46,8 +71,8 @@ export function LetterGapsExercise({
   }
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className={EXERCISE_STACK}>
+      <div>
         <div className="flex flex-wrap items-baseline gap-2">
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
@@ -65,35 +90,42 @@ export function LetterGapsExercise({
         </div>
         {config.subInstructions && (
           <div
-            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.words.map((word, wi) => {
           let gapIndex = -1;
           const wordDetail = detail?.words[wi];
           return (
-            <div key={wi}>
+            <div key={wi} className={`flex flex-col ${EXERCISE_LABEL_GAP}`}>
               {word.imageUrl && (
                 <ImageOrPlaceholder
                   src={word.imageUrl}
                   alt=""
-                  className="mb-1 h-20 w-20 rounded object-cover"
+                  className="h-20 w-20 rounded object-cover"
                 />
               )}
               {word.audioUrl && (
-                <audio controls src={word.audioUrl} className="mb-1 h-8 w-full max-w-xs" />
+                <audio controls src={word.audioUrl} className="h-8 w-full max-w-xs" />
               )}
-              <p className="text-base italic text-neutral-500 dark:text-neutral-400">
-                {word.hintType === "definition" ? "Визначення: " : "Речення: "}
-                {word.hintText}
-              </p>
-              <p className="leading-8">
-                {word.chars.map((char, ci) => {
-                  if (char !== null) return <span key={ci}>{char}</span>;
+              {word.hintText.trim() && (
+                <p className="text-base italic text-neutral-500 dark:text-neutral-400">
+                  {word.hintType === "definition" ? "Визначення: " : "Речення: "}
+                  {word.hintText}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-1">
+                {groupChars(word.chars).map((group, ci) => {
+                  if (group.type === "letters")
+                    return (
+                      <span key={ci} className="font-heading text-xl font-semibold">
+                        {group.text}
+                      </span>
+                    );
                   gapIndex += 1;
                   const gi = gapIndex;
                   return (
@@ -106,7 +138,12 @@ export function LetterGapsExercise({
                       onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
                       onBlur={diacritics.onBlur}
                       disabled={!!result}
-                      className={`m-0.5 inline-block w-11 rounded-md border px-1 py-1.5 text-center text-base shadow-sm transition-colors ${
+                      // font-heading font-semibold text-xl прямо на input —
+                      // не лише для вирівнювання з видимими літерами, а й
+                      // тому, що глобальне input{font-family:var(--font-heading)}
+                      // (globals.css) саме по собі дає ЛИШЕ шрифт, не вагу/
+                      // розмір — ті все одно треба задавати явно тут.
+                      className={`h-9 w-8 rounded-md border text-center font-heading text-xl font-semibold shadow-sm transition-colors ${
                         wordDetail
                           ? wordDetail.isCorrect
                             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
@@ -116,7 +153,7 @@ export function LetterGapsExercise({
                     />
                   );
                 })}
-              </p>
+              </div>
             </div>
           );
         })}
@@ -132,31 +169,32 @@ export function LetterGapsExercise({
         />
       )}
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={() => submit(answers)}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={() => submit(answers)}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

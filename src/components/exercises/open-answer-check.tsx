@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
 // розгорнутого тексту), тут коротка відповідь звіряється з фіксованим
@@ -39,14 +40,13 @@ export function OpenAnswerCheckExercise({
   const allAnswered = config.questions.every((q) => answers[q.id]?.trim());
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer}
         subText={config.subInstructions}
-        className="mb-2"
       />
 
-      <div className="flex flex-col gap-3">
+      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.questions.map((q) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
@@ -62,9 +62,9 @@ export function OpenAnswerCheckExercise({
                   </span>
                 )}
               </p>
-              {/* py-3 (не py-1.5) — окреме поле відповіді, не вбудоване в
-                  речення, тож може собі дозволити комфортнішу висоту дотику
-                  (>=44px разом із text-base line-height); INPUT_BORDER
+              {/* px-4 py-2.5 — та сама компактність, що картка твердження
+                  true_false; bg-white на невідповідженому стані — як у
+                  карток відповідей (ANSWER_CARD_DEFAULT) — INPUT_BORDER
                   (input-styles.ts) тут не використовується взагалі, тож
                   правити нічого спільного не довелось. */}
               <input
@@ -74,12 +74,12 @@ export function OpenAnswerCheckExercise({
                 onFocus={() => diacritics.onFocus(q.id)}
                 onBlur={diacritics.onBlur}
                 disabled={!!result}
-                className={`mt-1 w-full rounded-md border px-2 py-3 text-base ${
+                className={`mt-1 w-full rounded-md border px-4 py-2.5 text-base ${
                   qDetail
                     ? qDetail.isCorrect
                       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                       : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                    : "border-gray-300 dark:border-neutral-600"
+                    : "border-gray-300 bg-white dark:border-neutral-600 dark:bg-neutral-800"
                 }`}
                 placeholder="Ваша відповідь..."
               />
@@ -106,33 +106,34 @@ export function OpenAnswerCheckExercise({
         />
       )}
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={() =>
-            submit(config.questions.map((q) => ({ questionId: q.id, value: answers[q.id] ?? "" })))
-          }
-          disabled={pending || !allAnswered}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={() =>
+              submit(config.questions.map((q) => ({ questionId: q.id, value: answers[q.id] ?? "" })))
+            }
+            disabled={pending || !allAnswered}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
@@ -138,8 +139,8 @@ export function WordChoiceExercise({
   }
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className={EXERCISE_STACK}>
+      <div>
         <div className="flex flex-wrap items-baseline gap-2">
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
@@ -151,13 +152,13 @@ export function WordChoiceExercise({
         </div>
         {config.subInstructions && (
           <div
-            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.sentences.map((s, si) => {
           const sentenceDetail = detail?.sentences.find((d) => d.id === s.id);
           const [before, after] = s.sentence.split("{{}}");
@@ -196,31 +197,32 @@ export function WordChoiceExercise({
         })}
       </div>
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={pending || !allAnswered}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending || !allAnswered}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

@@ -10,11 +10,9 @@ import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-
 export function InstructionsText({
   text,
   subText,
-  className,
 }: {
   text: string;
   subText?: string;
-  className?: string;
 }) {
   const safeText = sanitizeInstructionsHtml(text);
   const safeSub = subText ? sanitizeInstructionsHtml(subText) : null;
@@ -24,29 +22,28 @@ export function InstructionsText({
   // HTML, який браузер розриває й ламає стилізацію. Той самий підхід, що
   // вже в callout.tsx.
   //
-  // ОДИН зовнішній <div> (не фрагмент із двома сиблінгами) — інакше в
-  // батьківському flex-контейнері (напр. "flex flex-col gap-2") title і
-  // subInstructions ставали б окремими flex-елементами й отримували
-  // ОДНАКОВИЙ відступ від батьківського gap, як і від наступного елемента
-  // (самого завдання) — підзаголовок не був би "ближче" до заголовку.
-  // className (переданий кожним типом вправи, напр. просто "mb-2") — на
-  // зовнішній обгортці, лише відступ ПІСЛЯ всього блоку (перед завданням);
-  // сам вигляд тексту (рівні 2/3 ієрархії, typography-styles.ts) тепер
-  // ЗАВЖДИ EXERCISE_INSTRUCTION/EXERCISE_SUBINSTRUCTION, не приходить від
-  // викликача (раніше кожен передавав "font-medium" у className сам —
-  // прибрано з усіх 15 місць виклику, тепер це частина компонента, не
-  // дублюється). mt-0.5 між title/subText — фіксований, малий, незалежний
-  // від батьківського gap. "instruction-text" — гачок для CSS-правила
-  // <strong>/<b> → font-extrabold (globals.css) усередині WYSIWYG-контенту
-  // основної інструкції (dangerouslySetInnerHTML, класи Tailwind не
-  // дотягнуться до вкладених тегів) — навмисно лише на основній інструкції,
-  // не на підінструкції.
+  // ОДИН зовнішній <div>, БЕЗ власного className (не фрагмент із двома
+  // сиблінгами) — інакше в батьківському EXERCISE_STACK (spacing.ts, "flex
+  // flex-col gap-4 md:gap-6" на корені кожної вправи) title і subInstructions
+  // ставали б окремими flex-елементами й отримували ОДНАКОВИЙ відступ від
+  // сусідів, як і тіло вправи — підзаголовок не був би "ближче" до
+  // заголовку. Відступ ПІСЛЯ всього блоку (перед тілом вправи) тепер задає
+  // ВИКЛИКАЧ через EXERCISE_STACK на своєму корені (раніше — власний margin
+  // тут, INSTRUCTION_TO_BODY) — компонент сам більше жодного зовнішнього
+  // відступу не додає, лише внутрішній mt-1 між title/subText. Сам вигляд
+  // тексту (рівні 2/3 ієрархії, typography-styles.ts) — ЗАВЖДИ
+  // EXERCISE_INSTRUCTION/EXERCISE_SUBINSTRUCTION, не приходить від
+  // викликача. "instruction-text" — гачок для CSS-правила <strong>/<b> →
+  // font-extrabold (globals.css) усередині WYSIWYG-контенту основної
+  // інструкції (dangerouslySetInnerHTML, класи Tailwind не дотягнуться до
+  // вкладених тегів) — навмисно лише на основній інструкції, не на
+  // підінструкції.
   return (
-    <div className={className}>
+    <div>
       <div className={`instruction-text ${EXERCISE_INSTRUCTION}`} dangerouslySetInnerHTML={{ __html: safeText }} />
       {safeSub && (
         <div
-          className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+          className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
           dangerouslySetInnerHTML={{ __html: safeSub }}
         />
       )}

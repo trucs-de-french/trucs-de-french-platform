@@ -10,6 +10,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SwappableTileRow } from "./swappable-tile-row";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP, EXERCISE_LABEL_GAP } from "@/lib/spacing";
 
 export function LetterRearrangementExercise({
   taskId,
@@ -40,8 +41,8 @@ export function LetterRearrangementExercise({
   }
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className={EXERCISE_STACK}>
+      <div>
         <div className="flex flex-wrap items-baseline gap-2">
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
@@ -61,13 +62,13 @@ export function LetterRearrangementExercise({
         </div>
         {config.subInstructions && (
           <div
-            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.words.map((word, wi) => {
           const wordDetail = detail?.words[wi];
           // letters[i].correctIndex === i завжди (той самий принцип, що
@@ -78,21 +79,23 @@ export function LetterRearrangementExercise({
           }
 
           return (
-            <div key={wi}>
+            <div key={wi} className={`flex flex-col ${EXERCISE_LABEL_GAP}`}>
               {word.imageUrl && (
                 <ImageOrPlaceholder
                   src={word.imageUrl}
                   alt=""
-                  className="mb-1 h-20 w-20 rounded object-cover"
+                  className="h-20 w-20 rounded object-cover"
                 />
               )}
               {word.audioUrl && (
-                <audio controls src={word.audioUrl} className="mb-1 h-8 w-full max-w-xs" />
+                <audio controls src={word.audioUrl} className="h-8 w-full max-w-xs" />
               )}
-              <p className="mb-1 text-base italic text-neutral-500 dark:text-neutral-400">
-                {word.hintType === "definition" ? "Визначення: " : "Речення: "}
-                {word.hintText}
-              </p>
+              {word.hintText.trim() && (
+                <p className="text-base italic text-neutral-500 dark:text-neutral-400">
+                  {word.hintType === "definition" ? "Визначення: " : "Речення: "}
+                  {word.hintText}
+                </p>
+              )}
               <SwappableTileRow
                 items={orders[wi]}
                 onChange={(next) => updateOrder(wi, next)}
@@ -100,7 +103,7 @@ export function LetterRearrangementExercise({
                 tileState={tileState}
               />
               {wordDetail && !wordDetail.isCorrect && (
-                <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">
                   Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
                 </p>
               )}
@@ -109,31 +112,32 @@ export function LetterRearrangementExercise({
         })}
       </div>
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={() => submit(orders)}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={() => submit(orders)}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

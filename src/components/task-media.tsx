@@ -8,7 +8,10 @@ import { isGdriveUrl } from "@/lib/video";
 // Універсальні image_url/audio_url на рівні task — показуються над змістом
 // будь-якого завдання. audio_url не має власного поля-провайдера в схемі
 // (на відміну від task_groups.media_provider) — gdrive визначається лише
-// за виглядом URL, той самий isGdriveUrl fallback, що в TaskGroupBlock.
+// за виглядом URL, той самий isGdriveUrl fallback, що в TaskGroupBlock. БЕЗ
+// власного margin — обидва елементи рендеряться прямими flex-дітьми
+// EXERCISE_STACK батьківського <li> (сторінка сцени/DELF/матеріалів),
+// відступ дає його gap, не компонент сам.
 export function TaskMedia({
   imageUrl,
   audioUrl,
@@ -18,12 +21,12 @@ export function TaskMedia({
 }) {
   return (
     <>
-      <ImageOrPlaceholder src={imageUrl} alt="" className="mt-2 h-40 w-full rounded-md object-cover" />
+      <ImageOrPlaceholder src={imageUrl} alt="" className="h-40 w-full rounded-md object-cover" />
       {audioUrl &&
         (isGdriveUrl(audioUrl) ? (
-          <GdriveAudioPlayer url={audioUrl} className="mt-2" />
+          <GdriveAudioPlayer url={audioUrl} />
         ) : (
-          <AudioPlayer src={audioUrl} className="mt-2" />
+          <AudioPlayer src={audioUrl} />
         ))}
     </>
   );

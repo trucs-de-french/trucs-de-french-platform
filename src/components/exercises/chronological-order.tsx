@@ -14,6 +14,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
@@ -101,11 +102,10 @@ export function ChronologicalOrderExercise({
   }
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order}
         subText={config.subInstructions}
-        className="mb-2"
       />
 
       {config.mode === "image" ? (
@@ -137,7 +137,7 @@ export function ChronologicalOrderExercise({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
           {config.items.map((item, i) => (
             <div key={item.id} className={`flex items-center gap-2 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
               <span className="w-6 text-center text-sm font-medium text-neutral-500 dark:text-neutral-400">
@@ -155,31 +155,32 @@ export function ChronologicalOrderExercise({
         </div>
       )}
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

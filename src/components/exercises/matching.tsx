@@ -9,6 +9,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 
 export function MatchingExercise({
   taskId,
@@ -93,14 +94,13 @@ export function MatchingExercise({
   }
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.matching}
         subText={config.subInstructions}
-        className="mb-2"
       />
       <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1">
+        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
           {config.left.map((left) => {
             const right = pairs[left];
             const d = right ? detailFor(left, right) : undefined;
@@ -132,7 +132,7 @@ export function MatchingExercise({
           })}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
           {config.right.map((right) => (
             <button
               key={right}
@@ -150,7 +150,7 @@ export function MatchingExercise({
       </div>
 
       {detail && (
-        <div className="mt-3 text-sm">
+        <div className="text-sm">
           <p className="font-medium">Правильні пари:</p>
           <ul className="mt-1 flex flex-col gap-0.5 text-neutral-600 dark:text-neutral-400">
             {detail.correctPairs.map((p, i) => (
@@ -162,31 +162,32 @@ export function MatchingExercise({
         </div>
       )}
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={() => submit(Object.entries(pairs).map(([left, right]) => ({ left, right })))}
-          disabled={pending || Object.keys(pairs).length !== config.left.length}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={() => submit(Object.entries(pairs).map(([left, right]) => ({ left, right })))}
+            disabled={pending || Object.keys(pairs).length !== config.left.length}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

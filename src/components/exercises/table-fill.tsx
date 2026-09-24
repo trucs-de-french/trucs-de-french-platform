@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -95,11 +96,10 @@ export function TableFillExercise({
   }
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill}
         subText={config.subInstructions}
-        className="mb-2"
       />
 
       <div className="overflow-x-auto">
@@ -146,7 +146,7 @@ export function TableFillExercise({
           дві можливі приховані клітинки на рядок, самого "Пропуск N" було б
           недостатньо, щоб зрозуміти, про яку клітинку йдеться. */}
       {detail && (
-        <ul className="mt-2 flex flex-col gap-1 text-sm">
+        <ul className="flex flex-col gap-1 text-sm">
           {detail.blanks.map((b, i) =>
             b.isCorrect ? null : (
               <li key={i} className="text-red-600 dark:text-red-400">
@@ -157,31 +157,32 @@ export function TableFillExercise({
         </ul>
       )}
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

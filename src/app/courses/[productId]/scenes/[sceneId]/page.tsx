@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
+import { Puzzle, Layers, Gamepad2, ExternalLink, type LucideIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
@@ -31,8 +32,9 @@ import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
-import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
+import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import {
   SceneContentBlock,
   type SceneContentBlockData,
@@ -76,6 +78,19 @@ const TYPES_WITH_TITLE = ["link", "game", "embed"];
 // вміст, службова назва типу йому не потрібна. Той самий підхід, що вже
 // в exercise-block.tsx.
 const TYPES_WITH_TYPE_BADGE = ["link", "game"];
+
+// platform у scene_links — НЕ той самий домен, що LinkPlatform/PlatformIcon
+// (lib/platform.ts, для config.platform завдань типу link/embed:
+// youtube/genially/custom за доменом URL) — тут окрема, вужча БД-колонка з
+// CHECK-обмеженням рівно на 3 значення (0001_init.sql, розширено 0043
+// custom для власних HTML-ігор): 'quizlet' | 'wordwall' | 'custom'.
+// Fallback (ключа немає) — суто захисний, БД інших значень не пропустить.
+const SCENE_LINK_PLATFORM_META: Record<string, { icon: LucideIcon; label: string }> = {
+  wordwall: { icon: Puzzle, label: "Wordwall" },
+  quizlet: { icon: Layers, label: "Quizlet" },
+  custom: { icon: Gamepad2, label: "Власна гра" },
+};
+const DEFAULT_SCENE_LINK_META = { icon: ExternalLink, label: "Посилання" };
 
 type MistakeRow = {
   id: string;
@@ -417,18 +432,32 @@ export default async function ScenePage({
   const linksNode = hasLinks && (
     <section>
       <h2 className={STUDENT_SECTION_HEADING}>Практика</h2>
-      <div className={`${H2_TO_CONTENT} flex flex-wrap gap-2`}>
-        {linkList.map((link) => (
-          <a
-            key={link.id}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={STUDENT_LINK_BUTTON}
-          >
-            {link.label ?? link.platform}
-          </a>
-        ))}
+      {/* auto-fill(minmax(12rem,1fr)) — кілька карток у ряд на широкому
+          екрані, по одній на всю ширину на мобільних. */}
+      <div className={`${H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}>
+        {linkList.map((link) => {
+          const meta = SCENE_LINK_PLATFORM_META[link.platform] ?? DEFAULT_SCENE_LINK_META;
+          const Icon = meta.icon;
+          return (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition duration-150 hover:-translate-y-0.5 hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                <Icon size={18} />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-heading text-base font-semibold">
+                  {link.label ?? meta.label}
+                </span>
+                <span className="text-sm text-neutral-500 dark:text-neutral-400">{meta.label}</span>
+              </span>
+            </a>
+          );
+        })}
       </div>
     </section>
   );
@@ -454,29 +483,30 @@ export default async function ScenePage({
 
           const task = row.task;
           const config = (task.config ?? {}) as LinkEmbedConfig;
+          if (!taskHasRenderableContent(task)) return null;
 
           return (
             <li
               key={task.id}
               id={`task-${task.id}`}
-              className={`scroll-mt-4 ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
+              className={`scroll-mt-4 ${EXERCISE_STACK} ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
             >
               {TYPES_WITH_TITLE.includes(task.type) && (
-                <>
+                <div>
                   {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
                     <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
                       {task.type}
                     </span>
                   )}
                   <p className="font-medium">{task.title}</p>
-                </>
+                </div>
               )}
 
               <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
               {task.type === "vocab_quiz" && (
-                <div className="mt-2">
-                  <p className="mb-2 font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz}</p>
+                <div className="flex flex-col gap-2">
+                  <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz}</p>
                   {(() => {
                     const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
                     return (
@@ -490,7 +520,7 @@ export default async function ScenePage({
               )}
 
               {task.type === "error_correction" && (
-                <div className="mt-2 flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
                   {sceneMistakes.length === 0 ? (
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
                       Поки що без помилок — так тримати!
@@ -516,46 +546,36 @@ export default async function ScenePage({
               )}
 
               {task.type === "flip_cards" && (
-                <div className="mt-2">
-                  <FlipCardsExercise
-                    config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
-                  />
-                </div>
+                <FlipCardsExercise
+                  config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
+                />
               )}
 
               {task.type === "essay_check" && (
-                <div className="mt-2">
-                  <EssayCheckExercise
-                    taskId={task.id}
-                    prompt={(task.config as { prompt?: string } | null)?.prompt}
-                    config={(task.config ?? {}) as Record<string, unknown>}
-                  />
-                </div>
+                <EssayCheckExercise
+                  taskId={task.id}
+                  prompt={(task.config as { prompt?: string } | null)?.prompt}
+                  config={(task.config ?? {}) as Record<string, unknown>}
+                />
               )}
 
               {task.type === "callout" && (
-                <div className="mt-2">
-                  <CalloutExercise config={task.config as unknown as CalloutConfig} />
-                </div>
+                <CalloutExercise config={task.config as unknown as CalloutConfig} />
               )}
 
               {task.type === "phonetics" && (
-                <div className="mt-2">
-                  <PhoneticsExercise
-                    config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
-                  />
-                </div>
+                <PhoneticsExercise
+                  config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
+                />
               )}
 
               {isExerciseType(task.type) && (
-                <div className="mt-2">
-                  <ExerciseCard
-                    taskId={task.id}
-                    type={task.type}
-                    config={sanitizeConfigForStudent(task.type, task.config ?? {})}
-                    pointsVisible={task.points_visible}
-                  />
-                </div>
+                <ExerciseCard
+                  taskId={task.id}
+                  type={task.type}
+                  config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                  pointsVisible={task.points_visible}
+                />
               )}
 
               {task.type === "game" && task.games?.embed_url && (
@@ -563,7 +583,7 @@ export default async function ScenePage({
                   href={task.games.embed_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
+                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
                 >
                   Відкрити гру ({task.games.provider})
                 </a>
@@ -574,7 +594,7 @@ export default async function ScenePage({
                   href={config.url}
                   download
                   rel="noopener noreferrer"
-                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
+                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
                 >
                   ⬇ {config.label ?? "Завантажити файл"}
                 </a>
@@ -585,7 +605,7 @@ export default async function ScenePage({
                   href={config.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`mt-2 inline-flex items-center gap-2 ${STUDENT_LINK_BUTTON}`}
+                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
                 >
                   <PlatformIcon platform={resolvePlatform(config.url, config.platform)} />
                   {config.label ?? "Відкрити"}
@@ -593,9 +613,9 @@ export default async function ScenePage({
               )}
 
               {task.type === "embed" && config.url && (
-                <>
+                <div className="flex flex-col gap-1">
                   <div
-                    className="mt-2 overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700"
+                    className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700"
                     style={{ height: config.height ?? 480 }}
                   >
                     <iframe src={config.url} className="h-full w-full" allowFullScreen />
@@ -604,7 +624,7 @@ export default async function ScenePage({
                       перемикача вимкнення (напр. якщо сторонній сервіс
                       блокує вбудовування в iframe, як уже траплялось із
                       Wordwall). Той самий фрагмент, що в exercise-block.tsx. */}
-                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Якщо гра чи відео не відкривається (браузер міг заблокувати сторонній вміст),{" "}
                     <a
                       href={config.url}
@@ -616,7 +636,7 @@ export default async function ScenePage({
                     </a>
                     .
                   </p>
-                </>
+                </div>
               )}
             </li>
           );
@@ -658,12 +678,19 @@ export default async function ScenePage({
                 : content;
             const attachedGroup = attachedGroupByContentBlockId.get(content.id);
             const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
+            const hasAttachedContent = !!attachedGroup && attachedMembers.length > 0;
+            // Сам content-блок порожній (нема заповненого поля для свого
+            // content_type) І немає прикріпленого набору вправ — секцію
+            // цілком пропускаємо, інакше лишається невидима "рамка" з
+            // padding, а gap-8 батьківського flex усе одно додав би зазор
+            // з обох боків порожнього елемента.
+            if (!contentBlockHasRenderableContent(block) && !hasAttachedContent) return null;
             return (
               <section key={`content-${row.ref_id}`}>
                 <SceneContentBlock block={block} />
                 {/* Той самий принцип, що вже в "Завданнях" — блок без жодної
                     задачі-члена не рендеримо взагалі. */}
-                {attachedGroup && attachedMembers.length > 0 && (
+                {hasAttachedContent && (
                   <div className="mt-3">
                     <TaskGroupBlock group={attachedGroup} tasks={attachedMembers} />
                   </div>

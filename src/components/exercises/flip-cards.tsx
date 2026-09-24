@@ -8,6 +8,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 // variant "normal" — звичайний manual-режим (клікабельна, front/back).
 // "highlighted" — рулетка зараз "пробігає" через цю картку (лише бордюр,
@@ -180,11 +181,10 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   }
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards}
         subText={config.subInstructions}
-        className="mb-2"
       />
       {config.mode === "random_reveal" ? (
         <RandomRevealFlipCards cards={config.cards} revealSide={config.revealSide ?? "front"} />

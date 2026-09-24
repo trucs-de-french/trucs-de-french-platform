@@ -4,13 +4,16 @@ import { useState, useMemo } from "react";
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
-import { InstructionsText } from "@/components/exercises/instructions-text";
 import { isExerciseType } from "@/components/exercises/exercise-card";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
-import { EXERCISE_LIST_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_BODY } from "@/lib/typography-styles";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { isBlankHtml } from "@/lib/html-text";
+import { contentBlockHasRenderableContent, taskHasRenderableContent } from "@/lib/exercises/task-visibility";
 
 export type TaskGroupData = {
   id: string;
@@ -76,6 +79,19 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
     return map;
   }, [tasks]);
 
+  // Ті самі перевірки, що й для порожніх обгорток-задач/content-блоків
+  // (task-visibility.ts) — тут вирішують, чи є взагалі що показати
+  // (guard нижче) і чи потрібен border-t-роздільник над списком задач
+  // (лише коли спільний контент групи справді відрендерився вище).
+  const visibleTasks = tasks.filter(taskHasRenderableContent);
+  const hasSharedContent = contentBlockHasRenderableContent(group);
+
+  // Ні спільного контенту, ні жодної задачі, що реально щось покаже —
+  // показувати голу рамку з border-t "нізвідки в нікуди" немає сенсу.
+  // Хуки (useState/useMemo) вище вже викликані безумовно — це не порушує
+  // Rules of Hooks.
+  if (!hasSharedContent && visibleTasks.length === 0) return null;
+
   // Підсумок рахуємо лише коли ВІДПОВІЛИ на всі задачі блоку, що взагалі
   // мають бали (essay_check/callout/embed/link/game серед tasks ніколи не
   // покличуть onResult — не чекаємо на них) — інакше "з Y балів" зростав
@@ -100,9 +116,14 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
   return (
-    <section className={EXERCISE_BLOCK_CLASS}>
-      {group.content_type === "text" && group.content_text && (
-        <InstructionsText text={group.content_text} className="mb-3" />
+    <section className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
+      {/* rich-text + EXERCISE_BODY — той самий фікс, що scene-content-block.tsx:
+          вільний пояснювальний текст блоку, не інструкція вправи. */}
+      {group.content_type === "text" && !isBlankHtml(group.content_text) && (
+        <div
+          className={`rich-text ${EXERCISE_BODY}`}
+          dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(group.content_text ?? "") }}
+        />
       )}
 
       {group.content_type === "audio" &&
@@ -122,14 +143,14 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
             // Гібрид: пряме gdrive-посилання в наш AudioPlayer (кнопки
             // швидкості), iframe — лише резерв при провалі. Деталі й
             // залишковий ризик — коментар у самому GdriveAudioPlayer.
-            return <GdriveAudioPlayer url={group.media_url} className="mb-3" />;
+            return <GdriveAudioPlayer url={group.media_url} />;
           }
 
           if (provider === "youtube") {
             // YouTube не має аналогічного прямого-посилання трюку (і не
             // повинен мати) — лишається iframe, як і для відео.
             return (
-              <div className="mb-3">
+              <div className="flex flex-col gap-1">
                 <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 140 }}>
                   <iframe
                     src={toEmbedUrl(group.media_url, "youtube")}
@@ -137,7 +158,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
                     allow="autoplay"
                   />
                 </div>
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                   Якщо аудіо не відкривається,{" "}
                   <a
                     href={group.media_url}
@@ -153,11 +174,11 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
             );
           }
 
-          return <AudioPlayer src={group.media_url} className="mb-3" />;
+          return <AudioPlayer src={group.media_url} />;
         })()}
 
       {group.content_type === "video" && group.media_url && (
-        <div className="mb-3 aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
+        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
           <iframe
             src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
             className="h-full w-full"
@@ -168,13 +189,13 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
       )}
 
       {group.content_type === "embed" && group.media_url && (
-        <div className="mb-3">
+        <div className="flex flex-col gap-1">
           <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 480 }}>
             <iframe src={group.media_url} className="h-full w-full" allowFullScreen />
           </div>
           {/* Завжди видимий резервний варіант — той самий принцип, що
               ExerciseBlock (не опційний, без перемикача вимкнення). */}
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Якщо вміст не відкривається,{" "}
             <a href={group.media_url} target="_blank" rel="noopener noreferrer" className="underline">
               перейдіть за посиланням
@@ -184,24 +205,43 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         </div>
       )}
 
-      <div className={`flex flex-col ${EXERCISE_LIST_GAP} border-t border-gray-200 pt-3 dark:border-neutral-700`}>
-        {tasks.map((task) => (
-          <ExerciseBlock
-            key={task.id}
-            task={task}
-            onResult={onResultCallbacks[task.id]}
-            // Режим "фіксовано" — індивідуальний бал на кожній задачі
-            // безумовно ховається, бо сума окремих балів природно НЕ
-            // дорівнює flat_points (формула тут — flat_points × середній %,
-            // не сума) і виглядала б для вчителя як нестикування чисел.
-            // Лишається видимим лише один загальний підсумок блоку нижче.
-            hidePoints={group.points_mode === "flat"}
-          />
-        ))}
-      </div>
+      {/* Подвійний ритм (gap-8 md:gap-12) МІЖ задачами-членами — свідомо
+          більший за звичайний EXERCISE_LIST_GAP: ці задачі йдуть БЕЗ власних
+          рамок (одна спільна рамка на весь блок), тож потребують помітнішого
+          проміжку, щоб не зливатись візуально одна з одною. Кожна задача —
+          в ОКРЕМІЙ обгортці-EXERCISE_STACK (одинарний ритм УСЕРЕДИНІ неї:
+          заголовок/медіа/тіло тієї Ж задачі), інакше фрагмент ExerciseBlock
+          розсипав би title/media/тіло ОДНІЄЇ задачі як окремі елементи
+          цього-таки списку — вони отримали б подвійний ритм МІЖ СОБОЮ,
+          а не лише між різними задачами. border-t/pt — одинарний ритм
+          (той самий, що padding EXERCISE_BLOCK_CLASS), не подвійний: лінія
+          відділяє спільний контент від СПИСКУ задач, а не одну задачу від
+          іншої. */}
+      {visibleTasks.length > 0 && (
+        <div
+          className={`flex flex-col gap-8 md:gap-12 ${
+            hasSharedContent ? "border-t border-gray-200 pt-4 md:pt-6 dark:border-neutral-700" : ""
+          }`}
+        >
+          {visibleTasks.map((task) => (
+            <div key={task.id} className={EXERCISE_STACK}>
+              <ExerciseBlock
+                task={task}
+                onResult={onResultCallbacks[task.id]}
+                // Режим "фіксовано" — індивідуальний бал на кожній задачі
+                // безумовно ховається, бо сума окремих балів природно НЕ
+                // дорівнює flat_points (формула тут — flat_points × середній %,
+                // не сума) і виглядала б для вчителя як нестикування чисел.
+                // Лишається видимим лише один загальний підсумок блоку нижче.
+                hidePoints={group.points_mode === "flat"}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
-        <p className="mt-3 border-t border-gray-200 pt-3 text-sm font-medium dark:border-neutral-700">
+        <p className="border-t border-gray-200 pt-4 text-sm font-medium md:pt-6 dark:border-neutral-700">
           Підсумок блоку:{" "}
           <span className="font-normal text-neutral-500 dark:text-neutral-400">
             {pointsEarned} з {pointsPossible} {pluralizePoints(pointsPossible)}
@@ -210,7 +250,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
       )}
 
       {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
-        <p className="mt-3 border-t border-gray-200 pt-3 text-sm font-medium dark:border-neutral-700">
+        <p className="border-t border-gray-200 pt-4 text-sm font-medium md:pt-6 dark:border-neutral-700">
           Підсумок блоку:{" "}
           <span className="font-normal text-neutral-500 dark:text-neutral-400">
             {flatEarned} з {flatPoints} {pluralizePoints(flatPoints)}

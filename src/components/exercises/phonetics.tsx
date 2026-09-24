@@ -4,6 +4,7 @@ import { AudioPlayer } from "@/components/audio-player";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 // Не "use client" — довідковий блок без взаємодії, що вимагала б стану
 // (як callout/flip_cards); AudioPlayer/iframe усередині самі "use client".
@@ -18,11 +19,10 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
   }
 
   return (
-    <div>
+    <div className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics}
         subText={config.subInstructions}
-        className="mb-2"
       />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (

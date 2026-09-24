@@ -10,7 +10,8 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
+import { EXERCISE_STACK } from "@/lib/spacing";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -246,8 +247,8 @@ export function CrosswordExercise({
               : ANSWER_CARD_DEFAULT
         }`}
       >
-        <span className={`text-base ${clueTextClass(liveStatus)}`}>
-          <span className="font-semibold">{clue.number}.</span> {clue.clue}
+        <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
+          <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
         </span>
         {clue.imageUrl && (
           <ImageOrPlaceholder src={clue.imageUrl} alt="" className="h-14 w-14 rounded object-cover" />
@@ -277,12 +278,22 @@ export function CrosswordExercise({
         key={clue.number}
         type="button"
         onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
-        className={`flex items-baseline gap-1.5 rounded px-1 py-0.5 text-left text-base transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+        className={`flex items-baseline gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
           isActive && !liveStatus ? "bg-blue-50 dark:bg-blue-950/40" : ""
         } ${clueTextClass(liveStatus)}`}
       >
-        <span className="whitespace-nowrap font-semibold">{clue.number}.</span>
-        <span>{clue.clue}</span>
+        {/* Клас шрифту прямо на кожному <span> (font-body тут, CLUE_TEXT
+            нижче), НЕ на <button>: глобальне button{font-family:var(--font-heading)} (globals.css)
+            неlayered CSS — за правилами cascade layers таке правило
+            переважає БУДЬ-яке правило з @layer (а Tailwind-утиліти, разом
+            з .font-body з CLUE_TEXT, лежать саме в @layer utilities),
+            незалежно від специфічності класу. Якби CLUE_TEXT стояв на
+            самій <button>, він програвав би цьому тег-правилу саме на
+            рівні шарів каскаду (не специфічності) — тому клас на
+            дочірньому <span> (якого тег-правило взагалі не стосується
+            напряму) — єдиний надійний спосіб перебити успадкований Nunito. */}
+        <span className="whitespace-nowrap font-body text-sm font-semibold">{clue.number}.</span>
+        <span className={CLUE_TEXT}>{clue.clue}</span>
       </button>
     );
   }
@@ -318,8 +329,8 @@ export function CrosswordExercise({
   }
 
   return (
-    <div>
-      <div className="mb-2">
+    <div className={EXERCISE_STACK}>
+      <div>
         <div className="flex flex-wrap items-baseline gap-2">
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
@@ -337,7 +348,7 @@ export function CrosswordExercise({
         </div>
         {config.subInstructions && (
           <div
-            className={`mt-0.5 ${EXERCISE_SUBINSTRUCTION}`}
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
           />
         )}
@@ -448,31 +459,32 @@ export function CrosswordExercise({
         </div>
       </div>
 
-      {!result ? (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={pending}
-          className={`mt-3 ${STUDENT_BUTTON_PRIMARY}`}
-        >
-          {pending ? "Перевіряю..." : "Перевірити"}
-        </button>
-      ) : (
-        <p
-          className={`mt-3 text-sm font-medium ${
-            result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-          {result.pointsPossible !== undefined && (
-            <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
-              ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-            </span>
-          )}
-        </p>
-      )}
-
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-col gap-3">
+        {!result ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+            }`}
+          >
+            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+            {result.pointsPossible !== undefined && (
+              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+              </span>
+            )}
+          </p>
+        )}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

@@ -9,8 +9,9 @@ import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
-import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES } from "@/lib/spacing";
+import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
 
 export default async function MaterialPage({
   params,
@@ -195,10 +196,10 @@ export default async function MaterialPage({
                 <li key={`group-${row.group.id}`} id={`group-${row.group.id}`} className="scroll-mt-4">
                   <TaskGroupBlock group={row.group} tasks={row.members} />
                 </li>
-              ) : (
+              ) : !taskHasRenderableContent(row.task) ? null : (
                 <li
                   key={row.task.id}
-                  className={row.task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}
+                  className={`${EXERCISE_STACK} ${row.task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
                 >
                   <ExerciseBlock task={row.task} />
                 </li>
