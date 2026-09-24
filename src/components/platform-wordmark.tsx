@@ -10,8 +10,10 @@
 //
 // Два шрифти (Montserrat 800, Cormorant Garamond italic 500) підключені в
 // кореневому layout.tsx як --font-montserrat/--font-cormorant, зареєстровані
-// тут-таки в globals.css як --font-brand-sans/--font-brand-serif — той
-// самий паттерн, що вже є для --font-heading (Playfair Display).
+// тут-таки в globals.css як --font-brand-sans/--font-brand-serif — окрема
+// пара змінних, свідомо не --font-heading (Nunito): вордмарк — фіксована
+// латинська назва бренду, не має підлаштовуватись під заміну шрифтів
+// решти інтерфейсу.
 //
 // Розміри — точні px з дизайну (28/34 — це "lg", дефолтний розмір),
 // sm/xl масштабовані з тим самим співвідношенням, що мали текстові

@@ -332,9 +332,9 @@ export function CrosswordExercise({
         )}
       </div>
 
-      {/* gap-3 (не gap-4) — той самий 12px, що padding блока завдання
-          (EXERCISE_BLOCK_CLASS + p-3): зазор між сіткою й панеллю підказок
-          під нею має дорівнювати відступу від зовнішньої межі блоку. */}
+      {/* Внутрішній відступ вправи (не входить у систему відступів сторінки,
+          src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
+          сіткою й панеллю підказок під нею. */}
       <div className="flex flex-col items-center gap-3">
         <div className="max-w-full overflow-x-auto">
           {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
@@ -349,7 +349,15 @@ export function CrosswordExercise({
               (лише сітка, без сусідніх елементів, — needed для того самого
               обходу border-collapse, що вже в word-search.tsx). */}
           <div className="inline-block drop-shadow-md">
-            <table className="border-collapse">
+            {/* font-mono — той самий принцип, що word-search.tsx: моноширинна
+                сітка лишається як є, попри глобальне правило
+                "input { font-family: var(--font-heading) }" (globals.css,
+                заміна шрифтів). На <table> цього досить для номерів клітинок
+                (звичайний <span>, успадковує), але НЕ для самого <input>
+                нижче — глобальне правило звертається до input напряму
+                (не через успадкування), тож перемагає ancestor-класи; клас
+                font-mono треба продублювати прямо на className інпута. */}
+            <table className="border-collapse font-mono">
               <tbody>
                 {config.openCells.map((row, ri) => (
                   <tr key={ri}>
@@ -386,7 +394,7 @@ export function CrosswordExercise({
                             }}
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
-                            className={`h-full w-full bg-white text-center text-base font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
+                            className={`h-full w-full bg-white text-center font-mono text-base font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
                               status === "correct"
                                 ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                                 : status === "incorrect"

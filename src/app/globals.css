@@ -45,17 +45,24 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
-  /* Лише для заголовків курсів/сцен/тестів (клас font-heading, точково на
-     ~6-8 h1) — решта UI лишається на Geist Sans/Roboto, як і було. */
-  --font-heading: var(--font-serif-heading);
+  /* Nunito — заголовки й інтерфейс: h1-h6 (глобальне правило нижче),
+     button/input/textarea/select/label/nav/aside (те саме, нижче) —
+     будь-де через утиліту font-heading, і як --font-sans (дефолтний "сан"
+     на випадок, якщо колись з'явиться className="font-sans"). Замінює
+     колишні Roboto (--font-sans) і Playfair Display (--font-heading,
+     раніше точково на ~6-8 h1) — обидва прибрані повністю. */
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  /* Lora — основний текст: body за замовчуванням (нижче) і .rich-text
+     p/li. */
+  --font-body: var(--font-lora), ui-serif, Georgia, serif;
   /* Лише для вордмарку "Trucs d'French" (platform-wordmark.tsx). */
   --font-brand-sans: var(--font-montserrat);
   --font-brand-serif: var(--font-cormorant);
-  /* Лише для полів навчального контенту (клас font-content) — інфраструктура
-     готова, застосування до конкретних полів (текст діалогу, варіанти
-     відповідей) — окремий етап, поки що клас ніде не використовується. */
+  /* Той самий шрифт, що --font-body (Lora), під іншою назвою для вужчого
+     призначення — поля навчального контенту (клас font-content: текст
+     репліки діалогу, варіанти відповідей вправ), а не весь body. */
   --font-content: var(--font-lora);
 
   /* Відкочено з точних hex дизайн-документа (#8B3FA0/#2EC4D6) назад на
@@ -72,38 +79,77 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
 }
 
-/* Мінімальна типографіка для TipTap-контенту (callout-завдання) — без
-   @tailwindcss/typography (не встановлений у проєкті, і не варто заради
-   пари тегів): Preflight скидає заголовки/списки до вигляду звичайного
-   тексту, тож без цього h2/h3/ul/ol виглядали б неможливо відрізнити від
-   параграфа. Використовується і в адмін-редакторі (CalloutFields), і на
-   сторінці студента (CalloutExercise) — той самий вигляд в обох місцях. */
+/* Заміна шрифтів на платформі: Nunito (заголовки/інтерфейс) + Lora
+   (основний текст) — глобально через теги, не по одному className на
+   кожен елемент. Адмінка сидить під тим самим кореневим layout.tsx/<body>
+   (admin/layout.tsx не рендерить власний <html>/<body>), тож успадковує
+   обидва правила без окремих змін. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+/* button/input/textarea/select/label — стандартні інтерактивні елементи
+   форм; nav/aside — бічні панелі й навігація (course-switcher-sidebar.tsx,
+   delf-course-tabs.tsx: єдині два місця в коді, де взагалі є <aside>).
+   Клас font-content (Lora, поля навчального контенту) чи font-mono
+   (моноширинні сітки word_search/crossword) на конкретному елементі
+   переважає це правило звичайною специфічністю CSS (клас сильніший за
+   голий тег) — жодних виключень тут прописувати не треба. */
+button, input, textarea, select, label, nav, aside {
+  font-family: var(--font-heading);
+}
+
+/* Мінімальна типографіка для TipTap-контенту (callout-завдання, статті
+   Матеріалів) — без @tailwindcss/typography (не встановлений у проєкті, і
+   не варто заради пари тегів): Preflight скидає заголовки/списки до
+   вигляду звичайного тексту, тож без цього h2/h3/ul/ol виглядали б
+   неможливо відрізнити від параграфа. Використовується і в адмін-редакторі
+   (CalloutFields, MaterialArticleFields), і на сторінці студента
+   (CalloutExercise, стаття Матеріалу) — той самий вигляд в обох місцях.
+   Margin-и синхронізовані ВРУЧНУ з системою відступів студентських сторінок
+   (src/lib/spacing.ts) — той самий 16px крок абзацу й H2→текст, що там,
+   просто звичайним CSS, бо dangerouslySetInnerHTML не дотягується до
+   Tailwind-класів/JS-констант. font-family на h2/h3/p/li нижче технічно
+   дублює глобальне правило h1-h6/body (той самий --font-heading/--font-body)
+   — явно прописано заради однозначності самого .rich-text блоку. Розміри
+   шрифтів/font-weight не чіпались. */
 .rich-text h2 {
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
-  margin-top: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
 }
 .rich-text h3 {
+  font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 600;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.rich-text p,
+.rich-text li {
+  font-family: var(--font-body);
 }
 .rich-text p {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 .rich-text p:last-child {
   margin-bottom: 0;
 }
+/* Заголовок на самому початку статті/callout-тексту не має додавати
+   зайвий відступ ЗВЕРХУ — той відступ уже дає контейнер ззовні (картка
+   правила, чи H1→контент сторінки Матеріалу). */
+.rich-text > :first-child {
+  margin-top: 0;
+}
 .rich-text ul {
-  margin: 0.25rem 0 0.5rem 1.25rem;
+  margin: 0.5rem 0 1rem 1.25rem;
   list-style-type: disc;
 }
 .rich-text ol {
-  margin: 0.25rem 0 0.5rem 1.25rem;
+  margin: 0.5rem 0 1rem 1.25rem;
   list-style-type: decimal;
 }

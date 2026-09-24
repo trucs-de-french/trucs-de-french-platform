@@ -1,39 +1,25 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Roboto, Geist_Mono, Playfair_Display, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
+import { Nunito, Geist_Mono, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
 import { ThemeScript } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
 import "./globals.css";
 
-// Той самий Roboto, що раніше був звужений лише на адмінку
-// (admin/layout.tsx) — тепер дефолтний шрифт усього сайту (--font-sans,
-// globals.css), замінює Geist Sans. cyrillic — обов'язково, увесь текст
-// сайту українською.
-const roboto = Roboto({
-  variable: "--font-roboto",
-  weight: ["400", "500", "700"],
-  subsets: ["latin", "cyrillic"],
+// Nunito — шрифт заголовків та інтерфейсу (--font-heading і --font-sans,
+// globals.css): усі h1-h6, кнопки/поля вводу/лейбли, бічні панелі/навігація
+// сайту. Замінює Roboto (--font-sans) і Playfair Display (--font-heading,
+// раніше точково лише на ~6-8 h1) — обидва прибрані повністю, більше ніде
+// не використовуються. latin-ext — потрібен для французьких діакритик
+// (é, è, ê, ç...) поза базовим latin-підсетом; cyrillic — увесь інтерфейс
+// українською.
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin", "latin-ext", "cyrillic"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin", "cyrillic"],
-});
-
-// Лише для заголовків назв курсів/сцен/тестів (font-heading, globals.css) —
-// не замінює Geist Sans як основний шрифт UI, той самий принцип, що вже
-// застосований до Roboto в admin/layout.tsx (окрема variable, вузьке
-// призначення, не сайт-вайд основний шрифт).
-//
-// Playfair Display, не Fraunces — Fraunces/Newsreader (варіанти з
-// дизайн-документа) НЕ мають кириличного підсету в Google Fonts (лише
-// latin/latin-ext/vietnamese), а назви курсів/сцен/тестів переважно
-// українською; без кирилиці шрифт просто не застосувався б до реального
-// контенту. Playfair Display — найближчий за характером (виразний,
-// високий контраст) варіант із повною кириличною підтримкою.
-const playfairDisplay = Playfair_Display({
-  variable: "--font-serif-heading",
   subsets: ["latin", "cyrillic"],
 });
 
@@ -52,14 +38,15 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
 });
 
-// Лише для полів навчального контенту (текст репліки діалогу, варіанти
-// відповідей вправ) — клас font-content (globals.css), той самий вузько-
-// скопований принцип, що Roboto/Playfair Display вище: окрема змінна, не
-// замінює жодного наявного шрифту. Застосування до конкретних полів — окремий
-// етап, тут лише інфраструктура (шрифт підключено, клас ще ніде не використано).
+// Lora — шрифт основного тексту сайту (--font-body, globals.css): body за
+// замовчуванням, статті Матеріалів/callout (.rich-text p/li), і далі
+// поля навчального контенту (--font-content, клас font-content — текст
+// репліки діалогу, варіанти відповідей вправ), той самий шрифт під іншою
+// назвою змінної для вужчого призначення. latin-ext — французькі
+// діакритики поза базовим latin.
 const lora = Lora({
   variable: "--font-lora",
-  subsets: ["latin", "cyrillic"],
+  subsets: ["latin", "latin-ext", "cyrillic"],
 });
 
 export const metadata: Metadata = {
@@ -82,7 +69,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${roboto.variable} ${geistMono.variable} ${playfairDisplay.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${nunito.variable} ${geistMono.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
