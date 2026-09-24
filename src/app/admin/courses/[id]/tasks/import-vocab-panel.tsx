@@ -14,19 +14,31 @@ type ImportedWord = { word: string; translation: string; image_url?: string };
 // pairMode — для типів, де ціль імпорту очікує ПАРУ word+translation разом
 // (matching/table_fill/flip_cards): дозволяє позначити лише одну колонку
 // (напр. тільки французьке слово) — інша сторона піде порожнім рядком,
-// вчителька дописує вручну. Для плоских типів (drag_drop/sort_columns/
-// reorder/image_match/checkbox_grid/chronological_order, за замовчуванням
-// pairMode=false) переклад узагалі не бере участі в імпорті — права колонка
-// й надалі клікабельна, просто нічого не змінює (найпростіший варіант —
-// без disabled/вимкнення).
+// вчителька дописує вручну.
+//
+// showTranslationColumn=false — для типів, де в конфігурації елемента
+// узагалі немає поля під переклад/підказку (drag_drop/sort_columns/reorder/
+// image_match/checkbox_grid/chronological_order): колонка "Переклад" не
+// рендериться зовсім, щоб позначена галочка не створювала враження, ніби
+// переклад кудись збережеться, хоча насправді importWords цього типу його
+// просто не читає. Типи з реальним полем підказки на рівні елемента
+// (letter_gaps/letter_rearrangement — hintText; word_search/crossword —
+// translation/clue; PAIR_TYPES вище) лишаються з видимою колонкою.
 export function ImportVocabPanel({
   sceneVocab,
   onImport,
   pairMode = false,
+  showTranslationColumn = true,
 }: {
   sceneVocab: VocabItem[];
   onImport?: (words: ImportedWord[]) => void;
   pairMode?: boolean;
+  // false — для типів, де переклад узагалі нікуди не потрапляє (немає ані
+  // pairMode-поля, ані підказки на рівні елемента: drag_drop/sort_columns/
+  // reorder/checkbox_grid/chronological_order/image_match) — колонка
+  // "Переклад" тоді просто НЕ рендериться, щоб галочка не створювала
+  // хибного очікування, що переклад кудись збережеться.
+  showTranslationColumn?: boolean;
 }) {
   const [checkedFr, setCheckedFr] = useState<Set<string>>(new Set());
   const [checkedUk, setCheckedUk] = useState<Set<string>>(new Set());
@@ -92,12 +104,19 @@ export function ImportVocabPanel({
 
       {sceneVocab.length > 0 ? (
         <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+          <div
+            className={`gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 ${
+              showTranslationColumn ? "grid grid-cols-2" : ""
+            }`}
+          >
             <span>Французька</span>
-            <span>Переклад</span>
+            {showTranslationColumn && <span>Переклад</span>}
           </div>
           {sceneVocab.map((v) => (
-            <div key={v.word} className="grid grid-cols-2 gap-2 text-sm">
+            <div
+              key={v.word}
+              className={`gap-2 text-sm ${showTranslationColumn ? "grid grid-cols-2" : ""}`}
+            >
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -106,14 +125,16 @@ export function ImportVocabPanel({
                 />
                 <span>{firstVocabVariant(v.word)}</span>
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={checkedUk.has(v.word)}
-                  onChange={() => toggleUk(v.word)}
-                />
-                <span>{v.translation}</span>
-              </label>
+              {showTranslationColumn && (
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedUk.has(v.word)}
+                    onChange={() => toggleUk(v.word)}
+                  />
+                  <span>{v.translation}</span>
+                </label>
+              )}
             </div>
           ))}
         </div>

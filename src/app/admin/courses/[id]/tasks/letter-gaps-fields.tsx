@@ -175,10 +175,13 @@ export const LetterGapsFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
-    // Плаский тип, як sort_columns/reorder/checkbox_grid — беремо лише
-    // французьке слово, переклад ігноруємо. hiddenIndices порожній і
-    // hintText порожній навмисно: вчителька клікає літери й вписує підказку
-    // вручну вже ПІСЛЯ імпорту.
+    // На відміну від sort_columns/reorder/checkbox_grid (де в елемента
+    // взагалі немає поля під переклад) — тут воно є (hintText), тож
+    // переклад із позначеної укр-колонки йде прямо туди. hintType не
+    // чіпаємо (лишається дефолтне "definition" — сам тип підказки вчителька
+    // й так може змінити вручну, це налаштування імпорт не визначає).
+    // hiddenIndices порожній навмисно: які літери приховати, вчителька
+    // обирає кліком уже ПІСЛЯ імпорту.
     importWords(imported) {
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
@@ -189,7 +192,7 @@ export const LetterGapsFields = forwardRef<
             word: w.word,
             hiddenIndices: [],
             hintType: "definition" as const,
-            hintText: "",
+            hintText: w.translation,
           })),
         ];
       });

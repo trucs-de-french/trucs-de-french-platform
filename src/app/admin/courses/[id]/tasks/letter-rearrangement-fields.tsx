@@ -138,9 +138,10 @@ export const LetterRearrangementFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
-    // Плаский тип, як letter_gaps/sort_columns/reorder — беремо лише
-    // французьке слово, переклад ігноруємо. hintText порожній навмисно:
-    // вчителька вписує підказку вручну вже ПІСЛЯ імпорту.
+    // На відміну від sort_columns/reorder (де в елемента взагалі немає поля
+    // під переклад) — тут воно є (hintText), тож переклад із позначеної
+    // укр-колонки йде прямо туди. hintType не чіпаємо (лишається дефолтне
+    // "definition" — сам тип підказки вчителька й так може змінити вручну).
     importWords(imported) {
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
@@ -150,7 +151,7 @@ export const LetterRearrangementFields = forwardRef<
             id: crypto.randomUUID(),
             word: w.word,
             hintType: "definition" as const,
-            hintText: "",
+            hintText: w.translation,
           })),
         ];
       });

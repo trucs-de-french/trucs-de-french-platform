@@ -87,9 +87,22 @@ const IMPORT_ENABLED_TYPES = [
 
 // Типи, де ціль імпорту очікує ПАРУ word+translation разом (не просто
 // плаский список слів) — ImportVocabPanel дозволяє позначити фр/укр
-// незалежно лише для цих трьох, решта IMPORT_ENABLED_TYPES ігнорують
-// переклад узагалі.
+// незалежно лише для цих трьох.
 const PAIR_TYPES = ["matching", "table_fill", "flip_cards"];
+
+// Типи, де в конфігурації ЕЛЕМЕНТА взагалі немає поля під переклад/підказку
+// (на відміну від letter_gaps/letter_rearrangement — hintText, і word_search/
+// crossword — translation/clue) — колонці "Переклад" в ImportVocabPanel
+// нічого записувати, тож ховаємо її зовсім, щоб позначена галочка не
+// створювала враження, ніби переклад кудись збережеться.
+const NO_TRANSLATION_TYPES = [
+  "drag_drop",
+  "sort_columns",
+  "reorder",
+  "checkbox_grid",
+  "chronological_order",
+  "image_match",
+];
 
 const TYPE_OPTIONS = [
   { value: "game", label: "Гра" },
@@ -835,6 +848,7 @@ export function TaskConfigFields({
           }
           onImport={(words) => importRef.current?.importWords(words)}
           pairMode={PAIR_TYPES.includes(type)}
+          showTranslationColumn={!NO_TRANSLATION_TYPES.includes(type)}
         />
       )}
 
