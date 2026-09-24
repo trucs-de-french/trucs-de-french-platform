@@ -11,8 +11,12 @@
 // якби контейнер лишався на тому самому відтінку, картки зливались би з
 // тлом у темній темі так само, як white-on-white до недавнього фіксу
 // letter_gaps у світлій.
+// p-4 md:p-6 — внутрішній padding за узгодженою системою відступів
+// (src/lib/spacing.ts): 16px на мобільних, 24px на десктопі. Раніше кожен
+// з 5 місць виклику додавав власний "p-3" поруч із цією константою —
+// тепер padding частина самої константи, єдине джерело правди.
 export const EXERCISE_BLOCK_CLASS =
-  "rounded-lg border border-gray-100 bg-neutral-50 shadow-sm dark:border-neutral-700 dark:bg-neutral-900";
+  "rounded-lg border border-gray-100 bg-neutral-50 shadow-sm p-4 md:p-6 dark:border-neutral-700 dark:bg-neutral-900";
 
 // Картка-посилання на сцену на дошці курсу (courses/[productId]/page.tsx) —
 // НЕ блок завдання (нема карток-відповідей усередині, які потребують

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { H1_TO_CONTENT } from "@/lib/spacing";
 
 const TABS: { value: "entrainement" | "examen"; label: string }[] = [
   { value: "entrainement", label: "Entraînement" },
@@ -17,7 +18,7 @@ export function DelfModeTabs({
   const [tab, setTab] = useState<"entrainement" | "examen">("entrainement");
 
   return (
-    <div className="mt-6">
+    <div className={H1_TO_CONTENT}>
       <div className="flex gap-1 border-b border-gray-200 dark:border-neutral-700">
         {TABS.map((t) => (
           <button

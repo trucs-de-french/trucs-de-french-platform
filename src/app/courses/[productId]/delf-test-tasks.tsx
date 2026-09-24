@@ -3,6 +3,7 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
 
 type TestTask = ExerciseTask & { delf_section: string | null };
 type TestTaskGroup = TaskGroupData & {
@@ -130,7 +131,7 @@ export async function DelfTestTasks({
     }
     const task = row.task;
     return (
-      <li key={task.id} className={task.type === "callout" ? "" : `${EXERCISE_BLOCK_CLASS} p-3`}>
+      <li key={task.id} className={task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}>
         <ExerciseBlock task={task} />
       </li>
     );
@@ -146,7 +147,7 @@ export async function DelfTestTasks({
             <h2 className="text-lg font-medium">
               {section} — {EXAM_SECTION_LABELS[section]}
             </h2>
-            <ul className="mt-2 flex flex-col gap-3">{sectionRows.map(renderRow)}</ul>
+            <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>{sectionRows.map(renderRow)}</ul>
           </section>
         );
       })}
@@ -154,7 +155,7 @@ export async function DelfTestTasks({
       {noSection.length > 0 && (
         <section>
           <h2 className="text-lg font-medium">Без секції</h2>
-          <ul className="mt-2 flex flex-col gap-3">{noSection.map(renderRow)}</ul>
+          <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>{noSection.map(renderRow)}</ul>
         </section>
       )}
     </div>

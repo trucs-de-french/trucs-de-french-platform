@@ -46,7 +46,7 @@ export type SceneContentBlockData = {
 // по собі "use client" — це нормально всередині Server Component).
 export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
   return (
-    <section className={`${EXERCISE_BLOCK_CLASS} p-3`}>
+    <section className={EXERCISE_BLOCK_CLASS}>
       {block.content_type === "text" && block.content_text && (
         <InstructionsText text={block.content_text} />
       )}

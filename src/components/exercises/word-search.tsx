@@ -182,12 +182,14 @@ export function WordSearchExercise({
         )}
       </div>
 
-      {/* gap-2 — той самий інтервал, що між картками легенди (gap-2 нижче),
-          щоб усі проміжки (сітка↔легенда, картка↔картка) візуально
-          збігались. Сітка НЕ стискається (shrink-0) і НЕ росте — легенда
+      {/* gap-4 md:gap-6 — той самий внутрішній padding, що тепер в
+          EXERCISE_BLOCK_CLASS (p-4 md:p-6): зазор сітка↔легенда має
+          дорівнювати відступу від зовнішньої межі блоку. Gap МІЖ картками
+          легенди (gap-2 нижче) — окреме, внутрішнє значення, не входить у
+          цю систему. Сітка НЕ стискається (shrink-0) і НЕ росте — легенда
           (flex-1 min-w-0) забирає весь простір, що лишився праворуч від
           сітки, аж до правого паддінгу блоку завдання. */}
-      <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-start">
+      <div className="mb-3 flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
         <div
           ref={gridRef}
           className="inline-block shrink-0 touch-none select-none shadow-md"

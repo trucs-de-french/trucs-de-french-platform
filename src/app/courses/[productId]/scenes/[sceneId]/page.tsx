@@ -31,6 +31,7 @@ import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
+import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP } from "@/lib/spacing";
 import {
   SceneContentBlock,
   type SceneContentBlockData,
@@ -389,9 +390,9 @@ export default async function ScenePage({
   }
 
   const videoNode = scene.video_url && (
-    <section className="mt-6">
+    <section>
       <h2 className="text-lg font-medium">Відео</h2>
-      <div className="mt-2 aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
+      <div className={`${H2_TO_CONTENT} aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700`}>
         <iframe
           src={toEmbedUrl(scene.video_url, scene.video_provider)}
           className="h-full w-full"
@@ -403,7 +404,7 @@ export default async function ScenePage({
   );
 
   const scriptNode = (
-    <section className="mt-6">
+    <section>
       <ScriptSection dialogue={dialogue} title="Скрипт" />
     </section>
   );
@@ -413,9 +414,9 @@ export default async function ScenePage({
   const hasVocab = sceneVocab.length > 0;
 
   const linksNode = hasLinks && (
-    <section className="mt-6">
+    <section>
       <h2 className="text-lg font-medium">Практика</h2>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className={`${H2_TO_CONTENT} flex flex-wrap gap-2`}>
         {linkList.map((link) => (
           <a
             key={link.id}
@@ -432,15 +433,15 @@ export default async function ScenePage({
   );
 
   const vocabNode = hasVocab && (
-    <section className="mt-6">
+    <section>
       <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} />
     </section>
   );
 
   const tasksNode = sceneRows.length > 0 && (
-    <section className="mt-6">
+    <section>
       <h2 className="text-lg font-medium">Завдання</h2>
-      <ul className="mt-2 flex flex-col gap-2">
+      <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
         {sceneRows.map((row) => {
           if (row.kind === "group") {
             return (
@@ -457,7 +458,7 @@ export default async function ScenePage({
             <li
               key={task.id}
               id={`task-${task.id}`}
-              className={`scroll-mt-4 ${task.type === "callout" ? "" : `${EXERCISE_BLOCK_CLASS} p-3`}`}
+              className={`scroll-mt-4 ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
             >
               {TYPES_WITH_TITLE.includes(task.type) && (
                 <>
@@ -639,31 +640,39 @@ export default async function ScenePage({
       {isPreviewing && <PreviewBanner productId={productId} />}
       <h1 className="mt-2 font-heading text-2xl font-semibold">{scene.title}</h1>
 
-      {orderedBlockRows.map((row, i) => {
-        if (row.block_type === "content") {
-          const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
-          if (!content) return null;
-          const block =
-            content.content_type === "links"
-              ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
-              : content;
-          const attachedGroup = attachedGroupByContentBlockId.get(content.id);
-          const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
-          return (
-            <section key={`content-${row.ref_id}`} className="mt-6">
-              <SceneContentBlock block={block} />
-              {/* Той самий принцип, що вже в "Завданнях" — блок без жодної
-                  задачі-члена не рендеримо взагалі. */}
-              {attachedGroup && attachedMembers.length > 0 && (
-                <div className="mt-3">
-                  <TaskGroupBlock group={attachedGroup} tasks={attachedMembers} />
-                </div>
-              )}
-            </section>
-          );
-        }
-        return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
-      })}
+      {/* H1_TO_CONTENT — відступ від h1 до першої секції; gap-8 — той самий
+          32px МІЖ секціями (Відео/Скрипт/Практика/Вокабуляр/Завдання/
+          довільні content-блоки) — одна спільна обгортка замість mt-8 на
+          КОЖНІЙ із 6 секцій нижче. Секції рендеряться умовно (falsy/null),
+          але це не заважає: React не створює DOM-вузол для false/null,
+          тож flex-gap коректно рахує лише те, що справді відображається. */}
+      <div className={`${H1_TO_CONTENT} flex flex-col gap-8`}>
+        {orderedBlockRows.map((row, i) => {
+          if (row.block_type === "content") {
+            const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
+            if (!content) return null;
+            const block =
+              content.content_type === "links"
+                ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
+                : content;
+            const attachedGroup = attachedGroupByContentBlockId.get(content.id);
+            const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
+            return (
+              <section key={`content-${row.ref_id}`}>
+                <SceneContentBlock block={block} />
+                {/* Той самий принцип, що вже в "Завданнях" — блок без жодної
+                    задачі-члена не рендеримо взагалі. */}
+                {attachedGroup && attachedMembers.length > 0 && (
+                  <div className="mt-3">
+                    <TaskGroupBlock group={attachedGroup} tasks={attachedMembers} />
+                  </div>
+                )}
+              </section>
+            );
+          }
+          return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
+        })}
+      </div>
     </main>
   );
 }

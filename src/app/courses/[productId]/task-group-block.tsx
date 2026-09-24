@@ -10,6 +10,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { EXERCISE_LIST_GAP } from "@/lib/spacing";
 
 export type TaskGroupData = {
   id: string;
@@ -99,7 +100,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
   const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
   return (
-    <section className={`${EXERCISE_BLOCK_CLASS} p-3`}>
+    <section className={EXERCISE_BLOCK_CLASS}>
       {group.content_type === "text" && group.content_text && (
         <InstructionsText text={group.content_text} className="mb-3" />
       )}
@@ -183,7 +184,7 @@ export function TaskGroupBlock({ group, tasks }: { group: TaskGroupData; tasks: 
         </div>
       )}
 
-      <div className="flex flex-col gap-4 border-t border-gray-200 pt-3 dark:border-neutral-700">
+      <div className={`flex flex-col ${EXERCISE_LIST_GAP} border-t border-gray-200 pt-3 dark:border-neutral-700`}>
         {tasks.map((task) => (
           <ExerciseBlock
             key={task.id}
