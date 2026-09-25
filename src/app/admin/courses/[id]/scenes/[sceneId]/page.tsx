@@ -37,6 +37,7 @@ import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 
 // Українська плюралізація "вправу/вправи/вправ" (знахідний відмінок —
 // "прикріплено N вправ(у)") для тексту підтвердження видалення content-
@@ -51,8 +52,6 @@ function pluralizeExercisesAccusative(n: number): "вправу" | "вправи
   return "вправ";
 }
 
-type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "vocab", "link", "task"];
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
   video: "Відео",
   script: "Скрипт",
@@ -241,7 +240,7 @@ export default async function AdminScenePage({
   const orderedBlockRows: { block_type: SceneBlockType | "content"; ref_id: string | null }[] =
     blocks && blocks.length > 0
       ? blocks
-      : DEFAULT_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
+      : DEFAULT_SCENE_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
 
   const sceneBlocks: BlockEntry[] = orderedBlockRows.map((row) => {
     if (row.block_type === "content") {
@@ -258,9 +257,12 @@ export default async function AdminScenePage({
 
   // 'video' може ще не мати рядка в scene_blocks (з'являється лише коли
   // заповнено URL) — але поле для введення URL має бути видиме й
-  // перетягувано в адмінці завжди, тому додаємо його в кінець, якщо нема.
+  // перетягувано в адмінці завжди, тому додаємо синтетичну картку, якщо
+  // нема. На початок (unshift), не в кінець — video йде першим у
+  // DEFAULT_SCENE_BLOCK_ORDER, і в цьому масиві попереду нього серед
+  // фіксованих типів нічого стояти не може.
   if (!sceneBlocks.some((b) => b.type === "video")) {
-    sceneBlocks.push({ type: "video", refId: null, label: "Відео" });
+    sceneBlocks.unshift({ type: "video", refId: null, label: "Відео" });
   }
 
   const videoContent = (

@@ -26,6 +26,7 @@ import type {
   PhoneticsConfig,
 } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
 import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
@@ -102,13 +103,7 @@ type MistakeRow = {
   tasks: { title: string } | null;
 };
 
-type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
 type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | null };
-
-// Фолбек на випадок, якщо scene_blocks порожній для сцени (напр. міграцію
-// ще не застосовано) — відтворює порядок, який був жорстко закодований до
-// впровадження scene_blocks.
-const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "vocab", "link", "task"];
 
 export default async function ScenePage({
   params,
@@ -310,7 +305,7 @@ export default async function ScenePage({
 
   if (blocksError) {
     // так само для scene_blocks — раніше ця помилка мовчки ховалась за
-    // фолбеком DEFAULT_BLOCK_ORDER, і виглядало так, ніби порядок груп
+    // фолбеком DEFAULT_SCENE_BLOCK_ORDER, і виглядало так, ніби порядок груп
     // працює, хоча реальний запит увесь час падав.
     console.error(
       `Не вдалося завантажити scene_blocks для сцени ${sceneId}:`,
@@ -321,7 +316,7 @@ export default async function ScenePage({
   const orderedBlockRows: SceneBlockRow[] =
     blocks && blocks.length > 0
       ? blocks
-      : DEFAULT_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
+      : DEFAULT_SCENE_BLOCK_ORDER.map((type) => ({ block_type: type, ref_id: null }));
 
   const contentBlocksById = new Map((sceneContentBlocks ?? []).map((b) => [b.id, b]));
 

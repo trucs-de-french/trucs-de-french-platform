@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/action-state";
+import { DEFAULT_SCENE_BLOCK_ORDER } from "@/lib/scene-block-order";
 
 // ЧЕКЛИСТ: перед тим як додавати нову мутуючу дію в цей файл (чи в
 // tasks/actions.ts), визнач, до якого з 4 сценаріїв вона належить —
@@ -57,13 +58,22 @@ export async function createScene(productId: string) {
   // 'script'/'link'/'task'/'vocab' — фіксовані групи, що існують завжди,
   // навіть порожні (щоб їх можна було перетягувати ще до наповнення).
   // 'video' не створюємо тут — нова сцена завжди без video_url, ця група
-  // з'являється синхронно з полем у updateSceneVideo.
-  const { error: blocksError } = await supabase.from("scene_blocks").insert([
-    { scene_id: scene.id, block_type: "script", position: 0 },
-    { scene_id: scene.id, block_type: "vocab", position: 1 },
-    { scene_id: scene.id, block_type: "link", position: 2 },
-    { scene_id: scene.id, block_type: "task", position: 3 },
-  ]);
+  // з'являється синхронно з полем у updateSceneVideo (і так само зникає,
+  // коли video_url очищують) — саме тому не можна просто завжди створювати
+  // тут і video-рядок: "Зберегти все" на сторінці сцени сабмітить і
+  // порожню форму відео, а update-гілка нижче видалила б щойно створений
+  // рядок як "video_url немає — прибрати рядок".
+  //
+  // Відносний порядок цих чотирьох — DEFAULT_SCENE_BLOCK_ORDER без 'video'
+  // (єдине джерело дефолтного порядку, спільне з фолбеком на сторінках
+  // сцени й доповненням video-рядка в updateSceneVideo нижче).
+  const { error: blocksError } = await supabase.from("scene_blocks").insert(
+    DEFAULT_SCENE_BLOCK_ORDER.filter((type) => type !== "video").map((type, position) => ({
+      scene_id: scene.id,
+      block_type: type,
+      position,
+    }))
+  );
   if (blocksError) throw blocksError;
 
   // Той самий сценарій 3 з чеклиста вище: redirect() веде на сторінку
@@ -126,17 +136,22 @@ export async function updateSceneVideo(
     .maybeSingle();
 
   if (videoUrl && !videoBlock) {
-    const { data: maxRow } = await supabase
+    // video — перший у DEFAULT_SCENE_BLOCK_ORDER, тож щойно рядок
+    // з'являється (раніше його не було), він має стати ПЕРЕД усіма вже
+    // наявними блоками (фіксованими й content), а не в кінець списку —
+    // інакше "Відео" щоразу опинялось би останнім, коли вчителька вперше
+    // заповнює URL. MIN-1, не MAX+1.
+    const { data: minRow } = await supabase
       .from("scene_blocks")
       .select("position")
       .eq("scene_id", sceneId)
-      .order("position", { ascending: false })
+      .order("position", { ascending: true })
       .limit(1)
       .maybeSingle();
     await supabase.from("scene_blocks").insert({
       scene_id: sceneId,
       block_type: "video",
-      position: (maxRow?.position ?? -1) + 1,
+      position: (minRow?.position ?? 1) - 1,
     });
   } else if (!videoUrl && videoBlock) {
     await supabase.from("scene_blocks").delete().eq("id", videoBlock.id);
