@@ -8,6 +8,8 @@ import type {
   GradeResult,
 } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageZoomBadge } from "./image-zoom-badge";
+import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -45,6 +47,7 @@ export function ChronologicalOrderExercise({
   hidePoints?: boolean;
 }) {
   const [positions, setPositions] = useState<Record<string, string>>({});
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ChronologicalOrderDetail | undefined;
 
@@ -113,10 +116,12 @@ export function ChronologicalOrderExercise({
           {config.items.map((item, i) => (
             <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
               <div className="relative">
+                <ImageZoomBadge onOpen={() => setLightboxSrc(item.content)} />
                 <ImageOrPlaceholder
                   src={item.content}
                   alt=""
                   className="h-24 w-full rounded-md object-cover"
+                  useFocus
                 />
                 <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
                   {indexToLabel(i)}
@@ -181,6 +186,8 @@ export function ChronologicalOrderExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

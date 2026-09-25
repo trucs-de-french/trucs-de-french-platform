@@ -8,6 +8,8 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageZoomBadge } from "./image-zoom-badge";
+import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
@@ -73,6 +75,7 @@ export function CrosswordExercise({
 }) {
   const [answer, setAnswer] = useState<CrosswordAnswer>(() => emptyAnswer(config.gridWidth, config.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   // Спільний хук (diacritics-popup.tsx) — ключ "row,col" на кожну клітинку.
   // Той самий інстанс дає й реф для програмного .focus() (автоперехід
   // вперед/назад — не пов'язано з попапом самим по собі, але той самий
@@ -251,7 +254,15 @@ export function CrosswordExercise({
           <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
         </span>
         {clue.imageUrl && (
-          <ImageOrPlaceholder src={clue.imageUrl} alt="" className="h-14 w-14 rounded object-cover" />
+          <span className="relative">
+            <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} />
+            <ImageOrPlaceholder
+              src={clue.imageUrl}
+              alt=""
+              className="h-14 w-14 rounded object-cover"
+              useFocus
+            />
+          </span>
         )}
         {clue.audioUrl && (
           <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
@@ -485,6 +496,8 @@ export function CrosswordExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

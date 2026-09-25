@@ -8,6 +8,8 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageZoomBadge } from "./image-zoom-badge";
+import { ImageLightbox } from "./image-lightbox";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -31,6 +33,10 @@ export function MultipleChoiceExercise({
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as MultipleChoiceDetail | undefined;
+  // Клік по картинці варіанта — вже дія вправи (вибір), тому збільшення
+  // винесене в окрему іконку-лупу в кутку (ImageZoomBadge), а не на весь
+  // клік по мініатюрі.
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -136,12 +142,14 @@ export function MultipleChoiceExercise({
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
+                  className={`relative ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
                 >
+                  <ImageZoomBadge onOpen={() => setLightboxSrc(o.imageUrl!)} />
                   <ImageOrPlaceholder
                     src={o.imageUrl}
                     alt={o.text || ""}
                     className="mx-auto h-20 w-20 rounded object-cover"
+                    useFocus
                   />
                   <div className="mt-1 flex items-center justify-center gap-1.5">
                     <span
@@ -250,6 +258,8 @@ export function MultipleChoiceExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

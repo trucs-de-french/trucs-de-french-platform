@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import type { FlipCard as FlipCardType, FlipCardsConfig } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageZoomBadge } from "./image-zoom-badge";
+import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { InstructionsText } from "./instructions-text";
@@ -26,6 +28,7 @@ function FlipCardTile({
   initialSide?: "front" | "back";
 }) {
   const [flipped, setFlipped] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const clickable = variant === "normal" || variant === "selected";
   const shown = flipped ? oppositeSide(card, initialSide) : sideText(card, initialSide);
 
@@ -43,11 +46,20 @@ function FlipCardTile({
       disabled={!clickable}
       className={`flex flex-col items-center gap-2 text-base transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
     >
-      <ImageOrPlaceholder
-        src={card.image_url}
-        alt=""
-        className="h-24 w-full rounded object-cover"
-      />
+      {card.image_url && (
+        <span className="relative w-full">
+          <ImageZoomBadge onOpen={() => setZoomOpen(true)} />
+          <ImageOrPlaceholder
+            src={card.image_url}
+            alt=""
+            className="h-24 w-full rounded object-cover"
+            useFocus
+          />
+        </span>
+      )}
+      {zoomOpen && card.image_url && (
+        <ImageLightbox src={card.image_url} onClose={() => setZoomOpen(false)} />
+      )}
       {card.audio_url && (
         <audio
           controls

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Link2 } from "lucide-react";
 import { FileUpload } from "./file-upload";
+import { ImageFocusButton } from "./image-focus-button";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
 type FileOrLinkFieldProps =
@@ -15,6 +16,12 @@ type FileOrLinkFieldProps =
       mode: "controlled";
       value: string;
       onChange: (value: string) => void;
+      // Показує кнопку-хрестик "точка фокусу" (лише kind: "image") — вмикати
+      // ЛИШЕ там, де ця сама картинка згодом рендериться як object-cover
+      // мініатюра студенту (letter_gaps, image_match тощо); там, де картинка
+      // показується цілком (TaskMedia, статті) — не вмикати, фокус нема чим
+      // застосувати.
+      allowFocus?: boolean;
     }
   | {
       kind: "image" | "audio";
@@ -61,6 +68,9 @@ export function useFileOrLink(props: FileOrLinkFieldProps): { icons: ReactNode; 
         <FileUpload kind={props.kind} variant="icon" onUploaded={props.onChange} />
       ) : (
         <FileUpload kind={props.kind} variant="icon" name={props.uploadName} />
+      )}
+      {props.mode === "controlled" && props.kind === "image" && props.allowFocus && props.value && (
+        <ImageFocusButton value={props.value} onChange={props.onChange} />
       )}
     </div>
   );

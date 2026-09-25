@@ -31,6 +31,7 @@ function MultipleChoiceOptionRow({
     value: option.imageUrl ?? "",
     onChange: onUpdateImageUrl,
     placeholder: "URL картинки (опційно)",
+    allowFocus: true,
   });
 
   return (
@@ -69,6 +70,7 @@ function MultipleChoiceOptionRow({
           src={option.imageUrl}
           alt="Прев'ю"
           className="h-12 w-12 shrink-0 rounded object-cover"
+          useFocus
         />
       </div>
     </div>

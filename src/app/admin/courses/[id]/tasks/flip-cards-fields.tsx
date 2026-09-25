@@ -32,6 +32,7 @@ function FlipCardRow({
     value: card.image_url ?? "",
     onChange: (url) => onUpdate("image_url", url),
     placeholder: "Картинка (URL, необов'язково)",
+    allowFocus: true,
   });
   const audio = useFileOrLink({
     kind: "audio",
@@ -78,6 +79,7 @@ function FlipCardRow({
                 src={card.image_url}
                 alt="Прев'ю"
                 className="h-12 w-12 shrink-0 rounded object-cover"
+                useFocus
               />
             </div>
           )}

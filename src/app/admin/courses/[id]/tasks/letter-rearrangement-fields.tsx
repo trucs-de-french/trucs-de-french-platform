@@ -7,7 +7,6 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
-import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -54,6 +53,7 @@ function LetterRearrangementWordRow({
     value: wordItem.imageUrl ?? "",
     onChange: onUpdateImageUrl,
     placeholder: "Картинка (URL, необов'язково)",
+    allowFocus: true,
   });
   const audio = useFileOrLink({
     kind: "audio",
@@ -87,16 +87,7 @@ function LetterRearrangementWordRow({
 
       {(image.input || audio.input) && (
         <div className="flex flex-wrap items-start gap-2">
-          {image.input && (
-            <div className="flex items-start gap-1">
-              {image.input}
-              <ImageOrPlaceholder
-                src={wordItem.imageUrl}
-                alt="Прев'ю"
-                className="h-12 w-12 shrink-0 rounded object-cover"
-              />
-            </div>
-          )}
+          {image.input && <div className="flex-1">{image.input}</div>}
           {audio.input && <div className="flex-1">{audio.input}</div>}
         </div>
       )}

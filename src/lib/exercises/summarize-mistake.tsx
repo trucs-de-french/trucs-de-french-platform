@@ -100,6 +100,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
                   src={item.content}
                   alt=""
                   className="h-8 w-8 shrink-0 rounded object-cover"
+                  useFocus
                 />
               </span>
             ))}

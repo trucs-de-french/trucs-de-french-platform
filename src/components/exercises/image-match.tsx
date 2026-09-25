@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { ImageMatchPublic, ImageMatchDetail, GradeResult } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass } from "./tile-styles";
@@ -29,6 +30,7 @@ export function ImageMatchExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
   const locked = !!result;
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -74,11 +76,19 @@ export function ImageMatchExercise({
           const itemDetail = detail?.items[i];
           return (
           <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
-            <ImageOrPlaceholder
-              src={item.imageUrl}
-              alt=""
-              className="h-24 w-full rounded-md object-cover"
-            />
+            <button
+              type="button"
+              onClick={() => setLightboxSrc(item.imageUrl)}
+              aria-label="Показати картинку повністю"
+              className="w-full cursor-zoom-in"
+            >
+              <ImageOrPlaceholder
+                src={item.imageUrl}
+                alt=""
+                className="h-24 w-full rounded-md object-cover"
+                useFocus
+              />
+            </button>
             {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
             {!hidePoints && (pointsVisible || itemDetail) && (
               <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
@@ -143,6 +153,8 @@ export function ImageMatchExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

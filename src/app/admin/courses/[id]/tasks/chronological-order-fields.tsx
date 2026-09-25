@@ -44,6 +44,7 @@ function ChronologicalOrderItemRow({
     value: item.content,
     onChange: onUpdateContent,
     placeholder: "URL зображення",
+    allowFocus: true,
   });
 
   return (
@@ -108,6 +109,7 @@ function ChronologicalOrderItemRow({
             src={item.content}
             alt="Прев'ю"
             className="h-12 w-12 shrink-0 rounded object-cover"
+            useFocus
           />
         </div>
       )}

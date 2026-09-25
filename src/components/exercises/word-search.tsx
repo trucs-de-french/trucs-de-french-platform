@@ -7,6 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageLightbox } from "./image-lightbox";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -59,6 +60,7 @@ export function WordSearchExercise({
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Cell | null>(null);
   const [dragEnd, setDragEnd] = useState<Cell | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -250,11 +252,19 @@ export function WordSearchExercise({
               >
                 {kind === "image" ? (
                   <>
-                    <ImageOrPlaceholder
-                      src={w.imageUrl}
-                      alt=""
-                      className="h-14 w-14 rounded object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setLightboxSrc(w.imageUrl!)}
+                      aria-label="Показати картинку повністю"
+                      className="cursor-zoom-in"
+                    >
+                      <ImageOrPlaceholder
+                        src={w.imageUrl}
+                        alt=""
+                        className="h-14 w-14 rounded object-cover"
+                        useFocus
+                      />
+                    </button>
                     {found && (
                       <span className="text-xs font-medium text-green-600 dark:text-green-400">
                         {w.word}
@@ -299,6 +309,8 @@ export function WordSearchExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

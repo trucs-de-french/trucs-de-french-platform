@@ -33,6 +33,7 @@ function ImageMatchItemRow({
     value: item.imageUrl,
     onChange: (url) => onUpdate("imageUrl", url),
     placeholder: "URL зображення",
+    allowFocus: true,
   });
 
   return (
@@ -71,6 +72,7 @@ function ImageMatchItemRow({
           src={item.imageUrl}
           alt="Прев'ю"
           className="h-12 w-12 shrink-0 rounded object-cover"
+          useFocus
         />
       </div>
     </div>

@@ -49,6 +49,7 @@ function WordSearchWordRow({
     value: wordItem.imageUrl ?? "",
     onChange: onUpdateImageUrl,
     placeholder: "Картинка (URL, необов'язково)",
+    allowFocus: true,
   });
   const audio = useFileOrLink({
     kind: "audio",
@@ -95,6 +96,7 @@ function WordSearchWordRow({
                 src={wordItem.imageUrl}
                 alt="Прев'ю"
                 className="h-12 w-12 shrink-0 rounded object-cover"
+                useFocus
               />
             </div>
           )}
