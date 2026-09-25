@@ -95,6 +95,10 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
     points: resolveLetterGapsPoints(config),
     words: config.words.map((w) => ({
       chars: w.word.split("").map((c, i) => (w.hiddenIndices.includes(i) ? null : c)),
+      // filter (не map+null) зберігає порядок зростання індексу — той самий
+      // порядок, що клієнтський gapIndex у letter-gaps.tsx (groupChars іде
+      // по chars зліва направо й рахує null-позиції підряд).
+      hiddenLetters: w.word.split("").filter((_, i) => w.hiddenIndices.includes(i)),
       hintType: w.hintType,
       hintText: w.hintText,
       imageUrl: w.imageUrl,

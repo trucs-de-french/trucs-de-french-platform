@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
+import { SELECTED_OPTION_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
+import { COMPACT_TILE_SIZE_CLASS } from "@/lib/exercises/word-list-layout";
 
 // Спільна DnD-механіка для reorder (плитки-слова) і letter_rearrangement
 // (плитки-літери) — нативний HTML5 drag-and-drop + click-to-select-then-swap
@@ -12,6 +13,7 @@ export function SwappableTileRow({
   onChange,
   locked,
   tileState,
+  compact = false,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
@@ -19,6 +21,10 @@ export function SwappableTileRow({
   // За ІНДЕКСОМ позиції (не значенням) — коректно для дублікатів (однакові
   // слова/літери можуть повторюватись).
   tileState?: (index: number) => "correct" | "incorrect" | undefined;
+  // Менший padding/шрифт для задовгих слів (letter_rearrangement,
+  // word-list-layout.ts LONG_WORD_COMPACT_THRESHOLD) — суто презентаційний
+  // проп, ніяк не зачіпає drag/click-swap логіку вище.
+  compact?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -49,8 +55,8 @@ export function SwappableTileRow({
   function tileClass(i: number) {
     const state = tileState?.(i);
     const shadow = draggingIndex === i ? "" : "shadow-sm";
-    if (state === "correct") return `${shadow} border-green-500 bg-green-50 dark:bg-green-950/30`;
-    if (state === "incorrect") return `${shadow} border-red-500 bg-red-50 dark:bg-red-950/30`;
+    if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
+    if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
     if (dragOverIndex === i) return `${shadow} border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30`;
     return `${shadow} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
@@ -85,7 +91,9 @@ export function SwappableTileRow({
           }}
           onClick={() => clickTile(i)}
           disabled={locked}
-          className={`cursor-grab select-none rounded-md border px-3 py-1.5 text-center text-base transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${tileClass(i)}`}
+          className={`cursor-grab select-none whitespace-nowrap rounded-md border text-center transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${
+            compact ? COMPACT_TILE_SIZE_CLASS : "px-3 py-1.5 text-base"
+          } ${tileClass(i)}`}
         >
           {text}
         </button>

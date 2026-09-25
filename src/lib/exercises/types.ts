@@ -32,6 +32,10 @@ export type LetterGapsWord = {
   hiddenIndices: number[];
   hintType: "definition" | "sentence";
   hintText: string;
+  // Точка фокусу кадрування (object-cover) кодується прямо у фрагменті
+  // самого imageUrl (`#focus=X,Y`, парситься src/lib/image-focus.ts) —
+  // окремого поля свідомо нема, щоб фокус завжди подорожував разом з URL,
+  // без ризику розсинхронізації при копіюванні/дублюванні картинки.
   imageUrl?: string;
   audioUrl?: string;
 };
@@ -479,8 +483,17 @@ export type FillBlankPublic = {
 // chars — явна маска на рівні символів (null на прихованих позиціях, сам
 // символ на видимих), а не word+hiddenIndices — інакше студент прочитав би
 // приховані літери прямо з word.
+//
+// hiddenLetters — правильна літера на кожну ПРИХОВАНУ позицію, у тому
+// самому порядку, що й gapIndex клієнта (зліва направо серед null-позицій
+// chars) — той самий принцип, що CrosswordPublic.solution: рішення
+// свідомо йде студенту одразу, щоб клієнт міг підсвічувати правильність
+// наживо, без запиту на сервер. Технічно це не "новий" секрет — той самий
+// student, хто вже читає chars/word структуру, при бажанні й так відновив
+// би слово по довжині+контексту; crossword уже приймає цей компроміс.
 export type LetterGapsPublicWord = {
   chars: (string | null)[];
+  hiddenLetters: string[];
   hintType: "definition" | "sentence";
   hintText: string;
   imageUrl?: string;
@@ -497,6 +510,9 @@ export type LetterGapsPublic = {
 // одне перемішування на показ. Порівняння при перевірці — позиційне за
 // значенням (як ReorderAnswer), не за identity літери, тож дублікати літер
 // (напр. "chocolat") коректно обробляються без додаткової розмітки.
+// Підсвічування правильності — лише ПІСЛЯ "Перевірити" (LetterRearrangementDetail),
+// той самий принцип, що reorder — жодного "рішення" клієнту заздалегідь не
+// передається.
 export type LetterRearrangementPublicWord = {
   shuffledLetters: string[];
   hintType: "definition" | "sentence";
