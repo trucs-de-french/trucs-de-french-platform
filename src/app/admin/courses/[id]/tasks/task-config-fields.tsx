@@ -109,6 +109,13 @@ const NO_TRANSLATION_TYPES = [
 // (тип замінений на embed із можливістю вставити .html-гру), але вже наявні
 // 3 задачі з type="game" і далі мусять відкриватись/редагуватись — див.
 // typeOptions нижче, де запис повертається в список лише для them.
+// Дефолтний тип нової задачі — явно, а не TYPE_OPTIONS[0] (той порядок
+// тепер лише "порядок оголошення", реальний порядок у комбоксі задає
+// TASK_TYPE_GROUPS/TaskTypeCombobox; був би випадковим, якби й далі залежав
+// від позиції в цьому масиві). Лишила поточний фактичний дефолт (open_answer,
+// раніше — перший елемент TYPE_OPTIONS), не змінюючи звичну поведінку.
+const DEFAULT_TASK_TYPE = "open_answer";
+
 const TYPE_OPTIONS = [
   { value: "open_answer", label: "Відкрита відповідь (автоперевірка)" },
   { value: "essay_check", label: "Есе / DELF (AI-перевірка)" },
@@ -180,7 +187,7 @@ export function TaskConfigFields({
   taskGroupId,
   initialPointsVisible,
 }: Props) {
-  const [type, setType] = useState(initialType ?? TYPE_OPTIONS[0].value);
+  const [type, setType] = useState(initialType ?? DEFAULT_TASK_TYPE);
   // "game" прибрано з TYPE_OPTIONS (нові ігри цього типу більше не
   // створюються), але вже наявну задачу з type="game" мусимо і далі
   // показувати коректно вибраною в комбобоксі (не "Оберіть тип") — додаємо

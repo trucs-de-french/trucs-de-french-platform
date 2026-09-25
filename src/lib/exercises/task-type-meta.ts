@@ -532,3 +532,85 @@ export const SCENE_CONTENT_BLOCK_COLORS: Record<string, { border: string; iconCo
     iconColor: "text-green-500",
   },
 };
+
+// Групування типів завдань у TaskTypeCombobox — педагогічне (за навичкою:
+// лексика/граматика/розуміння/письмо), не за TaskTypeCategory вище (та
+// технічна: як перевіряється відповідь, auto_graded/reference/delf/media).
+// Один тип — рівно одна група, порядок масиву types[] у групі визначає
+// порядок рендеру пунктів під заголовком. Єдине місце, де це задається —
+// зміна порядку/складу груп тут одразу відображається в комбобоксі,
+// TYPE_OPTIONS (task-config-fields.tsx) саму групу не визначає, лише
+// набір value/label, доступних для вибору.
+//
+// 'game' — тут, у "Матеріали та інше": прихований з TYPE_OPTIONS для НОВИХ
+// задач (заміщений embed), але коли typeOptions (task-config-fields.tsx)
+// повертає його для РЕДАГУВАННЯ вже наявної задачі, він так само мусить
+// потрапити в якусь групу комбобоксу.
+export const TASK_TYPE_GROUPS: { name: string; types: string[] }[] = [
+  {
+    name: "Лексика",
+    types: [
+      "flip_cards",
+      "matching",
+      "letter_gaps",
+      "letter_rearrangement",
+      "word_search",
+      "crossword",
+      "vocab_quiz",
+      "image_match",
+    ],
+  },
+  {
+    name: "Граматика",
+    types: ["fill_blank", "drag_drop", "word_choice", "table_fill", "reorder", "sort_columns"],
+  },
+  {
+    name: "Розуміння",
+    types: ["multiple_choice", "true_false", "listening", "chronological_order", "open_answer", "checkbox_grid"],
+  },
+  {
+    name: "Письмо",
+    types: ["essay_check"],
+  },
+  {
+    name: "Матеріали та інше",
+    types: ["callout", "embed", "link", "phonetics", "error_correction", "game"],
+  },
+];
+
+export function getTaskTypeGroup(type: string): string | null {
+  return TASK_TYPE_GROUPS.find((g) => g.types.includes(type))?.name ?? null;
+}
+
+// Короткий однорядковий опис під назвою типу в TaskTypeCombobox — до ~50
+// символів, простими словами про те, ЩО РОБИТЬ СТУДЕНТ (не термінологію
+// формату конфігу). ai_examiner без опису — поки не в TYPE_OPTIONS.
+export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
+  flip_cards: "Картки: слово ↔ переклад, перевертаються кліком",
+  matching: "З'єднати пари кліком: слово ↔ переклад",
+  letter_gaps: "Вписати пропущені літери в слові",
+  letter_rearrangement: "Скласти слово з перемішаних літер",
+  word_search: "Знайти слова в сітці літер (філворд)",
+  crossword: "Розгадати кросворд за визначеннями",
+  vocab_quiz: "Вікторина: обрати переклад слова",
+  image_match: "Перетягнути підписи під картинки",
+  fill_blank: "Вписати слово чи фразу в пропуск",
+  drag_drop: "Перетягнути слова в потрібні пропуски",
+  word_choice: "Обрати правильну форму слова в реченні",
+  table_fill: "Заповнити комірки таблиці",
+  reorder: "Розкласти елементи у правильному порядку",
+  sort_columns: "Розкласти елементи по колонках",
+  multiple_choice: "Обрати правильний варіант відповіді",
+  true_false: "Обрати Vrai чи Faux (правда/хиба)",
+  listening: "Прослухати аудіо, відповісти на питання",
+  chronological_order: "Розставити події в хронологічному порядку",
+  open_answer: "Відкрита відповідь з автоперевіркою тексту",
+  checkbox_grid: "Позначити правильні клітинки в таблиці",
+  essay_check: "Есе з AI-перевіркою за критеріями DELF",
+  callout: "Текстовий блок-примітка без вправи",
+  embed: "Гра чи вбудований контент (iframe/HTML)",
+  link: "Кнопка-посилання на зовнішній тренажер",
+  phonetics: "Довідка з вимови звуків",
+  error_correction: "Робота над помилками: власні помилки студента",
+  game: "Стара гра (Wordwall тощо) — лише редагування",
+};
