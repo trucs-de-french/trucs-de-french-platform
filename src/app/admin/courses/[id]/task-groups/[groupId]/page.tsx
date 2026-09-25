@@ -152,7 +152,7 @@ export default async function EditTaskGroupPage({
         <TaskGroupFields initialGroup={group} productType={product?.type} materialId={group.material_id} />
       </SaveForm>
 
-      <section id="tasks-section" className="mt-6">
+      <section id="tasks-section" className="scroll-mt-4 mt-6">
         <div className="flex items-center justify-between">
           <h2 className={H2_TEXT}>Задачі блоку</h2>
           <Link

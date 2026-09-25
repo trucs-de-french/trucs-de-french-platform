@@ -26,7 +26,7 @@ import { DialogueEditor } from "./dialogue-editor";
 import { DialogueStateProvider } from "./dialogue-state";
 import { VocabTable } from "./vocab-table";
 import { SceneBlockList } from "./scene-block-list";
-import { blockDomId } from "./block-dom-id";
+import { blockDomId } from "@/lib/block-dom-id";
 import { SceneStickyActions } from "./scene-sticky-actions";
 import { TaskDragList } from "./task-drag-list";
 import { LinkDragList } from "./link-drag-list";

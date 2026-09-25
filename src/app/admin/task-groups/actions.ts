@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor, type ParentScope } from "@/app/admin/task-order";
+import { blockDomId } from "@/lib/block-dom-id";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -48,6 +49,26 @@ async function resolveEffectiveSceneId(
     .eq("id", sceneContentBlockId)
     .single();
   return data?.scene_id ?? null;
+}
+
+// "Домашня" сторінка САМОГО блоку (не його батьківського контексту, як
+// resolveGroupParentPath) — куди веде "Додати до блоку"/успішне прикріплення,
+// коли рядок ЛИШАЄТЬСЯ в тому самому блоці, не покидає його: група,
+// прикріплена до scene_content_block (0040), керується інлайн на сторінці
+// сцени — якір на свою картку (той самий blockDomId, що вже "+ Нова
+// задача"); звичайна сцена/матеріал/DELF-група має власну сторінку
+// /task-groups/[id] — туди й повертаємось (без якоря, це вже вся сторінка).
+async function resolveGroupHomePath(
+  supabase: Supa,
+  group: { id: string; product_id: string; scene_id: string | null; scene_content_block_id?: string | null }
+): Promise<string> {
+  if (group.scene_content_block_id) {
+    const sceneId = await resolveEffectiveSceneId(supabase, group.scene_id, group.scene_content_block_id);
+    if (sceneId) {
+      return `/admin/courses/${group.product_id}/scenes/${sceneId}#${blockDomId(`content:${group.scene_content_block_id}`)}`;
+    }
+  }
+  return `/admin/courses/${group.product_id}/task-groups/${group.id}`;
 }
 
 // media_audio_file_url — приховане поле FileUpload (kind="audio",
@@ -162,12 +183,18 @@ export async function attachTaskGroupToContentBlock(
     points_mode: "sum",
   });
 
-  const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
+  // Якір на щойно створену картку блоку — інакше "+ Додати вправи до цього
+  // блоку" повертає на верх сторінки сцени, а не туди, де вчителька щойно
+  // клікнула (той самий blockDomId, що вже "+ Нова задача"/detachTask).
+  // Якір — ЗАВЖДИ в кінці URL, після query-рядка (?error=...), інакше
+  // error опинився б усередині фрагмента, а не як параметр.
+  const scenePath = `/admin/courses/${productId}/scenes/${sceneId}`;
+  const anchor = `#${blockDomId(`content:${sceneContentBlockId}`)}`;
   if (error) {
-    redirect(`${backPath}?error=${encodeURIComponent(error.message)}`);
+    redirect(`${scenePath}?error=${encodeURIComponent(error.message)}${anchor}`);
   }
 
-  redirect(backPath);
+  redirect(`${scenePath}${anchor}`);
 }
 
 export async function updateTaskGroup(
@@ -274,6 +301,15 @@ export async function detachTask(taskId: string) {
         material_id: group.material_id,
         delf_test_number: group.delf_test_number,
       });
+      // Якір на сам блок, що лишається на сторінці сцени — content-блок за
+      // його id, звичайна група сцени за фіксованим id "task" (уся секція
+      // "Завдання"; окремого якоря на кожен блок там немає, той самий
+      // компроміс, що вже "+ Нове завдання").
+      if (group.scene_content_block_id) {
+        backPath += `#${blockDomId(`content:${group.scene_content_block_id}`)}`;
+      } else if (sceneId) {
+        backPath += `#${blockDomId("task")}`;
+      }
     }
   }
 
@@ -295,12 +331,12 @@ async function attachTaskCore(
   supabase: Supa,
   taskId: string,
   taskGroupId: string
-): Promise<{ ok: boolean; error?: string; group?: GroupParent }> {
+): Promise<{ ok: boolean; error?: string; group?: GroupParent & { scene_content_block_id: string | null } }> {
   if (!taskId || !taskGroupId) return { ok: false, error: "Не вказано задачу або блок" };
 
   const { data: group } = await supabase
     .from("task_groups")
-    .select("product_id, scene_id, material_id")
+    .select("product_id, scene_id, material_id, scene_content_block_id")
     .eq("id", taskGroupId)
     .single();
   if (!group) return { ok: false, error: "Блок не знайдено" };
@@ -343,11 +379,13 @@ export async function attachTaskToGroup(formData: FormData) {
   const result = await attachTaskCore(supabase, taskId, taskGroupId);
   if (!result.ok || !result.group) return;
 
-  // Сторінка САМОГО блоку (не resolveGroupParentPath — той веде на
-  // батьківський контекст блоку, правильно для detachTask/deleteTaskGroup,
-  // де рядок ПОКИДАЄ поточний контекст, але не тут: пікер живе на сторінці
-  // блоку, і додавання задачі не повинно нікуди "виносити" вчителя).
-  redirect(`/admin/courses/${result.group.product_id}/task-groups/${taskGroupId}`);
+  // "Домашня" сторінка блоку (resolveGroupHomePath), НЕ resolveGroupParentPath
+  // — той веде на батьківський контекст блоку, правильно для
+  // detachTask/deleteTaskGroup, де рядок ПОКИДАЄ поточний контекст, але не
+  // тут: пікер живе або на сторінці самого блоку (звичайна група), або
+  // інлайн на сторінці сцени (група, прикріплена до content-блоку) —
+  // додавання задачі не повинно нікуди "виносити" вчителя з жодного з них.
+  redirect(await resolveGroupHomePath(supabase, { ...result.group, id: taskGroupId }));
 }
 
 // Прямий виклик з клієнта (drag-to-attach у TaskDragList на сторінці
@@ -413,6 +451,13 @@ export async function deleteTaskGroup(groupId: string) {
 
   const sceneId = await resolveEffectiveSceneId(supabase, group.scene_id, group.scene_content_block_id);
   const backPath = resolveGroupParentPath({ ...group, scene_id: sceneId });
+  // Той самий якір, що detachTask — content-блок, що лишається на сторінці
+  // сцени, за його id, звичайна група сцени за фіксованим id "task".
+  const anchor = group.scene_content_block_id
+    ? `#${blockDomId(`content:${group.scene_content_block_id}`)}`
+    : sceneId
+      ? `#${blockDomId("task")}`
+      : "";
 
   const { data: members } = await supabase.from("tasks").select("id").eq("task_group_id", groupId);
   for (const member of members ?? []) {
@@ -421,10 +466,10 @@ export async function deleteTaskGroup(groupId: string) {
 
   const { error } = await supabase.from("task_groups").delete().eq("id", groupId);
   if (error) {
-    redirect(`${backPath}?error=${encodeURIComponent(error.message)}`);
+    redirect(`${backPath}?error=${encodeURIComponent(error.message)}${anchor}`);
   }
 
-  redirect(backPath);
+  redirect(`${backPath}${anchor}`);
 }
 
 export async function moveTaskGroup(groupId: string, direction: "up" | "down") {

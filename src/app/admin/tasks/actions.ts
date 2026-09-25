@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
+import { blockDomId } from "@/lib/block-dom-id";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -371,12 +372,13 @@ async function syncGameRow(
 }
 
 // Куди повертатись (редірект) для задачі з даним батьківським контекстом —
-// спільна для moveTask/deleteTask, щоб не тримати ту саму 3-4-гілкову логіку
-// в кожній окремо. Задача в блоці (task_group_id) сама має null scene_id/
-// material_id (успадковує контекст від групи, див. 0031_task_groups.sql),
-// тож для неї доводиться підвантажити батьківський контекст самої групи —
-// адмінської сторінки блоку ще нема (з'явиться в CRUD-етапі), тож у гіршому
-// разі повертаємось на флет-список курсу.
+// спільна для createTask/moveTask/deleteTask, щоб не тримати ту саму
+// 3-4-гілкову логіку в кожній окремо. Задача в блоці (task_group_id) сама
+// має null scene_id/material_id (успадковує контекст від групи, див.
+// 0031_task_groups.sql), тож для неї доводиться підвантажити батьківський
+// контекст самої групи. Повертає й anchor — непрозорий id елемента, куди
+// варто прокрутити (не в кожної гілки він є: плоскі сцена/матеріал/DELF-
+// сторінки такого якоря на конкретну задачу не мають, лише сторінка блоку).
 async function resolveTaskParentPath(
   supabase: Awaited<ReturnType<typeof createClient>>,
   task: {
@@ -386,23 +388,20 @@ async function resolveTaskParentPath(
     task_group_id: string | null;
     delf_test_number?: number | null;
   }
-): Promise<string> {
-  if (task.scene_id) return `/admin/courses/${task.product_id}/scenes/${task.scene_id}`;
-  if (task.material_id) return `/admin/courses/${task.product_id}/materials/${task.material_id}`;
+): Promise<{ path: string; anchor: string | null }> {
+  if (task.scene_id)
+    return { path: `/admin/courses/${task.product_id}/scenes/${task.scene_id}`, anchor: null };
+  if (task.material_id)
+    return { path: `/admin/courses/${task.product_id}/materials/${task.material_id}`, anchor: null };
   if (task.task_group_id) {
     const { data: group } = await supabase
       .from("task_groups")
       .select("scene_id, material_id, delf_test_number, scene_content_block_id")
       .eq("id", task.task_group_id)
       .single();
-    if (group?.scene_id) return `/admin/courses/${task.product_id}/scenes/${group.scene_id}`;
-    if (group?.material_id)
-      return `/admin/courses/${task.product_id}/materials/${group.material_id}`;
-    if (group?.delf_test_number)
-      return `/admin/courses/${task.product_id}/tests/${group.delf_test_number}`;
-    // Група, прикріплена до scene_content_block (0040), не має власного
-    // scene_id — резолвимо через сам content-блок, щоб задача коректно
-    // повертала вчителя на сторінку сцени, а не на голу сторінку курсу.
+    // Група, прикріплена до scene_content_block (0040) — керується інлайн
+    // на сторінці сцени, не власною сторінкою; резолвимо scene_id через сам
+    // content-блок і повертаємо якір на його картку (не на верх сторінки).
     if (group?.scene_content_block_id) {
       const { data: contentBlock } = await supabase
         .from("scene_content_blocks")
@@ -410,12 +409,21 @@ async function resolveTaskParentPath(
         .eq("id", group.scene_content_block_id)
         .single();
       if (contentBlock?.scene_id) {
-        return `/admin/courses/${task.product_id}/scenes/${contentBlock.scene_id}`;
+        return {
+          path: `/admin/courses/${task.product_id}/scenes/${contentBlock.scene_id}`,
+          anchor: blockDomId(`content:${group.scene_content_block_id}`),
+        };
       }
     }
+    // Звичайна група (сцена/матеріал/DELF) має власну сторінку
+    // /task-groups/[id] — саме туди, а не на батьківський контекст групи
+    // (там і решта задач блоку), той самий принцип, що
+    // resolveGroupHomePath у ../task-groups/actions.ts.
+    return { path: `/admin/courses/${task.product_id}/task-groups/${task.task_group_id}`, anchor: null };
   }
-  if (task.delf_test_number) return `/admin/courses/${task.product_id}/tests/${task.delf_test_number}`;
-  return `/admin/courses/${task.product_id}`;
+  if (task.delf_test_number)
+    return { path: `/admin/courses/${task.product_id}/tests/${task.delf_test_number}`, anchor: null };
+  return { path: `/admin/courses/${task.product_id}`, anchor: null };
 }
 
 export async function createTask(formData: FormData) {
@@ -475,7 +483,7 @@ export async function createTask(formData: FormData) {
 
   await syncGameRow(supabase, task.id, type, formData);
 
-  const parentPath = await resolveTaskParentPath(supabase, {
+  const parent = await resolveTaskParentPath(supabase, {
     product_id: productId,
     scene_id: sceneId,
     material_id: materialId,
@@ -486,9 +494,11 @@ export async function createTask(formData: FormData) {
   // page.tsx) — приносить redirect() назад саме туди, а не на верх
   // сторінки, і на сторінці сцени зберігає розгорнутим потрібний блок
   // акордеона (sessionStorage-стан у SceneBlockList не скидається окремо,
-  // просто елемент з таким id уже опиняється в полі зору).
-  const anchor = (formData.get("anchor") as string) || null;
-  redirect(anchor ? `${parentPath}#${anchor}` : parentPath);
+  // просто елемент з таким id уже опиняється в полі зору). Фолбек на
+  // parent.anchor — на випадок, якщо викликач не передав власний (сторінка
+  // блоку сама знає свій якір лише для content-block-групи).
+  const anchor = (formData.get("anchor") as string) || parent.anchor;
+  redirect(anchor ? `${parent.path}#${anchor}` : parent.path);
 }
 
 export async function updateTask(
@@ -547,7 +557,8 @@ export async function deleteTask(taskId: string) {
     .single();
   if (!task) return;
 
-  const backPath = await resolveTaskParentPath(supabase, task);
+  const parent = await resolveTaskParentPath(supabase, task);
+  const backPath = parent.anchor ? `${parent.path}#${parent.anchor}` : parent.path;
 
   const { data: deleted, error } = await supabase
     .from("tasks")
@@ -557,7 +568,7 @@ export async function deleteTask(taskId: string) {
 
   if (error || !deleted?.length) {
     redirect(
-      `${backPath}?error=${encodeURIComponent(error?.message ?? "Не вдалося видалити завдання")}`
+      `${parent.path}?error=${encodeURIComponent(error?.message ?? "Не вдалося видалити завдання")}${parent.anchor ? `#${parent.anchor}` : ""}`
     );
   }
 
@@ -595,7 +606,7 @@ export async function moveTask(taskId: string, direction: "up" | "down") {
 
   if (!neighbor) return;
 
-  const backPath = await resolveTaskParentPath(supabase, task);
+  const { path: backPath } = await resolveTaskParentPath(supabase, task);
 
   const { data: updated1, error: error1 } = await supabase
     .from("tasks")

@@ -5,6 +5,7 @@ import { createTask } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { blockDomId } from "@/lib/block-dom-id";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
@@ -36,21 +37,29 @@ export default async function NewTaskPage({
   // createTask -> resolveTaskParentPath (admin/tasks/actions.ts), лише в
   // інший бік — тут для sceneVocab, там для шляху редиректу.
   let effectiveSceneId = sceneId ?? null;
-  if (!effectiveSceneId && taskGroupId) {
+  // contentBlockId — потрібен нижче для backHref/backLabel (група,
+  // прикріплена до scene_content_block, керується інлайн на сторінці
+  // сцени, якорем на СВОЮ картку — не власною сторінкою /task-groups/[id],
+  // на відміну від звичайної групи).
+  let contentBlockId: string | null = null;
+  if (taskGroupId) {
     const { data: group } = await supabase
       .from("task_groups")
       .select("scene_id, scene_content_block_id")
       .eq("id", taskGroupId)
       .single();
-    if (group?.scene_id) {
+    if (group?.scene_content_block_id) {
+      contentBlockId = group.scene_content_block_id;
+      if (!effectiveSceneId) {
+        const { data: contentBlock } = await supabase
+          .from("scene_content_blocks")
+          .select("scene_id")
+          .eq("id", group.scene_content_block_id)
+          .single();
+        effectiveSceneId = contentBlock?.scene_id ?? null;
+      }
+    } else if (!effectiveSceneId && group?.scene_id) {
       effectiveSceneId = group.scene_id;
-    } else if (group?.scene_content_block_id) {
-      const { data: contentBlock } = await supabase
-        .from("scene_content_blocks")
-        .select("scene_id")
-        .eq("id", group.scene_content_block_id)
-        .single();
-      effectiveSceneId = contentBlock?.scene_id ?? null;
     }
   }
 
@@ -83,17 +92,22 @@ export default async function NewTaskPage({
 
   // Контекст, з якого прийшли, відомий одразу з searchParams — вправа,
   // прив'язана до сцени/матеріалу/блоку/DELF-тесту, повертає саме туди, а
-  // не на курс. Задача блоку повертається на сторінку самого блоку (не на
-  // сцену/матеріал/тест блоку) — там і видно решту його задач.
-  const backHref = taskGroupId
-    ? `/admin/courses/${productId}/task-groups/${taskGroupId}`
-    : sceneId
-      ? `/admin/courses/${productId}/scenes/${sceneId}`
-      : materialId
-        ? `/admin/courses/${productId}/materials/${materialId}`
-        : delfTestNumber
-          ? `/admin/courses/${productId}/tests/${delfTestNumber}`
-          : `/admin/courses/${productId}#tasks`;
+  // не на курс. Задача звичайного блоку повертається на сторінку самого
+  // блоку (там і видно решту його задач); задача блоку, прикріпленого до
+  // content-блоку, повертається на сторінку сцени, якорем на саму картку
+  // (той самий blockDomId, що вже anchor вище) — той блок керується інлайн
+  // там, власної сторінки не має.
+  const backHref = contentBlockId && effectiveSceneId
+    ? `/admin/courses/${productId}/scenes/${effectiveSceneId}#${blockDomId(`content:${contentBlockId}`)}`
+    : taskGroupId
+      ? `/admin/courses/${productId}/task-groups/${taskGroupId}`
+      : sceneId
+        ? `/admin/courses/${productId}/scenes/${sceneId}`
+        : materialId
+          ? `/admin/courses/${productId}/materials/${materialId}`
+          : delfTestNumber
+            ? `/admin/courses/${productId}/tests/${delfTestNumber}`
+            : `/admin/courses/${productId}#tasks`;
   const backLabel = taskGroupId
     ? "← До блоку"
     : sceneId
@@ -101,8 +115,8 @@ export default async function NewTaskPage({
       : materialId
         ? "← До матеріалу"
         : delfTestNumber
-          ? "← До тесту"
-          : "← До курсу";
+        ? "← До тесту"
+        : "← До курсу";
 
   return (
     <div>

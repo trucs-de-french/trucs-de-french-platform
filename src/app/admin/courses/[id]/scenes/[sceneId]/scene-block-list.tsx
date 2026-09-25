@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type Drag
 import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
-import { blockDomId } from "./block-dom-id";
+import { blockDomId } from "@/lib/block-dom-id";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
@@ -239,7 +239,7 @@ export function SceneBlockList({
             const fromKey = e.dataTransfer.getData("text/plain");
             if (fromKey) void swap(fromKey, key);
           }}
-          className={`rounded-lg border border-t-4 bg-white p-4 shadow-sm transition-colors dark:bg-neutral-800 ${
+          className={`scroll-mt-4 rounded-lg border border-t-4 bg-white p-4 shadow-sm transition-colors dark:bg-neutral-800 ${
             dragOver === key
               ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
               : `border-gray-100 dark:border-neutral-700 ${border ?? ""}`
