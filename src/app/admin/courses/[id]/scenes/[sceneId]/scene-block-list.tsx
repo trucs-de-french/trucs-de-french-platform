@@ -26,6 +26,7 @@ import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exer
 import { blockDomId } from "@/lib/block-dom-id";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
+import { Z_STICKY_HEADER } from "@/lib/z-layers";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
@@ -352,8 +353,13 @@ export function SceneBlockList({
               межах цього блоку — sticky виходить за екран разом із рештою
               картки, щойно вона проскролюється повз. Власний bg + тінь, щоб
               вміст блоку, який ковзає під заголовком, не проступав крізь
-              нього. */}
-          <div className="sticky top-4 z-10 -mx-4 -mt-4 mb-3 flex items-center gap-2 rounded-t-lg bg-white px-4 pb-3 pt-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-800">
+              нього. Z_STICKY_HEADER (не голе z-10) — щоб не опинитись НАД
+              нижньою панеллю дій (Z_ACTION_BAR): обидва — position:sticky
+              без спільного стекінг-контексту між ними, тож порівнюються
+              напряму за z-index, не за DOM-порядком. */}
+          <div
+            className={`sticky top-4 ${Z_STICKY_HEADER} -mx-4 -mt-4 mb-3 flex items-center gap-2 rounded-t-lg bg-white px-4 pb-3 pt-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-800`}
+          >
             <button
               type="button"
               draggable

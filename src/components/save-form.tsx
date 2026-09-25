@@ -6,6 +6,7 @@ import type { ActionState } from "@/lib/action-state";
 import { useStudentPreview } from "@/lib/use-student-preview";
 import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
 import { BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { Z_ACTION_BAR } from "@/lib/z-layers";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -103,7 +104,7 @@ export function SaveForm({
       <div
         className={`mt-4 mb-6 flex items-center gap-3 ${
           sticky
-            ? "sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950"
+            ? `sticky bottom-0 ${Z_ACTION_BAR} -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950`
             : ""
         }`}
       >

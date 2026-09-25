@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AdminLogo } from "@/components/admin-logo";
+import { Z_MODAL } from "@/lib/z-layers";
 
 export type SidebarCourseChild = { key: string; label: string; href: string };
 export type SidebarCourse = {
@@ -134,7 +135,7 @@ export function CourseSwitcherSidebar({
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+        <div className={`fixed inset-0 ${Z_MODAL} lg:hidden`} role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[80vw] flex-col gap-4 overflow-y-auto border-r border-slate-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
             <div className="flex items-center justify-between">

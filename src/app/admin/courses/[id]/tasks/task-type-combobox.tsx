@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TASK_TYPE_COLORS } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
+import { Z_DROPDOWN } from "@/lib/z-layers";
 
 // Кастомний searchable-комбобокс замість нативного <select> — щоб додати
 // пошук у довгому списку (20+ типів) і показати іконку/колір категорії на
@@ -82,7 +83,7 @@ export function TaskTypeCombobox({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border border-gray-100 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-950">
+        <div className={`absolute ${Z_DROPDOWN} mt-1 w-full rounded-md border border-gray-100 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-950`}>
           <input
             autoFocus
             value={query}

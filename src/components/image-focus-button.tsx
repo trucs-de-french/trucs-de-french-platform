@@ -5,6 +5,7 @@ import { Crosshair, X } from "lucide-react";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { parseImageFocus, withImageFocus } from "@/lib/image-focus";
 import { HINT_TEXT } from "@/lib/typography-styles";
+import { Z_MODAL } from "@/lib/z-layers";
 
 const PREVIEW_MAX = 240;
 const EXAMPLE_SIZE = 64;
@@ -58,7 +59,7 @@ export function ImageFocusButton({ value, onChange }: { value: string; onChange:
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className={`fixed inset-0 ${Z_MODAL} flex items-center justify-center bg-black/50 p-4`}
           onClick={() => setOpen(false)}
         >
           <div

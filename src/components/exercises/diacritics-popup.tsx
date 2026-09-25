@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
+import { Z_MODAL } from "@/lib/z-layers";
 
 // Спільна панель символів з діакритикою — раніше жила лише в crossword.tsx,
 // тепер спільна для будь-якого текстового поля студентської сторінки
@@ -30,7 +31,7 @@ export function DiacriticsPopup({ rect, onPick }: { rect: DOMRect; onPick: (ch: 
 
   return (
     <div
-      className="fixed z-50 flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+      className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800`}
       style={{ top, left, width: POPUP_WIDTH }}
     >
       {DIACRITICS.map((ch) => (

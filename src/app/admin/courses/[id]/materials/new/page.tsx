@@ -5,6 +5,7 @@ import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { Z_ACTION_BAR } from "@/lib/z-layers";
 
 export default async function NewMaterialPage({
   params,
@@ -62,7 +63,7 @@ export default async function NewMaterialPage({
 
         {/* Той самий sticky-трюк, що в SaveForm (sticky=true) — тут окремо,
             бо ця форма редіректить (createMaterial), а не useActionState. */}
-        <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950">
+        <div className={`sticky bottom-0 ${Z_ACTION_BAR} -mx-4 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-1px_3px_rgba(0,0,0,0.1)] dark:border-neutral-800 dark:bg-neutral-950`}>
           <SubmitButton
             pendingChildren="Створюю..."
             className={`self-start ${BUTTON_PRIMARY_LG}`}

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { parseImageFocus } from "@/lib/image-focus";
+import { Z_MODAL } from "@/lib/z-layers";
 
 // Повноекранний перегляд картинки-підказки (клік по мініатюрі) — object-
 // contain: тут показуємо ВСЮ картинку цілком, кадрування (фокус) свідомо
@@ -45,7 +46,7 @@ export function ImageLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      className={`fixed inset-0 ${Z_MODAL} flex items-center justify-center bg-black/80 p-4`}
       onClick={onClose}
     >
       <button

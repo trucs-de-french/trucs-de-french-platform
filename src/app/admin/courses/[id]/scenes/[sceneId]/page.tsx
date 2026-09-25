@@ -581,7 +581,10 @@ export default async function AdminScenePage({
         </DialogueStateProvider>
       </div>
 
-      <div className="mt-2">
+      {/* pb-20 — щоб останній блок і ця кнопка мали куди прокрутитись ПОВНІСТЮ
+          над нижньою закріпленою панеллю дій (SceneStickyActions), а не
+          опинялись під нею в момент, коли сторінка добігає кінця. */}
+      <div className="mt-2 pb-20">
         <Link
           href={`/admin/courses/${productId}/scene-content-blocks/new?sceneId=${sceneId}`}
           className={BUTTON_SECONDARY}
