@@ -1,11 +1,31 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type DragEvent, type ReactNode } from "react";
-import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type DragEvent,
+  type ReactNode,
+} from "react";
+import {
+  GripVertical,
+  Video,
+  MessageSquare,
+  Link2,
+  ListChecks,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  type LucideIcon,
+} from "lucide-react";
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
 import { blockDomId } from "@/lib/block-dom-id";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
+import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
@@ -23,8 +43,9 @@ function blockKey(block: Block): string {
   return block.refId ? `content:${block.refId}` : block.type;
 }
 
-// sessionStorage-backed collapsedKeys — через useSyncExternalStore, не
-// useState+useEffect: sessionStorage недоступний під час SSR, тож просте
+// localStorage-backed collapsedKeys (переживає перезавантаження сторінки,
+// на відміну від sessionStorage раніше) — через useSyncExternalStore, не
+// useState+useEffect: сховище недоступне під час SSR, тож просте
 // "прочитати в ефекті й setState" дало б і hydration mismatch (сервер
 // рендерить дефолт, клієнтський перший рендер — уже інше), і саму лінтер-
 // помилку react-hooks/set-state-in-effect. useSyncExternalStore — офіційно
@@ -32,6 +53,9 @@ function blockKey(block: Block): string {
 // (getServerSnapshot повертає null — SSR завжди бачить лише дефолт).
 // Підписка — власний мінімальний pub-sub (не подія "storage": та не
 // спрацьовує для змін у тій самій вкладці, яка сама їх і зробила).
+// try/catch навколо кожного звернення до localStorage — якщо сховище
+// недоступне (приватний режим тощо), поведінка як без збереження взагалі
+// (дефолтний collapsedKeys щоразу), без падіння.
 function useCollapsedKeys(storageKey: string, defaultKeys: () => Set<string>) {
   const listenersRef = useRef(new Set<() => void>());
 
@@ -42,7 +66,7 @@ function useCollapsedKeys(storageKey: string, defaultKeys: () => Set<string>) {
 
   const getSnapshot = useCallback(() => {
     try {
-      return sessionStorage.getItem(storageKey);
+      return localStorage.getItem(storageKey);
     } catch {
       return null;
     }
@@ -65,10 +89,10 @@ function useCollapsedKeys(storageKey: string, defaultKeys: () => Set<string>) {
   function setCollapsedKeys(updater: (prev: Set<string>) => Set<string>) {
     const next = updater(collapsedKeys);
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify([...next]));
+      localStorage.setItem(storageKey, JSON.stringify([...next]));
     } catch {
-      // sessionStorage недоступний (приватний режим тощо) — далі не пишемо,
-      // але й не падаємо
+      // сховище недоступне (приватний режим тощо) — далі не пишемо, але й
+      // не падаємо
     }
     listenersRef.current.forEach((onStoreChange) => onStoreChange());
   }
@@ -154,14 +178,17 @@ export function SceneBlockList({
   // щоб не скидати внутрішній стан (DialogueEditor/VocabTable через
   // DialogueStateProvider, LinkDragList, TaskDragList тощо) і щоб приховані
   // форми й надалі коректно сабмітились через requestSubmit() ("Зберегти
-  // все"). Зберігається в sessionStorage по сцені (useCollapsedKeys вище) —
-  // щоб redirect() назад із "+ Нова задача" (окрема сторінка /tasks/new) не
-  // скидав акордеон до дефолту "усе згорнуто", а повертав саме той стан,
-  // який був перед переходом.
+  // все"). Зберігається в localStorage по сцені (useCollapsedKeys вище) —
+  // переживає не лише redirect() назад із "+ Нова задача" (окрема сторінка
+  // /tasks/new), а й повне перезавантаження сторінки.
   const [collapsedKeys, setCollapsedKeys] = useCollapsedKeys(
     `scene-blocks-collapsed:${sceneId}`,
     () => new Set(initialBlocks.map(blockKey))
   );
+  // Для scrollIntoView з кнопки "Згорнути" — той самий DOM-вузол, що вже
+  // має id/scroll-mt-4 для якорів (#content-{id} тощо), лише прямий ref
+  // замість getElementById, щоб не залежати від того, чи вже змонтовано.
+  const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   function toggleCollapsed(key: string) {
     setCollapsedKeys((prev) => {
@@ -171,6 +198,44 @@ export function SceneBlockList({
       return next;
     });
   }
+
+  function collapseAndScrollToHeader(key: string) {
+    toggleCollapsed(key);
+    blockRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function collapseAll() {
+    setCollapsedKeys(() => new Set(blocks.map(blockKey)));
+  }
+
+  function expandAll() {
+    setCollapsedKeys(() => new Set());
+  }
+
+  // Перехід за якорем (#content-{id}, #task тощо — з redirect() дій вправ/
+  // блоку чи прямого посилання) має показати цільовий блок РОЗГОРНУТИМ,
+  // навіть якщо він був згорнутий раніше — інакше посилання приводить на
+  // порожній заголовок без видимого вмісту. Ефект (не читання хеша прямо в
+  // рендері) — location.hash доступний лише на клієнті, а сам вибір, який
+  // блок розгорнути, не впливає на СЕРВЕРНИЙ рендер, тож без ризику
+  // hydration-розбіжності: перший клієнтський рендер іще бачить дефолтний
+  // collapsedKeys, ефект одразу після монтування виправляє його.
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+    const target = blocks.find((b) => blockDomId(blockKey(b)) === hash);
+    if (!target) return;
+    const targetKey = blockKey(target);
+    setCollapsedKeys((prev) => {
+      if (!prev.has(targetKey)) return prev;
+      const next = new Set(prev);
+      next.delete(targetKey);
+      return next;
+    });
+    // Лише на монтуванні (перехід за якорем стається один раз на завантаження
+    // сторінки) — не на кожну зміну blocks/collapsedKeys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function moveByIndex(fromIndex: number, toIndex: number) {
     if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return;
@@ -220,6 +285,22 @@ export function SceneBlockList({
           {error}
         </p>
       )}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={collapseAll}
+          className="text-sm text-neutral-500 hover:underline dark:text-neutral-400"
+        >
+          Згорнути всі
+        </button>
+        <button
+          type="button"
+          onClick={expandAll}
+          className="text-sm text-neutral-500 hover:underline dark:text-neutral-400"
+        >
+          Розгорнути всі
+        </button>
+      </div>
       {blocks.map((block) => {
         const key = blockKey(block);
         const isContent = block.type === "content";
@@ -233,7 +314,14 @@ export function SceneBlockList({
           ? SCENE_CONTENT_BLOCK_COLORS[block.contentType ?? ""]?.iconColor
           : BLOCK_COLORS[block.type]?.iconColor;
         return (
-        <div key={key} id={blockDomId(key)} className="relative scroll-mt-4">
+        <div
+          key={key}
+          id={blockDomId(key)}
+          ref={(el) => {
+            blockRefs.current[key] = el;
+          }}
+          className="relative scroll-mt-4"
+        >
           {dropTarget?.key === key && dropTarget.side === "before" && (
             <span className="absolute -top-[7px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
           )}
@@ -257,7 +345,15 @@ export function SceneBlockList({
             }}
             className={`rounded-lg border border-t-4 bg-white p-4 shadow-sm dark:bg-neutral-800 border-gray-100 dark:border-neutral-700 ${border ?? ""}`}
           >
-          <div className="mb-3 flex items-center gap-2">
+          {/* Липкий заголовок — top-4 узгоджено зі scroll-mt-4 вище (той
+              самий 1rem-відступ, куди й так "приземляється" перехід за
+              якорем/scrollIntoView), тож немає видимого "стрибка" між
+              позицією після скролу й позицією прилипання. Прилипає лише в
+              межах цього блоку — sticky виходить за екран разом із рештою
+              картки, щойно вона проскролюється повз. Власний bg + тінь, щоб
+              вміст блоку, який ковзає під заголовком, не проступав крізь
+              нього. */}
+          <div className="sticky top-4 z-10 -mx-4 -mt-4 mb-3 flex items-center gap-2 rounded-t-lg bg-white px-4 pb-3 pt-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:bg-neutral-800">
             <button
               type="button"
               draggable
@@ -297,7 +393,24 @@ export function SceneBlockList({
               />
             </button>
           </div>
-          <div className={collapsedKeys.has(key) ? "hidden" : ""}>{contentByKey[key]}</div>
+          <div className={collapsedKeys.has(key) ? "hidden" : ""}>
+            {contentByKey[key]}
+            {/* Завжди, не лише для "помітно довгих" блоків — визначити
+                реальну відрендерену висоту тут довелось би виміром DOM
+                (ResizeObserver на кожен блок), а вміст contentByKey —
+                непрозорий ReactNode (DialogueEditor/VocabTable/TaskDragList/
+                довільні content-блоки), тож надійно виміряти складно й не
+                варте цього заради дрібної косметики: кнопка на короткому
+                блоці — не завада, довгий блок без неї — реальна незручність. */}
+            <button
+              type="button"
+              onClick={() => collapseAndScrollToHeader(key)}
+              className={`mt-3 inline-flex items-center gap-1.5 ${BUTTON_SECONDARY_SM}`}
+            >
+              <ChevronUp size={14} />
+              Згорнути
+            </button>
+          </div>
           </div>
           {dropTarget?.key === key && dropTarget.side === "after" && (
             <span className="absolute -bottom-[7px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
