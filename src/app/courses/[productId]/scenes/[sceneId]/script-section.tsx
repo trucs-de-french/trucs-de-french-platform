@@ -6,6 +6,7 @@ import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker } from "./dialogue-line";
 import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { H2_TO_CONTENT } from "@/lib/spacing";
 
 type DialogueEntry = {
   speaker: string;
@@ -66,7 +67,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div>
       {title && (
         <button
           type="button"
@@ -75,16 +76,14 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
         >
           <ChevronDown
             size={18}
-            className={`shrink-0 text-neutral-500 transition-transform dark:text-neutral-400 ${
-              collapsed ? "" : "rotate-180"
-            }`}
+            className={`shrink-0 transition-transform ${collapsed ? "" : "rotate-180"}`}
           />
           <h2 className={STUDENT_SECTION_HEADING}>{title}</h2>
         </button>
       )}
 
       {isOpen && (
-        <>
+        <div className={`flex flex-col gap-2 ${title ? H2_TO_CONTENT : ""}`}>
           {hasTranslation && (
             <button
               type="button"
@@ -144,7 +143,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
               />
             ))
           )}
-        </>
+        </div>
       )}
     </div>
   );

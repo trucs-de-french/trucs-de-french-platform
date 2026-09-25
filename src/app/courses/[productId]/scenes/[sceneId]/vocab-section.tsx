@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
 import type { VocabItem, PartOfSpeech } from "@/lib/vocab";
 import {
   firstVocabVariant,
@@ -10,8 +10,9 @@ import {
   PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab";
-import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_TOGGLE_HEADER_BUTTON, BUTTON_SECONDARY } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { H2_TO_CONTENT } from "@/lib/spacing";
 
 // Компактна легенда колір→категорія — над списком груп, щоб орієнтуватись,
 // не гортаючи до заголовка потрібної групи.
@@ -41,8 +42,8 @@ function VocabGroupTable({
   return (
     <div>
       <div className="flex items-center gap-2">
-        {dotClass && <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClass}`} aria-hidden />}
-        <h3 className="font-heading text-sm font-bold text-neutral-700 dark:text-neutral-300">{label}</h3>
+        {dotClass && <span className={`h-3 w-3 shrink-0 rounded-full ${dotClass}`} aria-hidden />}
+        <h3 className="font-heading text-lg font-bold text-neutral-700 dark:text-neutral-300">{label}</h3>
       </div>
       {/* table-fixed + colgroup — та сама ширина першої колонки в УСІХ
           категоріях (не автоширина на кожну таблицю окремо), щоб колонка
@@ -80,40 +81,58 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
   const groups = groupVocabByPartOfSpeech(vocab);
 
   return (
-    <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => setCollapsed((c) => !c)}
-        className={STUDENT_TOGGLE_HEADER_BUTTON}
-      >
-        <ChevronDown
-          size={18}
-          className={`shrink-0 text-neutral-500 transition-transform dark:text-neutral-400 ${
-            collapsed ? "" : "rotate-180"
-          }`}
-        />
-        <h2 className={STUDENT_SECTION_HEADING}>Вокабуляр</h2>
-      </button>
+    <div>
+      {/* Кнопка-тогл і посилання PDF — окремі елементи в одному ряду, НЕ
+          вкладені одне в одне (button/a всередині іншого button — невалідний
+          HTML і зламана доступність): flex-1 на тоглі забирає весь простір,
+          що лишився праворуч, PDF лишається компактним справа (justify-between
+          тут вже нічого додатково не розсовує, коли тогл на flex-1, але
+          лишаю — той самий рядок мав би сенс і без flex-1). items-center —
+          PDF (менша, py-1.5) вирівнюється по центру висоти тогла (py-2), не
+          розтягується на всю висоту, як було раніше (items-stretch). Клік
+          по PDF не спливає до тогла просто тому, що це сиблінги, а не
+          вкладені елементи — жодного stopPropagation не треба. */}
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className={`flex-1 ${STUDENT_TOGGLE_HEADER_BUTTON}`}
+        >
+          <ChevronDown
+            size={18}
+            className={`shrink-0 transition-transform ${collapsed ? "" : "rotate-180"}`}
+          />
+          <h2 className={STUDENT_SECTION_HEADING}>Вокабуляр</h2>
+        </button>
+
+        {/* Видима незалежно від collapsed — і тому, що завантаження PDF не
+            вимагає розгорнутого списку, і тому, що инакше кнопка зникала б
+            одразу після першого кліку на тогл. Текст ховається на вузьких
+            екранах (sm:inline), лишається лише іконка + aria-label, щоб не
+            розпирати рядок поруч із "ВОКАБУЛЯР". */}
+        <a
+          href={pdfHref}
+          aria-label="Завантажити PDF"
+          className={`inline-flex shrink-0 items-center gap-1.5 ${BUTTON_SECONDARY}`}
+        >
+          <Download size={16} className="shrink-0" aria-hidden />
+          <span className="hidden sm:inline">Завантажити PDF</span>
+        </a>
+      </div>
 
       {!collapsed && (
-        <>
-          <a
-            href={pdfHref}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            Завантажити PDF
-          </a>
-          {/* Легенда + список категорій — ОДНА центрована колонка (max-w-3xl
-              mx-auto, приблизно колишня ширина таблиці), не текст по центру
-              (весь вміст усередині лишається вирівняним по лівому краю) —
-              на мобільній ширині колонка природно займає всю ширину. */}
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-            <Legend />
-            {groups.map((g) => (
-              <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
-            ))}
-          </div>
-        </>
+        // Легенда + список категорій — ОДНА центрована колонка (max-w-3xl
+        // mx-auto, приблизно колишня ширина таблиці), не текст по центру
+        // (весь вміст усередині лишається вирівняним по лівому краю) —
+        // на мобільній ширині колонка природно займає всю ширину.
+        // H2_TO_CONTENT — той самий відступ від заголовка, що й у Відео/
+        // Практика/Завдання.
+        <div className={`${H2_TO_CONTENT} mx-auto flex w-full max-w-3xl flex-col gap-4`}>
+          <Legend />
+          {groups.map((g) => (
+            <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
+          ))}
+        </div>
       )}
     </div>
   );

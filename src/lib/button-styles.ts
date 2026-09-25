@@ -83,14 +83,16 @@ export const STUDENT_LINK_BUTTON =
   "font-heading rounded-md border border-brand px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700";
 
 // Заголовок-тогл акордеон-блоку студентської сторінки ("Скрипт",
-// "Вокабуляр" тощо, script-section.tsx/vocab-section.tsx) — раніше зовсім
-// без рамки (голий текст+шеврон). Спробували брендовану рамку — виявилось
-// зайвим акцентом (тогл-заголовок читається як окрема брендована дія, а не
-// частина звичайної картки), тому відкотили на ту саму нейтральну логіку,
-// що й решта карток-контейнерів (border-gray-100/bg-white/shadow-sm, той
-// самий принцип, що ANSWER_CARD_DEFAULT) — виділення через тінь, не колір.
+// "Вокабуляр", script-section.tsx/vocab-section.tsx) — свідомо БЕЗ вигляду
+// картки (рамка/фон/тінь/padding пробували раніше в обидва боки — і голим
+// текстом, і карткою — це вже третя ітерація): має виглядати як звичайний
+// h2 розділу сторінки (STUDENT_SECTION_HEADING) поруч із "Відео"/
+// "Практика"/"Завдання", лише клікабельний. Колір — НЕ заданий тут навмисно:
+// h2 усередині (без власного кольору) і шеврон-іконка (currentColor)
+// успадковують один і той самий колір від цього button, тож hover:text-brand
+// тут одразу перефарбовує ОБИДВА разом, без окремих класів на кожному.
 export const STUDENT_TOGGLE_HEADER_BUTTON =
-  "font-heading flex w-full items-center gap-2 rounded-md border border-gray-100 bg-white px-3 py-2 text-left shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+  "font-heading flex cursor-pointer items-center gap-2 rounded text-left transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:hover:text-brand";
 
 // Незворотна дія (видалити назавжди).
 export const BUTTON_DANGER =
