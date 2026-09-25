@@ -71,13 +71,24 @@ export default async function AdminScenePage({
   const { error } = await searchParams;
   const supabase = await createClient();
 
-  const { data: scene } = await supabase
+  const { data: scene, error: sceneError } = await supabase
     .from("scenes")
     .select("id, title, video_url, video_provider, dialogue")
     .eq("id", sceneId)
     .eq("product_id", productId)
     .single();
 
+  // notFound() — ЛИШЕ коли запису справді нема (0 рядків, без помилки).
+  // Раніше error тут узагалі не читався — .single() повертає error і на
+  // "0 рядків" (легітимне 404, код PGRST116), і на РЕАЛЬНУ проблему запиту
+  // (RLS відхилив, збій з'єднання тощо), обидва варіанти давали data=null і
+  // мовчки ставали 404 — сцена, що насправді існує, виглядала видаленою, без
+  // жодного сліду в логах чому. Кидаємо помилку (сторінка error.tsx/дефолтна
+  // 500, явно відмінна від 404) лише коли error вказує НЕ на "0 рядків".
+  if (sceneError && sceneError.code !== "PGRST116") {
+    console.error(`Не вдалося завантажити сцену ${sceneId}:`, sceneError.message);
+    throw new Error(`Не вдалося завантажити сцену: ${sceneError.message}`);
+  }
   if (!scene) notFound();
 
   const [
