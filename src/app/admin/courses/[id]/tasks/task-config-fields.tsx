@@ -64,6 +64,7 @@ import {
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileOrLinkField } from "@/components/file-or-link-field";
+import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -104,14 +105,17 @@ const NO_TRANSLATION_TYPES = [
   "image_match",
 ];
 
+// "game" свідомо ВІДСУТНІЙ тут — нові ігри цього типу більше не створюються
+// (тип замінений на embed із можливістю вставити .html-гру), але вже наявні
+// 3 задачі з type="game" і далі мусять відкриватись/редагуватись — див.
+// typeOptions нижче, де запис повертається в список лише для them.
 const TYPE_OPTIONS = [
-  { value: "game", label: "Гра" },
   { value: "open_answer", label: "Відкрита відповідь (автоперевірка)" },
   { value: "essay_check", label: "Есе / DELF (AI-перевірка)" },
   { value: "listening", label: "Аудіювання" },
   { value: "error_correction", label: "Робота над помилками" },
   { value: "vocab_quiz", label: "Вікторина лексики" },
-  { value: "embed", label: "Вбудований контент (iframe)" },
+  { value: "embed", label: "Гра / вбудований контент" },
   { value: "link", label: "Посилання-кнопка" },
   { value: "fill_blank", label: "Заповніть пропуск" },
   { value: "letter_gaps", label: "Пропущені літери" },
@@ -176,7 +180,12 @@ export function TaskConfigFields({
   taskGroupId,
   initialPointsVisible,
 }: Props) {
-  const [type, setType] = useState(initialType ?? "game");
+  const [type, setType] = useState(initialType ?? TYPE_OPTIONS[0].value);
+  // "game" прибрано з TYPE_OPTIONS (нові ігри цього типу більше не
+  // створюються), але вже наявну задачу з type="game" мусимо і далі
+  // показувати коректно вибраною в комбобоксі (не "Оберіть тип") — додаємо
+  // пункт назад лише для цього єдиного випадку.
+  const typeOptions = initialType === "game" ? [{ value: "game", label: "Гра" }, ...TYPE_OPTIONS] : TYPE_OPTIONS;
   // Контрольований чекбокс, синхронізований з пропом від сервера
   // (points_visible оновлюється через revalidatePath в updateTask) — не
   // через useEffect (react-hooks/set-state-in-effect), а через "adjust
@@ -383,7 +392,7 @@ export function TaskConfigFields({
           )}
         </div>
         <input type="hidden" name="type" value={type} readOnly />
-        <TaskTypeCombobox options={TYPE_OPTIONS} value={type} onChange={handleTypeChange} />
+        <TaskTypeCombobox options={typeOptions} value={type} onChange={handleTypeChange} />
       </div>
 
       {transferWarning && (
@@ -598,17 +607,28 @@ export function TaskConfigFields({
       {type === "embed" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
           <div className="flex flex-col gap-1">
-            <label className={LABEL_TEXT}>URL для вбудовування (iframe)</label>
-            <input
-              ref={embedUrlRef}
-              name="embed_url"
-              defaultValue={
-                (pendingSeed?.forType === "embed"
-                  ? (pendingSeed.config as LinkEmbedFields).url
-                  : (initialConfig?.url as string)) ?? ""
-              }
-              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-            />
+            <label className={LABEL_TEXT}>
+              Посилання на гру або контент (Wordwall, Quizlet, YouTube…) або завантажте HTML-файл
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                ref={embedUrlRef}
+                name="embed_url"
+                defaultValue={
+                  (pendingSeed?.forType === "embed"
+                    ? (pendingSeed.config as LinkEmbedFields).url
+                    : (initialConfig?.url as string)) ?? ""
+                }
+                className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
+              />
+              <FileUpload
+                kind="html"
+                variant="icon"
+                onUploaded={(url) => {
+                  if (embedUrlRef.current) embedUrlRef.current.value = url;
+                }}
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>Висота (px)</label>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
 import { FileOrLinkField } from "@/components/file-or-link-field";
+import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -21,6 +22,7 @@ export type ContentBlockInitial = {
 // що вже задокументований у material-article-fields.tsx.
 export function ContentBlockFields({ initialBlock }: { initialBlock?: ContentBlockInitial }) {
   const [contentType, setContentType] = useState(initialBlock?.content_type ?? "text");
+  const mediaUrlRef = useRef<HTMLInputElement>(null);
 
   return (
     <>
@@ -47,7 +49,6 @@ export function ContentBlockFields({ initialBlock }: { initialBlock?: ContentBlo
           <option value="video">Відео</option>
           <option value="embed">Вбудований контент (iframe)</option>
           <option value="script">Скрипт (діалог)</option>
-          <option value="links">Практика (посилання)</option>
         </select>
       </div>
 
@@ -78,11 +79,23 @@ export function ContentBlockFields({ initialBlock }: { initialBlock?: ContentBlo
           <label className={LABEL_TEXT}>
             {contentType === "video" ? "URL відео" : "URL для вбудовування (iframe src)"}
           </label>
-          <input
-            name="media_url"
-            defaultValue={initialBlock?.media_url ?? ""}
-            className={`${INPUT_BORDER} px-3 py-2 text-sm`}
-          />
+          <div className="flex items-center gap-1">
+            <input
+              ref={mediaUrlRef}
+              name="media_url"
+              defaultValue={initialBlock?.media_url ?? ""}
+              className={`${INPUT_BORDER} flex-1 px-3 py-2 text-sm`}
+            />
+            {contentType === "embed" && (
+              <FileUpload
+                kind="html"
+                variant="icon"
+                onUploaded={(url) => {
+                  if (mediaUrlRef.current) mediaUrlRef.current.value = url;
+                }}
+              />
+            )}
+          </div>
         </div>
       )}
 

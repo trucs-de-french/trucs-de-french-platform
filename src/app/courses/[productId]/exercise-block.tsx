@@ -4,6 +4,7 @@ import { resolvePlatform } from "@/lib/platform";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
+import { EmbedWithFallback } from "@/components/embed-with-fallback";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
@@ -135,24 +136,7 @@ export function ExerciseBlock({
       )}
 
       {task.type === "embed" && config.url && (
-        <div className="flex flex-col gap-1">
-          <div
-            className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700"
-            style={{ height: config.height ?? 480 }}
-          >
-            <iframe src={config.url} className="h-full w-full" allowFullScreen />
-          </div>
-          {/* Завжди видимий резервний варіант — не опційний, без перемикача
-              вимкнення (напр. якщо стороннній сервіс блокує вбудовування
-              в iframe, як уже траплялось із Wordwall). */}
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Якщо гра чи відео не відкривається (браузер міг заблокувати сторонній вміст),{" "}
-            <a href={config.url} target="_blank" rel="noopener noreferrer" className="underline">
-              перейдіть за посиланням
-            </a>
-            .
-          </p>
-        </div>
+        <EmbedWithFallback url={config.url} height={config.height ?? 480} />
       )}
     </>
   );

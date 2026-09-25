@@ -4,6 +4,7 @@ import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import type { VocabItem } from "@/lib/vocab";
 import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
+import { EmbedWithFallback } from "@/components/embed-with-fallback";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
@@ -166,23 +167,7 @@ export function SceneContentBlockContent({
       )}
 
       {block.content_type === "embed" && block.media_url && (
-        <div>
-          <div className="overflow-hidden rounded-md border border-gray-200 dark:border-neutral-700" style={{ height: 480 }}>
-            <iframe src={block.media_url} className="h-full w-full" allowFullScreen />
-          </div>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Якщо вміст не відкривається,{" "}
-            <a
-              href={block.media_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              перейдіть за посиланням
-            </a>
-            .
-          </p>
-        </div>
+        <EmbedWithFallback url={block.media_url} height={480} />
       )}
     </>
   );

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS } from "@/lib/delf/exam-structure";
 import { InstructionsRichTextField } from "../tasks/instructions-rich-text-field";
 import { FileOrLinkField } from "@/components/file-or-link-field";
+import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -33,6 +34,7 @@ export function TaskGroupFields({
 }) {
   const [contentType, setContentType] = useState(initialGroup?.content_type ?? "text");
   const [pointsMode, setPointsMode] = useState(initialGroup?.points_mode ?? "sum");
+  const mediaUrlRef = useRef<HTMLInputElement>(null);
   const [delfSection, setDelfSection] = useState(initialGroup?.delf_section ?? "");
   const [delfTestNumber, setDelfTestNumber] = useState(
     initialGroup?.delf_test_number ? String(initialGroup.delf_test_number) : ""
@@ -133,11 +135,23 @@ export function TaskGroupFields({
           <label className={LABEL_TEXT}>
             {contentType === "video" ? "URL відео" : "URL для вбудовування (iframe src)"}
           </label>
-          <input
-            name="media_url"
-            defaultValue={initialGroup?.media_url ?? ""}
-            className={`${INPUT_BORDER} px-3 py-2 text-sm`}
-          />
+          <div className="flex items-center gap-1">
+            <input
+              ref={mediaUrlRef}
+              name="media_url"
+              defaultValue={initialGroup?.media_url ?? ""}
+              className={`${INPUT_BORDER} flex-1 px-3 py-2 text-sm`}
+            />
+            {contentType === "embed" && (
+              <FileUpload
+                kind="html"
+                variant="icon"
+                onUploaded={(url) => {
+                  if (mediaUrlRef.current) mediaUrlRef.current.value = url;
+                }}
+              />
+            )}
+          </div>
         </div>
       )}
 
