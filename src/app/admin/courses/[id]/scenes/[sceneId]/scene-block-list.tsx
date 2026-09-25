@@ -5,6 +5,7 @@ import { GripVertical, Video, MessageSquare, Link2, ListChecks, BookOpen, Chevro
 import { reorderSceneBlocks } from "@/app/admin/scenes/actions";
 import { SCENE_CONTENT_BLOCK_ICON, SCENE_CONTENT_BLOCK_COLORS } from "@/lib/exercises/task-type-meta";
 import { blockDomId } from "@/lib/block-dom-id";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 // refId — null для 4 фіксованих типів (video/script/link/task, рівно один
 // на сцену); для type === "content" — id самого scene_content_blocks-рядка,
@@ -118,10 +119,12 @@ const BLOCK_COLORS: Record<string, { icon: LucideIcon; border: string; iconColor
   },
 };
 
-// Той самий click+drag swap-патерн, що й у студентській вправі reorder.tsx —
-// клік на ручку однієї групи, потім клік на ручку іншої міняє їх місцями;
-// drag-and-drop робить те саме через ручку-заголовок (не через весь блок,
-// щоб не заважати виділенню тексту/роботі з полями всередині).
+// Той самий click+drag insert-патерн, що й у студентському SortableTileRow —
+// клік на ручку однієї групи, потім клік на ручку іншої ставить першу рівно
+// на місце другої (arrayMove); drag-and-drop робить те саме через
+// ручку-заголовок (не через весь блок, щоб не заважати виділенню тексту/
+// роботі з полями всередині), з визначенням "до"/"після" за верхньою/
+// нижньою половиною картки під курсором (src/lib/sortable-list.ts).
 //
 // ВАЖЛИВО: у useState тримаємо лише ПОРЯДОК ({type, refId, label}), не сам
 // вміст групи. Раніше сюди клали ще й content: ReactNode прямо в масив — і
@@ -143,7 +146,8 @@ export function SceneBlockList({
 }) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [selected, setSelected] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ key: string; side: DropSide } | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Акордеон-згортання — суто візуальне (Tailwind "hidden", не умовний
   // рендер): контент кожного блоку лишається змонтованим, коли згорнутий,
@@ -168,15 +172,11 @@ export function SceneBlockList({
     });
   }
 
-  async function swap(fromKey: string, toKey: string) {
-    if (fromKey === toKey) return;
-    const fromIndex = blocks.findIndex((b) => blockKey(b) === fromKey);
-    const toIndex = blocks.findIndex((b) => blockKey(b) === toKey);
-    if (fromIndex === -1 || toIndex === -1) return;
+  async function moveByIndex(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return;
 
     const prev = blocks;
-    const next = [...blocks];
-    [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+    const next = arrayMove(blocks, fromIndex, toIndex);
     setBlocks(next);
     setError(null);
 
@@ -193,13 +193,22 @@ export function SceneBlockList({
     }
   }
 
+  async function move(fromKey: string, overKey: string, side: DropSide) {
+    const fromIndex = blocks.findIndex((b) => blockKey(b) === fromKey);
+    const overIndex = blocks.findIndex((b) => blockKey(b) === overKey);
+    if (fromIndex === -1 || overIndex === -1) return;
+    await moveByIndex(fromIndex, computeInsertIndex(fromIndex, overIndex, side));
+  }
+
   function clickHandle(key: string) {
     if (selected === null) {
       setSelected(key);
     } else if (selected === key) {
       setSelected(null);
     } else {
-      void swap(selected, key);
+      const fromIndex = blocks.findIndex((b) => blockKey(b) === selected);
+      const toIndex = blocks.findIndex((b) => blockKey(b) === key);
+      void moveByIndex(fromIndex, toIndex);
       setSelected(null);
     }
   }
@@ -224,32 +233,38 @@ export function SceneBlockList({
           ? SCENE_CONTENT_BLOCK_COLORS[block.contentType ?? ""]?.iconColor
           : BLOCK_COLORS[block.type]?.iconColor;
         return (
-        <div
-          key={key}
-          id={blockDomId(key)}
-          onDragOver={(e: DragEvent) => e.preventDefault()}
-          onDragEnter={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOver(key);
-          }}
-          onDragLeave={() => setDragOver((prev) => (prev === key ? null : prev))}
-          onDrop={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOver(null);
-            const fromKey = e.dataTransfer.getData("text/plain");
-            if (fromKey) void swap(fromKey, key);
-          }}
-          className={`scroll-mt-4 rounded-lg border border-t-4 bg-white p-4 shadow-sm transition-colors dark:bg-neutral-800 ${
-            dragOver === key
-              ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-              : `border-gray-100 dark:border-neutral-700 ${border ?? ""}`
-          }`}
-        >
+        <div key={key} id={blockDomId(key)} className="relative scroll-mt-4">
+          {dropTarget?.key === key && dropTarget.side === "before" && (
+            <span className="absolute -top-[7px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+          )}
+          <div
+            onDragOver={(e: DragEvent) => {
+              e.preventDefault();
+              if (draggingKey === null) return;
+              const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+              setDropTarget({ key, side });
+            }}
+            onDragLeave={() => setDropTarget((prev) => (prev?.key === key ? null : prev))}
+            onDragEnd={() => {
+              setDraggingKey(null);
+              setDropTarget(null);
+            }}
+            onDrop={(e: DragEvent) => {
+              e.preventDefault();
+              const fromKey = e.dataTransfer.getData("text/plain");
+              if (fromKey && dropTarget) void move(fromKey, dropTarget.key, dropTarget.side);
+              setDropTarget(null);
+            }}
+            className={`rounded-lg border border-t-4 bg-white p-4 shadow-sm dark:bg-neutral-800 border-gray-100 dark:border-neutral-700 ${border ?? ""}`}
+          >
           <div className="mb-3 flex items-center gap-2">
             <button
               type="button"
               draggable
-              onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", key)}
+              onDragStart={(e: DragEvent) => {
+                e.dataTransfer.setData("text/plain", key);
+                setDraggingKey(key);
+              }}
               onClick={() => clickHandle(key)}
               className={`flex flex-1 cursor-grab items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-sm font-semibold shadow-sm shadow-cyan-100/50 active:cursor-grabbing dark:shadow-none ${
                 selected === key
@@ -283,6 +298,10 @@ export function SceneBlockList({
             </button>
           </div>
           <div className={collapsedKeys.has(key) ? "hidden" : ""}>{contentByKey[key]}</div>
+          </div>
+          {dropTarget?.key === key && dropTarget.side === "after" && (
+            <span className="absolute -bottom-[7px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+          )}
         </div>
         );
       })}

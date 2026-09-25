@@ -745,7 +745,7 @@ export type LetterGapsDetail = {
 };
 
 // letters[i].correctIndex === i завжди (масив побудований по позиції, як
-// ReorderDetail.items) — SwappableTileRow індексує напряму, без пошуку.
+// ReorderDetail.items) — SortableTileRow індексує напряму, без пошуку.
 export type LetterRearrangementDetail = {
   words: { letters: { text: string; correctIndex: number; isCorrect: boolean }[]; isCorrect: boolean }[];
 };

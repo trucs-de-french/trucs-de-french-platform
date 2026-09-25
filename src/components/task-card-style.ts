@@ -7,7 +7,7 @@
 // виділятись на дещо темнішому тлі самого блока, а не зливатись із ним.
 // dark:bg-neutral-900 (НЕ neutral-800) — усі картки/тогли/плитки всередині
 // (ANSWER_CARD_DEFAULT, STUDENT_TOGGLE_HEADER_BUTTON, tile-styles.ts,
-// letter-gaps.tsx/swappable-tile-row.tsx) уже стоять на dark:bg-neutral-800;
+// letter-gaps.tsx/sortable-tile-row.tsx) уже стоять на dark:bg-neutral-800;
 // якби контейнер лишався на тому самому відтінку, картки зливались би з
 // тлом у темній темі так само, як white-on-white до недавнього фіксу
 // letter_gaps у світлій.

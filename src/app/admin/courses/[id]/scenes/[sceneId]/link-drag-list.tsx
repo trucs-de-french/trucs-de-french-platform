@@ -4,6 +4,7 @@ import { useState, type DragEvent } from "react";
 import { GripVertical, Trash2, ExternalLink } from "lucide-react";
 import { deleteLink, reorderLinks } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 type LinkRow = { id: string; platform: string; url: string; label: string | null };
 
@@ -20,7 +21,8 @@ function shortLinkText(link: LinkRow): string {
 }
 
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList/TaskDragList:
-// ручка (GripVertical) — джерело drag, увесь <li> — ціль drop, swap-семантика.
+// ручка (GripVertical) — джерело drag, увесь <li> — ціль drop. Insert-семантика
+// (не swap) — див. src/lib/sortable-list.ts.
 //
 // useState(initialLinks) бере пропс лише як ПОЧАТКОВЕ значення — якщо
 // revalidatePath (напр. з addLink) принесе свіжий initialLinks, цей
@@ -36,18 +38,19 @@ export function LinkDragList({
   initialLinks: LinkRow[];
 }) {
   const [links, setLinks] = useState(initialLinks);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; side: DropSide } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function swap(fromId: string, toId: string) {
-    if (fromId === toId) return;
+  async function move(fromId: string, overId: string, side: DropSide) {
     const fromIndex = links.findIndex((l) => l.id === fromId);
-    const toIndex = links.findIndex((l) => l.id === toId);
-    if (fromIndex === -1 || toIndex === -1) return;
+    const overIndex = links.findIndex((l) => l.id === overId);
+    if (fromIndex === -1 || overIndex === -1) return;
+    const toIndex = computeInsertIndex(fromIndex, overIndex, side);
+    if (toIndex === fromIndex) return;
 
     const prev = links;
-    const next = [...links];
-    [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+    const next = arrayMove(links, fromIndex, toIndex);
     setLinks(next);
     setError(null);
 
@@ -71,48 +74,59 @@ export function LinkDragList({
 
       <ul className="flex flex-col gap-2">
         {links.map((link) => (
-          <li
-            key={link.id}
-            onDragOver={(e: DragEvent) => e.preventDefault()}
-            onDragEnter={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(link.id);
-            }}
-            onDragLeave={() => setDragOver((p) => (p === link.id ? null : p))}
-            onDrop={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(null);
-              const fromId = e.dataTransfer.getData("text/plain");
-              if (fromId) void swap(fromId, link.id);
-            }}
-            className={`flex items-center justify-between rounded-md border p-3 text-sm transition-colors ${
-              dragOver === link.id
-                ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : "border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800"
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <span
-                draggable
-                onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", link.id)}
-                className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
-                aria-hidden
-              >
-                <GripVertical size={16} />
+          <li key={link.id} className="relative">
+            {dropTarget?.id === link.id && dropTarget.side === "before" && (
+              <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
+            <div
+              onDragOver={(e: DragEvent) => {
+                e.preventDefault();
+                if (draggingId === null) return;
+                const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+                setDropTarget({ id: link.id, side });
+              }}
+              onDragLeave={() => setDropTarget((p) => (p?.id === link.id ? null : p))}
+              onDragEnd={() => {
+                setDraggingId(null);
+                setDropTarget(null);
+              }}
+              onDrop={(e: DragEvent) => {
+                e.preventDefault();
+                const fromId = e.dataTransfer.getData("text/plain");
+                if (fromId && dropTarget) void move(fromId, dropTarget.id, dropTarget.side);
+                setDropTarget(null);
+              }}
+              className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  draggable
+                  onDragStart={(e: DragEvent) => {
+                    e.dataTransfer.setData("text/plain", link.id);
+                    setDraggingId(link.id);
+                  }}
+                  className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
+                  aria-hidden
+                >
+                  <GripVertical size={16} />
+                </span>
+                <ExternalLink size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
+                {link.platform}: {shortLinkText(link)}
               </span>
-              <ExternalLink size={16} className="shrink-0 text-neutral-400 dark:text-neutral-500" />
-              {link.platform}: {shortLinkText(link)}
-            </span>
-            <form action={deleteLink.bind(null, link.id)}>
-              <SubmitButton
-                pendingChildren="…"
-                aria-label="Видалити посилання"
-                title="Видалити"
-                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-              >
-                <Trash2 size={16} />
-              </SubmitButton>
-            </form>
+              <form action={deleteLink.bind(null, link.id)}>
+                <SubmitButton
+                  pendingChildren="…"
+                  aria-label="Видалити посилання"
+                  title="Видалити"
+                  className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                >
+                  <Trash2 size={16} />
+                </SubmitButton>
+              </form>
+            </div>
+            {dropTarget?.id === link.id && dropTarget.side === "after" && (
+              <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
           </li>
         ))}
       </ul>

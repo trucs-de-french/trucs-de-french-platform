@@ -11,6 +11,7 @@ import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { useDialogueState, type Line } from "./dialogue-state";
 import { VocabItemRow } from "./vocab-item-row";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 function parsedLineToLine(p: ParsedLine): Line {
   return { speaker: p.speaker, text: p.text, vocab: [], start: p.start, end: p.end, videoLink: null };
@@ -81,7 +82,8 @@ function OptionalFieldsPanel({
 
 export function DialogueEditor() {
   const { lines, setLines, updateVocab } = useDialogueState();
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ index: number; side: DropSide } | null>(null);
   const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
 
   const [preview, setPreview] = useState<Line[] | null>(null);
@@ -143,14 +145,11 @@ export function DialogueEditor() {
   }
 
   // Реплік не має власного id — це просто позиції в масиві, тож reorder за
-  // індексом (swap), а не за ідентифікатором.
-  function swapLines(i: number, j: number) {
-    if (i === j) return;
-    setLines((prev) => {
-      const next = [...prev];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
+  // індексом. Insert-семантика (не swap) — репліка стає рівно на місце,
+  // куди її кинули, решта зсувається (arrayMove, src/lib/sortable-list.ts).
+  function moveLine(from: number, to: number) {
+    if (from === to) return;
+    setLines((prev) => arrayMove(prev, from, to));
   }
 
   function addVocab(i: number) {
@@ -304,30 +303,39 @@ export function DialogueEditor() {
       <input type="hidden" name="dialogue" value={JSON.stringify(dialogueToSave)} readOnly />
 
       {lines.map((line, i) => (
-        <div
-          key={i}
-          onDragOver={(e: DragEvent) => e.preventDefault()}
-          onDragEnter={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOverIndex(i);
-          }}
-          onDragLeave={() => setDragOverIndex((prev) => (prev === i ? null : prev))}
-          onDrop={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOverIndex(null);
-            const from = Number(e.dataTransfer.getData("text/plain"));
-            if (!Number.isNaN(from)) swapLines(from, i);
-          }}
-          className={`rounded-md border p-3 transition-colors ${
-            dragOverIndex === i
-              ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-              : "border-gray-100 dark:border-neutral-700"
-          }`}
-        >
+        <div key={i} className="relative">
+          {dropTarget?.index === i && dropTarget.side === "before" && (
+            <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+          )}
+          <div
+            onDragOver={(e: DragEvent) => {
+              e.preventDefault();
+              if (draggingIndex === null) return;
+              const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+              setDropTarget({ index: i, side });
+            }}
+            onDragLeave={() => setDropTarget((prev) => (prev?.index === i ? null : prev))}
+            onDragEnd={() => {
+              setDraggingIndex(null);
+              setDropTarget(null);
+            }}
+            onDrop={(e: DragEvent) => {
+              e.preventDefault();
+              const from = Number(e.dataTransfer.getData("text/plain"));
+              if (!Number.isNaN(from) && dropTarget) {
+                moveLine(from, computeInsertIndex(from, dropTarget.index, dropTarget.side));
+              }
+              setDropTarget(null);
+            }}
+            className="rounded-md border border-gray-100 p-3 dark:border-neutral-700"
+          >
           <div className="flex items-start gap-2">
             <span
               draggable
-              onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", String(i))}
+              onDragStart={(e: DragEvent) => {
+                e.dataTransfer.setData("text/plain", String(i));
+                setDraggingIndex(i);
+              }}
               className="mt-1.5 cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
               aria-hidden
             >
@@ -408,6 +416,10 @@ export function DialogueEditor() {
               + слово в лексику
             </button>
           </div>
+          </div>
+          {dropTarget?.index === i && dropTarget.side === "after" && (
+            <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+          )}
         </div>
       ))}
 

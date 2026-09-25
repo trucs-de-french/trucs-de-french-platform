@@ -8,18 +8,21 @@ import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/ta
 import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 type MemberRow = { id: string; type: string; title: string };
 
 // Той самий native HTML5 drag-патерн, що TaskDragList на сторінці сцени
-// (ручка GripVertical — джерело drag, увесь <li> — ціль drop, swap-семантика), але
-// простіше: усередині блоку лише задачі (блоки не вкладаються одне в
-// одне), тож без розгалуження по kind і без "attach"-гілки. Стрілки ↑/↓
-// одразу спроєктовані як клієнтські (swap із сусідом у вже відомому
-// відсортованому масиві), а НЕ через <form action={moveTask...}> —
-// та сама причина, що вже привела до full-page refresh на сторінці сцени:
-// форма+redirect на фоні клієнтського drag-списку відчувається як
-// регресія, тож тут одразу робимо правильно.
+// (ручка GripVertical — джерело drag, увесь <li> — ціль drop), але простіше:
+// усередині блоку лише задачі (блоки не вкладаються одне в одне), тож без
+// розгалуження по kind і без "attach"-гілки. Insert-семантика для drag (не
+// swap) — src/lib/sortable-list.ts; для ↑/↓ (сусідній обмін) arrayMove на
+// сусідніх індексах дає той самий результат, що й swap, тож окремої функції
+// не потрібно. Стрілки одразу спроєктовані як клієнтські (у вже відомому
+// відсортованому масиві), а НЕ через <form action={moveTask...}> — та сама
+// причина, що вже привела до full-page refresh на сторінці сцени: форма+
+// redirect на фоні клієнтського drag-списку відчувається як регресія, тож
+// тут одразу робимо правильно.
 export function GroupMemberDragList({
   groupId,
   productId,
@@ -39,18 +42,15 @@ export function GroupMemberDragList({
   delfTestNumber?: number | null;
 }) {
   const [members, setMembers] = useState(initialMembers);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; side: DropSide } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function swap(fromId: string, toId: string) {
-    if (fromId === toId) return;
-    const fromIndex = members.findIndex((m) => m.id === fromId);
-    const toIndex = members.findIndex((m) => m.id === toId);
-    if (fromIndex === -1 || toIndex === -1) return;
+  async function moveByIndex(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || toIndex >= members.length) return;
 
     const prev = members;
-    const next = [...members];
-    [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+    const next = arrayMove(members, fromIndex, toIndex);
     setMembers(next);
     setError(null);
 
@@ -64,12 +64,19 @@ export function GroupMemberDragList({
     }
   }
 
+  async function move(fromId: string, overId: string, side: DropSide) {
+    const fromIndex = members.findIndex((m) => m.id === fromId);
+    const overIndex = members.findIndex((m) => m.id === overId);
+    if (fromIndex === -1 || overIndex === -1) return;
+    await moveByIndex(fromIndex, computeInsertIndex(fromIndex, overIndex, side));
+  }
+
   // Копія одразу в цьому самому блоці, без пікера — вставляємо в локальний
   // список ПІСЛЯ оригіналу і одразу перезаписуємо order_index через уже
-  // наявний reorderGroupMembers (той самий трюк, що swap()), щоб позиція
-  // реально збереглась, а не лишилась там, де RPC поставив order_index
-  // (max+1 у блоці — кінець списку). На відміну від swap() — якщо
-  // reorderGroupMembers тут впаде, members НЕ відкочуємо: копія вже
+  // наявний reorderGroupMembers (той самий трюк, що moveByIndex), щоб
+  // позиція реально збереглась, а не лишилась там, де RPC поставив
+  // order_index (max+1 у блоці — кінець списку). На відміну від moveByIndex —
+  // якщо reorderGroupMembers тут впаде, members НЕ відкочуємо: копія вже
   // реально створена в БД, приховати її локально було б оманливо (пропала
   // б із виду, хоча існує), лише повідомляємо про проблему з порядком.
   async function copy(taskId: string) {
@@ -113,30 +120,37 @@ export function GroupMemberDragList({
 
       <ul className="flex flex-col gap-2">
         {members.map((task, i) => (
-          <li
-            key={task.id}
-            onDragOver={(e: DragEvent) => e.preventDefault()}
-            onDragEnter={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(task.id);
-            }}
-            onDragLeave={() => setDragOver((p) => (p === task.id ? null : p))}
-            onDrop={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(null);
-              const fromId = e.dataTransfer.getData("text/plain");
-              if (fromId) void swap(fromId, task.id);
-            }}
-            className={`flex items-center justify-between rounded-md border p-3 transition-colors ${
-              dragOver === task.id
-                ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : "border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800"
-            }`}
-          >
+          <li key={task.id} className="relative">
+            {dropTarget?.id === task.id && dropTarget.side === "before" && (
+              <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
+            <div
+              onDragOver={(e: DragEvent) => {
+                e.preventDefault();
+                if (draggingId === null) return;
+                const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+                setDropTarget({ id: task.id, side });
+              }}
+              onDragLeave={() => setDropTarget((p) => (p?.id === task.id ? null : p))}
+              onDragEnd={() => {
+                setDraggingId(null);
+                setDropTarget(null);
+              }}
+              onDrop={(e: DragEvent) => {
+                e.preventDefault();
+                const fromId = e.dataTransfer.getData("text/plain");
+                if (fromId && dropTarget) void move(fromId, dropTarget.id, dropTarget.side);
+                setDropTarget(null);
+              }}
+              className="flex items-center justify-between rounded-md border border-gray-100 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+            >
             <div className="flex items-center gap-2">
               <span
                 draggable
-                onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", task.id)}
+                onDragStart={(e: DragEvent) => {
+                  e.dataTransfer.setData("text/plain", task.id);
+                  setDraggingId(task.id);
+                }}
                 className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
                 aria-hidden
               >
@@ -157,7 +171,7 @@ export function GroupMemberDragList({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => void swap(task.id, members[i - 1].id)}
+                onClick={() => void moveByIndex(i, i - 1)}
                 disabled={i === 0}
                 className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
               >
@@ -165,7 +179,7 @@ export function GroupMemberDragList({
               </button>
               <button
                 type="button"
-                onClick={() => void swap(task.id, members[i + 1].id)}
+                onClick={() => void moveByIndex(i, i + 1)}
                 disabled={i === members.length - 1}
                 className="rounded border px-2 py-1 text-xs disabled:opacity-30 dark:hover:bg-neutral-800"
               >
@@ -199,6 +213,10 @@ export function GroupMemberDragList({
                 </SubmitButton>
               </form>
             </div>
+            </div>
+            {dropTarget?.id === task.id && dropTarget.side === "after" && (
+              <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
           </li>
         ))}
       </ul>

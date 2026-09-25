@@ -7,7 +7,7 @@ export const TWO_COLUMN_WORD_THRESHOLD = 10;
 // "Одиниця переносу" — окреме слово ФРАЗИ (розділене пробілом), не вся
 // фраза цілком: довжина рахується БЕЗ пробілів. Поріг і розміри — спільні
 // для letter_gaps (поля-input+видимі літери) і letter_rearrangement
-// (плитки SwappableTileRow), застосовуються до ВСЬОГО рядка одразу, коли
+// (плитки SortableTileRow), застосовуються до ВСЬОГО рядка одразу, коли
 // НАЙДОВША одиниця в ньому перевищує поріг — інакше в одній фразі сусідні
 // короткі й довгі слова виглядали б неоднорідно (одне зменшене, інше ні).
 export const LONG_WORD_COMPACT_THRESHOLD = 9;
@@ -15,7 +15,7 @@ export const LONG_WORD_COMPACT_THRESHOLD = 9;
 // замовчуванням.
 export const COMPACT_GAP_SIZE_CLASS = "h-8 w-7";
 export const COMPACT_LETTER_TEXT_CLASS = "text-base";
-// Компактний розмір плитки (letter_rearrangement, SwappableTileRow) — px-3
+// Компактний розмір плитки (letter_rearrangement, SortableTileRow) — px-3
 // py-1.5/text-base за замовчуванням.
 export const COMPACT_TILE_SIZE_CLASS = "px-2 py-1 text-sm";
 

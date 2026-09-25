@@ -7,7 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { SwappableTileRow } from "./swappable-tile-row";
+import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { useTwoColumnWordOrder } from "./use-two-column-word-order";
@@ -184,7 +184,7 @@ export function LetterRearrangementExercise({
                   {word.hintText.trim() && (
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
                   )}
-                  <SwappableTileRow
+                  <SortableTileRow
                     items={orders[wi]}
                     onChange={(next) => updateOrder(wi, next)}
                     locked={locked}

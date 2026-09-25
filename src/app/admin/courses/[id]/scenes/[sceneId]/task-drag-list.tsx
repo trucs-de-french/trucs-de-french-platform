@@ -13,6 +13,7 @@ import {
 } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
 type GroupRow = { id: string; title: string | null; content_type: string; maxPoints: number };
@@ -61,9 +62,12 @@ function getTaskPreview(config: Record<string, unknown> | null): string | null {
 }
 
 // Той самий click-нейтральний drag-патерн, що й у SceneBlockList: ручка
-// (GripVertical) — джерело drag, увесь <li> — ціль drop. Swap-семантика (перетягнута
-// картка міняється місцями з тією, на яку кинута) — узгоджено з
-// SceneBlockList/reorder.tsx, а не insert-shift.
+// (GripVertical) — джерело drag, увесь <li> — ціль drop. Insert-семантика для
+// звичайного reorder (перетягнута картка стає рівно на місце, куди її
+// кинули, решта зсувається — src/lib/sortable-list.ts) — АЛЕ кидок задачі
+// САМЕ на рядок блоку лишається окремою, незмінною операцією "прикріпити"
+// (attach), не позиціюванням: там і далі повний кольоровий highlight картки
+// блоку, без лінії-індикатора.
 //
 // Стрілки ↑/↓ НЕ ходять через moveTask/moveTaskGroup (form + redirect) —
 // свідоме рішення: цей список уже повністю клієнтський (rows у useState),
@@ -91,7 +95,11 @@ export function TaskDragList({
   initialRows: Row[];
 }) {
   const [rows, setRows] = useState(initialRows);
+  // Повний кольоровий highlight картки блоку — лише для "прикріпити"
+  // (willAttach), не для звичайного reorder (той тепер показує тонку лінію
+  // через dropTarget, не підсвічування всієї картки).
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; side: DropSide } | null>(null);
   // Яка задача/блок зараз тягнеться — потрібно ЗАЗДАЛЕГІДЬ (під час
   // dragover, до drop), щоб показати іншу підсвітку для "прикріпити" на
   // блок, а не лише "поміняти місцями". dataTransfer.getData() тут не
@@ -111,15 +119,11 @@ export function TaskDragList({
     });
   }
 
-  async function swap(fromId: string, toId: string) {
-    if (fromId === toId) return;
-    const fromIndex = rows.findIndex((r) => r.id === fromId);
-    const toIndex = rows.findIndex((r) => r.id === toId);
-    if (fromIndex === -1 || toIndex === -1) return;
+  async function moveByIndex(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex === -1 || toIndex === -1) return;
 
     const prev = rows;
-    const next = [...rows];
-    [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+    const next = arrayMove(rows, fromIndex, toIndex);
     setRows(next);
     setError(null);
 
@@ -131,6 +135,13 @@ export function TaskDragList({
       setRows(prev);
       setError(result.error ?? "Не вдалося зберегти новий порядок");
     }
+  }
+
+  async function move(fromId: string, overId: string, side: DropSide) {
+    const fromIndex = rows.findIndex((r) => r.id === fromId);
+    const overIndex = rows.findIndex((r) => r.id === overId);
+    if (fromIndex === -1 || overIndex === -1) return;
+    await moveByIndex(fromIndex, computeInsertIndex(fromIndex, overIndex, side));
   }
 
   // Кинути задачу САМЕ на рядок блоку — прикріпити її до блоку (той самий
@@ -161,18 +172,28 @@ export function TaskDragList({
 
       <ul className="flex flex-col gap-2">
         {rows.map((row, i) => {
-          // Кинути задачу САМЕ на блок = прикріпити, не поміняти місцями —
+          // Кинути задачу САМЕ на блок = прикріпити, не позиціювати —
           // усі інші комбінації (задача на задачу, блок на будь-що)
-          // лишаються звичайним swap, як і раніше.
+          // лишаються звичайним insert-reorder.
           const willAttach = row.kind === "group" && draggingRow?.kind === "task";
 
           const dragProps = {
-            onDragOver: (e: DragEvent) => e.preventDefault(),
+            onDragOver: (e: DragEvent) => {
+              e.preventDefault();
+              if (draggingId === null) return;
+              if (!willAttach) {
+                const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+                setDropTarget({ id: row.id, side });
+              }
+            },
             onDragEnter: (e: DragEvent) => {
               e.preventDefault();
               setDragOver(row.id);
             },
-            onDragLeave: () => setDragOver((p) => (p === row.id ? null : p)),
+            onDragLeave: () => {
+              setDragOver((p) => (p === row.id ? null : p));
+              setDropTarget((p) => (p?.id === row.id ? null : p));
+            },
             onDrop: (e: DragEvent) => {
               e.preventDefault();
               setDragOver(null);
@@ -182,9 +203,10 @@ export function TaskDragList({
               const fromRow = rows.find((r) => r.id === fromId);
               if (fromRow?.kind === "task" && row.kind === "group") {
                 void attach(fromId, row.id);
-              } else {
-                void swap(fromId, row.id);
+              } else if (dropTarget) {
+                void move(fromId, dropTarget.id, dropTarget.side);
               }
+              setDropTarget(null);
             },
           };
           const handle = (
@@ -197,6 +219,7 @@ export function TaskDragList({
               onDragEnd={() => {
                 setDraggingId(null);
                 setDragOver(null);
+                setDropTarget(null);
               }}
               className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
               aria-hidden
@@ -208,14 +231,15 @@ export function TaskDragList({
           if (row.kind === "group") {
             const ContentIcon = TASK_GROUP_CONTENT_ICON[row.content_type];
             return (
-              <li
-                key={row.id}
+              <li key={row.id} className="relative">
+              {dropTarget?.id === row.id && dropTarget.side === "before" && (
+                <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+              )}
+              <div
                 {...dragProps}
                 className={`flex flex-col rounded-md border border-t-4 bg-white p-3 shadow-sm transition-colors dark:bg-neutral-800 ${
-                  dragOver === row.id
-                    ? willAttach
-                      ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
-                      : "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+                  dragOver === row.id && willAttach
+                    ? "border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/30"
                     : `border-gray-200 dark:border-neutral-700 ${
                         TASK_GROUP_CONTENT_COLORS[row.content_type]?.border ?? ""
                       }`
@@ -254,7 +278,7 @@ export function TaskDragList({
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => void swap(row.id, rows[i - 1].id)}
+                      onClick={() => void moveByIndex(i, i - 1)}
                       disabled={i === 0}
                       aria-label="Перемістити вище"
                       title="Перемістити вище"
@@ -264,7 +288,7 @@ export function TaskDragList({
                     </button>
                     <button
                       type="button"
-                      onClick={() => void swap(row.id, rows[i + 1].id)}
+                      onClick={() => void moveByIndex(i, i + 1)}
                       disabled={i === rows.length - 1}
                       aria-label="Перемістити нижче"
                       title="Перемістити нижче"
@@ -284,6 +308,10 @@ export function TaskDragList({
                     </form>
                   </div>
                 </div>
+              </div>
+              {dropTarget?.id === row.id && dropTarget.side === "after" && (
+                <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+              )}
               </li>
             );
           }
@@ -291,16 +319,15 @@ export function TaskDragList({
           const preview = getTaskPreview(row.config);
           const isExpanded = expanded.has(row.id);
           return (
-            <li
-              key={row.id}
+            <li key={row.id} className="relative">
+            {dropTarget?.id === row.id && dropTarget.side === "before" && (
+              <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
+            <div
               {...dragProps}
-              className={`flex flex-col rounded-md border p-3 transition-colors ${stripeClassFor(
+              className={`flex flex-col rounded-md border p-3 ${stripeClassFor(
                 row.type
-              )} ${
-                dragOver === row.id
-                  ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                  : `border-gray-200 bg-white shadow-sm ${shadowClassFor(row.type)} dark:border-neutral-700 dark:bg-neutral-800`
-              }`}
+              )} border-gray-200 bg-white shadow-sm ${shadowClassFor(row.type)} dark:border-neutral-700 dark:bg-neutral-800`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -336,7 +363,7 @@ export function TaskDragList({
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => void swap(row.id, rows[i - 1].id)}
+                    onClick={() => void moveByIndex(i, i - 1)}
                     disabled={i === 0}
                     aria-label="Перемістити вище"
                     title="Перемістити вище"
@@ -346,7 +373,7 @@ export function TaskDragList({
                   </button>
                   <button
                     type="button"
-                    onClick={() => void swap(row.id, rows[i + 1].id)}
+                    onClick={() => void moveByIndex(i, i + 1)}
                     disabled={i === rows.length - 1}
                     aria-label="Перемістити нижче"
                     title="Перемістити нижче"
@@ -379,6 +406,10 @@ export function TaskDragList({
                   {preview}
                 </p>
               )}
+            </div>
+            {dropTarget?.id === row.id && dropTarget.side === "after" && (
+              <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
             </li>
           );
         })}

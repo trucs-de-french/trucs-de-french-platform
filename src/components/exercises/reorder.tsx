@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { SwappableTileRow } from "./swappable-tile-row";
+import { SortableTileRow } from "./sortable-tile-row";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -14,7 +14,7 @@ type SequenceDetail = ReorderDetail["sequences"][number];
 
 // Один ряд плиток у перемішаному порядку — жодного окремого банку чи
 // порожніх слотів (на відміну від drag_drop, де банк доречний через текст
-// із пропусками). Сам DnD/click-swap — у спільному SwappableTileRow
+// із пропусками). Сам DnD/click-move — у спільному SortableTileRow
 // (той самий код, що й letter_rearrangement). Контрольований компонент —
 // батько (ReorderExercise) тримає поточний порядок кожної послідовності.
 function ReorderSequenceTiles({
@@ -55,7 +55,7 @@ function ReorderSequenceTiles({
             : `${points} ${pluralizePoints(points)}`}
         </p>
       )}
-      <SwappableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
+      <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
 
       {detail && (
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">

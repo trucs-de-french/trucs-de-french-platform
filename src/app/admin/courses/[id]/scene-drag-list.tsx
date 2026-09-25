@@ -5,14 +5,17 @@ import Link from "next/link";
 import { GripVertical, Copy, Trash2 } from "lucide-react";
 import { deleteScene, duplicateScene, reorderScenes } from "@/app/admin/scenes/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 
 type Scene = { id: string; title: string };
 
 // Той самий click-нейтральний drag-патерн, що й TaskDragList/LinkDragList:
-// ручка — джерело drag, увесь <li> — ціль drop, swap-семантика. На відміну
-// від TaskDragList, стрілки ↑/↓ тут НЕ лишені поряд із drag — свідома
-// відмінність від того патерну (там стрілки — та сама операція, що drag на
-// сусіда; тут drag повністю замінює стрілки, а не доповнює їх).
+// ручка — джерело drag, увесь <li> — ціль drop. Insert-семантика (не swap) —
+// відпущена сцена стає рівно на місце, куди її кинули, решта зсувається (див.
+// src/lib/sortable-list.ts). На відміну від TaskDragList, стрілки ↑/↓ тут НЕ
+// лишені поряд із drag — свідома відмінність від того патерну (там стрілки —
+// та сама операція, що drag на сусіда; тут drag повністю замінює стрілки, а
+// не доповнює їх).
 //
 // useState(initialScenes) бере пропс лише як початкове значення — той самий
 // компроміс, що в TaskDragList.
@@ -24,18 +27,19 @@ export function SceneDragList({
   initialScenes: Scene[];
 }) {
   const [scenes, setScenes] = useState(initialScenes);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; side: DropSide } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function swap(fromId: string, toId: string) {
-    if (fromId === toId) return;
+  async function move(fromId: string, overId: string, side: DropSide) {
     const fromIndex = scenes.findIndex((s) => s.id === fromId);
-    const toIndex = scenes.findIndex((s) => s.id === toId);
-    if (fromIndex === -1 || toIndex === -1) return;
+    const overIndex = scenes.findIndex((s) => s.id === overId);
+    if (fromIndex === -1 || overIndex === -1) return;
+    const toIndex = computeInsertIndex(fromIndex, overIndex, side);
+    if (toIndex === fromIndex) return;
 
     const prev = scenes;
-    const next = [...scenes];
-    [next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
+    const next = arrayMove(scenes, fromIndex, toIndex);
     setScenes(next);
     setError(null);
 
@@ -59,30 +63,37 @@ export function SceneDragList({
 
       <ul className="flex flex-col gap-2">
         {scenes.map((scene) => (
-          <li
-            key={scene.id}
-            onDragOver={(e: DragEvent) => e.preventDefault()}
-            onDragEnter={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(scene.id);
-            }}
-            onDragLeave={() => setDragOver((p) => (p === scene.id ? null : p))}
-            onDrop={(e: DragEvent) => {
-              e.preventDefault();
-              setDragOver(null);
-              const fromId = e.dataTransfer.getData("text/plain");
-              if (fromId) void swap(fromId, scene.id);
-            }}
-            className={`flex items-center justify-between rounded-md border p-3 transition-colors ${
-              dragOver === scene.id
-                ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
-                : "border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800"
-            }`}
-          >
+          <li key={scene.id} className="relative">
+            {dropTarget?.id === scene.id && dropTarget.side === "before" && (
+              <span className="absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
+            <div
+              onDragOver={(e: DragEvent) => {
+                e.preventDefault();
+                if (draggingId === null) return;
+                const side = resolveDropSide(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect(), "vertical");
+                setDropTarget({ id: scene.id, side });
+              }}
+              onDragLeave={() => setDropTarget((p) => (p?.id === scene.id ? null : p))}
+              onDragEnd={() => {
+                setDraggingId(null);
+                setDropTarget(null);
+              }}
+              onDrop={(e: DragEvent) => {
+                e.preventDefault();
+                const fromId = e.dataTransfer.getData("text/plain");
+                if (fromId && dropTarget) void move(fromId, dropTarget.id, dropTarget.side);
+                setDropTarget(null);
+              }}
+              className="flex items-center justify-between rounded-md border border-gray-100 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+            >
             <div className="flex items-center gap-2">
               <span
                 draggable
-                onDragStart={(e: DragEvent) => e.dataTransfer.setData("text/plain", scene.id)}
+                onDragStart={(e: DragEvent) => {
+                  e.dataTransfer.setData("text/plain", scene.id);
+                  setDraggingId(scene.id);
+                }}
                 className="cursor-grab select-none text-neutral-400 active:cursor-grabbing dark:text-neutral-500"
                 aria-hidden
               >
@@ -117,6 +128,10 @@ export function SceneDragList({
                 </SubmitButton>
               </form>
             </div>
+            </div>
+            {dropTarget?.id === scene.id && dropTarget.side === "after" && (
+              <span className="absolute -bottom-[5px] left-0 right-0 h-0.5 rounded-full bg-brand" aria-hidden />
+            )}
           </li>
         ))}
       </ul>
