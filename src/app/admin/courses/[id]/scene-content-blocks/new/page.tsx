@@ -25,7 +25,8 @@ export default async function NewSceneContentBlockPage({
       <h1 className="mt-2 text-2xl font-bold">Новий додатковий блок</h1>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Самостійний контент (текст/аудіо/відео/embed) на сцені, окремо від Відео/Скрипта/
-        Практики/Завдання. Тимчасово завжди рендериться в кінці сторінки сцени.
+        Практики/Завдання. Одразу після створення блок можна перетягнути на потрібне місце
+        серед інших блоків сцени.
       </p>
 
       <form
