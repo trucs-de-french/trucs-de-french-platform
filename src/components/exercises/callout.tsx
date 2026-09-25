@@ -1,4 +1,5 @@
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
+import { isBlankHtml } from "@/lib/html-text";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 
 // Не "use client" — це чистий, неінтерактивний блок тексту, рендериться
@@ -28,6 +29,12 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
   // майбутніх редакторів бази в обхід адмінки, і від зміни правил санітизації
   // заднім числом для вже збереженого контенту.
   const safeHtml = sanitizeCalloutHtml(config.content ?? "");
+  // Порожній callout (лише <p></p>/<br>/<hr> без реального тексту) не має
+  // сенсу показувати — на відміну від інших типів, callout не обгортається
+  // в EXERCISE_BLOCK_CLASS зовні (свій власний кольоровий бокс), тож
+  // taskHasRenderableContent (task-visibility.ts) не покриває цей рівень —
+  // перевірка тут, у самому компоненті.
+  if (isBlankHtml(safeHtml)) return null;
 
   return (
     <div className={`flex gap-2 rounded-md border-2 p-3 ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
