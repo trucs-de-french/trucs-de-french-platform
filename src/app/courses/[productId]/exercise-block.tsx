@@ -8,6 +8,7 @@ import { EmbedWithFallback } from "@/components/embed-with-fallback";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
+import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 
 export type ExerciseTask = {
   id: string;
@@ -28,10 +29,6 @@ type LinkEmbedConfig = {
   download?: boolean;
 };
 
-// Для цих типів студенту потрібно бачити заголовок замість власної
-// інструкції (як в решти типів вправ). Той самий список, що вже в
-// scenes/[sceneId]/page.tsx.
-const TYPES_WITH_TITLE = ["link", "game", "embed"];
 // Технічна назва типу (напр. "embed") — лише для link/game, де вона реально
 // підказує студенту, із чим він має справу (зовнішнє посилання/гра). Для
 // embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
@@ -65,7 +62,7 @@ export function ExerciseBlock({
 
   return (
     <>
-      {TYPES_WITH_TITLE.includes(task.type) && (
+      {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && (
         <>
           {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
             <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">

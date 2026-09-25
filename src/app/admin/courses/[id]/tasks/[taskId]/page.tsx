@@ -9,8 +9,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { blockDomId } from "@/lib/block-dom-id";
 import { BUTTON_DANGER } from "@/lib/button-styles";
-import { INPUT_BORDER } from "@/lib/input-styles";
-import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK } from "@/lib/typography-styles";
 
 type TaskDetail = {
   id: string;
@@ -163,17 +162,8 @@ export default async function EditTaskPage({
         backLink={{ href: backHref, label: backLabel }}
         previewLink={studentHref ? { productId, href: studentHref } : undefined}
       >
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Назва</label>
-          <input
-            name="title"
-            defaultValue={task.title}
-            required
-            className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
-          />
-        </div>
-
         <TaskConfigFields
+          initialTitle={task.title}
           initialType={task.type}
           initialConfig={task.config ?? {}}
           initialGame={task.games ?? undefined}

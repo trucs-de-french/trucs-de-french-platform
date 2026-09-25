@@ -614,3 +614,45 @@ export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
   error_correction: "Робота над помилками: власні помилки студента",
   game: "Стара гра (Wordwall тощо) — лише редагування",
 };
+
+// Людські назви типів для комбобокса вибору типу (TaskTypeCombobox) — єдине
+// джерело, звідки й TYPE_OPTIONS (task-config-fields.tsx) бере label, і
+// generateTaskTitle (task-title.ts) бере назву типу для автоназви задачі —
+// раніше ці рядки жили лише як текстові літерали в TYPE_OPTIONS, дублювати
+// їх для автоназви означало б ризикувати розбіжністю з тим, що вчителька
+// бачить у самому меню вибору типу.
+export const TASK_TYPE_LABELS: Record<string, string> = {
+  open_answer: "Відкрита відповідь (автоперевірка)",
+  essay_check: "Есе / DELF (AI-перевірка)",
+  listening: "Аудіювання",
+  error_correction: "Робота над помилками",
+  vocab_quiz: "Вікторина лексики",
+  embed: "Гра / вбудований контент",
+  link: "Посилання-кнопка",
+  fill_blank: "Заповніть пропуск",
+  letter_gaps: "Пропущені літери",
+  letter_rearrangement: "Переставити літери",
+  multiple_choice: "Оберіть правильний варіант",
+  word_choice: "Вибір правильної форми",
+  word_search: "Філворд",
+  crossword: "Кросворд",
+  true_false: "Оберіть Vrai чи Faux",
+  matching: "З'єднайте елементи",
+  reorder: "Розкладіть у правильному порядку",
+  drag_drop: "Перетягніть слова",
+  sort_columns: "Розкладіть по колонках",
+  flip_cards: "Фліп-картки",
+  callout: "Текстовий блок (callout)",
+  phonetics: "Фонетика",
+  table_fill: "Заповніть таблицю",
+  image_match: "Перетягніть назви під картинки",
+  checkbox_grid: "Таблиця вибору",
+  chronological_order: "Хронологічний порядок",
+  game: "Гра",
+};
+
+// Типи, чия tasks.title показується СТУДЕНТУ (scenes/[sceneId]/page.tsx,
+// exercise-block.tsx) — там вона лишається обов'язковим/ручним полем, як і
+// раніше; автоназва (task-title.ts) для них НЕ генерується. Єдине джерело —
+// раніше цей самий масив був продубльований в обох студентських файлах.
+export const TASK_TYPES_WITH_VISIBLE_TITLE = ["link", "game", "embed"];

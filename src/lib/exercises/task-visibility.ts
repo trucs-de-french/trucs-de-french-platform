@@ -23,18 +23,28 @@ type MinimalTask = {
 // ("У цій вправі ще немає карток" тощо) навіть при порожніх даних — їм ця
 // перевірка не потрібна, тому default — true (рендерити як завжди).
 export function taskHasRenderableContent(task: MinimalTask): boolean {
+  const config = (task.config ?? {}) as { url?: string; content?: string };
+
+  // callout окремо, ПЕРЕД загальним "title непорожній -> є вміст" нижче:
+  // студент title callout узагалі не бачить (exercise-block.tsx,
+  // TASK_TYPES_WITH_VISIBLE_TITLE), а відколи title генерується автоматично
+  // з типу/тексту (task-title.ts), він завжди непорожній навіть для
+  // порожнього callout ("Текстовий блок (callout)" — сама лише назва
+  // типу) — той загальний короткий шлях більше не сигналізує "є що
+  // показати" саме для цього типу.
+  if (task.type === "callout") {
+    return !isBlankHtml(config.content) || Boolean(task.image_url) || Boolean(task.audio_url);
+  }
+
   if (!isBlankHtml(task.title)) return true;
   if (task.image_url || task.audio_url) return true;
 
-  const config = (task.config ?? {}) as { url?: string; content?: string };
   switch (task.type) {
     case "game":
       return !isBlankHtml(task.games?.embed_url);
     case "link":
     case "embed":
       return !isBlankHtml(config.url);
-    case "callout":
-      return !isBlankHtml(config.content);
     default:
       return true;
   }

@@ -37,6 +37,7 @@ import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
+import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import {
   SceneContentBlock,
   SceneContentBlockContent,
@@ -72,9 +73,6 @@ type TaskRow = {
   games: { embed_url: string | null; provider: string } | null;
 };
 
-// Для цих типів студенту потрібно бачити заголовок замість власної
-// інструкції (як в решти типів вправ).
-const TYPES_WITH_TITLE = ["link", "game", "embed"];
 // Технічна назва типу (напр. "embed") — лише для link/game, де вона реально
 // підказує студенту, із чим він має справу (зовнішнє посилання/гра). Для
 // embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
@@ -495,7 +493,7 @@ export default async function ScenePage({
               id={`task-${task.id}`}
               className={`scroll-mt-4 ${EXERCISE_STACK} ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
             >
-              {TYPES_WITH_TITLE.includes(task.type) && (
+              {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && (
                 <div>
                   {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
                     <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">

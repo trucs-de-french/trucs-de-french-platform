@@ -7,8 +7,7 @@ import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { blockDomId } from "@/lib/block-dom-id";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
-import { INPUT_BORDER } from "@/lib/input-styles";
-import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
+import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK } from "@/lib/typography-styles";
 import { Z_ACTION_BAR } from "@/lib/z-layers";
 
 export default async function NewTaskPage({
@@ -140,15 +139,6 @@ export default async function NewTaskPage({
             "верх сторінки". Непрозорий рядок — сервер лише проносить його
             далі, не інтерпретує. */}
         {anchor && <input type="hidden" name="anchor" value={anchor} />}
-
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Назва</label>
-          <input
-            name="title"
-            required
-            className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
-          />
-        </div>
 
         <TaskConfigFields
           scenes={scenes ?? []}

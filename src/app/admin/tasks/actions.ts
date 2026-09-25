@@ -9,6 +9,8 @@ import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 import { blockDomId } from "@/lib/block-dom-id";
+import { generateTaskTitle } from "@/lib/exercises/task-title";
+import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -350,6 +352,34 @@ function parseJsonField(value: FormDataEntryValue | null): unknown[] {
   }
 }
 
+// Автоназва — єдине місце для обох сценаріїв (створення й оновлення):
+// - назва порожня -> генерується з (нового) config;
+// - назва саме та, що generateTaskTitle дала б зі СТАРОГО config
+//   (previous) -> вчителька її не міняла руками, перегенеровуємо з нового
+//   config, щоб назва не застаріла після редагування слів/речень;
+// - будь-яка інша назва -> ручна, не чіпаємо.
+// Типи з видимою студенту назвою (TASK_TYPES_WITH_VISIBLE_TITLE —
+// link/embed/game) взагалі не проходять через цю функцію — там назва
+// лишається обов'язковим/ручним полем, як і раніше (виклик пропускається
+// на рівні createTask/updateTask нижче).
+function resolveTaskTitle(
+  rawTitle: string,
+  type: string,
+  config: Record<string, unknown>,
+  previous?: { title: string; type: string; config: Record<string, unknown> | null }
+): string {
+  if (TASK_TYPES_WITH_VISIBLE_TITLE.includes(type)) return rawTitle;
+
+  const trimmed = rawTitle.trim();
+  if (!trimmed) return generateTaskTitle(type, config);
+
+  if (previous && trimmed === generateTaskTitle(previous.type, previous.config ?? {})) {
+    return generateTaskTitle(type, config);
+  }
+
+  return rawTitle;
+}
+
 async function syncGameRow(
   supabase: Awaited<ReturnType<typeof createClient>>,
   taskId: string,
@@ -438,7 +468,8 @@ export async function createTask(formData: FormData) {
   // відкритої зі сторінки блоку (?taskGroupId=...).
   const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
-  const title = formData.get("title") as string;
+  const config = buildConfig(type, formData);
+  const title = resolveTaskTitle((formData.get("title") as string) ?? "", type, config);
   const delfSection = (formData.get("delf_section") as string) || null;
   const delfTestNumber = formData.get("delf_test_number")
     ? Number(formData.get("delf_test_number"))
@@ -463,7 +494,7 @@ export async function createTask(formData: FormData) {
       type,
       title,
       order_index: orderIndex,
-      config: buildConfig(type, formData),
+      config,
       image_url: resolveImageUrl(formData),
       audio_url: resolveAudioUrl(formData),
       // Чекбокс рендериться лише для POINTS_SUPPORTED_TASK_TYPES
@@ -510,14 +541,32 @@ export async function updateTask(
   const supabase = await createClient();
 
   const type = formData.get("type") as string;
-  const title = formData.get("title") as string;
+  const config = buildConfig(type, formData);
+
+  // Стара назва/тип/config — щоб відрізнити "вчителька лишила автоназву
+  // незмінною" (перегенерувати з нового config) від "вчителька вписала
+  // щось своє" (не чіпати) — resolveTaskTitle вище.
+  const { data: previousTask } = await supabase
+    .from("tasks")
+    .select("title, type, config")
+    .eq("id", taskId)
+    .single();
+
+  const title = resolveTaskTitle(
+    (formData.get("title") as string) ?? "",
+    type,
+    config,
+    previousTask
+      ? { title: previousTask.title, type: previousTask.type, config: previousTask.config }
+      : undefined
+  );
 
   const { error } = await supabase
     .from("tasks")
     .update({
       type,
       title,
-      config: buildConfig(type, formData),
+      config,
       image_url: resolveImageUrl(formData),
       audio_url: resolveAudioUrl(formData),
       points_visible: formData.get("points_visible") === "true",

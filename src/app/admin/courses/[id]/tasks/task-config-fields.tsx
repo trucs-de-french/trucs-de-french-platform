@@ -60,13 +60,16 @@ import {
   TASK_TYPE_COLORS,
   CATEGORY_LABELS,
   getTaskTypeCategory,
+  TASK_TYPE_LABELS,
+  TASK_TYPES_WITH_VISIBLE_TITLE,
 } from "@/lib/exercises/task-type-meta";
+import { generateTaskTitle, buildTitlePreviewConfig } from "@/lib/exercises/task-title";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileOrLinkField } from "@/components/file-or-link-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { LABEL_TEXT } from "@/lib/typography-styles";
+import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -116,36 +119,42 @@ const NO_TRANSLATION_TYPES = [
 // раніше — перший елемент TYPE_OPTIONS), не змінюючи звичну поведінку.
 const DEFAULT_TASK_TYPE = "open_answer";
 
-const TYPE_OPTIONS = [
-  { value: "open_answer", label: "Відкрита відповідь (автоперевірка)" },
-  { value: "essay_check", label: "Есе / DELF (AI-перевірка)" },
-  { value: "listening", label: "Аудіювання" },
-  { value: "error_correction", label: "Робота над помилками" },
-  { value: "vocab_quiz", label: "Вікторина лексики" },
-  { value: "embed", label: "Гра / вбудований контент" },
-  { value: "link", label: "Посилання-кнопка" },
-  { value: "fill_blank", label: "Заповніть пропуск" },
-  { value: "letter_gaps", label: "Пропущені літери" },
-  { value: "letter_rearrangement", label: "Переставити літери" },
-  { value: "multiple_choice", label: "Оберіть правильний варіант" },
-  { value: "word_choice", label: "Вибір правильної форми" },
-  { value: "word_search", label: "Філворд" },
-  { value: "crossword", label: "Кросворд" },
-  { value: "true_false", label: "Оберіть Vrai чи Faux" },
-  { value: "matching", label: "З'єднайте елементи" },
-  { value: "reorder", label: "Розкладіть у правильному порядку" },
-  { value: "drag_drop", label: "Перетягніть слова" },
-  { value: "sort_columns", label: "Розкладіть по колонках" },
-  { value: "flip_cards", label: "Фліп-картки" },
-  { value: "callout", label: "Текстовий блок (callout)" },
-  { value: "phonetics", label: "Фонетика" },
-  { value: "table_fill", label: "Заповніть таблицю" },
-  { value: "image_match", label: "Перетягніть назви під картинки" },
-  { value: "checkbox_grid", label: "Таблиця вибору" },
-  { value: "chronological_order", label: "Хронологічний порядок" },
+// Порядок оголошення тут ні на що вже не впливає (реальний порядок у
+// комбоксі задає TASK_TYPE_GROUPS/TaskTypeCombobox) — лишається лише як
+// перелік доступних для вибору значень; label береться з TASK_TYPE_LABELS
+// (task-type-meta.ts), єдиного джерела, спільного з generateTaskTitle.
+const TYPE_OPTION_VALUES = [
+  "open_answer",
+  "essay_check",
+  "listening",
+  "error_correction",
+  "vocab_quiz",
+  "embed",
+  "link",
+  "fill_blank",
+  "letter_gaps",
+  "letter_rearrangement",
+  "multiple_choice",
+  "word_choice",
+  "word_search",
+  "crossword",
+  "true_false",
+  "matching",
+  "reorder",
+  "drag_drop",
+  "sort_columns",
+  "flip_cards",
+  "callout",
+  "phonetics",
+  "table_fill",
+  "image_match",
+  "checkbox_grid",
+  "chronological_order",
 ];
+const TYPE_OPTIONS = TYPE_OPTION_VALUES.map((value) => ({ value, label: TASK_TYPE_LABELS[value] }));
 
 type Props = {
+  initialTitle?: string;
   initialType?: string;
   initialConfig?: Record<string, unknown>;
   initialGame?: { provider?: string; embed_url?: string | null; game_type?: string | null };
@@ -173,6 +182,7 @@ type Props = {
 };
 
 export function TaskConfigFields({
+  initialTitle,
   initialType,
   initialConfig,
   initialGame,
@@ -192,7 +202,36 @@ export function TaskConfigFields({
   // створюються), але вже наявну задачу з type="game" мусимо і далі
   // показувати коректно вибраною в комбобоксі (не "Оберіть тип") — додаємо
   // пункт назад лише для цього єдиного випадку.
-  const typeOptions = initialType === "game" ? [{ value: "game", label: "Гра" }, ...TYPE_OPTIONS] : TYPE_OPTIONS;
+  const typeOptions =
+    initialType === "game" ? [{ value: "game", label: TASK_TYPE_LABELS.game }, ...TYPE_OPTIONS] : TYPE_OPTIONS;
+
+  // Поле "Назва" живе тут (не в батьківській сторінці), бо лише тут відомий
+  // type — потрібен і для авто-плейсхолдера (яка автоназва вийшла б), і щоб
+  // сховати сам плейсхолдер/кнопку "Згенерувати" для типів, чия назва видна
+  // студенту (TASK_TYPES_WITH_VISIBLE_TITLE — там назва лишається
+  // обов'язковим полем без автогенерації, як і раніше).
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  // display:contents — обгортка потрібна лише як DOM-вузол для делегованого
+  // onChange/onInput (рахує ЖИВИЙ прев'ю автоназви, поки вчителька заповнює
+  // конкретний тип), сама по собі в розкладку не втручається.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [previewTitle, setPreviewTitle] = useState(() =>
+    generateTaskTitle(initialType ?? DEFAULT_TASK_TYPE, initialConfig ?? {})
+  );
+
+  // rAF, не одразу — дочекатись, поки React застосує onChange дочірнього
+  // поля (те, що й спричинило подію) і синхронізує його прихований
+  // JSON-інпут з новим станом, перш ніж читати FormData цієї форми;
+  // синхронне читання в тому самому обробнику бачило б ще СТАРЕ значення
+  // (React застосовує стан після завершення поточного обробника).
+  function scheduleTitlePreviewUpdate(currentType: string) {
+    requestAnimationFrame(() => {
+      const form = rootRef.current?.closest("form");
+      if (!form) return;
+      const liveConfig = buildTitlePreviewConfig(currentType, new FormData(form));
+      setPreviewTitle(generateTaskTitle(currentType, liveConfig));
+    });
+  }
   // Контрольований чекбокс, синхронізований з пропом від сервера
   // (points_visible оновлюється через revalidatePath в updateTask) — не
   // через useEffect (react-hooks/set-state-in-effect), а через "adjust
@@ -380,12 +419,47 @@ export function TaskConfigFields({
       setTransferWarning(null);
     }
     setType(newType);
+    // Новий тип -> інший набір полів у DOM (інші імена, інший config) —
+    // прев'ю рахуємо для НОВОГО типу, не старого.
+    scheduleTitlePreviewUpdate(newType);
   }
 
   const taskTypeCategory = getTaskTypeCategory(type);
+  const titleIsVisibleToStudent = TASK_TYPES_WITH_VISIBLE_TITLE.includes(type);
 
   return (
-    <>
+    <div
+      ref={rootRef}
+      className="contents"
+      onChange={() => scheduleTitlePreviewUpdate(type)}
+      onInput={() => scheduleTitlePreviewUpdate(type)}
+    >
+      <div className="flex flex-col gap-1">
+        <label className={LABEL_TEXT}>Назва</label>
+        <input
+          ref={titleInputRef}
+          name="title"
+          defaultValue={initialTitle ?? ""}
+          required={titleIsVisibleToStudent}
+          placeholder={titleIsVisibleToStudent ? undefined : previewTitle}
+          className={`${INPUT_BORDER} px-3 py-2 text-base font-medium`}
+        />
+        {!titleIsVisibleToStudent && (
+          <div className="flex items-center gap-2">
+            <p className={HINT_TEXT}>Якщо лишити порожнім — назва створиться автоматично.</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (titleInputRef.current) titleInputRef.current.value = previewTitle;
+              }}
+              className="shrink-0 text-xs text-brand hover:underline"
+            >
+              Згенерувати
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <label className={LABEL_TEXT}>Тип завдання</label>
@@ -1011,6 +1085,6 @@ export function TaskConfigFields({
           </label>
         </div>
       )}
-    </>
+    </div>
   );
 }
