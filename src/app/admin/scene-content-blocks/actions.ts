@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { deleteTaskGroupCore } from "@/app/admin/task-groups/actions";
 import type { ActionState } from "@/lib/action-state";
 
 // buildContentFields дубльована з task-groups/actions.ts (той самий шматок
@@ -153,12 +154,41 @@ export async function deleteSceneContentBlock(
   blockId: string
 ) {
   const supabase = await createClient();
-
-  const { error } = await supabase.from("scene_content_blocks").delete().eq("id", blockId);
-
   const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
+
+  // Прикріплена група вправ (0040) — спершу відкріпити її задачі тим самим
+  // ядром, що й кнопка "Видалити вправи блоку" (deleteTaskGroupCore), а не
+  // покладатись на ON DELETE CASCADE: інакше вправи знищились би разом із
+  // блоком без попередження, хоча сторінка сцени вже попереджає про це
+  // текстом підтвердження (для порожньої групи — просто видаляється разом
+  // із блоком, попереджати нема про що).
+  const { data: group } = await supabase
+    .from("task_groups")
+    .select("id")
+    .eq("scene_content_block_id", blockId)
+    .maybeSingle();
+
+  if (group) {
+    const result = await deleteTaskGroupCore(supabase, group.id);
+    if (!result.ok) {
+      redirect(`${backPath}?error=${encodeURIComponent(result.error ?? "Не вдалося прибрати вправи блоку")}`);
+    }
+  }
+
+  // .select("id") — перевіряє кількість РЕАЛЬНО видалених рядків: без цього
+  // RLS міг би мовчки відфільтрувати DELETE (0 рядків, без error), і кнопка
+  // виглядала б робочою, хоча блок і далі на місці (мовчазна відмова).
+  const { data, error } = await supabase
+    .from("scene_content_blocks")
+    .delete()
+    .eq("id", blockId)
+    .select("id");
+
   if (error) {
     redirect(`${backPath}?error=${encodeURIComponent(error.message)}`);
+  }
+  if (!data?.length) {
+    redirect(`${backPath}?error=${encodeURIComponent("Блок не видалено — можливо, вже видалений або немає прав")}`);
   }
 
   redirect(backPath);

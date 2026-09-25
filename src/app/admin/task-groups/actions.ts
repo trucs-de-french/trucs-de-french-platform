@@ -437,9 +437,36 @@ export async function copyTaskInGroup(
   return { ok: true, task: newTask };
 }
 
-// Видалення блоку НЕ видаляє його задачі (не покладаємось на схемний
-// on delete cascade, який є лише запобіжником) — спершу повертає кожну з
-// них у батьківський контекст блоку, той самий шлях, що detachTask.
+// Спільне ядро видалення групи — відкріплює всіх членів (не покладається на
+// схемний on delete cascade tasks.task_group_id, який знищив би задачі без
+// попередження), тоді видаляє вже порожню групу. Без redirect() — викликач
+// сам вирішує, куди й з яким якорем повертатись (deleteTaskGroup нижче —
+// кнопка "Видалити вправи блоку"; deleteSceneContentBlock,
+// ../scene-content-blocks/actions.ts — видалення content-блоку з
+// прикріпленою групою, той самий порядок дій, лише БЕЗ власного redirect).
+// Перевіряє кількість РЕАЛЬНО видалених рядків (.select("id")) — без цього
+// RLS міг би мовчки відфільтрувати DELETE (0 рядків, без error), і виклик
+// виглядав би успішним, хоча нічого не змінилось.
+export async function deleteTaskGroupCore(
+  supabase: Supa,
+  groupId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const { data: members } = await supabase.from("tasks").select("id").eq("task_group_id", groupId);
+  for (const member of members ?? []) {
+    await detachTaskFromGroup(supabase, member.id);
+  }
+
+  const { data, error } = await supabase.from("task_groups").delete().eq("id", groupId).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) {
+    return { ok: false, error: "Блок вправ не видалено — можливо, вже видалений або немає прав" };
+  }
+  return { ok: true };
+}
+
+// Видалення блоку НЕ видаляє його задачі — deleteTaskGroupCore спершу
+// повертає кожну з них у батьківський контекст блоку, той самий шлях, що
+// detachTask.
 export async function deleteTaskGroup(groupId: string) {
   const supabase = await createClient();
   const { data: group } = await supabase
@@ -459,14 +486,9 @@ export async function deleteTaskGroup(groupId: string) {
       ? `#${blockDomId("task")}`
       : "";
 
-  const { data: members } = await supabase.from("tasks").select("id").eq("task_group_id", groupId);
-  for (const member of members ?? []) {
-    await detachTaskFromGroup(supabase, member.id);
-  }
-
-  const { error } = await supabase.from("task_groups").delete().eq("id", groupId);
-  if (error) {
-    redirect(`${backPath}?error=${encodeURIComponent(error.message)}${anchor}`);
+  const result = await deleteTaskGroupCore(supabase, groupId);
+  if (!result.ok) {
+    redirect(`${backPath}?error=${encodeURIComponent(result.error ?? "Не вдалося видалити блок")}${anchor}`);
   }
 
   redirect(`${backPath}${anchor}`);

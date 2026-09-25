@@ -38,6 +38,19 @@ import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
 
+// Українська плюралізація "вправу/вправи/вправ" (знахідний відмінок —
+// "прикріплено N вправ(у)") для тексту підтвердження видалення content-
+// блоку з прикріпленими вправами — той самий mod10/mod100 принцип, що вже
+// pluralizePoints, лише для іншого слова, не варте окремого спільного файлу
+// заради єдиного місця вжитку.
+function pluralizeExercisesAccusative(n: number): "вправу" | "вправи" | "вправ" {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "вправу";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "вправи";
+  return "вправ";
+}
+
 type SceneBlockType = "video" | "script" | "link" | "task" | "vocab";
 const DEFAULT_BLOCK_ORDER: SceneBlockType[] = ["video", "script", "vocab", "link", "task"];
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
@@ -483,13 +496,25 @@ export default async function AdminScenePage({
       </form>
     );
 
+    // Скільки вправ прикріплено (якщо є група) — попереджаємо в тексті
+    // підтвердження ЛИШЕ коли є що відкріпляти; для порожньої групи (чи
+    // взагалі без групи) звичайний текст без згадки вправ — деталь про
+    // "видаляться разом" тут зайва, порожню групу дійсно видаляє каскад.
+    const attachedMemberCount = attachedGroup
+      ? (membersByAttachedGroupId.get(attachedGroup.id) ?? []).length
+      : 0;
+    const deleteBlockMessage =
+      attachedMemberCount > 0
+        ? `До блоку прикріплено ${attachedMemberCount} ${pluralizeExercisesAccusative(attachedMemberCount)} — вони НЕ видаляться, повернуться у звичайний список завдань сцени. Видалити блок? Цю дію не можна скасувати.`
+        : "Видалити цей блок? Цю дію не можна скасувати.";
+
     contentByKey[`content:${block.refId}`] = (
       <div className="flex flex-col gap-3">
         {editor}
         {exercisesSection}
         <ConfirmForm
           action={deleteSceneContentBlock.bind(null, productId, sceneId, block.refId)}
-          message="Видалити цей блок? Цю дію не можна скасувати."
+          message={deleteBlockMessage}
         >
           <SubmitButton
             pendingChildren="Видаляю..."
