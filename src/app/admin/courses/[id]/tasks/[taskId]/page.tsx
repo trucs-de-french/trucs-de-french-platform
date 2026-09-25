@@ -7,6 +7,7 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { blockDomId } from "@/lib/block-dom-id";
 import { BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT } from "@/lib/typography-styles";
@@ -20,6 +21,7 @@ type TaskDetail = {
   audio_url: string | null;
   scene_id: string | null;
   material_id: string | null;
+  task_group_id: string | null;
   delf_section: string | null;
   delf_test_number: number | null;
   points_visible: boolean;
@@ -38,7 +40,7 @@ export default async function EditTaskPage({
     supabase
       .from("tasks")
       .select(
-        "id, type, title, config, image_url, audio_url, scene_id, material_id, delf_section, delf_test_number, points_visible, games(provider, embed_url, game_type)"
+        "id, type, title, config, image_url, audio_url, scene_id, material_id, task_group_id, delf_section, delf_test_number, points_visible, games(provider, embed_url, game_type)"
       )
       .eq("id", taskId)
       .single<TaskDetail>(),
@@ -48,43 +50,104 @@ export default async function EditTaskPage({
 
   if (!task) notFound();
 
-  const { data: sceneRow } = task.scene_id
-    ? await supabase.from("scenes").select("dialogue").eq("id", task.scene_id).single()
+  // Задача в блоці (task_group_id) сама має null scene_id/material_id
+  // (успадковує контекст від групи, 0031_task_groups.sql) — доводиться
+  // підвантажити батьківський контекст самої групи, той самий принцип, що
+  // resolveTaskParentPath (../../tasks/actions.ts).
+  let group: {
+    scene_id: string | null;
+    material_id: string | null;
+    delf_test_number: number | null;
+    scene_content_block_id: string | null;
+  } | null = null;
+  if (task.task_group_id) {
+    const { data } = await supabase
+      .from("task_groups")
+      .select("scene_id, material_id, delf_test_number, scene_content_block_id")
+      .eq("id", task.task_group_id)
+      .single();
+    group = data ?? null;
+  }
+
+  // Група, прикріплена до scene_content_block (0040) — керується інлайн на
+  // сторінці сцени, не власною сторінкою; резолвимо scene_id через сам
+  // content-блок і повертаємо якорем на його картку.
+  let contentBlockSceneId: string | null = null;
+  if (group?.scene_content_block_id) {
+    const { data: contentBlock } = await supabase
+      .from("scene_content_blocks")
+      .select("scene_id")
+      .eq("id", group.scene_content_block_id)
+      .single();
+    contentBlockSceneId = contentBlock?.scene_id ?? null;
+  }
+
+  // Сцена вправи — власна (task.scene_id) АБО, для вправи блоку, сцена
+  // самої групи (group.scene_id) чи, для групи, прикріпленої до content-
+  // блоку, сцена ЦЬОГО блоку (contentBlockSceneId) — словник читається
+  // звідти так само, як для звичайної вправи сцени. Для блоку в матеріалі/
+  // DELF (group.material_id/group.delf_test_number) сцени взагалі немає —
+  // effectiveSceneId лишається null, словник порожній, як і раніше.
+  const effectiveSceneId = task.scene_id ?? contentBlockSceneId ?? group?.scene_id ?? null;
+  const { data: sceneRow } = effectiveSceneId
+    ? await supabase.from("scenes").select("dialogue").eq("id", effectiveSceneId).single()
     : { data: null };
   const sceneVocab: VocabItem[] = sceneRow
     ? collectSceneVocab((sceneRow.dialogue ?? []) as { vocab?: VocabItem[] }[])
     : [];
 
   // Вправа, прив'язана до сцени/матеріалу, повертає саме туди, а не на
-  // курс — той самий розподіл, що й на сторінці створення завдання.
-  const backHref = task.scene_id
-    ? `/admin/courses/${productId}/scenes/${task.scene_id}`
-    : task.material_id
-      ? `/admin/courses/${productId}/materials/${task.material_id}`
-      : task.delf_test_number
-        ? `/admin/courses/${productId}/tests/${task.delf_test_number}`
-        : `/admin/courses/${productId}#tasks`;
-  const backLabel = task.scene_id
-    ? "← До сцени"
-    : task.material_id
-      ? "← До матеріалу"
-      : task.delf_test_number
-        ? "← До тесту"
-        : "← До курсу";
+  // курс — той самий розподіл, що й на сторінці створення завдання. Вправа
+  // звичайного блоку повертається на сторінку самого блоку (там і решта
+  // його задач); вправа блоку, прикріпленого до content-блоку, повертається
+  // на сторінку сцени, якорем на саму картку (blockDomId, той самий, що
+  // "+ Нова задача"/detachTask).
+  const backHref =
+    contentBlockSceneId && group?.scene_content_block_id
+      ? `/admin/courses/${productId}/scenes/${contentBlockSceneId}#${blockDomId(`content:${group.scene_content_block_id}`)}`
+      : task.task_group_id
+        ? `/admin/courses/${productId}/task-groups/${task.task_group_id}`
+        : task.scene_id
+          ? `/admin/courses/${productId}/scenes/${task.scene_id}`
+          : task.material_id
+            ? `/admin/courses/${productId}/materials/${task.material_id}`
+            : task.delf_test_number
+              ? `/admin/courses/${productId}/tests/${task.delf_test_number}`
+              : `/admin/courses/${productId}#tasks`;
+  const backLabel = task.task_group_id
+    ? "← До блоку"
+    : task.scene_id
+      ? "← До сцени"
+      : task.material_id
+        ? "← До матеріалу"
+        : task.delf_test_number
+          ? "← До тесту"
+          : "← До курсу";
 
   // Студентська сторінка, де ця вправа реально відображається — той самий
   // розподіл, що й backHref, але веде на публічну сторону (scenes/materials
   // спільні з backHref, DELF — окремо: сторінка тесту фільтрує задачі за
   // product_id+delf_test_number, а не delf_section, тож URL будується з
-  // номера тесту). null — коли для задачі взагалі немає валідного
-  // студентського місця (задача-сирота без номера DELF-тесту).
-  const studentHref = task.scene_id
-    ? `/courses/${productId}/scenes/${task.scene_id}`
-    : task.material_id
-      ? `/courses/${productId}/materials/${task.material_id}`
-      : task.delf_test_number
-        ? `/courses/${productId}/tests/${task.delf_test_number}`
-        : null;
+  // номера тесту). Задача блоку веде на сторінку батьківського контексту
+  // ГРУПИ (не власну сторінку задачі — такої немає для студента), якорем на
+  // сам блок (#group-{id}, той самий, що вже task-groups/[groupId]/page.tsx).
+  // null — коли для задачі взагалі немає валідного студентського місця
+  // (задача-сирота без номера DELF-тесту).
+  const studentHref = task.task_group_id
+    ? effectiveSceneId
+      ? `/courses/${productId}/scenes/${effectiveSceneId}#group-${task.task_group_id}`
+      : group?.material_id
+        ? `/courses/${productId}/materials/${group.material_id}#group-${task.task_group_id}`
+        : group?.delf_test_number
+          ? `/courses/${productId}/tests/${group.delf_test_number}#group-${task.task_group_id}`
+          : null
+    : task.scene_id
+      ? `/courses/${productId}/scenes/${task.scene_id}`
+      : task.material_id
+        ? `/courses/${productId}/materials/${task.material_id}`
+        : task.delf_test_number
+          ? `/courses/${productId}/tests/${task.delf_test_number}`
+          : null;
 
   return (
     <div>
