@@ -1,3 +1,5 @@
+import { protectedPrefixLength } from "./article";
+
 // Автоматичний вибір hiddenIndices для letter_gaps — опційна дія поруч із
 // ручним кліком на символи (LetterGapsWordRow), не заміна: вчителька й далі
 // може підправити результат вручну після застосування.
@@ -20,6 +22,9 @@ function isVowel(ch: string): boolean {
 
 // Правила (уточнені вчителькою):
 // - перша літера НІКОЛИ не приховується, у жодному режимі;
+// - якщо слово починається з артикля (un/une/le/la/les/des/du/de la/de l'/
+//   l' — stripArticle, article.ts), увесь артикль ТЕЖ ніколи не
+//   приховується, не лише його перша літера;
 // - пробіли/апострофи/дефіси (усе, що не \p{L}) НІКОЛИ не приховуються —
 //   лишаються звичайними видимими символами-плитками;
 // - у кожному слові — щонайменше один пропуск (якщо взагалі є що ховати) і
@@ -34,9 +39,10 @@ function isVowel(ch: string): boolean {
 //   елемент hideable).
 export function computeAutoHiddenIndices(word: string, mode: LetterHideMode): number[] {
   const chars = word.split("");
+  const protectedLength = protectedPrefixLength(word);
   const hideable = chars
     .map((ch, i) => ({ ch, i }))
-    .filter(({ ch, i }) => i > 0 && isLetter(ch))
+    .filter(({ ch, i }) => i >= protectedLength && isLetter(ch))
     .map(({ i }) => i);
 
   if (hideable.length === 0) return [];

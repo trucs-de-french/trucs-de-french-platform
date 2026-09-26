@@ -3,10 +3,11 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -24,6 +25,7 @@ export const TableFillFields = forwardRef<
   const [rows, setRows] = useState<TableFillRow[]>(
     initialConfig?.rows?.length ? initialConfig.rows : [emptyRow()]
   );
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.table_fill ?? false);
 
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — За замовчуванням права
@@ -32,7 +34,9 @@ export const TableFillFields = forwardRef<
     // власного поля під картинку/аудіо, тож переносити тут нічого, окрім
     // left/right.
     importWords(words) {
-      const { rows: newRows } = buildConfigFromVocab("table_fill", words) as { rows: TableFillRow[] };
+      const { rows: newRows } = buildConfigFromVocab("table_fill", words, { stripArticles }) as {
+        rows: TableFillRow[];
+      };
       setRows((prev) => [...prev, ...newRows]);
     },
     getValue: () => ({
@@ -101,6 +105,8 @@ export const TableFillFields = forwardRef<
         напр. chat|chats. Приховані клітинки студент заповнює сам — видимі показуються одразу
         як текст.
       </p>
+
+      <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
 
       {rows.map((row) => (
         <div key={row.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">

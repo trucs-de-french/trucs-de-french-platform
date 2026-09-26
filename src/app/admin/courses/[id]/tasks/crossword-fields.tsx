@@ -4,9 +4,10 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord, CrosswordPlacement } from "@/lib/exercises/types";
 import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { CROSSWORD_MAX_WORDS } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
@@ -165,6 +166,7 @@ export const CrosswordFields = forwardRef<
   const [gridWidth, setGridWidth] = useState(initialConfig?.gridWidth ?? 0);
   const [gridHeight, setGridHeight] = useState(initialConfig?.gridHeight ?? 0);
   const [isolatedWords, setIsolatedWords] = useState<string[]>([]);
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.crossword ?? false);
 
   useImperativeHandle(ref, () => ({
     // Плаский тип (як letter_gaps/word_search) — word завжди обов'язковий.
@@ -175,7 +177,7 @@ export const CrosswordFields = forwardRef<
     // дефісів для розміщення в сітці відбувається пізніше, усередині
     // generateCrosswordGrid (crossword-grid.ts), не тут.
     importWords(imported) {
-      const { words: newWords } = buildConfigFromVocab("crossword", imported) as {
+      const { words: newWords } = buildConfigFromVocab("crossword", imported, { stripArticles }) as {
         words: CrosswordWord[];
       };
       setWords((prev) => {
@@ -264,6 +266,7 @@ export const CrosswordFields = forwardRef<
 
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова та підказки</label>
+        <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
         {words.length > CROSSWORD_MAX_WORDS && (
           <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
             ⚠ Рекомендовано не більше {CROSSWORD_MAX_WORDS} слів — розбийте на кілька вправ, інакше сітка стане

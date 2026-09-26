@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { ImportVocabPanel } from "../../../../tasks/import-vocab-panel";
-import { BULK_VOCAB_TASK_TYPES, type BulkVocabTaskType } from "@/lib/exercises/task-config-builder";
+import {
+  BULK_VOCAB_TASK_TYPES,
+  STRIP_ARTICLES_DEFAULT,
+  type BulkVocabTaskType,
+} from "@/lib/exercises/task-config-builder";
 import { TASK_TYPE_LABELS, TASK_TYPE_DESCRIPTIONS } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
+import { StripArticlesToggle } from "../../../../tasks/strip-articles-toggle";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
 import { WORD_SEARCH_MAX_WORDS, CROSSWORD_MAX_WORDS, splitIntoChunks } from "@/lib/exercises/grid-limits";
 import type { VocabItem } from "@/lib/vocab";
@@ -30,10 +35,17 @@ type TypeState = {
   points: number;
   letterHideMode: LetterHideMode;
   crosswordClueStyle: "short" | "long";
+  stripArticles: boolean;
 };
 
-function defaultTypeState(): TypeState {
-  return { checked: false, points: 1, letterHideMode: "default", crosswordClueStyle: "short" };
+function defaultTypeState(type: BulkVocabTaskType): TypeState {
+  return {
+    checked: false,
+    points: 1,
+    letterHideMode: "default",
+    crosswordClueStyle: "short",
+    stripArticles: STRIP_ARTICLES_DEFAULT[type] ?? false,
+  };
 }
 
 const LETTER_HIDE_OPTIONS: { mode: LetterHideMode; label: string }[] = [
@@ -70,7 +82,7 @@ export function BulkFromVocabForm({
   const [selectedWords, setSelectedWords] = useState<ImportedWord[]>([]);
   const [typeState, setTypeState] = useState<Record<BulkVocabTaskType, TypeState>>(
     () =>
-      Object.fromEntries(BULK_VOCAB_TASK_TYPES.map((t) => [t, defaultTypeState()])) as Record<
+      Object.fromEntries(BULK_VOCAB_TASK_TYPES.map((t) => [t, defaultTypeState(t)])) as Record<
         BulkVocabTaskType,
         TypeState
       >
@@ -107,6 +119,11 @@ export function BulkFromVocabForm({
     points: NO_POINTS_TYPES.has(type) ? undefined : typeState[type].points,
     letterHideMode: type === "letter_gaps" ? typeState[type].letterHideMode : undefined,
     crosswordClueStyle: type === "crossword" ? typeState[type].crosswordClueStyle : undefined,
+    // letter_gaps не прибирає артикль узагалі (він завжди лишається видимим,
+    // лише захищений від приховування) — buildConfigFromVocab однаково
+    // ігнорує stripArticles для цього типу, але не надсилаємо його явно, щоб
+    // не створювати враження, ніби перемикач для letter_gaps щось важить.
+    stripArticles: type === "letter_gaps" ? undefined : typeState[type].stripArticles,
   }));
 
   return (
@@ -216,6 +233,17 @@ export function BulkFromVocabForm({
                         ))}
                       </div>
                     </div>
+                  )}
+
+                  {type !== "letter_gaps" && (
+                    <StripArticlesToggle
+                      checked={s.stripArticles}
+                      onChange={(value) => updateType(type, { stripArticles: value })}
+                    />
+                  )}
+
+                  {type === "letter_gaps" && (
+                    <p className={HINT_TEXT}>Артикль лишається видимим і ніколи не приховується.</p>
                   )}
                 </div>
               )}

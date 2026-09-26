@@ -7,7 +7,8 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -128,13 +129,16 @@ export const LetterRearrangementFields = forwardRef<
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
       : [emptyWord()]
   );
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.letter_rearrangement ?? false);
 
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
     // word/translation->word/hintText, що раніше було inline тут, тепер
     // спільне з масовим створювачем "Створити вправи зі словника".
     importWords(imported) {
-      const { words: newWords } = buildConfigFromVocab("letter_rearrangement", imported) as {
+      const { words: newWords } = buildConfigFromVocab("letter_rearrangement", imported, {
+        stripArticles,
+      }) as {
         words: LetterRearrangementWord[];
       };
       setWords((prev) => {
@@ -199,6 +203,8 @@ export const LetterRearrangementFields = forwardRef<
         initialValue={initialConfig?.subInstructions ?? ""}
         compact
       />
+
+      <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
 
       {words.map((w) => (
         <LetterRearrangementWordRow

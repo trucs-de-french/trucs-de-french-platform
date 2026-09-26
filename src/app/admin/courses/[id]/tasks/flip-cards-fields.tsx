@@ -3,10 +3,11 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -100,6 +101,7 @@ export const FlipCardsFields = forwardRef<
   );
   const [mode, setMode] = useState<"manual" | "random_reveal">(initialConfig?.mode ?? "manual");
   const [revealSide, setRevealSide] = useState<"front" | "back">(initialConfig?.revealSide ?? "front");
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.flip_cards ?? false);
 
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
@@ -107,7 +109,9 @@ export const FlipCardsFields = forwardRef<
     // audio_url слова, якщо вони є у вокабуляру (FlipCard підтримує обидва
     // поля).
     importWords(words) {
-      const { cards: newCards } = buildConfigFromVocab("flip_cards", words) as { cards: FlipCard[] };
+      const { cards: newCards } = buildConfigFromVocab("flip_cards", words, { stripArticles }) as {
+        cards: FlipCard[];
+      };
       setCards((prev) => {
         const withoutEmpty = prev.filter((c) => c.front.trim() || c.back.trim());
         return [...withoutEmpty, ...newCards];
@@ -179,6 +183,8 @@ export const FlipCardsFields = forwardRef<
           </div>
         )}
       </div>
+
+      <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
 
       {cards.map((card, i) => (
         <FlipCardRow

@@ -3,10 +3,11 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 
@@ -27,13 +28,16 @@ export const MatchingFields = forwardRef<
       ? initialConfig.pairs.map((p) => ({ ...p, id: p.id ?? crypto.randomUUID() }))
       : [emptyPair()]
   );
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.matching ?? false);
 
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — MatchingPair не має
     // власного поля під картинку/аудіо, тож переносити тут нічого, окрім
     // left/right (те саме мапування, що раніше було inline).
     importWords(words) {
-      const { pairs: newPairs } = buildConfigFromVocab("matching", words) as { pairs: MatchingPair[] };
+      const { pairs: newPairs } = buildConfigFromVocab("matching", words, { stripArticles }) as {
+        pairs: MatchingPair[];
+      };
       setPairs((prev) => {
         // Прибираємо порожню плейсхолдер-пару за замовчуванням, якщо
         // вчитель ще нічого не ввів — інакше лишався б сміттєвий рядок.
@@ -84,6 +88,8 @@ export const MatchingFields = forwardRef<
       <p className={HINT_TEXT}>
         Уникайте однакового тексту зліва і справа в різних парах — це заважає перевірці.
       </p>
+
+      <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
 
       {pairs.map((p, i) => (
         <div key={p.id} className="flex items-center gap-2">

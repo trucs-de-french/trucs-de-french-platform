@@ -236,6 +236,7 @@ type BulkTypeSelection = {
   points?: number;
   letterHideMode?: LetterHideMode;
   crosswordClueStyle?: "short" | "long";
+  stripArticles?: boolean;
 };
 
 // "Створити вправи зі словника" (bulk-from-vocab/page.tsx) — той самий
@@ -287,6 +288,7 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
         pointsPerElement: sel.points,
         crosswordClueStyle: sel.crosswordClueStyle,
         letterHideMode: sel.letterHideMode,
+        stripArticles: sel.stripArticles,
       });
 
       if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {

@@ -4,9 +4,10 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
-import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { WORD_SEARCH_MAX_WORDS, WORD_SEARCH_MAX_GRID } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { StripArticlesToggle } from "./strip-articles-toggle";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
@@ -127,6 +128,7 @@ export const WordSearchFields = forwardRef<
     initialConfig?.placements ?? []
   );
   const [failedWords, setFailedWords] = useState<string[]>([]);
+  const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.word_search ?? false);
 
   useImperativeHandle(ref, () => ({
     // Плаский тип, як letter_gaps/letter_rearrangement (word_search НЕ в
@@ -140,7 +142,7 @@ export const WordSearchFields = forwardRef<
     // апострофів/дефісів для розміщення в сітці відбувається пізніше,
     // усередині generateWordSearchGrid (word-search-grid.ts), не тут.
     importWords(imported) {
-      const { words: newWords } = buildConfigFromVocab("word_search", imported) as {
+      const { words: newWords } = buildConfigFromVocab("word_search", imported, { stripArticles }) as {
         words: WordSearchWord[];
       };
       setWords((prev) => {
@@ -221,6 +223,7 @@ export const WordSearchFields = forwardRef<
 
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
+        <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
         {words.length > WORD_SEARCH_MAX_WORDS && (
           <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
             ⚠ Рекомендовано не більше {WORD_SEARCH_MAX_WORDS} слів — розбийте на кілька вправ. Сітка обмежена{" "}

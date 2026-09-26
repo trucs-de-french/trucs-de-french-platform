@@ -9,6 +9,7 @@ import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import { computeAutoHiddenIndices, type LetterHideMode } from "@/lib/exercises/letter-hide";
+import { protectedPrefixLength } from "@/lib/exercises/article";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -116,16 +117,26 @@ function LetterGapsWordRow({
         <div className="flex flex-wrap gap-0.5">
           {wordItem.word.split("").map((char, i) => {
             const isHidden = wordItem.hiddenIndices.includes(i);
+            const isProtected = i < protectedPrefixLength(wordItem.word);
             return (
               <button
                 key={i}
                 type="button"
+                disabled={isProtected}
                 onClick={() => onToggleIndex(i)}
-                title={isHidden ? "Показати цей символ студенту" : "Приховати цей символ"}
+                title={
+                  isProtected
+                    ? "Артикль — не приховується"
+                    : isHidden
+                      ? "Показати цей символ студенту"
+                      : "Приховати цей символ"
+                }
                 className={`h-8 w-8 rounded text-sm font-medium font-content ${
-                  isHidden
-                    ? "bg-amber-100 text-amber-800 underline decoration-2 dark:bg-amber-900/40 dark:text-amber-300"
-                    : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  isProtected
+                    ? "cursor-not-allowed text-neutral-400 dark:text-neutral-600"
+                    : isHidden
+                      ? "bg-amber-100 text-amber-800 underline decoration-2 dark:bg-amber-900/40 dark:text-amber-300"
+                      : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 }`}
               >
                 {char}
@@ -136,7 +147,8 @@ function LetterGapsWordRow({
       )}
       <p className={HINT_TEXT}>
         Клікніть на символи, щоб приховати їх від студента (можна ховати будь-що, включно з
-        апострофом/дефісом).
+        апострофом/дефісом). Артикль на початку слова (un/le/la/les/des/du/de la/l&apos;) ніколи не
+        приховується.
       </p>
 
       {wordItem.word && (
@@ -239,7 +251,10 @@ export const LetterGapsFields = forwardRef<
   function toggleIndex(id: string, index: number) {
     setWords((prev) =>
       prev.map((w) => {
-        if (w.id !== id) return w;
+        // Захист про всяк випадок (кнопка на артиклі й так disabled у
+        // LetterGapsWordRow, onClick фізично не спрацює) — на випадок
+        // програмного виклику з іншого місця в майбутньому.
+        if (w.id !== id || index < protectedPrefixLength(w.word)) return w;
         // Відсортовано за зростанням — grade.ts зчитує правильні літери в
         // порядку hiddenIndices, а студент бачить/заповнює їх зліва направо,
         // тож порядок кліків учителя не повинен впливати на перевірку.

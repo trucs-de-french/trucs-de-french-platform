@@ -3,6 +3,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { detectPlatform } from "@/lib/platform";
 import { sanitizeWordForGrid } from "./grid-word";
 import { computeAutoHiddenIndices, type LetterHideMode } from "./letter-hide";
+import { stripArticle } from "./article";
 import type {
   FlipCard,
   LetterGapsWord,
@@ -359,6 +360,25 @@ export const BULK_VOCAB_TASK_TYPES = [
 ] as const;
 export type BulkVocabTaskType = (typeof BULK_VOCAB_TASK_TYPES)[number];
 
+// Дефолт "прибирати артикль при імпорті" за типом вправи (VocabImportOptions.
+// stripArticles нижче) — одне місце, і для звичайного імпорту (кожен
+// *-fields.tsx сам ставить checkbox у цей стан за замовчуванням), і для
+// майстра "Створити вправи зі словника". word_search/crossword/
+// letter_rearrangement — артикль лише заважає (сітка/переставлені літери),
+// flip_cards/matching/table_fill — пара слово+переклад, де артикль частина
+// граматики, яку варто бачити. letter_gaps свідомо ВІДСУТНІЙ — там артикль
+// ЗАВЖДИ лишається видимим (лише його літери ніколи не приховуються,
+// protectedPrefixLength у article.ts/letter-hide.ts) — не бінарний
+// прибрати/лишити вибір, як в інших типів.
+export const STRIP_ARTICLES_DEFAULT: Partial<Record<BulkVocabTaskType, boolean>> = {
+  word_search: true,
+  crossword: true,
+  letter_rearrangement: true,
+  flip_cards: false,
+  matching: false,
+  table_fill: false,
+};
+
 // ---------------------------------------------------------------------------
 // Імпорт лексики -> нові елементи типу — ОДНЕ джерело правди для звичайного
 // імпорту (ImportVocabPanel через importWords у *-fields.tsx) і для
@@ -395,6 +415,14 @@ export type VocabImportOptions = {
   // імпорту. Масовий створювач (bulk-from-vocab) передає режим, обраний
   // вчителькою в майстрі, одразу.
   letterHideMode?: LetterHideMode;
+  // Прибрати артикль (un/une/le/la/les/des/du/de la/de l'/l' — stripArticle,
+  // article.ts) з початку word ПЕРЕД мапуванням у форму елемента, специфічну
+  // для типу. За замовчуванням false — виклик відповідає за передачу
+  // фактичного значення (кожен *-fields.tsx і bulk-from-vocab-form.tsx самі
+  // читають дефолт із STRIP_ARTICLES_DEFAULT вище для свого типу). Не
+  // застосовується до letter_gaps (той сам ігнорує цю опцію нижче) — там
+  // артикль лишається завжди, лише захищений від приховування.
+  stripArticles?: boolean;
 };
 
 export function buildConfigFromVocab(
@@ -402,9 +430,18 @@ export function buildConfigFromVocab(
   words: VocabWordInput[],
   options: VocabImportOptions = {}
 ): Record<string, unknown> {
+  // letter_gaps свідомо виключений: там артикль завжди лишається видимим
+  // (STRIP_ARTICLES_DEFAULT не має запису для нього) — приховування його
+  // літер вирішує protectedPrefixLength (article.ts) усередині
+  // computeAutoHiddenIndices, не тут.
+  const effectiveWords =
+    options.stripArticles && type !== "letter_gaps"
+      ? words.map((w) => ({ ...w, word: stripArticle(w.word).word }))
+      : words;
+
   switch (type) {
     case "flip_cards": {
-      const cards: FlipCard[] = words.map((w) => ({
+      const cards: FlipCard[] = effectiveWords.map((w) => ({
         front: w.word,
         back: w.translation,
         image_url: w.imageUrl || undefined,
@@ -413,7 +450,7 @@ export function buildConfigFromVocab(
       return { cards, mode: "manual", revealSide: "front" };
     }
     case "matching": {
-      const pairs: MatchingPair[] = words.map((w) => ({
+      const pairs: MatchingPair[] = effectiveWords.map((w) => ({
         id: crypto.randomUUID(),
         left: w.word,
         right: w.translation,
@@ -426,7 +463,7 @@ export function buildConfigFromVocab(
       // окрема ручна дія ПІСЛЯ), або одразу пораховані через
       // computeAutoHiddenIndices, якщо викликач (bulk-from-vocab) передав
       // options.letterHideMode.
-      const importedWords: LetterGapsWord[] = words.map((w) => ({
+      const importedWords: LetterGapsWord[] = effectiveWords.map((w) => ({
         word: w.word,
         hiddenIndices: options.letterHideMode ? computeAutoHiddenIndices(w.word, options.letterHideMode) : [],
         hintType: "definition",
@@ -437,7 +474,7 @@ export function buildConfigFromVocab(
       return { words: importedWords };
     }
     case "letter_rearrangement": {
-      const importedWords: LetterRearrangementWord[] = words.map((w) => ({
+      const importedWords: LetterRearrangementWord[] = effectiveWords.map((w) => ({
         word: w.word,
         hintType: "definition",
         hintText: w.translation,
@@ -454,7 +491,7 @@ export function buildConfigFromVocab(
       // фільтруємо слово, що ПІСЛЯ такого прибирання не лишило б жодної
       // літери (вкрай рідкісний вхід на кшталт "-" саме по собі) — розмістити
       // в сітці все одно було б нічого.
-      const importedWords: WordSearchWord[] = words
+      const importedWords: WordSearchWord[] = effectiveWords
         .filter((w) => sanitizeWordForGrid(w.word).length > 0)
         .map((w) => ({
           word: w.word,
@@ -468,7 +505,7 @@ export function buildConfigFromVocab(
       // Той самий принцип, що word_search вище — word лишається оригіналом
       // для підказки/легенди, sanitizeWordForGrid застосовується лише
       // всередині generateCrosswordGrid (crossword-grid.ts).
-      const importedWords: CrosswordWord[] = words
+      const importedWords: CrosswordWord[] = effectiveWords
         .filter((w) => sanitizeWordForGrid(w.word).length > 0)
         .map((w) => ({
           word: w.word,
@@ -480,7 +517,7 @@ export function buildConfigFromVocab(
       return { words: importedWords };
     }
     case "table_fill": {
-      const rows: TableFillRow[] = words.map((w) => ({
+      const rows: TableFillRow[] = effectiveWords.map((w) => ({
         id: crypto.randomUUID(),
         left: w.word,
         right: w.translation,
