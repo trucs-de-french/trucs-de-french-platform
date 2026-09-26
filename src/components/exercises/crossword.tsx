@@ -14,6 +14,7 @@ import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { gridCellSize } from "./grid-cell-size";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -220,6 +221,11 @@ export function CrosswordExercise({
     submit(answer);
   }
 
+  // Max(ширина, висота) — та сама логіка "розмір за стороною", що
+  // word_search, лише крос-ворд не завжди квадратний (органічна форма, не
+  // попередньо задана сітка) — довша сторона визначає, наскільки тісно.
+  const cellSize = gridCellSize(Math.max(config.gridWidth, config.gridHeight));
+
   // Текст підказки — той самий колір/закреслення для ОБОХ форм (картка й
   // плаский текст), лише навколишня розмітка різна.
   function clueTextClass(liveStatus: "correct" | "incorrect" | null): string {
@@ -402,12 +408,15 @@ export function CrosswordExercise({
                         // клітинка й далі займає своє місце в grid-розкладці
                         // (порожній <td>, не display:none) — сітка лишається
                         // прямокутною, лише "неправильна форма" видима.
-                        return <td key={ci} className="h-7 w-7 border-none bg-transparent" />;
+                        return <td key={ci} className={`border-none bg-transparent ${cellSize.box}`} />;
                       }
                       const number = config.cellNumbers[ri][ci];
                       const status = cellLiveStatus(ri, ci);
                       return (
-                        <td key={ci} className="relative h-7 w-7 border border-neutral-300 p-0 dark:border-neutral-700">
+                        <td
+                          key={ci}
+                          className={`relative border border-neutral-300 p-0 dark:border-neutral-700 ${cellSize.box}`}
+                        >
                           {number !== null && (
                             <span className="pointer-events-none absolute left-0.5 top-0 text-[8px] leading-none text-neutral-500 dark:text-neutral-400">
                               {number}
@@ -428,7 +437,7 @@ export function CrosswordExercise({
                             }}
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
-                            className={`h-full w-full bg-white text-center font-heading text-base font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
+                            className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${cellSize.text} ${
                               status === "correct"
                                 ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                                 : status === "incorrect"

@@ -1,5 +1,6 @@
 import type { WordSearchPlacement, WordSearchWord } from "./types";
 import { sanitizeWordForGrid } from "./grid-word";
+import { WORD_SEARCH_MAX_GRID } from "./grid-limits";
 
 // Лише два вектори — горизонталь праворуч і вертикаль вниз (без діагоналей
 // і без реверсу) — точно за описом фічі.
@@ -17,11 +18,17 @@ function randomFiller(): string {
 // Розмір — похідний від найдовшого слова й сумарної кількості літер, а не
 // фіксований, щоб короткий список не тонув у зайво великій сітці, а
 // довгий/об'ємний — не змушував без кінця повторювати спроби розміщення.
-// Мінімум 10, про всяк випадок для геть куценьких списків.
+// Мінімум 10, про всяк випадок для геть куценьких списків. Максимум —
+// WORD_SEARCH_MAX_GRID (grid-limits.ts): сітка НІКОЛИ не росте понад це,
+// незалежно від кількості/довжини слів — усе, що фізично не вміщається
+// (зокрема слово, довше за сам максимум), стає failedWords нижче, а не
+// розсуває сітку далі. Раніше сітка росла необмежено (до ~25+ колонок на
+// великих списках), через що легенда на студентській сторінці стискалась у
+// вузьку колонку.
 function computeGridSize(words: string[]): number {
   const longest = Math.max(0, ...words.map((w) => w.length));
   const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
-  return Math.max(10, longest, Math.ceil(Math.sqrt(totalLetters * 2.5)));
+  return Math.min(WORD_SEARCH_MAX_GRID, Math.max(10, longest, Math.ceil(Math.sqrt(totalLetters * 2.5))));
 }
 
 // Викликається ОДИН РАЗ в адмінці (word-search-fields.tsx), не на кожен

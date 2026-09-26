@@ -5,6 +5,7 @@ import { Trash2, RefreshCw } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord, CrosswordPlacement } from "@/lib/exercises/types";
 import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
 import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { CROSSWORD_MAX_WORDS } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -263,6 +264,12 @@ export const CrosswordFields = forwardRef<
 
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова та підказки</label>
+        {words.length > CROSSWORD_MAX_WORDS && (
+          <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            ⚠ Рекомендовано не більше {CROSSWORD_MAX_WORDS} слів — розбийте на кілька вправ, інакше сітка стане
+            занадто громіздкою.
+          </p>
+        )}
         {words.map((w) => (
           <CrosswordWordRow
             key={w.id}

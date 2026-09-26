@@ -12,6 +12,7 @@ import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { gridCellSize } from "./grid-cell-size";
 
 type Cell = { row: number; col: number };
 
@@ -134,6 +135,7 @@ export function WordSearchExercise({
     return { row: Number(target.dataset.row), col: Number(target.dataset.col) };
   }
 
+  const cellSize = gridCellSize(config.grid.length);
   const previewPath = dragging && dragStart && dragEnd ? buildPath(dragStart, dragEnd) : [];
   const previewKeys = new Set(previewPath.map(cellKey));
   const foundKeys = new Set([...foundWords.values()].flatMap((cells) => cells.map(cellKey)));
@@ -194,23 +196,23 @@ export function WordSearchExercise({
         )}
       </div>
 
-      {/* gap-4 md:gap-6 — той самий ритм, що тепер EXERCISE_STACK на корені
-          (spacing.ts): зазор сітка↔легенда має дорівнювати відступу від
-          зовнішньої межі блоку. Gap МІЖ картками легенди (gap-2 нижче) —
-          окреме, внутрішнє значення, не входить у цю систему. Сітка НЕ
-          стискається (shrink-0) і НЕ росте — легенда (flex-1 min-w-0)
-          забирає весь простір, що лишився праворуч від сітки, аж до правого
-          паддінгу блоку завдання. */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+      {/* flex-wrap (не md:flex-row/flex-col перемикач за viewport) — легенда
+          сама переходить на новий рядок природним flex-переносом, щойно їй
+          не лишається місця поруч із сіткою (сітка shrink-0 фіксованої
+          ширини + легенда min-w-[12rem] flex-1 — комбінація, яку браузер
+          сам вирішує рядок за рядком, без потреби відстежувати реальну
+          ширину контейнера через JS/ResizeObserver). gap-4 md:gap-6 — той
+          самий ритм, що EXERCISE_STACK на корені (spacing.ts). */}
+      <div className="flex flex-wrap items-start gap-4 md:gap-6">
         <div
           ref={gridRef}
-          className="inline-block shrink-0 touch-none select-none shadow-md"
+          className="max-w-full shrink-0 touch-none select-none overflow-x-auto shadow-md"
           onTouchMove={(e) => {
             const cell = cellFromTouch(e.touches[0]);
             if (cell) moveDrag(cell);
           }}
         >
-          <table className="border-collapse font-heading font-semibold text-base">
+          <table className="border-collapse font-heading font-semibold">
             <tbody>
               {config.grid.map((row, ri) => (
                 <tr key={ri}>
@@ -222,7 +224,7 @@ export function WordSearchExercise({
                       onMouseDown={() => startDrag({ row: ri, col: ci })}
                       onMouseEnter={() => moveDrag({ row: ri, col: ci })}
                       onTouchStart={() => startDrag({ row: ri, col: ci })}
-                      className={`h-7 w-7 cursor-pointer border border-neutral-200 text-center leading-7 dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
+                      className={`cursor-pointer border border-neutral-200 text-center align-middle dark:border-neutral-700 ${cellSize.box} ${cellSize.text} ${cellClass({ row: ri, col: ci })}`}
                     >
                       {letter}
                     </td>
@@ -237,14 +239,16 @@ export function WordSearchExercise({
             текст) — не два окремі grid-и, щоб легенда виглядала цілісно,
             навіть коли в одному завданні є суміш обох. Однакові рамка/
             заокруглення/тінь/відступ (CARD_BASE) на кожній картці, лише
-            вміст усередині різниться. minmax(5.5rem,1fr) — ширше, ніж чиста
-            картинка-плитка потребувала б, бо переклад буває довшим за одне
-            слово ("дозвіл, шкільний бланк") і має кудись загорнутись.
-            flex-1 min-w-0 (замість фіксованого w-72) — легенда заповнює
-            ВЕСЬ простір, що лишився праворуч від сітки, а не застигає на
-            288px незалежно від ширини блоку; auto-fill сам домальовує
-            стільки колонок, скільки влізе в цю ширину. */}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 md:min-w-0 md:flex-1">
+            вміст усередині різниться. minmax(10rem,1fr) — досить широко,
+            щоб довший переклад ("дозвіл, шкільний бланк") не ламав картку, і
+            щоб min-w-[12rem] нижче (мінімум легенди в flex-переносі) завжди
+            вміщав хоча б одну повну колонку карток, коли легенда переходить
+            під сітку. min-w-[12rem] flex-1 (замість md:min-w-0 md:flex-1) —
+            легенда росте, заповнюючи простір праворуч від сітки, ПОКИ там
+            лишається принаймні 12rem; щойно ні — переносить її на новий
+            flex-рядок (сам батьківський flex-wrap вище), де вона вже займає
+            всю ширину. */}
+        <div className="grid min-w-[12rem] flex-1 grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
           {config.words.map((w) => {
             const found = isFound(w.word);
             const kind = hintKind(w);

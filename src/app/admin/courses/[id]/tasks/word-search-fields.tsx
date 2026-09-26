@@ -5,6 +5,7 @@ import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
 import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { WORD_SEARCH_MAX_WORDS, WORD_SEARCH_MAX_GRID } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -220,6 +221,12 @@ export const WordSearchFields = forwardRef<
 
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
+        {words.length > WORD_SEARCH_MAX_WORDS && (
+          <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            ⚠ Рекомендовано не більше {WORD_SEARCH_MAX_WORDS} слів — розбийте на кілька вправ. Сітка обмежена{" "}
+            {WORD_SEARCH_MAX_GRID}×{WORD_SEARCH_MAX_GRID}, слова, що не вмістяться, покажуться попередженням нижче.
+          </p>
+        )}
         {words.map((w) => (
           <WordSearchWordRow
             key={w.id}
