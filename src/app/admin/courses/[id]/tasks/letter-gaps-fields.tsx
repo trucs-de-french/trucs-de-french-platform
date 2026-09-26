@@ -7,8 +7,16 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
+import { computeAutoHiddenIndices, type LetterHideMode } from "@/lib/exercises/letter-hide";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+
+const AUTO_HIDE_OPTIONS: { mode: LetterHideMode; label: string }[] = [
+  { mode: "default", label: "~40%" },
+  { mode: "vowels", label: "Голосні" },
+  { mode: "every_second", label: "Кожну другу" },
+];
 
 type EditableWord = LetterGapsWord & { id: string };
 
@@ -42,6 +50,7 @@ function LetterGapsWordRow({
   wordItem,
   onUpdateWord,
   onToggleIndex,
+  onAutoHide,
   onUpdateHintType,
   onUpdateHintText,
   onUpdateImageUrl,
@@ -51,6 +60,7 @@ function LetterGapsWordRow({
   wordItem: EditableWord;
   onUpdateWord: (value: string) => void;
   onToggleIndex: (index: number) => void;
+  onAutoHide: (mode: LetterHideMode) => void;
   onUpdateHintType: (value: "definition" | "sentence") => void;
   onUpdateHintText: (value: string) => void;
   onUpdateImageUrl: (url: string) => void;
@@ -129,6 +139,22 @@ function LetterGapsWordRow({
         апострофом/дефісом).
       </p>
 
+      {wordItem.word && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={HINT_TEXT}>Приховати автоматично:</span>
+          {AUTO_HIDE_OPTIONS.map(({ mode, label }) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onAutoHide(mode)}
+              className="text-xs text-blue-700 hover:underline dark:text-blue-400"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
           <label className={LABEL_TEXT}>Підказка</label>
@@ -166,26 +192,19 @@ export const LetterGapsFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
-    // На відміну від sort_columns/reorder/checkbox_grid (де в елемента
-    // взагалі немає поля під переклад) — тут воно є (hintText), тож
-    // переклад із позначеної укр-колонки йде прямо туди. hintType не
-    // чіпаємо (лишається дефолтне "definition" — сам тип підказки вчителька
-    // й так може змінити вручну, це налаштування імпорт не визначає).
-    // hiddenIndices порожній навмисно: які літери приховати, вчителька
-    // обирає кліком уже ПІСЛЯ імпорту.
+    // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
+    // word/translation->word/hintText, що раніше було inline тут, тепер
+    // спільне з майбутнім масовим створювачем. hintType не чіпаємо
+    // (лишається дефолтне "definition" — вчителька сама може змінити
+    // вручну). hiddenIndices порожній навмисно: автоприховування — окрема
+    // дія (кнопки "Приховати автоматично" нижче), не частина імпорту.
     importWords(imported) {
+      const { words: newWords } = buildConfigFromVocab("letter_gaps", imported) as {
+        words: LetterGapsWord[];
+      };
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
-        return [
-          ...withoutEmpty,
-          ...imported.map((w) => ({
-            id: crypto.randomUUID(),
-            word: w.word,
-            hiddenIndices: [],
-            hintType: "definition" as const,
-            hintText: w.translation,
-          })),
-        ];
+        return [...withoutEmpty, ...newWords.map((w) => ({ ...w, id: crypto.randomUUID() }))];
       });
     },
     getValue: () => ({
@@ -229,6 +248,12 @@ export const LetterGapsFields = forwardRef<
           : [...w.hiddenIndices, index].sort((a, b) => a - b);
         return { ...w, hiddenIndices };
       })
+    );
+  }
+
+  function applyAutoHide(id: string, mode: LetterHideMode) {
+    setWords((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, hiddenIndices: computeAutoHiddenIndices(w.word, mode) } : w))
     );
   }
 
@@ -276,6 +301,7 @@ export const LetterGapsFields = forwardRef<
           wordItem={w}
           onUpdateWord={(value) => updateWord(w.id, value)}
           onToggleIndex={(index) => toggleIndex(w.id, index)}
+          onAutoHide={(mode) => applyAutoHide(w.id, mode)}
           onUpdateHintType={(value) => updateHintType(w.id, value)}
           onUpdateHintText={(value) => updateHintText(w.id, value)}
           onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}

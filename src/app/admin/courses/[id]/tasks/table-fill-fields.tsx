@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -25,19 +26,14 @@ export const TableFillFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
-    // За замовчуванням права клітинка (переклад) прихована, ліва (слово)
-    // видима — вчитель потім перемикає чекбокси на кожному рядку окремо.
+    // buildConfigFromVocab (task-config-builder.ts) — За замовчуванням права
+    // клітинка (переклад) прихована, ліва (слово) видима — вчитель потім
+    // перемикає чекбокси на кожному рядку окремо. TableFillRow не має
+    // власного поля під картинку/аудіо, тож переносити тут нічого, окрім
+    // left/right.
     importWords(words) {
-      setRows((prev) => [
-        ...prev,
-        ...words.map((w) => ({
-          id: crypto.randomUUID(),
-          left: w.word,
-          right: w.translation,
-          leftHidden: false,
-          rightHidden: true,
-        })),
-      ]);
+      const { rows: newRows } = buildConfigFromVocab("table_fill", words) as { rows: TableFillRow[] };
+      setRows((prev) => [...prev, ...newRows]);
     },
     getValue: () => ({
       instructions: initialConfig?.instructions,

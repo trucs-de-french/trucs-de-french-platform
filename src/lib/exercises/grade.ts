@@ -25,6 +25,7 @@ import {
   resolveCrosswordPoints,
 } from "./sanitize";
 import { placementCells } from "./word-search-grid";
+import { sanitizeWordForGrid } from "./grid-word";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -269,12 +270,14 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
   const answerByWord = new Map((answer ?? []).map((a) => [a.word, a.cells]));
 
   const words: WordSearchDetail["words"] = config.words.map((w) => {
-    // placement.word завжди ВЕРХНІМ регістром (word-search-grid.ts —
-    // генератор нормалізує перед розміщенням у сітці), а w.word лишається
-    // таким, як набрала вчителька (легенда показує саме його) — без
-    // .toUpperCase() тут === ніколи не збігався б, окрім слів, набраних
-    // капсом, і gradeWordSearch завжди повертав би found: false.
-    const placement = config.placements.find((p) => p.word === w.word.toUpperCase());
+    // placement.word завжди ВЕРХНІМ регістром і БЕЗ пробілів/апострофів/
+    // дефісів (word-search-grid.ts — генератор нормалізує перед
+    // розміщенням у сітці, sanitizeWordForGrid), а w.word лишається таким,
+    // як набрала вчителька/як у словнику (легенда показує саме його, з
+    // дефісом/апострофом) — без тієї самої нормалізації тут === ніколи не
+    // збігався б для будь-якого слова з такими символами, і gradeWordSearch
+    // завжди повертав би found: false.
+    const placement = config.placements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
     if (!placement) return { word: w.word, found: false };
 
     const target = placementCells(placement, w.word.length);

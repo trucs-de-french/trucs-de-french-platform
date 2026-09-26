@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -101,13 +102,15 @@ export const FlipCardsFields = forwardRef<
   const [revealSide, setRevealSide] = useState<"front" | "back">(initialConfig?.revealSide ?? "front");
 
   useImperativeHandle(ref, () => ({
+    // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
+    // word/translation->front/back, тепер ще й переносить image_url/
+    // audio_url слова, якщо вони є у вокабуляру (FlipCard підтримує обидва
+    // поля).
     importWords(words) {
+      const { cards: newCards } = buildConfigFromVocab("flip_cards", words) as { cards: FlipCard[] };
       setCards((prev) => {
         const withoutEmpty = prev.filter((c) => c.front.trim() || c.back.trim());
-        return [
-          ...withoutEmpty,
-          ...words.map((w) => ({ front: w.word, back: w.translation, image_url: "", audio_url: "" })),
-        ];
+        return [...withoutEmpty, ...newCards];
       });
     },
     getValue: () => ({

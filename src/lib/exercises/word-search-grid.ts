@@ -1,4 +1,5 @@
 import type { WordSearchPlacement, WordSearchWord } from "./types";
+import { sanitizeWordForGrid } from "./grid-word";
 
 // Лише два вектори — горизонталь праворуч і вертикаль вниз (без діагоналей
 // і без реверсу) — точно за описом фічі.
@@ -36,12 +37,16 @@ function computeGridSize(words: string[]): number {
 // Приймає повні WordSearchWord (не string[]) — читає лише .word кожного
 // запису для розміщення в сітці; translation/imageUrl/audioUrl на
 // генерацію не впливають узагалі (це підказки в легенді, не сітка).
+// sanitizeWordForGrid (grid-word.ts) прибирає з .word усе, що не літера
+// (пробіл/апостроф/дефіс) — ЛИШЕ для розміщення: сам w.word (легенда)
+// лишається недоторканим у config.words, тут читається окремо, лише для
+// побудови сітки/placements.
 export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
   grid: string[][];
   placements: WordSearchPlacement[];
   failedWords: string[];
 } {
-  const words = rawWords.map((w) => w.word.trim().toUpperCase()).filter(Boolean);
+  const words = rawWords.map((w) => sanitizeWordForGrid(w.word).toUpperCase()).filter(Boolean);
   const size = computeGridSize(words);
   const grid: (string | null)[][] = Array.from({ length: size }, () => Array(size).fill(null));
   const placements: WordSearchPlacement[] = [];

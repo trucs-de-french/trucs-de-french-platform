@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -28,15 +29,16 @@ export const MatchingFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
+    // buildConfigFromVocab (task-config-builder.ts) — MatchingPair не має
+    // власного поля під картинку/аудіо, тож переносити тут нічого, окрім
+    // left/right (те саме мапування, що раніше було inline).
     importWords(words) {
+      const { pairs: newPairs } = buildConfigFromVocab("matching", words) as { pairs: MatchingPair[] };
       setPairs((prev) => {
         // Прибираємо порожню плейсхолдер-пару за замовчуванням, якщо
         // вчитель ще нічого не ввів — інакше лишався б сміттєвий рядок.
         const withoutEmpty = prev.filter((p) => p.left.trim() || p.right.trim());
-        return [
-          ...withoutEmpty,
-          ...words.map((w) => ({ id: crypto.randomUUID(), left: w.word, right: w.translation })),
-        ];
+        return [...withoutEmpty, ...newPairs];
       });
     },
     getValue: () => ({

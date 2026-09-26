@@ -63,7 +63,8 @@ import {
   TASK_TYPE_LABELS,
   TASK_TYPES_WITH_VISIBLE_TITLE,
 } from "@/lib/exercises/task-type-meta";
-import { generateTaskTitle, buildTitlePreviewConfig } from "@/lib/exercises/task-title";
+import { generateTaskTitle } from "@/lib/exercises/task-title";
+import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileOrLinkField } from "@/components/file-or-link-field";
@@ -228,7 +229,7 @@ export function TaskConfigFields({
     requestAnimationFrame(() => {
       const form = rootRef.current?.closest("form");
       if (!form) return;
-      const liveConfig = buildTitlePreviewConfig(currentType, new FormData(form));
+      const liveConfig = buildTaskConfig(currentType, new FormData(form));
       setPreviewTitle(generateTaskTitle(currentType, liveConfig));
     });
   }

@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -132,21 +133,18 @@ export const WordSearchFields = forwardRef<
     // відміну від них, ТЕЖ підтягує translation, якщо вчителька позначила
     // українську колонку для того самого рядка (ImportVocabPanel уже
     // повертає його — умова "checkedUk для цього v" саме там, у
-    // import-vocab-panel.tsx). imageUrl/audioUrl усе одно порожні —
-    // картинку й аудіо вчителька додає вручну вже ПІСЛЯ імпорту.
+    // import-vocab-panel.tsx). buildConfigFromVocab (task-config-builder.ts)
+    // переносить imageUrl/audioUrl, якщо вони є у вокабуляру; word лишається
+    // оригіналом (легенда показує саме його) — прибирання пробілів/
+    // апострофів/дефісів для розміщення в сітці відбувається пізніше,
+    // усередині generateWordSearchGrid (word-search-grid.ts), не тут.
     importWords(imported) {
+      const { words: newWords } = buildConfigFromVocab("word_search", imported) as {
+        words: WordSearchWord[];
+      };
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
-        return [
-          ...withoutEmpty,
-          ...imported.map((w) => ({
-            id: crypto.randomUUID(),
-            word: w.word,
-            translation: w.translation,
-            imageUrl: "",
-            audioUrl: "",
-          })),
-        ];
+        return [...withoutEmpty, ...newWords.map((w) => ({ ...w, id: crypto.randomUUID() }))];
       });
     },
     getValue: () => ({

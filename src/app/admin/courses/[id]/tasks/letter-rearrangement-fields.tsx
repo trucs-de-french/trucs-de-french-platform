@@ -7,6 +7,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
@@ -129,22 +130,16 @@ export const LetterRearrangementFields = forwardRef<
   );
 
   useImperativeHandle(ref, () => ({
-    // На відміну від sort_columns/reorder (де в елемента взагалі немає поля
-    // під переклад) — тут воно є (hintText), тож переклад із позначеної
-    // укр-колонки йде прямо туди. hintType не чіпаємо (лишається дефолтне
-    // "definition" — сам тип підказки вчителька й так може змінити вручну).
+    // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
+    // word/translation->word/hintText, що раніше було inline тут, тепер
+    // спільне з майбутнім масовим створювачем.
     importWords(imported) {
+      const { words: newWords } = buildConfigFromVocab("letter_rearrangement", imported) as {
+        words: LetterRearrangementWord[];
+      };
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
-        return [
-          ...withoutEmpty,
-          ...imported.map((w) => ({
-            id: crypto.randomUUID(),
-            word: w.word,
-            hintType: "definition" as const,
-            hintText: w.translation,
-          })),
-        ];
+        return [...withoutEmpty, ...newWords.map((w) => ({ ...w, id: crypto.randomUUID() }))];
       });
     },
     getValue: () => ({

@@ -2,14 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { createClient } from "@/lib/supabase/server";
-import { detectPlatform } from "@/lib/platform";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 import { blockDomId } from "@/lib/block-dom-id";
 import { generateTaskTitle } from "@/lib/exercises/task-title";
+import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
@@ -31,325 +29,6 @@ function resolveAudioUrl(formData: FormData): string | null {
 function resolveImageUrl(formData: FormData): string | null {
   const uploadedUrl = (formData.get("task_image_file_url") as string) || "";
   return uploadedUrl || (formData.get("task_image_url") as string) || null;
-}
-
-function buildConfig(type: string, formData: FormData): Record<string, unknown> {
-  switch (type) {
-    case "essay_check": {
-      const level = (formData.get("essay_level") as string) || "B1";
-      const exerciseNumberRaw = formData.get("essay_exercise_number") as string | null;
-      const exerciseNumber = exerciseNumberRaw ? (Number(exerciseNumberRaw) as 1 | 2) : undefined;
-
-      if (level === "A1" && exerciseNumber === 1) {
-        return {
-          level,
-          exerciseNumber,
-          instructions: (formData.get("essay_formulaire_instructions") as string) || "",
-          fields: parseJsonField(formData.get("essay_formulaire_fields")),
-        };
-      }
-
-      return {
-        prompt: (formData.get("prompt") as string) || "",
-        criteria: (formData.get("criteria") as string) || "",
-        level,
-        exerciseNumber,
-      };
-    }
-    case "open_answer": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("open_answer_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        questions: parseJsonField(formData.get("open_answer_questions")),
-      };
-    }
-    case "embed":
-      return {
-        url: (formData.get("embed_url") as string) || "",
-        height: Number(formData.get("embed_height")) || 480,
-      };
-    case "link": {
-      const url = (formData.get("link_url") as string) || "";
-      const rawPlatform = (formData.get("link_platform") as string) || "auto";
-      return {
-        url,
-        label: (formData.get("link_label") as string) || "",
-        platform: rawPlatform === "auto" ? detectPlatform(url) : rawPlatform,
-        download: formData.get("link_download") === "true",
-      };
-    }
-    case "fill_blank": {
-      const wordBank = parseJsonField(formData.get("fill_blank_word_bank")) as string[];
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("fill_blank_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("fill_blank_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        template: (formData.get("fill_blank_template") as string) || "",
-        points: Number(formData.get("fill_blank_points")) || 1,
-        // Порожній банк -> wordBank взагалі відсутній у config, а не "[]" —
-        // студентський рендер уже й так коректно ховає порожній масив
-        // (config.wordBank?.length), але так конфіг чистіший для читання.
-        ...(wordBank.length > 0 ? { wordBank } : {}),
-      };
-    }
-
-    case "letter_gaps": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("letter_gaps_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("letter_gaps_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        words: parseJsonField(formData.get("letter_gaps_words")),
-        points: Number(formData.get("letter_gaps_points")) || 1,
-      };
-    }
-    case "letter_rearrangement": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("letter_rearrangement_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("letter_rearrangement_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        words: parseJsonField(formData.get("letter_rearrangement_words")),
-        points: Number(formData.get("letter_rearrangement_points")) || 1,
-      };
-    }
-    case "multiple_choice": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("mc_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("mc_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        display: (formData.get("mc_display") as string) || "buttons",
-        items: parseJsonField(formData.get("mc_items")),
-      };
-    }
-    case "word_choice": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("word_choice_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("word_choice_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        mode: (formData.get("word_choice_mode") as string) || "select",
-        sentences: parseJsonField(formData.get("word_choice_sentences")),
-        points: Number(formData.get("word_choice_points")) || 1,
-      };
-    }
-    case "word_search": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("word_search_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("word_search_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        // Сітку й розміщення вже згенерувала й перевірила адмінка
-        // (word-search-fields.tsx) — сервер лише зберігає готовий
-        // результат, не перегенеровує.
-        words: parseJsonField(formData.get("word_search_words")),
-        grid: parseJsonField(formData.get("word_search_grid")),
-        placements: parseJsonField(formData.get("word_search_placements")),
-        points: Number(formData.get("word_search_points")) || 1,
-      };
-    }
-    case "crossword": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("crossword_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("crossword_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        // Розкладку вже згенерувала й перевірила адмінка
-        // (crossword-fields.tsx) — сервер лише зберігає готовий результат,
-        // не перегенеровує. Немає окремого поля "grid" (на відміну від
-        // word_search) — форма й літери відновлюються з placements там, де
-        // вони потрібні (sanitizeCrossword/gradeCrossword).
-        words: parseJsonField(formData.get("crossword_words")),
-        placements: parseJsonField(formData.get("crossword_placements")),
-        gridWidth: Number(formData.get("crossword_grid_width")) || 0,
-        gridHeight: Number(formData.get("crossword_grid_height")) || 0,
-        points: Number(formData.get("crossword_points")) || 1,
-      };
-    }
-    case "true_false": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("tf_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("tf_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        statements: parseJsonField(formData.get("tf_statements")),
-      };
-    }
-    case "matching": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("matching_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("matching_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        pairs: parseJsonField(formData.get("matching_pairs")),
-      };
-    }
-    case "listening": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("listening_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("listening_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        audioUrl: (formData.get("listening_audio_url") as string) || "",
-        questions: parseJsonField(formData.get("listening_questions")),
-      };
-    }
-    case "reorder": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("reorder_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("reorder_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        sequences: parseJsonField(formData.get("reorder_sequences")),
-      };
-    }
-    case "drag_drop": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("drag_drop_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("drag_drop_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        sentences: parseJsonField(formData.get("drag_drop_sentences")),
-        bank: parseJsonField(formData.get("drag_drop_bank")),
-      };
-    }
-    case "sort_columns": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("sort_columns_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("sort_columns_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        columns: parseJsonField(formData.get("sort_columns_columns")),
-        items: parseJsonField(formData.get("sort_columns_items")),
-      };
-    }
-    case "flip_cards": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("flip_cards_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("flip_cards_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        cards: parseJsonField(formData.get("flip_cards_cards")),
-        mode: (formData.get("flip_cards_mode") as string) || "manual",
-        revealSide: (formData.get("flip_cards_reveal_side") as string) || "front",
-      };
-    }
-    case "callout":
-      // Основна санітизація — саме тут, на межі збереження в базу
-      // (клієнтська санітизація в CalloutFields — лише для швидкого
-      // відгуку, їй не можна довіряти як єдиному захисту).
-      return {
-        style: (formData.get("callout_style") as string) || "none",
-        content: sanitizeCalloutHtml((formData.get("callout_content") as string) || ""),
-      };
-    case "phonetics": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("phonetics_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml((formData.get("phonetics_instructions") as string) || ""),
-        ...(subInstructions ? { subInstructions } : {}),
-        items: parseJsonField(formData.get("phonetics_items")),
-      };
-    }
-    case "table_fill": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("table_fill_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("table_fill_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
-        rows: parseJsonField(formData.get("table_fill_rows")),
-      };
-    }
-    case "image_match": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("image_match_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("image_match_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        items: parseJsonField(formData.get("image_match_items")),
-      };
-    }
-    case "checkbox_grid": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("checkbox_grid_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("checkbox_grid_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        columns: parseJsonField(formData.get("checkbox_grid_columns")),
-        rows: parseJsonField(formData.get("checkbox_grid_rows")),
-      };
-    }
-    case "chronological_order": {
-      const subInstructions = sanitizeInstructionsHtml(
-        (formData.get("chronological_order_sub_instructions") as string) || ""
-      );
-      return {
-        instructions: sanitizeInstructionsHtml(
-          (formData.get("chronological_order_instructions") as string) || ""
-        ),
-        ...(subInstructions ? { subInstructions } : {}),
-        mode: (formData.get("chronological_order_mode") as string) || "image",
-        items: parseJsonField(formData.get("chronological_order_items")),
-      };
-    }
-    case "vocab_quiz":
-      return {
-        sceneIds: parseJsonField(formData.get("vocab_quiz_scene_ids")),
-      };
-    default:
-      return {};
-  }
-}
-
-function parseJsonField(value: FormDataEntryValue | null): unknown[] {
-  try {
-    const parsed = JSON.parse((value as string) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
 }
 
 // Автоназва — єдине місце для обох сценаріїв (створення й оновлення):
@@ -468,7 +147,7 @@ export async function createTask(formData: FormData) {
   // відкритої зі сторінки блоку (?taskGroupId=...).
   const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
-  const config = buildConfig(type, formData);
+  const config = buildTaskConfig(type, formData);
   const title = resolveTaskTitle((formData.get("title") as string) ?? "", type, config);
   const delfSection = (formData.get("delf_section") as string) || null;
   const delfTestNumber = formData.get("delf_test_number")
@@ -541,7 +220,7 @@ export async function updateTask(
   const supabase = await createClient();
 
   const type = formData.get("type") as string;
-  const config = buildConfig(type, formData);
+  const config = buildTaskConfig(type, formData);
 
   // Стара назва/тип/config — щоб відрізнити "вчителька лишила автоназву
   // незмінною" (перегенерувати з нового config) від "вчителька вписала

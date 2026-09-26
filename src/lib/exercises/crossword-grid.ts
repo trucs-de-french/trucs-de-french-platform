@@ -1,5 +1,6 @@
 import type { CrosswordWord, CrosswordPlacement } from "./types";
 import { placementCells } from "./word-search-grid";
+import { sanitizeWordForGrid } from "./grid-word";
 
 type Direction = "horizontal" | "vertical";
 
@@ -398,9 +399,13 @@ export function generateCrosswordGrid(rawWords: CrosswordWord[]): {
   gridHeight: number;
   isolatedWords: string[];
 } {
+  // sanitizeWordForGrid прибирає з .word усе, що не літера (пробіл/
+  // апостроф/дефіс) — ЛИШЕ для розміщення в сітці; сам w.word (легенда/
+  // підказка) лишається недоторканим у CrosswordConfig.words, тут читається
+  // окремо.
   const words: WorkingWord[] = rawWords
     .map((w) => ({
-      word: w.word.trim().toUpperCase(),
+      word: sanitizeWordForGrid(w.word).toUpperCase(),
       clue: w.clue.trim(),
       clueStyle: w.clueStyle,
       imageUrl: w.imageUrl,

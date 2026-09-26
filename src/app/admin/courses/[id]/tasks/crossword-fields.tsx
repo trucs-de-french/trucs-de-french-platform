@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord, CrosswordPlacement } from "@/lib/exercises/types";
 import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
+import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -166,25 +167,19 @@ export const CrosswordFields = forwardRef<
 
   useImperativeHandle(ref, () => ({
     // Плаский тип (як letter_gaps/word_search) — word завжди обов'язковий.
-    // clue заповнюється з перекладу — той самий принцип, що word_search:
-    // ImportVocabPanel завжди рахує w.translation (порожній рядок, якщо
-    // українську колонку не позначили для цього рядка), тут воно просто
-    // йде в clue замість translation. imageUrl/audioUrl імпорт НЕ чіпає —
-    // вчителька додає їх вручну вже після імпорту (той самий принцип, що
-    // word_search).
+    // clue заповнюється з перекладу — той самий принцип, що word_search.
+    // buildConfigFromVocab (task-config-builder.ts) переносить imageUrl/
+    // audioUrl, якщо вони є у вокабуляру; word лишається оригіналом
+    // (легенда/підказка показує саме його) — прибирання пробілів/апострофів/
+    // дефісів для розміщення в сітці відбувається пізніше, усередині
+    // generateCrosswordGrid (crossword-grid.ts), не тут.
     importWords(imported) {
+      const { words: newWords } = buildConfigFromVocab("crossword", imported) as {
+        words: CrosswordWord[];
+      };
       setWords((prev) => {
         const withoutEmpty = prev.filter((w) => w.word.trim());
-        return [
-          ...withoutEmpty,
-          ...imported.map((w) => ({
-            id: crypto.randomUUID(),
-            word: w.word,
-            clue: w.translation,
-            imageUrl: "",
-            audioUrl: "",
-          })),
-        ];
+        return [...withoutEmpty, ...newWords.map((w) => ({ ...w, id: crypto.randomUUID() }))];
       });
     },
     getValue: () => ({

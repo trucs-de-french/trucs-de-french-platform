@@ -8,6 +8,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
+import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -91,9 +92,15 @@ export function WordSearchExercise({
       if (path.length > 1) {
         const letters = path.map((c) => config.grid[c.row][c.col]).join("");
         const reversed = [...letters].reverse().join("");
-        const match = config.words.find(
-          (w) => !foundWords.has(w.word) && (w.word.toUpperCase() === letters || w.word.toUpperCase() === reversed)
-        );
+        // sanitizeWordForGrid — те саме прибирання пробілів/апострофів/
+        // дефісів, що й у генераторі сітки/gradeWordSearch: w.word лишається
+        // оригіналом ("grand-mère"), а в клітинках сітки таких символів
+        // немає взагалі, тож звірка без нормалізації ніколи не збіглась би.
+        const match = config.words.find((w) => {
+          if (foundWords.has(w.word)) return false;
+          const sanitized = sanitizeWordForGrid(w.word).toUpperCase();
+          return sanitized === letters || sanitized === reversed;
+        });
         if (match) {
           setFoundWords((prev) => new Map(prev).set(match.word, path));
         }
