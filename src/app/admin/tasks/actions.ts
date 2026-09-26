@@ -7,8 +7,19 @@ import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 import { blockDomId } from "@/lib/block-dom-id";
 import { generateTaskTitle } from "@/lib/exercises/task-title";
-import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
+import {
+  buildTaskConfig,
+  buildConfigFromVocab,
+  BULK_VOCAB_TASK_TYPES,
+  type BulkVocabTaskType,
+  type VocabWordInput,
+} from "@/lib/exercises/task-config-builder";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
+import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
+import { generateCrosswordGrid } from "@/lib/exercises/crossword-grid";
+import { WORD_SEARCH_MAX_WORDS, CROSSWORD_MAX_WORDS, splitIntoChunks } from "@/lib/exercises/grid-limits";
+import type { LetterHideMode } from "@/lib/exercises/letter-hide";
+import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -88,6 +99,15 @@ async function syncGameRow(
 // контекст самої групи. Повертає й anchor — непрозорий id елемента, куди
 // варто прокрутити (не в кожної гілки він є: плоскі сцена/матеріал/DELF-
 // сторінки такого якоря на конкретну задачу не мають, лише сторінка блоку).
+function parseJsonField(value: FormDataEntryValue | null): unknown[] {
+  try {
+    const parsed = JSON.parse((value as string) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 async function resolveTaskParentPath(
   supabase: Awaited<ReturnType<typeof createClient>>,
   task: {
@@ -209,6 +229,144 @@ export async function createTask(formData: FormData) {
   // блоку сама знає свій якір лише для content-block-групи).
   const anchor = (formData.get("anchor") as string) || parent.anchor;
   redirect(anchor ? `${parent.path}#${anchor}` : parent.path);
+}
+
+type BulkTypeSelection = {
+  type: BulkVocabTaskType;
+  points?: number;
+  letterHideMode?: LetterHideMode;
+  crosswordClueStyle?: "short" | "long";
+};
+
+// "Створити вправи зі словника" (bulk-from-vocab/page.tsx) — той самий
+// прямий <form action={...}> + redirect() паттерн, що createTask, лише за
+// один виклик створює N задач одразу (N = кількість обраних типів, усі
+// зі спільного набору слів). ЖОДНОЇ перевірки прав тут понад те, що вже дає
+// createClient()/RLS (is_teacher() на tasks_write) — той самий рівень, що
+// createTask вище, доступ до самої сторінки вже гейтить admin/layout.tsx.
+export async function bulkCreateTasksFromVocab(formData: FormData) {
+  const supabase = await createClient();
+
+  const productId = formData.get("product_id") as string;
+  const sceneId = formData.get("scene_id") as string;
+  const taskGroupId = (formData.get("task_group_id") as string) || null;
+
+  const words = parseJsonField(formData.get("selected_words")) as VocabWordInput[];
+  const selectionsRaw = parseJsonField(formData.get("selections")) as BulkTypeSelection[];
+  // Захист від сфальшованого formData (тип поза BULK_VOCAB_TASK_TYPES) —
+  // buildConfigFromVocab повернув би для нього {} (default-гілка), тож
+  // задача створилась би без жодного реального вмісту; простіше відкинути
+  // такий вибір одразу, ще до збирання конфігів.
+  const selections = selectionsRaw.filter((s) => (BULK_VOCAB_TASK_TYPES as readonly string[]).includes(s.type));
+
+  if (words.length === 0 || selections.length === 0) {
+    redirect(`/admin/courses/${productId}/scenes/${sceneId}`);
+  }
+
+  // word_search/crossword — якщо слів більше за максимум, ділимо на кілька
+  // вправ рівномірно (splitIntoChunks, grid-limits.ts: 20 слів -> 2 по 10,
+  // не 12+8) замість однієї, що впиралась би в WORD_SEARCH_MAX_GRID чи
+  // ставала занадто громіздкою. Інші 5 типів завжди 1 вправа на весь набір.
+  const MAX_WORDS_BY_TYPE: Partial<Record<BulkVocabTaskType, number>> = {
+    word_search: WORD_SEARCH_MAX_WORDS,
+    crossword: CROSSWORD_MAX_WORDS,
+  };
+
+  // Помилки збирання конфігурації (чи не мало б статись — генератори не
+  // кидають виняток, лише повертають failedWords/isolatedWords) — усі ДО
+  // insert, жодного часткового запису в БД: якщо тут щось впаде, весь
+  // .insert() нижче просто не виконається.
+  const warnings: string[] = [];
+  const rows = selections.flatMap((sel) => {
+    const maxWords = MAX_WORDS_BY_TYPE[sel.type];
+    const wordChunks = maxWords ? splitIntoChunks(words, maxWords) : [words];
+    const partLabel = (i: number) => (wordChunks.length > 1 ? ` (частина ${i + 1})` : "");
+
+    return wordChunks.map((chunkWords, chunkIndex) => {
+      let config = buildConfigFromVocab(sel.type, chunkWords, {
+        pointsPerElement: sel.points,
+        crosswordClueStyle: sel.crosswordClueStyle,
+        letterHideMode: sel.letterHideMode,
+      });
+
+      if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
+        config = { ...config, points: sel.points ?? 1 };
+      } else if (sel.type === "word_search") {
+        const { grid, placements, failedWords } = generateWordSearchGrid(config.words as WordSearchWord[]);
+        config = { ...config, grid, placements, points: sel.points ?? 1 };
+        if (failedWords.length > 0) {
+          warnings.push(`Філворд${partLabel(chunkIndex)}: не вмістились у сітку — ${failedWords.join(", ")}`);
+        }
+      } else if (sel.type === "crossword") {
+        const { placements, gridWidth, gridHeight, isolatedWords } = generateCrosswordGrid(
+          config.words as CrosswordWord[]
+        );
+        config = { ...config, placements, gridWidth, gridHeight, points: sel.points ?? 1 };
+        if (isolatedWords.length > 0) {
+          warnings.push(
+            `Кросворд${partLabel(chunkIndex)}: не перетнулись з іншими словами — ${isolatedWords.join(", ")}`
+          );
+        }
+      }
+
+      const title = generateTaskTitle(sel.type, config) + partLabel(chunkIndex);
+      return { type: sel.type as string, title, config };
+    });
+  });
+
+  // Один nextOrderIndex, далі +1 у порядку selections (той самий порядок,
+  // що чекбокси кроку 2 на сторінці) — не окремий запит на кожну вправу.
+  const orderIndexStart = await nextOrderIndex(supabase, {
+    productId,
+    sceneId: taskGroupId ? null : sceneId,
+    materialId: null,
+    taskGroupId,
+  });
+
+  // Один insert([...]) на весь масив — атомарність дає сам Postgres: якщо
+  // ЩОСЬ не вставиться (напр. constraint), уся команда відкотиться вся,
+  // без потреби вручну видаляти вже створене.
+  const { data: inserted, error } = await supabase
+    .from("tasks")
+    .insert(
+      rows.map((r, i) => ({
+        product_id: productId,
+        scene_id: taskGroupId ? null : sceneId,
+        material_id: null,
+        task_group_id: taskGroupId,
+        type: r.type,
+        title: r.title,
+        order_index: orderIndexStart + i,
+        config: r.config,
+        // Так само, як у звичайному createTask за замовчуванням (чекбокс
+        // "Показувати бали" там не позначений) — тут його взагалі нема в
+        // майстрі, тож завжди false.
+        points_visible: false,
+      }))
+    )
+    .select("id");
+
+  if (error || !inserted) {
+    redirect(
+      `/admin/courses/${productId}/scenes/${sceneId}?error=${encodeURIComponent(
+        error?.message ?? "Не вдалося створити вправи"
+      )}`
+    );
+  }
+
+  const parent = await resolveTaskParentPath(supabase, {
+    product_id: productId,
+    scene_id: taskGroupId ? null : sceneId,
+    material_id: null,
+    task_group_id: taskGroupId,
+    delf_test_number: null,
+  });
+  const anchor = (formData.get("anchor") as string) || parent.anchor;
+  const params = new URLSearchParams();
+  params.set("newTasks", inserted.map((t) => t.id).join(","));
+  if (warnings.length > 0) params.set("warning", warnings.join(" | "));
+
+  redirect(`${parent.path}?${params.toString()}${anchor ? `#${anchor}` : ""}`);
 }
 
 export async function updateTask(

@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
+import { useNewTaskHighlight } from "@/lib/use-new-task-highlight";
 
 type MemberRow = { id: string; type: string; title: string };
 
@@ -29,6 +30,7 @@ export function GroupMemberDragList({
   initialMembers,
   sceneId,
   delfTestNumber,
+  newTaskIds = [],
 }: {
   groupId: string;
   productId: string;
@@ -40,8 +42,12 @@ export function GroupMemberDragList({
   // може належати матеріалу, де підсвічувати нічого.
   sceneId?: string | null;
   delfTestNumber?: number | null;
+  // Щойно створені (bulk-from-vocab у цей блок) — підсвічуються рамкою
+  // кольору brand на ~3с (useNewTaskHighlight).
+  newTaskIds?: string[];
 }) {
   const [members, setMembers] = useState(initialMembers);
+  const highlightedIds = useNewTaskHighlight(newTaskIds);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; side: DropSide } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +148,9 @@ export function GroupMemberDragList({
                 if (fromId && dropTarget) void move(fromId, dropTarget.id, dropTarget.side);
                 setDropTarget(null);
               }}
-              className="flex items-center justify-between rounded-md border border-gray-100 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-800"
+              className={`flex items-center justify-between rounded-md border border-gray-100 bg-white p-3 transition-shadow dark:border-neutral-700 dark:bg-neutral-800 ${
+                highlightedIds.has(task.id) ? "ring-2 ring-brand" : ""
+              }`}
             >
             <div className="flex items-center gap-2">
               <span

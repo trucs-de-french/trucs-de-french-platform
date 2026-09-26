@@ -132,7 +132,7 @@ export const LetterRearrangementFields = forwardRef<
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
     // word/translation->word/hintText, що раніше було inline тут, тепер
-    // спільне з майбутнім масовим створювачем.
+    // спільне з масовим створювачем "Створити вправи зі словника".
     importWords(imported) {
       const { words: newWords } = buildConfigFromVocab("letter_rearrangement", imported) as {
         words: LetterRearrangementWord[];

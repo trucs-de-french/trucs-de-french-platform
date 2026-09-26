@@ -37,20 +37,9 @@ import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { pluralizeExercisesAccusative } from "@/lib/pluralize-exercises";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
-
-// Українська плюралізація "вправу/вправи/вправ" (знахідний відмінок —
-// "прикріплено N вправ(у)") для тексту підтвердження видалення content-
-// блоку з прикріпленими вправами — той самий mod10/mod100 принцип, що вже
-// pluralizePoints, лише для іншого слова, не варте окремого спільного файлу
-// заради єдиного місця вжитку.
-function pluralizeExercisesAccusative(n: number): "вправу" | "вправи" | "вправ" {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "вправу";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "вправи";
-  return "вправ";
-}
+import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
   video: "Відео",
@@ -65,10 +54,10 @@ export default async function AdminScenePage({
   searchParams,
 }: {
   params: Promise<{ id: string; sceneId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; newTasks?: string; warning?: string }>;
 }) {
   const { id: productId, sceneId } = await params;
-  const { error } = await searchParams;
+  const { error, newTasks, warning } = await searchParams;
   const supabase = await createClient();
 
   const { data: scene, error: sceneError } = await supabase
@@ -90,6 +79,12 @@ export default async function AdminScenePage({
     throw new Error(`Не вдалося завантажити сцену: ${sceneError.message}`);
   }
   if (!scene) notFound();
+
+  // Для кнопки "Створити вправи зі словника" (блок "Завдання" і "Вправи
+  // блоку" нижче) — показуємо її лише коли є що обирати.
+  const sceneVocab = collectSceneVocab((scene.dialogue ?? []) as { vocab?: VocabItem[] }[]);
+  const hasSceneVocab = sceneVocab.length > 0;
+  const newTaskIds = newTasks ? newTasks.split(",").filter(Boolean) : [];
 
   const [
     { data: links },
@@ -355,6 +350,14 @@ export default async function AdminScenePage({
         >
           + Блок
         </Link>
+        {hasSceneVocab && (
+          <Link
+            href={`/admin/courses/${productId}/scenes/${sceneId}/tasks/bulk-from-vocab?anchor=${blockDomId("task")}`}
+            className={BUTTON_SECONDARY}
+          >
+            Створити вправи зі словника
+          </Link>
+        )}
         <Link
           href={`/admin/courses/${productId}/tasks/new?sceneId=${sceneId}&anchor=${blockDomId("task")}`}
           className={BUTTON_SECONDARY}
@@ -363,12 +366,19 @@ export default async function AdminScenePage({
         </Link>
       </div>
 
+      {warning && (
+        <p className="mt-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          ⚠ {warning}
+        </p>
+      )}
+
       <div className="mt-2">
         <TaskDragList
           key={sceneRows.map((r) => r.id).join(",")}
           sceneId={sceneId}
           productId={productId}
           initialRows={sceneRows}
+          newTaskIds={newTaskIds}
         />
       </div>
     </div>
@@ -449,12 +459,22 @@ export default async function AdminScenePage({
               return maxPoints > 0 ? ` · ${maxPoints} ${pluralizePoints(maxPoints)}` : "";
             })()}
           </span>
-          <Link
-            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${attachedGroup.id}&anchor=${blockDomId(`content:${block.refId}`)}`}
-            className={BUTTON_SECONDARY}
-          >
-            + Нова задача
-          </Link>
+          <div className="flex items-center gap-2">
+            {hasSceneVocab && (
+              <Link
+                href={`/admin/courses/${productId}/scenes/${sceneId}/tasks/bulk-from-vocab?taskGroupId=${attachedGroup.id}&anchor=${blockDomId(`content:${block.refId}`)}`}
+                className={BUTTON_SECONDARY}
+              >
+                Створити вправи зі словника
+              </Link>
+            )}
+            <Link
+              href={`/admin/courses/${productId}/tasks/new?taskGroupId=${attachedGroup.id}&anchor=${blockDomId(`content:${block.refId}`)}`}
+              className={BUTTON_SECONDARY}
+            >
+              + Нова задача
+            </Link>
+          </div>
         </div>
 
         <GroupMemberDragList
@@ -463,6 +483,7 @@ export default async function AdminScenePage({
           productId={productId}
           initialMembers={membersByAttachedGroupId.get(attachedGroup.id) ?? []}
           sceneId={sceneId}
+          newTaskIds={newTaskIds}
         />
 
         {freeSceneTaskCandidates.length > 0 && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { firstVocabVariant, type VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
@@ -27,11 +27,18 @@ type ImportedWord = { word: string; translation: string; image_url?: string };
 export function ImportVocabPanel({
   sceneVocab,
   onImport,
+  onSelectionChange,
   pairMode = false,
   showTranslationColumn = true,
 }: {
   sceneVocab: VocabItem[];
   onImport?: (words: ImportedWord[]) => void;
+  // Опційний "живий" колбек — викликається з ПОТОЧНИМ вибором щоразу, як
+  // він змінюється (незалежно від onImport/кнопки "Імпортувати"). Потрібен
+  // майстру "Створити вправи зі словника" (bulk-from-vocab) — там вибір
+  // слів триває протягом усієї форми, без окремого кроку "Імпортувати"
+  // (сам вибір і є частиною форми, що сабмітиться одним кліком наприкінці).
+  onSelectionChange?: (words: ImportedWord[]) => void;
   pairMode?: boolean;
   // false — для типів, де переклад узагалі нікуди не потрапляє (немає ані
   // pairMode-поля, ані підказки на рівні елемента: drag_drop/sort_columns/
@@ -42,6 +49,17 @@ export function ImportVocabPanel({
 }) {
   const [checkedFr, setCheckedFr] = useState<Set<string>>(new Set());
   const [checkedUk, setCheckedUk] = useState<Set<string>>(new Set());
+
+  function selectAll() {
+    const allWords = new Set(sceneVocab.map((v) => v.word));
+    setCheckedFr(allWords);
+    setCheckedUk(new Set(allWords));
+  }
+
+  function deselectAll() {
+    setCheckedFr(new Set());
+    setCheckedUk(new Set());
+  }
 
   function toggleFr(word: string) {
     setCheckedFr((prev) => {
@@ -71,23 +89,33 @@ export function ImportVocabPanel({
   // word_search), отримують його безкоштовно, без нового прапорця.
   // Парні типи: об'єднання обох колонок за спільним word-індексом —
   // непозначена сторона піде порожнім рядком, а не парою з чужого рядка.
-  const fromScene: ImportedWord[] = pairMode
-    ? sceneVocab
-        .filter((v) => checkedFr.has(v.word) || checkedUk.has(v.word))
-        .map((v) => ({
-          word: checkedFr.has(v.word) ? firstVocabVariant(v.word) : "",
-          translation: checkedUk.has(v.word) ? v.translation : "",
-          image_url: v.image_url,
-        }))
-    : sceneVocab
-        .filter((v) => checkedFr.has(v.word))
-        .map((v) => ({
-          word: firstVocabVariant(v.word),
-          translation: checkedUk.has(v.word) ? v.translation : "",
-          image_url: v.image_url,
-        }));
+  // useMemo — стабільна посилання між рендерами, поки набір позначених слів
+  // реально не змінився: ефект нижче (onSelectionChange) залежить від цього
+  // масиву, без memo він був би новим об'єктом щоразу й спрацьовував би на
+  // кожен рендер, а не лише на реальну зміну вибору.
+  const selected: ImportedWord[] = useMemo(
+    () =>
+      pairMode
+        ? sceneVocab
+            .filter((v) => checkedFr.has(v.word) || checkedUk.has(v.word))
+            .map((v) => ({
+              word: checkedFr.has(v.word) ? firstVocabVariant(v.word) : "",
+              translation: checkedUk.has(v.word) ? v.translation : "",
+              image_url: v.image_url,
+            }))
+        : sceneVocab
+            .filter((v) => checkedFr.has(v.word))
+            .map((v) => ({
+              word: firstVocabVariant(v.word),
+              translation: checkedUk.has(v.word) ? v.translation : "",
+              image_url: v.image_url,
+            })),
+    [pairMode, sceneVocab, checkedFr, checkedUk]
+  );
 
-  const selected: ImportedWord[] = fromScene;
+  useEffect(() => {
+    onSelectionChange?.(selected);
+  }, [selected, onSelectionChange]);
 
   function handleImport() {
     if (selected.length === 0 || !onImport) return;
@@ -101,6 +129,25 @@ export function ImportVocabPanel({
       <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
         Імпортувати лексику зі скрипту сцени
       </p>
+
+      {sceneVocab.length > 0 && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={selectAll}
+            className="text-xs text-blue-700 hover:underline dark:text-blue-400"
+          >
+            Обрати всі
+          </button>
+          <button
+            type="button"
+            onClick={deselectAll}
+            className="text-xs text-blue-700 hover:underline dark:text-blue-400"
+          >
+            Зняти всі
+          </button>
+        </div>
+      )}
 
       {sceneVocab.length > 0 ? (
         <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">

@@ -2,6 +2,7 @@ import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { detectPlatform } from "@/lib/platform";
 import { sanitizeWordForGrid } from "./grid-word";
+import { computeAutoHiddenIndices, type LetterHideMode } from "./letter-hide";
 import type {
   FlipCard,
   LetterGapsWord,
@@ -341,10 +342,27 @@ function parseJsonField(value: FormDataEntryValue | null): unknown[] {
   }
 }
 
+// Типи, що вміють будувати конфігурацію зі слів словника (buildConfigFromVocab
+// нижче) — той самий список і порядок, що в майстрі "Створити вправи зі
+// словника" (bulk-from-vocab) для чекбоксів кроку 2 й порядку order_index
+// створюваних задач. vocab_quiz свідомо відсутній — його конфіг посилається
+// на СЦЕНИ (sceneIds), не на окремі слова, вибір конкретних слів на нього
+// не впливає.
+export const BULK_VOCAB_TASK_TYPES = [
+  "flip_cards",
+  "matching",
+  "letter_gaps",
+  "letter_rearrangement",
+  "word_search",
+  "crossword",
+  "table_fill",
+] as const;
+export type BulkVocabTaskType = (typeof BULK_VOCAB_TASK_TYPES)[number];
+
 // ---------------------------------------------------------------------------
 // Імпорт лексики -> нові елементи типу — ОДНЕ джерело правди для звичайного
 // імпорту (ImportVocabPanel через importWords у *-fields.tsx) і для
-// майбутнього масового створювача "Створити вправи зі словника". Кожен
+// масового створювача "Створити вправи зі словника" (bulk-from-vocab). Кожен
 // консьюмер сам вирішує, куди саме додати повернені елементи (importWords —
 // у кінець наявного масиву; масовий створювач — як ЄДИНИЙ вміст нової
 // задачі) — ця функція лише мапить word/translation/imageUrl/audioUrl у
@@ -369,6 +387,14 @@ export type VocabImportOptions = {
   // на етапі оцінювання/показу, sanitize.ts).
   pointsPerElement?: number;
   crosswordClueStyle?: "short" | "long";
+  // Задано -> hiddenIndices рахується одразу (computeAutoHiddenIndices,
+  // letter-hide.ts) для КОЖНОГО слова, замість порожнього масиву. Звичайний
+  // імпорт (ImportVocabPanel через *-fields.tsx) цей параметр не передає —
+  // там приховування й далі окрема ручна дія ПІСЛЯ імпорту (кнопки
+  // "Приховати автоматично" в letter-gaps-fields.tsx), не частина самого
+  // імпорту. Масовий створювач (bulk-from-vocab) передає режим, обраний
+  // вчителькою в майстрі, одразу.
+  letterHideMode?: LetterHideMode;
 };
 
 export function buildConfigFromVocab(
@@ -396,12 +422,13 @@ export function buildConfigFromVocab(
       return { pairs };
     }
     case "letter_gaps": {
-      // hiddenIndices завжди [] тут — приховування літер не частина
-      // імпорту, окрема дія (computeAutoHiddenIndices, letter-hide.ts),
-      // застосовується вчителькою вручну на слово ПІСЛЯ імпорту.
+      // hiddenIndices — [] за замовчуванням (звичайний імпорт: приховування
+      // окрема ручна дія ПІСЛЯ), або одразу пораховані через
+      // computeAutoHiddenIndices, якщо викликач (bulk-from-vocab) передав
+      // options.letterHideMode.
       const importedWords: LetterGapsWord[] = words.map((w) => ({
         word: w.word,
-        hiddenIndices: [],
+        hiddenIndices: options.letterHideMode ? computeAutoHiddenIndices(w.word, options.letterHideMode) : [],
         hintType: "definition",
         hintText: w.translation,
         imageUrl: w.imageUrl || undefined,

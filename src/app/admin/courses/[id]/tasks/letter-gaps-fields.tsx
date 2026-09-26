@@ -194,7 +194,7 @@ export const LetterGapsFields = forwardRef<
   useImperativeHandle(ref, () => ({
     // buildConfigFromVocab (task-config-builder.ts) — те саме мапування
     // word/translation->word/hintText, що раніше було inline тут, тепер
-    // спільне з майбутнім масовим створювачем. hintType не чіпаємо
+    // спільне з масовим створювачем "Створити вправи зі словника". hintType не чіпаємо
     // (лишається дефолтне "definition" — вчителька сама може змінити
     // вручну). hiddenIndices порожній навмисно: автоприховування — окрема
     // дія (кнопки "Приховати автоматично" нижче), не частина імпорту.

@@ -17,6 +17,7 @@ import { GroupMemberDragList } from "../group-member-drag-list";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK } from "@/lib/typography-styles";
+import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 
 type GroupDetail = TaskGroupInitial & {
   id: string;
@@ -36,10 +37,13 @@ type MemberTask = {
 
 export default async function EditTaskGroupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; groupId: string }>;
+  searchParams: Promise<{ newTasks?: string; warning?: string }>;
 }) {
   const { id: productId, groupId } = await params;
+  const { newTasks, warning } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: group }, { data: product }] = await Promise.all([
@@ -68,6 +72,16 @@ export default async function EditTaskGroupPage({
       .single();
     effectiveSceneId = contentBlock?.scene_id ?? null;
   }
+
+  // Для кнопки "Створити вправи зі словника" — лише коли блок належить
+  // сцені (пряме scene_id чи через content-блок) І в її словнику є слова.
+  const { data: sceneForVocab } = effectiveSceneId
+    ? await supabase.from("scenes").select("dialogue").eq("id", effectiveSceneId).single()
+    : { data: null };
+  const hasSceneVocab =
+    sceneForVocab != null &&
+    collectSceneVocab((sceneForVocab.dialogue ?? []) as { vocab?: VocabItem[] }[]).length > 0;
+  const newTaskIds = newTasks ? newTasks.split(",").filter(Boolean) : [];
 
   const backHref = effectiveSceneId
     ? `/admin/courses/${productId}/scenes/${effectiveSceneId}`
@@ -155,13 +169,29 @@ export default async function EditTaskGroupPage({
       <section id="tasks-section" className="scroll-mt-4 mt-6">
         <div className="flex items-center justify-between">
           <h2 className={H2_TEXT}>Задачі блоку</h2>
-          <Link
-            href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}&anchor=tasks-section`}
-            className={BUTTON_SECONDARY}
-          >
-            + Нова задача в блоці
-          </Link>
+          <div className="flex items-center gap-2">
+            {effectiveSceneId && hasSceneVocab && (
+              <Link
+                href={`/admin/courses/${productId}/scenes/${effectiveSceneId}/tasks/bulk-from-vocab?taskGroupId=${group.id}&anchor=tasks-section`}
+                className={BUTTON_SECONDARY}
+              >
+                Створити вправи зі словника
+              </Link>
+            )}
+            <Link
+              href={`/admin/courses/${productId}/tasks/new?taskGroupId=${group.id}&anchor=tasks-section`}
+              className={BUTTON_SECONDARY}
+            >
+              + Нова задача в блоці
+            </Link>
+          </div>
         </div>
+
+        {warning && (
+          <p className="mt-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            ⚠ {warning}
+          </p>
+        )}
 
         <GroupMemberDragList
           key={members?.map((m) => m.id).join(",") ?? ""}
@@ -170,6 +200,7 @@ export default async function EditTaskGroupPage({
           initialMembers={members ?? []}
           sceneId={effectiveSceneId}
           delfTestNumber={group.delf_test_number}
+          newTaskIds={newTaskIds}
         />
 
         {candidates && candidates.length > 0 && (

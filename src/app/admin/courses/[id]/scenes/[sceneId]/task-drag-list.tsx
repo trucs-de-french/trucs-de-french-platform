@@ -14,6 +14,7 @@ import {
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
+import { useNewTaskHighlight } from "@/lib/use-new-task-highlight";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
 type GroupRow = { id: string; title: string | null; content_type: string; maxPoints: number };
@@ -89,12 +90,17 @@ export function TaskDragList({
   sceneId,
   productId,
   initialRows,
+  newTaskIds = [],
 }: {
   sceneId: string;
   productId: string;
   initialRows: Row[];
+  // Щойно створені (bulk-from-vocab) — підсвічуються рамкою кольору brand
+  // на ~3с (useNewTaskHighlight).
+  newTaskIds?: string[];
 }) {
   const [rows, setRows] = useState(initialRows);
+  const highlightedIds = useNewTaskHighlight(newTaskIds);
   // Повний кольоровий highlight картки блоку — лише для "прикріпити"
   // (willAttach), не для звичайного reorder (той тепер показує тонку лінію
   // через dropTarget, не підсвічування всієї картки).
@@ -325,9 +331,11 @@ export function TaskDragList({
             )}
             <div
               {...dragProps}
-              className={`flex flex-col rounded-md border p-3 ${stripeClassFor(
+              className={`flex flex-col rounded-md border p-3 transition-shadow ${stripeClassFor(
                 row.type
-              )} border-gray-200 bg-white shadow-sm ${shadowClassFor(row.type)} dark:border-neutral-700 dark:bg-neutral-800`}
+              )} border-gray-200 bg-white shadow-sm ${shadowClassFor(row.type)} dark:border-neutral-700 dark:bg-neutral-800 ${
+                highlightedIds.has(row.id) ? "ring-2 ring-brand" : ""
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
