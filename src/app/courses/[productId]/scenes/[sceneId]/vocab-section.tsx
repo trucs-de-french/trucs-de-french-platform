@@ -3,26 +3,30 @@
 import { useState } from "react";
 import { ChevronDown, Download } from "lucide-react";
 import type { VocabItem, PartOfSpeech } from "@/lib/vocab";
+import { firstVocabVariant, groupVocabByPartOfSpeech } from "@/lib/vocab";
 import {
-  firstVocabVariant,
-  groupVocabByPartOfSpeech,
   PART_OF_SPEECH_ORDER,
   PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
-} from "@/lib/vocab";
+} from "@/lib/vocab-categories";
 import { STUDENT_TOGGLE_HEADER_BUTTON, BUTTON_SECONDARY } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
 
 // Компактна легенда колір→категорія — над списком груп, щоб орієнтуватись,
-// не гортаючи до заголовка потрібної групи.
+// не гортаючи до заголовка потрібної групи. Розмір/шрифт/колір назви — на
+// ВНУТРІШНЬОМУ span із текстом, а не на цьому контейнері. БЕЗ overflow-x-auto/
+// overflow-hidden узагалі — не влазить у рядок на вузькому екрані -> просто
+// переноситься на наступний (flex-wrap), жодної прокрутки.
 function Legend() {
   return (
-    <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+    <div className="flex flex-wrap justify-start gap-x-2.5 gap-y-1">
       {PART_OF_SPEECH_ORDER.map((pos) => (
-        <span key={pos} className="inline-flex items-center gap-1">
-          <span className={`h-2 w-2 shrink-0 rounded-full ${PART_OF_SPEECH_COLORS[pos].dot}`} aria-hidden />
-          {PART_OF_SPEECH_LABELS_FR[pos]}
+        <span key={pos} className="inline-flex items-center gap-1 whitespace-nowrap">
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${PART_OF_SPEECH_COLORS[pos].dot}`} aria-hidden />
+          <span className="font-body text-xs text-neutral-500 dark:text-neutral-400">
+            {PART_OF_SPEECH_LABELS_FR[pos]}
+          </span>
         </span>
       ))}
     </div>
@@ -84,19 +88,17 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
     <div>
       {/* Кнопка-тогл і посилання PDF — окремі елементи в одному ряду, НЕ
           вкладені одне в одне (button/a всередині іншого button — невалідний
-          HTML і зламана доступність): flex-1 на тоглі забирає весь простір,
-          що лишився праворуч, PDF лишається компактним справа (justify-between
-          тут вже нічого додатково не розсовує, коли тогл на flex-1, але
-          лишаю — той самий рядок мав би сенс і без flex-1). items-center —
-          PDF (менша, py-1.5) вирівнюється по центру висоти тогла (py-2), не
-          розтягується на всю висоту, як було раніше (items-stretch). Клік
-          по PDF не спливає до тогла просто тому, що це сиблінги, а не
-          вкладені елементи — жодного stopPropagation не треба. */}
-      <div className="flex items-center justify-between gap-2">
+          HTML і зламана доступність): тогл сам розміром під контент (без
+          flex-1) — PDF стоїть одразу після заголовка, не притиснутий до
+          правого краю. items-center — PDF (менша, py-1.5) вирівнюється по
+          центру висоти тогла (py-2), не розтягується на всю висоту. Клік по
+          PDF не спливає до тогла просто тому, що це сиблінги, а не вкладені
+          елементи — жодного stopPropagation не треба. */}
+      <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className={`flex-1 ${STUDENT_TOGGLE_HEADER_BUTTON}`}
+          className={STUDENT_TOGGLE_HEADER_BUTTON}
         >
           <ChevronDown
             size={18}
@@ -121,18 +123,25 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
       </div>
 
       {!collapsed && (
-        // Легенда + список категорій — ОДНА центрована колонка (max-w-3xl
-        // mx-auto, приблизно колишня ширина таблиці), не текст по центру
-        // (весь вміст усередині лишається вирівняним по лівому краю) —
-        // на мобільній ширині колонка природно займає всю ширину.
-        // H2_TO_CONTENT — той самий відступ від заголовка, що й у Відео/
-        // Практика/Завдання.
-        <div className={`${H2_TO_CONTENT} mx-auto flex w-full max-w-3xl flex-col gap-4`}>
-          <Legend />
-          {groups.map((g) => (
-            <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
-          ))}
-        </div>
+        <>
+          {/* Легенда — на всю ширину секції (не max-w-3xl mx-auto, як
+              список слів нижче), по лівому краю на одній вертикалі із
+              заголовком-тоглом "ВОКАБУЛЯР" вище. H2_TO_CONTENT — той самий
+              відступ від заголовка, що й у Відео/Практика/Завдання. */}
+          <div className={`${H2_TO_CONTENT} w-full`}>
+            <Legend />
+          </div>
+
+          {/* Список категорій — ОДНА центрована колонка (max-w-3xl mx-auto,
+              приблизно колишня ширина таблиці), не текст по центру (весь
+              вміст усередині лишається вирівняним по лівому краю) — на
+              мобільній ширині колонка природно займає всю ширину. */}
+          <div className="mx-auto mt-4 flex w-full max-w-3xl flex-col gap-4">
+            {groups.map((g) => (
+              <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
