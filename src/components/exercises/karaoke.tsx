@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from "react";
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -14,19 +14,30 @@ import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-
 import { EXERCISE_STACK } from "@/lib/spacing";
 
 const POLL_INTERVAL_MS = 200;
+// Останній рядок не має "наступного", що позначив би його кінець — якщо
+// після його start ще довго триває музика (інструментал/аутро), вважаємо
+// його завершеним через стільки секунд (коротший фінал ловить подія ENDED).
+const LAST_LINE_END_FALLBACK_SECONDS = 4;
+const PAUSE_PREFERENCE_KEY_PREFIX = "karaoke-pause-";
+// Опитування currentTime раз на ~200мс саме по собі занадто неточне для
+// паузи "рівно в кінці рядка" (плюс власна затримка YouTube API) — коли до
+// межі лишається менше цього вікна, озброюємо ТОЧНИЙ setTimeout (нижче),
+// а не чекаємо наступного тіку опитування.
+const PAUSE_ARM_WINDOW_SECONDS = 0.5;
 
 // Останній рядок, чий start <= time — не покладається на порядок масиву
 // (хоч конструктор і заповнює рядки згори вниз, а значить хронологічно),
-// шукає МАКСИМАЛЬНИЙ придатний start явним проходом.
+// шукає МАКСИМАЛЬНИЙ придатний start явним проходом. Рядки з ОДНАКОВИМ
+// start (зокрема кілька 0 на початку, поки вчителька ще не розмітила час) —
+// строге "> найкращого" лишає виграним ПЕРШИЙ за індексом, не останній.
 function findCurrentLineIndex(lines: { start: number }[], time: number): number {
   let best = -1;
-  let bestStart = -Infinity;
-  lines.forEach((line, i) => {
-    if (line.start <= time && line.start > bestStart) {
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].start > time) continue;
+    if (best === -1 || lines[i].start > lines[best].start) {
       best = i;
-      bestStart = line.start;
     }
-  });
+  }
   return best;
 }
 
@@ -45,6 +56,50 @@ function gapIndexesForTokens(tokens: (string | null)[]): number[] {
     result.push(t === null ? counter : -1);
   }
   return result;
+}
+
+// localStorage-backed перемикач паузи, за вправою (ключ включає taskId) —
+// useSyncExternalStore, не useState+useEffect: сховище недоступне під час
+// SSR, тож "прочитати в ефекті й setState" дало б і hydration mismatch
+// (сервер рендерить дефолт із config.pauseOnGap, клієнтський перший рендер —
+// уже інше), і саму лінтер-помилку react-hooks/set-state-in-effect (той
+// самий принцип, що вже useCollapsedKeys у scene-block-list.tsx).
+// sessionFallbackRef — якщо localStorage кидає виняток (приватний режим
+// тощо), перемикач і далі працює в межах сесії (не "замерзає" на дефолті),
+// просто нічого не переживає перезавантаження сторінки.
+function usePausePreference(key: string, defaultValue: boolean) {
+  const listenersRef = useRef(new Set<() => void>());
+  const sessionFallbackRef = useRef<string | null>(null);
+
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    listenersRef.current.add(onStoreChange);
+    return () => listenersRef.current.delete(onStoreChange);
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return sessionFallbackRef.current;
+    }
+  }, [key]);
+
+  const getServerSnapshot = useCallback(() => null, []);
+
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const value = raw === null ? defaultValue : raw === "true";
+
+  function setValue(next: boolean) {
+    const str = next ? "true" : "false";
+    try {
+      window.localStorage.setItem(key, str);
+    } catch {
+      sessionFallbackRef.current = str;
+    }
+    listenersRef.current.forEach((onStoreChange) => onStoreChange());
+  }
+
+  return [value, setValue] as const;
 }
 
 function findFirstGap(lines: KaraokePublicLine[]): ActiveGap | null {
@@ -104,7 +159,6 @@ function KaraokeLineRow({
           isCurrent ? "text-lg" : "text-base text-neutral-500 dark:text-neutral-400"
         }`}
       >
-
         {line.tokens.map((token, ti) => {
           if (token !== null) return <span key={ti}>{token}</span>;
           const gi = gapIndexByToken[ti];
@@ -173,13 +227,11 @@ export function KaraokeExercise({
   const videoId = extractYoutubeId(config.videoUrl);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const player = useYoutubePlayer({
-    videoId,
-    containerRef,
-    onStateChange: (state) => setIsPlaying(state === YT_PLAYER_STATE.PLAYING),
-  });
 
-  const [currentLineIndex, setCurrentLineIndex] = useState(-1);
+  // 0, не -1, коли є хоч один рядок — до запуску відео (і поки currentTime
+  // не дістався start першого рядка) поточним/прокрученим вважається
+  // ПЕРШИЙ рядок, а не "нічого".
+  const [currentLineIndex, setCurrentLineIndex] = useState(() => (config.lines.length > 0 ? 0 : -1));
   const [answers, setAnswers] = useState<string[][]>(() =>
     config.lines.map((l) => Array(l.tokens.filter((t) => t === null).length).fill(""))
   );
@@ -198,26 +250,190 @@ export function KaraokeExercise({
     if (result) onResult?.(result);
   }, [result, onResult]);
 
-  // Опитування currentTime — лише поки відео реально грає, ~200мс: досить
-  // часто для плавної підсвітки поточного рядка без зайвого навантаження.
+  // Студентський перемикач паузи — початково з налаштування вправи
+  // (config.pauseOnGap), далі власний вибір студента для ЦІЄЇ вправи
+  // (usePausePreference, useSyncExternalStore — вище).
+  const [pauseEnabled, setPauseEnabled] = usePausePreference(
+    `${PAUSE_PREFERENCE_KEY_PREFIX}${taskId}`,
+    config.pauseOnGap
+  );
+
+  function togglePauseEnabled() {
+    setPauseEnabled(!pauseEnabled);
+  }
+
+  // Пауза-в-кінці-рядка — pausedForGapLine (для показу кнопки "▶
+  // Продовжити"/підсвітки саме щойно проспіваного рядка) і
+  // pausedLineIndicesRef (які рядки вже паузили В ЦЬОМУ проході — рівно
+  // раз, доки перемотка назад не озброїть їх знову). previousRawIndexRef —
+  // "сира" позиція за часом із МИНУЛОГО тіку опитування, для виявлення
+  // перемотки назад незалежно від того, як саме вона сталась (клік по
+  // рядку чи скрол у самому плеєрі).
+  const [pausedForGapLine, setPausedForGapLine] = useState<number | null>(null);
+  const pausedLineIndicesRef = useRef<Set<number>>(new Set());
+  const previousRawIndexRef = useRef(-1);
+  // Точний таймер паузи — armedForLineRef запам'ятовує, для ЯКОГО рядка вже
+  // заплановано setTimeout (щоб не переозброювати його на кожен тік
+  // опитування, поки й так у вікні PAUSE_ARM_WINDOW_SECONDS).
+  const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armedForLineRef = useRef<number | null>(null);
+
+  // useCallback — стабільна ідентичність (лише refs усередині, жодних
+  // реактивних залежностей) для обох ефектів нижче, що її використовують.
+  const cancelScheduledPause = useCallback(() => {
+    if (pauseTimeoutRef.current !== null) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
+    armedForLineRef.current = null;
+  }, []);
+
+  // Скасування при: паузі (isPlaying стає false → ефект опитування нижче
+  // сам чистить таймер у своєму return), перемотці (усередині ефекту й у
+  // onSeek рядка), зміні перемикача, анмаунті (тут, окремим ефектом —
+  // спрацює незалежно від того, чи взагалі був активний ефект опитування
+  // на момент розмонтування).
+  useEffect(() => {
+    if (!pauseEnabled) cancelScheduledPause();
+  }, [pauseEnabled, cancelScheduledPause]);
+
+  useEffect(() => () => cancelScheduledPause(), [cancelScheduledPause]);
+  // Завжди свіжі answers всередині setInterval-колбека нижче — сам ефект
+  // навмисно НЕ перезапускається на кожну зміну answers (інакше найменше
+  // натискання клавіші рвало б інтервал опитування currentTime).
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  });
+
+  const player = useYoutubePlayer({
+    videoId,
+    containerRef,
+    onStateChange: (state) => {
+      setIsPlaying(state === YT_PLAYER_STATE.PLAYING);
+      // Короткий фінал (останній рядок закінчується разом із відео, без
+      // тривалого аутро) — тут ENDED ловить те, що фолбек-таймер нижче міг
+      // не встигнути.
+      if (state === YT_PLAYER_STATE.ENDED && pauseEnabled) {
+        triggerPauseForLine(config.lines.length - 1);
+      }
+    },
+  });
+
+  // Пауза спрацьовує РІВНО РАЗ за прохід через рядок (pausedLineIndicesRef),
+  // лише якщо в ньому є незаповнений пропуск — інакше рядок просто
+  // пропускається без жодної паузи. useCallback — стабільна ідентичність
+  // для ефекту опитування нижче (інакше він перезапускав би interval на
+  // кожен рендер без потреби).
+  const triggerPauseForLine = useCallback(
+    (index: number) => {
+      if (index < 0 || pausedLineIndicesRef.current.has(index)) return;
+      const lineAnswers = answersRef.current[index] ?? [];
+      const firstEmptyGi = lineAnswers.findIndex((v) => !v);
+      if (firstEmptyGi === -1) return;
+
+      pausedLineIndicesRef.current.add(index);
+      setPausedForGapLine(index);
+      player.pause();
+
+      if (config.answerMode === "typing") {
+        diacritics.getElement(`${index}-${firstEmptyGi}`)?.focus();
+      } else {
+        setActiveGap({ li: index, gi: firstEmptyGi });
+      }
+    },
+    [player, config.answerMode, diacritics]
+  );
+
+  // Ціль паузи для рядка index — момент відео-часу, на який планується
+  // setTimeout: явний end рядка, якщо заданий (конструктор, karaoke-
+  // fields.tsx), інакше start наступного рядка, а для останнього рядка без
+  // end — старий "віртуальний" запас LAST_LINE_END_FALLBACK_SECONDS.
+  const pauseTargetFor = useCallback(
+    (index: number): number | undefined => {
+      const line = config.lines[index];
+      if (!line) return undefined;
+      if (line.end !== undefined) return line.end;
+      if (index === config.lines.length - 1) return line.start + LAST_LINE_END_FALLBACK_SECONDS;
+      return config.lines[index + 1]?.start;
+    },
+    [config.lines]
+  );
+
+  // Опитування currentTime — лише поки відео реально грає, ~200мс. Підсвітка
+  // рядка (setCurrentLineIndex) працює із "сирим" індексом (rawIndex), лише
+  // замінюючи -1 (ще до start першого рядка) на 0 для показу/скролу.
+  //
+  // Пауза-в-кінці-рядка — ДВОШАРОВА: (1) основний шлях — щойно до цілі
+  // (pauseTargetFor) лишається менше PAUSE_ARM_WINDOW_SECONDS, озброюємо
+  // ТОЧНИЙ setTimeout — саме опитування раз на ~200мс недостатньо точне;
+  // (2) резервний шлях — стара реактивна перевірка "вже перетнули межу
+  // наступного рядка" на випадок, якщо точний таймер з якоїсь причини не
+  // встиг озброїтись (напр. пропуск тіку опитування під навантаженою
+  // вкладкою).
   useEffect(() => {
     if (!isPlaying) return;
     const id = setInterval(() => {
       const time = player.getCurrentTime();
-      const index = findCurrentLineIndex(config.lines, time);
-      setCurrentLineIndex((prev) => (prev === index ? prev : index));
+      const rawIndex = findCurrentLineIndex(config.lines, time);
+      const displayIndex = rawIndex === -1 && config.lines.length > 0 ? 0 : rawIndex;
+      setCurrentLineIndex((prev) => (prev === displayIndex ? prev : displayIndex));
+
+      if (!pauseEnabled) return;
+
+      // Перемотка назад (клік по рядку чи скрол у самому плеєрі) — знову
+      // озброюємо паузи для рядків ПІСЛЯ нової позиції й скасовуємо будь-
+      // який запланований точний таймер (він рахований під СТАРУ позицію).
+      if (rawIndex < previousRawIndexRef.current) {
+        for (const idx of pausedLineIndicesRef.current) {
+          if (idx >= rawIndex) pausedLineIndicesRef.current.delete(idx);
+        }
+        cancelScheduledPause();
+      }
+      previousRawIndexRef.current = rawIndex;
+
+      if (rawIndex < 0) return;
+
+      if (armedForLineRef.current !== rawIndex && !pausedLineIndicesRef.current.has(rawIndex)) {
+        const target = pauseTargetFor(rawIndex);
+        if (target !== undefined) {
+          const remaining = target - time;
+          if (remaining > 0 && remaining <= PAUSE_ARM_WINDOW_SECONDS) {
+            armedForLineRef.current = rawIndex;
+            const delayMs = Math.max(0, remaining * 1000);
+            pauseTimeoutRef.current = setTimeout(() => triggerPauseForLine(rawIndex), delayMs);
+          }
+        }
+      }
+
+      // Резервний, менш точний шлях — на випадок, якщо озброєння вище
+      // якось пропустило момент.
+      if (rawIndex >= 1) triggerPauseForLine(rawIndex - 1);
+      const lastIndex = config.lines.length - 1;
+      const lastTarget = pauseTargetFor(lastIndex);
+      if (rawIndex === lastIndex && lastTarget !== undefined && time >= lastTarget) {
+        triggerPauseForLine(lastIndex);
+      }
     }, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [isPlaying, player, config.lines]);
+    return () => {
+      clearInterval(id);
+      cancelScheduledPause();
+    };
+  }, [isPlaying, player, config.lines, pauseEnabled, pauseTargetFor, triggerPauseForLine, cancelScheduledPause]);
+
+  // Під час паузи-в-кінці-рядка підсвічуємо саме ЩОЙНО ПРОСПІВАНИЙ рядок
+  // (pausedForGapLine), не "сиру" позицію за часом, що вже перейшла на
+  // наступний.
+  const displayLineIndex = pausedForGapLine ?? currentLineIndex;
 
   // Автоскрол у ВЛАСНОМУ контейнері тексту (overflow-y-auto нижче), не
   // сторінки — scrollIntoView скролить найближчого overflow-предка, той
   // самий принцип, що вже застосований для сітки філворда/легенди
   // вокабуляру раніше в цій сесії.
   useEffect(() => {
-    if (currentLineIndex < 0) return;
-    lineRefs.current[currentLineIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [currentLineIndex]);
+    if (displayLineIndex < 0) return;
+    lineRefs.current[displayLineIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [displayLineIndex]);
 
   const totalGaps = useMemo(
     () => config.lines.reduce((sum, l) => sum + l.tokens.filter((t) => t === null).length, 0),
@@ -225,6 +441,9 @@ export function KaraokeExercise({
   );
   const pointsPossibleTotal = config.pointsPerGap * totalGaps;
 
+  // Заповнення пропуску більше НЕ продовжує відео саме — єдиний спосіб
+  // продовжити після паузи-в-кінці-рядка — кнопка "▶ Продовжити" нижче
+  // (працює незалежно від того, заповнені пропуски чи ні).
   function updateAnswer(li: number, gi: number, value: string) {
     setAnswers((prev) => prev.map((line, idx) => (idx === li ? line.map((v, j) => (j === gi ? value : v)) : line)));
   }
@@ -282,6 +501,28 @@ export function KaraokeExercise({
           раніше) — відео зверху по центру, обмежене max-w-3xl, під ним —
           вікно тексту тієї самої ширини, під ним — варіанти вибору. */}
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
+        {/* Перемикач студента — праворуч над відео. Початковий стан із
+            налаштування вправи, далі власний вибір студента (localStorage,
+            через togglePauseEnabled вище). */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">Пауза після рядка з пропуском</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pauseEnabled}
+            onClick={togglePauseEnabled}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+              pauseEnabled ? "bg-brand" : "bg-neutral-300 dark:bg-neutral-600"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                pauseEnabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
         <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
           {videoId ? (
             <div ref={containerRef} className="h-full w-full" />
@@ -292,6 +533,23 @@ export function KaraokeExercise({
           )}
         </div>
 
+        {/* Єдиний спосіб продовжити після паузи-в-кінці-рядка — активна
+            незалежно від того, заповнені пропуски чи ні (можна пропустити
+            рядок). */}
+        {pausedForGapLine !== null && (
+          <button
+            type="button"
+            onClick={() => {
+              player.play();
+              cancelScheduledPause();
+              setPausedForGapLine(null);
+            }}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            ▶ Продовжити
+          </button>
+        )}
+
         {/* ~5-6 рядків висотою (leading-8=2rem на рядок) — власний
             скрол-контейнер, не сторінка. */}
         <div className="flex h-44 flex-col gap-1 overflow-y-auto">
@@ -300,13 +558,22 @@ export function KaraokeExercise({
               key={li}
               line={line}
               lineIndex={li}
-              isCurrent={li === currentLineIndex}
+              isCurrent={li === displayLineIndex}
               answers={answers[li]}
               detail={detail?.lines[li]}
               disabled={!!result}
               answerMode={config.answerMode}
               activeGap={activeGap}
-              onSeek={() => player.seekTo(line.start)}
+              onSeek={() => {
+                // Ручний клік по рядку — той самий "перемотка", що й скрол
+                // у самому плеєрі: не тримаємо підсвітку/кнопку продовження
+                // прив'язаною до рядка, з якого студент щойно пішов сам, і
+                // скасовуємо будь-який запланований точний таймер паузи
+                // (рахований під позицію, з якої щойно пішли).
+                cancelScheduledPause();
+                setPausedForGapLine(null);
+                player.seekTo(line.start);
+              }}
               onSetActiveGap={(gi) => setActiveGap({ li, gi })}
               onTypeAnswer={(gi, value) => updateAnswer(li, gi, value)}
               diacritics={diacritics}
@@ -356,15 +623,19 @@ export function KaraokeExercise({
 
       {detail && (
         <ul className="flex flex-col gap-1 text-sm">
-          {detail.lines.flatMap((l, li) =>
-            l.gaps.map((g, gi) =>
-              g.isCorrect ? null : (
-                <li key={`${li}-${gi}`} className="text-red-600 dark:text-red-400">
-                  Рядок {li + 1}, пропуск {gi + 1}: правильно — {g.correctAnswer}
-                </li>
-              )
-            )
-          )}
+          {detail.lines.map((l, li) => {
+            // Один рядок повідомлення на весь рядок пісні (не на кожен
+            // пропуск окремо) — правильні слова через кому, у порядку
+            // появи (той самий порядок, що й l.gaps, бо gapTokenIndices
+            // сортуються за зростанням при позначенні пропуску).
+            const wrongAnswers = l.gaps.filter((g) => !g.isCorrect).map((g) => g.correctAnswer);
+            if (wrongAnswers.length === 0) return null;
+            return (
+              <li key={li} className="text-red-600 dark:text-red-400">
+                Рядок {li + 1}: правильно — {wrongAnswers.join(", ")}
+              </li>
+            );
+          })}
         </ul>
       )}
 

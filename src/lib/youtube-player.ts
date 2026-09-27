@@ -12,6 +12,7 @@ type YTPlayer = {
   seekTo(seconds: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number;
   getPlayerState(): number;
+  setPlaybackRate(rate: number): void;
   destroy(): void;
 };
 
@@ -158,6 +159,11 @@ export function useYoutubePlayer({
     () => playerRef.current?.getPlayerState() ?? YT_PLAYER_STATE.UNSTARTED,
     []
   );
+  // getCurrentTime() за документацією YT API завжди повертає реальний час
+  // відео незалежно від playbackRate — записаний у розмітці час лишається
+  // коректним, навіть коли розмітка ведеться на пришвидшеній/сповільненій
+  // швидкості (karaoke-fields.tsx, режим розмітки пробілом).
+  const setPlaybackRate = useCallback((rate: number) => playerRef.current?.setPlaybackRate(rate), []);
 
-  return { isReady, play, pause, seekTo, getCurrentTime, getPlayerState };
+  return { isReady, play, pause, seekTo, getCurrentTime, getPlayerState, setPlaybackRate };
 }

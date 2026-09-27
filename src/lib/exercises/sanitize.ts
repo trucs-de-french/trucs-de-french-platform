@@ -531,9 +531,11 @@ export function sanitizeKaraoke(config: KaraokeConfig): KaraokePublic {
     subInstructions: config.subInstructions,
     videoUrl: config.videoUrl,
     answerMode: config.answerMode,
+    pauseOnGap: config.pauseOnGap,
     pointsPerGap: resolveKaraokePoints(config),
     lines: config.lines.map((line) => ({
       start: line.start,
+      end: line.end,
       tokens: line.tokens.map((t, i) => (line.gapTokenIndices.includes(i) ? null : t)),
       gapOptions:
         config.answerMode === "choice"

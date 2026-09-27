@@ -434,6 +434,10 @@ export type ChronologicalOrderConfig = {
 // коефіцієнт на всі пропуски вправи, а не окремий на кожен.
 export type KaraokeLine = {
   start: number; // секунди від початку відео (дробові дозволені)
+  // Кінець рядка (секунди) — момент паузи-на-пропуску, karaoke.tsx.
+  // Опційний для зворотної сумісності: якщо не задано, кінцем вважається
+  // start наступного рядка (для останнього — старий фолбек-запас).
+  end?: number;
   tokens: string[];
   gapTokenIndices: number[];
 };
@@ -728,6 +732,9 @@ export type ChronologicalOrderPublic = {
 // відсутнє для "typing".
 export type KaraokePublicLine = {
   start: number;
+  // Не відповідь (на відміну від tokens) — передається студенту як є, для
+  // точного моменту паузи-на-пропуску, karaoke.tsx.
+  end?: number;
   tokens: (string | null)[];
   gapOptions?: string[][];
 };
@@ -736,6 +743,7 @@ export type KaraokePublic = {
   subInstructions?: string;
   videoUrl: string;
   answerMode: "choice" | "typing";
+  pauseOnGap: boolean;
   pointsPerGap: number;
   lines: KaraokePublicLine[];
 };
