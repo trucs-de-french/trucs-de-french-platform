@@ -4,6 +4,7 @@ import { resolvePlatform } from "@/lib/platform";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
+import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { EmbedWithFallback } from "@/components/embed-with-fallback";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
@@ -76,15 +77,19 @@ export function ExerciseBlock({
       <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
       {task.type === "essay_check" && (
-        <EssayCheckExercise
-          taskId={task.id}
-          prompt={(task.config as { prompt?: string } | null)?.prompt}
-          config={(task.config ?? {}) as Record<string, unknown>}
-        />
+        <ExerciseErrorBoundary>
+          <EssayCheckExercise
+            taskId={task.id}
+            prompt={(task.config as { prompt?: string } | null)?.prompt}
+            config={(task.config ?? {}) as Record<string, unknown>}
+          />
+        </ExerciseErrorBoundary>
       )}
 
       {task.type === "callout" && (
-        <CalloutExercise config={task.config as unknown as CalloutConfig} />
+        <ExerciseErrorBoundary>
+          <CalloutExercise config={task.config as unknown as CalloutConfig} />
+        </ExerciseErrorBoundary>
       )}
 
       {isExerciseType(task.type) && (

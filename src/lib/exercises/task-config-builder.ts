@@ -542,7 +542,11 @@ export function buildConfigFromVocab(
         rightHidden: true,
         points: options.pointsPerElement,
       }));
-      return { rows };
+      // columnLabels — обов'язкове поле TableFillConfig (на відміну від
+      // усіх інших 6 типів масового створення, де немає такого спільного
+      // поля рівня конфігурації понад сам масив елементів) — той самий
+      // дефолт, що звичайна форма створення, table-fill-fields.tsx.
+      return { columnLabels: ["Французька", "Переклад"] as [string, string], rows };
     }
     default:
       return {};

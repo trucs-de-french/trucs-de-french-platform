@@ -10,6 +10,7 @@ import { PlatformIcon } from "@/components/platform-icon";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import { summarizeMistake } from "@/lib/exercises/summarize-mistake";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
+import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
 import { FlipCardsExercise } from "@/components/exercises/flip-cards";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
@@ -507,68 +508,80 @@ export default async function ScenePage({
               <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
               {task.type === "vocab_quiz" && (
-                <div className="flex flex-col gap-2">
-                  <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz}</p>
-                  {(() => {
-                    const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
-                    return (
-                      <VocabQuizExercise
-                        vocab={quizVocab}
-                        initialQuestions={buildQuizQuestions(quizVocab)}
-                      />
-                    );
-                  })()}
-                </div>
+                <ExerciseErrorBoundary>
+                  <div className="flex flex-col gap-2">
+                    <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz}</p>
+                    {(() => {
+                      const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
+                      return (
+                        <VocabQuizExercise
+                          vocab={quizVocab}
+                          initialQuestions={buildQuizQuestions(quizVocab)}
+                        />
+                      );
+                    })()}
+                  </div>
+                </ExerciseErrorBoundary>
               )}
 
               {task.type === "error_correction" && (
-                <div className="flex flex-col gap-2">
-                  {sceneMistakes.length === 0 ? (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      Поки що без помилок — так тримати!
-                    </p>
-                  ) : (
-                    <>
-                      <p className="font-medium">{DEFAULT_INSTRUCTIONS.error_correction}</p>
-                      {sceneMistakes.map((m) => (
-                        <a
-                          key={m.id}
-                          href={`#task-${m.task_id}`}
-                          className="block rounded-md border p-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                        >
-                          <span className="font-medium">{m.tasks?.title}</span>
-                          <span className="block text-neutral-500 dark:text-neutral-400">
-                            {summarizeMistake(m.ai_feedback)}
-                          </span>
-                        </a>
-                      ))}
-                    </>
-                  )}
-                </div>
+                <ExerciseErrorBoundary>
+                  <div className="flex flex-col gap-2">
+                    {sceneMistakes.length === 0 ? (
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Поки що без помилок — так тримати!
+                      </p>
+                    ) : (
+                      <>
+                        <p className="font-medium">{DEFAULT_INSTRUCTIONS.error_correction}</p>
+                        {sceneMistakes.map((m) => (
+                          <a
+                            key={m.id}
+                            href={`#task-${m.task_id}`}
+                            className="block rounded-md border p-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                          >
+                            <span className="font-medium">{m.tasks?.title}</span>
+                            <span className="block text-neutral-500 dark:text-neutral-400">
+                              {summarizeMistake(m.ai_feedback)}
+                            </span>
+                          </a>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </ExerciseErrorBoundary>
               )}
 
               {task.type === "flip_cards" && (
-                <FlipCardsExercise
-                  config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
-                />
+                <ExerciseErrorBoundary>
+                  <FlipCardsExercise
+                    config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
+                  />
+                </ExerciseErrorBoundary>
               )}
 
               {task.type === "essay_check" && (
-                <EssayCheckExercise
-                  taskId={task.id}
-                  prompt={(task.config as { prompt?: string } | null)?.prompt}
-                  config={(task.config ?? {}) as Record<string, unknown>}
-                />
+                <ExerciseErrorBoundary>
+                  <EssayCheckExercise
+                    taskId={task.id}
+                    prompt={(task.config as { prompt?: string } | null)?.prompt}
+                    config={(task.config ?? {}) as Record<string, unknown>}
+                  />
+                </ExerciseErrorBoundary>
               )}
 
               {task.type === "callout" && (
-                <CalloutExercise config={task.config as unknown as CalloutConfig} />
+                <ExerciseErrorBoundary>
+                  <CalloutExercise config={task.config as unknown as CalloutConfig} />
+                </ExerciseErrorBoundary>
               )}
 
               {task.type === "phonetics" && (
-                <PhoneticsExercise
-                  config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
-                />
+                <ExerciseErrorBoundary>
+                  <PhoneticsExercise
+                    config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
+                  />
+                </ExerciseErrorBoundary>
               )}
 
               {isExerciseType(task.type) && (

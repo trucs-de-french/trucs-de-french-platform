@@ -14,6 +14,12 @@ function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
 }
 
+// sanitizeTableFill (sanitize.ts) уже підставляє цей самий дефолт, якщо
+// його нема в конфізі — тут другий шар захисту саме на випадок конфіга, що
+// оминув sanitize (напр. застарілий кеш/бандл), щоб рендер рядка заголовка
+// таблиці не падав на columnLabels[0] з undefined.
+const DEFAULT_COLUMN_LABELS: [string, string] = ["Французька", "Переклад"];
+
 export function TableFillExercise({
   taskId,
   config,
@@ -31,6 +37,7 @@ export function TableFillExercise({
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as TableFillDetail | undefined;
+  const columnLabels = config.columnLabels ?? DEFAULT_COLUMN_LABELS;
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -106,8 +113,8 @@ export function TableFillExercise({
         <table className="w-full max-w-md border-collapse text-base">
           <thead>
             <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
-              <th className="py-1 pr-2 font-medium">{config.columnLabels[0]}</th>
-              <th className="py-1 pr-2 font-medium">{config.columnLabels[1]}</th>
+              <th className="py-1 pr-2 font-medium">{columnLabels[0]}</th>
+              <th className="py-1 pr-2 font-medium">{columnLabels[1]}</th>
               <th className="py-1 font-medium"></th>
             </tr>
           </thead>
@@ -150,7 +157,7 @@ export function TableFillExercise({
           {detail.blanks.map((b, i) =>
             b.isCorrect ? null : (
               <li key={i} className="text-red-600 dark:text-red-400">
-                Рядок {config.rows.findIndex((r) => r.id === b.rowId) + 1}, {config.columnLabels[b.side === "left" ? 0 : 1]}: правильно — {b.correctAnswers.join(" / ")}
+                Рядок {config.rows.findIndex((r) => r.id === b.rowId) + 1}, {columnLabels[b.side === "left" ? 0 : 1]}: правильно — {b.correctAnswers.join(" / ")}
               </li>
             )
           )}

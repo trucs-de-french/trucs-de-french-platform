@@ -21,6 +21,7 @@ import type {
   GradeResult,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
+import { ExerciseErrorBoundary } from "./exercise-error-boundary";
 import { FillBlankExercise } from "./fill-blank";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { WordChoiceExercise } from "./word-choice";
@@ -63,6 +64,28 @@ export function ExerciseCard({
   // Опційний — для блоків у режимі "фіксовано" (TaskGroupBlock), щоб
   // безумовно ховати індивідуальний бал задачі (і до, і після перевірки),
   // коли на рівні блоку показується лише один загальний підсумок.
+  hidePoints?: boolean;
+}) {
+  return (
+    <ExerciseErrorBoundary>
+      {renderExerciseByType({ taskId, type, config, pointsVisible, onResult, hidePoints })}
+    </ExerciseErrorBoundary>
+  );
+}
+
+function renderExerciseByType({
+  taskId,
+  type,
+  config,
+  pointsVisible,
+  onResult,
+  hidePoints,
+}: {
+  taskId: string;
+  type: string;
+  config: Record<string, unknown>;
+  pointsVisible?: boolean;
+  onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
 }) {
   switch (type) {

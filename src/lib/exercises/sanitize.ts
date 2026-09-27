@@ -434,11 +434,19 @@ export function resolveTableFillPoints(row: TableFillRow): number {
   return row.points ?? 1;
 }
 
+// columnLabels — обов'язкове поле в типі TableFillConfig, але вправи,
+// створені в обхід звичайної форми (напр. масове створення зі словника до
+// виправлення task-config-builder.ts), могли зберегтись без нього —
+// дефолт тут захищає й уже наявні в БД такі вправи, не лише нові.
+export function resolveTableFillColumnLabels(config: TableFillConfig): [string, string] {
+  return config.columnLabels ?? ["Французька", "Переклад"];
+}
+
 export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
-    columnLabels: config.columnLabels,
+    columnLabels: resolveTableFillColumnLabels(config),
     rows: config.rows.map((r) => ({
       id: r.id,
       left: r.leftHidden ? null : r.left,
