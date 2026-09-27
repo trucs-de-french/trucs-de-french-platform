@@ -17,6 +17,7 @@ import type {
   LetterGapsPublic,
   LetterRearrangementPublic,
   CrosswordPublic,
+  KaraokePublic,
   GradeResult,
 } from "@/lib/exercises/types";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
@@ -38,6 +39,7 @@ import { CheckboxGridExercise } from "./checkbox-grid";
 import { ChronologicalOrderExercise } from "./chronological-order";
 import { LetterGapsExercise } from "./letter-gaps";
 import { LetterRearrangementExercise } from "./letter-rearrangement";
+import { KaraokeExercise } from "./karaoke";
 
 export const isExerciseType = isGradableTaskType;
 
@@ -239,6 +241,16 @@ export function ExerciseCard({
         <ChronologicalOrderExercise
           taskId={taskId}
           config={config as unknown as ChronologicalOrderPublic}
+          pointsVisible={pointsVisible ?? false}
+          onResult={onResult}
+          hidePoints={hidePoints}
+        />
+      );
+    case "karaoke":
+      return (
+        <KaraokeExercise
+          taskId={taskId}
+          config={config as unknown as KaraokePublic}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}

@@ -23,6 +23,7 @@ import {
   resolveCheckboxGridPoints,
   resolveChronologicalOrderPoints,
   resolveCrosswordPoints,
+  resolveKaraokePoints,
 } from "./sanitize";
 import { placementCells } from "./word-search-grid";
 import { sanitizeWordForGrid } from "./grid-word";
@@ -81,12 +82,30 @@ import type {
   ChronologicalOrderConfig,
   ChronologicalOrderAnswer,
   ChronologicalOrderDetail,
+  KaraokeConfig,
+  KaraokeAnswer,
+  KaraokeDetail,
   GradeResult,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 
+// Порівняння текстових відповідей для ВСІХ типів нижче, що ним користуються
+// (fill_blank, letter_gaps, open_answer, table_fill, image_match,
+// word_search, crossword, karaoke): регістр і зовнішні пробіли байдужі,
+// апостроф будь-якого стилю (типографський ’/‘/ʼ) прирівнюється до
+// звичайного "'" (студент фізично не набере ’ з клавіатури), кілька
+// пробілів підряд стискаються в один. ДІАКРИТИКА НЕ ПРИБИРАЄТЬСЯ — "café" і
+// "cafe" НЕ вважаються однаковим — свідомий вибір (мовна точність), а не
+// недогляд. Виключно розширення (усе, що збігалось раніше, збігається й
+// далі) — не може зламати жоден наявний тип.
+const APOSTROPHE_VARIANTS_RE = /[‘’ʼ]/g;
+
 function normalize(value: string): string {
-  return value.trim().toLowerCase();
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(APOSTROPHE_VARIANTS_RE, "'")
+    .replace(/\s+/g, " ");
 }
 
 function percentage(correctCount: number, total: number): number {
@@ -123,9 +142,8 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
 
 // Той самий принцип, що gradeFillBlank: один бал на все завдання, а не на
 // слово/літеру — зараховується цілком, лише якщо ВСІ слова повністю
-// правильні. normalize() (trim+lowercase) — та сама конвенція, що для
-// текстових пропусків, коректно працює з французькими діакритичними
-// символами.
+// правильні. normalize() — та сама конвенція, що для текстових пропусків
+// (регістр/апостроф/пробіли байдужі, діакритика — ні).
 function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): GradeResult {
   const words: LetterGapsDetail["words"] = config.words.map((w, wi) => {
     const correctLetters = w.hiddenIndices.map((idx) => w.word[idx]);
@@ -735,6 +753,48 @@ function gradeChronologicalOrder(
   };
 }
 
+// Часткові бали за пропуск (не все-або-нічого, як gradeFillBlank/
+// gradeLetterGaps) — той самий принцип, що gradeMatching/gradeImageMatch:
+// pointsEarned/pointsPossible — сума по КОЖНОМУ пропуску окремо,
+// pointsPerGap (KaraokeConfig.pointsPerGap) — спільний коефіцієнт на всі,
+// не масив per-пропуск. normalize() — та сама конвенція, що для інших
+// текстових пропусків (регістр/апостроф/пробіли байдужі, діакритика — ні).
+function gradeKaraoke(config: KaraokeConfig, answer: KaraokeAnswer): GradeResult {
+  const pointsPerGap = resolveKaraokePoints(config);
+
+  const lines: KaraokeDetail["lines"] = config.lines.map((line, li) => {
+    const lineAnswers = answer[li] ?? [];
+    const gaps = line.gapTokenIndices.map((tokenIndex, gi) => {
+      const correctAnswer = line.tokens[tokenIndex];
+      const studentAnswer = lineAnswers[gi] ?? "";
+      return {
+        studentAnswer,
+        correctAnswer,
+        isCorrect: normalize(studentAnswer) === normalize(correctAnswer),
+        points: pointsPerGap,
+      };
+    });
+    // Текст для "Роботи над помилками" — пропуски як "___", tokens уже
+    // містить пробіли/пунктуацію окремими елементами, тож join("")
+    // відновлює оригінальний рядок один-в-один.
+    const text = line.tokens.map((t, i) => (line.gapTokenIndices.includes(i) ? "___" : t)).join("");
+    return { text, gaps };
+  });
+
+  const allGaps = lines.flatMap((l) => l.gaps);
+  const correctCount = allGaps.filter((g) => g.isCorrect).length;
+  const pointsPossible = allGaps.reduce((sum, g) => sum + g.points, 0);
+  const pointsEarned = allGaps.filter((g) => g.isCorrect).reduce((sum, g) => sum + g.points, 0);
+
+  return {
+    correct: correctCount === allGaps.length && allGaps.length > 0,
+    score: percentage(correctCount, allGaps.length),
+    detail: { lines },
+    pointsEarned,
+    pointsPossible,
+  };
+}
+
 export function gradeAnswer(
   type: GradableTaskType,
   config: Record<string, unknown>,
@@ -789,6 +849,8 @@ export function gradeAnswer(
         config as unknown as ChronologicalOrderConfig,
         answer as ChronologicalOrderAnswer
       );
+    case "karaoke":
+      return gradeKaraoke(config as unknown as KaraokeConfig, answer as KaraokeAnswer);
     default:
       return assertNeverGradableType(type);
   }

@@ -422,6 +422,31 @@ export type ChronologicalOrderConfig = {
   items: ChronologicalOrderItem[];
 };
 
+// Караоке — відео (поки лише YouTube, своя URL на кожну вправу) + текст
+// пісні/скрипту, синхронізований за часом. tokens — ВСЯ послідовність
+// токенів рядка (і слова, і роздільники — пробіли/розділові знаки — як
+// окремі елементи, в оригінальному порядку) — так само, як gapTokenIndices
+// нижче адресує лише "словесні" токени (пунктуація ніколи не є пропуском),
+// той самий принцип, що LetterGapsWord.hiddenIndices, лише на рівні слова,
+// не символу. Бали — ЧАСТКОВІ, pointsPerGap за кожен пропуск, підсумок —
+// сума (на відміну від fill_blank/letter_gaps, де один бал на все
+// завдання) — той самий принцип, що MatchingPair.points, лише один спільний
+// коефіцієнт на всі пропуски вправи, а не окремий на кожен.
+export type KaraokeLine = {
+  start: number; // секунди від початку відео (дробові дозволені)
+  tokens: string[];
+  gapTokenIndices: number[];
+};
+export type KaraokeConfig = {
+  instructions?: string;
+  subInstructions?: string;
+  videoUrl: string;
+  answerMode: "choice" | "typing";
+  pauseOnGap: boolean;
+  pointsPerGap?: number;
+  lines: KaraokeLine[];
+};
+
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється),
 // тому повна конфігурація й публічна — одне й те саме, sanitize не потрібен.
 export type FlipCard = { front: string; back: string; image_url?: string; audio_url?: string };
@@ -694,6 +719,27 @@ export type ChronologicalOrderPublic = {
   items: { id: string; content: string; points: number }[];
 };
 
+// tokens — маска (null на позиціях пропуску), той самий принцип, що
+// LetterGapsPublicWord.chars: не word+hiddenIndices, бо це віддало б
+// студенту прихований токен прямо з конфігу. gapOptions — лише для
+// answerMode "choice": на кожен пропуск рядка (за порядком зліва направо,
+// паралельно до "дірок" у tokens) — варіанти для вибору (правильний +
+// відволікачі з інших пропусків цієї ж пісні, перемішані, sanitize.ts) —
+// відсутнє для "typing".
+export type KaraokePublicLine = {
+  start: number;
+  tokens: (string | null)[];
+  gapOptions?: string[][];
+};
+export type KaraokePublic = {
+  instructions?: string;
+  subInstructions?: string;
+  videoUrl: string;
+  answerMode: "choice" | "typing";
+  pointsPerGap: number;
+  lines: KaraokePublicLine[];
+};
+
 // Відповідь студента для кожного типу.
 
 export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
@@ -733,6 +779,10 @@ export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: st
 export type CheckboxGridAnswer = { rowId: string; columnIds: string[] }[]; // позначені колонки на кожен рядок
 export type ImageMatchAnswer = { itemId: string; name: string }[];
 export type ChronologicalOrderAnswer = { itemId: string; position: number }[];
+// Рядок -> k-й пропуск у цьому рядку (за порядком зліва направо) -> текст
+// відповіді студента (уведений з клавіатури або обраний варіант — просте
+// string в обох режимах), той самий шейп, що LetterGapsAnswer.
+export type KaraokeAnswer = string[][];
 
 // Детальний результат перевірки — саме він показує "де помилка".
 
@@ -905,6 +955,18 @@ export type ChronologicalOrderDetail = {
   }[];
 };
 
+// text — рядок ІЗ ПРОПУСКАМИ, показаними як "___" (для контексту в "Роботі
+// над помилками" — там задача рендериться поза власним студентським
+// компонентом, самих tokens/gapTokenIndices під рукою нема). points — на
+// кожен пропуск (не на рядок і не на всю вправу) — часткові бали,
+// підсумовуються, той самий принцип, що ImageMatchDetail/ChronologicalOrderDetail.
+export type KaraokeDetail = {
+  lines: {
+    text: string;
+    gaps: { studentAnswer: string; correctAnswer: string; isCorrect: boolean; points: number }[];
+  }[];
+};
+
 // pointsEarned/pointsPossible — опційний шар балів ПОРЯД зі score (не
 // заміна): score/percentage лишається джерелом правди для прогресу/
 // pass-fail (напр. DelfTestGrid уже рахує pass/fail як middle 0-100 score),
@@ -929,4 +991,5 @@ export type GradeResult =
   | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number }
   | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ChronologicalOrderDetail; pointsEarned?: number; pointsPossible?: number };
+  | { correct: boolean; score: number; detail: ChronologicalOrderDetail; pointsEarned?: number; pointsPossible?: number }
+  | { correct: boolean; score: number; detail: KaraokeDetail; pointsEarned?: number; pointsPossible?: number };

@@ -177,6 +177,23 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         points: Number(formData.get("crossword_points")) || 1,
       };
     }
+    case "karaoke": {
+      const subInstructions = sanitizeInstructionsHtml(
+        (formData.get("karaoke_sub_instructions") as string) || ""
+      );
+      return {
+        instructions: sanitizeInstructionsHtml((formData.get("karaoke_instructions") as string) || ""),
+        ...(subInstructions ? { subInstructions } : {}),
+        videoUrl: (formData.get("karaoke_video_url") as string) || "",
+        answerMode: ((formData.get("karaoke_answer_mode") as string) || "typing") as "choice" | "typing",
+        pauseOnGap: formData.get("karaoke_pause_on_gap") === "true",
+        pointsPerGap: Number(formData.get("karaoke_points_per_gap")) || 1,
+        // Рядки (текст->токени, час, позначені пропуски) уже зібрала й
+        // перевірила адмінка (karaoke-fields.tsx) — сервер лише зберігає
+        // готовий результат, той самий принцип, що word_search/crossword.
+        lines: parseJsonField(formData.get("karaoke_lines")),
+      };
+    }
     case "true_false": {
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""

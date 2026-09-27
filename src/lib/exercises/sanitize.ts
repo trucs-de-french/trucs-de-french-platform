@@ -47,6 +47,8 @@ import type {
   ChronologicalOrderPublic,
   CrosswordConfig,
   CrosswordPublic,
+  KaraokeConfig,
+  KaraokePublic,
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
@@ -509,6 +511,42 @@ export function sanitizeChronologicalOrder(
   };
 }
 
+// Часткові бали за пропуск (не на всю вправу) — один спільний коефіцієнт,
+// не масив (на відміну від MatchingPair.points — тут немає структурної
+// адресації окремого пропуску, як і немає в FillBlankConfig).
+export function resolveKaraokePoints(config: KaraokeConfig): number {
+  return config.pointsPerGap ?? 1;
+}
+
+// tokens -> маска (null на позиціях пропуску), той самий принцип, що
+// sanitizeLetterGaps.chars. gapOptions ("вибір") — правильне слово + до 2
+// відволікачів з ІНШИХ пропусків цієї ж пісні (пул рахуємо один раз, не на
+// кожен пропуск окремо), перемішані — сама наявність правильної відповіді
+// серед options НЕ видає, яка саме правильна (порядок randomized).
+export function sanitizeKaraoke(config: KaraokeConfig): KaraokePublic {
+  const allGapWords = config.lines.flatMap((line) => line.gapTokenIndices.map((i) => line.tokens[i]));
+
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    videoUrl: config.videoUrl,
+    answerMode: config.answerMode,
+    pointsPerGap: resolveKaraokePoints(config),
+    lines: config.lines.map((line) => ({
+      start: line.start,
+      tokens: line.tokens.map((t, i) => (line.gapTokenIndices.includes(i) ? null : t)),
+      gapOptions:
+        config.answerMode === "choice"
+          ? line.gapTokenIndices.map((i) => {
+              const correct = line.tokens[i];
+              const distractors = shuffle(allGapWords.filter((w) => w !== correct)).slice(0, 2);
+              return shuffle([correct, ...distractors]);
+            })
+          : undefined,
+    })),
+  };
+}
+
 export function sanitizeConfigForStudent(
   type: GradableTaskType,
   config: Record<string, unknown>
@@ -550,6 +588,8 @@ export function sanitizeConfigForStudent(
       return sanitizeImageMatch(config as unknown as ImageMatchConfig);
     case "chronological_order":
       return sanitizeChronologicalOrder(config as unknown as ChronologicalOrderConfig);
+    case "karaoke":
+      return sanitizeKaraoke(config as unknown as KaraokeConfig);
     default:
       return assertNeverGradableType(type);
   }

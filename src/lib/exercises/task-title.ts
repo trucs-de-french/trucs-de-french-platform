@@ -90,6 +90,14 @@ function getPreviewElements(type: string, config: Record<string, unknown>): stri
       return cleanList(parseJsonArray(config.items), (i) => (i as { name?: string })?.name);
     case "phonetics":
       return cleanList(parseJsonArray(config.items), (i) => (i as { text?: string })?.text);
+    case "karaoke": {
+      const lines = parseJsonArray(config.lines) as { tokens?: string[]; gapTokenIndices?: number[] }[];
+      return cleanList(lines, (l) => {
+        const tokens = (l as { tokens?: string[] })?.tokens ?? [];
+        const gaps = new Set((l as { gapTokenIndices?: number[] })?.gapTokenIndices ?? []);
+        return tokens.map((t, i) => (gaps.has(i) ? "___" : t)).join("");
+      });
+    }
     case "essay_check":
       return [clean(config.prompt)].filter((t) => t.length > 0);
     case "callout":

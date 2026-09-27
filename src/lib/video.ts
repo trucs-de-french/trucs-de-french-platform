@@ -17,12 +17,18 @@ function extractGdriveFileId(url: string): string | null {
   return url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? null;
 }
 
+// Спільний з useYoutubePlayer (youtube-player.ts) — той самий id потрібен
+// і для звичайного iframe-ембеду тут, і для IFrame Player API там.
+export function extractYoutubeId(url: string): string | null {
+  return url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([a-zA-Z0-9_-]{11})/)?.[1] ?? null;
+}
+
 export function toEmbedUrl(
   url: string,
   provider: "youtube" | "gdrive" | null
 ): string {
   if (provider === "youtube") {
-    const id = url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([a-zA-Z0-9_-]{11})/)?.[1];
+    const id = extractYoutubeId(url);
     return id ? `https://www.youtube.com/embed/${id}` : url;
   }
 

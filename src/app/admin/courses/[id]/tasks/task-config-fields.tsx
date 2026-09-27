@@ -25,6 +25,7 @@ import type {
   LetterGapsConfig,
   LetterRearrangementConfig,
   CrosswordConfig,
+  KaraokeConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
@@ -50,6 +51,7 @@ import { ChronologicalOrderFields } from "./chronological-order-fields";
 import { LetterGapsFields } from "./letter-gaps-fields";
 import { LetterRearrangementFields } from "./letter-rearrangement-fields";
 import { CrosswordFields } from "./crossword-fields";
+import { KaraokeFields } from "./karaoke-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -151,6 +153,7 @@ const TYPE_OPTION_VALUES = [
   "image_match",
   "checkbox_grid",
   "chronological_order",
+  "karaoke",
 ];
 const TYPE_OPTIONS = TYPE_OPTION_VALUES.map((value) => ({ value, label: TASK_TYPE_LABELS[value] }));
 
@@ -931,6 +934,13 @@ export function TaskConfigFields({
           initialConfig={
             (pendingSeed?.forType === "crossword" ? pendingSeed.config : initialConfig) as Partial<CrosswordConfig>
           }
+        />
+      )}
+
+      {type === "karaoke" && (
+        <KaraokeFields
+          ref={typeSwitchRef as RefObject<TypeSwitchHandle<KaraokeConfig> | null>}
+          initialConfig={initialConfig as Partial<KaraokeConfig>}
         />
       )}
 

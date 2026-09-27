@@ -337,6 +337,19 @@ export const TASK_TYPE_COLORS: Record<
     iconText: "text-pink-500",
     shadow: "shadow-pink-100/50",
   },
+  // 29-й тип — палітра з 16 кольорів так само вичерпана (уже третій випадок
+  // 3-стороннього поділу, як word_search/vocab_quiz). Ділить fuchsia з
+  // game/drag_drop — обидва рідко трапляються поруч із караоке в одному
+  // списку (game — легасі-тип, drag_drop — граматика, караоке — розуміння
+  // на слух), іконка (Music2) додатково рятує впізнаваність.
+  karaoke: {
+    stripe: "border-l-4 border-l-fuchsia-500",
+    badge: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300",
+    dot: "bg-fuchsia-500",
+    iconBorder: "border-fuchsia-500",
+    iconText: "text-fuchsia-500",
+    shadow: "shadow-fuchsia-100/50",
+  },
 };
 
 // ai_examiner — у DB-обмеженні є, у TYPE_OPTIONS (вибір типу) поки немає,
@@ -360,6 +373,7 @@ export const TASK_TYPE_CATEGORY: Record<string, TaskTypeCategory> = {
   word_search: "auto_graded",
   crossword: "auto_graded",
   open_answer: "auto_graded",
+  karaoke: "auto_graded",
   callout: "reference",
   phonetics: "reference",
   flip_cards: "reference",
@@ -410,6 +424,7 @@ import {
   Brackets,
   Grid3x3,
   LayoutGrid,
+  Music2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -442,6 +457,7 @@ export const TASK_TYPE_ICON: Record<string, LucideIcon> = {
   embed: CodeXml,
   listening: Headphones,
   error_correction: CircleAlert,
+  karaoke: Music2,
 };
 
 export function getTaskTypeIcon(type: string): LucideIcon | null {
@@ -566,7 +582,15 @@ export const TASK_TYPE_GROUPS: { name: string; types: string[] }[] = [
   },
   {
     name: "Розуміння",
-    types: ["multiple_choice", "true_false", "listening", "chronological_order", "open_answer", "checkbox_grid"],
+    types: [
+      "multiple_choice",
+      "true_false",
+      "listening",
+      "chronological_order",
+      "open_answer",
+      "checkbox_grid",
+      "karaoke",
+    ],
   },
   {
     name: "Письмо",
@@ -613,6 +637,7 @@ export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
   phonetics: "Довідка з вимови звуків",
   error_correction: "Робота над помилками: власні помилки студента",
   game: "Стара гра (Wordwall тощо) — лише редагування",
+  karaoke: "Відео з YouTube + текст із пропусками, синхронізовані за часом",
 };
 
 // Людські назви типів для комбобокса вибору типу (TaskTypeCombobox) — єдине
@@ -649,6 +674,7 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
   checkbox_grid: "Таблиця вибору",
   chronological_order: "Хронологічний порядок",
   game: "Гра",
+  karaoke: "Караоке",
 };
 
 // Типи, чия tasks.title показується СТУДЕНТУ (scenes/[sceneId]/page.tsx,
