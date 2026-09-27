@@ -52,6 +52,7 @@ import type {
 } from "./types";
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
+import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
@@ -280,9 +281,20 @@ export function sanitizeTrueFalse(config: TrueFalseConfig): TrueFalsePublic {
 
 // Стара форма (пари без id, до пілоту балів) — виродковий випадок нової:
 // стабільний синтетичний id за позицією. НЕ рандомний (crypto.randomUUID
-// на кожне читання зламав би адресацію балів між рендерами).
+// на кожне читання зламав би адресацію балів між рендерами). id
+// присвоюється ДО фільтрації неповних пар нижче — за позицією в
+// ОРИГІНАЛЬНОМУ config.pairs, не в уже відфільтрованому списку, інакше
+// видалення однієї неповної пари змістило б синтетичні id всіх наступних.
+//
+// Пара без лівої чи правої частини (незаповнена в конструкторі) — свідомо
+// прибирається тут, у ЄДИНОМУ спільному джерелі, яким користуються і
+// sanitizeMatching (що студент бачить), і gradeMatching (що зараховується) —
+// гарантія, що обидва завжди пропускають РІВНО ті самі пари, індекси й бали
+// ніколи не розійдуться.
 export function getMatchingPairs(config: MatchingConfig): (MatchingPair & { id: string })[] {
-  return config.pairs.map((p, i) => ({ ...p, id: p.id ?? `pair-${i}` }));
+  return config.pairs
+    .map((p, i) => ({ ...p, id: p.id ?? `pair-${i}` }))
+    .filter((p) => p.left.trim() && p.right.trim());
 }
 
 // Пілот системи балів, Група B (див. resolveTrueFalsePoints) — дефолт 1.
@@ -291,12 +303,16 @@ export function resolveMatchingPoints(pair: MatchingPair): number {
 }
 
 export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
+  // left/right тепер похідні з ТІЄЇ САМОЇ відфільтрованої pairs (не сирого
+  // config.pairs) — неповна пара (без лівої чи правої частини) не потрапляє
+  // студенту в жодному з трьох полів, той самий принцип, що вже нижче для
+  // pairs.
   const pairs = getMatchingPairs(config);
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
-    left: config.pairs.map((p) => p.left),
-    right: shuffle(config.pairs.map((p) => p.right)),
+    left: pairs.map((p) => p.left),
+    right: shuffle(pairs.map((p) => p.right)),
     // left тут НЕ перемішаний — той самий порядок, що в left[] вище.
     pairs: pairs.map((p) => ({ id: p.id, left: p.left, points: resolveMatchingPoints(p) })),
   };
@@ -429,6 +445,14 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   };
 }
 
+// Рядок без лівої чи правої частини (незаповнений у конструкторі) — не
+// показується студенту і не враховується в балах. Спільне джерело для
+// sanitizeTableFill і gradeTableFill (grade.ts) — той самий принцип, що
+// getMatchingPairs: обидва завжди пропускають РІВНО ті самі рядки.
+export function getTableFillRows(config: TableFillConfig): TableFillRow[] {
+  return config.rows.filter((r) => r.left.trim() && r.right.trim());
+}
+
 // Пілот системи балів, Група B (див. resolveTrueFalsePoints) — дефолт 1.
 export function resolveTableFillPoints(row: TableFillRow): number {
   return row.points ?? 1;
@@ -447,11 +471,14 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     columnLabels: resolveTableFillColumnLabels(config),
-    rows: config.rows.map((r) => ({
+    rows: getTableFillRows(config).map((r) => ({
       id: r.id,
       left: r.leftHidden ? null : r.left,
       right: r.rightHidden ? null : r.right,
       points: resolveTableFillPoints(r),
+      // normalizePartOfSpeech — той самий легасі-ключ "adverbe_locution" ->
+      // "adverbe" і невідомі/порожні значення -> null, що вже вокабуляр.
+      partOfSpeech: normalizePartOfSpeech(r.partOfSpeech),
     })),
   };
 }

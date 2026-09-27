@@ -1,3 +1,5 @@
+import type { PartOfSpeech } from "@/lib/vocab-categories";
+
 // Повні конфігурації (з правильними відповідями) — живуть тільки на сервері.
 
 // points — пілот системи балів, Група B, останній тип. На відміну від усіх
@@ -358,6 +360,10 @@ export type TableFillRow = {
   leftHidden: boolean;
   rightHidden: boolean;
   points?: number;
+  // Опційна частина мови (vocab-categories.ts) — для групування рядків на
+  // студентській сторінці (table-fill.tsx); порожньо для рядків, доданих
+  // вручну, і для вправ, збережених до появи цього поля.
+  partOfSpeech?: PartOfSpeech | null;
 };
 export type TableFillConfig = {
   instructions?: string;
@@ -697,7 +703,9 @@ export type TableFillPublic = {
   instructions?: string;
   subInstructions?: string;
   columnLabels: [string, string];
-  rows: { id: string; left: string | null; right: string | null; points: number }[]; // null = прихована клітинка
+  // partOfSpeech — не відповідь (як gapOptions у karaoke), передається як є
+  // для групування на студентській сторінці.
+  rows: { id: string; left: string | null; right: string | null; points: number; partOfSpeech?: PartOfSpeech | null }[]; // null = прихована клітинка
 };
 
 export type CheckboxGridPublic = {

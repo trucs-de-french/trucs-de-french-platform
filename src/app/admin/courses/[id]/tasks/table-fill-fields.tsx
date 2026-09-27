@@ -8,11 +8,19 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
-import { INPUT_BORDER } from "@/lib/input-styles";
+import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
 
 function emptyRow(): TableFillRow {
-  return { id: crypto.randomUUID(), left: "", right: "", leftHidden: false, rightHidden: true };
+  return {
+    id: crypto.randomUUID(),
+    left: "",
+    right: "",
+    leftHidden: false,
+    rightHidden: true,
+    partOfSpeech: null,
+  };
 }
 
 export const TableFillFields = forwardRef<
@@ -61,6 +69,12 @@ export const TableFillFields = forwardRef<
 
   function updateRowPoints(id: string, points: number) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, points } : r)));
+  }
+
+  function updateRowPartOfSpeech(id: string, value: string) {
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, partOfSpeech: value ? (value as TableFillRow["partOfSpeech"]) : null } : r))
+    );
   }
 
   return (
@@ -115,7 +129,7 @@ export const TableFillFields = forwardRef<
               value={row.left}
               onChange={(e) => updateRow(row.id, "left", e.target.value)}
               placeholder={columnLabels[0]}
-              className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
+              className={`${row.left.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} px-2 py-2 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
@@ -131,7 +145,7 @@ export const TableFillFields = forwardRef<
               value={row.right}
               onChange={(e) => updateRow(row.id, "right", e.target.value)}
               placeholder={columnLabels[1]}
-              className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
+              className={`${row.right.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} px-2 py-2 text-base font-medium font-content`}
             />
             <label className={`flex items-center gap-1 ${LABEL_TEXT}`}>
               <input
@@ -142,6 +156,19 @@ export const TableFillFields = forwardRef<
               приховати
             </label>
           </div>
+          <select
+            value={row.partOfSpeech ?? ""}
+            onChange={(e) => updateRowPartOfSpeech(row.id, e.target.value)}
+            title="Частина мови (для групування на студентській сторінці)"
+            className={`${INPUT_BORDER} self-start px-1.5 py-2 text-xs`}
+          >
+            <option value="">—</option>
+            {PART_OF_SPEECH_ORDER.map((pos) => (
+              <option key={pos} value={pos}>
+                {PART_OF_SPEECH_LABELS_FR[pos]}
+              </option>
+            ))}
+          </select>
           <span className={`self-start ${HINT_TEXT}`}>Бали</span>
           <input
             type="number"

@@ -20,7 +20,12 @@ import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { Z_ACTION_BAR } from "@/lib/z-layers";
 
-type ImportedWord = { word: string; translation: string; image_url?: string };
+type ImportedWord = {
+  word: string;
+  translation: string;
+  image_url?: string;
+  partOfSpeech?: string | null;
+};
 
 // Сітка на 1-2 слова технічно згенерується (генератор не падає), але
 // виглядає як завдання заради завдання — лише попередження, не блокування.
@@ -29,6 +34,12 @@ const MIN_WORDS_FOR_GRID = 3;
 // flip_cards — самостійний тип без правильної відповіді (не оцінюється,
 // той самий принцип, що вже в types.ts) — єдиний із 7 без поля "Бали".
 const NO_POINTS_TYPES = new Set<BulkVocabTaskType>(["flip_cards"]);
+
+// Типи, де КОЖЕН елемент — обов'язково пара слово+переклад (той самий
+// список, що PAIR_TYPES у task-config-fields.tsx, лише тут окремий, бо
+// призначення інше: там — яку колонку показати в ImportVocabPanel, тут —
+// чи вистачає перекладів для повноцінних пар при масовому створенні).
+const PAIR_TYPES = new Set<BulkVocabTaskType>(["matching", "table_fill", "flip_cards"]);
 
 type TypeState = {
   checked: boolean;
@@ -92,7 +103,21 @@ export function BulkFromVocabForm({
     setTypeState((prev) => ({ ...prev, [type]: { ...prev[type], ...patch } }));
   }
 
-  const selectedTypes = BULK_VOCAB_TASK_TYPES.filter((t) => typeState[t].checked);
+  // Скільки з обраних слів узагалі без перекладу — для попередження/
+  // деактивації парних типів (matching/table_fill/flip_cards) нижче.
+  const missingTranslationCount = selectedWords.filter((w) => !w.translation.trim()).length;
+
+  function isTypeActive(type: BulkVocabTaskType): boolean {
+    if (!PAIR_TYPES.has(type) || selectedWords.length === 0) return true;
+    return missingTranslationCount < selectedWords.length;
+  }
+
+  // isTypeActive, не лише s.checked — якщо студентка спершу відмітила
+  // парний тип, а тоді прибрала переклади з усіх слів, чекбокс стає
+  // disabled (нижче), але сам React-стан checked міг лишитись true: тип не
+  // повинен рахуватись у список створення, навіть якщо DOM-чекбокс
+  // заблокований, а не знято програмно.
+  const selectedTypes = BULK_VOCAB_TASK_TYPES.filter((t) => typeState[t].checked && isTypeActive(t));
   // word_search/crossword діляться на кілька вправ, коли слів більше за
   // максимум для типу (той самий MAX_WORDS_BY_TYPE, що в bulkCreateTasksFromVocab) —
   // кнопка має показувати реальну кількість вправ, що створяться, а не 1 на тип.
@@ -113,6 +138,7 @@ export function BulkFromVocabForm({
     word: w.word,
     translation: w.translation,
     imageUrl: w.image_url,
+    partOfSpeech: w.partOfSpeech,
   }));
   const selections = selectedTypes.map((type) => ({
     type,
@@ -149,20 +175,29 @@ export function BulkFromVocabForm({
           const s = typeState[type];
           const isGridType = type === "word_search" || type === "crossword";
           const showGridWarning = s.checked && isGridType && selectedWords.length > 0 && selectedWords.length < MIN_WORDS_FOR_GRID;
+          const typeActive = isTypeActive(type);
+          const showSomeMissingTranslation =
+            PAIR_TYPES.has(type) && typeActive && missingTranslationCount > 0;
 
           return (
             <div
               key={type}
               className={`rounded-md border p-3 ${
-                s.checked
-                  ? "border-brand bg-brand/5 dark:border-brand dark:bg-neutral-800"
-                  : "border-gray-100 dark:border-neutral-700"
+                !typeActive
+                  ? "border-gray-100 opacity-60 dark:border-neutral-700"
+                  : s.checked
+                    ? "border-brand bg-brand/5 dark:border-brand dark:bg-neutral-800"
+                    : "border-gray-100 dark:border-neutral-700"
               }`}
             >
-              <label className="flex cursor-pointer items-start gap-2">
+              <label
+                className={`flex items-start gap-2 ${typeActive ? "cursor-pointer" : "cursor-not-allowed"}`}
+                title={typeActive ? undefined : "У жодного з обраних слів немає перекладу"}
+              >
                 <input
                   type="checkbox"
-                  checked={s.checked}
+                  checked={s.checked && typeActive}
+                  disabled={!typeActive}
                   onChange={(e) => updateType(type, { checked: e.target.checked })}
                   className="mt-1"
                 />
@@ -252,6 +287,18 @@ export function BulkFromVocabForm({
                 <p className="mt-2 pl-6 text-xs text-amber-600 dark:text-amber-400">
                   ⚠ Обрано менше {MIN_WORDS_FOR_GRID} слів — {type === "word_search" ? "філворд" : "кросворд"} матиме
                   сенс лише за більшої кількості.
+                </p>
+              )}
+
+              {showSomeMissingTranslation && (
+                <p className="mt-2 pl-6 text-xs text-amber-600 dark:text-amber-400">
+                  ⚠ Слів без перекладу: {missingTranslationCount} — пари будуть неповними.
+                </p>
+              )}
+
+              {!typeActive && (
+                <p className="mt-2 pl-6 text-xs text-neutral-500 dark:text-neutral-500">
+                  Недоступно — у жодного з обраних слів немає перекладу.
                 </p>
               )}
             </div>

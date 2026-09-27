@@ -4,6 +4,7 @@ import { detectPlatform } from "@/lib/platform";
 import { sanitizeWordForGrid } from "./grid-word";
 import { computeAutoHiddenIndices, type LetterHideMode } from "./letter-hide";
 import { stripArticle } from "./article";
+import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 import type {
   FlipCard,
   LetterGapsWord,
@@ -416,6 +417,11 @@ export type VocabWordInput = {
   translation: string;
   imageUrl?: string;
   audioUrl?: string;
+  // Частина мови (vocab-categories.ts) — наразі переноситься лише в
+  // table_fill (групування рядків на студентській сторінці), інші типи
+  // мовчки ігнорують це поле, як і imageUrl/audioUrl там, де немає
+  // відповідного поля елемента.
+  partOfSpeech?: string | null;
 };
 
 export type VocabImportOptions = {
@@ -541,6 +547,7 @@ export function buildConfigFromVocab(
         leftHidden: false,
         rightHidden: true,
         points: options.pointsPerElement,
+        partOfSpeech: normalizePartOfSpeech(w.partOfSpeech),
       }));
       // columnLabels — обов'язкове поле TableFillConfig (на відміну від
       // усіх інших 6 типів масового створення, де немає такого спільного

@@ -5,7 +5,12 @@ import { firstVocabVariant, type VocabItem } from "@/lib/vocab";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 
-type ImportedWord = { word: string; translation: string; image_url?: string };
+type ImportedWord = {
+  word: string;
+  translation: string;
+  image_url?: string;
+  partOfSpeech?: string | null;
+};
 
 // onImport відсутній -> "довідковий" режим (напр. fill_blank): показує
 // обрані терміни текстом для ручного копіювання в шаблон, без кнопки
@@ -102,6 +107,7 @@ export function ImportVocabPanel({
               word: checkedFr.has(v.word) ? firstVocabVariant(v.word) : "",
               translation: checkedUk.has(v.word) ? v.translation : "",
               image_url: v.image_url,
+              partOfSpeech: v.partOfSpeech,
             }))
         : sceneVocab
             .filter((v) => checkedFr.has(v.word))
@@ -109,6 +115,7 @@ export function ImportVocabPanel({
               word: firstVocabVariant(v.word),
               translation: checkedUk.has(v.word) ? v.translation : "",
               image_url: v.image_url,
+              partOfSpeech: v.partOfSpeech,
             })),
     [pairMode, sceneVocab, checkedFr, checkedUk]
   );

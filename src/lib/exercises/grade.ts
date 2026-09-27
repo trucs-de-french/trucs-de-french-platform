@@ -13,6 +13,7 @@ import {
   resolveListeningPoints,
   resolveDragDropPoints,
   resolveTableFillPoints,
+  getTableFillRows,
   getMatchingPairs,
   resolveMatchingPoints,
   resolveFillBlankPoints,
@@ -381,23 +382,31 @@ function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): Grade
 }
 
 function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeResult {
+  // getMatchingPairs (sanitize.ts) — ЄДИНЕ спільне джерело, що вже відкидає
+  // неповні пари (без лівої чи правої частини): студент ніколи не бачив їх
+  // (sanitizeMatching), тож рахувати score/бали проти сирого config.pairs
+  // тут означало б вимагати відповідь на пару, якої студент і не міг
+  // ввести — score ніколи не досяг би 100%. completePairs замінює
+  // config.pairs УСЮДИ нижче (score, correct, detail.correctPairs, бали).
+  const completePairs = getMatchingPairs(config);
+
   // Пари не мають id, тому порівнюємо left/right як окремі поля структурно,
   // а не через склеєний рядок — конкатенація неоднозначна, якщо межа між
   // ними зсувається (напр. "a b"+"c" і "a"+"b c" можуть дати той самий ключ).
   const studentPairs: MatchingDetail["studentPairs"] = answer.map((a) => ({
     left: a.left,
     right: a.right,
-    isCorrect: config.pairs.some((p) => p.left === a.left && p.right === a.right),
+    isCorrect: completePairs.some((p) => p.left === a.left && p.right === a.right),
   }));
 
   const correctCount = studentPairs.filter((p) => p.isCorrect).length;
 
   // POINTS — окремий прохід, зі СПРОТИВНОГО напрямку за studentPairs вище
   // (по config-парах, а не по відповідях студента): для кожної пари з
-  // getMatchingPairs (уже з id) перевіряємо, чи вона є серед відповідей
+  // completePairs (уже з id) перевіряємо, чи вона є серед відповідей
   // студента. Пара — вже атомарна одиниця (без під-структури), тож бали
   // просто по парі, як у true_false/sort_columns.
-  const pairPoints: MatchingDetail["pairPoints"] = getMatchingPairs(config).map((p) => ({
+  const pairPoints: MatchingDetail["pairPoints"] = completePairs.map((p) => ({
     id: p.id,
     left: p.left,
     points: resolveMatchingPoints(p),
@@ -407,9 +416,9 @@ function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeRes
   const pointsEarned = pairPoints.filter((p) => p.isCorrect).reduce((sum, p) => sum + p.points, 0);
 
   return {
-    correct: correctCount === config.pairs.length && studentPairs.length === config.pairs.length,
-    score: percentage(correctCount, config.pairs.length),
-    detail: { correctPairs: config.pairs, studentPairs, pairPoints },
+    correct: correctCount === completePairs.length && studentPairs.length === completePairs.length,
+    score: percentage(correctCount, completePairs.length),
+    detail: { correctPairs: completePairs, studentPairs, pairPoints },
     pointsEarned,
     pointsPossible,
   };
@@ -585,7 +594,10 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   const answerMap = new Map(answer.map((a) => [`${a.rowId}:${a.side}`, a.value]));
 
   const blanks: TableFillDetail["blanks"] = [];
-  for (const row of config.rows) {
+  // getTableFillRows (sanitize.ts) — рядок без лівої чи правої частини не
+  // потрапляє студенту (sanitizeTableFill), тож і тут не повинен впливати
+  // на score/бали — той самий принцип, що completePairs у gradeMatching.
+  for (const row of getTableFillRows(config)) {
     const rowPoints = resolveTableFillPoints(row);
     (["left", "right"] as const).forEach((side) => {
       const hidden = side === "left" ? row.leftHidden : row.rightHidden;

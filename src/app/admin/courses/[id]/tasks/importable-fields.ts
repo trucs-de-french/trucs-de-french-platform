@@ -3,5 +3,7 @@
 // ref, а не через пропси — кожна форма сама вирішує, куди саме в своєму
 // масиві додати нові слова).
 export type ImportableFieldsHandle = {
-  importWords: (words: { word: string; translation: string; image_url?: string }[]) => void;
+  importWords: (
+    words: { word: string; translation: string; image_url?: string; partOfSpeech?: string | null }[]
+  ) => void;
 };

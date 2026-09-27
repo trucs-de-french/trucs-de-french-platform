@@ -22,3 +22,10 @@
 // py-*, переможець непередбачуваний).
 export const INPUT_BORDER =
   "rounded-md border border-gray-200 pl-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
+
+// Той самий базовий стиль, лише жовта рамка — поле, яке task-validation.ts
+// вважає незаповненим (перевірка повноти вправи в конструкторі). Той самий
+// колір, що вже в амбер-попередженнях по коду (karaoke-fields.tsx тощо) —
+// НЕ помилка (тому не червоний), лише незаповнене обов'язкове поле.
+export const INPUT_BORDER_WARNING =
+  "rounded-md border border-amber-500 bg-amber-50 pl-3 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-amber-700 dark:bg-amber-950/30 dark:text-neutral-100";
