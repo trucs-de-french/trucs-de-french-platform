@@ -4,7 +4,7 @@ import { ArrowRight, Trash2 } from "lucide-react";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
-import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab";
+import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, normalizePartOfSpeech } from "@/lib/vocab-categories";
 import { useDialogueState } from "./dialogue-state";
 
 // Спільні поля одного VocabItem — раніше буквально задубльовані в
@@ -56,7 +56,12 @@ export function VocabItemRow({
           className={`${INPUT_BORDER} w-48 px-2 py-2 text-sm font-content`}
         />
         <select
-          value={v.partOfSpeech ?? ""}
+          // normalizePartOfSpeech — легасі "adverbe_locution" (ще не
+          // перейменований у даних до міграції 0050) показує тут "Adverbes"
+          // обраним, а не порожній вибір. Опції select нижче містять лише
+          // нові 8 ключів, тож будь-яка зміна вчителькою одразу пише новий
+          // ключ, старий у записувану сторону більше ніколи не потрапляє.
+          value={normalizePartOfSpeech(v.partOfSpeech) ?? ""}
           onChange={(e) => updateVocab(lineIndex, vocabIndex, "partOfSpeech", e.target.value)}
           title="Частина мови"
           className={`${INPUT_BORDER} w-28 px-1 py-2 text-xs`}

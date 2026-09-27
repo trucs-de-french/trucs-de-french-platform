@@ -1,4 +1,6 @@
-export type PartOfSpeech = "nom" | "verbe" | "adjectif" | "adverbe_locution" | "phrase" | "idiome";
+import { normalizePartOfSpeech, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "./vocab-categories";
+
+export type { PartOfSpeech };
 
 export type VocabItem = {
   // Стабільний ідентифікатор — потрібен, щоб плоска агрегована таблиця
@@ -22,41 +24,6 @@ export type VocabItem = {
   // (groupVocabByPartOfSpeech нижче). Відсутнє/порожній рядок — легасі-
   // записи без класифікації, потрапляють в окрему групу "Інше".
   partOfSpeech?: PartOfSpeech | null;
-};
-
-// Порядок групування на студентській сторінці й у PDF: Іменники → Дієслова
-// → Прикметники → Прислівники/сталі вирази → Фрази → Ідіоми.
-export const PART_OF_SPEECH_ORDER: PartOfSpeech[] = [
-  "nom",
-  "verbe",
-  "adjectif",
-  "adverbe_locution",
-  "phrase",
-  "idiome",
-];
-
-// Французькі підписи — і в select конструктора, і як назви груп на
-// студентській сторінці/у PDF (легасі-група без категорії — виняток,
-// лишається "Інше" українською, бо для неї немає французького відповідника
-// в природній системі категорій).
-export const PART_OF_SPEECH_LABELS_FR: Record<PartOfSpeech, string> = {
-  nom: "Noms",
-  verbe: "Verbes",
-  adjectif: "Adjectifs",
-  adverbe_locution: "Adverbes / Locutions",
-  phrase: "Phrases",
-  idiome: "Idiomes",
-};
-
-// dot — Tailwind-клас кольорової крапки (веб); rgb — той самий колір
-// (0–1 на канал) для pdf-lib, який не читає CSS-класи.
-export const PART_OF_SPEECH_COLORS: Record<PartOfSpeech, { dot: string; rgb: [number, number, number] }> = {
-  nom: { dot: "bg-orange-500", rgb: [0.976, 0.451, 0.086] },
-  verbe: { dot: "bg-red-500", rgb: [0.937, 0.267, 0.267] },
-  adjectif: { dot: "bg-green-500", rgb: [0.133, 0.773, 0.369] },
-  adverbe_locution: { dot: "bg-violet-500", rgb: [0.545, 0.361, 0.965] },
-  phrase: { dot: "bg-blue-500", rgb: [0.231, 0.51, 0.965] },
-  idiome: { dot: "bg-cyan-500", rgb: [0.024, 0.714, 0.831] },
 };
 
 type DialogueLine = {
@@ -100,7 +67,10 @@ export function groupVocabByPartOfSpeech(vocab: VocabItem[]): VocabGroup[] {
   const buckets = new Map<PartOfSpeech | null, VocabItem[]>();
 
   for (const v of vocab) {
-    const key = v.partOfSpeech || null;
+    // normalizePartOfSpeech — мапить легасі-ключ "adverbe_locution" (ще не
+    // перейменований у даних до застосування міграції 0050) на "adverbe" тут,
+    // у ЄДИНОМУ місці читання (vocab-categories.ts).
+    const key = normalizePartOfSpeech(v.partOfSpeech);
     const arr = buckets.get(key) ?? [];
     arr.push(v);
     buckets.set(key, arr);

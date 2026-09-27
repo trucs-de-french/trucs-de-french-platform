@@ -2,14 +2,8 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  firstVocabVariant,
-  groupVocabByPartOfSpeech,
-  PART_OF_SPEECH_ORDER,
-  PART_OF_SPEECH_LABELS_FR,
-  PART_OF_SPEECH_COLORS,
-  type VocabItem,
-} from "@/lib/vocab";
+import { firstVocabVariant, groupVocabByPartOfSpeech, type VocabItem } from "@/lib/vocab";
+import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS } from "@/lib/vocab-categories";
 
 // PT Sans (OFL) — на відміну від стандартних PDF-шрифтів (Helvetica тощо),
 // підтримує і кирилицю (переклад), і французьку латиницю з діакритикою.
