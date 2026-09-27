@@ -10,7 +10,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { INPUT_BORDER } from "@/lib/input-styles";
+import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
 function emptyCard(): FlipCard {
@@ -51,14 +51,14 @@ function FlipCardRow({
           value={card.front}
           onChange={(e) => onUpdate("front", e.target.value)}
           placeholder="Перед"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+          className={`${card.front.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         <span className="text-neutral-400 dark:text-neutral-500">→</span>
         <input
           value={card.back}
           onChange={(e) => onUpdate("back", e.target.value)}
           placeholder="Зад"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+          className={`${card.back.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         {image.icons}
         {audio.icons}

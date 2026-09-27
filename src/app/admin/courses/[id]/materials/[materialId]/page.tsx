@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Copy, Trash2, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateMaterial, deleteMaterial } from "@/app/admin/materials/actions";
@@ -14,6 +14,19 @@ import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { TASK_GROUP_CONTENT_COLORS, TASK_GROUP_CONTENT_ICON } from "@/lib/exercises/task-type-meta";
+import { validateTaskConfig } from "@/lib/exercises/task-validation";
+
+// Той самий попередження-бейдж, що на сторінці сцени/DELF/блоку —
+// task-validation.ts, нічого не блокує, лише підказка при наведенні.
+function IncompleteBadge({ type, config }: { type: string; config: Record<string, unknown> | null }) {
+  const problems = validateTaskConfig(type, config ?? {});
+  if (problems.length === 0) return null;
+  return (
+    <span title={`Не заповнено: ${problems.map((p) => p.message).join("; ")}`}>
+      <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+    </span>
+  );
+}
 
 export default async function EditMaterialPage({
   params,
@@ -37,7 +50,7 @@ export default async function EditMaterialPage({
     material.category === "general_tip"
       ? await supabase
           .from("tasks")
-          .select("id, type, title, order_index")
+          .select("id, type, title, order_index, config")
           .eq("material_id", materialId)
           .is("task_group_id", null)
           .order("order_index")
@@ -63,7 +76,7 @@ export default async function EditMaterialPage({
   // (task-order.ts) — зливаємо для рендеру в один список, той самий принцип,
   // що на флет-списку курсу (admin/courses/[id]/page.tsx).
   type Row =
-    | { kind: "task"; id: string; order_index: number; type: string; title: string }
+    | { kind: "task"; id: string; order_index: number; type: string; title: string; config: Record<string, unknown> | null }
     | { kind: "group"; id: string; order_index: number; title: string | null; content_type: string; maxPoints: number };
   const rows: Row[] = [
     ...(exercises ?? []).map((t): Row => ({ kind: "task", ...t })),
@@ -224,12 +237,15 @@ export default async function EditMaterialPage({
                     <span className={`uppercase ${HINT_TEXT}`}>
                       {row.type}
                     </span>
-                    <Link
-                      href={`/admin/courses/${productId}/tasks/${row.id}`}
-                      className="block font-medium hover:underline"
-                    >
-                      {row.title}
-                    </Link>
+                    <span className="flex items-center gap-1">
+                      <Link
+                        href={`/admin/courses/${productId}/tasks/${row.id}`}
+                        className="block font-medium hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                      <IncompleteBadge type={row.type} config={row.config} />
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <form action={moveTask.bind(null, row.id, "up")}>

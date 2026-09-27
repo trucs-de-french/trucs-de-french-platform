@@ -9,7 +9,7 @@ import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { StripArticlesToggle } from "./strip-articles-toggle";
-import { INPUT_BORDER } from "@/lib/input-styles";
+import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
 
 type EditableWord = LetterRearrangementWord & { id: string };
@@ -72,7 +72,10 @@ function LetterRearrangementWordRow({
           value={wordItem.word}
           onChange={(e) => onUpdateWord(e.target.value)}
           placeholder="Слово"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+          title={wordItem.word.trim().length === 1 ? "Закоротке — потрібно мінімум 2 літери" : undefined}
+          className={`${
+            wordItem.word.trim().length >= 2 ? INPUT_BORDER : INPUT_BORDER_WARNING
+          } flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         {image.icons}
         {audio.icons}

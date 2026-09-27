@@ -67,6 +67,7 @@ import {
 } from "@/lib/exercises/task-type-meta";
 import { generateTaskTitle } from "@/lib/exercises/task-title";
 import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
+import { validateTaskConfig, type ConfigProblem } from "@/lib/exercises/task-validation";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileOrLinkField } from "@/components/file-or-link-field";
@@ -222,6 +223,14 @@ export function TaskConfigFields({
   const [previewTitle, setPreviewTitle] = useState(() =>
     generateTaskTitle(initialType ?? DEFAULT_TASK_TYPE, initialConfig ?? {})
   );
+  // Список неповних елементів вправи — рахується з тієї самої ЖИВОЇ
+  // FormData, що й previewTitle нижче (одна rAF-затримка на обидва),
+  // показується жовтою панеллю над полями вправи. Ніколи не блокує
+  // збереження тут — лише підтвердження при сабміті (SaveForm/
+  // TaskCreateForm, validateBeforeSubmit="task-config").
+  const [problems, setProblems] = useState<ConfigProblem[]>(() =>
+    validateTaskConfig(initialType ?? DEFAULT_TASK_TYPE, initialConfig ?? {})
+  );
 
   // rAF, не одразу — дочекатись, поки React застосує onChange дочірнього
   // поля (те, що й спричинило подію) і синхронізує його прихований
@@ -234,6 +243,7 @@ export function TaskConfigFields({
       if (!form) return;
       const liveConfig = buildTaskConfig(currentType, new FormData(form));
       setPreviewTitle(generateTaskTitle(currentType, liveConfig));
+      setProblems(validateTaskConfig(currentType, liveConfig));
     });
   }
   // Контрольований чекбокс, синхронізований з пропом від сервера
@@ -484,6 +494,22 @@ export function TaskConfigFields({
         <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
           ⚠ {transferWarning}
         </p>
+      )}
+
+      {/* Жива панель неповноти вправи (task-validation.ts) — оновлюється тим
+          самим механізмом, що previewTitle вище (delegated onChange/onInput
+          на кореневому div + rAF-читання FormData). Ніколи не блокує саме
+          редагування, лише інформує — підтвердження при спробі зберегти
+          окремо (SaveForm/TaskCreateForm). */}
+      {problems.length > 0 && (
+        <div className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          <p className="font-medium">Не заповнено ({problems.length}):</p>
+          <ul className="mt-1 list-disc pl-4">
+            {problems.map((p, i) => (
+              <li key={`${p.path}-${i}`}>{p.message}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {productType === "delf" && !materialId && !taskGroupId && (

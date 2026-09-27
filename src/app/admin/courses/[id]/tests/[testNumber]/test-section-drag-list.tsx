@@ -2,7 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import { deleteTask, reorderTestRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -14,10 +14,23 @@ import {
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
+import { validateTaskConfig } from "@/lib/exercises/task-validation";
 
 type TaskRow = { id: string; type: string; title: string; config: Record<string, unknown> | null };
 type GroupRow = { id: string; title: string | null; content_type: string; maxPoints: number };
 type Row = ({ kind: "task" } & TaskRow) | ({ kind: "group" } & GroupRow);
+
+// Той самий попередження-бейдж, що task-drag-list.tsx (сцена) і
+// group-member-drag-list.tsx (блок) — task-validation.ts, нічого не блокує.
+function IncompleteBadge({ type, config }: { type: string; config: Record<string, unknown> | null }) {
+  const problems = validateTaskConfig(type, config ?? {});
+  if (problems.length === 0) return null;
+  return (
+    <span title={`Не заповнено: ${problems.map((p) => p.message).join("; ")}`}>
+      <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+    </span>
+  );
+}
 
 function stripeClassFor(type: string): string {
   return TASK_TYPE_COLORS[type]?.stripe ?? "";
@@ -306,12 +319,15 @@ export function TestSectionDragList({
                     >
                       {row.type}
                     </span>
-                    <Link
-                      href={`/admin/courses/${productId}/tasks/${row.id}?delfTestNumber=${testNumber}`}
-                      className="block text-base font-semibold hover:underline"
-                    >
-                      {row.title}
-                    </Link>
+                    <span className="inline-flex items-center gap-1">
+                      <Link
+                        href={`/admin/courses/${productId}/tasks/${row.id}?delfTestNumber=${testNumber}`}
+                        className="block text-base font-semibold hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                      <IncompleteBadge type={row.type} config={row.config} />
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

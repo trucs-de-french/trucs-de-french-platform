@@ -2,7 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical, Copy, Trash2 } from "lucide-react";
+import { GripVertical, Copy, Trash2, AlertTriangle } from "lucide-react";
 import { deleteTask } from "@/app/admin/tasks/actions";
 import { detachTask, reorderGroupMembers, copyTaskInGroup } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -10,8 +10,21 @@ import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 import { useNewTaskHighlight } from "@/lib/use-new-task-highlight";
+import { validateTaskConfig } from "@/lib/exercises/task-validation";
 
-type MemberRow = { id: string; type: string; title: string };
+type MemberRow = { id: string; type: string; title: string; config?: Record<string, unknown> | null };
+
+// Той самий попередження-бейдж, що task-drag-list.tsx (сцена) і
+// test-section-drag-list.tsx (DELF) — task-validation.ts, нічого не блокує.
+function IncompleteBadge({ type, config }: { type: string; config?: Record<string, unknown> | null }) {
+  const problems = validateTaskConfig(type, config ?? {});
+  if (problems.length === 0) return null;
+  return (
+    <span title={`Не заповнено: ${problems.map((p) => p.message).join("; ")}`}>
+      <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+    </span>
+  );
+}
 
 // Той самий native HTML5 drag-патерн, що TaskDragList на сторінці сцени
 // (ручка GripVertical — джерело drag, увесь <li> — ціль drop), але простіше:
@@ -168,12 +181,15 @@ export function GroupMemberDragList({
                 <span className={`uppercase ${HINT_TEXT}`}>
                   {task.type}
                 </span>
-                <Link
-                  href={taskHref(task.id)}
-                  className="block font-medium hover:underline"
-                >
-                  {task.title}
-                </Link>
+                <span className="flex items-center gap-1">
+                  <Link
+                    href={taskHref(task.id)}
+                    className="block font-medium hover:underline"
+                  >
+                    {task.title}
+                  </Link>
+                  <IncompleteBadge type={task.type} config={task.config} />
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-1">

@@ -2,7 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import { deleteTask, reorderSceneRows } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -12,6 +12,7 @@ import {
   TASK_GROUP_CONTENT_ICON,
 } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
+import { validateTaskConfig } from "@/lib/exercises/task-validation";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 import { useNewTaskHighlight } from "@/lib/use-new-task-highlight";
@@ -47,6 +48,19 @@ function shadowClassFor(type: string): string {
 // content_text/media_url.
 const PREVIEW_FIELDS = ["instructions", "question", "template", "content", "prompt"] as const;
 const PREVIEW_MAX_LENGTH = 150;
+
+// Список проблем повноти вправи (task-validation.ts) — та сама функція,
+// що жива панель у конструкторі (task-config-fields.tsx), тут лише формує
+// підказку до іконки-попередження, нічого не блокує.
+function IncompleteBadge({ type, config }: { type: string; config: Record<string, unknown> | null }) {
+  const problems = validateTaskConfig(type, config ?? {});
+  if (problems.length === 0) return null;
+  return (
+    <span title={`Не заповнено: ${problems.map((p) => p.message).join("; ")}`}>
+      <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+    </span>
+  );
+}
 
 function getTaskPreview(config: Record<string, unknown> | null): string | null {
   if (!config) return null;
@@ -360,12 +374,15 @@ export function TaskDragList({
                     >
                       {row.type}
                     </span>
-                    <Link
-                      href={`/admin/courses/${productId}/tasks/${row.id}?sceneId=${sceneId}`}
-                      className="block text-base font-semibold hover:underline"
-                    >
-                      {row.title}
-                    </Link>
+                    <span className="inline-flex items-center gap-1">
+                      <Link
+                        href={`/admin/courses/${productId}/tasks/${row.id}?sceneId=${sceneId}`}
+                        className="block text-base font-semibold hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                      <IncompleteBadge type={row.type} config={row.config} />
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

@@ -8,7 +8,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
-import { INPUT_BORDER } from "@/lib/input-styles";
+import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyPair(): MatchingPair {
@@ -97,14 +97,14 @@ export const MatchingFields = forwardRef<
             value={p.left}
             onChange={(e) => updatePair(i, "left", e.target.value)}
             placeholder="Лівий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+            className={`${p.left.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
           />
           <span className="text-neutral-400 dark:text-neutral-500">→</span>
           <input
             value={p.right}
             onChange={(e) => updatePair(i, "right", e.target.value)}
             placeholder="Правий елемент"
-            className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+            className={`${p.right.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
           />
           <span className={HINT_TEXT}>Бали</span>
           <input

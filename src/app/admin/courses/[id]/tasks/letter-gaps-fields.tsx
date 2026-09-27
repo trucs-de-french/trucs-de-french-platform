@@ -10,7 +10,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { buildConfigFromVocab } from "@/lib/exercises/task-config-builder";
 import { computeAutoHiddenIndices, type LetterHideMode } from "@/lib/exercises/letter-hide";
 import { protectedPrefixLength } from "@/lib/exercises/article";
-import { INPUT_BORDER } from "@/lib/input-styles";
+import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 const AUTO_HIDE_OPTIONS: { mode: LetterHideMode; label: string }[] = [
@@ -91,7 +91,14 @@ function LetterGapsWordRow({
           value={wordItem.word}
           onChange={(e) => onUpdateWord(e.target.value)}
           placeholder="Слово"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+          title={
+            wordItem.word.trim() && wordItem.hiddenIndices.length === 0
+              ? "Не приховано жодної літери"
+              : undefined
+          }
+          className={`${
+            wordItem.word.trim() && wordItem.hiddenIndices.length > 0 ? INPUT_BORDER : INPUT_BORDER_WARNING
+          } flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         {image.icons}
         {audio.icons}

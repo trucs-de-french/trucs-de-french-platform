@@ -7,6 +7,8 @@ import { useStudentPreview } from "@/lib/use-student-preview";
 import { BUTTON_PRIMARY_LG, BUTTON_SECONDARY_LG, BUTTON_PREVIEW } from "@/lib/button-styles";
 import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 import { Z_ACTION_BAR } from "@/lib/z-layers";
+import { confirmMessageForTaskConfig } from "@/lib/exercises/task-validation";
+import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -28,10 +30,19 @@ export function SaveForm({
   sticky = false,
   backLink,
   previewLink,
+  validateBeforeSubmit,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   children: React.ReactNode;
   className?: string;
+  // Опційна перевірка ПЕРЕД сабмітом, "confirm або продовжуй" — рядок-
+  // прапорець (не функція-проп), бо сторінки, що рендерять SaveForm, самі
+  // є серверними компонентами: функцію з них у клієнтський SaveForm не
+  // передати через межу Server/Client. "task-config" — єдиний наразі
+  // варіант (редагування завдання, task-validation.ts); значення обране
+  // рядком, а не булевим прапорцем, щоб додати інші перевірки тим самим
+  // способом пізніше, без нової властивості.
+  validateBeforeSubmit?: "task-config";
   // Потрібен зовнішнім кнопкам поза формою (напр. глобальне "Зберегти все"
   // на сторінці сцени), щоб знайти форму через document.getElementById і
   // викликати requestSubmit() — форма сабмітить через onSubmit нижче
@@ -80,6 +91,10 @@ export function SaveForm({
     e.preventDefault();
     const formEl = e.currentTarget;
     const formData = new FormData(formEl);
+    if (validateBeforeSubmit === "task-config") {
+      const message = confirmMessageForTaskConfig(formData, buildTaskConfig);
+      if (message && !window.confirm(message)) return;
+    }
     startTransition(async () => {
       const result = await action(state, formData);
       setState(result);

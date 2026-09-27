@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createTask } from "@/app/admin/tasks/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TaskConfigFields } from "../task-config-fields";
+import { TaskCreateForm } from "../task-create-form";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { blockDomId } from "@/lib/block-dom-id";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
@@ -125,7 +126,7 @@ export default async function NewTaskPage({
       </Link>
       <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Нове завдання</h1>
 
-      <form
+      <TaskCreateForm
         action={createTask}
         className="mt-4 flex flex-col gap-4 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
       >
@@ -160,7 +161,7 @@ export default async function NewTaskPage({
             Створити
           </SubmitButton>
         </div>
-      </form>
+      </TaskCreateForm>
     </div>
   );
 }

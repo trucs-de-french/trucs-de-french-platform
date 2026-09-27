@@ -161,6 +161,7 @@ export default async function EditTaskPage({
         sticky
         backLink={{ href: backHref, label: backLabel }}
         previewLink={studentHref ? { productId, href: studentHref } : undefined}
+        validateBeforeSubmit="task-config"
       >
         <TaskConfigFields
           initialTitle={task.title}

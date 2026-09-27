@@ -184,7 +184,13 @@ function oppositeSide(card: FlipCardType, side: "front" | "back"): string {
 }
 
 export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
-  if (config.cards.length === 0) {
+  // flip_cards не має sanitize-межі (самостійний тип без правильної
+  // відповіді — повна конфігурація йде студенту як є, types.ts), тож
+  // фільтрація неповної картки (без лицьової чи зворотної сторони) — тут,
+  // на рівні рендеру, не в sanitize.ts.
+  const cards = config.cards.filter((c) => c.front.trim() && c.back.trim());
+
+  if (cards.length === 0) {
     return (
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
         У цій вправі ще немає карток.
@@ -199,10 +205,10 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
         subText={config.subInstructions}
       />
       {config.mode === "random_reveal" ? (
-        <RandomRevealFlipCards cards={config.cards} revealSide={config.revealSide ?? "front"} />
+        <RandomRevealFlipCards cards={cards} revealSide={config.revealSide ?? "front"} />
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {config.cards.map((card, i) => (
+          {cards.map((card, i) => (
             <FlipCardTile key={i} card={card} />
           ))}
         </div>
