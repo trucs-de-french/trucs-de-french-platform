@@ -127,6 +127,12 @@ export const WordSearchFields = forwardRef<
   const [placements, setPlacements] = useState<WordSearchPlacement[]>(
     initialConfig?.placements ?? []
   );
+  // Знімок нормалізованих слів на момент ОСТАННЬОЇ генерації (types.ts) —
+  // для task-validation.ts "чи сітка застаріла". Відсутнє в initialConfig
+  // для вправ, збережених до появи цього поля — лишається undefined, не [].
+  const [gridSourceWords, setGridSourceWords] = useState<string[] | undefined>(
+    initialConfig?.gridSourceWords
+  );
   const [failedWords, setFailedWords] = useState<string[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.word_search ?? false);
 
@@ -156,6 +162,7 @@ export const WordSearchFields = forwardRef<
       words: words.map(stripId),
       grid,
       placements,
+      gridSourceWords,
       points: initialConfig?.points,
     }),
   }));
@@ -190,6 +197,7 @@ export const WordSearchFields = forwardRef<
     setGrid(result.grid);
     setPlacements(result.placements);
     setFailedWords(result.failedWords);
+    setGridSourceWords(result.sourceWords);
   }
 
   return (
@@ -205,6 +213,16 @@ export const WordSearchFields = forwardRef<
         type="hidden"
         name="word_search_placements"
         value={JSON.stringify(placements)}
+        readOnly
+      />
+      {/* Порожній рядок (не JSON.stringify(undefined)), якщо ще не
+          генерували чи вправа стара — parseJsonField (task-config-builder.ts)
+          трактує порожній рядок як "поля немає", той самий принцип, що й
+          для grid/placements при ще не згенерованій сітці. */}
+      <input
+        type="hidden"
+        name="word_search_grid_source_words"
+        value={gridSourceWords ? JSON.stringify(gridSourceWords) : ""}
         readOnly
       />
 
@@ -224,9 +242,15 @@ export const WordSearchFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
         <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
+        {/* Порада, не помилка (severity "hint" за духом task-validation.ts,
+            хоч і не звідти технічно — локальна перевірка кількості слів) —
+            тихий сірий текст, без жовтого фону й "⚠": перевищення
+            рекомендованого, не жорсткого ліміту (масове створення й далі
+            саме ділить на кілька вправ, тут лише порада зробити так само
+            вручну). */}
         {words.length > WORD_SEARCH_MAX_WORDS && (
-          <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-            ⚠ Рекомендовано не більше {WORD_SEARCH_MAX_WORDS} слів — розбийте на кілька вправ. Сітка обмежена{" "}
+          <p className={HINT_TEXT}>
+            Рекомендовано не більше {WORD_SEARCH_MAX_WORDS} слів — розбийте на кілька вправ. Сітка обмежена{" "}
             {WORD_SEARCH_MAX_GRID}×{WORD_SEARCH_MAX_GRID}, слова, що не вмістяться, покажуться попередженням нижче.
           </p>
         )}

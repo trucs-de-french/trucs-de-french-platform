@@ -68,6 +68,11 @@ import {
 import { generateTaskTitle } from "@/lib/exercises/task-title";
 import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
 import { validateTaskConfig, type ConfigProblem } from "@/lib/exercises/task-validation";
+import {
+  DEFAULT_INSTRUCTIONS,
+  WORD_CHOICE_DEFAULT_INSTRUCTIONS,
+  type InstructionDefault,
+} from "@/lib/exercises/default-instructions";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isPointsSupportedTaskType } from "@/lib/exercises/gradable-types";
 import { FileOrLinkField } from "@/components/file-or-link-field";
@@ -111,6 +116,51 @@ const NO_TRANSLATION_TYPES = [
   "chronological_order",
   "image_match",
 ];
+
+// Префікс імені form-поля instructions/sub_instructions на кожен тип — той
+// самий `name=` рядок, що й на InstructionsRichTextField усередині
+// відповідного *-fields.tsx (чи прямо тут, для fill_blank). Типи, чия
+// конфігурація не має цих двох полів узагалі (essay_check — має prompt/
+// criteria замість generic-інструкції; vocab_quiz/callout/embed/link/
+// error_correction/game/ai_examiner — своя форма чи немає форми взагалі),
+// у мапі відсутні НАВМИСНО: без запису тут дефолт-автозаповнення (п.2) і
+// перенесення при зміні типу просто не застосовуються до них, той самий
+// список, що "без автоматичних інструкцій" у default-instructions.ts.
+const INSTRUCTION_FIELD_PREFIX: Partial<Record<string, string>> = {
+  fill_blank: "fill_blank",
+  letter_gaps: "letter_gaps",
+  letter_rearrangement: "letter_rearrangement",
+  multiple_choice: "mc",
+  word_choice: "word_choice",
+  word_search: "word_search",
+  crossword: "crossword",
+  true_false: "tf",
+  matching: "matching",
+  listening: "listening",
+  reorder: "reorder",
+  drag_drop: "drag_drop",
+  sort_columns: "sort_columns",
+  flip_cards: "flip_cards",
+  phonetics: "phonetics",
+  open_answer: "open_answer",
+  table_fill: "table_fill",
+  image_match: "image_match",
+  checkbox_grid: "checkbox_grid",
+  chronological_order: "chronological_order",
+  karaoke: "karaoke",
+};
+
+// Дефолт для типу — word_choice єдиний залежить ще й від режиму (окрема
+// мапа WORD_CHOICE_DEFAULT_INSTRUCTIONS, default-instructions.ts). null —
+// тип без цих полів узагалі (INSTRUCTION_FIELD_PREFIX не має запису).
+function defaultInstructionsFor(
+  targetType: string,
+  wordChoiceMode: "select" | "cross_out"
+): InstructionDefault | null {
+  if (!INSTRUCTION_FIELD_PREFIX[targetType]) return null;
+  if (targetType === "word_choice") return WORD_CHOICE_DEFAULT_INSTRUCTIONS[wordChoiceMode];
+  return DEFAULT_INSTRUCTIONS[targetType] ?? null;
+}
 
 // "game" свідомо ВІДСУТНІЙ тут — нові ігри цього типу більше не створюються
 // (тип замінений на embed із можливістю вставити .html-гру), але вже наявні
@@ -209,6 +259,41 @@ export function TaskConfigFields({
   // пункт назад лише для цього єдиного випадку.
   const typeOptions =
     initialType === "game" ? [{ value: "game", label: TASK_TYPE_LABELS.game }, ...TYPE_OPTIONS] : TYPE_OPTIONS;
+
+  // Автозаповнення інструкцій (instruction FR + subInstruction UA) дефолтом
+  // типу — instructionsSeed підставляється замість initialConfig.instructions/
+  // subInstructions ЛИШЕ для типу, у який щойно перемкнулись (forType), той
+  // самий принцип, що pendingSeed нижче (structural-переноси). Початкове
+  // значення — ЛИШЕ для справді НОВОЇ задачі (немає ні initialConfig, ні
+  // initialType): існуючу задачу при відкритті на редагування не чіпаємо,
+  // навіть якщо instructions порожнє (п.4) — дефолт з'являється лише як
+  // результат ЖИВОЇ дії в цій сесії (зміна типу/режиму), не сам по собі при
+  // завантаженні сторінки.
+  const [instructionsSeed, setInstructionsSeed] = useState<{
+    forType: string;
+    instruction: string;
+    subInstruction: string;
+  } | null>(() => {
+    if (initialConfig || initialType) return null;
+    const def = defaultInstructionsFor(DEFAULT_TASK_TYPE, "select");
+    return def ? { forType: DEFAULT_TASK_TYPE, instruction: def.instruction, subInstruction: def.subInstruction } : null;
+  });
+
+  // Конфіг для конкретного XFields — pendingSeed (structural-перенос при
+  // сумісній парі типів) АБО initialConfig, з накладеним зверху
+  // instructionsSeed (якщо він саме для targetType) — єдина точка, звідки
+  // всі ~20 підкомпонентів типів читають свій initialConfig.instructions/
+  // subInstructions.
+  function configForType(targetType: string): Record<string, unknown> {
+    const base = ((pendingSeed?.forType === targetType ? pendingSeed.config : initialConfig) ?? {}) as Record<
+      string,
+      unknown
+    >;
+    if (instructionsSeed?.forType === targetType) {
+      return { ...base, instructions: instructionsSeed.instruction, subInstructions: instructionsSeed.subInstruction };
+    }
+    return base;
+  }
 
   // Поле "Назва" живе тут (не в батьківській сторінці), бо лише тут відомий
   // type — потрібен і для авто-плейсхолдера (яка автоназва вийшла б), і щоб
@@ -413,6 +498,29 @@ export function TaskConfigFields({
     return undefined;
   }
 
+  // Живе значення instructions/subInstructions поточного (ще ДО зміни) типу
+  // — читається напряму з DOM (прихований input, куди InstructionsRichTextField
+  // пише через onUpdate), бо React-стан цих полів живе ВСЕРЕДИНІ дочірнього
+  // *Fields-компонента, недоступний тут напряму. null — тип без цих полів
+  // узагалі (INSTRUCTION_FIELD_PREFIX).
+  function readLiveInstructionsFor(t: string): { instruction: string; subInstruction: string } | null {
+    const prefix = INSTRUCTION_FIELD_PREFIX[t];
+    if (!prefix) return null;
+    const form = rootRef.current?.closest("form");
+    if (!form) return null;
+    const instrEl = form.elements.namedItem(`${prefix}_instructions`) as HTMLInputElement | null;
+    const subEl = form.elements.namedItem(`${prefix}_sub_instructions`) as HTMLInputElement | null;
+    return { instruction: instrEl?.value ?? "", subInstruction: subEl?.value ?? "" };
+  }
+
+  // word_choice_mode — звичайний <select>, не прихований input, але той
+  // самий принцип читання напряму з DOM (mode — внутрішній стан WordChoiceFields).
+  function readCurrentWordChoiceMode(): "select" | "cross_out" {
+    const form = rootRef.current?.closest("form");
+    const el = form?.elements.namedItem("word_choice_mode") as HTMLSelectElement | null;
+    return el?.value === "cross_out" ? "cross_out" : "select";
+  }
+
   function handleTypeChange(newType: string) {
     const transform = getTypeTransform(type, newType);
     const currentValue = transform ? getCurrentValueForTransform() : undefined;
@@ -432,6 +540,34 @@ export function TaskConfigFields({
       setPendingSeed(null);
       setTransferWarning(null);
     }
+
+    // Автозаповнення інструкцій дефолтом НОВОГО типу — лише якщо поле (FR
+    // instruction чи UA subInstruction, НЕЗАЛЕЖНО одне від одного) ще НЕ
+    // редагували вручну: дорівнює дефолту СТАРОГО типу (звідки щойно
+    // перемкнулись) або порожнє. Якщо редагували — переносимо ЖИВИЙ
+    // введений текст у новий тип (не втрачаємо, не перезаписуємо дефолтом),
+    // той самий принцип "не чіпати", що й для структурних pendingSeed-полів
+    // вище, лише на рівні кожного з двох полів окремо.
+    // newType word_choice завжди монтується зі свіжим mode="select" (немає
+    // жодного type-compatibility transform, що переносив би mode) — дефолт
+    // рахуємо саме для нього, не для поточного mode СТАРОГО типу.
+    const oldDefault = defaultInstructionsFor(type, type === "word_choice" ? readCurrentWordChoiceMode() : "select");
+    const newDefault = defaultInstructionsFor(newType, "select");
+    if (newDefault) {
+      const live = readLiveInstructionsFor(type);
+      const instruction =
+        live && live.instruction !== "" && live.instruction !== oldDefault?.instruction
+          ? live.instruction
+          : newDefault.instruction;
+      const subInstruction =
+        live && live.subInstruction !== "" && live.subInstruction !== oldDefault?.subInstruction
+          ? live.subInstruction
+          : newDefault.subInstruction;
+      setInstructionsSeed({ forType: newType, instruction, subInstruction });
+    } else {
+      setInstructionsSeed(null);
+    }
+
     setType(newType);
     // Новий тип -> інший набір полів у DOM (інші імена, інший config) —
     // прев'ю рахуємо для НОВОГО типу, не старого.
@@ -440,6 +576,8 @@ export function TaskConfigFields({
 
   const taskTypeCategory = getTaskTypeCategory(type);
   const titleIsVisibleToStudent = TASK_TYPES_WITH_VISIBLE_TITLE.includes(type);
+  const errorProblems = problems.filter((p) => p.severity === "error");
+  const hintProblems = problems.filter((p) => p.severity === "hint");
 
   return (
     <div
@@ -500,16 +638,27 @@ export function TaskConfigFields({
           самим механізмом, що previewTitle вище (delegated onChange/onInput
           на кореневому div + rAF-читання FormData). Ніколи не блокує саме
           редагування, лише інформує — підтвердження при спробі зберегти
-          окремо (SaveForm/TaskCreateForm). */}
-      {problems.length > 0 && (
+          окремо (SaveForm/TaskCreateForm), і лише для severity "error".
+          "hint" (порожня інструкція, рекомендована кількість слів тощо) —
+          окремий, тихий сірий блок нижче: без жовтого фону, без іконки, не
+          впливає на підтвердження чи ⚠ у списках задач. */}
+      {errorProblems.length > 0 && (
         <div className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-          <p className="font-medium">Не заповнено ({problems.length}):</p>
+          <p className="font-medium">Не заповнено ({errorProblems.length}):</p>
           <ul className="mt-1 list-disc pl-4">
-            {problems.map((p, i) => (
+            {errorProblems.map((p, i) => (
               <li key={`${p.path}-${i}`}>{p.message}</li>
             ))}
           </ul>
         </div>
+      )}
+
+      {hintProblems.length > 0 && (
+        <ul className={`flex flex-col gap-0.5 ${HINT_TEXT}`}>
+          {hintProblems.map((p, i) => (
+            <li key={`${p.path}-${i}`}>{p.message}</li>
+          ))}
+        </ul>
       )}
 
       {productType === "delf" && !materialId && !taskGroupId && (
@@ -712,7 +861,7 @@ export function TaskConfigFields({
       )}
 
       {type === "open_answer" && (
-        <OpenAnswerFields initialConfig={initialConfig as Partial<OpenAnswerConfig>} />
+        <OpenAnswerFields initialConfig={configForType("open_answer") as Partial<OpenAnswerConfig>} />
       )}
 
       {type === "embed" && (
@@ -811,13 +960,13 @@ export function TaskConfigFields({
           <InstructionsRichTextField
             name="fill_blank_instructions"
             label="Інструкція для студента"
-            initialValue={(initialConfig?.instructions as string) ?? ""}
+            initialValue={(configForType("fill_blank").instructions as string) ?? ""}
           />
 
           <InstructionsRichTextField
             name="fill_blank_sub_instructions"
             label="Додаткові інструкції (опційно)"
-            initialValue={(initialConfig?.subInstructions as string) ?? ""}
+            initialValue={(configForType("fill_blank").subInstructions as string) ?? ""}
             compact
           />
 
@@ -903,7 +1052,7 @@ export function TaskConfigFields({
         <LetterGapsFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "letter_gaps" ? pendingSeed.config : initialConfig) as Partial<LetterGapsConfig>
+            configForType("letter_gaps") as Partial<LetterGapsConfig>
           }
         />
       )}
@@ -915,11 +1064,7 @@ export function TaskConfigFields({
               (ImportableFieldsHandle & TypeSwitchHandle<LetterRearrangementConfig>) | null
             >
           }
-          initialConfig={
-            (pendingSeed?.forType === "letter_rearrangement"
-              ? pendingSeed.config
-              : initialConfig) as Partial<LetterRearrangementConfig>
-          }
+          initialConfig={configForType("letter_rearrangement") as Partial<LetterRearrangementConfig>}
         />
       )}
 
@@ -927,7 +1072,7 @@ export function TaskConfigFields({
         <MultipleChoiceFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<MultipleChoiceConfig> | null>}
           initialConfig={
-            (pendingSeed?.forType === "multiple_choice" ? pendingSeed.config : initialConfig) as Partial<MultipleChoiceConfig>
+            configForType("multiple_choice") as Partial<MultipleChoiceConfig>
           }
         />
       )}
@@ -936,7 +1081,7 @@ export function TaskConfigFields({
         <WordChoiceFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<WordChoiceConfig> | null>}
           initialConfig={
-            (pendingSeed?.forType === "word_choice" ? pendingSeed.config : initialConfig) as Partial<WordChoiceConfig>
+            configForType("word_choice") as Partial<WordChoiceConfig>
           }
         />
       )}
@@ -947,7 +1092,7 @@ export function TaskConfigFields({
             importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>) | null>
           }
           initialConfig={
-            (pendingSeed?.forType === "word_search" ? pendingSeed.config : initialConfig) as Partial<WordSearchConfig>
+            configForType("word_search") as Partial<WordSearchConfig>
           }
         />
       )}
@@ -958,7 +1103,7 @@ export function TaskConfigFields({
             importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>) | null>
           }
           initialConfig={
-            (pendingSeed?.forType === "crossword" ? pendingSeed.config : initialConfig) as Partial<CrosswordConfig>
+            configForType("crossword") as Partial<CrosswordConfig>
           }
         />
       )}
@@ -966,12 +1111,12 @@ export function TaskConfigFields({
       {type === "karaoke" && (
         <KaraokeFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<KaraokeConfig> | null>}
-          initialConfig={initialConfig as Partial<KaraokeConfig>}
+          initialConfig={configForType("karaoke") as Partial<KaraokeConfig>}
         />
       )}
 
       {type === "true_false" && (
-        <TrueFalseFields initialConfig={initialConfig as Partial<TrueFalseConfig>} />
+        <TrueFalseFields initialConfig={configForType("true_false") as Partial<TrueFalseConfig>} />
       )}
 
       {IMPORT_ENABLED_TYPES.includes(type) && (
@@ -994,7 +1139,7 @@ export function TaskConfigFields({
         <MatchingFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "matching" ? pendingSeed.config : initialConfig) as Partial<MatchingConfig>
+            configForType("matching") as Partial<MatchingConfig>
           }
         />
       )}
@@ -1003,7 +1148,7 @@ export function TaskConfigFields({
         <ListeningFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<ListeningConfig> | null>}
           initialConfig={
-            (pendingSeed?.forType === "listening" ? pendingSeed.config : initialConfig) as Partial<ListeningConfig>
+            configForType("listening") as Partial<ListeningConfig>
           }
         />
       )}
@@ -1026,7 +1171,7 @@ export function TaskConfigFields({
         <ReorderFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "reorder" ? pendingSeed.config : initialConfig) as Partial<ReorderConfig>
+            configForType("reorder") as Partial<ReorderConfig>
           }
         />
       )}
@@ -1035,7 +1180,7 @@ export function TaskConfigFields({
         <DragDropFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "drag_drop" ? pendingSeed.config : initialConfig) as Partial<DragDropConfig>
+            configForType("drag_drop") as Partial<DragDropConfig>
           }
         />
       )}
@@ -1044,7 +1189,7 @@ export function TaskConfigFields({
         <SortColumnsFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "sort_columns" ? pendingSeed.config : initialConfig) as Partial<SortColumnsConfig>
+            configForType("sort_columns") as Partial<SortColumnsConfig>
           }
         />
       )}
@@ -1053,7 +1198,7 @@ export function TaskConfigFields({
         <FlipCardsFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<FlipCardsConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "flip_cards" ? pendingSeed.config : initialConfig) as Partial<FlipCardsConfig>
+            configForType("flip_cards") as Partial<FlipCardsConfig>
           }
         />
       )}
@@ -1066,7 +1211,7 @@ export function TaskConfigFields({
         <PhoneticsFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<PhoneticsConfig> | null>}
           initialConfig={
-            (pendingSeed?.forType === "phonetics" ? pendingSeed.config : initialConfig) as Partial<PhoneticsConfig>
+            configForType("phonetics") as Partial<PhoneticsConfig>
           }
         />
       )}
@@ -1075,20 +1220,20 @@ export function TaskConfigFields({
         <TableFillFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "table_fill" ? pendingSeed.config : initialConfig) as Partial<TableFillConfig>
+            configForType("table_fill") as Partial<TableFillConfig>
           }
         />
       )}
 
       {type === "image_match" && (
-        <ImageMatchFields ref={importRef} initialConfig={initialConfig as Partial<ImageMatchConfig>} />
+        <ImageMatchFields ref={importRef} initialConfig={configForType("image_match") as Partial<ImageMatchConfig>} />
       )}
 
       {type === "checkbox_grid" && (
         <CheckboxGridFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<CheckboxGridConfig>) | null>}
           initialConfig={
-            (pendingSeed?.forType === "checkbox_grid" ? pendingSeed.config : initialConfig) as Partial<CheckboxGridConfig>
+            configForType("checkbox_grid") as Partial<CheckboxGridConfig>
           }
         />
       )}
@@ -1096,11 +1241,7 @@ export function TaskConfigFields({
       {type === "chronological_order" && (
         <ChronologicalOrderFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>) | null>}
-          initialConfig={
-            (pendingSeed?.forType === "chronological_order"
-              ? pendingSeed.config
-              : initialConfig) as Partial<ChronologicalOrderConfig>
-          }
+          initialConfig={configForType("chronological_order") as Partial<ChronologicalOrderConfig>}
         />
       )}
 

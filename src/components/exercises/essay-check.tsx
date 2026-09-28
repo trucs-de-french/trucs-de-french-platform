@@ -232,7 +232,7 @@ export function EssayCheckExercise({
   return (
     <div className={EXERCISE_STACK}>
       <div>
-        <p className="font-medium">{prompt ?? DEFAULT_INSTRUCTIONS.essay_check}</p>
+        <p className="font-medium">{prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction}</p>
         {grid && (
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Рівень {level}

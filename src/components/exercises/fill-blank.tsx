@@ -70,7 +70,7 @@ export function FillBlankExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank),
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction),
             }}
           />
           {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
@@ -83,10 +83,12 @@ export function FillBlankExercise({
             </span>
           )}
         </div>
-        {config.subInstructions && (
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.fill_blank.subInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.fill_blank.subInstruction),
+            }}
           />
         )}
       </div>

@@ -20,6 +20,7 @@ import { generateCrosswordGrid } from "@/lib/exercises/crossword-grid";
 import { WORD_SEARCH_MAX_WORDS, CROSSWORD_MAX_WORDS, splitIntoChunks } from "@/lib/exercises/grid-limits";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
 import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
+import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
 // "redirect() vs revalidatePath() vs {ok,error}" на початку
@@ -291,19 +292,33 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
         stripArticles: sel.stripArticles,
       });
 
+      // Автоматичні інструкції — той самий дефолт типу, що вчителька
+      // бачила б, обравши цей тип вручну в конструкторі (default-
+      // instructions.ts): buildConfigFromVocab їх не встановлює (звичайний
+      // імпорт через *-fields.tsx лишає це полю форми), а тут форми взагалі
+      // немає, тож підставляємо прямо тут, один раз на кожну створювану
+      // вправу. Усі 7 типів BULK_VOCAB_TASK_TYPES присутні в мапі (жоден не
+      // word_choice, де дефолт залежав би від режиму).
+      const defaults = DEFAULT_INSTRUCTIONS[sel.type];
+      if (defaults) {
+        config = { ...config, instructions: defaults.instruction, subInstructions: defaults.subInstruction };
+      }
+
       if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
         config = { ...config, points: sel.points ?? 1 };
       } else if (sel.type === "word_search") {
-        const { grid, placements, failedWords } = generateWordSearchGrid(config.words as WordSearchWord[]);
-        config = { ...config, grid, placements, points: sel.points ?? 1 };
+        const { grid, placements, failedWords, sourceWords } = generateWordSearchGrid(
+          config.words as WordSearchWord[]
+        );
+        config = { ...config, grid, placements, gridSourceWords: sourceWords, points: sel.points ?? 1 };
         if (failedWords.length > 0) {
           warnings.push(`Філворд${partLabel(chunkIndex)}: не вмістились у сітку — ${failedWords.join(", ")}`);
         }
       } else if (sel.type === "crossword") {
-        const { placements, gridWidth, gridHeight, isolatedWords } = generateCrosswordGrid(
+        const { placements, gridWidth, gridHeight, isolatedWords, sourceWords } = generateCrosswordGrid(
           config.words as CrosswordWord[]
         );
-        config = { ...config, placements, gridWidth, gridHeight, points: sel.points ?? 1 };
+        config = { ...config, placements, gridWidth, gridHeight, gridSourceWords: sourceWords, points: sel.points ?? 1 };
         if (isolatedWords.length > 0) {
           warnings.push(
             `Кросворд${partLabel(chunkIndex)}: не перетнулись з іншими словами — ${isolatedWords.join(", ")}`

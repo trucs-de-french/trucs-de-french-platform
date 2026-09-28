@@ -476,7 +476,7 @@ export function KaraokeExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke),
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction),
             }}
           />
           {!hidePoints && (pointsVisible || detail) && (
@@ -489,10 +489,12 @@ export function KaraokeExercise({
             </span>
           )}
         </div>
-        {config.subInstructions && (
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction),
+            }}
           />
         )}
       </div>

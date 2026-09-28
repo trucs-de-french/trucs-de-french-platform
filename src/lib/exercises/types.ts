@@ -190,6 +190,13 @@ export type WordSearchConfig = {
   grid: string[][];
   placements: WordSearchPlacement[];
   points?: number;
+  // Нормалізований (sanitizeWordForGrid+upper) список слів, з яких grid/
+  // placements БУЛИ згенеровані (generateWordSearchGrid.sourceWords,
+  // word-search-grid.ts) — знімок на момент генерації, не похідне поточних
+  // words. Опційне — вправи, збережені до появи цього поля, не мають його
+  // взагалі; task-validation.ts тоді звіряє інакше (лише "чи зникло
+  // розміщене слово"), не порівнюючи списки цілком.
+  gridSourceWords?: string[];
 };
 
 // Слово + підказка (означення) — на відміну від WordSearchWord, тут немає
@@ -242,6 +249,10 @@ export type CrosswordConfig = {
   gridWidth: number;
   gridHeight: number;
   points?: number;
+  // Той самий принцип, що WordSearchConfig.gridSourceWords — знімок
+  // нормалізованих слів на момент генерації (generateCrosswordGrid.sourceWords,
+  // crossword-grid.ts), опційний для сумісності зі старими вправами.
+  gridSourceWords?: string[];
 };
 
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у

@@ -165,6 +165,12 @@ export const CrosswordFields = forwardRef<
   const [placements, setPlacements] = useState<CrosswordPlacement[]>(initialConfig?.placements ?? []);
   const [gridWidth, setGridWidth] = useState(initialConfig?.gridWidth ?? 0);
   const [gridHeight, setGridHeight] = useState(initialConfig?.gridHeight ?? 0);
+  // Знімок нормалізованих слів на момент ОСТАННЬОЇ генерації (types.ts) —
+  // для task-validation.ts "чи сітка застаріла". Відсутнє в initialConfig
+  // для вправ, збережених до появи цього поля — лишається undefined, не [].
+  const [gridSourceWords, setGridSourceWords] = useState<string[] | undefined>(
+    initialConfig?.gridSourceWords
+  );
   const [isolatedWords, setIsolatedWords] = useState<string[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.crossword ?? false);
 
@@ -192,6 +198,7 @@ export const CrosswordFields = forwardRef<
       placements,
       gridWidth,
       gridHeight,
+      gridSourceWords,
       points: initialConfig?.points,
     }),
   }));
@@ -239,6 +246,7 @@ export const CrosswordFields = forwardRef<
     setGridWidth(result.gridWidth);
     setGridHeight(result.gridHeight);
     setIsolatedWords(result.isolatedWords);
+    setGridSourceWords(result.sourceWords);
   }
 
   const previewLetters = placements.length > 0 ? buildCrosswordSolution(placements, gridWidth, gridHeight) : [];
@@ -250,6 +258,15 @@ export const CrosswordFields = forwardRef<
       <input type="hidden" name="crossword_placements" value={JSON.stringify(placements)} readOnly />
       <input type="hidden" name="crossword_grid_width" value={gridWidth} readOnly />
       <input type="hidden" name="crossword_grid_height" value={gridHeight} readOnly />
+      {/* Порожній рядок (не JSON.stringify(undefined)), якщо ще не
+          генерували чи вправа стара — parseOptionalJsonField
+          (task-config-builder.ts) трактує порожній рядок як "поля немає". */}
+      <input
+        type="hidden"
+        name="crossword_grid_source_words"
+        value={gridSourceWords ? JSON.stringify(gridSourceWords) : ""}
+        readOnly
+      />
 
       <InstructionsRichTextField
         name="crossword_instructions"
@@ -267,9 +284,12 @@ export const CrosswordFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова та підказки</label>
         <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
+        {/* Порада, не помилка — тихий сірий текст, без жовтого фону й "⚠":
+            перевищення рекомендованого, не жорсткого ліміту (масове
+            створення й далі саме ділить на кілька вправ). */}
         {words.length > CROSSWORD_MAX_WORDS && (
-          <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-            ⚠ Рекомендовано не більше {CROSSWORD_MAX_WORDS} слів — розбийте на кілька вправ, інакше сітка стане
+          <p className={HINT_TEXT}>
+            Рекомендовано не більше {CROSSWORD_MAX_WORDS} слів — розбийте на кілька вправ, інакше сітка стане
             занадто громіздкою.
           </p>
         )}

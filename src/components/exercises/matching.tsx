@@ -96,8 +96,8 @@ export function MatchingExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.matching}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.matching.subInstruction}
       />
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">

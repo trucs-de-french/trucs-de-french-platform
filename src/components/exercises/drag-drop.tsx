@@ -66,8 +66,8 @@ export function DragDropExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
       />
 
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>

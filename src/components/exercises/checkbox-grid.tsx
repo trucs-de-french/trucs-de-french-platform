@@ -75,8 +75,8 @@ export function CheckboxGridExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction}
       />
 
       <div className="overflow-x-auto">

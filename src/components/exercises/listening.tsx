@@ -44,8 +44,8 @@ export function ListeningExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.listening}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.listening.subInstruction}
       />
 
       {isYouTubeUrl(config.audioUrl) ? (

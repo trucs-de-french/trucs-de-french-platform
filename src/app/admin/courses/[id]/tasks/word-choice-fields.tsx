@@ -1,10 +1,11 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { WordChoiceConfig, WordChoiceSentence, WordChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -72,6 +73,36 @@ export const WordChoiceFields = forwardRef<
   const [sentences, setSentences] = useState<WordChoiceSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Автозаповнення інструкцій дефолтом при перемиканні РЕЖИМУ (select ↔
+  // cross_out) — той самий принцип "не чіпати, якщо редагували", що у
+  // task-config-fields.tsx для зміни ТИПУ, лише повністю всередині цього
+  // компонента (mode — його ВЛАСНИЙ стан, батько про нього не знає).
+  // seedKey форсує ПЕРЕМОНТУВАННЯ InstructionsRichTextField — TipTap бере
+  // initialValue лише один раз при монтуванні, іншого API "переписати
+  // вміст" зовні немає (той самий прийом, що повне перемонтування *Fields-
+  // компонента при зміні типу в батьківському файлі).
+  const [instructionsSeed, setInstructionsSeed] = useState<{ instruction: string; subInstruction: string } | null>(
+    null
+  );
+  const [seedKey, setSeedKey] = useState(0);
+
+  function handleModeChange(newMode: "select" | "cross_out") {
+    const form = rootRef.current?.closest("form");
+    const instrEl = form?.elements.namedItem("word_choice_instructions") as HTMLInputElement | null;
+    const subEl = form?.elements.namedItem("word_choice_sub_instructions") as HTMLInputElement | null;
+    const liveInstruction = instrEl?.value ?? "";
+    const liveSub = subEl?.value ?? "";
+    const oldDefault = WORD_CHOICE_DEFAULT_INSTRUCTIONS[mode];
+    const newDefault = WORD_CHOICE_DEFAULT_INSTRUCTIONS[newMode];
+    setInstructionsSeed({
+      instruction: liveInstruction !== "" && liveInstruction !== oldDefault.instruction ? liveInstruction : newDefault.instruction,
+      subInstruction:
+        liveSub !== "" && liveSub !== oldDefault.subInstruction ? liveSub : newDefault.subInstruction,
+    });
+    setSeedKey((k) => k + 1);
+    setMode(newMode);
+  }
 
   useImperativeHandle(ref, () => ({
     getValue: () => ({
@@ -137,7 +168,7 @@ export const WordChoiceFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <div ref={rootRef} className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input
         type="hidden"
         name="word_choice_sentences"
@@ -146,15 +177,17 @@ export const WordChoiceFields = forwardRef<
       />
 
       <InstructionsRichTextField
+        key={`instructions-${seedKey}`}
         name="word_choice_instructions"
         label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
+        initialValue={instructionsSeed?.instruction ?? initialConfig?.instructions ?? ""}
       />
 
       <InstructionsRichTextField
+        key={`sub-instructions-${seedKey}`}
         name="word_choice_sub_instructions"
         label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
+        initialValue={instructionsSeed?.subInstruction ?? initialConfig?.subInstructions ?? ""}
         compact
       />
 
@@ -163,7 +196,7 @@ export const WordChoiceFields = forwardRef<
         <select
           name="word_choice_mode"
           value={mode}
-          onChange={(e) => setMode(e.target.value as "select" | "cross_out")}
+          onChange={(e) => handleModeChange(e.target.value as "select" | "cross_out")}
           className={`${INPUT_BORDER} px-2 py-2 text-sm`}
         >
           <option value="select">Вибір правильного варіанта</option>

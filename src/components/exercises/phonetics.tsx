@@ -21,8 +21,8 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
       />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (

@@ -202,7 +202,7 @@ export function LetterGapsExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps),
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction),
             }}
           />
           {!hidePoints && (pointsVisible || detail) && (
@@ -213,10 +213,12 @@ export function LetterGapsExercise({
             </span>
           )}
         </div>
-        {config.subInstructions && (
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction),
+            }}
           />
         )}
       </div>

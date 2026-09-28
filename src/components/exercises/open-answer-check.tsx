@@ -42,8 +42,8 @@ export function OpenAnswerCheckExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.open_answer.subInstruction}
       />
 
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>

@@ -107,8 +107,8 @@ export function ChronologicalOrderExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction}
       />
 
       {config.mode === "image" ? (

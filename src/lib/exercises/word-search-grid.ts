@@ -52,6 +52,13 @@ export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
   grid: string[][];
   placements: WordSearchPlacement[];
   failedWords: string[];
+  // Нормалізований (sanitizeWordForGrid+upper, порожні відкинуті) список
+  // СЛІВ-ДЖЕРЕЛ генерації, у вихідному порядку, з дублікатами як є —
+  // для збереження в config.gridSourceWords (types.ts) і звірки "чи сітка
+  // застаріла" (task-validation.ts). Включає й failedWords — "джерело
+  // генерації" це те, з чого сітку рахували, незалежно від успіху
+  // розміщення кожного окремого слова.
+  sourceWords: string[];
 } {
   const words = rawWords.map((w) => sanitizeWordForGrid(w.word).toUpperCase()).filter(Boolean);
   const size = computeGridSize(words);
@@ -99,7 +106,7 @@ export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
 
   const filledGrid: string[][] = grid.map((row) => row.map((cell) => cell ?? randomFiller()));
 
-  return { grid: filledGrid, placements, failedWords };
+  return { grid: filledGrid, placements, failedWords, sourceWords: words };
 }
 
 // Впорядкований список клітинок одного розміщеного слова — спільна логіка

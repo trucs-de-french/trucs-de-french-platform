@@ -221,8 +221,8 @@ export function TableFillExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.table_fill.subInstruction}
       />
 
       <div

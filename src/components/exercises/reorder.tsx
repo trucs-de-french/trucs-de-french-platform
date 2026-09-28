@@ -97,8 +97,8 @@ export function ReorderExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
 
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>

@@ -201,8 +201,8 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.flip_cards.subInstruction}
       />
       {config.mode === "random_reveal" ? (
         <RandomRevealFlipCards cards={cards} revealSide={config.revealSide ?? "front"} />

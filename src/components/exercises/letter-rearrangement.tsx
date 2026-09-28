@@ -86,7 +86,7 @@ export function LetterRearrangementExercise({
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
               __html: sanitizeInstructionsHtml(
-                config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement
+                config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction
               ),
             }}
           />
@@ -98,10 +98,14 @@ export function LetterRearrangementExercise({
             </span>
           )}
         </div>
-        {config.subInstructions && (
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(
+                config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction
+              ),
+            }}
           />
         )}
       </div>

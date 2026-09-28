@@ -23,10 +23,12 @@ type Row = ({ kind: "task" } & TaskRow) | ({ kind: "group" } & GroupRow);
 // Той самий попередження-бейдж, що task-drag-list.tsx (сцена) і
 // group-member-drag-list.tsx (блок) — task-validation.ts, нічого не блокує.
 function IncompleteBadge({ type, config }: { type: string; config: Record<string, unknown> | null }) {
-  const problems = validateTaskConfig(type, config ?? {});
-  if (problems.length === 0) return null;
+  // Лише "error" — hint-и (порожня інструкція, рекомендована кількість
+  // слів) не мають показувати ⚠ у списку, лише справжню незаповненість.
+  const errors = validateTaskConfig(type, config ?? {}).filter((p) => p.severity === "error");
+  if (errors.length === 0) return null;
   return (
-    <span title={`Не заповнено: ${problems.map((p) => p.message).join("; ")}`}>
+    <span title={`Не заповнено: ${errors.map((p) => p.message).join("; ")}`}>
       <AlertTriangle size={14} className="shrink-0 text-amber-500" />
     </span>
   );

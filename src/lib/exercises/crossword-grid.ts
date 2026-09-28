@@ -398,6 +398,14 @@ export function generateCrosswordGrid(rawWords: CrosswordWord[]): {
   gridWidth: number;
   gridHeight: number;
   isolatedWords: string[];
+  // Нормалізований (sanitizeWordForGrid+upper, порожні відкинуті) список
+  // СЛІВ-ДЖЕРЕЛ генерації, у вихідному порядку, з дублікатами як є —
+  // призначений для збереження в config.gridSourceWords (types.ts) і
+  // подальшої звірки "чи сітка застаріла" (task-validation.ts), а не для
+  // самого розміщення. Включає й слова, що не вмістились (isolatedWords) —
+  // "джерело генерації" означає РІВНО те, з чого сітку рахували, незалежно
+  // від успіху розміщення кожного окремого слова.
+  sourceWords: string[];
 } {
   // sanitizeWordForGrid прибирає з .word усе, що не літера (пробіл/
   // апостроф/дефіс) — ЛИШЕ для розміщення в сітці; сам w.word (легенда/
@@ -412,9 +420,10 @@ export function generateCrosswordGrid(rawWords: CrosswordWord[]): {
       audioUrl: w.audioUrl,
     }))
     .filter((w) => w.word);
+  const sourceWords = words.map((w) => w.word);
 
   if (words.length === 0) {
-    return { placements: [], gridWidth: 0, gridHeight: 0, isolatedWords: [] };
+    return { placements: [], gridWidth: 0, gridHeight: 0, isolatedWords: [], sourceWords: [] };
   }
 
   const occupied = new Map<string, OccupiedCell>();
@@ -525,6 +534,7 @@ export function generateCrosswordGrid(rawWords: CrosswordWord[]): {
     gridWidth: maxCol + 1,
     gridHeight: maxRow + 1,
     isolatedWords,
+    sourceWords,
   };
 }
 

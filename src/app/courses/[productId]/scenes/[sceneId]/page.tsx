@@ -26,7 +26,7 @@ import type {
   CalloutConfig,
   PhoneticsConfig,
 } from "@/lib/exercises/types";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, ERROR_CORRECTION_INSTRUCTION } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
 import { ScriptSection } from "./script-section";
@@ -36,7 +36,7 @@ import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
-import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
+import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import {
@@ -510,7 +510,12 @@ export default async function ScenePage({
               {task.type === "vocab_quiz" && (
                 <ExerciseErrorBoundary>
                   <div className="flex flex-col gap-2">
-                    <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz}</p>
+                    <div>
+                      <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}</p>
+                      <p className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}>
+                        {DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+                      </p>
+                    </div>
                     {(() => {
                       const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
                       return (
@@ -533,7 +538,7 @@ export default async function ScenePage({
                       </p>
                     ) : (
                       <>
-                        <p className="font-medium">{DEFAULT_INSTRUCTIONS.error_correction}</p>
+                        <p className="font-medium">{ERROR_CORRECTION_INSTRUCTION}</p>
                         {sceneMistakes.map((m) => (
                           <a
                             key={m.id}

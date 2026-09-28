@@ -224,8 +224,8 @@ export function MultipleChoiceExercise({
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice}
-        subText={config.subInstructions}
+        text={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
+        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
       />
 
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>{config.items.map(renderItem)}</div>

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
@@ -145,15 +145,21 @@ export function WordChoiceExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_choice),
+              __html: sanitizeInstructionsHtml(
+                config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction
+              ),
             }}
           />
           {pointsBadge()}
         </div>
-        {config.subInstructions && (
+        {(config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(config.subInstructions) }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(
+                config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction
+              ),
+            }}
           />
         )}
       </div>

@@ -143,6 +143,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("word_search_sub_instructions") as string) || ""
       );
+      const gridSourceWords = parseOptionalJsonField(formData.get("word_search_grid_source_words"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_search_instructions") as string) || ""
@@ -154,6 +155,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         words: parseJsonField(formData.get("word_search_words")),
         grid: parseJsonField(formData.get("word_search_grid")),
         placements: parseJsonField(formData.get("word_search_placements")),
+        ...(gridSourceWords ? { gridSourceWords } : {}),
         points: Number(formData.get("word_search_points")) || 1,
       };
     }
@@ -161,6 +163,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("crossword_sub_instructions") as string) || ""
       );
+      const gridSourceWords = parseOptionalJsonField(formData.get("crossword_grid_source_words"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("crossword_instructions") as string) || ""
@@ -173,6 +176,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         // вони потрібні (sanitizeCrossword/gradeCrossword).
         words: parseJsonField(formData.get("crossword_words")),
         placements: parseJsonField(formData.get("crossword_placements")),
+        ...(gridSourceWords ? { gridSourceWords } : {}),
         gridWidth: Number(formData.get("crossword_grid_width")) || 0,
         gridHeight: Number(formData.get("crossword_grid_height")) || 0,
         points: Number(formData.get("crossword_points")) || 1,
@@ -358,6 +362,23 @@ function parseJsonField(value: FormDataEntryValue | null): unknown[] {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+// На відміну від parseJsonField (завжди масив, порожній рядок -> []) — тут
+// порожній рядок/відсутнє поле означає "поля взагалі немає в конфігурації"
+// (undefined), не порожній масив. Потрібно для gridSourceWords
+// (word_search/crossword, task-validation.ts): "порожній масив" і "поля
+// нема зовсім" — це різні стани (стара вправа без gridSourceWords мусить
+// лишитись БЕЗ цього ключа в config, інакше звірка "чи сітка застаріла"
+// сплутала б її зі свіжо згенерованою вправою на 0 слів).
+function parseOptionalJsonField(value: FormDataEntryValue | null): unknown[] | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value as string);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
   }
 }
 
