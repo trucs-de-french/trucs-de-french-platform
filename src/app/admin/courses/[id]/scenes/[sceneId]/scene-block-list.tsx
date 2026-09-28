@@ -39,9 +39,24 @@ type Block = { type: string; refId: string | null; label: string; contentType?: 
 
 // Унікальний ключ блоку для React key/DnD/lookup — type сам по собі більше
 // не унікальний для "content" (кількох блоків із цим типом може бути кілька
-// на одну сцену), тому ключ = refId, коли він є, інакше type.
-function blockKey(block: Block): string {
-  return block.refId ? `content:${block.refId}` : block.type;
+// на одну сцену), тому ключ = refId, коли він є, інакше type. Формат
+// "content:${refId}" НЕ можна змінювати для звичайного випадку — той самий
+// рядок будують anchor-посилання в багатьох інших файлах напряму
+// (blockDomId(`content:${block.refId}`), page.tsx і сусідні actions.ts), не
+// через цю функцію.
+//
+// index — фолбек ЛИШЕ для аномалії даних: "content"-рядок із refId === null
+// (втрачений/задвоєний зв'язок зі scene_content_blocks — звідси й захисна
+// перевірка `!block.refId` у page.tsx, де contentByKey будується). Два такі
+// рядки без index колізували б на однаковому ключі "content" (React
+// warning "Each child... unique key", SceneBlockList/AdminScenePage) —
+// звідси й додавання. Фіксовані типи (video/script/link/task, завжди рівно
+// один на сцену) index НЕ отримують — їхній ключ (просто block.type) теж
+// анкор в інших місцях (напр. blockDomId("task")), тому мусить лишитись
+// без змін.
+function blockKey(block: Block, index: number): string {
+  if (block.refId) return `content:${block.refId}`;
+  return block.type === "content" ? `content:${index}` : block.type;
 }
 
 // localStorage-backed collapsedKeys (переживає перезавантаження сторінки,
@@ -224,9 +239,9 @@ export function SceneBlockList({
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash) return;
-    const target = blocks.find((b) => blockDomId(blockKey(b)) === hash);
-    if (!target) return;
-    const targetKey = blockKey(target);
+    const targetIndex = blocks.findIndex((b, index) => blockDomId(blockKey(b, index)) === hash);
+    if (targetIndex === -1) return;
+    const targetKey = blockKey(blocks[targetIndex], targetIndex);
     setCollapsedKeys((prev) => {
       if (!prev.has(targetKey)) return prev;
       const next = new Set(prev);
@@ -260,8 +275,8 @@ export function SceneBlockList({
   }
 
   async function move(fromKey: string, overKey: string, side: DropSide) {
-    const fromIndex = blocks.findIndex((b) => blockKey(b) === fromKey);
-    const overIndex = blocks.findIndex((b) => blockKey(b) === overKey);
+    const fromIndex = blocks.findIndex((b, index) => blockKey(b, index) === fromKey);
+    const overIndex = blocks.findIndex((b, index) => blockKey(b, index) === overKey);
     if (fromIndex === -1 || overIndex === -1) return;
     await moveByIndex(fromIndex, computeInsertIndex(fromIndex, overIndex, side));
   }
@@ -272,8 +287,8 @@ export function SceneBlockList({
     } else if (selected === key) {
       setSelected(null);
     } else {
-      const fromIndex = blocks.findIndex((b) => blockKey(b) === selected);
-      const toIndex = blocks.findIndex((b) => blockKey(b) === key);
+      const fromIndex = blocks.findIndex((b, index) => blockKey(b, index) === selected);
+      const toIndex = blocks.findIndex((b, index) => blockKey(b, index) === key);
       void moveByIndex(fromIndex, toIndex);
       setSelected(null);
     }
@@ -302,8 +317,8 @@ export function SceneBlockList({
           Розгорнути всі
         </button>
       </div>
-      {blocks.map((block) => {
-        const key = blockKey(block);
+      {blocks.map((block, index) => {
+        const key = blockKey(block, index);
         const isContent = block.type === "content";
         const BlockIcon = isContent
           ? SCENE_CONTENT_BLOCK_ICON[block.contentType ?? ""]
