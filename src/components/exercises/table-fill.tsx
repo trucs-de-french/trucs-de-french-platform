@@ -10,12 +10,6 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import {
-  PART_OF_SPEECH_ORDER,
-  PART_OF_SPEECH_LABELS_FR,
-  PART_OF_SPEECH_COLORS,
-  type PartOfSpeech,
-} from "@/lib/vocab-categories";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -27,49 +21,21 @@ function cellKey(rowId: string, side: "left" | "right") {
 // таблиці не падав на columnLabels[0] з undefined.
 const DEFAULT_COLUMN_LABELS: [string, string] = ["Французька", "Переклад"];
 
-// Рядки без categорій довше 10 — розбиваємо навпіл на дві колонки без
-// заголовків груп (лише щоб довга таблиця не розтягувалась на всю висоту
-// сторінки в один стовпець).
-const SPLIT_WITHOUT_CATEGORY_THRESHOLD = 10;
+// Рядків довше 10 — розбиваємо навпіл на дві колонки, кожна зі своїм
+// рядком підписів колонок (лише щоб довга таблиця не розтягувалась на всю
+// висоту сторінки в один стовпець).
+const SPLIT_THRESHOLD = 10;
 
 type Row = TableFillPublic["rows"][number];
 
-// Той самий принцип, що groupVocabByPartOfSpeech (vocab.ts): PART_OF_SPEECH_ORDER
-// напряму, легасі-група без категорії — останньою. row.partOfSpeech тут уже
-// нормалізований (sanitizeTableFill викликає normalizePartOfSpeech), тож
-// звірка з PART_OF_SPEECH_ORDER напряму, без повторної нормалізації.
-function groupRowsByPartOfSpeech(rows: Row[]): { partOfSpeech: PartOfSpeech | null; rows: Row[] }[] {
-  const buckets = new Map<PartOfSpeech | null, Row[]>();
-  for (const r of rows) {
-    const key = r.partOfSpeech ?? null;
-    const arr = buckets.get(key) ?? [];
-    arr.push(r);
-    buckets.set(key, arr);
-  }
-  const groups: { partOfSpeech: PartOfSpeech | null; rows: Row[] }[] = [];
-  for (const pos of PART_OF_SPEECH_ORDER) {
-    const items = buckets.get(pos);
-    if (items?.length) groups.push({ partOfSpeech: pos, rows: items });
-  }
-  const other = buckets.get(null);
-  if (other?.length) groups.push({ partOfSpeech: null, rows: other });
-  return groups;
-}
-
-// Одна колонка вправи — або категорія (label+dotClass задані), або половина
-// без категорій, або вся вправа одним стовпцем (label null в обох випадках,
-// відрізняються лише набором rows). Сама таблиця — той самий рендер, що був
-// раніше, лише тепер параметризований підмножиною рядків.
+// Одна колонка вправи — або половина рядків, або вся вправа одним
+// стовпцем; завжди зі своїм рядком підписів колонок.
 function TableFillColumn({
-  label,
-  dotClass,
   rows,
   columnLabels,
   renderCell,
   rowPointsLabel,
 }: {
-  label: string | null;
-  dotClass: string | null;
   rows: Row[];
   columnLabels: [string, string];
   renderCell: (rowId: string, side: "left" | "right", value: string | null) => ReactNode;
@@ -77,12 +43,6 @@ function TableFillColumn({
 }) {
   return (
     <div>
-      {label && (
-        <div className="mb-1 flex items-center gap-2">
-          {dotClass && <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClass}`} aria-hidden />}
-          <h3 className="font-heading text-sm font-bold text-neutral-700 dark:text-neutral-300">{label}</h3>
-        </div>
-      )}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-base">
           <thead>
@@ -245,32 +205,19 @@ export function TableFillExercise({
     submit(answer);
   }
 
-  // Групування — ЛИШЕ візуальне: кожна колонка нижче несе підмножину ТИХ
-  // САМИХ об'єктів row (той самий row.id), відповіді (cellKey/rowId) і
-  // список помилок нижче (config.rows.findIndex за ПОВНИМ, негрупованим
-  // масивом) узагалі не звертаються до цього поділу — індекси/бали не
-  // можуть розійтись.
-  const hasAnyCategory = config.rows.some((r) => r.partOfSpeech);
-  let columns: { key: string; label: string | null; dotClass: string | null; rows: Row[] }[];
-  if (hasAnyCategory) {
-    const groups = groupRowsByPartOfSpeech(config.rows);
-    // Захист від краю: якщо після групування лишилась рівно одна група і це
-    // "Інше" — заголовок зайвий (виглядав би як "Інше" над усією вправою).
-    const suppressLabels = groups.length === 1 && groups[0].partOfSpeech === null;
-    columns = groups.map((g) => ({
-      key: g.partOfSpeech ?? "other",
-      label: suppressLabels ? null : g.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[g.partOfSpeech] : "Інше",
-      dotClass: g.partOfSpeech ? PART_OF_SPEECH_COLORS[g.partOfSpeech].dot : null,
-      rows: g.rows,
-    }));
-  } else if (config.rows.length > SPLIT_WITHOUT_CATEGORY_THRESHOLD) {
+  // Поділ — ЛИШЕ візуальний: кожна колонка нижче несе підмножину ТИХ САМИХ
+  // об'єктів row (той самий row.id), відповіді (cellKey/rowId) і список
+  // помилок нижче (config.rows.findIndex за ПОВНИМ, неподіленим масивом)
+  // узагалі не звертаються до цього поділу — індекси/бали не можуть розійтись.
+  let columns: { key: string; rows: Row[] }[];
+  if (config.rows.length > SPLIT_THRESHOLD) {
     const mid = Math.ceil(config.rows.length / 2);
     columns = [
-      { key: "col-a", label: null, dotClass: null, rows: config.rows.slice(0, mid) },
-      { key: "col-b", label: null, dotClass: null, rows: config.rows.slice(mid) },
+      { key: "col-a", rows: config.rows.slice(0, mid) },
+      { key: "col-b", rows: config.rows.slice(mid) },
     ];
   } else {
-    columns = [{ key: "all", label: null, dotClass: null, rows: config.rows }];
+    columns = [{ key: "all", rows: config.rows }];
   }
 
   return (
@@ -296,8 +243,6 @@ export function TableFillExercise({
         {columns.map((col) => (
           <TableFillColumn
             key={col.key}
-            label={col.label}
-            dotClass={col.dotClass}
             rows={col.rows}
             columnLabels={columnLabels}
             renderCell={renderCell}

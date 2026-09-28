@@ -10,7 +10,6 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
-import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
 
 function emptyRow(): TableFillRow {
   return {
@@ -69,12 +68,6 @@ export const TableFillFields = forwardRef<
 
   function updateRowPoints(id: string, points: number) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, points } : r)));
-  }
-
-  function updateRowPartOfSpeech(id: string, value: string) {
-    setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, partOfSpeech: value ? (value as TableFillRow["partOfSpeech"]) : null } : r))
-    );
   }
 
   return (
@@ -156,19 +149,6 @@ export const TableFillFields = forwardRef<
               приховати
             </label>
           </div>
-          <select
-            value={row.partOfSpeech ?? ""}
-            onChange={(e) => updateRowPartOfSpeech(row.id, e.target.value)}
-            title="Частина мови (для групування на студентській сторінці)"
-            className={`${INPUT_BORDER} self-start px-1.5 py-2 text-xs`}
-          >
-            <option value="">—</option>
-            {PART_OF_SPEECH_ORDER.map((pos) => (
-              <option key={pos} value={pos}>
-                {PART_OF_SPEECH_LABELS_FR[pos]}
-              </option>
-            ))}
-          </select>
           <span className={`self-start ${HINT_TEXT}`}>Бали</span>
           <input
             type="number"
