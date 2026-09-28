@@ -15,6 +15,7 @@ import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { LEGEND_TILE_BASE, LEGEND_TILE_GRID, LEGEND_IMAGE_GRID } from "./legend-tile-style";
 
 type Cell = { row: number; col: number };
 
@@ -66,7 +67,7 @@ function ImageTile({
   return (
     <div
       onClick={onHint}
-      className={`relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 ${
+      className={`flex flex-col overflow-hidden ${LEGEND_TILE_BASE} ${
         found ? "cursor-default" : "cursor-pointer"
       }`}
     >
@@ -128,7 +129,7 @@ function TextTile({
   return (
     <div
       onClick={onHint}
-      className={`relative flex flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-center transition-opacity dark:border-neutral-700 dark:bg-neutral-800 ${
+      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 text-center transition-opacity ${LEGEND_TILE_BASE} ${
         found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
@@ -502,7 +503,7 @@ export function WordSearchExercise({
 
           <div className="mt-3 flex flex-col gap-2">
             {imageWords.length > 0 && (
-              <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
+              <div className={LEGEND_IMAGE_GRID}>
                 {imageWords.map((w) => (
                   <ImageTile
                     key={w.word}
@@ -516,7 +517,7 @@ export function WordSearchExercise({
               </div>
             )}
             {textWords.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+              <div className={LEGEND_TILE_GRID}>
                 {textWords.map((w) => (
                   <TextTile
                     key={w.word}

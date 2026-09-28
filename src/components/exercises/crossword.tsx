@@ -13,7 +13,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { LEGEND_TILE_BASE, LEGEND_TILE_GRID } from "./legend-tile-style";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { gridCellSize } from "./grid-cell-size";
@@ -293,10 +293,10 @@ export function CrosswordExercise({
         : "";
   }
 
-  // Картка — той самий ANSWER_CARD_BASE/DEFAULT, що вже в легенді Філворда
-  // (word_search): для підказок із clueStyle === "long" АБО картинкою/аудіо
-  // (картинка/аудіо завжди в картці, незалежно від clueStyle — той принцип
-  // не змінюється цим перемикачем).
+  // Картка — той самий LEGEND_TILE_BASE (тонка рамка, без тіні), що вже в
+  // легенді Філворда (word_search): для підказок із clueStyle === "long"
+  // АБО картинкою/аудіо (картинка/аудіо завжди в картці, незалежно від
+  // clueStyle — той принцип не змінюється цим перемикачем).
   function renderClueCard(direction: Direction, clue: CrosswordPublic["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
@@ -312,12 +312,12 @@ export function CrosswordExercise({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${ANSWER_CARD_BASE} relative flex cursor-pointer flex-col items-center gap-1 ${
+        className={`${LEGEND_TILE_BASE} flex cursor-pointer flex-col items-center gap-1 px-3 py-2 text-center transition-colors ${
           liveStatus === "correct"
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
-              : ANSWER_CARD_DEFAULT
+              : "hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
         {!result && !isDelf && (
@@ -416,10 +416,11 @@ export function CrosswordExercise({
     );
   }
 
-  // Картки (auto-fill, той самий вигляд, що у Філворді) і плаский текст —
-  // ДВІ окремі однорідні ділянки в межах секції, не одна змішана сітка:
-  // картка розрахована на мінімальну ширину 9rem, короткий текстовий рядок
-  // у тій самій клітинці або розтягнувся б, або зламав вирівнювання —
+  // Картки (LEGEND_TILE_GRID — фіксована кількість рівних колонок, той
+  // самий вигляд, що у Філворді; НЕ auto-fill/minmax — той розтягував
+  // картки неповного рядка на всю ширину) і плаский текст — ДВІ окремі
+  // однорідні ділянки в межах секції, не одна змішана сітка: короткий
+  // текстовий рядок у тій самій клітинці зламав би вирівнювання —
   // натомість короткі підказки йдуть рядком (flex-wrap) під блоком карток:
   // gap-x-8 між підказками по горизонталі, gap-y-2 між рядками при переносі
   // (не gap-y-0.5 впритул, як був проміжний варіант).
@@ -433,7 +434,7 @@ export function CrosswordExercise({
       <div className="w-full">
         <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
         {cardClues.length > 0 && (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
+          <div className={LEGEND_TILE_GRID}>
             {cardClues.map((clue) => renderClueCard(direction, clue))}
           </div>
         )}
