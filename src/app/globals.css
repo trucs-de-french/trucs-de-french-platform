@@ -187,35 +187,23 @@ button, input, textarea, select, label, nav, aside {
   animation: hint-blink 0.5s ease-in-out 3;
 }
 
-/* Капсули знайдених слів у філворді (word-search.tsx) — 5 пастельних
-   кольорів, обраних за стабільним хешем слова (не порядком знаходження, щоб
-   колір не "стрибав" у вже знайдених слів при знаходженні нових). Пряме CSS-
-   змінні (не --color-* у @theme inline вище) — вони споживаються лише як
-   stroke SVG inline-стилем у JS, не як Tailwind-утиліти, тож реєструвати їх
-   у @theme sensibility немає. Темні варіанти — трохи яскравіші/насиченіші
-   відтінки тих самих кольорів (той самий принцип, що --background/
+/* Капсула знайденого слова у філворді (word-search.tsx) — ЄДИНА зелена для
+   ВСІХ знайдених слів (той самий green-600/green-400, що вже скрізь на
+   сторінці для "Правильно!" — text-green-600 dark:text-green-400). Пряма
+   CSS-змінна (не --color-* у @theme inline вище) — споживається лише як
+   stroke SVG inline-стилем у JS, не як Tailwind-утиліта, тож реєструвати її
+   у @theme немає сенсу. Темніший варіант для темної теми — трохи
+   яскравіший/насиченіший відтінок (той самий принцип, що --background/
    --foreground вище: :root:not(.light) для системної теми + :root.dark для
    явного вибору). */
 :root {
-  --capsule-1: #f9a8d4;
-  --capsule-2: #93c5fd;
-  --capsule-3: #86efac;
-  --capsule-4: #fcd34d;
-  --capsule-5: #c4b5fd;
+  --found-word: #16a34a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --capsule-1: #f472b6;
-    --capsule-2: #60a5fa;
-    --capsule-3: #4ade80;
-    --capsule-4: #fbbf24;
-    --capsule-5: #a78bfa;
+    --found-word: #4ade80;
   }
 }
 :root.dark {
-  --capsule-1: #f472b6;
-  --capsule-2: #60a5fa;
-  --capsule-3: #4ade80;
-  --capsule-4: #fbbf24;
-  --capsule-5: #a78bfa;
+  --found-word: #4ade80;
 }

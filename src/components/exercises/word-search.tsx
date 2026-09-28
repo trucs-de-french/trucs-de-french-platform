@@ -298,16 +298,6 @@ export function WordSearchExercise({
     return "";
   }
 
-  // Стабільний вибір кольору капсули за самим словом (не порядком
-  // знаходження) — щоб колір не "перестрибував" у вже знайдених слів, коли
-  // знаходиться нове. Проста сума кодів символів за модулем розміру
-  // палітри — жодних криптографічних вимог.
-  function capsuleColor(word: string): string {
-    let hash = 0;
-    for (let i = 0; i < word.length; i++) hash = (hash + word.charCodeAt(i)) % 5;
-    return `var(--capsule-${hash + 1})`;
-  }
-
   function isFound(word: string): boolean {
     if (detail) return detail.words.find((d) => d.word === word)?.found ?? false;
     return foundWords.has(word);
@@ -442,10 +432,21 @@ export function WordSearchExercise({
                 = 1 юніт viewBox": не потребує заміру реальних пікселів
                 (ResizeObserver тощо) — viewBox сам масштабується разом із
                 флюїдною сіткою, бо контейнер квадратний (aspect-square на
-                кожній клітинці робить квадратною і всю сітку). Дві лінії на
-                слово — товстіша суцільна "контур" знизу, тонша напівпрозора
-                "заливка" зверху: разом дають ефект напівпрозорої капсули з
-                2px контуром без ручної геометрії заокруглених прямокутників. */}
+                кожній клітинці робить квадратною і всю сітку). Одна пряма
+                лінія на слово (round caps) від центру першої до центру
+                останньої клітинки — round-cap і дає форму заокругленої
+                пілюлі без ручної геометрії прямокутників; той самий відступ
+                від меж клітинки, що в drag-прев'ю (previewKeys/cellClass
+                вище), бо лінія йде рівно по центру клітинок, а не через усю
+                їх ширину. Дві лінії — напівпрозора товща "заливка" знизу,
+                тонша, темніша й НЕ повністю непрозора "рамка" зверху: обидві
+                частково прозорі, щоб літера (вона в DOM РАНІШЕ цього SVG,
+                тобто під ним) лишалась читабельною і в світлій, і в темній
+                темі. Ширина/проміжок між сусідніми словами і "видно обидві"
+                на спільній літері — вже наслідок самої геометрії (round cap
+                не заходить за центр сусідньої клітинки, а лінії двох слів,
+                що перетинаються під кутом, просто накладаються), кольору
+                це не стосується. */}
             <svg
               viewBox={`0 0 ${gridSize} ${gridSize}`}
               className="pointer-events-none absolute inset-0 h-full w-full"
@@ -454,21 +455,29 @@ export function WordSearchExercise({
                 if (cells.length === 0) return null;
                 const start = cells[0];
                 const end = cells[cells.length - 1];
-                const color = capsuleColor(word);
                 const x1 = start.col + 0.5;
                 const y1 = start.row + 0.5;
                 const x2 = end.col + 0.5;
                 const y2 = end.row + 0.5;
                 return (
                   <g key={word}>
-                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={0.68} strokeLinecap="round" />
                     <line
                       x1={x1}
                       y1={y1}
                       x2={x2}
                       y2={y2}
-                      stroke={color}
-                      strokeOpacity={0.35}
+                      stroke="var(--found-word)"
+                      strokeOpacity={0.3}
+                      strokeWidth={0.7}
+                      strokeLinecap="round"
+                    />
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="var(--found-word)"
+                      strokeOpacity={0.55}
                       strokeWidth={0.56}
                       strokeLinecap="round"
                     />
