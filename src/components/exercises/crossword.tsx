@@ -17,6 +17,7 @@ import { LEGEND_TILE_BASE, LEGEND_TILE_GRID } from "./legend-tile-style";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { gridCellSize } from "./grid-cell-size";
+import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -458,7 +459,7 @@ export function CrosswordExercise({
             }}
           />
           {!hidePoints && (pointsVisible || detail) && (
-            <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+            <span className={SCORE_LABEL_CLASS}>
               {detail
                 ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
                 : `${config.points} ${pluralizePoints(config.points)}`}
@@ -603,13 +604,13 @@ export function CrosswordExercise({
           </button>
         ) : (
           <p
-            className={`text-sm font-medium ${
+            className={`${RESULT_MESSAGE_CLASS} ${
               result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
             {result.pointsPossible !== undefined && (
-              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
                 ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
               </span>
             )}

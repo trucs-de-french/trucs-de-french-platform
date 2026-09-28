@@ -13,6 +13,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -103,13 +104,13 @@ export function MultipleChoiceExercise({
     if (itemDetail) {
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
       return (
-        <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
+        <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
           {isCorrect ? item.points : 0}/{item.points} {pluralizePoints(item.points)}
         </span>
       );
     }
     return (
-      <span className="ml-2 text-xs italic text-neutral-500 dark:text-neutral-400">
+      <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
         {item.points} {pluralizePoints(item.points)}
       </span>
     );
@@ -244,13 +245,13 @@ export function MultipleChoiceExercise({
           </button>
         ) : (
           <p
-            className={`text-sm font-medium ${
+            className={`${RESULT_MESSAGE_CLASS} ${
               result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
             {result.pointsPossible !== undefined && (
-              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
                 ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
               </span>
             )}

@@ -17,6 +17,7 @@ import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
@@ -134,7 +135,7 @@ export function ChronologicalOrderExercise({
                 {numberInput(item.id)}
               </div>
               {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
-                <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
+                <p className={`text-center ${SCORE_LABEL_CLASS}`}>
                   {pointsLabel(item.id, item.points)}
                 </p>
               ) : null}
@@ -151,7 +152,7 @@ export function ChronologicalOrderExercise({
               <span className="flex-1">{item.content}</span>
               {numberInput(item.id)}
               {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
-                <span className="w-16 text-right text-xs italic text-neutral-500 dark:text-neutral-400">
+                <span className={`w-16 text-right ${SCORE_LABEL_CLASS}`}>
                   {pointsLabel(item.id, item.points)}
                 </span>
               )}
@@ -172,13 +173,13 @@ export function ChronologicalOrderExercise({
           </button>
         ) : (
           <p
-            className={`text-sm font-medium ${
+            className={`${RESULT_MESSAGE_CLASS} ${
               result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
             {result.pointsPossible !== undefined && (
-              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
                 ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
               </span>
             )}

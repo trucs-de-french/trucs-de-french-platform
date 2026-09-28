@@ -13,6 +13,7 @@ import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 export function ImageMatchExercise({
   taskId,
@@ -91,7 +92,7 @@ export function ImageMatchExercise({
             </button>
             {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
             {!hidePoints && (pointsVisible || itemDetail) && (
-              <p className="text-center text-xs italic text-neutral-500 dark:text-neutral-400">
+              <p className={`text-center ${SCORE_LABEL_CLASS}`}>
                 {itemDetail
                   ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} ${pluralizePoints(item.points)}`
                   : `${item.points} ${pluralizePoints(item.points)}`}
@@ -139,13 +140,13 @@ export function ImageMatchExercise({
           </button>
         ) : (
           <p
-            className={`text-sm font-medium ${
+            className={`${RESULT_MESSAGE_CLASS} ${
               result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
             {result.pointsPossible !== undefined && (
-              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
                 ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
               </span>
             )}

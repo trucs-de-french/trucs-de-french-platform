@@ -12,6 +12,7 @@ import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 const POLL_INTERVAL_MS = 200;
 // Останній рядок не має "наступного", що позначив би його кінець — якщо
@@ -480,7 +481,7 @@ export function KaraokeExercise({
             }}
           />
           {!hidePoints && (pointsVisible || detail) && (
-            <span className="text-xs font-normal italic text-neutral-500 dark:text-neutral-400">
+            <span className={SCORE_LABEL_CLASS}>
               {detail
                 ? `${result?.pointsEarned ?? 0}/${result?.pointsPossible ?? pointsPossibleTotal} ${pluralizePoints(
                     result?.pointsPossible ?? pointsPossibleTotal
@@ -653,13 +654,13 @@ export function KaraokeExercise({
           </button>
         ) : (
           <p
-            className={`text-sm font-medium ${
+            className={`${RESULT_MESSAGE_CLASS} ${
               result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             }`}
           >
             {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
             {result.pointsPossible !== undefined && (
-              <span className="ml-2 font-normal text-neutral-500 dark:text-neutral-400">
+              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
                 ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
               </span>
             )}
