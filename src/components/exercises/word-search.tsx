@@ -11,6 +11,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { CompactAudioButton } from "./compact-audio-button";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
+import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -45,20 +46,36 @@ function FoundBadge() {
 // Приглушення (opacity-50) — лише на самій КАРТИНЦІ, не на всій плитці: і
 // підпис-слово, і зелена галочка (обидва — сусідні елементи картинки, не
 // всередині її ж opacity) лишаються чіткими.
+// onHint — клік по плитці ЦІЛОМУ (не лише по картинці) блимає першою
+// літерою слова в сітці; кнопка "лупа" (onZoom) і аудіо-кнопка всередині
+// самі зупиняють спливання (stopPropagation), інакше кожен їхній клік теж
+// рахувався б підказкою.
 function ImageTile({
   word,
   found,
+  hintUsed,
   onZoom,
+  onHint,
 }: {
   word: WordSearchPublic["words"][number];
   found: boolean;
+  hintUsed: boolean;
   onZoom: () => void;
+  onHint: () => void;
 }) {
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
+    <div
+      onClick={onHint}
+      className={`relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 ${
+        found ? "cursor-default" : "cursor-pointer"
+      }`}
+    >
       <button
         type="button"
-        onClick={onZoom}
+        onClick={(e) => {
+          e.stopPropagation();
+          onZoom();
+        }}
         aria-label="Показати картинку повністю"
         className="relative aspect-square cursor-zoom-in"
       >
@@ -78,11 +95,16 @@ function ImageTile({
         )}
       </button>
       {word.audioUrl && (
-        <div className="flex justify-center p-1">
+        <div className="flex justify-center p-1" onClick={(e) => e.stopPropagation()}>
           <CompactAudioButton src={word.audioUrl} />
         </div>
       )}
       {found && <FoundBadge />}
+      {hintUsed && (
+        <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+          з підказкою
+        </span>
+      )}
     </div>
   );
 }
@@ -90,16 +112,38 @@ function ImageTile({
 // Картка-текст — компактна плитка під ширину тексту (не фіксована ширина
 // колонки), текст переноситься всередині (CLUE_TEXT), без тіні (лише тонка
 // рамка) — на відміну від попереднього варіанту легенди.
-function TextTile({ text, audioUrl, found }: { text: string; audioUrl?: string; found: boolean }) {
+function TextTile({
+  text,
+  audioUrl,
+  found,
+  hintUsed,
+  onHint,
+}: {
+  text: string;
+  audioUrl?: string;
+  found: boolean;
+  hintUsed: boolean;
+  onHint: () => void;
+}) {
   return (
     <div
+      onClick={onHint}
       className={`relative flex flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-center transition-opacity dark:border-neutral-700 dark:bg-neutral-800 ${
-        found ? "opacity-50" : ""
+        found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
       <span className={`${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
-      {audioUrl && <CompactAudioButton src={audioUrl} />}
+      {audioUrl && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <CompactAudioButton src={audioUrl} />
+        </div>
+      )}
       {found && <FoundBadge />}
+      {hintUsed && (
+        <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+          з підказкою
+        </span>
+      )}
     </div>
   );
 }
@@ -134,12 +178,16 @@ export function WordSearchExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: WordSearchPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — клік по легенді більше не підсвічує
+  // першу літеру (triggerHint нижче).
+  isDelf?: boolean;
 }) {
   // Клієнтський збіг за ЛІТЕРАМИ (не координатами — публічна конфігурація
   // взагалі не містить placements) — лише для миттєвого відгуку "знайдено!"
@@ -152,6 +200,16 @@ export function WordSearchExercise({
   const [dragEnd, setDragEnd] = useState<Cell | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  // Слова, для яких клікали підказку — надсилається разом із foundWords
+  // (WordSearchAnswer.hintedWords), для 50%-балів при hintsReducePoints.
+  const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
+  // nonce — щоб клік по тій самій плитці вдруге теж перезапускав CSS-
+  // анімацію (React інакше не перемонтував би вже завершений DOM-вузол).
+  // Лічильник у ref (не Date.now() — react-hooks/purity забороняє нечисті
+  // виклики під час рендеру, а ref можна безпечно змінювати в обробнику
+  // подій), просто зростає з кожним кліком підказки.
+  const [blink, setBlink] = useState<{ row: number; col: number; nonce: number } | null>(null);
+  const blinkNonceRef = useRef(0);
 
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as WordSearchDetail | undefined;
@@ -229,18 +287,43 @@ export function WordSearchExercise({
   const gridMaxWidthPx = gridSize * maxCellPx(gridSize);
   const previewPath = dragging && dragStart && dragEnd ? buildPath(dragStart, dragEnd) : [];
   const previewKeys = new Set(previewPath.map(cellKey));
-  const foundKeys = new Set([...foundWords.values()].flatMap((cells) => cells.map(cellKey)));
 
+  // Знайдені слова більше не зафарбовують клітинки тут — їх показує SVG-
+  // капсула (оверлей нижче), піднята НАД сіткою.
   function cellClass(cell: Cell) {
     const key = cellKey(cell);
     if (previewKeys.has(key)) return "bg-blue-200 dark:bg-blue-800";
-    if (foundKeys.has(key)) return "bg-green-200 dark:bg-green-800";
     return "";
+  }
+
+  // Стабільний вибір кольору капсули за самим словом (не порядком
+  // знаходження) — щоб колір не "перестрибував" у вже знайдених слів, коли
+  // знаходиться нове. Проста сума кодів символів за модулем розміру
+  // палітри — жодних криптографічних вимог.
+  function capsuleColor(word: string): string {
+    let hash = 0;
+    for (let i = 0; i < word.length; i++) hash = (hash + word.charCodeAt(i)) % 5;
+    return `var(--capsule-${hash + 1})`;
   }
 
   function isFound(word: string): boolean {
     if (detail) return detail.words.find((d) => d.word === word)?.found ?? false;
     return foundWords.has(word);
+  }
+
+  function wordHintUsed(word: string): boolean {
+    return detail?.words.find((d) => d.word === word)?.hintUsed ?? false;
+  }
+
+  // hintStart — координата ПЕРШОЇ літери слова, порахована на сервері один
+  // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
+  // сітки й так видимі студенту, тож розкриття лише СТАРТОВОЇ клітинки —
+  // менший компроміс, ніж уже наявне повне розкриття в crossword/letter_gaps.
+  function triggerHint(w: WordSearchPublic["words"][number]) {
+    if (locked || isDelf || isFound(w.word) || !w.hintStart) return;
+    setHintedWords((prev) => new Set(prev).add(w.word));
+    blinkNonceRef.current += 1;
+    setBlink({ row: w.hintStart.row, col: w.hintStart.col, nonce: blinkNonceRef.current });
   }
 
   // Картинка ПРІОРИТЕТНІША за переклад (як і в hintKind до попередніх
@@ -254,10 +337,10 @@ export function WordSearchExercise({
   const progressPercent = totalWords > 0 ? (foundCount / totalWords) * 100 : 0;
 
   function handleSubmit() {
-    const answer: WordSearchAnswer = [...foundWords.entries()].map(([word, cells]) => ({
-      word,
-      cells,
-    }));
+    const answer: WordSearchAnswer = {
+      found: [...foundWords.entries()].map(([word, cells]) => ({ word, cells })),
+      hintedWords: [...hintedWords],
+    };
     submit(answer);
   }
 
@@ -289,6 +372,12 @@ export function WordSearchExercise({
         )}
       </div>
 
+      <HintExplanation
+        type="word_search"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || locked}
+      />
+
       {/* Вертикальна розкладка на всіх ширинах (не flex-wrap "поруч/під") —
           той самий принцип компонування, що crossword.tsx: сітка по центру
           зверху, легенда під нею, відступ між ними — той самий ритм
@@ -317,26 +406,74 @@ export function WordSearchExercise({
               <table> раніше (суцільні 1px лінії, без подвоєння на межах між
               клітинками), лише тепер на CSS grid (не table), бо тільки grid
               підтримує minmax(min,max) на колонках для флюїдного розміру. */}
-          <div
-            className="grid border-l border-t border-neutral-200 font-heading font-semibold dark:border-neutral-700"
-            style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(${MIN_CELL_PX}px, 1fr))` }}
-          >
-            {config.grid.flatMap((row, ri) =>
-              row.map((letter, ci) => (
-                <div
-                  key={`${ri}:${ci}`}
-                  data-row={ri}
-                  data-col={ci}
-                  onMouseDown={() => startDrag({ row: ri, col: ci })}
-                  onMouseEnter={() => moveDrag({ row: ri, col: ci })}
-                  onTouchStart={() => startDrag({ row: ri, col: ci })}
-                  className={`flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })}`}
-                  style={{ fontSize: `clamp(10px, ${45 / gridSize}cqi, ${maxCellPx(gridSize) * 0.5}px)` }}
-                >
-                  {letter}
-                </div>
-              ))
-            )}
+          <div className="relative">
+            <div
+              className="grid border-l border-t border-neutral-200 font-heading font-semibold dark:border-neutral-700"
+              style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(${MIN_CELL_PX}px, 1fr))` }}
+            >
+              {config.grid.flatMap((row, ri) =>
+                row.map((letter, ci) => {
+                  const isBlinking = blink?.row === ri && blink?.col === ci;
+                  return (
+                    <div
+                      // nonce у key — лише для клітинки, що блимає ЗАРАЗ:
+                      // React перемонтовує вузол при повторному кліку на ту
+                      // саму підказку, інакше вже завершена (iteration-count:
+                      // 3, не infinite) CSS-анімація не перезапустилась би на
+                      // тому самому DOM-елементі.
+                      key={isBlinking ? `${ri}:${ci}:${blink.nonce}` : `${ri}:${ci}`}
+                      data-row={ri}
+                      data-col={ci}
+                      onMouseDown={() => startDrag({ row: ri, col: ci })}
+                      onMouseEnter={() => moveDrag({ row: ri, col: ci })}
+                      onTouchStart={() => startDrag({ row: ri, col: ci })}
+                      className={`flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${isBlinking ? "animate-hint-blink" : ""}`}
+                      style={{ fontSize: `clamp(10px, ${45 / gridSize}cqi, ${maxCellPx(gridSize) * 0.5}px)` }}
+                    >
+                      {letter}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            {/* Капсули знайдених слів — SVG-оверлей у координатах "1 клітинка
+                = 1 юніт viewBox": не потребує заміру реальних пікселів
+                (ResizeObserver тощо) — viewBox сам масштабується разом із
+                флюїдною сіткою, бо контейнер квадратний (aspect-square на
+                кожній клітинці робить квадратною і всю сітку). Дві лінії на
+                слово — товстіша суцільна "контур" знизу, тонша напівпрозора
+                "заливка" зверху: разом дають ефект напівпрозорої капсули з
+                2px контуром без ручної геометрії заокруглених прямокутників. */}
+            <svg
+              viewBox={`0 0 ${gridSize} ${gridSize}`}
+              className="pointer-events-none absolute inset-0 h-full w-full"
+            >
+              {[...foundWords.entries()].map(([word, cells]) => {
+                if (cells.length === 0) return null;
+                const start = cells[0];
+                const end = cells[cells.length - 1];
+                const color = capsuleColor(word);
+                const x1 = start.col + 0.5;
+                const y1 = start.row + 0.5;
+                const x2 = end.col + 0.5;
+                const y2 = end.row + 0.5;
+                return (
+                  <g key={word}>
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={0.68} strokeLinecap="round" />
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke={color}
+                      strokeOpacity={0.35}
+                      strokeWidth={0.56}
+                      strokeLinecap="round"
+                    />
+                  </g>
+                );
+              })}
+            </svg>
           </div>
         </div>
 
@@ -371,7 +508,9 @@ export function WordSearchExercise({
                     key={w.word}
                     word={w}
                     found={isFound(w.word)}
+                    hintUsed={wordHintUsed(w.word)}
                     onZoom={() => setLightboxSrc(w.imageUrl!)}
+                    onHint={() => triggerHint(w)}
                   />
                 ))}
               </div>
@@ -384,6 +523,8 @@ export function WordSearchExercise({
                     text={w.translation || w.word}
                     audioUrl={w.audioUrl}
                     found={isFound(w.word)}
+                    hintUsed={wordHintUsed(w.word)}
+                    onHint={() => triggerHint(w)}
                   />
                 ))}
               </div>

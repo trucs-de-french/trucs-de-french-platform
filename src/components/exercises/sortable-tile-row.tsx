@@ -18,6 +18,7 @@ export function SortableTileRow({
   locked,
   tileState,
   compact = false,
+  lockedCount = 0,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
@@ -29,6 +30,12 @@ export function SortableTileRow({
   // word-list-layout.ts LONG_WORD_COMPACT_THRESHOLD) — суто презентаційний
   // проп, ніяк не зачіпає drag/click-move логіку вище.
   compact?: boolean;
+  // Префікс позицій [0, lockedCount), закріплених кнопкою-підказкою
+  // (letter_rearrangement): ці плитки не тягаються й не клікаються, і жодну
+  // іншу плитку не можна перетягнути/клікнути НА ці позиції — лише "після"
+  // них (move() нижче затискає ціль). Завжди суцільний префікс, бо підказка
+  // закриває позиції зліва направо по порядку.
+  lockedCount?: number;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -38,12 +45,14 @@ export function SortableTileRow({
   const [dropTarget, setDropTarget] = useState<{ index: number; side: "before" | "after" } | null>(null);
 
   function move(from: number, to: number) {
-    if (locked || from === to) return;
-    onChange(arrayMove(items, from, to));
+    if (locked || from < lockedCount) return;
+    const clampedTo = Math.max(to, lockedCount);
+    if (from === clampedTo) return;
+    onChange(arrayMove(items, from, clampedTo));
   }
 
   function clickTile(i: number) {
-    if (locked) return;
+    if (locked || i < lockedCount) return;
     if (selected === null) {
       setSelected(i);
     } else if (selected === i) {
@@ -61,6 +70,8 @@ export function SortableTileRow({
   function tileClass(i: number) {
     const state = tileState?.(i);
     const shadow = draggingIndex === i ? "" : "shadow-sm";
+    if (i < lockedCount)
+      return `${shadow} border-sky-400 bg-sky-100 text-sky-700 dark:border-sky-600 dark:bg-sky-950/40 dark:text-sky-400`;
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
@@ -81,7 +92,7 @@ export function SortableTileRow({
           )}
           <button
             type="button"
-            draggable={!locked}
+            draggable={!locked && i >= lockedCount}
             onDragStart={(e: DragEvent) => {
               e.dataTransfer.setData("text/plain", String(i));
               e.dataTransfer.effectAllowed = "move";
@@ -115,7 +126,9 @@ export function SortableTileRow({
             }}
             onClick={() => clickTile(i)}
             disabled={locked}
-            className={`cursor-grab select-none whitespace-nowrap rounded-md border text-center transition-shadow active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`select-none whitespace-nowrap rounded-md border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
+              i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+            } ${
               compact ? COMPACT_TILE_SIZE_CLASS : "px-3 py-1.5 text-base"
             } ${tileClass(i)}`}
           >

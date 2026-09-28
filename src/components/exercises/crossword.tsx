@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { Lightbulb } from "lucide-react";
+import { HintExplanation } from "./hint-explanation";
 import type { CrosswordPublic, CrosswordDetail, CrosswordAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -19,7 +21,10 @@ import { gridCellSize } from "./grid-cell-size";
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
 
-function emptyAnswer(width: number, height: number): CrosswordAnswer {
+// CrosswordAnswer тепер — формат ЗАПИТУ на сервер ({grid, hintedWords}), не
+// внутрішній стан компонента: сітка студента живе окремо (grid нижче, звичайний
+// string[][]), hintedWords збирається окремим Set при сабміті.
+function emptyGrid(width: number, height: number): string[][] {
   return Array.from({ length: height }, () => Array(width).fill(""));
 }
 
@@ -67,16 +72,27 @@ export function CrosswordExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: CrosswordPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
+  isDelf?: boolean;
 }) {
-  const [answer, setAnswer] = useState<CrosswordAnswer>(() => emptyAnswer(config.gridWidth, config.gridHeight));
+  const [grid, setGrid] = useState<string[][]>(() => emptyGrid(config.gridWidth, config.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  // hintedCells — клітинки, що ЗАРАЗ тримають значення, вписане підказкою
+  // (синя підсвітка "відкрито підказкою", пріоритетна над зеленою/червоною);
+  // прибирається з клітинки, якщо студент сам перетипував її (updateLetter).
+  // hintedWords ("напрямок-номер") — чи хоч РАЗ використали підказку на
+  // цьому слові за весь час, незалежно від подальших правок — саме це йде
+  // на сервер (CrosswordAnswer.hintedWords) для розрахунку балів.
+  const [hintedCells, setHintedCells] = useState<Set<string>>(new Set());
+  const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
   // Спільний хук (diacritics-popup.tsx) — ключ "row,col" на кожну клітинку.
   // Той самий інстанс дає й реф для програмного .focus() (автоперехід
   // вперед/назад — не пов'язано з попапом самим по собі, але той самий
@@ -115,7 +131,16 @@ export function CrosswordExercise({
 
   function updateLetter(row: number, col: number, value: string) {
     const letter = (value.slice(-1) || "").toUpperCase();
-    setAnswer((prev) => prev.map((r, ri) => (ri === row ? r.map((v, ci) => (ci === col ? letter : v)) : r)));
+    setGrid((prev) => prev.map((r, ri) => (ri === row ? r.map((v, ci) => (ci === col ? letter : v)) : r)));
+    // Студент сам перетипував клітинку — вона більше не "щойно відкрита
+    // підказкою" візуально (hintedWords, для балів, лишається незмінним —
+    // підказку вже було використано на цьому слові, факт не скасовується).
+    setHintedCells((prev) => {
+      if (!prev.has(cellKey(row, col))) return prev;
+      const next = new Set(prev);
+      next.delete(cellKey(row, col));
+      return next;
+    });
 
     // Автоперехід — лише вперед, лише коли справді ввели символ (не
     // стирання) і є активне слово. Клітинка на перетині лишається "своєю"
@@ -134,7 +159,7 @@ export function CrosswordExercise({
         let nextIndex = index + 1;
         while (nextIndex < cells.length) {
           const c = cells[nextIndex];
-          const filledCorrectly = answer[c.row][c.col] !== "" && answer[c.row][c.col] === config.solution[c.row][c.col];
+          const filledCorrectly = grid[c.row][c.col] !== "" && grid[c.row][c.col] === config.solution[c.row][c.col];
           if (!filledCorrectly) break;
           nextIndex++;
         }
@@ -152,7 +177,7 @@ export function CrosswordExercise({
   // onChange із порожнім значенням, updateLetter його вже обробляє (без
   // автопереходу, бо letter буде порожній рядок), фокус лишається на місці.
   function handleBackspace(row: number, col: number) {
-    if (answer[row][col] !== "") return;
+    if (grid[row][col] !== "") return;
     if (!activeClue) return;
     const cells = clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [];
     const index = cells.findIndex((c) => c.row === row && c.col === col);
@@ -163,8 +188,8 @@ export function CrosswordExercise({
     // ІНШОГО слова через перетин — лишаємо як є: фокус переходить туди,
     // але сам символ видаляється лише наступним явним Backspace, коли
     // курсор буде САМЕ на цій клітинці, а не одразу під час переходу.
-    if (answer[prev.row][prev.col] === "") {
-      setAnswer((p) => p.map((r, ri) => (ri === prev.row ? r.map((v, ci) => (ci === prev.col ? "" : v)) : r)));
+    if (grid[prev.row][prev.col] === "") {
+      setGrid((p) => p.map((r, ri) => (ri === prev.row ? r.map((v, ci) => (ci === prev.col ? "" : v)) : r)));
     }
     diacritics.getElement(cellKey(prev.row, prev.col))?.focus();
   }
@@ -181,18 +206,43 @@ export function CrosswordExercise({
   // не чекаючи завершення слова.
   function isWordFilled(direction: Direction, number: number): boolean {
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    return cells.length > 0 && cells.every((c) => answer[c.row][c.col] !== "");
+    return cells.length > 0 && cells.every((c) => grid[c.row][c.col] !== "");
   }
 
   // На рівні ЦІЛОГО слова — лише для закреслення підказки в списку
   // (renderClueColumn), не для кольору клітинок у сітці (те — cellLiveStatus
-  // нижче, посимвольно). Рахується напряму з answer проти config.solution,
-  // без запиту на сервер і незалежно від кнопки "Перевірити"/grade.ts.
+  // нижче, посимвольно). Рахується напряму з grid проти config.solution,
+  // без запиту на сервер і незалежно від кнопки "Перевірити"/grade.ts. Той
+  // самий предикат "усі клітинки слова правильні" вимикає кнопку підказки
+  // (renderClueCard/renderClueFlat) — нема чого відкривати далі.
   function liveWordStatus(direction: Direction, number: number): "correct" | "incorrect" | null {
     if (!isWordFilled(direction, number)) return null;
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    const allCorrect = cells.every((c) => answer[c.row][c.col] === config.solution[c.row][c.col]);
+    const allCorrect = cells.every((c) => grid[c.row][c.col] === config.solution[c.row][c.col]);
     return allCorrect ? "correct" : "incorrect";
+  }
+
+  // Перша клітинка слова, де grid ще не збігається з розв'язком (незалежно
+  // від того, порожня вона чи заповнена НЕправильно) — ціль наступного
+  // натискання лампочки. null — усі клітинки слова вже правильні (кнопка
+  // неактивна, "Якщо всі літери слова вже правильні").
+  function nextHintCell(direction: Direction, number: number): { row: number; col: number } | null {
+    const cells = clueCells.get(`${direction}-${number}`) ?? [];
+    return cells.find((c) => grid[c.row][c.col] !== config.solution[c.row][c.col]) ?? null;
+  }
+
+  // Вписує правильну літеру в ПЕРШУ ще не відкриту/не заповнену правильно
+  // клітинку слова — фокус НЕ переміщується (на відміну від updateLetter),
+  // студент лишається там, де друкував.
+  function applyHint(direction: Direction, number: number) {
+    const target = nextHintCell(direction, number);
+    if (!target) return;
+    const letter = config.solution[target.row][target.col];
+    setGrid((prev) =>
+      prev.map((r, ri) => (ri === target.row ? r.map((v, ci) => (ci === target.col ? letter : v)) : r))
+    );
+    setHintedCells((prev) => new Set(prev).add(cellKey(target.row, target.col)));
+    setHintedWords((prev) => new Set(prev).add(`${direction}-${number}`));
   }
 
   // Посимвольно — на відміну від liveWordStatus, тут перевіряється ЛИШЕ ЦЯ
@@ -208,7 +258,7 @@ export function CrosswordExercise({
     let anyCorrect = false;
     for (const w of words) {
       if (!isWordFilled(w.direction, w.number)) continue;
-      if (answer[row][col] === config.solution[row][col]) {
+      if (grid[row][col] === config.solution[row][col]) {
         anyCorrect = true;
       } else {
         return "incorrect";
@@ -218,6 +268,13 @@ export function CrosswordExercise({
   }
 
   function handleSubmit() {
+    const answer: CrosswordAnswer = {
+      grid,
+      hintedWords: [...hintedWords].map((key) => {
+        const [direction, numberStr] = key.split("-") as [Direction, string];
+        return { number: Number(numberStr), direction };
+      }),
+    };
     submit(answer);
   }
 
@@ -244,11 +301,18 @@ export function CrosswordExercise({
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     return (
-      <button
+      <div
         key={clue.number}
-        type="button"
+        role="button"
+        tabIndex={0}
         onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
-        className={`${ANSWER_CARD_BASE} flex flex-col items-center gap-1 ${
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setActiveClue(isActive ? null : { direction, number: clue.number });
+          }
+        }}
+        className={`${ANSWER_CARD_BASE} relative flex cursor-pointer flex-col items-center gap-1 ${
           liveStatus === "correct"
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
@@ -256,6 +320,21 @@ export function CrosswordExercise({
               : ANSWER_CARD_DEFAULT
         }`}
       >
+        {!result && !isDelf && (
+          <button
+            type="button"
+            title="Підказка: відкрити наступну літеру"
+            aria-label="Підказка: відкрити наступну літеру"
+            disabled={liveStatus === "correct"}
+            onClick={(e) => {
+              e.stopPropagation();
+              applyHint(direction, clue.number);
+            }}
+            className="absolute right-1 top-1 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+          >
+            <Lightbulb size={14} />
+          </button>
+        )}
         <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
           <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
         </span>
@@ -273,7 +352,7 @@ export function CrosswordExercise({
         {clue.audioUrl && (
           <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
         )}
-      </button>
+      </div>
     );
   }
 
@@ -291,27 +370,49 @@ export function CrosswordExercise({
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     return (
-      <button
+      <div
         key={clue.number}
-        type="button"
+        role="button"
+        tabIndex={0}
         onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
-        className={`flex items-baseline gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setActiveClue(isActive ? null : { direction, number: clue.number });
+          }
+        }}
+        className={`flex cursor-pointer items-baseline gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
           isActive && !liveStatus ? "bg-blue-50 dark:bg-blue-950/40" : ""
         } ${clueTextClass(liveStatus)}`}
       >
         {/* Клас шрифту прямо на кожному <span> (font-body тут, CLUE_TEXT
-            нижче), НЕ на <button>: глобальне button{font-family:var(--font-heading)} (globals.css)
+            нижче), НЕ на кореневому елементі: глобальне button{font-family:var(--font-heading)} (globals.css)
             неlayered CSS — за правилами cascade layers таке правило
             переважає БУДЬ-яке правило з @layer (а Tailwind-утиліти, разом
             з .font-body з CLUE_TEXT, лежать саме в @layer utilities),
             незалежно від специфічності класу. Якби CLUE_TEXT стояв на
-            самій <button>, він програвав би цьому тег-правилу саме на
+            самому кореневому елементі, він програвав би цьому тег-правилу саме на
             рівні шарів каскаду (не специфічності) — тому клас на
             дочірньому <span> (якого тег-правило взагалі не стосується
             напряму) — єдиний надійний спосіб перебити успадкований Nunito. */}
         <span className="whitespace-nowrap font-body text-sm font-semibold">{clue.number}.</span>
         <span className={CLUE_TEXT}>{clue.clue}</span>
-      </button>
+        {!result && !isDelf && (
+          <button
+            type="button"
+            title="Підказка: відкрити наступну літеру"
+            aria-label="Підказка: відкрити наступну літеру"
+            disabled={liveStatus === "correct"}
+            onClick={(e) => {
+              e.stopPropagation();
+              applyHint(direction, clue.number);
+            }}
+            className="rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+          >
+            <Lightbulb size={13} />
+          </button>
+        )}
+      </div>
     );
   }
 
@@ -373,6 +474,12 @@ export function CrosswordExercise({
         )}
       </div>
 
+      <HintExplanation
+        type="crossword"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || !!result}
+      />
+
       {/* Внутрішній відступ вправи (не входить у систему відступів сторінки,
           src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
           сіткою й панеллю підказок під нею. */}
@@ -427,7 +534,7 @@ export function CrosswordExercise({
                           <input
                             ref={diacritics.fieldRef(cellKey(ri, ci))}
                             maxLength={1}
-                            value={answer[ri][ci]}
+                            value={grid[ri][ci]}
                             onChange={(e) => updateLetter(ri, ci, e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === "Backspace") handleBackspace(ri, ci);
@@ -440,13 +547,15 @@ export function CrosswordExercise({
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
                             className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${cellSize.text} ${
-                              status === "correct"
-                                ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
-                                : status === "incorrect"
-                                  ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                  : isActiveCell(ri, ci)
-                                    ? "bg-blue-50 dark:bg-blue-950/40"
-                                    : ""
+                              hintedCells.has(cellKey(ri, ci))
+                                ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                : status === "correct"
+                                  ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                                  : status === "incorrect"
+                                    ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                                    : isActiveCell(ri, ci)
+                                      ? "bg-blue-50 dark:bg-blue-950/40"
+                                      : ""
                             }`}
                           />
                         </td>

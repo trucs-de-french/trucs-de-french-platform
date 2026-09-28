@@ -51,6 +51,7 @@ export function ExerciseCard({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   type: string;
@@ -65,10 +66,16 @@ export function ExerciseCard({
   // безумовно ховати індивідуальний бал задачі (і до, і після перевірки),
   // коли на рівні блоку показується лише один загальний підсумок.
   hidePoints?: boolean;
+  // Задача належить DELF-тесту (визначається один раз — delf-test-tasks.tsx
+  // — і прокидається сюди, а не перевіряється в кожному компоненті окремо):
+  // вимикає підказки в 6 типів, де вони є (word_search, crossword,
+  // letter_gaps, letter_rearrangement, fill_blank, table_fill); ігнорується
+  // рештою типів.
+  isDelf?: boolean;
 }) {
   return (
     <ExerciseErrorBoundary>
-      {renderExerciseByType({ taskId, type, config, pointsVisible, onResult, hidePoints })}
+      {renderExerciseByType({ taskId, type, config, pointsVisible, onResult, hidePoints, isDelf })}
     </ExerciseErrorBoundary>
   );
 }
@@ -80,6 +87,7 @@ function renderExerciseByType({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   type: string;
@@ -87,6 +95,7 @@ function renderExerciseByType({
   pointsVisible?: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  isDelf?: boolean;
 }) {
   switch (type) {
     case "fill_blank":
@@ -97,6 +106,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "letter_gaps":
@@ -107,6 +117,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "letter_rearrangement":
@@ -117,6 +128,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "multiple_choice":
@@ -147,6 +159,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "crossword":
@@ -157,6 +170,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "true_false":
@@ -237,6 +251,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "image_match":

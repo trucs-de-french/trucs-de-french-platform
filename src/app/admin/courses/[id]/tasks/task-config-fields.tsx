@@ -359,6 +359,14 @@ export function TaskConfigFields({
   const [delfTestNumber, setDelfTestNumber] = useState(
     initialDelfTestNumber ? String(initialDelfTestNumber) : ""
   );
+  // Єдине місце, де в конструкторі визначається "ця задача належить
+  // DELF-тесту" — звідси прокидається в *-fields.tsx для приховування
+  // "Підказки зменшують бали" (задача підказок, п.6): DELF-тести самі не
+  // мають підказок узагалі. delfSection/delfTestNumber тут коректні і для
+  // прямої DELF-задачі (обирається вище), і для задачі-члена блоку
+  // (initialDelfSection/initialDelfTestNumber підставляються сторінкою-
+  // викликачем із самої групи — new/page.tsx, [taskId]/page.tsx).
+  const isDelfTask = Boolean(delfSection) && Boolean(delfTestNumber);
   const [essayLevel, setEssayLevel] = useState((initialConfig?.level as string) ?? "B1");
   const [essayExerciseNumber, setEssayExerciseNumber] = useState(
     initialConfig?.exerciseNumber ? String(initialConfig.exerciseNumber) : ""
@@ -1005,6 +1013,17 @@ export function TaskConfigFields({
               className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
             />
           </div>
+          {!isDelfTask && (
+            <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+              <input
+                type="checkbox"
+                name="fill_blank_hints_reduce_points"
+                value="true"
+                defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+              />
+              Підказки зменшують бали (50% за елемент, де використана підказка)
+            </label>
+          )}
           <div className="flex flex-col gap-1">
             <input
               type="hidden"
@@ -1222,6 +1241,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("table_fill") as Partial<TableFillConfig>
           }
+          isDelf={isDelfTask}
         />
       )}
 

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { FillBlankPublic, FillBlankDetail, GradeResult } from "@/lib/exercises/types";
+import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { HintExplanation } from "./hint-explanation";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 
@@ -17,6 +18,7 @@ export function FillBlankExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: FillBlankPublic;
@@ -27,10 +29,19 @@ export function FillBlankExercise({
   // коли на рівні блоку показується лише один загальний підсумок. На
   // відміну від pointsVisible, не має винятку "після перевірки — завжди".
   hidePoints?: boolean;
+  // Задача належить DELF-тесту (delf-test-tasks.tsx/exercise-block.tsx) —
+  // підказки повністю вимкнені: кнопка-лампочка в попапі не рендериться
+  // взагалі (не лише неактивна), сервер (/api/exercises/hint) однаково
+  // відхилив би запит, якби хтось обійшов UI.
+  isDelf?: boolean;
 }) {
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
   const [answers, setAnswers] = useState<string[]>(() => Array(blankCount).fill(""));
+  // Пропуски, де брали підказку "перша літера" — один раз на пропуск,
+  // повторний клік нічого не робить (кнопка неактивна, applyHint нижче).
+  const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set());
+  const [hintPending, setHintPending] = useState(false);
   // Довідкові бульбашки — суто локальний UI-стан на сесію проходження, не
   // зберігається на сервері й не впливає на перевірку. За ІНДЕКСОМ у
   // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
@@ -39,6 +50,7 @@ export function FillBlankExercise({
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
+  const hasWordBank = !!config.wordBank && config.wordBank.length > 0;
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -46,6 +58,40 @@ export function FillBlankExercise({
 
   function updateAnswer(i: number, value: string) {
     setAnswers((prev) => prev.map((v, idx) => (idx === i ? value : v)));
+    setHintedBlanks((prev) => {
+      if (!prev.has(i)) return prev;
+      const next = new Set(prev);
+      next.delete(i);
+      return next;
+    });
+  }
+
+  // Перша літера правильної відповіді — сервер сам вирішує, яка вона (з
+  // кількох допустимих — з першої), FillBlankPublic її ніколи не містить.
+  // Вписується на ПОЧАТОК поля: якщо поле порожнє чи починається не з неї —
+  // повністю замінює вміст (лишається сама ця літера), інакше лишає як є
+  // (перша літера й так уже там). Курсор — одразу після літери, фокус з
+  // поля не йде (diacritics.getElement — той самий <input>, що вже в
+  // фокусі).
+  async function applyHint(i: number) {
+    if (hintedBlanks.has(i) || hintPending) return;
+    setHintPending(true);
+    try {
+      const res = await fetch("/api/exercises/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, kind: "fill_blank", blankIndex: i }),
+      });
+      if (!res.ok) return;
+      const { letter } = (await res.json()) as { letter: string };
+      const current = answers[i] ?? "";
+      const value = current.startsWith(letter) ? current : letter;
+      setAnswers((prev) => prev.map((v, idx) => (idx === i ? value : v)));
+      setHintedBlanks((prev) => new Set(prev).add(i));
+      focusAndSetCursor(diacritics.getElement(String(i)), letter.length);
+    } finally {
+      setHintPending(false);
+    }
   }
 
   function toggleCrossedOut(i: number) {
@@ -93,6 +139,12 @@ export function FillBlankExercise({
         )}
       </div>
 
+      <HintExplanation
+        type="fill_blank"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || hasWordBank || !!result}
+      />
+
       {/* Банк слів (опційний) і саме речення — разом ОДНЕ тіло вправи, тож
           проміжок між ними — EXERCISE_BODY_ITEMS_GAP, не власний margin
           банку: банк суто довідковий (клік лише візуально викреслює/
@@ -135,9 +187,16 @@ export function FillBlankExercise({
                       ? detail.blanks[i]?.isCorrect
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                         : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                      : "border-gray-300 dark:border-neutral-600"
+                      : hintedBlanks.has(i)
+                        ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                        : "border-gray-300 dark:border-neutral-600"
                   }`}
                 />
+              )}
+              {i < blankCount && detail?.blanks[i]?.hintUsed && (
+                <span className="text-xs italic text-amber-600 dark:text-amber-400">
+                  (з підказкою)
+                </span>
               )}
             </span>
           ))}
@@ -154,6 +213,10 @@ export function FillBlankExercise({
             updateAnswer(i, value);
             focusAndSetCursor(el, cursor);
           }}
+          onHint={
+            isDelf || hasWordBank ? undefined : () => applyHint(Number(diacritics.activeKey))
+          }
+          hintDisabled={hintPending || hintedBlanks.has(Number(diacritics.activeKey))}
         />
       )}
 
@@ -173,7 +236,10 @@ export function FillBlankExercise({
         {!result ? (
           <button
             type="button"
-            onClick={() => submit(answers)}
+            onClick={() => {
+              const answer: FillBlankAnswer = { answers, hintedBlanks: [...hintedBlanks] };
+              submit(answer);
+            }}
             disabled={pending}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >

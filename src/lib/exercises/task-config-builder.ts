@@ -87,6 +87,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         // студентський рендер уже й так коректно ховає порожній масив
         // (config.wordBank?.length), але так конфіг чистіший для читання.
         ...(wordBank.length > 0 ? { wordBank } : {}),
+        hintsReducePoints: formData.get("fill_blank_hints_reduce_points") === "true",
       };
     }
 
@@ -99,6 +100,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         words: parseJsonField(formData.get("letter_gaps_words")),
         points: Number(formData.get("letter_gaps_points")) || 1,
+        hintsReducePoints: formData.get("letter_gaps_hints_reduce_points") === "true",
       };
     }
     case "letter_rearrangement": {
@@ -112,6 +114,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         words: parseJsonField(formData.get("letter_rearrangement_words")),
         points: Number(formData.get("letter_rearrangement_points")) || 1,
+        hintsReducePoints: formData.get("letter_rearrangement_hints_reduce_points") === "true",
       };
     }
     case "multiple_choice": {
@@ -157,6 +160,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         placements: parseJsonField(formData.get("word_search_placements")),
         ...(gridSourceWords ? { gridSourceWords } : {}),
         points: Number(formData.get("word_search_points")) || 1,
+        hintsReducePoints: formData.get("word_search_hints_reduce_points") === "true",
       };
     }
     case "crossword": {
@@ -180,6 +184,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         gridWidth: Number(formData.get("crossword_grid_width")) || 0,
         gridHeight: Number(formData.get("crossword_grid_height")) || 0,
         points: Number(formData.get("crossword_points")) || 1,
+        hintsReducePoints: formData.get("crossword_hints_reduce_points") === "true",
       };
     }
     case "karaoke": {
@@ -307,6 +312,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
         rows: parseJsonField(formData.get("table_fill_rows")),
+        hintsReducePoints: formData.get("table_fill_hints_reduce_points") === "true",
       };
     }
     case "image_match": {

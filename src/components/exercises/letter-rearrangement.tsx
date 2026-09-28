@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { LetterRearrangementPublic, LetterRearrangementDetail, GradeResult } from "@/lib/exercises/types";
+import { Lightbulb } from "lucide-react";
+import { HintExplanation } from "./hint-explanation";
+import type {
+  LetterRearrangementPublic,
+  LetterRearrangementDetail,
+  LetterRearrangementAnswer,
+  GradeResult,
+} from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -28,12 +35,17 @@ export function LetterRearrangementExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: LetterRearrangementPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі
+  // (сервер /api/exercises/letter-rearrangement-hint однаково відхилив би
+  // запит, якби хтось обійшов UI).
+  isDelf?: boolean;
 }) {
   const [orders, setOrders] = useState<string[][]>(() =>
     config.words.map((w) => w.shuffledLetters)
@@ -42,6 +54,15 @@ export function LetterRearrangementExercise({
   const detail = result?.detail as LetterRearrangementDetail | undefined;
   const locked = !!result;
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  // lockedCounts[wi] — скільки позицій ЗЛІВА в orders[wi] закріплено
+  // підказкою (завжди суцільний префікс: підказка йде по позиціях зліва
+  // направо). hintedWordIndices — окремо, для нарахування балів
+  // (LetterRearrangementAnswer) — раз використана для слова, лишається
+  // позначеним, навіть якщо lockedCounts[wi] згодом якимось чином досяг би
+  // довжини слова.
+  const [lockedCounts, setLockedCounts] = useState<number[]>(() => config.words.map(() => 0));
+  const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
+  const [hintLoading, setHintLoading] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -50,6 +71,51 @@ export function LetterRearrangementExercise({
   function updateOrder(wordIndex: number, next: string[]) {
     markInteracted();
     setOrders((prev) => prev.map((o, wi) => (wi === wordIndex ? next : o)));
+  }
+
+  // Правильний порядок НІКОЛИ не приходить клієнту цілком (на відміну від
+  // CrosswordPublic.solution/LetterGapsPublicWord.hiddenLetters) — по одній
+  // літері за раз через /api/exercises/letter-rearrangement-hint (RLS,
+  // authenticated Supabase client на сервері, без service-role) — свідомо
+  // обраний варіант замість "передати в зашифрованому вигляді": останнє
+  // однаково оборотне на клієнті (ключ розшифрування був би поруч), лише
+  // додає фальшиве відчуття безпеки.
+  async function applyHint(wi: number) {
+    const position = lockedCounts[wi];
+    if (position >= orders[wi].length || hintLoading.has(wi)) return;
+    markInteracted();
+    setHintLoading((prev) => new Set(prev).add(wi));
+    try {
+      const res = await fetch("/api/exercises/letter-rearrangement-hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, wordIndex: wi, position }),
+      });
+      if (!res.ok) return;
+      const { letter } = (await res.json()) as { letter: string };
+      // Будь-яка плитка з тим самим символом серед ще не закріплених
+      // (позиція >= position) підходить — однакові літери візуально й
+      // логічно взаємозамінні, конкретний вихідний індекс значення не має.
+      const idx = orders[wi].findIndex((v, i) => i >= position && v === letter);
+      if (idx === -1) return;
+      setOrders((prev) =>
+        prev.map((o, i) => {
+          if (i !== wi) return o;
+          const next = [...o];
+          next.splice(idx, 1);
+          next.splice(position, 0, letter);
+          return next;
+        })
+      );
+      setLockedCounts((prev) => prev.map((c, i) => (i === wi ? position + 1 : c)));
+      setHintedWordIndices((prev) => new Set(prev).add(wi));
+    } finally {
+      setHintLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(wi);
+        return next;
+      });
+    }
   }
 
   // "full" (md:col-span-2) — той самий компроміс, що вже прийнятий для
@@ -110,6 +176,12 @@ export function LetterRearrangementExercise({
         )}
       </div>
 
+      <HintExplanation
+        type="letter_rearrangement"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || !!result}
+      />
+
       <div
         className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
           isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
@@ -156,8 +228,26 @@ export function LetterRearrangementExercise({
           const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
           const needsFullSpan = fullFlags[wi];
 
+          const hintUsed = detail?.words[wi]?.hintUsed;
           return (
-            <div key={wi} className={`${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+            <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+              {!result && !isDelf && (
+                <button
+                  type="button"
+                  title="Підказка: поставити наступну літеру на місце"
+                  aria-label="Підказка: поставити наступну літеру на місце"
+                  disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
+                  onClick={() => applyHint(wi)}
+                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+                >
+                  <Lightbulb size={14} />
+                </button>
+              )}
+              {hintUsed && (
+                <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
+                  з підказкою
+                </span>
+              )}
               <div className="flex items-center gap-3">
                 {/* Той самий 44px слот, що letter-gaps.tsx: картинка й/або
                     компактна аудіо-кнопка поруч, або жодної. */}
@@ -194,6 +284,7 @@ export function LetterRearrangementExercise({
                     locked={locked}
                     tileState={tileState}
                     compact={isCompact}
+                    lockedCount={locked ? 0 : lockedCounts[wi]}
                   />
                 </div>
               </div>
@@ -213,7 +304,13 @@ export function LetterRearrangementExercise({
         {!result ? (
           <button
             type="button"
-            onClick={() => submit(orders)}
+            onClick={() => {
+              const answer: LetterRearrangementAnswer = {
+                words: orders,
+                hintedWordIndices: [...hintedWordIndices],
+              };
+              submit(answer);
+            }}
             disabled={pending}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >

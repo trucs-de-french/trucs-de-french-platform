@@ -127,7 +127,7 @@ export async function DelfTestTasks({
     if (row.kind === "group") {
       return (
         <li key={`group-${row.group.id}`} id={`group-${row.group.id}`} className="scroll-mt-4">
-          <TaskGroupBlock group={row.group} tasks={row.members} />
+          <TaskGroupBlock group={row.group} tasks={row.members} isDelf />
         </li>
       );
     }
@@ -135,7 +135,7 @@ export async function DelfTestTasks({
     if (!taskHasRenderableContent(task)) return null;
     return (
       <li key={task.id} className={`${EXERCISE_STACK} ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}>
-        <ExerciseBlock task={task} />
+        <ExerciseBlock task={task} isDelf />
       </li>
     );
   }

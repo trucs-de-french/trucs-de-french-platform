@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { LetterGapsPublic, LetterGapsDetail, GradeResult } from "@/lib/exercises/types";
+import { Lightbulb } from "lucide-react";
+import { HintExplanation } from "./hint-explanation";
+import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -68,12 +70,15 @@ export function LetterGapsExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: LetterGapsPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
+  isDelf?: boolean;
 }) {
   // По слову: рядок відповідей довжиною = кількість прихованих позицій
   // (null-клітин) у цьому слові, у порядку зліва направо.
@@ -81,6 +86,11 @@ export function LetterGapsExercise({
     config.words.map((w) => Array(w.chars.filter((c) => c === null).length).fill(""))
   );
   const diacritics = useDiacriticsPopup<string>();
+  // Ключ — "wi,gi" (той самий формат, що diacritics.fieldRef нижче) — поле,
+  // куди щойно вписала літеру кнопка-лампочка, підсвічується синім, поки
+  // студент не перепише його сам (updateLetter знімає підсвітку).
+  const [hintedGaps, setHintedGaps] = useState<Set<string>>(new Set());
+  const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as LetterGapsDetail | undefined;
   // Одна лайтбокс-картинка на всю вправу (не по слову) — одночасно відкрита
@@ -150,6 +160,29 @@ export function LetterGapsExercise({
     return normalize(answers[wi][gi]) === normalize(correctLetter) ? "correct" : "incorrect";
   }
 
+  // Перший пропуск слова, ще не заповнений правильною літерою (порожній чи
+  // помилковий) — ціль наступного натискання лампочки. null — усі пропуски
+  // слова вже правильні (кнопка неактивна).
+  function nextHintGap(wi: number): number | null {
+    const word = config.words[wi];
+    for (let gi = 0; gi < answers[wi].length; gi++) {
+      const correctLetter = word.hiddenLetters[gi] ?? "";
+      if (normalize(answers[wi][gi]) !== normalize(correctLetter)) return gi;
+    }
+    return null;
+  }
+
+  // hiddenLetters уже публічні (LetterGapsPublicWord.hiddenLetters) —
+  // підказка лише читає вже наявні клієнту дані, без запиту на сервер.
+  function applyHint(wi: number) {
+    const gi = nextHintGap(wi);
+    if (gi === null) return;
+    const letter = config.words[wi].hiddenLetters[gi] ?? "";
+    setAnswers((prev) => prev.map((word, i) => (i === wi ? word.map((v, g) => (g === gi ? letter : v)) : word)));
+    setHintedGaps((prev) => new Set(prev).add(`${wi},${gi}`));
+    setHintedWordIndices((prev) => new Set(prev).add(wi));
+  }
+
   function updateLetter(wordIndex: number, gapIndex: number, value: string) {
     markInteracted();
     setAnswers((prev) =>
@@ -157,6 +190,13 @@ export function LetterGapsExercise({
         wi === wordIndex ? word.map((v, gi) => (gi === gapIndex ? value : v)) : word
       )
     );
+    setHintedGaps((prev) => {
+      const key = `${wordIndex},${gapIndex}`;
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
 
     // Автоперехід — лише коли справді ввели символ (не стирання). Пропуски,
     // де вже стоїть ПРАВИЛЬНА літера, перескакуємо; на першому порожньому
@@ -223,6 +263,12 @@ export function LetterGapsExercise({
         )}
       </div>
 
+      <HintExplanation
+        type="letter_gaps"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || !!result}
+      />
+
       <div
         className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
           isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
@@ -242,8 +288,26 @@ export function LetterGapsExercise({
           const needsFullSpan = fullFlags[wi];
           const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : "h-9 w-8";
           const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : "text-lg";
+          const hintUsed = detail?.words[wi]?.hintUsed;
           return (
-            <div key={wi} className={`${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+            <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+              {!result && !isDelf && (
+                <button
+                  type="button"
+                  title="Підказка: відкрити наступну літеру"
+                  aria-label="Підказка: відкрити наступну літеру"
+                  disabled={nextHintGap(wi) === null}
+                  onClick={() => applyHint(wi)}
+                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+                >
+                  <Lightbulb size={14} />
+                </button>
+              )}
+              {hintUsed && (
+                <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
+                  з підказкою
+                </span>
+              )}
               <div className="flex items-center gap-3">
                 {/* Картинка й аудіо-кнопка — той самий 44px слот, обидві
                     можуть бути одночасно (картинка + кнопка поруч), лише
@@ -320,11 +384,13 @@ export function LetterGapsExercise({
                               // вагу/розмір — ті все одно треба задавати
                               // явно тут.
                               className={`${gapSizeClass} rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-sm transition-colors ${
-                                status === "correct"
-                                  ? LIVE_CORRECT_CLASS
-                                  : status === "incorrect"
-                                    ? LIVE_INCORRECT_CLASS
-                                    : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                                hintedGaps.has(`${wi},${gi}`)
+                                  ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                  : status === "correct"
+                                    ? LIVE_CORRECT_CLASS
+                                    : status === "incorrect"
+                                      ? LIVE_INCORRECT_CLASS
+                                      : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
                               }`}
                             />
                           );
@@ -355,7 +421,10 @@ export function LetterGapsExercise({
         {!result ? (
           <button
             type="button"
-            onClick={() => submit(answers)}
+            onClick={() => {
+              const answer: LetterGapsAnswer = { letters: answers, hintedWordIndices: [...hintedWordIndices] };
+              submit(answer);
+            }}
             disabled={pending}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >

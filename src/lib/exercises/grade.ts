@@ -114,29 +114,66 @@ function percentage(correctCount: number, total: number): number {
   return Math.round((correctCount / total) * 100);
 }
 
+// Спільний розподіл балів з урахуванням підказок — для letter_gaps/
+// letter_rearrangement/word_search/crossword, усі 4 з ОДНІЄЮ спільною
+// точкою балів на всю вправу (points на конфізі, не на елемент), а не
+// частковими per-елемент points, як у "Групі B" інших типів. correct/score
+// НЕ залежать від підказок узагалі (isCorrect по кожному елементу лишається
+// джерелом правди для проходження/відсотка) — підказки впливають ЛИШЕ на
+// цей окремий, опційний шар балів.
+//
+// hintsReducePoints вимкнено (дефолт, і всі наявні вправи до появи цієї
+// фічі) — точнісінько стара поведінка: pointsEarned = усі елементи correct
+// ? points : 0, без жодного розподілу по елементах.
+//
+// Увімкнено — points ділиться порівну між елементами (perElement =
+// points/count); елемент, де підказку НЕ використовували, дає свою повну
+// частку, якщо він correct; елемент із підказкою — половину частки, теж
+// лише якщо зрештою correct (сама підказка не "купує" бали за неправильну
+// відповідь, лише зменшує їх за правильну).
+function pointsWithHints(
+  points: number,
+  elements: { isCorrect: boolean; hintUsed: boolean }[],
+  hintsReducePoints: boolean
+): number {
+  if (!hintsReducePoints) {
+    return elements.length > 0 && elements.every((e) => e.isCorrect) ? points : 0;
+  }
+  if (elements.length === 0) return 0;
+  const perElement = points / elements.length;
+  return elements.reduce((sum, e) => {
+    if (!e.isCorrect) return sum;
+    return sum + (e.hintUsed ? perElement * 0.5 : perElement);
+  }, 0);
+}
+
 function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): GradeResult {
   const blanksAcceptable = [...config.template.matchAll(BLANK_RE)].map((m) =>
     m[1].split("|").map((s) => normalize(s))
   );
+  const studentAnswers = answer?.answers ?? [];
+  const hintedSet = new Set(answer?.hintedBlanks ?? []);
 
   const blanks: FillBlankDetail["blanks"] = blanksAcceptable.map((accepted, i) => {
-    const studentAnswer = answer[i] ?? "";
+    const studentAnswer = studentAnswers[i] ?? "";
     const isCorrect = accepted.includes(normalize(studentAnswer));
-    return { studentAnswer, correctAnswers: accepted, isCorrect };
+    return { studentAnswer, correctAnswers: accepted, isCorrect, hintUsed: hintedSet.has(i) };
   });
 
   const correctCount = blanks.filter((b) => b.isCorrect).length;
   const correct = correctCount === blanks.length && blanks.length > 0;
   // POINTS — на всю вправу (не на пропуск, підтверджений компроміс, бо
   // template — вільний текст без структурної адресації пропусків):
-  // зараховується цілком, лише якщо ВСІ пропуски правильні.
+  // зараховується цілком, лише якщо ВСІ пропуски правильні. З
+  // hintsReducePoints — pointsWithHints ділить ці ж бали порівну між
+  // пропусками (елемент — пропуск, як і для detail.blanks вище).
   const points = resolveFillBlankPoints(config);
 
   return {
     correct,
     score: percentage(correctCount, blanks.length),
     detail: { blanks },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: pointsWithHints(points, blanks, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -146,13 +183,15 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
 // правильні. normalize() — та сама конвенція, що для текстових пропусків
 // (регістр/апостроф/пробіли байдужі, діакритика — ні).
 function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): GradeResult {
+  const studentLettersByWord = answer?.letters ?? [];
+  const hintedSet = new Set(answer?.hintedWordIndices ?? []);
   const words: LetterGapsDetail["words"] = config.words.map((w, wi) => {
     const correctLetters = w.hiddenIndices.map((idx) => w.word[idx]);
-    const studentLetters = answer[wi] ?? [];
+    const studentLetters = studentLettersByWord[wi] ?? [];
     const isCorrect = correctLetters.every(
       (c, li) => normalize(c) === normalize(studentLetters[li] ?? "")
     );
-    return { studentLetters, correctLetters, isCorrect };
+    return { studentLetters, correctLetters, isCorrect, hintUsed: hintedSet.has(wi) };
   });
 
   const correctCount = words.filter((w) => w.isCorrect).length;
@@ -163,7 +202,7 @@ function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): Gr
     correct,
     score: percentage(correctCount, words.length),
     detail: { words },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -178,15 +217,17 @@ function gradeLetterRearrangement(
   config: LetterRearrangementConfig,
   answer: LetterRearrangementAnswer
 ): GradeResult {
+  const studentOrderByWord = answer?.words ?? [];
+  const hintedSet = new Set(answer?.hintedWordIndices ?? []);
   const words: LetterRearrangementDetail["words"] = config.words.map((w, wi) => {
     const correctWord = w.word.split("");
-    const studentOrder = answer[wi] ?? [];
+    const studentOrder = studentOrderByWord[wi] ?? [];
     const letters = correctWord.map((text, correctIndex) => ({
       text,
       correctIndex,
       isCorrect: studentOrder[correctIndex] === text,
     }));
-    return { letters, isCorrect: letters.every((l) => l.isCorrect) };
+    return { letters, isCorrect: letters.every((l) => l.isCorrect), hintUsed: hintedSet.has(wi) };
   });
 
   const correctCount = words.filter((w) => w.isCorrect).length;
@@ -197,7 +238,7 @@ function gradeLetterRearrangement(
     correct,
     score: percentage(correctCount, words.length),
     detail: { words },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -286,7 +327,8 @@ function cellsMatch(a: { row: number; col: number }[], b: { row: number; col: nu
 // detail лишається per-слово — лише для візуального фідбеку/легенди, не
 // для заліку балів.
 function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): GradeResult {
-  const answerByWord = new Map((answer ?? []).map((a) => [a.word, a.cells]));
+  const answerByWord = new Map((answer?.found ?? []).map((a) => [a.word, a.cells]));
+  const hintedSet = new Set(answer?.hintedWords ?? []);
 
   const words: WordSearchDetail["words"] = config.words.map((w) => {
     // placement.word завжди ВЕРХНІМ регістром і БЕЗ пробілів/апострофів/
@@ -297,12 +339,13 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
     // збігався б для будь-якого слова з такими символами, і gradeWordSearch
     // завжди повертав би found: false.
     const placement = config.placements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
-    if (!placement) return { word: w.word, found: false };
+    const hintUsed = hintedSet.has(w.word);
+    if (!placement) return { word: w.word, found: false, hintUsed };
 
     const target = placementCells(placement, w.word.length);
     const studentCells = answerByWord.get(w.word) ?? [];
     const found = cellsMatch(studentCells, target) || cellsMatch(studentCells, [...target].reverse());
-    return { word: w.word, found };
+    return { word: w.word, found, hintUsed };
   });
 
   const foundCount = words.filter((w) => w.found).length;
@@ -313,7 +356,11 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
     correct,
     score: percentage(foundCount, words.length),
     detail: { words },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: pointsWithHints(
+      points,
+      words.map((w) => ({ isCorrect: w.found, hintUsed: w.hintUsed })),
+      !!config.hintsReducePoints
+    ),
     pointsPossible: points,
   };
 }
@@ -329,11 +376,14 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
 // літеру там (crossword-grid.ts: fits() дозволяє перетин лише з тим самим
 // символом). Один бал на все завдання (як gradeWordSearch/gradeLetterGaps).
 function gradeCrossword(config: CrosswordConfig, answer: CrosswordAnswer): GradeResult {
+  const grid = answer?.grid ?? [];
+  const hintedSet = new Set((answer?.hintedWords ?? []).map((h) => `${h.number}-${h.direction}`));
   const words: CrosswordDetail["words"] = config.placements.map((p) => {
     const cells = placementCells(p, p.word.length);
-    const studentWord = cells.map(({ row, col }) => answer[row]?.[col] ?? "").join("");
+    const studentWord = cells.map(({ row, col }) => grid[row]?.[col] ?? "").join("");
     const isCorrect = normalize(studentWord) === normalize(p.word);
-    return { number: p.number, direction: p.direction, word: p.word, isCorrect };
+    const hintUsed = hintedSet.has(`${p.number}-${p.direction}`);
+    return { number: p.number, direction: p.direction, word: p.word, isCorrect, hintUsed };
   });
 
   const correctCount = words.filter((w) => w.isCorrect).length;
@@ -344,7 +394,7 @@ function gradeCrossword(config: CrosswordConfig, answer: CrosswordAnswer): Grade
     correct,
     score: percentage(correctCount, words.length),
     detail: { words },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -503,7 +553,7 @@ function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeRes
 
   const sentencesDetail: DragDropDetail["sentences"] = sentences.map((s) => {
     const words = answerBySentence.get(s.id) ?? [];
-    const fbResult = gradeFillBlank({ template: s.template }, words);
+    const fbResult = gradeFillBlank({ template: s.template }, { answers: words, hintedBlanks: [] });
     return {
       id: s.id,
       blanks: (fbResult.detail as FillBlankDetail).blanks,
@@ -591,7 +641,8 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
 }
 
 function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): GradeResult {
-  const answerMap = new Map(answer.map((a) => [`${a.rowId}:${a.side}`, a.value]));
+  const answerMap = new Map((answer?.cells ?? []).map((a) => [`${a.rowId}:${a.side}`, a.value]));
+  const hintedSet = new Set((answer?.hintedCells ?? []).map((h) => `${h.rowId}:${h.side}`));
 
   const blanks: TableFillDetail["blanks"] = [];
   // getTableFillRows (sanitize.ts) — рядок без лівої чи правої частини не
@@ -614,6 +665,7 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
         correctAnswers: accepted,
         isCorrect,
         points: rowPoints,
+        hintUsed: hintedSet.has(`${row.id}:${side}`),
       });
     });
   }
@@ -624,6 +676,9 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   // зараховується цілком, лише якщо ВСІ його приховані клітинки правильні.
   // Рядки без жодної прихованої клітинки взагалі не потрапляють у blanks
   // вище, тому не впливають ні на pointsEarned, ні на pointsPossible.
+  // hintsReducePoints — "елемент" тут РЯДОК (та сама гранулярність, що
+  // points): якщо хоч одна з прихованих клітинок рядка була відкрита
+  // підказкою, увесь правильний рядок дає 50%, а не лише та клітинка.
   const blanksByRow = new Map<string, TableFillDetail["blanks"]>();
   for (const b of blanks) {
     const arr = blanksByRow.get(b.rowId) ?? [];
@@ -633,8 +688,11 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   let pointsPossible = 0;
   let pointsEarned = 0;
   for (const rowBlanks of blanksByRow.values()) {
-    pointsPossible += rowBlanks[0].points;
-    if (rowBlanks.every((b) => b.isCorrect)) pointsEarned += rowBlanks[0].points;
+    const rowPoints = rowBlanks[0].points;
+    pointsPossible += rowPoints;
+    if (!rowBlanks.every((b) => b.isCorrect)) continue;
+    const rowHinted = config.hintsReducePoints && rowBlanks.some((b) => b.hintUsed);
+    pointsEarned += rowHinted ? rowPoints * 0.5 : rowPoints;
   }
 
   return {

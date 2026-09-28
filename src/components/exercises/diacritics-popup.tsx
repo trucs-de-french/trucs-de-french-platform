@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Lightbulb } from "lucide-react";
 import { STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
 import { Z_MODAL } from "@/lib/z-layers";
 
@@ -19,7 +20,22 @@ const VIEWPORT_MARGIN = 8;
 // overflow-x-auto чи будь-якого іншого контейнера навколо. Знизу за
 // замовчуванням; згори — лише якщо знизу справді бракує місця, а згори
 // його більше. Горизонтально — по центру поля, з клемпінгом у межі вікна.
-export function DiacriticsPopup({ rect, onPick }: { rect: DOMRect; onPick: (ch: string) => void }) {
+export function DiacriticsPopup({
+  rect,
+  onPick,
+  onHint,
+  hintDisabled,
+}: {
+  rect: DOMRect;
+  onPick: (ch: string) => void;
+  // Опційно — лише fill_blank/table_fill (єдине місце, де підказка
+  // "перша літера" живе саме тут, а не окремою кнопкою біля поля, як в
+  // інших 4 типах): якщо передано, лампочка рендериться ПЕРЕД символами
+  // діакритики. Відсутній пропс — жодних змін для решти викликів
+  // (letter_gaps/crossword/open_answer/essay_check тощо).
+  onHint?: () => void;
+  hintDisabled?: boolean;
+}) {
   const spaceBelow = window.innerHeight - rect.bottom;
   const spaceAbove = rect.top;
   const showBelow = spaceBelow >= POPUP_HEIGHT || spaceBelow >= spaceAbove;
@@ -34,6 +50,22 @@ export function DiacriticsPopup({ rect, onPick }: { rect: DOMRect; onPick: (ch: 
       className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800`}
       style={{ top, left, width: POPUP_WIDTH }}
     >
+      {onHint && (
+        <button
+          type="button"
+          title="Підказка: відкрити першу літеру"
+          aria-label="Підказка: відкрити першу літеру"
+          disabled={hintDisabled}
+          // preventDefault — той самий прийом, що діакритик-кнопки нижче:
+          // клік не забирає фокус з поля (онBlur не встигає спрацювати
+          // раніше onClick).
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onHint}
+          className={`flex items-center justify-center rounded border border-blue-300 bg-blue-50 px-2 text-blue-600 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-blue-50 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-950/60`}
+        >
+          <Lightbulb size={16} />
+        </button>
+      )}
       {DIACRITICS.map((ch) => (
         <button
           key={ch}

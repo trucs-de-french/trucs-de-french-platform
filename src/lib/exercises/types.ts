@@ -20,6 +20,10 @@ export type FillBlankConfig = {
   // тасується (той самий порядок, що вписав вчитель), не впливає на
   // gradeFillBlank жодним чином.
   wordBank?: string[];
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints. Зараховується
+  // на рівні ПРОПУСКУ (не всієї вправи, як points) — той самий елемент, що
+  // hintedBlanks у FillBlankAnswer.
+  hintsReducePoints?: boolean;
 };
 
 // Пропущені літери — вчителька вручну клікає окремі символи слова (будь-
@@ -46,6 +50,11 @@ export type LetterGapsConfig = {
   subInstructions?: string;
   words: LetterGapsWord[];
   points?: number;
+  // За замовчуванням false (наявні вправи поводяться як і раніше — бали не
+  // залежать від підказок) — увімкнено -> слово, для якого студент бодай
+  // раз натиснув лампочку-підказку, дає 50% своєї частки балів замість
+  // повної (grade.ts), навіть якщо саме слово зрештою правильне.
+  hintsReducePoints?: boolean;
 };
 
 // Переставити ВСЕ слово (не лише приховані позиції, як LetterGaps) —
@@ -64,6 +73,8 @@ export type LetterRearrangementConfig = {
   subInstructions?: string;
   words: LetterRearrangementWord[];
   points?: number;
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
+  hintsReducePoints?: boolean;
 };
 
 // Звичайна відкрита відповідь з автоматичною текстовою перевіркою (без AI —
@@ -197,6 +208,8 @@ export type WordSearchConfig = {
   // взагалі; task-validation.ts тоді звіряє інакше (лише "чи зникло
   // розміщене слово"), не порівнюючи списки цілком.
   gridSourceWords?: string[];
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
+  hintsReducePoints?: boolean;
 };
 
 // Слово + підказка (означення) — на відміну від WordSearchWord, тут немає
@@ -253,6 +266,8 @@ export type CrosswordConfig = {
   // нормалізованих слів на момент генерації (generateCrosswordGrid.sourceWords,
   // crossword-grid.ts), опційний для сумісності зі старими вправами.
   gridSourceWords?: string[];
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
+  hintsReducePoints?: boolean;
 };
 
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
@@ -381,6 +396,11 @@ export type TableFillConfig = {
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   columnLabels: [string, string];
   rows: TableFillRow[];
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints — тут
+  // застосовується на рівні РЯДКА (не клітинки, як і points): рядок, де
+  // підказку брали хоч для однієї з його прихованих клітинок, дає 50% балів
+  // рядка, якщо в підсумку весь рядок правильний.
+  hintsReducePoints?: boolean;
 };
 
 // checkbox_grid — довільна кількість рядків (тверджень/питань) і колонок
@@ -524,6 +544,10 @@ export type FillBlankPublic = {
   template: string; // з {{}} замість {{вар1|вар2}}
   points: number; // на всю вправу, не на пропуск
   wordBank?: string[]; // довідкові бульбашки, не тасується
+  // Лише для тексту-пояснення "Слово з підказкою дає половину балів"
+  // (hint-explanation.tsx) — сама знижка рахується на сервері (grade.ts),
+  // тут це суто інформаційний прапорець.
+  hintsReducePoints: boolean;
 };
 
 // chars — явна маска на рівні символів (null на прихованих позиціях, сам
@@ -550,6 +574,9 @@ export type LetterGapsPublic = {
   subInstructions?: string;
   words: LetterGapsPublicWord[];
   points: number;
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 // shuffledLetters — word.split("") перемішаний на сервері (sanitize.ts),
@@ -571,6 +598,9 @@ export type LetterRearrangementPublic = {
   subInstructions?: string;
   words: LetterRearrangementPublicWord[];
   points: number;
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 export type MultipleChoicePublic = {
@@ -612,12 +642,23 @@ export type WordChoicePublic = {
 // бачить усю сітку цілком). words — та сама форма, що WordSearchWord
 // (translation/imageUrl/audioUrl теж не секрет, це підказки). placements —
 // ЄДИНЕ, що ховається (інакше перевірка була б тривіальною).
+// hintStart — координата ПЕРШОЇ клітинки слова в сітці (для підказки-
+// блимання, word-search.tsx), єдине, що виходить за межі "конфіг мінус
+// placements": letters у grid і так усі видимі студенту (сама природа
+// філворда — секрет лише ЯКІ клітинки утворюють слово, не самі літери), тож
+// розкриття лише СТАРТОВОЇ клітинки ОДНОГО слова — значно менший компроміс,
+// ніж CrosswordPublic.solution (там розкриваються самі значення літер,
+// яких інакше не видно взагалі). null — слово не вмістилось у сітку
+// (failedWords, word-search-grid.ts) — підказка для нього недоступна.
 export type WordSearchPublic = {
   instructions?: string;
   subInstructions?: string;
-  words: WordSearchWord[];
+  words: (WordSearchWord & { hintStart: { row: number; col: number } | null })[];
   grid: string[][];
   points: number;
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 // Не "конфіг мінус placements" — синтезована структура (sanitizeCrossword
@@ -652,6 +693,9 @@ export type CrosswordPublic = {
   across: CrosswordCluePublic[];
   down: CrosswordCluePublic[];
   points: number;
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 export type TrueFalsePublic = {
@@ -717,6 +761,9 @@ export type TableFillPublic = {
   // partOfSpeech — не відповідь (як gapOptions у karaoke), передається як є
   // для групування на студентській сторінці.
   rows: { id: string; left: string | null; right: string | null; points: number; partOfSpeech?: PartOfSpeech | null }[]; // null = прихована клітинка
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 export type CheckboxGridPublic = {
@@ -769,14 +816,27 @@ export type KaraokePublic = {
 
 // Відповідь студента для кожного типу.
 
-export type FillBlankAnswer = string[]; // по одному рядку на пропуск, за порядком
-// Зовнішній масив — по слову, у порядку config.words; внутрішній — по
-// одній літері на кожну приховану позицію, зліва направо.
-export type LetterGapsAnswer = string[][];
-// Той самий принцип — за індексом слова, не id (LetterRearrangementWord теж
-// без id). Внутрішній масив — поточне (переставлене студентом) розташування
-// ВСІХ літер слова, а не лише прихованих.
-export type LetterRearrangementAnswer = string[][];
+// answers — по одному рядку на пропуск, за порядком (як і раніше).
+// hintedBlanks — індекси пропусків (0-based, той самий порядок), де брали
+// підказку "перша літера" — "елемент" для балів/позначки "з підказкою" тут
+// САМЕ пропуск (кнопка підказки в попапі — на конкретне активне поле).
+export type FillBlankAnswer = { answers: string[]; hintedBlanks: number[] };
+// letters — зовнішній масив по слову, у порядку config.words; внутрішній —
+// по одній літері на кожну приховану позицію, зліва направо. hintedWordIndices
+// — індекси слів (той самий порядок), де студент бодай раз натиснув
+// лампочку-підказку — "елемент" для балів/позначки "з підказкою" тут САМЕ
+// слово (кнопка підказки одна на всю картку слова, не на окрему літеру).
+export type LetterGapsAnswer = {
+  letters: string[][];
+  hintedWordIndices: number[];
+};
+// Той самий принцип, що LetterGapsAnswer — words: поточне (переставлене
+// студентом) розташування ВСІХ літер слова (не лише прихованих, тут таких
+// нема), за індексом слова, не id; hintedWordIndices — той самий сенс.
+export type LetterRearrangementAnswer = {
+  words: string[][];
+  hintedWordIndices: number[];
+};
 export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
 // Множина optionId на речення (не одне значення) — підтримує кілька
 // правильних варіантів, незалежно від mode (select/cross_out); студентський
@@ -788,13 +848,27 @@ export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
 // не знайшов, просто відсутні в масиві. Сервер (gradeWordSearch) сам звіряє
 // координати з placements — той самий принцип, що всюди в grade.ts
 // (ніколи не довіряти клієнтському boolean).
-export type WordSearchAnswer = { word: string; cells: { row: number; col: number }[] }[];
+// found — той самий формат, що раніше (масив, лише СЛОВА, які студент
+// фізично виділив і вони збіглись клієнтським фідбеком); hintedWords —
+// слова, для яких клікали лампочку-підказку в легенді (блимання першої
+// літери, word-search.tsx) — підказка НЕ позначає слово знайденим сама по
+// собі, лише інформує, студент і далі мусить виділити його вручну.
+export type WordSearchAnswer = {
+  found: { word: string; cells: { row: number; col: number }[] }[];
+  hintedWords: string[];
+};
 // Єдина 2D-мапа клітинка→літера (row-major, ті самі виміри, що gridWidth×
 // gridHeight) — НЕ по слову, як LetterGapsAnswer: клітинки спільні між
 // словами, що перетинаються, тож ввід в одну клітинку одразу впливає на
 // обидва слова. Порожній рядок "" — клітинка ще не заповнена (або
 // заблокована, звідти студент і не міг нічого ввести).
-export type CrosswordAnswer = string[][];
+// grid — той самий формат, що раніше; hintedWords — слова (за number+
+// direction, однозначний ідентифікатор — той самий принцип, що
+// CrosswordDetail.words), у яких натискали лампочку-підказку хоч раз.
+export type CrosswordAnswer = {
+  grid: string[][];
+  hintedWords: { number: number; direction: "horizontal" | "vertical" }[];
+};
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
@@ -802,7 +876,14 @@ export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // пор
 export type DragDropAnswer = { sentenceId: string; words: string[] }[]; // слова на кожен пропуск, за реченням
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = { questionId: string; value: string }[];
-export type TableFillAnswer = { rowId: string; side: "left" | "right"; value: string }[];
+// cells — той самий плаский список, що раніше (тепер поле обʼєкта).
+// hintedCells — клітинки (rowId+side), де брали підказку "перша літера" —
+// "елемент" для балів тут — РЯДОК (як points), клітинка лише позначає, що
+// підказку брали хоч для однієї з його прихованих клітинок (gradeTableFill).
+export type TableFillAnswer = {
+  cells: { rowId: string; side: "left" | "right"; value: string }[];
+  hintedCells: { rowId: string; side: "left" | "right" }[];
+};
 export type CheckboxGridAnswer = { rowId: string; columnIds: string[] }[]; // позначені колонки на кожен рядок
 export type ImageMatchAnswer = { itemId: string; name: string }[];
 export type ChronologicalOrderAnswer = { itemId: string; position: number }[];
@@ -814,17 +895,26 @@ export type KaraokeAnswer = string[][];
 // Детальний результат перевірки — саме він показує "де помилка".
 
 export type FillBlankDetail = {
-  blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean }[];
+  blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean; hintUsed: boolean }[];
 };
 
+// hintUsed — чи натискали лампочку-підказку на цьому слові (незалежно від
+// isCorrect: підказка могла заповнити не всі позиції) — для позначки "з
+// підказкою" в студентському рендері й для info, чи застосовано 50%-знижку
+// балів (сама знижка — окремо, у пораховних pointsEarned).
 export type LetterGapsDetail = {
-  words: { studentLetters: string[]; correctLetters: string[]; isCorrect: boolean }[];
+  words: { studentLetters: string[]; correctLetters: string[]; isCorrect: boolean; hintUsed: boolean }[];
 };
 
 // letters[i].correctIndex === i завжди (масив побудований по позиції, як
 // ReorderDetail.items) — SortableTileRow індексує напряму, без пошуку.
+// hintUsed — той самий сенс, що LetterGapsDetail.
 export type LetterRearrangementDetail = {
-  words: { letters: { text: string; correctIndex: number; isCorrect: boolean }[]; isCorrect: boolean }[];
+  words: {
+    letters: { text: string; correctIndex: number; isCorrect: boolean }[];
+    isCorrect: boolean;
+    hintUsed: boolean;
+  }[];
 };
 
 export type MultipleChoiceDetail = {
@@ -850,8 +940,9 @@ export type WordChoiceDetail = {
 // points тут НЕ на слово (points — на всю вправу, WordSearchConfig.points)
 // — found лише для візуального фідбека/закреслення в легенді, не для
 // заліку балів.
+// hintUsed — той самий сенс, що LetterGapsDetail.
 export type WordSearchDetail = {
-  words: { word: string; found: boolean }[];
+  words: { word: string; found: boolean; hintUsed: boolean }[];
 };
 
 // per-слово (не per-клітинка) — той самий рівень деталізації, що
@@ -860,7 +951,13 @@ export type WordSearchDetail = {
 // number+direction ідентифікують слово однозначно (пара може повторюватись
 // лише в межах одного напрямку, номер унікальний у своєму напрямку).
 export type CrosswordDetail = {
-  words: { number: number; direction: "horizontal" | "vertical"; word: string; isCorrect: boolean }[];
+  words: {
+    number: number;
+    direction: "horizontal" | "vertical";
+    word: string;
+    isCorrect: boolean;
+    hintUsed: boolean;
+  }[];
 };
 
 export type TrueFalseDetail = {
@@ -942,6 +1039,7 @@ export type TableFillDetail = {
     correctAnswers: string[];
     isCorrect: boolean;
     points: number; // однакове для обох клітинок одного рядка — бали на рядок, не на клітинку
+    hintUsed: boolean;
   }[];
 };
 

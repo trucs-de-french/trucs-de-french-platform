@@ -54,9 +54,14 @@ export function TaskGroupBlock({
   tasks,
   bare = false,
   extraSharedContent = null,
+  isDelf = false,
 }: {
   group: TaskGroupData;
   tasks: ExerciseTask[];
+  // Задача-член блоку належить DELF-тесту — вимикає підказки в кожній
+  // ExerciseBlock нижче. За замовчуванням false (звичайний блок сцени чи
+  // матеріалу); delf-test-tasks.tsx передає true.
+  isDelf?: boolean;
   // true — коли групу прикріплено до scene_content_block і сторінка сцени
   // сама малює ОДНУ спільну <section className={EXERCISE_BLOCK_CLASS}>
   // навколо контенту блоку + цього компонента: тоді TaskGroupBlock не додає
@@ -255,6 +260,7 @@ export function TaskGroupBlock({
                 // не сума) і виглядала б для вчителя як нестикування чисел.
                 // Лишається видимим лише один загальний підсумок блоку нижче.
                 hidePoints={group.points_mode === "flat"}
+                isDelf={isDelf}
               />
             </div>
           ))}

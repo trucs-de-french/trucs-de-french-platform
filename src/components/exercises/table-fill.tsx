@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, type ReactNode } from "react";
-import type { TableFillPublic, TableFillDetail, GradeResult } from "@/lib/exercises/types";
+import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { HintExplanation } from "./hint-explanation";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
   PART_OF_SPEECH_ORDER,
@@ -114,14 +115,22 @@ export function TableFillExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: TableFillPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — підказки повністю вимкнені (той самий
+  // принцип, що fill-blank.tsx).
+  isDelf?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Клітинки (rowId:side), де брали підказку "перша літера" — той самий
+  // ключ-формат, що cellKey нижче.
+  const [hintedCells, setHintedCells] = useState<Set<string>>(new Set());
+  const [hintPending, setHintPending] = useState(false);
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as TableFillDetail | undefined;
@@ -133,11 +142,46 @@ export function TableFillExercise({
 
   function updateAnswer(rowId: string, side: "left" | "right", value: string) {
     setAnswers((prev) => ({ ...prev, [cellKey(rowId, side)]: value }));
+    setHintedCells((prev) => {
+      const key = cellKey(rowId, side);
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  // Перша літера правильної відповіді, з сервера (/api/exercises/hint) —
+  // конфіг ніколи не містить correctAnswers на клієнті. Той самий принцип
+  // вписування, що fill-blank.tsx: замінює вміст, лише якщо поле порожнє чи
+  // починається не з цієї літери.
+  async function applyHint(rowId: string, side: "left" | "right") {
+    const key = cellKey(rowId, side);
+    if (hintedCells.has(key) || hintPending) return;
+    setHintPending(true);
+    try {
+      const res = await fetch("/api/exercises/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, kind: "table_fill", rowId, side }),
+      });
+      if (!res.ok) return;
+      const { letter } = (await res.json()) as { letter: string };
+      const current = answers[key] ?? "";
+      const value = current.startsWith(letter) ? current : letter;
+      setAnswers((prev) => ({ ...prev, [key]: value }));
+      setHintedCells((prev) => new Set(prev).add(key));
+      focusAndSetCursor(diacritics.getElement(key), letter.length);
+    } finally {
+      setHintPending(false);
+    }
   }
 
   function inputClass(rowId: string, side: "left" | "right") {
     const idle = "border-gray-300 dark:border-neutral-600";
-    if (!detail) return idle;
+    if (!detail) return hintedCells.has(cellKey(rowId, side))
+      ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+      : idle;
     const blank = detail.blanks.find((b) => b.rowId === rowId && b.side === side);
     if (!blank) return idle;
     return blank.isCorrect
@@ -169,24 +213,35 @@ export function TableFillExercise({
       return <span>{value}</span>;
     }
     const key = cellKey(rowId, side);
+    const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;
     return (
-      <input
-        ref={diacritics.fieldRef(key)}
-        value={answers[key] ?? ""}
-        onChange={(e) => updateAnswer(rowId, side, e.target.value)}
-        onFocus={() => diacritics.onFocus(key)}
-        onBlur={diacritics.onBlur}
-        disabled={!!result}
-        className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side)}`}
-      />
+      <div className="flex items-center gap-1">
+        <input
+          ref={diacritics.fieldRef(key)}
+          value={answers[key] ?? ""}
+          onChange={(e) => updateAnswer(rowId, side, e.target.value)}
+          onFocus={() => diacritics.onFocus(key)}
+          onBlur={diacritics.onBlur}
+          disabled={!!result}
+          className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side)}`}
+        />
+        {hintUsed && (
+          <span className="shrink-0 text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>
+        )}
+      </div>
     );
   }
 
   function handleSubmit() {
-    const answer = Object.entries(answers).map(([key, value]) => {
+    const cells = Object.entries(answers).map(([key, value]) => {
       const [rowId, side] = key.split(":") as [string, "left" | "right"];
       return { rowId, side, value };
     });
+    const hintedCellsList = [...hintedCells].map((key) => {
+      const [rowId, side] = key.split(":") as [string, "left" | "right"];
+      return { rowId, side };
+    });
+    const answer: TableFillAnswer = { cells, hintedCells: hintedCellsList };
     submit(answer);
   }
 
@@ -225,6 +280,12 @@ export function TableFillExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.table_fill.subInstruction}
       />
 
+      <HintExplanation
+        type="table_fill"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!!isDelf || !!result}
+      />
+
       <div
         className={`mx-auto w-full ${
           columns.length > 1
@@ -257,6 +318,17 @@ export function TableFillExercise({
             updateAnswer(rowId, side, value);
             focusAndSetCursor(el, cursor);
           }}
+          onHint={
+            isDelf
+              ? undefined
+              : () => {
+                  const key = diacritics.activeKey!;
+                  const rowId = key.slice(0, key.lastIndexOf(":"));
+                  const side = key.slice(key.lastIndexOf(":") + 1) as "left" | "right";
+                  applyHint(rowId, side);
+                }
+          }
+          hintDisabled={hintPending || (diacritics.activeKey ? hintedCells.has(diacritics.activeKey) : false)}
         />
       )}
 

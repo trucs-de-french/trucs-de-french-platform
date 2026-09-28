@@ -25,8 +25,8 @@ function emptyRow(): TableFillRow {
 
 export const TableFillFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>,
-  { initialConfig?: Partial<TableFillConfig> }
->(function TableFillFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<TableFillConfig>; isDelf?: boolean }
+>(function TableFillFields({ initialConfig, isDelf }, ref) {
   const [columnLabels, setColumnLabels] = useState<[string, string]>(
     initialConfig?.columnLabels ?? ["Французька", "Переклад"]
   );
@@ -197,6 +197,18 @@ export const TableFillFields = forwardRef<
       >
         + рядок
       </button>
+
+      {!isDelf && (
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            name="table_fill_hints_reduce_points"
+            value="true"
+            defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          />
+          Підказки зменшують бали (50% за елемент, де використана підказка)
+        </label>
+      )}
     </div>
   );
 });

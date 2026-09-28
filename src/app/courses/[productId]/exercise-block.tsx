@@ -49,6 +49,7 @@ export function ExerciseBlock({
   task,
   onResult,
   hidePoints,
+  isDelf = false,
 }: {
   task: ExerciseTask;
   // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
@@ -58,6 +59,11 @@ export function ExerciseBlock({
   // Опційний — для блоків у режимі "фіксовано", щоб безумовно ховати
   // індивідуальний бал задачі. Прокидається без змін в ExerciseCard.
   hidePoints?: boolean;
+  // Задача належить DELF-тесту — вимикає підказки (ExerciseCard, 6 типів,
+  // де вони є). За замовчуванням false: сцени фільмів і матеріали
+  // структурно ніколи не є DELF-тестом (delf_test_number там завжди null,
+  // 0018_delf_tracks.sql) — лише delf-test-tasks.tsx передає тут true.
+  isDelf?: boolean;
 }) {
   const config = (task.config ?? {}) as LinkEmbedConfig;
 
@@ -100,6 +106,7 @@ export function ExerciseBlock({
           pointsVisible={task.points_visible}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       )}
 

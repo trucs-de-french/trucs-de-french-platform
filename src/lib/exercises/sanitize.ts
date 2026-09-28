@@ -53,6 +53,7 @@ import type {
 import { type GradableTaskType, assertNeverGradableType } from "./gradable-types";
 import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
 import { normalizePartOfSpeech } from "@/lib/vocab-categories";
+import { sanitizeWordForGrid } from "./grid-word";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
@@ -81,6 +82,7 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
     // Довідкові бульбашки — пропускаємо як є, не тасуємо (той самий
     // порядок, що вписав вчитель), нема що приховувати.
     wordBank: config.wordBank,
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 
@@ -107,6 +109,7 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
       imageUrl: w.imageUrl,
       audioUrl: w.audioUrl,
     })),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 
@@ -130,6 +133,7 @@ export function sanitizeLetterRearrangement(config: LetterRearrangementConfig): 
       imageUrl: w.imageUrl,
       audioUrl: w.audioUrl,
     })),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 
@@ -213,10 +217,18 @@ export function sanitizeWordSearch(config: WordSearchConfig): WordSearchPublic {
     subInstructions: config.subInstructions,
     grid: config.grid,
     // translation/imageUrl/audioUrl передаються як є — не секрет, це
-    // підказки в легенді (на відміну від placements, який тут відсутній
-    // узагалі).
-    words: config.words,
+    // підказки в легенді (на відміну від placements, повного масиву якого
+    // тут немає). hintStart — виняток, лише СТАРТОВА клітинка (типографію
+    // самого placement — довжину/кінець/напрямок студент і так легко
+    // вирахує з grid+word.length щойно побачить старт, тож ховати решту
+    // додаткового сенсу не має) для підказки-блимання (word-search.tsx,
+    // той самий пошук за sanitizeWordForGrid+upper, що gradeWordSearch).
+    words: config.words.map((w) => {
+      const placement = config.placements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
+      return { ...w, hintStart: placement ? { row: placement.row, col: placement.col } : null };
+    }),
     points: resolveWordSearchPoints(config),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 
@@ -256,6 +268,7 @@ export function sanitizeCrossword(config: CrosswordConfig): CrosswordPublic {
     across: byDirection("horizontal"),
     down: byDirection("vertical"),
     points: resolveCrosswordPoints(config),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 
@@ -480,6 +493,7 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
       // "adverbe" і невідомі/порожні значення -> null, що вже вокабуляр.
       partOfSpeech: normalizePartOfSpeech(r.partOfSpeech),
     })),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 

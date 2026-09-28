@@ -164,6 +164,7 @@ export const WordSearchFields = forwardRef<
       placements,
       gridSourceWords,
       points: initialConfig?.points,
+      hintsReducePoints: initialConfig?.hintsReducePoints,
     }),
   }));
 
@@ -327,6 +328,16 @@ export const WordSearchFields = forwardRef<
           className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
         />
       </div>
+
+      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+        <input
+          type="checkbox"
+          name="word_search_hints_reduce_points"
+          value="true"
+          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+        />
+        Підказки зменшують бали (50% за елемент, де використана підказка)
+      </label>
     </div>
   );
 });
