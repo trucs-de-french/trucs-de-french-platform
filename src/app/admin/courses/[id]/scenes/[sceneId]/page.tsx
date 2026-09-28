@@ -40,6 +40,8 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { pluralizeExercisesAccusative } from "@/lib/pluralize-exercises";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { isGradableTaskType } from "@/lib/exercises/gradable-types";
+import { distributeSceneTaskPoints } from "@/app/admin/scenes/actions";
 
 const BLOCK_LABELS: Record<SceneBlockType, string> = {
   video: "Відео",
@@ -341,9 +343,32 @@ export default async function AdminScenePage({
     </div>
   );
 
+  // Для кнопки "Розподілити 100 балів" — усі 3 джерела вправ сцени, той
+  // самий набір, що resolveGroupMaxPoints/memberTasksByGroup вище: прямі
+  // задачі, задачі звичайних блоків, задачі блоків, прикріплених до
+  // content-блоків. isGradableTaskType відсіює callout/link/game/embed
+  // тощо (без points узагалі) — рахуємо лише щоб показати/сховати кнопку,
+  // саму фільтрацію для запису повторює distributeSceneTaskPoints на
+  // сервері незалежно.
+  const gradableTaskCount = [
+    ...(tasks ?? []),
+    ...Object.values(memberTasksByGroup).flat(),
+    ...(attachedGroupMembers ?? []),
+  ].filter((t) => isGradableTaskType(t.type)).length;
+
   const taskContent = (
     <div key="task">
       <div className="flex items-center justify-end gap-2">
+        {gradableTaskCount > 0 && (
+          <ConfirmForm
+            action={distributeSceneTaskPoints.bind(null, productId, sceneId)}
+            message={`Перезаписати бали для ВСІХ ${gradableTaskCount} ${pluralizeExercisesAccusative(gradableTaskCount)} з автоперевіркою в сцені (сума — рівно 100, пропорційно складності типу)? Поточні бали буде замінено.`}
+          >
+            <SubmitButton pendingChildren="Розподіляю..." className={BUTTON_SECONDARY}>
+              Розподілити 100 балів
+            </SubmitButton>
+          </ConfirmForm>
+        )}
         <Link
           href={`/admin/courses/${productId}/task-groups/new?sceneId=${sceneId}`}
           className={BUTTON_SECONDARY}

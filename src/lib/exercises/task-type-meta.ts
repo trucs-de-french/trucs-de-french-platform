@@ -13,6 +13,8 @@
 // напряму в className), бо Tailwind сканує вихідний код на предмет точних
 // рядків класів — динамічно побудований `bg-${color}-100` просто не
 // потрапив би у фінальний CSS.
+import type { GradableTaskType } from "@/lib/exercises/gradable-types";
+
 export type TaskTypeCategory = "auto_graded" | "reference" | "delf" | "media";
 
 export const CATEGORY_LABELS: Record<TaskTypeCategory, string> = {
@@ -682,3 +684,43 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
 // раніше; автоназва (task-title.ts) для них НЕ генерується. Єдине джерело —
 // раніше цей самий масив був продубльований в обох студентських файлах.
 export const TASK_TYPES_WITH_VISIBLE_TITLE = ["link", "game", "embed"];
+
+// Вага складності gradable-типу — для "Розподілити 100 балів"
+// (distributeSceneTaskPoints, admin/scenes/actions.ts): розподіл ПРОПОРЦІЙНИЙ
+// цій вазі, не порівну. Ярусна система, погоджена з вчителькою:
+// 1 — true_false/multiple_choice/image_match/checkbox_grid,
+// 1.5 — matching/table_fill/sort_columns/chronological_order/drag_drop/
+//       reorder/word_choice/letter_gaps/letter_rearrangement,
+// 2 — fill_blank/open_answer/listening, 3 — word_search/crossword.
+// Record<GradableTaskType, number> — навмисно ПОВНИЙ (не Partial): TS не
+// дасть скомпілюватись, якщо в GRADABLE_TASK_TYPES з'явиться новий тип, а
+// тут для нього забудуть вагу (той самий принцип, що assertNeverGradableType
+// у gradable-types.ts, лише через вичерпність об'єкта, а не switch).
+// karaoke — ЄДИНИЙ тип, якого не було у вихідній таблиці ваг вчительки:
+// поставлено 1.5 (медіана) за прямою інструкцією, винесено на розгляд
+// окремо в звіті. Не gradable типи (essay_check, ai_examiner, vocab_quiz,
+// error_correction тощо) тут відсутні — вони поза GRADABLE_TASK_TYPES,
+// points на них не застосовується взагалі.
+export const TASK_TYPE_COMPLEXITY_WEIGHT: Record<GradableTaskType, number> = {
+  true_false: 1,
+  multiple_choice: 1,
+  image_match: 1,
+  checkbox_grid: 1,
+  matching: 1.5,
+  table_fill: 1.5,
+  sort_columns: 1.5,
+  chronological_order: 1.5,
+  drag_drop: 1.5,
+  reorder: 1.5,
+  word_choice: 1.5,
+  letter_gaps: 1.5,
+  letter_rearrangement: 1.5,
+  // Відсутній у таблиці ваг вчительки — медіана, на розгляд (див. коментар
+  // вище).
+  karaoke: 1.5,
+  fill_blank: 2,
+  open_answer: 2,
+  listening: 2,
+  word_search: 3,
+  crossword: 3,
+};

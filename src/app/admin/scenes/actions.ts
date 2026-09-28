@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/action-state";
 import { DEFAULT_SCENE_BLOCK_ORDER } from "@/lib/scene-block-order";
+import { blockDomId } from "@/lib/block-dom-id";
+import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/gradable-types";
+import { computeSceneTaskPoints, applyDistributedPoints } from "@/lib/exercises/distribute-points";
 
 // ЧЕКЛИСТ: перед тим як додавати нову мутуючу дію в цей файл (чи в
 // tasks/actions.ts), визнач, до якого з 4 сценаріїв вона належить —
@@ -460,4 +463,81 @@ export async function reorderLinks(
   }
 
   return { ok: true };
+}
+
+// "Розподілити 100 балів" (кнопка над списком "Завдання", ConfirmForm —
+// сценарій 2 з чекліста нагорі файлу: звичайна форма, без useActionState,
+// redirect() назад на ту саму сторінку сцени). Перезаписує config.points
+// (чи еквівалент — applyDistributedPoints, distribute-points.ts) УСІХ
+// gradable-вправ сцени заново, включно з тими, що вже мали бали — не лише
+// нових; викликається лише за явним повторним натисканням, нічого не
+// перераховує автоматично при додаванні/видаленні вправи.
+//
+// "Вправи сцени" — той самий трирівневий збір, що вже на сторінці сцени
+// (page.tsx): прямі задачі (tasks.scene_id), задачі у звичайних блоках
+// (task_groups.scene_id), і задачі у блоках, прикріплених до
+// scene_content_blocks цієї сцени (0040_task_groups_scene_content_block.sql
+// — tasks.scene_id у них null, контекст лише через task_group_id).
+export async function distributeSceneTaskPoints(productId: string, sceneId: string) {
+  const supabase = await createClient();
+  const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
+  const anchor = `#${blockDomId("task")}`;
+
+  const { data: contentBlocks } = await supabase
+    .from("scene_content_blocks")
+    .select("id")
+    .eq("scene_id", sceneId);
+  const contentBlockIds = (contentBlocks ?? []).map((b) => b.id);
+
+  const [{ data: sceneGroups }, attachedGroupsResult] = await Promise.all([
+    supabase.from("task_groups").select("id").eq("scene_id", sceneId),
+    contentBlockIds.length > 0
+      ? supabase.from("task_groups").select("id").in("scene_content_block_id", contentBlockIds)
+      : Promise.resolve({ data: [] as { id: string }[] }),
+  ]);
+  const taskGroupIds = [...(sceneGroups ?? []), ...(attachedGroupsResult.data ?? [])].map((g) => g.id);
+
+  type TaskRow = { id: string; type: string; config: Record<string, unknown> | null };
+  const [{ data: directTasks }, groupTasksResult] = await Promise.all([
+    supabase.from("tasks").select("id, type, config").eq("scene_id", sceneId).order("order_index"),
+    taskGroupIds.length > 0
+      ? supabase.from("tasks").select("id, type, config").in("task_group_id", taskGroupIds).order("order_index")
+      : Promise.resolve({ data: [] as TaskRow[] }),
+  ]);
+
+  // Порядок: прямі задачі сцени, потім задачі в блоках — визначає, кому
+  // дістається залишок округлення при нічиї на найбільшу вагу
+  // (computeSceneTaskPoints, distribute-points.ts).
+  const allTasks: TaskRow[] = [...(directTasks ?? []), ...(groupTasksResult.data ?? [])];
+  const gradableTasks = allTasks.filter(
+    (t): t is TaskRow & { type: GradableTaskType } => isGradableTaskType(t.type)
+  );
+
+  if (gradableTasks.length === 0) {
+    redirect(
+      `${backPath}?error=${encodeURIComponent("У сцені немає вправ з автоперевіркою — розподіляти нічого")}${anchor}`
+    );
+  }
+
+  const pointsById = computeSceneTaskPoints(gradableTasks.map((t) => ({ id: t.id, type: t.type })));
+
+  const results = await Promise.all(
+    gradableTasks.map(async (t) => {
+      const target = pointsById.get(t.id) ?? 0;
+      const newConfig = applyDistributedPoints(t.type, t.config ?? {}, target);
+      const { data, error } = await supabase.from("tasks").update({ config: newConfig }).eq("id", t.id).select("id");
+      return { error, affected: data?.length ?? 0 };
+    })
+  );
+
+  const dbError = results.find((r) => r.error)?.error;
+  if (dbError) {
+    redirect(`${backPath}?error=${encodeURIComponent(`Не вдалося зберегти бали: ${dbError.message}`)}${anchor}`);
+  }
+  if (results.some((r) => r.affected === 0)) {
+    redirect(`${backPath}?error=${encodeURIComponent("Не вдалося зберегти бали частини вправ")}${anchor}`);
+  }
+
+  revalidatePath(backPath);
+  redirect(`${backPath}${anchor}`);
 }
