@@ -195,15 +195,21 @@ button, input, textarea, select, label, nav, aside {
    у @theme немає сенсу. Темніший варіант для темної теми — трохи
    яскравіший/насиченіший відтінок (той самий принцип, що --background/
    --foreground вище: :root:not(.light) для системної теми + :root.dark для
-   явного вибору). */
+   явного вибору). --found-word-fill-opacity — прозорість ШИРШОЇ з двох ліній
+   капсули (заливка, не рамка — та лишається на своєму фіксованому 0.55, її
+   не чіпаємо): у темній темі трохи вища за світлу, бо той самий проміле
+   opacity на темному тлі "зникає" помітніше, ніж на світлому. */
 :root {
   --found-word: #16a34a;
+  --found-word-fill-opacity: 0.15;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     --found-word: #4ade80;
+    --found-word-fill-opacity: 0.2;
   }
 }
 :root.dark {
   --found-word: #4ade80;
+  --found-word-fill-opacity: 0.2;
 }
