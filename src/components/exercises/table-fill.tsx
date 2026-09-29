@@ -208,10 +208,25 @@ export function TableFillExercise({
   }
 
   function handleSubmit() {
-    const cells = Object.entries(answers).map(([key, value]) => {
-      const [rowId, side] = key.split(":") as [string, "left" | "right"];
-      return { rowId, side, value };
-    });
+    // Повний прохід по ВСІХ рядках вправи (не Object.entries(answers)) —
+    // той самий принцип, що submitBlock() нижче: незаймана клітинка
+    // (студент жодного разу не клікнув у поле) отримує запис з value: ""
+    // замість випадання з cells узагалі. gradeTableFill (grade.ts) визначає
+    // скоуп рядка за ПРИСУТНІСТЮ rowId у cells — якщо рядок відсутній
+    // повністю, він випадає зі знаменника score/балів, а не рахується
+    // неправильним; сирий Object.entries(answers) (лише реально введені
+    // клітинки) робив незайману клітинку невидимою для сервера, і студент
+    // отримував ВИЩИЙ бал, ніж мав би (регресія, знайдена після
+    // впровадження блоків — answeredRowIds у grade.ts до блоків не
+    // існував, gradeTableFill проходила всі рядки конфігу безумовно).
+    const cells: TableFillAnswer["cells"] = [];
+    for (const row of config.rows) {
+      (["left", "right"] as const).forEach((side) => {
+        const hidden = side === "left" ? row.left === null : row.right === null;
+        if (!hidden) return;
+        cells.push({ rowId: row.id, side, value: answers[cellKey(row.id, side)] ?? "" });
+      });
+    }
     const hintedCellsList = [...hintedCells].map((key) => {
       const [rowId, side] = key.split(":") as [string, "left" | "right"];
       return { rowId, side };
