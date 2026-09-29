@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { Lightbulb } from "lucide-react";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -203,6 +204,25 @@ export function TableFillExercise({
           disabled={locked}
           className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side, detail)}`}
         />
+        {/* Статична лампочка одразу біля поля — той самий принцип, що
+            letter-gaps.tsx (окрема кнопка на кожній картці, завжди видима,
+            не залежить від фокуса/попапу діакритики). Раніше лампочка була
+            ЧАСТИНОЮ DiacriticsPopup (onHint), тож з'являлась лише коли
+            попап відкритий (фокус на полі) — не позиційний глюк, а сама
+            умова рендеру попапу (diacritics.rect && ... && activeKey) також
+            гейтила лампочку. */}
+        {!locked && !isDelf && (
+          <button
+            type="button"
+            title="Підказка: відкрити першу літеру"
+            aria-label="Підказка: відкрити першу літеру"
+            disabled={hintedCells.has(key) || hintPending}
+            onClick={() => applyHint(rowId, side)}
+            className="shrink-0 rounded p-1 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+          >
+            <Lightbulb size={14} />
+          </button>
+        )}
         {hintUsed && <span className="shrink-0 text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>}
       </div>
     );
@@ -445,17 +465,6 @@ export function TableFillExercise({
                 updateAnswer(rowId, side, value);
                 focusAndSetCursor(el, cursor);
               }}
-              onHint={
-                isDelf
-                  ? undefined
-                  : () => {
-                      const key = diacritics.activeKey!;
-                      const rowId = key.slice(0, key.lastIndexOf(":"));
-                      const side = key.slice(key.lastIndexOf(":") + 1) as "left" | "right";
-                      applyHint(rowId, side);
-                    }
-              }
-              hintDisabled={hintPending || (diacritics.activeKey ? hintedCells.has(diacritics.activeKey) : false)}
             />
           )}
 
@@ -526,17 +535,6 @@ export function TableFillExercise({
                 updateAnswer(rowId, side, value);
                 focusAndSetCursor(el, cursor);
               }}
-              onHint={
-                isDelf
-                  ? undefined
-                  : () => {
-                      const key = diacritics.activeKey!;
-                      const rowId = key.slice(0, key.lastIndexOf(":"));
-                      const side = key.slice(key.lastIndexOf(":") + 1) as "left" | "right";
-                      applyHint(rowId, side);
-                    }
-              }
-              hintDisabled={hintPending || (diacritics.activeKey ? hintedCells.has(diacritics.activeKey) : false)}
             />
           )}
         </BlockNavigation>
