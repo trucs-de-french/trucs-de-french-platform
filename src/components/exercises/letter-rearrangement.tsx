@@ -120,10 +120,7 @@ export function LetterRearrangementExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // 2-колонковий порядок — лише для ≤10-гілки (той самий принцип, що
-  // letter-gaps.tsx: EXERCISE_BLOCK_SIZE === TWO_COLUMN_WORD_THRESHOLD,
-  // тож жоден блок сам по собі ніколи не перевищує поріг — у блоках завжди
-  // один стовпець).
+  // 2-колонковий порядок — для ≤10-гілки, на всю вправу.
   const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
@@ -145,6 +142,31 @@ export function LetterRearrangementExercise({
   const [blockResults, setBlockResults] = useState<Record<number, LetterRearrangementResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  // Та сама 2-колонкова сітка/групування за виміряною висотою, що ≤10-
+  // гілка вище — ОКРЕМИЙ виклик хука, СКОУПЛЕНИЙ на слова АКТИВНОГО блоку
+  // (не на всю вправу), той самий принцип, що letter-gaps.tsx.
+  const activeBlockWordIndices = useMemo(
+    () => (useBlocks ? (wordBlocks[activeBlock] ?? []) : []),
+    [useBlocks, wordBlocks, activeBlock]
+  );
+  const activeBlockFullFlags = useMemo(
+    () => activeBlockWordIndices.map((wi) => fullFlags[wi]),
+    [activeBlockWordIndices, fullFlags]
+  );
+  const activeBlockImageUrls = useMemo(
+    () => activeBlockWordIndices.map((wi) => imageUrls[wi]),
+    [activeBlockWordIndices, imageUrls]
+  );
+  const blockTwoColumn = useTwoColumnWordOrder({
+    wordCount: activeBlockWordIndices.length,
+    fullFlags: activeBlockFullFlags,
+    imageUrls: activeBlockImageUrls,
+    enabled: useBlocks,
+  });
+  const blockDisplayOrder = activeBlockWordIndices.length
+    ? blockTwoColumn.displayOrder.map((li) => activeBlockWordIndices[li])
+    : [];
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
 
@@ -214,7 +236,11 @@ export function LetterRearrangementExercise({
   // принцип, що letter-gaps.tsx).
   function renderWordCard(
     wi: number,
-    opts: { detail: LetterRearrangementDetail | undefined; locked: boolean; withContentRef: boolean }
+    opts: {
+      detail: LetterRearrangementDetail | undefined;
+      locked: boolean;
+      setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
+    }
   ) {
     const word = config.words[wi];
     const wordDetail = opts.detail?.words[wi];
@@ -226,7 +252,7 @@ export function LetterRearrangementExercise({
 
     const totalLength = word.shuffledLetters.length;
     const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
-    const needsFullSpan = opts.withContentRef && fullFlags[wi];
+    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
 
     return (
@@ -265,7 +291,7 @@ export function LetterRearrangementExercise({
             </div>
           )}
           <div
-            ref={opts.withContentRef ? setContentRef(wi) : undefined}
+            ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
             className="flex min-w-0 flex-1 flex-col gap-1"
           >
             {word.hintText.trim() && (
@@ -291,7 +317,6 @@ export function LetterRearrangementExercise({
   }
 
   function renderBlock() {
-    const blockWordIndices = wordBlocks[activeBlock];
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
     const isPending = !!blockPending[activeBlock];
@@ -299,9 +324,17 @@ export function LetterRearrangementExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3">
-          {blockWordIndices.map((wi) =>
-            renderWordCard(wi, { detail: blockDetail, locked: !!blockResult, withContentRef: false })
+        <div
+          className={`transition-opacity duration-150 ${
+            blockTwoColumn.ready ? "opacity-100" : "opacity-0"
+          } grid gap-3 md:grid-cols-2`}
+        >
+          {blockDisplayOrder.map((wi) =>
+            renderWordCard(wi, {
+              detail: blockDetail,
+              locked: !!blockResult,
+              setContentRef: blockTwoColumn.setContentRef,
+            })
           )}
         </div>
 
@@ -384,7 +417,7 @@ export function LetterRearrangementExercise({
             }`}
           >
             {displayOrder.map((wi) =>
-              renderWordCard(wi, { detail: singleDetail, locked: !!single.result, withContentRef: true })
+              renderWordCard(wi, { detail: singleDetail, locked: !!single.result, setContentRef })
             )}
           </div>
 

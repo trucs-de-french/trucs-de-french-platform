@@ -122,13 +122,8 @@ export function LetterGapsExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — має сенс лише
-  // для ≤10-гілки (EXERCISE_BLOCK_SIZE === TWO_COLUMN_WORD_THRESHOLD, тож
-  // жоден БЛОК ніколи не перевищує поріг 2-колонкового режиму сам по собі
-  // — у блоках завжди один стовпець, природний наслідок самого розбиття,
-  // без окремої логіки). enabled: !useBlocks — у блоковому режимі хук
-  // одразу неактивний (ready=true, displayOrder=identity), нуль зайвої
-  // роботи.
+  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
+  // на всю вправу.
   const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
@@ -242,6 +237,38 @@ export function LetterGapsExercise({
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
 
+  // Та сама 2-колонкова сітка/групування за виміряною висотою, що ≤10-
+  // гілка вище — ОКРЕМИЙ виклик хука, СКОУПЛЕНИЙ на слова АКТИВНОГО блоку
+  // (не на всю вправу): wordCount/fullFlags/imageUrls і похідні
+  // displayOrder/setContentRef цього виклику стосуються лише
+  // activeBlockWordIndices, мапляться назад на глобальний wi через сам
+  // масив (activeBlockWordIndices[localIndex]). enabled: useBlocks —
+  // завжди сітка в блоковому режимі, навіть для неповного останнього
+  // блоку (зайва порожня клітинка grid на 1 непарне слово — не проблема).
+  const activeBlockWordIndices = useMemo(
+    () => (useBlocks ? (wordBlocks[activeBlock] ?? []) : []),
+    [useBlocks, wordBlocks, activeBlock]
+  );
+  const activeBlockFullFlags = useMemo(
+    () => activeBlockWordIndices.map((wi) => fullFlags[wi]),
+    [activeBlockWordIndices, fullFlags]
+  );
+  const activeBlockImageUrls = useMemo(
+    () => activeBlockWordIndices.map((wi) => imageUrls[wi]),
+    [activeBlockWordIndices, imageUrls]
+  );
+  const blockTwoColumn = useTwoColumnWordOrder({
+    wordCount: activeBlockWordIndices.length,
+    fullFlags: activeBlockFullFlags,
+    imageUrls: activeBlockImageUrls,
+    enabled: useBlocks,
+  });
+  // Глобальні індекси слів активного блоку в ПОКАЗОВОМУ порядку
+  // (blockTwoColumn.displayOrder — локальні індекси 0..розмір_блоку-1).
+  const blockDisplayOrder = activeBlockWordIndices.length
+    ? blockTwoColumn.displayOrder.map((li) => activeBlockWordIndices[li])
+    : [];
+
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
 
   // Сумарний результат — лише коли ВСІ блоки перевірені хоч раз (той самий
@@ -322,13 +349,21 @@ export function LetterGapsExercise({
   // gapIndex-нумерації через gapOrder). Блоки завжди single-column
   // (isTwoColumn лише для ≤10-гілки) — жодного setContentRef/виміру
   // висоти тут не потрібно.
-  function renderWordCard(wi: number, opts: { detail: LetterGapsDetail | undefined; locked: boolean; gapOrder: GapKey[]; withContentRef: boolean }) {
+  function renderWordCard(
+    wi: number,
+    opts: {
+      detail: LetterGapsDetail | undefined;
+      locked: boolean;
+      gapOrder: GapKey[];
+      setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
+    }
+  ) {
     const word = config.words[wi];
     let gapIndex = -1;
     const units = splitPhraseUnits(word.chars);
     const { maxUnitLength } = phraseSizeInfo(word.chars);
     const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
-    const needsFullSpan = opts.withContentRef && fullFlags[wi];
+    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
     const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : "h-9 w-8";
     const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : "text-lg";
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
@@ -368,7 +403,7 @@ export function LetterGapsExercise({
             </div>
           )}
           <div
-            ref={opts.withContentRef ? setContentRef(wi) : undefined}
+            ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
             className="flex min-w-0 flex-1 flex-col gap-1"
           >
             {word.hintText.trim() && (
@@ -422,18 +457,30 @@ export function LetterGapsExercise({
   }
 
   function renderBlock() {
-    const blockWordIndices = wordBlocks[activeBlock];
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
     const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
-    const blockGapOrder = gapOrderFor(blockWordIndices);
+    // Порядок автопереходу — за ПОКАЗОВИМ порядком карток (blockDisplayOrder),
+    // не за вихідним wordBlocks[activeBlock] — той самий принцип, що
+    // singleGapOrder/displayOrder у ≤10-гілці ("Tab рухається так, як
+    // вправа виглядає на екрані").
+    const blockGapOrder = gapOrderFor(blockDisplayOrder);
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3">
-          {blockWordIndices.map((wi) =>
-            renderWordCard(wi, { detail: blockDetail, locked: !!blockResult, gapOrder: blockGapOrder, withContentRef: false })
+        <div
+          className={`transition-opacity duration-150 ${
+            blockTwoColumn.ready ? "opacity-100" : "opacity-0"
+          } grid gap-3 md:grid-cols-2`}
+        >
+          {blockDisplayOrder.map((wi) =>
+            renderWordCard(wi, {
+              detail: blockDetail,
+              locked: !!blockResult,
+              gapOrder: blockGapOrder,
+              setContentRef: blockTwoColumn.setContentRef,
+            })
           )}
         </div>
 
@@ -516,7 +563,7 @@ export function LetterGapsExercise({
                 detail: singleDetail,
                 locked: !!single.result,
                 gapOrder: singleGapOrder,
-                withContentRef: true,
+                setContentRef,
               })
             )}
           </div>
@@ -578,7 +625,7 @@ export function LetterGapsExercise({
               rect={diacritics.rect}
               onPick={(ch) => {
                 const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
-                updateLetter(wi, gi, ch, gapOrderFor(wordBlocks[activeBlock]));
+                updateLetter(wi, gi, ch, gapOrderFor(blockDisplayOrder));
               }}
             />
           )}
