@@ -69,6 +69,30 @@ export function useTwoColumnWordOrder({
   const contentRefs = useRef<(HTMLElement | null)[]>([]);
   const interactedRef = useRef(false);
 
+  // Скидання стану під час РЕНДЕРУ (не в ефекті) при зміні wordCount —
+  // офіційний React-патерн "resetting state when a prop changes". Без
+  // цього displayOrder/ready лишались би від ПОПЕРЕДНЬОГО виклику з іншим
+  // wordCount, доки не спрацює useEffect([wordCount]) нижче (асинхронний,
+  // після waitUntilMeasurable) — у вікні між зміною wordCount і цим
+  // ефектом displayOrder міг містити локальні індекси АЖ ДО старого
+  // (більшого) wordCount, а споживач хука (letter-gaps.tsx/letter-
+  // rearrangement.tsx: блок X → блок Y меншого розміру, той самий
+  // wordCount, обчислений з wordBlocks[activeBlock].length) мапував би їх
+  // на масив слів НОВОГО (коротшого) блоку — index-out-of-range,
+  // config.words[undefined].chars. Виявлено як "Cannot read properties of
+  // undefined (reading 'chars')" у gapOrderFor при перемиканні між
+  // блоками різного розміру (останній неповний блок).
+  const [prevWordCount, setPrevWordCount] = useState(wordCount);
+  if (wordCount !== prevWordCount) {
+    setPrevWordCount(wordCount);
+    setDisplayOrder(identity(wordCount));
+    if (enabled) setReady(false);
+    // contentRefs НЕ чіпаємо тут (мутація ref під час рендеру — антипатерн):
+    // measureAndReorder() нижче й так фолбекає на identity(wordCount), якщо
+    // contentRefs.current.length ще не встиг наздогнати новий wordCount
+    // (heights.length !== wordCount) — самокоригується без ручного скидання.
+  }
+
   const setContentRef = useCallback(
     (index: number) => (el: HTMLElement | null) => {
       contentRefs.current[index] = el;
