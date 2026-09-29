@@ -29,6 +29,10 @@ import {
   WORD_CARD,
 } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { BlockNavigation } from "./block-navigation";
+
+type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
 export function LetterRearrangementExercise({
   taskId,
@@ -48,39 +52,29 @@ export function LetterRearrangementExercise({
   // запит, якби хтось обійшов UI).
   isDelf?: boolean;
 }) {
-  const [orders, setOrders] = useState<string[][]>(() =>
-    config.words.map((w) => w.shuffledLetters)
-  );
-  const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as LetterRearrangementDetail | undefined;
-  const locked = !!result;
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
-  // lockedCounts[wi] — скільки позицій ЗЛІВА в orders[wi] закріплено
-  // підказкою (завжди суцільний префікс: підказка йде по позиціях зліва
-  // направо). hintedWordIndices — окремо, для нарахування балів
-  // (LetterRearrangementAnswer) — раз використана для слова, лишається
-  // позначеним, навіть якщо lockedCounts[wi] згодом якимось чином досяг би
-  // довжини слова.
+  // Усі стани — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
+  // matching.tsx.
+  const [orders, setOrders] = useState<string[][]>(() => config.words.map((w) => w.shuffledLetters));
   const [lockedCounts, setLockedCounts] = useState<number[]>(() => config.words.map(() => 0));
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
   const [hintLoading, setHintLoading] = useState<Set<number>>(new Set());
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+  // ≤EXERCISE_BLOCK_SIZE слів (≤10) — той самий принцип, що
+  // letter-gaps.tsx: одна гілка, окрема від блоків, вигляд/поведінка
+  // наявних коротких вправ не залежать від логіки блоків узагалі.
+  const wordBlocks = useMemo(
+    () => chunk(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
+    [config.words]
+  );
+  const blockCount = wordBlocks.length;
+  const useBlocks = blockCount > 1;
 
   function updateOrder(wordIndex: number, next: string[]) {
     markInteracted();
     setOrders((prev) => prev.map((o, wi) => (wi === wordIndex ? next : o)));
   }
 
-  // Правильний порядок НІКОЛИ не приходить клієнту цілком (на відміну від
-  // CrosswordPublic.solution/LetterGapsPublicWord.hiddenLetters) — по одній
-  // літері за раз через /api/exercises/letter-rearrangement-hint (RLS,
-  // authenticated Supabase client на сервері, без service-role) — свідомо
-  // обраний варіант замість "передати в зашифрованому вигляді": останнє
-  // однаково оборотне на клієнті (ключ розшифрування був би поруч), лише
-  // додає фальшиве відчуття безпеки.
   async function applyHint(wi: number) {
     const position = lockedCounts[wi];
     if (position >= orders[wi].length || hintLoading.has(wi)) return;
@@ -94,9 +88,6 @@ export function LetterRearrangementExercise({
       });
       if (!res.ok) return;
       const { letter } = (await res.json()) as { letter: string };
-      // Будь-яка плитка з тим самим символом серед ще не закріплених
-      // (позиція >= position) підходить — однакові літери візуально й
-      // логічно взаємозамінні, конкретний вихідний індекс значення не має.
       const idx = orders[wi].findIndex((v, i) => i >= position && v === letter);
       if (idx === -1) return;
       setOrders((prev) =>
@@ -119,10 +110,6 @@ export function LetterRearrangementExercise({
     }
   }
 
-  // "full" (md:col-span-2) — той самий компроміс, що вже прийнятий для
-  // isCompact у цьому файлі: сумарна довжина shuffledLetters замість
-  // "найдовшої одиниці" (пробіл не в стабільній позиції в перемішаному
-  // масиві).
   const fullFlags = useMemo(
     () =>
       config.words.map((w) => {
@@ -131,19 +118,221 @@ export function LetterRearrangementExercise({
       }),
     [config.words]
   );
-
-  // Показовий порядок карток у режимі двох колонок — за РЕАЛЬНО заміряною
-  // висотою вмісту, див. use-two-column-word-order.ts. orders/detail
-  // лишаються індексованими вихідним індексом, переставляється лише
-  // порядок рендеру карток.
-  const isTwoColumn = config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
+
+  // 2-колонковий порядок — лише для ≤10-гілки (той самий принцип, що
+  // letter-gaps.tsx: EXERCISE_BLOCK_SIZE === TWO_COLUMN_WORD_THRESHOLD,
+  // тож жоден блок сам по собі ніколи не перевищує поріг — у блоках завжди
+  // один стовпець).
+  const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
     fullFlags,
     imageUrls,
     enabled: isTwoColumn,
   });
+
+  // ==== Гілка ≤10 слів (незмінна поведінка) ====
+  const single = useExerciseCheck(taskId);
+  const singleDetail = single.result?.detail as LetterRearrangementDetail | undefined;
+
+  useEffect(() => {
+    if (!useBlocks && single.result) onResult?.(single.result);
+  }, [useBlocks, single.result, onResult]);
+
+  // ==== Гілка блоків (>10 слів) ====
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, LetterRearrangementResult>>({});
+  const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
+  const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  // Той самий принцип, що letter-gaps.tsx: totalCorrect — за КОЖЕН
+  // глобальний індекс слова з ЙОГО ВЛАСНОГО блочного результату, не з
+  // чужого detail (де це слово поза скоупом і тому завжди isCorrect=false).
+  const aggregateResult: LetterRearrangementResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const totalWords = config.words.length;
+    const totalCorrect = wordBlocks.reduce((sum, block, i) => {
+      const r = blockResults[i];
+      const blockCorrect = block.filter((wi) => r.detail.words[wi]?.isCorrect).length;
+      return sum + blockCorrect;
+    }, 0);
+    return {
+      correct: results.every((r) => r.correct),
+      score: totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0,
+      detail: results[results.length - 1].detail,
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults, wordBlocks, config.words.length]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  // Пряме fetch, не useExerciseCheck — N незалежних станів (по блоку). words
+  // — розрідженим масивом на всю вправу: реальний порядок лише на позиціях
+  // слів ЦЬОГО блоку, null на решті (JSON перетворює "дірки" на null) —
+  // так gradeLetterRearrangement (grade.ts) визначає скоуп, тип
+  // LetterRearrangementAnswer лишається незмінним.
+  async function submitBlock(blockIndex: number) {
+    const blockWordIndices = wordBlocks[blockIndex];
+    const blockSet = new Set(blockWordIndices);
+    const words: (string[] | null)[] = config.words.map((_, wi) => (blockSet.has(wi) ? orders[wi] : null));
+    const answer: Omit<LetterRearrangementAnswer, "words"> & { words: (string[] | null)[] } = {
+      words,
+      hintedWordIndices: [...hintedWordIndices],
+    };
+    setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
+    setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
+    try {
+      const res = await fetch("/api/exercises/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, answer }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Помилка перевірки");
+      }
+      const result = (await res.json()) as LetterRearrangementResult;
+      setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+    } catch (e) {
+      setBlockError((prev) => ({
+        ...prev,
+        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+      }));
+    } finally {
+      setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
+    }
+  }
+
+  // Рендер однієї картки-слова — спільний для обох гілок (той самий
+  // принцип, що letter-gaps.tsx).
+  function renderWordCard(
+    wi: number,
+    opts: { detail: LetterRearrangementDetail | undefined; locked: boolean; withContentRef: boolean }
+  ) {
+    const word = config.words[wi];
+    const wordDetail = opts.detail?.words[wi];
+
+    function tileState(i: number): "correct" | "incorrect" | undefined {
+      if (!wordDetail) return undefined;
+      return wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect";
+    }
+
+    const totalLength = word.shuffledLetters.length;
+    const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
+    const needsFullSpan = opts.withContentRef && fullFlags[wi];
+    const hintUsed = opts.detail?.words[wi]?.hintUsed;
+
+    return (
+      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+        {!opts.locked && !isDelf && (
+          <button
+            type="button"
+            title="Підказка: поставити наступну літеру на місце"
+            aria-label="Підказка: поставити наступну літеру на місце"
+            disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
+            onClick={() => applyHint(wi)}
+            className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+          >
+            <Lightbulb size={14} />
+          </button>
+        )}
+        {hintUsed && (
+          <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
+            з підказкою
+          </span>
+        )}
+        <div className="flex items-center gap-3">
+          {(word.imageUrl || word.audioUrl) && (
+            <div className="flex shrink-0 items-center gap-2">
+              {word.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(word.imageUrl!)}
+                  aria-label="Показати картинку повністю"
+                  className="shrink-0 cursor-zoom-in"
+                >
+                  <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
+                </button>
+              )}
+              {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
+            </div>
+          )}
+          <div
+            ref={opts.withContentRef ? setContentRef(wi) : undefined}
+            className="flex min-w-0 flex-1 flex-col gap-1"
+          >
+            {word.hintText.trim() && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
+            )}
+            <SortableTileRow
+              items={orders[wi]}
+              onChange={(next) => updateOrder(wi, next)}
+              locked={opts.locked}
+              tileState={tileState}
+              compact={isCompact}
+              lockedCount={opts.locked ? 0 : lockedCounts[wi]}
+            />
+          </div>
+        </div>
+        {wordDetail && !wordDetail.isCorrect && (
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  function renderBlock() {
+    const blockWordIndices = wordBlocks[activeBlock];
+    const blockResult = blockResults[activeBlock];
+    const blockDetail = blockResult?.detail;
+    const isPending = !!blockPending[activeBlock];
+    const errMsg = blockError[activeBlock];
+
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          {blockWordIndices.map((wi) =>
+            renderWordCard(wi, { detail: blockDetail, locked: !!blockResult, withContentRef: false })
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => submitBlock(activeBlock)}
+            disabled={isPending}
+            className={STUDENT_BUTTON_PRIMARY}
+          >
+            {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
+          </button>
+          {blockResult && (
+            <p
+              className={`${RESULT_MESSAGE_CLASS} ${
+                blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
+              {blockResult.pointsPossible !== undefined && (
+                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  ({blockResult.pointsEarned} з {blockResult.pointsPossible} {pluralizePoints(blockResult.pointsPossible)})
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+        {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className={EXERCISE_STACK}>
@@ -157,11 +346,15 @@ export function LetterRearrangementExercise({
               ),
             }}
           />
-          {!hidePoints && (pointsVisible || detail) && (
+          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail)) && (
             <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`}
+              {useBlocks
+                ? aggregateResult
+                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`
+                : singleDetail
+                  ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`}
             </span>
           )}
         </div>
@@ -180,159 +373,69 @@ export function LetterRearrangementExercise({
       <HintExplanation
         type="letter_rearrangement"
         hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || !!result}
+        hidden={!!isDelf || (useBlocks ? allBlocksChecked : !!single.result)}
       />
 
-      <div
-        className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-          isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
-        }`}
-      >
-        {displayOrder.map((wi) => {
-          const word = config.words[wi];
-          const wordDetail = detail?.words[wi];
-          // Підсвічування — лише ПІСЛЯ "Перевірити" (wordDetail), як у
-          // reorder: жодного рішення клієнту заздалегідь, letter_rearrangement
-          // повернуто до цього навмисно (жива підсвітка була в попередній
-          // версії, прибрана — див. коментар при LetterRearrangementPublicWord
-          // у types.ts).
-          function tileState(i: number): "correct" | "incorrect" | undefined {
-            if (!wordDetail) return undefined;
-            return wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect";
-          }
-
-          // На відміну від letter-gaps.tsx, тут НЕ розбиваємо фразу на
-          // "одиниці переносу" за пробілом: пробіл у letter_rearrangement —
-          // ЗВИЧАЙНА плитка серед перемішаних (sanitizeLetterRearrangement
-          // шафлить w.word.split("") цілком, разом із пробілами), яку
-          // студент так само може перетягнути будь-куди. Межа між "словами"
-          // тому нестабільна ПРОТЯГОМ вправи — сама плитка-пробіл рухається
-          // разом з рештою, і будь-яке групування за поточною позицією
-          // пробілу перебудовувалось би на кожен drag, а стабільне
-          // групування вимагало б робити пробіл нерухомим/недраговним —
-          // тобто змінювати саму механіку перетягування, а не лише
-          // розмітку.
-          //
-          // Розмір теж не може спиратись на "найдовшу одиницю" (correctOrder
-          // прибрано з Public — п.2 цієї задачі): shuffledLetters уже
-          // перемішаний, тож розбиття НА НЬОМУ за пробілом дало б випадкові,
-          // безглузді довжини "шматків" (пробіл фізично в іншому місці, ніж
-          // у справжньому слові). Тому для letter_rearrangement компактність/
-          // span рахуються від СУМАРНОЇ довжини плиток (без розбиття на
-          // слова) — точний збіг з "найдовше слово" лише для однослівних
-          // завдань (переважна більшість цього типу — сам конфіг називається
-          // "word", не "phrase"); для рідкісної фрази з пробілом це груба,
-          // але безпечна апроксимація (могла б увімкнути компактність трохи
-          // раніше/пізніше, ніж true "найдовше слово", ніколи не ламає
-          // розмітку).
-          const totalLength = word.shuffledLetters.length;
-          const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
-          const needsFullSpan = fullFlags[wi];
-
-          const hintUsed = detail?.words[wi]?.hintUsed;
-          return (
-            <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
-              {!result && !isDelf && (
-                <button
-                  type="button"
-                  title="Підказка: поставити наступну літеру на місце"
-                  aria-label="Підказка: поставити наступну літеру на місце"
-                  disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
-                  onClick={() => applyHint(wi)}
-                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-                >
-                  <Lightbulb size={14} />
-                </button>
-              )}
-              {hintUsed && (
-                <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
-                  з підказкою
-                </span>
-              )}
-              <div className="flex items-center gap-3">
-                {/* Той самий 44px слот, що letter-gaps.tsx: картинка й/або
-                    компактна аудіо-кнопка поруч, або жодної. */}
-                {(word.imageUrl || word.audioUrl) && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    {word.imageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setLightboxSrc(word.imageUrl!)}
-                        aria-label="Показати картинку повністю"
-                        className="shrink-0 cursor-zoom-in"
-                      >
-                        <ImageOrPlaceholder
-                          src={word.imageUrl}
-                          alt=""
-                          className="h-11 w-11 rounded-lg object-cover"
-                          useFocus
-                        />
-                      </button>
-                    )}
-                    {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
-                  </div>
-                )}
-                {/* ref — на текстовій/плитковій колонці, НЕ на всьому рядку
-                    разом із картинкою (той самий принцип, що letter-gaps.tsx —
-                    use-two-column-word-order.ts). */}
-                <div ref={setContentRef(wi)} className="flex min-w-0 flex-1 flex-col gap-1">
-                  {word.hintText.trim() && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
-                  )}
-                  <SortableTileRow
-                    items={orders[wi]}
-                    onChange={(next) => updateOrder(wi, next)}
-                    locked={locked}
-                    tileState={tileState}
-                    compact={isCompact}
-                    lockedCount={locked ? 0 : lockedCounts[wi]}
-                  />
-                </div>
-              </div>
-              {wordDetail && !wordDetail.isCorrect && (
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-
-      <div className="flex flex-col gap-3">
-        {!result ? (
-          <button
-            type="button"
-            onClick={() => {
-              const answer: LetterRearrangementAnswer = {
-                words: orders,
-                hintedWordIndices: [...hintedWordIndices],
-              };
-              submit(answer);
-            }}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+      {!useBlocks ? (
+        <>
+          <div
+            className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
+              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
+            {displayOrder.map((wi) =>
+              renderWordCard(wi, { detail: singleDetail, locked: !!single.result, withContentRef: true })
             )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+          </div>
+
+          {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+
+          <div className="flex flex-col gap-3">
+            {!single.result ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const answer: LetterRearrangementAnswer = {
+                    words: orders,
+                    hintedWordIndices: [...hintedWordIndices],
+                  };
+                  single.submit(answer);
+                }}
+                disabled={single.pending}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {single.pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+            ) : (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
+                {single.result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
+                    {pluralizePoints(single.result.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+            {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
+          </div>
+        </>
+      ) : (
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
+          {renderBlock()}
+          {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+        </BlockNavigation>
+      )}
     </div>
   );
 }

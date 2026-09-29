@@ -201,15 +201,38 @@ function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): Gr
     return { studentLetters, correctLetters, isCorrect, hintUsed: hintedSet.has(wi) };
   });
 
-  const correctCount = words.filter((w) => w.isCorrect).length;
-  const correct = correctCount === words.length && words.length > 0;
-  const points = resolveLetterGapsPoints(config);
+  // Скоуп — за словами, де answer.letters РЕАЛЬНО має масив на цій позиції
+  // (не undefined/null): letter-gaps.tsx для вправ >10 слів
+  // (exercise-blocks.ts) шле по БЛОКУ — letters лишається позиційним
+  // масивом на ВСЮ вправу (config.words.length), лише з "дірками" на
+  // позиціях слів поза поточним блоком (JSON перетворює їх на null).
+  // detail.words НАВМИСНО лишається повної довжини (нижче, по одному
+  // елементу на КОЖНЕ слово, за вихідним wi) — на відміну від matching,
+  // тут немає id, лише позиційний індекс, і letter-gaps.tsx читає
+  // detail.words[wi] напряму за глобальним wi в обох режимах; звужені
+  // лише "рахункові" поля (score/correct/points) нижче. Для ≤10 слів
+  // (один "блок" = уся вправа) letter-gaps.tsx ініціалізує answers одразу
+  // для ВСІХ слів (dense масив від монтування) — тож кожен
+  // studentLettersByWord[wi] завжди справжній масив, скоуп збігається з
+  // усіма словами, поведінка НЕ змінюється.
+  const answeredIndices = config.words.map((_, wi) => wi).filter((wi) => Array.isArray(studentLettersByWord[wi]));
+  const scopedWords = answeredIndices.map((wi) => words[wi]);
+
+  const correctCount = scopedWords.filter((w) => w.isCorrect).length;
+  const correct = correctCount === scopedWords.length && scopedWords.length > 0;
+  // pointsPossible — пропорційна частка config.points за часткою слів У
+  // ЦЬОМУ поданні (для ≤10 слів — завжди всі слова, тобто весь points, як
+  // і раніше). Кожен блок при незалежному округленні може в сумі трохи
+  // відхилитись від повного config.points — той самий прийнятний
+  // компроміс округлення, що вже в "Розподілити 100 балів".
+  const totalPoints = resolveLetterGapsPoints(config);
+  const points = config.words.length > 0 ? Math.round((totalPoints * scopedWords.length) / config.words.length) : 0;
 
   return {
     correct,
-    score: percentage(correctCount, words.length),
+    score: percentage(correctCount, scopedWords.length),
     detail: { words },
-    pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
+    pointsEarned: pointsWithHints(points, scopedWords, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -237,15 +260,23 @@ function gradeLetterRearrangement(
     return { letters, isCorrect: letters.every((l) => l.isCorrect), hintUsed: hintedSet.has(wi) };
   });
 
-  const correctCount = words.filter((w) => w.isCorrect).length;
-  const correct = correctCount === words.length && words.length > 0;
-  const points = resolveLetterRearrangementPoints(config);
+  // Той самий скоуп-за-присутністю-масиву й той самий компроміс з
+  // detail.words повної довжини, що gradeLetterGaps вище (letter-
+  // rearrangement.tsx має ту саму позиційну структуру answer.words, ту саму
+  // гарантію dense-масиву для ≤10 слів).
+  const answeredIndices = config.words.map((_, wi) => wi).filter((wi) => Array.isArray(studentOrderByWord[wi]));
+  const scopedWords = answeredIndices.map((wi) => words[wi]);
+
+  const correctCount = scopedWords.filter((w) => w.isCorrect).length;
+  const correct = correctCount === scopedWords.length && scopedWords.length > 0;
+  const totalPoints = resolveLetterRearrangementPoints(config);
+  const points = config.words.length > 0 ? Math.round((totalPoints * scopedWords.length) / config.words.length) : 0;
 
   return {
     correct,
-    score: percentage(correctCount, words.length),
+    score: percentage(correctCount, scopedWords.length),
     detail: { words },
-    pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
+    pointsEarned: pointsWithHints(points, scopedWords, !!config.hintsReducePoints),
     pointsPossible: points,
   };
 }
@@ -665,12 +696,24 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
 function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): GradeResult {
   const answerMap = new Map((answer?.cells ?? []).map((a) => [`${a.rowId}:${a.side}`, a.value]));
   const hintedSet = new Set((answer?.hintedCells ?? []).map((h) => `${h.rowId}:${h.side}`));
+  // Скоуп — за rowId, присутніми в answer.cells: table-fill.tsx для вправ
+  // >10 рядків (exercise-blocks.ts) шле лише клітинки поточного блоку
+  // (кожен рядок блоку — і незаповнені клітинки теж, порожнім рядком, щоб
+  // rowId лишався присутнім). Для ≤10 рядків (один "блок" = уся вправа)
+  // типове використання (усе видиме заповнено, тоді "Перевірити") і так
+  // покриває всі рядки — поведінка НЕ змінюється. Рідкісний випадок
+  // дострокового сабміту з дійсно НЕЗАЙМАНОЮ клітинкою (кнопка
+  // "Перевірити" тут і раніше не блокувалась на неповноті, на відміну від
+  // matching) тепер не рахується в pointsPossible замість "вважається
+  // неправильною" — прийнятний компроміс без зміни формату TableFillAnswer.
+  const answeredRowIds = new Set((answer?.cells ?? []).map((c) => c.rowId));
 
   const blanks: TableFillDetail["blanks"] = [];
   // getTableFillRows (sanitize.ts) — рядок без лівої чи правої частини не
   // потрапляє студенту (sanitizeTableFill), тож і тут не повинен впливати
   // на score/бали — той самий принцип, що completePairs у gradeMatching.
   for (const row of getTableFillRows(config)) {
+    if (!answeredRowIds.has(row.id)) continue;
     const rowPoints = resolveTableFillPoints(row);
     (["left", "right"] as const).forEach((side) => {
       const hidden = side === "left" ? row.leftHidden : row.rightHidden;

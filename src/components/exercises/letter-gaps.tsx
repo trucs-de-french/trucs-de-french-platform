@@ -29,6 +29,8 @@ import {
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { BlockNavigation } from "./block-navigation";
 
 // Той самий normalize (trim+lowercase, БЕЗ прибирання діакритики), що
 // сервер (grade.ts) — з тими самими наслідками: регістр не має значення,
@@ -65,6 +67,8 @@ function groupChars(chars: (string | null)[]): CharGroup[] {
   return groups;
 }
 
+type LetterGapsResult = Extract<GradeResult, { detail: LetterGapsDetail }>;
+
 export function LetterGapsExercise({
   taskId,
   config,
@@ -81,29 +85,33 @@ export function LetterGapsExercise({
   // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
   isDelf?: boolean;
 }) {
-  // По слову: рядок відповідей довжиною = кількість прихованих позицій
-  // (null-клітин) у цьому слові, у порядку зліва направо.
+  // Усі стани відповіді — СПІЛЬНІ на всю вправу (не по блоку), як і pairs у
+  // matching.tsx: блок лише фільтрує, які слова видно й до яких прив'язана
+  // поточна дія, answers/hintedGaps/hintedWordIndices — одна мапа на всі
+  // блоки.
   const [answers, setAnswers] = useState<string[][]>(() =>
     config.words.map((w) => Array(w.chars.filter((c) => c === null).length).fill(""))
   );
   const diacritics = useDiacriticsPopup<string>();
-  // Ключ — "wi,gi" (той самий формат, що diacritics.fieldRef нижче) — поле,
-  // куди щойно вписала літеру кнопка-лампочка, підсвічується синім, поки
-  // студент не перепише його сам (updateLetter знімає підсвітку).
   const [hintedGaps, setHintedGaps] = useState<Set<string>>(new Set());
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
-  const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as LetterGapsDetail | undefined;
-  // Одна лайтбокс-картинка на всю вправу (не по слову) — одночасно відкрита
-  // максимум одна, той самий принцип, що openId у ScriptSection.
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+  // ≤EXERCISE_BLOCK_SIZE слів (≤10) — wordBlocks матиме РІВНО один чанк,
+  // useBlocks === false, і нижче рендериться ТОЧНО той самий код, що був до
+  // розбиття на блоки (окрема гілка, не перевикористання спільного
+  // рендера) — свідомо, щоб вигляд/поведінка наявних коротких вправ не
+  // залежали від логіки блоків узагалі.
+  const wordBlocks = useMemo(
+    () => chunk(config.words.map((_, wi) => wi), EXERCISE_BLOCK_SIZE),
+    [config.words]
+  );
+  const blockCount = wordBlocks.length;
+  const useBlocks = blockCount > 1;
 
-  // "full" (md:col-span-2) — той самий критерій, що вже раніше, для кожного
-  // слова окремо; масив, не функція (стабільна ідентичність для хука нижче).
+  // "full" (md:col-span-2) — той самий критерій, що й раніше, для кожного
+  // слова окремо; масив, не функція (стабільна ідентичність для хука
+  // нижче).
   const fullFlags = useMemo(
     () =>
       config.words.map((w) => {
@@ -112,14 +120,16 @@ export function LetterGapsExercise({
       }),
     [config.words]
   );
-
-  // Показовий порядок карток у режимі двох колонок — за РЕАЛЬНО заміряною
-  // висотою вмісту (не евристичною оцінкою), див. use-two-column-word-order.ts.
-  // answers/hiddenLetters/detail лишаються індексованими вихідним індексом
-  // скрізь нижче — переставляється лише порядок РЕНДЕРУ й порядок
-  // АВТОПЕРЕХОДУ (gapOrder), не сама структура відповідей.
-  const isTwoColumn = config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
+
+  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — має сенс лише
+  // для ≤10-гілки (EXERCISE_BLOCK_SIZE === TWO_COLUMN_WORD_THRESHOLD, тож
+  // жоден БЛОК ніколи не перевищує поріг 2-колонкового режиму сам по собі
+  // — у блоках завжди один стовпець, природний наслідок самого розбиття,
+  // без окремої логіки). enabled: !useBlocks — у блоковому режимі хук
+  // одразу неактивний (ready=true, displayOrder=identity), нуль зайвої
+  // роботи.
+  const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
     fullFlags,
@@ -127,30 +137,6 @@ export function LetterGapsExercise({
     enabled: isTwoColumn,
   });
 
-  // Плаский порядок УСІХ пропусків через усю вправу — той самий принцип, що
-  // clueCells у crossword.tsx, лише без напрямків (тут один-єдиний
-  // "напрямок": далі по списку слів). Автоперехід іде по ЦЬОМУ порядку: у
-  // межах слова, потім — перший пропуск наступного — АЛЕ саме слова
-  // обходяться в ПОРЯДКУ ПОКАЗУ (displayOrder), не у вихідному, щоб Tab/
-  // автоперехід рухався зверху вниз/зліва направо так, як вправа виглядає
-  // на екрані, а не за прихованим вихідним порядком карток.
-  const gapOrder = useMemo(() => {
-    const order: GapKey[] = [];
-    displayOrder.forEach((wi) => {
-      const gapCount = config.words[wi].chars.filter((c) => c === null).length;
-      for (let gi = 0; gi < gapCount; gi++) order.push({ wi, gi });
-    });
-    return order;
-  }, [displayOrder, config.words]);
-
-  function focusGap(key: GapKey | undefined) {
-    if (!key) return;
-    diacritics.getElement(`${key.wi},${key.gi}`)?.focus();
-  }
-
-  // Слово ПОВНІСТЮ заповнене (кожен пропуск непорожній) — той самий принцип,
-  // що isWordFilled у crossword.tsx: без цього кожна ще не дописана літера
-  // вже підсвічувалась би як помилка, не чекаючи завершення слова.
   function isWordFilled(wi: number): boolean {
     return answers[wi].length > 0 && answers[wi].every((v) => v !== "");
   }
@@ -161,9 +147,6 @@ export function LetterGapsExercise({
     return normalize(answers[wi][gi]) === normalize(correctLetter) ? "correct" : "incorrect";
   }
 
-  // Перший пропуск слова, ще не заповнений правильною літерою (порожній чи
-  // помилковий) — ціль наступного натискання лампочки. null — усі пропуски
-  // слова вже правильні (кнопка неактивна).
   function nextHintGap(wi: number): number | null {
     const word = config.words[wi];
     for (let gi = 0; gi < answers[wi].length; gi++) {
@@ -173,8 +156,6 @@ export function LetterGapsExercise({
     return null;
   }
 
-  // hiddenLetters уже публічні (LetterGapsPublicWord.hiddenLetters) —
-  // підказка лише читає вже наявні клієнту дані, без запиту на сервер.
   function applyHint(wi: number) {
     const gi = nextHintGap(wi);
     if (gi === null) return;
@@ -184,12 +165,10 @@ export function LetterGapsExercise({
     setHintedWordIndices((prev) => new Set(prev).add(wi));
   }
 
-  function updateLetter(wordIndex: number, gapIndex: number, value: string) {
+  function updateLetter(wordIndex: number, gapIndex: number, value: string, gapOrder: GapKey[]) {
     markInteracted();
     setAnswers((prev) =>
-      prev.map((word, wi) =>
-        wi === wordIndex ? word.map((v, gi) => (gi === gapIndex ? value : v)) : word
-      )
+      prev.map((word, wi) => (wi === wordIndex ? word.map((v, gi) => (gi === gapIndex ? value : v)) : word))
     );
     setHintedGaps((prev) => {
       const key = `${wordIndex},${gapIndex}`;
@@ -199,10 +178,6 @@ export function LetterGapsExercise({
       return next;
     });
 
-    // Автоперехід — лише коли справді ввели символ (не стирання). Пропуски,
-    // де вже стоїть ПРАВИЛЬНА літера, перескакуємо; на першому порожньому
-    // чи неправильному — зупиняємось (той самий принцип, що updateLetter у
-    // crossword.tsx).
     if (!value) return;
     const index = gapOrder.findIndex((k) => k.wi === wordIndex && k.gi === gapIndex);
     if (index < 0) return;
@@ -218,22 +193,277 @@ export function LetterGapsExercise({
     focusGap(gapOrder[nextIndex]);
   }
 
-  // Backspace на ВЖЕ порожньому пропуску — переходимо на попередній і
-  // стираємо ЙОГО. На відміну від crossword.tsx (де та сама дія навмисно
-  // НЕ стирає, лише переміщує фокус) — там клітинки можуть належати
-  // ОДРАЗУ двом словам через перетин, і сліпе стирання зіпсувало б друге
-  // слово; тут пропуски одного слова НІКОЛИ не перетинаються з пропусками
-  // іншого, тож такого ризику немає — стираємо напряму.
-  function handleBackspace(wordIndex: number, gapIndex: number) {
+  function focusGap(key: GapKey | undefined) {
+    if (!key) return;
+    diacritics.getElement(`${key.wi},${key.gi}`)?.focus();
+  }
+
+  function handleBackspace(wordIndex: number, gapIndex: number, gapOrder: GapKey[]) {
     if (answers[wordIndex][gapIndex] !== "") return;
     markInteracted();
     const index = gapOrder.findIndex((k) => k.wi === wordIndex && k.gi === gapIndex);
     if (index <= 0) return;
     const prev = gapOrder[index - 1];
-    setAnswers((p) =>
-      p.map((word, wi) => (wi === prev.wi ? word.map((v, gi) => (gi === prev.gi ? "" : v)) : word))
-    );
+    setAnswers((p) => p.map((word, wi) => (wi === prev.wi ? word.map((v, gi) => (gi === prev.gi ? "" : v)) : word)));
     focusGap(prev);
+  }
+
+  // ==== Гілка ≤10 слів (незмінна поведінка) ====
+  const single = useExerciseCheck(taskId);
+  const singleDetail = single.result?.detail as LetterGapsDetail | undefined;
+
+  useEffect(() => {
+    if (!useBlocks && single.result) onResult?.(single.result);
+  }, [useBlocks, single.result, onResult]);
+
+  // Плаский порядок пропусків для даного списку слів (у наданому порядку)
+  // — звичайна функція, НЕ хук: викликається і з useMemo нижче (гілка
+  // ≤10), і напряму з renderBlock()/колбеків (гілка блоків), де виклик
+  // useMemo був би порушенням Rules of Hooks (renderBlock — не компонент,
+  // викликається умовно з JSX).
+  function gapOrderFor(wordIndices: number[]): GapKey[] {
+    const order: GapKey[] = [];
+    wordIndices.forEach((wi) => {
+      const gapCount = config.words[wi].chars.filter((c) => c === null).length;
+      for (let gi = 0; gi < gapCount; gi++) order.push({ wi, gi });
+    });
+    return order;
+  }
+
+  const singleGapOrder = useMemo(
+    () => gapOrderFor(displayOrder),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayOrder, config.words]
+  );
+
+  // ==== Гілка блоків (>10 слів) ====
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, LetterGapsResult>>({});
+  const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
+  const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  // Сумарний результат — лише коли ВСІ блоки перевірені хоч раз (той самий
+  // принцип, що matching.tsx). detail.words тут СПІЛЬНИЙ повної довжини
+  // (config.words.length) у КОЖНОГО блочного результату (grade.ts:
+  // gradeLetterGaps лишає detail.words повним завжди, звужує лише
+  // score/бали) — тож просто беремо detail останнього перевіреного блоку
+  // (він містить ті самі correctLetters для всіх слів незалежно від
+  // блоку), а не конкатенуємо.
+  const aggregateResult: LetterGapsResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const totalWords = config.words.length;
+    // За КОЖЕН глобальний індекс слова — isCorrect ЛИШЕ з результату ТОГО
+    // блоку, що реально його перевіряв (blockResults[i], не будь-якого
+    // іншого): слово поза скоупом певного подання завжди isCorrect=false
+    // у ЙОГО detail.words (grade.ts трактує "немає масиву на цій позиції"
+    // як порожню відповідь), тож брати чийсь один спільний detail для ВСІХ
+    // слів дало б хибні "неправильно" для слів з ІНШИХ блоків.
+    const totalCorrect = wordBlocks.reduce((sum, block, i) => {
+      const r = blockResults[i];
+      const blockCorrect = block.filter((wi) => r.detail.words[wi]?.isCorrect).length;
+      return sum + blockCorrect;
+    }, 0);
+    return {
+      correct: results.every((r) => r.correct),
+      score: totalWords > 0 ? Math.round((totalCorrect / totalWords) * 100) : 0,
+      detail: results[results.length - 1].detail,
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults, wordBlocks, config.words.length]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  // Пряме fetch, не useExerciseCheck — той тримає ОДИН result/pending/error
+  // на весь виклик хука, тут потрібні N незалежних станів (по одному на
+  // блок). letters — розрідженим масивом на ВСЮ вправу: реальні відповіді
+  // лише на позиціях СЛІВ ЦЬОГО блоку, null на решті (JSON.stringify
+  // перетворює "дірки"/undefined на null) — так gradeLetterGaps (grade.ts)
+  // визначає скоуп, не чіпаючи сам тип LetterGapsAnswer.
+  async function submitBlock(blockIndex: number) {
+    const blockWordIndices = wordBlocks[blockIndex];
+    const blockSet = new Set(blockWordIndices);
+    const letters: (string[] | null)[] = config.words.map((_, wi) => (blockSet.has(wi) ? answers[wi] : null));
+    const answer: Omit<LetterGapsAnswer, "letters"> & { letters: (string[] | null)[] } = {
+      letters,
+      hintedWordIndices: [...hintedWordIndices],
+    };
+    setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
+    setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
+    try {
+      const res = await fetch("/api/exercises/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, answer }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Помилка перевірки");
+      }
+      const result = (await res.json()) as LetterGapsResult;
+      setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+    } catch (e) {
+      setBlockError((prev) => ({
+        ...prev,
+        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+      }));
+    } finally {
+      setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
+    }
+  }
+
+  // Рендер однієї картки-слова — СПІЛЬНИЙ для обох гілок (структура карток
+  // ідентична, різниться лише джерело "result"/"detail"/locked і порядок
+  // gapIndex-нумерації через gapOrder). Блоки завжди single-column
+  // (isTwoColumn лише для ≤10-гілки) — жодного setContentRef/виміру
+  // висоти тут не потрібно.
+  function renderWordCard(wi: number, opts: { detail: LetterGapsDetail | undefined; locked: boolean; gapOrder: GapKey[]; withContentRef: boolean }) {
+    const word = config.words[wi];
+    let gapIndex = -1;
+    const units = splitPhraseUnits(word.chars);
+    const { maxUnitLength } = phraseSizeInfo(word.chars);
+    const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
+    const needsFullSpan = opts.withContentRef && fullFlags[wi];
+    const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : "h-9 w-8";
+    const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : "text-lg";
+    const hintUsed = opts.detail?.words[wi]?.hintUsed;
+    return (
+      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+        {!opts.locked && !isDelf && (
+          <button
+            type="button"
+            title="Підказка: відкрити наступну літеру"
+            aria-label="Підказка: відкрити наступну літеру"
+            disabled={nextHintGap(wi) === null}
+            onClick={() => applyHint(wi)}
+            className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+          >
+            <Lightbulb size={14} />
+          </button>
+        )}
+        {hintUsed && (
+          <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
+            з підказкою
+          </span>
+        )}
+        <div className="flex items-center gap-3">
+          {(word.imageUrl || word.audioUrl) && (
+            <div className="flex shrink-0 items-center gap-2">
+              {word.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(word.imageUrl!)}
+                  aria-label="Показати картинку повністю"
+                  className="shrink-0 cursor-zoom-in"
+                >
+                  <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
+                </button>
+              )}
+              {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
+            </div>
+          )}
+          <div
+            ref={opts.withContentRef ? setContentRef(wi) : undefined}
+            className="flex min-w-0 flex-1 flex-col gap-1"
+          >
+            {word.hintText.trim() && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {units.map((unit, ui) => (
+                <div key={ui} className="flex shrink-0 items-center gap-1">
+                  {groupChars(unit).map((group, ci) => {
+                    if (group.type === "letters")
+                      return (
+                        <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
+                          {group.text}
+                        </span>
+                      );
+                    gapIndex += 1;
+                    const gi = gapIndex;
+                    const status = gapLiveStatus(wi, gi);
+                    return (
+                      <input
+                        key={ci}
+                        ref={diacritics.fieldRef(`${wi},${gi}`)}
+                        maxLength={1}
+                        value={answers[wi][gi]}
+                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
+                        }}
+                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                        onBlur={diacritics.onBlur}
+                        disabled={opts.locked}
+                        className={`${gapSizeClass} rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-sm transition-colors ${
+                          hintedGaps.has(`${wi},${gi}`)
+                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                            : status === "correct"
+                              ? LIVE_CORRECT_CLASS
+                              : status === "incorrect"
+                                ? LIVE_INCORRECT_CLASS
+                                : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderBlock() {
+    const blockWordIndices = wordBlocks[activeBlock];
+    const blockResult = blockResults[activeBlock];
+    const blockDetail = blockResult?.detail;
+    const isPending = !!blockPending[activeBlock];
+    const errMsg = blockError[activeBlock];
+    const blockGapOrder = gapOrderFor(blockWordIndices);
+
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          {blockWordIndices.map((wi) =>
+            renderWordCard(wi, { detail: blockDetail, locked: !!blockResult, gapOrder: blockGapOrder, withContentRef: false })
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => submitBlock(activeBlock)}
+            disabled={isPending}
+            className={STUDENT_BUTTON_PRIMARY}
+          >
+            {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
+          </button>
+          {blockResult && (
+            <p
+              className={`${RESULT_MESSAGE_CLASS} ${
+                blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
+              {blockResult.pointsPossible !== undefined && (
+                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  ({blockResult.pointsEarned} з {blockResult.pointsPossible} {pluralizePoints(blockResult.pointsPossible)})
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+        {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+      </div>
+    );
   }
 
   return (
@@ -246,11 +476,15 @@ export function LetterGapsExercise({
               __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction),
             }}
           />
-          {!hidePoints && (pointsVisible || detail) && (
+          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail)) && (
             <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`}
+              {useBlocks
+                ? aggregateResult
+                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`
+                : singleDetail
+                  ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`}
             </span>
           )}
         </div>
@@ -267,186 +501,90 @@ export function LetterGapsExercise({
       <HintExplanation
         type="letter_gaps"
         hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || !!result}
+        hidden={!!isDelf || (useBlocks ? allBlocksChecked : !!single.result)}
       />
 
-      <div
-        className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-          isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
-        }`}
-      >
-        {displayOrder.map((wi) => {
-          const word = config.words[wi];
-          let gapIndex = -1;
-          // Одиниці переносу — слова ФРАЗИ за пробілом (пробіл сам
-          // відкидається, стає gap-2 розкладки нижче). gapIndex наскрізний
-          // через УСІ одиниці цього слова (той самий, що gapOrder/answers) —
-          // let у зовнішній замикаючій області, не скидається між
-          // одиницями.
-          const units = splitPhraseUnits(word.chars);
-          const { maxUnitLength } = phraseSizeInfo(word.chars);
-          const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
-          const needsFullSpan = fullFlags[wi];
-          const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : "h-9 w-8";
-          const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : "text-lg";
-          const hintUsed = detail?.words[wi]?.hintUsed;
-          return (
-            <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
-              {!result && !isDelf && (
-                <button
-                  type="button"
-                  title="Підказка: відкрити наступну літеру"
-                  aria-label="Підказка: відкрити наступну літеру"
-                  disabled={nextHintGap(wi) === null}
-                  onClick={() => applyHint(wi)}
-                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-                >
-                  <Lightbulb size={14} />
-                </button>
-              )}
-              {hintUsed && (
-                <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
-                  з підказкою
-                </span>
-              )}
-              <div className="flex items-center gap-3">
-                {/* Картинка й аудіо-кнопка — той самий 44px слот, обидві
-                    можуть бути одночасно (картинка + кнопка поруч), лише
-                    аудіо (кнопка "на місці картинки"), або жодної (тоді
-                    цей рядок звужується до самої лише текстової колонки). */}
-                {(word.imageUrl || word.audioUrl) && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    {word.imageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setLightboxSrc(word.imageUrl!)}
-                        aria-label="Показати картинку повністю"
-                        className="shrink-0 cursor-zoom-in"
-                      >
-                        <ImageOrPlaceholder
-                          src={word.imageUrl}
-                          alt=""
-                          className="h-11 w-11 rounded-lg object-cover"
-                          useFocus
-                        />
-                      </button>
-                    )}
-                    {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
-                  </div>
-                )}
-                {/* ref — саме на текстовій колонці (підказка+слово), НЕ на
-                    всьому рядку разом із картинкою: h-11 картинка не має
-                    штучно "утовщувати" однорядкову картку понад дворядкову
-                    без картинки при групуванні за висотою
-                    (use-two-column-word-order.ts). */}
-                <div ref={setContentRef(wi)} className="flex min-w-0 flex-1 flex-col gap-1">
-                  {word.hintText.trim() && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
-                  )}
-                  {/* Зовнішній рядок — flex-wrap, переносить лише МІЖ
-                      одиницями (словами фрази), gap-2 між ними виконує роль
-                      "пробілу". Кожна одиниця всередині — shrink-0,
-                      без flex-wrap (за замовчуванням flex-wrap: nowrap) — не
-                      розсипається сама по собі. */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {units.map((unit, ui) => (
-                      <div key={ui} className="flex shrink-0 items-center gap-1">
-                        {groupChars(unit).map((group, ci) => {
-                          if (group.type === "letters")
-                            return (
-                              <span
-                                key={ci}
-                                className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}
-                              >
-                                {group.text}
-                              </span>
-                            );
-                          gapIndex += 1;
-                          const gi = gapIndex;
-                          const status = gapLiveStatus(wi, gi);
-                          return (
-                            <input
-                              key={ci}
-                              ref={diacritics.fieldRef(`${wi},${gi}`)}
-                              maxLength={1}
-                              value={answers[wi][gi]}
-                              onChange={(e) => updateLetter(wi, gi, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Backspace") handleBackspace(wi, gi);
-                              }}
-                              onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                              onBlur={diacritics.onBlur}
-                              disabled={!!result}
-                              // font-heading font-medium прямо на input — не
-                              // лише для вирівнювання з видимими літерами, а
-                              // й тому, що глобальне
-                              // input{font-family:var(--font-heading)}
-                              // (globals.css) саме по собі дає ЛИШЕ шрифт, не
-                              // вагу/розмір — ті все одно треба задавати
-                              // явно тут.
-                              className={`${gapSizeClass} rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-sm transition-colors ${
-                                hintedGaps.has(`${wi},${gi}`)
-                                  ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                                  : status === "correct"
-                                    ? LIVE_CORRECT_CLASS
-                                    : status === "incorrect"
-                                      ? LIVE_INCORRECT_CLASS
-                                      : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {diacritics.rect && !result && diacritics.activeKey && (
-        <DiacriticsPopup
-          rect={diacritics.rect}
-          onPick={(ch) => {
-            const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
-            updateLetter(wi, gi, ch);
-          }}
-        />
-      )}
-
-      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-
-      <div className="flex flex-col gap-3">
-        {!result ? (
-          <button
-            type="button"
-            onClick={() => {
-              const answer: LetterGapsAnswer = { letters: answers, hintedWordIndices: [...hintedWordIndices] };
-              submit(answer);
-            }}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+      {!useBlocks ? (
+        <>
+          <div
+            className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
+              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
+            {displayOrder.map((wi) =>
+              renderWordCard(wi, {
+                detail: singleDetail,
+                locked: !!single.result,
+                gapOrder: singleGapOrder,
+                withContentRef: true,
+              })
             )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+          </div>
+
+          {diacritics.rect && !single.result && diacritics.activeKey && (
+            <DiacriticsPopup
+              rect={diacritics.rect}
+              onPick={(ch) => {
+                const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
+                updateLetter(wi, gi, ch, singleGapOrder);
+              }}
+            />
+          )}
+
+          {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+
+          <div className="flex flex-col gap-3">
+            {!single.result ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const answer: LetterGapsAnswer = { letters: answers, hintedWordIndices: [...hintedWordIndices] };
+                  single.submit(answer);
+                }}
+                disabled={single.pending}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {single.pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+            ) : (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
+                {single.result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
+                    {pluralizePoints(single.result.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+            {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
+          </div>
+        </>
+      ) : (
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
+          {renderBlock()}
+          {diacritics.rect && diacritics.activeKey && !blockResults[activeBlock] && (
+            <DiacriticsPopup
+              rect={diacritics.rect}
+              onPick={(ch) => {
+                const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
+                updateLetter(wi, gi, ch, gapOrderFor(wordBlocks[activeBlock]));
+              }}
+            />
+          )}
+          {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+        </BlockNavigation>
+      )}
     </div>
   );
 }
