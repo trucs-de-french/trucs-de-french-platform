@@ -449,7 +449,18 @@ function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeRes
   // тут означало б вимагати відповідь на пару, якої студент і не міг
   // ввести — score ніколи не досяг би 100%. completePairs замінює
   // config.pairs УСЮДИ нижче (score, correct, detail.correctPairs, бали).
-  const completePairs = getMatchingPairs(config);
+  //
+  // Скоуп — за LEFT-значеннями, що реально прийшли в answer, не за ВСІМА
+  // completePairs: matching.tsx для вправ >10 елементів ділить пари на
+  // блоки (matching-blocks.ts) і "Перевірити" кожного блоку шле лише пари
+  // ЦЬОГО блоку — без цього фільтра denominator (score/pointsPossible)
+  // завжди був би на всю вправу, і перевірка одного повністю правильного
+  // блоку з 3 показувала б лише ~33%. Для ≤10 елементів (один "блок" = уся
+  // вправа) кнопка "Перевірити" заблокована, доки заповнені не ВСІ left
+  // (matching.tsx), тож answer і так завжди покриває 100% пар — цей фільтр
+  // для такого випадку не звужує нічого, і поведінка НЕ змінюється.
+  const answeredLefts = new Set(answer.map((a) => a.left));
+  const completePairs = getMatchingPairs(config).filter((p) => answeredLefts.has(p.left));
 
   // Пари не мають id, тому порівнюємо left/right як окремі поля структурно,
   // а не через склеєний рядок — конкатенація неоднозначна, якщо межа між
