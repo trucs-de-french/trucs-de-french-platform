@@ -123,23 +123,30 @@ function percentage(correctCount: number, total: number): number {
 // цей окремий, опційний шар балів.
 //
 // hintsReducePoints вимкнено (дефолт, і всі наявні вправи до появи цієї
-// фічі) — точнісінько стара поведінка: pointsEarned = усі елементи correct
-// ? points : 0, без жодного розподілу по елементах.
+// фічі) — ЧАСТКОВИЙ залік, пропорційний частці правильних елементів:
+// pointsEarned = round(points * correctCount / elements.length). До цього
+// тут було "все-або-нічого" (round-цінка інакше не потрібна: за 100%
+// correctCount === elements.length, і формула сама дає points без остачі).
+// gradeWordChoice (grade.ts, окремо нижче) рахує ту саму частку inline —
+// не через цю функцію, бо WordChoiceConfig взагалі не має hintsReducePoints
+// (для нього тут ніколи не було другої гілки, яку варто перевикористати).
 //
 // Увімкнено — points ділиться порівну між елементами (perElement =
 // points/count); елемент, де підказку НЕ використовували, дає свою повну
 // частку, якщо він correct; елемент із підказкою — половину частки, теж
 // лише якщо зрештою correct (сама підказка не "купує" бали за неправильну
-// відповідь, лише зменшує їх за правильну).
+// відповідь, лише зменшує їх за правильну). Ця гілка й так завжди була
+// частковим заліком — не займана.
 function pointsWithHints(
   points: number,
   elements: { isCorrect: boolean; hintUsed: boolean }[],
   hintsReducePoints: boolean
 ): number {
-  if (!hintsReducePoints) {
-    return elements.length > 0 && elements.every((e) => e.isCorrect) ? points : 0;
-  }
   if (elements.length === 0) return 0;
+  if (!hintsReducePoints) {
+    const correctCount = elements.filter((e) => e.isCorrect).length;
+    return Math.round((points * correctCount) / elements.length);
+  }
   const perElement = points / elements.length;
   return elements.reduce((sum, e) => {
     if (!e.isCorrect) return sum;
@@ -164,9 +171,9 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
   const correct = correctCount === blanks.length && blanks.length > 0;
   // POINTS — на всю вправу (не на пропуск, підтверджений компроміс, бо
   // template — вільний текст без структурної адресації пропусків):
-  // зараховується цілком, лише якщо ВСІ пропуски правильні. З
-  // hintsReducePoints — pointsWithHints ділить ці ж бали порівну між
-  // пропусками (елемент — пропуск, як і для detail.blanks вище).
+  // pointsWithHints ділить ці бали пропорційно частці правильних пропусків
+  // (елемент — пропуск, як і для detail.blanks вище); з hintsReducePoints —
+  // та сама пропорція, лише з додатковою половинною знижкою за підказку.
   const points = resolveFillBlankPoints(config);
 
   return {
@@ -178,10 +185,10 @@ function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): Grade
   };
 }
 
-// Той самий принцип, що gradeFillBlank: один бал на все завдання, а не на
-// слово/літеру — зараховується цілком, лише якщо ВСІ слова повністю
-// правильні. normalize() — та сама конвенція, що для текстових пропусків
-// (регістр/апостроф/пробіли байдужі, діакритика — ні).
+// Той самий принцип, що gradeFillBlank: один пул балів на все завдання, а
+// не на слово/літеру — pointsWithHints ділить його пропорційно частці
+// повністю правильних слів. normalize() — та сама конвенція, що для
+// текстових пропусків (регістр/апостроф/пробіли байдужі, діакритика — ні).
 function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): GradeResult {
   const studentLettersByWord = answer?.letters ?? [];
   const hintedSet = new Set(answer?.hintedWordIndices ?? []);
@@ -285,8 +292,11 @@ function gradeMultipleChoice(
 // розгалуження по mode: студентський компонент сам звів обидва режими
 // (select/cross_out) до однієї selected[]-форми ще до сабміту. На відміну
 // від gradeMultipleChoice — бали НЕ на речення, а на всю вправу (як
-// gradeLetterGaps): зараховуються цілком, лише якщо ВСІ речення правильні;
-// score лишається per-речення відсотком (незалежний вимір).
+// gradeLetterGaps), пропорційно частці правильних речень (round(points *
+// correctCount / sentences.length), той самий принцип, що pointsWithHints
+// вище) — не через саму pointsWithHints, бо WordChoiceConfig не має
+// hintsReducePoints (нема другої гілки, яку тут перевикористовувати).
+// score лишається per-речення відсотком (незалежний вимір, та сама частка).
 function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): GradeResult {
   const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, new Set(a.selected)]));
 
@@ -309,7 +319,7 @@ function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): Gr
     correct,
     score: percentage(correctCount, sentences.length),
     detail: { sentences },
-    pointsEarned: correct ? points : 0,
+    pointsEarned: sentences.length > 0 ? Math.round((points * correctCount) / sentences.length) : 0,
     pointsPossible: points,
   };
 }
@@ -323,9 +333,10 @@ function cellsMatch(a: { row: number; col: number }[], b: { row: number; col: nu
 // виділити слово з БУДЬ-ЯКОГО кінця лінії (природний жест — не знає
 // наперед, з якого краю "правильний" початок), тож звіряємо з placement
 // АБО його реверсом. points — на всю вправу (як gradeLetterGaps), не на
-// слово: зараховується цілком, лише якщо ВСІ слова знайдені; found у
-// detail лишається per-слово — лише для візуального фідбеку/легенди, не
-// для заліку балів.
+// слово: pointsWithHints ділить його пропорційно частці знайдених слів
+// (score — та сама частка, foundCount/words.length, лише у відсотках); found
+// у detail лишається per-слово — і для візуального фідбеку/легенди, і як
+// вхід у саму пропорцію балів.
 function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): GradeResult {
   const answerByWord = new Map((answer?.found ?? []).map((a) => [a.word, a.cells]));
   const hintedSet = new Set(answer?.hintedWords ?? []);
