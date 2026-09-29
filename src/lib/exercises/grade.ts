@@ -28,6 +28,7 @@ import {
 } from "./sanitize";
 import { placementCells } from "./word-search-grid";
 import { sanitizeWordForGrid } from "./grid-word";
+import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -154,6 +155,47 @@ function pointsWithHints(
   }, 0);
 }
 
+// Частка config.points для ОДНОГО блоку (letter_gaps/letter_rearrangement,
+// exercise-blocks.ts: блоки по EXERCISE_BLOCK_SIZE слів, коли слів більше)
+// — усі блоки, КРІМ ОСТАННЬОГО, отримують свою незалежно округлену
+// пропорційну частку (round(total * розмір_блоку / усього_слів)); залишок
+// округлення (total - сума округлених часток) іде НА ОСТАННІЙ блок, щоб
+// сума pointsPossible по всіх блоках вправи завжди точно дорівнювала
+// config.points. Раніше кожен блок рахувався незалежно й округлення могло
+// не зійтись (13 слів/100 балів, EXERCISE_BLOCK_SIZE=10: блоки [10,3] —
+// round(100*10/13)=77, round(100*3/13)=23, сума 100 — тут якраз зійшлось,
+// але для інших N/points — ні, звідси й фікс).
+//
+// answeredIndices — які САМЕ індекси слів прийшли в answer цього виклику
+// (уже відфільтровані вище на "реально присутній масив", не null) —
+// співставляється з ТИМ САМИМ чанкуванням, що на клієнті (chunk з
+// exercise-blocks.ts, той самий EXERCISE_BLOCK_SIZE), щоб визначити, який
+// це блок за порядком і чи він останній. Якщо відповідь не збігається
+// ЖОДНИМ повним блоком (нестандартний виклик API напряму, не через UI) —
+// фолбек на просту пропорційну частку без гарантії суми, той самий
+// розрахунок, що був до цього фіксу.
+function blockPointsPossible(totalPoints: number, totalCount: number, answeredIndices: number[]): number {
+  if (totalCount === 0) return 0;
+  const chunks = chunk(
+    Array.from({ length: totalCount }, (_, i) => i),
+    EXERCISE_BLOCK_SIZE
+  );
+  const answeredSet = new Set(answeredIndices);
+  const chunkIndex = chunks.findIndex(
+    (c) => c.length === answeredIndices.length && c.every((i) => answeredSet.has(i))
+  );
+  if (chunkIndex === -1) {
+    return Math.round((totalPoints * answeredIndices.length) / totalCount);
+  }
+  if (chunkIndex < chunks.length - 1) {
+    return Math.round((totalPoints * chunks[chunkIndex].length) / totalCount);
+  }
+  const precedingSum = chunks
+    .slice(0, chunks.length - 1)
+    .reduce((sum, c) => sum + Math.round((totalPoints * c.length) / totalCount), 0);
+  return totalPoints - precedingSum;
+}
+
 function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): GradeResult {
   const blanksAcceptable = [...config.template.matchAll(BLANK_RE)].map((m) =>
     m[1].split("|").map((s) => normalize(s))
@@ -220,13 +262,12 @@ function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): Gr
 
   const correctCount = scopedWords.filter((w) => w.isCorrect).length;
   const correct = correctCount === scopedWords.length && scopedWords.length > 0;
-  // pointsPossible — пропорційна частка config.points за часткою слів У
-  // ЦЬОМУ поданні (для ≤10 слів — завжди всі слова, тобто весь points, як
-  // і раніше). Кожен блок при незалежному округленні може в сумі трохи
-  // відхилитись від повного config.points — той самий прийнятний
-  // компроміс округлення, що вже в "Розподілити 100 балів".
+  // pointsPossible — частка config.points ЦЬОГО блоку (blockPointsPossible
+  // вище): для ≤10 слів — завжди всі слова, тобто весь points, як і
+  // раніше; для >10 — залишок округлення йде на ОСТАННІЙ блок, тож сума
+  // pointsPossible по всіх блоках вправи завжди точно дорівнює config.points.
   const totalPoints = resolveLetterGapsPoints(config);
-  const points = config.words.length > 0 ? Math.round((totalPoints * scopedWords.length) / config.words.length) : 0;
+  const points = blockPointsPossible(totalPoints, config.words.length, answeredIndices);
 
   return {
     correct,
@@ -269,8 +310,10 @@ function gradeLetterRearrangement(
 
   const correctCount = scopedWords.filter((w) => w.isCorrect).length;
   const correct = correctCount === scopedWords.length && scopedWords.length > 0;
+  // pointsPossible — той самий blockPointsPossible, що gradeLetterGaps
+  // (залишок округлення на останній блок).
   const totalPoints = resolveLetterRearrangementPoints(config);
-  const points = config.words.length > 0 ? Math.round((totalPoints * scopedWords.length) / config.words.length) : 0;
+  const points = blockPointsPossible(totalPoints, config.words.length, answeredIndices);
 
   return {
     correct,
