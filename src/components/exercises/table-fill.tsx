@@ -26,11 +26,12 @@ const DEFAULT_COLUMN_LABELS: [string, string] = ["Французька", "Пер
 
 // Рядків довше 10 — розбиваємо навпіл на дві колонки, кожна зі своїм
 // рядком підписів колонок (лише щоб довга таблиця не розтягувалась на всю
-// висоту сторінки в один стовпець). ЛИШЕ для ≤EXERCISE_BLOCK_SIZE-гілки —
-// той самий поріг, що й розбиття на блоки (обидва — 10), тож для >10
-// рядків тепер спрацьовує розбиття на БЛОКИ (кожен блок ≤10 рядків, ніколи
-// сам по собі не перевищує SPLIT_THRESHOLD), а не цей візуальний поділ —
-// код нижче лишається лише для вже наявної ≤10-гілки, не видалений.
+// висоту сторінки в один стовпець). Використовується ЛИШЕ ≤10-гілкою
+// (умовно, за rows.length > SPLIT_THRESHOLD — той самий поріг, що й
+// розбиття на блоки, обидва 10). Блокова гілка (renderBlock() нижче) має
+// СВІЙ поділ навпіл на 2 таблиці — БЕЗУМОВНИЙ, не за цим порогом: блок за
+// визначенням ≤EXERCISE_BLOCK_SIZE(10) рядків, тож SPLIT_THRESHOLD там
+// ніколи не спрацював би сам по собі.
 const SPLIT_THRESHOLD = 10;
 
 type Row = TableFillPublic["rows"][number];
@@ -333,15 +334,41 @@ export function TableFillExercise({
     const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
 
+    // Той самий поділ навпіл на 2 таблиці-половини, що й columns вище для
+    // ≤10-гілки (SPLIT_THRESHOLD) — тут БЕЗУМОВНО (не за rows.length >
+    // SPLIT_THRESHOLD): блок за визначенням ≤EXERCISE_BLOCK_SIZE(10) рядків,
+    // тож числовий поріг ">10" ніколи не спрацював би сам по собі — та сама
+    // причина, що змусила letter-gaps.tsx/letter-rearrangement.tsx (feb2f3c)
+    // прибрати аналогічну умову для 2-колонкової сітки карток. Останній
+    // непарний блок (напр. 3 рядки) дає нерівний поділ 2/1 — прийнятно,
+    // той самий компроміс, що "зайва порожня клітинка" в сітці карток.
+    const blockMid = Math.ceil(blockRows.length / 2);
+    const blockColumns =
+      blockRows.length > 1
+        ? [
+            { key: "block-col-a", rows: blockRows.slice(0, blockMid) },
+            { key: "block-col-b", rows: blockRows.slice(blockMid) },
+          ]
+        : [{ key: "block-col-all", rows: blockRows }];
+
     return (
       <div className="flex flex-col gap-3">
-        <div className="mx-auto w-full max-w-3xl">
-          <TableFillColumn
-            rows={blockRows}
-            columnLabels={columnLabels}
-            renderCell={(rowId, side, value) => renderCell(rowId, side, value, blockDetail, !!blockResult)}
-            rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
-          />
+        <div
+          className={`mx-auto w-full ${
+            blockColumns.length > 1
+              ? "grid max-w-5xl grid-cols-1 items-start gap-x-8 gap-y-6 md:grid-cols-2"
+              : "max-w-3xl"
+          }`}
+        >
+          {blockColumns.map((col) => (
+            <TableFillColumn
+              key={col.key}
+              rows={col.rows}
+              columnLabels={columnLabels}
+              renderCell={(rowId, side, value) => renderCell(rowId, side, value, blockDetail, !!blockResult)}
+              rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
+            />
+          ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
