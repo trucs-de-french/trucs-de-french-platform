@@ -54,7 +54,7 @@ import { type GradableTaskType, assertNeverGradableType } from "./gradable-types
 import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolution } from "./crossword-grid";
 import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 import { sanitizeWordForGrid } from "./grid-word";
-import { MATCHING_BLOCK_SIZE, chunk } from "./matching-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
@@ -322,16 +322,16 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   // студенту в жодному з трьох полів, той самий принцип, що вже нижче для
   // pairs.
   const pairs = getMatchingPairs(config);
-  // right — перемішано В МЕЖАХ кожного блоку по MATCHING_BLOCK_SIZE пар
-  // (matching-blocks.ts), НЕ глобально по всій вправі: matching.tsx ділить
-  // >10-елементні вправи на незалежні блоки (5 пар/10 елементів), і кожен
-  // блок мусить бачити серед своїх right ХОЧА Б усі власні правильні
-  // відповіді — глобальний шафл міг би закинути їх усі в ІНШИЙ блок,
-  // залишивши поточний нерозв'язним. Для ≤MATCHING_BLOCK_SIZE пар це рівно
-  // ОДИН чанк = уся вправа — тобто той самий результат, що старий
-  // shuffle(pairs.map(...)) без чанкування, поведінка для наявних (≤10)
-  // вправ НЕ змінюється.
-  const right = chunk(pairs, MATCHING_BLOCK_SIZE).flatMap((group) => shuffle(group.map((p) => p.right)));
+  // right — перемішано В МЕЖАХ кожного блоку по EXERCISE_BLOCK_SIZE/2 пар
+  // (exercise-blocks.ts — ПАРА це 2 елементи, звідси ділення навпіл), НЕ
+  // глобально по всій вправі: matching.tsx ділить >10-елементні вправи на
+  // незалежні блоки, і кожен блок мусить бачити серед своїх right ХОЧА Б
+  // усі власні правильні відповіді — глобальний шафл міг би закинути їх усі
+  // в ІНШИЙ блок, залишивши поточний нерозв'язним. Для ≤EXERCISE_BLOCK_SIZE/2
+  // пар це рівно ОДИН чанк = уся вправа — тобто той самий результат, що
+  // старий shuffle(pairs.map(...)) без чанкування, поведінка для наявних
+  // (≤10) вправ НЕ змінюється.
+  const right = chunk(pairs, EXERCISE_BLOCK_SIZE / 2).flatMap((group) => shuffle(group.map((p) => p.right)));
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,

@@ -8,14 +8,11 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
-import {
-  STUDENT_BUTTON_PRIMARY,
-  STUDENT_BUTTON_SECONDARY_IDLE,
-  STUDENT_BUTTON_SECONDARY_ACTIVE,
-} from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { MATCHING_BLOCK_SIZE, chunk } from "@/lib/exercises/matching-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { BlockNavigation } from "./block-navigation";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -39,13 +36,16 @@ export function MatchingExercise({
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
 
-  // ≤MATCHING_BLOCK_SIZE пар (≤10 елементів) — leftBlocks матиме РІВНО один
-  // чанк, useBlocks === false, і нижче рендериться ТОЧНО той самий код, що
-  // був до розбиття на блоки (окрема гілка, не перевикористання спільного
-  // рендера з блоками) — свідомо, щоб вигляд/поведінка наявних коротких
-  // вправ не залежали від логіки блоків узагалі.
-  const leftBlocks = useMemo(() => chunk(config.left, MATCHING_BLOCK_SIZE), [config.left]);
-  const rightBlocks = useMemo(() => chunk(config.right, MATCHING_BLOCK_SIZE), [config.right]);
+  // ПАРА — 2 елементи, звідси EXERCISE_BLOCK_SIZE/2 (exercise-blocks.ts:
+  // спільний поріг "10 елементів", кожен тип сам вирішує, скільки його
+  // "елементів" у чанку). ≤EXERCISE_BLOCK_SIZE/2 пар (≤10 елементів) —
+  // leftBlocks матиме РІВНО один чанк, useBlocks === false, і нижче
+  // рендериться ТОЧНО той самий код, що був до розбиття на блоки (окрема
+  // гілка, не перевикористання спільного рендера з блоками) — свідомо, щоб
+  // вигляд/поведінка наявних коротких вправ не залежали від логіки блоків
+  // узагалі.
+  const leftBlocks = useMemo(() => chunk(config.left, EXERCISE_BLOCK_SIZE / 2), [config.left]);
+  const rightBlocks = useMemo(() => chunk(config.right, EXERCISE_BLOCK_SIZE / 2), [config.right]);
   const blockCount = leftBlocks.length;
   const useBlocks = blockCount > 1;
 
@@ -430,68 +430,15 @@ export function MatchingExercise({
           </div>
         </>
       ) : (
-        <>
-          {/* Навігація між блоками — вільна (клік по будь-якій вкладці чи
-              стрілками), той самий STUDENT_BUTTON_SECONDARY_* принцип, що
-              перемикач швидкості аудіо (button-styles.ts): неактивна
-              вкладка — нейтральна картка, активна — залита brand. ✓ на вже
-              перевіреній — з blockResults, не зі стану навігації. */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1.5">
-              {leftBlocks.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveBlock(i)}
-                  className={i === activeBlock ? STUDENT_BUTTON_SECONDARY_ACTIVE : STUDENT_BUTTON_SECONDARY_IDLE}
-                >
-                  Блок {i + 1}
-                  {i in blockResults ? " ✓" : ""}
-                </button>
-              ))}
-            </div>
-            <span className={SCORE_LABEL_CLASS}>
-              Блок {activeBlock + 1} з {blockCount}
-            </span>
-          </div>
-
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
           {renderBlock()}
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveBlock((b) => b - 1)}
-              disabled={activeBlock === 0}
-              className={`${STUDENT_BUTTON_SECONDARY_IDLE} disabled:cursor-not-allowed disabled:opacity-40`}
-            >
-              ← Попередній блок
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveBlock((b) => b + 1)}
-              disabled={activeBlock === blockCount - 1}
-              className={`${STUDENT_BUTTON_SECONDARY_IDLE} disabled:cursor-not-allowed disabled:opacity-40`}
-            >
-              Наступний блок →
-            </button>
-          </div>
-
-          {aggregateResult && (
-            <p
-              className={`${RESULT_MESSAGE_CLASS} ${
-                aggregateResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-              }`}
-            >
-              Загалом: {aggregateResult.correct ? "Правильно! ✓" : `${aggregateResult.score}%`}
-              {aggregateResult.pointsPossible !== undefined && (
-                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                  ({aggregateResult.pointsEarned} з {aggregateResult.pointsPossible}{" "}
-                  {pluralizePoints(aggregateResult.pointsPossible)})
-                </span>
-              )}
-            </p>
-          )}
-        </>
+        </BlockNavigation>
       )}
     </div>
   );
