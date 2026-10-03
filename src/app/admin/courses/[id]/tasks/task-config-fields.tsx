@@ -1140,14 +1140,15 @@ export function TaskConfigFields({
 
       {IMPORT_ENABLED_TYPES.includes(type) && (
         <ImportVocabPanel
-          // Для image_match показуємо лише слова з уже заповненим image_url
-          // (у dialogue-editor.tsx) — без картинки слово тут однаково
-          // непридатне.
-          sceneVocab={
-            type === "image_match"
-              ? (sceneVocab ?? []).filter((v) => v.image_url)
-              : (sceneVocab ?? [])
-          }
+          // image_match раніше звужував sceneVocab до слів із уже заповненим
+          // image_url — відфільтровувало ВСЮ позначену лексику, якщо
+          // картинки ще не додані в скрипті (звичний робочий стан: картинку
+          // зручніше додавати тут, в ImageMatchFields, після імпорту, а не
+          // заздалегідь у скрипті). Імпорт тепер підтягує всі позначені
+          // слова, як і для решти типів — image_url кожного елемента
+          // лишається порожнім, доки вчителька не додасть його вручну
+          // (ImageMatchFields/FileOrLinkField нижче).
+          sceneVocab={sceneVocab ?? []}
           onImport={(words) => importRef.current?.importWords(words)}
           pairMode={PAIR_TYPES.includes(type)}
           showTranslationColumn={!NO_TRANSLATION_TYPES.includes(type)}
