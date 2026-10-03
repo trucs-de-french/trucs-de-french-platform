@@ -98,10 +98,17 @@ export const ListeningFields = forwardRef<
   const [questions, setQuestions] = useState<ListeningQuestion[]>(
     initialConfig?.questions?.length ? initialConfig.questions : [emptyQuestion()]
   );
+  const [audioUrl, setAudioUrl] = useState(initialConfig?.audioUrl ?? "");
+  const audio = useFileOrLink({
+    kind: "audio",
+    mode: "controlled",
+    value: audioUrl,
+    onChange: setAudioUrl,
+    placeholder: "Аудіо або відео (пряме посилання на mp3 або YouTube)",
+  });
 
-  // audioUrl — неконтрольований input (defaultValue), живого стану нема,
-  // тож не переноситься нікуди при зміні типу — той самий компроміс, що
-  // instructions у MultipleChoiceFields.
+  // audioUrl не переноситься при зміні типу (не в getValue) — той самий
+  // компроміс, що instructions у MultipleChoiceFields.
   useImperativeHandle(ref, () => ({
     getValue: () => ({
       instructions: initialConfig?.instructions,
@@ -192,13 +199,10 @@ export const ListeningFields = forwardRef<
       />
 
       <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>URL аудіо/відео</label>
-        <input
-          name="listening_audio_url"
-          defaultValue={initialConfig?.audioUrl ?? ""}
-          placeholder="пряме посилання на mp3 або YouTube"
-          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-        />
+        <label className={LABEL_TEXT}>Аудіо/відео запису</label>
+        <input type="hidden" name="listening_audio_url" value={audioUrl} readOnly />
+        <div className="flex items-center gap-2">{audio.icons}</div>
+        {audio.input}
       </div>
 
       <div className="flex flex-col gap-3">
