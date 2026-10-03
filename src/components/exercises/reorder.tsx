@@ -136,7 +136,7 @@ export function ReorderExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="flex flex-col gap-3">
         {config.sequences.map((seq) => (
           <ReorderSequenceTiles
             key={seq.id}
