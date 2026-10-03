@@ -330,7 +330,16 @@ export type ListeningConfig = {
 // послідовності) — свідоме рішення, score і points незалежні виміри, і не
 // вимагає id для кожного елемента items: string[] (що перевело б reorder у
 // складність Групи B).
-export type ReorderSequence = { id: string; items: string[]; points?: number }; // items — правильний порядок
+// imageUrl/audioUrl — опційні, на рівні ПОСЛІДОВНОСТІ (не елемента, як у
+// LetterRearrangementWord) — показуються один раз над усім рядком плиток,
+// слово в items лишається плоским string.
+export type ReorderSequence = {
+  id: string;
+  items: string[]; // items — правильний порядок
+  points?: number;
+  imageUrl?: string;
+  audioUrl?: string;
+};
 export type ReorderConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
@@ -734,7 +743,9 @@ export type ListeningPublic = {
 export type ReorderPublic = {
   instructions?: string;
   subInstructions?: string;
-  sequences: { id: string; items: string[]; points: number }[]; // items перемішано, окремо на кожну послідовність
+  // items перемішано, окремо на кожну послідовність; imageUrl/audioUrl —
+  // те саме, що в ReorderSequence, копіюється без змін (sanitizeReorder).
+  sequences: { id: string; items: string[]; points: number; imageUrl?: string; audioUrl?: string }[];
 };
 
 export type DragDropPublic = {

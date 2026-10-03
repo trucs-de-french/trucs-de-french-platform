@@ -388,6 +388,8 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
       id: s.id,
       items: shuffle(s.items),
       points: resolveReorderPoints(s),
+      imageUrl: s.imageUrl,
+      audioUrl: s.audioUrl,
     })),
   };
 }

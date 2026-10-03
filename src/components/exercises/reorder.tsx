@@ -5,6 +5,9 @@ import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SortableTileRow } from "./sortable-tile-row";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { CompactAudioButton } from "./compact-audio-button";
+import { ImageLightbox } from "./image-lightbox";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -26,6 +29,9 @@ function ReorderSequenceTiles({
   points,
   pointsVisible,
   hidePoints,
+  imageUrl,
+  audioUrl,
+  onOpenImage,
 }: {
   order: string[];
   onChange: (next: string[]) => void;
@@ -34,6 +40,9 @@ function ReorderSequenceTiles({
   points: number;
   pointsVisible: boolean;
   hidePoints?: boolean;
+  imageUrl?: string;
+  audioUrl?: string;
+  onOpenImage: (src: string) => void;
 }) {
   // detail.items[i].correctIndex === i завжди (масив побудований по
   // позиції) — пряма індексація, не пошук за текстом/studentIndex.
@@ -55,6 +64,21 @@ function ReorderSequenceTiles({
             ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
             : `${points} ${pluralizePoints(points)}`}
         </p>
+      )}
+      {(imageUrl || audioUrl) && (
+        <div className="mb-2 flex shrink-0 items-center gap-2">
+          {imageUrl && (
+            <button
+              type="button"
+              onClick={() => onOpenImage(imageUrl)}
+              aria-label="Показати картинку повністю"
+              className="shrink-0 cursor-zoom-in"
+            >
+              <ImageOrPlaceholder src={imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
+            </button>
+          )}
+          {audioUrl && <CompactAudioButton src={audioUrl} />}
+        </div>
       )}
       <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
 
@@ -87,6 +111,7 @@ export function ReorderExercise({
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ReorderDetail | undefined;
   const locked = !!result;
@@ -113,6 +138,9 @@ export function ReorderExercise({
             points={seq.points}
             pointsVisible={pointsVisible}
             hidePoints={hidePoints}
+            imageUrl={seq.imageUrl}
+            audioUrl={seq.audioUrl}
+            onOpenImage={setLightboxSrc}
           />
         ))}
       </div>
@@ -145,6 +173,8 @@ export function ReorderExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }
