@@ -11,7 +11,8 @@ import { ImageLightbox } from "./image-lightbox";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
+import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
@@ -56,41 +57,49 @@ function ReorderSequenceTiles({
   // окремій плитці, як score) — 0/points, а не часткове.
   const sequenceCorrect = detail?.items.every((i) => i.isCorrect) ?? false;
 
+  // Та сама картка, що слово letter_rearrangement (WORD_CARD) — картинка
+  // зліва, вміст (бали/плитки/правильний порядок) у колонці праворуч від
+  // неї. Без медіа внутрішній flex-рядок лишається з ОДНИМ дочірнім
+  // елементом (content), жодного порожнього місця зліва не з'являється.
   return (
-    <div>
-      {!hidePoints && (pointsVisible || detail) && (
-        <p className={`mb-1 ${SCORE_LABEL_CLASS}`}>
-          {detail
-            ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
-            : `${points} ${pluralizePoints(points)}`}
-        </p>
-      )}
-      {(imageUrl || audioUrl) && (
-        <div className="mb-2 flex shrink-0 items-center gap-2">
-          {imageUrl && (
-            <button
-              type="button"
-              onClick={() => onOpenImage(imageUrl)}
-              aria-label="Показати картинку повністю"
-              className="shrink-0 cursor-zoom-in"
-            >
-              <ImageOrPlaceholder src={imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
-            </button>
+    <div className={WORD_CARD}>
+      <div className="flex items-center gap-3">
+        {(imageUrl || audioUrl) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {imageUrl && (
+              <button
+                type="button"
+                onClick={() => onOpenImage(imageUrl)}
+                aria-label="Показати картинку повністю"
+                className="shrink-0 cursor-zoom-in"
+              >
+                <ImageOrPlaceholder src={imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
+              </button>
+            )}
+            {audioUrl && <CompactAudioButton src={audioUrl} />}
+          </div>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          {!hidePoints && (pointsVisible || detail) && (
+            <p className={SCORE_LABEL_CLASS}>
+              {detail
+                ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
+                : `${points} ${pluralizePoints(points)}`}
+            </p>
           )}
-          {audioUrl && <CompactAudioButton src={audioUrl} />}
-        </div>
-      )}
-      <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
+          <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
 
-      {detail && (
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-          Правильний порядок:{" "}
-          {[...detail.items]
-            .sort((a, b) => a.correctIndex - b.correctIndex)
-            .map((i) => i.text)
-            .join(" → ")}
-        </p>
-      )}
+          {detail && (
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              Правильний порядок:{" "}
+              {[...detail.items]
+                .sort((a, b) => a.correctIndex - b.correctIndex)
+                .map((i) => i.text)
+                .join(" → ")}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -127,7 +136,7 @@ export function ReorderExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
 
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+      <div className="grid gap-3 md:grid-cols-2">
         {config.sequences.map((seq) => (
           <ReorderSequenceTiles
             key={seq.id}
