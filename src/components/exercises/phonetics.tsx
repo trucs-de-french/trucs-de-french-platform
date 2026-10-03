@@ -1,15 +1,23 @@
+"use client";
+
+import { useState } from "react";
 import type { PhoneticsConfig } from "@/lib/exercises/types";
 import { isYouTubeUrl, toEmbedUrl } from "@/lib/video";
 import { AudioPlayer } from "@/components/audio-player";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { EXERCISE_STACK } from "@/lib/spacing";
 
-// Не "use client" — довідковий блок без взаємодії, що вимагала б стану
-// (як callout/flip_cards); AudioPlayer/iframe усередині самі "use client".
+// "use client" тепер потрібен лише для лайтбокса (стан lightboxSrc) —
+// AudioPlayer/iframe і раніше самі були "use client", довідковий блок і
+// далі без взаємодії, що оцінюється.
 
 export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
   if (config.items.length === 0) {
     return (
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -27,6 +35,21 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (
           <div key={i} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
+            {item.imageUrl && (
+              <button
+                type="button"
+                onClick={() => setLightboxSrc(item.imageUrl!)}
+                aria-label="Показати картинку повністю"
+                className="mb-1 shrink-0 cursor-zoom-in"
+              >
+                <ImageOrPlaceholder
+                  src={item.imageUrl}
+                  alt=""
+                  className="h-16 w-16 rounded-lg object-cover"
+                  useFocus
+                />
+              </button>
+            )}
             <span>{item.text}</span>
             <span className="text-base text-neutral-500 dark:text-neutral-400">
               {item.transcription}
@@ -46,6 +69,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
           </div>
         ))}
       </div>
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

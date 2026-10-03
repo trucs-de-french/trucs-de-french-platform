@@ -533,6 +533,7 @@ export type PhoneticsItem = {
   text: string;
   transcription: string;
   mediaUrl?: string;
+  imageUrl?: string;
 };
 export type PhoneticsConfig = {
   instructions?: string;

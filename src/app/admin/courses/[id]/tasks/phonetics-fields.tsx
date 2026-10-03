@@ -5,10 +5,77 @@ import { Trash2 } from "lucide-react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
+import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 
 function emptyItem(): PhoneticsItem {
-  return { text: "", transcription: "", mediaUrl: "" };
+  return { text: "", transcription: "", mediaUrl: "", imageUrl: "" };
+}
+
+// Окремий компонент на репліку (не інлайн у .map()) — useFileOrLink це хук,
+// викликати його всередині callback .map() було б порушенням правил хуків.
+function PhoneticsItemRow({
+  item,
+  onUpdateField,
+  onRemove,
+}: {
+  item: PhoneticsItem;
+  onUpdateField: (field: keyof PhoneticsItem, value: string) => void;
+  onRemove: () => void;
+}) {
+  const image = useFileOrLink({
+    kind: "image",
+    mode: "controlled",
+    value: item.imageUrl ?? "",
+    onChange: (url) => onUpdateField("imageUrl", url),
+    placeholder: "Картинка (URL, необов'язково)",
+    allowFocus: true,
+  });
+  const audio = useFileOrLink({
+    kind: "audio",
+    mode: "controlled",
+    value: item.mediaUrl ?? "",
+    onChange: (url) => onUpdateField("mediaUrl", url),
+    placeholder: "Аудіо або відео (URL, необов'язково)",
+  });
+
+  return (
+    <div className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+      <div className="flex items-center gap-2">
+        <input
+          value={item.text}
+          onChange={(e) => onUpdateField("text", e.target.value)}
+          placeholder="Репліка (французькою)"
+          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+        />
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Видалити репліку"
+          title="Видалити"
+          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      <input
+        value={item.transcription}
+        onChange={(e) => onUpdateField("transcription", e.target.value)}
+        placeholder="Транскрипція (напр. [ʒə vɛ bjɛ̃])"
+        className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
+      />
+      <div className="flex items-center gap-2">
+        {image.icons}
+        {audio.icons}
+      </div>
+      {(image.input || audio.input) && (
+        <div className="flex flex-wrap items-start gap-2">
+          {image.input && <div className="flex-1">{image.input}</div>}
+          {audio.input && <div className="flex-1">{audio.input}</div>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Без ImportableFieldsHandle — навмисно без імпорту лексики: vocab дає лише
@@ -62,37 +129,12 @@ export const PhoneticsFields = forwardRef<
       />
 
       {items.map((item, i) => (
-        <div key={i} className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
-          <div className="flex items-center gap-2">
-            <input
-              value={item.text}
-              onChange={(e) => updateItem(i, "text", e.target.value)}
-              placeholder="Репліка (французькою)"
-              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-            />
-            <button
-              type="button"
-              onClick={() => removeItem(i)}
-              aria-label="Видалити репліку"
-              title="Видалити"
-              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-          <input
-            value={item.transcription}
-            onChange={(e) => updateItem(i, "transcription", e.target.value)}
-            placeholder="Транскрипція (напр. [ʒə vɛ bjɛ̃])"
-            className={`${INPUT_BORDER} px-2 py-2 text-base font-medium font-content`}
-          />
-          <input
-            value={item.mediaUrl ?? ""}
-            onChange={(e) => updateItem(i, "mediaUrl", e.target.value)}
-            placeholder="Аудіо або відео (URL, необов'язково)"
-            className={`${INPUT_BORDER} px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
-          />
-        </div>
+        <PhoneticsItemRow
+          key={i}
+          item={item}
+          onUpdateField={(field, value) => updateItem(i, field, value)}
+          onRemove={() => removeItem(i)}
+        />
       ))}
       <button
         type="button"
