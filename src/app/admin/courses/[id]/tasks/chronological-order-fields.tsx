@@ -26,15 +26,17 @@ function ChronologicalOrderItemRow({
   mode,
   onMove,
   onUpdateContent,
+  onUpdateText,
   onUpdatePoints,
   onRemove,
 }: {
   item: ChronologicalOrderItem;
   index: number;
   itemsCount: number;
-  mode: "image" | "text";
+  mode: "image" | "text" | "mixed";
   onMove: (direction: 1 | -1) => void;
   onUpdateContent: (value: string) => void;
+  onUpdateText: (value: string) => void;
   onUpdatePoints: (points: number) => void;
   onRemove: () => void;
 }) {
@@ -91,7 +93,7 @@ function ChronologicalOrderItemRow({
           title="Бали за цей елемент"
           className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
         />
-        {mode === "image" && icons}
+        {mode !== "text" && icons}
         <button
           type="button"
           onClick={onRemove}
@@ -102,7 +104,7 @@ function ChronologicalOrderItemRow({
           <Trash2 size={16} />
         </button>
       </div>
-      {mode === "image" && (
+      {mode !== "text" && (
         <div className="flex items-start gap-1 pl-8">
           {input}
           <ImageOrPlaceholder
@@ -110,6 +112,16 @@ function ChronologicalOrderItemRow({
             alt="Прев'ю"
             className="h-12 w-12 shrink-0 rounded object-cover"
             useFocus
+          />
+        </div>
+      )}
+      {mode === "mixed" && (
+        <div className="pl-8">
+          <input
+            value={item.text ?? ""}
+            onChange={(e) => onUpdateText(e.target.value)}
+            placeholder="Підпис під картинкою"
+            className={`${INPUT_BORDER} w-full px-2 py-2 text-base font-medium font-content`}
           />
         </div>
       )}
@@ -121,7 +133,7 @@ export const ChronologicalOrderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>,
   { initialConfig?: Partial<ChronologicalOrderConfig> }
 >(function ChronologicalOrderFields({ initialConfig }, ref) {
-  const [mode, setMode] = useState<"image" | "text">(initialConfig?.mode ?? "image");
+  const [mode, setMode] = useState<"image" | "text" | "mixed">(initialConfig?.mode ?? "image");
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
   );
@@ -155,6 +167,10 @@ export const ChronologicalOrderFields = forwardRef<
 
   function updateContent(id: string, content: string) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, content } : it)));
+  }
+
+  function updateText(id: string, text: string) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, text } : it)));
   }
 
   function updatePoints(id: string, points: number) {
@@ -201,11 +217,12 @@ export const ChronologicalOrderFields = forwardRef<
         <label className={LABEL_TEXT}>Тип елементів</label>
         <select
           value={mode}
-          onChange={(e) => setMode(e.target.value as "image" | "text")}
+          onChange={(e) => setMode(e.target.value as "image" | "text" | "mixed")}
           className={`${INPUT_BORDER} w-fit px-2 py-2 text-sm`}
         >
           <option value="image">Зображення (URL)</option>
           <option value="text">Текстові твердження</option>
+          <option value="mixed">Змішаний (картинка + текст)</option>
         </select>
       </div>
 
@@ -224,6 +241,7 @@ export const ChronologicalOrderFields = forwardRef<
           mode={mode}
           onMove={(direction) => moveItem(index, direction)}
           onUpdateContent={(value) => updateContent(item.id, value)}
+          onUpdateText={(value) => updateText(item.id, value)}
           onUpdatePoints={(points) => updatePoints(item.id, points)}
           onRemove={() => removeItem(item.id)}
         />

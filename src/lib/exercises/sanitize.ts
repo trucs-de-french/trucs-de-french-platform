@@ -565,6 +565,7 @@ export function sanitizeChronologicalOrder(
       config.items.map((i) => ({
         id: i.id,
         content: i.content,
+        text: i.text,
         points: resolveChronologicalOrderPoints(i),
       }))
     ),

@@ -327,10 +327,13 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
 
     case "chronological_order": {
       checkInstructions(config, problems);
-      const items = asArray(config.items) as { content?: string }[];
+      const items = asArray(config.items) as { content?: string; text?: string }[];
       if (items.length < 2) problems.push({ path: "items", message: "Потрібно мінімум 2 елементи", severity: "error" });
       items.forEach((it, i) => {
         if (isBlank(it.content)) problems.push({ path: `items[${i}].content`, message: `Елемент ${i + 1}: порожній`, severity: "error" });
+        if (config.mode === "mixed" && isBlank(it.text)) {
+          problems.push({ path: `items[${i}].text`, message: `Елемент ${i + 1}: порожній підпис`, severity: "error" });
+        }
       });
       break;
     }

@@ -109,8 +109,8 @@ function chronologicalToReorder(c: ChronologicalOrderConfig): TransformResult<Re
       ],
     },
     warning:
-      c.mode === "image"
-        ? "Елементи були зображеннями (URL) — перенесено як звичайний текст, перевірте відображення."
+      c.mode === "image" || c.mode === "mixed"
+        ? "Елементи мали картинку (URL) — перенесено як звичайний текст, перевірте відображення."
         : undefined,
   };
 }

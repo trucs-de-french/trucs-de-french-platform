@@ -451,11 +451,14 @@ export type ImageMatchConfig = {
 // string[]): дублювати індекс окремим полем означало б тримати їх
 // синхронними вручну. В адмінці тому потрібні кнопки ↑/↓ для зміни порядку
 // (єдиний тип, де порядок елементів у списку має змістовне значення).
-export type ChronologicalOrderItem = { id: string; content: string; points?: number };
+// mode "mixed" — картинка (content, як у "image") + підпис знизу (text,
+// нове поле, використовується ЛИШЕ в mode "mixed"). content не змінює
+// семантику для "image"/"text" — лише mixed додає друге поле поруч.
+export type ChronologicalOrderItem = { id: string; content: string; text?: string; points?: number };
 export type ChronologicalOrderConfig = {
   instructions?: string;
   subInstructions?: string;
-  mode: "image" | "text";
+  mode: "image" | "text" | "mixed";
   items: ChronologicalOrderItem[];
 };
 
@@ -783,10 +786,10 @@ export type ImageMatchPublic = {
 export type ChronologicalOrderPublic = {
   instructions?: string;
   subInstructions?: string;
-  mode: "image" | "text";
+  mode: "image" | "text" | "mixed";
   // Перемішано (shuffle) — буква-мітка (A, B, C...) рахується на боці
   // студента з індексу в цьому вже перемішаному масиві, не зберігається тут.
-  items: { id: string; content: string; points: number }[];
+  items: { id: string; content: string; text?: string; points: number }[];
 };
 
 // tokens — маска (null на позиціях пропуску), той самий принцип, що

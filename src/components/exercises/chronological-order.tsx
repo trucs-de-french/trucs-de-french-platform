@@ -112,7 +112,7 @@ export function ChronologicalOrderExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction}
       />
 
-      {config.mode === "image" ? (
+      {config.mode === "image" || config.mode === "mixed" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {config.items.map((item, i) => (
             <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
@@ -128,6 +128,9 @@ export function ChronologicalOrderExercise({
                   {indexToLabel(i)}
                 </span>
               </div>
+              {config.mode === "mixed" && (
+                <p className="text-center text-sm font-medium">{item.text}</p>
+              )}
               <div className="flex items-center justify-center gap-2">
                 <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   Situation n°
