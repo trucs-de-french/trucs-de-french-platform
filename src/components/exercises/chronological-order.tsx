@@ -14,7 +14,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -90,7 +90,8 @@ export function ChronologicalOrderExercise({
     submit(answer);
   }
 
-  function numberInput(itemId: string) {
+  function numberInput(itemId: string, variant: "wide" | "square" = "wide") {
+    const sizeClass = variant === "square" ? "h-11 w-11 px-1 text-center" : "w-16 px-2";
     return (
       <input
         type="number"
@@ -100,7 +101,7 @@ export function ChronologicalOrderExercise({
         onChange={(e) => updatePosition(itemId, e.target.value)}
         disabled={!!result}
         placeholder="№"
-        className={`w-16 rounded border px-2 py-1 text-sm ${inputClass(itemId)}`}
+        className={`${sizeClass} rounded border py-1 text-sm ${inputClass(itemId)}`}
       />
     );
   }
@@ -124,7 +125,7 @@ export function ChronologicalOrderExercise({
                   className="h-24 w-full rounded-md object-cover"
                   useFocus
                 />
-                <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
+                <span className={`absolute left-1 top-1 ${ITEM_LETTER_BADGE}`}>
                   {indexToLabel(i)}
                 </span>
               </div>
@@ -148,12 +149,10 @@ export function ChronologicalOrderExercise({
       ) : (
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
           {config.items.map((item, i) => (
-            <div key={item.id} className={`flex items-center gap-2 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
-              <span className="w-6 text-center text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                {indexToLabel(i)}
-              </span>
+            <div key={item.id} className={`flex items-start gap-2 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
+              <span className={ITEM_LETTER_BADGE}>{indexToLabel(i)}</span>
               <span className="flex-1">{item.content}</span>
-              {numberInput(item.id)}
+              {numberInput(item.id, "square")}
               {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
                 <span className={`w-16 text-right ${SCORE_LABEL_CLASS}`}>
                   {pointsLabel(item.id, item.points)}

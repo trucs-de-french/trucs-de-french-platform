@@ -21,3 +21,13 @@ export const ANSWER_CARD_DEFAULT =
 // Використовується ЛИШЕ в word_choice.tsx — усі інші типи (letter_gaps,
 // true_false, перша хвиля) лишаються на повному ANSWER_CARD_BASE.
 export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm transition-colors";
+
+// Кругла позначка-літера (A, B, C...) — єдиний стиль для всіх трьох режимів
+// chronological_order (image/mixed/text), щоб позначка виглядала однаково
+// незалежно від верстки навколо неї. h-7 w-7 (28px), колір — той самий
+// bg-brand/text-white, що в STUDENT_BUTTON_PRIMARY (button-styles.ts) —
+// той самий акцент, не окремий відтінок. Позиціонування (absolute у
+// картці-картинці, звичайний flex-item у флет-списку) лишається на
+// викликачі — тут лише форма+колір+розмір.
+export const ITEM_LETTER_BADGE =
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
