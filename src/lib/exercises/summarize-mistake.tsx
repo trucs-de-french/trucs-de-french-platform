@@ -33,8 +33,30 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
   // drag_drop (багатореченнєва форма): { sentences: [{ blanks: [...] }] } —
   // окремий ключ верхнього рівня від старої пласкої { blanks: [...] } вище,
   // тож стара збережена детальна форма (до цієї фічі) і далі розпізнається
-  // тим блоком.
+  // тим блоком. word_choice має ТОЙ САМИЙ верхній ключ "sentences"
+  // (WordChoiceDetail), але інша форма елемента (options, не blanks) —
+  // перевіряємо форму ПЕРШОГО елемента перед тим, як вважати це drag_drop,
+  // той самий принцип розрізнення, що вже нижче для f.items/f.questions.
+  // Третьої форми під цим самим ключем в жодному Detail-типі немає
+  // (звірено з types.ts: лише ці два типи мають top-level "sentences").
   if (Array.isArray(f.sentences) && f.sentences.length > 0) {
+    const first = f.sentences[0] as Record<string, unknown>;
+
+    // word_choice: { sentences: [{ id, options: [{correct, selected, text}], isCorrect }] } —
+    // той самий принцип підсумку, що multiple_choice нижче (f.items з
+    // "options" у кожному елементі): кількість речень із хоч одним
+    // неправильно обраним/невибраним варіантом, без перелічення самих
+    // варіантів (sentence — ціле речення з кількома пропусками-кнопками,
+    // не один текстовий пропуск, конкретний "правильний варіант" тут
+    // менш однозначний, ніж для f.options нижче).
+    if ("options" in first) {
+      const sentences = f.sentences as {
+        options: { correct: boolean; selected: boolean; text: string }[];
+      }[];
+      const wrong = sentences.filter((s) => s.options.some((o) => o.correct !== o.selected));
+      return wrong.length ? `Неправильних речень: ${wrong.length}` : "Усі речення правильні.";
+    }
+
     const sentences = f.sentences as {
       blanks: { isCorrect: boolean; correctAnswers: string[] }[];
     }[];
