@@ -149,9 +149,9 @@ export function ChronologicalOrderExercise({
       ) : (
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
           {config.items.map((item, i) => (
-            <div key={item.id} className={`flex items-start gap-2 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
+            <div key={item.id} className={`flex items-start gap-3 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
               <span className={ITEM_LETTER_BADGE}>{indexToLabel(i)}</span>
-              <span className="flex-1">{item.content}</span>
+              <span className="flex-1 pt-1 text-left">{item.content}</span>
               {numberInput(item.id, "square")}
               {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
                 <span className={`w-16 text-right ${SCORE_LABEL_CLASS}`}>
