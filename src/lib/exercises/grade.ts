@@ -709,6 +709,7 @@ function gradeSortColumns(config: SortColumnsConfig, answer: SortColumnsAnswer):
 
 function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): GradeResult {
   const answerByQuestion = new Map((answer ?? []).map((a) => [a.questionId, a.value]));
+  const hintedSet = new Set((answer ?? []).filter((a) => a.hintUsed).map((a) => a.questionId));
 
   const questions: OpenAnswerDetail["questions"] = getOpenAnswerQuestions(config).map((q) => {
     const accepted = q.answers.map((a) => normalize(a));
@@ -720,12 +721,21 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
       correctAnswers: q.answers,
       isCorrect: accepted.includes(normalize(studentAnswer)),
       points: resolveOpenAnswerPoints(q),
+      hintUsed: hintedSet.has(q.id),
     };
   });
 
   const correctCount = questions.filter((q) => q.isCorrect).length;
   const pointsPossible = questions.reduce((sum, q) => sum + q.points, 0);
-  const pointsEarned = questions.filter((q) => q.isCorrect).reduce((sum, q) => sum + q.points, 0);
+  // hintsReducePoints — той самий принцип, що gradeTableFill (granularity =
+  // питання, як і points): правильне питання, де підказку бодай раз
+  // показали, дає 50% своїх балів замість повної.
+  const pointsEarned = questions
+    .filter((q) => q.isCorrect)
+    .reduce((sum, q) => {
+      const reduced = !!config.hintsReducePoints && q.hintUsed;
+      return sum + (reduced ? q.points * 0.5 : q.points);
+    }, 0);
 
   return {
     correct: correctCount === questions.length && questions.length > 0,

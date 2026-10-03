@@ -56,6 +56,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
         questions: parseJsonField(formData.get("open_answer_questions")),
+        hintsReducePoints: formData.get("open_answer_hints_reduce_points") === "true",
       };
     }
     case "embed":

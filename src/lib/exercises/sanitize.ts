@@ -467,6 +467,9 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
       id: q.id,
       question: q.question,
       points: resolveOpenAnswerPoints(q),
+      imageUrl: q.imageUrl,
+      audioUrl: q.audioUrl,
+      hint: q.hint,
     })),
   };
 }

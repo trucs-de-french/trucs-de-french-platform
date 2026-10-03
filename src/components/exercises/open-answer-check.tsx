@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Lightbulb } from "lucide-react";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -8,6 +9,9 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { CompactAudioButton } from "./compact-audio-button";
+import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
@@ -30,9 +34,15 @@ export function OpenAnswerCheckExercise({
   hidePoints?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [hintShown, setHintShown] = useState<Set<string>>(new Set());
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as OpenAnswerDetail | undefined;
+
+  function showHint(id: string) {
+    setHintShown((prev) => new Set(prev).add(id));
+  }
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -50,19 +60,56 @@ export function OpenAnswerCheckExercise({
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.questions.map((q) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
+          const hintVisible = hintShown.has(q.id);
           return (
             <div key={q.id}>
-              <p className="font-medium">
-                {q.question}
-                {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-                {!hidePoints && (pointsVisible || qDetail) && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    {qDetail
-                      ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} ${pluralizePoints(qDetail.points)}`
-                      : `${q.points} ${pluralizePoints(q.points)}`}
-                  </span>
+              <div className="flex items-start gap-3">
+                {(q.imageUrl || q.audioUrl) && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    {q.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setLightboxSrc(q.imageUrl!)}
+                        aria-label="Показати картинку повністю"
+                        className="shrink-0 cursor-zoom-in"
+                      >
+                        <ImageOrPlaceholder
+                          src={q.imageUrl}
+                          alt=""
+                          className="h-11 w-11 rounded-lg object-cover"
+                          useFocus
+                        />
+                      </button>
+                    )}
+                    {q.audioUrl && <CompactAudioButton src={q.audioUrl} />}
+                  </div>
                 )}
-              </p>
+                <p className="min-w-0 flex-1 font-medium">
+                  {q.question}
+                  {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
+                  {!hidePoints && (pointsVisible || qDetail) && (
+                    <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                      {qDetail
+                        ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} ${pluralizePoints(qDetail.points)}`
+                        : `${q.points} ${pluralizePoints(q.points)}`}
+                    </span>
+                  )}
+                  {q.hint && !result && (
+                    <button
+                      type="button"
+                      onClick={() => showHint(q.id)}
+                      aria-label="Підказка"
+                      title="Підказка"
+                      className="ml-1.5 inline-flex rounded p-0.5 align-middle text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                    >
+                      <Lightbulb size={14} />
+                    </button>
+                  )}
+                </p>
+              </div>
+              {q.hint && hintVisible && (
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{q.hint}</p>
+              )}
               {/* px-4 py-2.5 — та сама компактність, що картка твердження
                   true_false; bg-white на невідповідженому стані — як у
                   карток відповідей (ANSWER_CARD_DEFAULT) — INPUT_BORDER
@@ -112,7 +159,13 @@ export function OpenAnswerCheckExercise({
           <button
             type="button"
             onClick={() =>
-              submit(config.questions.map((q) => ({ questionId: q.id, value: answers[q.id] ?? "" })))
+              submit(
+                config.questions.map((q) => ({
+                  questionId: q.id,
+                  value: answers[q.id] ?? "",
+                  hintUsed: hintShown.has(q.id),
+                }))
+              )
             }
             disabled={pending || !allAnswered}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
@@ -135,6 +188,8 @@ export function OpenAnswerCheckExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
   );
 }

@@ -87,11 +87,29 @@ export type LetterRearrangementConfig = {
 // нормалізується на льоту в grade.ts/sanitize.ts, без міграції БД.
 // points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
 // (resolveOpenAnswerPoints у sanitize.ts).
-export type OpenAnswerQuestion = { id: string; question: string; answers: string[]; points?: number };
+// imageUrl/audioUrl — опційні, біля тексту питання (той самий принцип, що
+// LetterGapsWord). hint — текст підказки за лампочкою (НЕ reveal-механізм,
+// як у letter_gaps/fill_blank/table_fill: тут лампочка просто показує/ховає
+// цей текст, одноразово фіксуючи hintUsed для питання) — на відміну від
+// answers, hint студенту показується напряму, тож він ЄСТЬ у
+// OpenAnswerPublic (answers лишається прихованим).
+export type OpenAnswerQuestion = {
+  id: string;
+  question: string;
+  answers: string[];
+  points?: number;
+  imageUrl?: string;
+  audioUrl?: string;
+  hint?: string;
+};
 export type OpenAnswerConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   questions: OpenAnswerQuestion[];
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints — питання, де
+  // студент хоч раз показав підказку, дає 50% своїх балів замість повної
+  // (gradeOpenAnswer), навіть якщо відповідь зрештою правильна.
+  hintsReducePoints?: boolean;
 };
 
 // essay_check — AI-перевірка есе за офіційною сіткою DELF (див.
@@ -766,7 +784,14 @@ export type SortColumnsPublic = {
 export type OpenAnswerPublic = {
   instructions?: string;
   subInstructions?: string;
-  questions: { id: string; question: string; points: number }[];
+  questions: {
+    id: string;
+    question: string;
+    points: number;
+    imageUrl?: string;
+    audioUrl?: string;
+    hint?: string;
+  }[];
 };
 
 export type TableFillPublic = {
@@ -890,7 +915,7 @@ export type ListeningAnswer = { questionId: string; optionId: string }[];
 export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // порядок на кожну послідовність
 export type DragDropAnswer = { sentenceId: string; words: string[] }[]; // слова на кожен пропуск, за реченням
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
-export type OpenAnswerAnswer = { questionId: string; value: string }[];
+export type OpenAnswerAnswer = { questionId: string; value: string; hintUsed?: boolean }[];
 // cells — той самий плаский список, що раніше (тепер поле обʼєкта).
 // hintedCells — клітинки (rowId+side), де брали підказку "перша літера" —
 // "елемент" для балів тут — РЯДОК (як points), клітинка лише позначає, що
@@ -1043,6 +1068,7 @@ export type OpenAnswerDetail = {
     correctAnswers: string[];
     isCorrect: boolean;
     points: number;
+    hintUsed: boolean;
   }[];
 };
 
