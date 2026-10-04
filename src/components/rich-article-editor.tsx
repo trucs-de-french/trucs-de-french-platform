@@ -4,10 +4,10 @@ import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEven
 import { createPortal } from "react-dom";
 import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { TextStyle } from "@tiptap/extension-text-style";
+import { TextStyle, FontSize } from "@tiptap/extension-text-style";
 import FontFamily from "@tiptap/extension-font-family";
 import Highlight from "@tiptap/extension-highlight";
-import { Image as ImageIcon, Trash2, X } from "lucide-react";
+import { Image as ImageIcon, Trash2, X, AlignLeft, AlignCenter, AlignRight, AlignJustify } from "lucide-react";
 import {
   RichImage,
   IMAGE_ALIGN_VALUES,
@@ -20,6 +20,12 @@ import {
   type ImageCrop,
   type ImageFocus,
 } from "@/lib/rich-image-extension";
+import {
+  ParagraphFormat,
+  PARAGRAPH_LINE_HEIGHT_VALUES,
+  type ParagraphTextAlign,
+  type ParagraphLineHeight,
+} from "@/lib/paragraph-format-extension";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -74,6 +80,93 @@ const FOCUS_LABELS: Record<ImageFocus, string> = {
   right: "Право",
 };
 
+const FONT_SIZE_PRESETS = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48];
+
+const ALIGN_BUTTONS: { value: ParagraphTextAlign; Icon: typeof AlignLeft; label: string }[] = [
+  { value: "left", Icon: AlignLeft, label: "Ліворуч" },
+  { value: "center", Icon: AlignCenter, label: "По центру" },
+  { value: "right", Icon: AlignRight, label: "Праворуч" },
+  { value: "justify", Icon: AlignJustify, label: "По ширині" },
+];
+
+const LINE_HEIGHT_OPTIONS: { value: ParagraphLineHeight; label: string }[] = PARAGRAPH_LINE_HEIGHT_VALUES.map((v) => ({
+  value: v,
+  label: v,
+}));
+
+// "paragraph"/"heading" — ті самі два типи, на які ParagraphFormat
+// (src/lib/paragraph-format-extension.ts) навішує textAlign/firstLine/
+// indent/lineHeight через addGlobalAttributes; команди зміни атрибутів
+// нижче завжди викликають updateAttributes для ОБОХ типів поспіль
+// (TipTap updateAttributes сам ніяк не зашкодить викликом для типу, якого
+// в поточному виділенні нема — просто нічого не змінює для нього).
+const FORMATTABLE_NODE_TYPES = ["paragraph", "heading"] as const;
+
+// Значення атрибута абзаца, уніфіковане по ВСІХ paragraph/heading-вузлах,
+// що потрапляють у поточне виділення (nodesBetween — та сама техніка, що
+// й core-команда updateAttributes нижче використовує для застосування
+// зміни): null — усюди дефолт (атрибута нема), "mixed" — у виділенні є
+// одночасно і дефолтні, і недефолтні (чи різні недефолтні) блоки, кнопки/
+// контроли тоді не підсвічують жоден конкретний варіант. Поза виділенням
+// (empty selection, звичайний курсор) у виділення потрапляє рівно один
+// блок — "mixed" тут неможливий, це завжди значення блоку під курсором.
+function getUniformBlockAttr(
+  editor: Editor,
+  key: "textAlign" | "firstLine" | "indent" | "lineHeight"
+): string | number | null | "mixed" {
+  const { from, to } = editor.state.selection;
+  let value: string | number | null | undefined;
+  let any = false;
+  editor.state.doc.nodesBetween(from, to, (node) => {
+    if (!(FORMATTABLE_NODE_TYPES as readonly string[]).includes(node.type.name)) return;
+    const v = (node.attrs[key] as string | number | null | undefined) ?? null;
+    if (!any) {
+      value = v;
+      any = true;
+    } else if (v !== value) {
+      value = "mixed";
+    }
+  });
+  if (!any) return null;
+  return value ?? null;
+}
+
+// Розмір шрифту — mark (textStyle), не атрибут блокового вузла, тож
+// уніфікація йде по текстових вузлах (node.marks), не по paragraph/heading.
+// Порожнє виділення (звичайний курсор) — nodesBetween узагалі не бачить
+// жодного текстового вузла під курсором (курсор між символами, не ВСЕРЕДИНІ
+// них), тож тут окремо падаємо на editor.getAttributes("textStyle") —
+// той самий спосіб, що й FontFamily-дропдаун використовує для toggleFont
+// (і так само показує "збережений на позиції курсора" розмір, яким
+// надрукується наступний символ).
+function getUniformFontSize(editor: Editor): number | null | "mixed" {
+  const { from, to, empty } = editor.state.selection;
+  if (empty) {
+    const raw = editor.getAttributes("textStyle").fontSize as string | undefined;
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  let value: string | null | undefined;
+  let any = false;
+  editor.state.doc.nodesBetween(from, to, (node) => {
+    if (!node.isText) return;
+    const mark = node.marks.find((m) => m.type.name === "textStyle");
+    const raw = (mark?.attrs.fontSize as string | undefined) ?? null;
+    if (!any) {
+      value = raw;
+      any = true;
+    } else if (raw !== value) {
+      value = "mixed";
+    }
+  });
+  if (!any) return null;
+  if (value === "mixed") return "mixed";
+  if (!value) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 // Спільний TipTap-редактор для callout (CalloutFields) і статей Матеріалів
 // (MaterialArticleFields) — до картинок (ЕТАП 1) обидва компоненти містили
 // буквально однаковий код редактора/панелі/sanitize-виклику, свідомо
@@ -122,6 +215,16 @@ export function RichArticleEditor({
   // overflow:hidden/auto чи ховає z-index якогось предка в адмін-панелі
   // (портал виносить його на верхній рівень DOM, поза всіма такими предками).
   const [focusAnchor, setFocusAnchor] = useState<{ top: number; right: number } | null>(null);
+  // Попап "Абзац…" (ЕТАП 2) — на відміну від попапу "Фокус" вище, тут НЕ
+  // потрібна окрема "зафіксована позиція" (focusNodePos-патерн): кнопки
+  // всередині (−/+/скинути/інтервал) самі несуть onMouseDown
+  // preventDefault (нижче) і застосовують зміну через updateAttributes до
+  // ПОТОЧНОГО editor.state.selection у момент кліку — так само, як кнопки
+  // align/size/crop картинки вище, що теж не потребують окремого
+  // відстеження позиції. Anchor — лише координати для position:fixed
+  // (та сама техніка порталу, що й попап "Фокус").
+  const [formatPopoverOpen, setFormatPopoverOpen] = useState(false);
+  const [formatAnchor, setFormatAnchor] = useState<{ top: number; right: number } | null>(null);
   // Контейнер навколо <img> у попапі "Фокус" — display:inline-block, тож
   // його rect ТОЧНО збігається з рендереним прямокутником самої картинки
   // (object-fit тут не потрібен узагалі: без зовнішньої фіксованої ширини
@@ -138,6 +241,18 @@ export function RichArticleEditor({
   // повертає DOM-фокус без збереженого native Range усередині). Ref, не
   // state — зміна не має викликати ре-рендер.
   const savedSelectionRef = useRef<number | null>(null);
+  // Той самий ризик, що й savedSelectionRef вище (клік у звичайний
+  // <input>/<select> неминуче переносить DOM-фокус ПОВЗ contentEditable,
+  // після чого .focus() без явно відновленого Range може "зʼїхати" на
+  // кінець документа — детальніше в коментарі при savedSelectionRef), але
+  // тут потрібен ДІАПАЗОН (from/to), а не одна позиція: розмір шрифту —
+  // mark, застосовується через setMark на ВИДІЛЕННІ, не на точці вставки.
+  // Кнопки вирівнювання/"Абзац…" нижче в цьому не потребують — їхній
+  // onMouseDown preventDefault взагалі не дає DOM-фокусу піти з редактора.
+  const savedFormatSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  function saveFormatSelection() {
+    if (editor) savedFormatSelectionRef.current = { from: editor.state.selection.from, to: editor.state.selection.to };
+  }
 
   const editor = useEditor({
     // Обов'язково false у Next.js — інакше редактор рендериться на сервері
@@ -147,6 +262,16 @@ export function RichArticleEditor({
       StarterKit.configure({ heading: { levels: [2, 3] } }),
       TextStyle,
       FontFamily,
+      // Офіційний FontSize (готовий, @tiptap/extension-text-style v3.30.5
+      // — перевірено в node_modules: FontSize.addGlobalAttributes додає
+      // fontSize до того самого "textStyle", що FontFamily/Highlight-колір
+      // вище, рендерить style="font-size: ..." на тому самому <span>).
+      // Власного кастомного розширення не знадобилось. Clamp 12-48/ціле —
+      // на боці UI (applyFontSize нижче), а не тут: сам FontSize жодних
+      // обмежень не накладає (editor.commands.setFontSize приймає будь-
+      // який рядок), друга лінія захисту — sanitizeCalloutHtml.
+      FontSize.configure({ types: ["textStyle"] }),
+      ParagraphFormat,
       Highlight.configure({ multicolor: true }),
       RichImage.configure({ inline: false, allowBase64: false }),
     ],
@@ -230,6 +355,109 @@ export function RichArticleEditor({
       focusY: (node.attrs.focusY as number | undefined) ?? 50,
     };
   })();
+
+  // Розмір шрифту й параметри абзаца (ЕТАП 2) — окремий useEditorState від
+  // imageSelection вище: непов'язані концерни (текстове форматування vs.
+  // вибрана картинка), той самий урок з попередніх задач — усе, що читає
+  // панель для рендеру, йде з одного реактивного selector на концерн, не
+  // ad-hoc під час рендеру.
+  const paragraphSelection = useEditorState({
+    editor,
+    selector: ({ editor }: { editor: Editor | null }) => ({
+      fontSize: editor ? getUniformFontSize(editor) : null,
+      textAlign: editor ? (getUniformBlockAttr(editor, "textAlign") as ParagraphTextAlign | null | "mixed") : null,
+      firstLine: editor ? (getUniformBlockAttr(editor, "firstLine") as number | null | "mixed") : null,
+      indent: editor ? (getUniformBlockAttr(editor, "indent") as number | null | "mixed") : null,
+      lineHeight: editor ? (getUniformBlockAttr(editor, "lineHeight") as ParagraphLineHeight | null | "mixed") : null,
+    }),
+  });
+
+  function applyFontSize(raw: string) {
+    if (!editor) return;
+    const trimmed = raw.trim();
+    // Порожнє/нечисле — ігноруємо (не скидаємо на "Авто", щоб випадкове
+    // стирання поля чи ввід "abc" не губило вже застосований розмір).
+    if (trimmed === "") return;
+    const n = Number(trimmed);
+    if (!Number.isInteger(n)) return;
+    const chain = editor.chain().focus();
+    const saved = savedFormatSelectionRef.current;
+    if (saved) chain.setTextSelection(saved);
+    chain.setFontSize(`${clamp(n, 12, 48)}px`).run();
+  }
+
+  function handleFontSizeSelect(value: string) {
+    if (!editor || !value) return;
+    if (value === "auto") {
+      const chain = editor.chain().focus();
+      const saved = savedFormatSelectionRef.current;
+      if (saved) chain.setTextSelection(saved);
+      chain.unsetFontSize().run();
+    } else {
+      applyFontSize(value);
+    }
+  }
+
+  // Усі команди нижче застосовують зміну до ОБОХ FORMATTABLE_NODE_TYPES —
+  // updateAttributes сам проходить nodesBetween виділення і підмінює
+  // атрибути лише в тих вузлах, що фактично мають такий тип (та сама
+  // команда, що офіційний TextAlign викликає для кожного зі своїх types),
+  // тож виклик для типу, якого в поточному виділенні нема, нічого не ламає.
+  function setTextAlign(value: ParagraphTextAlign) {
+    if (!editor) return;
+    const attr = value === "left" ? null : value;
+    let chain = editor.chain().focus();
+    for (const type of FORMATTABLE_NODE_TYPES) chain = chain.updateAttributes(type, { textAlign: attr });
+    chain.run();
+  }
+
+  function adjustFirstLine(delta: number) {
+    if (!editor) return;
+    const current = typeof paragraphSelection?.firstLine === "number" ? paragraphSelection?.firstLine : 0;
+    const next = clamp(current + delta, 0, 3);
+    const attr = next === 0 ? null : next;
+    let chain = editor.chain().focus();
+    for (const type of FORMATTABLE_NODE_TYPES) chain = chain.updateAttributes(type, { firstLine: attr });
+    chain.run();
+  }
+
+  function adjustIndent(delta: number) {
+    if (!editor) return;
+    const current = typeof paragraphSelection?.indent === "number" ? paragraphSelection?.indent : 0;
+    const next = clamp(current + delta, 0, 6);
+    const attr = next === 0 ? null : next;
+    let chain = editor.chain().focus();
+    for (const type of FORMATTABLE_NODE_TYPES) chain = chain.updateAttributes(type, { indent: attr });
+    chain.run();
+  }
+
+  function setLineHeight(value: string) {
+    if (!editor) return;
+    const attr = value === "auto" ? null : value;
+    let chain = editor.chain().focus();
+    for (const type of FORMATTABLE_NODE_TYPES) chain = chain.updateAttributes(type, { lineHeight: attr });
+    chain.run();
+  }
+
+  function resetParagraphFormat() {
+    if (!editor) return;
+    let chain = editor.chain().focus();
+    for (const type of FORMATTABLE_NODE_TYPES) {
+      chain = chain.updateAttributes(type, { textAlign: null, firstLine: null, indent: null, lineHeight: null });
+    }
+    chain.run();
+  }
+
+  function openFormatPopover(e: MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFormatAnchor({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    setFormatPopoverOpen(true);
+  }
+
+  function closeFormatPopover() {
+    setFormatPopoverOpen(false);
+    setFormatAnchor(null);
+  }
 
   function toggleFont(value: string) {
     if (!editor) return;
@@ -453,6 +681,69 @@ export function RichArticleEditor({
               </option>
             ))}
           </select>
+          <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
+          <span className={HINT_TEXT}>Розмір:</span>
+          <input
+            key={`fontsize-${paragraphSelection?.fontSize ?? "auto"}`}
+            type="number"
+            min={12}
+            max={48}
+            defaultValue={typeof paragraphSelection?.fontSize === "number" ? paragraphSelection?.fontSize : undefined}
+            placeholder={paragraphSelection?.fontSize === "mixed" ? "—" : "Авто"}
+            title="Розмір тексту, px (12-48)"
+            onMouseDown={saveFormatSelection}
+            onBlur={(e) => applyFontSize(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+            className={`${INPUT_BORDER} w-14 px-1.5 py-1.5 text-xs`}
+          />
+          <select
+            onMouseDown={saveFormatSelection}
+            onChange={(e) => {
+              handleFontSizeSelect(e.target.value);
+              e.target.value = "";
+            }}
+            defaultValue=""
+            title="Типові розміри"
+            className={`${INPUT_BORDER} px-1 py-1.5 text-xs`}
+          >
+            <option value="" disabled>
+              …
+            </option>
+            {FONT_SIZE_PRESETS.map((n) => (
+              <option key={n} value={n}>
+                {n}px
+              </option>
+            ))}
+            <option value="auto">Авто</option>
+          </select>
+          <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
+          {ALIGN_BUTTONS.map(({ value, Icon, label }) => (
+            <button
+              key={value}
+              type="button"
+              title={label}
+              aria-label={label}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setTextAlign(value)}
+              className={`rounded px-2 py-1 ${
+                (paragraphSelection?.textAlign ?? "left") === value
+                  ? "bg-neutral-200 dark:bg-neutral-700"
+                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              <Icon size={14} />
+            </button>
+          ))}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={openFormatPopover}
+            className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          >
+            Абзац…
+          </button>
           <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
           <button
             type="button"
@@ -685,6 +976,116 @@ export function RichArticleEditor({
                   </button>
                 ))}
               </div>
+            </div>
+          </>,
+          document.body
+        )}
+
+      {formatPopoverOpen &&
+        formatAnchor &&
+        createPortal(
+          <>
+            <div className={Z_DROPDOWN} style={{ position: "fixed", inset: 0 }} onClick={closeFormatPopover} />
+            <div
+              style={{ position: "fixed", top: formatAnchor.top, right: formatAnchor.right }}
+              className={`w-64 ${Z_MODAL} flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-neutral-700 dark:bg-neutral-900`}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") closeFormatPopover();
+              }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Абзац</p>
+                <button
+                  type="button"
+                  onClick={closeFormatPopover}
+                  aria-label="Готово"
+                  title="Готово"
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className={HINT_TEXT}>Відступ 1-го рядка</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => adjustFirstLine(-1)}
+                    className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    −
+                  </button>
+                  <span className="w-4 text-center text-xs">
+                    {typeof paragraphSelection?.firstLine === "number" ? paragraphSelection?.firstLine : 0}
+                  </span>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => adjustFirstLine(1)}
+                    className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className={HINT_TEXT}>Відступ зліва</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => adjustIndent(-1)}
+                    className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    −
+                  </button>
+                  <span className="w-4 text-center text-xs">
+                    {typeof paragraphSelection?.indent === "number" ? paragraphSelection?.indent : 0}
+                  </span>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => adjustIndent(1)}
+                    className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className={HINT_TEXT}>Інтервал</span>
+                <select
+                  onMouseDown={(e) => e.preventDefault()}
+                  onChange={(e) => setLineHeight(e.target.value)}
+                  value={
+                    (PARAGRAPH_LINE_HEIGHT_VALUES as readonly string[]).includes(paragraphSelection?.lineHeight as string)
+                      ? (paragraphSelection?.lineHeight as string)
+                      : "auto"
+                  }
+                  className={`${INPUT_BORDER} px-1.5 py-1 text-xs`}
+                >
+                  <option value="auto">Авто</option>
+                  {LINE_HEIGHT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={resetParagraphFormat}
+                className="self-start rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+              >
+                Скинути абзац
+              </button>
             </div>
           </>,
           document.body

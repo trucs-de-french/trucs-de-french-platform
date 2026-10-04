@@ -280,6 +280,88 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Параметри абзацу (ЕТАП 2) — data-* на самому блоковому вузлі (p/h2/h3,
+   src/lib/paragraph-format-extension.ts), той самий принцип, що
+   data-align/data-size картинок: вигляд цілком тут, у CSS, не inline
+   style — один набір правил для обох контекстів (.rich-text і в
+   адмін-редакторі, і на студентській сторінці, як і скрізь вище). Жодного
+   !important — нижче в джерелі CSS-файлу (.rich-text h2/h3/p/li margin,
+   font-size вище) і правила тут по специфічності однакові
+   (один клас + один атрибутний селектор на тому самому елементі), але
+   порядок у файлі (ці правила ПІСЛЯ margin-правил) означає, що
+   margin-left/line-height з data-indent/data-line-height застосуються
+   навіть якщо колись поміняють порядок визначення .rich-text p —
+   властивості не перетинаються (margin-bottom там, margin-left/line-height
+   тут), конфлікту немає в принципі.
+   li > p (пункт списку, параметри застосовані до абзаца всередині) —
+   маркер (list-style) лишається на місці самого <li>, зсувається лише
+   текст абзаца всередині нього; прийнятно для списків. */
+.rich-text [data-text-align="left"] {
+  text-align: left;
+}
+.rich-text [data-text-align="center"] {
+  text-align: center;
+}
+.rich-text [data-text-align="right"] {
+  text-align: right;
+}
+.rich-text [data-text-align="justify"] {
+  text-align: justify;
+}
+.rich-text [data-first-line="1"] {
+  text-indent: 1.5rem;
+}
+.rich-text [data-first-line="2"] {
+  text-indent: 3rem;
+}
+.rich-text [data-first-line="3"] {
+  text-indent: 4.5rem;
+}
+.rich-text [data-indent="1"] {
+  margin-left: 1.5rem;
+}
+.rich-text [data-indent="2"] {
+  margin-left: 3rem;
+}
+.rich-text [data-indent="3"] {
+  margin-left: 4.5rem;
+}
+.rich-text [data-indent="4"] {
+  margin-left: 6rem;
+}
+.rich-text [data-indent="5"] {
+  margin-left: 7.5rem;
+}
+.rich-text [data-indent="6"] {
+  margin-left: 9rem;
+}
+.rich-text [data-line-height="1"] {
+  line-height: 1;
+}
+.rich-text [data-line-height="1.15"] {
+  line-height: 1.15;
+}
+.rich-text [data-line-height="1.5"] {
+  line-height: 1.5;
+}
+.rich-text [data-line-height="2"] {
+  line-height: 2;
+}
+.rich-text [data-line-height="2.5"] {
+  line-height: 2.5;
+}
+/* Мобільна ширина — великі відступи зліва (4/5/6) стискали б текст у
+   вузькій картці до нечитабельної смужки (той самий ризик, що float
+   картинок вище); обмежуємо всі три до того самого максимуму 4.5rem, що
+   й крок "3" на десктопі. */
+@media (max-width: 640px) {
+  .rich-text [data-indent="4"],
+  .rich-text [data-indent="5"],
+  .rich-text [data-indent="6"] {
+    margin-left: 4.5rem;
+  }
+}
+
 .rich-text h2 {
   font-family: var(--font-heading);
   font-size: 1.25rem;

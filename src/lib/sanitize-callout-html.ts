@@ -1,5 +1,11 @@
 import sanitizeHtml from "sanitize-html";
 import { IMAGE_ALIGN_VALUES, IMAGE_SIZE_VALUES, IMAGE_CROP_VALUES, IMAGE_FOCUS_VALUES } from "@/lib/rich-image-extension";
+import {
+  PARAGRAPH_TEXT_ALIGN_VALUES,
+  PARAGRAPH_LINE_HEIGHT_VALUES,
+  PARAGRAPH_FIRST_LINE_VALUES,
+  PARAGRAPH_INDENT_VALUES,
+} from "@/lib/paragraph-format-extension";
 
 // Спільна функція для callout-контенту (TipTap HTML) — використовується і
 // при збереженні (actions.ts, сервер), і при рендері студенту (callout.tsx,
@@ -34,6 +40,10 @@ export function sanitizeCalloutHtml(html: string): string {
     ],
     allowedAttributes: {
       mark: ["data-color", "style"],
+      // span: font-size (ЕТАП 2, той самий механізм TextStyle, що
+      // font-family/color/background-color — усі разом style на span)
+      // додається нижче через allowedStyles.span, не тут — style лишається
+      // єдиним дозволеним атрибутом span.
       span: ["style"],
       // img: НІ class, НІ width/height, і НІ довільний style — вигляд
       // (float/розмір/обрізання) задає CSS за data-align/data-size/
@@ -44,12 +54,27 @@ export function sanitizeCalloutHtml(html: string): string {
       // функції — ВИКЛЮЧНО згенероване з уже перевірених data-focus-x/y
       // (нижче), ніколи напряму з HTML, що зберігається в БД.
       img: ["src", "alt", "data-align", "data-size", "data-crop", "data-focus", "data-focus-x", "data-focus-y", "style"],
+      // Параметри абзацу (ЕТАП 2) — data-* на самому блоковому вузлі,
+      // той самий патерн, що data-align/data-size картинок: жодного style
+      // чи class на p/h2/h3 (вигляд цілком у CSS за цими data-*,
+      // globals.css). transformTags нижче відкидає будь-яке невалідне
+      // значення (атрибут зникає, тег лишається).
+      p: ["data-text-align", "data-first-line", "data-indent", "data-line-height"],
+      h2: ["data-text-align", "data-first-line", "data-indent", "data-line-height"],
+      h3: ["data-text-align", "data-first-line", "data-indent", "data-line-height"],
     },
     allowedStyles: {
       "*": {
         "background-color": [/^#[0-9a-f]{3,8}$/i, /^rgba?\([\d.,\s%]+\)$/i],
         color: [/^#[0-9a-f]{3,8}$/i, /^inherit$/i, /^rgba?\([\d.,\s%]+\)$/i],
         "font-family": [/^[a-zA-Z0-9 ,'"-]+$/],
+      },
+      // ЕТАП 2: розмір тексту — лише ціле px у діапазоні 12-48 (той самий
+      // діапазон, що в редакторі/UI), той самий span, що font-family/color
+      // вище (@tiptap/extension-text-style, один <span style="..."> на всі
+      // ці властивості разом). Жодних em/rem/%/calc — лише ця одна форма.
+      span: {
+        "font-size": [/^(1[2-9]|[2-3][0-9]|4[0-8])px$/],
       },
       // Друга лінія захисту понад "ми самі генеруємо це значення" нижче —
       // навіть якби transformTags десь помилився, лише object-position
@@ -112,6 +137,33 @@ export function sanitizeCalloutHtml(html: string): string {
         }
         return { tagName: "img", attribs: next };
       },
+      // Параметри абзацу (ЕТАП 2) — той самий принцип, що img вище:
+      // будуємо next із нуля (ніколи не копіюємо вхідний style/class —
+      // allowedAttributes для p/h2/h3 їх і так не пропустить, але так
+      // next лишається єдиним джерелом правди), невалідне значення просто
+      // відкидається (тег лишається, атрибут зникає), без падіння на
+      // невідомому значенні. Один обробник на всі три теги — tagName
+      // передає сам обробник, callback спільний.
+      p: paragraphFormatTransform,
+      h2: paragraphFormatTransform,
+      h3: paragraphFormatTransform,
     },
   });
+}
+
+function paragraphFormatTransform(tagName: string, attribs: Record<string, string>) {
+  const next: Record<string, string> = {};
+  if ((PARAGRAPH_TEXT_ALIGN_VALUES as string[]).includes(attribs["data-text-align"])) {
+    next["data-text-align"] = attribs["data-text-align"];
+  }
+  if ((PARAGRAPH_FIRST_LINE_VALUES as readonly number[]).includes(Number(attribs["data-first-line"]))) {
+    next["data-first-line"] = attribs["data-first-line"];
+  }
+  if ((PARAGRAPH_INDENT_VALUES as readonly number[]).includes(Number(attribs["data-indent"]))) {
+    next["data-indent"] = attribs["data-indent"];
+  }
+  if ((PARAGRAPH_LINE_HEIGHT_VALUES as string[]).includes(attribs["data-line-height"])) {
+    next["data-line-height"] = attribs["data-line-height"];
+  }
+  return { tagName, attribs: next };
 }
