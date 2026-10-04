@@ -415,7 +415,7 @@ export default async function ScenePage({
         <iframe
           src={toEmbedUrl(scene.video_url, scene.video_provider)}
           className="h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture"
           allowFullScreen
         />
       </div>

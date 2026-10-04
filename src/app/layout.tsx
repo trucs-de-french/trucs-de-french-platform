@@ -67,7 +67,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${nunito.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      {/* max-[639px]:pt-16 — резервує місце під ThemeToggle, який на цій
+          ширині стає position:absolute (theme-toggle.tsx) й інакше лягав би
+          прямо на перший контент сторінки (наприклад, кнопку "Вийти з
+          перегляду" у PreviewBanner, що теж у правому верхньому куті). На
+          >=640px не впливає — там ThemeToggle лишається fixed, як і раніше. */}
+      <body className="min-h-full flex flex-col max-[639px]:pt-16">
         <ThemeScript />
         {children}
         <ThemeToggle />

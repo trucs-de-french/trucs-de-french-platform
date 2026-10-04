@@ -29,7 +29,9 @@ export function toEmbedUrl(
 ): string {
   if (provider === "youtube") {
     const id = extractYoutubeId(url);
-    return id ? `https://www.youtube.com/embed/${id}` : url;
+    // playsinline=1 — на iOS Safari без цього параметра YouTube розгортає
+    // відео в повноекранний системний плеєр просто при натисканні play.
+    return id ? `https://www.youtube.com/embed/${id}?playsinline=1` : url;
   }
 
   if (provider === "gdrive") {

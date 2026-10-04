@@ -127,8 +127,14 @@ export function ThemeToggle() {
       aria-label="Перемкнути тему (утримуйте й тягніть, щоб перемістити)"
       suppressHydrationWarning
       style={position ? { left: position.x, top: position.y, right: "auto" } : undefined}
-      className={`fixed z-50 flex h-10 w-10 touch-none items-center justify-center rounded-full border bg-white text-lg shadow-md hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 ${
-        position ? "" : "top-4 right-4"
+      // Дефолтна позиція (без власного перетягування користувачем) на
+      // <640px — absolute, не fixed: прокручується разом зі сторінкою,
+      // замість того щоб висіти постійно над банером/контентом угорі
+      // (body отримує відповідний pt у layout.tsx). Перетягнута користувачем
+      // позиція (position !== null) рахується через getBoundingClientRect
+      // при drag — лишається fixed на будь-якій ширині, як і раніше.
+      className={`z-50 flex h-10 w-10 touch-none items-center justify-center rounded-full border bg-white text-lg shadow-md hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 ${
+        position ? "fixed" : "top-4 right-4 max-[639px]:absolute sm:fixed"
       }`}
     >
       <span suppressHydrationWarning>{isDark ? "☀️" : "🌙"}</span>
