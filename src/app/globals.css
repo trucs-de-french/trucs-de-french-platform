@@ -518,3 +518,52 @@ button, input, textarea, select, label, nav, aside {
   --found-word: #4ade80;
   --found-word-fill-opacity: 0.2;
 }
+
+/* video-frame.tsx — спільна обгортка відео-iframe для студентської
+   частини. Пропорція НЕ через Tailwind-arbitrary на льоту (клас, зібраний
+   з динамічного значення, Tailwind відсікає на збірці — лишається лише
+   клас, застосований буквально десь у коді), а через звичайні CSS-класи
+   тут + одну CSS-змінну (--drive-mobile-aspect, інлайн-стиль обгортки,
+   значення з DRIVE_MOBILE_ASPECT у video.ts) — підкрутити один калькуляцію
+   можна, змінивши ЛИШЕ ту константу, без правок тут. */
+.video-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.375rem; /* rounded-md */
+  background: #000;
+}
+.video-frame--gdrive {
+  aspect-ratio: var(--drive-mobile-aspect, 1.3333);
+}
+@media (min-width: 640px) {
+  .video-frame--gdrive {
+    aspect-ratio: 16 / 9;
+  }
+}
+.video-frame--youtube {
+  aspect-ratio: 16 / 9;
+}
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* :fullscreen — справжній Fullscreen API на самій обгортці; --pseudo —
+   ручний клас-фолбек (iPhone Safari, де Fullscreen API на звичайному
+   елементі недоступний) з ІДЕНТИЧНИМ візуальним результатом. aspect-ratio:
+   auto — інакше фіксована пропорція змагалася б із 100vw/100dvh. */
+.video-frame:fullscreen,
+.video-frame:-webkit-full-screen,
+.video-frame--pseudo-fullscreen {
+  aspect-ratio: auto;
+  width: 100vw;
+  height: 100dvh;
+  border-radius: 0;
+}
+.video-frame--pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+}

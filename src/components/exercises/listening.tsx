@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ListeningPublic, ListeningDetail, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
+import { VideoFrame } from "@/components/video-frame";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
@@ -50,13 +51,7 @@ export function ListeningExercise({
       />
 
       {isYouTubeUrl(config.audioUrl) ? (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
-          <iframe
-            src={toEmbedUrl(config.audioUrl, "youtube")}
-            className="h-full w-full"
-            allowFullScreen
-          />
-        </div>
+        <VideoFrame src={toEmbedUrl(config.audioUrl, "youtube")} title="Відео" provider="youtube" />
       ) : isGdriveUrl(config.audioUrl) ? (
         <GdriveAudioPlayer url={config.audioUrl} />
       ) : (

@@ -29,6 +29,7 @@ import type {
 import { DEFAULT_INSTRUCTIONS, ERROR_CORRECTION_INSTRUCTION } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
+import { VideoFrame } from "@/components/video-frame";
 import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
@@ -411,12 +412,11 @@ export default async function ScenePage({
   const videoNode = scene.video_url && (
     <section>
       <h2 className={STUDENT_SECTION_HEADING}>Відео</h2>
-      <div className={`${H2_TO_CONTENT} aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700`}>
-        <iframe
+      <div className={H2_TO_CONTENT}>
+        <VideoFrame
           src={toEmbedUrl(scene.video_url, scene.video_provider)}
-          className="h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture"
-          allowFullScreen
+          title={scene.title}
+          provider={scene.video_provider ?? "youtube"}
         />
       </div>
     </section>

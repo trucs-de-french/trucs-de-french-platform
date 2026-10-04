@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
+import { VideoFrame } from "@/components/video-frame";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { isExerciseType } from "@/components/exercises/exercise-card";
@@ -213,14 +214,11 @@ export function TaskGroupBlock({
         })()}
 
       {group.content_type === "video" && group.media_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
-          <iframe
-            src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
-            className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+        <VideoFrame
+          src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
+          title="Відео"
+          provider={(group.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
+        />
       )}
 
       {group.content_type === "embed" && group.media_url && (

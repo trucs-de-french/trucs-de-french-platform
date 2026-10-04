@@ -1,4 +1,5 @@
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
+import { VideoFrame } from "@/components/video-frame";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
@@ -156,14 +157,11 @@ export function SceneContentBlockContent({
         })()}
 
       {block.content_type === "video" && block.media_url && (
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black dark:border dark:border-neutral-700">
-          <iframe
-            src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
-            className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
+        <VideoFrame
+          src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
+          title="Відео"
+          provider={(block.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
+        />
       )}
 
       {block.content_type === "embed" && block.media_url && (
