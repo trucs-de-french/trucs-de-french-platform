@@ -181,7 +181,11 @@ export function insertAtCursor(
 // інакше setSelectionRange цілився б у ще стару (коротшу) довжину рядка.
 export function focusAndSetCursor(el: FieldElement | null, pos: number) {
   requestAnimationFrame(() => {
-    el?.focus();
+    // preventScroll — поле вже видиме (студент щойно сам у нього тапнув чи
+    // клікнув символ діакритики над ним), автоскрол-на-фокус браузера тут
+    // лише зайвий стрибок (той самий принцип, що в karaoke.tsx навколо
+    // triggerPauseForLine).
+    el?.focus({ preventScroll: true });
     el?.setSelectionRange(pos, pos);
   });
 }

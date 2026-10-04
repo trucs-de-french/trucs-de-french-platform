@@ -44,6 +44,23 @@ function findCurrentLineIndex(lines: { start: number }[], time: number): number 
 
 type ActiveGap = { li: number; gi: number };
 
+// Скролить ЛИШЕ сам контейнер рядків (container.scrollTo) — ніколи вікно:
+// на відміну від Element.scrollIntoView(), яке саме вирішує, якого
+// скрольованого предка рухати (і за певних умов — скролить СТОРІНКУ, не
+// лише цей контейнер, звідси й баг на мобільному). Рахує зсув через
+// getBoundingClientRect обох елементів, не lineEl.offsetTop — коректно
+// навіть якщо container має padding/border чи сам не в normal flow.
+function scrollLineIntoContainer(container: HTMLElement, lineEl: HTMLElement) {
+  const containerRect = container.getBoundingClientRect();
+  const lineRect = lineEl.getBoundingClientRect();
+  // Рядок уже повністю видимий у контейнері — нічого не робимо; це й
+  // покриває випадок "весь список вміщається без скролу" (containerRect
+  // завжди вмістить lineRect, якщо scrollHeight <= clientHeight).
+  if (lineRect.top >= containerRect.top && lineRect.bottom <= containerRect.bottom) return;
+  const delta = lineRect.top + lineRect.height / 2 - (containerRect.top + containerRect.height / 2);
+  container.scrollTo({ top: container.scrollTop + delta, behavior: "smooth" });
+}
+
 // Module-level, поза компонентом — той самий принцип, що groupChars/
 // splitPhraseUnits у letter-gaps.tsx: React Compiler незалежно аналізує й
 // мемоізує КОЖЕН компонент, тож мутація let-лічильника між ітераціями
@@ -227,6 +244,7 @@ export function KaraokeExercise({
 }) {
   const videoId = extractYoutubeId(config.videoUrl);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const linesContainerRef = useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   // 0, не -1, коли є хоч один рядок — до запуску відео (і поки currentTime
@@ -338,7 +356,11 @@ export function KaraokeExercise({
       player.pause();
 
       if (config.answerMode === "typing") {
-        diacritics.getElement(`${index}-${firstEmptyGi}`)?.focus();
+        // preventScroll — фокус на полі пропуску не повинен сам по собі
+        // смикати сторінку/контейнер; видимість цього рядка вже забезпечує
+        // scrollLineIntoContainer вище (той самий ефект, через
+        // pausedForGapLine).
+        diacritics.getElement(`${index}-${firstEmptyGi}`)?.focus({ preventScroll: true });
       } else {
         setActiveGap({ li: index, gi: firstEmptyGi });
       }
@@ -427,26 +449,36 @@ export function KaraokeExercise({
   // наступний.
   const displayLineIndex = pausedForGapLine ?? currentLineIndex;
 
-  // Автоскрол у ВЛАСНОМУ контейнері тексту (overflow-y-auto нижче), не
-  // сторінки — scrollIntoView скролить найближчого overflow-предка, той
-  // самий принцип, що вже застосований для сітки філворда/легенди
-  // вокабуляру раніше в цій сесії.
+  // Автоскрол лише ВСЕРЕДИНІ linesContainerRef (scrollLineIntoContainer
+  // вище), ніколи вікна — scrollIntoView ЗАМІНЕНО саме тому, що воно сам
+  // вирішує, якого скрольованого предка рухати, і на мобільному це могло
+  // виявитись сторінкою, а не лише h-44-контейнером рядків.
   //
-  // mountedRef — currentLineIndex стартує з 0 (не -1), тож без цього
-  // прапорця scrollIntoView спрацьовував би й на САМОМУ монтуванні вправи
-  // (перший рендер = "зміна" displayLineIndex з undefined на 0), ще до
-  // будь-якої дії студента — на мобільному, де власний h-44-контейнер може
-  // ще не мати стабільного розміру в момент ефекту, це здатне потягнути за
-  // собою скрол усієї сторінки, а не лише контейнера рядків.
+  // mountedRef("перший рендер — нічого не робити") лишається як ДОДАТКОВИЙ
+  // бар'єр, але НЕ єдиний: у React StrictMode (dev) ефекти монтування
+  // викликаються ДВІЧІ підряд (mount → cleanup → mount) на тому самому
+  // рендері — mountedRef.current, виставлений ПЕРШИМ із цих двох викликів,
+  // уже true й на ДРУГОМУ, тож прапорець сам по собі не захищає від скролу
+  // саме на монтуванні (це й лишало баг живим попри mountedRef у 7502031).
+  // Надійний захист — isPlaying/pausedForGapLine: currentLineIndex і
+  // pausedForGapLine можуть реально змінитись лише як наслідок відтворення
+  // (інтервал опитування нижче існує лише поки isPlaying; pausedForGapLine
+  // виставляється лише з нього самого чи з onStateChange ENDED, теж під час
+  // відтворення) — на самому монтуванні, і під час паузи без жодної дії,
+  // обидва лишаються у стартових значеннях (false/null), тож ефект нічого
+  // не скролить незалежно від StrictMode чи кількості викликів.
   const mountedRef = useRef(false);
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
       return;
     }
+    if (!isPlaying && pausedForGapLine === null) return;
     if (displayLineIndex < 0) return;
-    lineRefs.current[displayLineIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [displayLineIndex]);
+    const container = linesContainerRef.current;
+    const lineEl = lineRefs.current[displayLineIndex];
+    if (container && lineEl) scrollLineIntoContainer(container, lineEl);
+  }, [displayLineIndex, isPlaying, pausedForGapLine]);
 
   const totalGaps = useMemo(
     () => config.lines.reduce((sum, l) => sum + l.tokens.filter((t) => t === null).length, 0),
@@ -567,7 +599,7 @@ export function KaraokeExercise({
 
         {/* ~5-6 рядків висотою (leading-8=2rem на рядок) — власний
             скрол-контейнер, не сторінка. */}
-        <div className="flex h-44 flex-col gap-1 overflow-y-auto">
+        <div ref={linesContainerRef} className="flex h-44 flex-col gap-1 overflow-y-auto">
           {config.lines.map((line, li) => (
             <KaraokeLineRow
               key={li}
