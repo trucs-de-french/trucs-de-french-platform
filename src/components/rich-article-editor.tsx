@@ -194,6 +194,15 @@ export function RichArticleEditor({
     editor,
     selector: ({ editor }: { editor: Editor | null }) => ({
       isImageActive: editor?.isActive("image") ?? false,
+      // Позиція вузла — теж через useEditorState (не ad-hoc
+      // editor.state.selection.from у клік-хендлері нижче): усі дані,
+      // потрібні панелі для вибраної картинки, йдуть з ОДНОГО реактивного
+      // джерела, що гарантовано перераховується на кожну транзакцію
+      // (useSyncExternalStoreWithSelector підписаний на editor.on
+      // ("transaction"/"update"), EditorStateManager.watch) — а не
+      // залежить від того, чи щось ІНШЕ (onUpdate) випадково теж
+      // перерендерило компонент у той самий момент.
+      pos: editor?.isActive("image") ? editor.state.selection.from : null,
       src: (editor?.getAttributes("image").src as string | undefined) ?? "",
       align: (editor?.getAttributes("image").align as ImageAlign | undefined) ?? "center",
       size: (editor?.getAttributes("image").size as ImageSize | undefined) ?? "medium",
@@ -267,19 +276,20 @@ export function RichArticleEditor({
     setImagePopoverOpen(false);
   }
 
-  // onClick кнопки "Фокус…" — mousedown з preventDefault на самій кнопці
-  // (нижче) лишає виділення картинки незмінним рівно до цього моменту,
-  // тож editor.state.selection.from тут ЩЕ точно позиція вузла картинки.
-  // Далі попап працює ЧЕРЕЗ цю збережену позицію (setFocus нижче), а не
-  // через "що зараз виділено" — саме це мало ламатись раніше: клік
-  // усередині попапу (перетягування мітки) — взаємодія поза
-  // contentEditable, після якої покладатись на "поточне виділення" вже
-  // не можна.
+  // onClick кнопки "Фокус…" — imageSelection.pos іде з того самого
+  // useEditorState, що й crop/align/size вище (не ad-hoc
+  // editor.state.selection.from): mousedown з preventDefault на самій
+  // кнопці лишає виділення картинки незмінним рівно до цього моменту, тож
+  // pos тут ЩЕ точно позиція вузла картинки. Далі попап працює ЧЕРЕЗ цю
+  // збережену позицію (setFocus нижче), а не через "що зараз виділено" —
+  // саме це мало ламатись раніше: клік усередині попапу (перетягування
+  // мітки) — взаємодія поза contentEditable, після якої покладатись на
+  // "поточне виділення" вже не можна.
   function openFocusPopover(e: MouseEvent<HTMLButtonElement>) {
-    if (!editor) return;
+    if (!editor || imageSelection?.pos == null) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setFocusAnchor({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-    setFocusNodePos(editor.state.selection.from);
+    setFocusNodePos(imageSelection.pos);
     setFocusPopoverOpen(true);
   }
 
