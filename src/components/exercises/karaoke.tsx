@@ -431,7 +431,19 @@ export function KaraokeExercise({
   // сторінки — scrollIntoView скролить найближчого overflow-предка, той
   // самий принцип, що вже застосований для сітки філворда/легенди
   // вокабуляру раніше в цій сесії.
+  //
+  // mountedRef — currentLineIndex стартує з 0 (не -1), тож без цього
+  // прапорця scrollIntoView спрацьовував би й на САМОМУ монтуванні вправи
+  // (перший рендер = "зміна" displayLineIndex з undefined на 0), ще до
+  // будь-якої дії студента — на мобільному, де власний h-44-контейнер може
+  // ще не мати стабільного розміру в момент ефекту, це здатне потягнути за
+  // собою скрол усієї сторінки, а не лише контейнера рядків.
+  const mountedRef = useRef(false);
   useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
     if (displayLineIndex < 0) return;
     lineRefs.current[displayLineIndex]?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [displayLineIndex]);
