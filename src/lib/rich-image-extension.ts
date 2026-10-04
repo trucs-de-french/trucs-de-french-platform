@@ -1,4 +1,7 @@
 import Image from "@tiptap/extension-image";
+import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
+import { TextSelection, type EditorState } from "@tiptap/pm/state";
+import type { Editor } from "@tiptap/core";
 
 export type ImageAlign = "left" | "right" | "center" | "full";
 export type ImageSize = "small" | "medium" | "large";
@@ -51,6 +54,91 @@ function parseFocusCoordinate(element: HTMLElement, attr: "data-focus-x" | "data
   return 50;
 }
 
+// Абзац-"якір" — textblock, що містить ЛИШЕ image-вузли (жодного тексту,
+// жодного hardBreak). З ЕТАПУ 3 (inline-картинка) таке трапляється
+// постійно: вставка/перенесення картинки в порожній рядок лишає її
+// єдиним вмістом абзаца. Без спеціальної обробки Backspace/Delete біля
+// такого абзаца (чи навіть ВСЕРЕДИНІ нього — атом, не можна "зайти
+// всередину") видаляє саму картинку разом із порожнім рядком — для
+// вчительки це виглядає як "видаляю порожній рядок", а насправді зникає
+// картинка.
+function isImageOnlyParagraph(node: PMNode): boolean {
+  if (!node.isTextblock || node.childCount === 0) return false;
+  let onlyImages = true;
+  node.forEach((child) => {
+    if (child.type.name !== "image") onlyImages = false;
+  });
+  return onlyImages;
+}
+
+// Спільна логіка Backspace/Delete біля абзаца-якоря — картинки
+// переносяться (НЕ видаляються) до сусіднього textblock-у В ТОМУ САМОМУ
+// батьківському вузлі (не виходимо за межі li при картинці в пункті
+// списку — grandParent нижче це й так гарантує, це вузол, що міг би
+// містити ТІЛЬКИ сусідні абзаци того самого рівня). Правило переносу
+// однакове для обох клавіш (пріоритет — наступний абзац, інакше
+// попередній); різниться лише фінальна позиція курсора (key нижче).
+// Усе одним tr — один виклик editor.view.dispatch, один крок Cmd+Z.
+// Експортовано заради скриптової перевірки без браузера (прямі
+// ProseMirror-транзакції на фейковому editor.state/editor.view.dispatch);
+// у продукті викликається лише з addKeyboardShortcuts нижче.
+export function relocateAnchorImages(editor: Editor, key: "backspace" | "delete"): boolean {
+  const state: EditorState = editor.state;
+  const { selection } = state;
+  // NodeSelection (клік по картинці) ніколи не "empty" — цей шлях
+  // свідомо пропускає такий випадок далі, до стандартної поведінки
+  // (видалення виділеної картинки як і раніше).
+  if (!selection.empty) return false;
+  const $from = selection.$from;
+  const depth = $from.depth;
+  if (depth === 0) return false;
+  const anchorNode = $from.parent;
+  if (!isImageOnlyParagraph(anchorNode)) return false;
+
+  const grandParent = $from.node(depth - 1);
+  const indexInParent = $from.index(depth - 1);
+  const nextSibling = grandParent.maybeChild(indexInParent + 1);
+  const prevSibling = indexInParent > 0 ? grandParent.maybeChild(indexInParent - 1) : null;
+  const useNext = !!(nextSibling && nextSibling.isTextblock);
+  const usePrev = !useNext && !!(prevSibling && prevSibling.isTextblock);
+
+  // Єдиний блок у документі чи в пункті списку (нема куди переносити) —
+  // лише перехоплюємо клавішу, картинка нікуди не зникає.
+  if (!useNext && !usePrev) return true;
+
+  const anchorStart = $from.before(depth);
+  const anchorEnd = $from.after(depth);
+  const images: PMNode[] = [];
+  anchorNode.forEach((child) => images.push(child));
+  const imagesSize = images.reduce((sum, n) => sum + n.nodeSize, 0);
+  // Кінець ПОПЕРЕДНЬОГО абзаца (для курсора Backspace) — рахуємо ДО змін
+  // документа: сусідні вузли межують напряму, тож це рівно anchorStart-1.
+  const prevEndBeforeChanges = prevSibling ? anchorStart - 1 : null;
+
+  const tr = state.tr;
+  tr.delete(anchorStart, anchorEnd);
+
+  const insertAt = useNext
+    ? tr.mapping.map(anchorEnd + 1, -1)
+    : tr.mapping.map(anchorStart - 1, -1);
+  tr.insert(insertAt, Fragment.from(images));
+
+  const cursorPos =
+    key === "delete"
+      // Завжди одразу ПІСЛЯ картинок у їхньому новому місці.
+      ? insertAt + imagesSize
+      // Backspace: кінець попереднього абзаца, якщо він є; інакше —
+      // початок абзаца з картинкою (useNext без prevSibling — тоді
+      // insertAt і є "перед картинками", початок цього абзаца).
+      : prevEndBeforeChanges !== null
+        ? tr.mapping.map(prevEndBeforeChanges, -1)
+        : insertAt;
+
+  tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+  editor.view.dispatch(tr);
+  return true;
+}
+
 // Розширення @tiptap/extension-image двома кастомними атрибутами —
 // положення (float ліво/право, по центру, на всю ширину) і розмір
 // (мала/середня/велика) — серіалізуються як data-align/data-size на самому
@@ -79,6 +167,18 @@ export const RichImage = Image.extend({
   // порожній), atom:true лише явно фіксує "однією клавішею/кліком, не
   // заходимо всередину" для курсора/виділення, як у Word.
   atom: true,
+  // Backspace/Delete біля абзаца-якоря (лише картинки, без тексту) —
+  // переносять картинки до сусіднього абзаца замість видалення разом із
+  // порожнім рядком (relocateAnchorImages вище). Повертає false для ВСІХ
+  // інших випадків (NodeSelection, курсор у звичайному абзаці з текстом
+  // поруч із картинкою, виділення діапазону) — падає далі до стандартної
+  // поведінки Tiptap/ProseMirror, нічого з неї не змінено.
+  addKeyboardShortcuts() {
+    return {
+      Backspace: () => relocateAnchorImages(this.editor, "backspace"),
+      Delete: () => relocateAnchorImages(this.editor, "delete"),
+    };
+  },
   addAttributes() {
     return {
       src: { default: null },

@@ -297,6 +297,41 @@ button, input, textarea, select, label, nav, aside {
 .rich-text-editable p {
   min-height: 1em;
 }
+/* Абзац-якір (ЕТАП 4) — textblock, де img — ЄДИНИЙ дочірній вузол (жодного
+   тексту поруч) — на відміну від звичайного абзаца з картинкою серед
+   тексту, такий не повинен займати вертикального місця взагалі: це і є
+   "порожній рядок", який вчителька намагається прибрати Backspace/Delete
+   (rich-image-extension.ts/relocateAnchorImages тепер лише переносить
+   картинку, не чіпаючи цього самого абзаца-якоря — він одразу видаляється
+   в тій-таки транзакції, але ДОКИ користувач не натиснув клавішу, цей
+   абзац усе ще видимий, і має виглядати як "немає зайвого проміжку", а
+   не як порожній рядок). :has() — вищий за .rich-text-editable p
+   (min-height:1em вище) за специфічністю, тож переважає для цього
+   конкретного абзаца навіть у редакторі. Одна спільна група для
+   редактора Й студента (.rich-text, не .rich-text-editable) — на
+   студентській сторінці цей самий абзац і так мав margin без контенту
+   (zero-height з самого початку, лише margin додавав зайвий проміжок). */
+.rich-text p:has(> img[data-align="left"]:only-child),
+.rich-text p:has(> img[data-align="right"]:only-child) {
+  margin-block: 0;
+  min-height: 0;
+  line-height: 0;
+}
+/* Лише в редакторі: службовий <br class="ProseMirror-trailingBreak">, який
+   prosemirror-view домальовує в ЦЬОМУ Ж порожньому (без текстового
+   вузла-нащадка) textblock-у (підтверджено в джерелі —
+   ViewTreeUpdater.updateNodeAt: "lastChild не TextViewDesc" саме й
+   виконується для нашого image-вузла, бо в нього немає жодного
+   TextViewDesc-нащадка) — суто DOM-деталь РЕНДЕРУ, її нема в
+   editor.getHTML()/збереженому HTML, тож без цього правила абзац-якір
+   займав би висоту рядка в редакторі, а в студента (де <br> просто
+   нема) — ні. line-height:0, НЕ display:none — сам <br> лишається в DOM
+   (потрібен ProseMirror/браузеру для коректного рендеру курсора в
+   порожньому блоці), лише не додає висоти рядку. */
+.rich-text-editable p:has(> img[data-align="left"]:only-child) br.ProseMirror-trailingBreak,
+.rich-text-editable p:has(> img[data-align="right"]:only-child) br.ProseMirror-trailingBreak {
+  line-height: 0;
+}
 /* Мобільна ширина — float ламає обтікання у вузькому блоці (текст
    стискається в однослівну смужку поруч із картинкою), тож ліво/право/центр
    уніфікуються в один і той самий вигляд ("на всю ширину контейнера, але не
