@@ -449,7 +449,7 @@ export default async function ScenePage({
               rel="noopener noreferrer"
               className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition duration-150 hover:-translate-y-0.5 hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:border-neutral-700 dark:bg-neutral-800"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
                 <Icon size={18} />
               </span>
               <span className="flex min-w-0 flex-col">

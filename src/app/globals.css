@@ -133,6 +133,9 @@ button, input, textarea, select, label, nav, aside {
    проблема), і бордер картки обрізав би картинку чи текст під нею. */
 .rich-text {
   display: flow-root;
+  /* Довге нерозривне слово/URL у статті/callout інакше розширює блок за
+     межі 360px-екрана (власного word-break на body-тексті немає). */
+  overflow-wrap: anywhere;
 }
 
 /* ЕТАП 3: однакова ширина текстової колонки в редакторі (RichArticleEditor)

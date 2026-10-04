@@ -18,5 +18,7 @@ export type GridCellSize = { box: string; text: string };
 export function gridCellSize(gridSize: number): GridCellSize {
   if (gridSize <= 10) return { box: "h-8 w-8 sm:h-10 sm:w-10", text: "text-sm sm:text-lg" };
   if (gridSize <= 12) return { box: "h-7 w-7 sm:h-9 sm:w-9", text: "text-xs sm:text-base" };
-  return { box: "h-5 w-5 sm:h-7 sm:w-7", text: "text-[10px] sm:text-sm" };
+  // 28px (h-7/w-7) — підлога для зручного тапу пальцем; те саме значення,
+  // що вже було лише на sm: (десктоп), тепер і на мобільному (було h-5=20px).
+  return { box: "h-7 w-7", text: "text-[10px] sm:text-sm" };
 }

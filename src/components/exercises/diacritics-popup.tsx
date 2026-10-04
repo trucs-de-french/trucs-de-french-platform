@@ -36,13 +36,29 @@ export function DiacriticsPopup({
   onHint?: () => void;
   hintDisabled?: boolean;
 }) {
-  const spaceBelow = window.innerHeight - rect.bottom;
-  const spaceAbove = rect.top;
+  // visualViewport — на мобільному відкрита клавіатура зменшує саме ЙОГО
+  // (window.innerHeight/innerWidth лишаються розміром шару layout-вьюпорту,
+  // частина якого ховається під клавіатурою); offsetTop/offsetLeft — бо
+  // position:fixed рахується від layout-вьюпорту, а видима область при
+  // скролі/клавіатурі може бути зсунута відносно нього. На десктопі
+  // visualViewport збігається з window — поведінка не змінюється.
+  const vv = window.visualViewport;
+  const viewportHeight = vv?.height ?? window.innerHeight;
+  const viewportWidth = vv?.width ?? window.innerWidth;
+  const offsetTop = vv?.offsetTop ?? 0;
+  const offsetLeft = vv?.offsetLeft ?? 0;
+
+  const spaceBelow = offsetTop + viewportHeight - rect.bottom;
+  const spaceAbove = rect.top - offsetTop;
   const showBelow = spaceBelow >= POPUP_HEIGHT || spaceBelow >= spaceAbove;
-  const top = showBelow ? rect.bottom + POPUP_GAP : rect.top - POPUP_HEIGHT - POPUP_GAP;
+  const rawTop = showBelow ? rect.bottom + POPUP_GAP : rect.top - POPUP_HEIGHT - POPUP_GAP;
+  const top = Math.max(
+    offsetTop + VIEWPORT_MARGIN,
+    Math.min(rawTop, offsetTop + viewportHeight - POPUP_HEIGHT - VIEWPORT_MARGIN)
+  );
   const left = Math.max(
-    VIEWPORT_MARGIN,
-    Math.min(rect.left + rect.width / 2 - POPUP_WIDTH / 2, window.innerWidth - POPUP_WIDTH - VIEWPORT_MARGIN)
+    offsetLeft + VIEWPORT_MARGIN,
+    Math.min(rect.left + rect.width / 2 - POPUP_WIDTH / 2, offsetLeft + viewportWidth - POPUP_WIDTH - VIEWPORT_MARGIN)
   );
 
   return (
@@ -108,10 +124,20 @@ export function useDiacriticsPopup<K extends string>() {
     // overflow-контейнера навколо поля, не лише скрол сторінки.
     window.addEventListener("scroll", updateRect, true);
     window.addEventListener("resize", updateRect);
+    // visualViewport resize/scroll — клавіатура з'являється вже ПІСЛЯ
+    // фокусу (rect поля сам може не змінитись), тож без цих слухачів
+    // DiacriticsPopup не дізнається, що видима область стала меншою, і
+    // позиція попапу лишиться розрахованою ще "до клавіатури". getBoundingClientRect()
+    // завжди повертає новий об'єкт — навіть однакові координати тригерять
+    // перерендер popup-а з уже актуальним visualViewport у його розрахунку.
+    window.visualViewport?.addEventListener("resize", updateRect);
+    window.visualViewport?.addEventListener("scroll", updateRect);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
+      window.visualViewport?.removeEventListener("resize", updateRect);
+      window.visualViewport?.removeEventListener("scroll", updateRect);
     };
   }, [activeKey]);
 

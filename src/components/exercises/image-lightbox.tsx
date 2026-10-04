@@ -53,7 +53,7 @@ export function ImageLightbox({
         type="button"
         onClick={onClose}
         aria-label="Закрити"
-        className="absolute right-4 top-4 text-white/80 transition-colors hover:text-white"
+        className="absolute right-4 top-4 text-white/80 before:absolute before:-inset-2 transition-colors hover:text-white"
       >
         <X size={28} />
       </button>

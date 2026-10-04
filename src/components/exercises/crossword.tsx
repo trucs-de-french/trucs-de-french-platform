@@ -331,7 +331,7 @@ export function CrosswordExercise({
               e.stopPropagation();
               applyHint(direction, clue.number);
             }}
-            className="absolute right-1 top-1 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+            className="absolute right-1 top-1 rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
           >
             <Lightbulb size={14} />
           </button>
@@ -408,7 +408,7 @@ export function CrosswordExercise({
               e.stopPropagation();
               applyHint(direction, clue.number);
             }}
-            className="rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
+            className="relative rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
           >
             <Lightbulb size={13} />
           </button>
