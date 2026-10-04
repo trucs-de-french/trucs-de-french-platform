@@ -59,6 +59,32 @@ export const DRIVE_MOBILE_ASPECT = 4 / 3;
 // змін у будь-якому разі.
 export const SHOW_OWN_FULLSCREEN_BUTTON_FOR_GDRIVE_MOBILE = true;
 
+// "poster" — на touch (media (pointer: coarse)) замість вбудованого плеєра
+// Drive (video-frame.tsx) показується постер із посиланнями, що
+// відкривають відео прямо в Google Drive (нова вкладка/застосунок) —
+// плеєр Drive на телефонах виявився ненадійним (подвійне керування,
+// обрізаний кадр, див. попередні коміти). "embed" — повернути вбудований
+// плеєр як було. YouTube і десктоп не торкається в будь-якому режимі.
+export const GDRIVE_TOUCH_MODE: "poster" | "embed" = "poster";
+
+// ID файлу з embed-URL Drive (toEmbedUrl вище: https://drive.google.com/
+// file/d/{ID}/preview) — НЕ те саме, що внутрішній extractGdriveFileId:
+// той приймає будь-який Drive-URL (оригінальний, до toEmbedUrl), цей —
+// саме вже побудований embed-URL (src, що video-frame.tsx передає й так
+// рендерив в iframe), з якого постер-режим має дістати ID для посилання
+// "відкрити в Drive".
+export function getGdriveFileId(embedUrl: string): string | null {
+  return embedUrl.match(/\/file\/d\/([^/?#]+)/)?.[1] ?? null;
+}
+
+// preview — мінімальний плеєр на всю сторінку; view — повна сторінка Drive,
+// на Android може відкритись у застосунку Drive замість браузера.
+export const GDRIVE_OPEN_PATH = "preview";
+
+export function toGdriveOpenUrl(id: string): string {
+  return `https://drive.google.com/file/d/${id}/${GDRIVE_OPEN_PATH}`;
+}
+
 // НЕОФІЦІЙНИЙ метод (не задокументований Google API) — надійний лише для
 // файлів, що влазять у ліміт розміру антивірусної перевірки Drive; для
 // більших Google повертає HTML-сторінку попередження замість байтів аудіо
