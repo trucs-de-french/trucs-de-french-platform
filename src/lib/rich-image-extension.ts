@@ -24,6 +24,17 @@ export const FOCUS_PRESET_TO_XY: Record<ImageFocus, { x: number; y: number }> = 
   right: { x: 100, y: 50 },
 };
 
+// Clamp+нормалізація для РЕНДЕРУ (не для parseHTML вище — там уже є своя
+// перевірка цілих 0-100 з фолбеком на legacy data-focus/50): довільне
+// значення (undefined, NaN, поза діапазоном) завжди зводиться до цілого
+// 0-100, дефолт 50 — та сама гарантія "ніякого довільного тексту в
+// style", що й у sanitizeCalloutHtml, тут лише для живого DOM редактора.
+function normalizeFocusCoordinate(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 50;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
 function parseFocusCoordinate(element: HTMLElement, attr: "data-focus-x" | "data-focus-y", axis: "x" | "y"): number {
   const raw = element.getAttribute(attr);
   if (raw !== null) {
@@ -117,25 +128,40 @@ export const RichImage = Image.extend({
       },
       // Точний фокус обрізання — відсотки відносно прямокутника самого
       // <img> (0=лівий/верхній край, 100=правий/нижній), застосовується
-      // через object-position: X% Y% — САМЕ sanitizeCalloutHtml генерує
-      // цей inline style з перевірених чисел (а не ми тут), тому
-      // renderHTML нижче свідомо НЕ пише style — лише сирі числа в
-      // data-атрибутах, щоб sanitizer мав що перевірити й сам підставити
-      // стиль (той самий принцип, що inline style НЕ приходить з
-      // редактора в обхід санітайзера ніде на платформі).
+      // через object-position: X% Y%.
+      //
+      // Цей style — ЛИШЕ для живого DOM усередині самого TipTap-редактора
+      // (contentEditable, renderHTML нижче формує саме той <img>, що
+      // бачить вчителька під час редагування — RichImage НЕ має власного
+      // addNodeView/resize, тож це й справді єдине місце, що будує цей
+      // DOM-вузол). Збережений/студентський HTML — ОКРЕМИЙ шлях: його
+      // style завжди ПЕРЕГЕНЕРОВУЄ sanitizeCalloutHtml із тих самих
+      // data-focus-x/y (а не копіює цей), бо він ніколи не читає
+      // editor.getHTML()-івський style напряму — тож цей inline-style не
+      // є "діркою в обхід санітайзера": він впливає лише на те, що
+      // бачить вчителька ПІД ЧАС редагування, не на те, що зберігається.
+      // attributes тут — ПОВНИЙ набір атрибутів вузла (Tiptap передає
+      // nodeOrMark.attrs у кожен renderHTML, не лише "свій" ключ), тож
+      // focusY нижче бачить і focusX — обчислює style в одному місці,
+      // не дублює в обох.
       focusX: {
         default: 50,
         parseHTML: (element: HTMLElement) => parseFocusCoordinate(element, "data-focus-x", "x"),
         renderHTML: (attributes: { focusX?: number }) => ({
-          "data-focus-x": String(attributes.focusX ?? 50),
+          "data-focus-x": String(normalizeFocusCoordinate(attributes.focusX)),
         }),
       },
       focusY: {
         default: 50,
         parseHTML: (element: HTMLElement) => parseFocusCoordinate(element, "data-focus-y", "y"),
-        renderHTML: (attributes: { focusY?: number }) => ({
-          "data-focus-y": String(attributes.focusY ?? 50),
-        }),
+        renderHTML: (attributes: { focusX?: number; focusY?: number }) => {
+          const x = normalizeFocusCoordinate(attributes.focusX);
+          const y = normalizeFocusCoordinate(attributes.focusY);
+          return {
+            "data-focus-y": String(y),
+            style: `object-position: ${x}% ${y}%`,
+          };
+        },
       },
     };
   },
