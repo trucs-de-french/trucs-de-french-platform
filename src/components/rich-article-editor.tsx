@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -75,6 +75,16 @@ export function RichArticleEditor({
   const [html, setHtml] = useState(initialContent ?? "");
   const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
   const [imageUrlDraft, setImageUrlDraft] = useState("");
+  // Позиція курсора в момент кліку "Картинка" — попап і вибір файлу
+  // (і текстове поле посилання, і системний діалог завантаження) неминуче
+  // переносять DOM-фокус ПОВЗ contentEditable (на відміну від кнопок
+  // панелі нижче, тут preventDefault на mousedown не допоможе — треба
+  // реально фокусувати інше поле), тож на момент insertImage()
+  // editor.state.selection вже може "зʼїхати" (типово — на кінець
+  // документа, стандартна поведінка браузера, коли contentEditable
+  // повертає DOM-фокус без збереженого native Range усередині). Ref, не
+  // state — зміна не має викликати ре-рендер.
+  const savedSelectionRef = useRef<number | null>(null);
 
   const editor = useEditor({
     // Обов'язково false у Next.js — інакше редактор рендериться на сервері
@@ -95,7 +105,12 @@ export function RichArticleEditor({
     },
     editorProps: {
       attributes: {
-        class: `rich-text ${minHeightClassName} rounded-md border px-3 py-2 text-sm font-content focus:outline-none`,
+        // rich-text-editable — лише тут (не на студентському рендері
+        // callout.tsx/article page) — css/globals.css ставить
+        // cursor:grab на img САМЕ за цим класом, щоб вчителька бачила, що
+        // вставлену картинку можна перетягнути в інше місце тексту
+        // (float left/right не завжди дає очевидну "ручку" для drag).
+        class: `rich-text rich-text-editable ${minHeightClassName} rounded-md border px-3 py-2 text-sm font-content focus:outline-none`,
       },
     },
   });
@@ -123,9 +138,38 @@ export function RichArticleEditor({
     }
   }
 
+  // onClick кнопки "Картинка" — виконується ПІСЛЯ mousedown
+  // (preventDefault на ньому нижче не дає браузеру зняти виділення), тож
+  // тут editor.state.selection ще саме те, що бачила вчителька.
+  function openImagePopover() {
+    if (editor) {
+      savedSelectionRef.current = editor.state.selection.from;
+    }
+    setImagePopoverOpen(true);
+  }
+
   function insertImage(url: string) {
     if (!editor || !url.trim()) return;
-    editor.chain().focus().setImage({ src: url.trim() }).run();
+    const chain = editor.chain().focus();
+    const savedPos = savedSelectionRef.current;
+    // Відновлюємо позицію курсора, збережену при відкритті попапу —
+    // .focus() сам по собі міг(!) уже посунути виділення (детальніше в
+    // коментарі при savedSelectionRef), setTextSelection ПІСЛЯ focus() у
+    // тому самому ланцюжку перекриває це, перш ніж insertContent встигне
+    // прочитати tr.selection. Без збереженої позиції (напр. редактор ще не
+    // встиг змонтуватись при кліку) — вставляємо в ту позицію, яка є
+    // ЗАРАЗ, а не форсуємо кінець документа.
+    if (savedPos !== null) {
+      const clamped = Math.min(savedPos, editor.state.doc.content.size);
+      chain.setTextSelection(clamped);
+    }
+    // Якщо курсор усередині абзацу — insertContent сам розбиває його на
+    // дві частини навколо вставленого блокового image-вузла (стандартна
+    // ProseMirror-поведінка для block-вузла, вставленого посеред
+    // inline-контенту). align/size — ті самі дефолти, що й раніше
+    // (RichImage.addAttributes), явно тут для читабельності.
+    chain.insertContent({ type: "image", attrs: { src: url.trim(), align: "center", size: "medium" } }).run();
+    savedSelectionRef.current = null;
     setImageUrlDraft("");
     setImagePopoverOpen(false);
   }
@@ -152,6 +196,7 @@ export function RichArticleEditor({
         <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 bg-white p-1 dark:bg-neutral-950">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={`rounded px-2 py-1 text-xs font-bold ${
               editor.isActive("bold") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -161,6 +206,7 @@ export function RichArticleEditor({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={`rounded px-2 py-1 text-xs italic ${
               editor.isActive("italic") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -175,6 +221,7 @@ export function RichArticleEditor({
               key={c.value}
               type="button"
               title={c.label}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setHighlight({ color: c.value }).run()}
               style={{ backgroundColor: c.value }}
               className={`h-5 w-5 rounded border-2 ${
@@ -187,6 +234,7 @@ export function RichArticleEditor({
           <button
             type="button"
             title="Прибрати підсвітку"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().unsetHighlight().run()}
             className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
@@ -195,6 +243,7 @@ export function RichArticleEditor({
           <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             className={`rounded px-2 py-1 text-xs ${
               editor.isActive("heading", { level: 2 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -204,6 +253,7 @@ export function RichArticleEditor({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             className={`rounded px-2 py-1 text-xs ${
               editor.isActive("heading", { level: 3 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -225,7 +275,8 @@ export function RichArticleEditor({
           <span className="mx-1 h-5 w-px bg-neutral-300 dark:bg-neutral-700" aria-hidden />
           <button
             type="button"
-            onClick={() => setImagePopoverOpen(true)}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={openImagePopover}
             className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             <ImageIcon size={14} /> Картинка
@@ -239,6 +290,7 @@ export function RichArticleEditor({
                 <button
                   key={align}
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => editor.chain().focus().updateAttributes("image", { align }).run()}
                   className={`rounded px-2 py-1 text-xs ${
                     imageSelection.align === align
@@ -255,6 +307,7 @@ export function RichArticleEditor({
                   key={size}
                   type="button"
                   disabled={imageSelection.align === "full"}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => editor.chain().focus().updateAttributes("image", { size }).run()}
                   className={`rounded px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${
                     imageSelection.size === size && imageSelection.align !== "full"
@@ -268,6 +321,7 @@ export function RichArticleEditor({
               <button
                 type="button"
                 title="Видалити картинку"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => editor.chain().focus().deleteSelection().run()}
                 className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
               >

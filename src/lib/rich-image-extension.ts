@@ -16,6 +16,15 @@ export const IMAGE_SIZE_VALUES: ImageSize[] = ["small", "medium", "large"];
 // успадкований — ні callout, ні стаття його не потребують, і
 // sanitize-callout-html.ts його все одно вирізав би.
 export const RichImage = Image.extend({
+  // Явно (хоч базовий @tiptap/extension-image вузол і так має
+  // draggable: true за замовчуванням) — переміщення вставленої картинки
+  // мишею в інше місце тексту: ProseMirror сам переносить вузол разом з
+  // УСІМА його атрибутами (align/size не губляться при drag&drop,
+  // перенесення — це видалення вузла зі старої позиції й вставка того
+  // самого вузла в нову, не пересворення). Dropcursor/Gapcursor (видима
+  // лінія вставки під час перетягування) — уже частина StarterKit v3 за
+  // замовчуванням (@tiptap/extensions), окремий пакет не потрібен.
+  draggable: true,
   addAttributes() {
     return {
       src: { default: null },
