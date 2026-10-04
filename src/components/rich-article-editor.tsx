@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { useEditor, EditorContent, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -101,6 +102,26 @@ export function RichArticleEditor({
   const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
   const [imageUrlDraft, setImageUrlDraft] = useState("");
   const [focusPopoverOpen, setFocusPopoverOpen] = useState(false);
+  // Позиція image-вузла в документі (editor.state.selection.from) у момент
+  // відкриття попапу — попап далі працює ЧЕРЕЗ цю позицію
+  // (setNodeSelection(pos) у setFocus нижче), а не через "поточне
+  // виділення": клік усередині самого попапу (перетягування мітки, клік по
+  // пресету) — це взаємодія з DOM ПОЗА contentEditable, яка неминуче
+  // забирає фокус з редактора; якби попап/кнопки залежали від того, що
+  // картинка й ЗАРАЗ виділена (imageSelection.isImageActive), будь-яка така
+  // взаємодія могла б зняти виділення й розмонтувати панель/попап посеред
+  // роботи. pos — не ref: використовується для похідного значення
+  // focusNodeAttrs нижче, яке має перерахунтись при зміні.
+  const [focusNodePos, setFocusNodePos] = useState<number | null>(null);
+  // Прив'язка попапу до кнопки "Фокус…" у ВІКОННИХ координатах (той самий
+  // простір, що й position:fixed) — обчислена ОДНОРАЗОВО в момент відкриття
+  // (getBoundingClientRect кнопки), не "живий" стеж за кнопкою: попап
+  // рендериться через портал у document.body (нижче), тож звичайний
+  // position:absolute відносно батьківського DOM-вузла тут не спрацював би
+  // — і, що важливіше, це й усуває будь-який ризик, що попап обрізає
+  // overflow:hidden/auto чи ховає z-index якогось предка в адмін-панелі
+  // (портал виносить його на верхній рівень DOM, поза всіма такими предками).
+  const [focusAnchor, setFocusAnchor] = useState<{ top: number; right: number } | null>(null);
   // Контейнер навколо <img> у попапі "Фокус" — display:inline-block, тож
   // його rect ТОЧНО збігається з рендереним прямокутником самої картинки
   // (object-fit тут не потрібен узагалі: без зовнішньої фіксованої ширини
@@ -182,6 +203,25 @@ export function RichArticleEditor({
     }),
   });
 
+  // Атрибути картинки, прив'язаної до попапу "Фокус" — читаються ПРЯМО з
+  // документа за focusNodePos, а НЕ з imageSelection (яке відображає
+  // ПОТОЧНЕ виділення): поки попап відкритий, виділення може зміститись
+  // (клік усередині самого попапу, або й просто кудись у текст), а
+  // картинка, яку редагує попап, лишається тією самою за збереженою
+  // позицією. Перерахунтовується на кожен рендер — достатньо дешево,
+  // і завжди відображає останній стан після setFocus() нижче (та
+  // ВИКЛИКАЄ re-render через onUpdate, оскільки setFocus змінює документ).
+  const focusNodeAttrs = (() => {
+    if (!editor || focusNodePos === null) return null;
+    const node = editor.state.doc.nodeAt(focusNodePos);
+    if (!node || node.type.name !== "image") return null;
+    return {
+      src: (node.attrs.src as string | null) ?? "",
+      focusX: (node.attrs.focusX as number | undefined) ?? 50,
+      focusY: (node.attrs.focusY as number | undefined) ?? 50,
+    };
+  })();
+
   function toggleFont(value: string) {
     if (!editor) return;
     if (value) {
@@ -227,18 +267,39 @@ export function RichArticleEditor({
     setImagePopoverOpen(false);
   }
 
-  // Точка фокусу при обрізанні — викликається і з перетягування мишею
-  // (pointermove), і з клавіатури, і з кнопок-пресетів у попапі. Та сама
-  // NodeSelection лишається виділеною протягом усього часу, поки попап
-  // відкритий (клік по кнопці "Фокус" — mousedown з preventDefault, як і
-  // решта панелі), тож .focus() тут не "зʼїжджає" на TextSelection: image
-  // вже NodeSelection, і ProseMirror-команда focus() для НЕ-text-виділення
-  // просто повертає фокус у DOM без зміни самого виділення (на відміну від
-  // insertImage() вище, де курсор був звичайним текстовим і довелось
-  // явно зберігати/відновлювати позицію).
-  function setFocus(x: number, y: number) {
+  // onClick кнопки "Фокус…" — mousedown з preventDefault на самій кнопці
+  // (нижче) лишає виділення картинки незмінним рівно до цього моменту,
+  // тож editor.state.selection.from тут ЩЕ точно позиція вузла картинки.
+  // Далі попап працює ЧЕРЕЗ цю збережену позицію (setFocus нижче), а не
+  // через "що зараз виділено" — саме це мало ламатись раніше: клік
+  // усередині попапу (перетягування мітки) — взаємодія поза
+  // contentEditable, після якої покладатись на "поточне виділення" вже
+  // не можна.
+  function openFocusPopover(e: MouseEvent<HTMLButtonElement>) {
     if (!editor) return;
-    editor.chain().focus().updateAttributes("image", { focusX: x, focusY: y }).run();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFocusAnchor({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    setFocusNodePos(editor.state.selection.from);
+    setFocusPopoverOpen(true);
+  }
+
+  function closeFocusPopover() {
+    setFocusPopoverOpen(false);
+    setFocusNodePos(null);
+    setFocusAnchor(null);
+  }
+
+  // Точка фокусу при обрізанні — викликається і з перетягування мишею
+  // (pointermove), і з клавіатури, і з кнопок-пресетів у попапі. На
+  // відміну від попередньої версії, НЕ покладається на editor.isActive —
+  // явно повертає виділення на збережену позицію (setNodeSelection) ПЕРЕД
+  // зміною атрибутів, тож працює незалежно від того, що зараз виділено
+  // в редакторі (навіть якщо клік усередині попапу вже перенів фокус/
+  // виділення кудись інде).
+  function setFocus(x: number, y: number) {
+    if (!editor || focusNodePos === null) return;
+    const pos = Math.min(focusNodePos, Math.max(0, editor.state.doc.content.size - 1));
+    editor.chain().focus().setNodeSelection(pos).updateAttributes("image", { focusX: x, focusY: y }).run();
   }
 
   function computeFocusFromPointer(e: { clientX: number; clientY: number }) {
@@ -279,8 +340,8 @@ export function RichArticleEditor({
     else return;
     e.preventDefault();
     setFocus(
-      clamp((imageSelection?.focusX ?? 50) + dx, 0, 100),
-      clamp((imageSelection?.focusY ?? 50) + dy, 0, 100)
+      clamp((focusNodeAttrs?.focusX ?? 50) + dx, 0, 100),
+      clamp((focusNodeAttrs?.focusY ?? 50) + dy, 0, 100)
     );
   }
 
@@ -299,11 +360,7 @@ export function RichArticleEditor({
   });
 
   return (
-    // relative — попап "Фокус" нижче позиціонується absolute САМЕ
-    // відносно цього контейнера (не fixed/на весь екран, як попап
-    // вставки картинки вище): щоб під час перетягування мітки лишався
-    // видимим і сам текст редактора з картинкою, що оновлюється наживо.
-    <div className="relative flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       <input type="hidden" name={name} value={html} readOnly />
 
       {editor && (
@@ -457,8 +514,9 @@ export function RichArticleEditor({
               <button
                 type="button"
                 disabled={imageSelection.crop === "original"}
+                title={imageSelection.crop === "original" ? "Спочатку виберіть обрізання" : undefined}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setFocusPopoverOpen(true)}
+                onClick={openFocusPopover}
                 className="rounded px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 Фокус…
@@ -513,93 +571,114 @@ export function RichArticleEditor({
         </div>
       )}
 
-      {focusPopoverOpen && (
-        <>
-          {/* Прозорий click-away шар, НЕ bg-black/50 — на відміну від
-              попапу вставки картинки вище, тут навмисно нема
-              затемнення всього екрана: вчителька має бачити, як
-              змінюється кадр у самому тексті редактора ПІД ЧАС
-              перетягування мітки, а не лише в попапі. */}
-          <div
-            className={Z_DROPDOWN}
-            style={{ position: "fixed", inset: 0 }}
-            onClick={() => setFocusPopoverOpen(false)}
-          />
-          <div
-            className={`absolute right-0 top-full mt-1 w-72 ${Z_MODAL} flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-neutral-700 dark:bg-neutral-900`}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setFocusPopoverOpen(false);
-            }}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Фокус обрізання</p>
-              <button
-                type="button"
-                onClick={() => setFocusPopoverOpen(false)}
-                aria-label="Готово"
-                title="Готово"
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Контейнер без object-fit: display:inline-block звужує
-                його рівно до рендереного розміру самого <img> (повна,
-                НЕобрізана картинка — тут завжди object-fit:contain не
-                потрібен, нема зовнішньої фіксованої ширини, що вимагала
-                б letterbox-компенсації), тож rect контейнера = rect
-                картинки, і відсотки кліку рахуються без зсуву. */}
+      {focusPopoverOpen &&
+        focusAnchor &&
+        createPortal(
+          // Портал у document.body — попап НЕ вкладений у жоден DOM-
+          // контейнер адмінки (жодного ризику overflow:hidden/auto чи
+          // чужого z-index, що обрізав/ховав би absolute-попап усередині
+          // звичного дерева), position:fixed від в'юпорта з координатами,
+          // знятими з кнопки "Фокус…" в момент відкриття (не "живе"
+          // стеження — попап не зсувається, якщо сторінку проскролити, і
+          // це нормально: закриття/переоткриття дешеве). Видимість НЕ
+          // залежить від imageSelection.isImageActive — лишається
+          // відкритим, навіть якщо клік усередині самого попапу (чи
+          // будь-де) перенесе виділення редактора кудись інде; закривають
+          // ЛИШЕ Esc/клік поза попапом/кнопка "Готово" нижче.
+          <>
+            {/* Прозорий click-away шар, НЕ bg-black/50 — на відміну від
+                попапу вставки картинки вище, тут навмисно нема
+                затемнення всього екрана: вчителька має бачити, як
+                змінюється кадр у самому тексті редактора ПІД ЧАС
+                перетягування мітки, а не лише в попапі. */}
             <div
-              ref={focusImageBoxRef}
-              onPointerDown={handleFocusPointerDown}
-              onPointerMove={handleFocusPointerMove}
-              className="relative inline-block max-w-full cursor-crosshair select-none self-center"
+              className={Z_DROPDOWN}
+              style={{ position: "fixed", inset: 0 }}
+              onClick={closeFocusPopover}
+            />
+            <div
+              style={{ position: "fixed", top: focusAnchor.top, right: focusAnchor.right }}
+              className={`w-72 ${Z_MODAL} flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-neutral-700 dark:bg-neutral-900`}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") closeFocusPopover();
+              }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- попередній перегляд у попапі адмінки, той самий принцип, що ImageOrPlaceholder */}
-              <img
-                src={imageSelection?.src || undefined}
-                alt=""
-                draggable={false}
-                className="block max-h-[260px] max-w-full rounded"
-              />
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Фокус обрізання</p>
+                <button
+                  type="button"
+                  onClick={closeFocusPopover}
+                  aria-label="Готово"
+                  title="Готово"
+                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Контейнер без object-fit: display:inline-block звужує
+                  його рівно до рендереного розміру самого <img> (повна,
+                  НЕобрізана картинка — тут завжди object-fit:contain не
+                  потрібен, нема зовнішньої фіксованої ширини, що вимагала
+                  б letterbox-компенсації), тож rect контейнера = rect
+                  картинки, і відсотки кліку рахуються без зсуву.
+                  onMouseDown preventDefault — як і решта кнопок панелі:
+                  клік тут не має забирати фокус/виділення з редактора (не
+                  критично для коректності — setFocus уже явно повертає
+                  виділення на збережену позицію — але без цього фокус
+                  "мигав" би між редактором і попапом на кожен клік). */}
               <div
-                role="slider"
-                tabIndex={0}
-                aria-label="Точка фокусу обрізання"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={imageSelection?.focusX ?? 50}
-                aria-valuetext={`${imageSelection?.focusX ?? 50}%, ${imageSelection?.focusY ?? 50}%`}
-                onKeyDown={handleFocusMarkerKeyDown}
-                style={{
-                  left: `${imageSelection?.focusX ?? 50}%`,
-                  top: `${imageSelection?.focusY ?? 50}%`,
-                }}
-                className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-brand shadow ring-1 ring-black/30 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand"
+                ref={focusImageBoxRef}
+                onMouseDown={(e) => e.preventDefault()}
+                onPointerDown={handleFocusPointerDown}
+                onPointerMove={handleFocusPointerMove}
+                className="relative inline-block max-w-full cursor-crosshair select-none self-center"
               >
-                <span className="absolute h-2.5 w-px bg-white" aria-hidden />
-                <span className="absolute h-px w-2.5 bg-white" aria-hidden />
+                {/* eslint-disable-next-line @next/next/no-img-element -- попередній перегляд у попапі адмінки, той самий принцип, що ImageOrPlaceholder */}
+                <img
+                  src={focusNodeAttrs?.src || undefined}
+                  alt=""
+                  draggable={false}
+                  className="block max-h-[260px] max-w-full rounded"
+                />
+                <div
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="Точка фокусу обрізання"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={focusNodeAttrs?.focusX ?? 50}
+                  aria-valuetext={`${focusNodeAttrs?.focusX ?? 50}%, ${focusNodeAttrs?.focusY ?? 50}%`}
+                  onKeyDown={handleFocusMarkerKeyDown}
+                  style={{
+                    left: `${focusNodeAttrs?.focusX ?? 50}%`,
+                    top: `${focusNodeAttrs?.focusY ?? 50}%`,
+                  }}
+                  className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-brand shadow ring-1 ring-black/30 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand"
+                >
+                  <span className="absolute h-2.5 w-px bg-white" aria-hidden />
+                  <span className="absolute h-px w-2.5 bg-white" aria-hidden />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-1">
+                {IMAGE_FOCUS_VALUES.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setFocus(FOCUS_PRESET_TO_XY[preset].x, FOCUS_PRESET_TO_XY[preset].y)}
+                    className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    {FOCUS_LABELS[preset]}
+                  </button>
+                ))}
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-1">
-              {IMAGE_FOCUS_VALUES.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setFocus(FOCUS_PRESET_TO_XY[preset].x, FOCUS_PRESET_TO_XY[preset].y)}
-                  className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  {FOCUS_LABELS[preset]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 }
