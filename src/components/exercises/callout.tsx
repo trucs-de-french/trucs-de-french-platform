@@ -37,11 +37,20 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
   if (isBlankHtml(safeHtml)) return null;
 
   return (
-    <div className={`flex gap-2 rounded-md border-2 p-3 ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
-      <span aria-hidden className="shrink-0">
-        {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
-      </span>
-      <div className="rich-text" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+    // ЕТАП 3: border-2/p-3 — на цій зовнішній обгортці (рамка/фон
+    // callout), НЕ на flex-рядку з іконкою й текстом — так само, як
+    // RichArticleEditor тепер тримає свою рамку/px-3 py-2 на окремій
+    // обгортці навколо EditorContent, не на самому .rich-text: щоб
+    // box-sizing:content-box у .rich-text--article (globals.css) рахував
+    // 46rem рівно для текстового контенту, незалежно від padding/border
+    // картки. Рамка/фон не змінились — лише перенесені на рівень вище.
+    <div className={`rounded-md border-2 p-3 ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
+      <div className="flex gap-2">
+        <span aria-hidden className="shrink-0">
+          {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
+        </span>
+        <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+      </div>
     </div>
   );
 }

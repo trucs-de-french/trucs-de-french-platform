@@ -135,6 +135,24 @@ button, input, textarea, select, label, nav, aside {
   display: flow-root;
 }
 
+/* ЕТАП 3: однакова ширина текстової колонки в редакторі (RichArticleEditor)
+   і в студента (CalloutExercise, стаття Матеріалу) — модифікатор, НЕ
+   застосовується до .rich-text в інших місцях (InstructionsRichTextField
+   тощо, у них своя ширина). box-sizing:content-box — щоб border/padding
+   рамки/обгортки (callout-картка, область редактора) НЕ додавались до цих
+   46rem, а йшли ПОВЕРХ (саме тому їх свідомо перенесено на зовнішні
+   обгортки — callout.tsx/material page/rich-article-editor.tsx — геть із
+   самого .rich-text--article). width:100% + max-width:46rem — якщо
+   батьківський контейнер вужчий (мобільна ширина, чи просто вузька картка)
+   — займає всю доступну ширину, 46rem лише СТЕЛЯ, не мінімум. */
+.rich-text--article {
+  box-sizing: content-box;
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
 /* Картинки з ЕТАПУ 1 (callout/стаття Матеріалу) — data-align/data-size на
    самому <img> (TipTap RichImage, src/lib/rich-image-extension.ts), не
    inline style: той самий HTML однаково рендериться і в адмін-редакторі
@@ -264,6 +282,20 @@ button, input, textarea, select, label, nav, aside {
    лише візуальна підказка). */
 .rich-text-editable img {
   cursor: grab;
+}
+/* ЕТАП 3: inline-картинка з float (data-align left/right) усередині
+   абзаца, що більше нічого не містить (<p><img></p>) — класичний
+   float-collapse: сам <p> не має "нормального" вмісту, що дало б йому
+   висоту (float виймається з потоку), тож у редакторі текстовий курсор
+   там був би невидимий (нульова висота рядка). display:flow-root на
+   .rich-text вище рятує ВИСОТУ САМОГО .rich-text (не дає картинці
+   "протекти" за межі картки), але НЕ висоту кожного окремого <p> всередині
+   — для цього min-height тут, і лише в редакторі (rich-text-editable):
+   на студентському рендері порожній відступ під рядком не потрібен,
+   курсора там нема. Безпечно для звичних абзаців з текстом — line-height
+   вже дає їм принаймні стільки ж висоти, min-height нічого не змінює. */
+.rich-text-editable p {
+  min-height: 1em;
 }
 /* Мобільна ширина — float ламає обтікання у вузькому блоці (текст
    стискається в однослівну смужку поруч із картинкою), тож ліво/право/центр

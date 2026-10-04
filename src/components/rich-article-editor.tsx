@@ -273,7 +273,14 @@ export function RichArticleEditor({
       FontSize.configure({ types: ["textStyle"] }),
       ParagraphFormat,
       Highlight.configure({ multicolor: true }),
-      RichImage.configure({ inline: false, allowBase64: false }),
+      // ЕТАП 3: inline: true — картинка живе в потоці тексту (всередині p/
+      // li/heading, а не лише як окремий блок між ними), group стає
+      // "inline" автоматично (Image.group() читає options.inline, джерело
+      // @tiptap/extension-image). Dropcursor/Gapcursor — частина
+      // StarterKit (@tiptap/extensions) за замовчуванням, і так само
+      // показують лінію вставки для inline-вузлів без додаткової
+      // конфігурації.
+      RichImage.configure({ inline: true, allowBase64: false }),
     ],
     content: initialContent ?? "",
     onUpdate({ editor }) {
@@ -289,23 +296,20 @@ export function RichArticleEditor({
         // вставлену картинку можна перетягнути в інше місце тексту
         // (float left/right не завжди дає очевидну "ручку" для drag).
         //
-        // max-w-xl (36rem=576px) — наближено до реальної ширини тексту
-        // студентської сторінки: max-w-2xl (672px) мінус p-6 сторінки
-        // (48px) мінус border-2+p-3 картки callout/статті (28px) мінус
-        // іконка+gap-2 зліва (~26px) ≈ 570px. Без цього обтікання
-        // картинки в редакторі (де текстова колонка тягнеться на всю
-        // ширину адмін-панелі, max-w-6xl) переносилось би по рядках
-        // зовсім інакше, ніж у студента — саме це й було видно на
-        // скріншотах (у редакторі заголовок встигає стати поруч із
-        // картинкою, у студента та сама картинка вже не лишає місця,
-        // і наступний рядок іде під нею).
-        //
-        // text-sm прибрано — залишає абзаци/списки на тому самому
-        // розмірі шрифту, що в студента (ambient 16px, body/.rich-text
-        // не задають власний font-size для p/li, лише font-family),
-        // інакше той самий % (data-size) давав би інший піксельний
-        // розмір картинки відносно тексту в редакторі й у студента.
-        class: `rich-text rich-text-editable max-w-xl ${minHeightClassName} rounded-md border px-3 py-2 font-content focus:outline-none`,
+        // ЕТАП 3: max-w-xl/border/px-3 py-2 ПРИБРАНО звідси — рамка й
+        // горизонтальні відступи переїхали на зовнішню обгортку нижче
+        // (<div className="rounded-b-md border px-3 py-2">), так само, як
+        // callout/стаття Матеріалу вже тримають border-2/p-3 картки НА
+        // ОБГОРТЦІ, а не на самому .rich-text (callout.tsx,
+        // material page). Причина: rich-text--article (globals.css)
+        // задає box-sizing:content-box і рівно 46rem — якби border/padding
+        // лишились НА цьому самому елементі, вони додавались би ПОВЕРХ
+        // 46rem (box-sizing:content-box це дозволяє), і текстова колонка
+        // в редакторі вийшла б ширшою за 46rem студента на ширину тієї ж
+        // padding/border. text-sm лишається прибраним (ambient 16px, як
+        // і раніше) — body/.rich-text не задають власний font-size для
+        // p/li.
+        class: `rich-text rich-text-editable rich-text--article ${minHeightClassName} font-content focus:outline-none`,
       },
     },
   });
@@ -493,11 +497,12 @@ export function RichArticleEditor({
       const clamped = Math.min(savedPos, editor.state.doc.content.size);
       chain.setTextSelection(clamped);
     }
-    // Якщо курсор усередині абзацу — insertContent сам розбиває його на
-    // дві частини навколо вставленого блокового image-вузла (стандартна
-    // ProseMirror-поведінка для block-вузла, вставленого посеред
-    // inline-контенту). align/size — ті самі дефолти, що й раніше
-    // (RichImage.addAttributes), явно тут для читабельності.
+    // ЕТАП 3: RichImage — inline-вузол, тож insertContent вставляє його
+    // прямо в текстовий потік у збереженій позиції (всередині слова,
+    // абзаца, пункту списку) — ніякого розбиття абзаца на два, на відміну
+    // від попередньої (блокової) поведінки цього вузла. align/size — ті
+    // самі дефолти, що й раніше (RichImage.addAttributes), явно тут для
+    // читабельності.
     chain.insertContent({ type: "image", attrs: { src: url.trim(), align: "center", size: "medium" } }).run();
     savedSelectionRef.current = null;
     setImageUrlDraft("");
@@ -836,7 +841,14 @@ export function RichArticleEditor({
         </div>
       )}
 
-      <EditorContent editor={editor} className="rounded-b-md" />
+      {/* Рамка/відступи (ЕТАП 3) — на цій зовнішній обгортці, НЕ на самому
+          .rich-text (editorProps.attributes.class вище) — щоб
+          box-sizing:content-box у .rich-text--article (globals.css) рахував
+          46rem рівно для текстового контенту, без додавання px-3/border
+          поверх. */}
+      <div className="rounded-b-md border px-3 py-2">
+        <EditorContent editor={editor} />
+      </div>
 
       {imagePopoverOpen && (
         <div

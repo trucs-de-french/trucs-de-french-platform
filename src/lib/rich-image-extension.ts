@@ -70,6 +70,15 @@ export const RichImage = Image.extend({
   // лінія вставки під час перетягування) — уже частина StarterKit v3 за
   // замовчуванням (@tiptap/extensions), окремий пакет не потрібен.
   draggable: true,
+  // Inline-вузол (ЕТАП 3) — group()/inline() базового @tiptap/extension-image
+  // уже самі перемикаються на "inline"/true за this.options.inline
+  // (перевірено в джерелі node_modules), тож схема бере group звідти
+  // автоматично з RichImage.configure({ inline: true, ... }) у
+  // rich-article-editor.tsx; тут лишається додати atom (базовий Image
+  // його не задає) — картинка і так без вмісту (content за замовчуванням
+  // порожній), atom:true лише явно фіксує "однією клавішею/кліком, не
+  // заходимо всередину" для курсора/виділення, як у Word.
+  atom: true,
   addAttributes() {
     return {
       src: { default: null },
@@ -80,8 +89,16 @@ export const RichImage = Image.extend({
           const value = element.getAttribute("data-align");
           return (IMAGE_ALIGN_VALUES as string[]).includes(value ?? "") ? value : "center";
         },
+        // title тут — підказка "можна перетягнути" для ЖИВОГО DOM
+        // редактора (той самий принцип, що object-position у focusY нижче:
+        // це не окремий data-атрибут, а просто ЩЕ одне поле в тому самому
+        // renderHTML, mergeAttributes об'єднає його з полями інших
+        // атрибутів без конфлікту). НЕ потрапляє у збережений HTML — title
+        // не входить у allowedAttributes.img sanitize-callout-html.ts,
+        // sanitizeCalloutHtml(editor.getHTML()) його просто відкидає.
         renderHTML: (attributes: { align?: string }) => ({
           "data-align": attributes.align ?? "center",
+          title: "Перетягніть, щоб перемістити",
         }),
       },
       size: {

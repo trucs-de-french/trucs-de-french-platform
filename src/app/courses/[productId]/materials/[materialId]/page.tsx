@@ -152,12 +152,19 @@ export default async function MaterialPage({
           власним margin-top, зайвий бухгалтерський зазор перед вправами. */}
       {(hasArticleContent || !hasExercises) && (
         <div className={`${H1_TO_CONTENT} space-y-4`}>
+          {/* ЕТАП 3: border-2/p-3 на зовнішній обгортці, не на flex-рядку —
+              той самий рефакторинг, що callout.tsx (STYLE_CLASSES-картка
+              тут буквально дублює той компонент), заради
+              box-sizing:content-box/46rem у .rich-text--article
+              (globals.css). */}
           {safeHtml && (
-            <div className={`flex gap-2 rounded-md border-2 p-3 ${STYLE_CLASSES[style]}`}>
-              <span aria-hidden className="shrink-0">
-                {STYLE_ICONS[style]}
-              </span>
-              <div className="rich-text" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+            <div className={`rounded-md border-2 p-3 ${STYLE_CLASSES[style]}`}>
+              <div className="flex gap-2">
+                <span aria-hidden className="shrink-0">
+                  {STYLE_ICONS[style]}
+                </span>
+                <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+              </div>
             </div>
           )}
 
