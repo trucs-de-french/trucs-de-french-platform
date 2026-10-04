@@ -50,6 +50,15 @@ export function toEmbedUrl(
 // правила в globals.css).
 export const DRIVE_MOBILE_ASPECT = 4 / 3;
 
+// Запасний вимикач власної кнопки "На весь екран" (video-frame.tsx) САМЕ
+// для provider="gdrive" на touch-пристроях (media (pointer: coarse)) —
+// якщо повний екран Drive на телефонах виглядає зламано (наприклад,
+// подвійне керування плеєра на Android), поставити false: кнопка зникне
+// лише для цього поєднання (gdrive + touch), студент користується рідною
+// кнопкою повного екрана САМОГО плеєра Drive. YouTube і десктоп — без
+// змін у будь-якому разі.
+export const SHOW_OWN_FULLSCREEN_BUTTON_FOR_GDRIVE_MOBILE = true;
+
 // НЕОФІЦІЙНИЙ метод (не задокументований Google API) — надійний лише для
 // файлів, що влазять у ліміт розміру антивірусної перевірки Drive; для
 // більших Google повертає HTML-сторінку попередження замість байтів аудіо
