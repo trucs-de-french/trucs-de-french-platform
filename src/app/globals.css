@@ -139,7 +139,24 @@ button, input, textarea, select, label, nav, aside {
    самому <img> (TipTap RichImage, src/lib/rich-image-extension.ts), не
    inline style: той самий HTML однаково рендериться і в адмін-редакторі
    (RichArticleEditor — вчителька бачить обтікання вже під час редагування),
-   і на студентській сторінці (CalloutExercise, стаття Матеріалу). */
+   і на студентській сторінці (CalloutExercise, стаття Матеріалу).
+   Розвідка (ЕТАП 3 — однаковий вигляд в обох місцях): окремого набору
+   правил для ".ProseMirror" НЕМАЄ і не було — contentEditable-корінь
+   редактора несе клас "rich-text" так само, як студентський контейнер
+   (RichArticleEditor, editorProps.attributes.class), тож правила нижче й
+   так ОДНІ й ті самі для обох контекстів; нема і NodeView-обгортки навколо
+   img (RichImage не додає addNodeView — рендериться голим <img>,
+   draggable лише ставить атрибут на сам елемент, без зайвого div/span,
+   перевірено в prosemirror-view: NodeViewDesc.create). Реальна причина
+   різної картинки "на екрані" — ширина і розмір шрифту контейнера з
+   текстом: студентська колонка ~570px (max-w-2xl сторінки мінус
+   padding/бордер картки callout мінус іконка+gap), а текстова колонка
+   редактора тягнулась на всю ширину адмін-панелі (max-w-6xl) з
+   text-sm (14px) замість ambient 16px — тому те саме data-size="medium"
+   (40% контейнера) займало інакший простір відносно тексту і переносилось
+   по рядках по-іншому. Фікс — у max-w-xl/font-size на самому
+   contentEditable (RichArticleEditor), не тут: власне відступи/float
+   margin/width-правила нижче лишились БЕЗ ЗМІН. */
 .rich-text img[data-align="left"] {
   float: left;
   margin: 0.25rem 1rem 0.5rem 0;
