@@ -127,6 +127,75 @@ button, input, textarea, select, label, nav, aside {
    дублює глобальне правило h1-h6/body (той самий --font-heading/--font-body)
    — явно прописано заради однозначності самого .rich-text блоку. Розміри
    шрифтів/font-weight не чіпались. */
+/* flow-root — щоб плаваючі (float) картинки нижче не вилазили за межі
+   .rich-text блоку (callout-картка, стаття Матеріалу): без цього батьківський
+   контейнер "не бачив" би висоту float-елементів (класична float-collapse
+   проблема), і бордер картки обрізав би картинку чи текст під нею. */
+.rich-text {
+  display: flow-root;
+}
+
+/* Картинки з ЕТАПУ 1 (callout/стаття Матеріалу) — data-align/data-size на
+   самому <img> (TipTap RichImage, src/lib/rich-image-extension.ts), не
+   inline style: той самий HTML однаково рендериться і в адмін-редакторі
+   (RichArticleEditor — вчителька бачить обтікання вже під час редагування),
+   і на студентській сторінці (CalloutExercise, стаття Матеріалу). */
+.rich-text img[data-align="left"] {
+  float: left;
+  margin: 0.25rem 1rem 0.5rem 0;
+}
+.rich-text img[data-align="right"] {
+  float: right;
+  margin: 0.25rem 0 0.5rem 1rem;
+}
+.rich-text img[data-align="center"] {
+  display: block;
+  margin: 1rem auto;
+}
+.rich-text img[data-align="full"] {
+  display: block;
+  width: 100%;
+  margin: 1rem 0;
+}
+/* Розмір застосовується лише до left/right/center — "на всю ширину" завжди
+   100% (правило вище), розмір для неї невідчутний. border-radius — той
+   самий, що в решти картинок платформи (TaskMedia/ImageOrPlaceholder). */
+.rich-text img[data-align="left"],
+.rich-text img[data-align="right"],
+.rich-text img[data-align="center"] {
+  height: auto;
+  border-radius: 0.5rem;
+}
+.rich-text img[data-align="left"][data-size="small"],
+.rich-text img[data-align="right"][data-size="small"],
+.rich-text img[data-align="center"][data-size="small"] {
+  width: 25%;
+}
+.rich-text img[data-align="left"][data-size="medium"],
+.rich-text img[data-align="right"][data-size="medium"],
+.rich-text img[data-align="center"][data-size="medium"] {
+  width: 40%;
+}
+.rich-text img[data-align="left"][data-size="large"],
+.rich-text img[data-align="right"][data-size="large"],
+.rich-text img[data-align="center"][data-size="large"] {
+  width: 60%;
+}
+/* Мобільна ширина — float ламає обтікання у вузькому блоці (текст
+   стискається в однослівну смужку поруч із картинкою), тож ліво/право/центр
+   уніфікуються в один і той самий вигляд ("на всю ширину контейнера, але не
+   більше за 22rem"); "full" лишається без змін (вона й так full-width). */
+@media (max-width: 640px) {
+  .rich-text img[data-align="left"],
+  .rich-text img[data-align="right"],
+  .rich-text img[data-align="center"] {
+    float: none;
+    display: block;
+    width: min(100%, 22rem);
+    margin: 1rem auto;
+  }
+}
+
 .rich-text h2 {
   font-family: var(--font-heading);
   font-size: 1.25rem;
