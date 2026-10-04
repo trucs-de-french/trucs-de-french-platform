@@ -10,6 +10,36 @@ export const IMAGE_SIZE_VALUES: ImageSize[] = ["small", "medium", "large"];
 export const IMAGE_CROP_VALUES: ImageCrop[] = ["original", "1-1", "4-3", "3-4", "16-9"];
 export const IMAGE_FOCUS_VALUES: ImageFocus[] = ["center", "top", "bottom", "left", "right"];
 
+// Мапа старих 5 пресетів на числові focusX/focusY у відсотках — потрібна
+// у двох місцях: (1) тут, у parseFocusCoordinate, як перехідна сумісність
+// для контенту, збереженого до вільного вибору точки (щоб не скидався на
+// 50/50 при першому відкритті в редакторі); (2) у RichArticleEditor —
+// рядок швидких кнопок-пресетів у попапі "Фокус" (Центр/Верх/Низ/Ліво/
+// Право) використовує ті самі числа, тому експортована, не продубльована.
+export const FOCUS_PRESET_TO_XY: Record<ImageFocus, { x: number; y: number }> = {
+  center: { x: 50, y: 50 },
+  top: { x: 50, y: 0 },
+  bottom: { x: 50, y: 100 },
+  left: { x: 0, y: 50 },
+  right: { x: 100, y: 50 },
+};
+
+function parseFocusCoordinate(element: HTMLElement, attr: "data-focus-x" | "data-focus-y", axis: "x" | "y"): number {
+  const raw = element.getAttribute(attr);
+  if (raw !== null) {
+    const n = Number(raw);
+    if (Number.isInteger(n) && n >= 0 && n <= 100) return n;
+  }
+  // data-focus-x/y відсутні (чи зіпсовані) — контент, збережений до цієї
+  // задачі, чи прямо правлений в БД в обхід адмінки: пробуємо старий
+  // data-focus, інакше дефолт — центр.
+  const legacy = element.getAttribute("data-focus");
+  if (legacy && (IMAGE_FOCUS_VALUES as string[]).includes(legacy)) {
+    return FOCUS_PRESET_TO_XY[legacy as ImageFocus][axis];
+  }
+  return 50;
+}
+
 // Розширення @tiptap/extension-image двома кастомними атрибутами —
 // положення (float ліво/право, по центру, на всю ширину) і розмір
 // (мала/середня/велика) — серіалізуються як data-align/data-size на самому
@@ -68,17 +98,43 @@ export const RichImage = Image.extend({
           "data-crop": attributes.crop ?? "original",
         }),
       },
-      // Яку частину кадру лишати видимою при обрізанні (object-position) —
-      // діє лише коли crop !== "original", але зберігається незалежно, щоб
-      // не втрачати вибір фокусу при тимчасовому поверненні на "Оригінал".
+      // Застарілий 5-кнопковий фокус (center/top/bottom/left/right) —
+      // ЛИШЕНО в схемі заради читання старого контенту (той самий вузол,
+      // ті самі parseHTML/renderHTML, що й раніше), але більше не
+      // РЕНДЕРИТЬСЯ (renderHTML нижче свідомо повертає {}) — вільний
+      // вибір точки (focusX/focusY) повністю замінює цей атрибут для
+      // нового збереження; data-focus у вихідному HTML лишається лише на
+      // рядках, які ще не редагувались через оновлений редактор (і там
+      // далі коректно виглядають завдяки старим CSS-правилам
+      // .rich-text img[data-focus=...], globals.css — їх не прибирали).
       focus: {
         default: "center",
         parseHTML: (element: HTMLElement) => {
           const value = element.getAttribute("data-focus");
           return (IMAGE_FOCUS_VALUES as string[]).includes(value ?? "") ? value : "center";
         },
-        renderHTML: (attributes: { focus?: string }) => ({
-          "data-focus": attributes.focus ?? "center",
+        renderHTML: () => ({}),
+      },
+      // Точний фокус обрізання — відсотки відносно прямокутника самого
+      // <img> (0=лівий/верхній край, 100=правий/нижній), застосовується
+      // через object-position: X% Y% — САМЕ sanitizeCalloutHtml генерує
+      // цей inline style з перевірених чисел (а не ми тут), тому
+      // renderHTML нижче свідомо НЕ пише style — лише сирі числа в
+      // data-атрибутах, щоб sanitizer мав що перевірити й сам підставити
+      // стиль (той самий принцип, що inline style НЕ приходить з
+      // редактора в обхід санітайзера ніде на платформі).
+      focusX: {
+        default: 50,
+        parseHTML: (element: HTMLElement) => parseFocusCoordinate(element, "data-focus-x", "x"),
+        renderHTML: (attributes: { focusX?: number }) => ({
+          "data-focus-x": String(attributes.focusX ?? 50),
+        }),
+      },
+      focusY: {
+        default: 50,
+        parseHTML: (element: HTMLElement) => parseFocusCoordinate(element, "data-focus-y", "y"),
+        renderHTML: (attributes: { focusY?: number }) => ({
+          "data-focus-y": String(attributes.focusY ?? 50),
         }),
       },
     };

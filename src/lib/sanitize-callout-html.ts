@@ -35,17 +35,28 @@ export function sanitizeCalloutHtml(html: string): string {
     allowedAttributes: {
       mark: ["data-color", "style"],
       span: ["style"],
-      // img: НІ style, НІ class, НІ width/height — вигляд (float/розмір/
-      // обрізання) задає лише CSS за data-align/data-size/data-crop/
-      // data-focus (.rich-text img[...] у globals.css), не inline-атрибути
-      // з HTML, що зберігається в БД.
-      img: ["src", "alt", "data-align", "data-size", "data-crop", "data-focus"],
+      // img: НІ class, НІ width/height, і НІ довільний style — вигляд
+      // (float/розмір/обрізання) задає CSS за data-align/data-size/
+      // data-crop/data-focus (.rich-text img[...] у globals.css). Єдиний
+      // виняток — style на object-position: той, що прийшов У ВХІДНОМУ
+      // HTML, завжди відкидається (transformTags нижче ніколи не копіює
+      // attribs.style у next); те, що лишається в "style" після цієї
+      // функції — ВИКЛЮЧНО згенероване з уже перевірених data-focus-x/y
+      // (нижче), ніколи напряму з HTML, що зберігається в БД.
+      img: ["src", "alt", "data-align", "data-size", "data-crop", "data-focus", "data-focus-x", "data-focus-y", "style"],
     },
     allowedStyles: {
       "*": {
         "background-color": [/^#[0-9a-f]{3,8}$/i, /^rgba?\([\d.,\s%]+\)$/i],
         color: [/^#[0-9a-f]{3,8}$/i, /^inherit$/i, /^rgba?\([\d.,\s%]+\)$/i],
         "font-family": [/^[a-zA-Z0-9 ,'"-]+$/],
+      },
+      // Друга лінія захисту понад "ми самі генеруємо це значення" нижче —
+      // навіть якби transformTags десь помилився, лише object-position
+      // рівно у форматі "N% N%" пройде далі; жоден інший спосіб (position,
+      // transform, width тощо) потрапити в style на img неможливий.
+      img: {
+        "object-position": [/^\d{1,3}% \d{1,3}%$/],
       },
     },
     // Лише https — жодних javascript:/data:/http:/відносних шляхів (R2
@@ -72,8 +83,32 @@ export function sanitizeCalloutHtml(html: string): string {
         if ((IMAGE_CROP_VALUES as string[]).includes(attribs["data-crop"])) {
           next["data-crop"] = attribs["data-crop"];
         }
+        // Застарілий 5-кнопковий фокус — лишається прохідним незмінно
+        // (старий контент, що ще не редагувався через точний вибір точки,
+        // далі виглядає як раніше завдяки CSS-правилам
+        // .rich-text img[data-focus=...], globals.css).
         if ((IMAGE_FOCUS_VALUES as string[]).includes(attribs["data-focus"])) {
           next["data-focus"] = attribs["data-focus"];
+        }
+        // Точний фокус — лише цілі 0-100, інакше атрибут просто
+        // відкидається (як і решта data-*, без падіння). style на
+        // object-position генерує САМ sanitizer з уже перевірених чисел —
+        // ніколи з attribs.style вхідного HTML (той тут навіть не
+        // читається) — єдиний спосіб потрапити туди.
+        const parseFocusCoord = (raw: string | undefined): number | null => {
+          if (raw === undefined) return null;
+          const n = Number(raw);
+          return Number.isInteger(n) && n >= 0 && n <= 100 ? n : null;
+        };
+        const focusX = parseFocusCoord(attribs["data-focus-x"]);
+        const focusY = parseFocusCoord(attribs["data-focus-y"]);
+        if (focusX !== null) next["data-focus-x"] = String(focusX);
+        if (focusY !== null) next["data-focus-y"] = String(focusY);
+        // Якщо задана хоч одна координата — друга дефолтиться на 50 ЛИШЕ
+        // для розрахунку style (не записується як окремий data-атрибут,
+        // якщо її не було у вхідному HTML).
+        if (focusX !== null || focusY !== null) {
+          next.style = `object-position: ${focusX ?? 50}% ${focusY ?? 50}%`;
         }
         return { tagName: "img", attribs: next };
       },
