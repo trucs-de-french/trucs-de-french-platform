@@ -11,8 +11,12 @@ import {
   RichImage,
   IMAGE_ALIGN_VALUES,
   IMAGE_SIZE_VALUES,
+  IMAGE_CROP_VALUES,
+  IMAGE_FOCUS_VALUES,
   type ImageAlign,
   type ImageSize,
+  type ImageCrop,
+  type ImageFocus,
 } from "@/lib/rich-image-extension";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { useFileOrLink } from "@/components/file-or-link-field";
@@ -46,6 +50,22 @@ const SIZE_LABELS: Record<ImageSize, string> = {
   small: "Мала",
   medium: "Середня",
   large: "Велика",
+};
+
+const CROP_LABELS: Record<ImageCrop, string> = {
+  original: "Оригінал",
+  "1-1": "1:1",
+  "4-3": "4:3",
+  "3-4": "3:4",
+  "16-9": "16:9",
+};
+
+const FOCUS_LABELS: Record<ImageFocus, string> = {
+  center: "Центр",
+  top: "Верх",
+  bottom: "Низ",
+  left: "Ліво",
+  right: "Право",
 };
 
 // Спільний TipTap-редактор для callout (CalloutFields) і статей Матеріалів
@@ -143,6 +163,8 @@ export function RichArticleEditor({
       isImageActive: editor?.isActive("image") ?? false,
       align: (editor?.getAttributes("image").align as ImageAlign | undefined) ?? "center",
       size: (editor?.getAttributes("image").size as ImageSize | undefined) ?? "medium",
+      crop: (editor?.getAttributes("image").crop as ImageCrop | undefined) ?? "original",
+      focus: (editor?.getAttributes("image").focus as ImageFocus | undefined) ?? "center",
     }),
   });
 
@@ -335,6 +357,48 @@ export function RichArticleEditor({
                   {SIZE_LABELS[size]}
                 </button>
               ))}
+              <span className={HINT_TEXT}>Обрізання:</span>
+              {IMAGE_CROP_VALUES.map((crop) => (
+                <button
+                  key={crop}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().updateAttributes("image", { crop }).run()}
+                  className={`rounded px-2 py-1 text-xs ${
+                    imageSelection.crop === crop
+                      ? "bg-neutral-200 dark:bg-neutral-700"
+                      : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  }`}
+                >
+                  {CROP_LABELS[crop]}
+                </button>
+              ))}
+              {/* Фокус має сенс лише коли обрізання вже вирізає частину
+                  кадру (crop !== "original") — для "Оригінал" показ усього
+                  зображення, object-position там ні на що не впливає.
+                  Сам атрибут focus НЕ скидається при поверненні на
+                  "Оригінал" (updateAttributes вище змінює лише crop) —
+                  вибір фокусу чекає на наступне обрізання. */}
+              {imageSelection.crop !== "original" && (
+                <>
+                  <span className={HINT_TEXT}>Фокус:</span>
+                  {IMAGE_FOCUS_VALUES.map((focus) => (
+                    <button
+                      key={focus}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => editor.chain().focus().updateAttributes("image", { focus }).run()}
+                      className={`rounded px-2 py-1 text-xs ${
+                        imageSelection.focus === focus
+                          ? "bg-neutral-200 dark:bg-neutral-700"
+                          : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      }`}
+                    >
+                      {FOCUS_LABELS[focus]}
+                    </button>
+                  ))}
+                </>
+              )}
               <button
                 type="button"
                 title="Видалити картинку"

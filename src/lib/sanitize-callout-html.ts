@@ -1,5 +1,5 @@
 import sanitizeHtml from "sanitize-html";
-import { IMAGE_ALIGN_VALUES, IMAGE_SIZE_VALUES } from "@/lib/rich-image-extension";
+import { IMAGE_ALIGN_VALUES, IMAGE_SIZE_VALUES, IMAGE_CROP_VALUES, IMAGE_FOCUS_VALUES } from "@/lib/rich-image-extension";
 
 // Спільна функція для callout-контенту (TipTap HTML) — використовується і
 // при збереженні (actions.ts, сервер), і при рендері студенту (callout.tsx,
@@ -35,10 +35,11 @@ export function sanitizeCalloutHtml(html: string): string {
     allowedAttributes: {
       mark: ["data-color", "style"],
       span: ["style"],
-      // img: НІ style, НІ class, НІ width/height — вигляд (float/розмір)
-      // задає лише CSS за data-align/data-size (.rich-text img[...] у
-      // globals.css), не inline-атрибути з HTML, що зберігається в БД.
-      img: ["src", "alt", "data-align", "data-size"],
+      // img: НІ style, НІ class, НІ width/height — вигляд (float/розмір/
+      // обрізання) задає лише CSS за data-align/data-size/data-crop/
+      // data-focus (.rich-text img[...] у globals.css), не inline-атрибути
+      // з HTML, що зберігається в БД.
+      img: ["src", "alt", "data-align", "data-size", "data-crop", "data-focus"],
     },
     allowedStyles: {
       "*": {
@@ -52,10 +53,11 @@ export function sanitizeCalloutHtml(html: string): string {
     allowedSchemesByTag: {
       img: ["https"],
     },
-    // data-align/data-size — лише значення з whitelist RichImage-розширення
-    // (src/lib/rich-image-extension.ts); будь-яке інше значення (напр. з
-    // прямого правки HTML в БД в обхід адмінки) просто відкидається, без
-    // падіння на невідомому значенні — тег лишається, атрибут зникає.
+    // data-align/data-size/data-crop/data-focus — лише значення з
+    // whitelist RichImage-розширення (src/lib/rich-image-extension.ts);
+    // будь-яке інше значення (напр. з прямого правки HTML в БД в обхід
+    // адмінки) просто відкидається, без падіння на невідомому значенні —
+    // тег лишається, атрибут зникає.
     transformTags: {
       img: (tagName, attribs) => {
         const next: Record<string, string> = {};
@@ -66,6 +68,12 @@ export function sanitizeCalloutHtml(html: string): string {
         }
         if ((IMAGE_SIZE_VALUES as string[]).includes(attribs["data-size"])) {
           next["data-size"] = attribs["data-size"];
+        }
+        if ((IMAGE_CROP_VALUES as string[]).includes(attribs["data-crop"])) {
+          next["data-crop"] = attribs["data-crop"];
+        }
+        if ((IMAGE_FOCUS_VALUES as string[]).includes(attribs["data-focus"])) {
+          next["data-focus"] = attribs["data-focus"];
         }
         return { tagName: "img", attribs: next };
       },

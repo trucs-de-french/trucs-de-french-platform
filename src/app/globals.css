@@ -198,6 +198,55 @@ button, input, textarea, select, label, nav, aside {
 .rich-text img[data-align="center"][data-size="large"] {
   width: 60%;
 }
+/* Невізуальне (non-destructive) обрізання — data-crop/data-focus на
+   самому <img> (RichImage, той самий патерн, що data-align/data-size);
+   оригінальний файл/src НЕ змінюється, лише CSS-кадрування
+   (aspect-ratio+object-fit:cover). Незалежне від align/size — ці правила
+   не торкаються float/width вище, діють на тому самому <img> одночасно
+   з ними (різні атрибути, не конфліктуючі селектори). Один набір правил
+   для обох контекстів (.rich-text — і на contentEditable в редакторі,
+   і на студентському рендері, окремого ".ProseMirror" запису нема, як і
+   раніше). height:auto (вище, на img[data-align=left/right/center]) не
+   ламає aspect-ratio — коли задані width і aspect-ratio, height:auto за
+   CSS Sizing саме й означає "візьми висоту з aspect-ratio", а не
+   "природне співвідношення файлу"; img[data-align="full"] теж працює
+   без додаткового height:auto — це дефолт браузера для <img>. */
+.rich-text img[data-crop="1-1"] {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+.rich-text img[data-crop="4-3"] {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.rich-text img[data-crop="3-4"] {
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+.rich-text img[data-crop="16-9"] {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+/* Яку частину кадру лишати видимою — діє лише коли crop !== "original"
+   (тоді й лише тоді object-fit:cover щось обрізає), але значення
+   зберігається незалежно (панель ховає кнопки фокусу для "Оригінал", не
+   скидає сам атрибут) — щоб вибір фокусу не губився при тимчасовому
+   поверненні на "Оригінал". */
+.rich-text img[data-focus="center"] {
+  object-position: center;
+}
+.rich-text img[data-focus="top"] {
+  object-position: center top;
+}
+.rich-text img[data-focus="bottom"] {
+  object-position: center bottom;
+}
+.rich-text img[data-focus="left"] {
+  object-position: left center;
+}
+.rich-text img[data-focus="right"] {
+  object-position: right center;
+}
 /* Лише в адмін-редакторі (RichArticleEditor, клас editorProps поруч із
    .rich-text), не на студентському рендері — там картинку нема куди
    "перетягувати". float: left/right не дає браузеру власного курсора-ручки
