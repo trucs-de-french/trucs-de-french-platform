@@ -20,8 +20,10 @@ export const LEGEND_IMAGE_GRID = "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-
 // довжиною тексту (clue-text-groups.ts) в окремі сітки S/M/L. auto-rows-fr —
 // плитки в одному ряду мають однакову висоту (сама плитка розтягується
 // h-full, вміст центрується всередині); порядок груп завжди S, M, L.
-export const SHORT_CLUE_GRID_S = "grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4";
-export const SHORT_CLUE_GRID_M = "grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3";
+// ЕТАП E, п.3 — S і M тепер ОДНАКОВА кількість колонок (2/sm:3/lg:3), щоб
+// плитки різних груп вирівнювались у колонки між собою; L без змін.
+export const SHORT_CLUE_GRID_S = "grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-3";
+export const SHORT_CLUE_GRID_M = "grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-3";
 export const SHORT_CLUE_GRID_L = "grid auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-2";
 
 // ЕТАП D — довгі підказки-речення word_search (SentenceTile, clueMode

@@ -367,10 +367,10 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_TILE_BASE} flex cursor-pointer px-3 py-2 transition-colors ${
+        className={`${LEGEND_TILE_BASE} flex cursor-pointer py-2 transition-colors ${
           sentenceMode
-            ? `items-start gap-2 text-left ${hasImage ? "flex-row" : "flex-col"}`
-            : "flex-col items-center gap-1 text-center"
+            ? `pl-3 pr-9 items-start gap-2 text-left ${hasImage ? "flex-row" : "flex-col"}`
+            : "pl-3 pr-7 flex-col items-center gap-1 text-center"
         } ${
           liveStatus === "correct"
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"

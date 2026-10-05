@@ -62,6 +62,19 @@ function FoundBadge() {
   );
 }
 
+// ЕТАП E, п.2 — лампочка-підказка НАД фотографією картки-картинки (ImageTile):
+// та сама позиція й розмір, що FoundBadge (right-1 top-1 h-4 w-4) — займають
+// те саме місце, бо мутуально виключні (поки не знайдено — лампочка, після
+// — галочка замінює її в тому самому куті). Кругла підкладка (не "гола"
+// іконка прямо на фото) — інакше лампочка губилась на світлих/темних фото.
+function ImageHintBadge() {
+  return (
+    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 shadow-sm ring-1 ring-black/5 dark:bg-neutral-900/85 dark:ring-white/10">
+      <Lightbulb className="h-4 w-4 text-amber-500" aria-hidden />
+    </span>
+  );
+}
+
 // Картка-картинка — квадратна (aspect-square), картинка займає ВСЮ плитку
 // (object-cover з точкою фокусу), клік — лайтбокс, як і раніше. Аудіо (якщо
 // є) — окремим рядком під картинкою В ТІЙ САМІЙ плитці (не чіпаємо саму
@@ -123,12 +136,11 @@ function ImageTile({
           <CompactAudioButton src={word.audioUrl} />
         </div>
       )}
-      {/* ЕТАП D, п.4b — декоративна лампочка (підказка доступна), зникає
-          коли слово знайдено (FoundBadge займає ту саму позицію замість
-          неї) чи коли в слова взагалі немає hintStart. */}
-      {!found && word.hintStart && (
-        <Lightbulb size={16} className="absolute right-1 top-1 text-amber-500" aria-hidden />
-      )}
+      {/* ЕТАП D/E, п.4b/п.2 — декоративна лампочка (підказка доступна) у
+          круглій підкладці (ImageHintBadge), зникає коли слово знайдено
+          (FoundBadge займає ту саму позицію замість неї) чи коли в слова
+          взагалі немає hintStart. */}
+      {!found && word.hintStart && <ImageHintBadge />}
       {found && <FoundBadge />}
       {hintUsed && (
         <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
@@ -160,7 +172,7 @@ function TextTile({
   return (
     <div
       onClick={onHint}
-      className={`flex h-full flex-col items-center justify-center gap-1 px-3 py-2 text-center transition-opacity ${LEGEND_TILE_BASE} ${
+      className={`flex h-full flex-col items-center justify-center gap-1 px-8 py-2 text-center transition-opacity ${LEGEND_TILE_BASE} ${
         found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
@@ -170,8 +182,14 @@ function TextTile({
           <CompactAudioButton src={audioUrl} />
         </div>
       )}
+      {/* ЕТАП E, п.1 — лампочка в правому запасі (px-8 на картці) по
+          вертикальному центру, а не в куті: за жодної довжини тексту не
+          перекриває слово/розділовий знак. */}
       {!found && hintStart && (
-        <Lightbulb size={16} className="absolute right-1 top-1 text-amber-500" aria-hidden />
+        <Lightbulb
+          className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-500"
+          aria-hidden
+        />
       )}
       {found && <FoundBadge />}
       {hintUsed && (
@@ -204,7 +222,7 @@ function SentenceTile({
   return (
     <div
       onClick={onHint}
-      className={`flex h-full items-start gap-3 px-3 py-2 text-left transition-opacity ${LEGEND_TILE_BASE} ${
+      className={`flex h-full items-start gap-3 pl-3 pr-9 py-2 text-left transition-opacity ${LEGEND_TILE_BASE} ${
         found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
@@ -229,8 +247,13 @@ function SentenceTile({
           </div>
         )}
       </div>
+      {/* ЕТАП E, п.1 — той самий запас праворуч (pr-9 на картці), лампочка
+          по вертикальному центру картки, а не в куті зверху. */}
       {!found && word.hintStart && (
-        <Lightbulb size={16} className="absolute right-1 top-1 shrink-0 text-amber-500" aria-hidden />
+        <Lightbulb
+          className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-500"
+          aria-hidden
+        />
       )}
       {found && <FoundBadge />}
       {hintUsed && (
