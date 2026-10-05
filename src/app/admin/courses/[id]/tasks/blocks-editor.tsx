@@ -86,14 +86,20 @@ export function BlockSelect({
         else onChange(e.target.value || null);
       }}
       aria-label="Блок"
-      className={`${INPUT_BORDER} min-h-11 shrink-0 px-1.5 py-1.5 text-xs`}
+      className={`${INPUT_BORDER} min-h-11 w-40 max-w-full shrink-0 px-1.5 py-1.5 text-xs`}
     >
       <option value="">Нерозподілені</option>
-      {blockOrder.map((id, i) => (
-        <option key={id} value={id}>
-          Блок {i + 1}{blockTitles[id] ? ` · ${blockTitles[id]}` : ""}
-        </option>
-      ))}
+      {blockOrder.map((id, i) => {
+        const defaultTitle = `Блок ${i + 1}`;
+        const title = blockTitles[id]?.trim();
+        const truncatedTitle = title && title.length > 20 ? `${title.slice(0, 20)}…` : title;
+        const label = title && title !== defaultTitle ? `${defaultTitle} · ${truncatedTitle}` : defaultTitle;
+        return (
+          <option key={id} value={id}>
+            {label}
+          </option>
+        );
+      })}
       <option value="__new__">+ Новий блок</option>
     </select>
   );

@@ -81,8 +81,8 @@ function WordSearchWordRow({
 
   return (
     <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="relative basis-36 grow min-w-[7rem]">
           <input
             value={wordItem.word}
             onChange={(e) => onUpdateWord(e.target.value)}
@@ -102,17 +102,19 @@ function WordSearchWordRow({
           value={wordItem.translation ?? ""}
           onChange={(e) => onUpdateTranslation(e.target.value)}
           placeholder="Переклад (опційно)"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-sm`}
+          className={`${INPUT_BORDER} basis-48 grow-[2] min-w-[8rem] px-2 py-2 text-sm`}
         />
-        {image.icons}
-        {audio.icons}
+        <div className="flex flex-wrap items-center gap-2">
+          {image.icons}
+          {audio.icons}
+        </div>
         <BlockSelect blockOrder={blockOrder} blockTitles={blockTitles} value={blockId} onChange={onMoveToBlock} onCreateNew={onCreateBlock} />
         <button
           type="button"
           onClick={onRemove}
           aria-label="Видалити слово"
           title="Видалити"
-          className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+          className="shrink-0 rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
         >
           <Trash2 size={16} />
         </button>

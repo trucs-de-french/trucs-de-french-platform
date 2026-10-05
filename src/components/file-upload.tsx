@@ -200,7 +200,10 @@ export function FileUpload({
         </p>
       )}
       {status === "done" && (
-        <p className="text-xs text-green-600 dark:text-green-400">
+        <p
+          title={fileName}
+          className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-xs text-green-600 sm:max-w-[12rem] dark:text-green-400"
+        >
           ✓ Завантажено: {fileName}
         </p>
       )}
