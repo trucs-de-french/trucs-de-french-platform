@@ -29,16 +29,25 @@ export const LEGEND_PILL =
 export const LEGEND_LONG_CARD =
   "relative flex items-start gap-2.5 rounded-xl border border-gray-200 bg-white p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
 
-// ЕТАП F — кругла підкладка лампочки/галочки LongCard: 26px, форма+розмір
-// спільні; колір (амбер "ще не знайдено" / зелений "знайдено") і сама
-// іконка всередині — на совісті викликача (LongCard, word-search.tsx).
-export const LEGEND_BULB_BADGE =
-  "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-white";
+// ЕТАП H — єдиний круглий бейдж лампочки/галочки (раніше LEGEND_BULB_BADGE
+// мав фіксований колір text-white і використовувався лише в LongCard/
+// LongClueCard; тепер та сама форма йде і на картинки, і в пілюлі, з двома
+// розмірами й спільними кольорами). Форма окремо від кольору: MD (26px,
+// довгі картки й картинки) / SM (22px, пілюлі) — лише розмір; AMBER/GREEN —
+// лише колір (непрозорий фон, не text-white — бейдж тепер лежить і прямо
+// на фото, де напівпрозорий фон був би нечитабельним); ON_IMAGE — додаткове
+// біле кільце для бейджа САМЕ над картинкою (на довгій картці з текстом
+// навколо кільце не потрібне, фон картки й так контрастний).
+export const LEGEND_BULB_BADGE_MD = "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full";
+export const LEGEND_BULB_BADGE_SM = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full";
+export const LEGEND_BULB_BADGE_AMBER = "bg-amber-100 text-amber-600 dark:bg-amber-900/70 dark:text-amber-300";
+export const LEGEND_BULB_BADGE_GREEN = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
+export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
 
-// ЕТАП G — сітка картинкових карток-підказок кросворду (ImageClueCard,
-// crossword.tsx): auto-fill з обмеженою шириною колонки (104-128px), а не
-// фіксована кількість колонок (LEGEND_IMAGE_GRID word_search) — кросворд
-// може мати як 2-3, так і 6+ картинкових підказок у секції, auto-fill сам
-// підбирає, скільки влізає в рядок на кожній ширині екрана, без порожніх
-// розтягнутих клітинок.
-export const CROSSWORD_IMAGE_GRID = "grid grid-cols-[repeat(auto-fill,minmax(6.5rem,8rem))] gap-2 justify-start";
+// ЕТАП H — сітка картинкових карток-підказок кросворду (ImageClueCard,
+// crossword.tsx): auto-fit (не auto-fill, ЕТАП G) з вужчою колонкою
+// (96-120px) — auto-fit стискає колонки, щоб рівно заповнити рядок (а не
+// лишає останню колонку "про запас" як auto-fill), тож 5 карток на
+// десктопі впевнено влазять в один ряд замість переносу через пару
+// пікселів недостачі ширини.
+export const CROSSWORD_IMAGE_GRID = "grid grid-cols-[repeat(auto-fit,minmax(6rem,7.5rem))] gap-2 justify-start";

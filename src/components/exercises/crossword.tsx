@@ -20,7 +20,17 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
-import { LEGEND_TILE_BASE, CROSSWORD_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD, LEGEND_BULB_BADGE } from "./legend-tile-style";
+import {
+  LEGEND_TILE_BASE,
+  CROSSWORD_IMAGE_GRID,
+  LEGEND_PILL,
+  LEGEND_LONG_CARD,
+  LEGEND_BULB_BADGE_MD,
+  LEGEND_BULB_BADGE_SM,
+  LEGEND_BULB_BADGE_AMBER,
+  LEGEND_BULB_BADGE_GREEN,
+  LEGEND_BULB_BADGE_ON_IMAGE,
+} from "./legend-tile-style";
 import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -320,16 +330,15 @@ function CrosswordBlockView({
         : "";
   }
 
-  // ЕТАП G, п.1 — картка-картинка кросворду (view "image-card",
-  // resolve-clue-view.ts): компактна (CROSSWORD_IMAGE_GRID, 104-128px
-  // колонка), вертикальна — номер зверху, картинка квадратна під ним, без
-  // тексту підказки (лише номер — студент бачить, якому слову відповідає
-  // картка, той самий номер є і на сітці) — те саме рішення, що ЕТАП A/3
-  // мало через параметр hideText, тепер вбудоване прямо в компонент
-  // (окрема картка-картинка — одна форма, не перемикач). Лампочка-підказка
-  // — кнопка у білому колі в правому верхньому куті САМОЇ КАРТИНКИ (та
-  // сама підкладка, що ImageHintBadge у word-search.tsx), лупа лайтбоксу —
-  // у протилежному (правому нижньому) куті, зменшена.
+  // ЕТАП G, п.1 (сітка й бейдж уніфіковано ЕТАП H) — картка-картинка
+  // кросворду (view "image-card", resolve-clue-view.ts): компактна
+  // (CROSSWORD_IMAGE_GRID, 96-120px колонка, auto-fit), вертикальна — номер
+  // зверху, картинка квадратна під ним, без тексту підказки (лише номер —
+  // студент бачить, якому слову відповідає картка, той самий номер є і на
+  // сітці). Лампочка-підказка — кнопка, круглий бейдж MD (LEGEND_BULB_BADGE_MD,
+  // той самий, що на довгих картках і в пілюлях) у правому верхньому куті
+  // САМОЇ КАРТИНКИ, з кільцем ON_IMAGE для контрасту на будь-якому фото; лупа
+  // лайтбоксу — у протилежному (правому нижньому) куті, зменшена.
   function ImageClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
@@ -363,8 +372,10 @@ function CrosswordBlockView({
             useFocus
           />
           {isCorrect ? (
-            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 shadow-sm ring-1 ring-black/5 dark:bg-neutral-900/85 dark:ring-white/10">
-              <Check size={16} className="text-green-500" aria-hidden />
+            <span
+              className={`absolute right-1.5 top-1.5 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_GREEN} ${LEGEND_BULB_BADGE_ON_IMAGE}`}
+            >
+              <Check size={14} strokeWidth={3} aria-hidden />
             </span>
           ) : (
             !result &&
@@ -377,9 +388,9 @@ function CrosswordBlockView({
                   e.stopPropagation();
                   applyHint(direction, clue.number);
                 }}
-                className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-amber-500 shadow-sm ring-1 ring-black/5 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:bg-neutral-900/85 dark:ring-white/10 dark:hover:bg-amber-950/30"
+                className={`absolute right-1.5 top-1.5 before:absolute before:-inset-2 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_AMBER} ${LEGEND_BULB_BADGE_ON_IMAGE} hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1`}
               >
-                <Lightbulb size={16} aria-hidden />
+                <Lightbulb size={15} aria-hidden />
               </button>
             )
           )}
@@ -398,7 +409,7 @@ function CrosswordBlockView({
   }
 
   // ЕТАП G, п.3 — картка довгої підказки-речення кросворду (view
-  // "text-card") — той самий LEGEND_LONG_CARD/LEGEND_BULB_BADGE вигляд, що
+  // "text-card") — той самий LEGEND_LONG_CARD/LEGEND_BULB_BADGE_MD вигляд, що
   // LongCard короткого філворду (word-search.tsx, ЕТАП F), лише дані —
   // liveStatus/applyHint кросворду, а не found/hintStart слова. Картка сама
   // (role=button) обирає слово в сітці; лампочка — ОКРЕМА вкладена кнопка
@@ -414,8 +425,8 @@ function CrosswordBlockView({
     const badge =
       isCorrect || canHint ? (
         <span
-          className={`${LEGEND_BULB_BADGE} ${hasImage ? "absolute right-2 top-2" : ""} ${
-            isCorrect ? "bg-green-500" : "bg-amber-400 dark:bg-amber-500"
+          className={`${LEGEND_BULB_BADGE_MD} ${hasImage ? "absolute right-2 top-2" : ""} ${
+            isCorrect ? LEGEND_BULB_BADGE_GREEN : LEGEND_BULB_BADGE_AMBER
           }`}
         >
           {isCorrect ? (
@@ -492,15 +503,18 @@ function CrosswordBlockView({
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     const isCorrect = liveStatus === "correct";
     const canHint = !result && !isDelf;
+    const showBadge = isCorrect || canHint;
     return (
       <div
         key={clue.number}
-        className={`${LEGEND_PILL} ${
+        className={`${LEGEND_PILL} ${showBadge ? "pl-1.5 pr-3" : ""} ${
           isCorrect ? "opacity-50" : isActive ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40" : ""
         }`}
       >
         {isCorrect ? (
-          <Check size={14} className="shrink-0 text-green-500" aria-hidden />
+          <span className={`${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_GREEN}`}>
+            <Check size={13} strokeWidth={3} aria-hidden />
+          </span>
         ) : (
           canHint && (
             <button
@@ -508,9 +522,9 @@ function CrosswordBlockView({
               title="Підказка: відкрити наступну літеру"
               aria-label="Підказка: відкрити наступну літеру"
               onClick={() => applyHint(direction, clue.number)}
-              className="relative shrink-0 rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:hover:bg-amber-950/30"
+              className={`relative before:absolute before:-inset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 hover:brightness-95 ${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_AMBER}`}
             >
-              <Lightbulb size={14} aria-hidden />
+              <Lightbulb size={13} aria-hidden />
             </button>
           )
         )}

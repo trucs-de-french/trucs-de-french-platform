@@ -22,7 +22,17 @@ import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD, LEGEND_BULB_BADGE } from "./legend-tile-style";
+import {
+  LEGEND_TILE_BASE,
+  LEGEND_IMAGE_GRID,
+  LEGEND_PILL,
+  LEGEND_LONG_CARD,
+  LEGEND_BULB_BADGE_MD,
+  LEGEND_BULB_BADGE_SM,
+  LEGEND_BULB_BADGE_AMBER,
+  LEGEND_BULB_BADGE_GREEN,
+  LEGEND_BULB_BADGE_ON_IMAGE,
+} from "./legend-tile-style";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -44,25 +54,30 @@ function maxCellPx(gridSize: number): number {
   return gridSize <= 10 ? 40 : 36;
 }
 
-// Маленька зелена галочка в куті плитки (текстової чи картинкової) —
-// спільна для обох, absolute всередині відносно позиціонованого батька.
+// Зелена галочка в куті плитки (текстової чи картинкової) — спільна для
+// обох, absolute всередині відносно позиціонованого батька. ЕТАП H — той
+// самий бейдж MD, що скрізь (картинки/довгі картки/пілюлі), з кільцем
+// ON_IMAGE (бейдж лежить прямо на фото, потрібен контраст від самого фото).
 function FoundBadge() {
   return (
-    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-white">
-      <Check size={10} strokeWidth={3} />
+    <span
+      className={`absolute right-1.5 top-1.5 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_GREEN} ${LEGEND_BULB_BADGE_ON_IMAGE}`}
+    >
+      <Check size={14} strokeWidth={3} aria-hidden />
     </span>
   );
 }
 
-// ЕТАП E, п.2 — лампочка-підказка НАД фотографією картки-картинки (ImageTile):
-// та сама позиція й розмір, що FoundBadge (right-1 top-1 h-4 w-4) — займають
-// те саме місце, бо мутуально виключні (поки не знайдено — лампочка, після
-// — галочка замінює її в тому самому куті). Кругла підкладка (не "гола"
-// іконка прямо на фото) — інакше лампочка губилась на світлих/темних фото.
+// ЕТАП E, п.2 (розмір/колір уніфіковано ЕТАП H) — лампочка-підказка НАД
+// фотографією картки-картинки (ImageTile): та сама позиція й розмір, що
+// FoundBadge — займають те саме місце, бо мутуально виключні (поки не
+// знайдено — лампочка, після — галочка замінює її в тому самому куті).
 function ImageHintBadge() {
   return (
-    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 shadow-sm ring-1 ring-black/5 dark:bg-neutral-900/85 dark:ring-white/10">
-      <Lightbulb className="h-4 w-4 text-amber-500" aria-hidden />
+    <span
+      className={`absolute right-1.5 top-1.5 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_AMBER} ${LEGEND_BULB_BADGE_ON_IMAGE}`}
+    >
+      <Lightbulb size={15} aria-hidden />
     </span>
   );
 }
@@ -146,10 +161,13 @@ function ImageTile({
 // Пілюля короткої текстової підказки (ЕТАП F, варіант C) — inline-flex у
 // спільному flex-wrap рядку (LEGEND_PILL): природно розкладається по рядках
 // незалежно від довжини тексту, не фіксована сітка-колонка. Лампочка/
-// галочка — зліва в тому самому слоті (однаковий розмір 14px обох іконок,
-// тож заміна при знайденому слові не зсуває ширину пілюлі); якщо в слова
-// взагалі немає hintStart і воно ще не знайдене — слот просто відсутній
-// (той самий edge-case, що й у попередніх варіантах легенди).
+// галочка — зліва в тому самому слоті, тепер круглий бейдж SM (ЕТАП H,
+// той самий вигляд, що на картинках і довгих картках, лише менший) —
+// однаковий розмір обох станів, тож заміна при знайденому слові не зсуває
+// ширину пілюлі; якщо в слова взагалі немає hintStart і воно ще не знайдене
+// — слот просто відсутній, лівий відступ лишається симетричним базовим
+// px-3 (LEGEND_PILL), інакше звужується до pl-1.5 — щоб коло бейджа сіло
+// акуратно без зайвого простору зліва.
 function TextPill({
   text,
   audioUrl,
@@ -177,13 +195,17 @@ function TextPill({
           onHint();
         }
       }}
-      className={`${LEGEND_PILL} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
+      className={`${LEGEND_PILL} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
     >
       {showIcon &&
         (found ? (
-          <Check size={14} className="shrink-0 text-green-500" aria-hidden />
+          <span className={`${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_GREEN}`}>
+            <Check size={13} strokeWidth={3} aria-hidden />
+          </span>
         ) : (
-          <Lightbulb size={14} className="shrink-0 text-amber-500" aria-hidden />
+          <span className={`${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_AMBER}`}>
+            <Lightbulb size={13} aria-hidden />
+          </span>
         ))}
       <span className={`whitespace-normal ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
       {audioUrl && (
@@ -222,8 +244,8 @@ function LongCard({
   const showBadge = found || !!word.hintStart;
   const badge = showBadge ? (
     <span
-      className={`${LEGEND_BULB_BADGE} ${hasImage ? "absolute right-2 top-2" : ""} ${
-        found ? "bg-green-500" : "bg-amber-400 dark:bg-amber-500"
+      className={`${LEGEND_BULB_BADGE_MD} ${hasImage ? "absolute right-2 top-2" : ""} ${
+        found ? LEGEND_BULB_BADGE_GREEN : LEGEND_BULB_BADGE_AMBER
       }`}
     >
       {found ? <Check size={14} strokeWidth={3} aria-hidden /> : <Lightbulb size={15} aria-hidden />}
