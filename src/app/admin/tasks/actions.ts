@@ -15,7 +15,7 @@ import {
   type VocabWordInput,
 } from "@/lib/exercises/task-config-builder";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
-import { buildWordSearchBlocksConfig, buildCrosswordBlocksConfig, formatBlockWarnings } from "@/lib/exercises/build-blocks-config";
+import { distributeWords, formatBlockWarnings, type DistributeMode } from "@/lib/exercises/build-blocks-config";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
 import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -236,6 +236,9 @@ type BulkTypeSelection = {
   letterHideMode?: LetterHideMode;
   crosswordClueStyle?: "short" | "long";
   stripArticles?: boolean;
+  // Лише для word_search/crossword (ЕТАП C/3) — радіо "Розподіл слів по
+  // блоках" у bulk-from-vocab-form.tsx; відсутнє для решти типів.
+  distributeMode?: DistributeMode;
 };
 
 // "Створити вправи зі словника" (bulk-from-vocab/page.tsx) — той самий
@@ -296,11 +299,15 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
     if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
       config = { ...config, points: sel.points ?? 1 };
     } else if (sel.type === "word_search") {
-      // Один філворд на весь набір, поділений на блоки (менші сітки) —
-      // та сама функція, що "(Пере)генерувати" в конструкторі
-      // (build-blocks-config.ts), не окремий чанкований набір вправ.
-      const { blocks, warnings: blockWarnings, unplaced } = buildWordSearchBlocksConfig(
-        config.words as WordSearchWord[]
+      // Один філворд на весь набір, поділений на блоки (менші сітки) — та
+      // сама точка входу, що "Розподілити автоматично" в конструкторі
+      // (build-blocks-config.ts, ЕТАП C/3: "optimize" за замовчуванням, чи
+      // "order"/"category" — обране в майстрі bulk-from-vocab-form.tsx), не
+      // окремий чанкований набір вправ.
+      const { blocks, warnings: blockWarnings, unplaced } = distributeWords(
+        config.words as WordSearchWord[],
+        "word_search",
+        sel.distributeMode ?? "optimize"
       );
       config = { ...config, blocks, points: sel.points ?? 1 };
       if (unplaced.length > 0) {
@@ -311,8 +318,10 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
         warnings.push(`Філворд: дуже багато слів (${words.length}), розгляньте поділ на кілька вправ`);
       }
     } else if (sel.type === "crossword") {
-      const { blocks, warnings: blockWarnings, unplaced } = buildCrosswordBlocksConfig(
-        config.words as CrosswordWord[]
+      const { blocks, warnings: blockWarnings, unplaced } = distributeWords(
+        config.words as CrosswordWord[],
+        "crossword",
+        sel.distributeMode ?? "optimize"
       );
       config = { ...config, blocks, points: sel.points ?? 1 };
       if (unplaced.length > 0) {

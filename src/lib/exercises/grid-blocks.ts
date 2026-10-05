@@ -51,6 +51,15 @@ export const CROSSWORD_TRY_TRANSPOSE = true;
 // порогу ~60%.
 export const BLOCK_WORD_SEARCH_DENSITY = 1.8;
 
+// Розумний авто-розподіл (ЕТАП C/3, optimize-split.ts) — перебір кандидатів
+// (перестановок списку слів перед звичайним splitWordsIntoBlocks), обирається
+// найкращий за scoreSplit. Зупиняється, щойно настане ПЕРШЕ з двох: перебрано
+// OPTIMIZE_MAX_ATTEMPTS кандидатів, або минуло OPTIMIZE_TIME_BUDGET_MS від
+// старту (перевірка між кандидатами — можливий один зайвий виклик
+// splitWordsIntoBlocks понад бюджет, не посередині нього).
+export const OPTIMIZE_MAX_ATTEMPTS = 40;
+export const OPTIMIZE_TIME_BUDGET_MS = 1500;
+
 // Той самий ключ, що вже використовують placements/gradeWordSearch/
 // gradeCrossword (sanitizeWordForGrid+upper) — НЕ сире w.word (легенда
 // лишається оригіналом з апострофом/дефісом/пробілом у config.words).

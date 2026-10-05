@@ -25,11 +25,19 @@ import {
   type WordSearchEditorGrid,
   type CrosswordEditorGrid,
 } from "@/lib/exercises/block-editing";
+import { type DistributeMode } from "@/lib/exercises/build-blocks-config";
+import { hasAnyCategory, countCategories } from "@/lib/exercises/optimize-split";
 import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 type Kind = "word_search" | "crossword";
+
+const DISTRIBUTE_MODE_LABELS: Record<DistributeMode, string> = {
+  optimize: "Перемішати (найкраща сітка)",
+  order: "За порядком списку",
+  category: "За категоріями зі скрипту",
+};
 
 function blockWarningText(w: BlockDisplayWarning): string {
   switch (w.type) {
@@ -131,7 +139,7 @@ function DeleteBlockMenu({ wordCount, onDeleteWithWords, onDissolve }: { wordCou
   );
 }
 
-export function BlocksEditor<TWord extends { word: string }, TGrid extends { gridSourceWords: string[] }>({
+export function BlocksEditor<TWord extends { word: string; category?: string }, TGrid extends { gridSourceWords: string[] }>({
   kind,
   state,
   onChange,
@@ -145,10 +153,20 @@ export function BlocksEditor<TWord extends { word: string }, TGrid extends { gri
   gridLabel: (grid: TGrid) => string;
 }) {
   const unassigned = state.words.filter((w) => w.blockId === null);
+  const [mode, setMode] = useState<DistributeMode>("optimize");
+  // Статус лише для mode "optimize" (attempts/score/baseScore з
+  // distributeWords, build-blocks-config.ts) — скидається перед кожним
+  // новим викликом, щоб не показувати застарілий статус після "order"/
+  // "category" чи після ручного редагування.
+  const [status, setStatus] = useState<{ attempts: number; score: number; baseScore: number } | null>(null);
+  const categoryAvailable = hasAnyCategory(state.words);
 
   function handleAutoDistribute() {
-    const { state: next } = autoDistributeUnassigned(state as never, kind as never);
+    const { state: next, attempts, score, baseScore } = autoDistributeUnassigned(state as never, kind as never, mode, {
+      seed: Date.now(),
+    });
     onChange(next as unknown as EditorState<TWord, TGrid>);
+    setStatus(mode === "optimize" && attempts !== undefined && score !== undefined && baseScore !== undefined ? { attempts, score, baseScore } : null);
   }
 
   function handleResetAll() {
@@ -159,8 +177,11 @@ export function BlocksEditor<TWord extends { word: string }, TGrid extends { gri
     ) {
       return;
     }
-    const { state: next } = resetAndDistributeAll(state as never, kind as never);
+    const { state: next, attempts, score, baseScore } = resetAndDistributeAll(state as never, kind as never, mode, {
+      seed: Date.now(),
+    });
     onChange(next as unknown as EditorState<TWord, TGrid>);
+    setStatus(mode === "optimize" && attempts !== undefined && score !== undefined && baseScore !== undefined ? { attempts, score, baseScore } : null);
   }
 
   function updateBlockField(blockId: string, patch: { title?: string; clueMode?: ClueMode }) {
@@ -179,18 +200,47 @@ export function BlocksEditor<TWord extends { word: string }, TGrid extends { gri
               </span>
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button type="button" onClick={handleAutoDistribute} className={`inline-flex items-center gap-1.5 ${BUTTON_SECONDARY_SM}`}>
-              <RefreshCw size={14} /> Розподілити автоматично
-            </button>
+        </div>
+      )}
+
+      {state.words.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as DistributeMode)}
+              aria-label="Спосіб розподілу"
+              className={`${INPUT_BORDER} min-h-11 px-2 py-1.5 text-xs`}
+            >
+              {(Object.keys(DISTRIBUTE_MODE_LABELS) as DistributeMode[]).map((m) => (
+                <option key={m} value={m} disabled={m === "category" && !categoryAvailable}>
+                  {m === "category"
+                    ? categoryAvailable
+                      ? `${DISTRIBUTE_MODE_LABELS[m]} (${countCategories(state.words)} категорій)`
+                      : `${DISTRIBUTE_MODE_LABELS[m]} — немає категорій`
+                    : DISTRIBUTE_MODE_LABELS[m]}
+                </option>
+              ))}
+            </select>
+            {unassigned.length > 0 && (
+              <button type="button" onClick={handleAutoDistribute} className={`inline-flex items-center gap-1.5 ${BUTTON_SECONDARY_SM}`}>
+                <RefreshCw size={14} /> Розподілити автоматично
+              </button>
+            )}
             <button type="button" onClick={handleResetAll} className="text-xs text-neutral-500 hover:underline dark:text-neutral-400">
               Скинути й розподілити всі слова заново
             </button>
           </div>
+          {status && (
+            <p className={HINT_TEXT}>
+              Перебрано {status.attempts} {status.attempts === 1 ? "варіант" : "варіантів"}, обрано найкращий
+              (штраф {status.score} замість {status.baseScore}). Натисніть ще раз для іншого варіанту.
+            </p>
+          )}
         </div>
       )}
 
-      {unassigned.length === 0 && state.blockOrder.length === 0 && (
+      {state.words.length === 0 && (
         <p className={HINT_TEXT}>Додайте слова й натисніть «Розподілити автоматично».</p>
       )}
 

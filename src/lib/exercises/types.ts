@@ -198,11 +198,19 @@ export type WordChoiceConfig = {
 // letter_gaps/letter_rearrangement), не частковий залік по слову.
 // translation/imageUrl/audioUrl — опційні підказки студенту в легенді, не
 // секрет (на відміну від placements) — sanitize пропускає їх як є.
+// category — ЕТАП C/3: назва категорії зі скрипту (VocabItem.partOfSpeech,
+// vocab-categories.ts, французький підпис — PART_OF_SPEECH_LABELS_FR), для
+// групування блоків у режимі "За категоріями" (optimize-split.ts,
+// splitByCategory) і підказки назви блоку. ЛИШЕ для адмінки/конструктора —
+// sanitizeWordSearch (sanitize.ts) явно НЕ копіює це поле в
+// WordSearchPublic (студент його не бачить і не повинен). Слова без
+// категорії (ручний ввід, старі вправи) — undefined.
 export type WordSearchWord = {
   word: string;
   translation?: string;
   imageUrl?: string;
   audioUrl?: string;
+  category?: string;
 };
 // direction — лише вперед (без реверсу/діагоналей), той самий принцип, що
 // й в описі фічі; row/col — 0-based, верхній лівий кут сітки.
@@ -285,12 +293,17 @@ export type WordSearchConfig = {
 // картки) — незалежно від картинки/аудіо (ті завжди в картці). Дефолт
 // "short", якщо не вказано — зберігає сумісність із уже наявними
 // завданнями, збереженими до появи цього поля.
+// category — той самий принцип, що WordSearchWord.category вище (ЕТАП C/3)
+// — НЕ денормалізується в CrosswordPlacement (crossword-grid.ts) і тому не
+// потрапляє в CrosswordPublic за конструкцією (sanitizeCrossword будує
+// across/down з placements, не з config.words).
 export type CrosswordWord = {
   word: string;
   clue: string;
   clueStyle?: "short" | "long";
   imageUrl?: string;
   audioUrl?: string;
+  category?: string;
 };
 // clue/clueStyle денормалізовано просто в placement (не шукається окремо в
 // CrosswordConfig.words за збігом word) — уникає крихкого JOIN, якщо

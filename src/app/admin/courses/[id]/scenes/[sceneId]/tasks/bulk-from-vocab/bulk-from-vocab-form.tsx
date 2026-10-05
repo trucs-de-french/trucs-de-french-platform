@@ -12,6 +12,8 @@ import { TASK_TYPE_LABELS, TASK_TYPE_DESCRIPTIONS } from "@/lib/exercises/task-t
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { StripArticlesToggle } from "../../../../tasks/strip-articles-toggle";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
+import { normalizePartOfSpeech } from "@/lib/vocab-categories";
+import type { DistributeMode } from "@/lib/exercises/build-blocks-config";
 import type { VocabItem } from "@/lib/vocab";
 import { pluralizeExercisesAccusative } from "@/lib/pluralize-exercises";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
@@ -46,6 +48,9 @@ type TypeState = {
   letterHideMode: LetterHideMode;
   crosswordClueStyle: "short" | "long";
   stripArticles: boolean;
+  // Лише для word_search/crossword (ЕТАП C/3) — радіо "Розподіл слів по
+  // блоках"; решта типів це поле просто не читають.
+  distributeMode: DistributeMode;
 };
 
 function defaultTypeState(type: BulkVocabTaskType): TypeState {
@@ -55,8 +60,15 @@ function defaultTypeState(type: BulkVocabTaskType): TypeState {
     letterHideMode: "default",
     crosswordClueStyle: "short",
     stripArticles: STRIP_ARTICLES_DEFAULT[type] ?? false,
+    distributeMode: "optimize",
   };
 }
+
+const DISTRIBUTE_MODE_OPTIONS: { mode: DistributeMode; label: string }[] = [
+  { mode: "optimize", label: "Перемішати (найкраща сітка)" },
+  { mode: "order", label: "За порядком у скрипті" },
+  { mode: "category", label: "За категоріями" },
+];
 
 const LETTER_HIDE_OPTIONS: { mode: LetterHideMode; label: string }[] = [
   { mode: "default", label: "~40%" },
@@ -111,6 +123,13 @@ export function BulkFromVocabForm({
     return missingTranslationCount < selectedWords.length;
   }
 
+  // Чи хоч одне обране слово має категорію (частину мови зі скрипту) —
+  // "За категоріями" (word_search/crossword) доступне лише тоді.
+  const categorizedCount = new Set(
+    selectedWords.map((w) => normalizePartOfSpeech(w.partOfSpeech)).filter((pos): pos is NonNullable<typeof pos> => pos !== null)
+  ).size;
+  const categoryDistributeAvailable = categorizedCount > 0;
+
   // isTypeActive, не лише s.checked — якщо студентка спершу відмітила
   // парний тип, а тоді прибрала переклади з усіх слів, чекбокс стає
   // disabled (нижче), але сам React-стан checked міг лишитись true: тип не
@@ -141,6 +160,12 @@ export function BulkFromVocabForm({
     // ігнорує stripArticles для цього типу, але не надсилаємо його явно, щоб
     // не створювати враження, ніби перемикач для letter_gaps щось важить.
     stripArticles: type === "letter_gaps" ? undefined : typeState[type].stripArticles,
+    distributeMode:
+      type === "word_search" || type === "crossword"
+        ? typeState[type].distributeMode === "category" && !categoryDistributeAvailable
+          ? "optimize"
+          : typeState[type].distributeMode
+        : undefined,
   }));
 
   return (
@@ -273,9 +298,27 @@ export function BulkFromVocabForm({
                   )}
 
                   {isGridType && (
-                    <p className={HINT_TEXT}>
-                      Одна вправа — слова автоматично діляться на блоки (менші сітки, зручні на телефоні).
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <label className={LABEL_TEXT}>Розподіл слів по блоках</label>
+                      <div role="radiogroup" aria-label="Розподіл слів по блоках" className="flex flex-wrap gap-2">
+                        {DISTRIBUTE_MODE_OPTIONS.filter((o) => o.mode !== "category" || categoryDistributeAvailable).map(
+                          ({ mode, label }) => (
+                            <label key={mode} className="flex items-center gap-1 text-xs">
+                              <input
+                                type="radio"
+                                name={`${type}_distribute_mode`}
+                                checked={s.distributeMode === mode}
+                                onChange={() => updateType(type, { distributeMode: mode })}
+                              />
+                              {mode === "category" ? `${label} (${categorizedCount})` : label}
+                            </label>
+                          )
+                        )}
+                      </div>
+                      <p className={HINT_TEXT}>
+                        Одна вправа — слова автоматично діляться на блоки (менші сітки, зручні на телефоні).
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

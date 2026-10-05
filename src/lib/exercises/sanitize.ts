@@ -220,13 +220,22 @@ export function resolveWordSearchPoints(config: WordSearchConfig): number {
 // word.length щойно побачить старт, тож ховати решту додаткового сенсу не
 // має) для підказки-блимання (word-search.tsx, той самий пошук за
 // sanitizeWordForGrid+upper, що gradeWordSearch).
+// ЯВНИЙ whitelist полів (не {...w}) — category (ЕТАП C/3, лише для
+// конструктора/групування блоків) НЕ повинна потрапити в Public навіть
+// якщо колись з'явиться ще одне внутрішнє поле на WordSearchWord.
 function buildWordSearchPublicWords(
   words: WordSearchConfig["words"],
   placements: WordSearchConfig["placements"]
 ): WordSearchPublic["words"] {
   return words.map((w) => {
     const placement = (placements ?? []).find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
-    return { ...w, hintStart: placement ? { row: placement.row, col: placement.col } : null };
+    return {
+      word: w.word,
+      translation: w.translation,
+      imageUrl: w.imageUrl,
+      audioUrl: w.audioUrl,
+      hintStart: placement ? { row: placement.row, col: placement.col } : null,
+    };
   });
 }
 

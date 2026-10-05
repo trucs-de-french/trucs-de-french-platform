@@ -4,7 +4,7 @@ import { detectPlatform } from "@/lib/platform";
 import { sanitizeWordForGrid } from "./grid-word";
 import { computeAutoHiddenIndices, type LetterHideMode } from "./letter-hide";
 import { stripArticle } from "./article";
-import { normalizePartOfSpeech } from "@/lib/vocab-categories";
+import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
 import type {
   FlipCard,
   LetterGapsWord,
@@ -455,6 +455,18 @@ export type VocabImportOptions = {
   stripArticles?: boolean;
 };
 
+// Французький підпис категорії (PART_OF_SPEECH_LABELS_FR, vocab-
+// categories.ts) для WordSearchWord.category/CrosswordWord.category (ЕТАП
+// C/3) — group-за-категоріями (optimize-split.ts, splitByCategory)
+// порівнює/групує за цим рядком, а не за сирим enum-ключем. undefined —
+// легасі-запис без класифікації (той самий сенс, що "Інше" на
+// студентському вокабулярі/PDF), splitByCategory сам трактує його як "Без
+// категорії".
+function categoryLabel(raw: string | null | undefined): string | undefined {
+  const pos = normalizePartOfSpeech(raw);
+  return pos ? PART_OF_SPEECH_LABELS_FR[pos] : undefined;
+}
+
 export function buildConfigFromVocab(
   type: string,
   words: VocabWordInput[],
@@ -528,6 +540,7 @@ export function buildConfigFromVocab(
           translation: w.translation,
           imageUrl: w.imageUrl || undefined,
           audioUrl: w.audioUrl || undefined,
+          category: categoryLabel(w.partOfSpeech),
         }));
       return { words: importedWords };
     }
@@ -543,6 +556,7 @@ export function buildConfigFromVocab(
           clueStyle: options.crosswordClueStyle ?? "short",
           imageUrl: w.imageUrl || undefined,
           audioUrl: w.audioUrl || undefined,
+          category: categoryLabel(w.partOfSpeech),
         }));
       return { words: importedWords };
     }

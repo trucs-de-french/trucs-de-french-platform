@@ -18,7 +18,7 @@ import type {
 import { normalizeWordSearchConfig, normalizeCrosswordConfig } from "./grid-blocks";
 import { sanitizeWordForGrid } from "./grid-word";
 import { generateBlockGrid } from "./generate-block-grid";
-import { buildWordSearchBlocksConfig, buildCrosswordBlocksConfig } from "./build-blocks-config";
+import { distributeWords, type DistributeMode } from "./build-blocks-config";
 import type { BlockWarning } from "./split-into-blocks";
 import { findIsolatedCrosswordWords } from "./task-validation";
 import { WORD_SEARCH_MAX_GRID } from "./grid-limits";
@@ -65,6 +65,11 @@ export type DistributeResult<TWord, TGrid> = {
   state: EditorState<TWord, TGrid>;
   warnings: BlockWarning[];
   unplaced: string[];
+  // Лише для mode "optimize" (ЕТАП C/3, build-blocks-config.ts) — статус
+  // для UI ("Перебрано N варіантів, обрано найкращий (штраф X замість Y)").
+  attempts?: number;
+  score?: number;
+  baseScore?: number;
 };
 
 function keyOf(word: string): string {
@@ -349,7 +354,9 @@ export function isBlockStale<TWord, TGrid extends { gridSourceWords: string[] } 
 
 function distribute(
   state: EditorState<unknown, unknown>,
-  kind: Kind
+  kind: Kind,
+  mode: DistributeMode,
+  opts?: { seed?: number }
 ): DistributeResult<unknown, unknown> {
   const unassigned = state.words.filter((w) => w.blockId === null);
   if (unassigned.length === 0) return { state, warnings: [], unplaced: [] };
@@ -357,8 +364,8 @@ function distribute(
   const plain = unassigned.map(stripEditorFields);
   const splitResult =
     kind === "word_search"
-      ? buildWordSearchBlocksConfig(plain as WordSearchWord[])
-      : buildCrosswordBlocksConfig(plain as CrosswordWord[]);
+      ? distributeWords(plain as WordSearchWord[], "word_search", mode, opts)
+      : distributeWords(plain as CrosswordWord[], "crossword", mode, opts);
 
   const newBlockIds = splitResult.blocks.map(() => crypto.randomUUID());
   const assigned = assignBlockIndices(
@@ -389,51 +396,69 @@ function distribute(
             gridHeight: (b as CrosswordBlock).gridHeight,
             gridSourceWords: b.gridSourceWords ?? b.wordKeys,
           } as CrosswordEditorGrid);
-    blocks[newBlockIds[i]] = { id: newBlockIds[i], grid };
+    // title — заповнений лише у mode "category" (splitByCategory, "Noms",
+    // "Noms (1/2)", "Інше"…); optimize/order лишають його undefined, як і
+    // раніше (вчителька сама називає блок у BlocksEditor).
+    blocks[newBlockIds[i]] = { id: newBlockIds[i], title: b.title, grid };
   });
 
   return {
     state: { ...state, words, blockOrder: [...state.blockOrder, ...newBlockIds], blocks },
     warnings: splitResult.warnings,
     unplaced: splitResult.unplaced,
+    attempts: splitResult.attempts,
+    score: splitResult.score,
+    baseScore: splitResult.baseScore,
   };
 }
 
 export function autoDistributeUnassigned(
   state: WordSearchEditorState,
-  kind: "word_search"
+  kind: "word_search",
+  mode?: DistributeMode,
+  opts?: { seed?: number }
 ): DistributeResult<WordSearchWord, WordSearchEditorGrid>;
 export function autoDistributeUnassigned(
   state: CrosswordEditorState,
-  kind: "crossword"
+  kind: "crossword",
+  mode?: DistributeMode,
+  opts?: { seed?: number }
 ): DistributeResult<CrosswordWord, CrosswordEditorGrid>;
 export function autoDistributeUnassigned(
   state: EditorState<unknown, unknown>,
-  kind: Kind
+  kind: Kind,
+  mode: DistributeMode = "optimize",
+  opts?: { seed?: number }
 ): DistributeResult<unknown, unknown> {
-  return distribute(state, kind);
+  return distribute(state, kind, mode, opts);
 }
 
 // Скидає blockId УСІХ слів (назви/режими блоків втрачаються) і розподіляє
 // все заново — поведінка старої кнопки "(Пере)генерувати" (до ЕТАПУ B).
 export function resetAndDistributeAll(
   state: WordSearchEditorState,
-  kind: "word_search"
+  kind: "word_search",
+  mode?: DistributeMode,
+  opts?: { seed?: number }
 ): DistributeResult<WordSearchWord, WordSearchEditorGrid>;
 export function resetAndDistributeAll(
   state: CrosswordEditorState,
-  kind: "crossword"
+  kind: "crossword",
+  mode?: DistributeMode,
+  opts?: { seed?: number }
 ): DistributeResult<CrosswordWord, CrosswordEditorGrid>;
 export function resetAndDistributeAll(
   state: EditorState<unknown, unknown>,
-  kind: Kind
+  kind: Kind,
+  mode: DistributeMode = "optimize",
+  opts?: { seed?: number }
 ): DistributeResult<unknown, unknown> {
   const resetState: EditorState<unknown, unknown> = {
     words: state.words.map((w) => ({ ...w, blockId: null })),
     blockOrder: [],
     blocks: {},
   };
-  return distribute(resetState, kind);
+  return distribute(resetState, kind, mode, opts);
 }
 
 // ---- попередження для UI (не блокують, лише інформують) ----
