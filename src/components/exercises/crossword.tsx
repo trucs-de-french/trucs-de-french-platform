@@ -640,39 +640,42 @@ function CrosswordBlockView({
           src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
           сіткою й панеллю підказок під нею. */}
       <div className="flex flex-col items-center gap-3">
-        {/* ЕТАП I — cw-grid-wrap (globals.css) задає --cw (розмір клітинки,
-            однаковий у ВСІХ блоках вправи) з --cols/--zoom, переданих
-            ЗВЕРХУ (CrosswordExercise) через CSS-змінні в style, не класами:
-            --cols/--zoom — єдині числа на всю вправу, саме --cw усередині
-            клітинок нижче вже "статична" частина (var(...), не
-            інтерпольований рядок). */}
-        <div
-          ref={scrollRef}
-          className="cw-grid-wrap max-w-full overflow-x-auto"
-          style={{ touchAction: "pan-x pan-y", "--cols": cols, "--zoom": zoom } as CSSVarStyle}
-        >
-          {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
-              (суцільно заповнена сітка, box-shadow там коректно повторює
-              прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима
-              (bg-transparent, border-none, стиль crosswordlabs.com) — форма
-              слів нерівна. box-shadow завжди йде по прямокутній рамці
-              елемента незалежно від прозорих ділянок усередині; drop-shadow
-              рахується з альфа-каналу відрендереного вмісту й слідує за
-              РЕАЛЬНО видимою (непрозорою) формою — саме контуром слів, а не
-              контуром контейнера. Той самий inline-block-шар, що й раніше
-              (лише сітка, без сусідніх елементів, — needed для того самого
-              обходу border-collapse, що вже в word-search.tsx). */}
-          <div className="inline-block drop-shadow-md">
-            {/* font-heading — сітка тепер на тому самому шрифті, що інтерфейс
-                (Nunito), не на моноширинному Geist Mono. На <table> цього
-                досить для номерів клітинок (звичайний <span>, успадковує),
-                але НЕ для самого <input> нижче — глобальне правило
-                "input { font-family: var(--font-heading) }" (globals.css)
-                звертається до input НАПРЯМУ (не через успадкування), тож
-                клас однаково треба продублювати прямо на className інпута
-                (тут це вже той самий шрифт, тому дублювання суто заради
-                стабільності на випадок майбутньої зміни правила). */}
-            <table className="border-collapse font-heading">
+        {/* ЕТАП I2 — 3 рівні, кожен зі своєю єдиною роллю (терміновий фікс
+            нульової ширини, ЕТАП I мав container-type і --cols/--zoom на
+            ОДНОМУ елементі, що й було коренем проблеми):
+            1. cw-grid-wrap — лише container-type:inline-size, w-full (не
+               shrink-to-fit у батьківській flex-колонці з items-center).
+            2. scrollRef — overflow-x-auto, w-full, сам touch-скрол.
+            3. cw-grid-inner — оголошує --cols/--zoom (і через них --cw),
+               w-max (замість inline-block) + mx-auto: вузька сітка
+               центрується в (2), широка — вирівнюється по початку й
+               прокручується (auto-margins колапсують у 0, коли вмісту не
+               вистачає місця). */}
+        <div className="cw-grid-wrap w-full min-w-0">
+          <div ref={scrollRef} className="w-full overflow-x-auto" style={{ touchAction: "pan-x pan-y" }}>
+            {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
+                (суцільно заповнена сітка, box-shadow там коректно повторює
+                прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима
+                (bg-transparent, border-none, стиль crosswordlabs.com) — форма
+                слів нерівна. box-shadow завжди йде по прямокутній рамці
+                елемента незалежно від прозорих ділянок усередині; drop-shadow
+                рахується з альфа-каналу відрендереного вмісту й слідує за
+                РЕАЛЬНО видимою (непрозорою) формою — саме контуром слів, а не
+                контуром контейнера. */}
+            <div
+              className="cw-grid-inner w-max mx-auto drop-shadow-md"
+              style={{ "--cols": cols, "--zoom": zoom } as CSSVarStyle}
+            >
+              {/* font-heading — сітка тепер на тому самому шрифті, що інтерфейс
+                  (Nunito), не на моноширинному Geist Mono. На <table> цього
+                  досить для номерів клітинок (звичайний <span>, успадковує),
+                  але НЕ для самого <input> нижче — глобальне правило
+                  "input { font-family: var(--font-heading) }" (globals.css)
+                  звертається до input НАПРЯМУ (не через успадкування), тож
+                  клас однаково треба продублювати прямо на className інпута
+                  (тут це вже той самий шрифт, тому дублювання суто заради
+                  стабільності на випадок майбутньої зміни правила). */}
+              <table className="border-collapse font-heading">
               <tbody>
                 {block.openCells.map((row, ri) => (
                   <tr key={ri}>
@@ -687,7 +690,7 @@ function CrosswordBlockView({
                           <td
                             key={ci}
                             className="border-none bg-transparent"
-                            style={{ width: "var(--cw)", height: "var(--cw)" }}
+                            style={{ width: "var(--cw)", height: "var(--cw)", minWidth: "1.75rem", minHeight: "1.75rem" }}
                           />
                         );
                       }
@@ -697,7 +700,7 @@ function CrosswordBlockView({
                         <td
                           key={ci}
                           className="relative border border-neutral-300 p-0 dark:border-neutral-700"
-                          style={{ width: "var(--cw)", height: "var(--cw)" }}
+                          style={{ width: "var(--cw)", height: "var(--cw)", minWidth: "1.75rem", minHeight: "1.75rem" }}
                         >
                           {number !== null && (
                             <span
@@ -741,7 +744,8 @@ function CrosswordBlockView({
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </div>
 

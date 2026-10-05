@@ -21,6 +21,12 @@ export function useScrollOverflowHint(ref: RefObject<HTMLElement | null>, active
     if (!el) return;
 
     function measure() {
+      // clientWidth === 0 — транзитний вимір (шар ще не отримав розкладку
+      // цього кадру, чи батьківський контейнер тимчасово нульової
+      // ширини) — scrollWidth > 0 проти такого clientWidth завжди хибно
+      // показав би "переповнення", хоча насправді ще просто нема
+      // валідного виміру; ігноруємо кадр, лишаємо попереднє значення.
+      if (el!.clientWidth === 0) return;
       setOverflow(el!.scrollWidth > el!.clientWidth);
     }
     measure();
