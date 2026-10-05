@@ -26,12 +26,30 @@ import { sanitizeWordForGrid } from "./grid-word";
 export const BLOCK_MAX_COLS = 12;
 export const BLOCK_MAX_ROWS = 16;
 export const BLOCK_MIN_WORDS = 3;
-export const BLOCK_MAX_WORDS = 8;
+export const BLOCK_MAX_WORDS = 10;
 // Кросворд — недетермінований генератор без власного ліміту розміру (на
 // відміну від word_search, де розмір рахується формулою заздалегідь) —
 // кілька спроб на кожен кандидат-набір слів, обирається найкраща з тих, що
 // вклались у ліміти блоку (split-into-blocks.ts).
 export const CROSSWORD_BLOCK_ATTEMPTS = 20;
+// Крім оригінальної орієнтації кожної спроби, split-into-blocks.ts пробує і
+// транспоновану (90°, transposeCrosswordPlacements у crossword-grid.ts) —
+// кросворд часто виходить вузьким-і-високим або широким-і-низьким, тож
+// один з двох варіантів регулярно вкладається в BLOCK_MAX_COLS, навіть
+// коли інший ні. Вимкнути (false) — лишає лише оригінальну орієнтацію, як
+// до етапу 4.
+export const CROSSWORD_TRY_TRANSPOSE = true;
+// Щільність (density, computeGridSize у word-search-grid.ts) лише для
+// ПОДІЛУ НА БЛОКИ — менша за дефолтну (2.5) площа на літеру ⇒ щільніша
+// сітка на ту саму кількість слів ⇒ більше слів влазить у BLOCK_MAX_COLS.
+// Формула для звичайної (неблокової) генерації й код поза split-into-
+// blocks.ts НЕ торкається — лишається 2.5. Підібрано вимірюванням (етап
+// 4/4, measure.ts): на двох тестових словниках (20 і 30 слів, довжина
+// 4-14 літер) 1.8 дає блоки по 8-10 слів (замість 5-8 при дефолтних 2.5),
+// заповненість сітки до ~52% (мінімум сітки 10×10 у computeGridSize
+// підстраховує від надто тісних сіток на малих блоках) — нижче умовного
+// порогу ~60%.
+export const BLOCK_WORD_SEARCH_DENSITY = 1.8;
 
 // Той самий ключ, що вже використовують placements/gradeWordSearch/
 // gradeCrossword (sanitizeWordForGrid+upper) — НЕ сире w.word (легенда

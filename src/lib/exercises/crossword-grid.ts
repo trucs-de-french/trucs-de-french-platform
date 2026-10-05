@@ -579,6 +579,40 @@ export function buildCrosswordSolution(
   return solution;
 }
 
+// Поворот сітки кросворду на 90° — горизонталь↔вертикаль, row↔col,
+// gridWidth↔gridHeight; номерація перерахована з нуля за тим самим
+// правилом, що й generateCrosswordGrid (зліва-направо/згори-вниз за
+// стартовою клітинкою) — транспонування саме по собі НЕ зберігає відносний
+// порядок стартів (транспонований рядок стає стовпцем), тож стару
+// нумерацію переносити не можна. Чиста функція — не знає про split-into-
+// blocks.ts, лише геометрія; викликається звідти для спроби "а що як
+// вузька-але-висока сітка вміститься, бо ширина/висота поміняні місцями".
+// Інволюція: transpose(transpose(p)) повертає ті самі placements (окрім,
+// можливо, порядку елементів масиву) — перевірено тестом (etap4-verify.ts).
+export function transposeCrosswordPlacements(
+  placements: CrosswordPlacement[]
+): CrosswordPlacement[] {
+  const swapped = placements.map((p) => ({
+    ...p,
+    row: p.col,
+    col: p.row,
+    direction: (p.direction === "horizontal" ? "vertical" : "horizontal") as Direction,
+  }));
+
+  const startCells = [...new Set(swapped.map((p) => cellKey(p.row, p.col)))]
+    .map((key) => {
+      const [row, col] = key.split(",").map(Number);
+      return { key, row, col };
+    })
+    .sort((a, b) => a.row - b.row || a.col - b.col);
+  const numberByStartCell = new Map(startCells.map((c, i) => [c.key, i + 1]));
+
+  return swapped.map((p) => ({
+    ...p,
+    number: numberByStartCell.get(cellKey(p.row, p.col))!,
+  }));
+}
+
 // Номер у клітинці, що починає слово(а) — вже пораховано в
 // generateCrosswordGrid() (placements[].number), тут лише розкладається в
 // 2D-форму для рендеру (адмінське прев'ю й sanitizeCrossword).

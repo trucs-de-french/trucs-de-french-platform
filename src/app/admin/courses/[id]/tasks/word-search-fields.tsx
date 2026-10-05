@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchBlock } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
-import { normalizeWordSearchConfig, selectWordsForBlock, BLOCK_MAX_COLS } from "@/lib/exercises/grid-blocks";
+import { normalizeWordSearchConfig, selectWordsForBlock, BLOCK_MAX_COLS, BLOCK_WORD_SEARCH_DENSITY } from "@/lib/exercises/grid-blocks";
 import { splitWordsIntoBlocks, type BlockWarning } from "@/lib/exercises/split-into-blocks";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
@@ -249,7 +249,9 @@ export const WordSearchFields = forwardRef<
   // це єдиний важіль впливу вчительки на склад блоків).
   function regenerate() {
     const validWords = words.filter((w) => w.word.trim()).map(stripId);
-    const result = splitWordsIntoBlocks(validWords, "word_search", { generate: generateWordSearchGrid });
+    const result = splitWordsIntoBlocks(validWords, "word_search", {
+      generate: (blockWords) => generateWordSearchGrid(blockWords, BLOCK_WORD_SEARCH_DENSITY),
+    });
     setBlocks(result.blocks);
     setBlockWords(result.blocks.map((b) => selectWordsForBlock(validWords, b.wordKeys)));
     setWarnings(result.warnings);
@@ -263,7 +265,7 @@ export const WordSearchFields = forwardRef<
   function regenerateBlock(index: number) {
     const blockWordList = blockWords[index];
     if (!blockWordList) return;
-    const result = generateWordSearchGrid(blockWordList);
+    const result = generateWordSearchGrid(blockWordList, BLOCK_WORD_SEARCH_DENSITY);
     const keys = blockWordList.map((w) => sanitizeWordForGrid(w.word).toUpperCase());
     const longestWord = keys.slice().sort((a, c) => c.length - a.length)[0] ?? "";
     const limit = Math.max(BLOCK_MAX_COLS, longestWord.length);
@@ -330,7 +332,7 @@ export const WordSearchFields = forwardRef<
         {words.length > 40 && (
           <p className={HINT_TEXT}>
             Рекомендовано до ~40 слів загалом — вправа автоматично розіб&apos;ється на кілька менших сіток
-            (блоків), по 3–8 слів кожна.
+            (блоків), по 3–10 слів кожна.
           </p>
         )}
         {words.map((w) => (

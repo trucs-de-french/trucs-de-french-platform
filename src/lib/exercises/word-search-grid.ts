@@ -25,10 +25,16 @@ function randomFiller(): string {
 // розсуває сітку далі. Раніше сітка росла необмежено (до ~25+ колонок на
 // великих списках), через що легенда на студентській сторінці стискалась у
 // вузьку колонку.
-export function computeGridSize(words: string[]): number {
+// density — множник площі на літеру (менший за дефолтний 2.5 = щільніша
+// сітка на ту саму кількість слів, тож більше слів влазить у той самий
+// розмір) — ОПЦІЙНИЙ параметр, дефолт лишає формулу й поведінку поза
+// блоками/для наявного коду незмінними. split-into-blocks.ts передає
+// BLOCK_WORD_SEARCH_DENSITY (grid-blocks.ts) — своє, менше значення, лише
+// для поділу на блоки.
+export function computeGridSize(words: string[], density = 2.5): number {
   const longest = Math.max(0, ...words.map((w) => w.length));
   const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
-  return Math.min(WORD_SEARCH_MAX_GRID, Math.max(10, longest, Math.ceil(Math.sqrt(totalLetters * 2.5))));
+  return Math.min(WORD_SEARCH_MAX_GRID, Math.max(10, longest, Math.ceil(Math.sqrt(totalLetters * density))));
 }
 
 // Викликається ОДИН РАЗ в адмінці (word-search-fields.tsx), не на кожен
@@ -48,7 +54,10 @@ export function computeGridSize(words: string[]): number {
 // (пробіл/апостроф/дефіс) — ЛИШЕ для розміщення: сам w.word (легенда)
 // лишається недоторканим у config.words, тут читається окремо, лише для
 // побудови сітки/placements.
-export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
+export function generateWordSearchGrid(
+  rawWords: WordSearchWord[],
+  density?: number
+): {
   grid: string[][];
   placements: WordSearchPlacement[];
   failedWords: string[];
@@ -61,7 +70,7 @@ export function generateWordSearchGrid(rawWords: WordSearchWord[]): {
   sourceWords: string[];
 } {
   const words = rawWords.map((w) => sanitizeWordForGrid(w.word).toUpperCase()).filter(Boolean);
-  const size = computeGridSize(words);
+  const size = computeGridSize(words, density);
   const grid: (string | null)[][] = Array.from({ length: size }, () => Array(size).fill(null));
   const placements: WordSearchPlacement[] = [];
   const failedWords: string[] = [];

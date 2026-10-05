@@ -21,8 +21,17 @@ import type {
 } from "./types";
 import { sanitizeWordForGrid } from "./grid-word";
 import { computeGridSize } from "./word-search-grid";
+import { transposeCrosswordPlacements } from "./crossword-grid";
 import { WORD_SEARCH_MAX_GRID } from "./grid-limits";
-import { BLOCK_MAX_COLS, BLOCK_MAX_ROWS, BLOCK_MAX_WORDS, BLOCK_MIN_WORDS, CROSSWORD_BLOCK_ATTEMPTS } from "./grid-blocks";
+import {
+  BLOCK_MAX_COLS,
+  BLOCK_MAX_ROWS,
+  BLOCK_MAX_WORDS,
+  BLOCK_MIN_WORDS,
+  BLOCK_WORD_SEARCH_DENSITY,
+  CROSSWORD_BLOCK_ATTEMPTS,
+  CROSSWORD_TRY_TRANSPOSE,
+} from "./grid-blocks";
 
 export type BlockWarning =
   | { type: "isolated-word"; word: string; blockIndex: number }
@@ -92,7 +101,7 @@ function splitWordSearchCandidates(words: WordSearchWord[]): {
     const trial = [...candidate, w];
     const trialKeys = trial.map((x) => keyOf(x.word));
     const limit = widthLimitFor(trialKeys);
-    const size = computeGridSize(trialKeys);
+    const size = computeGridSize(trialKeys, BLOCK_WORD_SEARCH_DENSITY);
 
     if (trial.length <= BLOCK_MAX_WORDS && size <= limit) {
       candidate = trial;
@@ -225,12 +234,32 @@ function generateBestCrosswordAttempt(
   const fitting: CrosswordAttempt[] = [];
   const all: CrosswordAttempt[] = [];
 
-  for (let attempt = 0; attempt < CROSSWORD_BLOCK_ATTEMPTS; attempt++) {
-    const result = generate(words);
+  function consider(result: CrosswordAttempt): boolean {
     all.push(result);
     if (result.gridWidth <= limit && result.gridHeight <= BLOCK_MAX_ROWS) {
       fitting.push(result);
-      if (result.isolatedWords.length === 0) break;
+      if (result.isolatedWords.length === 0) return true;
+    }
+    return false;
+  }
+
+  for (let attempt = 0; attempt < CROSSWORD_BLOCK_ATTEMPTS; attempt++) {
+    const result = generate(words);
+    if (consider(result)) break;
+    // Та сама спроба, повернута на 90° (row<->col, across<->down,
+    // перенумерована) — кросворд часто виходить вузьким-і-високим або
+    // навпаки, тож одна з двох орієнтацій регулярно вкладається в
+    // BLOCK_MAX_COLS, навіть коли інша ні. isolatedWords/sourceWords не
+    // залежать від орієнтації — копіюються як є.
+    if (CROSSWORD_TRY_TRANSPOSE) {
+      const transposed: CrosswordAttempt = {
+        placements: transposeCrosswordPlacements(result.placements),
+        gridWidth: result.gridHeight,
+        gridHeight: result.gridWidth,
+        isolatedWords: result.isolatedWords,
+        sourceWords: result.sourceWords,
+      };
+      if (consider(transposed)) break;
     }
   }
 
