@@ -25,7 +25,7 @@ function randomFiller(): string {
 // розсуває сітку далі. Раніше сітка росла необмежено (до ~25+ колонок на
 // великих списках), через що легенда на студентській сторінці стискалась у
 // вузьку колонку.
-function computeGridSize(words: string[]): number {
+export function computeGridSize(words: string[]): number {
   const longest = Math.max(0, ...words.map((w) => w.length));
   const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
   return Math.min(WORD_SEARCH_MAX_GRID, Math.max(10, longest, Math.ceil(Math.sqrt(totalLetters * 2.5))));

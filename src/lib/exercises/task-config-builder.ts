@@ -147,19 +147,20 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("word_search_sub_instructions") as string) || ""
       );
-      const gridSourceWords = parseOptionalJsonField(formData.get("word_search_grid_source_words"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_search_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
-        // Сітку й розміщення вже згенерувала й перевірила адмінка
-        // (word-search-fields.tsx) — сервер лише зберігає готовий
-        // результат, не перегенеровує.
+        // Поділ на блоки й сітки для кожного вже згенерувала й перевірила
+        // адмінка (word-search-fields.tsx, split-into-blocks.ts) — сервер
+        // лише зберігає готовий результат, не перегенеровує. Старі
+        // top-level grid/placements/gridSourceWords (етап 1) більше НЕ
+        // пишуться для жодної вправи — normalizeWordSearchConfig
+        // (grid-blocks.ts) читає лише blocks[] або синтезує їх на льоту
+        // для вже наявних у БД старих рядків, записаних до цієї зміни.
         words: parseJsonField(formData.get("word_search_words")),
-        grid: parseJsonField(formData.get("word_search_grid")),
-        placements: parseJsonField(formData.get("word_search_placements")),
-        ...(gridSourceWords ? { gridSourceWords } : {}),
+        blocks: parseJsonField(formData.get("word_search_blocks")),
         points: Number(formData.get("word_search_points")) || 1,
         hintsReducePoints: formData.get("word_search_hints_reduce_points") === "true",
       };
@@ -168,22 +169,17 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("crossword_sub_instructions") as string) || ""
       );
-      const gridSourceWords = parseOptionalJsonField(formData.get("crossword_grid_source_words"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("crossword_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
-        // Розкладку вже згенерувала й перевірила адмінка
-        // (crossword-fields.tsx) — сервер лише зберігає готовий результат,
-        // не перегенеровує. Немає окремого поля "grid" (на відміну від
-        // word_search) — форма й літери відновлюються з placements там, де
-        // вони потрібні (sanitizeCrossword/gradeCrossword).
+        // Той самий принцип, що word_search вище — готовий результат
+        // поділу на блоки, без перегенерації на сервері; старі top-level
+        // placements/gridWidth/gridHeight/gridSourceWords більше НЕ
+        // пишуться.
         words: parseJsonField(formData.get("crossword_words")),
-        placements: parseJsonField(formData.get("crossword_placements")),
-        ...(gridSourceWords ? { gridSourceWords } : {}),
-        gridWidth: Number(formData.get("crossword_grid_width")) || 0,
-        gridHeight: Number(formData.get("crossword_grid_height")) || 0,
+        blocks: parseJsonField(formData.get("crossword_blocks")),
         points: Number(formData.get("crossword_points")) || 1,
         hintsReducePoints: formData.get("crossword_hints_reduce_points") === "true",
       };
@@ -369,23 +365,6 @@ function parseJsonField(value: FormDataEntryValue | null): unknown[] {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
-  }
-}
-
-// На відміну від parseJsonField (завжди масив, порожній рядок -> []) — тут
-// порожній рядок/відсутнє поле означає "поля взагалі немає в конфігурації"
-// (undefined), не порожній масив. Потрібно для gridSourceWords
-// (word_search/crossword, task-validation.ts): "порожній масив" і "поля
-// нема зовсім" — це різні стани (стара вправа без gridSourceWords мусить
-// лишитись БЕЗ цього ключа в config, інакше звірка "чи сітка застаріла"
-// сплутала б її зі свіжо згенерованою вправою на 0 слів).
-function parseOptionalJsonField(value: FormDataEntryValue | null): unknown[] | undefined {
-  if (!value) return undefined;
-  try {
-    const parsed = JSON.parse(value as string);
-    return Array.isArray(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
   }
 }
 

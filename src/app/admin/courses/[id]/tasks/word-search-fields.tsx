@@ -2,11 +2,12 @@
 
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
-import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
+import type { WordSearchConfig, WordSearchWord, WordSearchBlock } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
-import { normalizeWordSearchConfig } from "@/lib/exercises/grid-blocks";
+import { normalizeWordSearchConfig, selectWordsForBlock, BLOCK_MAX_COLS } from "@/lib/exercises/grid-blocks";
+import { splitWordsIntoBlocks, type BlockWarning } from "@/lib/exercises/split-into-blocks";
+import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
-import { WORD_SEARCH_MAX_WORDS, WORD_SEARCH_MAX_GRID } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -63,15 +64,30 @@ function WordSearchWordRow({
     placeholder: "Аудіо (URL, необов'язково)",
   });
 
+  // Довжина ПІСЛЯ sanitizeWordForGrid (пробіли/артиклі склеюються) — та
+  // сама величина, що визначає ширину блоку в split-into-blocks.ts.
+  const sanitizedLength = sanitizeWordForGrid(wordItem.word).length;
+  const isLong = sanitizedLength > BLOCK_MAX_COLS;
+
   return (
     <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
       <div className="flex items-center gap-2">
-        <input
-          value={wordItem.word}
-          onChange={(e) => onUpdateWord(e.target.value)}
-          placeholder="Слово"
-          className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-        />
+        <div className="relative flex-1">
+          <input
+            value={wordItem.word}
+            onChange={(e) => onUpdateWord(e.target.value)}
+            placeholder="Слово"
+            className={`${INPUT_BORDER} w-full px-2 py-2 text-base font-medium font-content`}
+          />
+          {isLong && (
+            <span
+              title="Блок із цим словом буде ширшим за екран телефона й прокручуватиметься вбік. Якщо слово містить артикль, спробуйте перемикач «Прибрати артиклі» вище."
+              className="absolute -top-2 right-1 rounded bg-amber-100 px-1 text-[10px] text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+            >
+              {sanitizedLength} літер
+            </span>
+          )}
+        </div>
         <input
           value={wordItem.translation ?? ""}
           onChange={(e) => onUpdateTranslation(e.target.value)}
@@ -111,6 +127,42 @@ function WordSearchWordRow({
   );
 }
 
+function GridPreview({ grid }: { grid: string[][] }) {
+  return (
+    <div className="mt-1 overflow-x-auto">
+      <table className="border-collapse font-heading font-semibold text-xs">
+        <tbody>
+          {grid.map((row, ri) => (
+            <tr key={ri}>
+              {row.map((cell, ci) => (
+                <td
+                  key={ci}
+                  className="h-6 w-6 border border-neutral-200 text-center dark:border-neutral-700 dark:text-neutral-300"
+                >
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function blockWarningText(w: BlockWarning): string {
+  switch (w.type) {
+    case "isolated-word":
+      return `"${w.word}" — без перетинів`;
+    case "wide-block":
+      return `сітка ${w.width}× — ширша за екран телефона (довге слово "${w.longestWord}")`;
+    case "merged-small-block":
+      return "об'єднано з попереднім блоком (інакше було б замало слів)";
+    case "long-word":
+      return `"${w.word}" — ${w.length} літер, не влазить у філворд`;
+  }
+}
+
 export const WordSearchFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>,
   { initialConfig?: Partial<WordSearchConfig> }
@@ -120,29 +172,22 @@ export const WordSearchFields = forwardRef<
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
       : [emptyWord()]
   );
-  // normalizeWordSearchConfig (grid-blocks.ts) — читає ОДИН блок як через
-  // legacy config.grid/placements, так і через новий config.blocks (якщо
-  // колись туди потрапить реальний поділ, етап 2/3) — адмінка етапу 1 й
-  // далі показує/редагує рівно ОДНУ сітку (UI не змінено), лише джерело
-  // початкових значень тепер крізь спільну точку нормалізації.
-  const initialBlock = initialConfig
-    ? normalizeWordSearchConfig(initialConfig as WordSearchConfig).blocks[0]
-    : undefined;
-  // grid/placements — результат ОСТАННЬОЇ генерації, не перераховуються на
-  // кожен рендер (той самий принцип, що в types.ts: генерація один раз, не
-  // на льоту) — редагування слів після генерації НЕ оновлює сітку
-  // автоматично, доки вчителька сама не натисне "(Пере)генерувати".
-  const [grid, setGrid] = useState<string[][]>(initialBlock?.grid ?? []);
-  const [placements, setPlacements] = useState<WordSearchPlacement[]>(
-    initialBlock?.placements ?? []
+  // normalizeWordSearchConfig (grid-blocks.ts) — читає blocks напряму
+  // (новий формат) або синтезує рівно ОДИН блок зі старих top-level
+  // grid/placements (вправи, збережені до цієї зміни, без міграції БД).
+  // blockWords — РЕАЛЬНІ WordSearchWord (з translation/imageUrl/audioUrl,
+  // не лише нормалізовані ключі) для кожного блоку — для чипів/прев'ю й
+  // для "Перегенерувати блок" нижче; selectWordsForBlock розбирає
+  // wordKeys як мультимножину за порядком появи в initialConfig.words.
+  const initialBlocks = initialConfig
+    ? normalizeWordSearchConfig(initialConfig as WordSearchConfig).blocks
+    : [];
+  const [blocks, setBlocks] = useState<WordSearchBlock[]>(initialBlocks);
+  const [blockWords, setBlockWords] = useState<WordSearchWord[][]>(
+    initialBlocks.map((b) => selectWordsForBlock(initialConfig?.words ?? [], b.wordKeys))
   );
-  // Знімок нормалізованих слів на момент ОСТАННЬОЇ генерації (types.ts) —
-  // для task-validation.ts "чи сітка застаріла". Відсутнє в initialConfig
-  // для вправ, збережених до появи цього поля — лишається undefined, не [].
-  const [gridSourceWords, setGridSourceWords] = useState<string[] | undefined>(
-    initialBlock?.gridSourceWords
-  );
-  const [failedWords, setFailedWords] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<BlockWarning[]>([]);
+  const [unplaced, setUnplaced] = useState<string[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.word_search ?? false);
 
   useImperativeHandle(ref, () => ({
@@ -169,9 +214,7 @@ export const WordSearchFields = forwardRef<
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
       words: words.map(stripId),
-      grid,
-      placements,
-      gridSourceWords,
+      blocks,
       points: initialConfig?.points,
       hintsReducePoints: initialConfig?.hintsReducePoints,
     }),
@@ -201,14 +244,60 @@ export const WordSearchFields = forwardRef<
     setWords((prev) => prev.map((w) => (w.id === id ? { ...w, audioUrl: value } : w)));
   }
 
+  // (Пере)генерувати — перебудовує й сам поділ на блоки, і сітку кожного
+  // (split-into-blocks.ts: слова беруться в ПОТОЧНОМУ порядку списку вище —
+  // це єдиний важіль впливу вчительки на склад блоків).
   function regenerate() {
-    const validWords = words.filter((w) => w.word.trim());
-    const result = generateWordSearchGrid(validWords);
-    setGrid(result.grid);
-    setPlacements(result.placements);
-    setFailedWords(result.failedWords);
-    setGridSourceWords(result.sourceWords);
+    const validWords = words.filter((w) => w.word.trim()).map(stripId);
+    const result = splitWordsIntoBlocks(validWords, "word_search", { generate: generateWordSearchGrid });
+    setBlocks(result.blocks);
+    setBlockWords(result.blocks.map((b) => selectWordsForBlock(validWords, b.wordKeys)));
+    setWarnings(result.warnings);
+    setUnplaced(result.unplaced);
   }
+
+  // Перегенерувати лише ОДИН блок — та сама генерація, що в самому
+  // block, але для тих самих слів (склад блоку, wordKeys, не змінюється):
+  // якщо нова спроба не вклалась у ліміт ширини блоку, стара сітка
+  // лишається (не гіршати мовчки).
+  function regenerateBlock(index: number) {
+    const blockWordList = blockWords[index];
+    if (!blockWordList) return;
+    const result = generateWordSearchGrid(blockWordList);
+    const keys = blockWordList.map((w) => sanitizeWordForGrid(w.word).toUpperCase());
+    const longestWord = keys.slice().sort((a, c) => c.length - a.length)[0] ?? "";
+    const limit = Math.max(BLOCK_MAX_COLS, longestWord.length);
+    if (result.grid.length > limit || result.failedWords.length > 0) {
+      setWarnings((prev) => [
+        ...prev.filter((w) => !("blockIndex" in w && w.type === "wide-block" && w.blockIndex === index)),
+        { type: "wide-block", blockIndex: index, width: result.grid.length, longestWord },
+      ]);
+      return;
+    }
+    setBlocks((prev) =>
+      prev.map((b, i) =>
+        i === index
+          ? { ...b, grid: result.grid, placements: result.placements, gridSourceWords: result.sourceWords }
+          : b
+      )
+    );
+  }
+
+  // Застаріло, якщо мультимножина нормалізованих слів списку не збігається
+  // з мультимножиною wordKeys усіх блоків — той самий сенс, що
+  // task-validation.ts (серверна/живa перевірка), тут лише для миттєвого
+  // попередження в формі без повторного виклику validateTaskConfig.
+  const currentKeys = words
+    .map((w) => sanitizeWordForGrid(w.word).toUpperCase())
+    .filter(Boolean)
+    .sort();
+  const blockKeys = blocks
+    .flatMap((b) => b.wordKeys)
+    .slice()
+    .sort();
+  const isStale =
+    blocks.length > 0 &&
+    (currentKeys.length !== blockKeys.length || currentKeys.some((k, i) => k !== blockKeys[i]));
 
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
@@ -218,23 +307,7 @@ export const WordSearchFields = forwardRef<
         value={JSON.stringify(words.map(stripId))}
         readOnly
       />
-      <input type="hidden" name="word_search_grid" value={JSON.stringify(grid)} readOnly />
-      <input
-        type="hidden"
-        name="word_search_placements"
-        value={JSON.stringify(placements)}
-        readOnly
-      />
-      {/* Порожній рядок (не JSON.stringify(undefined)), якщо ще не
-          генерували чи вправа стара — parseJsonField (task-config-builder.ts)
-          трактує порожній рядок як "поля немає", той самий принцип, що й
-          для grid/placements при ще не згенерованій сітці. */}
-      <input
-        type="hidden"
-        name="word_search_grid_source_words"
-        value={gridSourceWords ? JSON.stringify(gridSourceWords) : ""}
-        readOnly
-      />
+      <input type="hidden" name="word_search_blocks" value={JSON.stringify(blocks)} readOnly />
 
       <InstructionsRichTextField
         name="word_search_instructions"
@@ -252,16 +325,12 @@ export const WordSearchFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
         <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
-        {/* Порада, не помилка (severity "hint" за духом task-validation.ts,
-            хоч і не звідти технічно — локальна перевірка кількості слів) —
-            тихий сірий текст, без жовтого фону й "⚠": перевищення
-            рекомендованого, не жорсткого ліміту (масове створення й далі
-            саме ділить на кілька вправ, тут лише порада зробити так само
-            вручну). */}
-        {words.length > WORD_SEARCH_MAX_WORDS && (
+        {/* Блоки формуються автоматично (split-into-blocks.ts), порада лише
+            про загальний орієнтовний обсяг — не жорсткий ліміт. */}
+        {words.length > 40 && (
           <p className={HINT_TEXT}>
-            Рекомендовано не більше {WORD_SEARCH_MAX_WORDS} слів — розбийте на кілька вправ. Сітка обмежена{" "}
-            {WORD_SEARCH_MAX_GRID}×{WORD_SEARCH_MAX_GRID}, слова, що не вмістяться, покажуться попередженням нижче.
+            Рекомендовано до ~40 слів загалом — вправа автоматично розіб&apos;ється на кілька менших сіток
+            (блоків), по 3–8 слів кожна.
           </p>
         )}
         {words.map((w) => (
@@ -290,39 +359,59 @@ export const WordSearchFields = forwardRef<
         className={`inline-flex w-fit items-center gap-1.5 ${BUTTON_SECONDARY_SM}`}
       >
         <RefreshCw size={14} />
-        {grid.length > 0 ? "Перегенерувати сітку" : "Згенерувати сітку"}
+        {blocks.length > 0 ? "Перегенерувати сітки" : "Згенерувати сітки"}
       </button>
 
-      {failedWords.length > 0 && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          Не вдалося розмістити: {failedWords.join(", ")} — скоротіть список слів (сітка замала
-          для решти) або спробуйте перегенерувати ще раз.
+      {isStale && (
+        <p className="text-sm text-amber-700 dark:text-amber-400">
+          Склад слів змінився — перегенеруйте.
         </p>
       )}
 
-      {grid.length > 0 && (
-        <div>
-          <p className={HINT_TEXT}>
-            Прев&apos;ю сітки ({grid.length}×{grid.length}) — те саме побачить студент
-          </p>
-          <div className="mt-1 overflow-x-auto">
-            <table className="border-collapse font-heading font-semibold text-xs">
-              <tbody>
-                {grid.map((row, ri) => (
-                  <tr key={ri}>
-                    {row.map((cell, ci) => (
-                      <td
-                        key={ci}
-                        className="h-6 w-6 border border-neutral-200 text-center dark:border-neutral-700 dark:text-neutral-300"
-                      >
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
+      {unplaced.length > 0 && (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Не вдалося розмістити: {unplaced.join(", ")} — слово задовге для філворда (максимум 15 літер
+          після вилучення пробілів) або список переповнений.
+        </p>
+      )}
+
+      {blocks.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {blocks.map((b, i) => {
+            const blockWarningsForThis = warnings.filter((w) => "blockIndex" in w && w.blockIndex === i);
+            return (
+              <div key={i} className="rounded-md border border-gray-200 p-2 dark:border-neutral-700">
+                <div className="flex items-center justify-between gap-2">
+                  <p className={HINT_TEXT}>
+                    Блок {i + 1} · {b.wordKeys.length} слів · {b.grid.length}×{b.grid.length}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => regenerateBlock(i)}
+                    className="text-xs text-blue-700 hover:underline dark:text-blue-400"
+                  >
+                    Перегенерувати блок
+                  </button>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(blockWords[i] ?? []).map((w, wi) => (
+                    <span
+                      key={wi}
+                      className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-700"
+                    >
+                      {w.word}
+                    </span>
+                  ))}
+                </div>
+                <GridPreview grid={b.grid} />
+                {blockWarningsForThis.map((w, wi) => (
+                  <p key={wi} className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                    ⚠ {blockWarningText(w)}
+                  </p>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

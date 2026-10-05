@@ -11,6 +11,28 @@
 import type { CrosswordBlock, CrosswordConfig, WordSearchBlock, WordSearchConfig, WordSearchWord } from "./types";
 import { sanitizeWordForGrid } from "./grid-word";
 
+// Ліміти авто-поділу на блоки (split-into-blocks.ts) — одне місце,
+// узгоджене з учителькою:
+// - BLOCK_MAX_COLS=12 — 358px доступної ширини на мобільному / 28px на
+//   клітинку (grid-cell-size.ts); ширина блоку релаксується понад це лише
+//   для слова, яке й саме довше (max(BLOCK_MAX_COLS, найдовше слово
+//   блоку)) — довге слово ніколи не "губиться", сітка просто прокручується
+//   вбік.
+// - BLOCK_MAX_ROWS=16 — висота НЕ релаксується (вертикальний скрол
+//   нормальний, на відміну від горизонтального) — менш критичний ліміт.
+// - BLOCK_MIN_WORDS/BLOCK_MAX_WORDS — бажаний розмір блоку; мінімум не
+//   застосовується, якщо в ЦІЛІЙ вправі менше слів, ніж мінімум (тоді один
+//   блок на все).
+export const BLOCK_MAX_COLS = 12;
+export const BLOCK_MAX_ROWS = 16;
+export const BLOCK_MIN_WORDS = 3;
+export const BLOCK_MAX_WORDS = 8;
+// Кросворд — недетермінований генератор без власного ліміту розміру (на
+// відміну від word_search, де розмір рахується формулою заздалегідь) —
+// кілька спроб на кожен кандидат-набір слів, обирається найкраща з тих, що
+// вклались у ліміти блоку (split-into-blocks.ts).
+export const CROSSWORD_BLOCK_ATTEMPTS = 20;
+
 // Той самий ключ, що вже використовують placements/gradeWordSearch/
 // gradeCrossword (sanitizeWordForGrid+upper) — НЕ сире w.word (легенда
 // лишається оригіналом з апострофом/дефісом/пробілом у config.words).
