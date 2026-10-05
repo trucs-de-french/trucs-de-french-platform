@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Check, Lightbulb } from "lucide-react";
 import type {
   WordSearchPublic,
   WordSearchPublicBlock,
@@ -22,17 +21,8 @@ import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import {
-  LEGEND_TILE_BASE,
-  LEGEND_IMAGE_GRID,
-  LEGEND_PILL,
-  LEGEND_LONG_CARD,
-  LEGEND_BULB_BADGE_MD,
-  LEGEND_BULB_BADGE_SM,
-  LEGEND_BULB_BADGE_AMBER,
-  LEGEND_BULB_BADGE_GREEN,
-  LEGEND_BULB_BADGE_ON_IMAGE,
-} from "./legend-tile-style";
+import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
+import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -55,32 +45,11 @@ function maxCellPx(gridSize: number): number {
   return gridSize <= 10 ? 40 : 36;
 }
 
-// Зелена галочка в куті плитки (текстової чи картинкової) — спільна для
-// обох, absolute всередині відносно позиціонованого батька. ЕТАП H — той
-// самий бейдж MD, що скрізь (картинки/довгі картки/пілюлі), з кільцем
-// ON_IMAGE (бейдж лежить прямо на фото, потрібен контраст від самого фото).
-function FoundBadge() {
-  return (
-    <span
-      className={`absolute right-1.5 top-1.5 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_GREEN} ${LEGEND_BULB_BADGE_ON_IMAGE}`}
-    >
-      <Check size={14} strokeWidth={3} aria-hidden />
-    </span>
-  );
-}
-
-// ЕТАП E, п.2 (розмір/колір уніфіковано ЕТАП H) — лампочка-підказка НАД
-// фотографією картки-картинки (ImageTile): та сама позиція й розмір, що
-// FoundBadge — займають те саме місце, бо мутуально виключні (поки не
-// знайдено — лампочка, після — галочка замінює її в тому самому куті).
-function ImageHintBadge() {
-  return (
-    <span
-      className={`absolute right-1.5 top-1.5 ${LEGEND_BULB_BADGE_MD} ${LEGEND_BULB_BADGE_AMBER} ${LEGEND_BULB_BADGE_ON_IMAGE}`}
-    >
-      <Lightbulb size={15} aria-hidden />
-    </span>
-  );
+// found/hintUsed → стан спільної лампочки (hint-bulb.tsx): знайдено —
+// завжди "done" (галочка), незнайдено — "used" (приглушено, підказку вже
+// брали) чи "available" (ще ні).
+function bulbState(found: boolean, hintUsed: boolean): HintBulbState {
+  return found ? "done" : hintUsed ? "used" : "available";
 }
 
 // Картка-картинка — квадратна (aspect-square), картинка займає ВСЮ плитку
@@ -145,11 +114,18 @@ function ImageTile({
         </div>
       )}
       {/* ЕТАП D/E, п.4b/п.2 — декоративна лампочка (підказка доступна) у
-          круглій підкладці (ImageHintBadge), зникає коли слово знайдено
-          (FoundBadge займає ту саму позицію замість неї) чи коли в слова
-          взагалі немає hintStart. */}
-      {!found && word.hintStart && <ImageHintBadge />}
-      {found && <FoundBadge />}
+          круглій підкладці, зникає коли в слова взагалі немає hintStart і
+          воно ще не знайдене; клік обробляє ВСЯ плитка (onHint на div
+          вище), бейдж лише декоративний (as="span"). */}
+      {(found || word.hintStart) && (
+        <HintBulb
+          size="md"
+          state={bulbState(found, hintUsed)}
+          as="span"
+          overImage
+          className="absolute right-1.5 top-1.5"
+        />
+      )}
       {hintUsed && (
         <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
           з підказкою
@@ -198,16 +174,7 @@ function TextPill({
       }}
       className={`${LEGEND_PILL} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
     >
-      {showIcon &&
-        (found ? (
-          <span className={`${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_GREEN}`}>
-            <Check size={13} strokeWidth={3} aria-hidden />
-          </span>
-        ) : (
-          <span className={`${LEGEND_BULB_BADGE_SM} ${LEGEND_BULB_BADGE_AMBER}`}>
-            <Lightbulb size={13} aria-hidden />
-          </span>
-        ))}
+      {showIcon && <HintBulb size="sm" state={bulbState(found, hintUsed)} as="span" />}
       <span className={`whitespace-normal ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
       {audioUrl && (
         <span onClick={(e) => e.stopPropagation()}>
@@ -244,13 +211,12 @@ function LongCard({
   const hasImage = !!word.imageUrl;
   const showBadge = found || !!word.hintStart;
   const badge = showBadge ? (
-    <span
-      className={`${LEGEND_BULB_BADGE_MD} ${hasImage ? "absolute right-2 top-2" : ""} ${
-        found ? LEGEND_BULB_BADGE_GREEN : LEGEND_BULB_BADGE_AMBER
-      }`}
-    >
-      {found ? <Check size={14} strokeWidth={3} aria-hidden /> : <Lightbulb size={15} aria-hidden />}
-    </span>
+    <HintBulb
+      size="md"
+      state={bulbState(found, hintUsed)}
+      as="span"
+      className={hasImage ? "absolute right-2 top-2" : ""}
+    />
   ) : null;
   return (
     <div

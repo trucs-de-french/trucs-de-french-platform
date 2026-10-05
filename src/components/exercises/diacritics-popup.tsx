@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Lightbulb } from "lucide-react";
 import { STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
 import { Z_MODAL } from "@/lib/z-layers";
+import { HintBulb } from "./hint-bulb";
 
 // Спільна панель символів з діакритикою — раніше жила лише в crossword.tsx,
 // тепер спільна для будь-якого текстового поля студентської сторінки
@@ -25,16 +25,18 @@ export function DiacriticsPopup({
   onPick,
   onHint,
   hintDisabled,
+  hintUsed,
 }: {
   rect: DOMRect;
   onPick: (ch: string) => void;
-  // Опційно — лише fill_blank/table_fill (єдине місце, де підказка
-  // "перша літера" живе саме тут, а не окремою кнопкою біля поля, як в
-  // інших 4 типах): якщо передано, лампочка рендериться ПЕРЕД символами
-  // діакритики. Відсутній пропс — жодних змін для решти викликів
-  // (letter_gaps/crossword/open_answer/essay_check тощо).
+  // Опційно — лише fill_blank (єдине місце, де підказка "перша літера"
+  // живе саме тут, а не окремою кнопкою біля поля, як в інших 5 типах):
+  // якщо передано, лампочка рендериться ПЕРЕД символами діакритики.
+  // Відсутній пропс — жодних змін для решти викликів
+  // (letter_gaps/crossword/open_answer/essay_check/table_fill тощо).
   onHint?: () => void;
   hintDisabled?: boolean;
+  hintUsed?: boolean;
 }) {
   // visualViewport — на мобільному відкрита клавіатура зменшує саме ЙОГО
   // (window.innerHeight/innerWidth лишаються розміром шару layout-вьюпорту,
@@ -67,20 +69,17 @@ export function DiacriticsPopup({
       style={{ top, left, width: POPUP_WIDTH }}
     >
       {onHint && (
-        <button
-          type="button"
-          title="Підказка: відкрити першу літеру"
-          aria-label="Підказка: відкрити першу літеру"
+        <HintBulb
+          size="sm"
+          state={hintUsed ? "used" : "available"}
+          label="Підказка: відкрити першу літеру"
           disabled={hintDisabled}
           // preventDefault — той самий прийом, що діакритик-кнопки нижче:
           // клік не забирає фокус з поля (онBlur не встигає спрацювати
           // раніше onClick).
           onMouseDown={(e) => e.preventDefault()}
           onClick={onHint}
-          className={`flex items-center justify-center rounded border border-blue-300 bg-blue-50 px-2 text-blue-600 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-blue-50 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-950/60`}
-        >
-          <Lightbulb size={16} />
-        </button>
+        />
       )}
       {DIACRITICS.map((ch) => (
         <button

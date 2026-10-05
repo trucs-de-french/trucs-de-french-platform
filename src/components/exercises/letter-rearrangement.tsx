@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Lightbulb } from "lucide-react";
 import { HintExplanation } from "./hint-explanation";
+import { HintBulb } from "./hint-bulb";
 import type {
   LetterRearrangementPublic,
   LetterRearrangementDetail,
@@ -258,16 +258,14 @@ export function LetterRearrangementExercise({
     return (
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
         {!opts.locked && !isDelf && (
-          <button
-            type="button"
-            title="Підказка: поставити наступну літеру на місце"
-            aria-label="Підказка: поставити наступну літеру на місце"
+          <HintBulb
+            size="md"
+            state={hintUsed ? "used" : "available"}
+            label="Підказка: поставити наступну літеру на місце"
             disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
             onClick={() => applyHint(wi)}
-            className="absolute right-1.5 top-1.5 rounded p-0.5 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-          >
-            <Lightbulb size={14} />
-          </button>
+            className="absolute right-1.5 top-1.5"
+          />
         )}
         {hintUsed && (
           <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">

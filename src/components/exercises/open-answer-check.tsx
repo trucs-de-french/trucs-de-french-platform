@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lightbulb } from "lucide-react";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
+import { HintBulb } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -95,15 +95,12 @@ export function OpenAnswerCheckExercise({
                     </span>
                   )}
                   {q.hint && !result && (
-                    <button
-                      type="button"
+                    <HintBulb
+                      size="sm"
+                      state={hintVisible ? "used" : "available"}
                       onClick={() => showHint(q.id)}
-                      aria-label="Підказка"
-                      title="Підказка"
-                      className="ml-1.5 inline-flex rounded p-0.5 align-middle text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                    >
-                      <Lightbulb size={14} />
-                    </button>
+                      className="ml-1.5 align-middle"
+                    />
                   )}
                 </p>
               </div>

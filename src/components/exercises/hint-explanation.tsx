@@ -1,5 +1,5 @@
-import { Lightbulb } from "lucide-react";
 import { HINT_EXPLANATIONS, HINTS_REDUCE_POINTS_SUFFIX } from "@/lib/exercises/hints";
+import { HintBulb } from "./hint-bulb";
 
 // Один рядок під інструкцією вправи, що пояснює механізм підказок — лише
 // там, де підказки реально доступні. hidden — обчислює викликач (DELF,
@@ -22,7 +22,7 @@ export function HintExplanation({
 
   return (
     <p className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-      <Lightbulb size={14} className="shrink-0 text-blue-500" aria-hidden />
+      <HintBulb size="sm" state="available" as="span" />
       {text}
       {hintsReducePoints ? HINTS_REDUCE_POINTS_SUFFIX : ""}
     </p>

@@ -218,6 +218,7 @@ export function FillBlankExercise({
             isDelf || hasWordBank ? undefined : () => applyHint(Number(diacritics.activeKey))
           }
           hintDisabled={hintPending || hintedBlanks.has(Number(diacritics.activeKey))}
+          hintUsed={hintedBlanks.has(Number(diacritics.activeKey))}
         />
       )}
 

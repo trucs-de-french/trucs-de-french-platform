@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { Lightbulb } from "lucide-react";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -10,6 +9,7 @@ import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
+import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -212,16 +212,14 @@ export function TableFillExercise({
             умова рендеру попапу (diacritics.rect && ... && activeKey) також
             гейтила лампочку. */}
         {!locked && !isDelf && (
-          <button
-            type="button"
-            title="Підказка: відкрити першу літеру"
-            aria-label="Підказка: відкрити першу літеру"
+          <HintBulb
+            size="sm"
+            state={hintedCells.has(key) ? "used" : "available"}
+            label="Підказка: відкрити першу літеру"
             disabled={hintedCells.has(key) || hintPending}
             onClick={() => applyHint(rowId, side)}
-            className="shrink-0 rounded p-1 text-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-          >
-            <Lightbulb size={14} />
-          </button>
+            className="shrink-0"
+          />
         )}
         {hintUsed && <span className="shrink-0 text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>}
       </div>
