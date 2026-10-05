@@ -750,9 +750,11 @@ export type WordSearchPublic = {
   instructions?: string;
   subInstructions?: string;
   // LEGACY — рівно те саме, що blocks[0] (words/grid), заповнюється
-  // sanitizeWordSearch для сумісності з наявним студентським компонентом
-  // (word-search.tsx читає ці поля напряму, без поняття блоків, до етапу
-  // 3) — прибрати разом із переходом word-search.tsx на blocks.
+  // sanitizeWordSearch. Етап 3/4: word-search.tsx перейшов на blocks як
+  // основне джерело — ці поля читаються лише В ОДНОМУ місці: власний
+  // фолбек word-search.tsx на випадок blocks:[] (помилка даних), щоб
+  // вправа не впала, а показалась як один блок. Не видаляти, доки цей
+  // фолбек існує.
   words: (WordSearchWord & { hintStart: { row: number; col: number } | null })[];
   grid: string[][];
   // Порожній масив — вправа без жодного блоку (сітку ще не згенеровано,
@@ -791,9 +793,11 @@ export type CrosswordPublicBlock = {
 export type CrosswordPublic = {
   instructions?: string;
   subInstructions?: string;
-  // LEGACY — рівно те саме, що blocks[0], заповнюється sanitizeCrossword
-  // для сумісності з наявним студентським компонентом (crossword.tsx читає
-  // ці поля напряму, до етапу 3) — прибрати разом із переходом на blocks.
+  // LEGACY — рівно те саме, що blocks[0], заповнюється sanitizeCrossword.
+  // Етап 3/4: crossword.tsx перейшов на blocks як основне джерело — ці
+  // поля читаються лише В ОДНОМУ місці: власний фолбек crossword.tsx на
+  // випадок blocks:[] (помилка даних), щоб вправа не впала, а показалась
+  // як один блок. Не видаляти, доки цей фолбек існує.
   gridWidth: number;
   gridHeight: number;
   openCells: boolean[][]; // true — клітинка для вводу, false — заблокована

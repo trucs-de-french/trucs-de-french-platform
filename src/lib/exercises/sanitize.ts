@@ -234,10 +234,10 @@ function buildWordSearchPublicWords(
 // (normalizeWordSearchConfig, grid-blocks.ts): words блоку — лише ті
 // config.words, що потрапили в нього (selectWordsForBlock, за
 // block.wordKeys), grid — та сама, що в блоці. LEGACY top-level
-// words/grid — рівно blocks[0] (для вправи з одним блоком, тобто всіх
-// наявних на момент появи цієї фічі, тотожно попередньому виводу) —
-// студентський компонент (word-search.tsx) і далі читає саме їх, до етапу
-// 3; порожні, якщо blocks: [] (сітку ще не згенеровано).
+// words/grid — рівно blocks[0] — етап 3/4: word-search.tsx вже читає
+// blocks як основне джерело, ці поля лишаються лише для його власного
+// фолбеку на випадок blocks:[] (помилка даних); порожні, якщо blocks: []
+// (сітку ще не згенеровано).
 export function sanitizeWordSearch(rawConfig: WordSearchConfig): WordSearchPublic {
   const config = normalizeWordSearchConfig(rawConfig);
 
@@ -303,8 +303,9 @@ function buildCrosswordPublicBlock(
 // block.gridWidth/gridHeight/placements[].number, той самий сенс, що для
 // одноблочної вправи раніше). LEGACY top-level gridWidth/openCells/... —
 // рівно blocks[0] (вправа з одним блоком, тотожно попередньому виводу) —
-// crossword.tsx і далі читає саме їх, до етапу 3; порожні 0×0/[], якщо
-// blocks: [] (сітку ще не згенеровано).
+// етап 3/4: crossword.tsx вже читає blocks як основне джерело, ці поля
+// лишаються лише для його власного фолбеку на випадок blocks:[] (помилка
+// даних); порожні 0×0/[], якщо blocks: [] (сітку ще не згенеровано).
 export function sanitizeCrossword(rawConfig: CrosswordConfig): CrosswordPublic {
   const config = normalizeCrosswordConfig(rawConfig);
 

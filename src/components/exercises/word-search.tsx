@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Check } from "lucide-react";
-import type { WordSearchPublic, WordSearchDetail, WordSearchAnswer, GradeResult } from "@/lib/exercises/types";
+import type {
+  WordSearchPublic,
+  WordSearchPublicBlock,
+  WordSearchDetail,
+  WordSearchAnswer,
+  GradeResult,
+} from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
@@ -13,18 +20,23 @@ import { CompactAudioButton } from "./compact-audio-button";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { LEGEND_TILE_BASE, LEGEND_TILE_GRID, LEGEND_IMAGE_GRID } from "./legend-tile-style";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { BlockNavigation } from "./block-navigation";
 
 type Cell = { row: number; col: number };
+type WordSearchBlockResult = Extract<GradeResult, { detail: WordSearchDetail }>;
 
 // Максимум клітинки на десктопі — 40px для невеликих сіток (до 10×10, де є
 // запас місця), інакше 36px (WORD_SEARCH_MAX_GRID=15 — найщільніший
 // випадок). MIN_CELL_PX — підлога на вузьких екранах, нижче якої літери вже
 // нечитабельні; після неї сітка вмикає власний internal-скрол
-// (overflow-x-auto на обгортці), а не стискається далі.
+// (overflow-x-auto на обгортці), а не стискається далі. Рахується за
+// розміром САМЕ ЦЬОГО блоку (split-into-blocks.ts: типово ≤12×12, зрідка
+// більше для довгого слова) — не всієї вправи, тож майже завжди в межах
+// 40px-гілки.
 const MIN_CELL_PX = 20;
 function maxCellPx(gridSize: number): number {
   return gridSize <= 10 ? 40 : 36;
@@ -59,7 +71,7 @@ function ImageTile({
   onZoom,
   onHint,
 }: {
-  word: WordSearchPublic["words"][number];
+  word: WordSearchPublicBlock["words"][number];
   found: boolean;
   hintUsed: boolean;
   onZoom: () => void;
@@ -174,22 +186,27 @@ function cellKey(c: Cell): string {
   return `${c.row}:${c.col}`;
 }
 
-export function WordSearchExercise({
+// Один блок — власна сітка, власна легенда, власний стан (виділення/
+// підказки/перевірка) — НІКОЛИ не розмонтовується при перемиканні вкладок
+// (WordSearchExercise ховає неактивні через className "hidden", не
+// умовний рендер) саме для того, щоб цей стан не губився. blockIndex
+// undefined — вправа з ОДНИМ блоком (стара або щойно згенерована): позначка
+// в WordSearchAnswer не надсилається взагалі (байтова відповідність
+// поведінці до появи блоків), кнопка "Перевірити" без варіанту "ще раз".
+function WordSearchBlockView({
   taskId,
-  config,
-  pointsVisible,
-  onResult,
-  hidePoints,
+  block,
+  blockIndex,
+  active,
   isDelf,
+  onResult,
 }: {
   taskId: string;
-  config: WordSearchPublic;
-  pointsVisible: boolean;
-  onResult?: (result: GradeResult) => void;
-  hidePoints?: boolean;
-  // Задача належить DELF-тесту — клік по легенді більше не підсвічує
-  // першу літеру (triggerHint нижче).
+  block: WordSearchPublicBlock;
+  blockIndex?: number;
+  active: boolean;
   isDelf?: boolean;
+  onResult: (result: WordSearchBlockResult) => void;
 }) {
   // Клієнтський збіг за ЛІТЕРАМИ (не координатами — публічна конфігурація
   // взагалі не містить placements) — лише для миттєвого відгуку "знайдено!"
@@ -202,6 +219,7 @@ export function WordSearchExercise({
   const [dragEnd, setDragEnd] = useState<Cell | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollHint = useScrollOverflowHint(gridRef, active);
   // Слова, для яких клікали підказку — надсилається разом із foundWords
   // (WordSearchAnswer.hintedWords), для 50%-балів при hintsReducePoints.
   const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
@@ -216,10 +234,12 @@ export function WordSearchExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as WordSearchDetail | undefined;
   const locked = !!result;
+  const allowRecheck = blockIndex !== undefined;
 
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (result) onResult(result as WordSearchBlockResult);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   function startDrag(cell: Cell) {
     if (locked) return;
@@ -239,13 +259,13 @@ export function WordSearchExercise({
     if (dragStart && dragEnd) {
       const path = buildPath(dragStart, dragEnd);
       if (path.length > 1) {
-        const letters = path.map((c) => config.grid[c.row][c.col]).join("");
+        const letters = path.map((c) => block.grid[c.row][c.col]).join("");
         const reversed = [...letters].reverse().join("");
         // sanitizeWordForGrid — те саме прибирання пробілів/апострофів/
         // дефісів, що й у генераторі сітки/gradeWordSearch: w.word лишається
         // оригіналом ("grand-mère"), а в клітинках сітки таких символів
         // немає взагалі, тож звірка без нормалізації ніколи не збіглась би.
-        const match = config.words.find((w) => {
+        const match = block.words.find((w) => {
           if (foundWords.has(w.word)) return false;
           const sanitized = sanitizeWordForGrid(w.word).toUpperCase();
           return sanitized === letters || sanitized === reversed;
@@ -283,7 +303,7 @@ export function WordSearchExercise({
     return { row: Number(target.dataset.row), col: Number(target.dataset.col) };
   }
 
-  const gridSize = config.grid.length;
+  const gridSize = block.grid.length;
   // Спільна ширина для обгортки сітки й легенди під нею (вирівнювання по
   // сітці замість flex-wrap по центру, п.1).
   const gridMaxWidthPx = gridSize * maxCellPx(gridSize);
@@ -311,7 +331,7 @@ export function WordSearchExercise({
   // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
   // сітки й так видимі студенту, тож розкриття лише СТАРТОВОЇ клітинки —
   // менший компроміс, ніж уже наявне повне розкриття в crossword/letter_gaps.
-  function triggerHint(w: WordSearchPublic["words"][number]) {
+  function triggerHint(w: WordSearchPublicBlock["words"][number]) {
     if (locked || isDelf || isFound(w.word) || !w.hintStart) return;
     setHintedWords((prev) => new Set(prev).add(w.word));
     blinkNonceRef.current += 1;
@@ -321,10 +341,10 @@ export function WordSearchExercise({
   // Картинка ПРІОРИТЕТНІША за переклад (як і в hintKind до попередніх
   // ітерацій цієї легенди) — слово потрапляє або в imageWords, або в
   // textWords, ніколи в обидва.
-  const imageWords = config.words.filter((w) => !!w.imageUrl);
-  const textWords = config.words.filter((w) => !w.imageUrl);
-  const foundCount = config.words.filter((w) => isFound(w.word)).length;
-  const totalWords = config.words.length;
+  const imageWords = block.words.filter((w) => !!w.imageUrl);
+  const textWords = block.words.filter((w) => !w.imageUrl);
+  const foundCount = block.words.filter((w) => isFound(w.word)).length;
+  const totalWords = block.words.length;
   const allFound = totalWords > 0 && foundCount === totalWords;
   const progressPercent = totalWords > 0 ? (foundCount / totalWords) * 100 : 0;
 
@@ -332,44 +352,13 @@ export function WordSearchExercise({
     const answer: WordSearchAnswer = {
       found: [...foundWords.entries()].map(([word, cells]) => ({ word, cells })),
       hintedWords: [...hintedWords],
+      ...(blockIndex !== undefined ? { blockIndex } : {}),
     };
     submit(answer);
   }
 
   return (
-    <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction),
-            }}
-          />
-          {!hidePoints && (pointsVisible || detail) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation
-        type="word_search"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || locked}
-      />
-
+    <div className="flex flex-col gap-4">
       {/* Вертикальна розкладка на всіх ширинах (не flex-wrap "поруч/під") —
           той самий принцип компонування, що crossword.tsx: сітка по центру
           зверху, легенда під нею, відступ між ними — той самий ритм
@@ -383,7 +372,9 @@ export function WordSearchExercise({
             екранах аж до підлоги 20px — після неї вмикається internal-
             скрол (overflow-x-auto тут-таки), сторінка сама НЕ скролиться
             горизонтально. Той самий gridMaxWidthPx нижче задає ширину
-            легенди — вирівняну по лівому/правому краю сітки. */}
+            легенди — вирівняну по лівому/правому краю сітки. touch-none —
+            ЛИШЕ на цьому контейнері (сітка), не на сторінці: жест-скрол
+            вертикально сторінкою лишається вільним поза сіткою. */}
         <div
           ref={gridRef}
           className="w-full touch-none select-none overflow-x-auto shadow-md [container-type:inline-size]"
@@ -403,7 +394,7 @@ export function WordSearchExercise({
               className="grid border-l border-t border-neutral-200 font-heading font-semibold dark:border-neutral-700"
               style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(${MIN_CELL_PX}px, 1fr))` }}
             >
-              {config.grid.flatMap((row, ri) =>
+              {block.grid.flatMap((row, ri) =>
                 row.map((letter, ci) => {
                   const isBlinking = blink?.row === ri && blink?.col === ci;
                   return (
@@ -429,28 +420,8 @@ export function WordSearchExercise({
               )}
             </div>
             {/* Капсули знайдених слів — SVG-оверлей у координатах "1 клітинка
-                = 1 юніт viewBox": не потребує заміру реальних пікселів
-                (ResizeObserver тощо) — viewBox сам масштабується разом із
-                флюїдною сіткою, бо контейнер квадратний (aspect-square на
-                кожній клітинці робить квадратною і всю сітку). Одна пряма
-                лінія на слово (round caps) від центру першої до центру
-                останньої клітинки — round-cap і дає форму заокругленої
-                пілюлі без ручної геометрії прямокутників; той самий відступ
-                від меж клітинки, що в drag-прев'ю (previewKeys/cellClass
-                вище), бо лінія йде рівно по центру клітинок, а не через усю
-                їх ширину. Дві лінії — напівпрозора товща "заливка" знизу
-                (--found-word-fill-opacity, 0.15/0.2 світла/темна — навмисно
-                світліша за рамку, щоб літера читалась крізь неї), тонша,
-                темніша й НЕ повністю непрозора "рамка" зверху (фіксовані
-                0.55, той самий контур в обох темах — контрасту й так
-                достатньо): обидві частково прозорі, щоб літера (вона в DOM
-                РАНІШЕ цього SVG, тобто під ним) лишалась читабельною і в
-                світлій, і в темній темі. Ширина/проміжок між сусідніми
-                словами і "видно обидві"
-                на спільній літері — вже наслідок самої геометрії (round cap
-                не заходить за центр сусідньої клітинки, а лінії двох слів,
-                що перетинаються під кутом, просто накладаються), кольору
-                це не стосується. */}
+                = 1 юніт viewBox" (детальний опис геометрії — без змін від
+                попередньої, одноблочної версії). */}
             <svg
               viewBox={`0 0 ${gridSize} ${gridSize}`}
               className="pointer-events-none absolute inset-0 h-full w-full"
@@ -491,6 +462,8 @@ export function WordSearchExercise({
             </svg>
           </div>
         </div>
+
+        {scrollHint && <p className={HINT_TEXT}>Сітка ширша за екран — прокрутіть убік</p>}
 
         {/* Легенда — та сама ширина/вирівнювання, що сітка (gridMaxWidthPx),
             не flex-wrap по центру. Заголовок+лічильник+прогрес-смужка над
@@ -549,7 +522,32 @@ export function WordSearchExercise({
       </div>
 
       <div className="flex flex-col gap-3">
-        {!result ? (
+        {allowRecheck ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={pending}
+              className={STUDENT_BUTTON_PRIMARY}
+            >
+              {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
+            </button>
+            {result && (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+                {result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+        ) : !result ? (
           <button
             type="button"
             onClick={handleSubmit}
@@ -576,6 +574,143 @@ export function WordSearchExercise({
       </div>
 
       {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+    </div>
+  );
+}
+
+export function WordSearchExercise({
+  taskId,
+  config,
+  pointsVisible,
+  onResult,
+  hidePoints,
+  isDelf,
+}: {
+  taskId: string;
+  config: WordSearchPublic;
+  pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
+  // Задача належить DELF-тесту — клік по легенді більше не підсвічує
+  // першу літеру (triggerHint у WordSearchBlockView).
+  isDelf?: boolean;
+}) {
+  // Фолбек на п.5 ЕТАПУ 3/4 — blocks відсутній/порожній (помилка даних,
+  // нормалізатор на сервері мав би це виключити, але тут про всяк випадок,
+  // без падіння): показуємо вправу як один блок із LEGACY-полів верхнього
+  // рівня (config.words/config.grid — ЩЕ не видалені з Public саме через
+  // цей фолбек, п.7 звіту).
+  const blocks: WordSearchPublicBlock[] =
+    config.blocks.length > 0 ? config.blocks : [{ words: config.words, grid: config.grid }];
+  const blockCount = blocks.length;
+  const useBlocks = blockCount > 1;
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, WordSearchBlockResult>>({});
+
+  // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
+  const [singleResult, setSingleResult] = useState<WordSearchBlockResult | null>(null);
+  useEffect(() => {
+    if (!useBlocks && singleResult) onResult?.(singleResult);
+  }, [useBlocks, singleResult, onResult]);
+
+  // ==== Гілка з кількома блоками ====
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  // Сумарний результат — той самий принцип, що matching.tsx/letter-gaps.tsx:
+  // лише коли ВСІ блоки перевірені хоч раз; повторна перевірка вже
+  // пройденого блоку оновлює лише його запис, useMemo перераховує суму.
+  const aggregateResult: WordSearchBlockResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const words = results.flatMap((r) => r.detail.words);
+    const foundCount = words.filter((w) => w.found).length;
+    return {
+      correct: results.every((r) => r.correct),
+      score: words.length > 0 ? Math.round((foundCount / words.length) * 100) : 0,
+      detail: { words },
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+
+  return (
+    <div className={EXERCISE_STACK}>
+      <div>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction),
+            }}
+          />
+          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult)) && (
+            <span className={SCORE_LABEL_CLASS}>
+              {useBlocks
+                ? aggregateResult
+                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`
+                : singleResult
+                  ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`}
+            </span>
+          )}
+        </div>
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction) && (
+          <div
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction),
+            }}
+          />
+        )}
+      </div>
+
+      <HintExplanation type="word_search" hintsReducePoints={config.hintsReducePoints} hidden={hintExplanationHidden} />
+
+      {!useBlocks ? (
+        <WordSearchBlockView
+          taskId={taskId}
+          block={blocks[0]}
+          active
+          isDelf={isDelf}
+          onResult={setSingleResult}
+        />
+      ) : (
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
+          {/* Усі блоки змонтовані одразу — неактивні лише приховані класом
+              "hidden" (display:none), НЕ умовним рендером: кожен
+              WordSearchBlockView тримає власний стан (foundWords/
+              hintedWords/drag/pending-результат), його не можна втратити
+              при перемиканні вкладок. active — лише цьому, видимому зараз
+              блоку дозволено вимірювати переповнення сітки
+              (useScrollOverflowHint) — немонтований display:none контейнер
+              дав би хибний (нульовий) вимір. */}
+          {blocks.map((b, i) => (
+            <div key={i} className={i === activeBlock ? "" : "hidden"}>
+              <WordSearchBlockView
+                taskId={taskId}
+                block={b}
+                blockIndex={i}
+                active={i === activeBlock}
+                isDelf={isDelf}
+                onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
+              />
+            </div>
+          ))}
+        </BlockNavigation>
+      )}
     </div>
   );
 }

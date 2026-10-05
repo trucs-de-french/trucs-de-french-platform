@@ -15,9 +15,21 @@
 // їм треба.
 export type GridCellSize = { box: string; text: string };
 
+// Етап 3/4 (блоки word_search/crossword, split-into-blocks.ts): gridSize
+// тепер — кількість колонок/рядків ОДНОГО БЛОКУ (BLOCK_MAX_COLS=12,
+// зрідка більше для довгого слова), не всієї вправи — типовий випадок
+// став суттєво меншим (≤8 слів на блок), тож додано тонший поділ на
+// мобільному (≤8 — найбільша клітинка) замість двох старих щаблів.
+// sm: (десктоп) значення НЕ змінені — кожен новий щабель успадковує той
+// самий sm: розмір, що мав відповідний старий діапазон (≤8 і ≤10 разом
+// раніше складали єдиний "≤10" діапазон, звідси однаковий sm:h-10 на
+// обох). 34px/30px — не на стандартній шкалі Tailwind (h-8=32/h-9=36),
+// тому буквальні arbitrary-value класи (не інтерпольовані — Tailwind їх
+// бачить при скануванні вихідного коду).
 export function gridCellSize(gridSize: number): GridCellSize {
-  if (gridSize <= 10) return { box: "h-8 w-8 sm:h-10 sm:w-10", text: "text-sm sm:text-lg" };
-  if (gridSize <= 12) return { box: "h-7 w-7 sm:h-9 sm:w-9", text: "text-xs sm:text-base" };
+  if (gridSize <= 8) return { box: "h-10 w-10 sm:h-10 sm:w-10", text: "text-base sm:text-lg" };
+  if (gridSize <= 10) return { box: "h-[34px] w-[34px] sm:h-10 sm:w-10", text: "text-sm sm:text-lg" };
+  if (gridSize <= 12) return { box: "h-[30px] w-[30px] sm:h-9 sm:w-9", text: "text-xs sm:text-base" };
   // 28px (h-7/w-7) — підлога для зручного тапу пальцем; те саме значення,
   // що вже було лише на sm: (десктоп), тепер і на мобільному (було h-5=20px).
   return { box: "h-7 w-7", text: "text-[10px] sm:text-sm" };

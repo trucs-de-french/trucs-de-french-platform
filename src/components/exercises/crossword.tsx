@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Lightbulb } from "lucide-react";
 import { HintExplanation } from "./hint-explanation";
-import type { CrosswordPublic, CrosswordDetail, CrosswordAnswer, GradeResult } from "@/lib/exercises/types";
+import type {
+  CrosswordPublic,
+  CrosswordPublicBlock,
+  CrosswordDetail,
+  CrosswordAnswer,
+  GradeResult,
+} from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -14,13 +21,15 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { LEGEND_TILE_BASE, LEGEND_TILE_GRID } from "./legend-tile-style";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT } from "@/lib/typography-styles";
+import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { gridCellSize } from "./grid-cell-size";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { BlockNavigation } from "./block-navigation";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
+type CrosswordBlockResult = Extract<GradeResult, { detail: CrosswordDetail }>;
 
 // CrosswordAnswer тепер — формат ЗАПИТУ на сервер ({grid, hintedWords}), не
 // внутрішній стан компонента: сітка студента живе окремо (grid нижче, звичайний
@@ -34,22 +43,24 @@ function cellKey(row: number, col: number): string {
 }
 
 // Позиції клітинок кожної підказки НЕ передаються студенту напряму
-// (CrosswordPublic несе лише форму+номери+довжину) — відновлюються тут:
-// клітинка зі cellNumbers[r][c] === number — старт, далі "довжина" клітинок
-// у напрямку підказки. Той самий принцип, що placementCells у
-// crossword-grid.ts, лише в зворотну сторону (з номера, не з координат).
-function buildClueCells(config: CrosswordPublic): Map<ClueKey, { row: number; col: number }[]> {
+// (CrosswordPublicBlock несе лише форму+номери+довжину) — відновлюються
+// тут: клітинка зі cellNumbers[r][c] === number — старт, далі "довжина"
+// клітинок у напрямку підказки. Нумерація — у межах ЦЬОГО блоку (з 1,
+// generateCrosswordGrid рахує її окремо для кожного блоку) — той самий
+// принцип, що placementCells у crossword-grid.ts, лише в зворотну сторону
+// (з номера, не з координат).
+function buildClueCells(block: CrosswordPublicBlock): Map<ClueKey, { row: number; col: number }[]> {
   const map = new Map<ClueKey, { row: number; col: number }[]>();
-  const clueLists: { direction: Direction; clues: CrosswordPublic["across"] }[] = [
-    { direction: "horizontal", clues: config.across },
-    { direction: "vertical", clues: config.down },
+  const clueLists: { direction: Direction; clues: CrosswordPublicBlock["across"] }[] = [
+    { direction: "horizontal", clues: block.across },
+    { direction: "vertical", clues: block.down },
   ];
   for (const { direction, clues } of clueLists) {
     for (const clue of clues) {
       let start: { row: number; col: number } | null = null;
-      outer: for (let r = 0; r < config.gridHeight; r++) {
-        for (let c = 0; c < config.gridWidth; c++) {
-          if (config.cellNumbers[r][c] === clue.number) {
+      outer: for (let r = 0; r < block.gridHeight; r++) {
+        for (let c = 0; c < block.gridWidth; c++) {
+          if (block.cellNumbers[r][c] === clue.number) {
             start = { row: r, col: c };
             break outer;
           }
@@ -67,25 +78,35 @@ function buildClueCells(config: CrosswordPublic): Map<ClueKey, { row: number; co
   return map;
 }
 
-export function CrosswordExercise({
+// Один блок — власний кросворд, власна 2D-мапа клітинка→літера, власні
+// підказки/активне слово/діакритичний попап — НІКОЛИ не розмонтовується
+// при перемиканні вкладок (CrosswordExercise ховає неактивні через
+// className "hidden"). blockIndex undefined — вправа з ОДНИМ блоком:
+// позначка в CrosswordAnswer не надсилається (байтова відповідність
+// поведінці до появи блоків), кнопка "Перевірити" без варіанту "ще раз".
+// Перша клітинка НЕ фокусується автоматично при показі блоку (жодного
+// autoFocus/scrollIntoView тут) — лише явний клік/тап студента задає
+// activeClue.
+function CrosswordBlockView({
   taskId,
-  config,
-  pointsVisible,
-  onResult,
-  hidePoints,
+  block,
+  blockIndex,
+  active,
   isDelf,
+  onResult,
 }: {
   taskId: string;
-  config: CrosswordPublic;
-  pointsVisible: boolean;
-  onResult?: (result: GradeResult) => void;
-  hidePoints?: boolean;
-  // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
+  block: CrosswordPublicBlock;
+  blockIndex?: number;
+  active: boolean;
   isDelf?: boolean;
+  onResult: (result: CrosswordBlockResult) => void;
 }) {
-  const [grid, setGrid] = useState<string[][]>(() => emptyGrid(config.gridWidth, config.gridHeight));
+  const [grid, setGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollHint = useScrollOverflowHint(scrollRef, active);
   // hintedCells — клітинки, що ЗАРАЗ тримають значення, вписане підказкою
   // (синя підсвітка "відкрито підказкою", пріоритетна над зеленою/червоною);
   // прибирається з клітинки, якщо студент сам перетипував її (updateLetter).
@@ -100,13 +121,14 @@ export function CrosswordExercise({
   // Map зручно перевикористати), і позицію для DiacriticsPopup.
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as CrosswordDetail | undefined;
+  const allowRecheck = blockIndex !== undefined;
 
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (result) onResult(result as CrosswordBlockResult);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
-  const clueCells = useMemo(() => buildClueCells(config), [config]);
+  const clueCells = useMemo(() => buildClueCells(block), [block]);
 
   // Слово(-а), що проходять через кожну клітинку — та сама мапа clueCells,
   // інвертована. Потрібна і для підсвітки активної підказки, і для живого
@@ -121,10 +143,10 @@ export function CrosswordExercise({
       const [direction, numberStr] = key.split("-") as [Direction, string];
       const number = Number(numberStr);
       for (const { row, col } of cells) {
-        const cellKey = `${row},${col}`;
-        const list = map.get(cellKey) ?? [];
+        const ck = `${row},${col}`;
+        const list = map.get(ck) ?? [];
         list.push({ direction, number });
-        map.set(cellKey, list);
+        map.set(ck, list);
       }
     }
     return map;
@@ -160,7 +182,7 @@ export function CrosswordExercise({
         let nextIndex = index + 1;
         while (nextIndex < cells.length) {
           const c = cells[nextIndex];
-          const filledCorrectly = grid[c.row][c.col] !== "" && grid[c.row][c.col] === config.solution[c.row][c.col];
+          const filledCorrectly = grid[c.row][c.col] !== "" && grid[c.row][c.col] === block.solution[c.row][c.col];
           if (!filledCorrectly) break;
           nextIndex++;
         }
@@ -212,14 +234,14 @@ export function CrosswordExercise({
 
   // На рівні ЦІЛОГО слова — лише для закреслення підказки в списку
   // (renderClueColumn), не для кольору клітинок у сітці (те — cellLiveStatus
-  // нижче, посимвольно). Рахується напряму з grid проти config.solution,
+  // нижче, посимвольно). Рахується напряму з grid проти block.solution,
   // без запиту на сервер і незалежно від кнопки "Перевірити"/grade.ts. Той
   // самий предикат "усі клітинки слова правильні" вимикає кнопку підказки
   // (renderClueCard/renderClueFlat) — нема чого відкривати далі.
   function liveWordStatus(direction: Direction, number: number): "correct" | "incorrect" | null {
     if (!isWordFilled(direction, number)) return null;
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    const allCorrect = cells.every((c) => grid[c.row][c.col] === config.solution[c.row][c.col]);
+    const allCorrect = cells.every((c) => grid[c.row][c.col] === block.solution[c.row][c.col]);
     return allCorrect ? "correct" : "incorrect";
   }
 
@@ -229,7 +251,7 @@ export function CrosswordExercise({
   // неактивна, "Якщо всі літери слова вже правильні").
   function nextHintCell(direction: Direction, number: number): { row: number; col: number } | null {
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    return cells.find((c) => grid[c.row][c.col] !== config.solution[c.row][c.col]) ?? null;
+    return cells.find((c) => grid[c.row][c.col] !== block.solution[c.row][c.col]) ?? null;
   }
 
   // Вписує правильну літеру в ПЕРШУ ще не відкриту/не заповнену правильно
@@ -238,7 +260,7 @@ export function CrosswordExercise({
   function applyHint(direction: Direction, number: number) {
     const target = nextHintCell(direction, number);
     if (!target) return;
-    const letter = config.solution[target.row][target.col];
+    const letter = block.solution[target.row][target.col];
     setGrid((prev) =>
       prev.map((r, ri) => (ri === target.row ? r.map((v, ci) => (ci === target.col ? letter : v)) : r))
     );
@@ -259,7 +281,7 @@ export function CrosswordExercise({
     let anyCorrect = false;
     for (const w of words) {
       if (!isWordFilled(w.direction, w.number)) continue;
-      if (grid[row][col] === config.solution[row][col]) {
+      if (grid[row][col] === block.solution[row][col]) {
         anyCorrect = true;
       } else {
         return "incorrect";
@@ -275,6 +297,7 @@ export function CrosswordExercise({
         const [direction, numberStr] = key.split("-") as [Direction, string];
         return { number: Number(numberStr), direction };
       }),
+      ...(blockIndex !== undefined ? { blockIndex } : {}),
     };
     submit(answer);
   }
@@ -282,7 +305,9 @@ export function CrosswordExercise({
   // Max(ширина, висота) — та сама логіка "розмір за стороною", що
   // word_search, лише крос-ворд не завжди квадратний (органічна форма, не
   // попередньо задана сітка) — довша сторона визначає, наскільки тісно.
-  const cellSize = gridCellSize(Math.max(config.gridWidth, config.gridHeight));
+  // Рахується за розміром САМЕ ЦЬОГО блоку (split-into-blocks.ts), не
+  // всієї вправи.
+  const cellSize = gridCellSize(Math.max(block.gridWidth, block.gridHeight));
 
   // Текст підказки — той самий колір/закреслення для ОБОХ форм (картка й
   // плаский текст), лише навколишня розмітка різна.
@@ -298,7 +323,7 @@ export function CrosswordExercise({
   // легенді Філворда (word_search): для підказок із clueStyle === "long"
   // АБО картинкою/аудіо (картинка/аудіо завжди в картці, незалежно від
   // clueStyle — той принцип не змінюється цим перемикачем).
-  function renderClueCard(direction: Direction, clue: CrosswordPublic["across"][number]) {
+  function renderClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     return (
@@ -367,7 +392,7 @@ export function CrosswordExercise({
   // nowrap — якщо трапиться довгий, перенос відбудеться всередині самого
   // тексту, а не між номером і текстом (номер — окремий флекс-елемент на
   // початку рядка, лишається на місці, поки текст переноситься під ним).
-  function renderClueFlat(direction: Direction, clue: CrosswordPublic["across"][number]) {
+  function renderClueFlat(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     return (
@@ -425,9 +450,9 @@ export function CrosswordExercise({
   // натомість короткі підказки йдуть рядком (flex-wrap) під блоком карток:
   // gap-x-8 між підказками по горизонталі, gap-y-2 між рядками при переносі
   // (не gap-y-0.5 впритул, як був проміжний варіант).
-  function renderClueSection(direction: Direction, clues: CrosswordPublic["across"], title: string) {
+  function renderClueSection(direction: Direction, clues: CrosswordPublicBlock["across"], title: string) {
     if (clues.length === 0) return null;
-    const needsCard = (clue: CrosswordPublic["across"][number]) =>
+    const needsCard = (clue: CrosswordPublicBlock["across"][number]) =>
       clue.clueStyle === "long" || !!clue.imageUrl || !!clue.audioUrl;
     const cardClues = clues.filter(needsCard);
     const flatClues = clues.filter((clue) => !needsCard(clue));
@@ -449,44 +474,12 @@ export function CrosswordExercise({
   }
 
   return (
-    <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction),
-            }}
-          />
-          {!hidePoints && (pointsVisible || detail) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation
-        type="crossword"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || !!result}
-      />
-
+    <div className="flex flex-col gap-4">
       {/* Внутрішній відступ вправи (не входить у систему відступів сторінки,
           src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
           сіткою й панеллю підказок під нею. */}
       <div className="flex flex-col items-center gap-3">
-        <div className="max-w-full overflow-x-auto">
+        <div ref={scrollRef} className="max-w-full overflow-x-auto" style={{ touchAction: "pan-x pan-y" }}>
           {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
               (суцільно заповнена сітка, box-shadow там коректно повторює
               прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима
@@ -510,7 +503,7 @@ export function CrosswordExercise({
                 стабільності на випадок майбутньої зміни правила). */}
             <table className="border-collapse font-heading">
               <tbody>
-                {config.openCells.map((row, ri) => (
+                {block.openCells.map((row, ri) => (
                   <tr key={ri}>
                     {row.map((open, ci) => {
                       if (!open) {
@@ -521,7 +514,7 @@ export function CrosswordExercise({
                         // прямокутною, лише "неправильна форма" видима.
                         return <td key={ci} className={`border-none bg-transparent ${cellSize.box}`} />;
                       }
-                      const number = config.cellNumbers[ri][ci];
+                      const number = block.cellNumbers[ri][ci];
                       const status = cellLiveStatus(ri, ci);
                       return (
                         <td
@@ -570,6 +563,8 @@ export function CrosswordExercise({
           </div>
         </div>
 
+        {scrollHint && <p className={HINT_TEXT}>Сітка ширша за екран — прокрутіть убік</p>}
+
         {/* Контекстний попап біля активної клітинки — спільний компонент/хук
             (diacritics-popup.tsx), той самий onMouseDown-preventDefault
             прийом усередині DiacriticsPopup (клік по кнопці не забирає
@@ -587,13 +582,38 @@ export function CrosswordExercise({
         )}
 
         <div className="flex w-full flex-col gap-6">
-          {renderClueSection("horizontal", config.across, "Horizontalement")}
-          {renderClueSection("vertical", config.down, "Verticalement")}
+          {renderClueSection("horizontal", block.across, "Horizontalement")}
+          {renderClueSection("vertical", block.down, "Verticalement")}
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        {!result ? (
+        {allowRecheck ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={pending}
+              className={STUDENT_BUTTON_PRIMARY}
+            >
+              {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
+            </button>
+            {result && (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+                {result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+        ) : !result ? (
           <button
             type="button"
             onClick={handleSubmit}
@@ -620,6 +640,138 @@ export function CrosswordExercise({
       </div>
 
       {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+    </div>
+  );
+}
+
+export function CrosswordExercise({
+  taskId,
+  config,
+  pointsVisible,
+  onResult,
+  hidePoints,
+  isDelf,
+}: {
+  taskId: string;
+  config: CrosswordPublic;
+  pointsVisible: boolean;
+  onResult?: (result: GradeResult) => void;
+  hidePoints?: boolean;
+  // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
+  isDelf?: boolean;
+}) {
+  // Фолбек на п.5 ЕТАПУ 3/4 — blocks відсутній/порожній (помилка даних):
+  // показуємо вправу як один блок із LEGACY-полів верхнього рівня.
+  const blocks: CrosswordPublicBlock[] =
+    config.blocks.length > 0
+      ? config.blocks
+      : [
+          {
+            gridWidth: config.gridWidth,
+            gridHeight: config.gridHeight,
+            openCells: config.openCells,
+            cellNumbers: config.cellNumbers,
+            solution: config.solution,
+            across: config.across,
+            down: config.down,
+          },
+        ];
+  const blockCount = blocks.length;
+  const useBlocks = blockCount > 1;
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, CrosswordBlockResult>>({});
+
+  // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
+  const [singleResult, setSingleResult] = useState<CrosswordBlockResult | null>(null);
+  useEffect(() => {
+    if (!useBlocks && singleResult) onResult?.(singleResult);
+  }, [useBlocks, singleResult, onResult]);
+
+  // ==== Гілка з кількома блоками ====
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  const aggregateResult: CrosswordBlockResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const words = results.flatMap((r) => r.detail.words);
+    const correctCount = words.filter((w) => w.isCorrect).length;
+    return {
+      correct: results.every((r) => r.correct),
+      score: words.length > 0 ? Math.round((correctCount / words.length) * 100) : 0,
+      detail: { words },
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+
+  return (
+    <div className={EXERCISE_STACK}>
+      <div>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <div
+            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction),
+            }}
+          />
+          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult)) && (
+            <span className={SCORE_LABEL_CLASS}>
+              {useBlocks
+                ? aggregateResult
+                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`
+                : singleResult
+                  ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                  : `${config.points} ${pluralizePoints(config.points)}`}
+            </span>
+          )}
+        </div>
+        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction) && (
+          <div
+            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction),
+            }}
+          />
+        )}
+      </div>
+
+      <HintExplanation type="crossword" hintsReducePoints={config.hintsReducePoints} hidden={hintExplanationHidden} />
+
+      {!useBlocks ? (
+        <CrosswordBlockView taskId={taskId} block={blocks[0]} active isDelf={isDelf} onResult={setSingleResult} />
+      ) : (
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
+          {/* Усі блоки змонтовані одразу, неактивні лише приховані класом
+              "hidden" — той самий принцип, що WordSearchExercise: кожен
+              CrosswordBlockView тримає власну сітку/фокус/підказки, їх не
+              можна втратити при перемиканні вкладок. */}
+          {blocks.map((b, i) => (
+            <div key={i} className={i === activeBlock ? "" : "hidden"}>
+              <CrosswordBlockView
+                taskId={taskId}
+                block={b}
+                blockIndex={i}
+                active={i === activeBlock}
+                isDelf={isDelf}
+                onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
+              />
+            </div>
+          ))}
+        </BlockNavigation>
+      )}
     </div>
   );
 }
