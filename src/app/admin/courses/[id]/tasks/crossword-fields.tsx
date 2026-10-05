@@ -5,7 +5,8 @@ import { Trash2, RefreshCw } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord, CrosswordBlock } from "@/lib/exercises/types";
 import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
 import { normalizeCrosswordConfig, selectWordsForBlock, BLOCK_MAX_COLS, BLOCK_MAX_ROWS } from "@/lib/exercises/grid-blocks";
-import { splitWordsIntoBlocks, type BlockWarning } from "@/lib/exercises/split-into-blocks";
+import type { BlockWarning } from "@/lib/exercises/split-into-blocks";
+import { buildCrosswordBlocksConfig } from "@/lib/exercises/build-blocks-config";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -312,7 +313,7 @@ export const CrosswordFields = forwardRef<
 
   function regenerate() {
     const validWords = validWordsList();
-    const result = splitWordsIntoBlocks(validWords, "crossword", { generate: generateCrosswordGrid });
+    const result = buildCrosswordBlocksConfig(validWords);
     setBlocks(result.blocks);
     setBlockWords(result.blocks.map((b) => selectWordsForBlock(validWords, b.wordKeys) as unknown as CrosswordWord[]));
     setWarnings(result.warnings);

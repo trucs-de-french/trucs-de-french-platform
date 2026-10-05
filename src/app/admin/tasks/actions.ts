@@ -15,9 +15,7 @@ import {
   type VocabWordInput,
 } from "@/lib/exercises/task-config-builder";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
-import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
-import { generateCrosswordGrid } from "@/lib/exercises/crossword-grid";
-import { WORD_SEARCH_MAX_WORDS, CROSSWORD_MAX_WORDS, splitIntoChunks } from "@/lib/exercises/grid-limits";
+import { buildWordSearchBlocksConfig, buildCrosswordBlocksConfig, formatBlockWarnings } from "@/lib/exercises/build-blocks-config";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
 import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -265,70 +263,69 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
     redirect(`/admin/courses/${productId}/scenes/${sceneId}`);
   }
 
-  // word_search/crossword — якщо слів більше за максимум, ділимо на кілька
-  // вправ рівномірно (splitIntoChunks, grid-limits.ts: 20 слів -> 2 по 10,
-  // не 12+8) замість однієї, що впиралась би в WORD_SEARCH_MAX_GRID чи
-  // ставала занадто громіздкою. Інші 5 типів завжди 1 вправа на весь набір.
-  const MAX_WORDS_BY_TYPE: Partial<Record<BulkVocabTaskType, number>> = {
-    word_search: WORD_SEARCH_MAX_WORDS,
-    crossword: CROSSWORD_MAX_WORDS,
-  };
+  // Понад це — вправа все одно створюється (слова не обрізаються мовчки),
+  // лише попередження "забагато слів, розгляньте поділ на кілька вправ":
+  // м'яке обмеження, не блокування.
+  const VERY_MANY_WORDS_THRESHOLD = 60;
 
   // Помилки збирання конфігурації (чи не мало б статись — генератори не
   // кидають виняток, лише повертають failedWords/isolatedWords) — усі ДО
   // insert, жодного часткового запису в БД: якщо тут щось впаде, весь
   // .insert() нижче просто не виконається.
   const warnings: string[] = [];
-  const rows = selections.flatMap((sel) => {
-    const maxWords = MAX_WORDS_BY_TYPE[sel.type];
-    const wordChunks = maxWords ? splitIntoChunks(words, maxWords) : [words];
-    const partLabel = (i: number) => (wordChunks.length > 1 ? ` (частина ${i + 1})` : "");
-
-    return wordChunks.map((chunkWords, chunkIndex) => {
-      let config = buildConfigFromVocab(sel.type, chunkWords, {
-        pointsPerElement: sel.points,
-        crosswordClueStyle: sel.crosswordClueStyle,
-        letterHideMode: sel.letterHideMode,
-        stripArticles: sel.stripArticles,
-      });
-
-      // Автоматичні інструкції — той самий дефолт типу, що вчителька
-      // бачила б, обравши цей тип вручну в конструкторі (default-
-      // instructions.ts): buildConfigFromVocab їх не встановлює (звичайний
-      // імпорт через *-fields.tsx лишає це полю форми), а тут форми взагалі
-      // немає, тож підставляємо прямо тут, один раз на кожну створювану
-      // вправу. Усі 7 типів BULK_VOCAB_TASK_TYPES присутні в мапі (жоден не
-      // word_choice, де дефолт залежав би від режиму).
-      const defaults = DEFAULT_INSTRUCTIONS[sel.type];
-      if (defaults) {
-        config = { ...config, instructions: defaults.instruction, subInstructions: defaults.subInstruction };
-      }
-
-      if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
-        config = { ...config, points: sel.points ?? 1 };
-      } else if (sel.type === "word_search") {
-        const { grid, placements, failedWords, sourceWords } = generateWordSearchGrid(
-          config.words as WordSearchWord[]
-        );
-        config = { ...config, grid, placements, gridSourceWords: sourceWords, points: sel.points ?? 1 };
-        if (failedWords.length > 0) {
-          warnings.push(`Філворд${partLabel(chunkIndex)}: не вмістились у сітку — ${failedWords.join(", ")}`);
-        }
-      } else if (sel.type === "crossword") {
-        const { placements, gridWidth, gridHeight, isolatedWords, sourceWords } = generateCrosswordGrid(
-          config.words as CrosswordWord[]
-        );
-        config = { ...config, placements, gridWidth, gridHeight, gridSourceWords: sourceWords, points: sel.points ?? 1 };
-        if (isolatedWords.length > 0) {
-          warnings.push(
-            `Кросворд${partLabel(chunkIndex)}: не перетнулись з іншими словами — ${isolatedWords.join(", ")}`
-          );
-        }
-      }
-
-      const title = generateTaskTitle(sel.type, config) + partLabel(chunkIndex);
-      return { type: sel.type as string, title, config };
+  const rows = selections.map((sel) => {
+    let config = buildConfigFromVocab(sel.type, words, {
+      pointsPerElement: sel.points,
+      crosswordClueStyle: sel.crosswordClueStyle,
+      letterHideMode: sel.letterHideMode,
+      stripArticles: sel.stripArticles,
     });
+
+    // Автоматичні інструкції — той самий дефолт типу, що вчителька
+    // бачила б, обравши цей тип вручну в конструкторі (default-
+    // instructions.ts): buildConfigFromVocab їх не встановлює (звичайний
+    // імпорт через *-fields.tsx лишає це полю форми), а тут форми взагалі
+    // немає, тож підставляємо прямо тут, один раз на кожну створювану
+    // вправу. Усі 7 типів BULK_VOCAB_TASK_TYPES присутні в мапі (жоден не
+    // word_choice, де дефолт залежав би від режиму).
+    const defaults = DEFAULT_INSTRUCTIONS[sel.type];
+    if (defaults) {
+      config = { ...config, instructions: defaults.instruction, subInstructions: defaults.subInstruction };
+    }
+
+    if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
+      config = { ...config, points: sel.points ?? 1 };
+    } else if (sel.type === "word_search") {
+      // Один філворд на весь набір, поділений на блоки (менші сітки) —
+      // та сама функція, що "(Пере)генерувати" в конструкторі
+      // (build-blocks-config.ts), не окремий чанкований набір вправ.
+      const { blocks, warnings: blockWarnings, unplaced } = buildWordSearchBlocksConfig(
+        config.words as WordSearchWord[]
+      );
+      config = { ...config, blocks, points: sel.points ?? 1 };
+      if (unplaced.length > 0) {
+        warnings.push(`Філворд: не вмістились — ${unplaced.join(", ")}`);
+      }
+      formatBlockWarnings(blockWarnings).forEach((w) => warnings.push(`Філворд: ${w}`));
+      if (words.length > VERY_MANY_WORDS_THRESHOLD) {
+        warnings.push(`Філворд: дуже багато слів (${words.length}), розгляньте поділ на кілька вправ`);
+      }
+    } else if (sel.type === "crossword") {
+      const { blocks, warnings: blockWarnings, unplaced } = buildCrosswordBlocksConfig(
+        config.words as CrosswordWord[]
+      );
+      config = { ...config, blocks, points: sel.points ?? 1 };
+      if (unplaced.length > 0) {
+        warnings.push(`Кросворд: не вмістились — ${unplaced.join(", ")}`);
+      }
+      formatBlockWarnings(blockWarnings).forEach((w) => warnings.push(`Кросворд: ${w}`));
+      if (words.length > VERY_MANY_WORDS_THRESHOLD) {
+        warnings.push(`Кросворд: дуже багато слів (${words.length}), розгляньте поділ на кілька вправ`);
+      }
+    }
+
+    const title = generateTaskTitle(sel.type, config);
+    return { type: sel.type as string, title, config };
   });
 
   // Один nextOrderIndex, далі +1 у порядку selections (той самий порядок,

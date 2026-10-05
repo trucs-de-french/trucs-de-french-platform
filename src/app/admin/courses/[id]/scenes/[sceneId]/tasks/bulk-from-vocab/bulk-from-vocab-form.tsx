@@ -12,7 +12,6 @@ import { TASK_TYPE_LABELS, TASK_TYPE_DESCRIPTIONS } from "@/lib/exercises/task-t
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { StripArticlesToggle } from "../../../../tasks/strip-articles-toggle";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
-import { WORD_SEARCH_MAX_WORDS, CROSSWORD_MAX_WORDS, splitIntoChunks } from "@/lib/exercises/grid-limits";
 import type { VocabItem } from "@/lib/vocab";
 import { pluralizeExercisesAccusative } from "@/lib/pluralize-exercises";
 import { BUTTON_PRIMARY_LG } from "@/lib/button-styles";
@@ -118,18 +117,10 @@ export function BulkFromVocabForm({
   // повинен рахуватись у список створення, навіть якщо DOM-чекбокс
   // заблокований, а не знято програмно.
   const selectedTypes = BULK_VOCAB_TASK_TYPES.filter((t) => typeState[t].checked && isTypeActive(t));
-  // word_search/crossword діляться на кілька вправ, коли слів більше за
-  // максимум для типу (той самий MAX_WORDS_BY_TYPE, що в bulkCreateTasksFromVocab) —
-  // кнопка має показувати реальну кількість вправ, що створяться, а не 1 на тип.
-  const MAX_WORDS_BY_TYPE: Partial<Record<BulkVocabTaskType, number>> = {
-    word_search: WORD_SEARCH_MAX_WORDS,
-    crossword: CROSSWORD_MAX_WORDS,
-  };
-  const taskCount = selectedTypes.reduce((sum, type) => {
-    const max = MAX_WORDS_BY_TYPE[type];
-    const parts = max ? splitIntoChunks(selectedWords, max).length : 1;
-    return sum + parts;
-  }, 0);
+  // Рівно одна вправа на обраний тип — для word_search/crossword слова, що
+  // не влізли в один блок, автоматично йдуть у наступний (splitWordsIntoBlocks,
+  // build-blocks-config.ts), а не в окрему вправу.
+  const taskCount = selectedTypes.length;
   const canSubmit = selectedWords.length > 0 && taskCount > 0;
 
   // Форма для server action — та сама розкладка полів, що VocabWordInput/
@@ -279,6 +270,12 @@ export function BulkFromVocabForm({
 
                   {type === "letter_gaps" && (
                     <p className={HINT_TEXT}>Артикль лишається видимим і ніколи не приховується.</p>
+                  )}
+
+                  {isGridType && (
+                    <p className={HINT_TEXT}>
+                      Одна вправа — слова автоматично діляться на блоки (менші сітки, зручні на телефоні).
+                    </p>
                   )}
                 </div>
               )}

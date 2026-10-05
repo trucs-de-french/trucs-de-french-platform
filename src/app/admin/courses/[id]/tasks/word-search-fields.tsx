@@ -5,7 +5,8 @@ import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchBlock } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
 import { normalizeWordSearchConfig, selectWordsForBlock, BLOCK_MAX_COLS, BLOCK_WORD_SEARCH_DENSITY } from "@/lib/exercises/grid-blocks";
-import { splitWordsIntoBlocks, type BlockWarning } from "@/lib/exercises/split-into-blocks";
+import type { BlockWarning } from "@/lib/exercises/split-into-blocks";
+import { buildWordSearchBlocksConfig } from "@/lib/exercises/build-blocks-config";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -249,9 +250,7 @@ export const WordSearchFields = forwardRef<
   // це єдиний важіль впливу вчительки на склад блоків).
   function regenerate() {
     const validWords = words.filter((w) => w.word.trim()).map(stripId);
-    const result = splitWordsIntoBlocks(validWords, "word_search", {
-      generate: (blockWords) => generateWordSearchGrid(blockWords, BLOCK_WORD_SEARCH_DENSITY),
-    });
+    const result = buildWordSearchBlocksConfig(validWords);
     setBlocks(result.blocks);
     setBlockWords(result.blocks.map((b) => selectWordsForBlock(validWords, b.wordKeys)));
     setWarnings(result.warnings);
