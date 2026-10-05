@@ -2,14 +2,10 @@
 // відміну від ANSWER_CARD_BASE у answer-card-style.ts), і фіксована
 // кількість колонок (grid-cols-N), а не auto-fill/minmax: остання неповна
 // колонка не розтягує плитки на всю ширину рядка. Спільне для картинкової
-// плитки філворду (word-search.tsx, ImageTile) і карток-підказок кросворду
-// з clueStyle "long" (crossword.tsx, renderClueCard).
+// плитки філворду (word-search.tsx, ImageTile) і картинкової картки-підказки
+// кросворду (crossword.tsx, ImageClueCard, ЕТАП G).
 export const LEGEND_TILE_BASE =
   "relative rounded-lg border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800";
-
-// Колонки під текстові/змішані плитки кросворду (компактні, ширина під
-// вміст) — crossword не торкались (ЕТАП D/E/F), ці класи там без змін.
-export const LEGEND_TILE_GRID = "grid grid-cols-2 gap-2 md:grid-cols-3";
 
 // Дрібніші колонки під квадратні картинкові плитки word-search ImageTile
 // (ЕТАП D: картинки більші — менше колонок на вузьких/середніх екранах).
@@ -38,3 +34,11 @@ export const LEGEND_LONG_CARD =
 // іконка всередині — на совісті викликача (LongCard, word-search.tsx).
 export const LEGEND_BULB_BADGE =
   "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-white";
+
+// ЕТАП G — сітка картинкових карток-підказок кросворду (ImageClueCard,
+// crossword.tsx): auto-fill з обмеженою шириною колонки (104-128px), а не
+// фіксована кількість колонок (LEGEND_IMAGE_GRID word_search) — кросворд
+// може мати як 2-3, так і 6+ картинкових підказок у секції, auto-fill сам
+// підбирає, скільки влізає в рядок на кожній ширині екрана, без порожніх
+// розтягнутих клітинок.
+export const CROSSWORD_IMAGE_GRID = "grid grid-cols-[repeat(auto-fill,minmax(6.5rem,8rem))] gap-2 justify-start";

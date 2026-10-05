@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Lightbulb } from "lucide-react";
+import { Check, Lightbulb } from "lucide-react";
 import { HintExplanation } from "./hint-explanation";
 import type {
   CrosswordPublic,
@@ -20,7 +20,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
-import { LEGEND_TILE_BASE, LEGEND_TILE_GRID } from "./legend-tile-style";
+import { LEGEND_TILE_BASE, CROSSWORD_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD, LEGEND_BULB_BADGE } from "./legend-tile-style";
 import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -237,8 +237,8 @@ function CrosswordBlockView({
   // (renderClueColumn), не для кольору клітинок у сітці (те — cellLiveStatus
   // нижче, посимвольно). Рахується напряму з grid проти block.solution,
   // без запиту на сервер і незалежно від кнопки "Перевірити"/grade.ts. Той
-  // самий предикат "усі клітинки слова правильні" вимикає кнопку підказки
-  // (renderClueCard/renderClueFlat) — нема чого відкривати далі.
+  // самий предикат "усі клітинки слова правильні" ховає/вимикає кнопку
+  // підказки (ImageClueCard/LongClueCard/CluePill) — нема чого відкривати далі.
   function liveWordStatus(direction: Direction, number: number): "correct" | "incorrect" | null {
     if (!isWordFilled(direction, number)) return null;
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
@@ -320,41 +320,20 @@ function CrosswordBlockView({
         : "";
   }
 
-  // Картка — той самий LEGEND_TILE_BASE (тонка рамка, без тіні), що вже в
-  // легенді Філворда (word_search): для підказок із clueStyle === "long"
-  // АБО картинкою/аудіо (картинка/аудіо завжди в картці, незалежно від
-  // clueStyle — той принцип не змінюється цим перемикачем).
-  // hideText — ЕТАП A/3, clueMode "image": текст підказки прихований, лишається
-  // лише номер (студент і так бачить, якому слову відповідає картка — той
-  // самий номер є на самій сітці) + картинка/аудіо. За замовчуванням false —
-  // рівно попередня розмітка (clue.number ТА clue.clue поруч), байтово.
-  function renderClueCard(
-    direction: Direction,
-    clue: CrosswordPublicBlock["across"][number],
-    hideText = false,
-    // ЕТАП D, п.3 — clueMode "long": текст по лівому краю, картка не
-    // колонкою по центру, а рядком (картинка зліва, текст/аудіо праворуч,
-    // якщо картинка є). Усі інші режими (short/image/легасі) — байтово той
-    // самий центрований вигляд, що був.
-    sentenceMode = false
-  ) {
+  // ЕТАП G, п.1 — картка-картинка кросворду (view "image-card",
+  // resolve-clue-view.ts): компактна (CROSSWORD_IMAGE_GRID, 104-128px
+  // колонка), вертикальна — номер зверху, картинка квадратна під ним, без
+  // тексту підказки (лише номер — студент бачить, якому слову відповідає
+  // картка, той самий номер є і на сітці) — те саме рішення, що ЕТАП A/3
+  // мало через параметр hideText, тепер вбудоване прямо в компонент
+  // (окрема картка-картинка — одна форма, не перемикач). Лампочка-підказка
+  // — кнопка у білому колі в правому верхньому куті САМОЇ КАРТИНКИ (та
+  // сама підкладка, що ImageHintBadge у word-search.tsx), лупа лайтбоксу —
+  // у протилежному (правому нижньому) куті, зменшена.
+  function ImageClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
-    const hasImage = !!clue.imageUrl;
-    // ЕТАП D, п.1 — картинка в картці підказки: 56×56 → 80×80 (72×72 на
-    // телефоні), решта картки без змін. Статичний клас (arbitrary value
-    // 72px — Tailwind не має стандартного кроку між 64 і 80).
-    const image = (
-      <span className="relative shrink-0">
-        <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} />
-        <ImageOrPlaceholder
-          src={clue.imageUrl}
-          alt=""
-          className="h-[72px] w-[72px] rounded object-cover sm:h-20 sm:w-20"
-          useFocus
-        />
-      </span>
-    );
+    const isCorrect = liveStatus === "correct";
     return (
       <div
         key={clue.number}
@@ -367,60 +346,96 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_TILE_BASE} flex cursor-pointer py-2 transition-colors ${
-          sentenceMode
-            ? `pl-3 pr-9 items-start gap-2 text-left ${hasImage ? "flex-row" : "flex-col"}`
-            : "pl-3 pr-7 flex-col items-center gap-1 text-center"
-        } ${
-          liveStatus === "correct"
+        className={`${LEGEND_TILE_BASE} flex w-full cursor-pointer flex-col gap-1 p-2 text-left transition-colors ${
+          isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
               : "hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
-        {!result && !isDelf && (
-          <button
-            type="button"
-            title="Підказка: відкрити наступну літеру"
-            aria-label="Підказка: відкрити наступну літеру"
-            disabled={liveStatus === "correct"}
-            onClick={(e) => {
-              e.stopPropagation();
-              applyHint(direction, clue.number);
-            }}
-            className="absolute right-1 top-1 rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-          >
-            <Lightbulb size={14} />
-          </button>
-        )}
-        {sentenceMode && hasImage && image}
-        <div className={sentenceMode && hasImage ? "flex-1" : "contents"}>
-          <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
-            <span className="font-body font-semibold">{clue.number}.</span>{!hideText && <> {clue.clue}</>}
-          </span>
-          {clue.audioUrl && (
-            <audio controls src={clue.audioUrl} className="mt-1 h-6 w-full" onClick={(e) => e.stopPropagation()} />
+        <span className={`font-body text-sm font-semibold ${clueTextClass(liveStatus)}`}>{clue.number}.</span>
+        <span className="relative aspect-square w-full overflow-hidden rounded-lg">
+          <ImageOrPlaceholder
+            src={clue.imageUrl}
+            alt=""
+            className={`h-full w-full object-cover transition-opacity ${isCorrect ? "opacity-50" : ""}`}
+            useFocus
+          />
+          {isCorrect ? (
+            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 shadow-sm ring-1 ring-black/5 dark:bg-neutral-900/85 dark:ring-white/10">
+              <Check size={16} className="text-green-500" aria-hidden />
+            </span>
+          ) : (
+            !result &&
+            !isDelf && (
+              <button
+                type="button"
+                title="Підказка: відкрити наступну літеру"
+                aria-label="Підказка: відкрити наступну літеру"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyHint(direction, clue.number);
+                }}
+                className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-amber-500 shadow-sm ring-1 ring-black/5 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:bg-neutral-900/85 dark:ring-white/10 dark:hover:bg-amber-950/30"
+              >
+                <Lightbulb size={16} aria-hidden />
+              </button>
+            )
           )}
-        </div>
-        {!(sentenceMode && hasImage) && hasImage && image}
+          <ImageZoomBadge
+            onOpen={() => setLightboxSrc(clue.imageUrl!)}
+            position="bottom-1 right-1"
+            boxClass="h-7 w-7"
+            iconSize={14}
+          />
+        </span>
+        {clue.audioUrl && (
+          <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
+        )}
       </div>
     );
   }
 
-  // Плаский текст (без рамки/тіні) — для короткої підказки (clueStyle
-  // "short" чи не вказано) БЕЗ картинки/аудіо. Рядкова розкладка (flex-wrap
-  // на батьківському контейнері, не вертикальний список) — номер БЕЗ
-  // фіксованої ширини/вирівнювання в колонку (це мало сенс лише у
-  // вертикальному списку, тут кожна підказка самостійний "чіп" у потоці),
-  // впритул до свого тексту (gap-1.5). Номер — whitespace-nowrap (сам по
-  // собі й так короткий, "3." ніколи не переноситься); текст підказки БЕЗ
-  // nowrap — якщо трапиться довгий, перенос відбудеться всередині самого
-  // тексту, а не між номером і текстом (номер — окремий флекс-елемент на
-  // початку рядка, лишається на місці, поки текст переноситься під ним).
-  function renderClueFlat(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
+  // ЕТАП G, п.3 — картка довгої підказки-речення кросворду (view
+  // "text-card") — той самий LEGEND_LONG_CARD/LEGEND_BULB_BADGE вигляд, що
+  // LongCard короткого філворду (word-search.tsx, ЕТАП F), лише дані —
+  // liveStatus/applyHint кросворду, а не found/hintStart слова. Картка сама
+  // (role=button) обирає слово в сітці; лампочка — ОКРЕМА вкладена кнопка
+  // (підказка не мусить збігатись із вибором слова) — div[role=button] із
+  // вкладеним справжнім <button> лишається валідним HTML (на відміну від
+  // button-у-button).
+  function LongClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
+    const isCorrect = liveStatus === "correct";
+    const hasImage = !!clue.imageUrl;
+    const canHint = !result && !isDelf;
+    const badge =
+      isCorrect || canHint ? (
+        <span
+          className={`${LEGEND_BULB_BADGE} ${hasImage ? "absolute right-2 top-2" : ""} ${
+            isCorrect ? "bg-green-500" : "bg-amber-400 dark:bg-amber-500"
+          }`}
+        >
+          {isCorrect ? (
+            <Check size={14} strokeWidth={3} aria-hidden />
+          ) : (
+            <button
+              type="button"
+              title="Підказка: відкрити наступну літеру"
+              aria-label="Підказка: відкрити наступну літеру"
+              onClick={(e) => {
+                e.stopPropagation();
+                applyHint(direction, clue.number);
+              }}
+              className="relative flex h-full w-full items-center justify-center before:absolute before:-inset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+            >
+              <Lightbulb size={15} aria-hidden />
+            </button>
+          )}
+        </span>
+      ) : null;
     return (
       <div
         key={clue.number}
@@ -433,99 +448,114 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`flex cursor-pointer items-baseline gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
-          isActive && !liveStatus ? "bg-blue-50 dark:bg-blue-950/40" : ""
-        } ${clueTextClass(liveStatus)}`}
+        className={`${LEGEND_LONG_CARD} cursor-pointer ${hasImage ? "pr-9" : ""} ${
+          isCorrect
+            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+            : isActive
+              ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+              : "hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+        }`}
       >
-        {/* Клас шрифту прямо на кожному <span> (font-body тут, CLUE_TEXT
-            нижче), НЕ на кореневому елементі: глобальне button{font-family:var(--font-heading)} (globals.css)
-            неlayered CSS — за правилами cascade layers таке правило
-            переважає БУДЬ-яке правило з @layer (а Tailwind-утиліти, разом
-            з .font-body з CLUE_TEXT, лежать саме в @layer utilities),
-            незалежно від специфічності класу. Якби CLUE_TEXT стояв на
-            самому кореневому елементі, він програвав би цьому тег-правилу саме на
-            рівні шарів каскаду (не специфічності) — тому клас на
-            дочірньому <span> (якого тег-правило взагалі не стосується
-            напряму) — єдиний надійний спосіб перебити успадкований Nunito. */}
-        <span className="whitespace-nowrap font-body text-sm font-semibold">{clue.number}.</span>
-        <span className={CLUE_TEXT}>{clue.clue}</span>
-        {!result && !isDelf && (
-          <button
-            type="button"
-            title="Підказка: відкрити наступну літеру"
-            aria-label="Підказка: відкрити наступну літеру"
-            disabled={liveStatus === "correct"}
-            onClick={(e) => {
-              e.stopPropagation();
-              applyHint(direction, clue.number);
-            }}
-            className="relative rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:hover:bg-amber-950/30"
-          >
-            <Lightbulb size={13} />
-          </button>
+        {!hasImage && badge}
+        {hasImage && (
+          <span className="relative shrink-0">
+            <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} iconSize={14} />
+            <ImageOrPlaceholder
+              src={clue.imageUrl}
+              alt=""
+              className="h-[72px] w-[72px] rounded-lg object-cover"
+              useFocus
+            />
+          </span>
         )}
+        <div className="flex-1 pt-[3px]">
+          <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
+            <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
+          </span>
+          {clue.audioUrl && (
+            <audio controls src={clue.audioUrl} className="mt-1 h-6 w-full" onClick={(e) => e.stopPropagation()} />
+          )}
+        </div>
+        {hasImage && badge}
       </div>
     );
   }
 
-  // Картки (LEGEND_TILE_GRID — фіксована кількість рівних колонок, той
-  // самий вигляд, що у Філворді; НЕ auto-fill/minmax — той розтягував
-  // картки неповного рядка на всю ширину) і плаский текст — ДВІ окремі
-  // однорідні ділянки в межах секції, не одна змішана сітка: короткий
-  // текстовий рядок у тій самій клітинці зламав би вирівнювання —
-  // натомість короткі підказки йдуть рядком (flex-wrap) під блоком карток:
-  // gap-x-8 між підказками по горизонталі, gap-y-2 між рядками при переносі
-  // (не gap-y-0.5 впритул, як був проміжний варіант).
+  // ЕТАП G, п.2 — коротка текстова підказка кросворду (view "text-compact")
+  // — пілюля (LEGEND_PILL), як коротка підказка філворду (TextPill,
+  // word-search.tsx, ЕТАП F), але ДВІ сусідні кнопки замість однієї
+  // клікабельної пілюлі: тап по тексту обирає слово в сітці (activeClue),
+  // тап по лампочці — підказка (applyHint) — у філворді ці дії збігаються
+  // (triggerHint), у кросворді ні, тож одна дія на всю пілюлю не підходить.
+  function CluePill(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
+    const liveStatus = liveWordStatus(direction, clue.number);
+    const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
+    const isCorrect = liveStatus === "correct";
+    const canHint = !result && !isDelf;
+    return (
+      <div
+        key={clue.number}
+        className={`${LEGEND_PILL} ${
+          isCorrect ? "opacity-50" : isActive ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40" : ""
+        }`}
+      >
+        {isCorrect ? (
+          <Check size={14} className="shrink-0 text-green-500" aria-hidden />
+        ) : (
+          canHint && (
+            <button
+              type="button"
+              title="Підказка: відкрити наступну літеру"
+              aria-label="Підказка: відкрити наступну літеру"
+              onClick={() => applyHint(direction, clue.number)}
+              className="relative shrink-0 rounded p-0.5 text-amber-500 before:absolute before:-inset-3 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:hover:bg-amber-950/30"
+            >
+              <Lightbulb size={14} aria-hidden />
+            </button>
+          )
+        )}
+        <button
+          type="button"
+          onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
+          className={`flex-1 whitespace-normal text-left ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}
+        >
+          <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
+        </button>
+      </div>
+    );
+  }
+
+  // Секція напрямку ("Horizontalement"/"Verticalement") — вигляд кожної
+  // підказки (image-card/text-card/text-compact) рахує resolveClueView
+  // (resolve-clue-view.ts), ОДНАКОВО для заданого й незаданого block.clueMode
+  // (для незаданого — та сама стара логіка needsCard, лише всередині
+  // resolveClueView, не продубльована тут окремою гілкою — ЕТАП G, п.4).
+  // Три однорідні ділянки одна під одною (не змішана сітка — короткий
+  // текстовий рядок у тій самій клітинці зламав би вирівнювання картинок/
+  // карток): картинки (CROSSWORD_IMAGE_GRID), довгі картки (flex-col),
+  // пілюлі (flex-wrap).
   function renderClueSection(direction: Direction, clues: CrosswordPublicBlock["across"], title: string) {
     if (clues.length === 0) return null;
-
-    // block.clueMode не заданий — ІСНУЮЧА (до ЕТАПУ A) гілка без змін:
-    // clueStyle "long" чи картинка/аудіо самого слова вирішують картка/
-    // плаский рядок, байтово той самий код.
-    if (!block.clueMode) {
-      const needsCard = (clue: CrosswordPublicBlock["across"][number]) =>
-        clue.clueStyle === "long" || !!clue.imageUrl || !!clue.audioUrl;
-      const cardClues = clues.filter(needsCard);
-      const flatClues = clues.filter((clue) => !needsCard(clue));
-      return (
-        <div className="w-full">
-          <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
-          {cardClues.length > 0 && (
-            <div className={LEGEND_TILE_GRID}>
-              {cardClues.map((clue) => renderClueCard(direction, clue))}
-            </div>
-          )}
-          {flatClues.length > 0 && (
-            <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardClues.length > 0 ? "mt-2" : ""}`}>
-              {flatClues.map((clue) => renderClueFlat(direction, clue))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // block.clueMode заданий — переозначає вигляд УСІХ підказок напрямку
-    // (resolveClueView, resolve-clue-view.ts): "long" — картки на всю
-    // ширину рядка (не колонками, як LEGEND_TILE_GRID), "image"/"short" —
-    // той самий LEGEND_TILE_GRID, що й раніше.
-    const mode = block.clueMode;
-    const views = clues.map((clue) => ({ clue, view: resolveClueView(mode, clue) }));
-    const cardViews = views.filter((v) => v.view !== "text-compact");
-    const flatClues = views.filter((v) => v.view === "text-compact").map((v) => v.clue);
-    const cardGridClass = mode === "long" ? "flex flex-col gap-2" : LEGEND_TILE_GRID;
+    const views = clues.map((clue) => ({ clue, view: resolveClueView(block.clueMode, clue) }));
+    const imageViews = views.filter((v) => v.view === "image-card");
+    const longViews = views.filter((v) => v.view === "text-card");
+    const flatViews = views.filter((v) => v.view === "text-compact");
     return (
       <div className="w-full">
         <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
-        {cardViews.length > 0 && (
-          <div className={cardGridClass}>
-            {cardViews.map(({ clue, view }) =>
-              renderClueCard(direction, clue, view === "image-card", mode === "long")
-            )}
+        {imageViews.length > 0 && (
+          <div className={CROSSWORD_IMAGE_GRID}>{imageViews.map(({ clue }) => ImageClueCard(direction, clue))}</div>
+        )}
+        {longViews.length > 0 && (
+          <div className={`flex flex-col gap-2 ${imageViews.length > 0 ? "mt-2" : ""}`}>
+            {longViews.map(({ clue }) => LongClueCard(direction, clue))}
           </div>
         )}
-        {flatClues.length > 0 && (
-          <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardViews.length > 0 ? "mt-2" : ""}`}>
-            {flatClues.map((clue) => renderClueFlat(direction, clue))}
+        {flatViews.length > 0 && (
+          <div
+            className={`flex flex-wrap gap-2 ${imageViews.length > 0 || longViews.length > 0 ? "mt-2" : ""}`}
+          >
+            {flatViews.map(({ clue }) => CluePill(direction, clue))}
           </div>
         )}
       </div>
