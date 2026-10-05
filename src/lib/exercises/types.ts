@@ -227,11 +227,22 @@ export type WordSearchPlacement = {
 // не Set) — grid-blocks.ts (selectWordsForBlock) розбирає їх по порядку
 // появи в config.words, по одному входженню на ключ, тож навіть дублікат
 // коректно дістається рівно одному блоку.
+// title/clueMode — ЕТАП A/3: назва блоку (показується студенту замість
+// "Блок N", BlockNavigation.labels) і режим показу підказок у ЦЬОМУ блоці
+// (переозначає per-слівний clueStyle/наявність картинки на весь блок,
+// resolveClueView, components/exercises/resolve-clue-view.ts) — дані самих
+// слів (config.words) не чіпаються, лише як їх показати в цьому блоці.
+// Обидва опційні: відсутні — блок виглядає й поводиться РІВНО як до
+// ЕТАПУ A (конструктор поки не вміє їх заповнювати — ЕТАП B). title —
+// звичайний текст (до 40 символів після санітизації, sanitize.ts), без
+// жодного HTML.
 export type WordSearchBlock = {
   wordKeys: string[];
   grid: string[][];
   placements: WordSearchPlacement[];
   gridSourceWords?: string[];
+  title?: string;
+  clueMode?: "short" | "long" | "image";
 };
 
 export type WordSearchConfig = {
@@ -314,12 +325,15 @@ export type CrosswordPlacement = {
 // межах блоку (рахується generateCrosswordGrid при генерації САМЕ цього
 // блоку, етап 2) — той самий сенс, що вже є для одноблочної вправи, просто
 // тепер по одному bounding-box+нумерації на блок, а не на всю вправу.
+// title/clueMode — той самий принцип, що WordSearchBlock вище (ЕТАП A/3).
 export type CrosswordBlock = {
   wordKeys: string[];
   placements: CrosswordPlacement[];
   gridWidth: number;
   gridHeight: number;
   gridSourceWords?: string[];
+  title?: string;
+  clueMode?: "short" | "long" | "image";
 };
 
 export type CrosswordConfig = {
@@ -741,9 +755,15 @@ export type WordChoicePublic = {
 // ніж CrosswordPublic.solution (там розкриваються самі значення літер,
 // яких інакше не видно взагалі). null — слово не вмістилось у сітку
 // (failedWords, word-search-grid.ts) — підказка для нього недоступна.
+// title/clueMode — санітизовані копії WordSearchBlock (ЕТАП A/3,
+// sanitize.ts) — title лише текст (до 40 символів, без переносів/керівних
+// символів, обрізане в sanitizeWordSearch), clueMode лише одне з трьох
+// валідних значень, інакше undefined.
 export type WordSearchPublicBlock = {
   words: (WordSearchWord & { hintStart: { row: number; col: number } | null })[];
   grid: string[][];
+  title?: string;
+  clueMode?: "short" | "long" | "image";
 };
 
 export type WordSearchPublic = {
@@ -780,6 +800,7 @@ export type CrosswordCluePublic = {
   imageUrl?: string;
   audioUrl?: string;
 };
+// title/clueMode — той самий принцип, що WordSearchPublicBlock вище.
 export type CrosswordPublicBlock = {
   gridWidth: number;
   gridHeight: number;
@@ -788,6 +809,8 @@ export type CrosswordPublicBlock = {
   solution: string[][];
   across: CrosswordCluePublic[];
   down: CrosswordCluePublic[];
+  title?: string;
+  clueMode?: "short" | "long" | "image";
 };
 
 export type CrosswordPublic = {

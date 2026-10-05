@@ -12,3 +12,8 @@ export const LEGEND_TILE_GRID = "grid grid-cols-2 gap-2 md:grid-cols-3";
 
 // Дрібніші колонки під квадратні картинкові плитки (word-search ImageTile).
 export const LEGEND_IMAGE_GRID = "grid grid-cols-4 gap-2 md:grid-cols-6";
+
+// Одна широка плитка в рядку — clueMode "long" (ЕТАП A/3, resolveClueView):
+// та сама TextTile, лише без обмеження ширини колонкою, щоб речення-
+// підказка не стискалось.
+export const LEGEND_TILE_GRID_WIDE = "grid grid-cols-1 gap-2";

@@ -31,6 +31,7 @@ export function BlockNavigation({
   onChangeBlock,
   isBlockChecked,
   summary,
+  labels,
   children,
 }: {
   blockCount: number;
@@ -38,6 +39,13 @@ export function BlockNavigation({
   onChangeBlock: (index: number) => void;
   isBlockChecked: (index: number) => boolean;
   summary?: BlockNavigationSummary | null;
+  // Назва блоку (ЕТАП A/3, word-search.tsx/crossword.tsx) замість "Блок N"
+  // на вкладці — опційно, елемент без значення (чи весь масив відсутній,
+  // чи порожній рядок/undefined на цій позиції) лишається "Блок N", той
+  // самий текст, що завжди був. truncate+title — довга назва не ламає
+  // ряд вкладок (wrap лишається на батьківському flex-wrap), повний текст
+  // доступний у title-атрибуті/тултипі.
+  labels?: (string | undefined)[];
   children: ReactNode;
 }) {
   return (
@@ -47,17 +55,28 @@ export function BlockNavigation({
           картка, активна — залита brand. */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
-          {Array.from({ length: blockCount }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onChangeBlock(i)}
-              className={i === activeBlock ? STUDENT_BUTTON_SECONDARY_ACTIVE : STUDENT_BUTTON_SECONDARY_IDLE}
-            >
-              Блок {i + 1}
-              {isBlockChecked(i) ? " ✓" : ""}
-            </button>
-          ))}
+          {Array.from({ length: blockCount }, (_, i) => {
+            // customLabel відсутній (ні для цього типу вправи, ні саме на
+            // цій позиції) — рівно ІСНУЮЧА розмітка без жодних додаткових
+            // класів/атрибутів (byte-identical для matching/letter_gaps/
+            // letter_rearrangement/table_fill, які labels не передають
+            // узагалі, і для word_search/crossword без title у блоку).
+            const customLabel = labels?.[i];
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onChangeBlock(i)}
+                title={customLabel || undefined}
+                className={`${customLabel ? "max-w-[10rem] truncate" : ""} ${
+                  i === activeBlock ? STUDENT_BUTTON_SECONDARY_ACTIVE : STUDENT_BUTTON_SECONDARY_IDLE
+                }`}
+              >
+                {customLabel || `Блок ${i + 1}`}
+                {isBlockChecked(i) ? " ✓" : ""}
+              </button>
+            );
+          })}
         </div>
         <span className={SCORE_LABEL_CLASS}>
           Блок {activeBlock + 1} з {blockCount}

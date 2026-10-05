@@ -21,6 +21,7 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { LEGEND_TILE_BASE, LEGEND_TILE_GRID } from "./legend-tile-style";
+import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { gridCellSize } from "./grid-cell-size";
@@ -323,7 +324,15 @@ function CrosswordBlockView({
   // легенді Філворда (word_search): для підказок із clueStyle === "long"
   // АБО картинкою/аудіо (картинка/аудіо завжди в картці, незалежно від
   // clueStyle — той принцип не змінюється цим перемикачем).
-  function renderClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
+  // hideText — ЕТАП A/3, clueMode "image": текст підказки прихований, лишається
+  // лише номер (студент і так бачить, якому слову відповідає картка — той
+  // самий номер є на самій сітці) + картинка/аудіо. За замовчуванням false —
+  // рівно попередня розмітка (clue.number ТА clue.clue поруч), байтово.
+  function renderClueCard(
+    direction: Direction,
+    clue: CrosswordPublicBlock["across"][number],
+    hideText = false
+  ) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     return (
@@ -362,7 +371,7 @@ function CrosswordBlockView({
           </button>
         )}
         <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
-          <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
+          <span className="font-body font-semibold">{clue.number}.</span>{!hideText && <> {clue.clue}</>}
         </span>
         {clue.imageUrl && (
           <span className="relative">
@@ -452,20 +461,51 @@ function CrosswordBlockView({
   // (не gap-y-0.5 впритул, як був проміжний варіант).
   function renderClueSection(direction: Direction, clues: CrosswordPublicBlock["across"], title: string) {
     if (clues.length === 0) return null;
-    const needsCard = (clue: CrosswordPublicBlock["across"][number]) =>
-      clue.clueStyle === "long" || !!clue.imageUrl || !!clue.audioUrl;
-    const cardClues = clues.filter(needsCard);
-    const flatClues = clues.filter((clue) => !needsCard(clue));
+
+    // block.clueMode не заданий — ІСНУЮЧА (до ЕТАПУ A) гілка без змін:
+    // clueStyle "long" чи картинка/аудіо самого слова вирішують картка/
+    // плаский рядок, байтово той самий код.
+    if (!block.clueMode) {
+      const needsCard = (clue: CrosswordPublicBlock["across"][number]) =>
+        clue.clueStyle === "long" || !!clue.imageUrl || !!clue.audioUrl;
+      const cardClues = clues.filter(needsCard);
+      const flatClues = clues.filter((clue) => !needsCard(clue));
+      return (
+        <div className="w-full">
+          <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
+          {cardClues.length > 0 && (
+            <div className={LEGEND_TILE_GRID}>
+              {cardClues.map((clue) => renderClueCard(direction, clue))}
+            </div>
+          )}
+          {flatClues.length > 0 && (
+            <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardClues.length > 0 ? "mt-2" : ""}`}>
+              {flatClues.map((clue) => renderClueFlat(direction, clue))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // block.clueMode заданий — переозначає вигляд УСІХ підказок напрямку
+    // (resolveClueView, resolve-clue-view.ts): "long" — картки на всю
+    // ширину рядка (не колонками, як LEGEND_TILE_GRID), "image"/"short" —
+    // той самий LEGEND_TILE_GRID, що й раніше.
+    const mode = block.clueMode;
+    const views = clues.map((clue) => ({ clue, view: resolveClueView(mode, clue) }));
+    const cardViews = views.filter((v) => v.view !== "text-compact");
+    const flatClues = views.filter((v) => v.view === "text-compact").map((v) => v.clue);
+    const cardGridClass = mode === "long" ? "flex flex-col gap-2" : LEGEND_TILE_GRID;
     return (
       <div className="w-full">
         <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
-        {cardClues.length > 0 && (
-          <div className={LEGEND_TILE_GRID}>
-            {cardClues.map((clue) => renderClueCard(direction, clue))}
+        {cardViews.length > 0 && (
+          <div className={cardGridClass}>
+            {cardViews.map(({ clue, view }) => renderClueCard(direction, clue, view === "image-card"))}
           </div>
         )}
         {flatClues.length > 0 && (
-          <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardClues.length > 0 ? "mt-2" : ""}`}>
+          <div className={`flex flex-wrap gap-x-8 gap-y-2 ${cardViews.length > 0 ? "mt-2" : ""}`}>
             {flatClues.map((clue) => renderClueFlat(direction, clue))}
           </div>
         )}
@@ -753,6 +793,7 @@ export function CrosswordExercise({
           onChangeBlock={setActiveBlock}
           isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
+          labels={blocks.map((b) => b.title)}
         >
           {/* Усі блоки змонтовані одразу, неактивні лише приховані класом
               "hidden" — той самий принцип, що WordSearchExercise: кожен

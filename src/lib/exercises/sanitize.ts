@@ -238,12 +238,35 @@ function buildWordSearchPublicWords(
 // blocks як основне джерело, ці поля лишаються лише для його власного
 // фолбеку на випадок blocks:[] (помилка даних); порожні, якщо blocks: []
 // (сітку ще не згенеровано).
+// Назва блоку (ЕТАП A/3) — лише текст, без HTML (React сам екранує, але й
+// без dangerouslySetInnerHTML тут нема де б йому взятись): керівні символи
+// й переноси рядків (\x00-\x1F, \x7F — включно з \r\n\t) заміняються на
+// пробіл, послідовні пробіли згортаються, обрізається пробілами з краю,
+// обрізається до 40 символів. Порожньо (після очищення) → undefined, не
+// порожній рядок — той самий сенс, що "немає назви", а не "назва з
+// пробілів".
+const BLOCK_TITLE_MAX_LENGTH = 40;
+function sanitizeBlockTitle(title: string | undefined): string | undefined {
+  if (!title) return undefined;
+  const cleaned = title.replace(/[\x00-\x1F\x7F]+/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned ? cleaned.slice(0, BLOCK_TITLE_MAX_LENGTH) : undefined;
+}
+
+// Режим підказок блоку (ЕТАП A/3) — лише одне з трьох валідних значень,
+// будь-що інше (зокрема застаріле/сфальшоване значення в jsonb) →
+// undefined, той самий сенс, що "режим не заданий" (resolveClueView).
+function sanitizeClueMode(mode: unknown): "short" | "long" | "image" | undefined {
+  return mode === "short" || mode === "long" || mode === "image" ? mode : undefined;
+}
+
 export function sanitizeWordSearch(rawConfig: WordSearchConfig): WordSearchPublic {
   const config = normalizeWordSearchConfig(rawConfig);
 
   const blocks: WordSearchPublic["blocks"] = config.blocks.map((block) => ({
     words: buildWordSearchPublicWords(selectWordsForBlock(config.words, block.wordKeys), block.placements),
     grid: block.grid,
+    title: sanitizeBlockTitle(block.title),
+    clueMode: sanitizeClueMode(block.clueMode),
   }));
 
   return {
@@ -270,7 +293,9 @@ export function resolveCrosswordPoints(config: CrosswordConfig): number {
 function buildCrosswordPublicBlock(
   placements: CrosswordConfig["placements"],
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
+  title?: string,
+  clueMode?: unknown
 ): CrosswordPublic["blocks"][number] {
   const list = placements ?? [];
   const byDirection = (direction: "horizontal" | "vertical") =>
@@ -294,6 +319,8 @@ function buildCrosswordPublicBlock(
     solution: buildCrosswordSolution(list, gridWidth, gridHeight),
     across: byDirection("horizontal"),
     down: byDirection("vertical"),
+    title: sanitizeBlockTitle(title),
+    clueMode: sanitizeClueMode(clueMode),
   };
 }
 
@@ -310,7 +337,7 @@ export function sanitizeCrossword(rawConfig: CrosswordConfig): CrosswordPublic {
   const config = normalizeCrosswordConfig(rawConfig);
 
   const blocks: CrosswordPublic["blocks"] = config.blocks.map((block) =>
-    buildCrosswordPublicBlock(block.placements, block.gridWidth, block.gridHeight)
+    buildCrosswordPublicBlock(block.placements, block.gridWidth, block.gridHeight, block.title, block.clueMode)
   );
   const legacy = blocks[0] ?? {
     gridWidth: 0,

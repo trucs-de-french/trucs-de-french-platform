@@ -22,7 +22,8 @@ import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { LEGEND_TILE_BASE, LEGEND_TILE_GRID, LEGEND_IMAGE_GRID } from "./legend-tile-style";
+import { LEGEND_TILE_BASE, LEGEND_TILE_GRID, LEGEND_IMAGE_GRID, LEGEND_TILE_GRID_WIDE } from "./legend-tile-style";
+import { resolveClueView } from "./resolve-clue-view";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { BlockNavigation } from "./block-navigation";
 
@@ -343,6 +344,14 @@ function WordSearchBlockView({
   // textWords, ніколи в обидва.
   const imageWords = block.words.filter((w) => !!w.imageUrl);
   const textWords = block.words.filter((w) => !w.imageUrl);
+  // clueMode заданий (ЕТАП A/3) — переозначає вигляд УСІХ слів блоку
+  // (resolveClueView, resolve-clue-view.ts) замість imageWords/textWords
+  // вище (ті лишаються для гілки без clueMode, нижче в JSX).
+  const clueMode = block.clueMode;
+  const clueViews = clueMode ? block.words.map((w) => ({ w, view: resolveClueView(clueMode, w) })) : [];
+  const imageCardWords = clueViews.filter((v) => v.view === "image-card").map((v) => v.w);
+  const textCardWords = clueViews.filter((v) => v.view === "text-card").map((v) => v.w);
+  const textCompactWords = clueViews.filter((v) => v.view === "text-compact").map((v) => v.w);
   const foundCount = block.words.filter((w) => isFound(w.word)).length;
   const totalWords = block.words.length;
   const allFound = totalWords > 0 && foundCount === totalWords;
@@ -489,33 +498,89 @@ function WordSearchBlockView({
           </div>
 
           <div className="mt-3 flex flex-col gap-2">
-            {imageWords.length > 0 && (
-              <div className={LEGEND_IMAGE_GRID}>
-                {imageWords.map((w) => (
-                  <ImageTile
-                    key={w.word}
-                    word={w}
-                    found={isFound(w.word)}
-                    hintUsed={wordHintUsed(w.word)}
-                    onZoom={() => setLightboxSrc(w.imageUrl!)}
-                    onHint={() => triggerHint(w)}
-                  />
-                ))}
-              </div>
-            )}
-            {textWords.length > 0 && (
-              <div className={LEGEND_TILE_GRID}>
-                {textWords.map((w) => (
-                  <TextTile
-                    key={w.word}
-                    text={w.translation || w.word}
-                    audioUrl={w.audioUrl}
-                    found={isFound(w.word)}
-                    hintUsed={wordHintUsed(w.word)}
-                    onHint={() => triggerHint(w)}
-                  />
-                ))}
-              </div>
+            {!block.clueMode ? (
+              // clueMode не заданий — ІСНУЮЧА (до ЕТАПУ A) гілка без змін:
+              // картинка пріоритетніша за переклад, picked вище в
+              // imageWords/textWords.
+              <>
+                {imageWords.length > 0 && (
+                  <div className={LEGEND_IMAGE_GRID}>
+                    {imageWords.map((w) => (
+                      <ImageTile
+                        key={w.word}
+                        word={w}
+                        found={isFound(w.word)}
+                        hintUsed={wordHintUsed(w.word)}
+                        onZoom={() => setLightboxSrc(w.imageUrl!)}
+                        onHint={() => triggerHint(w)}
+                      />
+                    ))}
+                  </div>
+                )}
+                {textWords.length > 0 && (
+                  <div className={LEGEND_TILE_GRID}>
+                    {textWords.map((w) => (
+                      <TextTile
+                        key={w.word}
+                        text={w.translation || w.word}
+                        audioUrl={w.audioUrl}
+                        found={isFound(w.word)}
+                        hintUsed={wordHintUsed(w.word)}
+                        onHint={() => triggerHint(w)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              // clueMode заданий — переозначає вигляд УСІХ слів блоку
+              // (imageCardWords/textCardWords/textCompactWords, пораховані
+              // вище через resolveClueView), незалежно від власної картинки
+              // слова (крім фолбеку "image" без картинки).
+              <>
+                {imageCardWords.length > 0 && (
+                  <div className={LEGEND_IMAGE_GRID}>
+                    {imageCardWords.map((w) => (
+                      <ImageTile
+                        key={w.word}
+                        word={w}
+                        found={isFound(w.word)}
+                        hintUsed={wordHintUsed(w.word)}
+                        onZoom={() => setLightboxSrc(w.imageUrl!)}
+                        onHint={() => triggerHint(w)}
+                      />
+                    ))}
+                  </div>
+                )}
+                {textCardWords.length > 0 && (
+                  <div className={LEGEND_TILE_GRID_WIDE}>
+                    {textCardWords.map((w) => (
+                      <TextTile
+                        key={w.word}
+                        text={w.translation || w.word}
+                        audioUrl={w.audioUrl}
+                        found={isFound(w.word)}
+                        hintUsed={wordHintUsed(w.word)}
+                        onHint={() => triggerHint(w)}
+                      />
+                    ))}
+                  </div>
+                )}
+                {textCompactWords.length > 0 && (
+                  <div className={LEGEND_TILE_GRID}>
+                    {textCompactWords.map((w) => (
+                      <TextTile
+                        key={w.word}
+                        text={w.translation || w.word}
+                        audioUrl={w.audioUrl}
+                        found={isFound(w.word)}
+                        hintUsed={wordHintUsed(w.word)}
+                        onHint={() => triggerHint(w)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -688,6 +753,7 @@ export function WordSearchExercise({
           onChangeBlock={setActiveBlock}
           isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
+          labels={blocks.map((b) => b.title)}
         >
           {/* Усі блоки змонтовані одразу — неактивні лише приховані класом
               "hidden" (display:none), НЕ умовним рендером: кожен
