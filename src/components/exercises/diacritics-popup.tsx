@@ -109,6 +109,13 @@ export function useDiacriticsPopup<K extends string>() {
   const [activeKey, setActiveKey] = useState<K | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const elements = useRef(new Map<K, FieldElement>());
+  // ЕТАП I (crossword.tsx) — зміна зуму сітки змінює розмір/позицію
+  // клітинки БЕЗ події resize/scroll вікна (саме на них зав'язаний ефект
+  // нижче), тож викликач мусить попросити перерахунок явно. updateRectRef
+  // (не прямий виклик setRect тут) — той самий замикання, що й усередині
+  // ефекту нижче, лишається актуальним між рендерами того самого
+  // activeKey, бо переприсвоюється щоразу, коли ефект нижче перезапускається.
+  const updateRectRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (activeKey === null) return;
@@ -116,6 +123,7 @@ export function useDiacriticsPopup<K extends string>() {
       const el = elements.current.get(activeKey!);
       setRect(el ? el.getBoundingClientRect() : null);
     }
+    updateRectRef.current = updateRect;
     // requestAnimationFrame, не прямий виклик у тілі ефекту — щоб setRect
     // викликався з КОЛБЕКА (react-hooks/set-state-in-effect не дозволяє
     // синхронний setState прямо в тілі ефекту), не одразу при монтуванні.
@@ -159,6 +167,11 @@ export function useDiacriticsPopup<K extends string>() {
     getElement,
     onFocus: (key: K) => setActiveKey(key),
     onBlur: () => setActiveKey(null),
+    // Явний перерахунок rect активного поля — crossword.tsx викликає це
+    // після зміни зуму сітки (клітинка змінила розмір/позицію без жодної
+    // події resize/scroll, на які зав'язаний ефект вище). No-op, якщо
+    // немає активного поля.
+    refresh: () => updateRectRef.current(),
   };
 }
 

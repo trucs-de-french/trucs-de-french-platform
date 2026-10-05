@@ -3,8 +3,11 @@
 import { useEffect, useState, type RefObject } from "react";
 
 // Текст-підказка "сітка ширша за екран — прокрутіть убік" під сіткою
-// word_search/crossword (grid-cell-size.ts поруч задає сам розмір
-// клітинки — тут лише факт переповнення контейнера). Вимір — лише коли
+// word_search/crossword (сам розмір клітинки задає maxCellPx у
+// word-search.tsx чи --cw у globals.css/crossword.tsx — тут лише факт
+// переповнення контейнера). ResizeObserver сам реагує й на зміну зуму
+// кросворда (ЕТАП I) — розмір контейнера змінюється, вимір автоматично
+// оновлюється без жодних додаткових залежностей. Вимір — лише коли
 // блок ВИДИМИЙ (active): прихований через display:none блок (hidden,
 // WordSearchExercise/CrosswordExercise) має clientWidth/scrollWidth === 0,
 // вимір там або хибний, або марний — тож ResizeObserver підключається й
@@ -24,6 +27,15 @@ export function useScrollOverflowHint(ref: RefObject<HTMLElement | null>, active
 
     const observer = new ResizeObserver(measure);
     observer.observe(el);
+    // Контейнер (el) сам має фіксовану ширину (max-w-full) — його ВЛАСНИЙ
+    // розмір не змінюється, коли росте лише ВМІСТ усередині (zoom
+    // кросворда, ЕТАП I: --cw росте, а сам scrollRef — ні). ResizeObserver
+    // на el сам по собі такого не ловить (він реагує на зміну РОЗМІРУ
+    // спостережуваного елемента, не на його overflow), тож додатково
+    // спостерігаємо за першим прямим нащадком (та сама "лише сітка, без
+    // сусідніх елементів" обгортка, що вже є і в word-search.tsx, і в
+    // crossword.tsx) — САМЕ її розмір росте разом зі вмістом.
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
     return () => observer.disconnect();
   }, [ref, active]);
 

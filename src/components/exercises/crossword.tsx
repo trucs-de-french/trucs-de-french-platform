@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { Check, Lightbulb } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { Check, Lightbulb, Minus, Plus } from "lucide-react";
 import { HintExplanation } from "./hint-explanation";
 import type {
   CrosswordPublic,
@@ -34,12 +34,15 @@ import {
 import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { gridCellSize } from "./grid-cell-size";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { BlockNavigation } from "./block-navigation";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
+// ЕТАП I — CSS custom properties (--cols/--zoom) у style= інлайн-об'єкті:
+// React.CSSProperties не має типів для власних змінних, окремий тип
+// додає їх без ослаблення перевірки звичайних (не --*) полів style.
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
 type CrosswordBlockResult = Extract<GradeResult, { detail: CrosswordDetail }>;
 
 // CrosswordAnswer тепер — формат ЗАПИТУ на сервер ({grid, hintedWords}), не
@@ -104,6 +107,8 @@ function CrosswordBlockView({
   blockIndex,
   active,
   isDelf,
+  cols,
+  zoom,
   onResult,
 }: {
   taskId: string;
@@ -111,6 +116,11 @@ function CrosswordBlockView({
   blockIndex?: number;
   active: boolean;
   isDelf?: boolean;
+  // ЕТАП I — спільні для ВСІХ блоків вправи (рахує/тримає CrosswordExercise):
+  // cols — max(gridWidth) по всіх блоках (однакова клітинка незалежно від
+  // того, який блок вужчий), zoom — студентський масштаб 1/1.25/1.5/2.
+  cols: number;
+  zoom: number;
   onResult: (result: CrosswordBlockResult) => void;
 }) {
   const [grid, setGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
@@ -162,6 +172,61 @@ function CrosswordBlockView({
     }
     return map;
   }, [clueCells]);
+
+  // ЕТАП I — при зміні зуму активна клітинка (чи, за її відсутності, центр
+  // видимої частини) лишається в полі зору — лише горизонтальний
+  // container.scrollTo, ніякого scrollIntoView/зсуву вікна сторінки (той
+  // самий урок, що вже був у karaoke.tsx). Ефект без залежностей (запускається
+  // після КОЖНОГО рендеру, не лише при зміні zoom) захоплює поточні метрики
+  // контейнера — саме вони стають "попередніми" на момент НАСТУПНОЇ зміни
+  // zoom, бо ефект нижче (залежний від [zoom]) запускається вже ПІСЛЯ того,
+  // як розмір клітинки оновився в DOM — "поточні" scrollWidth/scrollLeft у
+  // ньому самому вже не ті, що були ДО зміни.
+  const prevMetricsRef = useRef<{ scrollLeft: number; clientWidth: number } | null>(null);
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (container) {
+      prevMetricsRef.current = { scrollLeft: container.scrollLeft, clientWidth: container.clientWidth };
+    }
+  });
+
+  const prevZoomRef = useRef(zoom);
+  useEffect(() => {
+    const prevZoom = prevZoomRef.current;
+    prevZoomRef.current = zoom;
+    if (prevZoom === zoom) return;
+    const container = scrollRef.current;
+    const prevMetrics = prevMetricsRef.current;
+    if (!container || !prevMetrics) return;
+
+    let newScrollLeft: number;
+    const activeCell = activeClue ? (clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [])[0] : null;
+    const activeCellEl = activeCell ? diacritics.getElement(cellKey(activeCell.row, activeCell.col)) : null;
+    if (activeCellEl) {
+      // Позиція активної клітинки в координатах контенту (вже за НОВИМ
+      // розміром — ефект запускається після того, як React застосував нові
+      // стилі) — та сама логіка, що visualViewport-розрахунки в
+      // diacritics-popup.tsx, лише тут потрібен лише X.
+      const containerRect = container.getBoundingClientRect();
+      const cellRect = activeCellEl.getBoundingClientRect();
+      const cellCenterContent = cellRect.left + cellRect.width / 2 - containerRect.left + container.scrollLeft;
+      newScrollLeft = cellCenterContent - container.clientWidth / 2;
+    } else {
+      // Немає активної клітинки — утримуємо той самий ВІДСОТОК ширини
+      // контенту в центрі видимої частини (контент масштабується
+      // рівномірно на ratio = zoom/prevZoom, тож позиція центру теж).
+      const ratio = zoom / prevZoom;
+      newScrollLeft = (prevMetrics.scrollLeft + prevMetrics.clientWidth / 2) * ratio - container.clientWidth / 2;
+    }
+    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+    container.scrollTo({ left: Math.max(0, Math.min(newScrollLeft, maxScrollLeft)) });
+    // Клітинка активного поля (якщо є) змінила позицію/розмір — попап
+    // діакритики (прив'язаний до getBoundingClientRect поля) мусить
+    // перерахувати координати, інакше лишиться прив'язаним до старого
+    // розміру клітинки.
+    diacritics.refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom]);
 
   function updateLetter(row: number, col: number, value: string) {
     const letter = (value.slice(-1) || "").toUpperCase();
@@ -312,13 +377,6 @@ function CrosswordBlockView({
     };
     submit(answer);
   }
-
-  // Max(ширина, висота) — та сама логіка "розмір за стороною", що
-  // word_search, лише крос-ворд не завжди квадратний (органічна форма, не
-  // попередньо задана сітка) — довша сторона визначає, наскільки тісно.
-  // Рахується за розміром САМЕ ЦЬОГО блоку (split-into-blocks.ts), не
-  // всієї вправи.
-  const cellSize = gridCellSize(Math.max(block.gridWidth, block.gridHeight));
 
   // Текст підказки — той самий колір/закреслення для ОБОХ форм (картка й
   // плаский текст), лише навколишня розмітка різна.
@@ -582,7 +640,17 @@ function CrosswordBlockView({
           src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
           сіткою й панеллю підказок під нею. */}
       <div className="flex flex-col items-center gap-3">
-        <div ref={scrollRef} className="max-w-full overflow-x-auto" style={{ touchAction: "pan-x pan-y" }}>
+        {/* ЕТАП I — cw-grid-wrap (globals.css) задає --cw (розмір клітинки,
+            однаковий у ВСІХ блоках вправи) з --cols/--zoom, переданих
+            ЗВЕРХУ (CrosswordExercise) через CSS-змінні в style, не класами:
+            --cols/--zoom — єдині числа на всю вправу, саме --cw усередині
+            клітинок нижче вже "статична" частина (var(...), не
+            інтерпольований рядок). */}
+        <div
+          ref={scrollRef}
+          className="cw-grid-wrap max-w-full overflow-x-auto"
+          style={{ touchAction: "pan-x pan-y", "--cols": cols, "--zoom": zoom } as CSSVarStyle}
+        >
           {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
               (суцільно заповнена сітка, box-shadow там коректно повторює
               прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима
@@ -615,17 +683,27 @@ function CrosswordBlockView({
                         // клітинка й далі займає своє місце в grid-розкладці
                         // (порожній <td>, не display:none) — сітка лишається
                         // прямокутною, лише "неправильна форма" видима.
-                        return <td key={ci} className={`border-none bg-transparent ${cellSize.box}`} />;
+                        return (
+                          <td
+                            key={ci}
+                            className="border-none bg-transparent"
+                            style={{ width: "var(--cw)", height: "var(--cw)" }}
+                          />
+                        );
                       }
                       const number = block.cellNumbers[ri][ci];
                       const status = cellLiveStatus(ri, ci);
                       return (
                         <td
                           key={ci}
-                          className={`relative border border-neutral-300 p-0 dark:border-neutral-700 ${cellSize.box}`}
+                          className="relative border border-neutral-300 p-0 dark:border-neutral-700"
+                          style={{ width: "var(--cw)", height: "var(--cw)" }}
                         >
                           {number !== null && (
-                            <span className="pointer-events-none absolute left-0.5 top-0 text-[8px] leading-none text-neutral-500 dark:text-neutral-400">
+                            <span
+                              className="pointer-events-none absolute left-0.5 top-0 leading-none text-neutral-500 dark:text-neutral-400"
+                              style={{ fontSize: "max(0.5625rem, calc(var(--cw) * 0.28))" }}
+                            >
                               {number}
                             </span>
                           )}
@@ -644,7 +722,8 @@ function CrosswordBlockView({
                             }}
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
-                            className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${cellSize.text} ${
+                            style={{ fontSize: "calc(var(--cw) * 0.5)" }}
+                            className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
                               hintedCells.has(cellKey(ri, ci))
                                 ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
                                 : status === "correct"
@@ -784,6 +863,21 @@ export function CrosswordExercise({
   const [activeBlock, setActiveBlock] = useState(0);
   const [blockResults, setBlockResults] = useState<Record<number, CrosswordBlockResult>>({});
 
+  // ЕТАП I — спільний розмір клітинки для ВСІХ блоків вправи: maxCols =
+  // max(gridWidth) по всіх блоках (висота на розмір НЕ впливає, лише
+  // ширина визначає, скільки клітинок має влізти в один рядок контейнера).
+  // zoom — теж спільний (одна й та сама панель +/− над сіткою, незалежно
+  // від активного блоку) — живе тут, не в CrosswordBlockView, саме щоб
+  // перемикання вкладок блоку не скидало масштаб.
+  // Без useMemo — blocks сам перераховується щорендеру (фолбек-гілка на
+  // п.5 ЕТАПУ 3/4 вище створює новий масив-літерал кожного разу), а
+  // Math.max по кількох блоках надто дешевий, щоб мемоізація була
+  // доцільною.
+  const maxCols = Math.max(...blocks.map((b) => b.gridWidth));
+  const ZOOM_STEPS = [1, 1.25, 1.5, 2] as const;
+  const [zoom, setZoom] = useState<number>(ZOOM_STEPS[0]);
+  const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number]);
+
   // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
   const [singleResult, setSingleResult] = useState<CrosswordBlockResult | null>(null);
   useEffect(() => {
@@ -847,8 +941,55 @@ export function CrosswordExercise({
 
       <HintExplanation type="crossword" hintsReducePoints={config.hintsReducePoints} hidden={hintExplanationHidden} />
 
+      {/* ЕТАП I — панель масштабу сітки, справа, безпосередньо над нею (над
+          BlockNavigation теж — той самий рядок, що й над самотнім блоком,
+          не всередині спільного block-navigation.tsx, щоб не чіпати решту
+          типів вправ, які теж ним користуються). onMouseDown
+          preventDefault на кожній кнопці — клік не забирає фокус з активної
+          клітинки (інакше onBlur устиг би спрацювати раніше onClick, той
+          самий прийом, що вже в DiacriticsPopup). */}
+      <div className="flex items-center justify-end gap-1">
+        <button
+          type="button"
+          aria-label="Зменшити сітку"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setZoom(ZOOM_STEPS[Math.max(0, zoomIndex - 1)])}
+          disabled={zoomIndex <= 0}
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 bg-white text-neutral-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
+        >
+          <Minus size={16} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label="Скинути масштаб"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setZoom(ZOOM_STEPS[0])}
+          className="flex h-10 min-w-[3.5rem] items-center justify-center rounded-md border border-gray-200 bg-white px-2 font-heading text-sm font-medium text-neutral-700 shadow-sm hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
+        >
+          {Math.round(zoom * 100)}%
+        </button>
+        <button
+          type="button"
+          aria-label="Збільшити сітку"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setZoom(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1)])}
+          disabled={zoomIndex >= ZOOM_STEPS.length - 1}
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 bg-white text-neutral-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
+        >
+          <Plus size={16} aria-hidden />
+        </button>
+      </div>
+
       {!useBlocks ? (
-        <CrosswordBlockView taskId={taskId} block={blocks[0]} active isDelf={isDelf} onResult={setSingleResult} />
+        <CrosswordBlockView
+          taskId={taskId}
+          block={blocks[0]}
+          active
+          isDelf={isDelf}
+          cols={maxCols}
+          zoom={zoom}
+          onResult={setSingleResult}
+        />
       ) : (
         <BlockNavigation
           blockCount={blockCount}
@@ -870,6 +1011,8 @@ export function CrosswordExercise({
                 blockIndex={i}
                 active={i === activeBlock}
                 isDelf={isDelf}
+                cols={maxCols}
+                zoom={zoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
               />
             </div>
