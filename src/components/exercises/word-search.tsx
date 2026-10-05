@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Check } from "lucide-react";
+import { Check, Lightbulb } from "lucide-react";
 import type {
   WordSearchPublic,
   WordSearchPublicBlock,
@@ -22,8 +22,17 @@ import { HintExplanation } from "./hint-explanation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { LEGEND_TILE_BASE, LEGEND_TILE_GRID, LEGEND_IMAGE_GRID, LEGEND_TILE_GRID_WIDE } from "./legend-tile-style";
+import {
+  LEGEND_TILE_BASE,
+  LEGEND_IMAGE_GRID,
+  SHORT_CLUE_GRID_S,
+  SHORT_CLUE_GRID_M,
+  SHORT_CLUE_GRID_L,
+  LONG_SENTENCE_GRID_SHORT,
+  LONG_SENTENCE_GRID_LONG,
+} from "./legend-tile-style";
 import { resolveClueView } from "./resolve-clue-view";
+import { groupByShortClueLength, groupBySentenceLength } from "@/lib/exercises/clue-text-groups";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { BlockNavigation } from "./block-navigation";
 
@@ -114,6 +123,12 @@ function ImageTile({
           <CompactAudioButton src={word.audioUrl} />
         </div>
       )}
+      {/* ЕТАП D, п.4b — декоративна лампочка (підказка доступна), зникає
+          коли слово знайдено (FoundBadge займає ту саму позицію замість
+          неї) чи коли в слова взагалі немає hintStart. */}
+      {!found && word.hintStart && (
+        <Lightbulb size={16} className="absolute right-1 top-1 text-amber-500" aria-hidden />
+      )}
       {found && <FoundBadge />}
       {hintUsed && (
         <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
@@ -130,12 +145,14 @@ function ImageTile({
 function TextTile({
   text,
   audioUrl,
+  hintStart,
   found,
   hintUsed,
   onHint,
 }: {
   text: string;
   audioUrl?: string;
+  hintStart?: { row: number; col: number } | null;
   found: boolean;
   hintUsed: boolean;
   onHint: () => void;
@@ -143,7 +160,7 @@ function TextTile({
   return (
     <div
       onClick={onHint}
-      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 text-center transition-opacity ${LEGEND_TILE_BASE} ${
+      className={`flex h-full flex-col items-center justify-center gap-1 px-3 py-2 text-center transition-opacity ${LEGEND_TILE_BASE} ${
         found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
@@ -152,6 +169,68 @@ function TextTile({
         <div onClick={(e) => e.stopPropagation()}>
           <CompactAudioButton src={audioUrl} />
         </div>
+      )}
+      {!found && hintStart && (
+        <Lightbulb size={16} className="absolute right-1 top-1 text-amber-500" aria-hidden />
+      )}
+      {found && <FoundBadge />}
+      {hintUsed && (
+        <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+          з підказкою
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Картка-речення (ЕТАП D, п.3) — довга підказка-речення (clueMode "long"):
+// текст ПО ЛІВОМУ КРАЮ (на відміну від TextTile, центрованої); якщо в слова
+// є картинка — картинка зліва, текст/аудіо праворуч (та сама лампочка й
+// FoundBadge, що в ImageTile/TextTile, у тому самому куті).
+function SentenceTile({
+  word,
+  found,
+  hintUsed,
+  onZoom,
+  onHint,
+}: {
+  word: WordSearchPublicBlock["words"][number];
+  found: boolean;
+  hintUsed: boolean;
+  onZoom: () => void;
+  onHint: () => void;
+}) {
+  const hasImage = !!word.imageUrl;
+  return (
+    <div
+      onClick={onHint}
+      className={`flex h-full items-start gap-3 px-3 py-2 text-left transition-opacity ${LEGEND_TILE_BASE} ${
+        found ? "cursor-default opacity-50" : "cursor-pointer"
+      }`}
+    >
+      {hasImage && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onZoom();
+          }}
+          aria-label="Показати картинку повністю"
+          className="relative shrink-0 cursor-zoom-in"
+        >
+          <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-16 w-16 rounded object-cover" useFocus />
+        </button>
+      )}
+      <div className="flex-1">
+        <span className={`${CLUE_TEXT} ${found ? "line-through" : ""}`}>{word.translation || word.word}</span>
+        {word.audioUrl && (
+          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+            <CompactAudioButton src={word.audioUrl} />
+          </div>
+        )}
+      </div>
+      {!found && word.hintStart && (
+        <Lightbulb size={16} className="absolute right-1 top-1 shrink-0 text-amber-500" aria-hidden />
       )}
       {found && <FoundBadge />}
       {hintUsed && (
@@ -352,6 +431,15 @@ function WordSearchBlockView({
   const imageCardWords = clueViews.filter((v) => v.view === "image-card").map((v) => v.w);
   const textCardWords = clueViews.filter((v) => v.view === "text-card").map((v) => v.w);
   const textCompactWords = clueViews.filter((v) => v.view === "text-compact").map((v) => v.w);
+  // ЕТАП D, п.2 — короткі текстові плитки (TextTile, і default-режим, і
+  // clueMode "short") групуються за довжиною тексту підказки в S/M/L
+  // (clue-text-groups.ts), щоб плитки в одному ряду мали однакову довжину
+  // тексту, а не випадкову мішанину коротких і довгих.
+  const textWordsGrouped = groupByShortClueLength(textWords, (w) => w.translation || w.word);
+  const textCompactWordsGrouped = groupByShortClueLength(textCompactWords, (w) => w.translation || w.word);
+  // ЕТАП D, п.3 — довгі підказки-речення (SentenceTile, clueMode "long")
+  // групуються за довжиною речення в short/long (clue-text-groups.ts).
+  const textCardWordsGrouped = groupBySentenceLength(textCardWords, (w) => w.translation || w.word);
   const foundCount = block.words.filter((w) => isFound(w.word)).length;
   const totalWords = block.words.length;
   const allFound = totalWords > 0 && foundCount === totalWords;
@@ -518,17 +606,29 @@ function WordSearchBlockView({
                   </div>
                 )}
                 {textWords.length > 0 && (
-                  <div className={LEGEND_TILE_GRID}>
-                    {textWords.map((w) => (
-                      <TextTile
-                        key={w.word}
-                        text={w.translation || w.word}
-                        audioUrl={w.audioUrl}
-                        found={isFound(w.word)}
-                        hintUsed={wordHintUsed(w.word)}
-                        onHint={() => triggerHint(w)}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    {(["S", "M", "L"] as const).map((size) =>
+                      textWordsGrouped[size].length > 0 ? (
+                        <div
+                          key={size}
+                          className={
+                            size === "S" ? SHORT_CLUE_GRID_S : size === "M" ? SHORT_CLUE_GRID_M : SHORT_CLUE_GRID_L
+                          }
+                        >
+                          {textWordsGrouped[size].map((w) => (
+                            <TextTile
+                              key={w.word}
+                              text={w.translation || w.word}
+                              audioUrl={w.audioUrl}
+                              hintStart={w.hintStart}
+                              found={isFound(w.word)}
+                              hintUsed={wordHintUsed(w.word)}
+                              onHint={() => triggerHint(w)}
+                            />
+                          ))}
+                        </div>
+                      ) : null
+                    )}
                   </div>
                 )}
               </>
@@ -553,31 +653,49 @@ function WordSearchBlockView({
                   </div>
                 )}
                 {textCardWords.length > 0 && (
-                  <div className={LEGEND_TILE_GRID_WIDE}>
-                    {textCardWords.map((w) => (
-                      <TextTile
-                        key={w.word}
-                        text={w.translation || w.word}
-                        audioUrl={w.audioUrl}
-                        found={isFound(w.word)}
-                        hintUsed={wordHintUsed(w.word)}
-                        onHint={() => triggerHint(w)}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    {(["short", "long"] as const).map((size) =>
+                      textCardWordsGrouped[size].length > 0 ? (
+                        <div key={size} className={size === "short" ? LONG_SENTENCE_GRID_SHORT : LONG_SENTENCE_GRID_LONG}>
+                          {textCardWordsGrouped[size].map((w) => (
+                            <SentenceTile
+                              key={w.word}
+                              word={w}
+                              found={isFound(w.word)}
+                              hintUsed={wordHintUsed(w.word)}
+                              onZoom={() => setLightboxSrc(w.imageUrl!)}
+                              onHint={() => triggerHint(w)}
+                            />
+                          ))}
+                        </div>
+                      ) : null
+                    )}
                   </div>
                 )}
                 {textCompactWords.length > 0 && (
-                  <div className={LEGEND_TILE_GRID}>
-                    {textCompactWords.map((w) => (
-                      <TextTile
-                        key={w.word}
-                        text={w.translation || w.word}
-                        audioUrl={w.audioUrl}
-                        found={isFound(w.word)}
-                        hintUsed={wordHintUsed(w.word)}
-                        onHint={() => triggerHint(w)}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    {(["S", "M", "L"] as const).map((size) =>
+                      textCompactWordsGrouped[size].length > 0 ? (
+                        <div
+                          key={size}
+                          className={
+                            size === "S" ? SHORT_CLUE_GRID_S : size === "M" ? SHORT_CLUE_GRID_M : SHORT_CLUE_GRID_L
+                          }
+                        >
+                          {textCompactWordsGrouped[size].map((w) => (
+                            <TextTile
+                              key={w.word}
+                              text={w.translation || w.word}
+                              audioUrl={w.audioUrl}
+                              hintStart={w.hintStart}
+                              found={isFound(w.word)}
+                              hintUsed={wordHintUsed(w.word)}
+                              onHint={() => triggerHint(w)}
+                            />
+                          ))}
+                        </div>
+                      ) : null
+                    )}
                   </div>
                 )}
               </>

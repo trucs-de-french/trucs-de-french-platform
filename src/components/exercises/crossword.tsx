@@ -331,10 +331,30 @@ function CrosswordBlockView({
   function renderClueCard(
     direction: Direction,
     clue: CrosswordPublicBlock["across"][number],
-    hideText = false
+    hideText = false,
+    // ЕТАП D, п.3 — clueMode "long": текст по лівому краю, картка не
+    // колонкою по центру, а рядком (картинка зліва, текст/аудіо праворуч,
+    // якщо картинка є). Усі інші режими (short/image/легасі) — байтово той
+    // самий центрований вигляд, що був.
+    sentenceMode = false
   ) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
+    const hasImage = !!clue.imageUrl;
+    // ЕТАП D, п.1 — картинка в картці підказки: 56×56 → 80×80 (72×72 на
+    // телефоні), решта картки без змін. Статичний клас (arbitrary value
+    // 72px — Tailwind не має стандартного кроку між 64 і 80).
+    const image = (
+      <span className="relative shrink-0">
+        <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} />
+        <ImageOrPlaceholder
+          src={clue.imageUrl}
+          alt=""
+          className="h-[72px] w-[72px] rounded object-cover sm:h-20 sm:w-20"
+          useFocus
+        />
+      </span>
+    );
     return (
       <div
         key={clue.number}
@@ -347,7 +367,11 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_TILE_BASE} flex cursor-pointer flex-col items-center gap-1 px-3 py-2 text-center transition-colors ${
+        className={`${LEGEND_TILE_BASE} flex cursor-pointer px-3 py-2 transition-colors ${
+          sentenceMode
+            ? `items-start gap-2 text-left ${hasImage ? "flex-row" : "flex-col"}`
+            : "flex-col items-center gap-1 text-center"
+        } ${
           liveStatus === "correct"
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
@@ -370,23 +394,16 @@ function CrosswordBlockView({
             <Lightbulb size={14} />
           </button>
         )}
-        <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
-          <span className="font-body font-semibold">{clue.number}.</span>{!hideText && <> {clue.clue}</>}
-        </span>
-        {clue.imageUrl && (
-          <span className="relative">
-            <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} />
-            <ImageOrPlaceholder
-              src={clue.imageUrl}
-              alt=""
-              className="h-14 w-14 rounded object-cover"
-              useFocus
-            />
+        {sentenceMode && hasImage && image}
+        <div className={sentenceMode && hasImage ? "flex-1" : "contents"}>
+          <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
+            <span className="font-body font-semibold">{clue.number}.</span>{!hideText && <> {clue.clue}</>}
           </span>
-        )}
-        {clue.audioUrl && (
-          <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
-        )}
+          {clue.audioUrl && (
+            <audio controls src={clue.audioUrl} className="mt-1 h-6 w-full" onClick={(e) => e.stopPropagation()} />
+          )}
+        </div>
+        {!(sentenceMode && hasImage) && hasImage && image}
       </div>
     );
   }
@@ -501,7 +518,9 @@ function CrosswordBlockView({
         <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
         {cardViews.length > 0 && (
           <div className={cardGridClass}>
-            {cardViews.map(({ clue, view }) => renderClueCard(direction, clue, view === "image-card"))}
+            {cardViews.map(({ clue, view }) =>
+              renderClueCard(direction, clue, view === "image-card", mode === "long")
+            )}
           </div>
         )}
         {flatClues.length > 0 && (
