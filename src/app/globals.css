@@ -471,27 +471,6 @@ button, input, textarea, select, label, nav, aside {
   list-style-type: decimal;
 }
 
-/* Філворд (word-search.tsx): клік по плитці легенди — перша літера слова в
-   сітці блимає синім (brand) 3 рази за ~1.5с. Скінченний
-   animation-iteration-count (не infinite) — анімація сама зупиняється,
-   ніякого onAnimationEnd/setTimeout на React-стороні не потрібно. Щоб те
-   саме слово можна було "блимнути" ще раз (наприклад, клікнули двічі
-   поспіль) — компонент монтує елемент із новим key при кожному кліку,
-   інакше React не перезапустив би вже завершену CSS-анімацію на тому
-   самому DOM-вузлі. */
-@keyframes hint-blink {
-  0%,
-  100% {
-    background-color: transparent;
-  }
-  50% {
-    background-color: var(--color-brand);
-  }
-}
-.animate-hint-blink {
-  animation: hint-blink 0.5s ease-in-out 3;
-}
-
 /* Капсула знайденого слова у філворді (word-search.tsx) — ЄДИНА зелена для
    ВСІХ знайдених слів (той самий green-600/green-400, що вже скрізь на
    сторінці для "Правильно!" — text-green-600 dark:text-green-400). Пряма

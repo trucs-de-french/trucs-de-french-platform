@@ -37,6 +37,7 @@ import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { BlockNavigation } from "./block-navigation";
+import { hintHighlightCells } from "./word-search-hint-highlight";
 
 type Cell = { row: number; col: number };
 type WordSearchBlockResult = Extract<GradeResult, { detail: WordSearchDetail }>;
@@ -359,13 +360,6 @@ function WordSearchBlockView({
   // Слова, для яких клікали підказку — надсилається разом із foundWords
   // (WordSearchAnswer.hintedWords), для 50%-балів при hintsReducePoints.
   const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
-  // nonce — щоб клік по тій самій плитці вдруге теж перезапускав CSS-
-  // анімацію (React інакше не перемонтував би вже завершений DOM-вузол).
-  // Лічильник у ref (не Date.now() — react-hooks/purity забороняє нечисті
-  // виклики під час рендеру, а ref можна безпечно змінювати в обробнику
-  // подій), просто зростає з кожним кліком підказки.
-  const [blink, setBlink] = useState<{ row: number; col: number; nonce: number } | null>(null);
-  const blinkNonceRef = useRef(0);
 
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as WordSearchDetail | undefined;
@@ -463,15 +457,25 @@ function WordSearchBlockView({
     return detail?.words.find((d) => d.word === word)?.hintUsed ?? false;
   }
 
+  // Похідний набір клітинок для синього маркера підказки (hintHighlightCells,
+  // word-search-hint-highlight.ts) — не окремий стан: перераховується щоразу
+  // з hintedWords і актуального "знайдено" (детальніше — коментар у файлі
+  // функції). foundWordsSet — ті самі слова, що isFound() визнає знайденими
+  // (детальний результат сервера, якщо вже перевірено, інакше клієнтський
+  // foundWords), просто у вигляді Set<string> для чистої функції.
+  const foundWordsSet = new Set(block.words.filter((w) => isFound(w.word)).map((w) => w.word));
+  const hintCells = hintHighlightCells(block.words, hintedWords, foundWordsSet);
+
   // hintStart — координата ПЕРШОЇ літери слова, порахована на сервері один
   // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
   // сітки й так видимі студенту, тож розкриття лише СТАРТОВОЇ клітинки —
   // менший компроміс, ніж уже наявне повне розкриття в crossword/letter_gaps.
   function triggerHint(w: WordSearchPublicBlock["words"][number]) {
-    if (locked || isDelf || isFound(w.word) || !w.hintStart) return;
+    // Повторний тап по вже підказаному (і ще не знайденому) слову — нічого
+    // не робить: без повторного списання балів (hintedWords — Set, і так
+    // ідемпотентний) і без зайвого ререндеру підсвічування.
+    if (locked || isDelf || isFound(w.word) || !w.hintStart || hintedWords.has(w.word)) return;
     setHintedWords((prev) => new Set(prev).add(w.word));
-    blinkNonceRef.current += 1;
-    setBlink({ row: w.hintStart.row, col: w.hintStart.col, nonce: blinkNonceRef.current });
   }
 
   // Картинка ПРІОРИТЕТНІША за переклад (як і в hintKind до попередніх
@@ -546,21 +550,27 @@ function WordSearchBlockView({
             >
               {block.grid.flatMap((row, ri) =>
                 row.map((letter, ci) => {
-                  const isBlinking = blink?.row === ri && blink?.col === ci;
+                  // Статичний синій маркер підказки (hintCells, похідний
+                  // набір — див. word-search-hint-highlight.ts): кільце
+                  // inset, щоб не змінювати розмір клітинки, без анімацій.
+                  // Зникає сам, щойно слово знайдене (клітинка випадає з
+                  // hintCells) — зелена пілюля знайденого слова (SVG нижче)
+                  // і так малюється над сіткою, окремо гасити синій не
+                  // потрібно.
+                  const isHinted = hintCells.has(cellKey({ row: ri, col: ci }));
                   return (
                     <div
-                      // nonce у key — лише для клітинки, що блимає ЗАРАЗ:
-                      // React перемонтовує вузол при повторному кліку на ту
-                      // саму підказку, інакше вже завершена (iteration-count:
-                      // 3, не infinite) CSS-анімація не перезапустилась би на
-                      // тому самому DOM-елементі.
-                      key={isBlinking ? `${ri}:${ci}:${blink.nonce}` : `${ri}:${ci}`}
+                      key={`${ri}:${ci}`}
                       data-row={ri}
                       data-col={ci}
                       onMouseDown={() => startDrag({ row: ri, col: ci })}
                       onMouseEnter={() => moveDrag({ row: ri, col: ci })}
                       onTouchStart={() => startDrag({ row: ri, col: ci })}
-                      className={`flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${isBlinking ? "animate-hint-blink" : ""}`}
+                      className={`flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${
+                        isHinted
+                          ? "bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
+                          : ""
+                      }`}
                       style={{ fontSize: `clamp(10px, ${45 / gridSize}cqi, ${maxCellPx(gridSize) * 0.5}px)` }}
                     >
                       {letter}
