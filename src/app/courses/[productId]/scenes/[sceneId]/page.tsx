@@ -17,7 +17,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
-import { EmbedWithFallback } from "@/components/embed-with-fallback";
+import { EmbedFrame } from "@/components/embed-frame";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
 import type {
@@ -633,7 +633,7 @@ export default async function ScenePage({
               )}
 
               {task.type === "embed" && config.url && (
-                <EmbedWithFallback url={config.url} height={config.height ?? 480} />
+                <EmbedFrame url={config.url} height={config.height ?? 480} />
               )}
             </li>
           );

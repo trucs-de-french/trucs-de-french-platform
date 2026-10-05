@@ -10,7 +10,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
-import { EmbedWithFallback } from "@/components/embed-with-fallback";
+import { EmbedFrame } from "@/components/embed-frame";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
@@ -222,7 +222,7 @@ export function TaskGroupBlock({
       )}
 
       {group.content_type === "embed" && group.media_url && (
-        <EmbedWithFallback url={group.media_url} height={480} />
+        <EmbedFrame url={group.media_url} height={480} />
       )}
     </>
   );

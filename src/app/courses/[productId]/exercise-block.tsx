@@ -5,7 +5,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
-import { EmbedWithFallback } from "@/components/embed-with-fallback";
+import { EmbedFrame } from "@/components/embed-frame";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
@@ -145,7 +145,7 @@ export function ExerciseBlock({
       )}
 
       {task.type === "embed" && config.url && (
-        <EmbedWithFallback url={config.url} height={config.height ?? 480} />
+        <EmbedFrame url={config.url} height={config.height ?? 480} />
       )}
     </>
   );

@@ -5,7 +5,7 @@ import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import type { VocabItem } from "@/lib/vocab";
 import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
-import { EmbedWithFallback } from "@/components/embed-with-fallback";
+import { EmbedFrame } from "@/components/embed-frame";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
@@ -165,7 +165,7 @@ export function SceneContentBlockContent({
       )}
 
       {block.content_type === "embed" && block.media_url && (
-        <EmbedWithFallback url={block.media_url} height={480} />
+        <EmbedFrame url={block.media_url} height={480} />
       )}
     </>
   );

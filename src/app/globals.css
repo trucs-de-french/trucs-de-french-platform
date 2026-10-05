@@ -580,3 +580,64 @@ button, input, textarea, select, label, nav, aside {
   width: 100vw;
   height: 100dvh;
 }
+
+/* embed-frame.tsx — спільна обгортка embed/гра-iframe (Wordwall, власні
+   HTML-ігри тощо) для студентської частини. На відміну від video-frame,
+   базова (десктоп/планшет) висота лишається фіксованою в пікселях —
+   points навмисно саме так були задані раніше (config.height/480px) і це
+   не той випадок, де потрібна пропорція. На телефоні — ОДИН регулятор
+   пропорції, --embed-phone-aspect нижче: підкручується однією цифрою,
+   більше нічого в цьому блоці чіпати не треба. */
+:root {
+  /* Єдиний регулятор висоти рамки embed/гри на телефоні в портреті —
+     підкручується ОДНІЄЮ цифрою тут, більше нічого в цьому блоці чіпати
+     не треба. */
+  --embed-phone-aspect: 4 / 5;
+}
+.embed-frame {
+  position: relative;
+  width: 100%;
+  height: var(--embed-desktop-height, 480px);
+}
+.embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* Портрет телефону (ширина < 768px, той самий злам, що й video-frame--
+   gdrive) — фіксована висота поступається місцем пропорції, інакше вузький
+   екран при height:480px лишається з дуже вузькою й високою рамкою. */
+@media (max-width: 767px) {
+  .embed-frame {
+    height: auto;
+    aspect-ratio: var(--embed-phone-aspect);
+    max-height: 85svh;
+  }
+}
+/* Телефон у landscape (низька висота, не залежить від ширини) — після
+   правила вище за джерельним порядком, щоб перемогти й тоді, коли телефон
+   у landscape ширший за 768px. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .embed-frame {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: 100svh;
+  }
+}
+.embed-frame:fullscreen,
+.embed-frame:-webkit-full-screen,
+.embed-frame--pseudo-fullscreen {
+  aspect-ratio: auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+}
+.embed-frame--pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+}

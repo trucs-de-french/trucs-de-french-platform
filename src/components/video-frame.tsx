@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import { Maximize, X, Play, ExternalLink } from "lucide-react";
 import {
   DRIVE_MOBILE_ASPECT,
@@ -10,6 +10,7 @@ import {
   toGdriveOpenUrl,
 } from "@/lib/video";
 import { Z_MODAL } from "@/lib/z-layers";
+import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 
 // "Телефон" — не будь-який touch (планшети лишаються на вбудованому
 // плеєрі й fullscreen-кнопці, як комп'ютер): дотиковий екран ТА (вузька
@@ -34,13 +35,6 @@ function getIsPhoneSnapshot(): "phone" | "other" {
 function getIsPhoneServerSnapshot(): "unknown" {
   return "unknown";
 }
-
-// "На весь екран" для iframe-режиму (requestFullscreen на обгортці) —
-// спільний стиль, і для звичайної кнопки, і для поster-режиму нижче (той
-// самий "у дусі STUDENT_BUTTON_SECONDARY", лише з висотою зони дотику
-// ≥44px, якої в самій константі (button-styles.ts) замало).
-const SECONDARY_BUTTON_CLASS =
-  "inline-flex min-h-11 items-center gap-1.5 self-end rounded border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70";
 
 // Постер замість вбудованого плеєра Drive на телефоні (GDRIVE_TOUCH_MODE
 // === "poster", video.ts) — плеєр Drive на телефонах виявився ненадійним
@@ -87,7 +81,7 @@ function GdrivePoster({ fileId }: { fileId: string }) {
           <span className="text-xs text-white/90">Відео відкриється в Google Drive</span>
         </a>
       </div>
-      <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className={SECONDARY_BUTTON_CLASS}>
+      <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className={FULLSCREEN_BUTTON_CLASS}>
         <ExternalLink size={16} />
         На весь екран
       </a>
@@ -108,9 +102,8 @@ export function VideoFrame({
   title: string;
   provider: "youtube" | "gdrive";
 }) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: handleToggle, exitPseudoFullscreen } =
+    useFullscreenWrapper();
   // "unknown" на сервері й на першому клієнтському рендері (гідратація без
   // розбіжності) — лише gdrive реально дивиться на це значення нижче;
   // youtube рендериться як завжди, незалежно від нього.
@@ -123,106 +116,6 @@ export function VideoFrame({
   // планшет і далі отримує звичну кнопку.
   const hideFullscreenButtonForGdrivePhone =
     provider === "gdrive" && isPhone && !SHOW_OWN_FULLSCREEN_BUTTON_FOR_GDRIVE_MOBILE;
-  // Попереднє значення body.style.overflow — повертаємо ТОЧНО його при
-  // виході з псевдо-режиму (не просто ""), на випадок якщо щось інше на
-  // сторінці вже його виставляло.
-  const previousBodyOverflowRef = useRef("");
-  const isPseudoFullscreenRef = useRef(false);
-
-  useEffect(() => {
-    isPseudoFullscreenRef.current = isPseudoFullscreen;
-  }, [isPseudoFullscreen]);
-
-  // Синхронізація зі справжнім Fullscreen API — у т.ч. коли студент вийшов
-  // системним жестом/кнопкою "назад", а не нашою кнопкою.
-  //
-  // БЕЗ orientation.lock/unlock (були тут раніше) — примусовий поворот
-  // екрана ОДРАЗУ після fullscreenchange збігався за часом із розтягуванням
-  // обгортки під нові розміри; на Android (Samsung Chrome) Drive-плеєр
-  // усередині iframe встигав намалювати внутрішній макет під СТАРІ
-  // (портретні) розміри, тоді отримував нові — і лишав застарілий шар
-  // керування поруч із новим (фото користувача: два таймери, обрізаний
-  // низ). Студент сам повертає телефон — на звичайному фото/відео-сайті
-  // так само.
-  useEffect(() => {
-    function onFullscreenChange() {
-      const fsEl = document.fullscreenElement ?? (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement;
-      setIsFullscreen(fsEl === wrapperRef.current);
-    }
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-    };
-  }, []);
-
-  // Esc для псевдо-режиму — справжній Fullscreen API сам обробляє Esc
-  // (fullscreenchange вище те підхопить), це лише для ручного фолбеку.
-  useEffect(() => {
-    if (!isPseudoFullscreen) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") exitPseudoFullscreen();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isPseudoFullscreen]);
-
-  // Розмонтування посеред псевдо-режиму (навігація студента геть зі
-  // сторінки) — повернути прокрутку сторінки, інакше вона лишиться
-  // заблокованою на НАСТУПНІЙ сторінці.
-  useEffect(() => {
-    return () => {
-      if (isPseudoFullscreenRef.current) {
-        document.body.style.overflow = previousBodyOverflowRef.current;
-      }
-    };
-  }, []);
-
-  function enterPseudoFullscreen() {
-    previousBodyOverflowRef.current = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    setIsPseudoFullscreen(true);
-  }
-
-  function exitPseudoFullscreen() {
-    document.body.style.overflow = previousBodyOverflowRef.current;
-    setIsPseudoFullscreen(false);
-  }
-
-  async function handleToggle() {
-    if (isFullscreen) {
-      await (document.exitFullscreen?.() ??
-        (document as Document & { webkitExitFullscreen?: () => Promise<void> }).webkitExitFullscreen?.());
-      return;
-    }
-    if (isPseudoFullscreen) {
-      exitPseudoFullscreen();
-      return;
-    }
-
-    const el = wrapperRef.current;
-    const elWithWebkit = el as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
-    const request = el?.requestFullscreen?.bind(el) ?? elWithWebkit?.webkitRequestFullscreen?.bind(elWithWebkit);
-    if (request) {
-      try {
-        // navigationUI: "hide" — просимо браузер не показувати власну
-        // підказку "Esc, щоб вийти" над нашим iframe; не всі браузери
-        // приймають опції (TypeError синхронно) — тоді пробуємо звичний
-        // виклик нижче, без опцій.
-        try {
-          await request({ navigationUI: "hide" });
-        } catch {
-          await request();
-        }
-        return; // fullscreenchange-слухач вище сам підхопить isFullscreen
-      } catch {
-        // Fullscreen API є, але викликав відмову (напр. політика
-        // браузера) — падаємо на псевдо-режим нижче.
-      }
-    }
-    enterPseudoFullscreen();
-  }
 
   if (provider === "gdrive" && !isDeviceKnown) {
     // Поки не визначили телефон/не телефон — НІ плеєра Drive (щоб
@@ -267,7 +160,7 @@ export function VideoFrame({
         )}
       </div>
       {!hideFullscreenButtonForGdrivePhone && (
-        <button type="button" onClick={handleToggle} className={SECONDARY_BUTTON_CLASS}>
+        <button type="button" onClick={handleToggle} className={FULLSCREEN_BUTTON_CLASS}>
           <Maximize size={16} />
           {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
         </button>
