@@ -29,6 +29,7 @@ import {
 import { placementCells } from "./word-search-grid";
 import { sanitizeWordForGrid } from "./grid-word";
 import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
+import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBlock } from "./grid-blocks";
 import type {
   FillBlankConfig,
   FillBlankAnswer,
@@ -193,6 +194,27 @@ function blockPointsPossible(totalPoints: number, totalCount: number, answeredIn
   const precedingSum = chunks
     .slice(0, chunks.length - 1)
     .reduce((sum, c) => sum + Math.round((totalPoints * c.length) / totalCount), 0);
+  return totalPoints - precedingSum;
+}
+
+// Той самий принцип округлення, що blockPointsPossible вище (кожен блок,
+// КРІМ ОСТАННЬОГО, отримує незалежно округлену пропорційну частку; залишок
+// округлення — на ОСТАННІЙ блок, щоб сума по всіх блоках завжди точно
+// дорівнювала totalPoints), але для ДОВІЛЬНИХ (не рівних
+// EXERCISE_BLOCK_SIZE-чанків) вагових часток — word_search/crossword
+// (grid-blocks.ts), де блоки формуються за розміром сітки (етап 2), не за
+// фіксованою кількістю елементів. weights — кількість слів у КОЖНОМУ блоці
+// вправи, за порядком (напр. [2,3,3] для 3 блоків на 8 слів); index —
+// який саме блок зараз оцінюється.
+function blockPointsPossibleByWeights(totalPoints: number, weights: number[], index: number): number {
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  if (totalWeight === 0 || weights[index] === undefined) return 0;
+  if (index < weights.length - 1) {
+    return Math.round((totalPoints * weights[index]) / totalWeight);
+  }
+  const precedingSum = weights
+    .slice(0, weights.length - 1)
+    .reduce((sum, w) => sum + Math.round((totalPoints * w) / totalWeight), 0);
   return totalPoints - precedingSum;
 }
 
@@ -411,11 +433,27 @@ function cellsMatch(a: { row: number; col: number }[], b: { row: number; col: nu
 // (score — та сама частка, foundCount/words.length, лише у відсотках); found
 // у detail лишається per-слово — і для візуального фідбеку/легенди, і як
 // вхід у саму пропорцію балів.
-function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): GradeResult {
+// blockIndex (answer.blockIndex) — звужує ОБСЯГ перевірки до складу САМЕ
+// цього блоку (config.blocks[i], нормалізований grid-blocks.ts): слова
+// визначаються конфігом (selectWordsForBlock за block.wordKeys), не тим,
+// що студент надіслав у found — слово блоку, відсутнє у found, і далі
+// found:false і лишається в знаменнику (той самий принцип, що вже
+// підтверджений для table_fill/letter_gaps, і свідомо НЕ регресує сюди
+// проблему "порожнє випадає зі знаменника"). Без blockIndex — уся вправа
+// (усі блоки разом, flatMap) — для вправи з ОДНИМ блоком (наявні, до
+// появи цієї фічі) результат точно той самий, що й раніше: той самий
+// перелік слів/placements, той самий порядок.
+function gradeWordSearch(rawConfig: WordSearchConfig, answer: WordSearchAnswer): GradeResult {
+  const config = normalizeWordSearchConfig(rawConfig);
+  const blockIndex = answer?.blockIndex;
+  const block = blockIndex !== undefined ? config.blocks[blockIndex] : undefined;
+  const scopeWords = block ? selectWordsForBlock(config.words, block.wordKeys) : config.words;
+  const scopePlacements = block ? block.placements : config.blocks.flatMap((b) => b.placements);
+
   const answerByWord = new Map((answer?.found ?? []).map((a) => [a.word, a.cells]));
   const hintedSet = new Set(answer?.hintedWords ?? []);
 
-  const words: WordSearchDetail["words"] = config.words.map((w) => {
+  const words: WordSearchDetail["words"] = scopeWords.map((w) => {
     // placement.word завжди ВЕРХНІМ регістром і БЕЗ пробілів/апострофів/
     // дефісів (word-search-grid.ts — генератор нормалізує перед
     // розміщенням у сітці, sanitizeWordForGrid), а w.word лишається таким,
@@ -423,7 +461,7 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
     // дефісом/апострофом) — без тієї самої нормалізації тут === ніколи не
     // збігався б для будь-якого слова з такими символами, і gradeWordSearch
     // завжди повертав би found: false.
-    const placement = config.placements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
+    const placement = scopePlacements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
     const hintUsed = hintedSet.has(w.word);
     if (!placement) return { word: w.word, found: false, hintUsed };
 
@@ -435,12 +473,16 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
 
   const foundCount = words.filter((w) => w.found).length;
   const correct = foundCount === words.length && words.length > 0;
-  const points = resolveWordSearchPoints(config);
+  const totalPoints = resolveWordSearchPoints(config);
+  const points =
+    block !== undefined
+      ? blockPointsPossibleByWeights(totalPoints, config.blocks.map((b) => b.wordKeys.length), blockIndex!)
+      : totalPoints;
 
   return {
     correct,
     score: percentage(foundCount, words.length),
-    detail: { words },
+    detail: { words, blockIndex },
     pointsEarned: pointsWithHints(
       points,
       words.map((w) => ({ isCorrect: w.found, hintUsed: w.hintUsed })),
@@ -460,10 +502,20 @@ function gradeWordSearch(config: WordSearchConfig, answer: WordSearchAnswer): Gr
 // узгоджена для обох слів, бо адмінський генератор гарантує однакову
 // літеру там (crossword-grid.ts: fits() дозволяє перетин лише з тим самим
 // символом). Один бал на все завдання (як gradeWordSearch/gradeLetterGaps).
-function gradeCrossword(config: CrosswordConfig, answer: CrosswordAnswer): GradeResult {
+// blockIndex — той самий принцип, що gradeWordSearch вище: з blockIndex
+// область звужується до config.blocks[i].placements (власний bounding-box
+// і нумерація блоку, той самий, що студент бачив у CrosswordPublicBlock);
+// без blockIndex — усі блоки разом (flatMap), для вправи з ОДНИМ блоком
+// тотожно попередній поведінці.
+function gradeCrossword(rawConfig: CrosswordConfig, answer: CrosswordAnswer): GradeResult {
+  const config = normalizeCrosswordConfig(rawConfig);
+  const blockIndex = answer?.blockIndex;
+  const block = blockIndex !== undefined ? config.blocks[blockIndex] : undefined;
+  const scopePlacements = block ? block.placements : config.blocks.flatMap((b) => b.placements);
+
   const grid = answer?.grid ?? [];
   const hintedSet = new Set((answer?.hintedWords ?? []).map((h) => `${h.number}-${h.direction}`));
-  const words: CrosswordDetail["words"] = config.placements.map((p) => {
+  const words: CrosswordDetail["words"] = scopePlacements.map((p) => {
     const cells = placementCells(p, p.word.length);
     const studentWord = cells.map(({ row, col }) => grid[row]?.[col] ?? "").join("");
     const isCorrect = normalize(studentWord) === normalize(p.word);
@@ -473,12 +525,16 @@ function gradeCrossword(config: CrosswordConfig, answer: CrosswordAnswer): Grade
 
   const correctCount = words.filter((w) => w.isCorrect).length;
   const correct = correctCount === words.length && words.length > 0;
-  const points = resolveCrosswordPoints(config);
+  const totalPoints = resolveCrosswordPoints(config);
+  const points =
+    block !== undefined
+      ? blockPointsPossibleByWeights(totalPoints, config.blocks.map((b) => b.wordKeys.length), blockIndex!)
+      : totalPoints;
 
   return {
     correct,
     score: percentage(correctCount, words.length),
-    detail: { words },
+    detail: { words, blockIndex },
     pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
     pointsPossible: points,
   };

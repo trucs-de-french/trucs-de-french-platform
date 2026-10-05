@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord, WordSearchPlacement } from "@/lib/exercises/types";
 import { generateWordSearchGrid } from "@/lib/exercises/word-search-grid";
+import { normalizeWordSearchConfig } from "@/lib/exercises/grid-blocks";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { WORD_SEARCH_MAX_WORDS, WORD_SEARCH_MAX_GRID } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -119,19 +120,27 @@ export const WordSearchFields = forwardRef<
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
       : [emptyWord()]
   );
+  // normalizeWordSearchConfig (grid-blocks.ts) — читає ОДИН блок як через
+  // legacy config.grid/placements, так і через новий config.blocks (якщо
+  // колись туди потрапить реальний поділ, етап 2/3) — адмінка етапу 1 й
+  // далі показує/редагує рівно ОДНУ сітку (UI не змінено), лише джерело
+  // початкових значень тепер крізь спільну точку нормалізації.
+  const initialBlock = initialConfig
+    ? normalizeWordSearchConfig(initialConfig as WordSearchConfig).blocks[0]
+    : undefined;
   // grid/placements — результат ОСТАННЬОЇ генерації, не перераховуються на
   // кожен рендер (той самий принцип, що в types.ts: генерація один раз, не
   // на льоту) — редагування слів після генерації НЕ оновлює сітку
   // автоматично, доки вчителька сама не натисне "(Пере)генерувати".
-  const [grid, setGrid] = useState<string[][]>(initialConfig?.grid ?? []);
+  const [grid, setGrid] = useState<string[][]>(initialBlock?.grid ?? []);
   const [placements, setPlacements] = useState<WordSearchPlacement[]>(
-    initialConfig?.placements ?? []
+    initialBlock?.placements ?? []
   );
   // Знімок нормалізованих слів на момент ОСТАННЬОЇ генерації (types.ts) —
   // для task-validation.ts "чи сітка застаріла". Відсутнє в initialConfig
   // для вправ, збережених до появи цього поля — лишається undefined, не [].
   const [gridSourceWords, setGridSourceWords] = useState<string[] | undefined>(
-    initialConfig?.gridSourceWords
+    initialBlock?.gridSourceWords
   );
   const [failedWords, setFailedWords] = useState<string[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.word_search ?? false);

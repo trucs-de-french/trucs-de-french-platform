@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord, CrosswordPlacement } from "@/lib/exercises/types";
 import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
+import { normalizeCrosswordConfig } from "@/lib/exercises/grid-blocks";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { CROSSWORD_MAX_WORDS } from "@/lib/exercises/grid-limits";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -158,18 +159,26 @@ export const CrosswordFields = forwardRef<
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
       : [emptyWord()]
   );
+  // normalizeCrosswordConfig (grid-blocks.ts) — той самий принцип, що
+  // word-search-fields.tsx: адмінка етапу 1 й далі показує/редагує рівно
+  // ОДИН кросворд (UI не змінено), лише читання initialConfig тепер крізь
+  // спільну точку нормалізації (сумісно і з legacy-полями, і з майбутнім
+  // config.blocks).
+  const initialBlock = initialConfig
+    ? normalizeCrosswordConfig(initialConfig as CrosswordConfig).blocks[0]
+    : undefined;
   // placements/gridWidth/gridHeight — результат ОСТАННЬОЇ генерації, не
   // перераховуються на кожен рендер (той самий принцип, що word_search):
   // редагування слів після генерації не оновлює кросворд автоматично, доки
   // вчителька сама не натисне "(Пере)генерувати".
-  const [placements, setPlacements] = useState<CrosswordPlacement[]>(initialConfig?.placements ?? []);
-  const [gridWidth, setGridWidth] = useState(initialConfig?.gridWidth ?? 0);
-  const [gridHeight, setGridHeight] = useState(initialConfig?.gridHeight ?? 0);
+  const [placements, setPlacements] = useState<CrosswordPlacement[]>(initialBlock?.placements ?? []);
+  const [gridWidth, setGridWidth] = useState(initialBlock?.gridWidth ?? 0);
+  const [gridHeight, setGridHeight] = useState(initialBlock?.gridHeight ?? 0);
   // Знімок нормалізованих слів на момент ОСТАННЬОЇ генерації (types.ts) —
   // для task-validation.ts "чи сітка застаріла". Відсутнє в initialConfig
   // для вправ, збережених до появи цього поля — лишається undefined, не [].
   const [gridSourceWords, setGridSourceWords] = useState<string[] | undefined>(
-    initialConfig?.gridSourceWords
+    initialBlock?.gridSourceWords
   );
   const [isolatedWords, setIsolatedWords] = useState<string[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.crossword ?? false);

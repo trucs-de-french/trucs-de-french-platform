@@ -22,6 +22,8 @@
 //   побачить дефолтну; рекомендована, не жорстка, межа кількості слів):
 //   тихий сірий текст у формі, НІКОЛИ не впливає на підтвердження чи ⚠.
 import { sanitizeWordForGrid } from "./grid-word";
+import { normalizeWordSearchConfig, normalizeCrosswordConfig } from "./grid-blocks";
+import type { WordSearchConfig, CrosswordConfig } from "./types";
 
 export type ConfigProblem = { path: string; message: string; severity: "error" | "hint" };
 
@@ -165,14 +167,20 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
       words.forEach((w, i) => {
         if (isBlank(w.word)) problems.push({ path: `words[${i}].word`, message: `Слово ${i + 1}: порожнє`, severity: "error" });
       });
-      const grid = asArray(config.grid);
-      const placements = asArray(config.placements) as { word?: string }[];
-      if (grid.length === 0 || placements.length === 0) {
+      // normalizeWordSearchConfig (grid-blocks.ts) — та сама перевірка, що
+      // раніше (config.grid/placements/gridSourceWords напряму), лише крізь
+      // нормалізатор: для вправи з ОДНИМ блоком (усі наявні, і будь-яка без
+      // явного config.blocks) blocks[0] — рівно ТІ САМІ значення, тож
+      // поведінка тотожна попередній. Поділ на КІЛЬКА блоків (етап 2) ще не
+      // звірявся тут — лишається на майбутнє, коли з'явиться сама генерація.
+      const normalizedWs = normalizeWordSearchConfig(config as unknown as WordSearchConfig);
+      const wsBlock = normalizedWs.blocks[0];
+      if (!wsBlock) {
         problems.push({ path: "grid", message: "Сітку ще не згенеровано", severity: "error" });
       } else {
         const currentWords = words.map((w) => normalizeGridWord(w.word)).filter(Boolean);
-        const placedWords = placements.map((p) => normalizeGridWord(p.word)).filter(Boolean);
-        if (isGridStale(currentWords, config.gridSourceWords, placedWords)) {
+        const placedWords = wsBlock.placements.map((p) => normalizeGridWord(p.word)).filter(Boolean);
+        if (isGridStale(currentWords, wsBlock.gridSourceWords, placedWords)) {
           problems.push({ path: "grid", message: "Сітка застаріла для поточного списку слів — перегенеруйте сітку", severity: "error" });
         }
       }
@@ -189,14 +197,17 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
           problems.push({ path: `words[${i}].clue`, message: `Слово ${i + 1}: немає підказки (тексту чи картинки)`, severity: "error" });
         }
       });
-      const placements = asArray(config.placements) as { word?: string }[];
-      const gridWidth = typeof config.gridWidth === "number" ? config.gridWidth : 0;
-      if (placements.length === 0 || gridWidth === 0) {
+      // Той самий принцип, що word_search вище — normalizeCrosswordConfig
+      // крізь нормалізатор, blocks[0] тотожний попереднім top-level полям
+      // для вправи з ОДНИМ блоком.
+      const normalizedCw = normalizeCrosswordConfig(config as unknown as CrosswordConfig);
+      const cwBlock = normalizedCw.blocks[0];
+      if (!cwBlock) {
         problems.push({ path: "placements", message: "Сітку ще не згенеровано", severity: "error" });
       } else {
         const currentWords = words.map((w) => normalizeGridWord(w.word)).filter(Boolean);
-        const placedWords = placements.map((p) => normalizeGridWord(p.word)).filter(Boolean);
-        if (isGridStale(currentWords, config.gridSourceWords, placedWords)) {
+        const placedWords = cwBlock.placements.map((p) => normalizeGridWord(p.word)).filter(Boolean);
+        if (isGridStale(currentWords, cwBlock.gridSourceWords, placedWords)) {
           problems.push({ path: "placements", message: "Сітка застаріла для поточного списку слів — перегенеруйте сітку", severity: "error" });
         }
       }

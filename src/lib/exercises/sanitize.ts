@@ -55,6 +55,7 @@ import { buildCrosswordOpenCells, buildCrosswordCellNumbers, buildCrosswordSolut
 import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 import { sanitizeWordForGrid } from "./grid-word";
 import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
+import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBlock } from "./grid-blocks";
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
@@ -212,22 +213,45 @@ export function resolveWordSearchPoints(config: WordSearchConfig): number {
 // placements — ЄДИНЕ, що ховається (координати відповідей); grid і words
 // передаються як є — не секрет, студент і так бачить усю сітку й список
 // слів для пошуку.
-export function sanitizeWordSearch(config: WordSearchConfig): WordSearchPublic {
+// translation/imageUrl/audioUrl передаються як є — не секрет, це підказки
+// в легенді (на відміну від placements, повного масиву якого тут немає).
+// hintStart — виняток, лише СТАРТОВА клітинка (типографію самого placement
+// — довжину/кінець/напрямок студент і так легко вирахує з grid+
+// word.length щойно побачить старт, тож ховати решту додаткового сенсу не
+// має) для підказки-блимання (word-search.tsx, той самий пошук за
+// sanitizeWordForGrid+upper, що gradeWordSearch).
+function buildWordSearchPublicWords(
+  words: WordSearchConfig["words"],
+  placements: WordSearchConfig["placements"]
+): WordSearchPublic["words"] {
+  return words.map((w) => {
+    const placement = (placements ?? []).find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
+    return { ...w, hintStart: placement ? { row: placement.row, col: placement.col } : null };
+  });
+}
+
+// blocks — по одному WordSearchPublicBlock на кожен config.blocks[i]
+// (normalizeWordSearchConfig, grid-blocks.ts): words блоку — лише ті
+// config.words, що потрапили в нього (selectWordsForBlock, за
+// block.wordKeys), grid — та сама, що в блоці. LEGACY top-level
+// words/grid — рівно blocks[0] (для вправи з одним блоком, тобто всіх
+// наявних на момент появи цієї фічі, тотожно попередньому виводу) —
+// студентський компонент (word-search.tsx) і далі читає саме їх, до етапу
+// 3; порожні, якщо blocks: [] (сітку ще не згенеровано).
+export function sanitizeWordSearch(rawConfig: WordSearchConfig): WordSearchPublic {
+  const config = normalizeWordSearchConfig(rawConfig);
+
+  const blocks: WordSearchPublic["blocks"] = config.blocks.map((block) => ({
+    words: buildWordSearchPublicWords(selectWordsForBlock(config.words, block.wordKeys), block.placements),
+    grid: block.grid,
+  }));
+
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
-    grid: config.grid,
-    // translation/imageUrl/audioUrl передаються як є — не секрет, це
-    // підказки в легенді (на відміну від placements, повного масиву якого
-    // тут немає). hintStart — виняток, лише СТАРТОВА клітинка (типографію
-    // самого placement — довжину/кінець/напрямок студент і так легко
-    // вирахує з grid+word.length щойно побачить старт, тож ховати решту
-    // додаткового сенсу не має) для підказки-блимання (word-search.tsx,
-    // той самий пошук за sanitizeWordForGrid+upper, що gradeWordSearch).
-    words: config.words.map((w) => {
-      const placement = config.placements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
-      return { ...w, hintStart: placement ? { row: placement.row, col: placement.col } : null };
-    }),
+    words: blocks[0]?.words ?? [],
+    grid: blocks[0]?.grid ?? [],
+    blocks,
     points: resolveWordSearchPoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
   };
@@ -243,10 +267,14 @@ export function resolveCrosswordPoints(config: CrosswordConfig): number {
 // будуються групуванням тих самих placements за напрямком, відсортованих
 // за вже пораховним number (generateCrosswordGrid). placements студенту не
 // передаються взагалі.
-export function sanitizeCrossword(config: CrosswordConfig): CrosswordPublic {
-  const { placements, gridWidth, gridHeight } = config;
+function buildCrosswordPublicBlock(
+  placements: CrosswordConfig["placements"],
+  gridWidth: number,
+  gridHeight: number
+): CrosswordPublic["blocks"][number] {
+  const list = placements ?? [];
   const byDirection = (direction: "horizontal" | "vertical") =>
-    placements
+    list
       .filter((p) => p.direction === direction)
       .sort((a, b) => a.number - b.number)
       .map((p) => ({
@@ -259,15 +287,51 @@ export function sanitizeCrossword(config: CrosswordConfig): CrosswordPublic {
       }));
 
   return {
-    instructions: config.instructions,
-    subInstructions: config.subInstructions,
     gridWidth,
     gridHeight,
-    openCells: buildCrosswordOpenCells(placements, gridWidth, gridHeight),
-    cellNumbers: buildCrosswordCellNumbers(placements, gridWidth, gridHeight),
-    solution: buildCrosswordSolution(placements, gridWidth, gridHeight),
+    openCells: buildCrosswordOpenCells(list, gridWidth, gridHeight),
+    cellNumbers: buildCrosswordCellNumbers(list, gridWidth, gridHeight),
+    solution: buildCrosswordSolution(list, gridWidth, gridHeight),
     across: byDirection("horizontal"),
     down: byDirection("vertical"),
+  };
+}
+
+// blocks — по одному CrosswordPublicBlock на кожен config.blocks[i]
+// (normalizeCrosswordConfig, grid-blocks.ts) — ВЛАСНИЙ bounding-box і
+// локальна нумерація кожного блоку (не перераховуються тут, уже готові в
+// block.gridWidth/gridHeight/placements[].number, той самий сенс, що для
+// одноблочної вправи раніше). LEGACY top-level gridWidth/openCells/... —
+// рівно blocks[0] (вправа з одним блоком, тотожно попередньому виводу) —
+// crossword.tsx і далі читає саме їх, до етапу 3; порожні 0×0/[], якщо
+// blocks: [] (сітку ще не згенеровано).
+export function sanitizeCrossword(rawConfig: CrosswordConfig): CrosswordPublic {
+  const config = normalizeCrosswordConfig(rawConfig);
+
+  const blocks: CrosswordPublic["blocks"] = config.blocks.map((block) =>
+    buildCrosswordPublicBlock(block.placements, block.gridWidth, block.gridHeight)
+  );
+  const legacy = blocks[0] ?? {
+    gridWidth: 0,
+    gridHeight: 0,
+    openCells: [] as boolean[][],
+    cellNumbers: [] as (number | null)[][],
+    solution: [] as string[][],
+    across: [],
+    down: [],
+  };
+
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    gridWidth: legacy.gridWidth,
+    gridHeight: legacy.gridHeight,
+    openCells: legacy.openCells,
+    cellNumbers: legacy.cellNumbers,
+    solution: legacy.solution,
+    across: legacy.across,
+    down: legacy.down,
+    blocks,
     points: resolveCrosswordPoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
   };

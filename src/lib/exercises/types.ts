@@ -212,13 +212,42 @@ export type WordSearchPlacement = {
   col: number;
   direction: "horizontal" | "vertical";
 };
+// Поділ великої вправи на кілька менших сіток — "Блок 1/2/3" (мобільна
+// причина: одна сітка з усіма словами не вміщується на екрані телефона,
+// grid-cell-size.ts). Генерація поділу — етап 2 (не тут); цей тип лише
+// описує РЕЗУЛЬТАТ поділу, уже збережений у config, щоб не перераховувати
+// його при кожному відкритті вправи (той самий принцип, що вже є для
+// grid/placements самої вправи — генерація один раз, не на льоту).
+// wordKeys — слова цього блоку в ТІЙ САМІЙ нормалізації, що
+// placements/sanitizeWordForGrid+upper (НЕ config.words[].word напряму) —
+// метадані слова (translation/imageUrl/audioUrl) лишаються виключно в
+// config.words, блок лише посилається на слово його нормалізованим
+// ключем. Дублікати нормалізованих слів (якщо вчителька ввела те саме
+// слово двічі) зберігаються як повторювані елементи wordKeys (мультимножина,
+// не Set) — grid-blocks.ts (selectWordsForBlock) розбирає їх по порядку
+// появи в config.words, по одному входженню на ключ, тож навіть дублікат
+// коректно дістається рівно одному блоку.
+export type WordSearchBlock = {
+  wordKeys: string[];
+  grid: string[][];
+  placements: WordSearchPlacement[];
+  gridSourceWords?: string[];
+};
+
 export type WordSearchConfig = {
   instructions?: string;
   subInstructions?: string;
   words: WordSearchWord[];
-  grid: string[][];
-  placements: WordSearchPlacement[];
+  // LEGACY — поле повної (нерозбитої на блоки) сітки. Нові вправи (і старі,
+  // пропущені крізь normalizeWordSearchConfig, grid-blocks.ts) тримають той
+  // самий зміст у blocks[0], це поле лишається опційним для зворотної
+  // сумісності зі старими рядками БД і НЕ читається новим кодом напряму.
+  grid?: string[][];
+  // LEGACY — те саме, що grid вище.
+  placements?: WordSearchPlacement[];
   points?: number;
+  // LEGACY — те саме, що grid вище (знімок слів-джерел генерації, тепер
+  // живе в blocks[i].gridSourceWords).
   // Нормалізований (sanitizeWordForGrid+upper) список слів, з яких grid/
   // placements БУЛИ згенеровані (generateWordSearchGrid.sourceWords,
   // word-search-grid.ts) — знімок на момент генерації, не похідне поточних
@@ -228,6 +257,12 @@ export type WordSearchConfig = {
   gridSourceWords?: string[];
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
   hintsReducePoints?: boolean;
+  // Відсутнє — старий формат (один "блок" без явного поля, еквівалентно
+  // grid/placements вище); normalizeWordSearchConfig (grid-blocks.ts)
+  // синтезує РІВНО ОДИН блок із цих legacy-полів на льоту, без міграції БД.
+  // Порожній масив — вправа ще без згенерованої сітки взагалі (і новий, і
+  // старий формат — той самий сенс, що grid.length===0 раніше).
+  blocks?: WordSearchBlock[];
 };
 
 // Слово + підказка (означення) — на відміну від WordSearchWord, тут немає
@@ -272,20 +307,45 @@ export type CrosswordPlacement = {
 // літер) — заблоковані/відкриті клітинки й самі літери відновлюються з
 // placements там, де вони потрібні (санітизація, оцінювання, прев'ю в
 // адмінці), а не зберігаються повторно.
+// Той самий принцип поділу на блоки, що WordSearchBlock (types.ts вище) —
+// одне застереження: на відміну від word_search (де грід — суцільний
+// прямокутник), тут gridWidth/gridHeight — ВЛАСНИЙ bounding-box ЦЬОГО
+// блоку (не всієї вправи), number у placements — локальна нумерація в
+// межах блоку (рахується generateCrosswordGrid при генерації САМЕ цього
+// блоку, етап 2) — той самий сенс, що вже є для одноблочної вправи, просто
+// тепер по одному bounding-box+нумерації на блок, а не на всю вправу.
+export type CrosswordBlock = {
+  wordKeys: string[];
+  placements: CrosswordPlacement[];
+  gridWidth: number;
+  gridHeight: number;
+  gridSourceWords?: string[];
+};
+
 export type CrosswordConfig = {
   instructions?: string;
   subInstructions?: string;
   words: CrosswordWord[];
-  placements: CrosswordPlacement[];
-  gridWidth: number;
-  gridHeight: number;
+  // LEGACY — те саме, що WordSearchConfig.grid: зміст живе в blocks[0]
+  // після normalizeCrosswordConfig (grid-blocks.ts), поле лишається лише
+  // для зворотної сумісності зі старими рядками БД.
+  placements?: CrosswordPlacement[];
+  // LEGACY — те саме.
+  gridWidth?: number;
+  // LEGACY — те саме.
+  gridHeight?: number;
   points?: number;
+  // LEGACY — те саме, що WordSearchConfig.gridSourceWords.
   // Той самий принцип, що WordSearchConfig.gridSourceWords — знімок
   // нормалізованих слів на момент генерації (generateCrosswordGrid.sourceWords,
   // crossword-grid.ts), опційний для сумісності зі старими вправами.
   gridSourceWords?: string[];
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що WordSearchConfig.blocks — відсутнє означає
+  // старий формат, normalizeCrosswordConfig синтезує один блок із legacy
+  // полів вище без міграції БД.
+  blocks?: CrosswordBlock[];
 };
 
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
@@ -681,11 +741,24 @@ export type WordChoicePublic = {
 // ніж CrosswordPublic.solution (там розкриваються самі значення літер,
 // яких інакше не видно взагалі). null — слово не вмістилось у сітку
 // (failedWords, word-search-grid.ts) — підказка для нього недоступна.
+export type WordSearchPublicBlock = {
+  words: (WordSearchWord & { hintStart: { row: number; col: number } | null })[];
+  grid: string[][];
+};
+
 export type WordSearchPublic = {
   instructions?: string;
   subInstructions?: string;
+  // LEGACY — рівно те саме, що blocks[0] (words/grid), заповнюється
+  // sanitizeWordSearch для сумісності з наявним студентським компонентом
+  // (word-search.tsx читає ці поля напряму, без поняття блоків, до етапу
+  // 3) — прибрати разом із переходом word-search.tsx на blocks.
   words: (WordSearchWord & { hintStart: { row: number; col: number } | null })[];
   grid: string[][];
+  // Порожній масив — вправа без жодного блоку (сітку ще не згенеровано,
+  // той самий сенс, що раніше grid.length===0): legacy words/grid вище теж
+  // порожні в цьому випадку.
+  blocks: WordSearchPublicBlock[];
   points: number;
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
@@ -705,9 +778,22 @@ export type CrosswordCluePublic = {
   imageUrl?: string;
   audioUrl?: string;
 };
+export type CrosswordPublicBlock = {
+  gridWidth: number;
+  gridHeight: number;
+  openCells: boolean[][];
+  cellNumbers: (number | null)[][];
+  solution: string[][];
+  across: CrosswordCluePublic[];
+  down: CrosswordCluePublic[];
+};
+
 export type CrosswordPublic = {
   instructions?: string;
   subInstructions?: string;
+  // LEGACY — рівно те саме, що blocks[0], заповнюється sanitizeCrossword
+  // для сумісності з наявним студентським компонентом (crossword.tsx читає
+  // ці поля напряму, до етапу 3) — прибрати разом із переходом на blocks.
   gridWidth: number;
   gridHeight: number;
   openCells: boolean[][]; // true — клітинка для вводу, false — заблокована
@@ -723,6 +809,8 @@ export type CrosswordPublic = {
   solution: string[][];
   across: CrosswordCluePublic[];
   down: CrosswordCluePublic[];
+  // Порожній масив — вправа без жодного блоку (сітку ще не згенеровано).
+  blocks: CrosswordPublicBlock[];
   points: number;
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
@@ -893,9 +981,19 @@ export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
 // слова, для яких клікали лампочку-підказку в легенді (блимання першої
 // літери, word-search.tsx) — підказка НЕ позначає слово знайденим сама по
 // собі, лише інформує, студент і далі мусить виділити його вручну.
+// blockIndex — відсутнє (undefined) означає "перевірити ВСЮ вправу" (усі
+// блоки разом, той самий результат, що й до появи блоків, для вправи з
+// ОДНИМ блоком — тотожний); присутнє — перевіряється ЛИШЕ склад САМЕ цього
+// блоку (config визначає склад за block.wordKeys/placements, не сама
+// відповідь — слово блоку, якого немає у found, зараховується
+// неправильним і лишається в знаменнику, той самий принцип, що вже
+// підтверджений для table_fill/letter_gaps). Етап 3 (студентський UI з
+// BlockNavigation) надсилатиме його з активного блоку; без етапу 3 поле
+// просто не передається, і поведінка лишається точно тією, що й раніше.
 export type WordSearchAnswer = {
   found: { word: string; cells: { row: number; col: number }[] }[];
   hintedWords: string[];
+  blockIndex?: number;
 };
 // Єдина 2D-мапа клітинка→літера (row-major, ті самі виміри, що gridWidth×
 // gridHeight) — НЕ по слову, як LetterGapsAnswer: клітинки спільні між
@@ -905,9 +1003,11 @@ export type WordSearchAnswer = {
 // grid — той самий формат, що раніше; hintedWords — слова (за number+
 // direction, однозначний ідентифікатор — той самий принцип, що
 // CrosswordDetail.words), у яких натискали лампочку-підказку хоч раз.
+// blockIndex — той самий сенс, що WordSearchAnswer.blockIndex вище.
 export type CrosswordAnswer = {
   grid: string[][];
   hintedWords: { number: number; direction: "horizontal" | "vertical" }[];
+  blockIndex?: number;
 };
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
@@ -981,8 +1081,12 @@ export type WordChoiceDetail = {
 // — found лише для візуального фідбека/закреслення в легенді, не для
 // заліку балів.
 // hintUsed — той самий сенс, що LetterGapsDetail.
+// blockIndex — ехо WordSearchAnswer.blockIndex (той самий, що прийшов у
+// запиті) — лише для клієнта (word-search.tsx, етап 3) розрізнити, якому
+// блоку належить цей результат; відсутнє — результат за всю вправу.
 export type WordSearchDetail = {
   words: { word: string; found: boolean; hintUsed: boolean }[];
+  blockIndex?: number;
 };
 
 // per-слово (не per-клітинка) — той самий рівень деталізації, що
@@ -990,6 +1094,7 @@ export type WordSearchDetail = {
 // не для заліку балів (points — на всю вправу, CrosswordConfig.points).
 // number+direction ідентифікують слово однозначно (пара може повторюватись
 // лише в межах одного напрямку, номер унікальний у своєму напрямку).
+// blockIndex — той самий сенс, що WordSearchDetail.blockIndex вище.
 export type CrosswordDetail = {
   words: {
     number: number;
@@ -998,6 +1103,7 @@ export type CrosswordDetail = {
     isCorrect: boolean;
     hintUsed: boolean;
   }[];
+  blockIndex?: number;
 };
 
 export type TrueFalseDetail = {
