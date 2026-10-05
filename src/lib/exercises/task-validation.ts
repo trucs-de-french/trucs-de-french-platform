@@ -73,7 +73,10 @@ function isGridStale(currentWords: string[], gridSourceWords: unknown, placedWor
 // заново з persisted-даних (ефемерне попередження адмінки після генерації
 // не зберігається в config) — для блока, відкритого повторно, без нового
 // запуску генератора.
-function findIsolatedCrosswordWords(placements: CrosswordPlacement[]): string[] {
+// Експортовано для block-editing.ts (ЕТАП B/3) — конструктор показує те
+// саме попередження "без перетинів" одразу після перегенерації блоку
+// (generateBlockGrid), без повторної реалізації.
+export function findIsolatedCrosswordWords(placements: CrosswordPlacement[]): string[] {
   const cellOwners = new Map<string, number>();
   placements.forEach((p) => {
     placementCells(p, p.word.length).forEach(({ row, col }) => {
@@ -84,6 +87,45 @@ function findIsolatedCrosswordWords(placements: CrosswordPlacement[]): string[] 
   return placements
     .filter((p) => placementCells(p, p.word.length).every(({ row, col }) => (cellOwners.get(`${row},${col}`) ?? 0) <= 1))
     .map((p) => p.word);
+}
+
+// Слова зі списку, яких НЕМА в жодному блоці (мультимножина-різниця,
+// порядок появи в currentWords) — конструктор (ЕТАП B/3) лишає такі слова
+// в "Нерозподілені", доки вчителька не призначить їм блок чи не розподілить
+// автоматично.
+function multisetExtra(currentWords: string[], blockKeys: string[]): string[] {
+  const remaining = [...blockKeys];
+  const extra: string[] = [];
+  for (const k of currentWords) {
+    const idx = remaining.indexOf(k);
+    if (idx === -1) extra.push(k);
+    else remaining.splice(idx, 1);
+  }
+  return extra;
+}
+
+// Спільна перевірка для ≥2 блоків (word_search/crossword) — якщо кожне
+// слово списку входить у якийсь блок (нерозподілених нема) і жоден блок не
+// посилається на зникле слово, повідомлення конкретне ("є нерозподілені
+// слова (N)"); інакше — загальне ("Склад слів змінився").
+function pushBlockCompositionProblems(
+  currentWords: string[],
+  allBlockKeys: string[],
+  path: string,
+  problems: ConfigProblem[]
+) {
+  const unassigned = multisetExtra(currentWords, allBlockKeys);
+  const orphanedInBlocks = multisetExtra(allBlockKeys, currentWords);
+  if (unassigned.length === 0 && orphanedInBlocks.length === 0) return;
+  if (orphanedInBlocks.length === 0) {
+    problems.push({
+      path,
+      message: `Є нерозподілені слова (${unassigned.length}) — додайте в блок або розподіліть автоматично`,
+      severity: "error",
+    });
+  } else {
+    problems.push({ path, message: "Склад слів змінився — перегенеруйте", severity: "error" });
+  }
 }
 
 function isBlank(value: unknown): boolean {
@@ -221,12 +263,7 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
             problems.push({ path: "grid", message: "Сітка застаріла для поточного списку слів — перегенеруйте сітку", severity: "error" });
           }
         } else {
-          const allBlockKeys = wsBlocks.flatMap((b) => b.wordKeys).slice().sort();
-          const current = currentWords.slice().sort();
-          const mismatch = allBlockKeys.length !== current.length || allBlockKeys.some((k, i) => k !== current[i]);
-          if (mismatch) {
-            problems.push({ path: "grid", message: "Склад слів змінився — перегенеруйте", severity: "error" });
-          }
+          pushBlockCompositionProblems(currentWords, wsBlocks.flatMap((b) => b.wordKeys), "grid", problems);
         }
       }
       break;
@@ -276,12 +313,7 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
             problems.push({ path: "placements", message: "Сітка застаріла для поточного списку слів — перегенеруйте сітку", severity: "error" });
           }
         } else {
-          const allBlockKeys = cwBlocks.flatMap((b) => b.wordKeys).slice().sort();
-          const current = currentWords.slice().sort();
-          const mismatch = allBlockKeys.length !== current.length || allBlockKeys.some((k, i) => k !== current[i]);
-          if (mismatch) {
-            problems.push({ path: "placements", message: "Склад слів змінився — перегенеруйте", severity: "error" });
-          }
+          pushBlockCompositionProblems(currentWords, cwBlocks.flatMap((b) => b.wordKeys), "placements", problems);
         }
       }
       break;

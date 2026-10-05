@@ -1,12 +1,17 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
-import { Trash2, RefreshCw } from "lucide-react";
-import type { CrosswordConfig, CrosswordWord, CrosswordBlock } from "@/lib/exercises/types";
-import { generateCrosswordGrid, buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
-import { normalizeCrosswordConfig, selectWordsForBlock, BLOCK_MAX_COLS, BLOCK_MAX_ROWS } from "@/lib/exercises/grid-blocks";
-import type { BlockWarning } from "@/lib/exercises/split-into-blocks";
-import { buildCrosswordBlocksConfig } from "@/lib/exercises/build-blocks-config";
+import { Trash2 } from "lucide-react";
+import type { CrosswordConfig, CrosswordWord } from "@/lib/exercises/types";
+import { buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
+import { BLOCK_MAX_COLS } from "@/lib/exercises/grid-blocks";
+import {
+  hydrateEditorBlocks,
+  serializeBlocks,
+  type CrosswordEditorState,
+  type CrosswordEditorGrid,
+} from "@/lib/exercises/block-editing";
+import { BlocksEditor, BlockSelect, moveWordToBlockChange, createBlockWithWordChange } from "./blocks-editor";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -15,18 +20,13 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 type EditableWord = CrosswordWord & { id: string };
 
-function emptyWord(): EditableWord {
-  return { id: crypto.randomUUID(), word: "", clue: "", clueStyle: "short", imageUrl: "", audioUrl: "" };
-}
-
-function stripId(w: EditableWord): CrosswordWord {
-  return { word: w.word, clue: w.clue, clueStyle: w.clueStyle, imageUrl: w.imageUrl, audioUrl: w.audioUrl };
+function emptyWord(): CrosswordWord {
+  return { word: "", clue: "", clueStyle: "short", imageUrl: "", audioUrl: "" };
 }
 
 // Компактний сегментований перемикач (не radio+label — у рядку й так тісно
@@ -72,6 +72,11 @@ function ClueStyleToggle({
 // картинка/аудіо — ні, там уже потрібне окреме джерело файлу/посилання).
 function CrosswordWordRow({
   wordItem,
+  blockOrder,
+  blockTitles,
+  blockId,
+  onMoveToBlock,
+  onCreateBlock,
   onUpdateWord,
   onUpdateClue,
   onUpdateClueStyle,
@@ -80,6 +85,11 @@ function CrosswordWordRow({
   onRemove,
 }: {
   wordItem: EditableWord;
+  blockOrder: string[];
+  blockTitles: Record<string, string | undefined>;
+  blockId: string | null;
+  onMoveToBlock: (blockId: string | null) => void;
+  onCreateBlock: () => void;
   onUpdateWord: (value: string) => void;
   onUpdateClue: (value: string) => void;
   onUpdateClueStyle: (value: "short" | "long") => void;
@@ -136,6 +146,7 @@ function CrosswordWordRow({
         <ClueStyleToggle value={wordItem.clueStyle ?? "short"} onChange={onUpdateClueStyle} />
         {image.icons}
         {audio.icons}
+        <BlockSelect blockOrder={blockOrder} blockTitles={blockTitles} value={blockId} onChange={onMoveToBlock} onCreateNew={onCreateBlock} />
         <button
           type="button"
           onClick={onRemove}
@@ -211,41 +222,23 @@ function CrosswordPreview({
   );
 }
 
-function blockWarningText(w: BlockWarning): string {
-  switch (w.type) {
-    case "isolated-word":
-      return `"${w.word}" — без перетинів`;
-    case "wide-block":
-      return `сітка ${w.width}× — більша за рекомендований розмір (довге слово "${w.longestWord}")`;
-    case "merged-small-block":
-      return "об'єднано з попереднім блоком (інакше було б замало слів)";
-    case "long-word":
-      return `"${w.word}" — ${w.length} літер`;
-  }
-}
-
 export const CrosswordFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>,
   { initialConfig?: Partial<CrosswordConfig> }
 >(function CrosswordFields({ initialConfig }, ref) {
-  const [words, setWords] = useState<EditableWord[]>(
+  // Той самий принцип, що word-search-fields.tsx (ЕТАП B/3) — EditorState
+  // (block-editing.ts) — джерело правди, blockId на кожному слові.
+  const [editor, setEditor] = useState<CrosswordEditorState>(() =>
     initialConfig?.words?.length
-      ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
-      : [emptyWord()]
+      ? hydrateEditorBlocks(initialConfig as CrosswordConfig, "crossword")
+      : { words: [{ ...emptyWord(), editorId: crypto.randomUUID(), blockId: null }], blockOrder: [], blocks: {} }
   );
-  // normalizeCrosswordConfig (grid-blocks.ts) — той самий принцип, що
-  // word-search-fields.tsx: blocks напряму (новий формат) або синтезований
-  // ОДИН блок зі старих top-level placements/gridWidth/gridHeight (вправи
-  // до цієї зміни, без міграції БД).
-  const initialBlocks = initialConfig
-    ? normalizeCrosswordConfig(initialConfig as CrosswordConfig).blocks
-    : [];
-  const [blocks, setBlocks] = useState<CrosswordBlock[]>(initialBlocks);
-  const [blockWords, setBlockWords] = useState<CrosswordWord[][]>(
-    initialBlocks.map((b) => selectWordsForBlock(initialConfig?.words ?? [], b.wordKeys) as unknown as CrosswordWord[])
-  );
-  const [warnings, setWarnings] = useState<BlockWarning[]>([]);
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.crossword ?? false);
+
+  const blockTitles = Object.fromEntries(editor.blockOrder.map((id) => [id, editor.blocks[id]?.title])) as Record<
+    string,
+    string | undefined
+  >;
 
   useImperativeHandle(ref, () => ({
     // Плаский тип (як letter_gaps/word_search) — word завжди обов'язковий.
@@ -259,115 +252,78 @@ export const CrosswordFields = forwardRef<
       const { words: newWords } = buildConfigFromVocab("crossword", imported, { stripArticles }) as {
         words: CrosswordWord[];
       };
-      setWords((prev) => {
-        const withoutEmpty = prev.filter((w) => w.word.trim());
-        return [...withoutEmpty, ...newWords.map((w) => ({ ...w, id: crypto.randomUUID() }))];
+      setEditor((prev) => {
+        const withoutEmpty = prev.words.filter((w) => w.word.trim());
+        return {
+          ...prev,
+          words: [
+            ...withoutEmpty,
+            ...newWords.map((w) => ({ ...w, editorId: crypto.randomUUID(), blockId: null })),
+          ],
+        };
       });
     },
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
-      words: words.map(stripId),
-      blocks,
+      words: editor.words.map(({ editorId, blockId, ...w }) => {
+        void editorId;
+        void blockId;
+        return w;
+      }),
+      blocks: serializeBlocks(editor, "crossword"),
       points: initialConfig?.points,
       hintsReducePoints: initialConfig?.hintsReducePoints,
     }),
   }));
 
   function addWord() {
-    setWords((prev) => [...prev, emptyWord()]);
+    setEditor((prev) => ({
+      ...prev,
+      words: [...prev.words, { ...emptyWord(), editorId: crypto.randomUUID(), blockId: null }],
+    }));
   }
 
-  function removeWord(id: string) {
-    setWords((prev) => prev.filter((w) => w.id !== id));
+  function removeWord(editorId: string) {
+    setEditor((prev) => ({ ...prev, words: prev.words.filter((w) => w.editorId !== editorId) }));
   }
 
-  function updateWord(id: string, value: string) {
-    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, word: value } : w)));
+  function updateWord(editorId: string, value: string) {
+    setEditor((prev) => ({ ...prev, words: prev.words.map((w) => (w.editorId === editorId ? { ...w, word: value } : w)) }));
   }
 
-  function updateClue(id: string, value: string) {
-    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, clue: value } : w)));
+  function updateClue(editorId: string, value: string) {
+    setEditor((prev) => ({ ...prev, words: prev.words.map((w) => (w.editorId === editorId ? { ...w, clue: value } : w)) }));
   }
 
-  function updateClueStyle(id: string, value: "short" | "long") {
-    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, clueStyle: value } : w)));
+  function updateClueStyle(editorId: string, value: "short" | "long") {
+    setEditor((prev) => ({
+      ...prev,
+      words: prev.words.map((w) => (w.editorId === editorId ? { ...w, clueStyle: value } : w)),
+    }));
   }
 
-  function updateImageUrl(id: string, value: string) {
-    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, imageUrl: value } : w)));
+  function updateImageUrl(editorId: string, value: string) {
+    setEditor((prev) => ({ ...prev, words: prev.words.map((w) => (w.editorId === editorId ? { ...w, imageUrl: value } : w)) }));
   }
 
-  function updateAudioUrl(id: string, value: string) {
-    setWords((prev) => prev.map((w) => (w.id === id ? { ...w, audioUrl: value } : w)));
+  function updateAudioUrl(editorId: string, value: string) {
+    setEditor((prev) => ({ ...prev, words: prev.words.map((w) => (w.editorId === editorId ? { ...w, audioUrl: value } : w)) }));
   }
-
-  // Підказка може бути текстом, картинкою чи аудіо — будь-якого ОДНОГО з
-  // трьох достатньо (той самий принцип, що word_search: слово без
-  // перекладу, але з картинкою, і так валідне).
-  function validWordsList(): CrosswordWord[] {
-    return words
-      .filter((w) => w.word.trim() && (w.clue.trim() || w.imageUrl?.trim() || w.audioUrl?.trim()))
-      .map(stripId);
-  }
-
-  function regenerate() {
-    const validWords = validWordsList();
-    const result = buildCrosswordBlocksConfig(validWords);
-    setBlocks(result.blocks);
-    setBlockWords(result.blocks.map((b) => selectWordsForBlock(validWords, b.wordKeys) as unknown as CrosswordWord[]));
-    setWarnings(result.warnings);
-  }
-
-  function regenerateBlock(index: number) {
-    const blockWordList = blockWords[index];
-    if (!blockWordList) return;
-    const keys = blockWordList.map((w) => sanitizeWordForGrid(w.word).toUpperCase());
-    const longestWord = keys.slice().sort((a, c) => c.length - a.length)[0] ?? "";
-    const limit = Math.max(BLOCK_MAX_COLS, longestWord.length);
-    const result = generateCrosswordGrid(blockWordList);
-    if (result.gridWidth > limit || result.gridHeight > BLOCK_MAX_ROWS) {
-      setWarnings((prev) => [
-        ...prev.filter((w) => !("blockIndex" in w && w.type === "wide-block" && w.blockIndex === index)),
-        { type: "wide-block", blockIndex: index, width: Math.max(result.gridWidth, result.gridHeight), longestWord },
-      ]);
-      return;
-    }
-    setBlocks((prev) =>
-      prev.map((b, i) =>
-        i === index
-          ? {
-              ...b,
-              placements: result.placements,
-              gridWidth: result.gridWidth,
-              gridHeight: result.gridHeight,
-              gridSourceWords: result.sourceWords,
-            }
-          : b
-      )
-    );
-    setWarnings((prev) => [
-      ...prev.filter((w) => !("blockIndex" in w && w.blockIndex === index)),
-      ...result.isolatedWords.map((word) => ({ type: "isolated-word" as const, word, blockIndex: index })),
-    ]);
-  }
-
-  const currentKeys = words
-    .map((w) => sanitizeWordForGrid(w.word).toUpperCase())
-    .filter(Boolean)
-    .sort();
-  const blockKeys = blocks
-    .flatMap((b) => b.wordKeys)
-    .slice()
-    .sort();
-  const isStale =
-    blocks.length > 0 &&
-    (currentKeys.length !== blockKeys.length || currentKeys.some((k, i) => k !== blockKeys[i]));
 
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
-      <input type="hidden" name="crossword_words" value={JSON.stringify(words.map(stripId))} readOnly />
-      <input type="hidden" name="crossword_blocks" value={JSON.stringify(blocks)} readOnly />
+      <input
+        type="hidden"
+        name="crossword_words"
+        value={JSON.stringify(editor.words.map(({ editorId, blockId, ...w }) => {
+          void editorId;
+          void blockId;
+          return w;
+        }))}
+        readOnly
+      />
+      <input type="hidden" name="crossword_blocks" value={JSON.stringify(serializeBlocks(editor, "crossword"))} readOnly />
 
       <InstructionsRichTextField
         name="crossword_instructions"
@@ -385,22 +341,34 @@ export const CrosswordFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова та підказки</label>
         <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
-        {words.length > 40 && (
+        {editor.words.length > 40 && (
           <p className={HINT_TEXT}>
             Рекомендовано до ~40 слів загалом — вправа автоматично розіб&apos;ється на кілька менших
             кросвордів (блоків), по 3–10 слів кожен.
           </p>
         )}
-        {words.map((w) => (
+        {editor.words.map((w) => (
           <CrosswordWordRow
-            key={w.id}
-            wordItem={w}
-            onUpdateWord={(value) => updateWord(w.id, value)}
-            onUpdateClue={(value) => updateClue(w.id, value)}
-            onUpdateClueStyle={(value) => updateClueStyle(w.id, value)}
-            onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}
-            onUpdateAudioUrl={(value) => updateAudioUrl(w.id, value)}
-            onRemove={() => removeWord(w.id)}
+            key={w.editorId}
+            wordItem={{
+              id: w.editorId,
+              word: w.word,
+              clue: w.clue,
+              clueStyle: w.clueStyle,
+              imageUrl: w.imageUrl,
+              audioUrl: w.audioUrl,
+            }}
+            blockOrder={editor.blockOrder}
+            blockTitles={blockTitles}
+            blockId={w.blockId}
+            onMoveToBlock={(target) => setEditor((prev) => moveWordToBlockChange(prev, "crossword", w.editorId, target))}
+            onCreateBlock={() => setEditor((prev) => createBlockWithWordChange(prev, "crossword", w.editorId))}
+            onUpdateWord={(value) => updateWord(w.editorId, value)}
+            onUpdateClue={(value) => updateClue(w.editorId, value)}
+            onUpdateClueStyle={(value) => updateClueStyle(w.editorId, value)}
+            onUpdateImageUrl={(value) => updateImageUrl(w.editorId, value)}
+            onUpdateAudioUrl={(value) => updateAudioUrl(w.editorId, value)}
+            onRemove={() => removeWord(w.editorId)}
           />
         ))}
         <button
@@ -412,60 +380,15 @@ export const CrosswordFields = forwardRef<
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={regenerate}
-        className={`inline-flex w-fit items-center gap-1.5 ${BUTTON_SECONDARY_SM}`}
-      >
-        <RefreshCw size={14} />
-        {blocks.length > 0 ? "Перегенерувати кросворди" : "Згенерувати кросворди"}
-      </button>
-
-      {isStale && (
-        <p className="text-sm text-amber-700 dark:text-amber-400">
-          Склад слів змінився — перегенеруйте.
-        </p>
-      )}
-
-      {blocks.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {blocks.map((b, i) => {
-            const blockWarningsForThis = warnings.filter((w) => "blockIndex" in w && w.blockIndex === i);
-            return (
-              <div key={i} className="rounded-md border border-gray-200 p-2 dark:border-neutral-700">
-                <div className="flex items-center justify-between gap-2">
-                  <p className={HINT_TEXT}>
-                    Блок {i + 1} · {b.wordKeys.length} слів · {b.gridWidth}×{b.gridHeight}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => regenerateBlock(i)}
-                    className="text-xs text-blue-700 hover:underline dark:text-blue-400"
-                  >
-                    Перегенерувати блок
-                  </button>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {(blockWords[i] ?? []).map((w, wi) => (
-                    <span
-                      key={wi}
-                      className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-700"
-                    >
-                      {w.word}
-                    </span>
-                  ))}
-                </div>
-                <CrosswordPreview placements={b.placements} gridWidth={b.gridWidth} gridHeight={b.gridHeight} />
-                {blockWarningsForThis.map((w, wi) => (
-                  <p key={wi} className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                    ⚠ {blockWarningText(w)}
-                  </p>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <BlocksEditor
+        kind="crossword"
+        state={editor}
+        onChange={setEditor}
+        renderPreview={(grid: CrosswordEditorGrid) => (
+          <CrosswordPreview placements={grid.placements} gridWidth={grid.gridWidth} gridHeight={grid.gridHeight} />
+        )}
+        gridLabel={(grid: CrosswordEditorGrid) => `${grid.gridWidth}×${grid.gridHeight}`}
+      />
 
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Бали за завдання</label>

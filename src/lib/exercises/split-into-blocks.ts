@@ -224,7 +224,11 @@ function pickBestCrosswordAttempt(attempts: CrosswordAttempt[]): CrosswordAttemp
 // якщо знайшлась спроба без жодного ізольованого слова. relaxed=true
 // (злиття малого останнього блоку) ігнорує ліміти — підходить будь-яка
 // спроба, обирається найкраща з усіх.
-function generateBestCrosswordAttempt(
+// Експортовано для generate-block-grid.ts (ЕТАП B/3) — конструктор
+// перегенеровує сітку ОДНОГО блоку (без автоподілу) тим самим алгоритмом
+// вибору найкращої спроби з транспонуванням, relaxed=true, щоб не
+// дублювати цю логіку.
+export function generateBestCrosswordAttempt(
   words: CrosswordWord[],
   generate: CrosswordGenerateFn,
   relaxed = false
