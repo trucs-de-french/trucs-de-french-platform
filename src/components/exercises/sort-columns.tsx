@@ -209,9 +209,15 @@ export function SortColumnsExercise({
               : isHinted
                 ? "border-blue-300 bg-blue-50 ring-2 ring-inset ring-blue-500 dark:border-blue-600 dark:bg-blue-950/30"
                 : ANSWER_CARD_DEFAULT;
+          // bg-brand/10 + text-brand (без dark:-варіанту) давали ~2.3:1 у
+          // темній темі (той самий --color-brand на майже чорному фоні —
+          // замалий контраст) — indigo-100/indigo-700 (світла) і
+          // indigo-900/40 + indigo-300 (темна) — та сама indigo-шкала, що
+          // вже дає badge кольору завдання (task-type-meta.ts:131),
+          // ~6.4:1/~7:1 (докладніше — звіт).
           const headerClass = isHinted
             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200"
-            : "bg-brand/10 text-brand";
+            : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300";
           return (
             <div
               key={col.id}
@@ -220,7 +226,7 @@ export function SortColumnsExercise({
               className={`overflow-hidden rounded-xl border transition-colors ${stateClass} ${scrollMtClass}`}
             >
               <p
-                className={`break-words px-3 py-2 text-center font-heading text-sm font-semibold text-balance ${headerClass}`}
+                className={`break-words px-3 py-2 text-center font-heading text-sm font-bold text-balance ${headerClass}`}
               >
                 {col.label}
               </p>
