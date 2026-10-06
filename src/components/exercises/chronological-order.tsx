@@ -14,9 +14,9 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
+import { ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 // Менший за ITEM_LETTER_BADGE (answer-card-style.ts) варіант — лише для
@@ -24,6 +24,13 @@ import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 // його ще використовують vocab-quiz.tsx і режим text цього ж компонента.
 const ITEM_LETTER_BADGE_SM =
   "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-medium text-white";
+
+// Бейдж для компактних рядків режиму text — трохи більший за SM (бо тут
+// немає сусідньої лупи, яка б з ним конкурувала за місце), але все одно
+// менший за спільний ITEM_LETTER_BADGE (28px): той лишається незмінним,
+// бо його й досі використовує vocab-quiz.tsx.
+const ITEM_LETTER_BADGE_TEXT =
+  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
 
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
@@ -78,6 +85,15 @@ export function ChronologicalOrderExercise({
       : "border-red-500 bg-red-50 dark:bg-red-950/30";
   }
 
+  // Фон рядка (режим text) після перевірки — той самий м'який відтінок, що
+  // й на полі (inputClass), лише без рамки: рядки без власних карток, тому
+  // підсвічування рамкою тут недоцільне (злилося б із роздільником).
+  function rowStateClass(itemId: string) {
+    const d = itemDetail(itemId);
+    if (!d) return "";
+    return d.isCorrect ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30";
+  }
+
   function pointsLabel(itemId: string, points: number) {
     if (hidePoints) return null;
     const d = itemDetail(itemId);
@@ -96,14 +112,23 @@ export function ChronologicalOrderExercise({
     submit(answer);
   }
 
-  function numberInput(itemId: string, variant: "wide" | "square" | "compact" = "wide", label?: string) {
+  function numberInput(
+    itemId: string,
+    variant: "wide" | "square" | "compact" | "line" = "wide",
+    label?: string,
+  ) {
     // "compact" — лише щільна сітка image/mixed: h-10 (40px) за замовчуванням
     // покриває і дотик, і вузький екран; sm:pointer-fine:h-8 (32px) звужує
     // лише на реальному десктопі з мишкою (sm+ ширина ТА pointer:fine) —
     // на touch-екрані будь-якої ширини лишається 40px. text-base (16px)
     // завжди, щоб Safari не зумив сторінку при фокусі на дотику (вимагає
     // ≥16px), на десктопі це теж ≥14px з запасом.
-    if (variant === "compact") {
+    if (variant === "compact" || variant === "line") {
+      // "line" (компактні рядки режиму text) — та сама логіка touch/desktop,
+      // лише десктопна висота трохи більша (h-9=36px, не h-8=32px): тут
+      // немає сусіднього квадрата-картинки, що диктує мінімальний розмір,
+      // тож можна лишити поле трохи вищим і легше читаним у рядку.
+      const desktopHeight = variant === "line" ? "sm:pointer-fine:h-9" : "sm:pointer-fine:h-8";
       return (
         <input
           type="number"
@@ -114,7 +139,7 @@ export function ChronologicalOrderExercise({
           disabled={!!result}
           placeholder="№"
           aria-label={label ? `Номер події ${label}` : "Номер події"}
-          className={`h-10 w-12 rounded border text-center text-base sm:pointer-fine:h-8 ${inputClass(itemId)}`}
+          className={`h-10 w-12 rounded border text-center text-base ${desktopHeight} ${inputClass(itemId)}`}
         />
       );
     }
@@ -207,19 +232,33 @@ export function ChronologicalOrderExercise({
           })}
         </div>
       ) : (
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
-          {config.items.map((item, i) => (
-            <div key={item.id} className={`flex items-start gap-3 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
-              <span className={ITEM_LETTER_BADGE}>{indexToLabel(i)}</span>
-              <span className="flex-1 pt-1 text-left">{item.content}</span>
-              {numberInput(item.id, "square")}
-              {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
-                <span className={`w-16 text-right ${SCORE_LABEL_CLASS}`}>
-                  {pointsLabel(item.id, item.points)}
-                </span>
-              )}
-            </div>
-          ))}
+        // Компактні рядки: ОДИН контейнер-картка (рамка/тло/закруглення —
+        // те саме ANSWER_CARD_DEFAULT, що й раніше на кожній картці
+        // окремо), рядки всередині — без власних карток, розділені тонкою
+        // лінією (divide-y з явним кольором рамки — не border/currentColor,
+        // щоб уникнути відомого Tailwind v4 бага). Висота рядка — за
+        // вмістом (py-2 px-2.5, без фіксованої min-height), тож довге
+        // (дворядкове) речення просто займає трохи більше місця, а не
+        // обрізається.
+        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
+          {config.items.map((item, i) => {
+            const label = indexToLabel(i);
+            return (
+              <div
+                key={item.id}
+                className={`flex items-center gap-2.5 px-2.5 py-2 transition-colors ${rowStateClass(item.id)}`}
+              >
+                <span className={ITEM_LETTER_BADGE_TEXT}>{label}</span>
+                <span className="min-w-0 flex-1 text-left leading-snug">{item.content}</span>
+                {numberInput(item.id, "line", label)}
+                {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
+                  <span className={`flex-none text-right ${SCORE_LABEL_CLASS}`}>
+                    {pointsLabel(item.id, item.points)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
