@@ -9,6 +9,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
+import { HintBulb } from "./hint-bulb";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -49,6 +50,16 @@ export function FillBlankExercise({
   // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
   // однакове слово, якщо вчитель вписав його двічі.
   const [crossedOut, setCrossedOut] = useState<Set<number>>(new Set());
+  // Підказка-переклад (лампочка біля пропуску, незалежна від applyHint/
+  // hintedBlanks вище — ОКРЕМИЙ стан, щоб не зачепити "перша літера": той
+  // стан очищується в updateAnswer на кожній зміні поля, а "використано"
+  // для перекладу має лишатись НАЗАВЖДИ з першого показу). translationHints
+  // — монотонний (для балів, grade.ts), visibleTranslations — перемикається
+  // кожним кліком (показати/сховати сірий текст), об'єднуються лише в
+  // payload submit().
+  const [translationHints, setTranslationHints] = useState<Set<number>>(new Set());
+  const [visibleTranslations, setVisibleTranslations] = useState<Set<number>>(new Set());
+  const hints = config.hints ?? [];
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
@@ -97,6 +108,16 @@ export function FillBlankExercise({
     } finally {
       setHintPending(false);
     }
+  }
+
+  function toggleTranslationHint(i: number) {
+    setTranslationHints((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
+    setVisibleTranslations((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
   }
 
   function toggleCrossedOut(i: number) {
@@ -201,9 +222,17 @@ export function FillBlankExercise({
                   onFocus={() => diacritics.onFocus(String(i))}
                   onBlur={diacritics.onBlur}
                   disabled={!!result}
-                  className={`mx-1 w-28 rounded border px-2 py-0.5 text-base ${
-                    hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
-                  } ${
+                  // placeholder — лише коли поле ще порожнє (нативно зникає,
+                  // щойно студентка почне вводити, без додаткової логіки);
+                  // title — повний переклад, навіть якщо truncate обрізав
+                  // видиму частину (довгий переклад, вузьке поле).
+                  placeholder={
+                    !result && visibleTranslations.has(i) && !answers[i] ? hints[i] ?? undefined : undefined
+                  }
+                  title={hints[i] ?? undefined}
+                  className={`mx-1 truncate rounded border px-2 py-0.5 text-base placeholder:text-neutral-400 placeholder:not-italic dark:placeholder:text-neutral-500 ${
+                    visibleTranslations.has(i) && !answers[i] && hints[i] ? "w-40" : "w-28"
+                  } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
                     detail
                       ? detail.blanks[i]?.isCorrect
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
@@ -213,6 +242,29 @@ export function FillBlankExercise({
                         : "border-gray-300 dark:border-neutral-600"
                   }`}
                 />
+              )}
+              {/* Лампочка-переклад — ОКРЕМА від DiacriticsPopup (перша
+                  літера, popup відкритий лише при фокусі): завжди inline
+                  одразу після поля, лише де є hints[i]. !inline-flex —
+                  LEGEND_BULB_BADGE_SM задає "flex" (блоковий бокс), який у
+                  прозовому <p> ламав би перенос рядків; "!"-модифікатор
+                  Tailwind гарантовано перебиває це саме тут, не чіпаючи
+                  legend-tile-style.ts (та інші вправи, що й далі покладаються
+                  на "flex" усередині своїх flex/absolute контейнерів, де
+                  flex-vs-inline-flex різниці нема). */}
+              {i < blankCount && !result && !isDelf && hints[i] && (
+                <HintBulb
+                  size="sm"
+                  state={translationHints.has(i) ? "used" : "available"}
+                  label="Підказка: показати переклад слова"
+                  onClick={() => toggleTranslationHint(i)}
+                  className="!inline-flex align-middle"
+                />
+              )}
+              {i < blankCount && !result && visibleTranslations.has(i) && hints[i] && answers[i] && (
+                <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hints[i] ?? undefined}>
+                  ({hints[i]})
+                </span>
               )}
               {i < blankCount && detail?.blanks[i]?.hintUsed && (
                 <span className="text-xs italic text-amber-600 dark:text-amber-400">
@@ -259,7 +311,13 @@ export function FillBlankExercise({
           <button
             type="button"
             onClick={() => {
-              const answer: FillBlankAnswer = { answers, hintedBlanks: [...hintedBlanks] };
+              // Об'єднання двох незалежних "used"-наборів (перша літера +
+              // переклад) лише ТУТ, у payload — grade.ts бачить один спільний
+              // hintedBlanks, не знає про джерело підказки.
+              const answer: FillBlankAnswer = {
+                answers,
+                hintedBlanks: [...new Set([...hintedBlanks, ...translationHints])],
+              };
               submit(answer);
             }}
             disabled={pending}

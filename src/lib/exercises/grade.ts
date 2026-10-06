@@ -1,5 +1,6 @@
 import {
   BLANK_RE,
+  parseBlankMarker,
   getOpenAnswerQuestions,
   getReorderSequences,
   getDragDropSentences,
@@ -220,7 +221,7 @@ function blockPointsPossibleByWeights(totalPoints: number, weights: number[], in
 
 function gradeFillBlank(config: FillBlankConfig, answer: FillBlankAnswer): GradeResult {
   const blanksAcceptable = [...config.template.matchAll(BLANK_RE)].map((m) =>
-    m[1].split("|").map((s) => normalize(s))
+    parseBlankMarker(m[1]).answers.map((s) => normalize(s))
   );
   const studentAnswers = answer?.answers ?? [];
   const hintedSet = new Set(answer?.hintedBlanks ?? []);
@@ -710,11 +711,13 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
 // ні" — той самий принцип, що для reorder.
 function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeResult {
   const sentences = getDragDropSentences(config);
-  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, a.words]));
+  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, a]));
 
   const sentencesDetail: DragDropDetail["sentences"] = sentences.map((s) => {
-    const words = answerBySentence.get(s.id) ?? [];
-    const fbResult = gradeFillBlank({ template: s.template }, { answers: words, hintedBlanks: [] });
+    const a = answerBySentence.get(s.id);
+    const words = a?.words ?? [];
+    const hintedBlanks = a?.hintedWords ?? [];
+    const fbResult = gradeFillBlank({ template: s.template }, { answers: words, hintedBlanks });
     return {
       id: s.id,
       blanks: (fbResult.detail as FillBlankDetail).blanks,
@@ -727,11 +730,18 @@ function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeRes
   // POINTS — окремий вимір, свідомо іншої гранулярності за SCORE (див.
   // reorder): бали речення зараховуються, лише якщо ВОНО повністю
   // правильне (усі пропуски), тоді як score рахує кожен пропуск атомарно
-  // через усі речення разом.
-  const pointsPossible = sentencesDetail.reduce((sum, s) => sum + s.points, 0);
-  const pointsEarned = sentencesDetail
-    .filter((s) => s.blanks.every((b) => b.isCorrect))
-    .reduce((sum, s) => sum + s.points, 0);
+  // через усі речення разом. hintsReducePoints — "елемент" тут РЕЧЕННЯ (та
+  // сама гранулярність, що points, той самий принцип, що gradeTableFill
+  // рядків): якщо хоч один пропуск речення відкритий підказкою-перекладом,
+  // усе правильне речення дає 50%, а не лише той пропуск.
+  let pointsPossible = 0;
+  let pointsEarned = 0;
+  for (const s of sentencesDetail) {
+    pointsPossible += s.points;
+    if (!s.blanks.every((b) => b.isCorrect)) continue;
+    const hinted = !!config.hintsReducePoints && s.blanks.some((b) => b.hintUsed);
+    pointsEarned += hinted ? s.points * 0.5 : s.points;
+  }
 
   return {
     correct: correctCount === allBlanks.length && allBlanks.length > 0,

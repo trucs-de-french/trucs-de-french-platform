@@ -1068,7 +1068,8 @@ export function TaskConfigFields({
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>
               Текст із пропусками — правильні варіанти пишіть прямо у {"{{ }}"} через
-              &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma.
+              &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma. Підказка-переклад
+              (опційно): {"{{chien|chiot::собака}}"}.
             </label>
             <textarea
               ref={fillBlankTemplateRef}

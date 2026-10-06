@@ -91,6 +91,7 @@ export const DragDropFields = forwardRef<
         <label className={LABEL_TEXT}>
           Речення з пропусками — правильне слово пишіть прямо у {"{{ }}"}, напр. Je{" "}
           {"{{vais}}"} au cinéma (один варіант на пропуск, бо це фіксоване слово з банку).
+          Підказка-переклад (опційно): {"{{La vache::корова}}"}.
         </label>
         {sentences.map((s, si) => (
           <div key={s.id} className="flex items-start gap-2">
@@ -132,6 +133,16 @@ export const DragDropFields = forwardRef<
           + речення
         </button>
       </div>
+
+      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+        <input
+          type="checkbox"
+          name="drag_drop_hints_reduce_points"
+          value="true"
+          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+        />
+        Підказки зменшують бали (50% за елемент, де використана підказка)
+      </label>
 
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>

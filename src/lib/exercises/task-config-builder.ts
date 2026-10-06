@@ -251,6 +251,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         sentences: parseJsonField(formData.get("drag_drop_sentences")),
         bank: parseJsonField(formData.get("drag_drop_bank")),
+        hintsReducePoints: formData.get("drag_drop_hints_reduce_points") === "true",
       };
     }
     case "sort_columns": {

@@ -59,6 +59,21 @@ import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBloc
 
 export const BLANK_RE = /\{\{([^}]*)\}\}/g;
 
+const BLANK_HINT_MAX_LENGTH = 80;
+
+// Маркер {{...}} fill_blank/drag_drop: "chien|chiot" (як і раніше) або
+// "chien|chiot::собака" — переклад після "::" НІКОЛИ не потрапляє в answers
+// (сервер звіряє лише цю частину з відповіддю студентки, grade.ts). Без
+// "::" — повна зворотна сумісність, answers = raw.split("|") так само, як
+// завжди. Єдина точка розбору маркера — уся логіка "::" живе тут, а не в
+// кожному з місць, що раніше викликали raw.split("|") напряму.
+export function parseBlankMarker(raw: string): { answers: string[]; hint?: string } {
+  const sep = raw.indexOf("::");
+  if (sep === -1) return { answers: raw.split("|") };
+  const hint = raw.slice(sep + 2).trim().slice(0, BLANK_HINT_MAX_LENGTH);
+  return { answers: raw.slice(0, sep).split("|"), hint: hint || undefined };
+}
+
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -85,6 +100,10 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
     // порядок, що вписав вчитель), нема що приховувати.
     wordBank: config.wordBank,
     hintsReducePoints: !!config.hintsReducePoints,
+    // Переклад на пропуск (за індексом, той самий порядок, що й самі
+    // пропуски в template) — лише hint з parseBlankMarker, answers сюди
+    // НІКОЛИ не потрапляють.
+    hints: [...config.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).hint ?? null),
   };
 }
 
@@ -520,9 +539,13 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
       id: s.id,
       template: s.template.replace(BLANK_RE, "{{}}"),
       points: resolveDragDropPoints(s),
+      // Той самий принцип, що FillBlankPublic.hints — переклад на пропуск,
+      // answers з parseBlankMarker сюди не потрапляють.
+      hints: [...s.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).hint ?? null),
     })),
     // Один спільний банк на всю вправу (не по реченню) — свідоме рішення.
     bank: shuffle(config.bank),
+    hintsReducePoints: !!config.hintsReducePoints,
   };
 }
 

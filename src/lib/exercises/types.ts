@@ -470,6 +470,9 @@ export type DragDropConfig = {
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   sentences: DragDropSentence[];
   bank: string[]; // слова для банку (правильні +, за бажанням, дистрактори)
+  // Той самий принцип, що LetterGapsConfig.hintsReducePoints — "елемент"
+  // тут РЕЧЕННЯ (та сама гранулярність, що points).
+  hintsReducePoints?: boolean;
 };
 
 export type SortColumn = { id: string; label: string };
@@ -666,6 +669,10 @@ export type FillBlankPublic = {
   // (hint-explanation.tsx) — сама знижка рахується на сервері (grade.ts),
   // тут це суто інформаційний прапорець.
   hintsReducePoints: boolean;
+  // Переклад на пропуск (за індексом, той самий порядок, що й самі
+  // пропуски), з маркера {{відповідь::переклад}} — null, де "::" не було.
+  // Відповіді сюди НІКОЛИ не потрапляють (parseBlankMarker, sanitize.ts).
+  hints?: (string | null)[];
 };
 
 // chars — явна маска на рівні символів (null на прихованих позиціях, сам
@@ -898,8 +905,12 @@ export type ReorderPublic = {
 export type DragDropPublic = {
   instructions?: string;
   subInstructions?: string;
-  sentences: { id: string; template: string; points: number }[]; // з {{}} замість {{слово}}
+  // hints — той самий принцип, що FillBlankPublic.hints, тут за ЛОКАЛЬНИМ
+  // (у межах цього речення) індексом пропуску.
+  sentences: { id: string; template: string; points: number; hints?: (string | null)[] }[]; // з {{}} замість {{слово}}
   bank: string[]; // перемішано, один спільний
+  // Лише для тексту-пояснення — сама знижка рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 export type SortColumnsPublic = {
@@ -1053,7 +1064,9 @@ export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
 export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // порядок на кожну послідовність
-export type DragDropAnswer = { sentenceId: string; words: string[] }[]; // слова на кожен пропуск, за реченням
+// hintedWords — ЛОКАЛЬНІ (у межах цього речення) індекси пропусків, де
+// брали підказку-переклад — той самий принцип, що FillBlankAnswer.hintedBlanks.
+export type DragDropAnswer = { sentenceId: string; words: string[]; hintedWords?: number[] }[]; // слова на кожен пропуск, за реченням
 export type SortColumnsAnswer = { itemId: string; columnId: string }[];
 export type OpenAnswerAnswer = { questionId: string; value: string; hintUsed?: boolean }[];
 // cells — той самий плаский список, що раніше (тепер поле обʼєкта).
@@ -1189,7 +1202,8 @@ export type ReorderDetail = {
 export type DragDropDetail = {
   sentences: {
     id: string;
-    blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean }[];
+    // hintUsed — той самий сенс, що FillBlankDetail.blanks (підказка-переклад).
+    blanks: { studentAnswer: string; correctAnswers: string[]; isCorrect: boolean; hintUsed: boolean }[];
     points: number;
   }[];
 };

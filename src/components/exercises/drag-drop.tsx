@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { DragDropPublic, DragDropDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
+import { HintBulb } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
@@ -64,6 +65,25 @@ export function DragDropExercise({
     bankDropProps,
   } = useTilePlacement(totalBlanks, locked);
 
+  // Підказка-переклад — ГЛОБАЛЬНИЙ індекс пропуску (offset+i, той самий,
+  // що вже використовує placed/selected вище), не локальний за реченням:
+  // translationHints — монотонний (для балів, grade.ts, DragDropAnswer.
+  // hintedWords — переводиться в локальний індекс лише в payload submit()),
+  // visibleHints — перемикається кожним кліком лампочки (показати/сховати
+  // переклад), окремо від translationHints.
+  const [translationHints, setTranslationHints] = useState<Set<number>>(new Set());
+  const [visibleHints, setVisibleHints] = useState<Set<number>>(new Set());
+
+  function toggleTranslationHint(gi: number) {
+    setTranslationHints((prev) => (prev.has(gi) ? prev : new Set(prev).add(gi)));
+    setVisibleHints((prev) => {
+      const next = new Set(prev);
+      if (next.has(gi)) next.delete(gi);
+      else next.add(gi);
+      return next;
+    });
+  }
+
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
@@ -117,45 +137,73 @@ export function DragDropExercise({
                 </p>
               )}
               <p className="leading-[2.6]">
-                {segments.map((seg, i) => (
-                  <span key={i}>
-                    {seg}
-                    {i < blankCount && (
-                      <button
-                        type="button"
-                        disabled={locked}
-                        onClick={() => clickSlot(offset + i)}
-                        {...slotDragProps(offset + i)}
-                        {...slotDropProps(offset + i)}
-                        aria-pressed={selected !== null && placed[offset + i] === selected}
-                        className={`mx-1 inline-flex min-h-11 min-w-[5.5rem] max-w-full select-none items-center justify-center whitespace-normal break-words px-3 py-1.5 align-middle text-base sm:min-w-[6.5rem] ${
-                          usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
-                        } ${slotClass(
-                          sentDetail
-                            ? sentDetail.blanks[i]?.isCorrect
-                              ? "correct"
-                              : "incorrect"
-                            : hoveredSlot === offset + i
-                              ? "hover"
-                              : placed[offset + i] !== null
-                                ? "filled"
-                                : "empty",
-                          {
-                            rounded: "lg",
-                            emptyBg: "subtle",
-                            selectableHint: selected !== null && placed[offset + i] === null,
-                          }
-                        )} ${
-                          selected !== null && placed[offset + i] === selected
-                            ? "ring-2 ring-black dark:ring-white"
-                            : ""
-                        }`}
-                      >
-                        {placed[offset + i] !== null ? config.bank[placed[offset + i] as number] : ""}
-                      </button>
-                    )}
-                  </span>
-                ))}
+                {segments.map((seg, i) => {
+                  const gi = offset + i;
+                  const hint = s.hints?.[i];
+                  const slotFilled = placed[gi] !== null;
+                  return (
+                    <span key={i}>
+                      {seg}
+                      {i < blankCount && (
+                        <button
+                          type="button"
+                          disabled={locked}
+                          onClick={() => clickSlot(gi)}
+                          {...slotDragProps(gi)}
+                          {...slotDropProps(gi)}
+                          aria-pressed={selected !== null && placed[gi] === selected}
+                          title={!slotFilled && visibleHints.has(gi) ? hint ?? undefined : undefined}
+                          className={`mx-1 inline-flex min-h-11 min-w-[5.5rem] max-w-full select-none items-center justify-center whitespace-normal break-words px-3 py-1.5 align-middle text-base sm:min-w-[6.5rem] ${
+                            usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
+                          } ${slotClass(
+                            sentDetail
+                              ? sentDetail.blanks[i]?.isCorrect
+                                ? "correct"
+                                : "incorrect"
+                              : hoveredSlot === gi
+                                ? "hover"
+                                : slotFilled
+                                  ? "filled"
+                                  : "empty",
+                            {
+                              rounded: "lg",
+                              emptyBg: "subtle",
+                              selectableHint: selected !== null && placed[gi] === null,
+                            }
+                          )} ${selected !== null && placed[gi] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
+                        >
+                          {slotFilled ? (
+                            config.bank[placed[gi] as number]
+                          ) : visibleHints.has(gi) && hint ? (
+                            <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
+                          ) : (
+                            ""
+                          )}
+                        </button>
+                      )}
+                      {/* !inline-flex — той самий принцип, що fill-blank.tsx
+                          (LEGEND_BULB_BADGE_SM задає "flex", блоковий бокс,
+                          що зламав би перенос рядків у цьому прозовому <p>). */}
+                      {i < blankCount && !locked && hint && (
+                        <HintBulb
+                          size="sm"
+                          state={translationHints.has(gi) ? "used" : "available"}
+                          label="Підказка: показати переклад слова"
+                          onClick={() => toggleTranslationHint(gi)}
+                          className="!inline-flex align-middle"
+                        />
+                      )}
+                      {i < blankCount && !locked && visibleHints.has(gi) && hint && slotFilled && (
+                        <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
+                          ({hint})
+                        </span>
+                      )}
+                      {i < blankCount && sentDetail?.blanks[i]?.hintUsed && (
+                        <span className="text-xs italic text-amber-600 dark:text-amber-400">(з підказкою)</span>
+                      )}
+                    </span>
+                  );
+                })}
               </p>
 
               {sentDetail && (
@@ -186,6 +234,12 @@ export function DragDropExercise({
                     const p = placed[offsets[si] + i];
                     return p !== null ? config.bank[p] : "";
                   }),
+                  // Локальний (у межах цього речення) індекс — переводимо з
+                  // глобального translationHints тут, у payload, той самий
+                  // принцип, що fill-blank.tsx.
+                  hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
+                    translationHints.has(offsets[si] + i)
+                  ),
                 }))
               )
             }
