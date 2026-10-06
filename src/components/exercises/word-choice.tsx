@@ -170,11 +170,22 @@ export function WordChoiceExercise({
           const sentenceDetail = detail?.sentences.find((d) => d.id === s.id);
           const [before, after] = s.sentence.split("{{}}");
           return (
-            <p key={s.id} className="leading-8">
+            // leading-[2.75rem] — єдиний nominal line-height для КОЖНОГО
+            // фізичного рядка речення (з чипом і без), не лише середнє:
+            // браузер рахує висоту кожного рядка окремо як максимум з
+            // nominal line-height і висоти найвищого inline-вмісту. Чип
+            // (ANSWER_CARD_INLINE: padding+border) із успадкованим
+            // line-height давав БІЛЬШУ за nominal висоту саме для рядків
+            // із чипом — звідси нерівність. Тому на чипі нижче leading-6
+            // повертає йому звичний (не успадкований 44px) рядок, його
+            // повна висота (~30px) лишається МЕНШОЮ за nominal 44px — і
+            // тоді висота КОЖНОГО рядка абзацу (з чипом і без) дорівнює
+            // рівно nominal 44px, без винятків.
+            <p key={s.id} className="leading-[2.75rem]">
               <span className="mr-1 text-neutral-400 dark:text-neutral-500">
                 {String.fromCharCode(97 + si)}.
               </span>
-              {before}
+              {before.trimEnd()}
               {s.options.map((o, oi) => (
                 <span key={o.id}>
                   <button
@@ -185,7 +196,19 @@ export function WordChoiceExercise({
                         : toggleCrossedOut(s.id, o.id)
                     }
                     disabled={locked}
-                    className={`mx-0.5 inline-flex items-center gap-1 align-middle disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
+                    // relative + before: невидима зона дотику до межі
+                    // рядка (44px), без зміни видимого розміру чипа —
+                    // inset-y підібраний так, щоб psuedo-елемент рівно
+                    // торкався межі свого рядка (leading-[2.75rem]), не
+                    // перекриваючи сусідній (рядки самі по собі не
+                    // перекриваються — border-box їхньої висоти
+                    // nominal). mx-1 — ОДИН спільний відступ для
+                    // "слово↔чип", "чип↔риска↔чип" і "чип↔крапка": gap
+                    // тепер завжди задає лише цей margin, а не випадковий
+                    // пробіл із тексту речення (прибраний через trim) —
+                    // тож апостроф ("de l'" без пробілу) і звичне слово
+                    // (із пробілом, обрізаним) дають однаковий зазор.
+                    className={`relative mx-1 inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
                   >
                     {!sentenceDetail &&
                       config.mode === "cross_out" &&
@@ -193,11 +216,11 @@ export function WordChoiceExercise({
                     {o.text}
                   </button>
                   {oi < s.options.length - 1 && (
-                    <span className="text-neutral-400 dark:text-neutral-500"> / </span>
+                    <span className="text-neutral-400 dark:text-neutral-500">/</span>
                   )}
                 </span>
               ))}
-              {after ?? ""}
+              {(after ?? "").trimStart()}
               {multiHint(s)}
             </p>
           );
