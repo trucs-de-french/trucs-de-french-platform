@@ -297,6 +297,7 @@ function gradeLetterGaps(config: LetterGapsConfig, answer: LetterGapsAnswer): Gr
     detail: { words },
     pointsEarned: pointsWithHints(points, scopedWords, !!config.hintsReducePoints),
     pointsPossible: points,
+    totalPointsPossible: totalPoints,
   };
 }
 
@@ -343,6 +344,7 @@ function gradeLetterRearrangement(
     detail: { words },
     pointsEarned: pointsWithHints(points, scopedWords, !!config.hintsReducePoints),
     pointsPossible: points,
+    totalPointsPossible: totalPoints,
   };
 }
 
@@ -489,6 +491,7 @@ function gradeWordSearch(rawConfig: WordSearchConfig, answer: WordSearchAnswer):
       !!config.hintsReducePoints
     ),
     pointsPossible: points,
+    totalPointsPossible: totalPoints,
   };
 }
 
@@ -537,6 +540,7 @@ function gradeCrossword(rawConfig: CrosswordConfig, answer: CrosswordAnswer): Gr
     detail: { words, blockIndex },
     pointsEarned: pointsWithHints(points, words, !!config.hintsReducePoints),
     pointsPossible: points,
+    totalPointsPossible: totalPoints,
   };
 }
 
@@ -616,6 +620,10 @@ function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeRes
   }));
   const pointsPossible = pairPoints.reduce((sum, p) => sum + p.points, 0);
   const pointsEarned = pairPoints.filter((p) => p.isCorrect).reduce((sum, p) => sum + p.points, 0);
+  // totalPointsPossible — на ВСІХ парах вправи (не лише completePairs у
+  // скоупі цього блоку, matching.tsx submitBlock) — знаменник для
+  // progress.ts/record_block_task_attempt (ЕТАП прогрес/блоки).
+  const totalPointsPossible = getMatchingPairs(config).reduce((sum, p) => sum + resolveMatchingPoints(p), 0);
 
   return {
     correct: correctCount === completePairs.length && studentPairs.length === completePairs.length,
@@ -623,6 +631,7 @@ function gradeMatching(config: MatchingConfig, answer: MatchingAnswer): GradeRes
     detail: { correctPairs: completePairs, studentPairs, pairPoints },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 
@@ -869,12 +878,20 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
     pointsEarned += rowHinted ? rowPoints * 0.5 : rowPoints;
   }
 
+  // totalPointsPossible — на ВСІХ рядках вправи з хоч однією прихованою
+  // клітинкою (не лише answeredRowIds-скоупі цього блоку) — знаменник для
+  // progress.ts/record_block_task_attempt.
+  const totalPointsPossible = getTableFillRows(config)
+    .filter((row) => row.leftHidden || row.rightHidden)
+    .reduce((sum, row) => sum + resolveTableFillPoints(row), 0);
+
   return {
     correct: correctCount === blanks.length && blanks.length > 0,
     score: percentage(correctCount, blanks.length),
     detail: { blanks },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 

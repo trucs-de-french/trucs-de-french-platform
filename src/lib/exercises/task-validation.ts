@@ -22,7 +22,7 @@
 //   побачить дефолтну; рекомендована, не жорстка, межа кількості слів):
 //   тихий сірий текст у формі, НІКОЛИ не впливає на підтвердження чи ⚠.
 import { sanitizeWordForGrid } from "./grid-word";
-import { normalizeWordSearchConfig, normalizeCrosswordConfig, BLOCK_MAX_COLS, BLOCK_MAX_ROWS } from "./grid-blocks";
+import { normalizeWordSearchConfig, normalizeCrosswordConfig, wordKeyOf, BLOCK_MAX_COLS, BLOCK_MAX_ROWS } from "./grid-blocks";
 import { placementCells } from "./word-search-grid";
 import type { WordSearchConfig, CrosswordConfig, CrosswordPlacement } from "./types";
 
@@ -130,6 +130,35 @@ function pushBlockCompositionProblems(
 
 function isBlank(value: unknown): boolean {
   return typeof value !== "string" || value.trim().length === 0;
+}
+
+// P2 — жорстка перевірка ПЕРЕД збереженням (на відміну від решти цього
+// файлу, що лише попереджає): не дозволяє зберегти word_search/crossword,
+// якщо жодного блоку з готовою сіткою нема, або якщо хоч одне слово не
+// входить у wordKeys ЖОДНОГО блоку ("Нерозподілені" у конструкторі) —
+// звірка завжди за 0/1/N блоків (на відміну від pushBlockCompositionProblems
+// вище, яка звіряє склад лише за ≥2 блоків — тотожна поведінка для
+// одноблочних вправ там історично не потрібна була для ⚠-попередження, але
+// для жорсткого блокування збереження прогалина неприпустима). Викликається
+// з admin/tasks/actions.ts (createTask/updateTask) ДО запису в БД.
+export function blocksNotReadyError(type: string, config: Config): string | null {
+  if (type !== "word_search" && type !== "crossword") return null;
+
+  const words = asArray(config.words) as { word?: string }[];
+  const nonEmptyWords = words.filter((w) => !isBlank(w.word));
+  if (nonEmptyWords.length === 0) return null; // "Немає жодного слова" — окрема, вже наявна перевірка
+
+  const blocks = asArray(config.blocks) as { wordKeys?: unknown }[];
+  if (blocks.length === 0) {
+    return "Сітку ще не згенеровано — розподіліть слова по блоках і згенеруйте сітку.";
+  }
+
+  const currentWords = nonEmptyWords.map((w) => wordKeyOf(w.word as string));
+  const allBlockKeys = blocks.flatMap((b) => (Array.isArray(b.wordKeys) ? (b.wordKeys as string[]) : []));
+  const unassigned = multisetExtra(currentWords, allBlockKeys);
+  return unassigned.length > 0
+    ? "Є нерозподілені слова — додайте їх у блок або розподіліть автоматично перед збереженням."
+    : null;
 }
 
 // М'яке зауваження — порожня інструкція не заважає вправі працювати

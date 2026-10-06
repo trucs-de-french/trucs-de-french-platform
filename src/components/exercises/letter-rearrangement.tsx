@@ -214,7 +214,7 @@ export function LetterRearrangementExercise({
       const res = await fetch("/api/exercises/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId, answer }),
+        body: JSON.stringify({ taskId, answer, blockIndex }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

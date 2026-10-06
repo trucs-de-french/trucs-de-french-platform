@@ -1285,23 +1285,30 @@ export type KaraokeDetail = {
 // points — лише для показу студенту. Спільні на весь union, щоб додавання
 // підтримки балів для наступного типу не вимагало знову чіпати цей тип —
 // поки що їх заповнює лише gradeTrueFalse (пілот), решта лишають undefined.
+// totalPointsPossible — ЗАВЖДИ повний pointsPossible вправи (а не блоку/
+// скоупу відповіді, на відміну від pointsPossible вище) — лише для типів із
+// підтримкою поблочної перевірки (word_search/crossword/matching/
+// table_fill/letter_gaps/letter_rearrangement, grade.ts), де сервер мусить
+// знати знаменник ВСІЄЇ вправи, щоб коректно підсумувати прогрес кількох
+// окремих запитів на блок (progress.ts/record_block_task_attempt). undefined
+// для решти типів — сигнал route.ts, що тип не поблочний.
 export type GradeResult =
-  | { correct: boolean; score: number; detail: FillBlankDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: LetterGapsDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: LetterRearrangementDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: WordChoiceDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: WordSearchDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: CrosswordDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ReorderDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: DragDropDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: SortColumnsDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: OpenAnswerDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: ChronologicalOrderDetail; pointsEarned?: number; pointsPossible?: number }
-  | { correct: boolean; score: number; detail: KaraokeDetail; pointsEarned?: number; pointsPossible?: number };
+  | { correct: boolean; score: number; detail: FillBlankDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: LetterGapsDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: LetterRearrangementDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: MultipleChoiceDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: WordChoiceDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: WordSearchDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: CrosswordDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: TrueFalseDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: MatchingDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: ListeningDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: ReorderDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: DragDropDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: SortColumnsDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: OpenAnswerDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: TableFillDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: ImageMatchDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: CheckboxGridDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: ChronologicalOrderDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number }
+  | { correct: boolean; score: number; detail: KaraokeDetail; pointsEarned?: number; pointsPossible?: number; totalPointsPossible?: number };

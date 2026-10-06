@@ -16,6 +16,7 @@ import {
 } from "@/lib/exercises/task-config-builder";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import { distributeWords, formatBlockWarnings, type DistributeMode } from "@/lib/exercises/build-blocks-config";
+import { blocksNotReadyError } from "@/lib/exercises/task-validation";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
 import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -167,6 +168,27 @@ export async function createTask(formData: FormData) {
   const taskGroupId = (formData.get("task_group_id") as string) || null;
   const type = formData.get("type") as string;
   const config = buildTaskConfig(type, formData);
+
+  // P2 — жорсткий блок збереження (не лише ⚠, на відміну від решти
+  // task-validation.ts): без цього вчителька могла зберегти філворд/
+  // кросворд без жодної сітки чи з "Нерозподіленими" словами, і студент
+  // бачив порожню вправу без жодного пояснення.
+  const blocksError = blocksNotReadyError(type, config);
+  if (blocksError) {
+    const anchorBack = (formData.get("anchor") as string) || "";
+    const backParams = new URLSearchParams();
+    if (sceneId) backParams.set("sceneId", sceneId);
+    if (materialId) backParams.set("materialId", materialId);
+    if (taskGroupId) backParams.set("taskGroupId", taskGroupId);
+    const anchorDelfSection = (formData.get("delf_section") as string) || "";
+    const anchorDelfTestNumber = (formData.get("delf_test_number") as string) || "";
+    if (anchorDelfSection) backParams.set("delfSection", anchorDelfSection);
+    if (anchorDelfTestNumber) backParams.set("delfTestNumber", anchorDelfTestNumber);
+    if (anchorBack) backParams.set("anchor", anchorBack);
+    backParams.set("error", blocksError);
+    redirect(`/admin/courses/${productId}/tasks/new?${backParams.toString()}`);
+  }
+
   const title = resolveTaskTitle((formData.get("title") as string) ?? "", type, config);
   const delfSection = (formData.get("delf_section") as string) || null;
   const delfTestNumber = formData.get("delf_test_number")
@@ -402,6 +424,10 @@ export async function updateTask(
 
   const type = formData.get("type") as string;
   const config = buildTaskConfig(type, formData);
+
+  // P2 — той самий жорсткий блок, що createTask вище.
+  const blocksError = blocksNotReadyError(type, config);
+  if (blocksError) return { ok: false, error: blocksError };
 
   // Стара назва/тип/config — щоб відрізнити "вчителька лишила автоназву
   // незмінною" (перегенерувати з нового config) від "вчителька вписала

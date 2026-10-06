@@ -64,7 +64,7 @@ export const OPTIMIZE_TIME_BUDGET_MS = 1500;
 // Той самий ключ, що вже використовують placements/gradeWordSearch/
 // gradeCrossword (sanitizeWordForGrid+upper) — НЕ сире w.word (легенда
 // лишається оригіналом з апострофом/дефісом/пробілом у config.words).
-function wordKeyOf(word: string): string {
+export function wordKeyOf(word: string): string {
   return sanitizeWordForGrid(word).toUpperCase();
 }
 

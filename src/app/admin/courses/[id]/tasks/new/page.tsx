@@ -23,10 +23,11 @@ export default async function NewTaskPage({
     delfSection?: string;
     delfTestNumber?: string;
     anchor?: string;
+    error?: string;
   }>;
 }) {
   const { id: productId } = await params;
-  const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber, anchor } = await searchParams;
+  const { sceneId, materialId, taskGroupId, delfSection, delfTestNumber, anchor, error } = await searchParams;
 
   const supabase = await createClient();
 
@@ -125,6 +126,12 @@ export default async function NewTaskPage({
         {backLabel}
       </Link>
       <h1 className={`mt-2 ${ADMIN_PAGE_TITLE}`}>Нове завдання</h1>
+
+      {error && (
+        <p className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+          {error}
+        </p>
+      )}
 
       <TaskCreateForm
         action={createTask}
