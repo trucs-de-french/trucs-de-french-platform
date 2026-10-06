@@ -117,12 +117,22 @@ export function ChronologicalOrderExercise({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {config.items.map((item, i) => (
             <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
-              <div className="relative">
+              {/* self-stretch — картка (items-center) інакше не дає дочірньому
+                  div визначеної ширини: без неї w-full картинки не може
+                  розв'язатись (resolve) проти "auto" батька і браузер falls
+                  back на ПРИРОДНУ ширину фото (звідси індик/курка різної
+                  ширини при однаковій h-24). self-stretch розтягує div на
+                  всю ширину картки (визначена гридом), aspect-square тоді
+                  рахує висоту від цієї вже певної ширини — однаковий квадрат
+                  незалежно від пропорцій фото; max-w-48+mx-auto — лише
+                  обмеження й центрування на десктопі (на вузькій мобільній
+                  картці max-w-48 не спрацьовує, вигляд як був). */}
+              <div className="relative mx-auto aspect-square w-full max-w-48 self-stretch">
                 <ImageZoomBadge onOpen={() => setLightboxSrc(item.content)} />
                 <ImageOrPlaceholder
                   src={item.content}
                   alt=""
-                  className="h-24 w-full rounded-md object-cover"
+                  className="h-full w-full rounded-md object-cover"
                   useFocus
                 />
                 <span className={`absolute left-1 top-1 ${ITEM_LETTER_BADGE}`}>
