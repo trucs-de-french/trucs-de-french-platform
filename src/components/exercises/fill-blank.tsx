@@ -172,7 +172,7 @@ export function FillBlankExercise({
                 type="button"
                 onClick={() => toggleCrossedOut(i)}
                 aria-pressed={crossedOut.has(i)}
-                className={`flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-3 py-1 text-base dark:border-neutral-600 ${
+                className={`flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-3 py-1 text-base shadow-sm dark:border-neutral-600 ${
                   crossedOut.has(i)
                     ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                     : "hover:bg-neutral-50 dark:hover:bg-neutral-800"

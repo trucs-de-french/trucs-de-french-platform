@@ -11,22 +11,34 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 // лишені ПОВНІСТЮ ЛІТЕРАЛЬНИМИ під кожен тип (а не зібрані інтерполяцією
 // рядка) — Tailwind JIT шукає клас як текст у вихідниках, динамічний
 // `py-${x}`/`max-h-[${x}vh]` він не згенерує.
+//
+// px-1 + -mx-1: чипи пулу мають тінь (shadow-sm, див. bankTileClass), а пул —
+// overflow-x-auto/overflow-y-auto, що обрізає тінь по краю скрол-області
+// без внутрішнього відступу. px-1 дає тіні місце всередині скрол-контейнера,
+// -mx-1 зсуває сам контейнер назад так, щоб видимий лівий/правий край пулу
+// лишився на тому самому місці, що й до змін (сусідні елементи — текст
+// речень/карток — не зсуваються). Вертикальний padding так само зміщено
+// (менше згори, більше знизу) замість збільшення — сумарна висота py не
+// зросла, пул не став помітно вищим.
 export type StickyPoolVariant = "image-match" | "fill-blank" | "drag-drop";
 
 export function stickyPoolClass(variant: StickyPoolVariant): string {
   switch (variant) {
     case "image-match":
-      return "sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-1.5 pt-0.5 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "fill-blank":
-      return "sticky top-0 z-10 flex flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "drag-drop":
-      return "sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
   }
 }
 
 export function bankTileClass({ selected, used }: { selected: boolean; used: boolean }) {
+  // shadow-sm — та сама тінь-еталон, що на плитках letter_rearrangement
+  // (sortable-tile-row.tsx) і letter_gaps.tsx; у base (не в кожній гілці
+  // нижче), тож вона та сама в усіх станах — вибраний/використаний/звичайний.
   const base =
-    "cursor-grab select-none rounded-md border px-3 py-1.5 text-base active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";
+    "cursor-grab select-none rounded-md border px-3 py-1.5 text-base shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";
   if (used) return `${base} opacity-40`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
   return `${base} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
