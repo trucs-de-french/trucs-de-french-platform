@@ -599,7 +599,7 @@ function WordSearchBlockView({
         <div className="grid-zoom-wrap w-full min-w-0">
           <div
             ref={scrollRef}
-            className="w-full touch-none select-none overflow-x-auto shadow-md"
+            className="w-full touch-none select-none overflow-x-auto"
             onPointerDown={handleTouchPointerDown}
             onPointerMove={handleTouchPointerMove}
             onPointerUp={handleTouchPointerUp}
