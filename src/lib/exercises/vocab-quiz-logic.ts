@@ -9,6 +9,14 @@ export type VocabQuizQuestion = {
 // Менше — нема з чого взяти навіть один дистрактор.
 export const MIN_VOCAB_FOR_QUIZ = 2;
 
+// Деякі слова словника зберігають кілька форм через кому ("ramener,
+// Ramène") — у питанні показуємо лише першу, решта лишається в даних
+// (sanitize/grade/адмінка/імпорт) незмінною, це стосується ЛИШЕ рендеру.
+export function firstFormOnly(text: string): string {
+  const comma = text.indexOf(",");
+  return comma === -1 ? text : text.slice(0, comma).trim();
+}
+
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {

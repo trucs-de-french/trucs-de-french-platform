@@ -4,12 +4,24 @@ import { useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import {
   buildQuizQuestions,
+  firstFormOnly,
   MIN_VOCAB_FOR_QUIZ,
   type VocabQuizQuestion,
 } from "@/lib/exercises/vocab-quiz-logic";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+
+const LETTERS = ["A", "B", "C", "D"];
+
+// Бейдж літери узгоджений з кольором картки (зелена/червона), текст
+// завжди білий — ніколи чорний на кольоровому фоні. Повні рядки (не
+// доповнення до ITEM_LETTER_BADGE), щоб bg-brand і bg-green-600/bg-red-600
+// не конкурували в одному класі — порядок класів у className НЕ визначає
+// порядок у згенерованому Tailwind CSS.
+const BADGE_SHAPE = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white";
+const BADGE_CORRECT = `${BADGE_SHAPE} bg-green-600`;
+const BADGE_INCORRECT = `${BADGE_SHAPE} bg-red-600`;
 
 export function VocabQuizExercise({
   vocab,
@@ -64,6 +76,7 @@ export function VocabQuizExercise({
   }
 
   const question = questions[index];
+  const progressPercent = Math.max(2, ((index + 1) / questions.length) * 100);
 
   function choose(option: string) {
     if (selected) return;
@@ -81,14 +94,24 @@ export function VocabQuizExercise({
   return (
     <div className={EXERCISE_STACK}>
       <div>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Питання {index + 1} з {questions.length}
+        <div className="flex items-baseline justify-between">
+          <p className="font-heading text-xs text-neutral-500 dark:text-neutral-400">
+            Питання {index + 1} з {questions.length}
+          </p>
+        </div>
+        <div className="mt-2 h-1 rounded-full bg-gray-100 dark:bg-neutral-700">
+          <div
+            className="h-1 rounded-full bg-brand transition-all"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <p className="font-body mt-5 text-center text-2xl sm:text-3xl">
+          {firstFormOnly(question.word)}
         </p>
-        <p className="mt-1 text-lg font-medium">{question.word}</p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {question.options.map((option) => {
+      <div className="grid grid-cols-2 gap-2.5 max-[359px]:grid-cols-1">
+        {question.options.map((option, i) => {
           const isCorrect = option === question.correctTranslation;
           const isSelected = option === selected;
           const cls = !selected
@@ -98,15 +121,23 @@ export function VocabQuizExercise({
               : isSelected
                 ? "border-red-500 bg-red-50 dark:bg-red-950/30"
                 : `${ANSWER_CARD_DEFAULT} opacity-60`;
+          const badgeCls = !selected
+            ? ITEM_LETTER_BADGE
+            : isCorrect
+              ? BADGE_CORRECT
+              : isSelected
+                ? BADGE_INCORRECT
+                : ITEM_LETTER_BADGE;
           return (
             <button
               key={option}
               type="button"
               onClick={() => choose(option)}
               disabled={!!selected}
-              className={`${ANSWER_CARD_BASE} ${cls}`}
+              className={`${ANSWER_CARD_BASE} ${cls} flex h-full items-center gap-2.5`}
             >
-              {option}
+              <span className={badgeCls}>{LETTERS[i]}</span>
+              <span className="flex-1 text-left">{option}</span>
             </button>
           );
         })}
