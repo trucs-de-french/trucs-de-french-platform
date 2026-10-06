@@ -19,6 +19,12 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
+// Менший за ITEM_LETTER_BADGE (answer-card-style.ts) варіант — лише для
+// щільної сітки image/mixed нижче. ITEM_LETTER_BADGE лишається незмінним:
+// його ще використовують vocab-quiz.tsx і режим text цього ж компонента.
+const ITEM_LETTER_BADGE_SM =
+  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-medium text-white";
+
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
 // ChronologicalOrderPublic у types.ts). Після Z переходить на AA, AB... —
@@ -90,7 +96,28 @@ export function ChronologicalOrderExercise({
     submit(answer);
   }
 
-  function numberInput(itemId: string, variant: "wide" | "square" = "wide") {
+  function numberInput(itemId: string, variant: "wide" | "square" | "compact" = "wide", label?: string) {
+    // "compact" — лише щільна сітка image/mixed: h-10 (40px) за замовчуванням
+    // покриває і дотик, і вузький екран; sm:pointer-fine:h-8 (32px) звужує
+    // лише на реальному десктопі з мишкою (sm+ ширина ТА pointer:fine) —
+    // на touch-екрані будь-якої ширини лишається 40px. text-base (16px)
+    // завжди, щоб Safari не зумив сторінку при фокусі на дотику (вимагає
+    // ≥16px), на десктопі це теж ≥14px з запасом.
+    if (variant === "compact") {
+      return (
+        <input
+          type="number"
+          min={1}
+          max={config.items.length}
+          value={positions[itemId] ?? ""}
+          onChange={(e) => updatePosition(itemId, e.target.value)}
+          disabled={!!result}
+          placeholder="№"
+          aria-label={label ? `Номер події ${label}` : "Номер події"}
+          className={`h-10 w-12 rounded border text-center text-base sm:pointer-fine:h-8 ${inputClass(itemId)}`}
+        />
+      );
+    }
     const sizeClass = variant === "square" ? "h-11 w-11 px-1 text-center" : "w-16 px-2";
     return (
       <input
@@ -114,47 +141,59 @@ export function ChronologicalOrderExercise({
       />
 
       {config.mode === "image" || config.mode === "mixed" ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {config.items.map((item, i) => (
-            <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
-              {/* self-stretch — картка (items-center) інакше не дає дочірньому
-                  div визначеної ширини: без неї w-full картинки не може
-                  розв'язатись (resolve) проти "auto" батька і браузер falls
-                  back на ПРИРОДНУ ширину фото (звідси індик/курка різної
-                  ширини при однаковій h-24). self-stretch розтягує div на
-                  всю ширину картки (визначена гридом), aspect-square тоді
-                  рахує висоту від цієї вже певної ширини — однаковий квадрат
-                  незалежно від пропорцій фото; max-w-48+mx-auto — лише
-                  обмеження й центрування на десктопі (на вузькій мобільній
-                  картці max-w-48 не спрацьовує, вигляд як був). */}
-              <div className="relative mx-auto aspect-square w-full max-w-48 self-stretch">
-                <ImageZoomBadge onOpen={() => setLightboxSrc(item.content)} />
-                <ImageOrPlaceholder
-                  src={item.content}
-                  alt=""
-                  className="h-full w-full rounded-md object-cover"
-                  useFocus
-                />
-                <span className={`absolute left-1 top-1 ${ITEM_LETTER_BADGE}`}>
-                  {indexToLabel(i)}
-                </span>
+        // Щільна сітка: 3/4/5 колонок за брейкпоінтами, gap-2 — щоб 10+
+        // картинок вміщались на екран майже без прокрутки (попередня
+        // версія — 2/3 колонки з великим квадратом (до 12rem) — і 10
+        // елементів розтягувались на кілька екранів прокрутки).
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+          {config.items.map((item, i) => {
+            const label = indexToLabel(i);
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center shadow-sm transition-colors ${ANSWER_CARD_DEFAULT}`}
+              >
+                {/* self-stretch — картка (items-center) інакше не дає
+                    дочірньому div визначеної ширини: без неї w-full
+                    картинки не може розв'язатись (resolve) проти "auto"
+                    батька і браузер falls back на ПРИРОДНУ ширину фото.
+                    self-stretch розтягує div на всю ширину комірки
+                    (визначена гридом), aspect-square тоді рахує висоту
+                    від цієї вже певної ширини — однаковий квадрат
+                    незалежно від пропорцій фото; max-w-[6.5rem]+mx-auto —
+                    лише обмеження й центрування на широких колонках
+                    (5 на ряд на десктопі). */}
+                <div className="relative mx-auto aspect-square w-full max-w-[6.5rem] self-stretch">
+                  <ImageZoomBadge
+                    onOpen={() => setLightboxSrc(item.content)}
+                    boxClass="relative p-1 before:absolute before:-inset-2 before:content-['']"
+                    iconSize={11}
+                  />
+                  <ImageOrPlaceholder
+                    src={item.content}
+                    alt=""
+                    className="h-full w-full rounded-md object-cover"
+                    useFocus
+                  />
+                  <span className={`absolute left-1 top-1 ${ITEM_LETTER_BADGE_SM}`}>{label}</span>
+                </div>
+                {config.mode === "mixed" && (
+                  <p className="line-clamp-2 text-center text-xs font-medium" title={item.text}>
+                    {item.text}
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">n°</span>
+                  {numberInput(item.id, "compact", label)}
+                </div>
+                {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
+                  <p className={`text-center ${SCORE_LABEL_CLASS}`}>
+                    {pointsLabel(item.id, item.points)}
+                  </p>
+                ) : null}
               </div>
-              {config.mode === "mixed" && (
-                <p className="text-center text-sm font-medium">{item.text}</p>
-              )}
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Situation n°
-                </span>
-                {numberInput(item.id)}
-              </div>
-              {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
-                <p className={`text-center ${SCORE_LABEL_CLASS}`}>
-                  {pointsLabel(item.id, item.points)}
-                </p>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
