@@ -18,6 +18,17 @@
 // цю мапу; ai_examiner — ще не має власної форми.
 export type InstructionDefault = { instruction: string; subInstruction: string };
 
+// fill_blank з банком слів (config.wordBank) — окремий підзаголовок, лише
+// для студентського компонента (fill-blank.tsx), коли вчителька сама не
+// задала subInstructions: пояснює, що слова треба ВПИСУВАТИ самій (банк —
+// довідковий список, не drag&drop), і що використані можна викреслювати.
+// DEFAULT_INSTRUCTIONS.fill_blank.subInstruction нижче лишається
+// незмінним — його й далі підставляють адмінський автозаповнювач
+// (task-config-fields.tsx) і масове створення з вокабуляру (actions.ts),
+// обидва ДО того, як відомо, чи буде банк слів у конкретній задачі.
+export const FILL_BLANK_WORD_BANK_SUBINSTRUCTION =
+  "Впишіть слова в пропуски самостійно. Використані викреслюйте зі списку.";
+
 export const DEFAULT_INSTRUCTIONS: Record<string, InstructionDefault> = {
   fill_blank: { instruction: "Complétez les phrases.", subInstruction: "Впишіть пропущені слова." },
   drag_drop: { instruction: "Glissez les mots à la bonne place.", subInstruction: "Перетягніть слова в пропуски." },

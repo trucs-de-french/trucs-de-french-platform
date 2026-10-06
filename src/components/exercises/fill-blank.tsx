@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -52,6 +52,9 @@ export function FillBlankExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
   const hasWordBank = !!config.wordBank && config.wordBank.length > 0;
+  const defaultSubInstruction = hasWordBank
+    ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION
+    : DEFAULT_INSTRUCTIONS.fill_blank.subInstruction;
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -130,11 +133,11 @@ export function FillBlankExercise({
             </span>
           )}
         </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.fill_blank.subInstruction) && (
+        {(config.subInstructions ?? defaultSubInstruction) && (
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.fill_blank.subInstruction),
+              __html: sanitizeInstructionsHtml(config.subInstructions ?? defaultSubInstruction),
             }}
           />
         )}
@@ -153,13 +156,22 @@ export function FillBlankExercise({
           реченням, щоб студент бачив підказки одразу. */}
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.wordBank && config.wordBank.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          // Липкий пул: той самий підхід, що image-match.tsx (58e5ac6) — на
+          // мобільних один рядок із горизонтальною прокруткою (менше висоти
+          // над текстом), від sm: перенос рядків з max-h-[25vh] і
+          // вертикальною прокруткою всередині. Непрозорий фон і border-b —
+          // той самий тон/рамка, що в EXERCISE_BLOCK_CLASS, щоб текст під
+          // час скролу не просвічував крізь пул. На відміну від image-match
+          // пул НЕ схлопується — слова лишаються в банку (лише викреслені
+          // візуально), кількість елементів не змінюється.
+          <div className="sticky top-0 z-10 flex flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900">
             {config.wordBank.map((word, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => toggleCrossedOut(i)}
-                className={`rounded-full border border-gray-300 px-3 py-1 text-base dark:border-neutral-600 ${
+                aria-pressed={crossedOut.has(i)}
+                className={`flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-3 py-1 text-base dark:border-neutral-600 ${
                   crossedOut.has(i)
                     ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                     : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -184,6 +196,8 @@ export function FillBlankExercise({
                   onBlur={diacritics.onBlur}
                   disabled={!!result}
                   className={`mx-1 w-28 rounded border px-2 py-0.5 text-base ${
+                    hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
+                  } ${
                     detail
                       ? detail.blanks[i]?.isCorrect
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
