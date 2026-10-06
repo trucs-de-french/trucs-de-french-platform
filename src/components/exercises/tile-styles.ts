@@ -3,6 +3,27 @@
 
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 
+// Спільний липкий пул слів (image_match 58e5ac6, fill_blank a240340,
+// drag_drop тут) — непрозорий фон/рамка в тон EXERCISE_BLOCK_CLASS, на
+// мобільних один рядок із горизонтальною прокруткою (менше висоти над
+// текстом/картками), від sm: перенос рядків з обмеженою max-height і
+// вертикальною прокруткою всередині. Значення max-height/padding/min-height
+// лишені ПОВНІСТЮ ЛІТЕРАЛЬНИМИ під кожен тип (а не зібрані інтерполяцією
+// рядка) — Tailwind JIT шукає клас як текст у вихідниках, динамічний
+// `py-${x}`/`max-h-[${x}vh]` він не згенерує.
+export type StickyPoolVariant = "image-match" | "fill-blank" | "drag-drop";
+
+export function stickyPoolClass(variant: StickyPoolVariant): string {
+  switch (variant) {
+    case "image-match":
+      return "sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+    case "fill-blank":
+      return "sticky top-0 z-10 flex flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+    case "drag-drop":
+      return "sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+  }
+}
+
 export function bankTileClass({ selected, used }: { selected: boolean; used: boolean }) {
   const base =
     "cursor-grab select-none rounded-md border px-3 py-1.5 text-base active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";

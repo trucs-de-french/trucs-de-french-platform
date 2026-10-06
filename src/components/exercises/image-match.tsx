@@ -6,7 +6,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
-import { bankTileClass, slotClass } from "./tile-styles";
+import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
@@ -66,7 +66,7 @@ export function ImageMatchExercise({
         // самий тон/рамка, що в EXERCISE_BLOCK_CLASS, щоб не було видно
         // картки, що проїжджають крізь пул під час скролу.
         <div
-          className="sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900"
+          className={stickyPoolClass("image-match")}
           {...bankDropProps()}
         >
           {config.bank.map((name, bi) => (

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import type { DragDropPublic, DragDropDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useTilePlacement } from "./use-tile-placement";
-import { bankTileClass, slotClass } from "./tile-styles";
+import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
@@ -71,6 +71,31 @@ export function DragDropExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
       />
 
+      {usedBankIndices.size < config.bank.length ? (
+        // Липкий пул над реченнями (спільний стиль tile-styles.ts —
+        // stickyPoolClass): той самий принцип "видимий під час скролу"/
+        // схлопування, що image_match, тут — бо слова, як і там,
+        // "розставляються" й зникають з пулу (на відміну від fill_blank,
+        // де банк лише довідковий і завжди повний).
+        <div className={stickyPoolClass("drag-drop")} {...bankDropProps()}>
+          {config.bank.map((word, bi) => (
+            <button
+              key={bi}
+              type="button"
+              {...bankDragProps(bi)}
+              onClick={() => clickBank(bi)}
+              disabled={locked || usedBankIndices.has(bi)}
+              aria-pressed={selected === bi}
+              className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
+            >
+              {word}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+      )}
+
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.sentences.map((s, si) => {
           const segments = sentenceSegments[si];
@@ -83,7 +108,7 @@ export function DragDropExercise({
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
           return (
-            <div key={s.id}>
+            <div key={s.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-neutral-800">
               {!hidePoints && (pointsVisible || sentDetail) && (
                 <p className={`mb-1 ${SCORE_LABEL_CLASS}`}>
                   {sentDetail
@@ -91,16 +116,21 @@ export function DragDropExercise({
                     : `${s.points} ${pluralizePoints(s.points)}`}
                 </p>
               )}
-              <p className="leading-8">
+              <p className="leading-[2.6]">
                 {segments.map((seg, i) => (
                   <span key={i}>
                     {seg}
                     {i < blankCount && (
-                      <span
+                      <button
+                        type="button"
+                        disabled={locked}
                         onClick={() => clickSlot(offset + i)}
                         {...slotDragProps(offset + i)}
                         {...slotDropProps(offset + i)}
-                        className={`mx-1 inline-flex min-h-10 min-w-20 select-none items-center justify-center px-3 py-1.5 align-middle text-base ${slotClass(
+                        aria-pressed={selected !== null && placed[offset + i] === selected}
+                        className={`mx-1 inline-flex min-h-11 min-w-[5.5rem] max-w-full select-none items-center justify-center whitespace-normal break-words px-3 py-1.5 align-middle text-base sm:min-w-[6.5rem] ${
+                          usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
+                        } ${slotClass(
                           sentDetail
                             ? sentDetail.blanks[i]?.isCorrect
                               ? "correct"
@@ -109,7 +139,12 @@ export function DragDropExercise({
                               ? "hover"
                               : placed[offset + i] !== null
                                 ? "filled"
-                                : "empty"
+                                : "empty",
+                          {
+                            rounded: "lg",
+                            emptyBg: "subtle",
+                            selectableHint: selected !== null && placed[offset + i] === null,
+                          }
                         )} ${
                           selected !== null && placed[offset + i] === selected
                             ? "ring-2 ring-black dark:ring-white"
@@ -117,7 +152,7 @@ export function DragDropExercise({
                         }`}
                       >
                         {placed[offset + i] !== null ? config.bank[placed[offset + i] as number] : ""}
-                      </span>
+                      </button>
                     )}
                   </span>
                 ))}
@@ -137,21 +172,6 @@ export function DragDropExercise({
             </div>
           );
         })}
-      </div>
-
-      <div className="flex min-h-12 flex-wrap gap-2 rounded-md" {...bankDropProps()}>
-        {config.bank.map((word, bi) => (
-          <button
-            key={bi}
-            type="button"
-            {...bankDragProps(bi)}
-            onClick={() => clickBank(bi)}
-            disabled={locked || usedBankIndices.has(bi)}
-            className={bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}
-          >
-            {word}
-          </button>
-        ))}
       </div>
 
       <div className="flex flex-col gap-3">

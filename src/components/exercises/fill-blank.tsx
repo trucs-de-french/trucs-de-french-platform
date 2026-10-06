@@ -12,6 +12,7 @@ import { HintExplanation } from "./hint-explanation";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { stickyPoolClass } from "./tile-styles";
 
 export function FillBlankExercise({
   taskId,
@@ -164,7 +165,7 @@ export function FillBlankExercise({
           // час скролу не просвічував крізь пул. На відміну від image-match
           // пул НЕ схлопується — слова лишаються в банку (лише викреслені
           // візуально), кількість елементів не змінюється.
-          <div className="sticky top-0 z-10 flex flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1.5 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900">
+          <div className={stickyPoolClass("fill-blank")}>
             {config.wordBank.map((word, i) => (
               <button
                 key={i}
