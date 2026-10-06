@@ -71,6 +71,7 @@ import { validateTaskConfig, type ConfigProblem } from "@/lib/exercises/task-val
 import {
   DEFAULT_INSTRUCTIONS,
   WORD_CHOICE_DEFAULT_INSTRUCTIONS,
+  FILL_BLANK_WORD_BANK_SUBINSTRUCTION,
   type InstructionDefault,
 } from "@/lib/exercises/default-instructions";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
@@ -160,6 +161,25 @@ function defaultInstructionsFor(
   if (!INSTRUCTION_FIELD_PREFIX[targetType]) return null;
   if (targetType === "word_choice") return WORD_CHOICE_DEFAULT_INSTRUCTIONS[wordChoiceMode];
   return DEFAULT_INSTRUCTIONS[targetType] ?? null;
+}
+
+// fill_blank subInstruction має ДВА дефолти залежно від того, чи вправа
+// матиме банк слів (default-instructions.ts) — на відміну від word_choice,
+// це не окрема мапа в тому файлі (вирішується тут, лише для живого
+// перемикання в конструкторі; студентський fill-blank.tsx рахує те саме
+// незалежно, за config.wordBank).
+function fillBlankSubInstructionFor(hasWordBank: boolean): string {
+  return hasWordBank ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION : DEFAULT_INSTRUCTIONS.fill_blank.subInstruction;
+}
+
+// TipTap (InstructionsRichTextField) завжди огортає вміст у <p>, щойно
+// onUpdate хоч раз спрацював (навіть без реальної зміни тексту) — порівняння
+// з "голим" дефолтом (без тегів) інакше не впізнало б уже раз відкритий і
+// закритий без правок редактор. Знімає РІВНО один зовнішній <p>...</p>, не
+// рекурсивно — підзаголовок завжди один абзац.
+function unwrapSingleParagraph(html: string): string {
+  const m = html.match(/^<p>([\s\S]*)<\/p>$/);
+  return m ? m[1] : html;
 }
 
 // "game" свідомо ВІДСУТНІЙ тут — нові ігри цього типу більше не створюються
@@ -289,10 +309,18 @@ export function TaskConfigFields({
       string,
       unknown
     >;
-    if (instructionsSeed?.forType === targetType) {
-      return { ...base, instructions: instructionsSeed.instruction, subInstructions: instructionsSeed.subInstruction };
+    const withInstructionsSeed =
+      instructionsSeed?.forType === targetType
+        ? { ...base, instructions: instructionsSeed.instruction, subInstructions: instructionsSeed.subInstruction }
+        : base;
+    // Override — ЗАВЖДИ останній (вище за instructionsSeed), бо
+    // відображає подію, що сталась ПІЗНІШЕ за будь-яке перемикання типу:
+    // додавання/прибирання слова з банку вже ПІСЛЯ того, як тип fill_blank
+    // був обраний (і, можливо, instructionsSeed для нього вже встановлено).
+    if (targetType === "fill_blank" && fillBlankSubInstructionOverride) {
+      return { ...withInstructionsSeed, subInstructions: fillBlankSubInstructionOverride.value };
     }
-    return base;
+    return withInstructionsSeed;
   }
 
   // Поле "Назва" живе тут (не в батьківській сторінці), бо лише тут відомий
@@ -351,6 +379,19 @@ export function TaskConfigFields({
   const [fillBlankWordBank, setFillBlankWordBank] = useState<string[]>(
     (initialConfig?.wordBank as string[] | undefined) ?? []
   );
+  // Живе перемикання дефолту subInstruction, коли банк слів увімкнули/
+  // вимкнули (addFillBlankWord/removeFillBlankWord нижче), а текст у полі
+  // все ще дорівнює одному з двох дефолтів (не редагований вручну) —
+  // InstructionsRichTextField не підхоплює новий initialValue сам (той
+  // самий принцип, що pendingSeed/instructionsSeed для зміни типу), тож
+  // ремонтуємо його через key. version — лише щоб key міняв значення й
+  // гарантовано перемонтовував навіть якщо value випадково збігся з
+  // попереднім (теоретично неможливо тут, але дешевше, ніж думати, чи
+  // можливо).
+  const [fillBlankSubInstructionOverride, setFillBlankSubInstructionOverride] = useState<{
+    version: number;
+    value: string;
+  } | null>(null);
   // essay_check за визначенням завжди PE — розумний дефолт, який лишається
   // редагованим.
   const [delfSection, setDelfSection] = useState(
@@ -412,11 +453,33 @@ export function TaskConfigFields({
     setCriteriaDirty(false);
   }
 
+  // Перемикає дефолт subInstruction на протилежний, ЛИШЕ якщо живий текст у
+  // полі зараз порожній або дорівнює (після знятого <p>) одному з двох
+  // дефолтів — власний текст вчительки (що б вона туди не написала) не
+  // чіпаємо. toHasWordBank — стан банку ПІСЛЯ зміни, що викликала перемикання.
+  function maybeSwitchFillBlankSubInstruction(toHasWordBank: boolean) {
+    const live = readLiveInstructionsFor("fill_blank")?.subInstruction ?? "";
+    const current = unwrapSingleParagraph(live).trim();
+    if (
+      current !== "" &&
+      current !== DEFAULT_INSTRUCTIONS.fill_blank.subInstruction &&
+      current !== FILL_BLANK_WORD_BANK_SUBINSTRUCTION
+    ) {
+      return;
+    }
+    setFillBlankSubInstructionOverride((prev) => ({
+      version: (prev?.version ?? 0) + 1,
+      value: fillBlankSubInstructionFor(toHasWordBank),
+    }));
+  }
+
   function addFillBlankWord() {
+    if (fillBlankWordBank.length === 0) maybeSwitchFillBlankSubInstruction(true);
     setFillBlankWordBank((prev) => [...prev, ""]);
   }
 
   function removeFillBlankWord(i: number) {
+    if (fillBlankWordBank.length === 1) maybeSwitchFillBlankSubInstruction(false);
     setFillBlankWordBank((prev) => prev.filter((_, idx) => idx !== i));
   }
 
@@ -532,6 +595,12 @@ export function TaskConfigFields({
   function handleTypeChange(newType: string) {
     const transform = getTypeTransform(type, newType);
     const currentValue = transform ? getCurrentValueForTransform() : undefined;
+    // Банк слів НОВОГО fill_blank — з результату трансформації (напр.
+    // drag_drop -> fill_blank: type-compatibility.ts переносить bank
+    // РЕАЛЬНИМ банком), а якщо трансформації не було (перемикання з
+    // типу без пари) — поточний fillBlankWordBank, той самий стан, що й
+    // так лишається між перемиканнями типу (нічого тут не змінюється).
+    let newFillBlankWordBank = fillBlankWordBank;
     if (transform && currentValue !== undefined) {
       const result = transform(currentValue as never);
       const config = result.config as Record<string, unknown>;
@@ -542,12 +611,17 @@ export function TaskConfigFields({
       // (неконтрольовані defaultValue, підхоплюють pendingSeed автоматично
       // при перемонтуванні fill_blank-блоку) його потрібно оновити явно.
       if (newType === "fill_blank" && Array.isArray(config.wordBank)) {
-        setFillBlankWordBank(config.wordBank as string[]);
+        newFillBlankWordBank = config.wordBank as string[];
+        setFillBlankWordBank(newFillBlankWordBank);
       }
     } else {
       setPendingSeed(null);
       setTransferWarning(null);
     }
+    // Нова подія (зміна типу) скасовує попереднє живе перемикання — інакше
+    // застарілий override (з попередньої сесії редагування fill_blank)
+    // міг би перебити щойно обчислений нижче instructionsSeed.
+    setFillBlankSubInstructionOverride(null);
 
     // Автозаповнення інструкцій дефолтом НОВОГО типу — лише якщо поле (FR
     // instruction чи UA subInstruction, НЕЗАЛЕЖНО одне від одного) ще НЕ
@@ -560,7 +634,15 @@ export function TaskConfigFields({
     // жодного type-compatibility transform, що переносив би mode) — дефолт
     // рахуємо саме для нього, не для поточного mode СТАРОГО типу.
     const oldDefault = defaultInstructionsFor(type, type === "word_choice" ? readCurrentWordChoiceMode() : "select");
-    const newDefault = defaultInstructionsFor(newType, "select");
+    const rawNewDefault = defaultInstructionsFor(newType, "select");
+    // fill_blank — єдиний тип, де субінструкція залежить ще й від банку
+    // слів (не лише від типу/режиму): якщо перемикання принесло з собою
+    // непорожній банк (drag_drop -> fill_blank) чи він уже був — підставляємо
+    // варіант "з банком", а не загальний дефолт типу.
+    const newDefault =
+      newType === "fill_blank" && rawNewDefault
+        ? { ...rawNewDefault, subInstruction: fillBlankSubInstructionFor(newFillBlankWordBank.length > 0) }
+        : rawNewDefault;
     if (newDefault) {
       const live = readLiveInstructionsFor(type);
       const instruction =
@@ -972,6 +1054,11 @@ export function TaskConfigFields({
           />
 
           <InstructionsRichTextField
+            // key — лише щоб ремонтувати редактор при живому перемиканні
+            // дефолту (maybeSwitchFillBlankSubInstruction/fillBlankSubInstructionOverride
+            // вище): InstructionsRichTextField — неконтрольований (TipTap),
+            // не підхоплює новий initialValue без цього.
+            key={`fill_blank_sub_instructions-${fillBlankSubInstructionOverride?.version ?? 0}`}
             name="fill_blank_sub_instructions"
             label="Додаткові інструкції (опційно)"
             initialValue={(configForType("fill_blank").subInstructions as string) ?? ""}
