@@ -280,6 +280,11 @@ export function TaskConfigFields({
   const typeOptions =
     initialType === "game" ? [{ value: "game", label: TASK_TYPE_LABELS.game }, ...TYPE_OPTIONS] : TYPE_OPTIONS;
 
+  // Той самий критерій "справді нова задача", що й instructionsSeed нижче —
+  // лише для нього дефолт чекбокса "Дозволити підказки" у SortColumnsFields
+  // увімкнений; наявну задачу (навіть без цього поля) не чіпаємо.
+  const isNewTask = !initialConfig && !initialType;
+
   // Автозаповнення інструкцій (instruction FR + subInstruction UA) дефолтом
   // типу — instructionsSeed підставляється замість initialConfig.instructions/
   // subInstructions ЛИШЕ для типу, у який щойно перемкнулись (forType), той
@@ -1299,6 +1304,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("sort_columns") as Partial<SortColumnsConfig>
           }
+          defaultHintsEnabled={isNewTask}
         />
       )}
 

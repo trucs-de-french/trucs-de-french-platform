@@ -265,6 +265,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         columns: parseJsonField(formData.get("sort_columns_columns")),
         items: parseJsonField(formData.get("sort_columns_items")),
+        hintsEnabled: formData.get("sort_columns_hints_enabled") === "true",
       };
     }
     case "flip_cards": {

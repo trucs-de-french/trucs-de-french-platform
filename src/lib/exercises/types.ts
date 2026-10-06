@@ -484,6 +484,13 @@ export type SortColumnsConfig = {
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   columns: SortColumn[];
   items: SortColumnsItem[];
+  // На відміну від LetterGapsConfig.hintsReducePoints (там лампочка й так
+  // завжди доступна, прапор лише вирішує ціну) — тут лампочка й сама
+  // підказка-колонка показуються ЛИШЕ коли hintsEnabled=true: без цього
+  // поля (наявні вправи до появи фічі) лампочки взагалі немає, а не просто
+  // "безкоштовної". /api/exercises/sort-columns-hint теж звіряє цей прапор
+  // на сервері — без нього не віддає колонку, навіть якщо хтось обійде UI.
+  hintsEnabled?: boolean;
 };
 
 // table_fill — таблиця з 2 колонками (довільні назви); для кожної клітинки
@@ -918,6 +925,7 @@ export type SortColumnsPublic = {
   subInstructions?: string;
   columns: SortColumn[];
   items: { id: string; text: string; points: number }[]; // без columnId, перемішано
+  hintsEnabled: boolean;
 };
 
 export type OpenAnswerPublic = {
@@ -1067,7 +1075,9 @@ export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // пор
 // hintedWords — ЛОКАЛЬНІ (у межах цього речення) індекси пропусків, де
 // брали підказку-переклад — той самий принцип, що FillBlankAnswer.hintedBlanks.
 export type DragDropAnswer = { sentenceId: string; words: string[]; hintedWords?: number[] }[]; // слова на кожен пропуск, за реченням
-export type SortColumnsAnswer = { itemId: string; columnId: string }[];
+// hintUsed — той самий сенс, що OpenAnswerAnswer.hintUsed: студентка клікала
+// лампочку для цього елемента (sort-columns-hint/route.ts).
+export type SortColumnsAnswer = { itemId: string; columnId: string; hintUsed?: boolean }[];
 export type OpenAnswerAnswer = { questionId: string; value: string; hintUsed?: boolean }[];
 // cells — той самий плаский список, що раніше (тепер поле обʼєкта).
 // hintedCells — клітинки (rowId+side), де брали підказку "перша літера" —
@@ -1217,6 +1227,9 @@ export type SortColumnsDetail = {
     studentColumnId: string | null;
     isCorrect: boolean;
     points: number;
+    // Той самий сенс, що DragDropDetail.blanks.hintUsed — лампочка
+    // підказала колонку (sort-columns-hint/route.ts) для цього елемента.
+    hintUsed: boolean;
   }[];
 };
 

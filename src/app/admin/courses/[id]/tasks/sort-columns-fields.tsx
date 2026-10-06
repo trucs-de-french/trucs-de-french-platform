@@ -11,8 +11,16 @@ import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
-  { initialConfig?: Partial<SortColumnsConfig> }
->(function SortColumnsFields({ initialConfig }, ref) {
+  {
+    initialConfig?: Partial<SortColumnsConfig>;
+    // true лише для справді нової задачі (task-config-fields.tsx: немає ні
+    // initialConfig, ні initialType) — на відміну від інших hintsReducePoints
+    // чекбоксів (дефолт ВИМКНЕНО), тут за задачею дефолт для нових вправ
+    // УВІМКНЕНО; наявні вправи без поля (включно з тими, що просто
+    // редагуються, а не створюються) лишаються вимкненими.
+    defaultHintsEnabled?: boolean;
+  }
+>(function SortColumnsFields({ initialConfig, defaultHintsEnabled }, ref) {
   const [columns, setColumns] = useState<SortColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -179,6 +187,18 @@ export const SortColumnsFields = forwardRef<
           + елемент
         </button>
       </div>
+
+      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+        <input
+          type="checkbox"
+          name="sort_columns_hints_enabled"
+          value="true"
+          defaultChecked={
+            initialConfig?.hintsEnabled !== undefined ? Boolean(initialConfig.hintsEnabled) : !!defaultHintsEnabled
+          }
+        />
+        Дозволити підказки (лампочка підсвічує колонку, слово з підказкою дає 50% балів)
+      </label>
     </div>
   );
 });

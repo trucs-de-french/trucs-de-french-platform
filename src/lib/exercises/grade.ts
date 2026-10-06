@@ -753,11 +753,12 @@ function gradeDragDrop(config: DragDropConfig, answer: DragDropAnswer): GradeRes
 }
 
 function gradeSortColumns(config: SortColumnsConfig, answer: SortColumnsAnswer): GradeResult {
-  const answerByItem = new Map(answer.map((a) => [a.itemId, a.columnId]));
+  const answerByItem = new Map(answer.map((a) => [a.itemId, a]));
   const labelById = new Map(config.columns.map((c) => [c.id, c.label]));
 
   const items: SortColumnsDetail["items"] = config.items.map((item) => {
-    const studentColumnId = answerByItem.get(item.id) ?? null;
+    const a = answerByItem.get(item.id);
+    const studentColumnId = a?.columnId ?? null;
     return {
       id: item.id,
       text: item.text,
@@ -766,12 +767,27 @@ function gradeSortColumns(config: SortColumnsConfig, answer: SortColumnsAnswer):
       studentColumnId,
       isCorrect: studentColumnId === item.columnId,
       points: resolveSortColumnsPoints(item),
+      // hintsEnabled=false (чи відсутнє) — hintUsed тут ніколи true не
+      // прийде з валідного клієнта (кнопка-лампочка не рендериться), але
+      // звіряємо прапор і тут самостійно, а не лише на клієнті/в route —
+      // підроблений запит без hintsEnabled не повинен ЗНІМАТИ бали.
+      hintUsed: !!config.hintsEnabled && !!a?.hintUsed,
     };
   });
 
   const correctCount = items.filter((i) => i.isCorrect).length;
+  // POINTS — та сама логіка, що gradeDragDrop (речення → тут елемент):
+  // правильний елемент без підказки дає повні бали, з підказкою — 50%,
+  // неправильний — 0 незалежно від підказки. pointsEarned може вийти
+  // дробовим (напр. 9.5 для 10 елементів по 1 балу з однією підказкою) —
+  // підтримано: GradeResult.pointsEarned: number, record_block_task_attempt
+  // (0052_block_progress.sql) приймає p_block_points_earned numeric.
+  let pointsEarned = 0;
+  for (const i of items) {
+    if (!i.isCorrect) continue;
+    pointsEarned += i.hintUsed ? i.points * 0.5 : i.points;
+  }
   const pointsPossible = items.reduce((sum, i) => sum + i.points, 0);
-  const pointsEarned = items.filter((i) => i.isCorrect).reduce((sum, i) => sum + i.points, 0);
 
   return {
     correct: correctCount === items.length && items.length > 0,

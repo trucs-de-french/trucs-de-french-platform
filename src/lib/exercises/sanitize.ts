@@ -562,6 +562,7 @@ export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPubli
     items: shuffle(
       config.items.map((i) => ({ id: i.id, text: i.text, points: resolveSortColumnsPoints(i) }))
     ),
+    hintsEnabled: !!config.hintsEnabled,
   };
 }
 

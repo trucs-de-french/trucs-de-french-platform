@@ -231,6 +231,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "open_answer":
