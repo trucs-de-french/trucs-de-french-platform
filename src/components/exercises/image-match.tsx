@@ -57,20 +57,35 @@ export function ImageMatchExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
       />
 
-      <div className="flex min-h-12 flex-wrap gap-2 rounded-md" {...bankDropProps()}>
-        {config.bank.map((name, bi) => (
-          <button
-            key={bi}
-            type="button"
-            {...bankDragProps(bi)}
-            onClick={() => clickBank(bi)}
-            disabled={locked || usedBankIndices.has(bi)}
-            className={bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
+      {usedBankIndices.size < config.bank.length ? (
+        // Липкий пул: на мобільних вузький по вертикалі екран, тож один
+        // рядок із горизонтальною прокруткою природніший, ніж вертикальний
+        // перенос, що з'їдав би багато висоти над картками; від sm: —
+        // вистачає місця на перенос рядків, тож вертикальна прокрутка з
+        // max-h замість горизонтальної. Непрозорий фон і border-b — той
+        // самий тон/рамка, що в EXERCISE_BLOCK_CLASS, щоб не було видно
+        // картки, що проїжджають крізь пул під час скролу.
+        <div
+          className="sticky top-0 z-10 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 py-1 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900"
+          {...bankDropProps()}
+        >
+          {config.bank.map((name, bi) => (
+            <button
+              key={bi}
+              type="button"
+              {...bankDragProps(bi)}
+              onClick={() => clickBank(bi)}
+              disabled={locked || usedBankIndices.has(bi)}
+              aria-pressed={selected === bi}
+              className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {config.items.map((item, i) => {
@@ -98,10 +113,13 @@ export function ImageMatchExercise({
                   : `${item.points} ${pluralizePoints(item.points)}`}
               </p>
             )}
-            <span
+            <button
+              type="button"
+              disabled={locked}
               onClick={() => clickSlot(i)}
               {...slotDragProps(i)}
               {...slotDropProps(i)}
+              aria-pressed={selected !== null && placed[i] === selected}
               className={`flex min-h-11 w-full select-none items-center justify-center break-words px-2 py-1.5 text-center text-base sm:min-h-12 ${slotClass(
                 detail
                   ? detail.items[i]?.isCorrect
@@ -112,11 +130,15 @@ export function ImageMatchExercise({
                     : placed[i] !== null
                       ? "filled"
                       : "empty",
-                { rounded: "lg", emptyBg: "subtle" }
+                {
+                  rounded: "lg",
+                  emptyBg: "subtle",
+                  selectableHint: selected !== null && placed[i] === null,
+                }
               )} ${selected !== null && placed[i] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
             >
               {placed[i] !== null ? config.bank[placed[i] as number] : ""}
-            </span>
+            </button>
           </div>
           );
         })}

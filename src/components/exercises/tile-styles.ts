@@ -16,11 +16,14 @@ export type SlotState = "empty" | "hover" | "filled" | "correct" | "incorrect";
 // rounded: "sm" (замовчування, drag_drop — не чіпати) чи "lg" (image_match —
 // більший слот під картинкою). emptyBg: "none" (замовчування, drag_drop)
 // чи "subtle" (image_match — порожній слот трохи темніший за картку, не
-// лише на hover). Колір рамки/заливки для решти станів лишається спільним
-// для обох типів.
+// лише на hover). selectableHint: true (лише image_match, лише коли в пулі
+// клікнуте слово вибране і цей слот порожній) замінює порожній дашед-стиль
+// на акцентний — підказка, куди можна покласти вибране слово дотиком; за
+// замовчуванням false, drag_drop цей параметр не передає. Колір рамки/
+// заливки для решти станів лишається спільним для обох типів.
 export function slotClass(
   state: SlotState,
-  opts?: { rounded?: "sm" | "lg"; emptyBg?: "none" | "subtle" }
+  opts?: { rounded?: "sm" | "lg"; emptyBg?: "none" | "subtle"; selectableHint?: boolean }
 ) {
   const radius = opts?.rounded === "lg" ? "rounded-lg" : "rounded";
   const base = `cursor-pointer ${radius} border-2 text-center transition-colors`;
@@ -37,6 +40,9 @@ export function slotClass(
       // до натискання "Перевірити", а не лише за текстом усередині.
       return `${base} border-solid ${SELECTED_OPTION_CLASS}`;
     default:
+      if (opts?.selectableHint) {
+        return `${base} border-dashed border-brand bg-brand/5 dark:bg-brand/10`;
+      }
       return opts?.emptyBg === "subtle"
         ? `${base} border-dashed border-neutral-400 bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
         : `${base} border-dashed border-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800`;
