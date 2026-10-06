@@ -102,7 +102,7 @@ export function ImageMatchExercise({
               onClick={() => clickSlot(i)}
               {...slotDragProps(i)}
               {...slotDropProps(i)}
-              className={`flex min-h-10 select-none items-center justify-center px-2 py-1.5 text-center text-base ${slotClass(
+              className={`flex min-h-11 w-full select-none items-center justify-center break-words px-2 py-1.5 text-center text-base sm:min-h-12 ${slotClass(
                 detail
                   ? detail.items[i]?.isCorrect
                     ? "correct"
@@ -111,7 +111,8 @@ export function ImageMatchExercise({
                     ? "hover"
                     : placed[i] !== null
                       ? "filled"
-                      : "empty"
+                      : "empty",
+                { rounded: "lg", emptyBg: "subtle" }
               )} ${selected !== null && placed[i] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
             >
               {placed[i] !== null ? config.bank[placed[i] as number] : ""}

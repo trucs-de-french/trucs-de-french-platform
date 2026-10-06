@@ -13,8 +13,17 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
 
 export type SlotState = "empty" | "hover" | "filled" | "correct" | "incorrect";
 
-export function slotClass(state: SlotState) {
-  const base = "cursor-pointer rounded border-2 text-center transition-colors";
+// rounded: "sm" (замовчування, drag_drop — не чіпати) чи "lg" (image_match —
+// більший слот під картинкою). emptyBg: "none" (замовчування, drag_drop)
+// чи "subtle" (image_match — порожній слот трохи темніший за картку, не
+// лише на hover). Колір рамки/заливки для решти станів лишається спільним
+// для обох типів.
+export function slotClass(
+  state: SlotState,
+  opts?: { rounded?: "sm" | "lg"; emptyBg?: "none" | "subtle" }
+) {
+  const radius = opts?.rounded === "lg" ? "rounded-lg" : "rounded";
+  const base = `cursor-pointer ${radius} border-2 text-center transition-colors`;
   switch (state) {
     case "correct":
       return `${base} border-green-500 bg-green-50 dark:bg-green-950/30`;
@@ -28,6 +37,8 @@ export function slotClass(state: SlotState) {
       // до натискання "Перевірити", а не лише за текстом усередині.
       return `${base} border-solid ${SELECTED_OPTION_CLASS}`;
     default:
-      return `${base} border-dashed border-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800`;
+      return opts?.emptyBg === "subtle"
+        ? `${base} border-dashed border-neutral-400 bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
+        : `${base} border-dashed border-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800`;
   }
 }
