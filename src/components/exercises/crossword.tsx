@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
-import { Minus, Plus } from "lucide-react";
 import { HintExplanation } from "./hint-explanation";
+import { GridZoomControls } from "./grid-zoom-controls";
+import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
   CrosswordPublic,
   CrosswordPublicBlock,
@@ -190,27 +191,12 @@ function CrosswordBlockView({
     const prevMetrics = prevMetricsRef.current;
     if (!container || !prevMetrics) return;
 
-    let newScrollLeft: number;
+    // Активна клітинка (якщо є) — якір: лишається по центру видимої
+    // частини; інакше keepViewAfterZoom утримує той самий відсоток
+    // ширини контенту в центрі (use-grid-zoom.ts, спільне з word-search).
     const activeCell = activeClue ? (clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [])[0] : null;
     const activeCellEl = activeCell ? diacritics.getElement(cellKey(activeCell.row, activeCell.col)) : null;
-    if (activeCellEl) {
-      // Позиція активної клітинки в координатах контенту (вже за НОВИМ
-      // розміром — ефект запускається після того, як React застосував нові
-      // стилі) — та сама логіка, що visualViewport-розрахунки в
-      // diacritics-popup.tsx, лише тут потрібен лише X.
-      const containerRect = container.getBoundingClientRect();
-      const cellRect = activeCellEl.getBoundingClientRect();
-      const cellCenterContent = cellRect.left + cellRect.width / 2 - containerRect.left + container.scrollLeft;
-      newScrollLeft = cellCenterContent - container.clientWidth / 2;
-    } else {
-      // Немає активної клітинки — утримуємо той самий ВІДСОТОК ширини
-      // контенту в центрі видимої частини (контент масштабується
-      // рівномірно на ratio = zoom/prevZoom, тож позиція центру теж).
-      const ratio = zoom / prevZoom;
-      newScrollLeft = (prevMetrics.scrollLeft + prevMetrics.clientWidth / 2) * ratio - container.clientWidth / 2;
-    }
-    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
-    container.scrollTo({ left: Math.max(0, Math.min(newScrollLeft, maxScrollLeft)) });
+    keepViewAfterZoom(container, prevMetrics, prevZoom, zoom, activeCellEl);
     // Клітинка активного поля (якщо є) змінила позицію/розмір — попап
     // діакритики (прив'язаний до getBoundingClientRect поля) мусить
     // перерахувати координати, інакше лишиться прив'язаним до старого
@@ -611,16 +597,17 @@ function CrosswordBlockView({
       <div className="flex flex-col items-center gap-3">
         {/* ЕТАП I2 — 3 рівні, кожен зі своєю єдиною роллю (терміновий фікс
             нульової ширини, ЕТАП I мав container-type і --cols/--zoom на
-            ОДНОМУ елементі, що й було коренем проблеми):
-            1. cw-grid-wrap — лише container-type:inline-size, w-full (не
+            ОДНОМУ елементі, що й було коренем проблеми); класи спільні з
+            word-search.tsx (ЕТАП J, grid-zoom-wrap/-inner, globals.css):
+            1. grid-zoom-wrap — лише container-type:inline-size, w-full (не
                shrink-to-fit у батьківській flex-колонці з items-center).
             2. scrollRef — overflow-x-auto, w-full, сам touch-скрол.
-            3. cw-grid-inner — оголошує --cols/--zoom (і через них --cw),
+            3. grid-zoom-inner — оголошує --cols/--zoom (і через них --cw),
                w-max (замість inline-block) + mx-auto: вузька сітка
                центрується в (2), широка — вирівнюється по початку й
                прокручується (auto-margins колапсують у 0, коли вмісту не
                вистачає місця). */}
-        <div className="cw-grid-wrap w-full min-w-0">
+        <div className="grid-zoom-wrap w-full min-w-0">
           <div ref={scrollRef} className="w-full overflow-x-auto" style={{ touchAction: "pan-x pan-y" }}>
             {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
                 (суцільно заповнена сітка, box-shadow там коректно повторює
@@ -632,7 +619,7 @@ function CrosswordBlockView({
                 РЕАЛЬНО видимою (непрозорою) формою — саме контуром слів, а не
                 контуром контейнера. */}
             <div
-              className="cw-grid-inner w-max mx-auto drop-shadow-md"
+              className="grid-zoom-inner w-max mx-auto drop-shadow-md"
               style={{ "--cols": cols, "--zoom": zoom } as CSSVarStyle}
             >
               {/* font-heading — сітка тепер на тому самому шрифті, що інтерфейс
@@ -847,9 +834,7 @@ export function CrosswordExercise({
   // Math.max по кількох блоках надто дешевий, щоб мемоізація була
   // доцільною.
   const maxCols = Math.max(...blocks.map((b) => b.gridWidth));
-  const ZOOM_STEPS = [1, 1.25, 1.5, 2] as const;
-  const [zoom, setZoom] = useState<number>(ZOOM_STEPS[0]);
-  const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number]);
+  const { zoom, setZoom } = useGridZoom();
 
   // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
   const [singleResult, setSingleResult] = useState<CrosswordBlockResult | null>(null);
@@ -914,44 +899,12 @@ export function CrosswordExercise({
 
       <HintExplanation type="crossword" hintsReducePoints={config.hintsReducePoints} hidden={hintExplanationHidden} />
 
-      {/* ЕТАП I — панель масштабу сітки, справа, безпосередньо над нею (над
+      {/* ЕТАП I — панель масштабу сітки (grid-zoom-controls.tsx, спільна з
+          word-search.tsx, ЕТАП J), справа, безпосередньо над нею (над
           BlockNavigation теж — той самий рядок, що й над самотнім блоком,
           не всередині спільного block-navigation.tsx, щоб не чіпати решту
-          типів вправ, які теж ним користуються). onMouseDown
-          preventDefault на кожній кнопці — клік не забирає фокус з активної
-          клітинки (інакше onBlur устиг би спрацювати раніше onClick, той
-          самий прийом, що вже в DiacriticsPopup). */}
-      <div className="flex items-center justify-end gap-1">
-        <button
-          type="button"
-          aria-label="Зменшити сітку"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => setZoom(ZOOM_STEPS[Math.max(0, zoomIndex - 1)])}
-          disabled={zoomIndex <= 0}
-          className="flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 bg-white text-neutral-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
-        >
-          <Minus size={16} aria-hidden />
-        </button>
-        <button
-          type="button"
-          aria-label="Скинути масштаб"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => setZoom(ZOOM_STEPS[0])}
-          className="flex h-10 min-w-[3.5rem] items-center justify-center rounded-md border border-gray-200 bg-white px-2 font-heading text-sm font-medium text-neutral-700 shadow-sm hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
-        >
-          {Math.round(zoom * 100)}%
-        </button>
-        <button
-          type="button"
-          aria-label="Збільшити сітку"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => setZoom(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1)])}
-          disabled={zoomIndex >= ZOOM_STEPS.length - 1}
-          className="flex h-10 w-10 items-center justify-center rounded-md border border-gray-200 bg-white text-neutral-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
-        >
-          <Plus size={16} aria-hidden />
-        </button>
-      </div>
+          типів вправ, які теж ним користуються). */}
+      <GridZoomControls zoom={zoom} onChange={setZoom} />
 
       {!useBlocks ? (
         <CrosswordBlockView

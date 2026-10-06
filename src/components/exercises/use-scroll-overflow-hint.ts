@@ -3,10 +3,9 @@
 import { useEffect, useState, type RefObject } from "react";
 
 // Текст-підказка "сітка ширша за екран — прокрутіть убік" під сіткою
-// word_search/crossword (сам розмір клітинки задає maxCellPx у
-// word-search.tsx чи --cw у globals.css/crossword.tsx — тут лише факт
-// переповнення контейнера). ResizeObserver сам реагує й на зміну зуму
-// кросворда (ЕТАП I) — розмір контейнера змінюється, вимір автоматично
+// word_search/crossword (сам розмір клітинки задає --cw у globals.css,
+// спільний для обох — ЕТАП J; тут лише факт переповнення контейнера).
+// ResizeObserver сам реагує й на зміну зуму (ЕТАП I/J) — розмір контейнера змінюється, вимір автоматично
 // оновлюється без жодних додаткових залежностей. Вимір — лише коли
 // блок ВИДИМИЙ (active): прихований через display:none блок (hidden,
 // WordSearchExercise/CrosswordExercise) має clientWidth/scrollWidth === 0,
