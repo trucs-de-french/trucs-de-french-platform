@@ -172,7 +172,12 @@ export function FillBlankExercise({
                 type="button"
                 onClick={() => toggleCrossedOut(i)}
                 aria-pressed={crossedOut.has(i)}
-                className={`flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-3 py-1 text-base shadow-sm dark:border-neutral-600 ${
+                // Видима висота менша (min-h-10/sm:min-h-9 — 40px/36px, раніше
+                // min-h-11 — 44px), але зона дотику лишається 44px: relative +
+                // before — невидимий псевдоелемент, розтягнутий по вертикалі
+                // (-inset-y-0.5 на вузьких/touch-екранах, sm:-inset-y-1 на
+                // десктопі — у сумі завжди +4px до 40 чи +8px до 36 = 44px).
+                className={`relative flex min-h-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-2.5 py-0.5 text-sm shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 ${
                   crossedOut.has(i)
                     ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                     : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
