@@ -153,36 +153,47 @@ export function ChronologicalOrderExercise({
                 key={item.id}
                 className={`flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center shadow-sm transition-colors ${ANSWER_CARD_DEFAULT}`}
               >
-                {/* self-stretch — картка (items-center) інакше не дає
-                    дочірньому div визначеної ширини: без неї w-full
-                    картинки не може розв'язатись (resolve) проти "auto"
-                    батька і браузер falls back на ПРИРОДНУ ширину фото.
-                    self-stretch розтягує div на всю ширину комірки
-                    (визначена гридом), aspect-square тоді рахує висоту
-                    від цієї вже певної ширини — однаковий квадрат
-                    незалежно від пропорцій фото; max-w-[6.5rem]+mx-auto —
-                    лише обмеження й центрування на широких колонках
-                    (5 на ряд на десктопі). */}
-                <div className="relative mx-auto aspect-square w-full max-w-[6.5rem] self-stretch">
-                  <ImageZoomBadge
-                    onOpen={() => setLightboxSrc(item.content)}
-                    boxClass="relative p-1 before:absolute before:-inset-2 before:content-['']"
-                    iconSize={11}
-                  />
+                {/* overflow-hidden + img absolute inset-0 — <img> більше не
+                    задає власну висоту через проценти (h-full проти
+                    батька, чия висота похідна від aspect-square, давало
+                    нестабільний розрахунок і картинка "наповзала" на
+                    рядок номера нижче). inset-0 завжди прилягає рівно до
+                    країв найближчого position:relative предка — без
+                    відсоткового розв'язання, тому немає залежності від
+                    self-stretch (видалено — він нічого корисного не
+                    додавав: width тут і так "100%", не "auto", align-self
+                    на явний відсоток не впливає, а в парі з aspect-square
+                    саме він і провокував непослідовний розрахунок хіпотетичного
+                    cross-size ДО застосування max-width, звідки квадрат
+                    ~208px замість затиснутого max-w-[6.5rem]=104px). */}
+                <div className="relative mx-auto aspect-square w-full max-w-[6.5rem] overflow-hidden rounded-md">
                   <ImageOrPlaceholder
                     src={item.content}
                     alt=""
-                    className="h-full w-full rounded-md object-cover"
+                    className="absolute inset-0 h-full w-full object-cover object-center"
                     useFocus
                   />
-                  <span className={`absolute left-1 top-1 ${ITEM_LETTER_BADGE_SM}`}>{label}</span>
+                  <span className={`absolute left-1 top-1 z-10 ${ITEM_LETTER_BADGE_SM}`}>{label}</span>
+                  {/* boxClass без "relative": span уже absolute (своя база
+                      класів компонента) — зайвий "relative" поруч з
+                      "absolute" в ОДНОМУ className — та сама CSS-властивість
+                      position двічі, переміг "relative" (пізніший у
+                      згенерованому Tailwind-шарі) і кнопка стала звичайним
+                      "relative" (в потоці) flex-блоком, який авто-розтягся
+                      на всю ширину батька — звідси суцільна смуга; w-6/h-6
+                      тепер явно, без purge-залежного p-1+iconSize підбору. */}
+                  <ImageZoomBadge
+                    onOpen={() => setLightboxSrc(item.content)}
+                    boxClass="h-6 w-6 before:absolute before:-inset-2 before:content-['']"
+                    iconSize={12}
+                  />
                 </div>
                 {config.mode === "mixed" && (
                   <p className="line-clamp-2 text-center text-xs font-medium" title={item.text}>
                     {item.text}
                   </p>
                 )}
-                <div className="flex items-center justify-center gap-1">
+                <div className="mt-1.5 flex items-center justify-center gap-1.5">
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">n°</span>
                   {numberInput(item.id, "compact", label)}
                 </div>
