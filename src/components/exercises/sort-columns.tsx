@@ -219,10 +219,16 @@ export function SortColumnsExercise({
               onClick={() => handleClickColumn(col.id)}
               className={`overflow-hidden rounded-xl border transition-colors ${stateClass} ${scrollMtClass}`}
             >
-              <p className={`break-words px-3 py-2 font-heading text-sm font-semibold ${headerClass}`}>
+              <p
+                className={`break-words px-3 py-2 text-center font-heading text-sm font-semibold text-balance ${headerClass}`}
+              >
                 {col.label}
               </p>
-              <div className="flex min-h-[6.5rem] flex-wrap gap-1.5 p-2.5">
+              <div
+                className={`flex min-h-[6.5rem] flex-wrap gap-1.5 p-2.5 ${
+                  columnItems.length === 0 ? "items-center justify-center text-center" : ""
+                }`}
+              >
                 {columnItems.length === 0 ? (
                   <span className="text-xs text-neutral-400 dark:text-neutral-500">
                     Перетягніть слово сюди
