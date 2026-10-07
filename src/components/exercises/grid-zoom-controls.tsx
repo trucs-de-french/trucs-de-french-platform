@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { ZOOM_STEPS } from "./use-grid-zoom";
+import { DEFAULT_ZOOM, ZOOM_STEPS } from "./use-grid-zoom";
 
 // Панель масштабу сітки (−/відсоток/+), спільна для word_search і
 // crossword (раніше жила лише в crossword.tsx, ЕТАП I). onMouseDown
@@ -26,7 +26,7 @@ export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (
         type="button"
         aria-label="Скинути масштаб"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onChange(ZOOM_STEPS[0])}
+        onClick={() => onChange(DEFAULT_ZOOM)}
         className="flex h-10 min-w-[3.5rem] items-center justify-center rounded-md border border-gray-200 bg-white px-2 font-heading text-sm font-medium text-neutral-700 shadow-sm hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
       >
         {Math.round(zoom * 100)}%

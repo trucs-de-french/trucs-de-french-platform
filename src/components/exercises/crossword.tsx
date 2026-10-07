@@ -646,7 +646,12 @@ function CrosswordBlockView({
                           <td
                             key={ci}
                             className="border-none bg-transparent"
-                            style={{ width: "var(--cw)", height: "var(--cw)", minWidth: "1.75rem", minHeight: "1.75rem" }}
+                            style={{
+                              width: "var(--cw)",
+                              height: "var(--cw)",
+                              minWidth: "calc(1.75rem * var(--zoom, 1))",
+                              minHeight: "calc(1.75rem * var(--zoom, 1))",
+                            }}
                           />
                         );
                       }
@@ -656,7 +661,12 @@ function CrosswordBlockView({
                         <td
                           key={ci}
                           className="relative border border-neutral-300 p-0 dark:border-neutral-700"
-                          style={{ width: "var(--cw)", height: "var(--cw)", minWidth: "1.75rem", minHeight: "1.75rem" }}
+                          style={{
+                            width: "var(--cw)",
+                            height: "var(--cw)",
+                            minWidth: "calc(1.75rem * var(--zoom, 1))",
+                            minHeight: "calc(1.75rem * var(--zoom, 1))",
+                          }}
                         >
                           {number !== null && (
                             <span
@@ -681,7 +691,7 @@ function CrosswordBlockView({
                             }}
                             onBlur={diacritics.onBlur}
                             disabled={!!result}
-                            style={{ fontSize: "calc(var(--cw) * 0.5)" }}
+                            style={{ fontSize: "max(0.6875rem, calc(var(--cw) * 0.5))" }}
                             className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
                               hintedCells.has(cellKey(ri, ci))
                                 ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"

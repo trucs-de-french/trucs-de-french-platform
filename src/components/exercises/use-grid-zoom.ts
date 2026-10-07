@@ -4,14 +4,18 @@ import { useState } from "react";
 
 // Спільні ступені зуму для word_search і crossword (раніше — локальний
 // ZOOM_STEPS у crossword.tsx, ЕТАП I). Єдине джерело правди для
-// GridZoomControls і useGridZoom.
-export const ZOOM_STEPS = [1, 1.25, 1.5, 2] as const;
+// GridZoomControls і useGridZoom. 1 (100%) — стандартний крок, НЕ перший
+// елемент масиву (нижче додані кроки зменшення 0.65/0.8) — початковий зум
+// і кнопка "Скинути" мусять орієнтуватись на значення 1, а не на
+// ZOOM_STEPS[0].
+export const ZOOM_STEPS = [0.65, 0.8, 1, 1.25, 1.5, 2] as const;
+export const DEFAULT_ZOOM: (typeof ZOOM_STEPS)[number] = 1;
 
 // Стан масштабу сітки, спільний для ВСІХ блоків вправи (тримає
 // *Exercise-компонент, не BlockView, — перемикання вкладки блоку не мусить
 // скидати зум).
 export function useGridZoom() {
-  const [zoom, setZoom] = useState<number>(ZOOM_STEPS[0]);
+  const [zoom, setZoom] = useState<number>(DEFAULT_ZOOM);
   return { zoom, setZoom };
 }
 
