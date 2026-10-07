@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
@@ -23,6 +24,28 @@ import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
+
+// Бейдж-номер питання для компактного рядкового вигляду режиму "dropdown"
+// (список рядків, схожий на chronological_order text-режим) — власний
+// розмір/колір, окремий від спільного ITEM_LETTER_BADGE (answer-card-
+// style.ts, 28px) і від лише-локальних ITEM_LETTER_BADGE_SM/TEXT у
+// chronological-order.tsx: жодної зі спільних констант тут не редагую.
+const QUESTION_NUMBER_BADGE =
+  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
+
+// Чип варіанта для звичайного (без картинок, не select) режиму — власний
+// стиль чипа, не bankTileClass (tile-styles.ts — той для плиток пулу, що
+// тягнуть/кидають, cursor-grab/used — інша семантика) і не ANSWER_CARD_BASE
+// (та картка на всю ширину колонки списком one-per-row; тут — компактний
+// інлайн-чип, що переноситься по рядку разом з іншими).
+const CHIP_BASE =
+  "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-lg border px-3 py-1.5 text-left text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+
+// Літера варіанта (A, B, C...) за позицією в item.options — та сама схема,
+// що вже показує літерний префікс чипа/пілюлі вибраної відповіді.
+function optionLetter(index: number): string {
+  return String.fromCharCode(65 + index);
+}
 
 export function MultipleChoiceExercise({
   taskId,
@@ -72,6 +95,27 @@ export function MultipleChoiceExercise({
     // Той самий принцип, що в true-false.tsx: правильний варіант завжди
     // зелений (обраний він чи ні), а червоним — лише те, що студент обрав
     // помилково.
+    if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
+    if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
+    return "opacity-60";
+  }
+
+  // Та сама логіка станів, що optionClass() вище (correct/selected/
+  // opacity-60 — літерально ті самі значення, свідомо продубльовані, а не
+  // винесені в один виклик), ЛИШЕ з іншим кольором стану "обрано до
+  // перевірки": замість спільного SELECTED_OPTION_CLASS (синій, selection-
+  // style.ts — його не редагую, він ще потрібен іншим типам вправ у
+  // блакитному) — брендовий indigo, як у пілюлі select-режиму нижче, щоб
+  // нові компактні елементи (чип/пілюля) мали один акцентний колір.
+  function chipClass(itemId: string, optionId: string, itemDetail?: ItemDetail) {
+    if (!itemDetail) {
+      const sel = selections[itemId] ?? [];
+      return sel.includes(optionId)
+        ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
+        : ANSWER_CARD_DEFAULT;
+    }
+    const opt = itemDetail.options.find((o) => o.id === optionId);
+    if (!opt) return "";
     if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
     if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
     return "opacity-60";
@@ -132,42 +176,34 @@ export function MultipleChoiceExercise({
   function renderItem(item: MultipleChoicePublicItem) {
     const itemDetail = detail?.items.find((d) => d.id === item.id);
     const sel = selections[item.id] ?? [];
-
-    if (config.display === "buttons") {
-      const hasImages = item.options.some((o) => !!o.imageUrl);
-      return (
-        <div key={item.id}>
-          <p className="font-medium">
-            {item.sentence}
-            {pointsBadge(item, itemDetail)}
+    const hasImages = item.options.some((o) => !!o.imageUrl);
+    return (
+      <div key={item.id}>
+        <p className="font-medium">
+          {item.sentence}
+          {pointsBadge(item, itemDetail)}
+        </p>
+        {item.multiple && (
+          <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
+            {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
           </p>
-          {item.multiple && (
-            <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
-              {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
-            </p>
-          )}
-          {/* Якщо хоч один варіант має картинку — на мобільній/sm та сама
-              сітка, що в chronological_order (3/4 колонки, gap-2) — не
-              використовую COMPACT_IMAGE_GRID напряму, бо на md потрібно
-              перевизначити ту саму CSS-властивість (grid-template-columns/
-              gap) на ТОМУ САМОМУ брейкпоінті — накладання двох класів з
-              однаковою специфічністю (constant.md:grid-cols-5 проти
-              локального md:grid-cols-4) залежало б від порядку в
-              згенерованому Tailwind-шарі, а не від порядку в рядку
-              className. Тому база/sm — буквальна копія COMPACT_IMAGE_GRID
-              (мобільна й так НЕ міняється за умовою задачі), а md:/lg: —
-              повністю локальні, без конфліктів. На md колонок 4, не 5:
-              при gap-4+p-3 5 колонок у контейнері max-w-2xl/3xl звужували
-              би картинку нижче 104px (капа з COMPACT_IMAGE_FRAME) — 4
-              колонки зберігають той самий видимий розмір картинки. Інакше
-              (текстові варіанти) — попередня розкладка без змін. */}
-          <div
-            className={
-              hasImages
-                ? "mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:mt-4 md:gap-4 lg:gap-5"
-                : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
-            }
-          >
+        )}
+        {hasImages ? (
+          // Якщо хоч один варіант має картинку — на мобільній/sm та сама
+          // сітка, що в chronological_order (3/4 колонки, gap-2) — не
+          // використовую COMPACT_IMAGE_GRID напряму, бо на md потрібно
+          // перевизначити ту саму CSS-властивість (grid-template-columns/
+          // gap) на ТОМУ САМОМУ брейкпоінті — накладання двох класів з
+          // однаковою специфічністю (constant.md:grid-cols-5 проти
+          // локального md:grid-cols-4) залежало б від порядку в
+          // згенерованому Tailwind-шарі, а не від порядку в рядку
+          // className. Тому база/sm — буквальна копія COMPACT_IMAGE_GRID
+          // (мобільна й так НЕ міняється за умовою задачі), а md:/lg: —
+          // повністю локальні, без конфліктів. На md колонок 4, не 5:
+          // при gap-4+p-3 5 колонок у контейнері max-w-2xl/3xl звужували
+          // би картинку нижче 104px (капа з COMPACT_IMAGE_FRAME) — 4
+          // колонки зберігають той самий видимий розмір картинки.
+          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:mt-4 md:gap-4 lg:gap-5">
             {item.options.map((o) => {
               if (!o.imageUrl) {
                 // Текстовий варіант у сітці картинок (частина варіантів без
@@ -225,18 +261,101 @@ export function MultipleChoiceExercise({
               );
             })}
           </div>
-        </div>
-      );
-    }
+        ) : (
+          // Немає жодної картинки в питанні — чипи замість картки-на-рядок:
+          // той самий одиничний/множинний toggle(), лише візуально компактні
+          // й перенесені потоком (flex-wrap), а не одна картка на весь рядок.
+          <div className="mt-2 flex flex-wrap gap-2">
+            {item.options.map((o, idx) => {
+              const opt = itemDetail?.options.find((x) => x.id === o.id);
+              const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => toggle(item.id, o.id, item.multiple)}
+                  disabled={!!result}
+                  role={item.multiple ? "checkbox" : "radio"}
+                  aria-checked={chosen}
+                  className={`${CHIP_BASE} ${chipClass(item.id, o.id, itemDetail)}`}
+                >
+                  {chosen && <Check size={14} className="shrink-0" aria-hidden />}
+                  <span>
+                    {optionLetter(idx)}) {o.text}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-    // dropdown — вбудований посередині речення через рівно один "{{}}"
-    // (не BLANK_RE-цикл fill_blank на довільну кількість пропусків — тут
-    // завжди рівно один вибір на речення).
+  // Режим "dropdown" (випадаючий список) — компактний рядковий список, той
+  // самий контейнерний стиль, що текстовий режим chronological_order
+  // (divide-y/rounded-xl/border, без власної картки на рядок, без gap між
+  // рядками). Пілюля праворуч (w-56 на десктопі, на всю ширину на мобільній)
+  // — видимий стан-індикатор, а справжній <select> лежить прозорим шаром
+  // поверх неї (нативна поведінка: клавіатура, системний вибір на телефоні,
+  // aria). imageUrl у dropdown-варіантах неможливий (types.ts: imageUrl лише
+  // для display "buttons") — картинок тут за визначенням немає.
+  function renderDropdownRow(item: MultipleChoicePublicItem, index: number) {
+    const itemDetail = detail?.items.find((d) => d.id === item.id);
+    const sel = selections[item.id] ?? [];
+    const selectedOptions = item.options.filter((o) => sel.includes(o.id));
+    const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
+    const pillState: "correct" | "incorrect" | "selected" | "empty" =
+      isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : selectedOptions.length > 0 ? "selected" : "empty";
+    const pillClass =
+      pillState === "correct"
+        ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300"
+        : pillState === "incorrect"
+          ? "border-red-500 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-950/30 dark:text-red-300"
+          : pillState === "selected"
+            ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
+            : "border-gray-300 bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+    const label =
+      selectedOptions.length === 0
+        ? "Оберіть"
+        : item.multiple
+          ? selectedOptions.map((o) => o.text).join(", ")
+          : `${optionLetter(item.options.findIndex((o) => o.id === selectedOptions[0].id))}) ${selectedOptions[0].text}`;
+
+    // Речення для dropdown могло містити рівно один маркер "{{}}" (адмінка:
+    // "Je {{}} au cinéma.") — раніше він позначав місце вбудованого
+    // <select> прямо в тексті. У новому рядковому вигляді (пілюля — окремий
+    // елемент праворуч) маркер замінюю на видиме підкреслене "___", а не
+    // прибираю мовчки: без нього речення втрачає сенс ("Je au cinéma").
     const [before, after] = item.sentence.split("{{}}");
+
     return (
-      <div key={item.id}>
-        <p className="leading-8">
-          {before}
+      <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-2.5">
+          <span className={QUESTION_NUMBER_BADGE}>{index + 1}</span>
+          <div className="min-w-0 flex-1">
+            <p className="leading-snug">
+              {before}
+              <span className="text-neutral-400 underline dark:text-neutral-500">___</span>
+              {after ?? ""}
+              {pointsBadge(item, itemDetail)}
+            </p>
+            {item.multiple && (
+              <p className="mt-0.5 text-xs italic text-neutral-500 dark:text-neutral-400">
+                {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="group relative w-full flex-none md:w-56">
+          <div
+            className={`flex h-10 w-full items-center justify-between gap-2 rounded-full border px-3 text-sm transition-colors md:h-9 group-focus-within:ring-2 group-focus-within:ring-brand ${pillClass}`}
+          >
+            <span className="truncate" title={selectedOptions.map((o) => o.text).join(", ") || undefined}>
+              {label}
+            </span>
+            <ChevronDown size={14} className="shrink-0 opacity-60" aria-hidden />
+          </div>
           <select
             multiple={item.multiple}
             value={item.multiple ? sel : (sel[0] ?? "")}
@@ -247,9 +366,8 @@ export function MultipleChoiceExercise({
               setSelections((prev) => ({ ...prev, [item.id]: next }));
             }}
             disabled={!!result}
-            className={`mx-1 rounded-md border px-2 py-0.5 text-base align-middle ${
-              sel.length > 0 && sel[0] !== "" ? SELECTED_OPTION_CLASS : "border-gray-300 dark:border-neutral-600"
-            }`}
+            aria-label={`Відповідь на питання ${index + 1}`}
+            className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed"
           >
             {!item.multiple && <option value="">— Оберіть —</option>}
             {item.options.map((o) => (
@@ -258,14 +376,7 @@ export function MultipleChoiceExercise({
               </option>
             ))}
           </select>
-          {after ?? ""}
-          {pointsBadge(item, itemDetail)}
-        </p>
-        {item.multiple && (
-          <p className="mt-1 text-xs italic text-neutral-500 dark:text-neutral-400">
-            {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
-          </p>
-        )}
+        </div>
       </div>
     );
   }
@@ -279,14 +390,24 @@ export function MultipleChoiceExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
       />
 
-      {/* md:gap-10 — локальне розширення EXERCISE_BODY_ITEMS_GAP (сам
-          константа лишається "gap-4" для інших вправ): на десктопі
-          сусідні питання мають чітко розділятись, на мобільній — без змін.
-          Застосовується рівномірно до ВСІХ питань (з картинками й без) —
-          той самий ритм між питаннями на десктопі незалежно від вмісту. */}
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP} md:gap-10`}>
-        {config.items.map(renderItem)}
-      </div>
+      {config.display === "dropdown" ? (
+        // Один спільний контейнер-список (divide-y/rounded-xl/border — той
+        // самий прийом, що текстовий режим chronological_order) замість
+        // окремого gap між питаннями: рядки йдуть щільно, розділені лише
+        // тонкою лінією, без "величезних проміжків" попереднього вигляду.
+        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
+          {config.items.map((item, i) => renderDropdownRow(item, i))}
+        </div>
+      ) : (
+        // md:gap-10 — локальне розширення EXERCISE_BODY_ITEMS_GAP (сам
+        // константа лишається "gap-4" для інших вправ): на десктопі
+        // сусідні питання мають чітко розділятись, на мобільній — без змін.
+        // Застосовується рівномірно до ВСІХ питань (з картинками й без) —
+        // той самий ритм між питаннями на десктопі незалежно від вмісту.
+        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP} md:gap-10`}>
+          {config.items.map(renderItem)}
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {!result ? (
