@@ -1268,7 +1268,10 @@ export type CheckboxGridDetail = {
     studentChecked: boolean;
     correctChecked: boolean;
     isCorrect: boolean;
-    points: number; // однакове для всіх клітинок одного рядка — бали на рядок, не на клітинку
+    points: number; // однакове для всіх клітинок одного рядка — максимум балів за рядок
+    // Частковий залік рядка (grade.ts: max(0,(rightTicks-wrongTicks)/required)
+    // × points) — однакове для всіх клітинок одного рядка, як і points.
+    earnedPoints: number;
   }[];
 };
 

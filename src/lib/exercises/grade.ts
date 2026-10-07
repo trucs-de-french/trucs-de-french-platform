@@ -921,22 +921,51 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
   };
 }
 
-// checkbox_grid — той самий принцип, що gradeTableFill: плаский список
-// клітинок (тут — усі рядок×колонка, не лише "приховані"), score атомарний
-// по клітинках, points групуються по рядку (зараховується цілком, лише
-// якщо ВСІ клітинки рядка збігаються з очікуваним станом — і хибний
-// позитив, і хибний негатив псують рядок).
+// checkbox_grid — плаский список клітинок (усі рядок×колонка), той самий
+// принцип ідентифікації помилки, що gradeTableFill: isCorrect === (стан
+// студента === ключ), і хибний позитив, і хибний негатив — помилка.
+//
+// Бали рядка — ЧАСТКОВИЙ залік (не все-або-нічого, як було): required =
+// кількість правильних колонок рядка; rightTicks/wrongTicks — позначено
+// правильно/позначено зайве; fraction = required>0
+// ? max(0,(rightTicks-wrongTicks)/required) : (wrongTicks===0 ? 1 : 0) —
+// хибний позитив в рядку без жодної правильної колонки (required=0) усе ще
+// псує рядок (fraction 0), а не "все одно зараховано", бо rightTicks там
+// завжди 0 і формула max(0,...) дала б 0/0 (NaN) без цього окремого випадку.
+// Округлення earned до 0.01 — щоб суми (required=3 тощо дають 1/3=0.333…)
+// не накопичували похибку плаваючої крапки на кількох рядках.
+//
+// score тепер = відсоток ВІД pointsEarned/pointsPossible (не окремий
+// рахунок по клітинках, як було) — "Результат: X%" і "(A з B балів)" завжди
+// узгоджені, X === round(A/B×100).
 function gradeCheckboxGrid(config: CheckboxGridConfig, answer: CheckboxGridAnswer): GradeResult {
   const answerByRow = new Map(answer.map((a) => [a.rowId, new Set(a.columnIds)]));
 
   const cells: CheckboxGridDetail["cells"] = [];
+  let pointsPossible = 0;
+  let pointsEarned = 0;
+
   for (const row of config.rows) {
     const rowPoints = resolveCheckboxGridPoints(row);
     const studentColumnIds = answerByRow.get(row.id) ?? new Set<string>();
     const correctColumnIds = new Set(row.correctColumnIds);
-    for (const column of config.columns) {
-      const studentChecked = studentColumnIds.has(column.id);
-      const correctChecked = correctColumnIds.has(column.id);
+
+    const rowCellStates = config.columns.map((column) => ({
+      column,
+      studentChecked: studentColumnIds.has(column.id),
+      correctChecked: correctColumnIds.has(column.id),
+    }));
+
+    const rightTicks = rowCellStates.filter((c) => c.studentChecked && c.correctChecked).length;
+    const wrongTicks = rowCellStates.filter((c) => c.studentChecked && !c.correctChecked).length;
+    const required = correctColumnIds.size;
+    const fraction = required > 0 ? Math.max(0, (rightTicks - wrongTicks) / required) : wrongTicks === 0 ? 1 : 0;
+    const rowEarned = Math.round(rowPoints * fraction * 100) / 100;
+
+    pointsPossible += rowPoints;
+    pointsEarned += rowEarned;
+
+    for (const { column, studentChecked, correctChecked } of rowCellStates) {
       cells.push({
         rowId: row.id,
         columnId: column.id,
@@ -944,28 +973,16 @@ function gradeCheckboxGrid(config: CheckboxGridConfig, answer: CheckboxGridAnswe
         correctChecked,
         isCorrect: studentChecked === correctChecked,
         points: rowPoints,
+        earnedPoints: rowEarned,
       });
     }
   }
 
   const correctCount = cells.filter((c) => c.isCorrect).length;
 
-  const cellsByRow = new Map<string, CheckboxGridDetail["cells"]>();
-  for (const c of cells) {
-    const arr = cellsByRow.get(c.rowId) ?? [];
-    arr.push(c);
-    cellsByRow.set(c.rowId, arr);
-  }
-  let pointsPossible = 0;
-  let pointsEarned = 0;
-  for (const rowCells of cellsByRow.values()) {
-    pointsPossible += rowCells[0].points;
-    if (rowCells.every((c) => c.isCorrect)) pointsEarned += rowCells[0].points;
-  }
-
   return {
-    correct: correctCount === cells.length && cells.length > 0,
-    score: percentage(correctCount, cells.length),
+    correct: cells.length > 0 && correctCount === cells.length,
+    score: percentage(pointsEarned, pointsPossible),
     detail: { cells },
     pointsEarned,
     pointsPossible,

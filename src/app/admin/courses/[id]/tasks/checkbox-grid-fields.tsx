@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -11,6 +11,20 @@ import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
 function emptyRow(): CheckboxGridRow {
   return { id: crypto.randomUUID(), label: "", correctColumnIds: [] };
+}
+
+// Попередження БЕЗ блокування збереження (actions.ts валідацію не чіпали):
+// лише орієнтир для вчительки, що довга назва колонки на телефоні стане
+// тісною (студентська розкладка показує короткі назви в header'і грід-
+// таблиці, 1-3 слова на колонку).
+function columnNameWarning(label: string): string | null {
+  const trimmed = label.trim();
+  if (!trimmed) return null;
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 3 || trimmed.length > 24) {
+    return "Довга назва — на телефоні їй забракне місця в шапці. Повний текст перенесіть у твердження (ліва колонка).";
+  }
+  return null;
 }
 
 export const CheckboxGridFields = forwardRef<
@@ -110,25 +124,46 @@ export const CheckboxGridFields = forwardRef<
 
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Колонки</label>
-        {columns.map((c) => (
-          <div key={c.id} className="flex items-center gap-2">
-            <input
-              value={c.label}
-              onChange={(e) => updateColumnLabel(c.id, e.target.value)}
-              placeholder="Назва колонки"
-              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium`}
-            />
-            <button
-              type="button"
-              onClick={() => removeColumn(c.id)}
-              aria-label="Видалити колонку"
-              title="Видалити"
-              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
+        <p className={HINT_TEXT}>
+          Назва колонки: коротке слово чи фраза, 1–3 слова (наприклад, La vache). Довгий текст пишіть у
+          твердженні (перша колонка). Рекомендовано до 6 колонок.
+        </p>
+        {columns.map((c) => {
+          const warning = columnNameWarning(c.label);
+          return (
+            <div key={c.id} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <input
+                  value={c.label}
+                  onChange={(e) => updateColumnLabel(c.id, e.target.value)}
+                  placeholder="Назва колонки"
+                  className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeColumn(c.id)}
+                  aria-label="Видалити колонку"
+                  title="Видалити"
+                  className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              {warning && (
+                <p className="flex items-start gap-1.5 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                  {warning}
+                </p>
+              )}
+            </div>
+          );
+        })}
+        {columns.length > 6 && (
+          <p className="flex items-start gap-1.5 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            Багато колонок ({columns.length}) — на телефоні таблиця стане тісною. Рекомендовано до 6.
+          </p>
+        )}
         <button
           type="button"
           onClick={addColumn}
@@ -151,7 +186,7 @@ export const CheckboxGridFields = forwardRef<
               <input
                 value={row.label}
                 onChange={(e) => updateRowLabel(row.id, e.target.value)}
-                placeholder="Твердження / питання"
+                placeholder="Повний текст твердження"
                 className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
               />
               <span className={HINT_TEXT}>Бали</span>
