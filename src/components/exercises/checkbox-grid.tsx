@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId } from "react";
+import { Check } from "lucide-react";
 import type {
   CheckboxGridPublic,
   CheckboxGridDetail,
@@ -26,11 +27,48 @@ const MATRIX_COLUMN_BADGE =
 
 // Перший стовпець matrix-таблиці (підписи варіантів) — вузький і липкий
 // при горизонтальній прокрутці, непрозорий фон, щоб прокручені клітинки не
-// просвічували крізь нього.
+// просвічували крізь нього. 7rem (було 7.5rem) — звільняє ~8px на мобільній
+// під трохи ширші стовпці чекбоксів нижче (w-10 замість w-9), щоб 5
+// тверджень і далі влазили без прокрутки на 390px.
 const MATRIX_FIRST_COL_HEADER =
-  "w-[7.5rem] max-w-[40%] px-2.5 py-2 md:w-auto md:min-w-[10rem] md:max-w-[18rem]";
+  "w-[7rem] max-w-[40%] px-2.5 py-2 md:w-auto md:min-w-[10rem] md:max-w-[18rem]";
 const MATRIX_FIRST_COL_CELL =
-  "sticky left-0 z-10 w-[7.5rem] max-w-[40%] break-words border-r border-gray-200 bg-white px-2.5 py-2 text-left text-sm font-normal md:w-auto md:min-w-[10rem] md:max-w-[18rem] md:text-base dark:border-neutral-700 dark:bg-neutral-800";
+  "sticky left-0 z-10 w-[7rem] max-w-[40%] break-words border-r border-gray-200 bg-white px-2.5 py-2 text-left text-sm font-normal md:w-auto md:min-w-[10rem] md:max-w-[18rem] md:text-base dark:border-neutral-700 dark:bg-neutral-800";
+
+// Картка таблиці — та сама обгортка в обох розкладках ("table" і "matrix"):
+// раніше лише matrix мала rounded-xl/рамку/фон прямо на <table>, "table"
+// була голою (лише горизонтальні лінії рядків) — тепер однаковий клас в
+// обох render-функціях нижче.
+const GRID_TABLE_CARD =
+  "rounded-xl border border-gray-200 bg-white overflow-hidden dark:border-neutral-700 dark:bg-neutral-800";
+
+// Вертикальна риска після першого стовпця — той самий токен кольору, що
+// вже на рамці картки й на border-r у MATRIX_FIRST_COL_CELL вище
+// (border-gray-200/dark:border-neutral-700, НЕ neutral-200 — щоб обидві
+// розкладки лишались на одному токені).
+const GRID_FIRST_COL_DIVIDER = "border-r border-gray-200 dark:border-neutral-700";
+
+// Обгортка-лейбл клітинки з чекбоксом — min-h-14 (56px) мобільна/md:min-h-16
+// (64px) в обох розкладках: уніфіковано з "table" (було min-h-11=44px) і
+// трохи піднято проти "matrix" (було min-h-12=48px без окремого md-кроку),
+// щоб новий 30px-чекбокс на md+ (нижче) мав запас, а не впритул. Хіт-зона
+// (44px мінімум із задачі) у 56/64 вже з запасом.
+const GRID_CELL_LABEL = "flex min-h-14 w-full items-center justify-center md:min-h-16";
+
+// Сам квадрат чекбокса — єдина константа для обох розкладок (раніше це
+// був голий <input type="checkbox"> без жодного класу, суто нативний
+// розмір/вигляд браузера, непередбачуваний і дрібний для кліку). Нативний
+// input лишається (sr-only + peer) — клавіатура/aria/форма не зачеплені;
+// видимий квадрат — сусідній <span>, стан (checked/unchecked) рахується в
+// JS (answers-set), а не CSS :checked — той самий принцип, що вже в
+// imageCardClass/imageOptionIndicator (multiple-choice.tsx). border-2 з
+// явним токеном кольору (не currentColor — Tailwind v4 бага без явного
+// кольору на bare "border").
+const GRID_CHECKBOX_BOX =
+  "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border-2 transition-colors md:h-[30px] md:w-[30px] peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 peer-disabled:opacity-60";
+const GRID_CHECKBOX_UNCHECKED = "border-neutral-300 bg-white dark:border-neutral-500 dark:bg-neutral-800";
+const GRID_CHECKBOX_CHECKED = "border-brand bg-brand";
+const GRID_CHECKBOX_ICON = "h-3.5 w-3.5 text-white md:h-4 md:w-4";
 
 export function CheckboxGridExercise({
   taskId,
@@ -83,6 +121,31 @@ export function CheckboxGridExercise({
     return `${row.points} ${pluralizePoints(row.points)}`;
   }
 
+  // Спільний для обох розкладок — єдине місце, що малює чекбокс-квадрат
+  // (GRID_CHECKBOX_*) і резервує хіт-зону (GRID_CELL_LABEL), щоб "table" і
+  // "matrix" не розходились власними копіями.
+  function renderCheckboxControl(rowId: string, columnId: string, labelledBy: string) {
+    const checked = answers[rowId]?.has(columnId) ?? false;
+    return (
+      <label className={GRID_CELL_LABEL}>
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          aria-labelledby={labelledBy}
+          checked={checked}
+          onChange={() => toggleCell(rowId, columnId)}
+          disabled={!!result}
+        />
+        <span
+          aria-hidden="true"
+          className={`${GRID_CHECKBOX_BOX} ${checked ? GRID_CHECKBOX_CHECKED : GRID_CHECKBOX_UNCHECKED}`}
+        >
+          {checked && <Check strokeWidth={3} className={GRID_CHECKBOX_ICON} />}
+        </span>
+      </label>
+    );
+  }
+
   function handleSubmit() {
     const answer: CheckboxGridAnswer = config.rows.map((row) => ({
       rowId: row.id,
@@ -94,16 +157,16 @@ export function CheckboxGridExercise({
   function renderTable(suffix: string) {
     return (
       <div className="overflow-x-auto">
-        <table className="w-fit max-w-xl mx-auto border-collapse text-base">
+        <table className={`w-fit max-w-xl mx-auto border-collapse text-base ${GRID_TABLE_CARD}`}>
           <thead>
             <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
-              <th className="py-1 pr-2 font-medium"></th>
+              <th className={`py-1 pr-2 pl-2.5 font-medium ${GRID_FIRST_COL_DIVIDER}`}></th>
               {config.columns.map((c) => (
                 <th
                   key={c.id}
                   id={`${uid}col${suffix}-${c.id}`}
                   scope="col"
-                  className="px-2 py-1 text-center text-xs font-medium leading-tight break-words md:text-sm"
+                  className="min-w-11 px-2 py-1 text-center text-xs font-medium leading-tight break-words md:min-w-14 md:text-sm"
                 >
                   {c.label}
                 </th>
@@ -116,7 +179,7 @@ export function CheckboxGridExercise({
               const stmtId = `${uid}stmt${suffix}-${row.id}`;
               return (
                 <tr key={row.id} className="border-b border-gray-200 last:border-0 dark:border-neutral-700">
-                  <td className="min-w-0 py-1 pr-2 md:min-w-[14rem]">
+                  <td className={`min-w-0 py-1 pr-2 pl-2.5 md:min-w-[14rem] ${GRID_FIRST_COL_DIVIDER}`}>
                     <div className="flex items-start gap-2">
                       {config.rows.length > 1 && (
                         <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
@@ -131,16 +194,11 @@ export function CheckboxGridExercise({
                   {config.columns.map((c) => {
                     const colId = `${uid}col${suffix}-${c.id}`;
                     return (
-                      <td key={c.id} className={`px-2 py-1 text-center ${cellClass(row.id, c.id)}`}>
-                        <label className="flex min-h-11 w-full items-center justify-center">
-                          <input
-                            type="checkbox"
-                            aria-labelledby={`${colId} ${stmtId}`}
-                            checked={answers[row.id]?.has(c.id) ?? false}
-                            onChange={() => toggleCell(row.id, c.id)}
-                            disabled={!!result}
-                          />
-                        </label>
+                      <td
+                        key={c.id}
+                        className={`min-w-11 px-2 py-1 text-center md:min-w-14 ${cellClass(row.id, c.id)}`}
+                      >
+                        {renderCheckboxControl(row.id, c.id, `${colId} ${stmtId}`)}
                       </td>
                     );
                   })}
@@ -182,7 +240,7 @@ export function CheckboxGridExercise({
         </ol>
 
         <div className="overflow-x-auto">
-          <table className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white text-base dark:border-neutral-700 dark:bg-neutral-800 md:w-fit md:max-w-full md:mx-auto">
+          <table className={`w-full text-base md:w-fit md:max-w-full md:mx-auto ${GRID_TABLE_CARD}`}>
             <thead>
               <tr className="border-b border-gray-200 dark:border-neutral-700">
                 <th className={MATRIX_FIRST_COL_HEADER}></th>
@@ -191,7 +249,7 @@ export function CheckboxGridExercise({
                     key={row.id}
                     id={`${uid}col${suffix}-${row.id}`}
                     scope="col"
-                    className="w-9 px-1 py-2 text-center md:w-14"
+                    className="w-10 px-1 py-2 text-center md:w-16"
                   >
                     <span className={MATRIX_COLUMN_BADGE} aria-hidden="true">
                       {index + 1}
@@ -213,17 +271,9 @@ export function CheckboxGridExercise({
                       return (
                         <td
                           key={row.id}
-                          className={`w-9 px-1 py-2 text-center md:w-14 ${cellClass(row.id, c.id)}`}
+                          className={`w-10 px-1 py-2 text-center md:w-16 ${cellClass(row.id, c.id)}`}
                         >
-                          <label className="flex min-h-12 w-full items-center justify-center">
-                            <input
-                              type="checkbox"
-                              aria-labelledby={`${optId} ${stmtId}`}
-                              checked={answers[row.id]?.has(c.id) ?? false}
-                              onChange={() => toggleCell(row.id, c.id)}
-                              disabled={!!result}
-                            />
-                          </label>
+                          {renderCheckboxControl(row.id, c.id, `${optId} ${stmtId}`)}
                         </td>
                       );
                     })}
