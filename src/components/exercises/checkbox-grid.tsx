@@ -27,13 +27,14 @@ const MATRIX_COLUMN_BADGE =
 
 // Перший стовпець matrix-таблиці (підписи варіантів) — вузький і липкий
 // при горизонтальній прокрутці, непрозорий фон, щоб прокручені клітинки не
-// просвічували крізь нього. 7rem (було 7.5rem) — звільняє ~8px на мобільній
-// під трохи ширші стовпці чекбоксів нижче (w-10 замість w-9), щоб 5
-// тверджень і далі влазили без прокрутки на 390px.
+// просвічували крізь нього. 6.5rem (було 7rem, 0a4659d) — 5 тверджень
+// (6.5rem=104px + 5×40px=200px → 304px) влазять у робочу ширину ~310px на
+// 390px без горизонтальної прокрутки (0a4659d звужував лише до 7rem=312px —
+// на ~2px більше за доступні 310px).
 const MATRIX_FIRST_COL_HEADER =
-  "w-[7rem] max-w-[40%] px-2.5 py-2 md:w-auto md:min-w-[10rem] md:max-w-[18rem]";
+  "w-[6.5rem] max-w-[40%] px-2.5 py-2 md:w-auto md:min-w-[10rem] md:max-w-[18rem]";
 const MATRIX_FIRST_COL_CELL =
-  "sticky left-0 z-10 w-[7rem] max-w-[40%] break-words border-r border-gray-200 bg-white px-2.5 py-2 text-left text-sm font-normal md:w-auto md:min-w-[10rem] md:max-w-[18rem] md:text-base dark:border-neutral-700 dark:bg-neutral-800";
+  "sticky left-0 z-10 w-[6.5rem] max-w-[40%] break-words border-r border-gray-200 bg-white px-2.5 py-2 text-left text-sm font-normal md:w-auto md:min-w-[10rem] md:max-w-[18rem] md:text-base dark:border-neutral-700 dark:bg-neutral-800";
 
 // Картка таблиці — та сама обгортка в обох розкладках ("table" і "matrix"):
 // раніше лише matrix мала rounded-xl/рамку/фон прямо на <table>, "table"
@@ -243,7 +244,7 @@ export function CheckboxGridExercise({
           <table className={`w-full text-base md:w-fit md:max-w-full md:mx-auto ${GRID_TABLE_CARD}`}>
             <thead>
               <tr className="border-b border-gray-200 dark:border-neutral-700">
-                <th className={MATRIX_FIRST_COL_HEADER}></th>
+                <th className={`${MATRIX_FIRST_COL_HEADER} ${GRID_FIRST_COL_DIVIDER}`}></th>
                 {config.rows.map((row, index) => (
                   <th
                     key={row.id}
