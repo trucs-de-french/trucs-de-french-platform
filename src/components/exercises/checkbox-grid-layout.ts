@@ -13,13 +13,16 @@ type LayoutLimits = {
   maxOptions: number;
 };
 
-// Два набори лімітів, на старті однакові. Набір desktop можна підняти
-// окремо (більші числа), якщо на комп'ютері довші твердження/варіанти
-// мають лишатись у звичайній таблиці — мобільний набір піднімати нема
-// куди, там завжди вузько.
+// Головний критерій — ДОВЖИНА тексту (statementMaxChars/optionMaxChars):
+// короткі твердження й короткі варіанти лишаються звичайною таблицею
+// незалежно від їх кількості. maxOptions — лише запобіжник проти
+// надто широкої таблиці (десятки коротких варіантів в один рядок шапки
+// вже нечитабельні самі по собі), а не головна умова переходу в matrix.
+// desktop.maxOptions вищий за mobile, бо на вузькому екрані навіть
+// коротким варіантам бракує місця в шапці раніше, ніж на комп'ютері.
 export const LAYOUT_LIMITS: Record<LayoutScreen, LayoutLimits> = {
-  mobile: { statementMaxChars: 28, optionMaxChars: 16, maxOptions: 4 },
-  desktop: { statementMaxChars: 28, optionMaxChars: 16, maxOptions: 4 },
+  mobile: { statementMaxChars: 28, optionMaxChars: 16, maxOptions: 5 },
+  desktop: { statementMaxChars: 28, optionMaxChars: 16, maxOptions: 8 },
 };
 
 function textLength(s: string): number {
