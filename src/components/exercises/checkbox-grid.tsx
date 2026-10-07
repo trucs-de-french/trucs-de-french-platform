@@ -182,7 +182,7 @@ export function CheckboxGridExercise({
         </ol>
 
         <div className="overflow-x-auto">
-          <table className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white text-base dark:border-neutral-700 dark:bg-neutral-800 md:w-fit md:max-w-full">
+          <table className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white text-base dark:border-neutral-700 dark:bg-neutral-800 md:w-fit md:max-w-full md:mx-auto">
             <thead>
               <tr className="border-b border-gray-200 dark:border-neutral-700">
                 <th className={MATRIX_FIRST_COL_HEADER}></th>
