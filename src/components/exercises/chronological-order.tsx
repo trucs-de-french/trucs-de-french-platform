@@ -14,7 +14,13 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import {
+  ANSWER_CARD_DEFAULT,
+  COMPACT_IMAGE_GRID,
+  COMPACT_IMAGE_CARD,
+  COMPACT_IMAGE_FRAME,
+  COMPACT_IMAGE_FILL,
+} from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -170,13 +176,13 @@ export function ChronologicalOrderExercise({
         // картинок вміщались на екран майже без прокрутки (попередня
         // версія — 2/3 колонки з великим квадратом (до 12rem) — і 10
         // елементів розтягувались на кілька екранів прокрутки).
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+        <div className={COMPACT_IMAGE_GRID}>
           {config.items.map((item, i) => {
             const label = indexToLabel(i);
             return (
               <div
                 key={item.id}
-                className={`flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center shadow-sm transition-colors ${ANSWER_CARD_DEFAULT}`}
+                className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT}`}
               >
                 {/* overflow-hidden + img absolute inset-0 — <img> більше не
                     задає власну висоту через проценти (h-full проти
@@ -191,11 +197,11 @@ export function ChronologicalOrderExercise({
                     саме він і провокував непослідовний розрахунок хіпотетичного
                     cross-size ДО застосування max-width, звідки квадрат
                     ~208px замість затиснутого max-w-[6.5rem]=104px). */}
-                <div className="relative mx-auto aspect-square w-full max-w-[6.5rem] overflow-hidden rounded-md">
+                <div className={COMPACT_IMAGE_FRAME}>
                   <ImageOrPlaceholder
                     src={item.content}
                     alt=""
-                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    className={COMPACT_IMAGE_FILL}
                     useFocus
                   />
                   <span className={`absolute left-1 top-1 z-10 ${ITEM_LETTER_BADGE_SM}`}>{label}</span>

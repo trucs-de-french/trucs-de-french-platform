@@ -31,3 +31,29 @@ export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm tra
 // викликачі — тут лише форма+колір+розмір.
 export const ITEM_LETTER_BADGE =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
+
+// Щільна сітка карток-з-картинкою — спочатку з'явилась у chronological_order
+// (режим image/mixed): 3 колонки на мобільній, 4 на sm, 5 на md+, gap-2.
+// multiple_choice (варіанти з картинкою) підключений до тих самих значень,
+// щоб розмір карток в обох вправах був ідентичний. Якщо колись знадобиться
+// розійтись — НЕ редагувати значення тут напряму, спершу перевірити обидва
+// виклики.
+export const COMPACT_IMAGE_GRID = "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5";
+
+// Сама картка: та форма+відступ+тінь, що й ANSWER_CARD_BASE мала намір
+// дати, але щільніша (p-1.5, не p-3) — під маленьку квадратну картинку
+// замість тексту на всю картку. Колір стану (ANSWER_CARD_DEFAULT і т.п.)
+// додається викликачем, як і в ANSWER_CARD_BASE.
+export const COMPACT_IMAGE_CARD =
+  "flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center shadow-sm transition-colors";
+
+// Квадратна рамка під картинку: max-w-[6.5rem] — те саме обмеження, що і в
+// chronological_order, щоб картка не розтягувалась на всю ширину колонки
+// на широких екранах (grid-cols-5 лишає значно більше 6.5rem на колонку).
+// overflow-hidden + дочірній img з absolute inset-0 (не h-full w-full на
+// самому img без обгортки) — свідомо: відсоткова висота без inset-0 дала
+// нестабільний розрахунок квадрата (див. коментар у chronological-order.tsx
+// з приводу aspect-square + self-stretch).
+export const COMPACT_IMAGE_FRAME =
+  "relative mx-auto aspect-square w-full max-w-[6.5rem] overflow-hidden rounded-md";
+export const COMPACT_IMAGE_FILL = "absolute inset-0 h-full w-full object-cover object-center";

@@ -10,7 +10,14 @@ import { InstructionsText } from "./instructions-text";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import {
+  ANSWER_CARD_BASE,
+  ANSWER_CARD_DEFAULT,
+  COMPACT_IMAGE_GRID,
+  COMPACT_IMAGE_CARD,
+  COMPACT_IMAGE_FRAME,
+  COMPACT_IMAGE_FILL,
+} from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -72,28 +79,35 @@ export function MultipleChoiceExercise({
   }
 
   // Для варіантів із картинкою підсвічення переноситься з усієї кнопки
-  // (як для текстових варіантів вище) на маленький квадратик-чекбокс поруч
-  // із текстом — та сама інформація (обрано/правильно/неправильно), лише
-  // менш нав'язливо на тлі картинки. Кнопка сама лишається нейтральною.
+  // (як для текстових варіантів вище) на маленький індикатор-чекбокс
+  // оверлеєм у кутку картинки — та сама інформація (обрано/правильно/
+  // неправильно), лише менш нав'язливо на тлі картинки. Кнопка сама
+  // лишається нейтральною. Білий/нейтральний фон + явна рамка — щоб
+  // індикатор читався на будь-якому фото, а не лише на темному.
   function imageOptionIndicator(itemId: string, optionId: string, itemDetail?: ItemDetail) {
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
       const selected = sel.includes(optionId);
       return {
         mark: selected ? "✓" : "",
+        selected,
         className: selected
-          ? "border-blue-600 bg-blue-600 text-white"
-          : "border-neutral-300 dark:border-neutral-600",
+          ? "border-brand bg-brand text-white"
+          : "border-neutral-400 bg-white/90 dark:border-neutral-300 dark:bg-neutral-900/80",
       };
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (opt?.correct) {
-      return { mark: "✓", className: "border-green-600 bg-green-600 text-white" };
+      return { mark: "✓", selected: true, className: "border-green-600 bg-green-600 text-white" };
     }
     if (opt?.selected) {
-      return { mark: "✕", className: "border-red-600 bg-red-600 text-white" };
+      return { mark: "✕", selected: true, className: "border-red-600 bg-red-600 text-white" };
     }
-    return { mark: "", className: "border-neutral-300 opacity-60 dark:border-neutral-600" };
+    return {
+      mark: "",
+      selected: false,
+      className: "border-neutral-300 bg-white/70 opacity-70 dark:border-neutral-600 dark:bg-neutral-900/50",
+    };
   }
 
   // До перевірки — лише якщо pointsVisible; після — завжди. Речення
@@ -133,62 +147,68 @@ export function MultipleChoiceExercise({
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
           )}
-          {/* Якщо хоч один варіант має картинку — вузькі картки фіксованої
-              ширини (auto-fill, не розтягуються на всю ширину рядка), інакше
-              — попередня розкладка "один/два стовпчики" для текстових
-              варіантів. */}
-          <div
-            className={
-              hasImages
-                ? "mt-2 grid grid-cols-[repeat(auto-fill,minmax(9.5rem,10.5rem))] items-stretch justify-start gap-2.5"
-                : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
-            }
-          >
-            {item.options.map((o) =>
-              o.imageUrl ? (
+          {/* Якщо хоч один варіант має картинку — та сама щільна сітка й
+              розмір картки, що в chronological_order (режим image): 3
+              колонки на мобільній, 4 на sm, 5 на md+ (COMPACT_IMAGE_GRID).
+              Інакше — попередня розкладка "один/два стовпчики" для
+              текстових варіантів. */}
+          <div className={hasImages ? `mt-2 ${COMPACT_IMAGE_GRID}` : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"}>
+            {item.options.map((o) => {
+              if (!o.imageUrl) {
+                // Текстовий варіант у сітці картинок (частина варіантів без
+                // картинки) — та сама картка, що й у чисто текстовому
+                // питанні (ANSWER_CARD_BASE): grid-cols фіксованої кількості
+                // колонок (а не auto-fill) сам підрівнює ширину до картинкових
+                // карток у рядку.
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => toggle(item.id, o.id, item.multiple)}
+                    disabled={!!result}
+                    className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
+                  >
+                    {o.text}
+                  </button>
+                );
+              }
+              const indicator = imageOptionIndicator(item.id, o.id, itemDetail);
+              return (
                 <button
                   key={o.id}
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className={`flex flex-col rounded-xl border p-2 text-left shadow-sm transition-colors ${ANSWER_CARD_DEFAULT}`}
+                  role={item.multiple ? "checkbox" : "radio"}
+                  aria-checked={indicator.selected}
+                  aria-label={o.text || undefined}
+                  className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT}`}
                 >
-                  <div className="relative">
-                    <ImageOrPlaceholder
-                      src={o.imageUrl}
-                      alt={o.text || ""}
-                      className="aspect-square w-full rounded-lg object-cover object-center"
-                      useFocus
-                    />
-                    <ImageZoomBadge
-                      onOpen={() => setLightboxSrc(o.imageUrl!)}
-                      boxClass="p-1.5"
-                      iconSize={14}
-                      hitAreaPx={40}
-                    />
-                  </div>
-                  <div className="mt-1.5 flex items-start gap-2">
+                  <div className={COMPACT_IMAGE_FRAME}>
+                    <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
                     <span
                       aria-hidden
-                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${imageOptionIndicator(item.id, o.id, itemDetail).className}`}
+                      className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs font-bold leading-none ${indicator.className}`}
                     >
-                      {imageOptionIndicator(item.id, o.id, itemDetail).mark}
+                      {indicator.mark}
                     </span>
-                    {o.text && <span className="text-sm">{o.text}</span>}
+                    <ImageZoomBadge
+                      onOpen={() => setLightboxSrc(o.imageUrl!)}
+                      boxClass="h-6 w-6 before:absolute before:-inset-2 before:content-['']"
+                      iconSize={12}
+                    />
                   </div>
+                  {o.text && (
+                    <p
+                      className="line-clamp-2 w-full text-center text-[13px] leading-tight sm:line-clamp-3 sm:text-sm"
+                      title={o.text}
+                    >
+                      {o.text}
+                    </p>
+                  )}
                 </button>
-              ) : (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!result}
-                  className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
-                >
-                  {o.text}
-                </button>
-              )
-            )}
+              );
+            })}
           </div>
         </div>
       );

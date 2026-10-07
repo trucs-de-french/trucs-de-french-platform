@@ -16,22 +16,16 @@ import { Search } from "lucide-react";
 // crossword-картку з картинкою (ImageClueCard): лупа йде в ПРОТИЛЕЖНИЙ
 // кут від лампочки-підказки (right-1 bottom-1) і менша — фіксований
 // 28px-квадрат (boxClass), а не p-1 навколо іконки.
-// hitAreaPx — опціональний невидимий псевдо-елемент (прозорий span), що
-// розширює зону дотику понад видимий розмір бейджа, не збільшуючи сам
-// гурток. Без нього (усі старі виклики) поведінка лишається байтово
-// попередньою.
 export function ImageZoomBadge({
   onOpen,
   position = "right-1 top-1",
   boxClass = "p-1",
   iconSize = 12,
-  hitAreaPx,
 }: {
   onOpen: () => void;
   position?: string;
   boxClass?: string;
   iconSize?: number;
-  hitAreaPx?: number;
 }) {
   return (
     <span
@@ -42,13 +36,6 @@ export function ImageZoomBadge({
       aria-hidden
       className={`absolute ${position} z-10 flex cursor-zoom-in items-center justify-center rounded-full bg-black/60 ${boxClass} text-white/90 hover:bg-black/80`}
     >
-      {hitAreaPx !== undefined && (
-        <span
-          aria-hidden
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{ width: hitAreaPx, height: hitAreaPx }}
-        />
-      )}
       <Search size={iconSize} />
     </span>
   );
