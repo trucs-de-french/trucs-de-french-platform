@@ -121,6 +121,7 @@ export function MultipleChoiceExercise({
     const sel = selections[item.id] ?? [];
 
     if (config.display === "buttons") {
+      const hasImages = item.options.some((o) => !!o.imageUrl);
       return (
         <div key={item.id}>
           <p className="font-medium">
@@ -132,10 +133,17 @@ export function MultipleChoiceExercise({
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
           )}
-          {/* grid, не суворо один стовпчик — на вузькому екрані природно
-              переходить в один стовпчик (вертикально), на широкому — кілька
-              поруч (горизонтально). */}
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {/* Якщо хоч один варіант має картинку — вузькі картки фіксованої
+              ширини (auto-fill, не розтягуються на всю ширину рядка), інакше
+              — попередня розкладка "один/два стовпчики" для текстових
+              варіантів. */}
+          <div
+            className={
+              hasImages
+                ? "mt-2 grid grid-cols-[repeat(auto-fill,minmax(9.5rem,10.5rem))] items-stretch justify-start gap-2.5"
+                : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+            }
+          >
             {item.options.map((o) =>
               o.imageUrl ? (
                 <button
@@ -143,23 +151,30 @@ export function MultipleChoiceExercise({
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className={`relative ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
+                  className={`flex flex-col rounded-xl border p-2 text-left shadow-sm transition-colors ${ANSWER_CARD_DEFAULT}`}
                 >
-                  <ImageZoomBadge onOpen={() => setLightboxSrc(o.imageUrl!)} />
-                  <ImageOrPlaceholder
-                    src={o.imageUrl}
-                    alt={o.text || ""}
-                    className="mx-auto h-20 w-20 rounded object-cover"
-                    useFocus
-                  />
-                  <div className="mt-1 flex items-center justify-center gap-1.5">
+                  <div className="relative">
+                    <ImageOrPlaceholder
+                      src={o.imageUrl}
+                      alt={o.text || ""}
+                      className="aspect-square w-full rounded-lg object-cover object-center"
+                      useFocus
+                    />
+                    <ImageZoomBadge
+                      onOpen={() => setLightboxSrc(o.imageUrl!)}
+                      boxClass="p-1.5"
+                      iconSize={14}
+                      hitAreaPx={40}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex items-start gap-2">
                     <span
                       aria-hidden
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${imageOptionIndicator(item.id, o.id, itemDetail).className}`}
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${imageOptionIndicator(item.id, o.id, itemDetail).className}`}
                     >
                       {imageOptionIndicator(item.id, o.id, itemDetail).mark}
                     </span>
-                    {o.text && <span>{o.text}</span>}
+                    {o.text && <span className="text-sm">{o.text}</span>}
                   </div>
                 </button>
               ) : (
