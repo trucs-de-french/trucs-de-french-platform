@@ -48,7 +48,11 @@ const TILE_BASE =
 // тут картинка має займати всю внутрішню ширину картки (сама картка вже
 // капована на ~14rem колонкою сітки нижче), тож локальна копія без
 // max-w/mx-auto.
-const IMAGE_OPTION_FRAME = "relative aspect-square w-full overflow-hidden rounded-md";
+// Рамка картинки картинкових режимів — aspect залежить від кількості
+// мобільних колонок (квадрат на 3, 4:3 на 2), на sm+ завжди 4:3 (щоб
+// картка не ставала надто високою при однаковій ширині колонки). Тому
+// базова форма без aspect, а сам aspect додається інлайн у місці виклику.
+const IMAGE_OPTION_FRAME_BASE = "relative w-full overflow-hidden rounded-md";
 
 // Літера варіанта (A, B, C...) за позицією в item.options — та сама схема,
 // що вже показує літерний префікс чипа/пілюлі вибраної відповіді.
@@ -295,15 +299,30 @@ export function MultipleChoiceExercise({
     // заголовку, роздільник (border-t нижче), тонована зона відповідей.
     // Колонок на мобільній (нижче sm) — 3, якщо найдовший підпис у питанні
     // короткий (≤12 символів після trim), інакше 2 (довгі підписи на 3
-    // колонках ламались би); sm:4. На md+ колонки МАЮТЬ фіксовану верхню
-    // межу ширини (minmax(0,14rem)), а не 1fr: без цього ширина/вирівнювання
-    // колонок залежала би від довжини підписів і кількості відповідей
-    // (точно той баг зі скріншота — mx-auto w-fit + grid-cols-5 робили
-    // ширину колонки залежною від вмісту). mobile/sm лишаються на
-    // стандартних fr-колонках (grid-cols-N) — там кап не потрібен, екран
-    // і так вузький.
+    // колонках ламались би). На sm+ кількість колонок = кількість відповідей
+    // (не більше 4 на sm, не більше 5 на md+; 1-2 відповіді все одно дають 3
+    // колонки, щоб картки не розтягувались на всю ширину) — усі колонки
+    // minmax(0,1fr), тож ширина залежить ЛИШЕ від контейнера й кількості
+    // колонок, а не від довжини підписів (той баг зі скріншота — mx-auto
+    // w-fit робив ширину залежною від вмісту). max-w-[60rem] на самій сітці
+    // — верхня межа на дуже широких екранах, вирівнювання зліва за
+    // замовчуванням (без mx-auto).
+    // Класи колонок — повні статичні рядки (не шаблонні вставки з числом):
+    // Tailwind JIT сканує файл текстовим пошуком класів, тож динамічно
+    // зібраний `sm:grid-cols-[repeat(${n},...)]` він НЕ розпізнає — лише
+    // готові рядки, присутні в коді буквально.
     const maxLabelLen = Math.max(0, ...item.options.map((o) => o.text?.trim().length ?? 0));
     const mobileColsClass = maxLabelLen <= 12 ? "grid-cols-3" : "grid-cols-2";
+    const mobileAspectClass = mobileColsClass === "grid-cols-3" ? "aspect-square" : "aspect-[4/3]";
+    const optionsCount = item.options.length;
+    const smColsClass =
+      optionsCount >= 4 ? "sm:grid-cols-[repeat(4,minmax(0,1fr))]" : "sm:grid-cols-[repeat(3,minmax(0,1fr))]";
+    const mdColsClass =
+      optionsCount >= 5
+        ? "md:grid-cols-[repeat(5,minmax(0,1fr))]"
+        : optionsCount === 4
+          ? "md:grid-cols-[repeat(4,minmax(0,1fr))]"
+          : "md:grid-cols-[repeat(3,minmax(0,1fr))]";
 
     return (
       <div key={item.id} className={CARD_WRAP}>
@@ -314,7 +333,7 @@ export function MultipleChoiceExercise({
           className="border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50"
         >
           <div
-            className={`grid ${mobileColsClass} items-stretch gap-2 sm:grid-cols-4 md:grid-cols-[repeat(5,minmax(0,14rem))] md:gap-3`}
+            className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}
           >
             {item.options.map((o) => {
               if (!o.imageUrl) {
@@ -329,7 +348,7 @@ export function MultipleChoiceExercise({
                     type="button"
                     onClick={() => toggle(item.id, o.id, item.multiple)}
                     disabled={!!result}
-                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-3 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
+                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail)}`}
                   >
                     {frenchNbsp(o.text)}
                   </button>
@@ -345,19 +364,19 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
+                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail)}`}
                 >
-                  <div className={IMAGE_OPTION_FRAME}>
+                  <div className={`${IMAGE_OPTION_FRAME_BASE} ${mobileAspectClass} sm:aspect-[4/3]`}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
                     <span
                       aria-hidden
-                      className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs font-bold leading-none ${indicator.className}`}
+                      className={`absolute left-1 top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none sm:h-[22px] sm:w-[22px] sm:text-xs ${indicator.className}`}
                     >
                       {indicator.mark}
                     </span>
                     <ImageZoomBadge
                       onOpen={() => setLightboxSrc(o.imageUrl!)}
-                      boxClass="h-6 w-6 before:absolute before:-inset-[10px] before:content-['']"
+                      boxClass="h-[22px] w-[22px] before:absolute before:-inset-[11px] before:content-[''] sm:h-[26px] sm:w-[26px] sm:before:-inset-[9px]"
                       iconSize={12}
                     />
                   </div>
