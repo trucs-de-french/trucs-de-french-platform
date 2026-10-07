@@ -29,7 +29,7 @@ import {
 } from "./sanitize";
 import { placementCells } from "./word-search-grid";
 import { sanitizeWordForGrid } from "./grid-word";
-import { EXERCISE_BLOCK_SIZE, chunk } from "./exercise-blocks";
+import { EXERCISE_BLOCK_SIZE, chunk, CARD_BLOCK_MAX, splitEvenly } from "./exercise-blocks";
 import { normalizeWordSearchConfig, normalizeCrosswordConfig, selectWordsForBlock } from "./grid-blocks";
 import type {
   FillBlankConfig,
@@ -359,7 +359,17 @@ function gradeMultipleChoice(
   const items = getMultipleChoiceItems(config);
   const answerByItem = new Map((answer ?? []).map((a) => [a.itemId, new Set(a.selected)]));
 
-  const itemsDetail: MultipleChoiceDetail["items"] = items.map((item) => {
+  // Скоуп — за ITEM, що реально прийшов у answer (answerByItem.has), не за
+  // ВСІМА items конфігу: multiple-choice.tsx для вправ >5 елементів
+  // (exercise-blocks.ts, CARD_BLOCK_MAX) ділить картки на блоки, і
+  // "Перевірити блок" шле лише items ЦЬОГО блоку — без цього фільтра
+  // score/pointsPossible завжди рахувались би на всю вправу (той самий
+  // принцип, що completePairs у gradeMatching). Для ≤5 items (один "блок" =
+  // уся вправа) answer і так завжди покриває всі items, фільтр нічого не
+  // звужує — поведінка НЕ змінюється.
+  const scopedItems = items.filter((item) => answerByItem.has(item.id));
+
+  const itemsDetail: MultipleChoiceDetail["items"] = scopedItems.map((item) => {
     const selected = answerByItem.get(item.id) ?? new Set<string>();
     const options = item.options.map((o) => ({
       id: o.id,
@@ -374,6 +384,10 @@ function gradeMultipleChoice(
   const correctCount = fullyCorrect.length;
   const pointsPossible = itemsDetail.reduce((sum, it) => sum + it.points, 0);
   const pointsEarned = fullyCorrect.reduce((sum, it) => sum + it.points, 0);
+  // totalPointsPossible — на ВСІХ items вправи (не лише scopedItems цього
+  // блоку) — знаменник для progress.ts/record_block_task_attempt (той самий
+  // принцип, що gradeMatching).
+  const totalPointsPossible = items.reduce((sum, it) => sum + resolveMultipleChoicePoints(it), 0);
 
   return {
     correct: correctCount === itemsDetail.length && itemsDetail.length > 0,
@@ -381,6 +395,7 @@ function gradeMultipleChoice(
     detail: { items: itemsDetail },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 
@@ -399,7 +414,11 @@ function gradeMultipleChoice(
 function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): GradeResult {
   const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, new Set(a.selected)]));
 
-  const sentences: WordChoiceDetail["sentences"] = config.sentences.map((s) => {
+  // Скоуп — за sentence, що реально прийшло в answer: той самий принцип, що
+  // gradeMultipleChoice (CARD_BLOCK_MAX, exercise-blocks.ts).
+  const scopedSentences = config.sentences.filter((s) => answerBySentence.has(s.id));
+
+  const sentences: WordChoiceDetail["sentences"] = scopedSentences.map((s) => {
     const selected = answerBySentence.get(s.id) ?? new Set<string>();
     const options = s.options.map((o) => ({
       id: o.id,
@@ -412,7 +431,30 @@ function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): Gr
 
   const correctCount = sentences.filter((s) => s.isCorrect).length;
   const correct = correctCount === sentences.length && sentences.length > 0;
-  const points = resolveWordChoicePoints(config);
+  const totalPoints = resolveWordChoicePoints(config);
+
+  // Один пул балів на всю вправу (не на картку, як multiple_choice/
+  // true_false/reorder/open_answer, звідси й окремий розрахунок тут) —
+  // блочна частка рахується ВАГАМИ (blockPointsPossibleByWeights, той самий
+  // принцип округлення, що gradeLetterGaps: кожен блок КРІМ ОСТАННЬОГО
+  // отримує округлену частку, залишок округлення — на останній), де вага
+  // блоку — кількість речень у ньому за card-розбиттям (splitEvenly). Який
+  // саме це блок визначаємо за СКЛАДОМ id (answer зі словесного блоку
+  // word-choice.tsx несе лише id речень цього блоку) — не index-math, бо
+  // блоки тут нерівні (CARD_BLOCK_MAX=5, не фіксований EXERCISE_BLOCK_SIZE).
+  // Для ≤5 речень (один блок) findIndex завжди знаходить блок 0, вага [n] —
+  // blockPointsPossibleByWeights повертає totalPoints без змін (та сама
+  // поведінка, що й до появи блоків).
+  const blocks = splitEvenly(config.sentences, CARD_BLOCK_MAX);
+  const blockWeights = blocks.map((b) => b.length);
+  const answeredIds = new Set(scopedSentences.map((s) => s.id));
+  const blockIndex = blocks.findIndex(
+    (b) => b.length === answeredIds.size && b.every((s) => answeredIds.has(s.id))
+  );
+  const points =
+    blockIndex === -1
+      ? Math.round((totalPoints * sentences.length) / config.sentences.length)
+      : blockPointsPossibleByWeights(totalPoints, blockWeights, blockIndex);
 
   return {
     correct,
@@ -420,6 +462,7 @@ function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): Gr
     detail: { sentences },
     pointsEarned: sentences.length > 0 ? Math.round((points * correctCount) / sentences.length) : 0,
     pointsPossible: points,
+    totalPointsPossible: totalPoints,
   };
 }
 
@@ -550,7 +593,11 @@ function gradeCrossword(rawConfig: CrosswordConfig, answer: CrosswordAnswer): Gr
 function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): GradeResult {
   const answerById = new Map(answer.map((a) => [a.id, a.value]));
 
-  const statements: TrueFalseDetail["statements"] = config.statements.map((s) => {
+  // Скоуп — за statement, що реально прийшло в answer: той самий принцип,
+  // що gradeMultipleChoice/gradeWordChoice (CARD_BLOCK_MAX).
+  const scopedStatements = config.statements.filter((s) => answerById.has(s.id));
+
+  const statements: TrueFalseDetail["statements"] = scopedStatements.map((s) => {
     const studentAnswer = answerById.get(s.id) ?? null;
     return {
       id: s.id,
@@ -567,6 +614,7 @@ function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): Grade
   const pointsEarned = statements
     .filter((s) => s.isCorrect)
     .reduce((sum, s) => sum + s.points, 0);
+  const totalPointsPossible = config.statements.reduce((sum, s) => sum + resolveTrueFalsePoints(s), 0);
 
   return {
     correct: correctCount === statements.length && statements.length > 0,
@@ -574,6 +622,7 @@ function gradeTrueFalse(config: TrueFalseConfig, answer: TrueFalseAnswer): Grade
     detail: { statements },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 
@@ -672,7 +721,11 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
   const sequences = getReorderSequences(config);
   const answerBySequence = new Map((answer ?? []).map((a) => [a.sequenceId, a.order]));
 
-  const sequencesDetail: ReorderDetail["sequences"] = sequences.map((seq) => {
+  // Скоуп — за sequence, що реально прийшла в answer: той самий принцип,
+  // що gradeTrueFalse/gradeMultipleChoice (CARD_BLOCK_MAX).
+  const scopedSequences = sequences.filter((seq) => answerBySequence.has(seq.id));
+
+  const sequencesDetail: ReorderDetail["sequences"] = scopedSequences.map((seq) => {
     const studentOrder = answerBySequence.get(seq.id) ?? [];
     // Порівняння за позицією, а не пошуком тексту (indexOf) — items можуть
     // містити дублікати (той самий текст двічі), і пошук за значенням
@@ -694,6 +747,7 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
   const pointsEarned = sequencesDetail
     .filter((s) => s.items.every((i) => i.isCorrect))
     .reduce((sum, s) => sum + s.points, 0);
+  const totalPointsPossible = sequences.reduce((sum, s) => sum + resolveReorderPoints(s), 0);
 
   return {
     correct: correctCount === allItems.length && allItems.length > 0,
@@ -701,6 +755,7 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
     detail: { sequences: sequencesDetail },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 
@@ -802,7 +857,12 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
   const answerByQuestion = new Map((answer ?? []).map((a) => [a.questionId, a.value]));
   const hintedSet = new Set((answer ?? []).filter((a) => a.hintUsed).map((a) => a.questionId));
 
-  const questions: OpenAnswerDetail["questions"] = getOpenAnswerQuestions(config).map((q) => {
+  const allQuestions = getOpenAnswerQuestions(config);
+  // Скоуп — за question, що реально прийшло в answer: той самий принцип,
+  // що gradeTrueFalse/gradeMultipleChoice (CARD_BLOCK_MAX).
+  const scopedQuestions = allQuestions.filter((q) => answerByQuestion.has(q.id));
+
+  const questions: OpenAnswerDetail["questions"] = scopedQuestions.map((q) => {
     const accepted = q.answers.map((a) => normalize(a));
     const studentAnswer = answerByQuestion.get(q.id) ?? "";
     return {
@@ -827,6 +887,7 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
       const reduced = !!config.hintsReducePoints && q.hintUsed;
       return sum + (reduced ? q.points * 0.5 : q.points);
     }, 0);
+  const totalPointsPossible = allQuestions.reduce((sum, q) => sum + resolveOpenAnswerPoints(q), 0);
 
   return {
     correct: correctCount === questions.length && questions.length > 0,
@@ -834,6 +895,7 @@ function gradeOpenAnswer(config: OpenAnswerConfig, answer: OpenAnswerAnswer): Gr
     detail: { questions },
     pointsEarned,
     pointsPossible,
+    totalPointsPossible,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -14,8 +14,12 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
+import { BlockNavigation } from "./block-navigation";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
+type ReorderResult = Extract<GradeResult, { detail: ReorderDetail }>;
+type PublicSequence = ReorderPublic["sequences"][number];
 
 // Один ряд плиток у перемішаному порядку — жодного окремого банку чи
 // порожніх слотів (на відміну від drag_drop, де банк доречний через текст
@@ -135,13 +139,144 @@ export function ReorderExercise({
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
-  const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as ReorderDetail | undefined;
-  const locked = !!result;
+
+  // Картки (послідовності) — поріг блоку CARD_BLOCK_MAX=5, той самий
+  // принцип, що word-choice.tsx/multiple-choice.tsx/true-false.tsx
+  // (exercise-blocks.ts, перша хвиля card-блоків). ≤5 послідовностей —
+  // sequenceBlocks матиме РІВНО один чанк, useBlocks===false, нижче
+  // рендериться ТОЧНО той самий код, що й до розбиття на блоки (на
+  // наявних даних — до 4 послідовностей — нічого не змінюється).
+  const sequenceBlocks = useMemo(() => splitEvenly(config.sequences, CARD_BLOCK_MAX), [config.sequences]);
+  const blockCount = sequenceBlocks.length;
+  const useBlocks = blockCount > 1;
+
+  // ==== Гілка ≤5 послідовностей (незмінна поведінка) ====
+  const single = useExerciseCheck(taskId);
+  const detail = single.result?.detail as ReorderDetail | undefined;
+  const singleLocked = !!single.result;
 
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (!useBlocks && single.result) onResult?.(single.result);
+  }, [useBlocks, single.result, onResult]);
+
+  function renderSequence(seq: PublicSequence, seqDetail: SequenceDetail | undefined, locked: boolean) {
+    return (
+      <ReorderSequenceTiles
+        key={seq.id}
+        order={orders[seq.id] ?? seq.items}
+        onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
+        detail={seqDetail}
+        locked={locked}
+        points={seq.points}
+        pointsVisible={pointsVisible}
+        hidePoints={hidePoints}
+        imageUrl={seq.imageUrl}
+        audioUrl={seq.audioUrl}
+        onOpenImage={setLightboxSrc}
+      />
+    );
+  }
+
+  // ==== Гілка блоків (>5 послідовностей) ====
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, ReorderResult>>({});
+  const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
+  const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  const aggregateResult: ReorderResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const sequences = results.flatMap((r) => r.detail.sequences);
+    const allItems = sequences.flatMap((s) => s.items);
+    const correctCount = allItems.filter((i) => i.isCorrect).length;
+    return {
+      correct: allItems.length > 0 && correctCount === allItems.length,
+      score: allItems.length > 0 ? Math.round((correctCount / allItems.length) * 100) : 0,
+      detail: { sequences },
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  async function submitBlock(blockIndex: number) {
+    const blockSequences = sequenceBlocks[blockIndex];
+    const answer = blockSequences.map((s) => ({ sequenceId: s.id, order: orders[s.id] ?? [] }));
+    setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
+    setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
+    try {
+      const res = await fetch("/api/exercises/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, answer, blockIndex }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Помилка перевірки");
+      }
+      const result = (await res.json()) as ReorderResult;
+      setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+    } catch (e) {
+      setBlockError((prev) => ({
+        ...prev,
+        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+      }));
+    } finally {
+      setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
+    }
+  }
+
+  function renderBlock() {
+    const blockSequences = sequenceBlocks[activeBlock];
+    const blockResult = blockResults[activeBlock];
+    const blockDetail = blockResult?.detail;
+    const isPending = !!blockPending[activeBlock];
+    const errMsg = blockError[activeBlock];
+
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          {blockSequences.map((seq) =>
+            renderSequence(seq, blockDetail?.sequences.find((d) => d.id === seq.id), !!blockResult)
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => submitBlock(activeBlock)}
+              disabled={isPending}
+              className={STUDENT_BUTTON_PRIMARY}
+            >
+              {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
+            </button>
+            {blockResult && (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
+                {blockResult.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
+                    {pluralizePoints(blockResult.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+          {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={EXERCISE_STACK}>
@@ -150,58 +285,68 @@ export function ReorderExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
 
-      {!locked && (
-        <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
-          Торкніться двох слів, щоб поміняти їх місцями
-        </p>
-      )}
+      {!useBlocks ? (
+        <>
+          {!singleLocked && (
+            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+              Торкніться двох слів, щоб поміняти їх місцями
+            </p>
+          )}
 
-      <div className="flex flex-col gap-3">
-        {config.sequences.map((seq) => (
-          <ReorderSequenceTiles
-            key={seq.id}
-            order={orders[seq.id] ?? seq.items}
-            onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
-            detail={detail?.sequences.find((d) => d.id === seq.id)}
-            locked={locked}
-            points={seq.points}
-            pointsVisible={pointsVisible}
-            hidePoints={hidePoints}
-            imageUrl={seq.imageUrl}
-            audioUrl={seq.audioUrl}
-            onOpenImage={setLightboxSrc}
-          />
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(config.sequences.map((s) => ({ sequenceId: s.id, order: orders[s.id] ?? [] })))
-            }
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
+          <div className="flex flex-col gap-3">
+            {config.sequences.map((seq) =>
+              renderSequence(seq, detail?.sequences.find((d) => d.id === seq.id), singleLocked)
             )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {!single.result ? (
+              <button
+                type="button"
+                onClick={() =>
+                  single.submit(config.sequences.map((s) => ({ sequenceId: s.id, order: orders[s.id] ?? [] })))
+                }
+                disabled={single.pending}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {single.pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+            ) : (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
+                {single.result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
+                    {pluralizePoints(single.result.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+            {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
+          </div>
+        </>
+      ) : (
+        <>
+          {!blockResults[activeBlock] && (
+            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+              Торкніться двох слів, щоб поміняти їх місцями
+            </p>
+          )}
+          <BlockNavigation
+            blockCount={blockCount}
+            activeBlock={activeBlock}
+            onChangeBlock={setActiveBlock}
+            isBlockChecked={(i) => i in blockResults}
+            summary={aggregateResult}
+          >
+            {renderBlock()}
+          </BlockNavigation>
+        </>
+      )}
 
       {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>

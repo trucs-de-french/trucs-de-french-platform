@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -20,9 +20,12 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
+import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
+import { BlockNavigation } from "./block-navigation";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
+type MultipleChoiceResult = Extract<GradeResult, { detail: MultipleChoiceDetail }>;
 
 // Картка питання для звичайного (без картинок, не select) режиму: шапка
 // (номер+текст питання) + підкладка-пул з плитками-відповідями нижче, той
@@ -75,19 +78,32 @@ export function MultipleChoiceExercise({
   hidePoints?: boolean;
 }) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
-  const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as MultipleChoiceDetail | undefined;
   // Клік по картинці варіанта — вже дія вправи (вибір), тому збільшення
   // винесене в окрему іконку-лупу в кутку (ImageZoomBadge), а не на весь
   // клік по мініатюрі.
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+  // Картки (питання) — поріг блоку CARD_BLOCK_MAX=5, той самий принцип, що
+  // word-choice.tsx (exercise-blocks.ts, перша хвиля card-блоків). ≤5
+  // питань — itemBlocks матиме РІВНО один чанк, useBlocks===false, нижче
+  // рендериться ТОЧНО той самий код, що й до розбиття на блоки.
+  const itemBlocks = useMemo(() => splitEvenly(config.items, CARD_BLOCK_MAX), [config.items]);
+  const blockCount = itemBlocks.length;
+  const useBlocks = blockCount > 1;
 
+  // ==== Гілка ≤5 питань (незмінна поведінка) ====
+  const single = useExerciseCheck(taskId);
+  const detail = single.result?.detail as MultipleChoiceDetail | undefined;
+
+  useEffect(() => {
+    if (!useBlocks && single.result) onResult?.(single.result);
+  }, [useBlocks, single.result, onResult]);
+
+  // Гейт від повторного клацання — на самій кнопці (disabled={!!itemDetail},
+  // renderItem/renderDropdownRow), не тут: toggle спільний для обох гілок
+  // (зі станом вибору на всю вправу), і "заблоковано" означає РІЗНЕ —
+  // single.result для ≤5 items, itemDetail КОНКРЕТНОГО блоку для >5.
   function toggle(itemId: string, optionId: string, multiple: boolean) {
-    if (result) return;
     setSelections((prev) => {
       const current = prev[itemId] ?? [];
       const next = multiple
@@ -245,8 +261,7 @@ export function MultipleChoiceExercise({
     );
   }
 
-  function renderItem(item: MultipleChoicePublicItem, index: number) {
-    const itemDetail = detail?.items.find((d) => d.id === item.id);
+  function renderItem(item: MultipleChoicePublicItem, index: number, itemDetail: ItemDetail | undefined) {
     const sel = selections[item.id] ?? [];
     const hasImages = item.options.some((o) => !!o.imageUrl);
     const questionId = `mc-q-${item.id}`;
@@ -271,7 +286,7 @@ export function MultipleChoiceExercise({
                   key={o.id}
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!result}
+                  disabled={!!itemDetail}
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={chosen}
                   className={`${TILE_BASE} ${chipClass(item.id, o.id, itemDetail)}`}
@@ -348,7 +363,7 @@ export function MultipleChoiceExercise({
                     key={o.id}
                     type="button"
                     onClick={() => toggle(item.id, o.id, item.multiple)}
-                    disabled={!!result}
+                    disabled={!!itemDetail}
                     className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail)}`}
                   >
                     {frenchNbsp(o.text)}
@@ -361,7 +376,7 @@ export function MultipleChoiceExercise({
                   key={o.id}
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!result}
+                  disabled={!!itemDetail}
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
@@ -416,8 +431,7 @@ export function MultipleChoiceExercise({
   // поверх неї (нативна поведінка: клавіатура, системний вибір на телефоні,
   // aria). imageUrl у dropdown-варіантах неможливий (types.ts: imageUrl лише
   // для display "buttons") — картинок тут за визначенням немає.
-  function renderDropdownRow(item: MultipleChoicePublicItem, index: number) {
-    const itemDetail = detail?.items.find((d) => d.id === item.id);
+  function renderDropdownRow(item: MultipleChoicePublicItem, index: number, itemDetail: ItemDetail | undefined) {
     const sel = selections[item.id] ?? [];
     const selectedOptions = item.options.filter((o) => sel.includes(o.id));
     const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
@@ -484,7 +498,7 @@ export function MultipleChoiceExercise({
                 : [e.target.value];
               setSelections((prev) => ({ ...prev, [item.id]: next }));
             }}
-            disabled={!!result}
+            disabled={!!itemDetail}
             aria-label={`Відповідь на питання ${index + 1}`}
             className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed"
           >
@@ -502,6 +516,120 @@ export function MultipleChoiceExercise({
 
   const allAnswered = config.items.every((it) => (selections[it.id] ?? []).length > 0);
 
+  // startIndex — глобальна позиція ПЕРШОГО питання items (наскрізна
+  // нумерація ITEM_NUMBER_BADGE, не локальна в межах блоку).
+  function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
+    return config.display === "dropdown" ? (
+      <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
+        {items.map((item, i) =>
+          renderDropdownRow(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id))
+        )}
+      </div>
+    ) : (
+      <div className="flex flex-col gap-3">
+        {items.map((item, i) => renderItem(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id)))}
+      </div>
+    );
+  }
+
+  // ==== Гілка блоків (>5 питань) ====
+  const [activeBlock, setActiveBlock] = useState(0);
+  const [blockResults, setBlockResults] = useState<Record<number, MultipleChoiceResult>>({});
+  const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
+  const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
+
+  const aggregateResult: MultipleChoiceResult | null = useMemo(() => {
+    if (!allBlocksChecked) return null;
+    const results = Object.values(blockResults);
+    const items = results.flatMap((r) => r.detail.items);
+    const correctCount = items.filter((it) => it.options.every((o) => o.correct === o.selected)).length;
+    return {
+      correct: items.length > 0 && correctCount === items.length,
+      score: items.length > 0 ? Math.round((correctCount / items.length) * 100) : 0,
+      detail: { items },
+      pointsEarned: results.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0),
+      pointsPossible: results.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0),
+    };
+  }, [allBlocksChecked, blockResults]);
+
+  useEffect(() => {
+    if (aggregateResult) onResult?.(aggregateResult);
+  }, [aggregateResult, onResult]);
+
+  async function submitBlock(blockIndex: number) {
+    const blockItems = itemBlocks[blockIndex];
+    const answer = blockItems.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] }));
+    setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
+    setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
+    try {
+      const res = await fetch("/api/exercises/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, answer, blockIndex }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Помилка перевірки");
+      }
+      const result = (await res.json()) as MultipleChoiceResult;
+      setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+    } catch (e) {
+      setBlockError((prev) => ({
+        ...prev,
+        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+      }));
+    } finally {
+      setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
+    }
+  }
+
+  function renderBlock() {
+    const blockItems = itemBlocks[activeBlock];
+    const startIndex = itemBlocks.slice(0, activeBlock).reduce((sum, b) => sum + b.length, 0);
+    const blockResult = blockResults[activeBlock];
+    const blockDetail = blockResult?.detail;
+    const isPending = !!blockPending[activeBlock];
+    const errMsg = blockError[activeBlock];
+    const blockAllAnswered = blockItems.every((it) => (selections[it.id] ?? []).length > 0);
+
+    return (
+      <div className="flex flex-col gap-3">
+        {renderItems(blockItems, startIndex, blockDetail)}
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => submitBlock(activeBlock)}
+              disabled={isPending || !blockAllAnswered}
+              className={STUDENT_BUTTON_PRIMARY}
+            >
+              {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
+            </button>
+            {blockResult && (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
+                {blockResult.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
+                    {pluralizePoints(blockResult.pointsPossible)})
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+          {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={EXERCISE_STACK}>
       <InstructionsText
@@ -509,52 +637,56 @@ export function MultipleChoiceExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
       />
 
-      {config.display === "dropdown" ? (
-        // Один спільний контейнер-список (divide-y/rounded-xl/border — той
-        // самий прийом, що текстовий режим chronological_order) замість
-        // окремого gap між питаннями: рядки йдуть щільно, розділені лише
-        // тонкою лінією, без "величезних проміжків" попереднього вигляду.
-        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
-          {config.items.map((item, i) => renderDropdownRow(item, i))}
-        </div>
-      ) : (
-        // Картинковий і текстовий режими тепер мають однакову обгортку
-        // (CARD_WRAP), тож однаковий компактний gap-3 між картками на всіх
-        // екранах — великий md:gap-10 був потрібен раніше лише тому, що
-        // картинкові картки не мали власної рамки/фону.
-        <div className="flex flex-col gap-3">
-          {config.items.map((item, i) => renderItem(item, i))}
-        </div>
-      )}
+      {!useBlocks ? (
+        <>
+          {/* Картинковий і текстовий режими мають однакову обгортку
+              (CARD_WRAP), тож однаковий компактний gap-3 між картками на
+              всіх екранах; dropdown — спільний контейнер-список (divide-y/
+              rounded-xl/border, той самий прийом, що текстовий режим
+              chronological_order). */}
+          {renderItems(config.items, 0, detail)}
 
-      <div className="flex flex-col gap-3">
-        {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(config.items.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] })))
-            }
-            disabled={pending || !allAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
+          <div className="flex flex-col gap-3">
+            {!single.result ? (
+              <button
+                type="button"
+                onClick={() =>
+                  single.submit(config.items.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] })))
+                }
+                disabled={single.pending || !allAnswered}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {single.pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+            ) : (
+              <p
+                className={`${RESULT_MESSAGE_CLASS} ${
+                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
+                {single.result.pointsPossible !== undefined && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
+                    {pluralizePoints(single.result.pointsPossible)})
+                  </span>
+                )}
+              </p>
             )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+            {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
+          </div>
+        </>
+      ) : (
+        <BlockNavigation
+          blockCount={blockCount}
+          activeBlock={activeBlock}
+          onChangeBlock={setActiveBlock}
+          isBlockChecked={(i) => i in blockResults}
+          summary={aggregateResult}
+        >
+          {renderBlock()}
+        </BlockNavigation>
+      )}
 
       {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
