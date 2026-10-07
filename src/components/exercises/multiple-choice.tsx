@@ -13,7 +13,6 @@ import { ImageLightbox } from "./image-lightbox";
 import {
   ANSWER_CARD_BASE,
   ANSWER_CARD_DEFAULT,
-  COMPACT_IMAGE_GRID,
   COMPACT_IMAGE_CARD,
   COMPACT_IMAGE_FRAME,
   COMPACT_IMAGE_FILL,
@@ -147,12 +146,28 @@ export function MultipleChoiceExercise({
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
           )}
-          {/* Якщо хоч один варіант має картинку — та сама щільна сітка й
-              розмір картки, що в chronological_order (режим image): 3
-              колонки на мобільній, 4 на sm, 5 на md+ (COMPACT_IMAGE_GRID).
-              Інакше — попередня розкладка "один/два стовпчики" для
-              текстових варіантів. */}
-          <div className={hasImages ? `mt-2 ${COMPACT_IMAGE_GRID}` : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"}>
+          {/* Якщо хоч один варіант має картинку — на мобільній/sm та сама
+              сітка, що в chronological_order (3/4 колонки, gap-2) — не
+              використовую COMPACT_IMAGE_GRID напряму, бо на md потрібно
+              перевизначити ту саму CSS-властивість (grid-template-columns/
+              gap) на ТОМУ САМОМУ брейкпоінті — накладання двох класів з
+              однаковою специфічністю (constant.md:grid-cols-5 проти
+              локального md:grid-cols-4) залежало б від порядку в
+              згенерованому Tailwind-шарі, а не від порядку в рядку
+              className. Тому база/sm — буквальна копія COMPACT_IMAGE_GRID
+              (мобільна й так НЕ міняється за умовою задачі), а md:/lg: —
+              повністю локальні, без конфліктів. На md колонок 4, не 5:
+              при gap-4+p-3 5 колонок у контейнері max-w-2xl/3xl звужували
+              би картинку нижче 104px (капа з COMPACT_IMAGE_FRAME) — 4
+              колонки зберігають той самий видимий розмір картинки. Інакше
+              (текстові варіанти) — попередня розкладка без змін. */}
+          <div
+            className={
+              hasImages
+                ? "mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:mt-4 md:gap-4 lg:gap-5"
+                : "mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
+            }
+          >
             {item.options.map((o) => {
               if (!o.imageUrl) {
                 // Текстовий варіант у сітці картинок (частина варіантів без
@@ -182,7 +197,7 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT}`}
+                  className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT} md:p-3`}
                 >
                   <div className={COMPACT_IMAGE_FRAME}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
@@ -200,7 +215,7 @@ export function MultipleChoiceExercise({
                   </div>
                   {o.text && (
                     <p
-                      className="line-clamp-2 w-full text-center text-[13px] leading-tight sm:line-clamp-3 sm:text-sm"
+                      className="line-clamp-2 w-full text-center text-[13px] leading-tight sm:line-clamp-3 sm:text-sm md:mt-2.5"
                       title={o.text}
                     >
                       {o.text}
@@ -264,7 +279,14 @@ export function MultipleChoiceExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
       />
 
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>{config.items.map(renderItem)}</div>
+      {/* md:gap-10 — локальне розширення EXERCISE_BODY_ITEMS_GAP (сам
+          константа лишається "gap-4" для інших вправ): на десктопі
+          сусідні питання мають чітко розділятись, на мобільній — без змін.
+          Застосовується рівномірно до ВСІХ питань (з картинками й без) —
+          той самий ритм між питаннями на десктопі незалежно від вмісту. */}
+      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP} md:gap-10`}>
+        {config.items.map(renderItem)}
+      </div>
 
       <div className="flex flex-col gap-3">
         {!result ? (
