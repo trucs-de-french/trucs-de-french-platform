@@ -27,13 +27,24 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
 
-// Чип варіанта для звичайного (без картинок, не select) режиму — власний
-// стиль чипа, не bankTileClass (tile-styles.ts — той для плиток пулу, що
-// тягнуть/кидають, cursor-grab/used — інша семантика) і не ANSWER_CARD_BASE
-// (та картка на всю ширину колонки списком one-per-row; тут — компактний
-// інлайн-чип, що переноситься по рядку разом з іншими).
-const CHIP_BASE =
-  "inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-lg border px-3 py-1.5 text-left text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+// Картка питання для звичайного (без картинок, не select) режиму: шапка
+// (номер+текст питання) + підкладка-пул з плитками-відповідями нижче, той
+// самий принцип картка+підкладка, що вже в task-type-meta.ts/0b80d3a
+// (border з ЯВНИМ токеном кольору — не currentColor, баг Tailwind v4).
+const CARD_WRAP =
+  "overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+
+// Підкладка з плитками: один стовпець на мобільній (grid-cols-1), на sm+ —
+// стільки колонок auto-fit влізе (мінімум 11rem на плитку). items-stretch —
+// однакова висота плиток у ряду навіть якщо текст різної довжини.
+const POOL_CLASS =
+  "grid grid-cols-1 items-stretch gap-2 border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
+
+// Плитка-відповідь: min-h-12 (48px) — зона дотику на touch. Колір стану
+// додається викликачем через chipClass() (нижче) — та сама функція, що й
+// раніше визначала колір чипа, лишена без змін.
+const TILE_BASE =
+  "flex min-h-12 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
 // Літера варіанта (A, B, C...) за позицією в item.options — та сама схема,
 // що вже показує літерний префікс чипа/пілюлі вибраної відповіді.
@@ -115,6 +126,23 @@ export function MultipleChoiceExercise({
     return "opacity-60";
   }
 
+  // Колір круглого/квадратного індикатора зліва в плитці — та сама логіка
+  // станів, що chipClass() (вище сама плитка), але для ЗАЛИТОГО кольору
+  // (bg, не лише border/text): обрано-до-перевірки → indigo, правильно →
+  // green, вибрано-неправильно → red, інакше нейтральний незаповнений.
+  function tileIndicatorClass(itemId: string, optionId: string, itemDetail?: ItemDetail) {
+    if (!itemDetail) {
+      const sel = selections[itemId] ?? [];
+      return sel.includes(optionId)
+        ? "border-indigo-500 bg-indigo-500"
+        : "border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800";
+    }
+    const opt = itemDetail.options.find((o) => o.id === optionId);
+    if (opt?.correct) return "border-green-500 bg-green-500";
+    if (opt?.selected) return "border-red-500 bg-red-500";
+    return "border-neutral-300 bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
+  }
+
   // Для варіантів із картинкою підсвічення переноситься з усієї кнопки
   // (як для текстових варіантів вище) на маленький індикатор-чекбокс
   // оверлеєм у кутку картинки — та сама інформація (обрано/правильно/
@@ -171,6 +199,70 @@ export function MultipleChoiceExercise({
     const itemDetail = detail?.items.find((d) => d.id === item.id);
     const sel = selections[item.id] ?? [];
     const hasImages = item.options.some((o) => !!o.imageUrl);
+
+    // Без картинок — картка (шапка+підкладка-пул), не низка окремих чипів:
+    // ІНШИЙ код-шлях від картинкового режиму нижче (той лишається буквально
+    // незмінним). questionId — для aria-labelledby групи плиток на текст
+    // питання, замість дублювання тексту в кожній плитці aria-label.
+    if (!hasImages) {
+      const questionId = `mc-q-${item.id}`;
+      return (
+        <div key={item.id} className={CARD_WRAP}>
+          <div className="flex items-start gap-2.5 p-3">
+            {config.items.length > 1 && (
+              <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                {index + 1}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p id={questionId} className="font-medium">
+                {frenchNbsp(item.sentence)}
+                {pointsBadge(item, itemDetail)}
+              </p>
+              {item.multiple && (
+                <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
+                  {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
+                </p>
+              )}
+            </div>
+          </div>
+          <div
+            role={item.multiple ? "group" : "radiogroup"}
+            aria-labelledby={questionId}
+            className={POOL_CLASS}
+          >
+            {item.options.map((o, idx) => {
+              const opt = itemDetail?.options.find((x) => x.id === o.id);
+              const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => toggle(item.id, o.id, item.multiple)}
+                  disabled={!!result}
+                  role={item.multiple ? "checkbox" : "radio"}
+                  aria-checked={chosen}
+                  className={`${TILE_BASE} ${chipClass(item.id, o.id, itemDetail)}`}
+                >
+                  <span
+                    aria-hidden
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center border-2 ${
+                      item.multiple ? "rounded-[4px]" : "rounded-full"
+                    } ${tileIndicatorClass(item.id, o.id, itemDetail)}`}
+                  >
+                    {chosen && <Check size={12} className="text-white" aria-hidden />}
+                  </span>
+                  <span className="min-w-0 flex-1 break-words">
+                    {optionLetter(idx)}) {o.text}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div key={item.id} className="flex items-start gap-2.5">
         {config.items.length > 1 && (
@@ -188,106 +280,79 @@ export function MultipleChoiceExercise({
             {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
           </p>
         )}
-        {hasImages ? (
-          // Якщо хоч один варіант має картинку — на мобільній/sm та сама
-          // сітка, що в chronological_order (3/4 колонки, gap-2) — не
-          // використовую COMPACT_IMAGE_GRID напряму, бо на md потрібно
-          // перевизначити ту саму CSS-властивість (grid-template-columns/
-          // gap) на ТОМУ САМОМУ брейкпоінті — накладання двох класів з
-          // однаковою специфічністю (constant.md:grid-cols-5 проти
-          // локального md:grid-cols-4) залежало б від порядку в
-          // згенерованому Tailwind-шарі, а не від порядку в рядку
-          // className. Тому база/sm — буквальна копія COMPACT_IMAGE_GRID
-          // (мобільна й так НЕ міняється за умовою задачі), а md:/lg: —
-          // повністю локальні, без конфліктів. На md колонок 4, не 5:
-          // при gap-4+p-3 5 колонок у контейнері max-w-2xl/3xl звужували
-          // би картинку нижче 104px (капа з COMPACT_IMAGE_FRAME) — 4
-          // колонки зберігають той самий видимий розмір картинки.
-          <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:mt-4 md:gap-4 lg:gap-5">
-            {item.options.map((o) => {
-              if (!o.imageUrl) {
-                // Текстовий варіант у сітці картинок (частина варіантів без
-                // картинки) — та сама картка, що й у чисто текстовому
-                // питанні (ANSWER_CARD_BASE): grid-cols фіксованої кількості
-                // колонок (а не auto-fill) сам підрівнює ширину до картинкових
-                // карток у рядку.
-                return (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => toggle(item.id, o.id, item.multiple)}
-                    disabled={!!result}
-                    className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
+        {/* Сюди доходимо лише коли hasImages === true (інакше renderItem уже
+            повернув картку-з-пулом вище) — на мобільній/sm та сама сітка,
+            що в chronological_order (3/4 колонки, gap-2); не використовую
+            COMPACT_IMAGE_GRID напряму, бо на md потрібно перевизначити ту
+            саму CSS-властивість (grid-template-columns/gap) на ТОМУ САМОМУ
+            брейкпоінті — накладання двох класів з однаковою специфічністю
+            (constant.md:grid-cols-5 проти локального md:grid-cols-4)
+            залежало б від порядку в згенерованому Tailwind-шарі, а не від
+            порядку в рядку className. Тому база/sm — буквальна копія
+            COMPACT_IMAGE_GRID (мобільна й так НЕ міняється за умовою
+            задачі), а md:/lg: — повністю локальні, без конфліктів. На md
+            колонок 4, не 5: при gap-4+p-3 5 колонок у контейнері
+            max-w-2xl/3xl звужували би картинку нижче 104px (капа з
+            COMPACT_IMAGE_FRAME) — 4 колонки зберігають той самий видимий
+            розмір картинки. */}
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 md:mt-4 md:gap-4 lg:gap-5">
+          {item.options.map((o) => {
+            if (!o.imageUrl) {
+              // Текстовий варіант у сітці картинок (частина варіантів без
+              // картинки) — та сама картка, що й у чисто текстовому
+              // питанні (ANSWER_CARD_BASE): grid-cols фіксованої кількості
+              // колонок (а не auto-fill) сам підрівнює ширину до картинкових
+              // карток у рядку.
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => toggle(item.id, o.id, item.multiple)}
+                  disabled={!!result}
+                  className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
+                >
+                  {o.text}
+                </button>
+              );
+            }
+            const indicator = imageOptionIndicator(item.id, o.id, itemDetail);
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => toggle(item.id, o.id, item.multiple)}
+                disabled={!!result}
+                role={item.multiple ? "checkbox" : "radio"}
+                aria-checked={indicator.selected}
+                aria-label={o.text || undefined}
+                className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT} md:p-3`}
+              >
+                <div className={COMPACT_IMAGE_FRAME}>
+                  <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
+                  <span
+                    aria-hidden
+                    className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs font-bold leading-none ${indicator.className}`}
+                  >
+                    {indicator.mark}
+                  </span>
+                  <ImageZoomBadge
+                    onOpen={() => setLightboxSrc(o.imageUrl!)}
+                    boxClass="h-6 w-6 before:absolute before:-inset-2 before:content-['']"
+                    iconSize={12}
+                  />
+                </div>
+                {o.text && (
+                  <p
+                    className="line-clamp-2 w-full text-center text-[13px] leading-tight sm:line-clamp-3 sm:text-sm md:mt-2.5"
+                    title={o.text}
                   >
                     {o.text}
-                  </button>
-                );
-              }
-              const indicator = imageOptionIndicator(item.id, o.id, itemDetail);
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!result}
-                  role={item.multiple ? "checkbox" : "radio"}
-                  aria-checked={indicator.selected}
-                  aria-label={o.text || undefined}
-                  className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT} md:p-3`}
-                >
-                  <div className={COMPACT_IMAGE_FRAME}>
-                    <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
-                    <span
-                      aria-hidden
-                      className={`absolute left-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs font-bold leading-none ${indicator.className}`}
-                    >
-                      {indicator.mark}
-                    </span>
-                    <ImageZoomBadge
-                      onOpen={() => setLightboxSrc(o.imageUrl!)}
-                      boxClass="h-6 w-6 before:absolute before:-inset-2 before:content-['']"
-                      iconSize={12}
-                    />
-                  </div>
-                  {o.text && (
-                    <p
-                      className="line-clamp-2 w-full text-center text-[13px] leading-tight sm:line-clamp-3 sm:text-sm md:mt-2.5"
-                      title={o.text}
-                    >
-                      {o.text}
-                    </p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          // Немає жодної картинки в питанні — чипи замість картки-на-рядок:
-          // той самий одиничний/множинний toggle(), лише візуально компактні
-          // й перенесені потоком (flex-wrap), а не одна картка на весь рядок.
-          <div className="mt-2 flex flex-wrap gap-2">
-            {item.options.map((o, idx) => {
-              const opt = itemDetail?.options.find((x) => x.id === o.id);
-              const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!result}
-                  role={item.multiple ? "checkbox" : "radio"}
-                  aria-checked={chosen}
-                  className={`${CHIP_BASE} ${chipClass(item.id, o.id, itemDetail)}`}
-                >
-                  {chosen && <Check size={14} className="shrink-0" aria-hidden />}
-                  <span>
-                    {optionLetter(idx)}) {o.text}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
         </div>
       </div>
     );
@@ -386,6 +451,11 @@ export function MultipleChoiceExercise({
   }
 
   const allAnswered = config.items.every((it) => (selections[it.id] ?? []).length > 0);
+  // Велике md:-розширення гапу лишається ТІЛЬКИ для картинкового режиму
+  // (hasAnyImages, картки renderItem лишились повністю незмінними); щойно
+  // перероблені картки-з-пулом (без картинок) ідуть з компактним gap-3 на
+  // всіх екранах — саме той "величезний проміжок", про який писала задача.
+  const hasAnyImages = config.items.some((it) => it.options.some((o) => !!o.imageUrl));
 
   return (
     <div className={EXERCISE_STACK}>
@@ -403,12 +473,11 @@ export function MultipleChoiceExercise({
           {config.items.map((item, i) => renderDropdownRow(item, i))}
         </div>
       ) : (
-        // md:gap-10 — локальне розширення EXERCISE_BODY_ITEMS_GAP (сам
-        // константа лишається "gap-4" для інших вправ): на десктопі
-        // сусідні питання мають чітко розділятись, на мобільній — без змін.
-        // Застосовується рівномірно до ВСІХ питань (з картинками й без) —
-        // той самий ритм між питаннями на десктопі незалежно від вмісту.
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP} md:gap-10`}>
+        // md:gap-10 — лишається ЛИШЕ для картинкового режиму (hasAnyImages),
+        // та сама картка renderItem, що й була. Для карток-з-пулом (без
+        // картинок) — компактний gap-3 на всіх екранах (gap-4/md:gap-10
+        // були тим самим "величезним проміжком" зі скріншота задачі).
+        <div className={`flex flex-col ${hasAnyImages ? `${EXERCISE_BODY_ITEMS_GAP} md:gap-10` : "gap-3"}`}>
           {config.items.map((item, i) => renderItem(item, i))}
         </div>
       )}
