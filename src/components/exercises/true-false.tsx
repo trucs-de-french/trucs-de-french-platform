@@ -7,7 +7,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -47,25 +47,32 @@ export function TrueFalseExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.true_false.subInstruction}
       />
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
-      {config.statements.map((s) => {
+      {config.statements.map((s, index) => {
         const d = detail?.statements.find((x) => x.id === s.id);
         return (
           <div
             key={s.id}
             className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white px-4 py-2.5 shadow-sm md:px-5 md:py-3 dark:border-neutral-700 dark:bg-neutral-800"
           >
-            <span className="min-w-0">
-              {s.text}
-              {/* До перевірки — лише якщо pointsVisible; після — завжди,
-                  ваше підтверджене рішення. */}
-              {!hidePoints && (pointsVisible || d) && (
-                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                  {d
-                    ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`
-                    : `${s.points} ${pluralizePoints(s.points)}`}
+            <div className="flex min-w-0 flex-1 items-start gap-2.5">
+              {config.statements.length > 1 && (
+                <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                  {index + 1}
                 </span>
               )}
-            </span>
+              <span className="min-w-0">
+                {s.text}
+                {/* До перевірки — лише якщо pointsVisible; після — завжди,
+                    ваше підтверджене рішення. */}
+                {!hidePoints && (pointsVisible || d) && (
+                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                    {d
+                      ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`
+                      : `${s.points} ${pluralizePoints(s.points)}`}
+                  </span>
+                )}
+              </span>
+            </div>
             <div className="flex shrink-0 gap-2">
               {[true, false].map((val) => (
                 <button

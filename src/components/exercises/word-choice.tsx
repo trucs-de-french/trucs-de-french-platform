@@ -8,7 +8,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -181,10 +181,17 @@ export function WordChoiceExercise({
             // повна висота (~30px) лишається МЕНШОЮ за nominal 44px — і
             // тоді висота КОЖНОГО рядка абзацу (з чипом і без) дорівнює
             // рівно nominal 44px, без винятків.
-            <p key={s.id} className="leading-[2.75rem]">
-              <span className="mr-1 text-neutral-400 dark:text-neutral-500">
-                {String.fromCharCode(97 + si)}.
-              </span>
+            <div key={s.id} className="flex items-start gap-2.5">
+              {config.sentences.length > 1 && (
+                // mt-2.5 (10px) — центрує бейдж (24px) на ПЕРШОМУ фізичному
+                // рядку речення (leading-[2.75rem] = 44px): (44-24)/2 = 10px.
+                // Перенесені рядки йдуть нижче, під текстом (p flex-1
+                // min-w-0), бейдж лишається лише біля першого рядка.
+                <span className={`mt-2.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
+                  {si + 1}
+                </span>
+              )}
+              <p className="min-w-0 flex-1 leading-[2.75rem]">
               {before.trimEnd()}
               {s.options.map((o, oi) => (
                 <span key={o.id}>
@@ -222,7 +229,8 @@ export function WordChoiceExercise({
               ))}
               {(after ?? "").trimStart()}
               {multiHint(s)}
-            </p>
+              </p>
+            </div>
           );
         })}
       </div>

@@ -32,6 +32,16 @@ export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm tra
 export const ITEM_LETTER_BADGE =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
 
+// Круглий бейдж-номер питання/твердження/рядка (1, 2, 3...) — еталон:
+// колишній QUESTION_NUMBER_BADGE, що жив лише в multiple-choice.tsx
+// (режим dropdown/select). Винесений сюди без зміни класів, щоб той самий
+// вигляд повторити в multiple_choice (картинки/чипи), word_choice,
+// true_false, checkbox_grid. h-6 w-6 (24px) — менший за ITEM_LETTER_BADGE
+// (28px, літерні бейджі chronological_order) — окрема семантика (номер,
+// не літера), не чіпати ITEM_LETTER_BADGE.
+export const ITEM_NUMBER_BADGE =
+  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
+
 // Щільна сітка карток-з-картинкою — спочатку з'явилась у chronological_order
 // (режим image/mixed): 3 колонки на мобільній, 4 на sm, 5 на md+, gap-2.
 // multiple_choice (варіанти з картинкою) підключений до тих самих значень,

@@ -17,6 +17,7 @@ import {
   COMPACT_IMAGE_CARD,
   COMPACT_IMAGE_FRAME,
   COMPACT_IMAGE_FILL,
+  ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -24,14 +25,6 @@ import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
-
-// Бейдж-номер питання для компактного рядкового вигляду режиму "dropdown"
-// (список рядків, схожий на chronological_order text-режим) — власний
-// розмір/колір, окремий від спільного ITEM_LETTER_BADGE (answer-card-
-// style.ts, 28px) і від лише-локальних ITEM_LETTER_BADGE_SM/TEXT у
-// chronological-order.tsx: жодної зі спільних констант тут не редагую.
-const QUESTION_NUMBER_BADGE =
-  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
 
 // Чип варіанта для звичайного (без картинок, не select) режиму — власний
 // стиль чипа, не bankTileClass (tile-styles.ts — той для плиток пулу, що
@@ -173,12 +166,18 @@ export function MultipleChoiceExercise({
     );
   }
 
-  function renderItem(item: MultipleChoicePublicItem) {
+  function renderItem(item: MultipleChoicePublicItem, index: number) {
     const itemDetail = detail?.items.find((d) => d.id === item.id);
     const sel = selections[item.id] ?? [];
     const hasImages = item.options.some((o) => !!o.imageUrl);
     return (
-      <div key={item.id}>
+      <div key={item.id} className="flex items-start gap-2.5">
+        {config.items.length > 1 && (
+          <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+            {index + 1}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
         <p className="font-medium">
           {item.sentence}
           {pointsBadge(item, itemDetail)}
@@ -288,6 +287,7 @@ export function MultipleChoiceExercise({
             })}
           </div>
         )}
+        </div>
       </div>
     );
   }
@@ -333,7 +333,11 @@ export function MultipleChoiceExercise({
     return (
       <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
-          <span className={QUESTION_NUMBER_BADGE}>{index + 1}</span>
+          {config.items.length > 1 && (
+            <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+              {index + 1}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className="leading-snug">
               {questionText}
@@ -404,7 +408,7 @@ export function MultipleChoiceExercise({
         // Застосовується рівномірно до ВСІХ питань (з картинками й без) —
         // той самий ритм між питаннями на десктопі незалежно від вмісту.
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP} md:gap-10`}>
-          {config.items.map(renderItem)}
+          {config.items.map((item, i) => renderItem(item, i))}
         </div>
       )}
 

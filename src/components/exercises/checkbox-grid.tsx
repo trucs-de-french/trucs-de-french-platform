@@ -11,6 +11,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -94,9 +95,18 @@ export function CheckboxGridExercise({
             </tr>
           </thead>
           <tbody>
-            {config.rows.map((row) => (
+            {config.rows.map((row, index) => (
               <tr key={row.id} className="border-b border-gray-200 last:border-0 dark:border-neutral-700">
-                <td className="py-1 pr-2">{row.label}</td>
+                <td className="py-1 pr-2">
+                  <div className="flex items-center gap-2">
+                    {config.rows.length > 1 && (
+                      <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                        {index + 1}
+                      </span>
+                    )}
+                    <span>{row.label}</span>
+                  </div>
+                </td>
                 {config.columns.map((c) => (
                   <td key={c.id} className={`px-2 py-1 text-center ${cellClass(row.id, c.id)}`}>
                     <input
