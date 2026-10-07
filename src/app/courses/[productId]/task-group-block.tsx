@@ -249,7 +249,11 @@ export function TaskGroupBlock({
       {visibleTasks.length > 0 && (
         <div className="flex flex-col gap-8 md:gap-12">
           {visibleTasks.map((task) => (
-            <div key={task.id} className={EXERCISE_STACK}>
+            // id/scroll-mt-4 — той самий якір, що на верхньорівневих задачах
+            // (page.tsx, "task"-рядки sceneRows): блок помилок лінкує на
+            // #task-<id> незалежно від того, чи задача в групі (клік із
+            // картки помилки прокручує сюди так само, як до звичайної задачі).
+            <div key={task.id} id={`task-${task.id}`} className={`scroll-mt-4 ${EXERCISE_STACK}`}>
               <ExerciseBlock
                 task={task}
                 onResult={onResultCallbacks[task.id]}

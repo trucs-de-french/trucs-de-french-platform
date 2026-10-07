@@ -82,6 +82,23 @@ type TaskRow = {
 // в exercise-block.tsx.
 const TYPES_WITH_TYPE_BADGE = ["link", "game"];
 
+// Типи, що НЕ беруть участі в "Робота над помилками" (список у блоці
+// error_correction), хоча самі мандрівники mistakes-рядки для них можуть
+// писатись (essay_check — пише навіть коли correct=true, через
+// hasReportableErrors у progress.ts). essay_check перевірятиметься окремо
+// (DELF-розділ, Gemini API); word_search/crossword/karaoke не розбиваються
+// на елементи (ціла сітка/рядок пісні — не список окремих полів); vocab_quiz
+// не пише в mistakes узагалі (сервер не перевіряє його через /api/exercises/
+// check) — лишений у списку для повноти пояснення, хоча фільтр для нього й
+// так нічого не прибирає.
+const ERROR_REVIEW_EXCLUDED_TASK_TYPES = [
+  "essay_check",
+  "word_search",
+  "crossword",
+  "karaoke",
+  "vocab_quiz",
+];
+
 // platform у scene_links — НЕ той самий домен, що LinkPlatform/PlatformIcon
 // (lib/platform.ts, для config.platform завдань типу link/embed:
 // youtube/genially/custom за доменом URL) — тут окрема, вужча БД-колонка з
@@ -329,7 +346,20 @@ export default async function ScenePage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const taskIds = (tasks ?? []).map((t) => t.id);
+  // Плоский список УСІХ задач сцени в порядку показу — включно з членами
+  // task_group (sceneRows вище вже містить і "task", і "group"-рядки,
+  // у членів групи вже власний порядок із groupMembers-запиту, order("order_
+  // index")). Раніше тут був (tasks ?? []).map(t => t.id) — лише верхньо-
+  // рівневі задачі, тож mistakes/progress для задач усередині груп узагалі
+  // не підвантажувались і не могли потрапити в список помилок. taskTypeById/
+  // taskOrderPosition нижче — для фільтра виключених типів і сортування
+  // sceneMistakes у тому самому порядку, що й сам список "Завдання".
+  const allSceneTaskEntries = sceneRows.flatMap((row) =>
+    row.kind === "task" ? [row.task] : row.members
+  );
+  const taskIds = allSceneTaskEntries.map((t) => t.id);
+  const taskTypeById = new Map(allSceneTaskEntries.map((t) => [t.id, t.type]));
+  const taskOrderPosition = new Map(allSceneTaskEntries.map((t, i) => [t.id, i]));
   // mistakes і progress не мають прямого FK одна на одну (обидві лише на
   // task_id/user_id окремо) — Supabase/PostgREST не виразить це одним
   // embed-запитом, тож два паралельні. progress має unique(user_id, task_id)
@@ -372,9 +402,14 @@ export default async function ScenePage({
   // Якщо остання спроба на це завдання (за progress, не за mistakes) уже
   // повністю правильна — не показуємо давню помилку, ніби вона й досі
   // актуальна.
-  const sceneMistakes = [...latestMistakeByTask.values()].filter(
-    (m) => latestScoreByTask.get(m.task_id) !== 100
-  );
+  // Другий .filter — ERROR_REVIEW_EXCLUDED_TASK_TYPES (essay_check/word_search/
+  // crossword/karaoke/vocab_quiz, визначено вище) не беруть участі в списку
+  // помилок. .sort — той самий порядок, що в списку "Завдання" (taskOrderPosition,
+  // побудований з уже відсортованого sceneRows), а не порядок mistakes.created_at.
+  const sceneMistakes = [...latestMistakeByTask.values()]
+    .filter((m) => latestScoreByTask.get(m.task_id) !== 100)
+    .filter((m) => !ERROR_REVIEW_EXCLUDED_TASK_TYPES.includes(taskTypeById.get(m.task_id) ?? ""))
+    .sort((a, b) => (taskOrderPosition.get(a.task_id) ?? 0) - (taskOrderPosition.get(b.task_id) ?? 0));
 
   // vocab_quiz бере лексику не лише з поточної сцени, а з будь-яких сцен
   // курсу, обраних вчителем у config.sceneIds — підвантажуємо їхній dialogue
