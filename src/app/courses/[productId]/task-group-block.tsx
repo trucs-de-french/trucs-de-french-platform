@@ -15,6 +15,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { isBlankHtml } from "@/lib/html-text";
 import { contentBlockHasRenderableContent, taskHasRenderableContent } from "@/lib/exercises/task-visibility";
 
@@ -157,7 +158,7 @@ export function TaskGroupBlock({
         <div className={SHARED_CONTENT_PANEL}>
           <div
             className={`rich-text ${EXERCISE_BODY}`}
-            dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(group.content_text ?? "") }}
+            dangerouslySetInnerHTML={{ __html: frenchNbspHtml(sanitizeInstructionsHtml(group.content_text ?? "")) }}
           />
         </div>
       )}

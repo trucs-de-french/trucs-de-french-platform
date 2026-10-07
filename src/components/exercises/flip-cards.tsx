@@ -9,6 +9,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 
@@ -68,7 +69,7 @@ function FlipCardTile({
           onClick={(e) => e.stopPropagation()}
         />
       )}
-      <span>{shown}</span>
+      <span>{frenchNbsp(shown)}</span>
       {clickable && (
         <span className="text-xs text-neutral-400 dark:text-neutral-500">
           {flipped ? "клік — назад" : "клік — перевернути"}

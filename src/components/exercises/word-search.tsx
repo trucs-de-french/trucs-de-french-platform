@@ -15,6 +15,7 @@ import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -240,7 +241,7 @@ function LongCard({
         </button>
       )}
       <div className="flex-1 pt-[3px]">
-        <span className={`${CLUE_TEXT} ${found ? "line-through" : ""}`}>{word.translation || word.word}</span>
+        <span className={`${CLUE_TEXT} ${found ? "line-through" : ""}`}>{frenchNbsp(word.translation || word.word)}</span>
         {word.audioUrl && (
           <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <CompactAudioButton src={word.audioUrl} />
@@ -749,7 +750,7 @@ function WordSearchBlockView({
                     {textWordsSorted.map((w) => (
                       <TextPill
                         key={w.word}
-                        text={w.translation || w.word}
+                        text={frenchNbsp(w.translation || w.word)}
                         audioUrl={w.audioUrl}
                         hintStart={w.hintStart}
                         found={isFound(w.word)}
@@ -799,7 +800,7 @@ function WordSearchBlockView({
                     {textCompactWordsSorted.map((w) => (
                       <TextPill
                         key={w.word}
-                        text={w.translation || w.word}
+                        text={frenchNbsp(w.translation || w.word)}
                         audioUrl={w.audioUrl}
                         hintStart={w.hintStart}
                         found={isFound(w.word)}
@@ -948,7 +949,7 @@ export function WordSearchExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction)),
             }}
           />
           {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult)) && (
@@ -967,7 +968,7 @@ export function WordSearchExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction)),
             }}
           />
         )}

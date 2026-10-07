@@ -8,6 +8,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -61,7 +62,7 @@ export function TrueFalseExercise({
                 </span>
               )}
               <span className="min-w-0">
-                {s.text}
+                {frenchNbsp(s.text)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди,
                     ваше підтверджене рішення. */}
                 {!hidePoints && (pointsVisible || d) && (

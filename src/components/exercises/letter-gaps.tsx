@@ -8,6 +8,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
@@ -405,7 +406,7 @@ export function LetterGapsExercise({
             className="flex min-w-0 flex-1 flex-col gap-1"
           >
             {word.hintText.trim() && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{frenchNbsp(word.hintText)}</p>
             )}
             <div className="flex flex-wrap items-center gap-2">
               {units.map((unit, ui) => (
@@ -518,7 +519,7 @@ export function LetterGapsExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction)),
             }}
           />
           {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail)) && (
@@ -537,7 +538,7 @@ export function LetterGapsExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction)),
             }}
           />
         )}

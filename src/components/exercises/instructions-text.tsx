@@ -1,4 +1,5 @@
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
 // Не "use client" — чистий, неінтерактивний текстовий блок, рендериться
@@ -14,8 +15,8 @@ export function InstructionsText({
   text: string;
   subText?: string;
 }) {
-  const safeText = sanitizeInstructionsHtml(text);
-  const safeSub = subText ? sanitizeInstructionsHtml(subText) : null;
+  const safeText = frenchNbspHtml(sanitizeInstructionsHtml(text));
+  const safeSub = subText ? frenchNbspHtml(sanitizeInstructionsHtml(subText)) : null;
 
   // <div>, не <p> — санітизований HTML тепер сам може містити <p> (TipTap
   // завжди огортає вміст у <p>), а вкладений <p> усередині <p> — невалідний

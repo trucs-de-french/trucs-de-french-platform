@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import {
   CRITERIA,
   CRITERION_LABELS,
@@ -232,7 +233,7 @@ export function EssayCheckExercise({
   return (
     <div className={EXERCISE_STACK}>
       <div>
-        <p className="font-medium">{prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction}</p>
+        <p className="font-medium">{frenchNbsp(prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction)}</p>
         {grid && (
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Рівень {level}

@@ -15,6 +15,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -64,7 +65,7 @@ export function ListeningExercise({
           return (
             <div key={q.id}>
               <p className="font-medium">
-                {q.question}
+                {frenchNbsp(q.question)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                 {!hidePoints && (pointsVisible || qDetail) && (
                   <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>

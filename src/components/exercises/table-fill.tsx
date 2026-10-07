@@ -13,6 +13,7 @@ import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation } from "./block-navigation";
 
 function cellKey(rowId: string, side: "left" | "right") {
@@ -189,7 +190,7 @@ export function TableFillExercise({
     locked: boolean
   ) {
     if (value !== null) {
-      return <span>{value}</span>;
+      return <span>{frenchNbsp(value)}</span>;
     }
     const key = cellKey(rowId, side);
     const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;

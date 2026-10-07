@@ -12,6 +12,7 @@ import { InstructionsText } from "./instructions-text";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 
 export function DragDropExercise({
   taskId,
@@ -143,7 +144,7 @@ export function DragDropExercise({
                   const slotFilled = placed[gi] !== null;
                   return (
                     <span key={i}>
-                      {seg}
+                      {frenchNbsp(seg)}
                       {i < blankCount && (
                         <button
                           type="button"

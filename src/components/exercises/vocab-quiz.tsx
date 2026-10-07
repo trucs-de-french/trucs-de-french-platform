@@ -8,6 +8,7 @@ import {
   MIN_VOCAB_FOR_QUIZ,
   type VocabQuizQuestion,
 } from "@/lib/exercises/vocab-quiz-logic";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -106,7 +107,7 @@ export function VocabQuizExercise({
           />
         </div>
         <p className="font-body mt-5 text-center text-2xl sm:text-3xl">
-          {firstFormOnly(question.word)}
+          {frenchNbsp(firstFormOnly(question.word))}
         </p>
       </div>
 

@@ -17,6 +17,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
@@ -499,7 +500,7 @@ function CrosswordBlockView({
         )}
         <div className="flex-1 pt-[3px]">
           <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
-            <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
+            <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
           </span>
           {clue.audioUrl && (
             <audio controls src={clue.audioUrl} className="mt-1 h-6 w-full" onClick={(e) => e.stopPropagation()} />
@@ -546,7 +547,7 @@ function CrosswordBlockView({
           onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
           className={`flex-1 whitespace-normal text-left ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}
         >
-          <span className="font-body font-semibold">{clue.number}.</span> {clue.clue}
+          <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
         </button>
       </div>
     );
@@ -882,7 +883,7 @@ export function CrosswordExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction)),
             }}
           />
           {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult)) && (
@@ -901,7 +902,7 @@ export function CrosswordExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction)),
             }}
           />
         )}

@@ -6,6 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
@@ -142,7 +143,7 @@ export function FillBlankExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction)),
             }}
           />
           {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
@@ -159,7 +160,7 @@ export function FillBlankExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(config.subInstructions ?? defaultSubInstruction),
+              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? defaultSubInstruction)),
             }}
           />
         )}
@@ -213,7 +214,7 @@ export function FillBlankExercise({
         <p className="leading-8">
           {segments.map((seg, i) => (
             <span key={i}>
-              {seg}
+              {frenchNbsp(seg)}
               {i < blankCount && (
                 <input
                   ref={diacritics.fieldRef(String(i))}

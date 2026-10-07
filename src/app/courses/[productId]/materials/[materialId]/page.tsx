@@ -12,6 +12,7 @@ import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 
 export default async function MaterialPage({
   params,
@@ -163,7 +164,7 @@ export default async function MaterialPage({
                 <span aria-hidden className="shrink-0">
                   {STYLE_ICONS[style]}
                 </span>
-                <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+                <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: frenchNbspHtml(safeHtml) }} />
               </div>
             </div>
           )}

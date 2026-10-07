@@ -13,6 +13,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -293,7 +294,7 @@ export function LetterRearrangementExercise({
             className="flex min-w-0 flex-1 flex-col gap-1"
           >
             {word.hintText.trim() && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">{word.hintText}</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{frenchNbsp(word.hintText)}</p>
             )}
             <SortableTileRow
               items={orders[wi]}
@@ -372,8 +373,10 @@ export function LetterRearrangementExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(
-                config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction
+              __html: frenchNbspHtml(
+                sanitizeInstructionsHtml(
+                  config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction
+                )
               ),
             }}
           />
@@ -393,8 +396,10 @@ export function LetterRearrangementExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(
-                config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction
+              __html: frenchNbspHtml(
+                sanitizeInstructionsHtml(
+                  config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction
+                )
               ),
             }}
           />

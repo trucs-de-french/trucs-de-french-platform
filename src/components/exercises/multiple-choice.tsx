@@ -22,6 +22,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -179,7 +180,7 @@ export function MultipleChoiceExercise({
         )}
         <div className="min-w-0 flex-1">
         <p className="font-medium">
-          {item.sentence}
+          {frenchNbsp(item.sentence)}
           {pointsBadge(item, itemDetail)}
         </p>
         {item.multiple && (
@@ -328,7 +329,7 @@ export function MultipleChoiceExercise({
     // у пілюлі праворуч, а не інлайн у тексті, тому маркер просто прибираю
     // з відображення (без заміни на видимий штрих) — зайвий пропуск після
     // цього згортаю в один пробіл, щоб речення читалось природно.
-    const questionText = item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim();
+    const questionText = frenchNbsp(item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim());
 
     return (
       <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">

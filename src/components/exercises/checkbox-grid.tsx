@@ -12,6 +12,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -104,7 +105,7 @@ export function CheckboxGridExercise({
                         {index + 1}
                       </span>
                     )}
-                    <span>{row.label}</span>
+                    <span>{frenchNbsp(row.label)}</span>
                   </div>
                 </td>
                 {config.columns.map((c) => (

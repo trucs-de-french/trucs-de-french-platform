@@ -24,6 +24,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { frenchNbsp } from "@/lib/text/french-typography";
 
 // Менший за ITEM_LETTER_BADGE (answer-card-style.ts) варіант — лише для
 // щільної сітки image/mixed нижче. ITEM_LETTER_BADGE лишається незмінним:
@@ -221,7 +222,7 @@ export function ChronologicalOrderExercise({
                 </div>
                 {config.mode === "mixed" && (
                   <p className="line-clamp-2 text-center text-xs font-medium" title={item.text}>
-                    {item.text}
+                    {frenchNbsp(item.text)}
                   </p>
                 )}
                 <div className="mt-1.5 flex items-center justify-center gap-1.5">
@@ -255,7 +256,7 @@ export function ChronologicalOrderExercise({
                 className={`flex items-center gap-2.5 px-2.5 py-2 transition-colors ${rowStateClass(item.id)}`}
               >
                 <span className={ITEM_LETTER_BADGE_TEXT}>{label}</span>
-                <span className="min-w-0 flex-1 text-left leading-snug">{item.content}</span>
+                <span className="min-w-0 flex-1 text-left leading-snug">{frenchNbsp(item.content)}</span>
                 {numberInput(item.id, "line", label)}
                 {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
                   <span className={`flex-none text-right ${SCORE_LABEL_CLASS}`}>

@@ -1,4 +1,5 @@
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
+import { frenchNbsp } from "@/lib/text/french-typography";
 
 // mode ("image" | "text") НЕ зберігається в самому detail (ChronologicalOrderDetail
 // містить лише content: string, агностичний до режиму) — тож розрізняємо
@@ -78,7 +79,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       f.statements as { isCorrect: boolean; text: string; correctAnswer: boolean }[]
     ).filter((s) => !s.isCorrect);
     return wrong.length
-      ? wrong.map((s) => `«${s.text}» — ${s.correctAnswer ? "Vrai" : "Faux"}`).join("; ")
+      ? wrong.map((s) => `«${frenchNbsp(s.text)}» — ${s.correctAnswer ? "Vrai" : "Faux"}`).join("; ")
       : "Всі твердження правильні.";
   }
 

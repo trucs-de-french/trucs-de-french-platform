@@ -9,6 +9,7 @@ import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instru
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -146,8 +147,10 @@ export function WordChoiceExercise({
           <div
             className={`instruction-text ${EXERCISE_INSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(
-                config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction
+              __html: frenchNbspHtml(
+                sanitizeInstructionsHtml(
+                  config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction
+                )
               ),
             }}
           />
@@ -157,8 +160,10 @@ export function WordChoiceExercise({
           <div
             className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
             dangerouslySetInnerHTML={{
-              __html: sanitizeInstructionsHtml(
-                config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction
+              __html: frenchNbspHtml(
+                sanitizeInstructionsHtml(
+                  config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction
+                )
               ),
             }}
           />
@@ -192,7 +197,7 @@ export function WordChoiceExercise({
                 </span>
               )}
               <p className="min-w-0 flex-1 leading-[2.75rem]">
-              {before.trimEnd()}
+              {frenchNbsp(before.trimEnd())}
               {s.options.map((o, oi) => (
                 <span key={o.id}>
                   <button
@@ -227,7 +232,7 @@ export function WordChoiceExercise({
                   )}
                 </span>
               ))}
-              {(after ?? "").trimStart()}
+              {frenchNbsp((after ?? "").trimStart())}
               {multiHint(s)}
               </p>
             </div>

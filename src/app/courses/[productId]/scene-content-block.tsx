@@ -9,6 +9,7 @@ import { EmbedFrame } from "@/components/embed-frame";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import { isBlankHtml } from "@/lib/html-text";
 
@@ -88,7 +89,7 @@ export function SceneContentBlockContent({
     // і скрізь у .rich-text.
     <div
       className={`rich-text ${EXERCISE_BODY}`}
-      dangerouslySetInnerHTML={{ __html: sanitizeInstructionsHtml(block.content_text ?? "") }}
+      dangerouslySetInnerHTML={{ __html: frenchNbspHtml(sanitizeInstructionsHtml(block.content_text ?? "")) }}
     />
   );
 

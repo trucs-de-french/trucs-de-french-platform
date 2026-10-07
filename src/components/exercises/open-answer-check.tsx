@@ -13,6 +13,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 // На відміну від EssayCheckExercise (essay_check, AI/Gemini-перевірка
@@ -85,7 +86,7 @@ export function OpenAnswerCheckExercise({
                   </div>
                 )}
                 <p className="min-w-0 flex-1 font-medium">
-                  {q.question}
+                  {frenchNbsp(q.question)}
                   {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                   {!hidePoints && (pointsVisible || qDetail) && (
                     <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>

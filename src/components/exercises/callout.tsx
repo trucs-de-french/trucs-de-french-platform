@@ -1,5 +1,6 @@
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import { isBlankHtml } from "@/lib/html-text";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 
 // Не "use client" — це чистий, неінтерактивний блок тексту, рендериться
@@ -49,7 +50,7 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
         <span aria-hidden className="shrink-0">
           {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
         </span>
-        <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+        <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: frenchNbspHtml(safeHtml) }} />
       </div>
     </div>
   );
