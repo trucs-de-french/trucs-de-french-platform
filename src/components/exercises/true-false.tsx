@@ -53,7 +53,7 @@ export function TrueFalseExercise({
         return (
           <div
             key={s.id}
-            className="flex items-center justify-between gap-3 rounded-md border border-gray-100 bg-white px-4 py-2.5 shadow-sm md:px-5 md:py-3 dark:border-neutral-700 dark:bg-neutral-800"
+            className="flex flex-col gap-2.5 rounded-md border border-gray-100 bg-white px-4 py-2.5 shadow-sm md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-3 dark:border-neutral-700 dark:bg-neutral-800"
           >
             <div className="flex min-w-0 flex-1 items-start gap-2.5">
               {config.statements.length > 1 && (
@@ -74,14 +74,14 @@ export function TrueFalseExercise({
                 )}
               </span>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="grid grid-cols-2 gap-2 md:flex md:w-auto md:shrink-0">
               {[true, false].map((val) => (
                 <button
                   key={String(val)}
                   type="button"
                   disabled={!!result}
                   onClick={() => setAnswers((prev) => ({ ...prev, [s.id]: val }))}
-                  className={`min-w-[4.5rem] rounded-lg border px-4 py-1.5 text-center text-base shadow-sm transition-colors ${
+                  className={`flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-1.5 text-center text-base shadow-sm transition-colors md:min-h-0 md:w-auto md:min-w-[4.5rem] ${
                     d
                       ? val === d.correctAnswer
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
