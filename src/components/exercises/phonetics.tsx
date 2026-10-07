@@ -34,7 +34,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
       />
       <div className="flex flex-col gap-2">
         {config.items.map((item, i) => (
-          <div key={i} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
+          <div key={i} className={`flex min-w-0 flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
             {item.imageUrl && (
               <button
                 type="button"
@@ -50,8 +50,8 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                 />
               </button>
             )}
-            <span>{item.text}</span>
-            <span className="text-base text-neutral-500 dark:text-neutral-400">
+            <span className="max-w-full break-words text-center [overflow-wrap:anywhere]">{item.text}</span>
+            <span className="max-w-full break-words text-center text-base text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
               {item.transcription}
             </span>
             {item.mediaUrl &&

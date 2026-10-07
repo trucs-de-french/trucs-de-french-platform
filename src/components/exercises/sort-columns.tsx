@@ -165,9 +165,9 @@ export function SortColumnsExercise({
             clickItem(item.id);
           }
         }}
-        className={`inline-flex items-center gap-1.5 ${itemClass(item.id)}`}
+        className={`flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
       >
-        <span>{itemLabel(item)}</span>
+        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
         {hintsEnabled && !locked && (
           <HintBulb
             size="sm"

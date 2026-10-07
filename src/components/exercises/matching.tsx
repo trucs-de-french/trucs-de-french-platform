@@ -249,7 +249,7 @@ export function MatchingExercise({
                   type="button"
                   onClick={() => clickLeftInBlock(left)}
                   disabled={!!blockResult}
-                  className={`${ANSWER_CARD_BASE} ${
+                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                     d
                       ? d.isCorrect
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
@@ -276,7 +276,7 @@ export function MatchingExercise({
                 type="button"
                 onClick={() => clickRightInBlock(right)}
                 disabled={!!blockResult}
-                className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} ${
+                className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
                   usedRightsInBlock.has(right) ? "opacity-50" : ""
                 }`}
               >
@@ -351,7 +351,7 @@ export function MatchingExercise({
                     type="button"
                     onClick={() => clickLeft(left)}
                     disabled={!!single.result}
-                    className={`${ANSWER_CARD_BASE} ${
+                    className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                       d
                         ? d.isCorrect
                           ? "border-green-500 bg-green-50 dark:bg-green-950/30"
@@ -378,7 +378,7 @@ export function MatchingExercise({
                   type="button"
                   onClick={() => clickRight(right)}
                   disabled={!!single.result}
-                  className={`${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} ${
+                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
                     usedRights.has(right) ? "opacity-50" : ""
                   }`}
                 >

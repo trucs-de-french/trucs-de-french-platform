@@ -61,7 +61,7 @@ export function TrueFalseExercise({
                   {index + 1}
                 </span>
               )}
-              <span className="min-w-0">
+              <span className="min-w-0 break-words [overflow-wrap:anywhere]">
                 {frenchNbsp(s.text)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди,
                     ваше підтверджене рішення. */}

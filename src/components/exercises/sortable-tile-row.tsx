@@ -126,10 +126,17 @@ export function SortableTileRow({
             }}
             onClick={() => clickTile(i)}
             disabled={locked}
-            className={`select-none whitespace-nowrap rounded-md border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`select-none rounded-md border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
             } ${
-              compact ? COMPACT_TILE_SIZE_CLASS : "px-3 py-1.5 text-base"
+              // compact (letter_rearrangement) — завжди одна літера, nowrap
+              // безпечний. Звичайні тайли (reorder — цілі слова/фрази) мають
+              // переноситись усередині себе (max-w-full break-words), інакше
+              // довга фраза вилазить за межі рядка (whitespace-nowrap без
+              // обмеження ширини).
+              compact
+                ? `whitespace-nowrap ${COMPACT_TILE_SIZE_CLASS}`
+                : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere]"
             } ${tileClass(i)}`}
           >
             {text}

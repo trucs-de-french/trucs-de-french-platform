@@ -45,7 +45,7 @@ function FlipCardTile({
       type="button"
       onClick={clickable ? () => setFlipped((f) => !f) : undefined}
       disabled={!clickable}
-      className={`flex flex-col items-center gap-2 text-base transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
+      className={`flex min-w-0 flex-col items-center gap-2 text-base transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
     >
       {card.image_url && (
         <span className="relative w-full">
@@ -69,7 +69,7 @@ function FlipCardTile({
           onClick={(e) => e.stopPropagation()}
         />
       )}
-      <span>{frenchNbsp(shown)}</span>
+      <span className="min-w-0 max-w-full break-words [overflow-wrap:anywhere]">{frenchNbsp(shown)}</span>
       {clickable && (
         <span className="text-xs text-neutral-400 dark:text-neutral-500">
           {flipped ? "клік — назад" : "клік — перевернути"}

@@ -168,7 +168,7 @@ function TextPill({
       className={`${LEGEND_PILL} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
     >
       {showIcon && <HintBulb size="sm" state={bulbState(found, hintUsed)} as="span" />}
-      <span className={`whitespace-normal ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
+      <span className={`min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
       {audioUrl && (
         <span onClick={(e) => e.stopPropagation()}>
           <CompactAudioButton src={audioUrl} />
@@ -240,8 +240,8 @@ function LongCard({
           <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-16 w-16 rounded object-cover" useFocus />
         </button>
       )}
-      <div className="flex-1 pt-[3px]">
-        <span className={`${CLUE_TEXT} ${found ? "line-through" : ""}`}>{frenchNbsp(word.translation || word.word)}</span>
+      <div className="min-w-0 flex-1 pt-[3px]">
+        <span className={`break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{frenchNbsp(word.translation || word.word)}</span>
         {word.audioUrl && (
           <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <CompactAudioButton src={word.audioUrl} />

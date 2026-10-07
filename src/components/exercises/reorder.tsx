@@ -90,7 +90,7 @@ function ReorderSequenceTiles({
           <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
 
           {detail && (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="break-words text-sm text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
               Правильний порядок:{" "}
               {[...detail.items]
                 .sort((a, b) => a.correctIndex - b.correctIndex)

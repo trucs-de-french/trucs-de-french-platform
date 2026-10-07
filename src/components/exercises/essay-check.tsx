@@ -233,7 +233,7 @@ export function EssayCheckExercise({
   return (
     <div className={EXERCISE_STACK}>
       <div>
-        <p className="font-medium">{frenchNbsp(prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction)}</p>
+        <p className="break-words font-medium [overflow-wrap:anywhere]">{frenchNbsp(prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction)}</p>
         {grid && (
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Рівень {level}

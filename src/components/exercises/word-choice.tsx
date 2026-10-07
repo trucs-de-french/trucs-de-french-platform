@@ -196,7 +196,7 @@ export function WordChoiceExercise({
                   {si + 1}
                 </span>
               )}
-              <p className="min-w-0 flex-1 leading-[2.75rem]">
+              <p className="min-w-0 flex-1 break-words leading-[2.75rem] [overflow-wrap:anywhere]">
               {frenchNbsp(before.trimEnd())}
               {s.options.map((o, oi) => (
                 <span key={o.id}>
@@ -225,7 +225,7 @@ export function WordChoiceExercise({
                     {!sentenceDetail &&
                       config.mode === "cross_out" &&
                       (crossedOut[s.id] ?? new Set()).has(o.id) && <X size={12} />}
-                    {o.text}
+                    <span className="break-words [overflow-wrap:anywhere]">{o.text}</span>
                   </button>
                   {oi < s.options.length - 1 && (
                     <span className="text-neutral-400 dark:text-neutral-500">/</span>

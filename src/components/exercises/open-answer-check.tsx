@@ -85,7 +85,7 @@ export function OpenAnswerCheckExercise({
                     {q.audioUrl && <CompactAudioButton src={q.audioUrl} />}
                   </div>
                 )}
-                <p className="min-w-0 flex-1 font-medium">
+                <p className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
                   {frenchNbsp(q.question)}
                   {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                   {!hidePoints && (pointsVisible || qDetail) && (

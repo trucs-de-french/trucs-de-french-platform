@@ -137,7 +137,7 @@ export function DragDropExercise({
                     : `${s.points} ${pluralizePoints(s.points)}`}
                 </p>
               )}
-              <p className="leading-[2.6]">
+              <p className="break-words leading-[2.6] [overflow-wrap:anywhere]">
                 {segments.map((seg, i) => {
                   const gi = offset + i;
                   const hint = s.hints?.[i];

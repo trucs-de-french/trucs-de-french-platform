@@ -215,7 +215,7 @@ export function MultipleChoiceExercise({
               </span>
             )}
             <div className="min-w-0 flex-1">
-              <p id={questionId} className="font-medium">
+              <p id={questionId} className="break-words font-medium [overflow-wrap:anywhere]">
                 {frenchNbsp(item.sentence)}
                 {pointsBadge(item, itemDetail)}
               </p>
@@ -271,7 +271,7 @@ export function MultipleChoiceExercise({
           </span>
         )}
         <div className="min-w-0 flex-1">
-        <p className="font-medium">
+        <p className="break-words font-medium [overflow-wrap:anywhere]">
           {frenchNbsp(item.sentence)}
           {pointsBadge(item, itemDetail)}
         </p>
@@ -309,7 +309,7 @@ export function MultipleChoiceExercise({
                   type="button"
                   onClick={() => toggle(item.id, o.id, item.multiple)}
                   disabled={!!result}
-                  className={`${ANSWER_CARD_BASE} ${optionClass(item.id, o.id, itemDetail)}`}
+                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${optionClass(item.id, o.id, itemDetail)}`}
                 >
                   {o.text}
                 </button>
@@ -405,7 +405,7 @@ export function MultipleChoiceExercise({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="leading-snug">
+            <p className="break-words leading-snug [overflow-wrap:anywhere]">
               {questionText}
               {pointsBadge(item, itemDetail)}
             </p>

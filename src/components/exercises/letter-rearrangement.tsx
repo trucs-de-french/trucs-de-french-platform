@@ -294,7 +294,7 @@ export function LetterRearrangementExercise({
             className="flex min-w-0 flex-1 flex-col gap-1"
           >
             {word.hintText.trim() && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">{frenchNbsp(word.hintText)}</p>
+              <p className="break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">{frenchNbsp(word.hintText)}</p>
             )}
             <SortableTileRow
               items={orders[wi]}

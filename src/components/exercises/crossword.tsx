@@ -498,8 +498,8 @@ function CrosswordBlockView({
             />
           </span>
         )}
-        <div className="flex-1 pt-[3px]">
-          <span className={`${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
+        <div className="min-w-0 flex-1 pt-[3px]">
+          <span className={`break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
             <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
           </span>
           {clue.audioUrl && (
@@ -545,7 +545,7 @@ function CrosswordBlockView({
         <button
           type="button"
           onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
-          className={`flex-1 whitespace-normal text-left ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}
+          className={`min-w-0 flex-1 whitespace-normal break-words text-left [overflow-wrap:anywhere] ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}
         >
           <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
         </button>

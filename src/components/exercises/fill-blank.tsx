@@ -199,7 +199,7 @@ export function FillBlankExercise({
                 // before — невидимий псевдоелемент, розтягнутий по вертикалі
                 // (-inset-y-0.5 на вузьких/touch-екранах, sm:-inset-y-1 на
                 // десктопі — у сумі завжди +4px до 40 чи +8px до 36 = 44px).
-                className={`relative flex min-h-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-2.5 py-0.5 text-sm shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 ${
+                className={`relative flex min-h-10 max-w-[12rem] shrink-0 cursor-pointer items-center justify-center break-words rounded-full border border-gray-300 px-2.5 py-0.5 text-sm shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 [overflow-wrap:anywhere] ${
                   crossedOut.has(i)
                     ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                     : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -211,7 +211,7 @@ export function FillBlankExercise({
           </div>
         )}
 
-        <p className="leading-8">
+        <p className="break-words leading-8 [overflow-wrap:anywhere]">
           {segments.map((seg, i) => (
             <span key={i}>
               {frenchNbsp(seg)}

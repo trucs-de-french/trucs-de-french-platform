@@ -63,8 +63,8 @@ export function ListeningExercise({
         {config.questions.map((q) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           return (
-            <div key={q.id}>
-              <p className="font-medium">
+            <div key={q.id} className="min-w-0">
+              <p className="break-words font-medium [overflow-wrap:anywhere]">
                 {frenchNbsp(q.question)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                 {!hidePoints && (pointsVisible || qDetail) && (
@@ -143,7 +143,7 @@ export function ListeningExercise({
                       type="button"
                       disabled={!!result}
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                      className={`${ANSWER_CARD_BASE} ${cls}`}
+                      className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${cls}`}
                     >
                       {o.text}
                     </button>

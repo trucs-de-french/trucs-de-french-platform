@@ -40,8 +40,11 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
   // shadow-sm — та сама тінь-еталон, що на плитках letter_rearrangement
   // (sortable-tile-row.tsx) і letter_gaps.tsx; у base (не в кожній гілці
   // нижче), тож вона та сама в усіх станах — вибраний/використаний/звичайний.
+  // max-w-full + break-words — пул на sm+ переходить у overflow-x-visible
+  // (вертикальна прокрутка замість горизонтальної, stickyPoolClass), тож
+  // надто довге слово без цього могло вилізти за межі пулу й сторінки.
   const base =
-    "cursor-grab select-none rounded-md border px-3 py-1.5 text-base shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40";
+    "max-w-full cursor-grab select-none break-words rounded-md border px-3 py-1.5 text-base shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
   if (used) return `${base} opacity-40`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
   return `${base} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;

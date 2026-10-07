@@ -20,9 +20,23 @@ const LETTERS = ["A", "B", "C", "D"];
 // доповнення до ITEM_LETTER_BADGE), щоб bg-brand і bg-green-600/bg-red-600
 // не конкурували в одному класі — порядок класів у className НЕ визначає
 // порядок у згенерованому Tailwind CSS.
-const BADGE_SHAPE = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white";
+const BADGE_SHAPE =
+  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-white sm:h-7 sm:w-7 sm:text-xs";
 const BADGE_CORRECT = `${BADGE_SHAPE} bg-green-600`;
 const BADGE_INCORRECT = `${BADGE_SHAPE} bg-red-600`;
+
+// Якщо найдовша відповідь питання за символами перевищує цей порядок АБО
+// містить слово довше WORD_LENGTH_THRESHOLD символів — на мобільній (нижче
+// sm) картки відповідей переходять в 1 колонку на всю ширину замість 2×2,
+// щоб довге слово мало більше місця для переносу й не вилазило за картку.
+const ANSWER_LENGTH_THRESHOLD = 26;
+const WORD_LENGTH_THRESHOLD = 13;
+
+function needsSingleColumn(options: string[]): boolean {
+  return options.some(
+    (o) => o.length > ANSWER_LENGTH_THRESHOLD || o.split(/\s+/).some((w) => w.length > WORD_LENGTH_THRESHOLD)
+  );
+}
 
 export function VocabQuizExercise({
   vocab,
@@ -94,7 +108,7 @@ export function VocabQuizExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
+      <div className="min-w-0">
         <div className="flex items-baseline justify-between">
           <p className="font-heading text-xs text-neutral-500 dark:text-neutral-400">
             Питання {index + 1} з {questions.length}
@@ -106,12 +120,16 @@ export function VocabQuizExercise({
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="font-body mt-5 text-center text-2xl sm:text-3xl">
+        <p className="font-body mt-5 min-w-0 break-words text-center text-2xl [overflow-wrap:anywhere] sm:text-3xl">
           {frenchNbsp(firstFormOnly(question.word))}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 max-[359px]:grid-cols-1">
+      <div
+        className={`grid min-w-0 gap-2 sm:grid-cols-2 sm:gap-2.5 ${
+          needsSingleColumn(question.options) ? "grid-cols-1" : "grid-cols-2"
+        }`}
+      >
         {question.options.map((option, i) => {
           const isCorrect = option === question.correctTranslation;
           const isSelected = option === selected;
@@ -135,10 +153,12 @@ export function VocabQuizExercise({
               type="button"
               onClick={() => choose(option)}
               disabled={!!selected}
-              className={`${ANSWER_CARD_BASE} ${cls} flex h-full items-center gap-2.5`}
+              className={`${ANSWER_CARD_BASE} ${cls} flex h-full min-h-12 min-w-0 items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 sm:py-3`}
             >
               <span className={badgeCls}>{LETTERS[i]}</span>
-              <span className="flex-1 text-left">{option}</span>
+              <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere] hyphens-auto">
+                {option}
+              </span>
             </button>
           );
         })}
