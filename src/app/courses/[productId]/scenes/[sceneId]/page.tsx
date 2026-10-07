@@ -346,17 +346,48 @@ export default async function ScenePage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Плоский список УСІХ задач сцени в порядку показу — включно з членами
-  // task_group (sceneRows вище вже містить і "task", і "group"-рядки,
-  // у членів групи вже власний порядок із groupMembers-запиту, order("order_
-  // index")). Раніше тут був (tasks ?? []).map(t => t.id) — лише верхньо-
-  // рівневі задачі, тож mistakes/progress для задач усередині груп узагалі
-  // не підвантажувались і не могли потрапити в список помилок. taskTypeById/
-  // taskOrderPosition нижче — для фільтра виключених типів і сортування
-  // sceneMistakes у тому самому порядку, що й сам список "Завдання".
-  const allSceneTaskEntries = sceneRows.flatMap((row) =>
+  // Плоский список УСІХ задач сцени для mistakes/progress — у два джерела:
+  // (1) sceneRows — top-level задачі й ГРУПИ, прив'язані напряму через
+  // task_groups.scene_id (ті, що формують блок "Завдання"); (2) групи,
+  // прив'язані через task_groups.scene_content_block_id (attachedGroups/
+  // membersByGroup, визначені вище) — ці НЕ входять у sceneRows узагалі
+  // (sceneRows будує лише блок "Завдання", прикріплені групи рендеряться
+  // окремо, разом зі своїм content-блоком, у render-циклі нижче), тож
+  // 35735ab (що брав лише sceneRows) пропускав усі 4 групи сцени, прив'язані
+  // лише через scene_content_block_id (із 5 груп, прив'язаних до сцен у БД,
+  // лише 1 має task_groups.scene_id напряму).
+  //
+  // Порядок — не з двох довільних списків підряд, а повторює РЕАЛЬНИЙ
+  // порядок рендеру: прохід по orderedBlockRows (той самий масив, що визначає
+  // порядок секцій нижче) — на позиції block_type "task" вставляємо весь
+  // sceneRows-список одним шматком (sceneRows уже впорядкований усередині
+  // себе), на позиції block_type "content" із прикріпленою групою — її
+  // задач-членів. Тобто картка прикріпленої групи в списку помилок стає на
+  // місце свого content-блоку в сцені, а не в довільний кінець списку.
+  type SceneTaskEntry = { id: string; type: string };
+  const tasksBlockEntries: SceneTaskEntry[] = sceneRows.flatMap((row) =>
     row.kind === "task" ? [row.task] : row.members
   );
+  let taskBlockInserted = false;
+  const allSceneTaskEntries: SceneTaskEntry[] = [];
+  for (const row of orderedBlockRows) {
+    if (row.block_type === "task") {
+      // "task" типово один рядок на сцену (nodeByBlockType — по одному
+      // React-вузлу на тип) — guard лише на випадок, якщо scene_blocks
+      // міститиме його двічі, щоб не продублювати весь список.
+      if (taskBlockInserted) continue;
+      taskBlockInserted = true;
+      allSceneTaskEntries.push(...tasksBlockEntries);
+      continue;
+    }
+    if (row.block_type === "content") {
+      const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
+      const attachedGroup = content ? attachedGroupByContentBlockId.get(content.id) : undefined;
+      if (attachedGroup) {
+        allSceneTaskEntries.push(...(membersByGroup.get(attachedGroup.id) ?? []));
+      }
+    }
+  }
   const taskIds = allSceneTaskEntries.map((t) => t.id);
   const taskTypeById = new Map(allSceneTaskEntries.map((t) => [t.id, t.type]));
   const taskOrderPosition = new Map(allSceneTaskEntries.map((t, i) => [t.id, i]));
