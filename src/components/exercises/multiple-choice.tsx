@@ -12,7 +12,6 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import {
   ANSWER_CARD_DEFAULT,
-  COMPACT_IMAGE_FRAME,
   COMPACT_IMAGE_FILL,
   ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
@@ -42,6 +41,14 @@ const POOL_CLASS =
 // раніше визначала колір чипа, лишена без змін.
 const TILE_BASE =
   "flex min-h-12 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+
+// Рамка під картинку лише для картинкових режимів multiple_choice: на
+// відміну від спільного COMPACT_IMAGE_FRAME (answer-card-style.ts, капає
+// ширину картинки на 6.5rem — потрібно для chronological_order, НЕ чіпати)
+// тут картинка має займати всю внутрішню ширину картки (сама картка вже
+// капована на ~14rem колонкою сітки нижче), тож локальна копія без
+// max-w/mx-auto.
+const IMAGE_OPTION_FRAME = "relative aspect-square w-full overflow-hidden rounded-md";
 
 // Літера варіанта (A, B, C...) за позицією в item.options — та сама схема,
 // що вже показує літерний префікс чипа/пілюлі вибраної відповіді.
@@ -288,17 +295,15 @@ export function MultipleChoiceExercise({
     // заголовку, роздільник (border-t нижче), тонована зона відповідей.
     // Колонок на мобільній (нижче sm) — 3, якщо найдовший підпис у питанні
     // короткий (≤12 символів після trim), інакше 2 (довгі підписи на 3
-    // колонках ламались би); sm:4, md+:5 — буквальна вимога задачі (раніше
-    // тут було md:4/lg:5, навмисно звужене через окрему причину — та
-    // причина (104px-кап COMPACT_IMAGE_FRAME) лишається, але задача прямо
-    // просить 5 на md+, тож повертаю до цього значення).
+    // колонках ламались би); sm:4. На md+ колонки МАЮТЬ фіксовану верхню
+    // межу ширини (minmax(0,14rem)), а не 1fr: без цього ширина/вирівнювання
+    // колонок залежала би від довжини підписів і кількості відповідей
+    // (точно той баг зі скріншота — mx-auto w-fit + grid-cols-5 робили
+    // ширину колонки залежною від вмісту). mobile/sm лишаються на
+    // стандартних fr-колонках (grid-cols-N) — там кап не потрібен, екран
+    // і так вузький.
     const maxLabelLen = Math.max(0, ...item.options.map((o) => o.text?.trim().length ?? 0));
     const mobileColsClass = maxLabelLen <= 12 ? "grid-cols-3" : "grid-cols-2";
-    // Менше відповідей, ніж колонок на md+ (5) — центрувати сітку замість
-    // розтягування на всю ширину зони (той самий прийом mx-auto w-fit, що
-    // й у checkbox_grid "matrix"/"table": fr-колонки в grid всередині
-    // width:fit-content рахуються по max-content замість розтягування).
-    const centerGrid = item.options.length < 5;
 
     return (
       <div key={item.id} className={CARD_WRAP}>
@@ -309,22 +314,22 @@ export function MultipleChoiceExercise({
           className="border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50"
         >
           <div
-            className={`grid ${mobileColsClass} gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 ${
-              centerGrid ? "md:mx-auto md:w-fit" : ""
-            }`}
+            className={`grid ${mobileColsClass} items-stretch gap-2 sm:grid-cols-4 md:grid-cols-[repeat(5,minmax(0,14rem))] md:gap-3`}
           >
             {item.options.map((o) => {
               if (!o.imageUrl) {
                 // Текстовий варіант у сітці картинок (частина варіантів без
                 // картинки) — та сама рамка+фон, що й картинкові картки тут
-                // (imageCardClass), щоб вигляд рядка був однорідним.
+                // (imageCardClass), щоб вигляд рядка був однорідним. h-full —
+                // та сама висота, що й сусідні картинкові картки в рядку
+                // (items-stretch на контейнері дає рядку спільну висоту).
                 return (
                   <button
                     key={o.id}
                     type="button"
                     onClick={() => toggle(item.id, o.id, item.multiple)}
                     disabled={!!result}
-                    className={`flex min-w-0 items-center justify-center rounded-lg border p-3 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
+                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-3 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
                   >
                     {frenchNbsp(o.text)}
                   </button>
@@ -340,9 +345,9 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`flex min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
+                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors ${imageCardClass(item.id, o.id, itemDetail)}`}
                 >
-                  <div className={COMPACT_IMAGE_FRAME}>
+                  <div className={IMAGE_OPTION_FRAME}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
                     <span
                       aria-hidden
@@ -357,12 +362,22 @@ export function MultipleChoiceExercise({
                     />
                   </div>
                   {o.text && (
-                    <p
-                      className="line-clamp-2 w-full min-w-0 text-center text-sm leading-snug break-words [overflow-wrap:anywhere]"
-                      title={o.text}
-                    >
-                      {frenchNbsp(o.text)}
-                    </p>
+                    // Зовнішній flex-1+flex items-center — підпис вертикально
+                    // центрований у залишку висоти картки, тож довгий
+                    // (двострічковий) підпис в одній картці не підіймає текст
+                    // сусідньої картки нагору (рядок стає вищим для всіх
+                    // через items-stretch на сітці, текст лишається
+                    // центрованим); line-clamp-2 — на внутрішньому <p>
+                    // (не на flex-контейнері: line-clamp вимагає
+                    // display:-webkit-box, що конфліктує з display:flex).
+                    <div className="flex w-full min-w-0 flex-1 items-center justify-center">
+                      <p
+                        className="line-clamp-2 text-center text-sm leading-snug break-words [overflow-wrap:anywhere]"
+                        title={o.text}
+                      >
+                        {frenchNbsp(o.text)}
+                      </p>
+                    </div>
                   )}
                 </button>
               );
