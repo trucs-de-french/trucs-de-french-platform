@@ -193,66 +193,79 @@ export function WordChoiceExercise({
         {config.sentences.map((s, si) => {
           const sentenceDetail = detail?.sentences.find((d) => d.id === s.id);
           const [before, after] = s.sentence.split("{{}}");
-          // leading-[2.75rem] — єдиний nominal line-height для КОЖНОГО
-          // фізичного рядка речення (з чипом і без), не лише середнє:
-          // браузер рахує висоту кожного рядка окремо як максимум з
-          // nominal line-height і висоти найвищого inline-вмісту. Чип
-          // (колишній ANSWER_CARD_INLINE, тепер TILE_INLINE_BASE: padding+
-          // border) із успадкованим line-height давав БІЛЬШУ за nominal
-          // висоту саме для рядків із чипом — звідси нерівність. Тому на
-          // чипі нижче leading-6 повертає йому звичний (не успадкований
-          // 44px) рядок, його повна висота (~30px) лишається МЕНШОЮ за
-          // nominal 44px — і тоді висота КОЖНОГО рядка абзацу (з чипом і
-          // без) дорівнює рівно nominal 44px, без винятків.
+          // Розділовий знак одразу після плитки (". , ; : ! ? ) » …") не
+          // повинен переноситись окремим рядком через [overflow-wrap:anywhere]
+          // на <p> — виносимо його з "after" і клеїмо до ОСТАННЬОЇ плитки
+          // в один whitespace-nowrap блок (нижче), без розділового mx-1.
+          const trimmedAfter = (after ?? "").trimStart();
+          const glueMatch = trimmedAfter.match(/^[.,;:!?)»…]+/);
+          const glueText = glueMatch ? glueMatch[0] : "";
+          const restAfter = glueText ? trimmedAfter.slice(glueText.length) : trimmedAfter;
+          // leading-[2.25rem] (36px) — єдиний nominal line-height для КОЖНОГО
+          // фізичного рядка речення (з чипом і без): браузер рахує висоту
+          // кожного рядка окремо як максимум з nominal line-height і висоти
+          // найвищого inline-вмісту. Чип (TILE_INLINE_BASE, leading-6 24px +
+          // py-0.5 (4px) + border (2px) = ~30px) лишається МЕНШИМ за nominal
+          // 36px, тож висота КОЖНОГО рядка абзацу (з чипом і без) — рівно
+          // 36px. Було 2.75rem (44px): проміжок між плитками сусідніх рядків
+          // = (nominal - висота чипа), тобто був 14px; тепер (36-30)=6px.
           return (
             <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
             <div className="flex items-start gap-2.5">
               {config.sentences.length > 1 && (
-                // mt-2.5 (10px) — центрує бейдж (24px) на ПЕРШОМУ фізичному
-                // рядку речення (leading-[2.75rem] = 44px): (44-24)/2 = 10px.
+                // mt-1.5 (6px) — центрує бейдж (24px) на ПЕРШОМУ фізичному
+                // рядку речення (leading-[2.25rem] = 36px): (36-24)/2 = 6px.
                 // Перенесені рядки йдуть нижче, під текстом (p flex-1
                 // min-w-0), бейдж лишається лише біля першого рядка.
-                <span className={`mt-2.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
+                <span className={`mt-1.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
                   {si + 1}
                 </span>
               )}
-              <p className="min-w-0 flex-1 break-words leading-[2.75rem] [overflow-wrap:anywhere]">
+              <p className="min-w-0 flex-1 break-words leading-[2.25rem] [overflow-wrap:anywhere]">
               {frenchNbsp(before.trimEnd())}
-              {s.options.map((o, oi) => (
-                <span key={o.id}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      config.mode === "select"
-                        ? toggleSelection(s.id, o.id, s.multiple)
-                        : toggleCrossedOut(s.id, o.id)
-                    }
-                    disabled={locked}
-                    // relative + before: невидима зона дотику до межі
-                    // рядка (44px), без зміни видимого розміру чипа —
-                    // inset-y підібраний так, щоб psuedo-елемент рівно
-                    // торкався межі свого рядка (leading-[2.75rem]), не
-                    // перекриваючи сусідній (рядки самі по собі не
-                    // перекриваються — border-box їхньої висоти
-                    // nominal). mx-1 — ОДИН спільний відступ для
-                    // "слово↔чип", "чип↔риска↔чип" і "чип↔крапка": gap
-                    // тепер завжди задає лише цей margin, а не випадковий
-                    // пробіл із тексту речення (прибраний через trim) —
-                    // тож апостроф ("de l'" без пробілу) і звичне слово
-                    // (із пробілом, обрізаним) дають однаковий зазор.
-                    className={`relative mx-1 inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] disabled:cursor-not-allowed ${TILE_INLINE_BASE} ${optionClass(s.id, o.id, sentenceDetail)}`}
-                  >
-                    {!sentenceDetail &&
-                      config.mode === "cross_out" &&
-                      (crossedOut[s.id] ?? new Set()).has(o.id) && <X size={12} />}
-                    <span className="break-words [overflow-wrap:anywhere]">{o.text}</span>
-                  </button>
-                  {oi < s.options.length - 1 && (
-                    <span className="text-neutral-400 dark:text-neutral-500">/</span>
-                  )}
-                </span>
-              ))}
-              {frenchNbsp((after ?? "").trimStart())}
+              {s.options.map((o, oi) => {
+                const isLast = oi === s.options.length - 1;
+                const glued = isLast && glueText.length > 0;
+                return (
+                  <span key={o.id} className={glued ? "inline-block whitespace-nowrap" : undefined}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        config.mode === "select"
+                          ? toggleSelection(s.id, o.id, s.multiple)
+                          : toggleCrossedOut(s.id, o.id)
+                      }
+                      disabled={locked}
+                      // relative + before: невидима зона дотику (~40px,
+                      // перекриття з сусіднім рядком до ~4px) — компроміс:
+                      // тісніший рядок (36px) не лишає місця під повний
+                      // 44px тап-таргет без помітного перекриття; inset-y-
+                      // [5px] додає ~10px до видимої висоти чипа (~30px).
+                      // mx-1 — спільний відступ для "слово↔чип"/"чип↔риска
+                      // ↔чип": gap задає лише цей margin, а не випадковий
+                      // пробіл із тексту речення (прибраний через trim) —
+                      // апостроф ("de l'" без пробілу) і звичне слово дають
+                      // однаковий зазор. Для ОСТАННЬОЇ плитки, за якою
+                      // одразу йде розділовий знак (glueText), правий
+                      // відступ прибрано (ml-1 mr-0): знак клеїться
+                      // впритул, а обгортка-span із whitespace-nowrap не
+                      // дає [overflow-wrap:anywhere] на <p> розірвати
+                      // плитку й знак на різні рядки.
+                      className={`relative ${glued ? "ml-1 mr-0" : "mx-1"} inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[5px] before:content-[''] disabled:cursor-not-allowed ${TILE_INLINE_BASE} ${optionClass(s.id, o.id, sentenceDetail)}`}
+                    >
+                      {!sentenceDetail &&
+                        config.mode === "cross_out" &&
+                        (crossedOut[s.id] ?? new Set()).has(o.id) && <X size={12} />}
+                      <span className="break-words [overflow-wrap:anywhere]">{o.text}</span>
+                    </button>
+                    {oi < s.options.length - 1 && (
+                      <span className="text-neutral-400 dark:text-neutral-500">/</span>
+                    )}
+                    {glued && frenchNbsp(glueText)}
+                  </span>
+                );
+              })}
+              {frenchNbsp(restAfter)}
               {multiHint(s)}
               </p>
             </div>
