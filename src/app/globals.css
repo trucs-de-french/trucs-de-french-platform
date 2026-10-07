@@ -556,6 +556,22 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* reorder.tsx — підказка про спосіб взаємодії (торкнутись двох плиток, щоб
+   поміняти місцями) потрібна лише там, де нема миші/трекпада: DnD через
+   draggable недоступний на дотик, а click-to-select-then-move (fallback у
+   SortableTileRow) непомітний без тексту-підказки. Лише CSS (hover: none —
+   не (pointer: coarse) саме, бо стилус/деякі гібридні ноутбуки мають
+   coarse-вказівник, але й мишу; hover: none точніше відповідає "немає
+   способу навести курсор без дотику"), без JS. */
+.tap-swap-hint {
+  display: none;
+}
+@media (hover: none) {
+  .tap-swap-hint {
+    display: block;
+  }
+}
+
 /* video-frame.tsx — спільна обгортка відео-iframe для студентської
    частини. Пропорція НЕ через Tailwind-arbitrary на льоту (клас, зібраний
    з динамічного значення, Tailwind відсікає на збірці — лишається лише

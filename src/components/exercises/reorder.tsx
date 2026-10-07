@@ -62,8 +62,8 @@ function ReorderSequenceTiles({
   // неї. Без медіа внутрішній flex-рядок лишається з ОДНИМ дочірнім
   // елементом (content), жодного порожнього місця зліва не з'являється.
   return (
-    <div className={WORD_CARD}>
-      <div className="flex items-center gap-3">
+    <div className={`${WORD_CARD} max-md:p-3`}>
+      <div className="flex flex-col items-start gap-2.5 md:flex-row md:items-center md:gap-3">
         {(imageUrl || audioUrl) && (
           <div className="flex shrink-0 items-center gap-2">
             {imageUrl && (
@@ -73,13 +73,18 @@ function ReorderSequenceTiles({
                 aria-label="Показати картинку повністю"
                 className="shrink-0 cursor-zoom-in"
               >
-                <ImageOrPlaceholder src={imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
+                <ImageOrPlaceholder
+                  src={imageUrl}
+                  alt=""
+                  className="h-20 w-20 rounded-lg object-cover md:h-11 md:w-11"
+                  useFocus
+                />
               </button>
             )}
             {audioUrl && <CompactAudioButton src={audioUrl} />}
           </div>
         )}
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 max-md:w-full">
           {!hidePoints && (pointsVisible || detail) && (
             <p className={SCORE_LABEL_CLASS}>
               {detail
@@ -87,7 +92,16 @@ function ReorderSequenceTiles({
                 : `${points} ${pluralizePoints(points)}`}
             </p>
           )}
-          <SortableTileRow items={order} onChange={onChange} locked={locked} tileState={tileState} />
+          <div className="max-md:rounded-lg max-md:bg-neutral-50 max-md:p-2 max-md:dark:bg-neutral-900">
+            <SortableTileRow
+              items={order}
+              onChange={onChange}
+              locked={locked}
+              tileState={tileState}
+              extraContainerClassName="max-md:gap-x-2 max-md:gap-y-1.5"
+              extraTileClassName="max-md:min-h-11 touch-manipulation"
+            />
+          </div>
 
           {detail && (
             <p className="break-words text-sm text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
@@ -135,6 +149,12 @@ export function ReorderExercise({
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
+
+      {!locked && (
+        <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+          Торкніться двох слів, щоб поміняти їх місцями
+        </p>
+      )}
 
       <div className="flex flex-col gap-3">
         {config.sequences.map((seq) => (

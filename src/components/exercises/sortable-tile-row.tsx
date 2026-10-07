@@ -19,6 +19,8 @@ export function SortableTileRow({
   tileState,
   compact = false,
   lockedCount = 0,
+  extraContainerClassName = "",
+  extraTileClassName = "",
 }: {
   items: string[];
   onChange: (next: string[]) => void;
@@ -36,6 +38,12 @@ export function SortableTileRow({
   // них (move() нижче затискає ціль). Завжди суцільний префікс, бо підказка
   // закриває позиції зліва направо по порядку.
   lockedCount?: number;
+  // Додаткові класи лише для викликача, що їх передав (порожній рядок за
+  // замовчуванням — жодної різниці для letter_rearrangement, який цих
+  // пропів не передає). Дає reorder.tsx мобільний min-h-11/gap/touch-action
+  // без зміни спільного вигляду плиток тут для letter_rearrangement.
+  extraContainerClassName?: string;
+  extraTileClassName?: string;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -79,7 +87,7 @@ export function SortableTileRow({
   }
 
   return (
-    <div className="flex flex-wrap items-stretch gap-2">
+    <div className={`flex flex-wrap items-stretch gap-2 ${extraContainerClassName}`}>
       {items.map((text, i) => (
         <div key={i} className="relative flex items-stretch">
           {/* Індикатор вставки — тонка вертикальна лінія кольору brand між
@@ -137,7 +145,7 @@ export function SortableTileRow({
               compact
                 ? `whitespace-nowrap ${COMPACT_TILE_SIZE_CLASS}`
                 : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere]"
-            } ${tileClass(i)}`}
+            } ${tileClass(i)} ${extraTileClassName}`}
           >
             {text}
           </button>
