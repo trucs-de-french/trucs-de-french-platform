@@ -324,10 +324,11 @@ export function MultipleChoiceExercise({
 
     // Речення для dropdown могло містити рівно один маркер "{{}}" (адмінка:
     // "Je {{}} au cinéma.") — раніше він позначав місце вбудованого
-    // <select> прямо в тексті. У новому рядковому вигляді (пілюля — окремий
-    // елемент праворуч) маркер замінюю на видиме підкреслене "___", а не
-    // прибираю мовчки: без нього речення втрачає сенс ("Je au cinéma").
-    const [before, after] = item.sentence.split("{{}}");
+    // <select> прямо в тексті. У новому рядковому вигляді відповідь вибирають
+    // у пілюлі праворуч, а не інлайн у тексті, тому маркер просто прибираю
+    // з відображення (без заміни на видимий штрих) — зайвий пропуск після
+    // цього згортаю в один пробіл, щоб речення читалось природно.
+    const questionText = item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim();
 
     return (
       <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">
@@ -335,9 +336,7 @@ export function MultipleChoiceExercise({
           <span className={QUESTION_NUMBER_BADGE}>{index + 1}</span>
           <div className="min-w-0 flex-1">
             <p className="leading-snug">
-              {before}
-              <span className="text-neutral-400 underline dark:text-neutral-500">___</span>
-              {after ?? ""}
+              {questionText}
               {pointsBadge(item, itemDetail)}
             </p>
             {item.multiple && (
