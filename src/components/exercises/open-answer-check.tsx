@@ -95,40 +95,56 @@ export function OpenAnswerCheckExercise({
                         : `${q.points} ${pluralizePoints(q.points)}`}
                     </span>
                   )}
-                  {q.hint && !result && (
-                    <HintBulb
-                      size="sm"
-                      state={hintVisible ? "used" : "available"}
-                      onClick={() => showHint(q.id)}
-                      className="ml-1.5 align-middle"
-                    />
-                  )}
                 </p>
               </div>
-              {q.hint && hintVisible && (
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{q.hint}</p>
+              {/* Лампочка тепер усередині поля (праворуч) — не окремим
+                  рядком під питанням, щоб не виглядала "самотньою" і не
+                  займала окремий рядок на мобільній (варіант B мокета).
+                  pr-12 і min-h-5 тримаю завʼязаними на q.hint (не на
+                  hintVisible/result) — ширина поля й висота рядка підказки
+                  не змінюються, коли підказка відкривається чи приходить
+                  результат (вимога "без зсуву розкладки"). */}
+              <div className="relative mt-1">
+                {/* px-4 py-2.5 — та сама компактність, що картка твердження
+                    true_false; bg-white на невідповідженому стані — як у
+                    карток відповідей (ANSWER_CARD_DEFAULT) — INPUT_BORDER
+                    (input-styles.ts) тут не використовується взагалі, тож
+                    правити нічого спільного не довелось. */}
+                <input
+                  ref={diacritics.fieldRef(q.id)}
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                  onFocus={() => diacritics.onFocus(q.id)}
+                  onBlur={diacritics.onBlur}
+                  disabled={!!result}
+                  className={`w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
+                    qDetail
+                      ? qDetail.isCorrect
+                        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                        : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                      : "border-gray-300 bg-white dark:border-neutral-600 dark:bg-neutral-800"
+                  }`}
+                  placeholder="Ваша відповідь..."
+                />
+                {q.hint && !result && (
+                  <HintBulb
+                    size="sm"
+                    state={hintVisible ? "used" : "available"}
+                    onClick={() => showHint(q.id)}
+                    // preventDefault — клік по лампочці не забирає фокус з
+                    // поля раніше onClick (інакше діакритик-попап встигає
+                    // зникнути/блимнути через onBlur поля).
+                    onMouseDown={(e) => e.preventDefault()}
+                    label={hintVisible ? q.hint : "Показати підказку"}
+                    className="!h-7 !w-7 absolute top-1/2 right-2 -translate-y-1/2"
+                  />
+                )}
+              </div>
+              {q.hint && (
+                <p className="mt-1.5 min-h-5 text-sm break-words text-neutral-600 dark:text-neutral-300">
+                  {hintVisible ? q.hint : ""}
+                </p>
               )}
-              {/* px-4 py-2.5 — та сама компактність, що картка твердження
-                  true_false; bg-white на невідповідженому стані — як у
-                  карток відповідей (ANSWER_CARD_DEFAULT) — INPUT_BORDER
-                  (input-styles.ts) тут не використовується взагалі, тож
-                  правити нічого спільного не довелось. */}
-              <input
-                ref={diacritics.fieldRef(q.id)}
-                value={answers[q.id] ?? ""}
-                onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                onFocus={() => diacritics.onFocus(q.id)}
-                onBlur={diacritics.onBlur}
-                disabled={!!result}
-                className={`mt-1 w-full rounded-md border px-4 py-2.5 text-base ${
-                  qDetail
-                    ? qDetail.isCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                      : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                    : "border-gray-300 bg-white dark:border-neutral-600 dark:bg-neutral-800"
-                }`}
-                placeholder="Ваша відповідь..."
-              />
               {qDetail && !qDetail.isCorrect && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   Правильно: {qDetail.correctAnswers.join(" / ")}
