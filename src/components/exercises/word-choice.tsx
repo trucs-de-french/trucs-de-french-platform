@@ -8,15 +8,30 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { ANSWER_CARD_INLINE, ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { ITEM_NUMBER_BADGE, ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
+
+// Плитка-варіант усередині картки речення — колишній спільний
+// ANSWER_CARD_INLINE (answer-card-style.ts) мав shadow-sm замість рамки:
+// на тлі СТОРІНКИ це читалось, але тепер речення лежить на картці
+// (ITEM_CARD_WRAP, той самий білий/neutral-800 фон, що в multiple_choice)
+// — тінь на однаковому білому фоні картки губилась, а border-gray-100 з
+// попереднього дефолтного стану теж був майже невидимий на білому. Тому
+// локальні класи (не чіпають спільний ANSWER_CARD_INLINE/ANSWER_CARD_DEFAULT
+// — вони й далі використовуються іншими вправами): явна рамка
+// (border-gray-200/dark:border-neutral-600, та сама вимога, що в задачі
+// для рамок картки) і фон, що відрізняється від фону картки в обох темах
+// (neutral-50 / neutral-900, а не білий/neutral-800).
+const TILE_INLINE_BASE = "rounded-md border px-1.5 py-0.5 transition-colors";
+const TILE_DEFAULT =
+  "border-gray-200 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
 
 export function WordChoiceExercise({
   taskId,
@@ -107,13 +122,13 @@ export function WordChoiceExercise({
       // завжди зелений, червоним — лише хибний вибір студента.
       if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
       if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-      return `${ANSWER_CARD_DEFAULT} opacity-60`;
+      return `${TILE_DEFAULT} opacity-60`;
     }
     if (config.mode === "cross_out") {
       const isCrossedOut = (crossedOut[sentenceId] ?? new Set()).has(optionId);
-      return isCrossedOut ? `${ANSWER_CARD_DEFAULT} text-neutral-400 opacity-60 dark:text-neutral-500` : ANSWER_CARD_DEFAULT;
+      return isCrossedOut ? `${TILE_DEFAULT} text-neutral-400 opacity-60 dark:text-neutral-500` : TILE_DEFAULT;
     }
-    return (selections[sentenceId] ?? []).includes(optionId) ? SELECTED_OPTION_CLASS : ANSWER_CARD_DEFAULT;
+    return (selections[sentenceId] ?? []).includes(optionId) ? SELECTED_OPTION_CLASS : TILE_DEFAULT;
   }
 
   function pointsBadge() {
@@ -170,23 +185,28 @@ export function WordChoiceExercise({
         )}
       </div>
 
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+      {/* gap-3 md:gap-4 — не спільний EXERCISE_BODY_ITEMS_GAP (gap-4 завжди):
+          тут кожне речення тепер окрема картка (ITEM_CARD_WRAP), а не рядок
+          без рамки, тож на мобільній трохи щільніший проміжок між картками
+          — явна вимога задачі, не випадковий відхід від спільної константи. */}
+      <div className="flex flex-col gap-3 md:gap-4">
         {config.sentences.map((s, si) => {
           const sentenceDetail = detail?.sentences.find((d) => d.id === s.id);
           const [before, after] = s.sentence.split("{{}}");
+          // leading-[2.75rem] — єдиний nominal line-height для КОЖНОГО
+          // фізичного рядка речення (з чипом і без), не лише середнє:
+          // браузер рахує висоту кожного рядка окремо як максимум з
+          // nominal line-height і висоти найвищого inline-вмісту. Чип
+          // (колишній ANSWER_CARD_INLINE, тепер TILE_INLINE_BASE: padding+
+          // border) із успадкованим line-height давав БІЛЬШУ за nominal
+          // висоту саме для рядків із чипом — звідси нерівність. Тому на
+          // чипі нижче leading-6 повертає йому звичний (не успадкований
+          // 44px) рядок, його повна висота (~30px) лишається МЕНШОЮ за
+          // nominal 44px — і тоді висота КОЖНОГО рядка абзацу (з чипом і
+          // без) дорівнює рівно nominal 44px, без винятків.
           return (
-            // leading-[2.75rem] — єдиний nominal line-height для КОЖНОГО
-            // фізичного рядка речення (з чипом і без), не лише середнє:
-            // браузер рахує висоту кожного рядка окремо як максимум з
-            // nominal line-height і висоти найвищого inline-вмісту. Чип
-            // (ANSWER_CARD_INLINE: padding+border) із успадкованим
-            // line-height давав БІЛЬШУ за nominal висоту саме для рядків
-            // із чипом — звідси нерівність. Тому на чипі нижче leading-6
-            // повертає йому звичний (не успадкований 44px) рядок, його
-            // повна висота (~30px) лишається МЕНШОЮ за nominal 44px — і
-            // тоді висота КОЖНОГО рядка абзацу (з чипом і без) дорівнює
-            // рівно nominal 44px, без винятків.
-            <div key={s.id} className="flex items-start gap-2.5">
+            <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
+            <div className="flex items-start gap-2.5">
               {config.sentences.length > 1 && (
                 // mt-2.5 (10px) — центрує бейдж (24px) на ПЕРШОМУ фізичному
                 // рядку речення (leading-[2.75rem] = 44px): (44-24)/2 = 10px.
@@ -220,7 +240,7 @@ export function WordChoiceExercise({
                     // пробіл із тексту речення (прибраний через trim) —
                     // тож апостроф ("de l'" без пробілу) і звичне слово
                     // (із пробілом, обрізаним) дають однаковий зазор.
-                    className={`relative mx-1 inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] disabled:cursor-not-allowed ${ANSWER_CARD_INLINE} ${optionClass(s.id, o.id, sentenceDetail)}`}
+                    className={`relative mx-1 inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] disabled:cursor-not-allowed ${TILE_INLINE_BASE} ${optionClass(s.id, o.id, sentenceDetail)}`}
                   >
                     {!sentenceDetail &&
                       config.mode === "cross_out" &&
@@ -235,6 +255,7 @@ export function WordChoiceExercise({
               {frenchNbsp((after ?? "").trimStart())}
               {multiHint(s)}
               </p>
+            </div>
             </div>
           );
         })}

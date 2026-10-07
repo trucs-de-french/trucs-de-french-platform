@@ -14,6 +14,7 @@ import {
   ANSWER_CARD_DEFAULT,
   COMPACT_IMAGE_FILL,
   ITEM_NUMBER_BADGE,
+  ITEM_CARD_WRAP as CARD_WRAP,
 } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -25,10 +26,10 @@ type ItemDetail = MultipleChoiceDetail["items"][number];
 
 // Картка питання для звичайного (без картинок, не select) режиму: шапка
 // (номер+текст питання) + підкладка-пул з плитками-відповідями нижче, той
-// самий принцип картка+підкладка, що вже в task-type-meta.ts/0b80d3a
-// (border з ЯВНИМ токеном кольору — не currentColor, баг Tailwind v4).
-const CARD_WRAP =
-  "overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+// самий принцип картка+підкладка, що вже в task-type-meta.ts/0b80d3a.
+// CARD_WRAP — тепер ITEM_CARD_WRAP з answer-card-style.ts (той самий рядок
+// класів, перенесено, щоб word_choice міг перевикористати без зміни
+// вигляду тут).
 
 // Підкладка з плитками: один стовпець на мобільній (grid-cols-1), на sm+ —
 // стільки колонок auto-fit влізе (мінімум 11rem на плитку). items-stretch —

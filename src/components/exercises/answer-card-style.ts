@@ -22,6 +22,16 @@ export const ANSWER_CARD_DEFAULT =
 // true_false, перша хвиля) лишаються на повному ANSWER_CARD_BASE.
 export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm transition-colors";
 
+// Картка-обгортка питання/елемента з рамкою (спершу multiple_choice,
+// тепер і word_choice — для візуальної цілісності сцени, кожне речення в
+// такій самій картці, що й питання multiple_choice): overflow-hidden
+// rounded-xl border з ЯВНИМ токеном кольору (не currentColor, баг
+// Tailwind v4, 0b80d3a). Клас перенесено сюди з колишнього локального
+// CARD_WRAP у multiple-choice.tsx БЕЗ зміни значення — рядок той самий,
+// multiple_choice імпортує звідси під тим самим локальним ім'ям.
+export const ITEM_CARD_WRAP =
+  "overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+
 // Кругла позначка-літера (A, B, C...) — єдиний стиль для всіх трьох режимів
 // chronological_order (image/mixed/text), щоб позначка виглядала однаково
 // незалежно від верстки навколо неї. h-7 w-7 (28px), колір — той самий
