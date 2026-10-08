@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -151,6 +152,7 @@ export function ReorderExercise({
   const useBlocks = blockCount > 1;
 
   // ==== Гілка ≤5 послідовностей (незмінна поведінка) ====
+  const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as ReorderDetail | undefined;
   const singleLocked = !!single.result;
@@ -221,6 +223,7 @@ export function ReorderExercise({
       }
       const result = (await res.json()) as ReorderResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

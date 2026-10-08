@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Check, ChevronDown } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -92,6 +93,7 @@ export function MultipleChoiceExercise({
   const useBlocks = blockCount > 1;
 
   // ==== Гілка ≤5 питань (незмінна поведінка) ====
+  const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as MultipleChoiceDetail | undefined;
 
@@ -575,6 +577,7 @@ export function MultipleChoiceExercise({
       }
       const result = (await res.json()) as MultipleChoiceResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

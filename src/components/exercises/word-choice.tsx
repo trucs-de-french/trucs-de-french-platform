@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -68,6 +69,7 @@ export function WordChoiceExercise({
   const useBlocks = blockCount > 1;
 
   // ==== Гілка ≤5 речень (незмінна поведінка) ====
+  const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as WordChoiceDetail | undefined;
   const locked = !!single.result;
@@ -285,6 +287,7 @@ export function WordChoiceExercise({
       }
       const result = (await res.json()) as WordChoiceResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

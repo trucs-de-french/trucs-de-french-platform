@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
 import { HintBulb } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
@@ -58,6 +59,7 @@ export function OpenAnswerCheckExercise({
   const useBlocks = blockCount > 1;
 
   // ==== Гілка ≤5 питань (незмінна поведінка) ====
+  const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as OpenAnswerDetail | undefined;
 
@@ -190,6 +192,7 @@ export function OpenAnswerCheckExercise({
       }
       const result = (await res.json()) as OpenAnswerResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

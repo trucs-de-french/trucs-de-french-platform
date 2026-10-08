@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { GradeResult } from "@/lib/exercises/types";
 
 export function useExerciseCheck(taskId: string) {
+  const router = useRouter();
   const [result, setResult] = useState<GradeResult | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,11 @@ export function useExerciseCheck(taskId: string) {
       }
 
       setResult((await res.json()) as GradeResult);
+      // Оновлює серверні дані сторінки (зокрема блок "Робота над
+      // помилками") без перезавантаження — router.refresh() лише
+      // перевиконує серверні компоненти, клієнтський стан (useState у
+      // студентських компонентах) не скидається.
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Помилка перевірки");
     } finally {

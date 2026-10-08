@@ -9,6 +9,11 @@ import { resolvePlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/platform-icon";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import { summarizeMistake } from "@/lib/exercises/summarize-mistake";
+import {
+  ERROR_REVIEW_EXCLUDED_TASK_TYPES,
+  buildErrorReviewEntry,
+  isPracticeItemsTaskType,
+} from "@/lib/exercises/error-review";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
@@ -82,22 +87,8 @@ type TaskRow = {
 // в exercise-block.tsx.
 const TYPES_WITH_TYPE_BADGE = ["link", "game"];
 
-// Типи, що НЕ беруть участі в "Робота над помилками" (список у блоці
-// error_correction), хоча самі мандрівники mistakes-рядки для них можуть
-// писатись (essay_check — пише навіть коли correct=true, через
-// hasReportableErrors у progress.ts). essay_check перевірятиметься окремо
-// (DELF-розділ, Gemini API); word_search/crossword/karaoke не розбиваються
-// на елементи (ціла сітка/рядок пісні — не список окремих полів); vocab_quiz
-// не пише в mistakes узагалі (сервер не перевіряє його через /api/exercises/
-// check) — лишений у списку для повноти пояснення, хоча фільтр для нього й
-// так нічого не прибирає.
-const ERROR_REVIEW_EXCLUDED_TASK_TYPES = [
-  "essay_check",
-  "word_search",
-  "crossword",
-  "karaoke",
-  "vocab_quiz",
-];
+// ERROR_REVIEW_EXCLUDED_TASK_TYPES — перенесено в error-review.ts (reviewMode()
+// має знати про винятки, не лише фільтр рендеру тут).
 
 // platform у scene_links — НЕ той самий домен, що LinkPlatform/PlatformIcon
 // (lib/platform.ts, для config.platform завдань типу link/embed:
@@ -430,6 +421,46 @@ export default async function ScenePage({
       latestMistakeByTask.set(m.task_id, m);
     }
   }
+
+  // Серверна модель "Робота над помилками" (пілот, частина 1): mode="items"
+  // реалізовано лише для multiple_choice/fill_blank (isPracticeItemsTaskType,
+  // error-review.ts) — для НИХ рахуємо помилки по ВСІХ записах mistakes
+  // завдання (aggregateWrongItems, не лише найновішому, бо для блокових
+  // multiple_choice кожен запис несе лише detail одного перевіреного блоку).
+  // Решта типів і далі йдуть старим шляхом нижче (latestMistakeByTask/
+  // latestScoreByTask) — вигляд картки "Робота над помилками" тут
+  // навмисно НЕ змінюється (редизайн — частина 2); модель додається лише як
+  // приховані data-* атрибути нижче, для ручної перевірки через DevTools.
+  const mistakeRowsByTask = new Map<string, { createdAt: string; detail: unknown }[]>();
+  for (const m of rawMistakes ?? []) {
+    const arr = mistakeRowsByTask.get(m.task_id) ?? [];
+    arr.push({ createdAt: m.created_at, detail: m.ai_feedback });
+    mistakeRowsByTask.set(m.task_id, arr);
+  }
+  const pilotTaskIds = [...mistakeRowsByTask.keys()].filter((id) =>
+    isPracticeItemsTaskType(taskTypeById.get(id) ?? "")
+  );
+  const correctionStates = await Promise.all(
+    pilotTaskIds.map((id) =>
+      supabase.rpc("get_mistake_correction_state", { p_user_id: user!.id, p_task_id: id })
+    )
+  );
+  const errorReviewByTask = new Map<string, ReturnType<typeof buildErrorReviewEntry>>();
+  pilotTaskIds.forEach((taskId, i) => {
+    const state = correctionStates[i].data?.[0] as
+      | { corrected_item_ids: string[]; failed_attempts: Record<string, number> }
+      | undefined;
+    errorReviewByTask.set(
+      taskId,
+      buildErrorReviewEntry({
+        taskId,
+        taskType: taskTypeById.get(taskId) ?? "",
+        mistakeRows: mistakeRowsByTask.get(taskId) ?? [],
+        correctedItemIds: state?.corrected_item_ids ?? [],
+        failedAttempts: state?.failed_attempts ?? {},
+      })
+    );
+  });
   // Якщо остання спроба на це завдання (за progress, не за mistakes) уже
   // повністю правильна — не показуємо давню помилку, ніби вона й досі
   // актуальна.
@@ -439,7 +470,9 @@ export default async function ScenePage({
   // побудований з уже відсортованого sceneRows), а не порядок mistakes.created_at.
   const sceneMistakes = [...latestMistakeByTask.values()]
     .filter((m) => latestScoreByTask.get(m.task_id) !== 100)
-    .filter((m) => !ERROR_REVIEW_EXCLUDED_TASK_TYPES.includes(taskTypeById.get(m.task_id) ?? ""))
+    .filter(
+      (m) => !(ERROR_REVIEW_EXCLUDED_TASK_TYPES as readonly string[]).includes(taskTypeById.get(m.task_id) ?? "")
+    )
     .sort((a, b) => (taskOrderPosition.get(a.task_id) ?? 0) - (taskOrderPosition.get(b.task_id) ?? 0));
 
   // vocab_quiz бере лексику не лише з поточної сцени, а з будь-яких сцен
@@ -605,10 +638,20 @@ export default async function ScenePage({
                     ) : (
                       <>
                         <p className="font-medium">{ERROR_CORRECTION_INSTRUCTION}</p>
-                        {sceneMistakes.map((m) => (
+                        {sceneMistakes.map((m) => {
+                          // Модель "Робота над помилками" (пілот, частина 1) —
+                          // лише для multiple_choice/fill_blank; інертні
+                          // data-* атрибути для ручної перевірки через DevTools,
+                          // вигляд картки нижче НЕ змінюється (частина 2).
+                          const review = errorReviewByTask.get(m.task_id);
+                          return (
                           <a
                             key={m.id}
                             href={`#task-${m.task_id}`}
+                            data-error-review-mode={review?.mode}
+                            data-error-review-total={review?.total}
+                            data-error-review-remaining={review?.remainingItemIds.length}
+                            data-error-review-status={review?.status}
                             className="block rounded-md border p-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
                           >
                             <span className="font-medium">{m.tasks?.title}</span>
@@ -616,7 +659,8 @@ export default async function ScenePage({
                               {summarizeMistake(m.ai_feedback)}
                             </span>
                           </a>
-                        ))}
+                          );
+                        })}
                       </>
                     )}
                   </div>

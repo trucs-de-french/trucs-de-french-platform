@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -48,6 +49,7 @@ export function TrueFalseExercise({
   const useBlocks = blockCount > 1;
 
   // ==== Гілка ≤5 твердженнь (незмінна поведінка) ====
+  const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as TrueFalseDetail | undefined;
 
@@ -151,6 +153,7 @@ export function TrueFalseExercise({
       }
       const result = (await res.json()) as TrueFalseResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
