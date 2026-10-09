@@ -17,7 +17,7 @@ import {
   ITEM_NUMBER_BADGE,
   ITEM_CARD_WRAP as CARD_WRAP,
 } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -181,7 +181,7 @@ export function MultipleChoiceExercise({
                       type="button"
                       onClick={() => practiceCheck.reveal(item.id, true)}
                       disabled={!!practiceCheck.revealPending[item.id]}
-                      className={STUDENT_BUTTON_SECONDARY_IDLE}
+                      className={STUDENT_BUTTON_SECONDARY_TOUCH}
                     >
                       Показати відповідь
                     </button>

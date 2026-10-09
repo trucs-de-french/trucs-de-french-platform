@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isPracticeItemsTaskType } from "@/lib/exercises/error-review";
 import { BLANK_RE, parseBlankMarker, getMultipleChoiceItems } from "@/lib/exercises/sanitize";
-import type { FillBlankConfig, MultipleChoiceConfig } from "@/lib/exercises/types";
+import type {
+  FillBlankConfig,
+  MultipleChoiceConfig,
+  TrueFalseConfig,
+  WordChoiceConfig,
+  LetterGapsConfig,
+} from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
 // /api/exercises/hint (повертає лише ОДИН елемент, не весь config). На
@@ -55,6 +61,8 @@ export async function POST(request: Request) {
     }
   }
 
+  // answer — завжди string[] (спільний формат для усіх 5 типів, щоб
+  // клієнт (usePracticeCheck) мав один спільний парсинг відповіді).
   if (task.type === "fill_blank") {
     const config = task.config as FillBlankConfig;
     const blankIndex = Number(itemId);
@@ -64,9 +72,37 @@ export async function POST(request: Request) {
     if (!first) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
     }
-    // answer — завжди string[] (та сама форма, що multiple_choice нижче),
-    // щоб клієнт (usePracticeCheck) мав один спільний формат для обох типів.
     return NextResponse.json({ answer: [first] });
+  }
+
+  if (task.type === "true_false") {
+    const config = task.config as TrueFalseConfig;
+    const statement = config.statements.find((s) => s.id === itemId);
+    if (!statement) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    return NextResponse.json({ answer: [statement.answer ? "Vrai" : "Faux"] });
+  }
+
+  if (task.type === "word_choice") {
+    const config = task.config as WordChoiceConfig;
+    const sentence = config.sentences.find((s) => s.id === itemId);
+    if (!sentence) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    // Кілька правильних варіантів можливі (речення з multiple:true) —
+    // усі, не лише перший.
+    const correctOptions = sentence.options.filter((o) => o.correct).map((o) => o.text);
+    return NextResponse.json({ answer: correctOptions });
+  }
+
+  if (task.type === "letter_gaps") {
+    const config = task.config as LetterGapsConfig;
+    const word = config.words[Number(itemId)];
+    if (!word) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    return NextResponse.json({ answer: [word.word] });
   }
 
   // multiple_choice

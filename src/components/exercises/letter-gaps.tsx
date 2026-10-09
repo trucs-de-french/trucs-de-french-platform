@@ -32,6 +32,25 @@ import {
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
+import { usePracticeCheck } from "./use-practice-check";
+import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+
+// Режим практики "Робота над помилками" (пілот, частина 3) — лише
+// помилкові ще не виправлені слова (onlyItemIds — String(wordIndex), той
+// самий принцип, що fill_blank/String(blankIndex): gradeLetterGaps
+// позиційний, слова не мають id). Відоме обмеження (свідомо прийняте):
+// LetterGapsPublicWord.hiddenLetters уже містить правильні літери в
+// config, який і так іде студенту (для живої підсвітки кольором під час
+// друку, gapLiveStatus нижче) — "не показувати відповідь до розкриття"
+// тут означає лише, що СЕРВЕРНА failed_attempts/corrected_item_ids модель
+// і кнопка "Показати відповідь" працюють так само, як і для інших 4
+// типів; сама літера технічно вже присутня в DOM/мережі, як і в звичайній
+// (не практичній) вправі сьогодні — той самий компроміс, що вже
+// задокументований для CrosswordPublic.solution.
+export type LetterGapsPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
 
 // Той самий normalize (trim+lowercase, БЕЗ прибирання діакритики), що
 // сервер (grade.ts) — з тими самими наслідками: регістр не має значення,
@@ -77,6 +96,7 @@ export function LetterGapsExercise({
   onResult,
   hidePoints,
   isDelf,
+  practice,
 }: {
   taskId: string;
   config: LetterGapsPublic;
@@ -85,6 +105,7 @@ export function LetterGapsExercise({
   hidePoints?: boolean;
   // Задача належить DELF-тесту — лампочки-підказки не рендеряться взагалі.
   isDelf?: boolean;
+  practice?: LetterGapsPracticeProps;
 }) {
   // Усі стани відповіді — СПІЛЬНІ на всю вправу (не по блоку), як і pairs у
   // matching.tsx: блок лише фільтрує, які слова видно й до яких прив'язана
@@ -232,6 +253,48 @@ export function LetterGapsExercise({
     [displayOrder, config.words]
   );
 
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
+  // вище: завжди плаский однoколонковий список, без 2-колонкового
+  // вимірювання висоти (useTwoColumnWordOrder) і без BlockNavigation.
+  const isPractice = !!practice;
+  const practiceWordIndices = isPractice
+    ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
+    : [];
+  const practiceGapOrder = gapOrderFor(practiceWordIndices);
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+  }
+
+  async function submitPractice() {
+    const practiceSet = new Set(practiceWordIndices);
+    const letters: (string[] | null)[] = config.words.map((_, wi) => (practiceSet.has(wi) ? answers[wi] : null));
+    const answer: Omit<LetterGapsAnswer, "letters"> & { letters: (string[] | null)[] } = {
+      letters,
+      hintedWordIndices: [...hintedWordIndices],
+    };
+    const result = await practiceCheck.check(practiceWordIndices.map(String), answer);
+    if (!result) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
+
   // ==== Гілка блоків (>10 слів) ====
   const [activeBlock, setActiveBlock] = useState(0);
   const [blockResults, setBlockResults] = useState<Record<number, LetterGapsResult>>({});
@@ -357,6 +420,11 @@ export function LetterGapsExercise({
       locked: boolean;
       gapOrder: GapKey[];
       setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
+      // Практика (пілот, частина 3) — лампочка "наступна літера" вимкнена:
+      // той самий принцип, що fill_blank/multiple_choice в режимі практики
+      // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
+      // повторі помилок).
+      hintDisabled?: boolean;
     }
   ) {
     const word = config.words[wi];
@@ -370,7 +438,7 @@ export function LetterGapsExercise({
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     return (
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
-        {!opts.locked && !isDelf && (
+        {!opts.locked && !isDelf && !opts.hintDisabled && (
           <HintBulb
             size="md"
             state={hintUsed ? "used" : "available"}
@@ -508,6 +576,81 @@ export function LetterGapsExercise({
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        <div className="flex flex-col gap-3">
+          {practiceWordIndices.map((wi) => {
+            const key = String(wi);
+            const isCorrect = practiceResults[key];
+            const attempts = practiceFailedAttempts[key] ?? 0;
+            const itemRevealed = practiceCheck.revealed[key];
+            return (
+              <div key={wi} className="flex flex-col gap-1.5">
+                {renderWordCard(wi, {
+                  detail: undefined,
+                  locked: false,
+                  gapOrder: practiceGapOrder,
+                  setContentRef: null,
+                  hintDisabled: true,
+                })}
+                {isCorrect === true && (
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                )}
+                {isCorrect === false && (
+                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+                    <span className="text-red-600 dark:text-red-400">
+                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                    </span>
+                    {!itemRevealed && (
+                      <button
+                        type="button"
+                        onClick={() => practiceCheck.reveal(key, true)}
+                        disabled={!!practiceCheck.revealPending[key]}
+                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      >
+                        Показати відповідь
+                      </button>
+                    )}
+                  </div>
+                )}
+                {itemRevealed && (
+                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+                    Правильне слово: {itemRevealed.join(", ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {diacritics.rect && diacritics.activeKey && (
+          <DiacriticsPopup
+            rect={diacritics.rect}
+            onPick={(ch) => {
+              const [wi, gi] = diacritics.activeKey!.split(",").map(Number);
+              updateLetter(wi, gi, ch, practiceGapOrder);
+            }}
+          />
+        )}
+
+        {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || !practiceWordIndices.every(isWordFilled)}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
       </div>
     );
   }

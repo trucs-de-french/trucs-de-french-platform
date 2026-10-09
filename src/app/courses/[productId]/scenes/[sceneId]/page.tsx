@@ -385,9 +385,10 @@ export default async function ScenePage({
   // config/title — allSceneTaskEntries типізований вузько як SceneTaskEntry
   // ({id,type}), але елементи в рантаймі — повні TaskRow/ExerciseTask (той
   // самий масив, лише звужений тип на момент push вище) — тут потрібні
-  // config (для inline-практики multiple_choice/fill_blank, ErrorReviewBlock
-  // нижче) і title (замість m.tasks?.title зі старого mistakes-запиту, щоб
-  // не плутати з назвою з іншого джерела).
+  // config (для inline-практики items-типів — multiple_choice/fill_blank/
+  // true_false/word_choice/letter_gaps, ErrorReviewBlock нижче) і title
+  // (замість m.tasks?.title зі старого mistakes-запиту, щоб не плутати з
+  // назвою з іншого джерела).
   const taskConfigById = new Map(
     allSceneTaskEntries.map((t) => [
       t.id,
@@ -439,11 +440,12 @@ export default async function ScenePage({
   }
 
   // Серверна модель "Робота над помилками": mode="items" (переробка
-  // поелементно) реалізовано лише для multiple_choice/fill_blank
-  // (isPracticeItemsTaskType, error-review.ts) — для НИХ рахуємо помилки по
-  // ВСІХ записах mistakes завдання (aggregateWrongItems, не лише
-  // найновішому, бо для блокових multiple_choice кожен запис несе лише
-  // detail одного перевіреного блоку). Для решти типів (mode="whole")
+  // поелементно) реалізовано для multiple_choice/fill_blank (частина 1) і
+  // true_false/word_choice/letter_gaps (частина 3) — isPracticeItemsTaskType,
+  // error-review.ts. Для НИХ рахуємо помилки по ВСІХ записах mistakes
+  // завдання (aggregateWrongItems, не лише найновішому, бо для блокових
+  // вправ кожен запис несе лише detail одного перевіреного блоку). Для
+  // решти типів (mode="whole")
   // buildErrorReviewEntry повертає тривіальну "items"-частину (завжди
   // порожню/not_started) — короткий опис картки такого завдання береться
   // з summarizeMistake (нижче), а не з цієї моделі.
@@ -468,9 +470,8 @@ export default async function ScenePage({
     .sort((a, b) => (taskOrderPosition.get(a.task_id) ?? 0) - (taskOrderPosition.get(b.task_id) ?? 0));
 
   // RPC get_mistake_correction_state — лише для пілотних items-типів
-  // (multiple_choice/fill_blank) серед sceneMistakes: whole-типам ця модель
-  // не потрібна (mode!=="items", correctedItemIds/failedAttempts не
-  // використовуються).
+  // серед sceneMistakes: whole-типам ця модель не потрібна (mode!=="items",
+  // correctedItemIds/failedAttempts не використовуються).
   const pilotTaskIds = sceneMistakes
     .map((m) => m.task_id)
     .filter((id) => isPracticeItemsTaskType(taskTypeById.get(id) ?? ""));

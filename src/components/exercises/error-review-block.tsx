@@ -8,7 +8,16 @@ import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { FillBlankExercise } from "./fill-blank";
-import type { MultipleChoicePublic, FillBlankPublic } from "@/lib/exercises/types";
+import { TrueFalseExercise } from "./true-false";
+import { WordChoiceExercise } from "./word-choice";
+import { LetterGapsExercise } from "./letter-gaps";
+import type {
+  MultipleChoicePublic,
+  FillBlankPublic,
+  TrueFalsePublic,
+  WordChoicePublic,
+  LetterGapsPublic,
+} from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
 // уже щось здавав у сцені взагалі (attemptedGradableCount, page.tsx) і чи
@@ -169,6 +178,33 @@ function ErrorReviewCard({
             <FillBlankExercise
               taskId={entry.taskId}
               config={entry.config as unknown as FillBlankPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "true_false" && (
+            <TrueFalseExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as TrueFalsePublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "word_choice" && (
+            <WordChoiceExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as WordChoicePublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "letter_gaps" && (
+            <LetterGapsExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as LetterGapsPublic}
               pointsVisible={false}
               hidePoints
               practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}

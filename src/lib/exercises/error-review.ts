@@ -17,9 +17,16 @@ export const ERROR_REVIEW_EXCLUDED_TASK_TYPES = [
 ] as const;
 
 // Пілот: повна реалізація режиму "items" (переробка лише неправильних
-// елементів) лише для цих двох типів. Решта типів класифікації "items"
+// елементів) — частина 1 (multiple_choice, fill_blank), частина 3
+// (true_false, word_choice, letter_gaps). Решта типів класифікації "items"
 // нижче тимчасово повертають "whole", доки не реалізовані.
-export const PRACTICE_ITEMS_TASK_TYPES = ["multiple_choice", "fill_blank"] as const;
+export const PRACTICE_ITEMS_TASK_TYPES = [
+  "multiple_choice",
+  "fill_blank",
+  "true_false",
+  "word_choice",
+  "letter_gaps",
+] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
 // Повна класифікація "items" (мета-ціль пілота, задача 2) — елементи, що
@@ -28,12 +35,7 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
 const ITEMS_MODE_TASK_TYPES = [
-  "fill_blank",
-  "letter_gaps",
   "letter_rearrangement",
-  "multiple_choice",
-  "word_choice",
-  "true_false",
   "matching",
   "drag_drop",
   "open_answer",
@@ -69,6 +71,25 @@ type MultipleChoiceDetailLike = {
   items: { id: string; options: { correct: boolean; selected: boolean }[] }[];
 };
 type FillBlankDetailLike = { blanks: { isCorrect: boolean }[] };
+type TrueFalseDetailLike = { statements: { id: string; isCorrect: boolean }[] };
+type WordChoiceDetailLike = { sentences: { id: string; isCorrect: boolean }[] };
+// НЕМАЄ id-поля (на відміну від true_false/word_choice) — gradeLetterGaps
+// (grade.ts) позиційний, "елемент" тут String(wordIndex), той самий
+// принцип, що fill_blank/String(blankIndex). correctLetters/studentLetters
+// — для РОЗРІЗНЕННЯ "слово поза скоупом цього конкретного check" (блокова
+// вправа >10 слів, letter-gaps.tsx шле null на позиції слів ІНШОГО блоку —
+// gradeLetterGaps перетворює null на studentLetters:[], detail.words
+// лишається ПОВНОЇ довжини завжди) від "слово реально перевірялось, просто
+// неправильно" — studentLetters.length !== correctLetters.length означає
+// перше (виключити з itemsInDetail, інакше кожен mistakes-рядок блокової
+// вправи хибно позначав би СЛОВА ІНШИХ БЛОКІВ як помилку).
+type LetterGapsDetailLike = {
+  words: { studentLetters: string[]; correctLetters: string[]; isCorrect: boolean }[];
+};
+
+function letterGapsInScope(w: { studentLetters: string[]; correctLetters: string[] }): boolean {
+  return w.correctLetters.length > 0 && w.studentLetters.length === w.correctLetters.length;
+}
 
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
@@ -89,6 +110,20 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
       .map((it) => it.id);
   }
 
+  if (taskType === "true_false" && Array.isArray(d.statements)) {
+    return (d as TrueFalseDetailLike).statements.filter((s) => !s.isCorrect).map((s) => s.id);
+  }
+
+  if (taskType === "word_choice" && Array.isArray(d.sentences)) {
+    return (d as WordChoiceDetailLike).sentences.filter((s) => !s.isCorrect).map((s) => s.id);
+  }
+
+  if (taskType === "letter_gaps" && Array.isArray(d.words)) {
+    return (d as LetterGapsDetailLike).words
+      .map((w, i) => (letterGapsInScope(w) && !w.isCorrect ? String(i) : null))
+      .filter((id): id is string => id !== null);
+  }
+
   return null;
 }
 
@@ -105,6 +140,20 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
 
   if (taskType === "multiple_choice" && Array.isArray(d.items)) {
     return (d as MultipleChoiceDetailLike).items.map((it) => it.id);
+  }
+
+  if (taskType === "true_false" && Array.isArray(d.statements)) {
+    return (d as TrueFalseDetailLike).statements.map((s) => s.id);
+  }
+
+  if (taskType === "word_choice" && Array.isArray(d.sentences)) {
+    return (d as WordChoiceDetailLike).sentences.map((s) => s.id);
+  }
+
+  if (taskType === "letter_gaps" && Array.isArray(d.words)) {
+    return (d as LetterGapsDetailLike).words
+      .map((w, i) => (letterGapsInScope(w) ? String(i) : null))
+      .filter((id): id is string => id !== null);
   }
 
   return null;

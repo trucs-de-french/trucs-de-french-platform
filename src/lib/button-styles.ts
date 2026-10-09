@@ -73,6 +73,14 @@ export const STUDENT_BUTTON_SECONDARY_IDLE =
 export const STUDENT_BUTTON_SECONDARY_ACTIVE =
   "font-heading rounded border border-brand bg-brand px-2 py-0.5 text-xs font-medium text-white shadow-sm transition-colors";
 
+// Допоміжна кнопка практики "Робота над помилками" ("Показати відповідь"
+// тощо, use-practice-check.ts) — той самий вигляд, що STUDENT_BUTTON_
+// SECONDARY_IDLE (компактна пілюля), але з гарантованою зоною дотику
+// ≥44px на мобільному: max-md:min-h-11 — той самий прийом, що reorder.tsx
+// (extraTileClassName) — на md+ (десктоп) min-height не застосовується,
+// вигляд лишається БАЙТОВО тим самим, що STUDENT_BUTTON_SECONDARY_IDLE.
+export const STUDENT_BUTTON_SECONDARY_TOUCH = `${STUDENT_BUTTON_SECONDARY_IDLE} max-md:min-h-11`;
+
 // Кнопка-посилання "Практики"/додаткових блоків посилань (scene_links,
 // студентська сторінка сцени) — той самий розмір (rounded-md px-3 py-1.5
 // text-sm), що вже був, тепер із брендовою рамкою й легкою тінню замість

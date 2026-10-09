@@ -7,7 +7,7 @@ import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
@@ -335,7 +335,7 @@ export function FillBlankExercise({
                   type="button"
                   onClick={() => practiceCheck.reveal(String(i), true)}
                   disabled={!!practiceCheck.revealPending[String(i)]}
-                  className={`ml-1 ${STUDENT_BUTTON_SECONDARY_IDLE}`}
+                  className={`ml-1 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
                 >
                   Показати відповідь
                 </button>

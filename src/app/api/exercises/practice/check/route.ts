@@ -6,15 +6,20 @@ import {
   aggregateWrongItems,
   type ErrorReviewStatus,
 } from "@/lib/exercises/error-review";
-import type { MultipleChoiceDetail, FillBlankDetail } from "@/lib/exercises/types";
+import type {
+  MultipleChoiceDetail,
+  FillBlankDetail,
+  TrueFalseDetail,
+  WordChoiceDetail,
+  LetterGapsDetail,
+} from "@/lib/exercises/types";
 
-// Режим практики "Робота над помилками" (пілот, частина 1) — переробка
-// ЛИШЕ неправильних елементів, БЕЗ балів: на відміну від /api/exercises/
-// check, НЕ викликає recordTaskAttempt — progress/mistakes/block_progress і
-// attempts не змінюються, оновлюється лише public.mistake_corrections
-// (RPC save_mistake_correction, 0054). gradeAnswer() тут лише ЧИТАЄ
-// правильність обраних елементів, її повертане pointsEarned/Possible
-// відкидається.
+// Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
+// елементів, БЕЗ балів: на відміну від /api/exercises/check, НЕ викликає
+// recordTaskAttempt — progress/mistakes/block_progress і attempts не
+// змінюються, оновлюється лише public.mistake_corrections (RPC
+// save_mistake_correction, 0054). gradeAnswer() тут лише ЧИТАЄ правильність
+// обраних елементів, її повертане pointsEarned/Possible відкидається.
 export async function POST(request: Request) {
   const body = await request.json();
   const taskId = body.taskId as string | undefined;
@@ -64,22 +69,62 @@ export async function POST(request: Request) {
   const config = (task.config ?? {}) as Record<string, unknown>;
   const graded = gradeAnswer(task.type, config, answer);
 
+  // Оцінка по кожному itemId — ТА САМА grade-логіка, що звичайна перевірка
+  // (gradeAnswer вище, без дублювання): тут лише витягуємо isCorrect
+  // потрібного елемента з уже готового detail, форма якого своя для
+  // кожного типу (items/blanks/statements/sentences/words).
   let results: { itemId: string; correct: boolean }[];
-  if (task.type === "multiple_choice") {
-    const detail = graded.detail as MultipleChoiceDetail;
-    results = itemIds.map((itemId) => {
-      const item = detail.items.find((it) => it.id === itemId);
-      return { itemId, correct: !!item && item.options.every((o) => o.correct === o.selected) };
-    });
-  } else {
-    // fill_blank — позиційний (blankIndex як рядок), gradeAnswer рахує ВСІ
-    // пропуски завжди (template — вільний текст без явних id, той самий
-    // принцип, що в /api/exercises/check); беремо лише запитані позиції.
-    const detail = graded.detail as FillBlankDetail;
-    results = itemIds.map((itemId) => {
-      const blank = detail.blanks[Number(itemId)];
-      return { itemId, correct: !!blank?.isCorrect };
-    });
+  switch (task.type) {
+    case "multiple_choice": {
+      const detail = graded.detail as MultipleChoiceDetail;
+      results = itemIds.map((itemId) => {
+        const item = detail.items.find((it) => it.id === itemId);
+        return { itemId, correct: !!item && item.options.every((o) => o.correct === o.selected) };
+      });
+      break;
+    }
+    case "fill_blank": {
+      // позиційний (blankIndex як рядок), gradeAnswer рахує ВСІ пропуски
+      // завжди (template — вільний текст без явних id) — беремо лише
+      // запитані позиції.
+      const detail = graded.detail as FillBlankDetail;
+      results = itemIds.map((itemId) => {
+        const blank = detail.blanks[Number(itemId)];
+        return { itemId, correct: !!blank?.isCorrect };
+      });
+      break;
+    }
+    case "true_false": {
+      const detail = graded.detail as TrueFalseDetail;
+      results = itemIds.map((itemId) => {
+        const s = detail.statements.find((x) => x.id === itemId);
+        return { itemId, correct: !!s?.isCorrect };
+      });
+      break;
+    }
+    case "word_choice": {
+      const detail = graded.detail as WordChoiceDetail;
+      results = itemIds.map((itemId) => {
+        const s = detail.sentences.find((x) => x.id === itemId);
+        return { itemId, correct: !!s?.isCorrect };
+      });
+      break;
+    }
+    case "letter_gaps": {
+      // позиційний (wordIndex як рядок), той самий принцип, що fill_blank —
+      // detail.words завжди повної довжини (gradeLetterGaps), беремо лише
+      // запитані позиції.
+      const detail = graded.detail as LetterGapsDetail;
+      results = itemIds.map((itemId) => {
+        const w = detail.words[Number(itemId)];
+        return { itemId, correct: !!w?.isCorrect };
+      });
+      break;
+    }
+    default: {
+      const never: never = task.type;
+      throw new Error(`practice/check: непідтримуваний тип "${never}"`);
+    }
   }
 
   const { data: stateRows, error: stateError } = await supabase.rpc("get_mistake_correction_state", {
@@ -95,6 +140,12 @@ export async function POST(request: Request) {
   for (const r of results) {
     if (r.correct) {
       correctedSet.add(r.itemId);
+      // Виправлення (частина 3, фікс A) — лічильник невдалих спроб
+      // очищається ЗАВЖДИ, коли елемент щойно став правильним: раніше
+      // multiple_choice/fill_blank лишали старе число в failed_attempts
+      // навіть для вже виправленого елемента (непослідовно між типами,
+      // і взагалі зайве — елемент більше не в remainingItemIds).
+      delete failedAttempts[r.itemId];
     } else {
       failedAttempts[r.itemId] = (failedAttempts[r.itemId] ?? 0) + 1;
     }

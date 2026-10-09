@@ -17,10 +17,21 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
+import { usePracticeCheck } from "./use-practice-check";
+import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
 type WordChoiceResult = Extract<GradeResult, { detail: WordChoiceDetail }>;
+
+// Режим практики "Робота над помилками" (пілот, частина 3) — лише
+// помилкові ще не виправлені речення (onlyItemIds — sentence.id). Працює
+// з обома режимами (select/cross_out) — sentenceAnswer() нижче вже зводить
+// обидва до однієї форми, повторно використано без змін.
+export type WordChoicePracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
 
 // Плитка-варіант усередині картки речення — колишній спільний
 // ANSWER_CARD_INLINE (answer-card-style.ts) мав shadow-sm замість рамки:
@@ -43,12 +54,14 @@ export function WordChoiceExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: WordChoicePublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: WordChoicePracticeProps;
 }) {
   // mode === "select": обрані optionId на речення — множина (toggle),
   // не одне значення, бо речення може дозволяти кілька правильних.
@@ -77,6 +90,56 @@ export function WordChoiceExercise({
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
   }, [useBlocks, single.result, onResult]);
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
+  // вище: завжди плаский список, без BlockNavigation. locked лишається
+  // false (single.result завжди null у практиці — single.submit тут не
+  // викликається), тож toggleSelection/toggleCrossedOut і далі працюють.
+  const isPractice = !!practice;
+  const practiceSentences = isPractice
+    ? config.sentences.filter((s) => practice!.onlyItemIds.includes(s.id))
+    : [];
+  const originalIndexOf = new Map(config.sentences.map((s, i) => [s.id, i]));
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+  }
+
+  async function submitPractice() {
+    const answer: WordChoiceAnswer = practiceSentences.map(sentenceAnswer);
+    const result = await practiceCheck.check(
+      practiceSentences.map((s) => s.id),
+      answer
+    );
+    if (!result) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
+
+  const practiceAllAnswered = practiceSentences.every((s) =>
+    config.mode === "select"
+      ? (selections[s.id] ?? []).length > 0
+      : remainingOptions(
+          s.id,
+          s.options.map((o) => o.id)
+        ).length > 0
+  );
 
   function toggleSelection(sentenceId: string, optionId: string, multiple: boolean) {
     if (locked) return;
@@ -350,6 +413,62 @@ export function WordChoiceExercise({
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        <div className="flex flex-col gap-3 md:gap-4">
+          {practiceSentences.map((s) => {
+            const idx = originalIndexOf.get(s.id)!;
+            const isCorrect = practiceResults[s.id];
+            const attempts = practiceFailedAttempts[s.id] ?? 0;
+            const itemRevealed = practiceCheck.revealed[s.id];
+            return (
+              <div key={s.id} className="flex flex-col gap-1.5">
+                {renderSentenceCard(s, idx, undefined)}
+                {isCorrect === true && (
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                )}
+                {isCorrect === false && (
+                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+                    <span className="text-red-600 dark:text-red-400">
+                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                    </span>
+                    {!itemRevealed && (
+                      <button
+                        type="button"
+                        onClick={() => practiceCheck.reveal(s.id, true)}
+                        disabled={!!practiceCheck.revealPending[s.id]}
+                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      >
+                        Показати відповідь
+                      </button>
+                    )}
+                  </div>
+                )}
+                {itemRevealed && (
+                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+                    Правильна відповідь: {itemRevealed.join(", ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || !practiceAllAnswered}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
       </div>
     );
