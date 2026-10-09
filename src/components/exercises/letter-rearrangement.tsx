@@ -19,7 +19,7 @@ import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { useTwoColumnWordOrder } from "./use-two-column-word-order";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
@@ -32,8 +32,18 @@ import {
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
+import { usePracticeCheck } from "./use-practice-check";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
+
+// Режим практики "Робота над помилками" (пілот, частина 4) — той самий
+// принцип, що LetterGapsPracticeProps (letter-gaps.tsx): лише помилкові ще
+// не виправлені слова, onlyItemIds — String(wordIndex) (letter_rearrangement
+// теж позиційний, слова не мають id).
+export type LetterRearrangementPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
 
 export function LetterRearrangementExercise({
   taskId,
@@ -42,6 +52,7 @@ export function LetterRearrangementExercise({
   onResult,
   hidePoints,
   isDelf,
+  practice,
 }: {
   taskId: string;
   config: LetterRearrangementPublic;
@@ -52,6 +63,7 @@ export function LetterRearrangementExercise({
   // (сервер /api/exercises/letter-rearrangement-hint однаково відхилив би
   // запит, якби хтось обійшов UI).
   isDelf?: boolean;
+  practice?: LetterRearrangementPracticeProps;
 }) {
   // Усі стани — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
   // matching.tsx.
@@ -137,6 +149,53 @@ export function LetterRearrangementExercise({
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
   }, [useBlocks, single.result, onResult]);
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
+  // вище: завжди плаский однoколонковий список, без 2-колонкового
+  // вимірювання висоти (useTwoColumnWordOrder) і без BlockNavigation — той
+  // самий принцип, що letter-gaps.tsx. practiceWordIndices будується НАПРЯМУ
+  // з config.words (не через displayOrder якогось хука), тож застарілий
+  // локальний індекс тут структурно неможливий — фільтр "li < довжина" з
+  // фіксу 0e3ad04 не застосовний (нема стану, що міг би лишитись
+  // "застарілим" між рендерами); renderWordCard все одно лишає захисний
+  // `if (!word) return null` на випадок відсутнього слова.
+  const isPractice = !!practice;
+  const practiceWordIndices = isPractice
+    ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
+    : [];
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+  }
+
+  async function submitPractice() {
+    const practiceSet = new Set(practiceWordIndices);
+    const words: (string[] | null)[] = config.words.map((_, wi) => (practiceSet.has(wi) ? orders[wi] : null));
+    const answer: Omit<LetterRearrangementAnswer, "words"> & { words: (string[] | null)[] } = {
+      words,
+      hintedWordIndices: [...hintedWordIndices],
+    };
+    const result = await practiceCheck.check(practiceWordIndices.map(String), answer);
+    if (!result) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
 
   // ==== Гілка блоків (>10 слів) ====
   const [activeBlock, setActiveBlock] = useState(0);
@@ -250,6 +309,9 @@ export function LetterRearrangementExercise({
       detail: LetterRearrangementDetail | undefined;
       locked: boolean;
       setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
+      // Практика (пілот, частина 4) — лампочка "поставити наступну літеру"
+      // вимкнена, той самий принцип, що letter-gaps.tsx hintDisabled.
+      hintDisabled?: boolean;
     }
   ) {
     const word = config.words[wi];
@@ -271,7 +333,7 @@ export function LetterRearrangementExercise({
 
     return (
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
-        {!opts.locked && !isDelf && (
+        {!opts.locked && !isDelf && !opts.hintDisabled && (
           <HintBulb
             size="md"
             state={hintUsed ? "used" : "available"}
@@ -375,6 +437,70 @@ export function LetterRearrangementExercise({
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        <div className="flex flex-col gap-3">
+          {practiceWordIndices.map((wi) => {
+            const key = String(wi);
+            const isCorrect = practiceResults[key];
+            const attempts = practiceFailedAttempts[key] ?? 0;
+            const itemRevealed = practiceCheck.revealed[key];
+            return (
+              <div key={wi} className="flex flex-col gap-1.5">
+                {renderWordCard(wi, {
+                  detail: undefined,
+                  locked: false,
+                  setContentRef: null,
+                  hintDisabled: true,
+                })}
+                {isCorrect === true && (
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                )}
+                {isCorrect === false && (
+                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+                    <span className="text-red-600 dark:text-red-400">
+                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                    </span>
+                    {!itemRevealed && (
+                      <button
+                        type="button"
+                        onClick={() => practiceCheck.reveal(key, true)}
+                        disabled={!!practiceCheck.revealPending[key]}
+                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      >
+                        Показати відповідь
+                      </button>
+                    )}
+                  </div>
+                )}
+                {itemRevealed && (
+                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+                    Правильне слово: {itemRevealed.join(", ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
       </div>
     );
   }

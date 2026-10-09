@@ -322,7 +322,16 @@ function gradeLetterRearrangement(
       correctIndex,
       isCorrect: studentOrder[correctIndex] === text,
     }));
-    return { letters, isCorrect: letters.every((l) => l.isCorrect), hintUsed: hintedSet.has(wi) };
+    return {
+      letters,
+      isCorrect: letters.every((l) => l.isCorrect),
+      hintUsed: hintedSet.has(wi),
+      // Явний скоуп-маркер (на відміну від gradeLetterGaps, тут
+      // studentLettersByWord-довжина не "просочується" у detail через
+      // letters — вона завжди correctWord.length) — error-review.ts
+      // (letterRearrangementInScope) читає саме це поле.
+      inScope: Array.isArray(studentOrderByWord[wi]),
+    };
   });
 
   // Той самий скоуп-за-присутністю-масиву й той самий компроміс з

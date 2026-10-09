@@ -18,14 +18,16 @@ export const ERROR_REVIEW_EXCLUDED_TASK_TYPES = [
 
 // Пілот: повна реалізація режиму "items" (переробка лише неправильних
 // елементів) — частина 1 (multiple_choice, fill_blank), частина 3
-// (true_false, word_choice, letter_gaps). Решта типів класифікації "items"
-// нижче тимчасово повертають "whole", доки не реалізовані.
+// (true_false, word_choice, letter_gaps), частина 4 (letter_rearrangement).
+// Решта типів класифікації "items" нижче тимчасово повертають "whole", доки
+// не реалізовані.
 export const PRACTICE_ITEMS_TASK_TYPES = [
   "multiple_choice",
   "fill_blank",
   "true_false",
   "word_choice",
   "letter_gaps",
+  "letter_rearrangement",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -35,7 +37,6 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
 const ITEMS_MODE_TASK_TYPES = [
-  "letter_rearrangement",
   "matching",
   "drag_drop",
   "open_answer",
@@ -91,6 +92,18 @@ function letterGapsInScope(w: { studentLetters: string[]; correctLetters: string
   return w.correctLetters.length > 0 && w.studentLetters.length === w.correctLetters.length;
 }
 
+// На відміну від LetterGapsDetailLike, gradeLetterRearrangement будує
+// letters з correctWord (ЗАВЖДИ повної довжини) незалежно від скоупу —
+// довжина тут нічого не каже про те, чи слово реально входило в answer.
+// Скоуп прийшов явним полем inScope (grade.ts: gradeLetterRearrangement).
+type LetterRearrangementDetailLike = {
+  words: { isCorrect: boolean; inScope: boolean }[];
+};
+
+function letterRearrangementInScope(w: { inScope: boolean }): boolean {
+  return w.inScope;
+}
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -124,6 +137,12 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
       .filter((id): id is string => id !== null);
   }
 
+  if (taskType === "letter_rearrangement" && Array.isArray(d.words)) {
+    return (d as LetterRearrangementDetailLike).words
+      .map((w, i) => (letterRearrangementInScope(w) && !w.isCorrect ? String(i) : null))
+      .filter((id): id is string => id !== null);
+  }
+
   return null;
 }
 
@@ -153,6 +172,12 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
   if (taskType === "letter_gaps" && Array.isArray(d.words)) {
     return (d as LetterGapsDetailLike).words
       .map((w, i) => (letterGapsInScope(w) ? String(i) : null))
+      .filter((id): id is string => id !== null);
+  }
+
+  if (taskType === "letter_rearrangement" && Array.isArray(d.words)) {
+    return (d as LetterRearrangementDetailLike).words
+      .map((w, i) => (letterRearrangementInScope(w) ? String(i) : null))
       .filter((id): id is string => id !== null);
   }
 

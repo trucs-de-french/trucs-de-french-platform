@@ -12,6 +12,7 @@ import type {
   TrueFalseDetail,
   WordChoiceDetail,
   LetterGapsDetail,
+  LetterRearrangementDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -115,6 +116,15 @@ export async function POST(request: Request) {
       // detail.words завжди повної довжини (gradeLetterGaps), беремо лише
       // запитані позиції.
       const detail = graded.detail as LetterGapsDetail;
+      results = itemIds.map((itemId) => {
+        const w = detail.words[Number(itemId)];
+        return { itemId, correct: !!w?.isCorrect };
+      });
+      break;
+    }
+    case "letter_rearrangement": {
+      // позиційний (wordIndex як рядок), той самий принцип, що letter_gaps.
+      const detail = graded.detail as LetterRearrangementDetail;
       results = itemIds.map((itemId) => {
         const w = detail.words[Number(itemId)];
         return { itemId, correct: !!w?.isCorrect };

@@ -1117,6 +1117,13 @@ export type LetterRearrangementDetail = {
     letters: { text: string; correctIndex: number; isCorrect: boolean }[];
     isCorrect: boolean;
     hintUsed: boolean;
+    // На відміну від LetterGapsDetail (studentLetters.length сам кодує
+    // скоуп — порожній масив на позиціях слів поза поточним блоком),
+    // letters тут ЗАВЖДИ повної довжини (correctWord.map), незалежно від
+    // того, чи слово було в answer.words — тому скоуп потребує окремого
+    // явного поля ("Робота над помилками", error-review.ts:
+    // letterRearrangementInScope).
+    inScope: boolean;
   }[];
 };
 

@@ -8,6 +8,7 @@ import type {
   TrueFalseConfig,
   WordChoiceConfig,
   LetterGapsConfig,
+  LetterRearrangementConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -98,6 +99,15 @@ export async function POST(request: Request) {
 
   if (task.type === "letter_gaps") {
     const config = task.config as LetterGapsConfig;
+    const word = config.words[Number(itemId)];
+    if (!word) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    return NextResponse.json({ answer: [word.word] });
+  }
+
+  if (task.type === "letter_rearrangement") {
+    const config = task.config as LetterRearrangementConfig;
     const word = config.words[Number(itemId)];
     if (!word) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
