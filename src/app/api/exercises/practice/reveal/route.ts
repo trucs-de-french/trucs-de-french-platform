@@ -64,7 +64,9 @@ export async function POST(request: Request) {
     if (!first) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
     }
-    return NextResponse.json({ answer: first });
+    // answer — завжди string[] (та сама форма, що multiple_choice нижче),
+    // щоб клієнт (usePracticeCheck) мав один спільний формат для обох типів.
+    return NextResponse.json({ answer: [first] });
   }
 
   // multiple_choice

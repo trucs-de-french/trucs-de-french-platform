@@ -7,7 +7,8 @@ import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
+import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
@@ -16,6 +17,16 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { stickyPoolClass } from "./tile-styles";
 
+// Режим практики "Робота над помилками" (пілот, частина 2) — лише
+// помилкові ще не виправлені пропуски (onlyItemIds — String(blankIndex),
+// error-review.ts). Решта пропусків template лишається видимою (інакше
+// речення втрачає сенс), але нерактивна — підміняється нейтральною
+// заглушкою замість поля вводу.
+export type FillBlankPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
+
 export function FillBlankExercise({
   taskId,
   config,
@@ -23,6 +34,7 @@ export function FillBlankExercise({
   onResult,
   hidePoints,
   isDelf,
+  practice,
 }: {
   taskId: string;
   config: FillBlankPublic;
@@ -38,10 +50,30 @@ export function FillBlankExercise({
   // взагалі (не лише неактивна), сервер (/api/exercises/hint) однаково
   // відхилив би запит, якби хтось обійшов UI.
   isDelf?: boolean;
+  practice?: FillBlankPracticeProps;
 }) {
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
   const [answers, setAnswers] = useState<string[]>(() => Array(blankCount).fill(""));
+  const isPractice = !!practice;
+  const practiceSet = new Set(practice?.onlyItemIds ?? []);
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  // Коригування стану під час рендеру (React-рекомендований патерн — НЕ
+  // useEffect, щоб уникнути react-hooks/set-state-in-effect): коли
+  // remainingItemIds змінюється (елемент виправлено й зник після
+  // router.refresh()), скидаємо локальні результати попередньої спроби, щоб
+  // застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+  }
+
   // Пропуски, де брали підказку "перша літера" — один раз на пропуск,
   // повторний клік нічого не робить (кнопка неактивна, applyHint нижче).
   const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set());
@@ -72,6 +104,31 @@ export function FillBlankExercise({
   useEffect(() => {
     if (result) onResult?.(result);
   }, [result, onResult]);
+
+  async function submitPractice() {
+    // Позиційний масив на ВСІ пропуски (gradeFillBlank/FillBlankAnswer —
+    // template-позиційний, не map за id) — пропуски ПОЗА практикою йдуть
+    // порожніми, сервер однаково бере з detail.blanks лише запитані
+    // itemIds (practice/check route.ts), решта відкидається.
+    const fullAnswers = answers.map((v, i) => (practiceSet.has(String(i)) ? v : ""));
+    const itemIds = [...practiceSet];
+    const practiceResult = await practiceCheck.check(itemIds, {
+      answers: fullAnswers,
+      hintedBlanks: [...hintedBlanks, ...translationHints].filter((i) => practiceSet.has(String(i))),
+    });
+    if (!practiceResult) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of practiceResult.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(practiceResult.failedAttempts);
+    for (const r of practiceResult.results) {
+      if (!r.correct && (practiceResult.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
 
   function updateAnswer(i: number, value: string) {
     setAnswers((prev) => prev.map((v, idx) => (idx === i ? value : v)));
@@ -169,7 +226,7 @@ export function FillBlankExercise({
       <HintExplanation
         type="fill_blank"
         hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || hasWordBank || !!result}
+        hidden={!!isDelf || hasWordBank || !!result || isPractice}
       />
 
       {/* Банк слів (опційний) і саме речення — разом ОДНЕ тіло вправи, тож
@@ -215,14 +272,27 @@ export function FillBlankExercise({
           {segments.map((seg, i) => (
             <span key={i}>
               {frenchNbsp(seg)}
-              {i < blankCount && (
+              {i < blankCount && isPractice && !practiceSet.has(String(i)) && (
+                // Пропуск ПОЗА поточною практикою (вже виправлений чи не
+                // мав помилки) — нейтральна заглушка замість поля вводу:
+                // речення лишається читабельним, але нередагованим, бо
+                // правильне значення цього пропуску клієнту невідоме
+                // (FillBlankPublic не містить відповідей).
+                <span
+                  aria-hidden
+                  className="mx-1 inline-block w-16 rounded border border-dashed border-neutral-300 px-2 py-0.5 text-center text-neutral-400 dark:border-neutral-600 dark:text-neutral-500"
+                >
+                  ···
+                </span>
+              )}
+              {i < blankCount && (!isPractice || practiceSet.has(String(i))) && (
                 <input
                   ref={diacritics.fieldRef(String(i))}
                   value={answers[i]}
                   onChange={(e) => updateAnswer(i, e.target.value)}
                   onFocus={() => diacritics.onFocus(String(i))}
                   onBlur={diacritics.onBlur}
-                  disabled={!!result}
+                  disabled={isPractice ? practiceCheck.pending : !!result}
                   // placeholder — лише коли поле ще порожнє (нативно зникає,
                   // щойно студентка почне вводити, без додаткової логіки);
                   // title — повний переклад, навіть якщо truncate обрізав
@@ -234,15 +304,41 @@ export function FillBlankExercise({
                   className={`mx-1 truncate rounded border px-2 py-0.5 text-base placeholder:text-neutral-400 placeholder:not-italic dark:placeholder:text-neutral-500 ${
                     visibleTranslations.has(i) && !answers[i] && hints[i] ? "w-40" : "w-28"
                   } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
-                    detail
-                      ? detail.blanks[i]?.isCorrect
+                    isPractice
+                      ? practiceResults[String(i)] === true
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                        : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                      : hintedBlanks.has(i)
-                        ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                        : "border-gray-300 dark:border-neutral-600"
+                        : practiceResults[String(i)] === false
+                          ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                          : "border-gray-300 dark:border-neutral-600"
+                      : detail
+                        ? detail.blanks[i]?.isCorrect
+                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                          : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                        : hintedBlanks.has(i)
+                          ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                          : "border-gray-300 dark:border-neutral-600"
                   }`}
                 />
+              )}
+              {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceResults[String(i)] === false && (
+                <span className="ml-1 text-xs text-red-600 dark:text-red-400">
+                  (спроб: {practiceFailedAttempts[String(i)] ?? 0})
+                </span>
+              )}
+              {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceCheck.revealed[String(i)] && (
+                <span className="ml-1 text-xs italic text-amber-700 dark:text-amber-400">
+                  (правильно: {practiceCheck.revealed[String(i)].join(" / ")})
+                </span>
+              )}
+              {i < blankCount && isPractice && practiceSet.has(String(i)) && !practiceCheck.revealed[String(i)] && (
+                <button
+                  type="button"
+                  onClick={() => practiceCheck.reveal(String(i), true)}
+                  disabled={!!practiceCheck.revealPending[String(i)]}
+                  className={`ml-1 ${STUDENT_BUTTON_SECONDARY_IDLE}`}
+                >
+                  Показати відповідь
+                </button>
               )}
               {/* Лампочка-переклад — ОКРЕМА від DiacriticsPopup (перша
                   літера, popup відкритий лише при фокусі): завжди inline
@@ -253,7 +349,7 @@ export function FillBlankExercise({
                   legend-tile-style.ts (та інші вправи, що й далі покладаються
                   на "flex" усередині своїх flex/absolute контейнерів, де
                   flex-vs-inline-flex різниці нема). */}
-              {i < blankCount && !result && !isDelf && hints[i] && (
+              {i < blankCount && !result && !isDelf && !isPractice && hints[i] && (
                 <HintBulb
                   size="sm"
                   state={translationHints.has(i) ? "used" : "available"}
@@ -262,7 +358,7 @@ export function FillBlankExercise({
                   className="!inline-flex align-middle"
                 />
               )}
-              {i < blankCount && !result && visibleTranslations.has(i) && hints[i] && answers[i] && (
+              {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (
                 <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hints[i] ?? undefined}>
                   ({hints[i]})
                 </span>
@@ -288,7 +384,7 @@ export function FillBlankExercise({
             focusAndSetCursor(el, cursor);
           }}
           onHint={
-            isDelf || hasWordBank ? undefined : () => applyHint(Number(diacritics.activeKey))
+            isDelf || hasWordBank || isPractice ? undefined : () => applyHint(Number(diacritics.activeKey))
           }
           hintDisabled={hintPending || hintedBlanks.has(Number(diacritics.activeKey))}
           hintUsed={hintedBlanks.has(Number(diacritics.activeKey))}
@@ -307,41 +403,55 @@ export function FillBlankExercise({
         </ul>
       )}
 
-      <div className="flex flex-col gap-3">
-        {!result ? (
+      {isPractice ? (
+        <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => {
-              // Об'єднання двох незалежних "used"-наборів (перша літера +
-              // переклад) лише ТУТ, у payload — grade.ts бачить один спільний
-              // hintedBlanks, не знає про джерело підказки.
-              const answer: FillBlankAnswer = {
-                answers,
-                hintedBlanks: [...new Set([...hintedBlanks, ...translationHints])],
-              };
-              submit(answer);
-            }}
-            disabled={pending}
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || [...practiceSet].some((id) => !answers[Number(id)])}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >
-            {pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {!result ? (
+            <button
+              type="button"
+              onClick={() => {
+                // Об'єднання двох незалежних "used"-наборів (перша літера +
+                // переклад) лише ТУТ, у payload — grade.ts бачить один спільний
+                // hintedBlanks, не знає про джерело підказки.
+                const answer: FillBlankAnswer = {
+                  answers,
+                  hintedBlanks: [...new Set([...hintedBlanks, ...translationHints])],
+                };
+                submit(answer);
+              }}
+              disabled={pending}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          ) : (
+            <p
+              className={`${RESULT_MESSAGE_CLASS} ${
+                result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+              {result.pointsPossible !== undefined && (
+                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+                </span>
+              )}
+            </p>
+          )}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </div>
+      )}
     </div>
   );
 }

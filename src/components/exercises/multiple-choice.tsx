@@ -17,12 +17,13 @@ import {
   ITEM_NUMBER_BADGE,
   ITEM_CARD_WRAP as CARD_WRAP,
 } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
+import { usePracticeCheck } from "./use-practice-check";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -65,18 +66,31 @@ function optionLetter(index: number): string {
   return String.fromCharCode(65 + index);
 }
 
+// Режим практики "Робота над помилками" (пілот, частина 2) — лише
+// неправильні ще не виправлені елементи (onlyItemIds, з серверної моделі
+// errorReviewByTask.remainingItemIds), бали не показуються ніколи
+// (хідpoints примусово true в error-review-block.tsx, failedAttempts —
+// стартовий стан із тієї самої моделі, для коректного лічильника з
+// першого рендеру, до першого practice/check у цій сесії).
+export type MultipleChoicePracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
+
 export function MultipleChoiceExercise({
   taskId,
   config,
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: MultipleChoicePublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: MultipleChoicePracticeProps;
 }) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   // Клік по картинці варіанта — вже дія вправи (вибір), тому збільшення
@@ -96,6 +110,95 @@ export function MultipleChoiceExercise({
   const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as MultipleChoiceDetail | undefined;
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
+  // вище: завжди плаский список, без BlockNavigation, навіть якщо
+  // onlyItemIds випадково довший за CARD_BLOCK_MAX (на практиці
+  // remainingItemIds — залишок помилок, рідко великий).
+  const isPractice = !!practice;
+  const practiceItems = isPractice
+    ? config.items.filter((it) => practice!.onlyItemIds.includes(it.id))
+    : [];
+  // originalIndexOf — щоб ITEM_NUMBER_BADGE/aria-label лишались
+  // ОРИГІНАЛЬНИМИ номерами питань вправи, а не позицією у звуженому
+  // практичному підсписку.
+  const originalIndexOf = new Map(config.items.map((it, i) => [it.id, i]));
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  // Коли remainingItemIds змінюється (елемент виправлено й зник після
+  // router.refresh()) — скидаємо локальні результати попередньої спроби,
+  // щоб застарілий "✓"/"✕" не лишався на екрані для вже інших елементів.
+  useEffect(() => {
+    if (isPractice) setPracticeResults({});
+  }, [isPractice, onlyItemIdsKey]);
+
+  async function submitPractice() {
+    const answer = practiceItems.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] }));
+    const result = await practiceCheck.check(practiceItems.map((it) => it.id), answer);
+    if (!result) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
+
+  const practiceAllAnswered = practiceItems.every((it) => (selections[it.id] ?? []).length > 0);
+
+  function renderPracticeList() {
+    return (
+      <div className="flex flex-col gap-3">
+        {practiceItems.map((item) => {
+          const idx = originalIndexOf.get(item.id)!;
+          const isCorrect = practiceResults[item.id];
+          const attempts = practiceFailedAttempts[item.id] ?? 0;
+          const itemRevealed = practiceCheck.revealed[item.id];
+          return (
+            <div key={item.id} className="flex flex-col gap-1.5">
+              {config.display === "dropdown"
+                ? renderDropdownRow(item, idx, undefined)
+                : renderItem(item, idx, undefined)}
+              {isCorrect === true && (
+                <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+              )}
+              {isCorrect === false && (
+                <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+                  <span className="text-red-600 dark:text-red-400">
+                    Неправильно, спробуйте ще раз (спроб: {attempts})
+                  </span>
+                  {!itemRevealed && (
+                    <button
+                      type="button"
+                      onClick={() => practiceCheck.reveal(item.id, true)}
+                      disabled={!!practiceCheck.revealPending[item.id]}
+                      className={STUDENT_BUTTON_SECONDARY_IDLE}
+                    >
+                      Показати відповідь
+                    </button>
+                  )}
+                </div>
+              )}
+              {itemRevealed && (
+                <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+                  Правильна відповідь: {itemRevealed.join(", ")}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -629,6 +732,26 @@ export function MultipleChoiceExercise({
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        {renderPracticeList()}
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || !practiceAllAnswered}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+        {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
       </div>
     );
   }

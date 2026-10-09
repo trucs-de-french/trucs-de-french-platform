@@ -14,6 +14,8 @@ import {
   buildErrorReviewEntry,
   isPracticeItemsTaskType,
 } from "@/lib/exercises/error-review";
+import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/gradable-types";
+import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
@@ -31,7 +33,7 @@ import type {
   CalloutConfig,
   PhoneticsConfig,
 } from "@/lib/exercises/types";
-import { DEFAULT_INSTRUCTIONS, ERROR_CORRECTION_INSTRUCTION } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
@@ -108,7 +110,6 @@ type MistakeRow = {
   task_id: string;
   ai_feedback: unknown;
   created_at: string;
-  tasks: { title: string } | null;
 };
 
 type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | null };
@@ -381,6 +382,21 @@ export default async function ScenePage({
   }
   const taskIds = allSceneTaskEntries.map((t) => t.id);
   const taskTypeById = new Map(allSceneTaskEntries.map((t) => [t.id, t.type]));
+  // config/title — allSceneTaskEntries типізований вузько як SceneTaskEntry
+  // ({id,type}), але елементи в рантаймі — повні TaskRow/ExerciseTask (той
+  // самий масив, лише звужений тип на момент push вище) — тут потрібні
+  // config (для inline-практики multiple_choice/fill_blank, ErrorReviewBlock
+  // нижче) і title (замість m.tasks?.title зі старого mistakes-запиту, щоб
+  // не плутати з назвою з іншого джерела).
+  const taskConfigById = new Map(
+    allSceneTaskEntries.map((t) => [
+      t.id,
+      (t as unknown as { config: Record<string, unknown> | null }).config,
+    ])
+  );
+  const taskTitleById = new Map(
+    allSceneTaskEntries.map((t) => [t.id, (t as unknown as { title: string }).title])
+  );
   const taskOrderPosition = new Map(allSceneTaskEntries.map((t, i) => [t.id, i]));
   // mistakes і progress не мають прямого FK одна на одну (обидві лише на
   // task_id/user_id окремо) — Supabase/PostgREST не виразить це одним
@@ -395,7 +411,7 @@ export default async function ScenePage({
       ? await Promise.all([
           supabase
             .from("mistakes")
-            .select("id, task_id, ai_feedback, created_at, tasks(title)")
+            .select("id, task_id, ai_feedback, created_at")
             .eq("user_id", user.id)
             .in("task_id", taskIds)
             .order("created_at", { ascending: false })
@@ -422,45 +438,21 @@ export default async function ScenePage({
     }
   }
 
-  // Серверна модель "Робота над помилками" (пілот, частина 1): mode="items"
-  // реалізовано лише для multiple_choice/fill_blank (isPracticeItemsTaskType,
-  // error-review.ts) — для НИХ рахуємо помилки по ВСІХ записах mistakes
-  // завдання (aggregateWrongItems, не лише найновішому, бо для блокових
-  // multiple_choice кожен запис несе лише detail одного перевіреного блоку).
-  // Решта типів і далі йдуть старим шляхом нижче (latestMistakeByTask/
-  // latestScoreByTask) — вигляд картки "Робота над помилками" тут
-  // навмисно НЕ змінюється (редизайн — частина 2); модель додається лише як
-  // приховані data-* атрибути нижче, для ручної перевірки через DevTools.
+  // Серверна модель "Робота над помилками": mode="items" (переробка
+  // поелементно) реалізовано лише для multiple_choice/fill_blank
+  // (isPracticeItemsTaskType, error-review.ts) — для НИХ рахуємо помилки по
+  // ВСІХ записах mistakes завдання (aggregateWrongItems, не лише
+  // найновішому, бо для блокових multiple_choice кожен запис несе лише
+  // detail одного перевіреного блоку). Для решти типів (mode="whole")
+  // buildErrorReviewEntry повертає тривіальну "items"-частину (завжди
+  // порожню/not_started) — короткий опис картки такого завдання береться
+  // з summarizeMistake (нижче), а не з цієї моделі.
   const mistakeRowsByTask = new Map<string, { createdAt: string; detail: unknown }[]>();
   for (const m of rawMistakes ?? []) {
     const arr = mistakeRowsByTask.get(m.task_id) ?? [];
     arr.push({ createdAt: m.created_at, detail: m.ai_feedback });
     mistakeRowsByTask.set(m.task_id, arr);
   }
-  const pilotTaskIds = [...mistakeRowsByTask.keys()].filter((id) =>
-    isPracticeItemsTaskType(taskTypeById.get(id) ?? "")
-  );
-  const correctionStates = await Promise.all(
-    pilotTaskIds.map((id) =>
-      supabase.rpc("get_mistake_correction_state", { p_user_id: user!.id, p_task_id: id })
-    )
-  );
-  const errorReviewByTask = new Map<string, ReturnType<typeof buildErrorReviewEntry>>();
-  pilotTaskIds.forEach((taskId, i) => {
-    const state = correctionStates[i].data?.[0] as
-      | { corrected_item_ids: string[]; failed_attempts: Record<string, number> }
-      | undefined;
-    errorReviewByTask.set(
-      taskId,
-      buildErrorReviewEntry({
-        taskId,
-        taskType: taskTypeById.get(taskId) ?? "",
-        mistakeRows: mistakeRowsByTask.get(taskId) ?? [],
-        correctedItemIds: state?.corrected_item_ids ?? [],
-        failedAttempts: state?.failed_attempts ?? {},
-      })
-    );
-  });
   // Якщо остання спроба на це завдання (за progress, не за mistakes) уже
   // повністю правильна — не показуємо давню помилку, ніби вона й досі
   // актуальна.
@@ -474,6 +466,75 @@ export default async function ScenePage({
       (m) => !(ERROR_REVIEW_EXCLUDED_TASK_TYPES as readonly string[]).includes(taskTypeById.get(m.task_id) ?? "")
     )
     .sort((a, b) => (taskOrderPosition.get(a.task_id) ?? 0) - (taskOrderPosition.get(b.task_id) ?? 0));
+
+  // RPC get_mistake_correction_state — лише для пілотних items-типів
+  // (multiple_choice/fill_blank) серед sceneMistakes: whole-типам ця модель
+  // не потрібна (mode!=="items", correctedItemIds/failedAttempts не
+  // використовуються).
+  const pilotTaskIds = sceneMistakes
+    .map((m) => m.task_id)
+    .filter((id) => isPracticeItemsTaskType(taskTypeById.get(id) ?? ""));
+  const correctionStates = await Promise.all(
+    pilotTaskIds.map((id) =>
+      supabase.rpc("get_mistake_correction_state", { p_user_id: user!.id, p_task_id: id })
+    )
+  );
+  const correctionStateByTask = new Map(
+    pilotTaskIds.map((id, i) => [
+      id,
+      correctionStates[i].data?.[0] as
+        | { corrected_item_ids: string[]; failed_attempts: Record<string, number> }
+        | undefined,
+    ])
+  );
+  const errorReviewByTask = new Map(
+    sceneMistakes.map((m) => {
+      const state = correctionStateByTask.get(m.task_id);
+      return [
+        m.task_id,
+        buildErrorReviewEntry({
+          taskId: m.task_id,
+          taskType: taskTypeById.get(m.task_id) ?? "",
+          mistakeRows: mistakeRowsByTask.get(m.task_id) ?? [],
+          correctedItemIds: state?.corrected_item_ids ?? [],
+          failedAttempts: state?.failed_attempts ?? {},
+        }),
+      ] as const;
+    })
+  );
+  // Картки блоку "Робота над помилками" (ErrorReviewBlock, клієнтський
+  // компонент нижче) — для items-типів передаємо санітизований config
+  // (sanitizeConfigForStudent, той самий, що вже рендерить вправу вище на
+  // сторінці), щоб inline-практика могла показати ТОЙ САМИЙ студентський
+  // компонент (MultipleChoiceExercise/FillBlankExercise) з onlyItemIds; для
+  // whole-типів — короткий опис з summarizeMistake (старий шлях, без змін).
+  const errorReviewEntries = sceneMistakes.map((m) => {
+    const review = errorReviewByTask.get(m.task_id)!;
+    const taskType = taskTypeById.get(m.task_id) ?? "";
+    return {
+      taskId: m.task_id,
+      title: taskTitleById.get(m.task_id) ?? "",
+      taskType,
+      mode: review.mode,
+      status: review.status,
+      total: review.total,
+      remainingItemIds: review.remainingItemIds,
+      failedAttempts: review.failedAttempts,
+      summary: review.mode === "items" ? null : summarizeMistake(m.ai_feedback),
+      config:
+        review.mode === "items"
+          ? sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
+          : null,
+    };
+  });
+  const gradableTaskIds = allSceneTaskEntries.filter((t) => isGradableTaskType(t.type)).map((t) => t.id);
+  const attemptedGradableCount = gradableTaskIds.filter((id) => latestScoreByTask.has(id)).length;
+  const errorReviewEmptyState: "not_attempted" | "no_errors" | "all_perfect" =
+    attemptedGradableCount === 0
+      ? "not_attempted"
+      : gradableTaskIds.length > 0 && gradableTaskIds.every((id) => latestScoreByTask.get(id) === 100)
+        ? "all_perfect"
+        : "no_errors";
 
   // vocab_quiz бере лексику не лише з поточної сцени, а з будь-яких сцен
   // курсу, обраних вчителем у config.sceneIds — підвантажуємо їхній dialogue
@@ -630,40 +691,7 @@ export default async function ScenePage({
 
               {task.type === "error_correction" && (
                 <ExerciseErrorBoundary>
-                  <div className="flex flex-col gap-2">
-                    {sceneMistakes.length === 0 ? (
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        Поки що без помилок — так тримати!
-                      </p>
-                    ) : (
-                      <>
-                        <p className="font-medium">{ERROR_CORRECTION_INSTRUCTION}</p>
-                        {sceneMistakes.map((m) => {
-                          // Модель "Робота над помилками" (пілот, частина 1) —
-                          // лише для multiple_choice/fill_blank; інертні
-                          // data-* атрибути для ручної перевірки через DevTools,
-                          // вигляд картки нижче НЕ змінюється (частина 2).
-                          const review = errorReviewByTask.get(m.task_id);
-                          return (
-                          <a
-                            key={m.id}
-                            href={`#task-${m.task_id}`}
-                            data-error-review-mode={review?.mode}
-                            data-error-review-total={review?.total}
-                            data-error-review-remaining={review?.remainingItemIds.length}
-                            data-error-review-status={review?.status}
-                            className="block rounded-md border p-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                          >
-                            <span className="font-medium">{m.tasks?.title}</span>
-                            <span className="block text-neutral-500 dark:text-neutral-400">
-                              {summarizeMistake(m.ai_feedback)}
-                            </span>
-                          </a>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
+                  <ErrorReviewBlock entries={errorReviewEntries} emptyState={errorReviewEmptyState} />
                 </ExerciseErrorBoundary>
               )}
 
