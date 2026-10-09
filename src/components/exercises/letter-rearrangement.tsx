@@ -165,8 +165,17 @@ export function LetterRearrangementExercise({
     imageUrls: activeBlockImageUrls,
     enabled: useBlocks,
   });
+  // displayOrder скидається в хуку ПІД ЧАС РЕНДЕРУ при зміні wordCount, але
+  // споживач тут читає blockTwoColumn.displayOrder У ТОМУ Ж ПРОХОДІ — у
+  // вікні між зміною activeBlock (блок меншого розміру) і стабілізацією
+  // displayOrder локальні індекси можуть лишатись аж до старого (більшого)
+  // activeBlockWordIndices.length. Фільтруємо такі li ПЕРЕД мапінгом —
+  // прохід, що однаково буде відкинутий React'ом, не повинен кидати
+  // виняток (той самий принцип, що letter-gaps.tsx).
   const blockDisplayOrder = activeBlockWordIndices.length
-    ? blockTwoColumn.displayOrder.map((li) => activeBlockWordIndices[li])
+    ? blockTwoColumn.displayOrder
+        .filter((li) => li < activeBlockWordIndices.length)
+        .map((li) => activeBlockWordIndices[li])
     : [];
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
@@ -244,6 +253,10 @@ export function LetterRearrangementExercise({
     }
   ) {
     const word = config.words[wi];
+    // Захист від застарілого displayOrder (прохід рендеру, що буде
+    // відкинутий — див. коментар над blockDisplayOrder вище): пропускаємо
+    // замість кидати, а не покладаємось лише на фільтр на вході.
+    if (!word) return null;
     const wordDetail = opts.detail?.words[wi];
 
     function tileState(i: number): "correct" | "incorrect" | undefined {

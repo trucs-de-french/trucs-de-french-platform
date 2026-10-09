@@ -241,7 +241,12 @@ export function LetterGapsExercise({
   function gapOrderFor(wordIndices: number[]): GapKey[] {
     const order: GapKey[] = [];
     wordIndices.forEach((wi) => {
-      const gapCount = config.words[wi].chars.filter((c) => c === null).length;
+      // wi може вказувати на слово поза config.words (застарілий
+      // displayOrder у проході рендеру, що буде відкинутий — див.
+      // коментар над blockDisplayOrder нижче) — пропускаємо, а не кидаємо.
+      const word = config.words[wi];
+      if (!word) return;
+      const gapCount = word.chars.filter((c) => c === null).length;
       for (let gi = 0; gi < gapCount; gi++) order.push({ wi, gi });
     });
     return order;
@@ -329,8 +334,19 @@ export function LetterGapsExercise({
   });
   // Глобальні індекси слів активного блоку в ПОКАЗОВОМУ порядку
   // (blockTwoColumn.displayOrder — локальні індекси 0..розмір_блоку-1).
+  // displayOrder скидається в хуку ПІД ЧАС РЕНДЕРУ при зміні wordCount
+  // (identity(wordCount) — офіційний React-патерн), але споживач тут
+  // читає blockTwoColumn.displayOrder У ТОМУ Ж ПРОХОДІ, ДО того, як цей
+  // прохід для хука завершиться: у вікні між зміною activeBlock (блок
+  // меншого розміру) і стабілізацією displayOrder локальні індекси можуть
+  // лишатись аж до старого (більшого) activeBlockWordIndices.length —
+  // li >= activeBlockWordIndices.length дає undefined при мапінгу на
+  // глобальний wi. Фільтруємо такі li ПЕРЕД мапінгом — прохід, що однаково
+  // буде відкинутий React'ом, не повинен кидати виняток.
   const blockDisplayOrder = activeBlockWordIndices.length
-    ? blockTwoColumn.displayOrder.map((li) => activeBlockWordIndices[li])
+    ? blockTwoColumn.displayOrder
+        .filter((li) => li < activeBlockWordIndices.length)
+        .map((li) => activeBlockWordIndices[li])
     : [];
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
@@ -428,6 +444,10 @@ export function LetterGapsExercise({
     }
   ) {
     const word = config.words[wi];
+    // Захист від застарілого displayOrder (прохід рендеру, що буде
+    // відкинутий — див. коментар над blockDisplayOrder вище): пропускаємо
+    // замість кидати, а не покладаємось лише на фільтр на вході.
+    if (!word) return null;
     let gapIndex = -1;
     const units = splitPhraseUnits(word.chars);
     const { maxUnitLength } = phraseSizeInfo(word.chars);
