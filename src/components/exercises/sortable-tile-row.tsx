@@ -2,7 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import { SELECTED_OPTION_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
-import { COMPACT_TILE_SIZE_CLASS } from "@/lib/exercises/word-list-layout";
+import { LETTER_TILE_SIZE_CLASS, COMPACT_LETTER_TILE_SIZE_CLASS } from "@/lib/exercises/word-list-layout";
 import { arrayMove, computeInsertIndex, resolveDropSide } from "@/lib/sortable-list";
 
 // Спільна DnD-механіка для reorder (плитки-слова) і letter_rearrangement
@@ -18,6 +18,7 @@ export function SortableTileRow({
   locked,
   tileState,
   compact = false,
+  letterTile = false,
   lockedCount = 0,
   extraContainerClassName = "",
   extraTileClassName = "",
@@ -28,10 +29,15 @@ export function SortableTileRow({
   // За ІНДЕКСОМ позиції (не значенням) — коректно для дублікатів (однакові
   // слова/літери можуть повторюватись).
   tileState?: (index: number) => "correct" | "incorrect" | undefined;
-  // Менший padding/шрифт для задовгих слів (letter_rearrangement,
+  // Менший розмір плитки для задовгих слів (letter_rearrangement,
   // word-list-layout.ts LONG_WORD_COMPACT_THRESHOLD) — суто презентаційний
   // проп, ніяк не зачіпає drag/click-move логіку вище.
   compact?: boolean;
+  // Однолітерні плитки (letter_rearrangement) — фіксована w/h + центрування
+  // замість padding-based розміру (reorder.tsx — плитки-СЛОВА, variable-
+  // width за задумом, letterTile не передає). compact тут вибирає менший
+  // фіксований розмір, а не менший padding.
+  letterTile?: boolean;
   // Префікс позицій [0, lockedCount), закріплених кнопкою-підказкою
   // (letter_rearrangement): ці плитки не тягаються й не клікаються, і жодну
   // іншу плитку не можна перетягнути/клікнути НА ці позиції — лише "після"
@@ -137,14 +143,20 @@ export function SortableTileRow({
             className={`select-none rounded-md border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
             } ${
-              // compact (letter_rearrangement) — завжди одна літера, nowrap
-              // безпечний. Звичайні тайли (reorder — цілі слова/фрази) мають
-              // переноситись усередині себе (max-w-full break-words), інакше
-              // довга фраза вилазить за межі рядка (whitespace-nowrap без
-              // обмеження ширини).
-              compact
-                ? `whitespace-nowrap ${COMPACT_TILE_SIZE_CLASS}`
-                : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere]"
+              // letterTile (letter_rearrangement) — фіксована w/h, однакова
+              // для будь-якого символу, по центру. compact тут вибирає
+              // менший фіксований розмір (LONG_WORD_COMPACT_THRESHOLD), не
+              // менший padding. Звичайні тайли (reorder — цілі слова/фрази)
+              // мають переноситись усередині себе (max-w-full break-words),
+              // інакше довга фраза вилазить за межі рядка (whitespace-nowrap
+              // без обмеження ширини).
+              letterTile
+                ? `flex shrink-0 items-center justify-center whitespace-nowrap text-center ${
+                    compact ? COMPACT_LETTER_TILE_SIZE_CLASS : LETTER_TILE_SIZE_CLASS
+                  }`
+                : compact
+                  ? "whitespace-nowrap px-2 py-1 text-sm"
+                  : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere]"
             } ${tileClass(i)} ${extraTileClassName}`}
           >
             {text}
