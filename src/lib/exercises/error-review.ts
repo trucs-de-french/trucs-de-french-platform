@@ -97,11 +97,17 @@ function letterGapsInScope(w: { studentLetters: string[]; correctLetters: string
 // довжина тут нічого не каже про те, чи слово реально входило в answer.
 // Скоуп прийшов явним полем inScope (grade.ts: gradeLetterRearrangement).
 type LetterRearrangementDetailLike = {
-  words: { isCorrect: boolean; inScope: boolean }[];
+  words: { isCorrect: boolean; inScope?: boolean }[];
 };
 
-function letterRearrangementInScope(w: { inScope: boolean }): boolean {
-  return w.inScope;
+// Записи mistakes, створені ДО цього поля (commit bf65e5d), не мають
+// inScope у збереженому ai_feedback взагалі — undefined тут означає "старий
+// запис, перевірка завжди покривала всю вправу" (блоків/практики для
+// letter_rearrangement тоді ще не існувало), тому трактуємо як true, а не
+// false (інакше всі старі помилки letter_rearrangement зникли б зі
+// списку "Робота над помилками" заднім числом).
+function letterRearrangementInScope(w: { inScope?: boolean }): boolean {
+  return w.inScope ?? true;
 }
 
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
