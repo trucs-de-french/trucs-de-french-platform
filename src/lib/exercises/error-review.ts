@@ -53,7 +53,12 @@ const ITEMS_MODE_TASK_TYPES = ["open_answer"] as const;
 // значення mode, лише isWholePracticeTaskType нижче розрізняє "є реальна
 // практика" від "ще немає", buildErrorReviewEntry/practice/check/
 // practice/reveal звіряють саме isWholePracticeTaskType, не mode==="whole").
-export const WHOLE_MODE_TASK_TYPES = ["reorder", "chronological_order", "sort_columns"] as const;
+export const WHOLE_MODE_TASK_TYPES = [
+  "reorder",
+  "chronological_order",
+  "sort_columns",
+  "checkbox_grid",
+] as const;
 export type WholePracticeTaskType = (typeof WHOLE_MODE_TASK_TYPES)[number];
 
 export function isWholePracticeTaskType(taskType: string): taskType is WholePracticeTaskType {

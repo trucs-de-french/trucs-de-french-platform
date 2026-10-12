@@ -25,6 +25,7 @@ import type {
   ReorderConfig,
   ChronologicalOrderConfig,
   SortColumnsConfig,
+  CheckboxGridConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -217,6 +218,14 @@ export async function POST(request: Request) {
   if (task.type === "sort_columns") {
     const config = task.config as SortColumnsConfig;
     const answer = config.items.map((i) => `${i.id}:${i.columnId}`);
+    return NextResponse.json({ answer });
+  }
+
+  // checkbox_grid — "rowId:colA,colB" на рядок (той самий принцип
+  // "матриця" з задачі — структура, не готовий текст).
+  if (task.type === "checkbox_grid") {
+    const config = task.config as CheckboxGridConfig;
+    const answer = config.rows.map((r) => `${r.id}:${r.correctColumnIds.join(",")}`);
     return NextResponse.json({ answer });
   }
 

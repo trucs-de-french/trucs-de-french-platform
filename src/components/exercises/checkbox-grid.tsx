@@ -9,13 +9,19 @@ import type {
   GradeResult,
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
+import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+
+// Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
+// самий принцип whole, що ReorderPracticeProps тощо.
+export type CheckboxGridPracticeProps = { whole: true; failedAttempts: Record<string, number> };
 
 // Картка-грід — одна розкладка для обох ширин (раніше "table"/"matrix",
 // pickLayout, checkbox-grid-layout.ts — видалено). overflow-clip (НЕ
@@ -85,21 +91,59 @@ export function CheckboxGridExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: CheckboxGridPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: CheckboxGridPracticeProps;
 }) {
   const [answers, setAnswers] = useState<Record<string, Set<string>>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as CheckboxGridDetail | undefined;
+  const singleDetail = result?.detail as CheckboxGridDetail | undefined;
   const uid = useId();
 
+  // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як один
+  // елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що інші whole-типи.
+  const isPractice = !!practice;
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceDetail, setPracticeDetail] = useState<CheckboxGridDetail | undefined>(undefined);
+  const [practiceCorrect, setPracticeCorrect] = useState(false);
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+
+  // У практиці грід НЕ показує по-клітинкові кольори (на відміну від
+  // звичайного проходження) — лише загальне правильно/неправильно і
+  // гейтована повна відповідь (reveal), той самий принцип, що придушення
+  // "правильна колонка" в sort-columns.tsx: інакше колір клітинки зраджував
+  // би правильність одразу на кожен "Перевірити", без очікування 2 невдач/
+  // кнопки.
+  const detail = isPractice ? undefined : singleDetail;
+  const locked = isPractice ? practiceCorrect : !!result;
+
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (!isPractice && result) onResult?.(result);
+  }, [isPractice, result, onResult]);
+
+  async function submitPractice() {
+    const answer: CheckboxGridAnswer = config.rows.map((row) => ({
+      rowId: row.id,
+      columnIds: Array.from(answers[row.id] ?? []),
+    }));
+    const r = await practiceCheck.check([WHOLE_TASK_ITEM_ID], answer);
+    if (!r) return;
+    const correct = r.results[0]?.correct ?? false;
+    setPracticeCorrect(correct);
+    setPracticeDetail(r.detail as CheckboxGridDetail | undefined);
+    setPracticeFailedAttempts(r.failedAttempts);
+    const attempts = r.failedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
+    if (!correct && attempts >= 2 && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) {
+      practiceCheck.reveal(WHOLE_TASK_ITEM_ID, false);
+    }
+  }
 
   function toggleCell(rowId: string, columnId: string) {
     setAnswers((prev) => {
@@ -164,7 +208,7 @@ export function CheckboxGridExercise({
           aria-describedby={stateText ? descId : undefined}
           checked={checked}
           onChange={() => toggleCell(rowId, columnId)}
-          disabled={!!result}
+          disabled={locked}
         />
         {stateText && (
           <span id={descId} className="sr-only">
@@ -291,6 +335,58 @@ export function CheckboxGridExercise({
         </div>
       )}
 
+      {isPractice ? (
+        <div className="flex flex-col gap-2">
+          {!practiceCorrect && (
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          )}
+          {practiceCorrect && (
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+          )}
+          {practiceDetail && !practiceCorrect && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-red-600 dark:text-red-400">
+                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
+              </span>
+              {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+                <button
+                  type="button"
+                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                >
+                  Показати відповідь
+                </button>
+              )}
+            </div>
+          )}
+          {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+            <ul className="flex flex-col gap-0.5 text-sm italic text-amber-700 dark:text-amber-400">
+              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
+                const [rowId, columnIdsStr] = pair.split(":");
+                const row = config.rows.find((r) => r.id === rowId);
+                const columnIds = columnIdsStr ? columnIdsStr.split(",") : [];
+                const labels = columnIds
+                  .map((id) => config.columns.find((c) => c.id === id)?.label ?? id)
+                  .join(", ");
+                return (
+                  <li key={rowId}>
+                    {row?.label ?? rowId}: {labels || "—"}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+      ) : (
       <div className="flex flex-col gap-3">
         {!result ? (
           <button
@@ -317,6 +413,7 @@ export function CheckboxGridExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+      )}
     </div>
   );
 }

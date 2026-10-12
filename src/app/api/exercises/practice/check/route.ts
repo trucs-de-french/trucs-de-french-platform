@@ -200,12 +200,14 @@ export async function POST(request: Request) {
     }
     // whole-режим (частина 7, хвиля 3) — один результат на весь taskType:
     // "правильно" = graded.correct (gradeReorder/gradeChronologicalOrder/
-    // gradeSortColumns уже рахують це як "усі елементи на 100%", часткові
-    // бали теж "неправильно"). Розширюється по одному case за раз разом із
-    // WHOLE_MODE_TASK_TYPES (error-review.ts).
+    // gradeSortColumns/gradeCheckboxGrid уже рахують це як "усі елементи на
+    // 100%", часткові бали теж "неправильно"). Увесь WHOLE_MODE_TASK_TYPES
+    // (error-review.ts) тепер тут — reorder/chronological_order/
+    // sort_columns/checkbox_grid (частина 7, хвиля 3, завершено).
     case "reorder":
     case "chronological_order":
     case "sort_columns":
+    case "checkbox_grid":
       results = [{ itemId: WHOLE_TASK_ITEM_ID, correct: graded.correct }];
       break;
     default: {

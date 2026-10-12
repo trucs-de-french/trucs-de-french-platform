@@ -22,6 +22,7 @@ import { ListeningExercise } from "./listening";
 import { ReorderExercise } from "./reorder";
 import { ChronologicalOrderExercise } from "./chronological-order";
 import { SortColumnsExercise } from "./sort-columns";
+import { CheckboxGridExercise } from "./checkbox-grid";
 import type {
   MultipleChoicePublic,
   FillBlankPublic,
@@ -37,6 +38,7 @@ import type {
   ReorderPublic,
   ChronologicalOrderPublic,
   SortColumnsPublic,
+  CheckboxGridPublic,
 } from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
@@ -310,6 +312,15 @@ function ErrorReviewCard({
             <SortColumnsExercise
               taskId={entry.taskId}
               config={entry.config as unknown as SortColumnsPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "checkbox_grid" && (
+            <CheckboxGridExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as CheckboxGridPublic}
               pointsVisible={false}
               hidePoints
               practice={{ whole: true, failedAttempts: entry.failedAttempts }}
