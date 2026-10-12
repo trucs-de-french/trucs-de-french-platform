@@ -448,6 +448,14 @@ export type ReorderSequence = {
 export type ReorderConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  // liveFeedback — undefined теж "true" (старі завдання без цього поля
+  // отримують живе підсвічування без міграції БД): коли true,
+  // sanitizeReorder додає ReorderPublicSequence.correctOrder — той самий
+  // компроміс, що LetterGapsPublicWord.hiddenLetters/CrosswordPublic.solution
+  // (рішення йде студенту одразу, щоб клієнт підсвічував правильність
+  // наживо, без запиту на сервер). Вимкнути (false) для завдань, де
+  // порядок має лишатись секретом до "Перевірити" (контрольні роботи).
+  liveFeedback?: boolean;
   sequences: ReorderSequence[];
 };
 
@@ -904,9 +912,23 @@ export type ListeningPublic = {
 export type ReorderPublic = {
   instructions?: string;
   subInstructions?: string;
+  // liveFeedback — не секрет сам по собі (лише прапорець режиму
+  // відображення); визначає, чи sequences[].correctOrder присутній нижче.
+  liveFeedback: boolean;
   // items перемішано, окремо на кожну послідовність; imageUrl/audioUrl —
   // те саме, що в ReorderSequence, копіюється без змін (sanitizeReorder).
-  sequences: { id: string; items: string[]; points: number; imageUrl?: string; audioUrl?: string }[];
+  // correctOrder — правильний порядок текстів цієї послідовності (лише
+  // коли liveFeedback), у тому самому порядку, що gradeReorder звіряє
+  // позиційно (items.length однакова довжина) — дає клієнту підсвічувати
+  // кожне слово одразу під час перетягування, без запиту на сервер.
+  sequences: {
+    id: string;
+    items: string[];
+    points: number;
+    imageUrl?: string;
+    audioUrl?: string;
+    correctOrder?: string[];
+  }[];
 };
 
 export type DragDropPublic = {

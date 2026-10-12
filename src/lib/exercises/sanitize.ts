@@ -517,9 +517,11 @@ export function resolveReorderPoints(sequence: ReorderSequence): number {
 }
 
 export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
+  const liveFeedback = config.liveFeedback !== false;
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    liveFeedback,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
     // перемішалися б між собою.
     sequences: getReorderSequences(config).map((s) => ({
@@ -528,6 +530,9 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
       points: resolveReorderPoints(s),
       imageUrl: s.imageUrl,
       audioUrl: s.audioUrl,
+      // s.items — уже правильний порядок (ReorderSequence), копіюється
+      // без змін, НЕ той самий масив, що перемішаний items вище.
+      ...(liveFeedback ? { correctOrder: s.items } : {}),
     })),
   };
 }

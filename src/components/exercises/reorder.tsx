@@ -41,6 +41,7 @@ function ReorderSequenceTiles({
   order,
   onChange,
   detail,
+  correctOrder,
   locked,
   points,
   pointsVisible,
@@ -52,6 +53,11 @@ function ReorderSequenceTiles({
   order: string[];
   onChange: (next: string[]) => void;
   detail?: SequenceDetail;
+  // Присутній лише коли вчитель увімкнув liveFeedback (ReorderConfig,
+  // sanitizeReorder) — правильний текст на кожну позицію, дає живе
+  // підсвічування без запиту на сервер (той самий компроміс секретності,
+  // що LetterGapsPublicWord.hiddenLetters).
+  correctOrder?: string[];
   locked: boolean;
   points: number;
   pointsVisible: boolean;
@@ -60,11 +66,15 @@ function ReorderSequenceTiles({
   audioUrl?: string;
   onOpenImage: (src: string) => void;
 }) {
-  // detail.items[i].correctIndex === i завжди (масив побудований по
-  // позиції) — пряма індексація, не пошук за текстом/studentIndex.
+  // Пріоритет: після "Перевірити" — detail (авторитетний серверний
+  // результат, той самий, що показує бали); до перевірки — якщо
+  // liveFeedback увімкнено, порівнюємо ПОЗИЦІЙНО з correctOrder (той самий
+  // принцип, що gradeReorder: studentOrder[i] === correctOrder[i]), наживо,
+  // на кожен рендер (order — пропс, змінюється з кожним drag/click-move).
   function tileState(i: number): "correct" | "incorrect" | undefined {
-    if (!detail) return undefined;
-    return detail.items[i]?.isCorrect ? "correct" : "incorrect";
+    if (detail) return detail.items[i]?.isCorrect ? "correct" : "incorrect";
+    if (correctOrder) return order[i] === correctOrder[i] ? "correct" : "incorrect";
+    return undefined;
   }
 
   // До перевірки — лише якщо pointsVisible; після — завжди. Бали
@@ -211,6 +221,7 @@ export function ReorderExercise({
         order={orders[seq.id] ?? seq.items}
         onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
         detail={seqDetail}
+        correctOrder={seq.correctOrder}
         locked={locked}
         points={seq.points}
         pointsVisible={pointsVisible}
@@ -348,6 +359,7 @@ export function ReorderExercise({
                 setPracticeDetail(undefined);
               }}
               detail={practiceDetail?.sequences.find((d) => d.id === seq.id)}
+              correctOrder={seq.correctOrder}
               locked={practiceCorrect}
               points={seq.points}
               pointsVisible={false}

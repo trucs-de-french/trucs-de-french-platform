@@ -240,6 +240,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         instructions: sanitizeInstructionsHtml((formData.get("reorder_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
         sequences: parseJsonField(formData.get("reorder_sequences")),
+        liveFeedback: formData.get("reorder_live_feedback") === "true",
       };
     }
     case "drag_drop": {
