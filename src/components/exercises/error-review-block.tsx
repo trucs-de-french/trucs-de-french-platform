@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
+import { displayTaskTitle } from "@/lib/exercises/task-title";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { FillBlankExercise } from "./fill-blank";
@@ -128,7 +129,9 @@ function ErrorReviewCard({
         </span>
         <TaskTypeIconBadge type={entry.taskType} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-heading font-medium">{entry.title}</p>
+          <p className="truncate font-heading font-medium" title={entry.title}>
+            {displayTaskTitle({ title: entry.title, taskType: entry.taskType })}
+          </p>
           {!isItems && entry.summary && (
             <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{entry.summary}</p>
           )}
