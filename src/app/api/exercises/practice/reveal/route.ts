@@ -7,6 +7,7 @@ import {
   getMultipleChoiceItems,
   getMatchingPairs,
   getTableFillRows,
+  getDragDropSentences,
 } from "@/lib/exercises/sanitize";
 import type {
   FillBlankConfig,
@@ -17,6 +18,7 @@ import type {
   LetterRearrangementConfig,
   MatchingConfig,
   TableFillConfig,
+  DragDropConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -147,6 +149,19 @@ export async function POST(request: Request) {
     const answer: string[] = [];
     if (row.leftHidden) answer.push(row.left.split("|")[0]);
     if (row.rightHidden) answer.push(row.right.split("|")[0]);
+    return NextResponse.json({ answer });
+  }
+
+  if (task.type === "drag_drop") {
+    // Елемент тут РЕЧЕННЯ — може мати кілька пропусків, повертаємо ПЕРШИЙ
+    // прийнятний варіант кожного (parseBlankMarker.answers[0]), у порядку
+    // пропусків у template (той самий принцип, що table_fill вище).
+    const config = task.config as DragDropConfig;
+    const sentence = getDragDropSentences(config).find((s) => s.id === itemId);
+    if (!sentence) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    const answer = [...sentence.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).answers[0]);
     return NextResponse.json({ answer });
   }
 

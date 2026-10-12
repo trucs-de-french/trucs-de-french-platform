@@ -15,6 +15,7 @@ import type {
   LetterRearrangementDetail,
   MatchingDetail,
   TableFillDetail,
+  DragDropDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -154,6 +155,16 @@ export async function POST(request: Request) {
       results = itemIds.map((itemId) => {
         const rowBlanks = detail.blanks.filter((b) => b.rowId === itemId);
         return { itemId, correct: rowBlanks.length > 0 && rowBlanks.every((b) => b.isCorrect) };
+      });
+      break;
+    }
+    case "drag_drop": {
+      // За sentenceId — елемент тут РЕЧЕННЯ, правильне лише якщо ВСІ його
+      // пропуски правильні (той самий принцип, що table_fill/рядок вище).
+      const detail = graded.detail as DragDropDetail;
+      results = itemIds.map((itemId) => {
+        const s = detail.sentences.find((x) => x.id === itemId);
+        return { itemId, correct: !!s && s.blanks.every((b) => b.isCorrect) };
       });
       break;
     }

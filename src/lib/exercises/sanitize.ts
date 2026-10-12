@@ -567,6 +567,34 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   };
 }
 
+// Скоуп для практики "Робота над помилками" (частина 6, хвиля 1,
+// error-review-block.tsx) — той самий принцип, що sanitizeMatchingForPractice:
+// bank тут СПІЛЬНИЙ пул, прив'язка слова до конкретного пропуску — секрет,
+// тож лише сервер (маючи повний, несанітизований config) може звузити його
+// до слів, потрібних САМЕ реченням sentenceIds (без зайвих дистракторів з
+// речень поза практикою — задача явно просить "пул лише з відповідей
+// помилкових елементів"). Перший варіант ({{chien|chiot}} -> "chien") кожного
+// пропуску цих речень, перемішаний.
+export function sanitizeDragDropForPractice(config: DragDropConfig, sentenceIds: string[]): DragDropPublic {
+  const idSet = new Set(sentenceIds);
+  const sentences = getDragDropSentences(config).filter((s) => idSet.has(s.id));
+  const bank = sentences.flatMap((s) =>
+    [...s.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).answers[0])
+  );
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    sentences: sentences.map((s) => ({
+      id: s.id,
+      template: s.template.replace(BLANK_RE, "{{}}"),
+      points: resolveDragDropPoints(s),
+      hints: [...s.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).hint ?? null),
+    })),
+    bank: shuffle(bank),
+    hintsReducePoints: !!config.hintsReducePoints,
+  };
+}
+
 // Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
 export function resolveSortColumnsPoints(item: SortColumnsItem): number {
   return item.points ?? 1;

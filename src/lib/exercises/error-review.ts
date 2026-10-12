@@ -30,6 +30,7 @@ export const PRACTICE_ITEMS_TASK_TYPES = [
   "letter_rearrangement",
   "matching",
   "table_fill",
+  "drag_drop",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -38,12 +39,7 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // цього списку мають реальну реалізацію mistakeItemIds/itemsInDetail —
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
-const ITEMS_MODE_TASK_TYPES = [
-  "drag_drop",
-  "open_answer",
-  "image_match",
-  "listening",
-] as const;
+const ITEMS_MODE_TASK_TYPES = ["open_answer", "image_match", "listening"] as const;
 
 // Класифікація "whole" (переробляється ЦІЛЕ завдання, не елемент) —
 // остаточна, не тимчасова.
@@ -133,6 +129,17 @@ type MatchingDetailLike = { pairPoints: { id: string; isCorrect: boolean }[] };
 // matching/pairPoints).
 type TableFillDetailLike = { blanks: { rowId: string; isCorrect: boolean }[] };
 
+// Речення — елемент drag_drop (частина 6, хвиля 1), той самий принцип, що
+// table_fill/рядок: кожне речення має кілька blanks (gradeDragDrop,
+// grade.ts, реалізовано через gradeFillBlank на речення), елемент
+// "правильний" лише коли ВСІ його blanks правильні (та сама гранулярність,
+// що points/hintsReducePoints). На відміну від table_fill, gradeDragDrop НЕ
+// скоупить sentences за присутністю в answer (завжди ВСІ речення
+// config) — не є проблемою: drag_drop не підтримує блоки взагалі
+// (EXERCISE_BLOCK_SIZE не застосовується, drag-drop.tsx не має
+// submitBlock), тож itemsInDetail завжди покриває всю вправу.
+type DragDropDetailLike = { sentences: { id: string; blanks: { isCorrect: boolean }[] }[] };
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -182,6 +189,12 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
     return rowIds.filter((id) => blanks.some((b) => b.rowId === id && !b.isCorrect));
   }
 
+  if (taskType === "drag_drop" && Array.isArray(d.sentences)) {
+    return (d as DragDropDetailLike).sentences
+      .filter((s) => !s.blanks.every((b) => b.isCorrect))
+      .map((s) => s.id);
+  }
+
   return null;
 }
 
@@ -226,6 +239,10 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
 
   if (taskType === "table_fill" && Array.isArray(d.blanks)) {
     return [...new Set((d as TableFillDetailLike).blanks.map((b) => b.rowId))];
+  }
+
+  if (taskType === "drag_drop" && Array.isArray(d.sentences)) {
+    return (d as DragDropDetailLike).sentences.map((s) => s.id);
   }
 
   return null;

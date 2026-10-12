@@ -1,18 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { DragDropPublic, DragDropDetail, GradeResult } from "@/lib/exercises/types";
+import type { DragDropPublic, DragDropDetail, DragDropAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
+
+// Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
+// принцип, що MatchingPracticeProps: config тут УЖЕ звужений сервером
+// (page.tsx: sanitizeDragDropForPractice) до рівно речень
+// review.remainingItemIds і до слів банку, потрібних САМЕ цим реченням —
+// компонент нижче НЕ фільтрує config сам (bank — спільний секретний пул,
+// як right у matching, звужувати могла лише сторона, що знає повний
+// config).
+export type DragDropPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
 
 export function DragDropExercise({
   taskId,
@@ -20,12 +33,14 @@ export function DragDropExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: DragDropPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: DragDropPracticeProps;
 }) {
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
   // живуть в одному спільному "слот-просторі" одного useTilePlacement, а не
@@ -83,6 +98,186 @@ export function DragDropExercise({
       else next.add(gi);
       return next;
     });
+  }
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від result/locked вище:
+  // той самий useTilePlacement (totalBlanks рахується з config.sentences,
+  // уже звуженого сервером до практики), без per-blank кольорів (practice/
+  // check повертає лише isCorrect на РІВНІ РЕЧЕННЯ, не детейл по пропуску) —
+  // той самий компроміс, що letter-rearrangement.tsx (detail: undefined у
+  // практиці).
+  const isPractice = !!practice;
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceSentenceResults, setPracticeSentenceResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeSentenceResults({});
+  }
+
+  async function submitPractice() {
+    const itemIds = config.sentences.map((s) => s.id);
+    const answer: DragDropAnswer = config.sentences.map((s, si) => ({
+      sentenceId: s.id,
+      words: Array.from({ length: blankCounts[si] }, (_, i) => {
+        const p = placed[offsets[si] + i];
+        return p !== null ? config.bank[p] : "";
+      }),
+      hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
+        translationHints.has(offsets[si] + i)
+      ),
+    }));
+    const r = await practiceCheck.check(itemIds, answer);
+    if (!r) return;
+    setPracticeSentenceResults((prev) => {
+      const next = { ...prev };
+      for (const x of r.results) next[x.itemId] = x.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(r.failedAttempts);
+    for (const x of r.results) {
+      if (!x.correct && (r.failedAttempts[x.itemId] ?? 0) >= 2 && !practiceCheck.revealed[x.itemId]) {
+        practiceCheck.reveal(x.itemId, false);
+      }
+    }
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        {usedBankIndices.size < config.bank.length ? (
+          <div className={stickyPoolClass("drag-drop")} {...bankDropProps()}>
+            {config.bank.map((word, bi) => (
+              <button
+                key={bi}
+                type="button"
+                {...bankDragProps(bi)}
+                onClick={() => clickBank(bi)}
+                disabled={usedBankIndices.has(bi)}
+                aria-pressed={selected === bi}
+                className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
+              >
+                {word}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+        )}
+
+        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+          {config.sentences.map((s, si) => {
+            const segments = sentenceSegments[si];
+            const blankCount = blankCounts[si];
+            const offset = offsets[si];
+            const isCorrect = practiceSentenceResults[s.id];
+            const attempts = practiceFailedAttempts[s.id] ?? 0;
+            const itemRevealed = practiceCheck.revealed[s.id];
+
+            return (
+              <div
+                key={s.id}
+                className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-neutral-800"
+              >
+                <p className="break-words leading-[2.6] [overflow-wrap:anywhere]">
+                  {segments.map((seg, i) => {
+                    const gi = offset + i;
+                    const hint = s.hints?.[i];
+                    const slotFilled = placed[gi] !== null;
+                    return (
+                      <span key={i}>
+                        {frenchNbsp(seg)}
+                        {i < blankCount && (
+                          <button
+                            type="button"
+                            onClick={() => clickSlot(gi)}
+                            {...slotDragProps(gi)}
+                            {...slotDropProps(gi)}
+                            aria-pressed={selected !== null && placed[gi] === selected}
+                            title={!slotFilled && visibleHints.has(gi) ? hint ?? undefined : undefined}
+                            className={`mx-1 inline-flex min-h-11 min-w-[5.5rem] max-w-full select-none items-center justify-center whitespace-normal break-words px-3 py-1.5 align-middle text-base sm:min-w-[6.5rem] ${slotClass(
+                              hoveredSlot === gi ? "hover" : slotFilled ? "filled" : "empty",
+                              {
+                                rounded: "lg",
+                                emptyBg: "subtle",
+                                selectableHint: selected !== null && placed[gi] === null,
+                              }
+                            )} ${selected !== null && placed[gi] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
+                          >
+                            {slotFilled ? (
+                              config.bank[placed[gi] as number]
+                            ) : visibleHints.has(gi) && hint ? (
+                              <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
+                            ) : (
+                              ""
+                            )}
+                          </button>
+                        )}
+                        {i < blankCount && hint && (
+                          <HintBulb
+                            size="sm"
+                            state={translationHints.has(gi) ? "used" : "available"}
+                            label="Підказка: показати переклад слова"
+                            onClick={() => toggleTranslationHint(gi)}
+                            className="!inline-flex align-middle"
+                          />
+                        )}
+                        {i < blankCount && visibleHints.has(gi) && hint && slotFilled && (
+                          <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
+                            ({hint})
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </p>
+                {isCorrect === true && (
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                )}
+                {isCorrect === false && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-red-600 dark:text-red-400">
+                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                    </span>
+                    {!itemRevealed && (
+                      <button
+                        type="button"
+                        onClick={() => practiceCheck.reveal(s.id, true)}
+                        disabled={!!practiceCheck.revealPending[s.id]}
+                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      >
+                        Показати відповідь
+                      </button>
+                    )}
+                  </div>
+                )}
+                {itemRevealed && (
+                  <p className="text-xs italic text-amber-700 dark:text-amber-400">
+                    Правильна відповідь: {itemRevealed.join(", ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || placed.some((p) => p === null)}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+      </div>
+    );
   }
 
   return (
