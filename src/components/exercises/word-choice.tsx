@@ -264,7 +264,7 @@ export function WordChoiceExercise({
             {globalIndex + 1}
           </span>
         )}
-        <p className="min-w-0 flex-1 break-words leading-[2.25rem] [overflow-wrap:anywhere]">
+        <p className="min-w-0 flex-1 break-words leading-[1.625rem] [overflow-wrap:anywhere]">
         {frenchNbsp(before.trimEnd())}
         {s.options.map((o, oi) => {
           const isLast = oi === s.options.length - 1;
