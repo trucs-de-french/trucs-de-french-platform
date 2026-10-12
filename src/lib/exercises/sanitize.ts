@@ -462,6 +462,24 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   };
 }
 
+// Скоуп для практики "Робота над помилками" (частина 5, error-review-
+// block.tsx) — на відміну від sanitizeMatching (увесь config), сюди йдуть
+// ЛИШЕ пари pairIds (невиправлені помилки): left/right/pairs містять ТІЛЬКИ
+// ці пари. right перемішується в межах цього малого набору (shuffle, той
+// самий принцип, що chunk-шафл у sanitizeMatching) — лишається секретом,
+// яке саме right відповідає якому left, попри вузький скоуп.
+export function sanitizeMatchingForPractice(config: MatchingConfig, pairIds: string[]): MatchingPublic {
+  const idSet = new Set(pairIds);
+  const pairs = getMatchingPairs(config).filter((p) => idSet.has(p.id));
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    left: pairs.map((p) => p.left),
+    right: shuffle(pairs.map((p) => p.right)),
+    pairs: pairs.map((p) => ({ id: p.id, left: p.left, points: resolveMatchingPoints(p) })),
+  };
+}
+
 // Пілот системи балів (див. resolveTrueFalsePoints) — дефолт 1.
 export function resolveListeningPoints(question: ListeningQuestion): number {
   return question.points ?? 1;

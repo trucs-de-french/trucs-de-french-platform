@@ -13,6 +13,7 @@ import type {
   WordChoiceDetail,
   LetterGapsDetail,
   LetterRearrangementDetail,
+  MatchingDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -128,6 +129,18 @@ export async function POST(request: Request) {
       results = itemIds.map((itemId) => {
         const w = detail.words[Number(itemId)];
         return { itemId, correct: !!w?.isCorrect };
+      });
+      break;
+    }
+    case "matching": {
+      // За pairPoints.id (стабільний синтетичний id пари, sanitize.ts:
+      // getMatchingPairs) — detail.pairPoints уже скоуплений на пари, що
+      // прийшли в answer (gradeMatching: completePairs/answeredLefts), тож
+      // тут лише шукаємо запитані itemIds серед них.
+      const detail = graded.detail as MatchingDetail;
+      results = itemIds.map((itemId) => {
+        const p = detail.pairPoints.find((pp) => pp.id === itemId);
+        return { itemId, correct: !!p?.isCorrect };
       });
       break;
     }

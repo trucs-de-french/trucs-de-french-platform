@@ -7,7 +7,7 @@ import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-pre
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { resolvePlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/platform-icon";
-import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
+import { sanitizeConfigForStudent, sanitizeMatchingForPractice } from "@/lib/exercises/sanitize";
 import { summarizeMistake } from "@/lib/exercises/summarize-mistake";
 import {
   ERROR_REVIEW_EXCLUDED_TASK_TYPES,
@@ -32,6 +32,7 @@ import type {
   VocabQuizConfig,
   CalloutConfig,
   PhoneticsConfig,
+  MatchingConfig,
 } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
@@ -522,9 +523,20 @@ export default async function ScenePage({
       remainingItemIds: review.remainingItemIds,
       failedAttempts: review.failedAttempts,
       summary: review.mode === "items" ? null : summarizeMistake(m.ai_feedback),
+      // matching — окремий шлях (sanitizeMatchingForPractice): на відміну
+      // від інших items-типів, де increment-компонент сам фільтрує повний
+      // публічний config за onlyItemIds (елементи самодостатні, без
+      // прихованого зв'язку), у matching right-варіанти не прив'язані до
+      // left публічно (секрет) — лише сервер, маючи повний (несанітизований)
+      // config, може звузити left/right саме до пар review.remainingItemIds.
       config:
         review.mode === "items"
-          ? sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
+          ? taskType === "matching"
+            ? sanitizeMatchingForPractice(
+                (taskConfigById.get(m.task_id) ?? {}) as unknown as MatchingConfig,
+                review.remainingItemIds
+              )
+            : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
           : null,
     };
   });

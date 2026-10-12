@@ -18,9 +18,9 @@ export const ERROR_REVIEW_EXCLUDED_TASK_TYPES = [
 
 // Пілот: повна реалізація режиму "items" (переробка лише неправильних
 // елементів) — частина 1 (multiple_choice, fill_blank), частина 3
-// (true_false, word_choice, letter_gaps), частина 4 (letter_rearrangement).
-// Решта типів класифікації "items" нижче тимчасово повертають "whole", доки
-// не реалізовані.
+// (true_false, word_choice, letter_gaps), частина 4 (letter_rearrangement),
+// частина 5 (matching). Решта типів класифікації "items" нижче тимчасово
+// повертають "whole", доки не реалізовані.
 export const PRACTICE_ITEMS_TASK_TYPES = [
   "multiple_choice",
   "fill_blank",
@@ -28,6 +28,7 @@ export const PRACTICE_ITEMS_TASK_TYPES = [
   "word_choice",
   "letter_gaps",
   "letter_rearrangement",
+  "matching",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -37,7 +38,6 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
 const ITEMS_MODE_TASK_TYPES = [
-  "matching",
   "drag_drop",
   "open_answer",
   "table_fill",
@@ -110,6 +110,16 @@ function letterRearrangementInScope(w: { inScope?: boolean }): boolean {
   return w.inScope ?? true;
 }
 
+// Пара — елемент matching (частина 5). pairPoints (grade.ts: gradeMatching,
+// Group B points pilot, commit c9036bf — передує цій задачі, тож на момент
+// увімкнення items-режиму кожен запис matching уже мав це поле, жодного
+// проміжного "старого формату без pairPoints" для items-режиму не існує,
+// на відміну від letter_rearrangement/inScope вище) уже СКОУПЛЕНИЙ на пари
+// ЦЬОГО конкретного check (gradeMatching: completePairs фільтрує за
+// answeredLefts — пари ІНШОГО блоку просто відсутні в масиві) — явного
+// поля inScope, як у letter_rearrangement, не потрібно.
+type MatchingDetailLike = { pairPoints: { id: string; isCorrect: boolean }[] };
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -149,6 +159,10 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
       .filter((id): id is string => id !== null);
   }
 
+  if (taskType === "matching" && Array.isArray(d.pairPoints)) {
+    return (d as MatchingDetailLike).pairPoints.filter((p) => !p.isCorrect).map((p) => p.id);
+  }
+
   return null;
 }
 
@@ -185,6 +199,10 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
     return (d as LetterRearrangementDetailLike).words
       .map((w, i) => (letterRearrangementInScope(w) ? String(i) : null))
       .filter((id): id is string => id !== null);
+  }
+
+  if (taskType === "matching" && Array.isArray(d.pairPoints)) {
+    return (d as MatchingDetailLike).pairPoints.map((p) => p.id);
   }
 
   return null;

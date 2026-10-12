@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { MatchingPublic, MatchingDetail, GradeResult } from "@/lib/exercises/types";
+import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -16,18 +17,31 @@ import { BlockNavigation } from "./block-navigation";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
+// Режим практики "Робота над помилками" (пілот, частина 5) — лише
+// помилкові ще не виправлені пари (onlyItemIds — pair.id, sanitize.ts:
+// getMatchingPairs). На відміну від word_choice/letter_gaps, config тут
+// УЖЕ звужено сервером (page.tsx: sanitizeMatchingForPractice) до рівно
+// цих пар — компонент нижче НЕ фільтрує config сам (right не прив'язаний
+// до left публічно, звужувати могла лише сторона, що знає повний config).
+export type MatchingPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
+
 export function MatchingExercise({
   taskId,
   config,
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: MatchingPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: MatchingPracticeProps;
 }) {
   // pairs/selectedLeft — СПІЛЬНІ на всю вправу (не по блоку): блок лише
   // фільтрує, які left/right видно й до яких прив'язана поточна дія click,
@@ -56,6 +70,88 @@ export function MatchingExercise({
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
   }, [useBlocks, single.result, onResult]);
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
+  // вище: завжди один "блок" (config тут уже звужений сервером до пар
+  // review.remainingItemIds, page.tsx: sanitizeMatchingForPractice), без
+  // BlockNavigation. idByLeft/leftById — локальна адресація між left-
+  // текстом (яким керують клік-хендлери) і pair.id (яким адресуються
+  // practice/check, practice/reveal і failedAttempts/revealed).
+  const isPractice = !!practice;
+  const idByLeft = useMemo(() => new Map(config.pairs.map((p) => [p.left, p.id])), [config.pairs]);
+  const leftById = useMemo(() => new Map(config.pairs.map((p) => [p.id, p.left])), [config.pairs]);
+  const [practicePairs, setPracticePairs] = useState<Record<string, string>>({});
+  const [selectedLeftPractice, setSelectedLeftPractice] = useState<string | null>(null);
+  const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const practiceCheck = usePracticeCheck(taskId);
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResultByLeft({});
+  }
+
+  const usedRightsPractice = new Set(Object.values(practicePairs));
+  const practiceAllAnswered = config.left.every((left) => !!practicePairs[left]);
+
+  function practiceClickLeft(left: string) {
+    if (practicePairs[left]) {
+      setPracticePairs((prev) => {
+        const next = { ...prev };
+        delete next[left];
+        return next;
+      });
+      setSelectedLeftPractice(null);
+      return;
+    }
+    setSelectedLeftPractice((prev) => (prev === left ? null : left));
+  }
+
+  function practiceClickRight(right: string) {
+    if (selectedLeftPractice) {
+      setPracticePairs((prev) => {
+        const next = { ...prev };
+        const prevLeft = Object.entries(prev).find(([, r]) => r === right)?.[0];
+        if (prevLeft) delete next[prevLeft];
+        next[selectedLeftPractice] = right;
+        return next;
+      });
+      setSelectedLeftPractice(null);
+      return;
+    }
+    const left = Object.entries(practicePairs).find(([, r]) => r === right)?.[0];
+    if (left) {
+      setPracticePairs((prev) => {
+        const next = { ...prev };
+        delete next[left];
+        return next;
+      });
+    }
+  }
+
+  async function submitPractice() {
+    const itemIds = config.pairs.map((p) => p.id);
+    const answer: MatchingAnswer = Object.entries(practicePairs).map(([left, right]) => ({ left, right }));
+    const result = await practiceCheck.check(itemIds, answer);
+    if (!result) return;
+    setPracticeResultByLeft((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) {
+        const left = leftById.get(r.itemId);
+        if (left) next[left] = r.correct;
+      }
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
 
   const usedRights = new Set(Object.values(pairs));
 
@@ -326,6 +422,111 @@ export function MatchingExercise({
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            {config.left.map((left) => {
+              const right = practicePairs[left];
+              const isCorrect = practiceResultByLeft[left];
+              return (
+                <button
+                  key={left}
+                  type="button"
+                  onClick={() => practiceClickLeft(left)}
+                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
+                    isCorrect === true
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                      : isCorrect === false
+                        ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                        : selectedLeftPractice === left
+                          ? SELECTED_OPTION_CLASS
+                          : right
+                            ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
+                            : ANSWER_CARD_DEFAULT
+                  }`}
+                >
+                  {left}
+                  {right ? ` → ${right}` : ""}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {config.right.map((right) => (
+              <button
+                key={right}
+                type="button"
+                onClick={() => practiceClickRight(right)}
+                className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
+                  usedRightsPractice.has(right) ? "opacity-50" : ""
+                }`}
+              >
+                {right}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          {config.left.map((left) => {
+            const id = idByLeft.get(left);
+            if (!id) return null;
+            const isCorrect = practiceResultByLeft[left];
+            const attempts = practiceFailedAttempts[id] ?? 0;
+            const itemRevealed = practiceCheck.revealed[id];
+            if (isCorrect === undefined && !itemRevealed) return null;
+            return (
+              <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+                {isCorrect === true && (
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    {left}: правильно ✓
+                  </span>
+                )}
+                {isCorrect === false && (
+                  <>
+                    <span className="text-red-600 dark:text-red-400">
+                      {left}: неправильно, спробуйте ще раз (спроб: {attempts})
+                    </span>
+                    {!itemRevealed && (
+                      <button
+                        type="button"
+                        onClick={() => practiceCheck.reveal(id, true)}
+                        disabled={!!practiceCheck.revealPending[id]}
+                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                      >
+                        Показати відповідь
+                      </button>
+                    )}
+                  </>
+                )}
+                {itemRevealed && (
+                  <span className="italic text-amber-700 dark:text-amber-400">
+                    Правильна пара: {left} → {itemRevealed.join(", ")}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending || !practiceAllAnswered}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
       </div>
     );

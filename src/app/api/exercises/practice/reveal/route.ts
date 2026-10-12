@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isPracticeItemsTaskType } from "@/lib/exercises/error-review";
-import { BLANK_RE, parseBlankMarker, getMultipleChoiceItems } from "@/lib/exercises/sanitize";
+import { BLANK_RE, parseBlankMarker, getMultipleChoiceItems, getMatchingPairs } from "@/lib/exercises/sanitize";
 import type {
   FillBlankConfig,
   MultipleChoiceConfig,
@@ -9,6 +9,7 @@ import type {
   WordChoiceConfig,
   LetterGapsConfig,
   LetterRearrangementConfig,
+  MatchingConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -113,6 +114,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
     }
     return NextResponse.json({ answer: [word.word] });
+  }
+
+  if (task.type === "matching") {
+    const config = task.config as MatchingConfig;
+    const pair = getMatchingPairs(config).find((p) => p.id === itemId);
+    if (!pair) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    return NextResponse.json({ answer: [pair.right] });
   }
 
   // multiple_choice

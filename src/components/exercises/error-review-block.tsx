@@ -12,6 +12,7 @@ import { TrueFalseExercise } from "./true-false";
 import { WordChoiceExercise } from "./word-choice";
 import { LetterGapsExercise } from "./letter-gaps";
 import { LetterRearrangementExercise } from "./letter-rearrangement";
+import { MatchingExercise } from "./matching";
 import type {
   MultipleChoicePublic,
   FillBlankPublic,
@@ -19,6 +20,7 @@ import type {
   WordChoicePublic,
   LetterGapsPublic,
   LetterRearrangementPublic,
+  MatchingPublic,
 } from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
@@ -216,6 +218,15 @@ function ErrorReviewCard({
             <LetterRearrangementExercise
               taskId={entry.taskId}
               config={entry.config as unknown as LetterRearrangementPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "matching" && (
+            <MatchingExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as MatchingPublic}
               pointsVisible={false}
               hidePoints
               practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
