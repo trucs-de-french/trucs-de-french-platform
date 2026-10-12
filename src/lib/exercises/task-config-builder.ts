@@ -141,6 +141,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         mode: (formData.get("word_choice_mode") as string) || "select",
         sentences: parseJsonField(formData.get("word_choice_sentences")),
         points: Number(formData.get("word_choice_points")) || 1,
+        hintsReducePoints: formData.get("word_choice_hints_reduce_points") === "true",
       };
     }
     case "word_search": {

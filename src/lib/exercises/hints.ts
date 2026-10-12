@@ -8,6 +8,7 @@ export const HINT_EXPLANATIONS: Partial<Record<string, string>> = {
   letter_rearrangement: "Лампочка ставить наступну літеру на своє місце.",
   fill_blank: "Лампочка біля поля відкриває першу літеру.",
   table_fill: "Лампочка біля поля відкриває першу літеру.",
+  word_choice: "Лампочка біля речення показує підказку вчительки.",
 };
 
 export const HINTS_REDUCE_POINTS_SUFFIX = " Слово з підказкою дає половину балів.";

@@ -73,6 +73,9 @@ export const WordChoiceFields = forwardRef<
   const [sentences, setSentences] = useState<WordChoiceSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
+  const [hintsReducePoints, setHintsReducePoints] = useState(
+    initialConfig?.hintsReducePoints ?? false
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   // Автозаповнення інструкцій дефолтом при перемиканні РЕЖИМУ (select ↔
   // cross_out) — той самий принцип "не чіпати, якщо редагували", що у
@@ -111,6 +114,7 @@ export const WordChoiceFields = forwardRef<
       mode,
       sentences,
       points: initialConfig?.points,
+      hintsReducePoints,
     }),
   }));
 
@@ -124,6 +128,10 @@ export const WordChoiceFields = forwardRef<
 
   function updateSentenceText(id: string, sentence: string) {
     setSentences((prev) => prev.map((s) => (s.id === id ? { ...s, sentence } : s)));
+  }
+
+  function updateSentenceHint(id: string, hint: string) {
+    setSentences((prev) => prev.map((s) => (s.id === id ? { ...s, hint } : s)));
   }
 
   function addOption(sentenceId: string) {
@@ -175,6 +183,12 @@ export const WordChoiceFields = forwardRef<
         value={JSON.stringify(sentences)}
         readOnly
       />
+      <input
+        type="hidden"
+        name="word_choice_hints_reduce_points"
+        value={hintsReducePoints ? "true" : ""}
+        readOnly
+      />
 
       <InstructionsRichTextField
         key={`instructions-${seedKey}`}
@@ -204,6 +218,15 @@ export const WordChoiceFields = forwardRef<
         </select>
       </div>
 
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={hintsReducePoints}
+          onChange={(e) => setHintsReducePoints(e.target.checked)}
+        />
+        Підказка зменшує бали (речення, де показали підказку, дає 50% своєї частки балів)
+      </label>
+
       <div className="flex flex-col gap-3">
         {sentences.map((s, si) => (
           <div key={s.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
@@ -226,6 +249,17 @@ export const WordChoiceFields = forwardRef<
               placeholder="напр. Il {{}} le bus? — {{}} позначає, де вставляється вибір"
               className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium font-content`}
             />
+            <div className="mt-2 flex flex-col gap-1">
+              <label className={LABEL_TEXT}>
+                Підказка (необов&apos;язково) — лампочка покаже цей текст студенту біля речення
+              </label>
+              <input
+                value={s.hint ?? ""}
+                onChange={(e) => updateSentenceHint(s.id, e.target.value)}
+                placeholder="Текст підказки"
+                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+              />
+            </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
               <label className={LABEL_TEXT}>
                 {mode === "cross_out"

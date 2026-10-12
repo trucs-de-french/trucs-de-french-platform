@@ -19,6 +19,8 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { HintBulb } from "./hint-bulb";
+import { HintExplanation } from "./hint-explanation";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
@@ -69,6 +71,17 @@ export function WordChoiceExercise({
   // mode === "cross_out": Set закреслених (НЕправильних, на думку студента)
   // optionId на речення — "відповідь" виводиться з того, що лишилось.
   const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
+
+  // Підказка вчительки (лампочка) — той самий принцип, що open-answer-
+  // check.tsx hintShown: клієнтський стан, лише "показано" (без закриття),
+  // нічого на сервер не йде, поки sentenceAnswer() нижче не пронесе
+  // hintUsed у відповідь. Практика НЕ використовує цей стан узагалі
+  // (renderSentenceCard(..., { showHint: false }) у гілці isPractice —
+  // лампочки вимкнені, нічого зберігати).
+  const [hintShown, setHintShown] = useState<Set<string>>(new Set());
+  function showHint(sentenceId: string) {
+    setHintShown((prev) => (prev.has(sentenceId) ? prev : new Set(prev).add(sentenceId)));
+  }
 
   // Картки (не слова/пари) — поріг блоку CARD_BLOCK_MAX=5, нижчий за
   // EXERCISE_BLOCK_SIZE=10 (exercise-blocks.ts, перша хвиля card-блоків,
@@ -191,6 +204,7 @@ export function WordChoiceExercise({
               s.id,
               s.options.map((o) => o.id)
             ),
+      hintUsed: hintShown.has(s.id),
     };
   }
 
@@ -246,7 +260,15 @@ export function WordChoiceExercise({
   // globalIndex — нумерація (ITEM_NUMBER_BADGE) наскрізна по всій вправі
   // (не локальна в межах блоку): картка №6 у другому блоці показує "6", не
   // "1" — викликач передає позицію в config.sentences, не в межах блоку.
-  function renderSentenceCard(s: PublicSentence, globalIndex: number, sentenceDetail: SentenceDetail | undefined) {
+  // showHintBulb — false лише в гілці практики (вимкнено нижче, п.6
+  // задачі): лампочка не рендериться взагалі, hintShown лишається порожнім,
+  // sentenceAnswer() там і так завжди дає hintUsed:false.
+  function renderSentenceCard(
+    s: PublicSentence,
+    globalIndex: number,
+    sentenceDetail: SentenceDetail | undefined,
+    showHintBulb = true
+  ) {
     const [before, after] = s.sentence.split("{{}}");
     // Розділовий знак одразу після плитки (". , ; : ! ? ) » …") не
     // повинен переноситись окремим рядком через [overflow-wrap:anywhere]
@@ -295,6 +317,24 @@ export function WordChoiceExercise({
         })}
         {frenchNbsp(restAfter)}
         {multiHint(s)}
+        {showHintBulb && s.hint && !sentenceDetail && (
+          <span className="relative ml-1 inline-block align-middle">
+            <HintBulb
+              size="sm"
+              state={hintShown.has(s.id) ? "used" : "available"}
+              onClick={() => showHint(s.id)}
+              label={hintShown.has(s.id) ? s.hint : "Показати підказку"}
+            />
+            {/* position:absolute — підказка-попап над текстом, не в потоці
+                рядка (інакше розкриття збільшило б висоту картки, пряма
+                вимога задачі: лампочка не ламає вирівнювання речення). */}
+            {hintShown.has(s.id) && (
+              <span className="absolute left-0 top-full z-10 mt-1 w-max max-w-[16rem] rounded-md border border-amber-200 bg-amber-50 p-2 text-xs break-words text-neutral-700 shadow-md dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+                {s.hint}
+              </span>
+            )}
+          </span>
+        )}
         </p>
       </div>
       </div>
@@ -429,7 +469,7 @@ export function WordChoiceExercise({
             const itemRevealed = practiceCheck.revealed[s.id];
             return (
               <div key={s.id} className="flex flex-col gap-1.5">
-                {renderSentenceCard(s, idx, undefined)}
+                {renderSentenceCard(s, idx, undefined, false)}
                 {isCorrect === true && (
                   <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
                 )}
@@ -503,6 +543,12 @@ export function WordChoiceExercise({
           />
         )}
       </div>
+
+      <HintExplanation
+        type="word_choice"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!config.sentences.some((s) => s.hint)}
+      />
 
       {!useBlocks ? (
         <>

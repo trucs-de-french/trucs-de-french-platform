@@ -209,14 +209,19 @@ export function sanitizeWordChoice(config: WordChoiceConfig): WordChoicePublic {
     subInstructions: config.subInstructions,
     mode: config.mode,
     points: resolveWordChoicePoints(config),
+    hintsReducePoints: !!config.hintsReducePoints,
     sentences: config.sentences.map((s) => {
       const correctCount = s.options.filter((o) => o.correct).length;
+      // trim — пробільний рядок рахується як "нема підказки" (той самий
+      // принцип, що BLANK_HINT_MAX_LENGTH-обробка в parseBlankMarker).
+      const hint = s.hint?.trim();
       return {
         id: s.id,
         sentence: s.sentence,
         multiple: correctCount > 1,
         correctCount,
         options: s.options.map(({ id, text }) => ({ id, text })),
+        ...(hint ? { hint } : {}),
       };
     }),
   };

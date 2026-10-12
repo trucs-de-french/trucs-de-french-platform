@@ -415,27 +415,33 @@ function gradeMultipleChoice(
 // розгалуження по mode: студентський компонент сам звів обидва режими
 // (select/cross_out) до однієї selected[]-форми ще до сабміту. На відміну
 // від gradeMultipleChoice — бали НЕ на речення, а на всю вправу (як
-// gradeLetterGaps), пропорційно частці правильних речень (round(points *
-// correctCount / sentences.length), той самий принцип, що pointsWithHints
-// вище) — не через саму pointsWithHints, бо WordChoiceConfig не має
-// hintsReducePoints (нема другої гілки, яку тут перевикористовувати).
+// gradeLetterGaps), пропорційно частці правильних речень — тепер через
+// pointsWithHints (WordChoiceConfig.hintsReducePoints, підказка-лампочка
+// до речення): без hintsReducePoints вона дає ту саму round(points *
+// correctCount / sentences.length), що раніше рахувалась тут inline.
 // score лишається per-речення відсотком (незалежний вимір, та сама частка).
 function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): GradeResult {
-  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, new Set(a.selected)]));
+  const answerBySentence = new Map((answer ?? []).map((a) => [a.sentenceId, a]));
 
   // Скоуп — за sentence, що реально прийшло в answer: той самий принцип, що
   // gradeMultipleChoice (CARD_BLOCK_MAX, exercise-blocks.ts).
   const scopedSentences = config.sentences.filter((s) => answerBySentence.has(s.id));
 
   const sentences: WordChoiceDetail["sentences"] = scopedSentences.map((s) => {
-    const selected = answerBySentence.get(s.id) ?? new Set<string>();
+    const a = answerBySentence.get(s.id);
+    const selected = new Set(a?.selected ?? []);
     const options = s.options.map((o) => ({
       id: o.id,
       text: o.text,
       correct: o.correct,
       selected: selected.has(o.id),
     }));
-    return { id: s.id, options, isCorrect: options.every((o) => o.correct === o.selected) };
+    return {
+      id: s.id,
+      options,
+      isCorrect: options.every((o) => o.correct === o.selected),
+      hintUsed: !!a?.hintUsed,
+    };
   });
 
   const correctCount = sentences.filter((s) => s.isCorrect).length;
@@ -469,7 +475,7 @@ function gradeWordChoice(config: WordChoiceConfig, answer: WordChoiceAnswer): Gr
     correct,
     score: percentage(correctCount, sentences.length),
     detail: { sentences },
-    pointsEarned: sentences.length > 0 ? Math.round((points * correctCount) / sentences.length) : 0,
+    pointsEarned: pointsWithHints(points, sentences, !!config.hintsReducePoints),
     pointsPossible: points,
     totalPointsPossible: totalPoints,
   };

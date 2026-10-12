@@ -178,13 +178,19 @@ export type MultipleChoiceConfig = {
 // відсотком, ці два виміри незалежні, той самий принцип, що вже
 // підтверджений для reorder/letter_gaps).
 export type WordChoiceOption = { id: string; text: string; correct: boolean };
-export type WordChoiceSentence = { id: string; sentence: string; options: WordChoiceOption[] };
+// hint — той самий принцип, що OpenAnswerQuestion.hint: опційний текст
+// вчительки за лампочкою, НЕ reveal-механізм (не впливає на correct), тож
+// безпечно йде в публічний config як є (sanitize.ts: trim, порожній -> нема).
+export type WordChoiceSentence = { id: string; sentence: string; options: WordChoiceOption[]; hint?: string };
 export type WordChoiceConfig = {
   instructions?: string;
   subInstructions?: string;
   mode: "select" | "cross_out";
   sentences: WordChoiceSentence[];
   points?: number;
+  // Той самий принцип, що OpenAnswerConfig.hintsReducePoints — "елемент" тут
+  // РЕЧЕННЯ (gradeWordChoice тепер реюзає pointsWithHints).
+  hintsReducePoints?: boolean;
 };
 
 // Сітка й розміщення слів генеруються ОДИН РАЗ в адмінці (word-search-
@@ -774,8 +780,12 @@ export type WordChoicePublic = {
     multiple: boolean;
     correctCount: number;
     options: { id: string; text: string }[];
+    hint?: string;
   }[];
   points: number;
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 // grid — та сама сітка, що в Config, без змін (не секрет, студент і так
@@ -1051,7 +1061,10 @@ export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // 
 // правильних варіантів, незалежно від mode (select/cross_out); студентський
 // компонент сам зводить обидва режими до цієї форми перед сабмітом (у
 // cross_out — усе, що лишилось незакресленим).
-export type WordChoiceAnswer = { sentenceId: string; selected: string[] }[];
+// hintUsed — той самий сенс, що OpenAnswerAnswer.hintUsed: студент клікнув
+// лампочку цього речення хоч раз (word-choice.tsx: hintShown, клієнтський
+// стан, без запиту на сервер — hint-текст уже в публічному config).
+export type WordChoiceAnswer = { sentenceId: string; selected: string[]; hintUsed?: boolean }[];
 // Сирі координати клітинок, які студент виділив на кожне ЗНАЙДЕНЕ (на його
 // думку) слово — не клієнтський вердикт "знайдено/ні". Слова, яких студент
 // не знайшов, просто відсутні в масиві. Сервер (gradeWordSearch) сам звіряє
@@ -1165,6 +1178,7 @@ export type WordChoiceDetail = {
     id: string;
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
     isCorrect: boolean;
+    hintUsed: boolean;
   }[];
 };
 
