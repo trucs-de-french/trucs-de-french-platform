@@ -23,6 +23,7 @@ import type {
   ImageMatchConfig,
   ListeningConfig,
   ReorderConfig,
+  ChronologicalOrderConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -191,11 +192,20 @@ export async function POST(request: Request) {
   // whole-режим (частина 7, хвиля 3) — itemId тут завжди WHOLE_TASK_ITEM_ID
   // (сервер не перевіряє його значення, бо елемент один і єдиний). reorder —
   // по рядку на послідовність, уже у вигляді "текст1 → текст2" (готовий до
-  // показу, items тут не мають власного id, на відміну від інших whole-
-  // типів, що приєднаються пізніше).
+  // показу, items тут не мають власного id). chronological_order —
+  // itemIds у правильному хронологічному порядку (сам компонент мапить
+  // id->content/text через СВІЙ (санітизований, але структурно повний)
+  // config, коректно для режимів image/mixed — "порядок id" з задачі, не
+  // вже відформатований текст).
   if (task.type === "reorder") {
     const config = task.config as ReorderConfig;
     const answer = getReorderSequences(config).map((s) => s.items.join(" → "));
+    return NextResponse.json({ answer });
+  }
+
+  if (task.type === "chronological_order") {
+    const config = task.config as ChronologicalOrderConfig;
+    const answer = config.items.map((i) => i.id);
     return NextResponse.json({ answer });
   }
 

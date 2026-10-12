@@ -11,6 +11,8 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
+import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
@@ -21,10 +23,15 @@ import {
   COMPACT_IMAGE_FRAME,
   COMPACT_IMAGE_FILL,
 } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
+
+// Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
+// самий принцип whole, що ReorderPracticeProps (reorder.tsx): ЦІЛЕ завдання
+// як один елемент (WHOLE_TASK_ITEM_ID, error-review.ts).
+export type ChronologicalOrderPracticeProps = { whole: true; failedAttempts: Record<string, number> };
 
 // Менший за ITEM_LETTER_BADGE (answer-card-style.ts) варіант — лише для
 // щільної сітки image/mixed нижче. ITEM_LETTER_BADGE лишається незмінним:
@@ -60,21 +67,59 @@ export function ChronologicalOrderExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: ChronologicalOrderPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: ChronologicalOrderPracticeProps;
 }) {
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as ChronologicalOrderDetail | undefined;
+  const singleDetail = result?.detail as ChronologicalOrderDetail | undefined;
+
+  // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як
+  // один елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що reorder.tsx.
+  const isPractice = !!practice;
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceDetail, setPracticeDetail] = useState<ChronologicalOrderDetail | undefined>(undefined);
+  const [practiceCorrect, setPracticeCorrect] = useState(false);
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+
+  const detail = isPractice ? practiceDetail : singleDetail;
+  const locked = isPractice ? practiceCorrect : !!result;
+  // Мітка показу (A, B, C...) за ПОТОЧНИМ (перемішаним) порядком config.items
+  // — та сама indexToLabel, що рендер нижче. Потрібна тут окремо для
+  // reveal-відповіді практики (practiceCheck.revealed — масив id у
+  // правильному порядку, студенту зрозуміліше побачити "C → A → B" (мітки з
+  // екрана), ніж сирі id).
+  const labelById = new Map(config.items.map((item, i) => [item.id, indexToLabel(i)]));
 
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (!isPractice && result) onResult?.(result);
+  }, [isPractice, result, onResult]);
+
+  async function submitPractice() {
+    const answer: ChronologicalOrderAnswer = config.items.map((item) => ({
+      itemId: item.id,
+      position: Number(positions[item.id] ?? ""),
+    }));
+    const r = await practiceCheck.check([WHOLE_TASK_ITEM_ID], answer);
+    if (!r) return;
+    const correct = r.results[0]?.correct ?? false;
+    setPracticeCorrect(correct);
+    setPracticeDetail(r.detail as ChronologicalOrderDetail | undefined);
+    setPracticeFailedAttempts(r.failedAttempts);
+    const attempts = r.failedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
+    if (!correct && attempts >= 2 && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) {
+      practiceCheck.reveal(WHOLE_TASK_ITEM_ID, false);
+    }
+  }
 
   function updatePosition(itemId: string, value: string) {
     setPositions((prev) => ({ ...prev, [itemId]: value }));
@@ -143,7 +188,7 @@ export function ChronologicalOrderExercise({
           max={config.items.length}
           value={positions[itemId] ?? ""}
           onChange={(e) => updatePosition(itemId, e.target.value)}
-          disabled={!!result}
+          disabled={locked}
           placeholder="№"
           aria-label={label ? `Номер події ${label}` : "Номер події"}
           className={`h-10 w-12 rounded border text-center text-base ${desktopHeight} ${inputClass(itemId)}`}
@@ -158,7 +203,7 @@ export function ChronologicalOrderExercise({
         max={config.items.length}
         value={positions[itemId] ?? ""}
         onChange={(e) => updatePosition(itemId, e.target.value)}
-        disabled={!!result}
+        disabled={locked}
         placeholder="№"
         className={`${sizeClass} rounded border py-1 text-sm ${inputClass(itemId)}`}
       />
@@ -269,32 +314,76 @@ export function ChronologicalOrderExercise({
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        {!result ? (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
-        ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+      {isPractice ? (
+        <div className="flex flex-col gap-2">
+          {!practiceCorrect && (
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          )}
+          {practiceCorrect && (
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+          )}
+          {practiceDetail && !practiceCorrect && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-red-600 dark:text-red-400">
+                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
               </span>
-            )}
-          </p>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      </div>
+              {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+                <button
+                  type="button"
+                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                >
+                  Показати відповідь
+                </button>
+              )}
+            </div>
+          )}
+          {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+            <p className="text-sm italic text-amber-700 dark:text-amber-400">
+              Правильний порядок:{" "}
+              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID]
+                .map((id) => labelById.get(id) ?? id)
+                .join(" → ")}
+            </p>
+          )}
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {!result ? (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={pending}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          ) : (
+            <p
+              className={`${RESULT_MESSAGE_CLASS} ${
+                result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
+              {result.pointsPossible !== undefined && (
+                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
+                </span>
+              )}
+            </p>
+          )}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </div>
+      )}
 
       {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </div>
