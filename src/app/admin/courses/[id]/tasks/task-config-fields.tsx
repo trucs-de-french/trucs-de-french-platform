@@ -28,6 +28,8 @@ import type {
   KaraokeConfig,
 } from "@/lib/exercises/types";
 import type { VocabItem } from "@/lib/vocab";
+import { LinkCard } from "@/components/link-card";
+import { LINK_TASK_ICON_OPTIONS, resolveLinkTaskIcon, linkTaskDefaultSubtitle } from "@/lib/link-task-icon";
 import type { EssayFormulaireConfig } from "@/lib/exercises/types";
 import { MultipleChoiceFields } from "./multiple-choice-fields";
 import { WordChoiceFields } from "./word-choice-fields";
@@ -359,11 +361,28 @@ export function TaskConfigFields({
     requestAnimationFrame(() => {
       const form = rootRef.current?.closest("form");
       if (!form) return;
-      const liveConfig = buildTaskConfig(currentType, new FormData(form));
+      const formData = new FormData(form);
+      const liveConfig = buildTaskConfig(currentType, formData);
       setPreviewTitle(generateTaskTitle(currentType, liveConfig));
       setProblems(validateTaskConfig(currentType, liveConfig));
+      if (currentType === "link") {
+        setLinkPreview({
+          title: (formData.get("title") as string) || "",
+          config: liveConfig as LinkEmbedFields,
+        });
+      }
     });
   }
+
+  // Прев'ю картки LinkCard для типу "link" — та сама liveConfig, що вище
+  // (одна rAF-затримка на previewTitle/problems/прев'ю картки разом),
+  // оновлюється на кожну зміну в формі через делеговані onChange/onInput.
+  const [linkPreview, setLinkPreview] = useState<{ title: string; config: LinkEmbedFields } | null>(
+    () =>
+      (initialType ?? DEFAULT_TASK_TYPE) === "link"
+        ? { title: initialTitle ?? "", config: (initialConfig ?? {}) as LinkEmbedFields }
+        : null
+  );
   // Контрольований чекбокс, синхронізований з пропом від сервера
   // (points_visible оновлюється через revalidatePath в updateTask) — не
   // через useEffect (react-hooks/set-state-in-effect), а через "adjust
@@ -513,6 +532,7 @@ export function TaskConfigFields({
   const linkPlatformRef = useRef<HTMLSelectElement>(null);
   const linkDownloadRef = useRef<HTMLInputElement>(null);
   const linkDescriptionRef = useRef<HTMLInputElement>(null);
+  const linkIconRef = useRef<HTMLSelectElement>(null);
   const embedUrlRef = useRef<HTMLInputElement>(null);
   const embedHeightRef = useRef<HTMLInputElement>(null);
   const fillBlankTemplateRef = useRef<HTMLTextAreaElement>(null);
@@ -556,6 +576,7 @@ export function TaskConfigFields({
         platform: linkPlatformRef.current?.value,
         download: linkDownloadRef.current?.checked,
         description: linkDescriptionRef.current?.value,
+        icon: linkIconRef.current?.value,
       };
       return value;
     }
@@ -1051,8 +1072,8 @@ export function TaskConfigFields({
           </label>
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>
-              Короткий опис (необов&apos;язково) — показується на картці в блоці
-              &quot;Практика&quot; замість назви платформи
+              Короткий опис (необов&apos;язково) — показується на картці замість
+              назви платформи чи домену
             </label>
             <input
               ref={linkDescriptionRef}
@@ -1063,6 +1084,45 @@ export function TaskConfigFields({
               className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <label className={LABEL_TEXT}>Іконка картки</label>
+            <select
+              ref={linkIconRef}
+              name="link_icon"
+              defaultValue={(initialConfig?.icon as string) ?? "auto"}
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+            >
+              {LINK_TASK_ICON_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <p className={HINT_TEXT}>
+              &quot;Авто&quot; підбирає іконку за посиланням (YouTube, Wordwall,
+              Quizlet, Google Диск тощо).
+            </p>
+          </div>
+
+          {linkPreview && (
+            <div className="flex flex-col gap-1">
+              <label className={LABEL_TEXT}>Попередній перегляд картки</label>
+              {(() => {
+                const meta = resolveLinkTaskIcon(linkPreview.config);
+                const description = linkPreview.config.description?.trim();
+                return (
+                  <LinkCard
+                    href={linkPreview.config.url || "#"}
+                    download={linkPreview.config.download}
+                    icon={meta.icon}
+                    name={linkPreview.title || "Без назви"}
+                    subtitle={description || linkTaskDefaultSubtitle(linkPreview.config)}
+                    className="pointer-events-none self-start"
+                  />
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
 

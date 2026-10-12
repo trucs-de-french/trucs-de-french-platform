@@ -134,7 +134,12 @@ export async function DelfTestTasks({
     const task = row.task;
     if (!taskHasRenderableContent(task)) return null;
     return (
-      <li key={task.id} className={`${EXERCISE_STACK} ${task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}>
+      <li
+        key={task.id}
+        className={`${EXERCISE_STACK} ${
+          task.type === "callout" || task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
+        }`}
+      >
         <ExerciseBlock task={task} isDelf />
       </li>
     );

@@ -1,6 +1,6 @@
 import { TaskMedia } from "@/components/task-media";
-import { PlatformIcon } from "@/components/platform-icon";
-import { resolvePlatform } from "@/lib/platform";
+import { LinkCard } from "@/components/link-card";
+import { resolveLinkTaskIcon, linkTaskDefaultSubtitle } from "@/lib/link-task-icon";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
@@ -28,13 +28,16 @@ type LinkEmbedConfig = {
   label?: string;
   platform?: string;
   download?: boolean;
+  description?: string;
+  icon?: string;
 };
 
-// Технічна назва типу (напр. "embed") — лише для link/game, де вона реально
-// підказує студенту, із чим він має справу (зовнішнє посилання/гра). Для
-// embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
-// вміст, службова назва типу йому не потрібна.
-const TYPES_WITH_TYPE_BADGE = ["link", "game"];
+// Технічна назва типу (напр. "embed") — лише для game, де вона реально
+// підказує студенту, із чим він має справу (зовнішня гра). Для embed
+// прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам вміст,
+// службова назва типу йому не потрібна. link сюди не входить — назва й
+// іконка вже на самій LinkCard (див. нижче), окремий бейдж типу зайвий.
+const TYPES_WITH_TYPE_BADGE = ["game"];
 
 // Рендер ОДНІЄЇ задачі — той самий набір компонентів і той самий
 // sanitizeConfigForStudent (не пускати правильні відповіді на клієнт), що й
@@ -69,7 +72,7 @@ export function ExerciseBlock({
 
   return (
     <>
-      {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && (
+      {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && (
         <>
           {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
             <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
@@ -121,28 +124,22 @@ export function ExerciseBlock({
         </a>
       )}
 
-      {task.type === "link" && config.url && config.download && (
-        <a
-          href={config.url}
-          download
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-        >
-          ⬇ {config.label ?? "Завантажити файл"}
-        </a>
-      )}
-
-      {task.type === "link" && config.url && !config.download && (
-        <a
-          href={config.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-        >
-          <PlatformIcon platform={resolvePlatform(config.url, config.platform)} />
-          {config.label ?? "Відкрити"}
-        </a>
-      )}
+      {task.type === "link" &&
+        config.url &&
+        (() => {
+          const meta = resolveLinkTaskIcon(config);
+          const description = config.description?.trim();
+          return (
+            <LinkCard
+              href={config.url!}
+              download={config.download}
+              icon={meta.icon}
+              name={task.title}
+              subtitle={description || linkTaskDefaultSubtitle(config)}
+              className="self-start"
+            />
+          );
+        })()}
 
       {task.type === "embed" && config.url && (
         <EmbedFrame url={config.url} height={config.height ?? 480} />

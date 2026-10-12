@@ -207,7 +207,9 @@ export default async function MaterialPage({
               ) : !taskHasRenderableContent(row.task) ? null : (
                 <li
                   key={row.task.id}
-                  className={`${EXERCISE_STACK} ${row.task.type === "callout" ? "" : EXERCISE_BLOCK_CLASS}`}
+                  className={`${EXERCISE_STACK} ${
+                    row.task.type === "callout" || row.task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
+                  }`}
                 >
                   <ExerciseBlock task={row.task} />
                 </li>

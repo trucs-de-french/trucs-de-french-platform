@@ -68,12 +68,14 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const url = (formData.get("link_url") as string) || "";
       const rawPlatform = (formData.get("link_platform") as string) || "auto";
       const description = ((formData.get("link_description") as string) || "").trim();
+      const icon = (formData.get("link_icon") as string) || "auto";
       return {
         url,
         label: (formData.get("link_label") as string) || "",
         platform: rawPlatform === "auto" ? detectPlatform(url) : rawPlatform,
         download: formData.get("link_download") === "true",
         ...(description ? { description } : {}),
+        ...(icon !== "auto" ? { icon } : {}),
       };
     }
     case "fill_blank": {
