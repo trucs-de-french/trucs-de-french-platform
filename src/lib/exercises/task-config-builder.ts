@@ -127,6 +127,7 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         display: (formData.get("mc_display") as string) || "buttons",
         items: parseJsonField(formData.get("mc_items")),
+        hintsReducePoints: formData.get("mc_hints_reduce_points") === "true",
       };
     }
     case "word_choice": {

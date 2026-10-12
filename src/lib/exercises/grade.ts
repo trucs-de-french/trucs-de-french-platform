@@ -366,7 +366,7 @@ function gradeMultipleChoice(
   answer: MultipleChoiceAnswer
 ): GradeResult {
   const items = getMultipleChoiceItems(config);
-  const answerByItem = new Map((answer ?? []).map((a) => [a.itemId, new Set(a.selected)]));
+  const answerByItem = new Map((answer ?? []).map((a) => [a.itemId, a]));
 
   // Скоуп — за ITEM, що реально прийшов у answer (answerByItem.has), не за
   // ВСІМА items конфігу: multiple-choice.tsx для вправ >5 елементів
@@ -379,20 +379,29 @@ function gradeMultipleChoice(
   const scopedItems = items.filter((item) => answerByItem.has(item.id));
 
   const itemsDetail: MultipleChoiceDetail["items"] = scopedItems.map((item) => {
-    const selected = answerByItem.get(item.id) ?? new Set<string>();
+    const a = answerByItem.get(item.id);
+    const selected = new Set(a?.selected ?? []);
     const options = item.options.map((o) => ({
       id: o.id,
       text: o.text,
       correct: o.correct,
       selected: selected.has(o.id),
     }));
-    return { id: item.id, options, points: resolveMultipleChoicePoints(item) };
+    return { id: item.id, options, points: resolveMultipleChoicePoints(item), hintUsed: !!a?.hintUsed };
   });
 
   const fullyCorrect = itemsDetail.filter((it) => it.options.every((o) => o.correct === o.selected));
   const correctCount = fullyCorrect.length;
   const pointsPossible = itemsDetail.reduce((sum, it) => sum + it.points, 0);
-  const pointsEarned = fullyCorrect.reduce((sum, it) => sum + it.points, 0);
+  // hintsReducePoints — той самий принцип, що gradeOpenAnswer (granularity =
+  // питання, як і points): правильне питання, де підказку бодай раз
+  // показали, дає 50% своїх балів замість повної. На відміну від
+  // ChronologicalOrderConfig (один hint на все завдання, знижка на суму) —
+  // тут hint на КОЖНЕ питання, тож і знижка рахується на рівні питання.
+  const pointsEarned = fullyCorrect.reduce((sum, it) => {
+    const reduced = !!config.hintsReducePoints && it.hintUsed;
+    return sum + (reduced ? it.points * 0.5 : it.points);
+  }, 0);
   // totalPointsPossible — на ВСІХ items вправи (не лише scopedItems цього
   // блоку) — знаменник для progress.ts/record_block_task_attempt (той самий
   // принцип, що gradeMatching).

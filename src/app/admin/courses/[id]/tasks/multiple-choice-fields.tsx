@@ -98,6 +98,9 @@ export const MultipleChoiceFields = forwardRef<
   const [items, setItems] = useState<MultipleChoiceItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
+  const [hintsReducePoints, setHintsReducePoints] = useState(
+    initialConfig?.hintsReducePoints ?? false
+  );
 
   // Для переносу сумісних даних при зміні типу (напр. → listening) —
   // читається в task-config-fields.tsx ПЕРЕД розмонтуванням цього
@@ -113,6 +116,7 @@ export const MultipleChoiceFields = forwardRef<
       subInstructions: initialConfig?.subInstructions,
       display,
       items,
+      hintsReducePoints,
     }),
   }));
 
@@ -170,6 +174,10 @@ export const MultipleChoiceFields = forwardRef<
     setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, points } : it)));
   }
 
+  function updateHint(itemId: string, hint: string) {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, hint } : it)));
+  }
+
   function toggleCorrect(itemId: string, optId: string) {
     setItems((prev) =>
       prev.map((it) =>
@@ -186,6 +194,12 @@ export const MultipleChoiceFields = forwardRef<
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="mc_items" value={JSON.stringify(items)} readOnly />
+      <input
+        type="hidden"
+        name="mc_hints_reduce_points"
+        value={hintsReducePoints ? "true" : ""}
+        readOnly
+      />
 
       <InstructionsRichTextField
         name="mc_instructions"
@@ -212,6 +226,15 @@ export const MultipleChoiceFields = forwardRef<
           <option value="dropdown">Випадаючий список</option>
         </select>
       </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={hintsReducePoints}
+          onChange={(e) => setHintsReducePoints(e.target.checked)}
+        />
+        Підказка зменшує бали (питання з показаною підказкою дає 50% балів)
+      </label>
 
       <div className="flex flex-col gap-3">
         {items.map((item, ii) => (
@@ -253,6 +276,17 @@ export const MultipleChoiceFields = forwardRef<
               }
               className={`${INPUT_BORDER} mt-2 w-full px-2 py-1 text-base font-medium font-content`}
             />
+            <div className="mt-2 flex flex-col gap-1">
+              <label className={LABEL_TEXT}>
+                Підказка (необов&apos;язково) — лампочка покаже цей текст студенту біля питання
+              </label>
+              <input
+                value={item.hint ?? ""}
+                onChange={(e) => updateHint(item.id, e.target.value)}
+                placeholder="Текст підказки"
+                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+              />
+            </div>
             <div className="mt-2 flex flex-col gap-1 pl-2">
               <label className={LABEL_TEXT}>
                 Варіанти (позначте правильні)

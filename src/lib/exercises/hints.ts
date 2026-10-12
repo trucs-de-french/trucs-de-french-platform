@@ -10,6 +10,7 @@ export const HINT_EXPLANATIONS: Partial<Record<string, string>> = {
   table_fill: "Лампочка біля поля відкриває першу літеру.",
   word_choice: "Лампочка біля речення показує підказку вчительки.",
   chronological_order: "Лампочка біля інструкції показує підказку до всього завдання.",
+  multiple_choice: "Лампочка біля запитання показує підказку.",
 };
 
 export const HINTS_REDUCE_POINTS_SUFFIX = " Слово з підказкою дає половину балів.";

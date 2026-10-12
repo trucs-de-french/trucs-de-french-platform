@@ -24,6 +24,8 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
+import { HintBulb } from "./hint-bulb";
+import { HintExplanation } from "./hint-explanation";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -98,6 +100,23 @@ export function MultipleChoiceExercise({
   // клік по мініатюрі.
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+  // Підказка (лампочка) до КОЖНОГО питання — той самий принцип, що
+  // word-choice.tsx: hintShown (перманентний, іде в answer як hintUsed) і
+  // hintVisible (лише розкрито/згорнуто зараз) — окремі стани. Практика
+  // (showHintBulb=false нижче) не рендерить лампочку взагалі, тож ці стани
+  // лишаються порожніми, і submitPractice() і так ніколи не додає hintUsed.
+  const [hintShown, setHintShown] = useState<Set<string>>(new Set());
+  const [hintVisible, setHintVisible] = useState<Set<string>>(new Set());
+  function toggleHintVisible(itemId: string) {
+    setHintShown((prev) => (prev.has(itemId) ? prev : new Set(prev).add(itemId)));
+    setHintVisible((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  }
+
   // Картки (питання) — поріг блоку CARD_BLOCK_MAX=5, той самий принцип, що
   // word-choice.tsx (exercise-blocks.ts, перша хвиля card-блоків). ≤5
   // питань — itemBlocks матиме РІВНО один чанк, useBlocks===false, нижче
@@ -166,8 +185,8 @@ export function MultipleChoiceExercise({
           return (
             <div key={item.id} className="flex flex-col gap-1.5">
               {config.display === "dropdown"
-                ? renderDropdownRow(item, idx, undefined)
-                : renderItem(item, idx, undefined)}
+                ? renderDropdownRow(item, idx, undefined, false)
+                : renderItem(item, idx, undefined, false)}
               {isCorrect === true && (
                 <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
               )}
@@ -342,8 +361,10 @@ export function MultipleChoiceExercise({
     index: number,
     itemDetail: ItemDetail | undefined,
     questionId: string,
-    extraClassName = ""
+    extraClassName = "",
+    showHintBulb = true
   ) {
+    const hasHintBulb = showHintBulb && !!item.hint;
     return (
       <div className={`flex items-start gap-2.5 p-3 ${extraClassName}`}>
         {config.items.length > 1 && (
@@ -352,21 +373,42 @@ export function MultipleChoiceExercise({
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p id={questionId} className="break-words font-medium [overflow-wrap:anywhere]">
-            {frenchNbsp(item.sentence)}
-            {pointsBadge(item, itemDetail)}
-          </p>
+          <div className="flex items-start gap-1.5">
+            <p id={questionId} className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
+              {frenchNbsp(item.sentence)}
+              {pointsBadge(item, itemDetail)}
+            </p>
+            {hasHintBulb && (
+              <HintBulb
+                size="sm"
+                state={hintShown.has(item.id) ? "used" : "available"}
+                onClick={() => toggleHintVisible(item.id)}
+                label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
+                className="mt-0.5 shrink-0"
+              />
+            )}
+          </div>
           {item.multiple && (
             <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
+          )}
+          {hasHintBulb && hintVisible.has(item.id) && (
+            <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+              {item.hint}
+            </div>
           )}
         </div>
       </div>
     );
   }
 
-  function renderItem(item: MultipleChoicePublicItem, index: number, itemDetail: ItemDetail | undefined) {
+  function renderItem(
+    item: MultipleChoicePublicItem,
+    index: number,
+    itemDetail: ItemDetail | undefined,
+    showHintBulb = true
+  ) {
     const sel = selections[item.id] ?? [];
     const hasImages = item.options.some((o) => !!o.imageUrl);
     const questionId = `mc-q-${item.id}`;
@@ -377,7 +419,7 @@ export function MultipleChoiceExercise({
     if (!hasImages) {
       return (
         <div key={item.id} className={CARD_WRAP}>
-          {renderQuestionHeader(item, index, itemDetail, questionId)}
+          {renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
           <div
             role={item.multiple ? "group" : "radiogroup"}
             aria-labelledby={questionId}
@@ -447,7 +489,7 @@ export function MultipleChoiceExercise({
 
     return (
       <div key={item.id} className={CARD_WRAP}>
-        {renderQuestionHeader(item, index, itemDetail, questionId, "md:p-4")}
+        {renderQuestionHeader(item, index, itemDetail, questionId, "md:p-4", showHintBulb)}
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
@@ -536,8 +578,14 @@ export function MultipleChoiceExercise({
   // поверх неї (нативна поведінка: клавіатура, системний вибір на телефоні,
   // aria). imageUrl у dropdown-варіантах неможливий (types.ts: imageUrl лише
   // для display "buttons") — картинок тут за визначенням немає.
-  function renderDropdownRow(item: MultipleChoicePublicItem, index: number, itemDetail: ItemDetail | undefined) {
+  function renderDropdownRow(
+    item: MultipleChoicePublicItem,
+    index: number,
+    itemDetail: ItemDetail | undefined,
+    showHintBulb = true
+  ) {
     const sel = selections[item.id] ?? [];
+    const hasHintBulb = showHintBulb && !!item.hint;
     const selectedOptions = item.options.filter((o) => sel.includes(o.id));
     const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
     const pillState: "correct" | "incorrect" | "selected" | "empty" =
@@ -574,14 +622,30 @@ export function MultipleChoiceExercise({
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="break-words leading-snug [overflow-wrap:anywhere]">
-              {questionText}
-              {pointsBadge(item, itemDetail)}
-            </p>
+            <div className="flex items-start gap-1.5">
+              <p className="min-w-0 flex-1 break-words leading-snug [overflow-wrap:anywhere]">
+                {questionText}
+                {pointsBadge(item, itemDetail)}
+              </p>
+              {hasHintBulb && (
+                <HintBulb
+                  size="sm"
+                  state={hintShown.has(item.id) ? "used" : "available"}
+                  onClick={() => toggleHintVisible(item.id)}
+                  label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
+                  className="mt-0.5 shrink-0"
+                />
+              )}
+            </div>
             {item.multiple && (
               <p className="mt-0.5 text-xs italic text-neutral-500 dark:text-neutral-400">
                 {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
               </p>
+            )}
+            {hasHintBulb && hintVisible.has(item.id) && (
+              <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+                {item.hint}
+              </div>
             )}
           </div>
         </div>
@@ -665,7 +729,11 @@ export function MultipleChoiceExercise({
 
   async function submitBlock(blockIndex: number) {
     const blockItems = itemBlocks[blockIndex];
-    const answer = blockItems.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] }));
+    const answer = blockItems.map((it) => ({
+      itemId: it.id,
+      selected: selections[it.id] ?? [],
+      hintUsed: hintShown.has(it.id),
+    }));
     setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
     setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
     try {
@@ -763,6 +831,12 @@ export function MultipleChoiceExercise({
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
       />
 
+      <HintExplanation
+        type="multiple_choice"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={!config.items.some((it) => it.hint)}
+      />
+
       {!useBlocks ? (
         <>
           {/* Картинковий і текстовий режими мають однакову обгортку
@@ -777,7 +851,13 @@ export function MultipleChoiceExercise({
               <button
                 type="button"
                 onClick={() =>
-                  single.submit(config.items.map((it) => ({ itemId: it.id, selected: selections[it.id] ?? [] })))
+                  single.submit(
+                    config.items.map((it) => ({
+                      itemId: it.id,
+                      selected: selections[it.id] ?? [],
+                      hintUsed: hintShown.has(it.id),
+                    }))
+                  )
                 }
                 disabled={single.pending || !allAnswered}
                 className={`self-start ${STUDENT_BUTTON_PRIMARY}`}

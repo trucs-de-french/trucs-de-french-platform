@@ -154,17 +154,27 @@ export type EssayFormulaireConfig = {
 export type MultipleChoiceOption = { id: string; text: string; correct: boolean; imageUrl?: string };
 // points — пілот системи балів (див. TrueFalseStatement) — дефолт 1
 // (resolveMultipleChoicePoints у sanitize.ts).
+// hint — той самий принцип, що WordChoiceSentence.hint: опційний текст за
+// лампочкою до КОНКРЕТНОГО питання (не на всю вправу, на відміну від
+// ChronologicalOrderConfig.hint — тут кожне питання вже має власні points,
+// тож hintUsed/знижка природно теж на рівні питання). Не впливає на
+// correct, тож безпечно йде в публічний config як є (sanitize.ts: trim,
+// порожній -> нема).
 export type MultipleChoiceItem = {
   id: string;
   sentence: string;
   options: MultipleChoiceOption[];
   points?: number;
+  hint?: string;
 };
 export type MultipleChoiceConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
   display: "buttons" | "dropdown";
   items: MultipleChoiceItem[];
+  // Той самий принцип, що WordChoiceConfig.hintsReducePoints — на рівні
+  // вправи (одна настройка для всіх питань), не на питання.
+  hintsReducePoints?: boolean;
 };
 
 // Той самий "sentence з ОДНИМ {{}}" принцип, що MultipleChoiceConfig
@@ -769,7 +779,11 @@ export type MultipleChoicePublic = {
     correctCount: number; // скільки саме — для підказки студенту, напр. "2 варіанти"
     options: { id: string; text: string; imageUrl?: string }[];
     points: number;
+    hint?: string;
   }[];
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 // correct-прапорці схованi (як у MultipleChoicePublic) — options лише
@@ -1069,7 +1083,11 @@ export type LetterRearrangementAnswer = {
   words: string[][];
   hintedWordIndices: number[];
 };
-export type MultipleChoiceAnswer = { itemId: string; selected: string[] }[]; // вибрані option.id на кожне речення
+// hintUsed — той самий сенс, що WordChoiceAnswer[].hintUsed: студент
+// клікнув лампочку ЦЬОГО питання хоч раз (multiple-choice.tsx: hintShown,
+// клієнтський стан, без запиту на сервер — hint-текст уже в публічному
+// config).
+export type MultipleChoiceAnswer = { itemId: string; selected: string[]; hintUsed?: boolean }[]; // вибрані option.id на кожне речення
 // Множина optionId на речення (не одне значення) — підтримує кілька
 // правильних варіантів, незалежно від mode (select/cross_out); студентський
 // компонент сам зводить обидва режими до цієї форми перед сабмітом (у
@@ -1189,6 +1207,7 @@ export type MultipleChoiceDetail = {
     id: string;
     options: { id: string; text: string; correct: boolean; selected: boolean }[];
     points: number;
+    hintUsed: boolean;
   }[];
 };
 

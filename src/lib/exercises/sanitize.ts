@@ -180,8 +180,12 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     display: config.display,
+    hintsReducePoints: !!config.hintsReducePoints,
     items: getMultipleChoiceItems(config).map((item) => {
       const correctCount = item.options.filter((o) => o.correct).length;
+      // trim — пробільний рядок рахується як "нема підказки" (той самий
+      // принцип, що sanitizeWordChoice).
+      const hint = item.hint?.trim();
       return {
         id: item.id,
         sentence: item.sentence,
@@ -189,6 +193,7 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
         correctCount,
         options: item.options.map(({ id, text, imageUrl }) => ({ id, text, imageUrl })),
         points: resolveMultipleChoicePoints(item),
+        ...(hint ? { hint } : {}),
       };
     }),
   };
