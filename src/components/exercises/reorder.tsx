@@ -42,6 +42,7 @@ function ReorderSequenceTiles({
   onChange,
   detail,
   correctOrder,
+  activated,
   locked,
   points,
   pointsVisible,
@@ -58,6 +59,11 @@ function ReorderSequenceTiles({
   // підсвічування без запиту на сервер (той самий компроміс секретності,
   // що LetterGapsPublicWord.hiddenLetters).
   correctOrder?: string[];
+  // Живе підсвічування активується лише ПІСЛЯ першої перестановки в цьому
+  // реченні (onChange у батьківському ReorderExercise) — до того всі
+  // плитки нейтральні, навіть якщо випадково стоять на правильних місцях
+  // (ключується по sequenceId, не скидається подальшими перестановками).
+  activated?: boolean;
   locked: boolean;
   points: number;
   pointsVisible: boolean;
@@ -73,7 +79,7 @@ function ReorderSequenceTiles({
   // на кожен рендер (order — пропс, змінюється з кожним drag/click-move).
   function tileState(i: number): "correct" | "incorrect" | undefined {
     if (detail) return detail.items[i]?.isCorrect ? "correct" : "incorrect";
-    if (correctOrder) return order[i] === correctOrder[i] ? "correct" : "incorrect";
+    if (correctOrder && activated) return order[i] === correctOrder[i] ? "correct" : "incorrect";
     return undefined;
   }
 
@@ -163,6 +169,19 @@ export function ReorderExercise({
   );
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+  // Живе підсвічування (liveFeedback, correctOrder) активується ПОЗА блоками
+  // та по кожному реченню окремо — лише після першої перестановки в НЬОМУ
+  // (не глобально для всього завдання). Стан піднятий сюди, вище
+  // BlockNavigation/activeBlock, тому переживає перемикання блоків
+  // (CARD_BLOCK_MAX) у межах одного рендеру компонента; скидається лише
+  // разом з усім компонентом — новий mount (нова спроба практики
+  // "Спробувати ще раз" в error-review-block.tsx — expanded false→true,
+  // або перезавантаження сторінки) дає чистий useState знову.
+  const [activated, setActivated] = useState<Record<string, boolean>>({});
+  function activateSequence(id: string) {
+    setActivated((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }
+
   // ==== Гілка практики (whole) — незалежна від блоків/single нижче:
   // завжди ВСІ послідовності одразу (config тут уже перемішаний сервером,
   // page.tsx: sanitizeConfigForStudent), без BlockNavigation.
@@ -219,9 +238,13 @@ export function ReorderExercise({
       <ReorderSequenceTiles
         key={seq.id}
         order={orders[seq.id] ?? seq.items}
-        onChange={(next) => setOrders((prev) => ({ ...prev, [seq.id]: next }))}
+        onChange={(next) => {
+          setOrders((prev) => ({ ...prev, [seq.id]: next }));
+          activateSequence(seq.id);
+        }}
         detail={seqDetail}
         correctOrder={seq.correctOrder}
+        activated={!!activated[seq.id]}
         locked={locked}
         points={seq.points}
         pointsVisible={pointsVisible}
@@ -357,9 +380,11 @@ export function ReorderExercise({
                 // студент бачить застарілі зелені/червоні кольори після
                 // того, як переставив слова знову, до наступного "Перевірити".
                 setPracticeDetail(undefined);
+                activateSequence(seq.id);
               }}
               detail={practiceDetail?.sequences.find((d) => d.id === seq.id)}
               correctOrder={seq.correctOrder}
+              activated={!!activated[seq.id]}
               locked={practiceCorrect}
               points={seq.points}
               pointsVisible={false}
