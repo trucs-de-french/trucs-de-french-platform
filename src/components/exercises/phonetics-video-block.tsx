@@ -14,7 +14,7 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
 
   if (media.source === "upload" || media.source === "url") {
     return (
-      <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+      <div className="aspect-video w-full max-w-full overflow-hidden rounded-xl bg-black">
         <video controls preload="metadata" playsInline src={media.url} className="h-full w-full" />
       </div>
     );
@@ -30,8 +30,8 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
   const thumbnail = isYoutube ? youtubeThumbnailUrl(id) : null;
 
   return (
-    <div className="flex w-full flex-col gap-1">
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+    <div className="flex w-full max-w-full min-w-0 flex-col gap-1">
+      <div className="relative aspect-video w-full max-w-full overflow-hidden rounded-xl bg-black">
         {activated ? (
           <iframe
             src={embedUrl}
@@ -54,11 +54,11 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
           >
             <span className="absolute inset-0 bg-black/20 transition group-hover:bg-black/30" />
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md">
-                <Play size={20} className="text-brand" fill="currentColor" />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md">
+                <Play size={16} className="text-brand" fill="currentColor" />
               </span>
             </span>
-            <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-white">
+            <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-white">
               {label}
             </span>
           </button>
@@ -68,7 +68,7 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
         href={media.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="self-start truncate text-[13px] text-neutral-500 underline hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+        className="self-start truncate text-[12px] text-neutral-500 underline hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
       >
         {openLabel}
       </a>

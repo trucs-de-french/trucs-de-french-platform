@@ -32,7 +32,7 @@ function DriveAudioBlock({ url }: { url: string }) {
       <iframe
         src={driveEmbedUrl(id)}
         title="Google Диск"
-        className="h-16 w-full rounded-xl"
+        className="h-16 w-full max-w-full rounded-xl"
         allow="autoplay"
       />
     );
@@ -42,18 +42,18 @@ function DriveAudioBlock({ url }: { url: string }) {
       type="button"
       onClick={() => setActivated(true)}
       aria-label="Відтворити аудіо з Google Диска"
-      className="flex w-full items-center gap-2 rounded-[14px] bg-[#f3f2fb] px-3 py-2 dark:bg-neutral-700/40"
+      className="flex w-full min-w-0 max-w-full items-center gap-1.5 rounded-xl bg-[#f3f2fb] px-2.5 py-1.5 dark:bg-neutral-700/40"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-        <Play size={16} fill="currentColor" />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+        <Play size={14} fill="currentColor" />
       </span>
-      <span className="truncate text-sm text-neutral-600 dark:text-neutral-300">Google Диск</span>
+      <span className="truncate text-xs text-neutral-600 dark:text-neutral-300">Google Диск</span>
     </button>
   );
 }
 
 const NUMBER_BADGE =
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white";
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white";
 
 export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -72,26 +72,35 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
       />
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
         {config.items.map((item, i) => {
           const media = mediaOf(item);
           const translation = item.translation?.trim();
           return (
             <div
               key={i}
-              className="flex flex-col gap-4 rounded-[18px] border border-gray-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:gap-6 dark:border-neutral-700 dark:bg-neutral-800"
+              // @container — "текст зліва, медіа справа" залежить від
+              // ФАКТИЧНОЇ ширини картки (яка в сітці 2х ≈ половина
+              // контейнера), а не від ширини вікна: sm:/lg: раніше
+              // ламались саме тут — на вузькій картці full-width вікна
+              // вони все одно спрацьовували, а flex-shrink:0 медіа-колонки
+              // при цьому стискав min-w-0 ліву частину до мінімуму,
+              // лишаючи під медіа ~600px замість заданих ~260-300.
+              // min-w-0 на самій картці — щоб довгий текст не розпирав
+              // grid-колонку (а з нею і сусідню картку) ширше задуманого.
+              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm @[480px]:flex-row @[480px]:items-center @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
             >
-              <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span className={NUMBER_BADGE}>{i + 1}</span>
                 <div className="flex min-w-0 flex-col gap-1">
-                  <span className="break-words font-content text-xl font-medium leading-[1.3] [overflow-wrap:anywhere]">
+                  <span className="break-words font-content text-[18px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
                     {item.text}
                   </span>
-                  <span className="break-words text-[15px] text-neutral-500 [overflow-wrap:anywhere] dark:text-neutral-400">
+                  <span className="break-words text-sm text-neutral-500 [overflow-wrap:anywhere] dark:text-neutral-400">
                     {item.transcription}
                   </span>
                   {translation && (
-                    <span className="break-words text-[14px] italic text-neutral-400 [overflow-wrap:anywhere] dark:text-neutral-500">
+                    <span className="break-words text-[13px] italic text-neutral-400 [overflow-wrap:anywhere] dark:text-neutral-500">
                       {translation}
                     </span>
                   )}
@@ -106,7 +115,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                     <ImageOrPlaceholder
                       src={item.imageUrl}
                       alt=""
-                      className="h-14 w-14 rounded-lg object-cover"
+                      className="h-12 w-12 rounded-lg object-cover"
                       useFocus
                     />
                   </button>
@@ -114,9 +123,12 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               </div>
 
               {media && (
-                // Права колонка: фіксована ширина на sm+ (~260-300px),
-                // на мобільному — повна ширина картки, але не ширше 360px.
-                <div className="w-full max-w-[360px] flex-none self-start sm:w-[260px] sm:self-center lg:w-[300px]">
+                // Права колонка: на вузькій картці (<480px, мобільний теж
+                // сюди потрапляє) — повна ширина картки, не більше 320px,
+                // зліва. На широкій картці (>=480px) — фіксована 220px
+                // (180-240 за вимогою). min-w-0 — не дати вмісту (iframe/
+                // video з "w-full") розіпрати цю колонку понад задане.
+                <div className="w-full min-w-0 max-w-[320px] flex-none self-start @[480px]:w-[220px] @[480px]:max-w-[220px] @[480px]:self-center">
                   {media.kind === "video" ? (
                     <PhoneticsVideoBlock media={media} />
                   ) : media.source === "drive" ? (

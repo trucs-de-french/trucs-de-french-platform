@@ -4,9 +4,8 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardE
 import { Play, Pause } from "lucide-react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-// 20, не 28 — плеєр живе у вузькій правій колонці картки (~260-300px), а не
-// на всю ширину; менше стовпчиків лишає їм видиму ширину кожного.
-const BAR_COUNT = 20;
+// 14, не 20 — права колонка картки у сітці 2х стала ще вужчою (~180-240px).
+const BAR_COUNT = 14;
 
 // Один елемент грає за раз (крок 7 задачі): коли стартує новий — попередній
 // ставиться на пауза. Модульний рівень, не React-стан — свідомо просто
@@ -113,7 +112,10 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
     <div
       // @container — вузька колонка, а не весь екран: час ховається за
       // шириною САМОГО плеєра (@[Npx]:), не за шириною вікна браузера.
-      className={`@container flex items-center gap-2 rounded-[14px] bg-[#f3f2fb] px-3 py-2 dark:bg-neutral-700/40 ${className}`}
+      // min-w-0 — плеєр не повинен штовхати власний max-w-full контейнер
+      // ширше за замовлену колонку (flex-row батьків без цього тягнеться
+      // під min-content дітей, звідси й був баг "розтягується до ~600px").
+      className={`@container flex min-w-0 max-w-full items-center gap-1.5 rounded-xl bg-[#f3f2fb] px-2.5 py-1.5 dark:bg-neutral-700/40 ${className}`}
     >
       <audio
         ref={audioRef}
@@ -132,9 +134,9 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
         onClick={togglePlay}
         aria-label={playing ? "Пауза" : "Відтворити"}
         aria-pressed={playing}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white"
       >
-        {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+        {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
       </button>
 
       <div
@@ -148,7 +150,7 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
         onPointerDown={handleWavePointerDown}
         onPointerMove={handleWavePointerMove}
         onKeyDown={handleWaveKeyDown}
-        className="flex h-6 min-w-0 flex-1 cursor-pointer items-center gap-[2px]"
+        className="flex h-5 min-w-0 flex-1 cursor-pointer items-center gap-[2px]"
       >
         {heights.map((h, i) => (
           <span
@@ -161,7 +163,7 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
 
       {/* приховано за замовчуванням — показуємо лише коли сам плеєр (не
           вікно) має досить ширини, @container вище */}
-      <span className="hidden shrink-0 whitespace-nowrap text-[11px] text-neutral-500 @[230px]:inline dark:text-neutral-400">
+      <span className="hidden shrink-0 whitespace-nowrap text-[10px] text-neutral-500 @[260px]:inline dark:text-neutral-400">
         {formatTime(currentTime)} / {formatTime(duration)}
       </span>
 
@@ -171,7 +173,7 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
           onClick={() => setSpeedOpen((v) => !v)}
           aria-label="Швидкість відтворення"
           aria-expanded={speedOpen}
-          className="rounded-md border border-gray-200 px-1.5 py-1 text-[11px] text-neutral-600 hover:bg-white dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
+          className="rounded-md border border-gray-200 px-1 py-0.5 text-[10px] text-neutral-600 hover:bg-white dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
         >
           {speed}× ▾
         </button>
