@@ -199,12 +199,13 @@ export async function POST(request: Request) {
       break;
     }
     // whole-режим (частина 7, хвиля 3) — один результат на весь taskType:
-    // "правильно" = graded.correct (gradeReorder/gradeChronologicalOrder уже
-    // рахують це як "усі елементи на 100%", часткові бали теж "неправильно").
-    // Розширюється по одному case за раз разом із WHOLE_MODE_TASK_TYPES
-    // (error-review.ts).
+    // "правильно" = graded.correct (gradeReorder/gradeChronologicalOrder/
+    // gradeSortColumns уже рахують це як "усі елементи на 100%", часткові
+    // бали теж "неправильно"). Розширюється по одному case за раз разом із
+    // WHOLE_MODE_TASK_TYPES (error-review.ts).
     case "reorder":
     case "chronological_order":
+    case "sort_columns":
       results = [{ itemId: WHOLE_TASK_ITEM_ID, correct: graded.correct }];
       break;
     default: {

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { SortColumnsPublic, SortColumnsDetail, GradeResult } from "@/lib/exercises/types";
+import type { SortColumnsPublic, SortColumnsDetail, SortColumnsAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
+import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
 import { bankTileClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb, type HintBulbState } from "./hint-bulb";
@@ -10,9 +12,13 @@ import { ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+
+// Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
+// самий принцип whole, що ReorderPracticeProps/ChronologicalOrderPracticeProps.
+export type SortColumnsPracticeProps = { whole: true; failedAttempts: Record<string, number> };
 
 export function SortColumnsExercise({
   taskId,
@@ -21,6 +27,7 @@ export function SortColumnsExercise({
   onResult,
   hidePoints,
   isDelf,
+  practice,
 }: {
   taskId: string;
   config: SortColumnsPublic;
@@ -31,15 +38,46 @@ export function SortColumnsExercise({
   // /api/exercises/sort-columns-hint однаково відхилив би запит, якби
   // хтось обійшов UI) — той самий принцип, що letter-rearrangement.tsx.
   isDelf?: boolean;
+  practice?: SortColumnsPracticeProps;
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
-  const detail = result?.detail as SortColumnsDetail | undefined;
-  const locked = !!result;
-  const hintsEnabled = !!config.hintsEnabled && !isDelf;
+  const singleDetail = result?.detail as SortColumnsDetail | undefined;
+
+  // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як один
+  // елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що reorder.tsx/
+  // chronological-order.tsx. Без підказок/балів у практиці (задача).
+  const isPractice = !!practice;
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceDetail, setPracticeDetail] = useState<SortColumnsDetail | undefined>(undefined);
+  const [practiceCorrect, setPracticeCorrect] = useState(false);
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+
+  const detail = isPractice ? practiceDetail : singleDetail;
+  const locked = isPractice ? practiceCorrect : !!result;
+  const hintsEnabled = !!config.hintsEnabled && !isDelf && !isPractice;
 
   useEffect(() => {
-    if (result) onResult?.(result);
-  }, [result, onResult]);
+    if (!isPractice && result) onResult?.(result);
+  }, [isPractice, result, onResult]);
+
+  async function submitPractice() {
+    const answer: SortColumnsAnswer = config.items.map((item) => ({
+      itemId: item.id,
+      columnId: assignment[item.id] ?? "",
+    }));
+    const r = await practiceCheck.check([WHOLE_TASK_ITEM_ID], answer);
+    if (!r) return;
+    const correct = r.results[0]?.correct ?? false;
+    setPracticeCorrect(correct);
+    setPracticeDetail(r.detail as SortColumnsDetail | undefined);
+    setPracticeFailedAttempts(r.failedAttempts);
+    const attempts = r.failedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
+    if (!correct && attempts >= 2 && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) {
+      practiceCheck.reveal(WHOLE_TASK_ITEM_ID, false);
+    }
+  }
 
   const {
     assignment,
@@ -248,7 +286,12 @@ export function SortColumnsExercise({
         })}
       </div>
 
-      {detail && (
+      {/* detail-підказка "правильна колонка" одразу після перевірки — лише
+          звичайне проходження. У практиці правильна відповідь розкривається
+          гейтовано (2 невдачі / кнопка), не одразу на кожен "Перевірити" —
+          інакше гейт нижче (practiceCheck.reveal) був би марним, відповідь
+          і так зливалася б з першої спроби. */}
+      {detail && !isPractice && (
         <ul className="flex flex-col gap-1 text-sm">
           {detail.items
             .filter((i) => !i.isCorrect)
@@ -260,6 +303,55 @@ export function SortColumnsExercise({
         </ul>
       )}
 
+      {isPractice ? (
+        <div className="flex flex-col gap-2">
+          {!practiceCorrect && (
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending || !allPlaced}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          )}
+          {practiceCorrect && (
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+          )}
+          {practiceDetail && !practiceCorrect && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-red-600 dark:text-red-400">
+                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
+              </span>
+              {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+                <button
+                  type="button"
+                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                >
+                  Показати відповідь
+                </button>
+              )}
+            </div>
+          )}
+          {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
+            <ul className="flex flex-col gap-0.5 text-sm italic text-amber-700 dark:text-amber-400">
+              {practiceCheck.revealed[WHOLE_TASK_ITEM_ID].map((pair) => {
+                const [itemId, columnId] = pair.split(":");
+                const item = config.items.find((i) => i.id === itemId);
+                const column = config.columns.find((c) => c.id === columnId);
+                return (
+                  <li key={pair}>
+                    {item?.text ?? itemId} → {column?.label ?? columnId}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+      ) : (
       <div className="flex flex-col gap-3">
         {!result ? (
           <button
@@ -294,6 +386,7 @@ export function SortColumnsExercise({
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
+      )}
     </div>
   );
 }

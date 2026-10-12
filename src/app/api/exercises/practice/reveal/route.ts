@@ -24,6 +24,7 @@ import type {
   ListeningConfig,
   ReorderConfig,
   ChronologicalOrderConfig,
+  SortColumnsConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -206,6 +207,16 @@ export async function POST(request: Request) {
   if (task.type === "chronological_order") {
     const config = task.config as ChronologicalOrderConfig;
     const answer = config.items.map((i) => i.id);
+    return NextResponse.json({ answer });
+  }
+
+  // sort_columns — "itemId:columnId" на елемент (той самий принцип
+  // "порядок id / колонки", що chronological_order вище — структура, не
+  // готовий текст, компонент сам мапить itemId/columnId на text/label через
+  // СВІЙ config).
+  if (task.type === "sort_columns") {
+    const config = task.config as SortColumnsConfig;
+    const answer = config.items.map((i) => `${i.id}:${i.columnId}`);
     return NextResponse.json({ answer });
   }
 

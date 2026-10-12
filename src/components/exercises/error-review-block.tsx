@@ -21,6 +21,7 @@ import { ImageMatchExercise } from "./image-match";
 import { ListeningExercise } from "./listening";
 import { ReorderExercise } from "./reorder";
 import { ChronologicalOrderExercise } from "./chronological-order";
+import { SortColumnsExercise } from "./sort-columns";
 import type {
   MultipleChoicePublic,
   FillBlankPublic,
@@ -35,6 +36,7 @@ import type {
   ListeningPublic,
   ReorderPublic,
   ChronologicalOrderPublic,
+  SortColumnsPublic,
 } from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
@@ -299,6 +301,15 @@ function ErrorReviewCard({
             <ChronologicalOrderExercise
               taskId={entry.taskId}
               config={entry.config as unknown as ChronologicalOrderPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "sort_columns" && (
+            <SortColumnsExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as SortColumnsPublic}
               pointsVisible={false}
               hidePoints
               practice={{ whole: true, failedAttempts: entry.failedAttempts }}
