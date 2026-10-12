@@ -340,7 +340,13 @@ export function ReorderExercise({
             <ReorderSequenceTiles
               key={seq.id}
               order={practiceOrders[seq.id] ?? seq.items}
-              onChange={(next) => setPracticeOrders((prev) => ({ ...prev, [seq.id]: next }))}
+              onChange={(next) => {
+                setPracticeOrders((prev) => ({ ...prev, [seq.id]: next }));
+                // Скидаємо підсвічування з попередньої перевірки — інакше
+                // студент бачить застарілі зелені/червоні кольори після
+                // того, як переставив слова знову, до наступного "Перевірити".
+                setPracticeDetail(undefined);
+              }}
               detail={practiceDetail?.sequences.find((d) => d.id === seq.id)}
               locked={practiceCorrect}
               points={seq.points}
