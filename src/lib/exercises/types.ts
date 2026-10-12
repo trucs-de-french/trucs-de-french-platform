@@ -677,10 +677,19 @@ export type CalloutConfig = {
 // phonetics — довідковий список реплік/фраз із транскрипцією (IPA чи
 // довільний запис) і опційним аудіо/відео на кожну; як flip_cards/callout —
 // не оцінюється, повна конфігурація й публічна — одне й те саме.
+//
+// media — нова явна модель (src/lib/phonetics-media.ts): джерело
+// (upload/youtube/drive/url) + тип відтворення (audio/video), а не
+// визначення "на льоту" з вигляду URL. mediaUrl лишається в типі лише для
+// сумісності зі старими рядками в БД (нормалізується в media при читанні,
+// task-config-builder.ts більше не пише це поле для нових/редагованих
+// карток).
 export type PhoneticsItem = {
   text: string;
   transcription: string;
+  translation?: string;
   mediaUrl?: string;
+  media?: { source: "upload" | "youtube" | "drive" | "url"; kind: "audio" | "video"; url: string };
   imageUrl?: string;
 };
 export type PhoneticsConfig = {

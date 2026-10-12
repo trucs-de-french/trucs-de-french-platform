@@ -258,17 +258,19 @@ function flipCardsToPhonetics(f: FlipCardsConfig): TransformResult<PhoneticsConf
       items: cards.map((c) => ({
         text: c.front,
         transcription: c.back,
-        mediaUrl: c.audio_url || c.image_url || "",
+        imageUrl: c.image_url || "",
+        ...(c.audio_url ? { media: { source: "url" as const, kind: "audio" as const, url: c.audio_url } } : {}),
       })),
     },
     warning:
       bothMediaCount > 0
-        ? `${bothMediaCount} ${bothMediaCount === 1 ? "картка мала" : "карток мали"} і картинку, і аудіо — phonetics підтримує лише одне медіа-поле, картинку відкинуто.`
+        ? `${bothMediaCount} ${bothMediaCount === 1 ? "картка мала" : "карток мали"} і картинку, і аудіо — обидва збережено (картинка окремо, аудіо як пряме посилання), перевірте відображення.`
         : undefined,
   };
 }
 
 function phoneticsToFlipCards(p: PhoneticsConfig): TransformResult<FlipCardsConfig> {
+  const hasNonUrlMedia = (p.items ?? []).some((it) => it.media && it.media.source !== "url");
   return {
     config: {
       instructions: p.instructions,
@@ -276,12 +278,12 @@ function phoneticsToFlipCards(p: PhoneticsConfig): TransformResult<FlipCardsConf
       cards: (p.items ?? []).map((it) => ({
         front: it.text,
         back: it.transcription,
-        image_url: "",
-        audio_url: it.mediaUrl ?? "",
+        image_url: it.imageUrl ?? "",
+        audio_url: it.media?.source === "url" ? it.media.url : it.mediaUrl ?? "",
       })),
     },
-    warning: (p.items ?? []).some((it) => it.mediaUrl)
-      ? "Медіа перенесено в поле аудіо — якщо це насправді картинка, перенесіть URL вручну в поле картинки."
+    warning: hasNonUrlMedia
+      ? "YouTube/Google Диск не перенесено — flip_cards підтримує лише пряме аудіо-посилання."
       : undefined,
   };
 }

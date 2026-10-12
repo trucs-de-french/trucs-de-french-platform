@@ -5,6 +5,7 @@ import { sanitizeWordForGrid } from "./grid-word";
 import { computeAutoHiddenIndices, type LetterHideMode } from "./letter-hide";
 import { stripArticle } from "./article";
 import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
+import { normalizeMedia } from "@/lib/phonetics-media";
 import type {
   FlipCard,
   LetterGapsWord,
@@ -301,10 +302,27 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("phonetics_sub_instructions") as string) || ""
       );
+      const rawItems = parseJsonField(formData.get("phonetics_items")) as Array<{
+        text?: unknown;
+        transcription?: unknown;
+        translation?: unknown;
+        imageUrl?: unknown;
+        media?: { source?: unknown; kind?: unknown; url?: unknown };
+      }>;
       return {
         instructions: sanitizeInstructionsHtml((formData.get("phonetics_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
-        items: parseJsonField(formData.get("phonetics_items")),
+        items: rawItems.map((it) => {
+          const translation = typeof it.translation === "string" ? it.translation.trim() : "";
+          const media = it.media ? normalizeMedia(it.media) : null;
+          return {
+            text: typeof it.text === "string" ? it.text : "",
+            transcription: typeof it.transcription === "string" ? it.transcription : "",
+            ...(translation ? { translation } : {}),
+            ...(typeof it.imageUrl === "string" && it.imageUrl ? { imageUrl: it.imageUrl } : {}),
+            ...(media ? { media } : {}),
+          };
+        }),
       };
     }
     case "table_fill": {

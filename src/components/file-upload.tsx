@@ -3,18 +3,23 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Paperclip, Image as ImageIcon, Volume2 } from "lucide-react";
 
-type UploadKind = "audio" | "image" | "html";
+type UploadKind = "audio" | "image" | "html" | "media";
 
 const ACCEPT_BY_KIND: Record<UploadKind, string> = {
   audio: "audio/*",
   image: "image/*",
   html: ".html,.htm",
+  // "media" (аудіо або відео, напр. phonetics) — той самий R2-бакет, що
+  // "audio" (r2-upload-url/route.ts): нова окрема інфраструктура для відео
+  // не потрібна, бакет не має значення для відтворення (лише зберігання).
+  media: "audio/*,video/*",
 };
 
 const LABEL_BY_KIND: Record<UploadKind, string> = {
   audio: "📎 Завантажити аудіо",
   image: "📎 Завантажити зображення",
   html: "📎 Завантажити HTML-гру",
+  media: "📎 Завантажити аудіо/відео",
 };
 
 // Лише variant="icon" — коли поруч на одному рядку є і картинка, і аудіо
@@ -25,6 +30,7 @@ const ICON_BY_KIND: Record<UploadKind, typeof Paperclip> = {
   audio: Volume2,
   image: ImageIcon,
   html: Paperclip,
+  media: Volume2,
 };
 
 // Лише для kind="html" — самодостатня гра/вправа, не файл довільного
@@ -63,7 +69,11 @@ export function FileUpload({
 }: {
   kind: UploadKind;
   name?: string;
-  onUploaded?: (url: string) => void;
+  // contentType — лише фактично завантажений MIME (напр. "video/mp4"), для
+  // викликачів, яким потрібно визначити audio/video за фактом файлу
+  // (phonetics-fields.tsx) — необов'язковий 2-й аргумент, існуючі виклики
+  // з (url) => ... лишаються сумісними без змін.
+  onUploaded?: (url: string, contentType?: string) => void;
   // "icon" — компактний тригер (скрепка, без тексту) для розміщення в
   // одному рядку поруч з іншим полем (напр. URL картинки словника) — той
   // самий icon-only рецепт, що вже Copy/Trash2 по платформі. За
@@ -148,7 +158,7 @@ export function FileUpload({
       }
 
       setUploadedUrl(prep.publicUrl);
-      onUploaded?.(prep.publicUrl);
+      onUploaded?.(prep.publicUrl, declaredContentType);
       setStatus("done");
     } catch (error) {
       setStatus("error");
