@@ -7,7 +7,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { HintExplanation } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
@@ -16,6 +16,7 @@ import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation } from "./block-navigation";
+import { usePracticeCheck } from "./use-practice-check";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -79,6 +80,14 @@ function TableFillColumn({
   );
 }
 
+// Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
+// принцип, що MatchingPracticeProps: елемент тут rowId (стабільний id, не
+// позиційний індекс, на відміну від letter_rearrangement/letter_gaps).
+export type TableFillPracticeProps = {
+  onlyItemIds: string[];
+  failedAttempts: Record<string, number>;
+};
+
 export function TableFillExercise({
   taskId,
   config,
@@ -86,6 +95,7 @@ export function TableFillExercise({
   onResult,
   hidePoints,
   isDelf,
+  practice,
 }: {
   taskId: string;
   config: TableFillPublic;
@@ -95,6 +105,7 @@ export function TableFillExercise({
   // Задача належить DELF-тесту — підказки повністю вимкнені (той самий
   // принцип, що fill-blank.tsx).
   isDelf?: boolean;
+  practice?: TableFillPracticeProps;
 }) {
   const router = useRouter();
 
@@ -152,6 +163,128 @@ export function TableFillExercise({
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
   }, [useBlocks, single.result, onResult]);
+
+  // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single вище
+  // (той самий принцип, що letter-rearrangement.tsx): плаский список рядків-
+  // карток (не таблиця/BlockNavigation), один спільний "Перевірити" на всі
+  // показані рядки.
+  const isPractice = !!practice;
+  const practiceRowIds = isPractice
+    ? config.rows.map((r) => r.id).filter((id) => practice!.onlyItemIds.includes(id))
+    : [];
+  const practiceRows = config.rows.filter((r) => practiceRowIds.includes(r.id));
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+  const onlyItemIdsKey = practice?.onlyItemIds.join(",") ?? "";
+  const [prevOnlyItemIdsKey, setPrevOnlyItemIdsKey] = useState(onlyItemIdsKey);
+  if (isPractice && onlyItemIdsKey !== prevOnlyItemIdsKey) {
+    setPrevOnlyItemIdsKey(onlyItemIdsKey);
+    setPracticeResults({});
+  }
+
+  async function submitPractice() {
+    const practiceSet = new Set(practiceRowIds);
+    const cells: TableFillAnswer["cells"] = [];
+    for (const row of practiceRows) {
+      (["left", "right"] as const).forEach((side) => {
+        const hidden = side === "left" ? row.left === null : row.right === null;
+        if (!hidden) return;
+        cells.push({ rowId: row.id, side, value: answers[cellKey(row.id, side)] ?? "" });
+      });
+    }
+    const hintedCellsList = [...hintedCells]
+      .map((key) => {
+        const [rowId, side] = key.split(":") as [string, "left" | "right"];
+        return { rowId, side };
+      })
+      .filter((h) => practiceSet.has(h.rowId));
+    const answer: TableFillAnswer = { cells, hintedCells: hintedCellsList };
+    const result = await practiceCheck.check(practiceRowIds, answer);
+    if (!result) return;
+    setPracticeResults((prev) => {
+      const next = { ...prev };
+      for (const r of result.results) next[r.itemId] = r.correct;
+      return next;
+    });
+    setPracticeFailedAttempts(result.failedAttempts);
+    for (const r of result.results) {
+      if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
+        practiceCheck.reveal(r.itemId, false);
+      }
+    }
+  }
+
+  function renderPracticeRow(row: Row) {
+    const isCorrect = practiceResults[row.id];
+    const locked = isCorrect !== undefined;
+    const attempts = practiceFailedAttempts[row.id] ?? 0;
+    const revealedAnswer = practiceCheck.revealed[row.id];
+
+    function practiceInputClass() {
+      if (!locked) return "border-gray-300 dark:border-neutral-600";
+      return isCorrect
+        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+        : "border-red-500 bg-red-50 dark:bg-red-950/30";
+    }
+
+    function cellField(side: "left" | "right", value: string | null) {
+      if (value !== null) return <span>{frenchNbsp(value)}</span>;
+      return (
+        <input
+          value={answers[cellKey(row.id, side)] ?? ""}
+          onChange={(e) => updateAnswer(row.id, side, e.target.value)}
+          disabled={locked}
+          className={`w-full rounded border px-2 py-1 text-base ${practiceInputClass()}`}
+        />
+      );
+    }
+
+    return (
+      <div
+        key={row.id}
+        className="flex flex-col gap-1.5 rounded border border-gray-200 p-2 dark:border-neutral-700"
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{columnLabels[0]}</p>
+            {cellField("left", row.left)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{columnLabels[1]}</p>
+            {cellField("right", row.right)}
+          </div>
+        </div>
+        {isCorrect === true && (
+          <p className="text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+        )}
+        {isCorrect === false && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-red-600 dark:text-red-400">
+              Неправильно, спробуйте ще раз (спроб: {attempts})
+            </span>
+            {!revealedAnswer && (
+              <button
+                type="button"
+                onClick={() => practiceCheck.reveal(row.id, true)}
+                disabled={!!practiceCheck.revealPending[row.id]}
+                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+              >
+                Показати відповідь
+              </button>
+            )}
+          </div>
+        )}
+        {revealedAnswer && (
+          <p className="text-xs italic text-amber-700 dark:text-amber-400">
+            Правильна відповідь: {revealedAnswer.join(" / ")}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   function inputClass(rowId: string, side: "left" | "right", detail: TableFillDetail | undefined) {
     const idle = "border-gray-300 dark:border-neutral-600";
@@ -423,6 +556,25 @@ export function TableFillExercise({
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    return (
+      <div className={EXERCISE_STACK}>
+        <div className="flex flex-col gap-2">{practiceRows.map((row) => renderPracticeRow(row))}</div>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={submitPractice}
+            disabled={practiceCheck.pending}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+          >
+            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+          </button>
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
       </div>
     );
   }

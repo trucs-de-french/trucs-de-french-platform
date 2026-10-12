@@ -29,6 +29,7 @@ export const PRACTICE_ITEMS_TASK_TYPES = [
   "letter_gaps",
   "letter_rearrangement",
   "matching",
+  "table_fill",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -40,7 +41,6 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 const ITEMS_MODE_TASK_TYPES = [
   "drag_drop",
   "open_answer",
-  "table_fill",
   "image_match",
   "listening",
 ] as const;
@@ -120,6 +120,19 @@ function letterRearrangementInScope(w: { inScope?: boolean }): boolean {
 // поля inScope, як у letter_rearrangement, не потрібно.
 type MatchingDetailLike = { pairPoints: { id: string; isCorrect: boolean }[] };
 
+// Рядок — елемент table_fill (частина 6, хвиля 1). На відміну від
+// matching/pairPoints, blanks тут НЕ один запис на елемент — рядок з ОБОМА
+// прихованими клітинками (leftHidden і rightHidden) дає ДВА записи blanks з
+// однаковим rowId (gradeTableFill, grade.ts) — елемент "правильний" лише
+// коли ВСІ його blanks правильні (та сама гранулярність, що points/
+// hintsReducePoints уже рахують на рівні рядка). Рядки без жодної
+// прихованої клітинки не потрапляють у blanks взагалі — не проблема (вони й
+// так не можуть бути помилкою). Скоуп (блокова вправа >10 рядків) уже
+// вбудований у gradeTableFill через answeredRowIds — тут додаткового inScope
+// поля, як у letter_rearrangement, не потрібно (той самий принцип, що
+// matching/pairPoints).
+type TableFillDetailLike = { blanks: { rowId: string; isCorrect: boolean }[] };
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -163,6 +176,12 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
     return (d as MatchingDetailLike).pairPoints.filter((p) => !p.isCorrect).map((p) => p.id);
   }
 
+  if (taskType === "table_fill" && Array.isArray(d.blanks)) {
+    const blanks = (d as TableFillDetailLike).blanks;
+    const rowIds = [...new Set(blanks.map((b) => b.rowId))];
+    return rowIds.filter((id) => blanks.some((b) => b.rowId === id && !b.isCorrect));
+  }
+
   return null;
 }
 
@@ -203,6 +222,10 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
 
   if (taskType === "matching" && Array.isArray(d.pairPoints)) {
     return (d as MatchingDetailLike).pairPoints.map((p) => p.id);
+  }
+
+  if (taskType === "table_fill" && Array.isArray(d.blanks)) {
+    return [...new Set((d as TableFillDetailLike).blanks.map((b) => b.rowId))];
   }
 
   return null;

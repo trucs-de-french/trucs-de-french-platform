@@ -14,6 +14,7 @@ import type {
   LetterGapsDetail,
   LetterRearrangementDetail,
   MatchingDetail,
+  TableFillDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -141,6 +142,18 @@ export async function POST(request: Request) {
       results = itemIds.map((itemId) => {
         const p = detail.pairPoints.find((pp) => pp.id === itemId);
         return { itemId, correct: !!p?.isCorrect };
+      });
+      break;
+    }
+    case "table_fill": {
+      // За rowId (елемент тут РЯДОК, не клітинка) — рядок правильний лише
+      // якщо ВСІ його blanks (1 чи 2 приховані клітинки) правильні, той
+      // самий принцип, що гранулярність points/mistakeItemIds (error-
+      // review.ts).
+      const detail = graded.detail as TableFillDetail;
+      results = itemIds.map((itemId) => {
+        const rowBlanks = detail.blanks.filter((b) => b.rowId === itemId);
+        return { itemId, correct: rowBlanks.length > 0 && rowBlanks.every((b) => b.isCorrect) };
       });
       break;
     }

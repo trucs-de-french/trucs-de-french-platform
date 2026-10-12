@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isPracticeItemsTaskType } from "@/lib/exercises/error-review";
-import { BLANK_RE, parseBlankMarker, getMultipleChoiceItems, getMatchingPairs } from "@/lib/exercises/sanitize";
+import {
+  BLANK_RE,
+  parseBlankMarker,
+  getMultipleChoiceItems,
+  getMatchingPairs,
+  getTableFillRows,
+} from "@/lib/exercises/sanitize";
 import type {
   FillBlankConfig,
   MultipleChoiceConfig,
@@ -10,6 +16,7 @@ import type {
   LetterGapsConfig,
   LetterRearrangementConfig,
   MatchingConfig,
+  TableFillConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -123,6 +130,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
     }
     return NextResponse.json({ answer: [pair.right] });
+  }
+
+  if (task.type === "table_fill") {
+    // Елемент тут РЯДОК (не клітинка) — відповідь може мати 1 чи 2 значення
+    // (leftHidden/rightHidden незалежні), у порядку left,right, той самий
+    // принцип, що раз rowBlanks у practice/check. Беремо ПЕРШИЙ прийнятний
+    // варіант кожної прихованої клітинки (той самий принцип, що
+    // fill_blank/parseBlankMarker.answers[0]), без normalize — показуємо як
+    // учитель написав, не як сервер звіряє.
+    const config = task.config as TableFillConfig;
+    const row = getTableFillRows(config).find((r) => r.id === itemId);
+    if (!row) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    const answer: string[] = [];
+    if (row.leftHidden) answer.push(row.left.split("|")[0]);
+    if (row.rightHidden) answer.push(row.right.split("|")[0]);
+    return NextResponse.json({ answer });
   }
 
   // multiple_choice
