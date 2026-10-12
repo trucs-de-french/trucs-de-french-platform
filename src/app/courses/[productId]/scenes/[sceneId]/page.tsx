@@ -18,6 +18,7 @@ import {
   ERROR_REVIEW_EXCLUDED_TASK_TYPES,
   buildErrorReviewEntry,
   isPracticeItemsTaskType,
+  isWholePracticeTaskType,
 } from "@/lib/exercises/error-review";
 import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/gradable-types";
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
@@ -477,12 +478,17 @@ export default async function ScenePage({
     )
     .sort((a, b) => (taskOrderPosition.get(a.task_id) ?? 0) - (taskOrderPosition.get(b.task_id) ?? 0));
 
-  // RPC get_mistake_correction_state — лише для пілотних items-типів
-  // серед sceneMistakes: whole-типам ця модель не потрібна (mode!=="items",
-  // correctedItemIds/failedAttempts не використовуються).
+  // RPC get_mistake_correction_state — для пілотних items-типів і для
+  // whole-типів з реальною практикою (частина 7, хвиля 3, isWholePracticeTaskType)
+  // серед sceneMistakes: інші whole-типи (open_answer — тимчасовий фолбек
+  // reviewMode, і будь-який майбутній невідомий тип) цій моделі не
+  // потребують (mode!=="items" і не в WHOLE_MODE_TASK_TYPES).
   const pilotTaskIds = sceneMistakes
     .map((m) => m.task_id)
-    .filter((id) => isPracticeItemsTaskType(taskTypeById.get(id) ?? ""));
+    .filter((id) => {
+      const t = taskTypeById.get(id) ?? "";
+      return isPracticeItemsTaskType(t) || isWholePracticeTaskType(t);
+    });
   const correctionStates = await Promise.all(
     pilotTaskIds.map((id) =>
       supabase.rpc("get_mistake_correction_state", { p_user_id: user!.id, p_task_id: id })
@@ -516,10 +522,17 @@ export default async function ScenePage({
   // (sanitizeConfigForStudent, той самий, що вже рендерить вправу вище на
   // сторінці), щоб inline-практика могла показати ТОЙ САМИЙ студентський
   // компонент (MultipleChoiceExercise/FillBlankExercise) з onlyItemIds; для
-  // whole-типів — короткий опис з summarizeMistake (старий шлях, без змін).
+  // whole-типів з реальною практикою (частина 7, хвиля 3) — ТОЙ САМИЙ
+  // sanitizeConfigForStudent (перемішаний/порожній початковий стан, як при
+  // звичайному проходженні — те, що задача явно вимагає), без summary
+  // (summarizeMistake показав би готову правильну відповідь ДО практики —
+  // спойлер, якого items-типи й так уникають); для решти whole-типів
+  // (open_answer — тимчасовий фолбек reviewMode, майбутні невідомі типи) —
+  // старий шлях без змін: короткий опис з summarizeMistake, без config.
   const errorReviewEntries = sceneMistakes.map((m) => {
     const review = errorReviewByTask.get(m.task_id)!;
     const taskType = taskTypeById.get(m.task_id) ?? "";
+    const isWholePractice = review.mode === "whole" && isWholePracticeTaskType(taskType);
     return {
       taskId: m.task_id,
       title: taskTitleById.get(m.task_id) ?? "",
@@ -529,7 +542,7 @@ export default async function ScenePage({
       total: review.total,
       remainingItemIds: review.remainingItemIds,
       failedAttempts: review.failedAttempts,
-      summary: review.mode === "items" ? null : summarizeMistake(m.ai_feedback),
+      summary: review.mode === "items" || isWholePractice ? null : summarizeMistake(m.ai_feedback),
       // matching — окремий шлях (sanitizeMatchingForPractice): на відміну
       // від інших items-типів, де increment-компонент сам фільтрує повний
       // публічний config за onlyItemIds (елементи самодостатні, без
@@ -554,7 +567,9 @@ export default async function ScenePage({
                     review.remainingItemIds
                   )
                 : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
-          : null,
+          : isWholePractice
+            ? sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
+            : null,
     };
   });
   const gradableTaskIds = allSceneTaskEntries.filter((t) => isGradableTaskType(t.type)).map((t) => t.id);

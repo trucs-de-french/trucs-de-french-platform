@@ -44,13 +44,27 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 const ITEMS_MODE_TASK_TYPES = ["open_answer"] as const;
 
 // Класифікація "whole" (переробляється ЦІЛЕ завдання, не елемент) —
-// остаточна, не тимчасова.
-const WHOLE_MODE_TASK_TYPES = [
-  "reorder",
-  "chronological_order",
-  "sort_columns",
-  "checkbox_grid",
-] as const;
+// остаточна, не тимчасова. Розширюється по одному типу за раз (частина 7,
+// хвиля 3: reorder → chronological_order → sort_columns → checkbox_grid,
+// той самий принцип поступового розширення, що PRACTICE_ITEMS_TASK_TYPES
+// вище) — типи, яких тут ще немає, і далі отримують reviewMode()==="whole"
+// через дефолтний фолбек (той самий mode, що список нижче повернув би, якби
+// вони в ньому вже були, — reviewMode() не залежить від цього списку для
+// значення mode, лише isWholePracticeTaskType нижче розрізняє "є реальна
+// практика" від "ще немає", buildErrorReviewEntry/practice/check/
+// practice/reveal звіряють саме isWholePracticeTaskType, не mode==="whole").
+export const WHOLE_MODE_TASK_TYPES = ["reorder"] as const;
+export type WholePracticeTaskType = (typeof WHOLE_MODE_TASK_TYPES)[number];
+
+export function isWholePracticeTaskType(taskType: string): taskType is WholePracticeTaskType {
+  return (WHOLE_MODE_TASK_TYPES as readonly string[]).includes(taskType);
+}
+
+// Сурогатний ідентифікатор "елемента" для whole-режиму — усе завдання є
+// ОДНИМ елементом з точки зору mistake_corrections (corrected_item_ids/
+// failed_attempts), той самий механізм зберігання, що й items-режим, просто
+// з рівно одним можливим id замість одного на кожен item.
+export const WHOLE_TASK_ITEM_ID = "__task__";
 
 export type ReviewMode = "items" | "whole" | "none";
 
@@ -351,6 +365,29 @@ export function buildErrorReviewEntry(params: {
   failedAttempts: Record<string, number>;
 }): ErrorReviewEntry {
   const mode = reviewMode(params.taskType);
+
+  // whole-режим з реальною практикою (частина 7, хвиля 3) — "елемент" тут
+  // рівно один, WHOLE_TASK_ITEM_ID: сам факт присутності завдання в
+  // sceneMistakes (page.tsx: score !== 100, часткові бали теж помилка) уже
+  // означає "неправильно", тож wrongItemIds завжди [WHOLE_TASK_ITEM_ID] —
+  // mistakeRows тут не аналізуються (на відміну від items-режиму, де
+  // aggregateWrongItems потрібен для блокових вправ). status — лише
+  // not_started/done, "partial" для цілого завдання не застосовується (за
+  // дизайном задачі).
+  if (mode === "whole" && isWholePracticeTaskType(params.taskType)) {
+    const isDone = params.correctedItemIds.includes(WHOLE_TASK_ITEM_ID);
+    return {
+      taskId: params.taskId,
+      taskType: params.taskType,
+      mode,
+      wrongItemIds: [WHOLE_TASK_ITEM_ID],
+      correctedItemIds: params.correctedItemIds,
+      failedAttempts: params.failedAttempts,
+      remainingItemIds: isDone ? [] : [WHOLE_TASK_ITEM_ID],
+      status: isDone ? "done" : "not_started",
+      total: 1,
+    };
+  }
 
   if (mode !== "items") {
     return {

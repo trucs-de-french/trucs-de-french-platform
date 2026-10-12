@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { ReorderPublic, ReorderDetail, GradeResult } from "@/lib/exercises/types";
+import type { ReorderPublic, ReorderDetail, ReorderAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
+import { usePracticeCheck } from "./use-practice-check";
+import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SortableTileRow } from "./sortable-tile-row";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -11,7 +13,7 @@ import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -21,6 +23,14 @@ import { BlockNavigation } from "./block-navigation";
 type SequenceDetail = ReorderDetail["sequences"][number];
 type ReorderResult = Extract<GradeResult, { detail: ReorderDetail }>;
 type PublicSequence = ReorderPublic["sequences"][number];
+
+// Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) —
+// переробка ЦІЛОГО завдання (whole), на відміну від items-режиму
+// (MatchingPracticeProps тощо, onlyItemIds): "елемент" тут один —
+// WHOLE_TASK_ITEM_ID (error-review.ts), без розбиття на блоки (CARD_BLOCK_MAX
+// нижче застосовується лише у звичайному проходженні, не в практиці —
+// завдання повністю, навіть якщо послідовностей > CARD_BLOCK_MAX).
+export type ReorderPracticeProps = { whole: true; failedAttempts: Record<string, number> };
 
 // Один ряд плиток у перемішаному порядку — жодного окремого банку чи
 // порожніх слотів (на відміну від drag_drop, де банк доречний через текст
@@ -129,17 +139,50 @@ export function ReorderExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  practice,
 }: {
   taskId: string;
   config: ReorderPublic;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  practice?: ReorderPracticeProps;
 }) {
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  // ==== Гілка практики (whole) — незалежна від блоків/single нижче:
+  // завжди ВСІ послідовності одразу (config тут уже перемішаний сервером,
+  // page.tsx: sanitizeConfigForStudent), без BlockNavigation.
+  const isPractice = !!practice;
+  const practiceCheck = usePracticeCheck(taskId);
+  const [practiceOrders, setPracticeOrders] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
+  );
+  const [practiceDetail, setPracticeDetail] = useState<ReorderDetail | undefined>(undefined);
+  const [practiceCorrect, setPracticeCorrect] = useState(false);
+  const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
+    practice?.failedAttempts ?? {}
+  );
+
+  async function submitPractice() {
+    const answer: ReorderAnswer = config.sequences.map((s) => ({
+      sequenceId: s.id,
+      order: practiceOrders[s.id] ?? [],
+    }));
+    const result = await practiceCheck.check([WHOLE_TASK_ITEM_ID], answer);
+    if (!result) return;
+    const correct = result.results[0]?.correct ?? false;
+    setPracticeCorrect(correct);
+    setPracticeDetail(result.detail as ReorderDetail | undefined);
+    setPracticeFailedAttempts(result.failedAttempts);
+    const attempts = result.failedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
+    if (!correct && attempts >= 2 && !practiceCheck.revealed[WHOLE_TASK_ITEM_ID]) {
+      practiceCheck.reveal(WHOLE_TASK_ITEM_ID, false);
+    }
+  }
 
   // Картки (послідовності) — поріг блоку CARD_BLOCK_MAX=5, той самий
   // принцип, що word-choice.tsx/multiple-choice.tsx/true-false.tsx
@@ -277,6 +320,79 @@ export function ReorderExercise({
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
+      </div>
+    );
+  }
+
+  if (isPractice) {
+    const revealedAnswer = practiceCheck.revealed[WHOLE_TASK_ITEM_ID];
+    const attempts = practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0;
+    return (
+      <div className={EXERCISE_STACK}>
+        {!practiceCorrect && (
+          <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+            Торкніться двох слів, щоб поміняти їх місцями
+          </p>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {config.sequences.map((seq) => (
+            <ReorderSequenceTiles
+              key={seq.id}
+              order={practiceOrders[seq.id] ?? seq.items}
+              onChange={(next) => setPracticeOrders((prev) => ({ ...prev, [seq.id]: next }))}
+              detail={practiceDetail?.sequences.find((d) => d.id === seq.id)}
+              locked={practiceCorrect}
+              points={seq.points}
+              pointsVisible={false}
+              hidePoints
+              imageUrl={seq.imageUrl}
+              audioUrl={seq.audioUrl}
+              onOpenImage={setLightboxSrc}
+            />
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {!practiceCorrect && (
+            <button
+              type="button"
+              onClick={submitPractice}
+              disabled={practiceCheck.pending}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+          )}
+          {practiceCorrect && (
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+          )}
+          {practiceDetail && !practiceCorrect && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-red-600 dark:text-red-400">
+                Неправильно, спробуйте ще раз (спроб: {attempts})
+              </span>
+              {!revealedAnswer && (
+                <button
+                  type="button"
+                  onClick={() => practiceCheck.reveal(WHOLE_TASK_ITEM_ID, true)}
+                  disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
+                  className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                >
+                  Показати відповідь
+                </button>
+              )}
+            </div>
+          )}
+          {revealedAnswer && (
+            <p className="text-sm italic text-amber-700 dark:text-amber-400">
+              Правильний порядок: {revealedAnswer.join("; ")}
+            </p>
+          )}
+          {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
+        </div>
+
+        {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
       </div>
     );
   }

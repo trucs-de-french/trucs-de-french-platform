@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { gradeAnswer } from "@/lib/exercises/grade";
 import {
   isPracticeItemsTaskType,
+  isWholePracticeTaskType,
   aggregateWrongItems,
+  WHOLE_TASK_ITEM_ID,
   type ErrorReviewStatus,
 } from "@/lib/exercises/error-review";
 import type {
@@ -51,22 +53,30 @@ export async function POST(request: Request) {
     .eq("id", taskId)
     .single();
 
-  if (taskError || !task || !isPracticeItemsTaskType(task.type)) {
+  if (taskError || !task || !(isPracticeItemsTaskType(task.type) || isWholePracticeTaskType(task.type))) {
     return NextResponse.json({ error: "Режим практики недоступний для цього завдання" }, { status: 400 });
   }
+  const isWhole = isWholePracticeTaskType(task.type);
 
-  const { data: mistakeRows } = await supabase
-    .from("mistakes")
-    .select("ai_feedback, created_at")
-    .eq("user_id", user.id)
-    .eq("task_id", taskId);
-
-  const wrongItemIds = new Set(
-    aggregateWrongItems(
-      (mistakeRows ?? []).map((m) => ({ createdAt: m.created_at, detail: m.ai_feedback })),
-      task.type
-    )
-  );
+  // whole-режим (частина 7, хвиля 3) — "елемент" тут ЗАВЖДИ весь
+  // WHOLE_TASK_ITEM_ID, саму присутність завдання в "Роботі над помилками"
+  // (page.tsx: score !== 100) уже достатньо вважати помилкою — на відміну
+  // від items-режиму, тут не потрібен запит mistakes/aggregateWrongItems.
+  const wrongItemIds = isWhole
+    ? new Set([WHOLE_TASK_ITEM_ID])
+    : new Set(
+        await (async () => {
+          const { data: mistakeRows } = await supabase
+            .from("mistakes")
+            .select("ai_feedback, created_at")
+            .eq("user_id", user.id)
+            .eq("task_id", taskId);
+          return aggregateWrongItems(
+            (mistakeRows ?? []).map((m) => ({ createdAt: m.created_at, detail: m.ai_feedback })),
+            task.type
+          );
+        })()
+      );
 
   if (!itemIds.every((id) => wrongItemIds.has(id))) {
     return NextResponse.json({ error: "itemIds мають бути підмножиною помилок цього завдання" }, { status: 400 });
@@ -188,6 +198,13 @@ export async function POST(request: Request) {
       });
       break;
     }
+    // whole-режим (частина 7, хвиля 3) — один результат на весь taskType:
+    // "правильно" = graded.correct (gradeReorder уже рахує це як "усі
+    // елементи на 100%", часткові бали теж "неправильно"). Розширюється по
+    // одному case за раз разом із WHOLE_MODE_TASK_TYPES (error-review.ts).
+    case "reorder":
+      results = [{ itemId: WHOLE_TASK_ITEM_ID, correct: graded.correct }];
+      break;
     default: {
       const never: never = task.type;
       throw new Error(`practice/check: непідтримуваний тип "${never}"`);
@@ -234,5 +251,10 @@ export async function POST(request: Request) {
         ? "partial"
         : "not_started";
 
-  return NextResponse.json({ results, remainingItemIds, failedAttempts, status });
+  // detail — додаткове поле (частина 7, хвиля 3), ігнорується items-режимом
+  // (results уже несуть усе потрібне для нього): whole-режиму потрібен
+  // ПОВНИЙ detail gradeAnswer (не лише isCorrect на WHOLE_TASK_ITEM_ID), щоб
+  // компонент показав, які саме плитки/клітинки/елементи неправильні — той
+  // самий вигляд, що й звичайна перевірка (/api/exercises/check).
+  return NextResponse.json({ results, remainingItemIds, failedAttempts, status, detail: graded.detail });
 }

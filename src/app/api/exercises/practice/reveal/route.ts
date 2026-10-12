@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isPracticeItemsTaskType } from "@/lib/exercises/error-review";
+import { isPracticeItemsTaskType, isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import {
   BLANK_RE,
   parseBlankMarker,
@@ -8,6 +8,7 @@ import {
   getMatchingPairs,
   getTableFillRows,
   getDragDropSentences,
+  getReorderSequences,
 } from "@/lib/exercises/sanitize";
 import type {
   FillBlankConfig,
@@ -21,6 +22,7 @@ import type {
   DragDropConfig,
   ImageMatchConfig,
   ListeningConfig,
+  ReorderConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
     .eq("id", taskId)
     .single();
 
-  if (taskError || !task || !isPracticeItemsTaskType(task.type)) {
+  if (taskError || !task || !(isPracticeItemsTaskType(task.type) || isWholePracticeTaskType(task.type))) {
     return NextResponse.json({ error: "Режим практики недоступний для цього завдання" }, { status: 400 });
   }
 
@@ -184,6 +186,17 @@ export async function POST(request: Request) {
     }
     const correctOptions = question.options.filter((o) => o.correct).map((o) => o.text);
     return NextResponse.json({ answer: correctOptions });
+  }
+
+  // whole-режим (частина 7, хвиля 3) — itemId тут завжди WHOLE_TASK_ITEM_ID
+  // (сервер не перевіряє його значення, бо елемент один і єдиний). reorder —
+  // по рядку на послідовність, уже у вигляді "текст1 → текст2" (готовий до
+  // показу, items тут не мають власного id, на відміну від інших whole-
+  // типів, що приєднаються пізніше).
+  if (task.type === "reorder") {
+    const config = task.config as ReorderConfig;
+    const answer = getReorderSequences(config).map((s) => s.items.join(" → "));
+    return NextResponse.json({ answer });
   }
 
   // multiple_choice

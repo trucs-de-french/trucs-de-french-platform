@@ -6,6 +6,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { displayTaskTitle } from "@/lib/exercises/task-title";
+import { isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { FillBlankExercise } from "./fill-blank";
@@ -18,6 +19,7 @@ import { TableFillExercise } from "./table-fill";
 import { DragDropExercise } from "./drag-drop";
 import { ImageMatchExercise } from "./image-match";
 import { ListeningExercise } from "./listening";
+import { ReorderExercise } from "./reorder";
 import type {
   MultipleChoicePublic,
   FillBlankPublic,
@@ -30,6 +32,7 @@ import type {
   DragDropPublic,
   ImageMatchPublic,
   ListeningPublic,
+  ReorderPublic,
 } from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
@@ -115,7 +118,9 @@ function ErrorReviewCard({
   onToggleExpanded: () => void;
 }) {
   const isItems = entry.mode === "items";
-  const isDone = isItems && entry.status === "done";
+  const isWhole = entry.mode === "whole" && isWholePracticeTaskType(entry.taskType);
+  const isInteractive = isItems || isWhole;
+  const isDone = isInteractive && entry.status === "done";
   const remaining = entry.remainingItemIds.length;
 
   return (
@@ -132,10 +137,10 @@ function ErrorReviewCard({
           <p className="truncate font-heading font-medium" title={entry.title}>
             {displayTaskTitle({ title: entry.title, taskType: entry.taskType })}
           </p>
-          {!isItems && entry.summary && (
+          {!isInteractive && entry.summary && (
             <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{entry.summary}</p>
           )}
-          {isItems && (
+          {isInteractive && (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {entry.status === "partial"
                 ? `Лишилось ${remaining} з ${entry.total}`
@@ -145,7 +150,7 @@ function ErrorReviewCard({
             </p>
           )}
         </div>
-        <StatusPill status={isItems ? entry.status : "not_started"} />
+        <StatusPill status={isInteractive ? entry.status : "not_started"} />
       </div>
 
       {isItems && entry.status === "partial" && (
@@ -159,14 +164,14 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {isItems && !isDone && (
+      {isInteractive && !isDone && (
         <div className="flex items-center gap-2 border-t border-gray-100 p-3 dark:border-neutral-700">
           <button
             type="button"
             onClick={onToggleExpanded}
             className={`${STUDENT_BUTTON_PRIMARY} min-h-11`}
           >
-            {expanded ? "Згорнути" : `Виправити ${remaining}`}
+            {expanded ? "Згорнути" : isWhole ? "Спробувати ще раз" : `Виправити ${remaining}`}
           </button>
         </div>
       )}
@@ -178,7 +183,7 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {expanded && isItems && !isDone && entry.config && (
+      {expanded && isInteractive && !isDone && entry.config && (
         <div className="border-t border-gray-100 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
           {entry.taskType === "multiple_choice" && (
             <MultipleChoiceExercise
@@ -277,6 +282,15 @@ function ErrorReviewCard({
               pointsVisible={false}
               hidePoints
               practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "reorder" && (
+            <ReorderExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as ReorderPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
             />
           )}
         </div>

@@ -8,6 +8,10 @@ export type PracticeCheckResponse = {
   remainingItemIds: string[];
   failedAttempts: Record<string, number>;
   status: "not_started" | "partial" | "done";
+  // whole-режим (частина 7, хвиля 3) — повний detail gradeAnswer, щоб
+  // компонент показав, які плитки/клітинки/елементи неправильні (items-
+  // режим цим полем не користується, results уже несуть усе потрібне).
+  detail?: unknown;
 };
 
 // Спільний для multiple-choice.tsx/fill-blank.tsx хук режиму практики
