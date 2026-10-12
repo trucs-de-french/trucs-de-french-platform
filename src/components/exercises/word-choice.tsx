@@ -72,15 +72,27 @@ export function WordChoiceExercise({
   // optionId на речення — "відповідь" виводиться з того, що лишилось.
   const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
 
-  // Підказка вчительки (лампочка) — той самий принцип, що open-answer-
-  // check.tsx hintShown: клієнтський стан, лише "показано" (без закриття),
-  // нічого на сервер не йде, поки sentenceAnswer() нижче не пронесе
-  // hintUsed у відповідь. Практика НЕ використовує цей стан узагалі
-  // (renderSentenceCard(..., { showHint: false }) у гілці isPractice —
-  // лампочки вимкнені, нічого зберігати).
+  // Підказка вчительки (лампочка) — ДВА окремі стани, бо розкриття/
+  // згортання має лишатись зворотним (UI), а факт "хоч раз показували"
+  // для балів — НАЗАВЖДИ (той самий принцип, що translationHints/
+  // hintedBlanks у fill-blank.tsx: лампочка "used" не повертається назад в
+  // "available", навіть коли сам блок із текстом згорнуто).
+  // hintShown — перманентний, іде в sentenceAnswer() нижче як hintUsed,
+  // ніколи не видаляється. hintVisible — лише "розгорнуто зараз", клік
+  // перемикає. Нічого не йде на сервер одразу (hint-текст уже в
+  // публічному config) — лише в самому сабміті відповіді. Практика НЕ
+  // використовує жоден із цих станів (showHintBulb=false у гілці
+  // isPractice — лампочки вимкнені, нічого зберігати).
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
-  function showHint(sentenceId: string) {
+  const [hintVisible, setHintVisible] = useState<Set<string>>(new Set());
+  function toggleHintVisible(sentenceId: string) {
     setHintShown((prev) => (prev.has(sentenceId) ? prev : new Set(prev).add(sentenceId)));
+    setHintVisible((prev) => {
+      const next = new Set(prev);
+      if (next.has(sentenceId)) next.delete(sentenceId);
+      else next.add(sentenceId);
+      return next;
+    });
   }
 
   // Картки (не слова/пари) — поріг блоку CARD_BLOCK_MAX=5, нижчий за
@@ -278,6 +290,7 @@ export function WordChoiceExercise({
     const glueMatch = trimmedAfter.match(/^[.,;:!?)»…]+/);
     const glueText = glueMatch ? glueMatch[0] : "";
     const restAfter = glueText ? trimmedAfter.slice(glueText.length) : trimmedAfter;
+    const hasHintBulb = showHintBulb && !!s.hint;
     return (
       <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
       <div className="flex items-start gap-2.5">
@@ -286,6 +299,17 @@ export function WordChoiceExercise({
             {globalIndex + 1}
           </span>
         )}
+        {/* min-w-0 flex-1 тут (не на <p>) — колонка тексту+лампочки разом,
+            щоб жовтий блок підказки нижче міг лягти на всю її ширину, а не
+            лише на ширину <p> в сусідньому flex-ряду. */}
+        <div className="min-w-0 flex-1">
+        {/* items-start — лампочка притиснута до ВЕРХУ першого рядка, не
+            по центру всієї (можливо багаторядкової) <p>. shrink-0 на
+            лампочці — вона фіксованої ширини, <p> забирає решту й сама
+            переноситься, лампочка ніколи не йде на новий рядок (на
+            відміну від старої inline-версії всередині <p>, яка саме тому
+            й переносилась). */}
+        <div className="flex items-start gap-1.5">
         <p className="min-w-0 flex-1 break-words leading-[1.625rem] [overflow-wrap:anywhere]">
         {frenchNbsp(before.trimEnd())}
         {s.options.map((o, oi) => {
@@ -317,25 +341,26 @@ export function WordChoiceExercise({
         })}
         {frenchNbsp(restAfter)}
         {multiHint(s)}
-        {showHintBulb && s.hint && !sentenceDetail && (
-          <span className="relative ml-1 inline-block align-middle">
-            <HintBulb
-              size="sm"
-              state={hintShown.has(s.id) ? "used" : "available"}
-              onClick={() => showHint(s.id)}
-              label={hintShown.has(s.id) ? s.hint : "Показати підказку"}
-            />
-            {/* position:absolute — підказка-попап над текстом, не в потоці
-                рядка (інакше розкриття збільшило б висоту картки, пряма
-                вимога задачі: лампочка не ламає вирівнювання речення). */}
-            {hintShown.has(s.id) && (
-              <span className="absolute left-0 top-full z-10 mt-1 w-max max-w-[16rem] rounded-md border border-amber-200 bg-amber-50 p-2 text-xs break-words text-neutral-700 shadow-md dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
-                {s.hint}
-              </span>
-            )}
-          </span>
-        )}
         </p>
+        {hasHintBulb && (
+          <HintBulb
+            size="sm"
+            state={hintShown.has(s.id) ? "used" : "available"}
+            onClick={() => toggleHintVisible(s.id)}
+            label={hintVisible.has(s.id) ? "Згорнути підказку" : "Показати підказку"}
+            className="mt-0.5 shrink-0"
+          />
+        )}
+        </div>
+        {/* У потоці картки (не absolute) — повторний клік на лампочці
+            згортає цей блок назад, isCorrect/hintUsed для балів незалежні
+            від hintVisible (hintShown окремий, перманентний стан вище). */}
+        {hasHintBulb && hintVisible.has(s.id) && (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+            {s.hint}
+          </div>
+        )}
+        </div>
       </div>
       </div>
     );
