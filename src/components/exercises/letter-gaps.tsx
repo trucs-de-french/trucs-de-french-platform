@@ -23,6 +23,8 @@ import {
   LONG_WORD_COMPACT_THRESHOLD,
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
+  GAP_SIZE_CLASS,
+  GAP_TEXT_CLASS,
   COMPACT_GAP_SIZE_CLASS,
   COMPACT_LETTER_TEXT_CLASS,
   WORD_CARD,
@@ -453,8 +455,8 @@ export function LetterGapsExercise({
     const { maxUnitLength } = phraseSizeInfo(word.chars);
     const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
     const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
-    const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : "h-9 w-8";
-    const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : "text-lg";
+    const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
+    const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     return (
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>

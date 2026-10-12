@@ -378,6 +378,7 @@ export function LetterRearrangementExercise({
               tileState={tileState}
               compact={isCompact}
               letterTile
+              gapClassName="gap-1"
               lockedCount={opts.locked ? 0 : lockedCounts[wi]}
             />
           </div>

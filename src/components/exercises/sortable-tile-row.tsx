@@ -19,6 +19,7 @@ export function SortableTileRow({
   tileState,
   compact = false,
   letterTile = false,
+  gapClassName = "gap-2",
   lockedCount = 0,
   extraContainerClassName = "",
   extraTileClassName = "",
@@ -38,6 +39,12 @@ export function SortableTileRow({
   // width за задумом, letterTile не передає). compact тут вибирає менший
   // фіксований розмір, а не менший padding.
   letterTile?: boolean;
+  // Відступ між плитками (і між перенесеними рядками — flex gap задає
+  // обидва) — за замовчуванням gap-2 (reorder.tsx, плитки-слова). У
+  // letter_rearrangement letterTile передає gap-1, той самий, що letter-
+  // gaps.tsx між літерами в межах слова (units-рядок), щоб обидва типи
+  // виглядали як одна родина, а не два різні міжплиткові ритми.
+  gapClassName?: string;
   // Префікс позицій [0, lockedCount), закріплених кнопкою-підказкою
   // (letter_rearrangement): ці плитки не тягаються й не клікаються, і жодну
   // іншу плитку не можна перетягнути/клікнути НА ці позиції — лише "після"
@@ -93,7 +100,7 @@ export function SortableTileRow({
   }
 
   return (
-    <div className={`flex flex-wrap items-stretch gap-2 ${extraContainerClassName}`}>
+    <div className={`flex flex-wrap items-stretch ${gapClassName} ${extraContainerClassName}`}>
       {items.map((text, i) => (
         <div key={i} className="relative flex items-stretch">
           {/* Індикатор вставки — тонка вертикальна лінія кольору brand між
