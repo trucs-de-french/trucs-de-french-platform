@@ -16,6 +16,7 @@ import type {
   MatchingDetail,
   TableFillDetail,
   DragDropDetail,
+  ImageMatchDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -165,6 +166,16 @@ export async function POST(request: Request) {
       results = itemIds.map((itemId) => {
         const s = detail.sentences.find((x) => x.id === itemId);
         return { itemId, correct: !!s && s.blanks.every((b) => b.isCorrect) };
+      });
+      break;
+    }
+    case "image_match": {
+      // За item.id — простий item-рівень (без групування, той самий
+      // принцип, що gradeChronologicalOrder).
+      const detail = graded.detail as ImageMatchDetail;
+      results = itemIds.map((itemId) => {
+        const it = detail.items.find((x) => x.id === itemId);
+        return { itemId, correct: !!it?.isCorrect };
       });
       break;
     }

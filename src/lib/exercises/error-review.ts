@@ -31,6 +31,7 @@ export const PRACTICE_ITEMS_TASK_TYPES = [
   "matching",
   "table_fill",
   "drag_drop",
+  "image_match",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -39,7 +40,7 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // цього списку мають реальну реалізацію mistakeItemIds/itemsInDetail —
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
-const ITEMS_MODE_TASK_TYPES = ["open_answer", "image_match", "listening"] as const;
+const ITEMS_MODE_TASK_TYPES = ["open_answer", "listening"] as const;
 
 // Класифікація "whole" (переробляється ЦІЛЕ завдання, не елемент) —
 // остаточна, не тимчасова.
@@ -140,6 +141,13 @@ type TableFillDetailLike = { blanks: { rowId: string; isCorrect: boolean }[] };
 // submitBlock), тож itemsInDetail завжди покриває всю вправу.
 type DragDropDetailLike = { sentences: { id: string; blanks: { isCorrect: boolean }[] }[] };
 
+// Елемент — одна картинка (item.id), той самий простий item-рівень, що
+// gradeChronologicalOrder, без групування (на відміну від table_fill/
+// drag_drop). gradeImageMatch теж НЕ скоупить items за присутністю в
+// answer (завжди ВСІ items config, той самий принцип, що drag_drop —
+// image_match не підтримує блоки взагалі).
+type ImageMatchDetailLike = { items: { id: string; isCorrect: boolean }[] };
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -195,6 +203,10 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
       .map((s) => s.id);
   }
 
+  if (taskType === "image_match" && Array.isArray(d.items)) {
+    return (d as ImageMatchDetailLike).items.filter((i) => !i.isCorrect).map((i) => i.id);
+  }
+
   return null;
 }
 
@@ -243,6 +255,10 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
 
   if (taskType === "drag_drop" && Array.isArray(d.sentences)) {
     return (d as DragDropDetailLike).sentences.map((s) => s.id);
+  }
+
+  if (taskType === "image_match" && Array.isArray(d.items)) {
+    return (d as ImageMatchDetailLike).items.map((i) => i.id);
   }
 
   return null;

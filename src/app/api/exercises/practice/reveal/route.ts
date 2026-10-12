@@ -19,6 +19,7 @@ import type {
   MatchingConfig,
   TableFillConfig,
   DragDropConfig,
+  ImageMatchConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -163,6 +164,15 @@ export async function POST(request: Request) {
     }
     const answer = [...sentence.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).answers[0]);
     return NextResponse.json({ answer });
+  }
+
+  if (task.type === "image_match") {
+    const config = task.config as ImageMatchConfig;
+    const item = config.items.find((i) => i.id === itemId);
+    if (!item) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    return NextResponse.json({ answer: [item.name] });
   }
 
   // multiple_choice

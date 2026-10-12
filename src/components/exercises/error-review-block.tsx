@@ -15,6 +15,7 @@ import { LetterRearrangementExercise } from "./letter-rearrangement";
 import { MatchingExercise } from "./matching";
 import { TableFillExercise } from "./table-fill";
 import { DragDropExercise } from "./drag-drop";
+import { ImageMatchExercise } from "./image-match";
 import type {
   MultipleChoicePublic,
   FillBlankPublic,
@@ -25,6 +26,7 @@ import type {
   MatchingPublic,
   TableFillPublic,
   DragDropPublic,
+  ImageMatchPublic,
 } from "@/lib/exercises/types";
 
 // Три порожні стани (пілот, частина 2) — розрізняються за тим, чи студент
@@ -249,6 +251,15 @@ function ErrorReviewCard({
             <DragDropExercise
               taskId={entry.taskId}
               config={entry.config as unknown as DragDropPublic}
+              pointsVisible={false}
+              hidePoints
+              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+            />
+          )}
+          {entry.taskType === "image_match" && (
+            <ImageMatchExercise
+              taskId={entry.taskId}
+              config={entry.config as unknown as ImageMatchPublic}
               pointsVisible={false}
               hidePoints
               practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}

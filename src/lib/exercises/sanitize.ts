@@ -702,6 +702,23 @@ export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
   };
 }
 
+// Скоуп для практики "Робота над помилками" (частина 6, хвиля 1) — той
+// самий принцип, що sanitizeDragDropForPractice/sanitizeMatchingForPractice:
+// bank тут СПІЛЬНИЙ пул назв, прив'язка назви до картинки — секрет, тож
+// лише сервер (повний config) може звузити його до назв САМЕ items
+// itemIds, без зайвих дистракторів з інших, уже виправлених/непрактикованих
+// картинок.
+export function sanitizeImageMatchForPractice(config: ImageMatchConfig, itemIds: string[]): ImageMatchPublic {
+  const idSet = new Set(itemIds);
+  const items = config.items.filter((i) => idSet.has(i.id));
+  return {
+    instructions: config.instructions,
+    subInstructions: config.subInstructions,
+    items: items.map((i) => ({ id: i.id, imageUrl: i.imageUrl, points: resolveImageMatchPoints(i) })),
+    bank: shuffle(items.map((i) => i.name)),
+  };
+}
+
 // Той самий пілот, що resolveTrueFalsePoints — дефолт 1. На рівні РЯДКА
 // (не клітинки, той самий компроміс, що resolveTableFillPoints).
 export function resolveCheckboxGridPoints(row: CheckboxGridRow): number {

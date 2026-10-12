@@ -7,7 +7,12 @@ import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-pre
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { resolvePlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/platform-icon";
-import { sanitizeConfigForStudent, sanitizeMatchingForPractice, sanitizeDragDropForPractice } from "@/lib/exercises/sanitize";
+import {
+  sanitizeConfigForStudent,
+  sanitizeMatchingForPractice,
+  sanitizeDragDropForPractice,
+  sanitizeImageMatchForPractice,
+} from "@/lib/exercises/sanitize";
 import { summarizeMistake } from "@/lib/exercises/summarize-mistake";
 import {
   ERROR_REVIEW_EXCLUDED_TASK_TYPES,
@@ -34,6 +39,7 @@ import type {
   PhoneticsConfig,
   MatchingConfig,
   DragDropConfig,
+  ImageMatchConfig,
 } from "@/lib/exercises/types";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
@@ -542,7 +548,12 @@ export default async function ScenePage({
                   (taskConfigById.get(m.task_id) ?? {}) as unknown as DragDropConfig,
                   review.remainingItemIds
                 )
-              : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
+              : taskType === "image_match"
+                ? sanitizeImageMatchForPractice(
+                    (taskConfigById.get(m.task_id) ?? {}) as unknown as ImageMatchConfig,
+                    review.remainingItemIds
+                  )
+                : sanitizeConfigForStudent(taskType as GradableTaskType, taskConfigById.get(m.task_id) ?? {})
           : null,
     };
   });
