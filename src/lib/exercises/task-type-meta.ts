@@ -684,6 +684,26 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
   ai_examiner: "ШІ-екзаменатор",
 };
 
+// Назва ТИПУ не завжди однозначно описує, що робить студент — word_choice
+// з config.mode==="cross_out" — та сама структура даних (речення + варіанти),
+// що звичайний "Вибір правильної форми" (mode==="select"), але студент
+// робить протилежне (викреслює ЗАЙВЕ, не обирає правильне) — заслуговує на
+// власну назву ("Вибір зайвого"), інакше дві принципово різні вправи в
+// одному блоці помилок/списку завдань конструктора невідрізнювані за назвою.
+//
+// Інші знайдені поля "mode"/"display" у типах (ChronologicalOrderConfig.mode
+// image/text/mixed, MultipleChoiceConfig.display buttons/dropdown,
+// FlipCardsConfig.mode manual/...) — свідомо СЮДИ не додані: це варіанти
+// ПОДАННЯ (як намальовано на екрані), а не того, ЩО студент повинен
+// зробити — інструкція, мета вправи й те, як вона оцінюється, не
+// змінюються між ними, на відміну від word_choice.
+export function taskVariantLabel(taskType: string, config?: Record<string, unknown> | null): string {
+  if (taskType === "word_choice" && config?.mode === "cross_out") {
+    return "Вибір зайвого";
+  }
+  return TASK_TYPE_LABELS[taskType] ?? taskType;
+}
+
 // Типи, чия tasks.title показується СТУДЕНТУ (scenes/[sceneId]/page.tsx,
 // exercise-block.tsx) — там вона лишається обов'язковим/ручним полем, як і
 // раніше; автоназва (task-title.ts) для них НЕ генерується. Єдине джерело —

@@ -1,4 +1,4 @@
-import { TASK_TYPE_LABELS } from "./task-type-meta";
+import { taskVariantLabel } from "./task-type-meta";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
 // "<Назва типу>: <перші 3 елементи через кому>…" — максимум ~60 символів
@@ -121,7 +121,7 @@ function getPreviewElements(type: string, config: Record<string, unknown>): stri
 // (TASK_TYPES_WITH_VISIBLE_TITLE — link/embed/game), не викликається
 // (виклик пропускається на рівні actions.ts) — там назва лишається ручною.
 export function generateTaskTitle(type: string, config: Record<string, unknown> | null | undefined): string {
-  const typeLabel = TASK_TYPE_LABELS[type] ?? type;
+  const typeLabel = taskVariantLabel(type, config);
   const elements = getPreviewElements(type, config ?? {});
   if (elements.length === 0) return typeLabel;
 
@@ -136,15 +136,23 @@ export function generateTaskTitle(type: string, config: Record<string, unknown> 
 }
 
 // Назва картки "Робота над помилками" (частина 6, хвиля 2; уніфікація
-// назв типів, хвиля 3) — лише ВІДОБРАЖЕННЯ, title у БД не чіпається.
-// Завжди українська назва ТИПУ з TASK_TYPE_LABELS, а не довільний title
-// вчителя (раніше короткий title показувався як є — звідси мішанина
-// укр/англ/фр назв у картках: "V ou F", "Reorder", "Audio" тощо, бо
-// вчителька могла назвати задачу як завгодно). Оригінальний title і далі
-// доступний викликачу через сам `task.title` — для title-атрибута на
-// hover (error-review-block.tsx), ординал при кількох картках одного
-// типу — так само відповідальність викликача (ця функція не знає про
+// назв типів, хвилі 3-4) — лише ВІДОБРАЖЕННЯ, title у БД не чіпається.
+// Завжди українська назва ТИПУ з ВРАХУВАННЯМ варіанта (taskVariantLabel,
+// task-type-meta.ts — напр. word_choice+cross_out → "Вибір зайвого", не
+// "Вибір правильної форми"), а не довільний title вчителя (раніше короткий
+// title показувався як є — звідси мішанина укр/англ/фр назв у картках:
+// "V ou F", "Reorder", "Audio" тощо, бо вчителька могла назвати задачу як
+// завгодно). config — опційний: якщо викликач його не передав (чи для
+// задачі немає санітизованого config), поведінка як без варіанта —
+// TASK_TYPE_LABELS[taskType]. Оригінальний title і далі доступний
+// викликачу через сам `task.title` — для title-атрибута на hover
+// (error-review-block.tsx), ординал при кількох картках ОДНАКОВОЇ фінальної
+// назви — так само відповідальність викликача (ця функція не знає про
 // сусідні картки).
-export function displayTaskTitle(task: { title: string | null | undefined; taskType: string }): string {
-  return frenchNbsp(TASK_TYPE_LABELS[task.taskType] ?? task.taskType);
+export function displayTaskTitle(task: {
+  title: string | null | undefined;
+  taskType: string;
+  config?: Record<string, unknown> | null;
+}): string {
+  return frenchNbsp(taskVariantLabel(task.taskType, task.config));
 }

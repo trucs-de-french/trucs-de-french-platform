@@ -6,6 +6,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { displayTaskTitle } from "@/lib/exercises/task-title";
+import { taskVariantLabel } from "@/lib/exercises/task-type-meta";
 import { isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { MultipleChoiceExercise } from "./multiple-choice";
@@ -146,7 +147,7 @@ function ErrorReviewCard({
         <TaskTypeIconBadge type={entry.taskType} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading font-medium" title={entry.title}>
-            {displayTaskTitle({ title: entry.title, taskType: entry.taskType })}
+            {displayTaskTitle({ title: entry.title, taskType: entry.taskType, config: entry.config })}
             {ordinal !== null && ` · ${ordinal}`}
           </p>
           {!isInteractive && entry.summary && (
@@ -371,19 +372,26 @@ export function ErrorReviewBlock({
       ) : (
         <div className="flex flex-col gap-2">
           {(() => {
-            // Кілька карток ОДНОГО taskType в блоці — додаємо порядковий
-            // номер до назви типу, щоб картки лишались розрізнюваними
-            // (displayTaskTitle тепер завжди показує лише назву типу, без
-            // довільного title вчителя — див. task-title.ts).
-            const typeCounts = new Map<string, number>();
+            // Кілька карток з ОДНАКОВОЮ фінальною назвою (taskVariantLabel,
+            // не сирий taskType!) у блоці — додаємо порядковий номер, щоб
+            // картки лишались розрізнюваними (displayTaskTitle тепер завжди
+            // показує назву типу/варіанта, без довільного title вчителя —
+            // див. task-title.ts). Групуємо саме по назві, а не по taskType,
+            // бо один taskType (word_choice) може дати ДВІ різні назви
+            // ("Вибір правильної форми" / "Вибір зайвого" — mode) — вони НЕ
+            // повинні ділити нумерацію між собою.
+            const labelOf = (entry: ErrorReviewEntryData) => taskVariantLabel(entry.taskType, entry.config);
+            const labelCounts = new Map<string, number>();
             for (const entry of entries) {
-              typeCounts.set(entry.taskType, (typeCounts.get(entry.taskType) ?? 0) + 1);
+              const label = labelOf(entry);
+              labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
             }
             const seenSoFar = new Map<string, number>();
             return entries.map((entry, i) => {
-              const seen = (seenSoFar.get(entry.taskType) ?? 0) + 1;
-              seenSoFar.set(entry.taskType, seen);
-              const ordinal = (typeCounts.get(entry.taskType) ?? 0) > 1 ? seen : null;
+              const label = labelOf(entry);
+              const seen = (seenSoFar.get(label) ?? 0) + 1;
+              seenSoFar.set(label, seen);
+              const ordinal = (labelCounts.get(label) ?? 0) > 1 ? seen : null;
               return (
                 <ErrorReviewCard
                   key={entry.taskId}
