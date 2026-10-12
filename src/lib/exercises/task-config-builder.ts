@@ -352,6 +352,8 @@ export function buildTaskConfig(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         mode: (formData.get("chronological_order_mode") as string) || "image",
         items: parseJsonField(formData.get("chronological_order_items")),
+        hint: (formData.get("chronological_order_hint") as string) || "",
+        hintsReducePoints: formData.get("chronological_order_hints_reduce_points") === "true",
       };
     }
     case "vocab_quiz":

@@ -16,6 +16,8 @@ import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
+import { HintBulb } from "./hint-bulb";
+import { HintExplanation } from "./hint-explanation";
 import {
   ANSWER_CARD_DEFAULT,
   COMPACT_IMAGE_GRID,
@@ -81,6 +83,19 @@ export function ChronologicalOrderExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as ChronologicalOrderDetail | undefined;
 
+  // Підказка вчительки (лампочка) на все завдання — той самий принцип, що
+  // word-choice.tsx (27fd820): hintShown (перманентний, іде в hintUsed) і
+  // hintVisible (лише поточна видимість) розділені, щоб згортання/повторне
+  // відкриття блоку ніколи не могло вдруге зняти бали. Практика нижче
+  // (isPractice) ці стани взагалі не використовує — лампочка там не
+  // рендериться (п.6 задачі).
+  const [hintShown, setHintShown] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
+  function toggleHintVisible() {
+    setHintShown(true);
+    setHintVisible((v) => !v);
+  }
+
   // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як
   // один елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що reorder.tsx.
   const isPractice = !!practice;
@@ -105,10 +120,12 @@ export function ChronologicalOrderExercise({
   }, [isPractice, result, onResult]);
 
   async function submitPractice() {
-    const answer: ChronologicalOrderAnswer = config.items.map((item) => ({
-      itemId: item.id,
-      position: Number(positions[item.id] ?? ""),
-    }));
+    const answer: ChronologicalOrderAnswer = {
+      items: config.items.map((item) => ({
+        itemId: item.id,
+        position: Number(positions[item.id] ?? ""),
+      })),
+    };
     const r = await practiceCheck.check([WHOLE_TASK_ITEM_ID], answer);
     if (!r) return;
     const correct = r.results[0]?.correct ?? false;
@@ -157,10 +174,13 @@ export function ChronologicalOrderExercise({
   }
 
   function handleSubmit() {
-    const answer: ChronologicalOrderAnswer = config.items.map((item) => ({
-      itemId: item.id,
-      position: Number(positions[item.id] ?? ""),
-    }));
+    const answer: ChronologicalOrderAnswer = {
+      items: config.items.map((item) => ({
+        itemId: item.id,
+        position: Number(positions[item.id] ?? ""),
+      })),
+      hintUsed: hintShown,
+    };
     submit(answer);
   }
 
@@ -212,9 +232,41 @@ export function ChronologicalOrderExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction}
+      <div>
+        {/* flex items-start — лампочка притиснута до верху, не по центру
+            (можливо багаторядкового) блоку інструкції, той самий принцип
+            flex-sibling, що word-choice.tsx (27fd820) — лампочка ніколи не
+            бере участі в перенесенні тексту інструкції, не збільшує висоту
+            першого рядка. Практика (isPractice) лампочку не показує взагалі
+            (п.6 задачі) — hasHintBulb нижче явно враховує це. */}
+        <div className="flex items-start gap-1.5">
+          <div className="min-w-0 flex-1">
+            <InstructionsText
+              text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction}
+              subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction}
+            />
+          </div>
+          {!isPractice && config.hint && (
+            <HintBulb
+              size="sm"
+              state={hintShown ? "used" : "available"}
+              onClick={toggleHintVisible}
+              label={hintVisible ? "Згорнути підказку" : "Показати підказку"}
+              className="mt-0.5 shrink-0"
+            />
+          )}
+        </div>
+        {!isPractice && config.hint && hintVisible && (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+            {config.hint}
+          </div>
+        )}
+      </div>
+
+      <HintExplanation
+        type="chronological_order"
+        hintsReducePoints={config.hintsReducePoints}
+        hidden={isPractice || !config.hint}
       />
 
       {config.mode === "image" || config.mode === "mixed" ? (

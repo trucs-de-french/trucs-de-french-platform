@@ -137,6 +137,9 @@ export const ChronologicalOrderFields = forwardRef<
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
   );
+  const [hintsReducePoints, setHintsReducePoints] = useState(
+    initialConfig?.hintsReducePoints ?? false
+  );
 
   useImperativeHandle(ref, () => ({
     // Розраховано на текстовий режим (mode==="text") — той самий плоский
@@ -154,6 +157,7 @@ export const ChronologicalOrderFields = forwardRef<
       subInstructions: initialConfig?.subInstructions,
       mode,
       items,
+      hintsReducePoints,
     }),
   }));
 
@@ -199,6 +203,12 @@ export const ChronologicalOrderFields = forwardRef<
         value={JSON.stringify(items)}
         readOnly
       />
+      <input
+        type="hidden"
+        name="chronological_order_hints_reduce_points"
+        value={hintsReducePoints ? "true" : ""}
+        readOnly
+      />
 
       <InstructionsRichTextField
         name="chronological_order_instructions"
@@ -212,6 +222,27 @@ export const ChronologicalOrderFields = forwardRef<
         initialValue={initialConfig?.subInstructions ?? ""}
         compact
       />
+
+      <div className="flex flex-col gap-1">
+        <label className={LABEL_TEXT}>
+          Підказка до завдання (необов&apos;язково) — лампочка покаже цей текст студенту біля інструкції
+        </label>
+        <input
+          name="chronological_order_hint"
+          defaultValue={initialConfig?.hint ?? ""}
+          placeholder="Текст підказки"
+          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+        />
+      </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={hintsReducePoints}
+          onChange={(e) => setHintsReducePoints(e.target.checked)}
+        />
+        Підказка зменшує бали (завдання з показаною підказкою дає 50% балів)
+      </label>
 
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Тип елементів</label>

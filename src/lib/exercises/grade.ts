@@ -1102,11 +1102,18 @@ function gradeImageMatch(config: ImageMatchConfig, answer: ImageMatchAnswer): Gr
 // лише в sanitizeChronologicalOrder для показу). Кожен елемент
 // самодостатній, той самий item-рівень, що gradeImageMatch — без
 // групування по "рядку", на відміну від table_fill/checkbox_grid.
+// hintUsed — ТАСК-рівневий (одна підказка на все завдання, не на item), тож
+// pointsWithHints (ділить points РІВНОМІРНО між елементами) не підходить —
+// у кожного item своя points (resolveChronologicalOrderPoints), сума яких і
+// є pointsPossible. Той самий принцип зниження, що gradeOpenAnswer (inline
+// "половина балів", не через спільний хелпер), лише застосований до
+// СУМАРНОГО pointsEarned завдання, а не до одного питання.
 function gradeChronologicalOrder(
   config: ChronologicalOrderConfig,
   answer: ChronologicalOrderAnswer
 ): GradeResult {
-  const answerByItem = new Map(answer.map((a) => [a.itemId, a.position]));
+  const hintUsed = !!answer?.hintUsed;
+  const answerByItem = new Map((answer?.items ?? []).map((a) => [a.itemId, a.position]));
 
   const items: ChronologicalOrderDetail["items"] = config.items.map((item, index) => {
     const correctPosition = index + 1;
@@ -1123,12 +1130,13 @@ function gradeChronologicalOrder(
 
   const correctCount = items.filter((i) => i.isCorrect).length;
   const pointsPossible = items.reduce((sum, i) => sum + i.points, 0);
-  const pointsEarned = items.filter((i) => i.isCorrect).reduce((sum, i) => sum + i.points, 0);
+  const rawPointsEarned = items.filter((i) => i.isCorrect).reduce((sum, i) => sum + i.points, 0);
+  const pointsEarned = config.hintsReducePoints && hintUsed ? rawPointsEarned * 0.5 : rawPointsEarned;
 
   return {
     correct: correctCount === items.length && items.length > 0,
     score: percentage(correctCount, items.length),
-    detail: { items },
+    detail: { items, hintUsed },
     pointsEarned,
     pointsPossible,
   };

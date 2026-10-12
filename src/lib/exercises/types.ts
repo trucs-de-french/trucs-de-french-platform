@@ -593,11 +593,20 @@ export type ImageMatchConfig = {
 // нове поле, використовується ЛИШЕ в mode "mixed"). content не змінює
 // семантику для "image"/"text" — лише mixed додає друге поле поруч.
 export type ChronologicalOrderItem = { id: string; content: string; text?: string; points?: number };
+// hint — ОДНА підказка на все завдання (не на кожен item, як у word_choice
+// на кожне sentence) — той самий принцип, що OpenAnswerQuestion.hint, лише
+// на рівні всього завдання, не окремого елемента. hintsReducePoints — той
+// самий перемикач, що WordChoiceConfig, gradeChronologicalOrder нижче
+// застосовує його до СУМАРНИХ балів завдання (pointsWithHints тут не
+// підходить — вона ділить points РІВНОМІРНО між елементами, а тут у кожного
+// item своя points, sum().
 export type ChronologicalOrderConfig = {
   instructions?: string;
   subInstructions?: string;
   mode: "image" | "text" | "mixed";
   items: ChronologicalOrderItem[];
+  hint?: string;
+  hintsReducePoints?: boolean;
 };
 
 // Караоке — відео (поки лише YouTube, своя URL на кожну вправу) + текст
@@ -1006,6 +1015,10 @@ export type ChronologicalOrderPublic = {
   // Перемішано (shuffle) — буква-мітка (A, B, C...) рахується на боці
   // студента з індексу в цьому вже перемішаному масиві, не зберігається тут.
   items: { id: string; content: string; text?: string; points: number }[];
+  // Лише текст (сама підказка нічого не виграє) — безпечно віддавати в
+  // публічний config, той самий принцип, що WordChoicePublic.sentences[].hint.
+  hint?: string;
+  hintsReducePoints: boolean;
 };
 
 // tokens — маска (null на позиціях пропуску), той самий принцип, що
@@ -1124,7 +1137,16 @@ export type TableFillAnswer = {
 };
 export type CheckboxGridAnswer = { rowId: string; columnIds: string[] }[]; // позначені колонки на кожен рядок
 export type ImageMatchAnswer = { itemId: string; name: string }[];
-export type ChronologicalOrderAnswer = { itemId: string; position: number }[];
+// Обгортка-об'єкт (не барий масив, як раніше) — hintUsed тут ОДИН на все
+// завдання, немає природного "елемента", до якого його причепити (на
+// відміну від WordChoiceAnswer[], де hintUsed сидить у кожному елементі
+// масиву). check/route.ts передає answer як є (untyped), тож зміна форми
+// безпечна — старі збережені відповіді без hintUsed далі читаються як
+// hintUsed===undefined (grade.ts нижче трактує це як false).
+export type ChronologicalOrderAnswer = {
+  items: { itemId: string; position: number }[];
+  hintUsed?: boolean;
+};
 // Рядок -> k-й пропуск у цьому рядку (за порядком зліва направо) -> текст
 // відповіді студента (уведений з клавіатури або обраний варіант — просте
 // string в обох режимах), той самий шейп, що LetterGapsAnswer.
@@ -1338,6 +1360,9 @@ export type ChronologicalOrderDetail = {
     isCorrect: boolean;
     points: number;
   }[];
+  // Таск-рівневий, той самий сенс, що WordChoiceDetail.sentences[].hintUsed,
+  // лише один на все завдання (не масив).
+  hintUsed: boolean;
 };
 
 // text — рядок ІЗ ПРОПУСКАМИ, показаними як "___" (для контексту в "Роботі

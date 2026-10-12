@@ -757,8 +757,11 @@ export function resolveChronologicalOrderPoints(item: ChronologicalOrderItem): n
 export function sanitizeChronologicalOrder(
   config: ChronologicalOrderConfig
 ): ChronologicalOrderPublic {
+  const hint = config.hint?.trim();
   return {
     instructions: config.instructions,
+    ...(hint ? { hint } : {}),
+    hintsReducePoints: !!config.hintsReducePoints,
     subInstructions: config.subInstructions,
     mode: config.mode,
     // Перемішуємо самі елементи (не окремий "банк", як image_match) — тут
