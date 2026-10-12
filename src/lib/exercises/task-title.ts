@@ -135,27 +135,16 @@ export function generateTaskTitle(type: string, config: Record<string, unknown> 
   return `${full.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…`;
 }
 
-// Коротка назва картки "Робота над помилками" (частина 6, хвиля 2) — лише
-// ВІДОБРАЖЕННЯ, title у БД не чіпається. Автоназва вище має форму
-// "<typeLabel>: <прев'ю>…" — префікс до першої двокрапки ВІДНОВЛЮЄ typeLabel
-// без окремого списку шаблонів, тож той самий код працює і для title,
-// згенерованого generateTaskTitle, і для будь-якого title з двокрапкою, яку
-// міг написати вчитель вручну. ">=3 символи" у префіксі — щоб короткі власні
-// назви з двокрапкою як структурний символ (малоймовірно, але про всяк
-// випадок) не обрізались до майже нічого. Довгі власні назви без двокрапки
-// (теоретично можливі, якщо вчитель написав щось довге без типового
-// шаблону) — фолбек на назву типу, а не обрізання до безглуздого уривка.
-const MAX_DISPLAY_TITLE_LENGTH = 40;
-
+// Назва картки "Робота над помилками" (частина 6, хвиля 2; уніфікація
+// назв типів, хвиля 3) — лише ВІДОБРАЖЕННЯ, title у БД не чіпається.
+// Завжди українська назва ТИПУ з TASK_TYPE_LABELS, а не довільний title
+// вчителя (раніше короткий title показувався як є — звідси мішанина
+// укр/англ/фр назв у картках: "V ou F", "Reorder", "Audio" тощо, бо
+// вчителька могла назвати задачу як завгодно). Оригінальний title і далі
+// доступний викликачу через сам `task.title` — для title-атрибута на
+// hover (error-review-block.tsx), ординал при кількох картках одного
+// типу — так само відповідальність викликача (ця функція не знає про
+// сусідні картки).
 export function displayTaskTitle(task: { title: string | null | undefined; taskType: string }): string {
-  const title = (task.title ?? "").trim();
-  const colonIndex = title.indexOf(":");
-  if (colonIndex >= 3) {
-    const prefix = title.slice(0, colonIndex).trim().replace(/[.,;:!?…]+$/, "");
-    if (prefix.length > 0) return frenchNbsp(prefix);
-  }
-  if (title.length > 0 && title.length <= MAX_DISPLAY_TITLE_LENGTH) {
-    return frenchNbsp(title);
-  }
   return frenchNbsp(TASK_TYPE_LABELS[task.taskType] ?? task.taskType);
 }

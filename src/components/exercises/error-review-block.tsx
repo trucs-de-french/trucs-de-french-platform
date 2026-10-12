@@ -115,11 +115,16 @@ function StatusPill({ status }: { status: ErrorReviewStatus }) {
 function ErrorReviewCard({
   entry,
   index,
+  ordinal,
   expanded,
   onToggleExpanded,
 }: {
   entry: ErrorReviewEntryData;
   index: number;
+  // Порядковий номер картки серед карток ТОГО Ж taskType у цьому блоці —
+  // null, якщо тип у блоці лише один (номер зайвий, не додається до назви).
+  // Рахується в ErrorReviewBlock (там видно всі entries одразу), не тут.
+  ordinal: number | null;
   expanded: boolean;
   onToggleExpanded: () => void;
 }) {
@@ -142,6 +147,7 @@ function ErrorReviewCard({
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading font-medium" title={entry.title}>
             {displayTaskTitle({ title: entry.title, taskType: entry.taskType })}
+            {ordinal !== null && ` · ${ordinal}`}
           </p>
           {!isInteractive && entry.summary && (
             <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{entry.summary}</p>
@@ -364,17 +370,34 @@ export function ErrorReviewBlock({
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          {entries.map((entry, i) => (
-            <ErrorReviewCard
-              key={entry.taskId}
-              entry={entry}
-              index={i}
-              expanded={expandedTaskId === entry.taskId}
-              onToggleExpanded={() =>
-                setExpandedTaskId((prev) => (prev === entry.taskId ? null : entry.taskId))
-              }
-            />
-          ))}
+          {(() => {
+            // Кілька карток ОДНОГО taskType в блоці — додаємо порядковий
+            // номер до назви типу, щоб картки лишались розрізнюваними
+            // (displayTaskTitle тепер завжди показує лише назву типу, без
+            // довільного title вчителя — див. task-title.ts).
+            const typeCounts = new Map<string, number>();
+            for (const entry of entries) {
+              typeCounts.set(entry.taskType, (typeCounts.get(entry.taskType) ?? 0) + 1);
+            }
+            const seenSoFar = new Map<string, number>();
+            return entries.map((entry, i) => {
+              const seen = (seenSoFar.get(entry.taskType) ?? 0) + 1;
+              seenSoFar.set(entry.taskType, seen);
+              const ordinal = (typeCounts.get(entry.taskType) ?? 0) > 1 ? seen : null;
+              return (
+                <ErrorReviewCard
+                  key={entry.taskId}
+                  entry={entry}
+                  index={i}
+                  ordinal={ordinal}
+                  expanded={expandedTaskId === entry.taskId}
+                  onToggleExpanded={() =>
+                    setExpandedTaskId((prev) => (prev === entry.taskId ? null : entry.taskId))
+                  }
+                />
+              );
+            });
+          })()}
         </div>
       )}
     </div>

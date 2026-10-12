@@ -650,7 +650,7 @@ export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
 // бачить у самому меню вибору типу.
 export const TASK_TYPE_LABELS: Record<string, string> = {
   open_answer: "Відкрита відповідь (автоперевірка)",
-  essay_check: "Есе / DELF (AI-перевірка)",
+  essay_check: "Есе / DELF (ШІ-перевірка)",
   listening: "Аудіювання",
   error_correction: "Робота над помилками",
   vocab_quiz: "Вікторина лексики",
@@ -669,7 +669,7 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
   drag_drop: "Перетягніть слова",
   sort_columns: "Розкладіть по колонках",
   flip_cards: "Фліп-картки",
-  callout: "Текстовий блок (callout)",
+  callout: "Текстовий блок-примітка",
   phonetics: "Фонетика",
   table_fill: "Заповніть таблицю",
   image_match: "Перетягніть назви під картинки",
@@ -677,6 +677,11 @@ export const TASK_TYPE_LABELS: Record<string, string> = {
   chronological_order: "Хронологічний порядок",
   game: "Гра",
   karaoke: "Караоке",
+  // Ще не в TYPE_OPTIONS (вибір типу в конструкторі) — див. коментар біля
+  // ai_examiner у TASK_TYPE_CATEGORY вище. Назва додана заздалегідь, щоб
+  // тип не лишався без української назви, якщо колись з'явиться в блоці
+  // помилок чи іншому місці, що читає TASK_TYPE_LABELS напряму.
+  ai_examiner: "ШІ-екзаменатор",
 };
 
 // Типи, чия tasks.title показується СТУДЕНТУ (scenes/[sceneId]/page.tsx,
