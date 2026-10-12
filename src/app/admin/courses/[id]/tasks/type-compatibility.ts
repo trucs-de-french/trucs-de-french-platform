@@ -33,6 +33,7 @@ export type LinkEmbedFields = {
   platform?: string;
   download?: boolean;
   height?: number;
+  description?: string;
 };
 
 export type TransformResult<T> = { config: Partial<T>; warning?: string };
@@ -122,8 +123,8 @@ function linkToEmbed(l: LinkEmbedFields): TransformResult<LinkEmbedFields> {
   return {
     config: { url: l.url },
     warning:
-      l.label || l.platform || l.download
-        ? "Текст кнопки, платформу й прапорець завантаження не перенесено — embed їх не підтримує."
+      l.label || l.platform || l.download || l.description
+        ? "Текст кнопки, опис, платформу й прапорець завантаження не перенесено — embed їх не підтримує."
         : undefined,
   };
 }

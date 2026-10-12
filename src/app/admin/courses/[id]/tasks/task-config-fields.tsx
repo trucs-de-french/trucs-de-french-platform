@@ -512,6 +512,7 @@ export function TaskConfigFields({
   const linkLabelRef = useRef<HTMLInputElement>(null);
   const linkPlatformRef = useRef<HTMLSelectElement>(null);
   const linkDownloadRef = useRef<HTMLInputElement>(null);
+  const linkDescriptionRef = useRef<HTMLInputElement>(null);
   const embedUrlRef = useRef<HTMLInputElement>(null);
   const embedHeightRef = useRef<HTMLInputElement>(null);
   const fillBlankTemplateRef = useRef<HTMLTextAreaElement>(null);
@@ -554,6 +555,7 @@ export function TaskConfigFields({
         label: linkLabelRef.current?.value,
         platform: linkPlatformRef.current?.value,
         download: linkDownloadRef.current?.checked,
+        description: linkDescriptionRef.current?.value,
       };
       return value;
     }
@@ -1047,6 +1049,20 @@ export function TaskConfigFields({
             />
             Завантажити файл (замість відкриття в новій вкладці)
           </label>
+          <div className="flex flex-col gap-1">
+            <label className={LABEL_TEXT}>
+              Короткий опис (необов&apos;язково) — показується на картці в блоці
+              &quot;Практика&quot; замість назви платформи
+            </label>
+            <input
+              ref={linkDescriptionRef}
+              name="link_description"
+              maxLength={60}
+              defaultValue={(initialConfig?.description as string) ?? ""}
+              placeholder="До 60 символів"
+              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+            />
+          </div>
         </div>
       )}
 

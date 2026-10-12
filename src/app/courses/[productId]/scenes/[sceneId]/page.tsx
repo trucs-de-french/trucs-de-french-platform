@@ -1,12 +1,11 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { Puzzle, Layers, Gamepad2, ExternalLink, type LucideIcon } from "lucide-react";
+import { Puzzle, Layers, Gamepad2, ExternalLink, PlayCircle, Sparkles, type LucideIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
-import { resolvePlatform } from "@/lib/platform";
-import { PlatformIcon } from "@/components/platform-icon";
+import { resolvePlatform, type LinkPlatform } from "@/lib/platform";
 import {
   sanitizeConfigForStudent,
   sanitizeMatchingForPractice,
@@ -78,6 +77,17 @@ type LinkEmbedConfig = {
   label?: string;
   platform?: string;
   download?: boolean;
+  description?: string;
+};
+
+// Та сама візуальна мова, що SCENE_LINK_PLATFORM_META нижче (іконка в
+// квадраті bg-brand/10), але для LinkPlatform (youtube/wordwall/genially/
+// custom) — домену завдань типу link, не scene_links.platform.
+const LINK_TASK_PLATFORM_META: Record<LinkPlatform, { icon: LucideIcon; label: string }> = {
+  youtube: { icon: PlayCircle, label: "YouTube" },
+  wordwall: { icon: Puzzle, label: "Wordwall" },
+  genially: { icon: Sparkles, label: "Genially" },
+  custom: { icon: ExternalLink, label: "Посилання" },
 };
 
 type TaskRow = {
@@ -96,7 +106,7 @@ type TaskRow = {
 // embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
 // вміст, службова назва типу йому не потрібна. Той самий підхід, що вже
 // в exercise-block.tsx.
-const TYPES_WITH_TYPE_BADGE = ["link", "game"];
+const TYPES_WITH_TYPE_BADGE = ["game"];
 
 // ERROR_REVIEW_EXCLUDED_TASK_TYPES — перенесено в error-review.ts (reviewMode()
 // має знати про винятки, не лише фільтр рендеру тут).
@@ -302,8 +312,14 @@ export default async function ScenePage({
         group: TaskGroupData & { order_index: number };
         members: ExerciseTask[];
       };
+  // Завдання типу "link" більше не йдуть окремими картками в "Завдання" —
+  // вони рендеряться як картки блоку "Практика" нижче (linksNode), разом з
+  // фіксованими scene_links. Відфільтровано тут, ДО сортування sceneRows.
+  const linkTasks = (tasks ?? []).filter((task) => task.type === "link");
+  const nonLinkTasks = (tasks ?? []).filter((task) => task.type !== "link");
+
   const sceneRows: SceneRow[] = [
-    ...(tasks ?? []).map((task): SceneRow => ({ kind: "task", task })),
+    ...nonLinkTasks.map((task): SceneRow => ({ kind: "task", task })),
     ...(taskGroups ?? [])
       .filter((g) => (membersByGroup.get(g.id) ?? []).length > 0)
       .map(
@@ -635,7 +651,48 @@ export default async function ScenePage({
   );
 
   const linkList = links ?? [];
-  const hasLinks = linkList.length > 0;
+
+  // Картки з двох різних джерел (scene_links — фіксована Практика сцени;
+  // tasks типу "link" — завдання-посилання), об'єднані лише на рівні
+  // рендеру в один список карток того самого вигляду — без міграції БД чи
+  // перенесення даних між таблицями. Порядок: спершу scene_links (як і
+  // раніше), потім link-завдання за їхнім order_index (п.6 задачі).
+  type PracticeCard = {
+    key: string;
+    href: string;
+    download?: boolean;
+    icon: LucideIcon;
+    name: string;
+    subtitle: string;
+  };
+  const sceneLinkCards: PracticeCard[] = linkList.map((link) => {
+    const meta = SCENE_LINK_PLATFORM_META[link.platform] ?? DEFAULT_SCENE_LINK_META;
+    return {
+      key: `scene-link-${link.id}`,
+      href: link.url,
+      icon: meta.icon,
+      name: link.label ?? meta.label,
+      subtitle: meta.label,
+    };
+  });
+  const linkTaskCards: PracticeCard[] = linkTasks
+    .filter((task) => Boolean((task.config as LinkEmbedConfig | null)?.url))
+    .map((task) => {
+      const config = (task.config ?? {}) as LinkEmbedConfig;
+      const platform = resolvePlatform(config.url!, config.platform);
+      const meta = LINK_TASK_PLATFORM_META[platform];
+      const description = config.description?.trim();
+      return {
+        key: `link-task-${task.id}`,
+        href: config.url!,
+        download: config.download,
+        icon: meta.icon,
+        name: task.title,
+        subtitle: description || meta.label,
+      };
+    });
+  const practiceCards = [...sceneLinkCards, ...linkTaskCards];
+  const hasLinks = practiceCards.length > 0;
   const hasVocab = sceneVocab.length > 0;
 
   const linksNode = hasLinks && (
@@ -644,14 +701,13 @@ export default async function ScenePage({
       {/* auto-fill(minmax(12rem,1fr)) — кілька карток у ряд на широкому
           екрані, по одній на всю ширину на мобільних. */}
       <div className={`${H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}>
-        {linkList.map((link) => {
-          const meta = SCENE_LINK_PLATFORM_META[link.platform] ?? DEFAULT_SCENE_LINK_META;
-          const Icon = meta.icon;
+        {practiceCards.map((card) => {
+          const Icon = card.icon;
           return (
             <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
+              key={card.key}
+              href={card.href}
+              {...(card.download ? { download: true } : { target: "_blank" })}
               rel="noopener noreferrer"
               className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition duration-150 hover:-translate-y-0.5 hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:border-neutral-700 dark:bg-neutral-800"
             >
@@ -659,10 +715,10 @@ export default async function ScenePage({
                 <Icon size={18} />
               </span>
               <span className="flex min-w-0 flex-col">
-                <span className="truncate font-heading text-base font-semibold">
-                  {link.label ?? meta.label}
+                <span className="truncate font-heading text-base font-semibold">{card.name}</span>
+                <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                  {card.subtitle}
                 </span>
-                <span className="text-sm text-neutral-500 dark:text-neutral-400">{meta.label}</span>
               </span>
             </a>
           );
@@ -790,29 +846,6 @@ export default async function ScenePage({
                   className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
                 >
                   Відкрити гру ({task.games.provider})
-                </a>
-              )}
-
-              {task.type === "link" && config.url && config.download && (
-                <a
-                  href={config.url}
-                  download
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-                >
-                  ⬇ {config.label ?? "Завантажити файл"}
-                </a>
-              )}
-
-              {task.type === "link" && config.url && !config.download && (
-                <a
-                  href={config.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-                >
-                  <PlatformIcon platform={resolvePlatform(config.url, config.platform)} />
-                  {config.label ?? "Відкрити"}
                 </a>
               )}
 
