@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -95,6 +96,8 @@ export function TableFillExercise({
   // принцип, що fill-blank.tsx).
   isDelf?: boolean;
 }) {
+  const router = useRouter();
+
   // answers/hintedCells — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
   // matching.tsx.
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -336,6 +339,11 @@ export function TableFillExercise({
       }
       const result = (await res.json()) as TableFillResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      // Оновлює серверні дані сторінки (зокрема блок "Робота над
+      // помилками") без перезавантаження — той самий принцип, що
+      // useExerciseCheck/usePracticeCheck; тут бракувало цього виклику
+      // (єдина відмінність блокової гілки від однокартної).
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

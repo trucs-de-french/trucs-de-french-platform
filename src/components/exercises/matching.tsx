@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
@@ -43,6 +44,8 @@ export function MatchingExercise({
   hidePoints?: boolean;
   practice?: MatchingPracticeProps;
 }) {
+  const router = useRouter();
+
   // pairs/selectedLeft — СПІЛЬНІ на всю вправу (не по блоку): блок лише
   // фільтрує, які left/right видно й до яких прив'язана поточна дія click,
   // сама мапа відповідей одна на всі блоки (як і раніше для ≤10 елементів,
@@ -268,6 +271,11 @@ export function MatchingExercise({
       }
       const result = (await res.json()) as MatchingResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      // Оновлює серверні дані сторінки (зокрема блок "Робота над
+      // помилками") без перезавантаження — той самий принцип, що
+      // useExerciseCheck/usePracticeCheck; тут бракувало цього виклику
+      // (єдина відмінність блокової гілки від однокартної).
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
