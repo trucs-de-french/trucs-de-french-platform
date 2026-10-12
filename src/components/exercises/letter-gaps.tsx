@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { HintExplanation } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
@@ -227,6 +228,8 @@ export function LetterGapsExercise({
     focusGap(prev);
   }
 
+  const router = useRouter();
+
   // ==== Гілка ≤10 слів (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as LetterGapsDetail | undefined;
@@ -416,6 +419,11 @@ export function LetterGapsExercise({
       }
       const result = (await res.json()) as LetterGapsResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      // Оновлює серверні дані сторінки (зокрема блок "Робота над
+      // помилками") без перезавантаження — той самий принцип, що
+      // useExerciseCheck/usePracticeCheck; тут бракувало цього виклику
+      // (єдина відмінність блокової гілки від однокартної).
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,

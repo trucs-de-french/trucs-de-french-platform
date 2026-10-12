@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { HintExplanation } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import type {
@@ -141,6 +142,8 @@ export function LetterRearrangementExercise({
     imageUrls,
     enabled: isTwoColumn,
   });
+
+  const router = useRouter();
 
   // ==== Гілка ≤10 слів (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
@@ -291,6 +294,11 @@ export function LetterRearrangementExercise({
       }
       const result = (await res.json()) as LetterRearrangementResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
+      // Оновлює серверні дані сторінки (зокрема блок "Робота над
+      // помилками") без перезавантаження — той самий принцип, що
+      // useExerciseCheck/usePracticeCheck; тут бракувало цього виклику
+      // (єдина відмінність блокової гілки від однокартної).
+      router.refresh();
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
