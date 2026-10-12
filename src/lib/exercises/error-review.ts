@@ -3,6 +3,8 @@
 // і майбутнього клієнта (частина 2, редизайн вигляду). Жодна з них не читає
 // БД і не має побічних ефектів.
 
+import { BLANK_RE, getMultipleChoiceItems, getMatchingPairs, getDragDropSentences, getTableFillRows } from "./sanitize";
+
 // Типи, виключені зі списку "Робота над помилками" взагалі (essay_check —
 // окрема DELF-перевірка Gemini; word_search/crossword/karaoke — ціла
 // сітка/рядок, не список окремих елементів; vocab_quiz — не пише в
@@ -321,16 +323,107 @@ export type MistakeRowLike = { createdAt: string; detail: unknown };
 // була помилка, просто НЕ перевіряли повторно — застарілий запис із
 // помилкою й далі вважається чинним (так само, як для одноблочних вправ
 // зараз) — це не вада цієї функції, а наявна поведінка mistakes.
-export function aggregateWrongItems(rows: MistakeRowLike[], taskType: string): string[] {
+//
+// Поточні валідні id елементів (id-адресовані типи) за АКТУАЛЬНИМ config —
+// null, якщо тип позиційний (fill_blank/letter_gaps/letter_rearrangement,
+// звіряються інакше, через currentPositionalCount) чи взагалі не items-типу.
+// Той самий getXxx-нормалізатор, що вже використовує grade.ts/sanitize.ts
+// для кожного типу (легасі "пласка" форма multiple_choice/matching/
+// drag_drop/table_fill зводиться до тієї самої форми, що й реальна
+// перевірка бачить, а не до сирого config напряму).
+function currentIdBasedIds(taskType: string, config: Record<string, unknown>): string[] | null {
+  switch (taskType) {
+    case "multiple_choice":
+      return getMultipleChoiceItems(config as never).map((i) => i.id);
+    case "true_false":
+      return Array.isArray(config.statements)
+        ? (config.statements as { id: string }[]).map((s) => s.id)
+        : [];
+    case "word_choice":
+      return Array.isArray(config.sentences) ? (config.sentences as { id: string }[]).map((s) => s.id) : [];
+    case "matching":
+      return getMatchingPairs(config as never).map((p) => p.id);
+    case "table_fill":
+      return getTableFillRows(config as never).map((r) => r.id);
+    case "drag_drop":
+      return getDragDropSentences(config as never).map((s) => s.id);
+    case "image_match":
+      return Array.isArray(config.items) ? (config.items as { id: string }[]).map((i) => i.id) : [];
+    case "listening":
+      return Array.isArray(config.questions) ? (config.questions as { id: string }[]).map((q) => q.id) : [];
+    default:
+      return null;
+  }
+}
+
+// Поточна кількість позиційних елементів (fill_blank/letter_gaps/
+// letter_rearrangement — "елемент" тут String(index), не id) — null для
+// решти типів. fill_blank рахує пропуски тим самим BLANK_RE, що
+// gradeFillBlank (grade.ts), щоб не розходитись із реальною перевіркою.
+function currentPositionalCount(taskType: string, config: Record<string, unknown>): number | null {
+  if (taskType === "letter_gaps" || taskType === "letter_rearrangement") {
+    return Array.isArray(config.words) ? config.words.length : 0;
+  }
+  if (taskType === "fill_blank") {
+    const template = typeof config.template === "string" ? config.template : "";
+    return [...template.matchAll(BLANK_RE)].length;
+  }
+  return null;
+}
+
+// Сира (без filterInScope) кількість позиційних елементів у ЦЬОМУ
+// detail-рядку старої спроби — на відміну від itemsInDetail (яка для
+// letter_gaps/letter_rearrangement уже звужує до "елементів, перевірених
+// САМЕ в цьому запиті", тобто може бути МЕНШЕ за повну кількість слів
+// завдання в блокових вправах), тут потрібна ПОВНА довжина масиву
+// detail.words/blanks на момент запису — вона завжди дорівнює кількості
+// елементів завдання станом на той check (letter-gaps.tsx/grade.ts ніколи
+// не укорочують сам масив, лише позначають слова поза скоупом через
+// studentLetters:[]). Використовується лише для звірки "чи змінилась
+// кількість елементів із тих пір" (крок 2, п.2) — не для списку id.
+function positionalTotalInDetail(taskType: string, detail: unknown): number | null {
+  if (!detail || typeof detail !== "object") return null;
+  const d = detail as Record<string, unknown>;
+  if (taskType === "fill_blank" && Array.isArray(d.blanks)) return d.blanks.length;
+  if ((taskType === "letter_gaps" || taskType === "letter_rearrangement") && Array.isArray(d.words)) {
+    return d.words.length;
+  }
+  return null;
+}
+
+// currentConfig — АКТУАЛЬНИЙ config завдання (null/undefined — викликач не
+// має конфігу, поведінка як раніше, без звірки). Коли переданий:
+// id-адресовані типи відкидають id, яких уже немає в поточному завданні
+// (видалений елемент — інакше "привид" у wrongItemIds/remainingItemIds
+// ніколи не зникає, і блок застряг би на "partial" назавжди); позиційні
+// типи відкидають ЦІЛИЙ рядок mistakes, чия кількість елементів не
+// збігається з поточною (доданий/видалений елемент зсуває індекси — старий
+// індекс після зсуву вказує вже на ІНШИЙ елемент, не на той, що реально був
+// неправильним).
+export function aggregateWrongItems(
+  rows: MistakeRowLike[],
+  taskType: string,
+  currentConfig?: Record<string, unknown> | null
+): string[] {
   const sorted = [...rows].sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   const seen = new Set<string>();
   const wrong = new Set<string>();
 
+  const validIds = currentConfig ? currentIdBasedIds(taskType, currentConfig) : null;
+  const positionalCount = currentConfig ? currentPositionalCount(taskType, currentConfig) : null;
+
   for (const row of sorted) {
     const ids = itemsInDetail(taskType, row.detail);
     if (!ids) continue;
+
+    if (positionalCount !== null) {
+      const rowTotal = positionalTotalInDetail(taskType, row.detail);
+      if (rowTotal !== null && rowTotal !== positionalCount) continue;
+    }
+
     const wrongIds = new Set(mistakeItemIds(taskType, row.detail) ?? []);
     for (const id of ids) {
+      if (validIds !== null && !validIds.includes(id)) continue;
       if (seen.has(id)) continue;
       seen.add(id);
       if (wrongIds.has(id)) wrong.add(id);
@@ -368,6 +461,10 @@ export function buildErrorReviewEntry(params: {
   mistakeRows: MistakeRowLike[];
   correctedItemIds: string[];
   failedAttempts: Record<string, number>;
+  // Актуальний config завдання — для звірки wrongItemIds проти привидів
+  // (крок 2). Опційний: не переданий чи null — поведінка як раніше, без
+  // звірки (назад сумісно з будь-яким викликачем, що config не має).
+  config?: Record<string, unknown> | null;
 }): ErrorReviewEntry {
   const mode = reviewMode(params.taskType);
 
@@ -408,7 +505,7 @@ export function buildErrorReviewEntry(params: {
     };
   }
 
-  const wrongItemIds = aggregateWrongItems(params.mistakeRows, params.taskType);
+  const wrongItemIds = aggregateWrongItems(params.mistakeRows, params.taskType, params.config);
   const correctedSet = new Set(params.correctedItemIds);
   const remainingItemIds = wrongItemIds.filter((id) => !correctedSet.has(id));
   const status: ErrorReviewStatus =

@@ -73,7 +73,8 @@ export async function POST(request: Request) {
             .eq("task_id", taskId);
           return aggregateWrongItems(
             (mistakeRows ?? []).map((m) => ({ createdAt: m.created_at, detail: m.ai_feedback })),
-            task.type
+            task.type,
+            task.config as Record<string, unknown> | null
           );
         })()
       );

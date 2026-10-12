@@ -513,6 +513,7 @@ export default async function ScenePage({
           mistakeRows: mistakeRowsByTask.get(m.task_id) ?? [],
           correctedItemIds: state?.corrected_item_ids ?? [],
           failedAttempts: state?.failed_attempts ?? {},
+          config: (taskConfigById.get(m.task_id) ?? null) as Record<string, unknown> | null,
         }),
       ] as const;
     })
