@@ -17,6 +17,7 @@ import type {
   TableFillDetail,
   DragDropDetail,
   ImageMatchDetail,
+  ListeningDetail,
 } from "@/lib/exercises/types";
 
 // Режим практики "Робота над помилками" — переробка ЛИШЕ неправильних
@@ -176,6 +177,14 @@ export async function POST(request: Request) {
       results = itemIds.map((itemId) => {
         const it = detail.items.find((x) => x.id === itemId);
         return { itemId, correct: !!it?.isCorrect };
+      });
+      break;
+    }
+    case "listening": {
+      const detail = graded.detail as ListeningDetail;
+      results = itemIds.map((itemId) => {
+        const q = detail.questions.find((x) => x.id === itemId);
+        return { itemId, correct: !!q && q.options.every((o) => o.correct === o.selected) };
       });
       break;
     }

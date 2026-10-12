@@ -20,6 +20,7 @@ import type {
   TableFillConfig,
   DragDropConfig,
   ImageMatchConfig,
+  ListeningConfig,
 } from "@/lib/exercises/types";
 
 // Розкриття правильної відповіді в режимі практики — той самий шаблон, що
@@ -173,6 +174,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
     }
     return NextResponse.json({ answer: [item.name] });
+  }
+
+  if (task.type === "listening") {
+    const config = task.config as ListeningConfig;
+    const question = config.questions.find((q) => q.id === itemId);
+    if (!question) {
+      return NextResponse.json({ error: "Некоректний елемент" }, { status: 400 });
+    }
+    const correctOptions = question.options.filter((o) => o.correct).map((o) => o.text);
+    return NextResponse.json({ answer: correctOptions });
   }
 
   // multiple_choice

@@ -32,6 +32,7 @@ export const PRACTICE_ITEMS_TASK_TYPES = [
   "table_fill",
   "drag_drop",
   "image_match",
+  "listening",
 ] as const;
 export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 
@@ -40,7 +41,7 @@ export type PracticeItemsTaskType = (typeof PRACTICE_ITEMS_TASK_TYPES)[number];
 // цього списку мають реальну реалізацію mistakeItemIds/itemsInDetail —
 // решта тут лише документує майбутній план, reviewMode() для них повертає
 // "whole".
-const ITEMS_MODE_TASK_TYPES = ["open_answer", "listening"] as const;
+const ITEMS_MODE_TASK_TYPES = ["open_answer"] as const;
 
 // Класифікація "whole" (переробляється ЦІЛЕ завдання, не елемент) —
 // остаточна, не тимчасова.
@@ -148,6 +149,15 @@ type DragDropDetailLike = { sentences: { id: string; blanks: { isCorrect: boolea
 // image_match не підтримує блоки взагалі).
 type ImageMatchDetailLike = { items: { id: string; isCorrect: boolean }[] };
 
+// Питання — елемент listening (частина 6, хвиля 1), той самий
+// multiple_choice-принцип (options з correct/selected, не окрема
+// isCorrect — рахуємо тут). gradeListening теж НЕ скоупить питання за
+// присутністю в answer (завжди ВСІ questions config) — listening не
+// підтримує блоки взагалі.
+type ListeningDetailLike = {
+  questions: { id: string; options: { correct: boolean; selected: boolean }[] }[];
+};
+
 // Ідентифікатори елементів, що в цьому detail НЕПРАВИЛЬНІ (не отримали
 // повних балів). null — тип поки не підтримує "items"-розбір (reviewMode
 // для нього і так "whole"/"none", викликати для нього цю функцію не варто).
@@ -207,6 +217,12 @@ export function mistakeItemIds(taskType: string, detail: unknown): string[] | nu
     return (d as ImageMatchDetailLike).items.filter((i) => !i.isCorrect).map((i) => i.id);
   }
 
+  if (taskType === "listening" && Array.isArray(d.questions)) {
+    return (d as ListeningDetailLike).questions
+      .filter((q) => !q.options.every((o) => o.correct === o.selected))
+      .map((q) => q.id);
+  }
+
   return null;
 }
 
@@ -259,6 +275,10 @@ export function itemsInDetail(taskType: string, detail: unknown): string[] | nul
 
   if (taskType === "image_match" && Array.isArray(d.items)) {
     return (d as ImageMatchDetailLike).items.map((i) => i.id);
+  }
+
+  if (taskType === "listening" && Array.isArray(d.questions)) {
+    return (d as ListeningDetailLike).questions.map((q) => q.id);
   }
 
   return null;
