@@ -56,12 +56,12 @@ begin
     select * from public.scene_content_blocks where scene_id = p_scene_id
   loop
     insert into public.scene_content_blocks (
-      scene_id, content_type, content_text, media_url, media_provider, title, dialogue
+      scene_id, content_type, content_text, media_url, media_provider, subtitles, title, dialogue
     )
     values (
       v_new_scene_id, v_content_block.content_type, v_content_block.content_text,
-      v_content_block.media_url, v_content_block.media_provider, v_content_block.title,
-      v_content_block.dialogue
+      v_content_block.media_url, v_content_block.media_provider, v_content_block.subtitles,
+      v_content_block.title, v_content_block.dialogue
     )
     returning id into v_new_content_block_id;
 
@@ -79,14 +79,14 @@ begin
   loop
     insert into public.task_groups (
       product_id, scene_id, scene_content_block_id, content_type, content_text, media_url,
-      media_provider, points_mode, flat_points, title, order_index
+      media_provider, subtitles, points_mode, flat_points, title, order_index
     )
     values (
       v_group.product_id,
       case when v_group.scene_id is not null then v_new_scene_id else null end,
       (select new_id from tmp_content_block_id_map where old_id = v_group.scene_content_block_id),
       v_group.content_type, v_group.content_text,
-      v_group.media_url, v_group.media_provider, v_group.points_mode, v_group.flat_points,
+      v_group.media_url, v_group.media_provider, v_group.subtitles, v_group.points_mode, v_group.flat_points,
       v_group.title, v_group.order_index
     )
     returning id into v_new_group_id;
