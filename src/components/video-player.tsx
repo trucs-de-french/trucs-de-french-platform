@@ -455,256 +455,266 @@ export function VideoPlayer({
             кроку. */}
         <PlaybackTicker videoRef={videoRef} playing={playing} onTick={setCurrentTime} />
 
-        {hasAnySubtitles && (
-          <div
-            className="pointer-events-none absolute inset-x-0 flex flex-col items-center gap-0.5 px-4 text-center"
-            style={{
-              // Оверлей видимий — рівно над ним (вимірена ResizeObserver
-              // висота + 8px), оверлей схований — не константа, а clamp
-              // відсотка висоти контейнера (CSS-відсотки для bottom
-              // абсолютно позиціонованого елемента й так резолвляться від
-              // висоти контейнера, без потреби міряти її в JS), щоб субтитри
-              // не провалювались у чорну смугу під картинкою ні на яких
-              // пропорціях відео.
-              bottom: overlayVisible ? `${overlayHeight + 8}px` : "clamp(36px, 8%, 72px)",
-              transition: "bottom 150ms ease, transform 150ms ease",
-            }}
-          >
-            {showFr && activeFrCue && (
-              <p
-                className="font-heading text-[15px] font-bold text-white sm:text-[18px]"
-                style={{
-                  textShadow: "0 1px 4px rgba(0,0,0,0.85)",
-                  ...((isFullscreen || isPseudoFullscreen) && { fontSize: "clamp(18px, 2.2vw, 32px)" }),
-                }}
-              >
-                {renderTokens(activeFrCue.text, "fr")}
-              </p>
-            )}
-            {showUk && activeUkCue && (
-              <p
-                className="font-heading text-[12px] font-semibold sm:text-[14px]"
-                style={{
-                  color: "#ffd166",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.85)",
-                  ...((isFullscreen || isPseudoFullscreen) && {
-                    fontSize: "calc(clamp(18px, 2.2vw, 32px) - 2px)",
-                  }),
-                }}
-              >
-                {renderTokens(activeUkCue.text, "uk")}
-              </p>
-            )}
-          </div>
-        )}
-
         {subtitlesLoadError && (
           <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white/90">
             Субтитри недоступні
           </span>
         )}
 
-        {/* Оверлей керування знизу */}
-        <div
-          ref={overlayRef}
-          className={`absolute inset-x-0 bottom-0 flex flex-col gap-2 transition-opacity duration-300 ${
-            overlayVisible ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          style={{
-            background: "linear-gradient(to top, rgba(10,9,30,0.85), transparent)",
-            padding: "34px 14px 12px",
-          }}
-        >
-          {/* Рядок 1: час + смуга */}
-          <div className="flex items-center gap-2">
-            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-              {metadataLoaded ? formatTime(currentTime) : "0:00"}
-            </span>
-            <div
-              ref={trackRef}
-              role="slider"
-              tabIndex={0}
-              aria-label="Позиція відтворення"
-              aria-valuemin={0}
-              aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
-              aria-valuenow={Math.round(currentTime)}
-              aria-disabled={!metadataLoaded}
-              onPointerDown={handleTrackPointerDown}
-              onPointerMove={handleTrackPointerMove}
-              className={`relative h-1 flex-1 touch-none rounded-full ${FOCUS_RING} ${
-                metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
-              }`}
-              style={{ background: "rgba(255,255,255,0.3)" }}
-            >
-              <div className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
-              <span
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
-                style={{ left: `${progress * 100}%` }}
-              />
-            </div>
-            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-              {metadataLoaded ? formatTime(duration!) : "0:00"}
-            </span>
-          </div>
-
-          {/* Рядок 2: зліва play/±10с/повтор, справа швидкість/субтитри/mute/fullscreen */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  togglePlay();
-                  wakeOverlay();
-                }}
-                aria-label={playing ? "Пауза" : "Відтворити"}
-                aria-pressed={playing}
-                className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
-              >
-                {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  skip(-10);
-                  wakeOverlay();
-                }}
-                aria-label="Назад на 10 секунд"
-                className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
-                style={{ background: "rgba(255,255,255,0.16)" }}
-              >
-                <Rewind size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  skip(10);
-                  wakeOverlay();
-                }}
-                aria-label="Вперед на 10 секунд"
-                className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
-                style={{ background: "rgba(255,255,255,0.16)" }}
-              >
-                <FastForward size={16} />
-              </button>
-              {hasAnySubtitles && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    toggleLoopLine();
-                    wakeOverlay();
+        {/* Єдиний нижній стек: субтитри йдуть у потоці ПЕРЕД панеллю
+            керування (document order), тож перекриття кнопками структурно
+            неможливе — немає абсолютного bottom, яким субтитри могли б
+            залізти під градієнт чи на кнопки. pointer-events:none на стеку
+            (субтитри не мають бути клікабельні), auto — лише на самій
+            панелі нижче. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
+          {hasAnySubtitles && (
+            <div className="mb-2 flex flex-col items-center gap-0.5 px-4 text-center">
+              {showFr && activeFrCue && (
+                <p
+                  className="font-heading text-[15px] font-bold text-white sm:text-[18px]"
+                  style={{
+                    textShadow: "0 1px 4px rgba(0,0,0,0.85)",
+                    ...((isFullscreen || isPseudoFullscreen) && { fontSize: "clamp(18px, 2.2vw, 32px)" }),
                   }}
-                  aria-label="Повтор репліки"
-                  aria-pressed={loopLine}
-                  className={`flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
-                    loopLine ? "bg-white text-[#4f46e5]" : "text-white"
-                  }`}
-                  style={!loopLine ? { background: "rgba(255,255,255,0.16)" } : undefined}
                 >
-                  <Repeat size={16} />
-                </button>
+                  {renderTokens(activeFrCue.text, "fr")}
+                </p>
+              )}
+              {showUk && activeUkCue && (
+                <p
+                  className="font-heading text-[12px] font-semibold sm:text-[14px]"
+                  style={{
+                    color: "#ffd166",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.85)",
+                    ...((isFullscreen || isPseudoFullscreen) && {
+                      fontSize: "calc(clamp(18px, 2.2vw, 32px) - 2px)",
+                    }),
+                  }}
+                >
+                  {renderTokens(activeUkCue.text, "uk")}
+                </p>
               )}
             </div>
+          )}
 
-            <div className="flex items-center gap-2">
-              <div ref={speedWrapRef} className="relative shrink-0">
-                <button
-                  ref={speedButtonRef}
-                  type="button"
-                  onClick={() => {
-                    setSpeedOpen((v) => !v);
-                    setSubsOpen(false);
-                    wakeOverlay();
-                  }}
-                  aria-label={`Швидкість відтворення ${speed}×`}
-                  aria-haspopup="menu"
-                  aria-expanded={speedOpen}
-                  className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+          {/* "Підлога" під субтитрами: висота плавно переходить між
+              природною висотою панелі (вимірена ResizeObserver, не
+              константа) і clamp(36px, 8% контейнера, 72px), коли панель
+              схована — субтитри завжди впираються саме в цю висоту, а не в
+              нижній край рамки. overflow-hidden ховає вміст панелі під час
+              переходу без зміни розкладки стеку. */}
+          <div
+            className="pointer-events-auto w-full overflow-hidden transition-[height] duration-150 ease-in-out"
+            style={{
+              height: overlayVisible ? (overlayHeight ? `${overlayHeight}px` : "auto") : "clamp(36px, 8%, 72px)",
+            }}
+          >
+            <div
+              ref={overlayRef}
+              className="flex flex-col gap-2 transition-opacity duration-150 ease-in-out"
+              style={{
+                background: "linear-gradient(to top, rgba(10,9,30,0.85), transparent)",
+                padding: "34px 14px 12px",
+                opacity: overlayVisible ? 1 : 0,
+                pointerEvents: overlayVisible ? "auto" : "none",
+              }}
+            >
+              {/* Рядок 1: час + смуга */}
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+                  {metadataLoaded ? formatTime(currentTime) : "0:00"}
+                </span>
+                <div
+                  ref={trackRef}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="Позиція відтворення"
+                  aria-valuemin={0}
+                  aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
+                  aria-valuenow={Math.round(currentTime)}
+                  aria-disabled={!metadataLoaded}
+                  onPointerDown={handleTrackPointerDown}
+                  onPointerMove={handleTrackPointerMove}
+                  className={`relative h-1 flex-1 touch-none rounded-full ${FOCUS_RING} ${
+                    metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
+                  }`}
+                  style={{ background: "rgba(255,255,255,0.3)" }}
                 >
-                  {speed}× ▾
-                </button>
-                {speedOpen && (
                   <div
-                    role="menu"
-                    className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-                  >
-                    {SPEEDS.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={s === speed}
-                        onClick={() => setRate(s)}
-                        className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
-                          s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
-                        }`}
-                      >
-                        {s}×
-                      </button>
-                    ))}
-                  </div>
-                )}
+                    className="absolute inset-y-0 left-0 rounded-full bg-white"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                  <span
+                    className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+                    style={{ left: `${progress * 100}%` }}
+                  />
+                </div>
+                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+                  {metadataLoaded ? formatTime(duration!) : "0:00"}
+                </span>
               </div>
 
-              {hasAnySubtitles && (
-                <div ref={subsWrapRef} className="relative shrink-0">
+              {/* Рядок 2: зліва play/±10с/повтор, справа швидкість/субтитри/mute/fullscreen */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
                   <button
-                    ref={subsButtonRef}
                     type="button"
                     onClick={() => {
-                      setSubsOpen((v) => !v);
-                      setSpeedOpen(false);
+                      togglePlay();
                       wakeOverlay();
                     }}
-                    aria-label={`Субтитри: ${subsLabel}`}
-                    aria-haspopup="menu"
-                    aria-expanded={subsOpen}
-                    className={`flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+                    aria-label={playing ? "Пауза" : "Відтворити"}
+                    aria-pressed={playing}
+                    className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
                   >
-                    <Captions size={14} />
-                    <span className="hidden min-[560px]:inline">{subsLabel}</span>
+                    {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
                   </button>
-                  {subsOpen && (
-                    <div
-                      role="menu"
-                      className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      skip(-10);
+                      wakeOverlay();
+                    }}
+                    aria-label="Назад на 10 секунд"
+                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    style={{ background: "rgba(255,255,255,0.16)" }}
+                  >
+                    <Rewind size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      skip(10);
+                      wakeOverlay();
+                    }}
+                    aria-label="Вперед на 10 секунд"
+                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    style={{ background: "rgba(255,255,255,0.16)" }}
+                  >
+                    <FastForward size={16} />
+                  </button>
+                  {hasAnySubtitles && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleLoopLine();
+                        wakeOverlay();
+                      }}
+                      aria-label="Повтор репліки"
+                      aria-pressed={loopLine}
+                      className={`flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
+                        loopLine ? "bg-white text-[#4f46e5]" : "text-white"
+                      }`}
+                      style={!loopLine ? { background: "rgba(255,255,255,0.16)" } : undefined}
                     >
-                      {hasFr && hasUk && (
-                        <SubsMenuItem label="FR+UA" active={mode === "fr_uk"} onClick={() => changeMode("fr_uk")} />
-                      )}
-                      {hasFr && <SubsMenuItem label="FR" active={mode === "fr"} onClick={() => changeMode("fr")} />}
-                      {hasUk && <SubsMenuItem label="UA" active={mode === "uk"} onClick={() => changeMode("uk")} />}
-                      <SubsMenuItem label="Вимкнено" active={mode === "off"} onClick={() => changeMode("off")} />
-                    </div>
+                      <Repeat size={16} />
+                    </button>
                   )}
                 </div>
-              )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMuted((v) => !v);
-                  wakeOverlay();
-                }}
-                aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
-                aria-pressed={muted}
-                className={`hidden h-[34px] w-[34px] items-center justify-center rounded-full text-white min-[560px]:flex ${FOCUS_RING}`}
-                style={{ background: "rgba(255,255,255,0.16)" }}
-              >
-                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
+                <div className="flex items-center gap-2">
+                  <div ref={speedWrapRef} className="relative shrink-0">
+                    <button
+                      ref={speedButtonRef}
+                      type="button"
+                      onClick={() => {
+                        setSpeedOpen((v) => !v);
+                        setSubsOpen(false);
+                        wakeOverlay();
+                      }}
+                      aria-label={`Швидкість відтворення ${speed}×`}
+                      aria-haspopup="menu"
+                      aria-expanded={speedOpen}
+                      className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+                    >
+                      {speed}× ▾
+                    </button>
+                    {speedOpen && (
+                      <div
+                        role="menu"
+                        className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                      >
+                        {SPEEDS.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={s === speed}
+                            onClick={() => setRate(s)}
+                            className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+                              s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
+                            }`}
+                          >
+                            {s}×
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  void toggleFullscreen();
-                  wakeOverlay();
-                }}
-                aria-label={isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
-                className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
-                style={{ background: "rgba(255,255,255,0.16)" }}
-              >
-                {isFullscreen || isPseudoFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              </button>
+                  {hasAnySubtitles && (
+                    <div ref={subsWrapRef} className="relative shrink-0">
+                      <button
+                        ref={subsButtonRef}
+                        type="button"
+                        onClick={() => {
+                          setSubsOpen((v) => !v);
+                          setSpeedOpen(false);
+                          wakeOverlay();
+                        }}
+                        aria-label={`Субтитри: ${subsLabel}`}
+                        aria-haspopup="menu"
+                        aria-expanded={subsOpen}
+                        className={`flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+                      >
+                        <Captions size={14} />
+                        <span className="hidden min-[560px]:inline">{subsLabel}</span>
+                      </button>
+                      {subsOpen && (
+                        <div
+                          role="menu"
+                          className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                        >
+                          {hasFr && hasUk && (
+                            <SubsMenuItem label="FR+UA" active={mode === "fr_uk"} onClick={() => changeMode("fr_uk")} />
+                          )}
+                          {hasFr && <SubsMenuItem label="FR" active={mode === "fr"} onClick={() => changeMode("fr")} />}
+                          {hasUk && <SubsMenuItem label="UA" active={mode === "uk"} onClick={() => changeMode("uk")} />}
+                          <SubsMenuItem label="Вимкнено" active={mode === "off"} onClick={() => changeMode("off")} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMuted((v) => !v);
+                      wakeOverlay();
+                    }}
+                    aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
+                    aria-pressed={muted}
+                    className={`hidden h-[34px] w-[34px] items-center justify-center rounded-full text-white min-[560px]:flex ${FOCUS_RING}`}
+                    style={{ background: "rgba(255,255,255,0.16)" }}
+                  >
+                    {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void toggleFullscreen();
+                      wakeOverlay();
+                    }}
+                    aria-label={isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    style={{ background: "rgba(255,255,255,0.16)" }}
+                  >
+                    {isFullscreen || isPseudoFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
