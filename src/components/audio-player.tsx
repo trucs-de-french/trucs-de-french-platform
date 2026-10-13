@@ -146,7 +146,7 @@ export function AudioPlayer({
 
   if (loadError) {
     return (
-      <div className={`w-full max-w-[640px] ${className}`}>
+      <div className={`mx-auto w-full max-w-[640px] ${className}`}>
         <div className="flex items-center gap-3 rounded-2xl p-4 shadow-sm" style={cardStyle}>
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-white">
             <Headphones size={20} />
@@ -160,7 +160,7 @@ export function AudioPlayer({
   const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
 
   return (
-    <div className={`w-full max-w-[640px] ${className}`}>
+    <div className={`mx-auto w-full max-w-[640px] ${className}`}>
       <div className="flex flex-col gap-3 rounded-2xl p-4 shadow-sm" style={cardStyle}>
         <audio
           ref={audioRef}
