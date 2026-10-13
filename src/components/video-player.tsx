@@ -125,6 +125,12 @@ export function VideoPlayer({
   // вузьких екранах, висота плаває) — субтитри піднімаються рівно на цю
   // висоту + 8px, щоб ніколи не перекриватись кнопками.
   const [overlayHeight, setOverlayHeight] = useState(0);
+  // Висота самого контейнера плеєра — потрібна лише для обмеження max-height
+  // меню, що розкриваються вгору (щоб не вилазили за верхній край контейнера
+  // з overflow-hidden). Вимірюється так само через ResizeObserver, а не
+  // читанням wrapperRef.current напряму в тілі рендеру (react-hooks/refs
+  // забороняє доступ до .current під час рендеру).
+  const [containerHeight, setContainerHeight] = useState(0);
   // Лазі-ініціалізатор useState, НЕ useEffect (react-hooks/set-state-in-effect
   // проєкту забороняє прямий setState() у тілі ефекту) — той самий підхід,
   // що вже getInitialPosition у theme-toggle.tsx: читається синхронно при
@@ -187,6 +193,17 @@ export function VideoPlayer({
     observer.observe(overlay);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height !== undefined) setContainerHeight(height);
+    });
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [wrapperRef]);
 
   // Завантаження й парсинг .vtt — лише коли є URL; окремо для FR/UA, провал
   // одного файлу не ламає інший чи саме відео (subtitlesLoadError — лише
@@ -432,6 +449,10 @@ export function VideoPlayer({
   const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
   const hasAnySubtitles = hasFr || hasUk;
   const subsLabel = mode === "fr_uk" ? "FR+UA" : mode === "fr" ? "FR" : mode === "uk" ? "UA" : "Вимкнено";
+  // Скільки вертикального місця меню (розкривається вгору) реально має
+  // всередині контейнера плеєра над панеллю — контейнер плеєра (rounded,
+  // overflow-hidden) інакше обрізав би довге меню зверху.
+  const menuMaxHeight = containerHeight ? Math.max(120, containerHeight - overlayHeight - 16) : undefined;
 
   if (loadError) {
     return (
@@ -507,54 +528,38 @@ export function VideoPlayer({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
           {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
             <div
-              className="video-subtitle-plate mb-2 flex max-w-[90%] flex-col items-center gap-[3px] rounded-[10px] px-3 py-1.5 text-center min-[560px]:rounded-[14px] min-[560px]:p-[10px_18px_11px]"
+              className={`video-subtitle-plate mb-2 flex flex-col items-center text-center ${
+                isFullscreen || isPseudoFullscreen ? "video-subtitle-plate--fullscreen" : ""
+              }`}
             >
               {showFr && activeFrCue && (
-                <p
-                  className="font-heading text-[15px] font-bold text-white sm:text-[18px]"
-                  style={{
-                    textShadow: "0 1px 4px rgba(0,0,0,0.85)",
-                    ...((isFullscreen || isPseudoFullscreen) && { fontSize: "clamp(18px, 2.2vw, 32px)" }),
-                  }}
-                >
-                  {renderTokens(activeFrCue.text, "fr")}
-                </p>
+                <p className="font-heading video-subtitle-fr">{renderTokens(activeFrCue.text, "fr")}</p>
               )}
               {showUk && activeUkCue && (
-                <p
-                  className="font-heading text-[12px] font-semibold sm:text-[14px]"
-                  style={{
-                    color: "#ffd166",
-                    textShadow: "0 1px 4px rgba(0,0,0,0.85)",
-                    ...((isFullscreen || isPseudoFullscreen) && {
-                      fontSize: "calc(clamp(18px, 2.2vw, 32px) - 2px)",
-                    }),
-                  }}
-                >
-                  {renderTokens(activeUkCue.text, "uk")}
-                </p>
+                <p className="font-heading video-subtitle-uk">{renderTokens(activeUkCue.text, "uk")}</p>
               )}
             </div>
           ) : null}
 
           {/* "Підлога" під субтитрами: висота плавно переходить між
-              природною висотою панелі (вимірена ResizeObserver, не
-              константа) і clamp(36px, 8% контейнера, 72px), коли панель
-              схована — субтитри завжди впираються саме в цю висоту, а не в
-              нижній край рамки. overflow-hidden ховає вміст панелі під час
-              переходу без зміни розкладки стеку. */}
+              природною висотою панелі (вимірена ResizeObserver на самому
+              вмісті нижче, не константа) і clamp(36px, 8% контейнера,
+              72px), коли панель схована. "Схований" стан — лише opacity:0 +
+              pointer-events:none на вмісті нижче; БЕЗ overflow-hidden тут —
+              інакше меню швидкості/субтитрів (розкриваються вгору,
+              position:absolute bottom-full всередині вмісту) обрізалися б
+              цією ж обгорткою. */}
           <div
-            className="pointer-events-auto w-full overflow-hidden transition-[height] duration-150 ease-in-out"
+            className="pointer-events-auto w-full transition-[height] duration-150 ease-in-out"
             style={{
               height: overlayVisible ? (overlayHeight ? `${overlayHeight}px` : "auto") : "clamp(36px, 8%, 72px)",
             }}
           >
             <div
               ref={overlayRef}
-              className="flex flex-col gap-2 transition-opacity duration-150 ease-in-out"
+              className="flex flex-col gap-2 pb-3 pl-[14px] pr-[14px] pt-[34px] transition-opacity duration-150 ease-in-out max-[420px]:gap-1 max-[420px]:pb-2 max-[420px]:pl-[10px] max-[420px]:pr-[10px] max-[420px]:pt-[18px]"
               style={{
                 background: "linear-gradient(to top, rgba(10,9,30,0.85), transparent)",
-                padding: "34px 14px 12px",
                 opacity: overlayVisible ? 1 : 0,
                 pointerEvents: overlayVisible ? "auto" : "none",
               }}
@@ -575,7 +580,7 @@ export function VideoPlayer({
                   aria-disabled={!metadataLoaded}
                   onPointerDown={handleTrackPointerDown}
                   onPointerMove={handleTrackPointerMove}
-                  className={`relative h-1 flex-1 touch-none rounded-full ${FOCUS_RING} ${
+                  className={`relative h-1 flex-1 touch-none rounded-full max-[420px]:h-[3px] ${FOCUS_RING} ${
                     metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
                   }`}
                   style={{ background: "rgba(255,255,255,0.3)" }}
@@ -598,7 +603,13 @@ export function VideoPlayer({
                   субтитри/mute/fullscreen. На <560px кнопки лівого кластера
                   зменшені до 32px (gap 6px), праворуч дозволений перенос у
                   другий рядок (flex-wrap), замість приховування функцій. */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              {/* justify-between замінено на ml-auto на правому кластері:
+                  коли права група не вміщається поруч із лівою й
+                  переноситься на окремий рядок (flex-wrap на цьому
+                  контейнері), з justify-between вона лягла б по лівому
+                  краю (єдиний елемент на рядку) — ml-auto тримає її
+                  праворуч завжди, і на спільному рядку, і на власному. */}
+              <div className="flex flex-wrap items-center gap-2 max-[420px]:gap-1.5">
                 <div className="flex items-center gap-1.5 min-[560px]:gap-2">
                   <button
                     type="button"
@@ -655,7 +666,7 @@ export function VideoPlayer({
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-1.5 min-[560px]:gap-2">
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 min-[560px]:gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -691,7 +702,8 @@ export function VideoPlayer({
                     {speedOpen && (
                       <div
                         role="menu"
-                        className="absolute bottom-full right-0 z-10 mb-1 flex max-h-[60vh] flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                        className="absolute bottom-full right-0 z-10 mb-1 flex flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                        style={{ maxHeight: menuMaxHeight }}
                       >
                         {SPEEDS.map((s) => (
                           <button
@@ -732,7 +744,8 @@ export function VideoPlayer({
                       {subsOpen && (
                         <div
                           role="menu"
-                          className="absolute bottom-full right-0 z-10 mb-1 flex max-h-[60vh] flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                          className="absolute bottom-full right-0 z-10 mb-1 flex flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                          style={{ maxHeight: menuMaxHeight }}
                         >
                           {hasFr && hasUk && (
                             <SubsMenuItem label="FR+UA" active={mode === "fr_uk"} onClick={() => changeMode("fr_uk")} />

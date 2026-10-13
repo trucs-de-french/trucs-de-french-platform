@@ -657,17 +657,60 @@ button, input, textarea, select, label, nav, aside {
 /* Скляна підкладка під активну репліку субтитрів — лише коли вона
    рендериться (немає тексту — немає порожньої плашки, керується в
    компоненті). Фолбек без backdrop-filter (старі браузери) — трохи
-   щільніший фон замість скла. */
+   щільніший фон замість скла. width: fit-content — плашка стискається під
+   короткі репліки, max-width обмежує довгі. */
 .video-subtitle-plate {
-  background: rgba(16, 14, 40, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  background: rgba(16, 14, 40, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 5px 12px 6px;
+  gap: 1px;
+  width: fit-content;
+  max-width: min(80%, 640px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-subtitle-plate {
-    background: rgba(16, 14, 40, 0.72);
+    background: rgba(16, 14, 40, 0.68);
+  }
+}
+.video-subtitle-plate--fullscreen {
+  padding: 8px 16px;
+  max-width: min(70%, 900px);
+}
+.video-subtitle-fr {
+  font-size: clamp(15px, 1.5vw, 18px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.video-subtitle-uk {
+  font-size: clamp(13px, 1.25vw, 15px);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #ffd166;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.video-subtitle-plate--fullscreen .video-subtitle-fr {
+  font-size: clamp(18px, 1.8vw, 28px);
+}
+.video-subtitle-plate--fullscreen .video-subtitle-uk {
+  font-size: calc(clamp(18px, 1.8vw, 28px) - 2px);
+}
+@media (max-width: 559px) {
+  .video-subtitle-plate {
+    padding: 3px 10px;
+    border-radius: 8px;
+    max-width: 92%;
+  }
+  .video-subtitle-fr {
+    font-size: 14px;
+  }
+  .video-subtitle-uk {
+    font-size: 12px;
   }
 }
 
