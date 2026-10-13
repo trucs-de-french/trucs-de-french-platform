@@ -7,7 +7,19 @@ import {
   type PointerEvent as ReactPointerEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { Play, Pause, Rewind, FastForward, Repeat, Volume2, VolumeX, Maximize, Minimize, Captions } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Rewind,
+  FastForward,
+  Repeat,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  Captions,
+  Turtle,
+} from "lucide-react";
 import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
@@ -342,6 +354,31 @@ export function VideoPlayer({
     }
   }
 
+  // Той самий ярлик, що toggleSlow у phonetics-audio-player.tsx — без
+  // окремого стану, активність виводиться напряму з speed.
+  function toggleSlow() {
+    setRate(speed === 0.75 ? 1 : 0.75);
+  }
+
+  // Orientation lock — лише локально тут, НЕ в самому useFullscreenWrapper:
+  // хук свідомо без нього (коментар у use-fullscreen-wrapper.ts — форсований
+  // поворот одразу після fullscreenchange ламав iframe-плеєри Drive на
+  // Android), але власний <video> цієй проблеми не має, тож пробуємо тут,
+  // ігноруючи відмову (iOS Safari й десктоп її не підтримують).
+  async function handleFullscreenToggle() {
+    const wasFullscreen = isFullscreen || isPseudoFullscreen;
+    await toggleFullscreen();
+    if (!wasFullscreen) {
+      try {
+        await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.(
+          "landscape"
+        );
+      } catch {
+        // більшість браузерів/ОС відмовляють — ігноруємо.
+      }
+    }
+  }
+
   // Закриття меню швидкості/субтитрів кліком поза ним і по Escape — той
   // самий рецепт, що вже в audio-player.tsx.
   useEffect(() => {
@@ -418,8 +455,8 @@ export function VideoPlayer({
         onKeyDown={handleWrapperKeyDown}
         onPointerMove={wakeOverlay}
         onFocus={wakeOverlay}
-        className={`relative aspect-video w-full overflow-hidden rounded-[14px] ${
-          isPseudoFullscreen ? Z_MODAL : ""
+        className={`video-player relative aspect-video w-full overflow-hidden rounded-[14px] ${
+          isPseudoFullscreen ? `video-player--pseudo-fullscreen ${Z_MODAL}` : ""
         }`}
         style={{ background: "linear-gradient(135deg, #14132b, #2b2a52)" }}
       >
@@ -468,8 +505,10 @@ export function VideoPlayer({
             (субтитри не мають бути клікабельні), auto — лише на самій
             панелі нижче. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
-          {hasAnySubtitles && (
-            <div className="mb-2 flex flex-col items-center gap-0.5 px-4 text-center">
+          {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
+            <div
+              className="video-subtitle-plate mb-2 flex max-w-[90%] flex-col items-center gap-[3px] rounded-[10px] px-3 py-1.5 text-center min-[560px]:rounded-[14px] min-[560px]:p-[10px_18px_11px]"
+            >
               {showFr && activeFrCue && (
                 <p
                   className="font-heading text-[15px] font-bold text-white sm:text-[18px]"
@@ -496,7 +535,7 @@ export function VideoPlayer({
                 </p>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* "Підлога" під субтитрами: висота плавно переходить між
               природною висотою панелі (вимірена ResizeObserver, не
@@ -555,9 +594,12 @@ export function VideoPlayer({
                 </span>
               </div>
 
-              {/* Рядок 2: зліва play/±10с/повтор, справа швидкість/субтитри/mute/fullscreen */}
+              {/* Рядок 2: зліва play/±10с/повтор, справа повільно/швидкість/
+                  субтитри/mute/fullscreen. На <560px кнопки лівого кластера
+                  зменшені до 32px (gap 6px), праворуч дозволений перенос у
+                  другий рядок (flex-wrap), замість приховування функцій. */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 min-[560px]:gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -577,7 +619,7 @@ export function VideoPlayer({
                       wakeOverlay();
                     }}
                     aria-label="Назад на 10 секунд"
-                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
                     <Rewind size={16} />
@@ -589,7 +631,7 @@ export function VideoPlayer({
                       wakeOverlay();
                     }}
                     aria-label="Вперед на 10 секунд"
-                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
                     <FastForward size={16} />
@@ -603,7 +645,7 @@ export function VideoPlayer({
                       }}
                       aria-label="Повтор репліки"
                       aria-pressed={loopLine}
-                      className={`flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING} ${
                         loopLine ? "bg-white text-[#4f46e5]" : "text-white"
                       }`}
                       style={!loopLine ? { background: "rgba(255,255,255,0.16)" } : undefined}
@@ -613,7 +655,23 @@ export function VideoPlayer({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-1.5 min-[560px]:gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleSlow();
+                      wakeOverlay();
+                    }}
+                    aria-label="Повільно"
+                    aria-pressed={speed === 0.75}
+                    className={`flex h-8 shrink-0 items-center gap-1 rounded-full border border-white/40 px-2.5 text-xs font-semibold min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING} ${
+                      speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"
+                    }`}
+                  >
+                    <Turtle size={14} />
+                    <span className="hidden min-[560px]:inline">Повільно</span>
+                  </button>
+
                   <div ref={speedWrapRef} className="relative shrink-0">
                     <button
                       ref={speedButtonRef}
@@ -626,14 +684,14 @@ export function VideoPlayer({
                       aria-label={`Швидкість відтворення ${speed}×`}
                       aria-haspopup="menu"
                       aria-expanded={speedOpen}
-                      className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+                      className={`flex h-8 items-center rounded-full border border-white/35 bg-white/10 px-2.5 text-xs font-semibold text-white min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING}`}
                     >
                       {speed}× ▾
                     </button>
                     {speedOpen && (
                       <div
                         role="menu"
-                        className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                        className="absolute bottom-full right-0 z-10 mb-1 flex max-h-[60vh] flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
                       >
                         {SPEEDS.map((s) => (
                           <button
@@ -642,7 +700,7 @@ export function VideoPlayer({
                             role="menuitemradio"
                             aria-checked={s === speed}
                             onClick={() => setRate(s)}
-                            className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+                            className={`flex min-h-10 min-w-24 items-center whitespace-nowrap px-3 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
                               s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
                             }`}
                           >
@@ -666,7 +724,7 @@ export function VideoPlayer({
                         aria-label={`Субтитри: ${subsLabel}`}
                         aria-haspopup="menu"
                         aria-expanded={subsOpen}
-                        className={`flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+                        className={`flex h-8 items-center gap-1 rounded-full border border-white/35 bg-white/10 px-2.5 text-xs font-semibold text-white min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING}`}
                       >
                         <Captions size={14} />
                         <span className="hidden min-[560px]:inline">{subsLabel}</span>
@@ -674,7 +732,7 @@ export function VideoPlayer({
                       {subsOpen && (
                         <div
                           role="menu"
-                          className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                          className="absolute bottom-full right-0 z-10 mb-1 flex max-h-[60vh] flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
                         >
                           {hasFr && hasUk && (
                             <SubsMenuItem label="FR+UA" active={mode === "fr_uk"} onClick={() => changeMode("fr_uk")} />
@@ -687,6 +745,10 @@ export function VideoPlayer({
                     </div>
                   )}
 
+                  {/* Звук регулюється апаратними кнопками на дотикових
+                      пристроях — ховається там через CSS (pointer: coarse),
+                      а не за шириною екрана, тож лишається доступним на
+                      вузькому, але мишачому вікні. */}
                   <button
                     type="button"
                     onClick={() => {
@@ -695,7 +757,7 @@ export function VideoPlayer({
                     }}
                     aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
                     aria-pressed={muted}
-                    className={`hidden h-[34px] w-[34px] items-center justify-center rounded-full text-white min-[560px]:flex ${FOCUS_RING}`}
+                    className={`video-mute-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
                     {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -704,11 +766,11 @@ export function VideoPlayer({
                   <button
                     type="button"
                     onClick={() => {
-                      void toggleFullscreen();
+                      void handleFullscreenToggle();
                       wakeOverlay();
                     }}
                     aria-label={isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
-                    className={`flex h-[34px] w-[34px] items-center justify-center rounded-full text-white ${FOCUS_RING}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
                     {isFullscreen || isPseudoFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
@@ -730,7 +792,7 @@ function SubsMenuItem({ label, active, onClick }: { label: string; active: boole
       role="menuitemradio"
       aria-checked={active}
       onClick={onClick}
-      className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+      className={`flex min-h-10 items-center whitespace-nowrap px-3 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
         active ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
       }`}
     >

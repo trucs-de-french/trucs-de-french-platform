@@ -634,6 +634,52 @@ button, input, textarea, select, label, nav, aside {
   height: 100dvh;
 }
 
+/* video-player.tsx — власний плеєр (аналогічно .video-frame вище): той
+   самий принцип, своя обгортка, бо video-frame — чужий iframe, тут —
+   наш <video> зі своєю панеллю/субтитрами всередині того ж контейнера. */
+.video-player:fullscreen,
+.video-player:-webkit-full-screen,
+.video-player--pseudo-fullscreen {
+  aspect-ratio: auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+}
+.video-player--pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  background: #000;
+}
+
+/* Скляна підкладка під активну репліку субтитрів — лише коли вона
+   рендериться (немає тексту — немає порожньої плашки, керується в
+   компоненті). Фолбек без backdrop-filter (старі браузери) — трохи
+   щільніший фон замість скла. */
+.video-subtitle-plate {
+  background: rgba(16, 14, 40, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .video-subtitle-plate {
+    background: rgba(16, 14, 40, 0.72);
+  }
+}
+
+/* Mute-кнопка video-player.tsx — звук на дотикових пристроях регулюють
+   апаратні кнопки, ховаємо саме за типом вказівника, не за шириною
+   екрана (вузьке мишаче вікно лишає кнопку доступною). */
+@media (pointer: coarse) {
+  .video-mute-btn {
+    display: none !important;
+  }
+}
+
 /* embed-frame.tsx — спільна обгортка embed/гра-iframe (Wordwall, власні
    HTML-ігри тощо) для студентської частини. На відміну від video-frame,
    базова (десктоп/планшет) висота лишається фіксованою в пікселях —
