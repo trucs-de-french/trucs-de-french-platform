@@ -1,34 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from "react";
-import { Play, Pause } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Play, Pause, Repeat } from "lucide-react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-// 14, не 20 — права колонка картки у сітці 2х стала ще вужчою (~180-240px).
-const BAR_COUNT = 14;
+const RADIUS = 26;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Один елемент грає за раз (крок 7 задачі): коли стартує новий — попередній
-// ставиться на пауза. Модульний рівень, не React-стан — свідомо просто
-// "хто зараз грає", без підписки/ререндерів чужих карток.
+// Один елемент грає за раз: коли стартує новий — попередній ставиться на
+// паузу. Модульний рівень, не React-стан — свідомо просто "хто зараз грає",
+// без підписки/ререндерів чужих карток.
 let currentlyPlaying: HTMLAudioElement | null = null;
 
 function stopOthersAndRegister(el: HTMLAudioElement) {
   if (currentlyPlaying && currentlyPlaying !== el) currentlyPlaying.pause();
   currentlyPlaying = el;
-}
-
-// Детермінована "хвиля" (не справжня амплітуда файлу — декоративна, як і
-// попросили) — та сама послідовність висот для того самого src щоразу,
-// без потреби декодувати аудіо.
-function barHeights(seed: string): number[] {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  const heights: number[] = [];
-  for (let i = 0; i < BAR_COUNT; i++) {
-    h = (h * 1103515245 + 12345) >>> 0;
-    heights.push(30 + (h % 71)); // 30%..100%
-  }
-  return heights;
 }
 
 function formatTime(seconds: number): string {
@@ -40,15 +26,16 @@ function formatTime(seconds: number): string {
 
 export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; className?: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const waveRef = useRef<HTMLDivElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
   const speedButtonRef = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  // null — метадані ще не завантажені: показуємо "–:–", а не "0:00".
+  const [duration, setDuration] = useState<number | null>(null);
+  const [loop, setLoop] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [speedOpen, setSpeedOpen] = useState(false);
-  const heights = useMemo(() => barHeights(src), [src]);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -92,140 +79,141 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
     }
   }
 
-  function seekToClientX(clientX: number) {
-    const audio = audioRef.current;
-    const wave = waveRef.current;
-    if (!audio || !wave || !duration) return;
-    const rect = wave.getBoundingClientRect();
-    const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    audio.currentTime = pct * duration;
-    setCurrentTime(audio.currentTime);
-  }
-
-  function handleWavePointerDown(e: PointerEvent<HTMLDivElement>) {
-    seekToClientX(e.clientX);
-    const wave = waveRef.current;
-    wave?.setPointerCapture(e.pointerId);
-  }
-
-  function handleWavePointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (e.buttons !== 1) return;
-    seekToClientX(e.clientX);
-  }
-
-  function handleWaveKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-    if (e.key === "ArrowRight") {
-      audio.currentTime = Math.min(duration, audio.currentTime + duration * 0.05);
-      setCurrentTime(audio.currentTime);
-    } else if (e.key === "ArrowLeft") {
-      audio.currentTime = Math.max(0, audio.currentTime - duration * 0.05);
-      setCurrentTime(audio.currentTime);
-    }
-  }
-
   function setRate(rate: number) {
     setSpeed(rate);
     setSpeedOpen(false);
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }
 
-  const progress = duration > 0 ? currentTime / duration : 0;
-  const filledBars = Math.round(progress * BAR_COUNT);
+  if (loadError) {
+    return (
+      <p className={`rounded-xl bg-[#f3f2fb] px-2.5 py-2 text-xs text-neutral-500 dark:bg-neutral-700/40 dark:text-neutral-400 ${className}`}>
+        Не вдалося завантажити аудіо
+      </p>
+    );
+  }
+
+  const metadataLoaded = duration !== null && Number.isFinite(duration);
+  const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
+  const ringOffset = CIRCUMFERENCE * (1 - progress);
 
   return (
-    <div
-      // @container — вузька колонка, а не весь екран: час ховається за
-      // шириною САМОГО плеєра (@[Npx]:), не за шириною вікна браузера.
-      // min-w-0 — плеєр не повинен штовхати власний max-w-full контейнер
-      // ширше за замовлену колонку (flex-row батьків без цього тягнеться
-      // під min-content дітей, звідси й був баг "розтягується до ~600px").
-      className={`@container flex min-w-0 max-w-full items-center gap-1.5 rounded-xl bg-[#f3f2fb] px-2.5 py-1.5 dark:bg-neutral-700/40 ${className}`}
-    >
+    <div className={`@container flex min-w-0 max-w-full items-center gap-2.5 rounded-xl bg-[#f3f2fb] px-2.5 py-1.5 dark:bg-neutral-700/40 ${className}`}>
       <audio
         ref={audioRef}
         src={src}
         preload="metadata"
+        loop={loop}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onEnded={() => {
+          // loop=true не породжує подію ended (аудіо само зациклюється) —
+          // це лише для випадку "повтор вимкнено": кільце/час повертаються
+          // на початок замість зависання на останньому кадрі.
+          setPlaying(false);
+          setCurrentTime(0);
+          if (audioRef.current) audioRef.current.currentTime = 0;
+        }}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onError={() => setLoadError(true)}
         className="hidden"
       />
 
-      <button
-        type="button"
-        onClick={togglePlay}
-        aria-label={playing ? "Пауза" : "Відтворити"}
-        aria-pressed={playing}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white"
-      >
-        {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
-      </button>
-
-      <div
-        ref={waveRef}
-        role="slider"
-        tabIndex={0}
-        aria-label="Позиція відтворення"
-        aria-valuemin={0}
-        aria-valuemax={Math.round(duration) || 0}
-        aria-valuenow={Math.round(currentTime)}
-        onPointerDown={handleWavePointerDown}
-        onPointerMove={handleWavePointerMove}
-        onKeyDown={handleWaveKeyDown}
-        className="flex h-5 min-w-0 flex-1 cursor-pointer items-center gap-[2px]"
-      >
-        {heights.map((h, i) => (
-          <span
-            key={i}
-            className={`w-full rounded-full ${i < filledBars ? "bg-brand" : "bg-neutral-300 dark:bg-neutral-500"}`}
-            style={{ height: `${h}%` }}
+      <div className="relative h-[60px] w-[60px] shrink-0">
+        <svg width={60} height={60} viewBox="0 0 60 60" className="absolute inset-0">
+          <circle
+            cx={30}
+            cy={30}
+            r={RADIUS}
+            strokeWidth={4}
+            fill="none"
+            stroke="currentColor"
+            className="text-[#e2e0f0] dark:text-neutral-600"
           />
-        ))}
+          <circle
+            cx={30}
+            cy={30}
+            r={RADIUS}
+            strokeWidth={4}
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={ringOffset}
+            transform="rotate(-90 30 30)"
+            className="text-brand transition-[stroke-dashoffset] duration-150 ease-linear"
+          />
+        </svg>
+        <button
+          type="button"
+          onClick={togglePlay}
+          aria-label={playing ? "Пауза" : "Відтворити"}
+          aria-pressed={playing}
+          className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-white"
+        >
+          {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+        </button>
       </div>
 
-      {/* приховано за замовчуванням — показуємо лише коли сам плеєр (не
-          вікно) має досить ширини, @container вище */}
-      <span className="hidden shrink-0 whitespace-nowrap text-[10px] text-neutral-500 @[260px]:inline dark:text-neutral-400">
-        {formatTime(currentTime)} / {formatTime(duration)}
-      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-baseline gap-1 whitespace-nowrap font-content text-[15px] font-semibold tabular-nums">
+          <span>{metadataLoaded ? formatTime(currentTime) : "–:–"}</span>
+          <span className="text-neutral-400 dark:text-neutral-500">
+            / {metadataLoaded ? formatTime(duration!) : "–:–"}
+          </span>
+        </div>
 
-      <div ref={speedWrapRef} className="relative shrink-0">
-        <button
-          ref={speedButtonRef}
-          type="button"
-          onClick={() => setSpeedOpen((v) => !v)}
-          aria-label="Швидкість відтворення"
-          aria-haspopup="menu"
-          aria-expanded={speedOpen}
-          className="rounded-md border border-gray-200 px-1 py-0.5 text-[10px] text-neutral-600 hover:bg-white dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
-        >
-          {speed}× ▾
-        </button>
-        {speedOpen && (
-          <div
-            role="menu"
-            className="absolute right-0 top-full z-10 mt-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setLoop((v) => !v)}
+            aria-label="Повторити"
+            aria-pressed={loop}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              loop
+                ? "border-brand bg-[#ecebfd] text-brand"
+                : "border-gray-200 text-neutral-500 hover:bg-white dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-800"
+            }`}
           >
-            {SPEEDS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                role="menuitemradio"
-                aria-checked={s === speed}
-                onClick={() => setRate(s)}
-                className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
-                  s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
-                }`}
+            <Repeat size={15} />
+          </button>
+
+          <div ref={speedWrapRef} className="relative shrink-0">
+            <button
+              ref={speedButtonRef}
+              type="button"
+              onClick={() => setSpeedOpen((v) => !v)}
+              aria-label={`Швидкість ${speed}×`}
+              aria-haspopup="menu"
+              aria-expanded={speedOpen}
+              className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[13px] font-bold text-brand dark:border-neutral-600 dark:bg-neutral-800"
+            >
+              {speed}× ▾
+            </button>
+            {speedOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-full z-10 mt-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
               >
-                {s}×
-              </button>
-            ))}
+                {SPEEDS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={s === speed}
+                    onClick={() => setRate(s)}
+                    className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+                      s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
+                    }`}
+                  >
+                    {s}×
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
