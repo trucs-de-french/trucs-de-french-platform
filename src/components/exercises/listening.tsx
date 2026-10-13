@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Check } from "lucide-react";
 import type { ListeningPublic, ListeningDetail, ListeningAnswer, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
@@ -12,10 +13,9 @@ import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -55,6 +55,41 @@ export function ListeningExercise({
   useEffect(() => {
     if (result) onResult?.(result);
   }, [result, onResult]);
+
+  // Колір рамки+фону плитки-варіанта — той самий принцип станів, що
+  // chipClass() у multiple-choice.tsx (indigo до перевірки, зелений/
+  // червоний після), з одним додатковим станом ЛИШЕ тут: правильний,
+  // але НЕ обраний варіант після перевірки — пунктирна зелена рамка (щоб
+  // було видно правильну відповідь, навіть коли студентка вибрала іншу).
+  // Значення класів — ті самі рядки, що були тут до картки-плитки.
+  function tileClass(questionId: string, optionId: string, qDetail?: ListeningDetail["questions"][number]) {
+    if (!qDetail) {
+      return answers[questionId] === optionId
+        ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
+        : ANSWER_CARD_DEFAULT;
+    }
+    const od = qDetail.options.find((o) => o.id === optionId);
+    if (!od) return "";
+    if (od.correct && od.selected) return "border-green-500 bg-green-50 dark:bg-green-950/30";
+    if (od.correct && !od.selected) return "border-green-500 border-dashed";
+    if (!od.correct && od.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
+    return "opacity-60";
+  }
+
+  // Колір круглого індикатора зліва в плитці — та сама логіка станів, що
+  // tileIndicatorClass() у multiple-choice.tsx (indigo/зелений/червоний),
+  // заповнений (не лише рамка), бо тут це коло-радіо, не чекбокс-квадрат.
+  function indicatorClass(questionId: string, optionId: string, qDetail?: ListeningDetail["questions"][number]) {
+    if (!qDetail) {
+      return answers[questionId] === optionId
+        ? "border-indigo-500 bg-indigo-500"
+        : "border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-800";
+    }
+    const od = qDetail.options.find((o) => o.id === optionId);
+    if (od?.correct) return "border-green-500 bg-green-500";
+    if (od?.selected) return "border-red-500 bg-red-500";
+    return "border-neutral-300 bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
+  }
 
   const allAnswered = config.questions.every((q) => answers[q.id]);
 
@@ -189,12 +224,18 @@ export function ListeningExercise({
         <AudioPlayer src={config.audioUrl} />
       )}
 
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
-        {config.questions.map((q) => {
+      <div className="flex flex-col gap-3">
+        {config.questions.map((q, index) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
-          return (
-            <div key={q.id} className="min-w-0">
-              <p className="break-words font-medium [overflow-wrap:anywhere]">
+          const questionId = `listening-q-${q.id}`;
+          const header = (
+            <div className="flex items-start gap-2.5 p-3">
+              {config.questions.length > 1 && (
+                <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                  {index + 1}
+                </span>
+              )}
+              <p id={questionId} className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
                 {frenchNbsp(q.question)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
                 {!hidePoints && (pointsVisible || qDetail) && (
@@ -205,82 +246,32 @@ export function ListeningExercise({
                   </span>
                 )}
               </p>
-              {/* grid, не суворо один стовпчик — на вузькому екрані природно
-                  переходить в один стовпчик (вертикально), на широкому —
-                  кілька поруч (горизонтально). */}
-              <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
-                {q.options.map((o) => {
-                  const od = qDetail?.options.find((x) => x.id === o.id);
-                  const cls = od
-                    ? od.correct && od.selected
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                      : od.correct && !od.selected
-                        ? "border-green-500 border-dashed"
-                        : !od.correct && od.selected
-                          ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : "opacity-60"
-                    : answers[q.id] === o.id
-                      ? SELECTED_OPTION_CLASS
-                      : ANSWER_CARD_DEFAULT;
-
-                  if (o.imageUrl) {
-                    // Той самий принцип, що в multiple-choice.tsx: підсвічення
-                    // йде на маленький квадратик-чекбокс, а не на всю кнопку.
-                    const indicator = !od
-                      ? {
-                          mark: answers[q.id] === o.id ? "✓" : "",
-                          className:
-                            answers[q.id] === o.id
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-neutral-300 dark:border-neutral-600",
-                        }
-                      : od.correct
-                        ? { mark: "✓", className: "border-green-600 bg-green-600 text-white" }
-                        : od.selected
-                          ? { mark: "✕", className: "border-red-600 bg-red-600 text-white" }
-                          : { mark: "", className: "border-neutral-300 opacity-60 dark:border-neutral-600" };
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        disabled={!!result}
-                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                        className={`relative ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
-                      >
-                        <ImageZoomBadge onOpen={() => setLightboxSrc(o.imageUrl!)} />
-                        <ImageOrPlaceholder
-                          src={o.imageUrl}
-                          alt={o.text || ""}
-                          className="mx-auto h-20 w-20 rounded object-cover"
-                          useFocus
-                        />
-                        <div className="mt-1 flex items-center justify-center gap-1.5">
-                          <span
-                            aria-hidden
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] leading-none ${indicator.className}`}
-                          >
-                            {indicator.mark}
-                          </span>
-                          {o.text && <span>{o.text}</span>}
-                        </div>
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      disabled={!!result}
-                      onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                      className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${cls}`}
-                    >
-                      {o.text}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
+          );
+          return (
+            <ChoiceQuestionCard
+              key={q.id}
+              header={header}
+              role="radiogroup"
+              ariaLabelledBy={questionId}
+              options={q.options.map((o) => {
+                const od = qDetail?.options.find((x) => x.id === o.id);
+                const chosen = qDetail ? !!od?.selected || !!od?.correct : answers[q.id] === o.id;
+                return {
+                  id: o.id,
+                  role: "radio" as const,
+                  selected: !!od?.selected || answers[q.id] === o.id,
+                  disabled: !!result,
+                  onClick: () => setAnswers((prev) => ({ ...prev, [q.id]: o.id })),
+                  tileClassName: tileClass(q.id, o.id, qDetail),
+                  indicatorClassName: indicatorClass(q.id, o.id, qDetail),
+                  indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
+                  imageUrl: o.imageUrl,
+                  onZoomImage: o.imageUrl ? () => setLightboxSrc(o.imageUrl!) : undefined,
+                  label: o.text,
+                };
+              })}
+            />
           );
         })}
       </div>

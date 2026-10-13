@@ -77,3 +77,18 @@ export const COMPACT_IMAGE_CARD =
 export const COMPACT_IMAGE_FRAME =
   "relative mx-auto aspect-square w-full max-w-[6.5rem] overflow-hidden rounded-md";
 export const COMPACT_IMAGE_FILL = "absolute inset-0 h-full w-full object-cover object-center";
+
+// Підкладка-пул з плитками-відповідями під карткою питання (multiple_choice,
+// тепер і listening через ChoiceQuestionCard) — один стовпець на мобільній,
+// на sm+ стільки колонок auto-fit влізе (мінімум 11rem на плитку). Рядок
+// перенесено сюди з колишнього локального POOL_CLASS у multiple-choice.tsx
+// БЕЗ зміни значення, щоб listening.tsx міг узяти той самий клас, а не
+// передруковувати його.
+export const POOL_CLASS =
+  "grid grid-cols-1 items-stretch gap-2 border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
+
+// Плитка-відповідь у пулі: min-h-12 (48px) — зона дотику на touch. Колір
+// стану додається викликачем окремо (chipClass/tileClass і т.п.) — перенесено
+// з колишнього локального TILE_BASE у multiple-choice.tsx без зміни значення.
+export const TILE_BASE =
+  "flex min-h-12 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";

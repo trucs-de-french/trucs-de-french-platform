@@ -17,6 +17,7 @@ import {
   ITEM_NUMBER_BADGE,
   ITEM_CARD_WRAP as CARD_WRAP,
 } from "./answer-card-style";
+import { ChoiceQuestionCard } from "./choice-question-card";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -38,17 +39,9 @@ type MultipleChoiceResult = Extract<GradeResult, { detail: MultipleChoiceDetail 
 // класів, перенесено, щоб word_choice міг перевикористати без зміни
 // вигляду тут).
 
-// Підкладка з плитками: один стовпець на мобільній (grid-cols-1), на sm+ —
-// стільки колонок auto-fit влізе (мінімум 11rem на плитку). items-stretch —
-// однакова висота плиток у ряду навіть якщо текст різної довжини.
-const POOL_CLASS =
-  "grid grid-cols-1 items-stretch gap-2 border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
-
-// Плитка-відповідь: min-h-12 (48px) — зона дотику на touch. Колір стану
-// додається викликачем через chipClass() (нижче) — та сама функція, що й
-// раніше визначала колір чипа, лишена без змін.
-const TILE_BASE =
-  "flex min-h-12 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+// POOL_CLASS/TILE_BASE тепер в answer-card-style.ts (винесено туди, щоб
+// listening.tsx міг узяти той самий клас через ChoiceQuestionCard, без
+// копіювання рядків) — значення не змінені.
 
 // Рамка під картинку лише для картинкових режимів multiple_choice: на
 // відміну від спільного COMPACT_IMAGE_FRAME (answer-card-style.ts, капає
@@ -418,42 +411,31 @@ export function MultipleChoiceExercise({
     // замість дублювання тексту в кожній плитці aria-label.
     if (!hasImages) {
       return (
-        <div key={item.id} className={CARD_WRAP}>
-          {renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
-          <div
-            role={item.multiple ? "group" : "radiogroup"}
-            aria-labelledby={questionId}
-            className={POOL_CLASS}
-          >
-            {item.options.map((o, idx) => {
-              const opt = itemDetail?.options.find((x) => x.id === o.id);
-              const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => toggle(item.id, o.id, item.multiple)}
-                  disabled={!!itemDetail}
-                  role={item.multiple ? "checkbox" : "radio"}
-                  aria-checked={chosen}
-                  className={`${TILE_BASE} ${chipClass(item.id, o.id, itemDetail)}`}
-                >
-                  <span
-                    aria-hidden
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center border-2 ${
-                      item.multiple ? "rounded-[4px]" : "rounded-full"
-                    } ${tileIndicatorClass(item.id, o.id, itemDetail)}`}
-                  >
-                    {chosen && <Check size={12} className="text-white" aria-hidden />}
-                  </span>
-                  <span className="min-w-0 flex-1 break-words">
-                    {optionLetter(idx)}) {o.text}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <ChoiceQuestionCard
+          key={item.id}
+          header={renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
+          role={item.multiple ? "group" : "radiogroup"}
+          ariaLabelledBy={questionId}
+          options={item.options.map((o, idx) => {
+            const opt = itemDetail?.options.find((x) => x.id === o.id);
+            const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
+            return {
+              id: o.id,
+              role: item.multiple ? "checkbox" : "radio",
+              selected: chosen,
+              disabled: !!itemDetail,
+              onClick: () => toggle(item.id, o.id, item.multiple),
+              tileClassName: chipClass(item.id, o.id, itemDetail),
+              indicatorClassName: tileIndicatorClass(item.id, o.id, itemDetail),
+              indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
+              label: (
+                <>
+                  {optionLetter(idx)}) {o.text}
+                </>
+              ),
+            };
+          })}
+        />
       );
     }
 
