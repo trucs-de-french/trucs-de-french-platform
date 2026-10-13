@@ -12,6 +12,9 @@ import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { CardPager } from "./card-pager";
+
+const PAGE_SIZE = 6;
 
 // variant "normal" — звичайний manual-режим (клікабельна, front/back).
 // "highlighted" — рулетка зараз "пробігає" через цю картку (лише бордюр,
@@ -84,21 +87,23 @@ const TOTAL_TICKS = 18;
 
 // Wordwall Flip Tiles-стиль: "рулетка" крутиться по картках, зупиняється на
 // заздалегідь обраній НЕВИКАЗАНІЙ картці, показує лише config.revealSide,
-// клік відкриває іншу сторону. shownIndices — на всю сесію проходження
-// (не персистить на сервер, це самоперевірка без балів) — коли пул
-// вичерпано, найпростіший варіант: тихо починаємо новий цикл з усіх карток
-// заново, без дизейблу/пояснень (дрил має лишатись безкінечним).
+// клік відкриває іншу сторону. Пул для вибору — лише картки ПОТОЧНОЇ
+// сторінки (pageIndices, глобальні індекси в cards): просто уникаємо
+// негайного повтору останньої обраної картки (не трекаємо весь пройдений
+// пул сторінки — спрощена вимога задачі "пагінація", на відміну від
+// колишньої shownIndices-логіки на весь список карток).
 function RandomRevealFlipCards({
   cards,
   revealSide,
+  pageIndices,
 }: {
   cards: FlipCardType[];
   revealSide: "front" | "back";
+  pageIndices: number[];
 }) {
   const [spinning, setSpinning] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
   const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
-  const [shownIndices, setShownIndices] = useState<Set<number>>(new Set());
   // Зростає щоразу на новому спіні — частина key кожної плитки нижче, щоб
   // React перемонтовував їх на кожен раунд: без цього internal flipped-стан
   // конкретної плитки міг би "протекти" в наступний раунд, якщо рулетка
@@ -113,34 +118,31 @@ function RandomRevealFlipCards({
   }, []);
 
   function spin() {
-    if (spinning) return;
+    if (spinning || pageIndices.length === 0) return;
 
-    let pool = cards.map((_, i) => i).filter((i) => !shownIndices.has(i));
-    let nextShown = shownIndices;
-    if (pool.length === 0) {
-      pool = cards.map((_, i) => i);
-      nextShown = new Set();
-    }
-    const target = pool[Math.floor(Math.random() * pool.length)];
+    const candidates =
+      pageIndices.length > 1 && revealedIndex !== null && pageIndices.includes(revealedIndex)
+        ? pageIndices.filter((i) => i !== revealedIndex)
+        : pageIndices;
+    const target = candidates[Math.floor(Math.random() * candidates.length)];
 
     setSpinning(true);
     setRevealedIndex(null);
     setRoundId((r) => r + 1);
 
     let tick = 0;
-    let current = highlightIndex ?? 0;
+    let pos = Math.max(0, pageIndices.indexOf(highlightIndex ?? pageIndices[0]));
     intervalRef.current = setInterval(() => {
       tick++;
       if (tick >= TOTAL_TICKS) {
         if (intervalRef.current) clearInterval(intervalRef.current);
         setHighlightIndex(target);
         setRevealedIndex(target);
-        setShownIndices(new Set(nextShown).add(target));
         setSpinning(false);
         return;
       }
-      current = (current + 1) % cards.length;
-      setHighlightIndex(current);
+      pos = (pos + 1) % pageIndices.length;
+      setHighlightIndex(pageIndices[pos]);
     }, TICK_MS);
   }
 
@@ -160,16 +162,16 @@ function RandomRevealFlipCards({
         {spinning ? "Крутимо..." : "Випадковий вибір"}
       </button>
 
-      {/* Уся сітка завжди в DOM — обрана картка виділяється (scale+рамка),
-          решта притлумлюється (opacity-30), а не зникає з розмітки. */}
+      {/* Усі картки лишаються в DOM на весь час вправи (не лише сторінки) —
+          це й зберігає "клік — перевернути" стан кожної плитки при
+          перемиканні сторінок (немонтування/монтування щоразу скидало б
+          внутрішній useState плитки). Поза поточною сторінкою — просто
+          hidden, не видалено з розмітки. */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {cards.map((card, i) => (
-          <FlipCardTile
-            key={`${roundId}-${i}`}
-            card={card}
-            variant={variantFor(i)}
-            initialSide={revealSide}
-          />
+          <div key={`${roundId}-${i}`} className={pageIndices.includes(i) ? "contents" : "hidden"}>
+            <FlipCardTile card={card} variant={variantFor(i)} initialSide={revealSide} />
+          </div>
         ))}
       </div>
     </div>
@@ -190,6 +192,28 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   // фільтрація неповної картки (без лицьової чи зворотної сторони) — тут,
   // на рівні рендеру, не в sanitize.ts.
   const cards = config.cards.filter((c) => c.front.trim() && c.back.trim());
+  const [page, setPage] = useState(0);
+  const blockRef = useRef<HTMLDivElement>(null);
+
+  const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+  const pageStart = page * PAGE_SIZE;
+  const pageIndices = cards
+    .map((_, i) => i)
+    .slice(pageStart, pageStart + PAGE_SIZE);
+
+  function handlePageChange(p: number) {
+    setPage(p);
+    // М'яко довертаємо верх блоку в екран, лише якщо його справді
+    // прогорнуло за межі (rect.top < 0) — без стрибка, якщо блок і так
+    // повністю видно (requestAnimationFrame — чекаємо нову висоту сітки
+    // після зміни сторінки, щоб rect.top був актуальний).
+    requestAnimationFrame(() => {
+      const rect = blockRef.current?.getBoundingClientRect();
+      if (rect && rect.top < 0) {
+        blockRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
 
   if (cards.length === 0) {
     return (
@@ -200,20 +224,30 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   }
 
   return (
-    <div className={EXERCISE_STACK}>
+    <div ref={blockRef} className={EXERCISE_STACK}>
       <InstructionsText
         text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards.instruction}
         subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.flip_cards.subInstruction}
       />
       {config.mode === "random_reveal" ? (
-        <RandomRevealFlipCards cards={cards} revealSide={config.revealSide ?? "front"} />
+        <RandomRevealFlipCards
+          cards={cards}
+          revealSide={config.revealSide ?? "front"}
+          pageIndices={pageIndices}
+        />
       ) : (
+        // Усі картки лишаються в DOM на весь час вправи — та сама причина,
+        // що в RandomRevealFlipCards: немонтування плитки при зміні
+        // сторінки скинуло б її внутрішній "перевернуто/ні" стан.
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {cards.map((card, i) => (
-            <FlipCardTile key={i} card={card} />
+            <div key={i} className={pageIndices.includes(i) ? "contents" : "hidden"}>
+              <FlipCardTile card={card} />
+            </div>
           ))}
         </div>
       )}
+      <CardPager page={page} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 }
