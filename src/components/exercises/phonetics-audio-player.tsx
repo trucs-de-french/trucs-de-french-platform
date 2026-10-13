@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Repeat } from "lucide-react";
+import { Play, Pause, Repeat, Turtle } from "lucide-react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const RADIUS = 20;
@@ -88,6 +88,13 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }
 
+  // Toggle "Повільно" — лише зручний ярлик для 0.75×: окремого стану нема,
+  // активність виводиться напряму з speed, тож вибір 0.75× у меню швидкості
+  // вмикає toggle, а вибір будь-якого іншого значення — вимикає його.
+  function toggleSlow() {
+    setRate(speed === 0.75 ? 1 : 0.75);
+  }
+
   if (loadError) {
     return (
       <div
@@ -156,6 +163,19 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
         <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#4f46e5]">
           {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
         </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={toggleSlow}
+        aria-pressed={speed === 0.75}
+        aria-label="Повільно"
+        className={`flex shrink-0 items-center gap-1 rounded-full border border-white/35 px-3 py-[5px] font-heading text-[13px] font-bold ${FOCUS_RING} ${
+          speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"
+        }`}
+      >
+        <Turtle size={14} />
+        <span className="@max-[340px]:hidden">Повільно</span>
       </button>
 
       <span className="@max-[340px]:hidden shrink-0 whitespace-nowrap font-heading text-[13px] font-semibold tabular-nums text-[#d6d3ff]">
