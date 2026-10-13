@@ -206,11 +206,21 @@ export function VideoPlayer({
   // Реальна висота оверлея (ResizeObserver, не константа) — рядок кнопок
   // переноситься на вузьких екранах, фіксоване число розійшлося б із
   // фактичною висотою й або лишало зазор, або субтитри перекривались би.
+  // getBoundingClientRect().height (border-box, з падінгами), НЕ
+  // entries[0].contentRect.height (content-box, БЕЗ падінгів елемента) —
+  // цей самий елемент має власний pt-[34px]/pb-3 падінг; contentRect
+  // недораховував рівно на цю величину (~46px), "підлога" під субтитрами
+  // (floor-wrapper нижче) виставляла собі на ~46px меншу висоту, ніж
+  // реальний рендер панелі, і після прибирання overflow-hidden з
+  // floor-wrapper (fix(video): unclip menus, 5440da0) цей "хвіст" уже не
+  // ховався локально, а виступав під нижній край floor-wrapper — рівно під
+  // нижній край контейнера плеєра, де його обрізав зовнішній
+  // overflow-hidden рамки, ховаючи рядок кнопок.
   useEffect(() => {
     const overlay = overlayRef.current;
     if (!overlay) return;
     const observer = new ResizeObserver((entries) => {
-      const height = entries[0]?.contentRect.height;
+      const height = entries[0]?.target.getBoundingClientRect().height;
       if (height !== undefined) setOverlayHeight(height);
     });
     observer.observe(overlay);
@@ -221,7 +231,7 @@ export function VideoPlayer({
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
     const observer = new ResizeObserver((entries) => {
-      const height = entries[0]?.contentRect.height;
+      const height = entries[0]?.target.getBoundingClientRect().height;
       if (height !== undefined) setContainerHeight(height);
     });
     observer.observe(wrapper);
@@ -511,6 +521,8 @@ export function VideoPlayer({
           playsInline
           preload="metadata"
           muted={muted}
+          disablePictureInPicture
+          disableRemotePlayback
           className="absolute inset-0 h-full w-full object-contain"
           onClick={() => {
             togglePlay();
@@ -537,7 +549,7 @@ export function VideoPlayer({
         <PlaybackTicker videoRef={videoRef} playing={playing} onTick={setCurrentTime} />
 
         {subtitlesLoadError && (
-          <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white/90">
+          <span className="font-heading absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white/90">
             Субтитри недоступні
           </span>
         )}
