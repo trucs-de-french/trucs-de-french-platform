@@ -131,11 +131,13 @@ export function VideoPlayer({
   // читанням wrapperRef.current напряму в тілі рендеру (react-hooks/refs
   // забороняє доступ до .current під час рендеру).
   const [containerHeight, setContainerHeight] = useState(0);
-  // Лазі-ініціалізатор useState, НЕ useEffect (react-hooks/set-state-in-effect
-  // проєкту забороняє прямий setState() у тілі ефекту) — той самий підхід,
-  // що вже getInitialPosition у theme-toggle.tsx: читається синхронно при
-  // першому рендері, на сервері (typeof window === "undefined") — дефолт.
-  const [speed, setSpeed] = useState<number>(() => (typeof window === "undefined" ? 1 : readStoredSpeed()));
+  // Завжди фіксований дефолт на першому рендері (сервер і клієнт мають
+  // збігатись) — збережену швидкість із localStorage застосовуємо лише
+  // ПІСЛЯ монтування, в ефекті нижче. Раніше лазі-ініціалізатор читав
+  // localStorage напряму тут — на клієнті першим рендером міг вийти інший
+  // speed, ніж на сервері (SSR завжди бачив дефолт), і React лаявся на
+  // hydration mismatch (aria-pressed кнопки "Повільно" true/false).
+  const [speed, setSpeed] = useState<number>(1);
   const [speedOpen, setSpeedOpen] = useState(false);
   const [subsOpen, setSubsOpen] = useState(false);
   const [loopLine, setLoopLine] = useState(false);
@@ -149,17 +151,13 @@ export function VideoPlayer({
   const [subtitlesLoadError, setSubtitlesLoadError] = useState(false);
   const hasFr = Boolean(frUrl);
   const hasUk = Boolean(ukUrl);
-  // Той самий лазі-підхід, що speed вище — subtitles-пропс відомий уже на
-  // першому рендері (не чекає на fetch .vtt), тож початковий режим
-  // обчислюється одразу, без ефекту.
-  const [mode, setMode] = useState<SubtitlesMode>(() => {
-    const stored = typeof window === "undefined" ? null : readStoredSubtitlesMode();
-    if (stored === "fr_uk" && hasFr && hasUk) return "fr_uk";
-    if (stored === "fr" && hasFr) return "fr";
-    if (stored === "uk" && hasUk) return "uk";
-    if (stored === "off") return "off";
-    return hasFr && hasUk ? "fr_uk" : hasFr ? "fr" : hasUk ? "uk" : "off";
-  });
+  // Той самий принцип, що speed вище: початковий режим рахується лише з
+  // subtitles-пропса (той самий і на сервері, і на клієнті) — без читання
+  // localStorage тут, щоб перший клієнтський рендер збігався з SSR.
+  // Збережений режим застосовується після монтування в ефекті нижче.
+  const [mode, setMode] = useState<SubtitlesMode>(() =>
+    hasFr && hasUk ? "fr_uk" : hasFr ? "fr" : hasUk ? "uk" : "off"
+  );
 
   const lockedCueRef = useRef<WebVttCue | null>(null);
   const lastCueRef = useRef<WebVttCue | null>(null);
@@ -172,6 +170,31 @@ export function VideoPlayer({
     videoRef.current.playbackRate = speed;
     (videoRef.current as HTMLVideoElement & { preservesPitch?: boolean }).preservesPitch = true;
   }, [speed]);
+
+  // Відновлення збережених speed/mode з localStorage — ЛИШЕ після
+  // монтування (не в ініціалізаторі useState вище), щоб перший рендер на
+  // клієнті збігався з SSR. setSpeed тут лише оновлює state — застосування
+  // до самого <video> (playbackRate/preservesPitch) бере на себе ефект
+  // вище, що й так реагує на зміну speed.
+  useEffect(() => {
+    // queueMicrotask — той самий прийом, що вже в save-form.tsx: без нього
+    // react-hooks/set-state-in-effect проєкту забороняє прямий синхронний
+    // setState() у тілі ефекту (навіть одноразового, deps: []).
+    queueMicrotask(() => {
+      const storedSpeed = readStoredSpeed();
+      setSpeed((current) => (storedSpeed !== current ? storedSpeed : current));
+
+      const storedMode = readStoredSubtitlesMode();
+      setMode((current) => {
+        if (storedMode === "fr_uk" && hasFr && hasUk) return "fr_uk";
+        if (storedMode === "fr" && hasFr) return "fr";
+        if (storedMode === "uk" && hasUk) return "uk";
+        if (storedMode === "off") return "off";
+        return current;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;

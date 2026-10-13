@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Nunito, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
-import { ThemeScript } from "./theme-script";
+import { THEME_SCRIPT } from "./theme-script";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
 import "./globals.css";
@@ -67,13 +67,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${nunito.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       {/* max-[639px]:pt-16 — резервує місце під ThemeToggle, який на цій
           ширині стає position:absolute (theme-toggle.tsx) й інакше лягав би
           прямо на перший контент сторінки (наприклад, кнопку "Вийти з
           перегляду" у PreviewBanner, що теж у правому верхньому куті). На
           >=640px не впливає — там ThemeToggle лишається fixed, як і раніше. */}
       <body className="min-h-full flex flex-col max-[639px]:pt-16">
-        <ThemeScript />
         {children}
         <ThemeToggle />
       </body>
