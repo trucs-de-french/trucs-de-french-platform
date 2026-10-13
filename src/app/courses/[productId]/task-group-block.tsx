@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
+import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { isExerciseType } from "@/components/exercises/exercise-card";
@@ -25,6 +26,9 @@ export type TaskGroupData = {
   content_text: string | null;
   media_url: string | null;
   media_provider: string | null;
+  // "file" (0056) — субтитри опційні, FR/UA WebVTT, лише для цього
+  // провайдера, той самий принцип, що scene-content-block.tsx.
+  subtitles?: VideoSubtitleTrack[] | null;
   points_mode: string;
   // Лише для points_mode === "flat" — один загальний бал за блок, зароблений
   // пропорційно середньому score% усіх задач блоку (узгоджене з учителем
@@ -214,13 +218,17 @@ export function TaskGroupBlock({
           return <AudioPlayer src={group.media_url} />;
         })()}
 
-      {group.content_type === "video" && group.media_url && (
-        <VideoFrame
-          src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
-          title="Відео"
-          provider={(group.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
-        />
-      )}
+      {group.content_type === "video" &&
+        group.media_url &&
+        (group.media_provider === "file" ? (
+          <VideoPlayer src={group.media_url} subtitles={group.subtitles ?? undefined} title="Відео" />
+        ) : (
+          <VideoFrame
+            src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
+            title="Відео"
+            provider={(group.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
+          />
+        ))}
 
       {group.content_type === "embed" && group.media_url && (
         <EmbedFrame url={group.media_url} height={480} />

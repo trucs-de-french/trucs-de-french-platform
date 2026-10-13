@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Paperclip, Image as ImageIcon, Volume2 } from "lucide-react";
 
-type UploadKind = "audio" | "image" | "html" | "media";
+type UploadKind = "audio" | "image" | "html" | "media" | "subtitle";
 
 const ACCEPT_BY_KIND: Record<UploadKind, string> = {
   audio: "audio/*",
@@ -13,6 +13,10 @@ const ACCEPT_BY_KIND: Record<UploadKind, string> = {
   // "audio" (r2-upload-url/route.ts): нова окрема інфраструктура для відео
   // не потрібна, бакет не має значення для відтворення (лише зберігання).
   media: "audio/*,video/*",
+  // "subtitle" — WebVTT-файли FR/UA для VideoPlayer (власного плеєра файлів
+  // "file"), той самий бакет, що "media"/"audio" — лише ще один тип об'єкта
+  // для зберігання, окрема інфраструктура не потрібна.
+  subtitle: ".vtt,text/vtt",
 };
 
 const LABEL_BY_KIND: Record<UploadKind, string> = {
@@ -20,6 +24,7 @@ const LABEL_BY_KIND: Record<UploadKind, string> = {
   image: "📎 Завантажити зображення",
   html: "📎 Завантажити HTML-гру",
   media: "📎 Завантажити аудіо/відео",
+  subtitle: "📎 Завантажити .vtt",
 };
 
 // Лише variant="icon" — коли поруч на одному рядку є і картинка, і аудіо
@@ -31,6 +36,7 @@ const ICON_BY_KIND: Record<UploadKind, typeof Paperclip> = {
   image: ImageIcon,
   html: Paperclip,
   media: Volume2,
+  subtitle: Paperclip,
 };
 
 // Лише для kind="html" — самодостатня гра/вправа, не файл довільного
@@ -116,10 +122,12 @@ export function FileUpload({
     setErrorMessage("");
     setFileName(file.name);
 
-    // Для html — завжди "text/html" явно, а не file.type (ненадійний для
-    // локальних .html-файлів) — гарантує збіг підписаного й фактичного
-    // Content-Type незалежно від того, що визначив браузер/ОС.
-    const declaredContentType = kind === "html" ? "text/html" : file.type || "application/octet-stream";
+    // Для html/subtitle — завжди фіксований MIME, а не file.type (браузери
+    // часто повертають порожній/сторонній тип для локальних .html/.vtt) —
+    // гарантує збіг підписаного й фактичного Content-Type незалежно від
+    // того, що визначив браузер/ОС.
+    const declaredContentType =
+      kind === "html" ? "text/html" : kind === "subtitle" ? "text/vtt" : file.type || "application/octet-stream";
 
     try {
       const prepRes = await fetch("/api/r2-upload-url", {

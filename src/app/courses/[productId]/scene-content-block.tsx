@@ -1,5 +1,6 @@
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
+import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
@@ -38,6 +39,10 @@ export type SceneContentBlockData = {
   content_text: string | null;
   media_url: string | null;
   media_provider: string | null;
+  // "file" (пряме посилання на mp4 — завантажений у R2 файл чи власний URL,
+  // 0056) — субтитри опційні, FR/UA WebVTT, лише для цього провайдера;
+  // youtube/gdrive їх не мають і лишаються на VideoFrame/iframe.
+  subtitles?: VideoSubtitleTrack[] | null;
   dialogue?: ScriptDialogueLine[] | null;
   links?: SceneContentLink[];
 };
@@ -157,13 +162,17 @@ export function SceneContentBlockContent({
           return <AudioPlayer src={block.media_url} />;
         })()}
 
-      {block.content_type === "video" && block.media_url && (
-        <VideoFrame
-          src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
-          title="Відео"
-          provider={(block.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
-        />
-      )}
+      {block.content_type === "video" &&
+        block.media_url &&
+        (block.media_provider === "file" ? (
+          <VideoPlayer src={block.media_url} subtitles={block.subtitles ?? undefined} title="Відео" />
+        ) : (
+          <VideoFrame
+            src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
+            title="Відео"
+            provider={(block.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
+          />
+        ))}
 
       {block.content_type === "embed" && block.media_url && (
         <EmbedFrame url={block.media_url} height={480} />

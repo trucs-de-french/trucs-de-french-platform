@@ -80,21 +80,34 @@ async function resolveGroupHomePath(
 // інакше, якщо вчитель раніше лишив селектор платформи на "youtube"/
 // "gdrive", а тепер завантажив файл у Storage, TaskGroupBlock спробував би
 // вбудувати supabase.co URL як youtube/gdrive iframe.
+// buildSubtitlesField дубльована з scene-content-blocks/actions.ts — та сама
+// навмисна дуплікація домену, що й buildContentFields нижче.
+function buildSubtitlesField(formData: FormData, mediaProvider: string | null): { lang: "fr" | "uk"; url: string }[] | null {
+  if (mediaProvider !== "file") return null;
+  const fr = (formData.get("subtitles_fr_file_url") as string) || (formData.get("subtitles_fr_url") as string) || "";
+  const uk = (formData.get("subtitles_uk_file_url") as string) || (formData.get("subtitles_uk_url") as string) || "";
+  const subtitles: { lang: "fr" | "uk"; url: string }[] = [];
+  if (fr.trim()) subtitles.push({ lang: "fr", url: fr.trim() });
+  if (uk.trim()) subtitles.push({ lang: "uk", url: uk.trim() });
+  return subtitles.length > 0 ? subtitles : null;
+}
+
 function buildContentFields(formData: FormData) {
   const contentType = (formData.get("content_type") as string) || "text";
   const uploadedUrl = (formData.get("media_audio_file_url") as string) || "";
+  // media_video_file_url — те саме, що media_audio_file_url, лише для
+  // contentType === "video" з провайдером "file" (власний VideoPlayer).
+  const uploadedVideoUrl = (formData.get("media_video_file_url") as string) || "";
+  const provider = contentType === "video" || contentType === "audio" ? (formData.get("media_provider") as string) || null : null;
   const mediaUrl =
     contentType === "audio" && uploadedUrl
       ? uploadedUrl
-      : contentType !== "text"
-        ? (formData.get("media_url") as string) || null
-        : null;
-  const mediaProvider =
-    contentType === "audio" && uploadedUrl
-      ? null
-      : contentType === "video" || contentType === "audio"
-        ? (formData.get("media_provider") as string) || null
-        : null;
+      : contentType === "video" && provider === "file" && uploadedVideoUrl
+        ? uploadedVideoUrl
+        : contentType !== "text"
+          ? (formData.get("media_url") as string) || null
+          : null;
+  const mediaProvider = contentType === "audio" && uploadedUrl ? null : provider;
 
   return {
     content_type: contentType,
@@ -104,6 +117,7 @@ function buildContentFields(formData: FormData) {
         : null,
     media_url: mediaUrl,
     media_provider: mediaProvider,
+    subtitles: buildSubtitlesField(formData, mediaProvider),
   };
 }
 

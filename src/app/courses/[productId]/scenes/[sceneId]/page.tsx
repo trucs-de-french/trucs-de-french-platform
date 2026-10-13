@@ -201,7 +201,7 @@ export default async function ScenePage({
     supabase
       .from("task_groups")
       .select(
-        "id, content_type, content_text, media_url, media_provider, points_mode, flat_points, order_index"
+        "id, content_type, content_text, media_url, media_provider, subtitles, points_mode, flat_points, order_index"
       )
       .eq("scene_id", sceneId)
       .order("order_index")
@@ -216,7 +216,7 @@ export default async function ScenePage({
     // scene_blocks вище, ref_id -> id тут.
     supabase
       .from("scene_content_blocks")
-      .select("id, content_type, content_text, media_url, media_provider, dialogue")
+      .select("id, content_type, content_text, media_url, media_provider, subtitles, dialogue")
       .eq("scene_id", sceneId)
       .returns<SceneContentBlockData[]>(),
   ]);
@@ -254,7 +254,7 @@ export default async function ScenePage({
       ? await supabase
           .from("task_groups")
           .select(
-            "id, scene_content_block_id, content_type, content_text, media_url, media_provider, points_mode, flat_points"
+            "id, scene_content_block_id, content_type, content_text, media_url, media_provider, subtitles, points_mode, flat_points"
           )
           .in("scene_content_block_id", contentBlockIds)
           .returns<(TaskGroupData & { scene_content_block_id: string })[]>()

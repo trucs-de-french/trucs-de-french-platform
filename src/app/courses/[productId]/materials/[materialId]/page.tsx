@@ -75,7 +75,7 @@ export default async function MaterialPage({
         supabase
           .from("task_groups")
           .select(
-            "id, content_type, content_text, media_url, media_provider, points_mode, flat_points, order_index"
+            "id, content_type, content_text, media_url, media_provider, subtitles, points_mode, flat_points, order_index"
           )
           .eq("material_id", materialId)
           .order("order_index")

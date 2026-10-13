@@ -6,7 +6,7 @@ import { buildPresignedUploadUrl } from "@/lib/r2-client";
 // проєкту (напр. /api/scenes/[sceneId]/vocab-pdf).
 export const runtime = "nodejs";
 
-type UploadKind = "audio" | "image" | "html" | "media";
+type UploadKind = "audio" | "image" | "html" | "media" | "subtitle";
 
 // Один спільний bucket на весь акаунт "не коштував" би нічого зайвого
 // (безкоштовний ліміт R2 рахується на акаунт, не на bucket), але окремі
@@ -27,10 +27,15 @@ const BUCKETS: Record<UploadKind, { bucket?: string; publicUrl?: string }> = {
   // бакет/env для нього додав би інфраструктурний крок (нові ключі R2),
   // не потрібний лише заради відтворення файлу за URL.
   media: { bucket: process.env.R2_BUCKET_NAME, publicUrl: process.env.R2_PUBLIC_URL },
+  // "subtitle" (.vtt для VideoPlayer) — той самий бакет, що "media"/"audio",
+  // та сама причина.
+  subtitle: { bucket: process.env.R2_BUCKET_NAME, publicUrl: process.env.R2_PUBLIC_URL },
 };
 
 function isUploadKind(value: unknown): value is UploadKind {
-  return value === "audio" || value === "image" || value === "html" || value === "media";
+  return (
+    value === "audio" || value === "image" || value === "html" || value === "media" || value === "subtitle"
+  );
 }
 
 export async function POST(request: Request) {
@@ -62,7 +67,10 @@ export async function POST(request: Request) {
   };
 
   if (!isUploadKind(body.kind)) {
-    return Response.json({ error: 'kind має бути "audio", "image", "html" або "media"' }, { status: 400 });
+    return Response.json(
+      { error: 'kind має бути "audio", "image", "html", "media" або "subtitle"' },
+      { status: 400 }
+    );
   }
 
   const { bucket, publicUrl } = BUCKETS[body.kind];
@@ -81,9 +89,11 @@ export async function POST(request: Request) {
       ? "jpg"
       : body.kind === "html"
         ? "html"
-        : body.kind === "media" && contentType.startsWith("video/")
-          ? "mp4"
-          : "mp3";
+        : body.kind === "subtitle"
+          ? "vtt"
+          : body.kind === "media" && contentType.startsWith("video/")
+            ? "mp4"
+            : "mp3";
   const ext = filename.includes(".") ? filename.split(".").pop() : fallbackExt;
   const key = `${crypto.randomUUID()}.${ext}`;
 
