@@ -88,12 +88,12 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               // лишаючи під медіа ~600px замість заданих ~260-300.
               // min-w-0 на самій картці — щоб довгий текст не розпирав
               // grid-колонку (а з нею і сусідню картку) ширше задуманого.
-              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm @[480px]:flex-row @[480px]:items-center @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
+              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm @[480px]:flex-row @[480px]:items-start @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span className={NUMBER_BADGE}>{i + 1}</span>
                 <div className="flex min-w-0 flex-col gap-1">
-                  <span className="break-words font-content text-[18px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
+                  <span className="break-words font-content text-[16px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
                     {item.text}
                   </span>
                   <span className="break-words text-sm text-neutral-500 [overflow-wrap:anywhere] dark:text-neutral-400">
@@ -128,7 +128,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                 // зліва. На широкій картці (>=480px) — фіксована 220px
                 // (180-240 за вимогою). min-w-0 — не дати вмісту (iframe/
                 // video з "w-full") розіпрати цю колонку понад задане.
-                <div className="w-full min-w-0 max-w-[320px] flex-none self-start @[480px]:w-[220px] @[480px]:max-w-[220px] @[480px]:self-center">
+                <div className="w-full min-w-0 max-w-[320px] flex-none self-start @[480px]:w-[220px] @[480px]:max-w-[220px]">
                   {media.kind === "video" ? (
                     <PhoneticsVideoBlock media={media} />
                   ) : media.source === "drive" ? (

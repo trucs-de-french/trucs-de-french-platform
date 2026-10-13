@@ -41,6 +41,8 @@ function formatTime(seconds: number): string {
 export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; className?: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const waveRef = useRef<HTMLDivElement>(null);
+  const speedWrapRef = useRef<HTMLDivElement>(null);
+  const speedButtonRef = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -54,6 +56,30 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
       if (audio && currentlyPlaying === audio) currentlyPlaying = null;
     };
   }, []);
+
+  // Слухач додається лише коли меню відкрите (і знімається при закритті/
+  // unmount) — так клік по кнопці іншого плеєра просто відкриває його
+  // власне меню, а це закривається через pointerdown поза собою.
+  useEffect(() => {
+    if (!speedOpen) return;
+    function handlePointerDown(e: globalThis.PointerEvent) {
+      if (speedWrapRef.current && !speedWrapRef.current.contains(e.target as Node)) {
+        setSpeedOpen(false);
+      }
+    }
+    function handleKeyDown(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSpeedOpen(false);
+        speedButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [speedOpen]);
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -167,22 +193,29 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
         {formatTime(currentTime)} / {formatTime(duration)}
       </span>
 
-      <div className="relative shrink-0">
+      <div ref={speedWrapRef} className="relative shrink-0">
         <button
+          ref={speedButtonRef}
           type="button"
           onClick={() => setSpeedOpen((v) => !v)}
           aria-label="Швидкість відтворення"
+          aria-haspopup="menu"
           aria-expanded={speedOpen}
           className="rounded-md border border-gray-200 px-1 py-0.5 text-[10px] text-neutral-600 hover:bg-white dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
         >
           {speed}× ▾
         </button>
         {speedOpen && (
-          <div className="absolute right-0 top-full z-10 mt-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800">
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-10 mt-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+          >
             {SPEEDS.map((s) => (
               <button
                 key={s}
                 type="button"
+                role="menuitemradio"
+                aria-checked={s === speed}
                 onClick={() => setRate(s)}
                 className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
                   s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
