@@ -102,12 +102,17 @@ export function VideoPlayer({
   const subsWrapRef = useRef<HTMLDivElement>(null);
   const subsButtonRef = useRef<HTMLButtonElement>(null);
   const hideOverlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: toggleFullscreen } = useFullscreenWrapper();
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
+  // Реальна висота оверлея керування (не константа — ряди переносяться на
+  // вузьких екранах, висота плаває) — субтитри піднімаються рівно на цю
+  // висоту + 8px, щоб ніколи не перекриватись кнопками.
+  const [overlayHeight, setOverlayHeight] = useState(0);
   // Лазі-ініціалізатор useState, НЕ useEffect (react-hooks/set-state-in-effect
   // проєкту забороняє прямий setState() у тілі ефекту) — той самий підхід,
   // що вже getInitialPosition у theme-toggle.tsx: читається синхронно при
@@ -155,6 +160,20 @@ export function VideoPlayer({
     return () => {
       if (video && currentlyPlaying === video) currentlyPlaying = null;
     };
+  }, []);
+
+  // Реальна висота оверлея (ResizeObserver, не константа) — рядок кнопок
+  // переноситься на вузьких екранах, фіксоване число розійшлося б із
+  // фактичною висотою й або лишало зазор, або субтитри перекривались би.
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height !== undefined) setOverlayHeight(height);
+    });
+    observer.observe(overlay);
+    return () => observer.disconnect();
   }, []);
 
   // Завантаження й парсинг .vtt — лише коли є URL; окремо для FR/UA, провал
@@ -438,14 +457,26 @@ export function VideoPlayer({
 
         {hasAnySubtitles && (
           <div
-            className={`pointer-events-none absolute inset-x-0 flex flex-col items-center gap-0.5 px-4 text-center transition-all duration-300 ${
-              overlayVisible ? "bottom-[92px]" : "bottom-6"
-            }`}
+            className="pointer-events-none absolute inset-x-0 flex flex-col items-center gap-0.5 px-4 text-center"
+            style={{
+              // Оверлей видимий — рівно над ним (вимірена ResizeObserver
+              // висота + 8px), оверлей схований — не константа, а clamp
+              // відсотка висоти контейнера (CSS-відсотки для bottom
+              // абсолютно позиціонованого елемента й так резолвляться від
+              // висоти контейнера, без потреби міряти її в JS), щоб субтитри
+              // не провалювались у чорну смугу під картинкою ні на яких
+              // пропорціях відео.
+              bottom: overlayVisible ? `${overlayHeight + 8}px` : "clamp(36px, 8%, 72px)",
+              transition: "bottom 150ms ease, transform 150ms ease",
+            }}
           >
             {showFr && activeFrCue && (
               <p
                 className="font-heading text-[15px] font-bold text-white sm:text-[18px]"
-                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.85)" }}
+                style={{
+                  textShadow: "0 1px 4px rgba(0,0,0,0.85)",
+                  ...((isFullscreen || isPseudoFullscreen) && { fontSize: "clamp(18px, 2.2vw, 32px)" }),
+                }}
               >
                 {renderTokens(activeFrCue.text, "fr")}
               </p>
@@ -453,7 +484,13 @@ export function VideoPlayer({
             {showUk && activeUkCue && (
               <p
                 className="font-heading text-[12px] font-semibold sm:text-[14px]"
-                style={{ color: "#ffd166", textShadow: "0 1px 4px rgba(0,0,0,0.85)" }}
+                style={{
+                  color: "#ffd166",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.85)",
+                  ...((isFullscreen || isPseudoFullscreen) && {
+                    fontSize: "calc(clamp(18px, 2.2vw, 32px) - 2px)",
+                  }),
+                }}
               >
                 {renderTokens(activeUkCue.text, "uk")}
               </p>
@@ -469,6 +506,7 @@ export function VideoPlayer({
 
         {/* Оверлей керування знизу */}
         <div
+          ref={overlayRef}
           className={`absolute inset-x-0 bottom-0 flex flex-col gap-2 transition-opacity duration-300 ${
             overlayVisible ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
