@@ -146,11 +146,13 @@ export function AudioPlayer({
 
   if (loadError) {
     return (
-      <div className={`flex items-center gap-3 rounded-2xl p-5 shadow-sm ${className}`} style={cardStyle}>
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-white">
-          <Headphones size={20} />
-        </span>
-        <p className="text-sm text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
+      <div className={`w-full max-w-[640px] ${className}`}>
+        <div className="flex items-center gap-3 rounded-2xl p-4 shadow-sm" style={cardStyle}>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-white">
+            <Headphones size={20} />
+          </span>
+          <p className="text-sm text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
+        </div>
       </div>
     );
   }
@@ -158,165 +160,167 @@ export function AudioPlayer({
   const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
 
   return (
-    <div className={`flex flex-col gap-3.5 rounded-2xl p-5 shadow-sm ${className}`} style={cardStyle}>
-      <audio
-        ref={audioRef}
-        src={src}
-        preload="metadata"
-        loop={loop}
-        muted={muted}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => {
-          // loop=true не породжує подію ended (аудіо само зациклюється) —
-          // це лише для "повтор вимкнено": позиція повертається на початок
-          // замість зависання на останньому кадрі.
-          setPlaying(false);
-          setCurrentTime(0);
-          if (audioRef.current) audioRef.current.currentTime = 0;
-        }}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-        onLoadedMetadata={(e) => {
-          setDuration(e.currentTarget.duration);
-          onLoadedMetadata?.();
-        }}
-        onError={() => {
-          setLoadError(true);
-          onError?.();
-        }}
-        onStalled={onStalled}
-        className="hidden"
-      />
+    <div className={`w-full max-w-[640px] ${className}`}>
+      <div className="flex flex-col gap-3 rounded-2xl p-4 shadow-sm" style={cardStyle}>
+        <audio
+          ref={audioRef}
+          src={src}
+          preload="metadata"
+          loop={loop}
+          muted={muted}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => {
+            // loop=true не породжує подію ended (аудіо само зациклюється) —
+            // це лише для "повтор вимкнено": позиція повертається на початок
+            // замість зависання на останньому кадрі.
+            setPlaying(false);
+            setCurrentTime(0);
+            if (audioRef.current) audioRef.current.currentTime = 0;
+          }}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => {
+            setDuration(e.currentTarget.duration);
+            onLoadedMetadata?.();
+          }}
+          onError={() => {
+            setLoadError(true);
+            onError?.();
+          }}
+          onStalled={onStalled}
+          className="hidden"
+        />
 
-      {/* верхній ряд: play/pause, заголовок, іконка-обкладинка */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={togglePlay}
-          aria-label={playing ? "Пауза" : "Відтворити"}
-          aria-pressed={playing}
-          className={`flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
-        >
-          {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
-        </button>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate font-heading text-[17px] font-semibold text-white">{title ?? "Аудіо"}</span>
-          {subtitle && <span className="truncate text-[14px] text-[#d6d3ff]">{subtitle}</span>}
+        {/* верхній ряд: play/pause, заголовок, іконка-обкладинка */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "Пауза" : "Відтворити"}
+            aria-pressed={playing}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
+          >
+            {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate font-heading text-[16px] font-semibold text-white">{title ?? "Аудіо"}</span>
+            {subtitle && <span className="truncate text-[13px] text-[#d6d3ff]">{subtitle}</span>}
+          </div>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.18] text-white">
+            <Headphones size={20} />
+          </span>
         </div>
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-white/[0.18] text-white">
-          <Headphones size={22} />
-        </span>
-      </div>
 
-      {/* ряд прогресу */}
-      <div className="flex items-center gap-2">
-        <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-          {metadataLoaded ? formatTime(currentTime) : "0:00"}
-        </span>
-        <div
-          ref={trackRef}
-          role="slider"
-          tabIndex={0}
-          aria-label="Позиція відтворення"
-          aria-valuemin={0}
-          aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
-          aria-valuenow={Math.round(currentTime)}
-          aria-disabled={!metadataLoaded}
-          onPointerDown={handleTrackPointerDown}
-          onPointerMove={handleTrackPointerMove}
-          onKeyDown={handleTrackKeyDown}
-          className={`relative h-[5px] flex-1 touch-none rounded-full bg-white/25 ${FOCUS_RING} ${
-            metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
-          }`}
-        >
-          <div className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
-          <span
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
-            style={{ left: `${progress * 100}%` }}
-          />
-        </div>
-        <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-          {metadataLoaded ? formatTime(duration!) : "0:00"}
-        </span>
-      </div>
-
-      {/* нижній ряд: ±10с/повтор зліва, швидкість/гучність справа */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* ряд прогресу */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => skip(-10)}
-            aria-label="Назад на 10 секунд"
-            className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
-          >
-            <Rewind size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => skip(10)}
-            aria-label="Вперед на 10 секунд"
-            className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
-          >
-            <FastForward size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoop((v) => !v)}
-            aria-label="Повторити"
-            aria-pressed={loop}
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
-              loop ? "bg-white text-[#4f46e5]" : "bg-white/[0.16] text-white"
+          <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+            {metadataLoaded ? formatTime(currentTime) : "0:00"}
+          </span>
+          <div
+            ref={trackRef}
+            role="slider"
+            tabIndex={0}
+            aria-label="Позиція відтворення"
+            aria-valuemin={0}
+            aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
+            aria-valuenow={Math.round(currentTime)}
+            aria-disabled={!metadataLoaded}
+            onPointerDown={handleTrackPointerDown}
+            onPointerMove={handleTrackPointerMove}
+            onKeyDown={handleTrackKeyDown}
+            className={`relative h-1 flex-1 touch-none rounded-full bg-white/25 ${FOCUS_RING} ${
+              metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
             }`}
           >
-            <Repeat size={16} />
-          </button>
+            <div className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
+            <span
+              className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+              style={{ left: `${progress * 100}%` }}
+            />
+          </div>
+          <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+            {metadataLoaded ? formatTime(duration!) : "0:00"}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div ref={speedWrapRef} className="relative shrink-0">
+        {/* нижній ряд: ±10с/повтор зліва, швидкість/гучність справа */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <button
-              ref={speedButtonRef}
               type="button"
-              onClick={() => setSpeedOpen((v) => !v)}
-              aria-label={`Швидкість ${speed}×`}
-              aria-haspopup="menu"
-              aria-expanded={speedOpen}
-              className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+              onClick={() => skip(-10)}
+              aria-label="Назад на 10 секунд"
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
             >
-              {speed}× ▾
+              <Rewind size={16} />
             </button>
-            {speedOpen && (
-              <div
-                role="menu"
-                className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
-              >
-                {SPEEDS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={s === speed}
-                    onClick={() => setRate(s)}
-                    className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
-                      s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
-                    }`}
-                  >
-                    {s}×
-                  </button>
-                ))}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => skip(10)}
+              aria-label="Вперед на 10 секунд"
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
+            >
+              <FastForward size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoop((v) => !v)}
+              aria-label="Повторити"
+              aria-pressed={loop}
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
+                loop ? "bg-white text-[#4f46e5]" : "bg-white/[0.16] text-white"
+              }`}
+            >
+              <Repeat size={16} />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setMuted((v) => !v)}
-            aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
-            aria-pressed={muted}
-            className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
-          >
-            {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <div ref={speedWrapRef} className="relative shrink-0">
+              <button
+                ref={speedButtonRef}
+                type="button"
+                onClick={() => setSpeedOpen((v) => !v)}
+                aria-label={`Швидкість ${speed}×`}
+                aria-haspopup="menu"
+                aria-expanded={speedOpen}
+                className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
+              >
+                {speed}× ▾
+              </button>
+              {speedOpen && (
+                <div
+                  role="menu"
+                  className="absolute bottom-full right-0 z-10 mb-1 flex flex-col rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                >
+                  {SPEEDS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={s === speed}
+                      onClick={() => setRate(s)}
+                      className={`whitespace-nowrap px-3 py-1 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+                        s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
+                      }`}
+                    >
+                      {s}×
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMuted((v) => !v)}
+              aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
+              aria-pressed={muted}
+              className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
+            >
+              {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            </button>
+          </div>
         </div>
       </div>
     </div>
