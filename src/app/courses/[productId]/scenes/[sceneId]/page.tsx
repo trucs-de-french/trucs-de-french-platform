@@ -46,6 +46,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
+import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
@@ -135,7 +136,7 @@ export default async function ScenePage({
 
   const { data: scene } = await supabase
     .from("scenes")
-    .select("id, title, video_url, video_provider, dialogue")
+    .select("id, title, video_url, video_provider, subtitles, dialogue")
     .eq("id", sceneId)
     .eq("product_id", productId)
     .single();
@@ -621,11 +622,19 @@ export default async function ScenePage({
     <section>
       <h2 className={STUDENT_SECTION_HEADING}>Відео</h2>
       <div className={H2_TO_CONTENT}>
-        <VideoFrame
-          src={toEmbedUrl(scene.video_url, scene.video_provider)}
-          title={scene.title}
-          provider={scene.video_provider ?? "youtube"}
-        />
+        {scene.video_provider === "file" ? (
+          <VideoPlayer
+            src={scene.video_url}
+            subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
+            title={scene.title}
+          />
+        ) : (
+          <VideoFrame
+            src={toEmbedUrl(scene.video_url, scene.video_provider)}
+            title={scene.title}
+            provider={scene.video_provider ?? "youtube"}
+          />
+        )}
       </div>
     </section>
   );

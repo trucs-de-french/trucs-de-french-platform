@@ -33,6 +33,7 @@ import { LinkDragList } from "./link-drag-list";
 import { AddLinkForm } from "./add-link-form";
 import { GroupMemberDragList } from "../../task-groups/group-member-drag-list";
 import { ContentBlockFields } from "../../scene-content-blocks/content-block-fields";
+import { SceneVideoFields } from "./scene-video-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -64,7 +65,7 @@ export default async function AdminScenePage({
 
   const { data: scene, error: sceneError } = await supabase
     .from("scenes")
-    .select("id, title, video_url, video_provider, dialogue")
+    .select("id, title, video_url, video_provider, subtitles, dialogue")
     .eq("id", sceneId)
     .eq("product_id", productId)
     .single();
@@ -281,27 +282,11 @@ export default async function AdminScenePage({
       className="flex flex-col gap-4"
       saveButtonStyle="secondary"
     >
-      <div className="flex gap-4">
-        <div className="flex flex-1 flex-col gap-1">
-          <label className={LABEL_TEXT}>URL відео</label>
-          <input
-            name="video_url"
-            defaultValue={scene.video_url ?? ""}
-            className={`${INPUT_BORDER} px-3 py-2`}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Джерело</label>
-          <select
-            name="video_provider"
-            defaultValue={scene.video_provider ?? "youtube"}
-            className={`${INPUT_BORDER} px-3 py-2`}
-          >
-            <option value="youtube">YouTube</option>
-            <option value="gdrive">Google Drive</option>
-          </select>
-        </div>
-      </div>
+      <SceneVideoFields
+        initialUrl={scene.video_url ?? ""}
+        initialProvider={scene.video_provider ?? "youtube"}
+        initialSubtitles={scene.subtitles}
+      />
     </SaveForm>
   );
 

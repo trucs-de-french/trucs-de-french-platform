@@ -109,6 +109,20 @@ export async function updateSceneTitle(
   return { ok: true };
 }
 
+// buildSceneSubtitles — той самий принцип, що buildSubtitlesField у
+// scene-content-blocks/task-groups actions.ts (7ccca03): лише для
+// video_provider === "file", _file_url (завантажений файл) перекриває _url
+// (вставлене посилання).
+function buildSceneSubtitles(formData: FormData, videoProvider: string | null): { lang: "fr" | "uk"; url: string }[] | null {
+  if (videoProvider !== "file") return null;
+  const fr = (formData.get("subtitles_fr_file_url") as string) || (formData.get("subtitles_fr_url") as string) || "";
+  const uk = (formData.get("subtitles_uk_file_url") as string) || (formData.get("subtitles_uk_url") as string) || "";
+  const subtitles: { lang: "fr" | "uk"; url: string }[] = [];
+  if (fr.trim()) subtitles.push({ lang: "fr", url: fr.trim() });
+  if (uk.trim()) subtitles.push({ lang: "uk", url: uk.trim() });
+  return subtitles.length > 0 ? subtitles : null;
+}
+
 export async function updateSceneVideo(
   sceneId: string,
   _prevState: ActionState,
@@ -116,13 +130,23 @@ export async function updateSceneVideo(
 ): Promise<ActionState> {
   const supabase = await createClient();
 
-  const videoUrl = (formData.get("video_url") as string) || null;
+  const videoProvider = (formData.get("video_provider") as string) || null;
+  // video_file_url — завантажений напряму в R2 mp4-файл (SceneVideoFields,
+  // kind="media"), той самий принцип, що media_video_file_url у
+  // scene-content-blocks/task-groups actions.ts — перекриває текстове поле
+  // URL, лише коли provider === "file".
+  const uploadedVideoUrl = (formData.get("video_file_url") as string) || "";
+  const videoUrl =
+    videoProvider === "file" && uploadedVideoUrl
+      ? uploadedVideoUrl
+      : (formData.get("video_url") as string) || null;
 
   const { error } = await supabase
     .from("scenes")
     .update({
       video_url: videoUrl,
-      video_provider: (formData.get("video_provider") as string) || null,
+      video_provider: videoProvider,
+      subtitles: buildSceneSubtitles(formData, videoProvider),
     })
     .eq("id", sceneId);
 
