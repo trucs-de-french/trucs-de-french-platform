@@ -31,7 +31,7 @@ import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
 import { LinkCard } from "@/components/link-card";
 import { EmbedFrame } from "@/components/embed-frame";
-import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
+import { collectSceneVocab, collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
 import type {
   FlipCardsConfig,
@@ -626,6 +626,7 @@ export default async function ScenePage({
           <VideoPlayer
             src={scene.video_url}
             subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
+            vocab={collectVideoVocab(dialogue)}
             title={scene.title}
           />
         ) : (
@@ -686,7 +687,7 @@ export default async function ScenePage({
           if (row.kind === "group") {
             return (
               <li key={`group-${row.group.id}`} id={`group-${row.group.id}`} className="scroll-mt-4">
-                <TaskGroupBlock group={row.group} tasks={row.members} />
+                <TaskGroupBlock group={row.group} tasks={row.members} sceneDialogue={dialogue} />
               </li>
             );
           }
@@ -881,8 +882,11 @@ export default async function ScenePage({
                     group={attachedGroup}
                     tasks={attachedMembers}
                     bare
+                    sceneDialogue={dialogue}
                     extraSharedContent={
-                      blockHasOwnContent ? <SceneContentBlockContent block={block} panelForText /> : null
+                      blockHasOwnContent ? (
+                        <SceneContentBlockContent block={block} panelForText sceneDialogue={dialogue} />
+                      ) : null
                     }
                   />
                 </section>
@@ -894,7 +898,7 @@ export default async function ScenePage({
             // матеріалом є вправи).
             return (
               <section key={`content-${row.ref_id}`}>
-                <SceneContentBlock block={block} />
+                <SceneContentBlock block={block} sceneDialogue={dialogue} />
               </section>
             );
           }

@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import {
@@ -19,10 +20,14 @@ import {
   Minimize,
   Captions,
   Turtle,
+  X,
 } from "lucide-react";
 import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
 import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
+import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
+import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
+import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech } from "@/lib/vocab-categories";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -68,23 +73,88 @@ function readStoredSubtitlesMode(): SubtitlesMode | null {
   }
 }
 
-// Розкладка репліки на слова-токени (<span data-word>) — поки без жодної
-// клікабельної поведінки, лише розмітка під майбутній глосарій (етап 2).
-// split(/(\s+)/) лишає пробіли окремими елементами масиву — рендеряться як
-// текст, не обгортаються в span.
-function renderTokens(text: string, keyPrefix: string) {
-  return text
-    .replace(/\n+/g, " ")
-    .split(/(\s+)/)
-    .map((chunk, i) =>
-      chunk.trim() === "" ? (
-        chunk
-      ) : (
-        <span key={`${keyPrefix}-${i}`} data-word={chunk}>
-          {chunk}
-        </span>
-      )
-    );
+function readStoredPauseOnWordOpen(): boolean | null {
+  try {
+    const raw = localStorage.getItem("videoPlayer:pauseOnWordOpen");
+    return raw === "true" ? true : raw === "false" ? false : null;
+  } catch {
+    return null;
+  }
+}
+
+// FR-репліка: vocab[].word, зіставлений через matchVocabInText (vocab-match.ts,
+// Крок 2 глосарію), рендериться клікабельною кнопкою (data-vocab-trigger —
+// за цим атрибутом "клік поза карткою" нижче впізнає сам тригер і не закриває
+// щойно відкриту картку). Решта тексту — звичайний текст, навіть пробіли
+// (обгортка в span безпечна — inline, без візуального ефекту).
+//
+// Компонент (не плоска функція) — onWordClick (handleWordClick у VideoPlayer)
+// читає wrapperRef.current/videoRef.current; react-hooks/refs забороняє
+// передавати такий колбек у звичайну функцію, викликану прямо в тілі
+// рендеру (не може статично довести, що викликається пізніше, в event-
+// хендлері) — як проп дочірнього КОМПОНЕНТА те саме дозволено (той самий
+// принцип, що вже onWordClick у DialogueLine, dialogue-line.tsx).
+function SubtitleFrLine({
+  text,
+  vocab,
+  onWordClick,
+}: {
+  text: string;
+  vocab: VideoVocabItem[];
+  onWordClick: (item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) => void;
+}) {
+  const parts = matchVocabInText(text.replace(/\n+/g, " "), vocab);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.type === "match" ? (
+          <button
+            key={i}
+            type="button"
+            data-vocab-trigger
+            onClick={(e) => onWordClick(part.item, e)}
+            className="video-word-fr"
+          >
+            {part.text}
+          </button>
+        ) : (
+          <span key={i}>{part.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
+// UA-репліка: той самий принцип, що TranslatedText (dialogue-line.tsx) —
+// підсвітка за translatedForm, БЕЗ клікабельності (переклад слова вже
+// показаний у FR-рядку вище/у картці).
+function renderUkSubtitleLine(text: string, vocab: VideoVocabItem[]) {
+  const parts = matchTranslatedFormInText(text.replace(/\n+/g, " "), vocab);
+  return parts.map((part, i) =>
+    part.type === "match" ? (
+      <span key={i} className="video-word-uk">
+        {part.text}
+      </span>
+    ) : (
+      <span key={i}>{part.text}</span>
+    )
+  );
+}
+
+// Підсвітка слова в прикладі репліки ВСЕРЕДИНІ самої картки — лише
+// візуальна (не кнопка): вкладати ще одну клікабельну кнопку в dialog, що й
+// сама відкрита з такого ж кліку, було б зайвим і заплутаним.
+function renderHighlightedExample(text: string, item: VideoVocabItem) {
+  const parts = matchVocabInText(text.replace(/\n+/g, " "), [item]);
+  return parts.map((part, i) =>
+    part.type === "match" ? (
+      <span key={i} className="video-word-fr-static">
+        {part.text}
+      </span>
+    ) : (
+      <span key={i}>{part.text}</span>
+    )
+  );
 }
 
 function findActiveCue(cues: WebVttCue[], time: number): WebVttCue | null {
@@ -97,12 +167,18 @@ function findActiveCue(cues: WebVttCue[], time: number): WebVttCue | null {
 export function VideoPlayer({
   src,
   subtitles,
+  vocab,
   title,
   poster,
   className = "",
 }: {
   src: string;
   subtitles?: VideoSubtitleTrack[];
+  // Клікабельний глосарій у субтитрах (Крок 2) — vocab[] зі скрипту сцени/
+  // content-блоку/групи, вже агрегований collectVideoVocab (vocab.ts) на
+  // сервері, разом із прикладом репліки для кожного слова. Відсутній —
+  // субтитри рендеряться як звичайний текст (жодних клікабельних слів).
+  vocab?: VideoVocabItem[];
   title?: string;
   poster?: string;
   className?: string;
@@ -115,6 +191,11 @@ export function VideoPlayer({
   const subsButtonRef = useRef<HTMLButtonElement>(null);
   const hideOverlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const wordCardRef = useRef<HTMLDivElement>(null);
+  // Пам'ятає, чи відео грало ДО відкриття картки слова (лише коли "Пауза
+  // при відкритті слова" увімкнена) — щоб закриття картки відновлювало
+  // відтворення ЛИШЕ якщо воно й справді йшло, а не завжди.
+  const wasPlayingBeforeCardRef = useRef<boolean | null>(null);
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: toggleFullscreen } = useFullscreenWrapper();
 
   const [playing, setPlaying] = useState(false);
@@ -131,6 +212,10 @@ export function VideoPlayer({
   // читанням wrapperRef.current напряму в тілі рендеру (react-hooks/refs
   // забороняє доступ до .current під час рендеру).
   const [containerHeight, setContainerHeight] = useState(0);
+  // Ширина контейнера — для горизонтального "затискання" картки слова
+  // (desktop-анкор біля слова, не вилазить за межі відео), той самий
+  // ResizeObserver, що вже вимірює containerHeight.
+  const [containerWidth, setContainerWidth] = useState(0);
   // Завжди фіксований дефолт на першому рендері (сервер і клієнт мають
   // збігатись) — збережену швидкість із localStorage застосовуємо лише
   // ПІСЛЯ монтування, в ефекті нижче. Раніше лазі-ініціалізатор читав
@@ -143,6 +228,18 @@ export function VideoPlayer({
   const [loopLine, setLoopLine] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  // Фіксований дефолт на першому рендері (ON), той самий принцип, що speed/
+  // mode вище — збережене значення з localStorage застосовується лише після
+  // монтування, в ефекті нижче.
+  const [pauseOnWordOpen, setPauseOnWordOpen] = useState(true);
+  // Відкрита картка слова — лише ОДНА одночасно (openWord=null — нічого не
+  // відкрито). anchorLeftPx/bottomPx — пікселі від краю wrapperRef,
+  // обчислені в handleWordClick із positions клікнутого слова.
+  const [openWord, setOpenWord] = useState<{
+    item: VideoVocabItem;
+    anchorLeftPx: number | null;
+    bottomPx: number;
+  } | null>(null);
 
   const frUrl = subtitles?.find((s) => s.lang === "fr")?.url ?? null;
   const ukUrl = subtitles?.find((s) => s.lang === "uk")?.url ?? null;
@@ -192,6 +289,11 @@ export function VideoPlayer({
         if (storedMode === "off") return "off";
         return current;
       });
+
+      const storedPauseOnWordOpen = readStoredPauseOnWordOpen();
+      if (storedPauseOnWordOpen !== null) {
+        setPauseOnWordOpen((current) => (storedPauseOnWordOpen !== current ? storedPauseOnWordOpen : current));
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -231,8 +333,10 @@ export function VideoPlayer({
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
     const observer = new ResizeObserver((entries) => {
-      const height = entries[0]?.target.getBoundingClientRect().height;
-      if (height !== undefined) setContainerHeight(height);
+      const rect = entries[0]?.target.getBoundingClientRect();
+      if (!rect) return;
+      setContainerHeight(rect.height);
+      setContainerWidth(rect.width);
     });
     observer.observe(wrapper);
     return () => observer.disconnect();
@@ -290,6 +394,88 @@ export function VideoPlayer({
       // localStorage недоступний (приватний режим тощо) — просто без збереження.
     }
   }
+
+  function togglePauseOnWordOpen() {
+    setPauseOnWordOpen((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem("videoPlayer:pauseOnWordOpen", String(next));
+      } catch {
+        // без збереження, якщо localStorage недоступний.
+      }
+      return next;
+    });
+  }
+
+  // openWord === null у перевірці нижче — "був уже грав" запам'ятовується
+  // ЛИШЕ на першому відкритті картки, не на кожному перемиканні між словами
+  // (інакше друге слово побачило би відео вже на паузі від першого й хибно
+  // запам'ятало б "не грало").
+  function openWordCard(item: VideoVocabItem, anchorLeftPx: number | null, bottomPx: number) {
+    if (pauseOnWordOpen && openWord === null) {
+      const video = videoRef.current;
+      if (video && !video.paused) {
+        wasPlayingBeforeCardRef.current = true;
+        video.pause();
+      } else {
+        wasPlayingBeforeCardRef.current = false;
+      }
+    }
+    setOpenWord({ item, anchorLeftPx, bottomPx });
+  }
+
+  function closeWordCard() {
+    setOpenWord(null);
+    if (pauseOnWordOpen && wasPlayingBeforeCardRef.current) {
+      const video = videoRef.current;
+      if (video) {
+        stopOthersAndRegister(video);
+        void video.play();
+      }
+    }
+    wasPlayingBeforeCardRef.current = null;
+  }
+
+  // Позиція картки — від самого клікнутого слова: anchorLeftPx — його
+  // горизонтальний центр (для desktop-анкора), bottomPx — відстань від низу
+  // wrapperRef до ВЕРХУ слова (+8px) — та сама величина автоматично тримає
+  // картку і над субтитрами, і над панеллю керування (обидва вище цього
+  // слова в document order), без окремого вимірювання висоти жодного з них.
+  function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      openWordCard(item, null, 88);
+      return;
+    }
+    const wordRect = e.currentTarget.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    openWordCard(item, wordRect.left + wordRect.width / 2 - wrapperRect.left, wrapperRect.bottom - wordRect.top + 8);
+  }
+
+  // Закриття картки слова кліком поза нею й по Escape — той самий рецепт,
+  // що вже в ефекті меню швидкості/субтитрів нижче, окремий ефект (інша
+  // умова відкриття). data-vocab-trigger — клік на ІНШЕ слово (перемикання
+  // відкритої картки) не має спершу закрити поточну картку цим слухачем:
+  // відкриття нового слова й так замінює openWord, без проміжного null.
+  useEffect(() => {
+    if (!openWord) return;
+    function handlePointerDown(e: globalThis.PointerEvent) {
+      const target = e.target as Element | null;
+      if (wordCardRef.current?.contains(target)) return;
+      if (target?.closest?.("[data-vocab-trigger]")) return;
+      closeWordCard();
+    }
+    function handleKeyDown(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") closeWordCard();
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openWord]);
 
   const activeFrCue = frCues ? findActiveCue(frCues, currentTime) : null;
   const activeUkCue = ukCues ? findActiveCue(ukCues, currentTime) : null;
@@ -487,6 +673,24 @@ export function VideoPlayer({
   // overflow-hidden) інакше обрізав би довге меню зверху.
   const menuMaxHeight = containerHeight ? Math.max(120, containerHeight - overlayHeight - 16) : undefined;
 
+  // Горизонтальне "затискання" картки слова (desktop-анкор): лишає мінімум
+  // 12px до кожного краю відео, навіть коли слово клікнуте біля самого
+  // краю рядка субтитрів. На мобільному (video-word-card, max-width 639px)
+  // CSS сам ігнорує left/transform — картка стає сторінкою знизу на всю
+  // ширину, тож clampedCardLeft там без ефекту.
+  const WORD_CARD_WIDTH = 300;
+  const clampedCardLeft =
+    openWord?.anchorLeftPx != null && containerWidth > 0
+      ? Math.min(
+          Math.max(openWord.anchorLeftPx, WORD_CARD_WIDTH / 2 + 12),
+          Math.max(WORD_CARD_WIDTH / 2 + 12, containerWidth - WORD_CARD_WIDTH / 2 - 12)
+        )
+      : null;
+  // bottomPx уже рахується від слова (handleWordClick) — тут лише обмежуємо
+  // висоту картки, щоб із цим bottom вона не вилізла за верхній край
+  // контейнера.
+  const cardMaxHeight = openWord ? Math.max(100, containerHeight - openWord.bottomPx - 16) : undefined;
+
   if (loadError) {
     return (
       <div className={`w-full ${className}`}>
@@ -568,10 +772,12 @@ export function VideoPlayer({
               }`}
             >
               {showFr && activeFrCue && (
-                <p className="font-heading video-subtitle-fr">{renderTokens(activeFrCue.text, "fr")}</p>
+                <p className="font-heading video-subtitle-fr">
+                  <SubtitleFrLine text={activeFrCue.text} vocab={vocab ?? []} onWordClick={handleWordClick} />
+                </p>
               )}
               {showUk && activeUkCue && (
-                <p className="font-heading video-subtitle-uk">{renderTokens(activeUkCue.text, "uk")}</p>
+                <p className="font-heading video-subtitle-uk">{renderUkSubtitleLine(activeUkCue.text, vocab ?? [])}</p>
               )}
             </div>
           ) : null}
@@ -788,6 +994,28 @@ export function VideoPlayer({
                           {hasFr && <SubsMenuItem label="FR" active={mode === "fr"} onClick={() => changeMode("fr")} />}
                           {hasUk && <SubsMenuItem label="UA" active={mode === "uk"} onClick={() => changeMode("uk")} />}
                           <SubsMenuItem label="Вимкнено" active={mode === "off"} onClick={() => changeMode("off")} />
+                          <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+                          <button
+                            type="button"
+                            role="menuitemcheckbox"
+                            aria-checked={pauseOnWordOpen}
+                            onClick={togglePauseOnWordOpen}
+                            className="flex min-h-10 items-center justify-between gap-3 whitespace-nowrap px-3 text-left text-xs text-neutral-600 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                          >
+                            <span>Пауза при відкритті слова</span>
+                            <span
+                              aria-hidden
+                              className={`inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                                pauseOnWordOpen ? "bg-brand" : "bg-gray-300 dark:bg-neutral-600"
+                              }`}
+                            >
+                              <span
+                                className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                                  pauseOnWordOpen ? "translate-x-4" : "translate-x-0.5"
+                                }`}
+                              />
+                            </span>
+                          </button>
                         </div>
                       )}
                     </div>
@@ -828,6 +1056,20 @@ export function VideoPlayer({
             </div>
           </div>
         </div>
+
+        {/* Картка слова — ВСЕРЕДИНІ wrapperRef (не portal у body), щоб
+            працювала і в справжньому fullscreen, і в iOS pseudo-fullscreen
+            (wrapperRef сам стає fullscreen-елементом в обох випадках). */}
+        {openWord && (
+          <VideoWordCard
+            cardRef={wordCardRef}
+            item={openWord.item}
+            leftPx={clampedCardLeft}
+            bottomPx={openWord.bottomPx}
+            maxHeight={cardMaxHeight ?? 240}
+            onClose={closeWordCard}
+          />
+        )}
       </div>
 
       {/* Та сама кнопка, що й під iframe-плеєрами (video-frame.tsx,
@@ -842,6 +1084,93 @@ export function VideoPlayer({
           <Maximize size={16} />
           На весь екран
         </button>
+      )}
+    </div>
+  );
+}
+
+// Картка слова (Крок 2 глосарію) — скляна плашка в тому ж стилі, що
+// video-subtitle-plate, анкорена біля клікнутого слова (desktop) або
+// bottom sheet на всю ширину (мобільний, <640px — сам .video-word-card
+// у globals.css перевизначає left/right/transform під медіа-запитом).
+// role="dialog" — єдина відкрита модальна картка, не меню/попап.
+function VideoWordCard({
+  item,
+  leftPx,
+  bottomPx,
+  maxHeight,
+  onClose,
+  cardRef,
+}: {
+  item: VideoVocabItem;
+  leftPx: number | null;
+  bottomPx: number;
+  maxHeight: number;
+  onClose: () => void;
+  cardRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const pos = normalizePartOfSpeech(item.partOfSpeech);
+  const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
+  const posDotClass = pos ? PART_OF_SPEECH_COLORS[pos].dot : null;
+
+  // stopPropagation — щоб Space/←/→, натиснуті поки фокус усередині картки
+  // (напр. на кнопці "×"), не спливли до onKeyDown обгортки плеєра й не
+  // перемкнули play/перемотку замість дії картки. Escape лишається робочим
+  // ТУТ самостійно (обгортка його теж ловить документним слухачем у
+  // VideoPlayer — цей виклик лише дублює для фокусу всередині картки).
+  function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    if (e.key === "Escape") onClose();
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      role="dialog"
+      aria-label={`Слово: ${firstVocabVariant(item.word)}`}
+      onKeyDown={handleKeyDown}
+      className="video-word-card"
+      style={{
+        bottom: `${bottomPx}px`,
+        left: leftPx != null ? `${leftPx}px` : undefined,
+        maxHeight: `${maxHeight}px`,
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-heading pr-2 text-lg font-bold text-white">{firstVocabVariant(item.word)}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Закрити"
+          className={`-m-1 shrink-0 rounded p-1 text-white/70 hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      {posLabel && posDotClass && (
+        <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${posDotClass}`}>
+          {posLabel}
+        </span>
+      )}
+
+      <p className="mt-2 text-sm text-white/90">{item.translation}</p>
+
+      {item.note?.trim() && <p className="mt-1 text-xs italic text-white/60">{item.note}</p>}
+
+      {item.image_url && (
+        // Невелике фото прикладу/ілюстрації слова — те саме поле, що
+        // vocab-item-row.tsx (адмінський конструктор), тут лише читається.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.image_url} alt="" className="mt-2 h-16 w-16 rounded object-cover" />
+      )}
+
+      {item.example && (
+        <div className="mt-3 border-t border-white/15 pt-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">З репліки</p>
+          <p className="mt-1 text-sm text-white/90">{renderHighlightedExample(item.example.text, item)}</p>
+          {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { normalizePartOfSpeech, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "./vocab-categories";
+import { matchVocabInText, normalizeWordForMatch } from "./vocab-match";
 
 export type { PartOfSpeech };
 
@@ -54,6 +55,43 @@ export function collectSceneVocab(dialogue: DialogueLine[]): VocabItem[] {
   }
 
   return [...seen.values()];
+}
+
+// Репліка скрипту, з якої слово взято — для "З репліки" в картці слова
+// VideoPlayer (Крок 2 глосарію): перша репліка в порядку масиву, де слово
+// (будь-який його кома-варіант) трапляється в тексті, незалежно від того,
+// в якій саме репліці вчителька додала сам vocab-запис.
+export type VocabExample = { text: string; translationUk: string | null };
+
+export type VideoVocabItem = VocabItem & { example: VocabExample | null };
+
+type VideoDialogueLine = {
+  text: string;
+  translationUk?: string | null;
+  vocab?: VocabItem[];
+};
+
+// Унікальна лексика для клікабельних субтитр VideoPlayer — той самий принцип
+// "перше входження виграє", що collectSceneVocab, але ключ — normalizeWordForMatch
+// (апострофи/регістр не розрізняються, щоб "l'ordre" і "l’ordre" не стали
+// двома різними записами), і кожному item одразу приєднується приклад.
+export function collectVideoVocab(dialogue: VideoDialogueLine[]): VideoVocabItem[] {
+  const seen = new Map<string, VocabItem>();
+  for (const line of dialogue) {
+    for (const v of line.vocab ?? []) {
+      if (!v.word.trim()) continue;
+      const key = normalizeWordForMatch(v.word);
+      if (!seen.has(key)) seen.set(key, v);
+    }
+  }
+
+  return [...seen.values()].map((item) => {
+    const line = dialogue.find((l) => matchVocabInText(l.text, [item]).some((p) => p.type === "match"));
+    const example: VocabExample | null = line
+      ? { text: line.text, translationUk: line.translationUk ?? null }
+      : null;
+    return { ...item, example };
+  });
 }
 
 export type VocabGroup = { partOfSpeech: PartOfSpeech | null; items: VocabItem[] };

@@ -1,63 +1,8 @@
 "use client";
 
 import type { VocabItem } from "@/lib/vocab";
+import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// Спільний будівник для обох напрямків підсвітки — оригінал (за word) і
-// переклад (за translatedForm, нижче) — той самий принцип "найдовший
-// варіант першим" (щоб довша фраза не "з'їдалась" коротшим словом, що є
-// її частиною).
-//
-// Порожні/пробільні слова відфільтровуються ТУТ, а не покладаються на
-// виклик уже відфільтрувати — порожній рядок у альтернативах регулярки
-// (напр. vocab-запис {word: ""}, залишений ненавмисно) дає ПОРОЖНЮ групу
-// захоплення (new RegExp("()")), яка матчить нульової довжини рядок УСЮДИ
-// (між кожною парою символів) — text.split на такому regex розбиває
-// репліку по одній літері, і кожен проміжок після цього хибно "знаходить"
-// той самий порожній vocab-запис і рендериться як окремий підсвічений
-// елемент — саме так репліка "Lumos Maxima" рендерилась літера-за-літерою.
-// null — сигнал викликачу, що підсвічувати нічого (замість регулярки, що
-// матчить порожній рядок скрізь).
-function buildHighlightRegex(words: string[]): RegExp | null {
-  const meaningful = words.map((w) => w.trim()).filter((w) => w.length > 0);
-  if (meaningful.length === 0) return null;
-  const alternatives = [...meaningful].sort((a, b) => b.length - a.length).map(escapeRegExp);
-  return new RegExp(`(${alternatives.join("|")})`, "giu");
-}
-
-// Кілька варіантів одного слова через кому в полі word (напр. "signer,
-// signe") — вчителька вписує їх вручну, кожен варіант підсвічується
-// незалежно, якщо трапляється в тексті репліки.
-function splitVariants(word: string): string[] {
-  return word
-    .split(",")
-    .map((w) => w.trim())
-    .filter((w) => w.length > 0);
-}
-
-function buildVocabRegex(vocab: VocabItem[]): RegExp | null {
-  return buildHighlightRegex(vocab.flatMap((v) => splitVariants(v.word)));
-}
-
-// Зворотне зіставлення "варіант -> VocabItem", щоб клік на підсвічений
-// фрагмент показував переклад ТОГО item, якому цей варіант належить (а не
-// завжди першого item зі списку). Якщо два items випадково діляться
-// однаковим варіантом — виграє перший за порядком масиву (map.has не дає
-// перезаписати), детерміновано, без падіння.
-function buildVariantMap(vocab: VocabItem[]): Map<string, VocabItem> {
-  const map = new Map<string, VocabItem>();
-  for (const v of vocab) {
-    for (const variant of splitVariants(v.word)) {
-      const key = variant.toLowerCase();
-      if (!map.has(key)) map.set(key, v);
-    }
-  }
-  return map;
-}
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -78,27 +23,22 @@ export function splitTranslationSpeaker(text: string): { speaker: string | null;
 // клікабельності/спливаючого перекладу (однобічний візуальний натяк, не
 // інтерактивний елемент — переклад слова вже показаний ліворуч).
 export function TranslatedText({ text, vocab }: { text: string; vocab: VocabItem[] }) {
-  const withForm = vocab.filter((v) => v.translatedForm?.trim());
-  const regex = buildHighlightRegex(withForm.map((v) => v.translatedForm as string));
-  if (!regex) return <>{text}</>;
-
-  const parts = text.split(regex);
+  const parts = matchTranslatedFormInText(text, vocab);
 
   return (
     <>
-      {parts.map((part, i) => {
-        const match = withForm.find((v) => v.translatedForm?.trim().toLowerCase() === part.toLowerCase());
-        return match ? (
+      {parts.map((part, i) =>
+        part.type === "match" ? (
           <span
             key={i}
             className="mx-0.5 rounded bg-blue-100 px-1 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-200"
           >
-            {part}
+            {part.text}
           </span>
         ) : (
-          <span key={i}>{part}</span>
-        );
-      })}
+          <span key={i}>{part.text}</span>
+        )
+      )}
     </>
   );
 }
@@ -178,39 +118,25 @@ export function DialogueLine({
   openId: string | null;
   onWordClick: (id: string) => void;
 }) {
-  const meaningfulVocab = vocab.filter((v) => v.word.trim());
-  const regex = buildVocabRegex(meaningfulVocab);
-  const variantMap = buildVariantMap(meaningfulVocab);
-
-  if (!regex) {
-    return (
-      <p>
-        <TimecodeBadge start={start} videoLink={videoLink} />
-        <span className="font-semibold">{speaker}:</span> {text}
-      </p>
-    );
-  }
-
-  const parts = text.split(regex);
+  const parts = matchVocabInText(text, vocab);
 
   return (
     <p>
       <TimecodeBadge start={start} videoLink={videoLink} />
       <span className="font-semibold">{speaker}:</span>{" "}
       {parts.map((part, i) => {
-        const match = variantMap.get(part.toLowerCase());
         const id = `${lineIndex}-${i}`;
-        return match ? (
+        return part.type === "match" ? (
           <VocabWord
             key={i}
             id={id}
-            word={part}
-            translation={match.translation}
+            word={part.text}
+            translation={part.item.translation}
             isOpen={openId === id}
             onClick={onWordClick}
           />
         ) : (
-          <span key={i}>{part}</span>
+          <span key={i}>{part.text}</span>
         );
       })}
     </p>

@@ -714,6 +714,75 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Клікабельні слова глосарію в субтитрах (video-player.tsx, Крок 2) —
+   text-decoration, НЕ border-bottom: border додав би свою висоту в line
+   box і плашка субтитрів зросла б; text-decoration суто візуальна,
+   лейаут не чіпає. Кнопка-слово (FR, клікабельна) зкидає стандартні
+   button-стилі до "звичайний інлайновий текст + курсор". video-word-uk —
+   та сама підсвітка в UA-рядку, БЕЗ кнопки (переклад уже видно в картці/
+   поряд). video-word-fr-static — той самий вигляд для прикладу РЕПЛІКИ
+   всередині самої картки слова (не кнопка — там це лише підсвітка). */
+.video-word-fr,
+.video-word-uk,
+.video-word-fr-static {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+.video-word-fr {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.video-word-fr:hover,
+.video-word-fr:focus-visible {
+  text-decoration-style: solid;
+}
+.video-word-fr-static {
+  font-weight: 700;
+}
+
+/* Картка слова (Крок 2 глосарію) — той самий скляний стиль, що
+   video-subtitle-plate вище (темне скло, той самий radius), прикладена
+   всередину wrapperRef (не portal) — працює і у fullscreen/pseudo-
+   fullscreen. --video-word-card-left/bottom виставляються inline зі
+   video-player.tsx (пікселі від краю контейнера, обчислені з positions
+   клікнутого слова); left/transform на мобільному нижче перевизначені під
+   bottom sheet на всю ширину, inline left там просто ігнорується. */
+.video-word-card {
+  position: absolute;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: min(300px, calc(100% - 24px));
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 9, 28, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 12px 14px;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .video-word-card {
+    background: rgba(10, 9, 28, 0.97);
+  }
+}
+@media (max-width: 639px) {
+  .video-word-card {
+    left: 10px !important;
+    right: 10px;
+    width: auto;
+    transform: none;
+    border-radius: 14px;
+  }
+}
+
 /* Mute-кнопка video-player.tsx — звук на дотикових пристроях регулюють
    апаратні кнопки, ховаємо саме за типом вказівника, не за шириною
    екрана (вузьке мишаче вікно лишає кнопку доступною). */

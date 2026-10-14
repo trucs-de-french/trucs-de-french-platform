@@ -19,6 +19,7 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { isBlankHtml } from "@/lib/html-text";
 import { contentBlockHasRenderableContent, taskHasRenderableContent } from "@/lib/exercises/task-visibility";
+import { collectVideoVocab, type VocabItem } from "@/lib/vocab";
 
 export type TaskGroupData = {
   id: string;
@@ -55,15 +56,23 @@ export type TaskGroupData = {
 // title блоку — свідомо НЕ рендериться (адмінська мітка, "студент не
 // бачить", task-group-fields.tsx) — сам контент і є тим, що ідентифікує
 // блок студенту.
+// task_groups не має власної колонки dialogue (на відміну від scenes/
+// scene_content_blocks) — глосарій відео групи завжди з dialogue СЦЕНИ,
+// якщо групу показано на сторінці сцени (сторінки материалів/DELF-тесту
+// просто не передають sceneDialogue — відео там без клікабельних слів).
+type SceneDialogueLine = { text: string; translationUk?: string | null; vocab?: VocabItem[] };
+
 export function TaskGroupBlock({
   group,
   tasks,
   bare = false,
   extraSharedContent = null,
   isDelf = false,
+  sceneDialogue,
 }: {
   group: TaskGroupData;
   tasks: ExerciseTask[];
+  sceneDialogue?: SceneDialogueLine[];
   // Задача-член блоку належить DELF-тесту — вимикає підказки в кожній
   // ExerciseBlock нижче. За замовчуванням false (звичайний блок сцени чи
   // матеріалу); delf-test-tasks.tsx передає true.
@@ -221,7 +230,12 @@ export function TaskGroupBlock({
       {group.content_type === "video" &&
         group.media_url &&
         (group.media_provider === "file" ? (
-          <VideoPlayer src={group.media_url} subtitles={group.subtitles ?? undefined} title="Відео" />
+          <VideoPlayer
+            src={group.media_url}
+            subtitles={group.subtitles ?? undefined}
+            vocab={collectVideoVocab(sceneDialogue ?? [])}
+            title="Відео"
+          />
         ) : (
           <VideoFrame
             src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}

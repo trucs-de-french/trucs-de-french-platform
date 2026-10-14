@@ -4,7 +4,7 @@ import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player"
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
-import type { VocabItem } from "@/lib/vocab";
+import { collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { EmbedFrame } from "@/components/embed-frame";
 import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
@@ -55,7 +55,18 @@ export type SceneContentBlockData = {
 // відміну від TaskGroupBlock, тут немає задач/балів, що потребують
 // клієнтського стану, весь блок рендериться на сервері (ScriptSection сам
 // по собі "use client" — це нормально всередині Server Component).
-export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
+export function SceneContentBlock({
+  block,
+  sceneDialogue,
+}: {
+  block: SceneContentBlockData;
+  // Dialogue сцени — фолбек для глосарію відео-блоку (Крок 2), якщо У
+  // САМОГО content-блоку немає власного dialogue (звичний випадок: dialogue
+  // на scene_content_blocks реально заповнюється лише для content_type
+  // "script", не "video"). Опційний — блоки поза сторінкою сцени (їх тут
+  // немає, але контракт лишається сумісним) просто не підсвічують слова.
+  sceneDialogue?: ScriptDialogueLine[];
+}) {
   // Обгортка (EXERCISE_BLOCK_CLASS) не має з'являтись, якщо для цього
   // content_type немає жодного заповненого поля — інакше студент бачить
   // голу рамку з padding, без вмісту (task-visibility.ts).
@@ -63,7 +74,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
 
   return (
     <section className={EXERCISE_BLOCK_CLASS}>
-      <SceneContentBlockContent block={block} />
+      <SceneContentBlockContent block={block} sceneDialogue={sceneDialogue} />
     </section>
   );
 }
@@ -76,6 +87,7 @@ export function SceneContentBlock({ block }: { block: SceneContentBlockData }) {
 export function SceneContentBlockContent({
   block,
   panelForText = false,
+  sceneDialogue,
 }: {
   block: SceneContentBlockData;
   // Підкладка (SHARED_CONTENT_PANEL, лише навколо тексту) — вмикається
@@ -84,7 +96,11 @@ export function SceneContentBlockContent({
   // bare-режим TaskGroupBlock) — самостійний content-блок (SceneContentBlock
   // вище, без жодної групи) лишається без підкладки навіть для тексту.
   panelForText?: boolean;
+  sceneDialogue?: ScriptDialogueLine[];
 }) {
+  // Власний dialogue блоку (якщо колись заповнять і для "video") виграє над
+  // сценою; інакше — dialogue сцени, якщо є.
+  const videoVocab = collectVideoVocab(block.dialogue?.length ? block.dialogue : sceneDialogue ?? []);
   const textNode = !isBlankHtml(block.content_text) && (
     // rich-text + EXERCISE_BODY (Lora, text-base, звичайна вага) — НЕ
     // InstructionsText/EXERCISE_INSTRUCTION: це вільний пояснювальний текст
@@ -165,7 +181,12 @@ export function SceneContentBlockContent({
       {block.content_type === "video" &&
         block.media_url &&
         (block.media_provider === "file" ? (
-          <VideoPlayer src={block.media_url} subtitles={block.subtitles ?? undefined} title="Відео" />
+          <VideoPlayer
+            src={block.media_url}
+            subtitles={block.subtitles ?? undefined}
+            vocab={videoVocab}
+            title="Відео"
+          />
         ) : (
           <VideoFrame
             src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
