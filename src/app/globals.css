@@ -660,7 +660,7 @@ button, input, textarea, select, label, nav, aside {
    щільніший фон замість скла. width: fit-content — плашка стискається під
    короткі репліки, max-width обмежує довгі. */
 .video-subtitle-plate {
-  background: rgba(16, 14, 40, 0.5);
+  background: rgba(10, 9, 28, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -673,7 +673,7 @@ button, input, textarea, select, label, nav, aside {
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-subtitle-plate {
-    background: rgba(16, 14, 40, 0.68);
+    background: rgba(10, 9, 28, 0.88);
   }
 }
 .video-subtitle-plate--fullscreen {
