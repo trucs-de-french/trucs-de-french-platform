@@ -99,6 +99,12 @@ function TimecodeBadge({ start, videoLink }: { start: number | null | undefined;
   return <span className="mr-1.5 text-xs font-normal text-neutral-400 dark:text-neutral-500">{label}</span>;
 }
 
+// Для порівняння "той самий спікер, що на попередній репліці" — регістр і
+// пробіли з початку/кінця не мають значення.
+export function normalizeSpeakerForCompare(speaker: string): string {
+  return speaker.trim().toLowerCase();
+}
+
 export function DialogueLine({
   lineIndex,
   speaker,
@@ -108,6 +114,7 @@ export function DialogueLine({
   videoLink,
   openId,
   onWordClick,
+  showSpeaker = true,
 }: {
   lineIndex: number;
   speaker: string;
@@ -117,13 +124,25 @@ export function DialogueLine({
   videoLink?: string | null;
   openId: string | null;
   onWordClick: (id: string) => void;
+  // false — та сама репліка спікера, що й на попередньому рядку: ім'я не
+  // повторюємо, але МІСЦЕ під нього лишається (invisible, не "display:
+  // none") — колонка не "стрибає" між рядками одного спікера. Якщо
+  // speaker.trim() взагалі порожній — нема ні імені, ні двокрапки, ні
+  // зарезервованого місця, незалежно від цього прапорця (раніше тут
+  // завжди рендерився ": " навіть без спікера — виправлено).
+  showSpeaker?: boolean;
 }) {
   const parts = matchVocabInText(text, vocab);
+  const label = speaker.trim();
 
   return (
     <p>
       <TimecodeBadge start={start} videoLink={videoLink} />
-      <span className="font-semibold">{speaker}:</span>{" "}
+      {label && (
+        <>
+          <span className={showSpeaker ? "font-semibold" : "invisible font-semibold"}>{label}:</span>{" "}
+        </>
+      )}
       {parts.map((part, i) => {
         const id = `${lineIndex}-${i}`;
         return part.type === "match" ? (

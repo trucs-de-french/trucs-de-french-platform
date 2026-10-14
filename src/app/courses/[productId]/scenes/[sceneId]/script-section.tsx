@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
-import { DialogueLine, TranslatedText, splitTranslationSpeaker } from "./dialogue-line";
+import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
 import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
@@ -49,6 +49,14 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasTranslation = dialogue.some((line) => line.translationUk);
   const isOpen = !title || !collapsed;
+
+  // Ім'я спікера показуємо лише на першому рядку "серії" його реплік —
+  // далі, поки спікер не змінився, DialogueLine ховає підпис (але лишає
+  // місце під нього, див. коментар там). Рахується один раз тут (не в
+  // DialogueLine — йому не видно сусідніх рядків).
+  const showSpeakerFlags = dialogue.map(
+    (line, i) => i === 0 || normalizeSpeakerForCompare(line.speaker) !== normalizeSpeakerForCompare(dialogue[i - 1].speaker)
+  );
 
   useEffect(() => {
     return () => {
@@ -117,6 +125,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
                     videoLink={line.videoLink}
                     openId={openId}
                     onWordClick={openWord}
+                    showSpeaker={showSpeakerFlags[i]}
                   />
                   <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
                     {line.translationUk ? (
@@ -140,6 +149,7 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
                 videoLink={line.videoLink}
                 openId={openId}
                 onWordClick={openWord}
+                showSpeaker={showSpeakerFlags[i]}
               />
             ))
           )}

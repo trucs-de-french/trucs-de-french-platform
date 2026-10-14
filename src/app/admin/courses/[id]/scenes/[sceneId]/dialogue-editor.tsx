@@ -115,6 +115,11 @@ export function DialogueEditor() {
   const [videoImportError, setVideoImportError] = useState<string | null>(null);
   const [videoImportMessage, setVideoImportMessage] = useState<string | null>(null);
   const [pendingVideoImport, setPendingVideoImport] = useState<Line[] | null>(null);
+  const [mergeSentences, setMergeSentences] = useState(true);
+  // Пам'ятається в стані компонента на всю сесію редагування (не
+  // localStorage — учителька зазвичай ставить ОДНЕ ім'я на всі репліки
+  // одразу після імпорту, перечитувати значення між сесіями не потрібно).
+  const [defaultSpeaker, setDefaultSpeaker] = useState("");
 
   const [preview, setPreview] = useState<Line[] | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -140,7 +145,7 @@ export function DialogueEditor() {
   const translationRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
 
   function addLine() {
-    setLines((prev) => [...prev, { speaker: "", text: "", vocab: [] }]);
+    setLines((prev) => [...prev, { speaker: prev[prev.length - 1]?.speaker ?? "", text: "", vocab: [] }]);
   }
 
   function removeLine(i: number) {
@@ -242,7 +247,10 @@ export function DialogueEditor() {
     setVideoImporting(true);
     setVideoImportError(null);
     setVideoImportMessage(null);
-    const result = await importDialogueFromVideoSubtitles(videoSubs.subFr, videoSubs.subUk || null);
+    const result = await importDialogueFromVideoSubtitles(videoSubs.subFr, videoSubs.subUk || null, {
+      mergeSentences,
+      defaultSpeaker,
+    });
     setVideoImporting(false);
 
     if (!result.ok) {
@@ -557,6 +565,29 @@ export function DialogueEditor() {
         <p className={HINT_TEXT}>Спочатку завантажте FR субтитри у блоці Відео, щоб імпортувати скрипт.</p>
       )}
 
+      {videoSubs && (
+        <div className="flex flex-wrap items-center gap-4 rounded-md bg-neutral-50 p-2 dark:bg-neutral-800/50">
+          <label className="flex items-center gap-1.5 text-sm">
+            <input
+              type="checkbox"
+              checked={mergeSentences}
+              onChange={(e) => setMergeSentences(e.target.checked)}
+            />
+            Об&apos;єднувати рядки в речення
+          </label>
+          <div className="flex items-center gap-1.5">
+            <label className={HINT_TEXT}>Мовець за замовчуванням</label>
+            <input
+              value={defaultSpeaker}
+              onChange={(e) => setDefaultSpeaker(e.target.value.slice(0, 60))}
+              placeholder="напр. Марі"
+              maxLength={60}
+              className={`${INPUT_BORDER} h-8 w-40 px-2 text-sm`}
+            />
+          </div>
+        </div>
+      )}
+
       {showPasteBox && (
         <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-3 dark:border-neutral-700">
           <label className={HINT_TEXT}>
@@ -672,7 +703,8 @@ export function DialogueEditor() {
         <div className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             {videoImportMessage} У скрипті вже є {lines.length} {lines.length === 1 ? "репліка" : "реплік"}. Замінити
-            його імпортованим (вокабуляр для реплік з однаковим французьким текстом збережеться)?
+            його імпортованим? Позначена лексика збережеться лише в незмінених репліках (французький текст
+            яких не змінився).
           </p>
           <div className="flex items-center gap-2">
             <button type="button" onClick={confirmReplaceWithVideoImport} className={BUTTON_SECONDARY}>

@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { parseWebVtt } from "@/lib/webvtt";
-import { pairVttCues } from "./vtt-pairing";
+import { pairVttCues, groupCuesIntoSentences } from "./vtt-pairing";
+
+const MAX_SPEAKER_LENGTH = 60;
 
 export type ImportedDialogueLine = { speaker: string; text: string; translationUk: string | null };
 
@@ -58,7 +60,8 @@ async function fetchVttText(url: string): Promise<{ ok: true; text: string } | {
 
 export async function importDialogueFromVideoSubtitles(
   frUrl: string,
-  ukUrl: string | null
+  ukUrl: string | null,
+  options?: { mergeSentences?: boolean; defaultSpeaker?: string | null }
 ): Promise<ImportFromVideoSubtitlesResult> {
   const supabase = await createClient();
   const {
@@ -91,8 +94,11 @@ export async function importDialogueFromVideoSubtitles(
     }
   }
 
-  const paired = pairVttCues(frCues, ukCues);
-  const lines: ImportedDialogueLine[] = paired.map((p) => ({ speaker: "", text: p.text, translationUk: p.translationUk }));
+  const mergeSentences = options?.mergeSentences ?? true;
+  const speaker = (options?.defaultSpeaker ?? "").trim().slice(0, MAX_SPEAKER_LENGTH);
+
+  const paired = mergeSentences ? groupCuesIntoSentences(frCues, ukCues) : pairVttCues(frCues, ukCues);
+  const lines: ImportedDialogueLine[] = paired.map((p) => ({ speaker, text: p.text, translationUk: p.translationUk }));
   const matchedCount = lines.filter((l) => l.translationUk).length;
 
   return { ok: true, lines, matchedCount, ukWarning };
