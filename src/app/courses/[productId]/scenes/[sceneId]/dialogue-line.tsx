@@ -31,7 +31,7 @@ export function TranslatedText({ text, vocab }: { text: string; vocab: VocabItem
         part.type === "match" ? (
           <span
             key={i}
-            className="mx-0.5 rounded bg-blue-100 px-1 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-200"
+            className="rounded bg-blue-100 px-1 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-200"
           >
             {part.text}
           </span>
@@ -63,7 +63,7 @@ function VocabWord({
     <button
       type="button"
       onClick={() => onClick(id)}
-      className="relative mx-0.5 rounded bg-blue-100 px-1 font-medium text-blue-900 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+      className="relative rounded bg-blue-100 px-1 font-medium text-blue-900 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
     >
       {word}
       {isOpen && (
@@ -125,11 +125,10 @@ export function DialogueLine({
   openId: string | null;
   onWordClick: (id: string) => void;
   // false — та сама репліка спікера, що й на попередньому рядку: ім'я не
-  // повторюємо, але МІСЦЕ під нього лишається (invisible, не "display:
-  // none") — колонка не "стрибає" між рядками одного спікера. Якщо
-  // speaker.trim() взагалі порожній — нема ні імені, ні двокрапки, ні
-  // зарезервованого місця, незалежно від цього прапорця (раніше тут
-  // завжди рендерився ": " навіть без спікера — виправлено).
+  // повторюємо і НЕ лишаємо місця під нього (ні invisible-підпису, ні
+  // відступу) — текст починається з лівого краю колонки, як рядок без
+  // спікера. Якщо speaker.trim() взагалі порожній — так само нема ні
+  // імені, ні двокрапки, ні відступу, незалежно від цього прапорця.
   showSpeaker?: boolean;
 }) {
   const parts = matchVocabInText(text, vocab);
@@ -138,9 +137,9 @@ export function DialogueLine({
   return (
     <p>
       <TimecodeBadge start={start} videoLink={videoLink} />
-      {label && (
+      {showSpeaker && label && (
         <>
-          <span className={showSpeaker ? "font-semibold" : "invisible font-semibold"}>{label}:</span>{" "}
+          <span className="font-semibold">{label}:</span>{" "}
         </>
       )}
       {parts.map((part, i) => {
