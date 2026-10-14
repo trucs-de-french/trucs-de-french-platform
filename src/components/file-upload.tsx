@@ -44,6 +44,24 @@ const ICON_BY_KIND: Record<UploadKind, typeof Paperclip> = {
 // audio/image свідомо БЕЗ ліміту тут — не чіпаю наявну поведінку.
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
 
+// ----------------------------------------------------------------------------
+// Дедуплікація завантажень (content-addressed R2): для файлів ≤100 МБ тут
+// рахується SHA-256 і надсилається серверу разом із запитом на presigned
+// URL (route.ts кладе об'єкт під ключ "<hash>.<ext>"). Якщо такий файл уже
+// є в R2 — сервер повертає exists:true й PUT не виконується взагалі. Для
+// файлів >100 МБ (відео) хешування свідомо пропускається — лишається
+// стара поведінка (випадковий ключ, завжди новий upload).
+// ----------------------------------------------------------------------------
+const HASH_SIZE_LIMIT_BYTES = 100 * 1024 * 1024;
+
+async function sha256Hex(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 // Завантаження НАПРЯМУ з браузера в Cloudflare R2 (не через наш
 // сервер/Server Action) — обходить і ліміт розміру тіла Server Actions
 // (1MB за замовчуванням), і буфер proxy-шару Next.js 16 (src/proxy.ts,
@@ -86,16 +104,20 @@ export function FileUpload({
   // замовчуванням "button" — усі наявні виклики лишаються без змін.
   variant?: "button" | "icon";
 }) {
-  const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "hashing" | "uploading" | "done" | "error">("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  // Показується одноразово поряд з "✓ Завантажено", коли сервер відповів
+  // exists:true (файл не вантажився повторно) — не окремий блокуючий стан,
+  // зникає сам при наступному завантаженні через цей самий компонент.
+  const [dedupNotice, setDedupNotice] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
 
   useEffect(() => {
-    if (status !== "uploading") return;
+    if (status !== "uploading" && status !== "hashing") return;
     const interval = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(interval);
   }, [status]);
@@ -117,9 +139,9 @@ export function FileUpload({
       return;
     }
 
-    setStatus("uploading");
     setElapsedSeconds(0);
     setErrorMessage("");
+    setDedupNotice(false);
     setFileName(file.name);
 
     // Для html/subtitle — завжди фіксований MIME, а не file.type (браузери
@@ -130,6 +152,14 @@ export function FileUpload({
       kind === "html" ? "text/html" : kind === "subtitle" ? "text/vtt" : file.type || "application/octet-stream";
 
     try {
+      let hash: string | undefined;
+      if (file.size <= HASH_SIZE_LIMIT_BYTES) {
+        setStatus("hashing");
+        hash = await sha256Hex(file);
+      }
+
+      setStatus("uploading");
+
       const prepRes = await fetch("/api/r2-upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,26 +167,50 @@ export function FileUpload({
           filename: file.name,
           contentType: declaredContentType,
           kind,
+          size: file.size,
+          hash,
         }),
       });
       const prep = (await prepRes.json()) as {
         uploadUrl?: string;
         publicUrl?: string;
         contentType?: string;
+        exists?: boolean;
+        checksumSha256Base64?: string;
         error?: string;
       };
-      if (!prepRes.ok || !prep.uploadUrl || !prep.publicUrl) {
+      if (!prepRes.ok || !prep.publicUrl) {
         setStatus("error");
         setErrorMessage(prep.error ?? "Не вдалося підготувати завантаження");
         return;
       }
 
+      if (prep.exists) {
+        setUploadedUrl(prep.publicUrl);
+        onUploaded?.(prep.publicUrl, declaredContentType);
+        setDedupNotice(true);
+        setStatus("done");
+        return;
+      }
+
+      if (!prep.uploadUrl) {
+        setStatus("error");
+        setErrorMessage("Не вдалося підготувати завантаження");
+        return;
+      }
+
       // contentType — саме те значення, яке сервер щойно використав для
       // підпису URL (не file.type напряму) — гарантує точний збіг між
-      // підписом і фактичним запитом.
+      // підписом і фактичним запитом. x-amz-checksum-sha256 — лише коли
+      // сервер підписав саме цей заголовок (route.ts, лише для kind із
+      // CORS AllowedHeaders, що вже дозволяє довільні заголовки) —
+      // SignedHeaders мають буквально збігтися з реально надісланими.
       const uploadRes = await fetch(prep.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": prep.contentType ?? declaredContentType },
+        headers: {
+          "Content-Type": prep.contentType ?? declaredContentType,
+          ...(prep.checksumSha256Base64 ? { "x-amz-checksum-sha256": prep.checksumSha256Base64 } : {}),
+        },
         body: file,
       });
       if (!uploadRes.ok) {
@@ -188,7 +242,7 @@ export function FileUpload({
         id={inputId}
         type="file"
         accept={ACCEPT_BY_KIND[kind]}
-        disabled={status === "uploading"}
+        disabled={status === "uploading" || status === "hashing"}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void handleFileChange(file);
@@ -202,15 +256,20 @@ export function FileUpload({
         className={
           variant === "icon"
             ? `inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 ${
-                status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
+                status === "uploading" || status === "hashing" ? "pointer-events-none opacity-50" : "cursor-pointer"
               }`
             : `w-fit rounded-md bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${
-                status === "uploading" ? "pointer-events-none opacity-50" : "cursor-pointer"
+                status === "uploading" || status === "hashing" ? "pointer-events-none opacity-50" : "cursor-pointer"
               }`
         }
       >
         {variant === "icon" ? <UploadIcon size={16} /> : LABEL_BY_KIND[kind]}
       </label>
+      {status === "hashing" && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <span className="inline-block animate-pulse">⏳</span> Перевіряю «{fileName}»... {elapsedSeconds}с
+        </p>
+      )}
       {status === "uploading" && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           <span className="inline-block animate-pulse">⏳</span> Завантажую &laquo;{fileName}
@@ -218,12 +277,19 @@ export function FileUpload({
         </p>
       )}
       {status === "done" && (
-        <p
-          title={fileName}
-          className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-xs text-green-600 sm:max-w-[12rem] dark:text-green-400"
-        >
-          ✓ Завантажено: {fileName}
-        </p>
+        <div className="flex flex-col gap-0.5">
+          <p
+            title={fileName}
+            className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-xs text-green-600 sm:max-w-[12rem] dark:text-green-400"
+          >
+            ✓ Завантажено: {fileName}
+          </p>
+          {dedupNotice && (
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Файл уже є у сховищі, повторно не завантажено
+            </p>
+          )}
+        </div>
       )}
       {status === "error" && (
         <div className="flex flex-col gap-1">

@@ -38,7 +38,12 @@ export async function buildPresignedUploadUrl(
   bucket: string,
   key: string,
   contentType: string,
-  expiresInSeconds = 300
+  expiresInSeconds = 300,
+  // Додаткові заголовки, які МАЮТЬ бути підписані в query-string (SignedHeaders)
+  // і потім буквально надіслані браузером у тому самому PUT — напр.
+  // x-amz-checksum-sha256 для серверної перевірки цілісності R2. Без цього
+  // параметра поведінка 1:1 як і раніше (лише Content-Type підписаний).
+  extraHeaders?: Record<string, string>
 ): Promise<string> {
   const { client, endpoint } = getR2Client();
   const url = `${endpoint}/${bucket}/${key}?X-Amz-Expires=${expiresInSeconds}`;
@@ -46,10 +51,28 @@ export async function buildPresignedUploadUrl(
   const signedRequest = await client.sign(
     new Request(url, {
       method: "PUT",
-      headers: { "Content-Type": contentType },
+      headers: { "Content-Type": contentType, ...extraHeaders },
     }),
     { aws: { signQuery: true } }
   );
 
   return signedRequest.url.toString();
+}
+
+// HEAD — лише метадані (розмір), без тіла об'єкта: використовується для
+// перевірки "цей content-addressed ключ уже існує?" перед підписом PUT.
+// Підписаний звичайний запит (не presigned query) — викликається з сервера,
+// де є секретний ключ, а не з браузера.
+export async function headR2Object(
+  bucket: string,
+  key: string
+): Promise<{ size: number } | null> {
+  const { client, endpoint } = getR2Client();
+  const url = `${endpoint}/${bucket}/${key}`;
+  const res = await client.fetch(url, { method: "HEAD" });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`R2 HEAD ${bucket}/${key} впав: HTTP ${res.status}`);
+  }
+  return { size: Number(res.headers.get("content-length") || "0") };
 }
