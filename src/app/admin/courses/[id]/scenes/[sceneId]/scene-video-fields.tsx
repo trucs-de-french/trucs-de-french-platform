@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
+import { useVideoSubtitlesUrls } from "./video-subtitles-state";
 
 // Той самий блок "Файл / пряме посилання (mp4)", що вже в
 // ContentBlockFields/TaskGroupFields (коміт 7ccca03) — ТРЕТІЙ окремий домен
@@ -25,10 +26,20 @@ export function SceneVideoFields({
   const [provider, setProvider] = useState(initialProvider || "youtube");
   const mediaUrlRef = useRef<HTMLInputElement>(null);
   const videoFileUrlRef = useRef<HTMLInputElement>(null);
-  const subsFrUrlRef = useRef<HTMLInputElement>(null);
-  const subsUkUrlRef = useRef<HTMLInputElement>(null);
   const initialSubFr = initialSubtitles?.find((s) => s.lang === "fr")?.url ?? "";
   const initialSubUk = initialSubtitles?.find((s) => s.lang === "uk")?.url ?? "";
+
+  // Контрольовані (через VideoSubtitlesProvider, якщо є) — щоб кнопка
+  // імпорту скрипту в DialogueEditor бачила щойно введений/завантажений URL
+  // ще до збереження цієї форми. useState — лише фолбек, якщо колись
+  // SceneVideoFields опиниться без Provider.
+  const subsCtx = useVideoSubtitlesUrls();
+  const [localSubFr, setLocalSubFr] = useState(initialSubFr);
+  const [localSubUk, setLocalSubUk] = useState(initialSubUk);
+  const subFr = subsCtx?.subFr ?? localSubFr;
+  const subUk = subsCtx?.subUk ?? localSubUk;
+  const setSubFr = subsCtx?.setSubFr ?? setLocalSubFr;
+  const setSubUk = subsCtx?.setSubUk ?? setLocalSubUk;
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,9 +102,9 @@ export function SceneVideoFields({
             <label className={LABEL_TEXT}>Субтитри FR (.vtt)</label>
             <div className="flex items-center gap-1">
               <input
-                ref={subsFrUrlRef}
                 name="subtitles_fr_url"
-                defaultValue={initialSubFr}
+                value={subFr}
+                onChange={(e) => setSubFr(e.target.value)}
                 placeholder="https://... .vtt"
                 className={`${INPUT_BORDER} flex-1 px-3 py-2 text-sm`}
               />
@@ -101,9 +112,7 @@ export function SceneVideoFields({
                 kind="subtitle"
                 variant="icon"
                 name="subtitles_fr_file_url"
-                onUploaded={(url) => {
-                  if (subsFrUrlRef.current) subsFrUrlRef.current.value = url;
-                }}
+                onUploaded={(url) => setSubFr(url)}
               />
             </div>
           </div>
@@ -112,9 +121,9 @@ export function SceneVideoFields({
             <label className={LABEL_TEXT}>Субтитри UA (.vtt)</label>
             <div className="flex items-center gap-1">
               <input
-                ref={subsUkUrlRef}
                 name="subtitles_uk_url"
-                defaultValue={initialSubUk}
+                value={subUk}
+                onChange={(e) => setSubUk(e.target.value)}
                 placeholder="https://... .vtt"
                 className={`${INPUT_BORDER} flex-1 px-3 py-2 text-sm`}
               />
@@ -122,9 +131,7 @@ export function SceneVideoFields({
                 kind="subtitle"
                 variant="icon"
                 name="subtitles_uk_file_url"
-                onUploaded={(url) => {
-                  if (subsUkUrlRef.current) subsUkUrlRef.current.value = url;
-                }}
+                onUploaded={(url) => setSubUk(url)}
               />
             </div>
           </div>

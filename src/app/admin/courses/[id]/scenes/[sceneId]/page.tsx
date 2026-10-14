@@ -24,6 +24,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { DialogueEditor } from "./dialogue-editor";
 import { DialogueStateProvider } from "./dialogue-state";
+import { VideoSubtitlesProvider } from "./video-subtitles-state";
 import { VocabTable } from "./vocab-table";
 import { SceneBlockList } from "./scene-block-list";
 import { blockDomId } from "@/lib/block-dom-id";
@@ -603,12 +604,17 @@ export default async function AdminScenePage({
 
       <div className="mt-6">
         <DialogueStateProvider initialDialogue={scene.dialogue ?? []}>
-          <SceneBlockList
-            key={sceneBlocks.map((b) => b.refId ?? b.type).join(",")}
-            sceneId={sceneId}
-            initialBlocks={sceneBlocks}
-            contentByKey={contentByKey}
-          />
+          <VideoSubtitlesProvider
+            initialSubFr={scene.subtitles?.find((s: { lang: string; url: string }) => s.lang === "fr")?.url ?? ""}
+            initialSubUk={scene.subtitles?.find((s: { lang: string; url: string }) => s.lang === "uk")?.url ?? ""}
+          >
+            <SceneBlockList
+              key={sceneBlocks.map((b) => b.refId ?? b.type).join(",")}
+              sceneId={sceneId}
+              initialBlocks={sceneBlocks}
+              contentByKey={contentByKey}
+            />
+          </VideoSubtitlesProvider>
         </DialogueStateProvider>
       </div>
 

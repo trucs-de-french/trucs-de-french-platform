@@ -1,17 +1,37 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { GripVertical, Trash2, ChevronDown, ChevronUp, Upload, Clipboard, Languages } from "lucide-react";
+import { GripVertical, Trash2, ChevronDown, ChevronUp, Upload, Clipboard, Languages, Captions } from "lucide-react";
 import { parseScriptFile, parseTranslationFile } from "@/lib/script-import/actions";
 import { parsePastedTranscript, type ParsedLine, type TranslationCue } from "@/lib/script-import/parse";
 import { matchTranslations, type TranslationMatch } from "@/lib/script-import/match-translations";
+import { importDialogueFromVideoSubtitles } from "@/lib/script-import/import-from-video-subtitles";
 import { formatTimecode } from "@/lib/format-timecode";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { useDialogueState, type Line } from "./dialogue-state";
+import { useVideoSubtitlesUrls } from "./video-subtitles-state";
 import { VocabItemRow } from "./vocab-item-row";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
+
+// Той самий принцип зіставлення, що apostrophe/case-insensitive матчер
+// вокабуляру (vocab-match.ts) — тут застосований до ЦІЛОЇ репліки: за цим
+// ключем вирішуємо, чи французький текст рядка "той самий", щоб перенести
+// вже розмічений вокабуляр зі старого скрипту в імпортований з субтитрів.
+function normalizeLineText(text: string): string {
+  return text.trim().toLowerCase().replace(/[’‘ʼ]/g, "'").replace(/\s+/g, " ");
+}
+
+function mergeKeepingVocab(oldLines: Line[], newLines: Line[]): Line[] {
+  const vocabByText = new Map<string, Line["vocab"]>();
+  for (const line of oldLines) {
+    if (line.vocab.length === 0) continue;
+    const key = normalizeLineText(line.text);
+    if (!vocabByText.has(key)) vocabByText.set(key, line.vocab);
+  }
+  return newLines.map((line) => ({ ...line, vocab: vocabByText.get(normalizeLineText(line.text)) ?? line.vocab }));
+}
 
 function parsedLineToLine(p: ParsedLine): Line {
   return { speaker: p.speaker, text: p.text, vocab: [], start: p.start, end: p.end, videoLink: null };
@@ -82,9 +102,19 @@ function OptionalFieldsPanel({
 
 export function DialogueEditor() {
   const { lines, setLines, updateVocab } = useDialogueState();
+  const videoSubs = useVideoSubtitlesUrls();
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<{ index: number; side: DropSide } | null>(null);
   const [expandedLines, setExpandedLines] = useState<Set<number>>(new Set());
+
+  // Імпорт скрипту із субтитрів відео (FR[+UA] .vtt, URL із
+  // VideoSubtitlesProvider — поточний, не обов'язково збережений). pendingVideoImport
+  // ненульовий лише коли в скрипті вже були репліки — тоді потрібне явне
+  // підтвердження "Замінити скрипт"/"Скасувати" (без тихого перезапису).
+  const [videoImporting, setVideoImporting] = useState(false);
+  const [videoImportError, setVideoImportError] = useState<string | null>(null);
+  const [videoImportMessage, setVideoImportMessage] = useState<string | null>(null);
+  const [pendingVideoImport, setPendingVideoImport] = useState<Line[] | null>(null);
 
   const [preview, setPreview] = useState<Line[] | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -204,6 +234,49 @@ export function DialogueEditor() {
     setPreview(result.lines.map(parsedLineToLine));
     setShowPasteBox(false);
     setPasteText("");
+  }
+
+  async function handleImportFromVideoSubtitles() {
+    if (!videoSubs?.subFr.trim()) return;
+
+    setVideoImporting(true);
+    setVideoImportError(null);
+    setVideoImportMessage(null);
+    const result = await importDialogueFromVideoSubtitles(videoSubs.subFr, videoSubs.subUk || null);
+    setVideoImporting(false);
+
+    if (!result.ok) {
+      setVideoImportError(result.error);
+      return;
+    }
+
+    const newLines: Line[] = result.lines.map((l) => ({
+      speaker: l.speaker,
+      text: l.text,
+      vocab: [],
+      translationUk: l.translationUk,
+    }));
+
+    if (lines.length > 0) {
+      setPendingVideoImport(newLines);
+    } else {
+      setLines(newLines);
+    }
+
+    const parts = [`Імпортовано ${result.lines.length} ${result.lines.length === 1 ? "репліку" : "реплік"} (переклад: ${result.matchedCount})`];
+    if (result.ukWarning) parts.push(result.ukWarning);
+    setVideoImportMessage(parts.join(". "));
+  }
+
+  function confirmReplaceWithVideoImport() {
+    if (!pendingVideoImport) return;
+    setLines((prev) => mergeKeepingVocab(prev, pendingVideoImport));
+    setPendingVideoImport(null);
+  }
+
+  function cancelVideoImport() {
+    setPendingVideoImport(null);
+    setVideoImportMessage(null);
   }
 
   function updatePreviewField(i: number, field: "speaker" | "text", value: string) {
@@ -467,7 +540,22 @@ export function DialogueEditor() {
           <Clipboard size={14} />
           Скрипт Google Диск
         </button>
+        {videoSubs && (
+          <button
+            type="button"
+            onClick={handleImportFromVideoSubtitles}
+            disabled={videoImporting || !videoSubs.subFr.trim()}
+            title={!videoSubs.subFr.trim() ? "Спочатку завантажте FR субтитри у блоці Відео" : undefined}
+            className={`inline-flex items-center gap-1.5 self-start ${BUTTON_SECONDARY} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <Captions size={14} />
+            {videoImporting ? "Імпортую..." : "Імпорт із субтитрів відео"}
+          </button>
+        )}
       </div>
+      {videoSubs && !videoSubs.subFr.trim() && (
+        <p className={HINT_TEXT}>Спочатку завантажте FR субтитри у блоці Відео, щоб імпортувати скрипт.</p>
+      )}
 
       {showPasteBox && (
         <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-3 dark:border-neutral-700">
@@ -562,6 +650,39 @@ export function DialogueEditor() {
               </button>
             )}
             <button type="button" onClick={cancelPreview} className="text-sm text-neutral-500 hover:underline dark:text-neutral-400">
+              Скасувати
+            </button>
+          </div>
+        </div>
+      )}
+
+      {videoImportError && (
+        <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+          {videoImportError}
+        </p>
+      )}
+
+      {videoImportMessage && !pendingVideoImport && (
+        <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+          {videoImportMessage}
+        </p>
+      )}
+
+      {pendingVideoImport && (
+        <div className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            {videoImportMessage} У скрипті вже є {lines.length} {lines.length === 1 ? "репліка" : "реплік"}. Замінити
+            його імпортованим (вокабуляр для реплік з однаковим французьким текстом збережеться)?
+          </p>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={confirmReplaceWithVideoImport} className={BUTTON_SECONDARY}>
+              Замінити скрипт
+            </button>
+            <button
+              type="button"
+              onClick={cancelVideoImport}
+              className="text-sm text-neutral-500 hover:underline dark:text-neutral-400"
+            >
               Скасувати
             </button>
           </div>
