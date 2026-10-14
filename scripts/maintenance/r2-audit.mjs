@@ -4,9 +4,10 @@
 // references found in the Supabase database.
 //
 // STRICTLY READ-ONLY: this file contains no Delete/Put/Copy R2 calls and no
-// INSERT/UPDATE/DELETE SQL. Deletion of orphans/duplicates is intentionally
-// NOT implemented here — this script only reports candidates for a human to
-// review and remove manually.
+// INSERT/UPDATE/DELETE SQL (same for the shared r2-lib.mjs it imports).
+// Deletion of orphans/duplicates is intentionally NOT implemented here —
+// this script only reports candidates for a human to review. For an actual
+// (also-careful) delete flow see scripts/maintenance/r2-cleanup.mjs.
 //
 // Run:
 //   node scripts/maintenance/r2-audit.mjs
@@ -21,26 +22,25 @@
 // Reports are written OUTSIDE the repo, to ~/Desktop/r2-audit/:
 //   summary.md, orphans.csv, duplicates.csv, references-missing.csv
 //
-// Schema source for the DB scan: the Supabase REST API (PostgREST) only
-// exposes the "public" schema's own tables — information_schema is not in
-// the exposed-schemas list and there is no generic SQL-exec RPC function in
-// this project (only narrow, purpose-built RPCs). Querying information_schema
-// live is therefore not possible without adding a DB function, which would be
-// a migration — out of scope ("no database migration"). Instead this script
-// derives the authoritative table/column list by statically parsing
-// supabase/migrations/*.sql (the single source of truth for schema in this
-// repo), picking out "create table" and "alter table ... add/drop column"
-// statements, and keeping only text/varchar/jsonb columns. It then performs
-// plain SELECT (read-only) calls against those tables/columns via the
-// service-role Supabase client.
+// See r2-lib.mjs for why the DB column list is parsed from
+// supabase/migrations/*.sql instead of a live information_schema query.
 // ============================================================================
 
-import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { AwsClient } from "aws4fetch";
 import { createClient } from "@supabase/supabase-js";
+import {
+  loadEnvLocal,
+  requireEnv,
+  buildBuckets,
+  listAllObjects,
+  parseSchemaFromMigrations,
+  scanDbReferences,
+  toCsv,
+  fmtBytes,
+} from "./r2-lib.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
@@ -48,292 +48,19 @@ const OUT_DIR = path.join(homedir(), "Desktop", "r2-audit");
 const RECENT_DAYS = 14;
 
 // ----------------------------------------------------------------------------
-// .env.local loading (no new dependency — same files the app already reads,
-// just parsed by hand here since this is a standalone node script, not Next.js)
-// ----------------------------------------------------------------------------
-function loadEnvLocal() {
-  const envPath = path.join(REPO_ROOT, ".env.local");
-  if (!existsSync(envPath)) {
-    throw new Error(".env.local не знайдено в корені репозиторію");
-  }
-  const text = readFileSync(envPath, "utf8");
-  for (const rawLine of text.split("\n")) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const eq = line.indexOf("=");
-    if (eq === -1) continue;
-    const key = line.slice(0, eq).trim();
-    let value = line.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (process.env[key] === undefined) process.env[key] = value;
-  }
-}
-
-function requireEnv(name) {
-  const v = process.env[name];
-  if (!v) throw new Error(`${name} не задано в .env.local`);
-  return v;
-}
-
-// ----------------------------------------------------------------------------
-// R2 (S3-compatible) listing via aws4fetch — same library/client shape as
-// src/lib/r2-client.ts, but used for signed GET (ListObjectsV2) instead of a
-// signed PUT URL. No @aws-sdk/client-s3 needed for a single read operation.
-// ----------------------------------------------------------------------------
-function getR2Client() {
-  const accountId = requireEnv("R2_ACCOUNT_ID");
-  const accessKeyId = requireEnv("R2_ACCESS_KEY_ID");
-  const secretAccessKey = requireEnv("R2_SECRET_ACCESS_KEY");
-  return {
-    client: new AwsClient({ accessKeyId, secretAccessKey, region: "auto", service: "s3" }),
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-  };
-}
-
-function xmlTag(block, tag) {
-  const m = block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
-  return m ? m[1] : null;
-}
-
-// Minimal purpose-built XML scraping for ListObjectsV2 responses — not a
-// general XML parser, just enough for the fixed <Contents>/<ListBucketResult>
-// shape S3-compatible APIs return, to avoid a new dependency for one shape.
-function parseListObjectsV2(xml) {
-  const contents = [];
-  const contentsBlocks = xml.match(/<Contents>[\s\S]*?<\/Contents>/g) || [];
-  for (const block of contentsBlocks) {
-    contents.push({
-      key: xmlTag(block, "Key"),
-      size: Number(xmlTag(block, "Size") || "0"),
-      etag: (xmlTag(block, "ETag") || "").replace(/^"|"$/g, ""),
-      lastModified: xmlTag(block, "LastModified"),
-    });
-  }
-  const isTruncated = xmlTag(xml, "IsTruncated") === "true";
-  const nextToken = xmlTag(xml, "NextContinuationToken");
-  return { contents, isTruncated, nextToken };
-}
-
-async function listAllObjects(bucket) {
-  const { client, endpoint } = getR2Client();
-  const objects = [];
-  let continuationToken = null;
-  for (;;) {
-    const params = new URLSearchParams({ "list-type": "2", "max-keys": "1000" });
-    if (continuationToken) params.set("continuation-token", continuationToken);
-    const url = `${endpoint}/${bucket}?${params.toString()}`;
-    const res = await client.fetch(url, { method: "GET" });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`R2 ListObjectsV2 для "${bucket}" впав: HTTP ${res.status} ${body.slice(0, 300)}`);
-    }
-    const xml = await res.text();
-    const { contents, isTruncated, nextToken } = parseListObjectsV2(xml);
-    objects.push(...contents);
-    if (!isTruncated || !nextToken) break;
-    continuationToken = nextToken;
-  }
-  return objects;
-}
-
-// ----------------------------------------------------------------------------
-// Schema discovery: parse supabase/migrations/*.sql for create/alter table
-// statements, keep only text/varchar/jsonb columns (candidates for holding an
-// R2 key or URL). See file header for why this replaces a live
-// information_schema query.
-// ----------------------------------------------------------------------------
-const TEXTY_TYPE = /\b(text|varchar|character varying|jsonb|json|citext)\b/i;
-
-function stripSqlComments(sql) {
-  return sql
-    .replace(/--.*$/gm, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
-}
-
-function parseSchemaFromMigrations() {
-  const migrationsDir = path.join(REPO_ROOT, "supabase", "migrations");
-  const files = listSqlFiles(migrationsDir).sort();
-  // table -> { columns: Set<column>, pk: string }
-  const schema = new Map();
-
-  for (const file of files) {
-    const sql = stripSqlComments(readFileSync(path.join(migrationsDir, file), "utf8"));
-
-    // CREATE TABLE public.<name> ( ...columns... );
-    const createRe = /create\s+table\s+(?:if\s+not\s+exists\s+)?public\.(\w+)\s*\(([\s\S]*?)\)\s*;/gi;
-    let m;
-    while ((m = createRe.exec(sql))) {
-      const table = m[1];
-      const body = m[2];
-      const entry = schema.get(table) || { columns: new Set(), pk: "id" };
-      for (const colLine of splitTopLevelCommas(body)) {
-        const trimmed = colLine.trim();
-        if (!trimmed) continue;
-        const lower = trimmed.toLowerCase();
-        if (lower.startsWith("primary key")) {
-          // table-level: primary key (col[, col2])
-          const pkMatch = trimmed.match(/primary\s+key\s*\(([^)]+)\)/i);
-          if (pkMatch) entry.pk = pkMatch[1].split(",")[0].trim();
-          continue;
-        }
-        if (
-          lower.startsWith("unique") ||
-          lower.startsWith("check") ||
-          lower.startsWith("foreign key") ||
-          lower.startsWith("constraint")
-        ) {
-          continue;
-        }
-        const colMatch = trimmed.match(/^(\w+)\s+(.+)$/s);
-        if (!colMatch) continue;
-        const [, colName, rest] = colMatch;
-        if (/primary\s+key/i.test(rest)) entry.pk = colName;
-        if (TEXTY_TYPE.test(rest)) entry.columns.add(colName);
-      }
-      schema.set(table, entry);
-    }
-
-    // DROP TABLE public.<name>;
-    const dropTableRe = /drop\s+table\s+(?:if\s+exists\s+)?public\.(\w+)\s*(?:cascade)?\s*;/gi;
-    while ((m = dropTableRe.exec(sql))) {
-      schema.delete(m[1]);
-    }
-
-    // ALTER TABLE public.<name> ADD COLUMN [IF NOT EXISTS] <col> <type> ...;
-    const addColRe =
-      /alter\s+table\s+public\.(\w+)\s+add\s+column\s+(?:if\s+not\s+exists\s+)?(\w+)\s+([^,;]+)[,;]/gi;
-    while ((m = addColRe.exec(sql))) {
-      const [, table, col, type] = m;
-      if (TEXTY_TYPE.test(type)) {
-        const entry = schema.get(table) || { columns: new Set(), pk: "id" };
-        entry.columns.add(col);
-        schema.set(table, entry);
-      }
-    }
-
-    // ALTER TABLE public.<name> DROP COLUMN [IF EXISTS] <col>;
-    const dropColRe = /alter\s+table\s+public\.(\w+)\s+drop\s+column\s+(?:if\s+exists\s+)?(\w+)\s*;/gi;
-    while ((m = dropColRe.exec(sql))) {
-      const [, table, col] = m;
-      schema.get(table)?.columns.delete(col);
-    }
-  }
-
-  return schema;
-}
-
-function listSqlFiles(dir) {
-  return readdirSync(dir).filter((f) => f.endsWith(".sql"));
-}
-
-// Splits a CREATE TABLE body on top-level commas (ignoring commas nested
-// inside parens, e.g. numeric(10, 2) or check (... in (...))).
-function splitTopLevelCommas(body) {
-  const parts = [];
-  let depth = 0;
-  let current = "";
-  for (const ch of body) {
-    if (ch === "(") depth++;
-    if (ch === ")") depth--;
-    if (ch === "," && depth === 0) {
-      parts.push(current);
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  if (current.trim()) parts.push(current);
-  return parts;
-}
-
-// ----------------------------------------------------------------------------
-// DB reference scan: for every (table, text/jsonb column), page through rows
-// (SELECT id, <column> only) and check whether any R2 key or public URL
-// appears in the stringified value.
-// ----------------------------------------------------------------------------
-async function scanDbReferences(supabase, schema, keyToInfo) {
-  // key -> [{table, column, id}]
-  const refs = new Map();
-  const tables = [...schema.keys()].sort();
-  const pageSize = 500;
-
-  for (const table of tables) {
-    const entry = schema.get(table);
-    const columns = [...(entry?.columns || [])];
-    if (columns.length === 0) continue;
-    const pk = entry.pk;
-    const selectCols = [pk, ...columns.filter((c) => c !== pk)].join(",");
-
-    let from = 0;
-    for (;;) {
-      const { data, error } = await supabase
-        .from(table)
-        .select(selectCols)
-        .range(from, from + pageSize - 1);
-      if (error) {
-        // Table might not actually exist under this name, or RLS restricts the
-        // service role in some unusual way — report and skip, don't crash the
-        // whole audit over one table.
-        console.warn(`[WARN] SELECT ${table}(${selectCols}) помилка: ${error.message}`);
-        break;
-      }
-      if (!data || data.length === 0) break;
-
-      for (const row of data) {
-        for (const col of columns) {
-          if (col === pk) continue;
-          const raw = row[col];
-          if (raw === null || raw === undefined) continue;
-          const text = typeof raw === "string" ? raw : JSON.stringify(raw);
-          findKeyMentions(text, keyToInfo, (key) => {
-            const list = refs.get(key) || [];
-            list.push({ table, column: col, id: row[pk] });
-            refs.set(key, list);
-          });
-        }
-      }
-
-      if (data.length < pageSize) break;
-      from += pageSize;
-    }
-  }
-
-  return refs;
-}
-
-// For a given text blob, find mentions of any known R2 key (as a bare key or
-// inside a public URL) and invoke onHit(key) for each match (deduped per call).
-function findKeyMentions(text, keyToInfo, onHit) {
-  if (!text) return;
-  const seen = new Set();
-  for (const [key, info] of keyToInfo) {
-    if (seen.has(key)) continue;
-    if (text.includes(key) || (info.publicUrl && text.includes(`${info.publicUrl}/${key}`))) {
-      onHit(key);
-      seen.add(key);
-    }
-  }
-}
-
-// ----------------------------------------------------------------------------
 // Also collect every R2-looking URL/key mentioned in the DB, to detect
 // references pointing at objects that do NOT exist in R2 (broken links) —
-// requires a separate pass with a broader URL regex (not limited to keys we
-// already found in R2).
+// a separate pass with a broader URL regex (not limited to keys we already
+// found in R2).
 // ----------------------------------------------------------------------------
-function buildUrlRegexes(buckets) {
+function buildUrlRegex(buckets) {
   const bases = buckets.map((b) => b.publicUrl.replace(/\/$/, "")).filter(Boolean);
   const escaped = bases.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   return new RegExp(`(?:${escaped.join("|")})/([A-Za-z0-9._\\-]+)`, "g");
 }
 
 async function scanDbForAllR2Urls(supabase, schema, bucketsByPublicUrl, urlRegex) {
-  // key -> [{table, column, id, publicUrl}]
+  // key -> [{table, column, id, key, publicUrl}]
   const mentions = new Map();
   const tables = [...schema.keys()].sort();
   const pageSize = 500;
@@ -382,49 +109,11 @@ async function scanDbForAllR2Urls(supabase, schema, bucketsByPublicUrl, urlRegex
   return mentions;
 }
 
-// ----------------------------------------------------------------------------
-// CSV helpers
-// ----------------------------------------------------------------------------
-function csvEscape(value) {
-  const s = String(value ?? "");
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-function toCsv(rows) {
-  return rows.map((row) => row.map(csvEscape).join(",")).join("\n") + "\n";
-}
-
-function fmtBytes(n) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`;
-  return `${(n / 1024 ** 3).toFixed(2)} GB`;
-}
-
-// ----------------------------------------------------------------------------
-// Main
-// ----------------------------------------------------------------------------
 async function main() {
-  loadEnvLocal();
+  loadEnvLocal(REPO_ROOT);
   mkdirSync(OUT_DIR, { recursive: true });
 
-  const buckets = [
-    {
-      label: "task-audio",
-      bucket: requireEnv("R2_BUCKET_NAME"),
-      publicUrl: requireEnv("R2_PUBLIC_URL").replace(/\/$/, ""),
-    },
-    {
-      label: "task-images",
-      bucket: requireEnv("R2_IMAGES_BUCKET_NAME"),
-      publicUrl: requireEnv("R2_IMAGES_PUBLIC_URL").replace(/\/$/, ""),
-    },
-    {
-      label: "task-html-games",
-      bucket: requireEnv("R2_HTML_GAMES_BUCKET_NAME"),
-      publicUrl: requireEnv("R2_HTML_GAMES_PUBLIC_URL").replace(/\/$/, ""),
-    },
-  ];
+  const buckets = buildBuckets();
 
   console.log("1/4 Listing R2 buckets...");
   const allObjects = []; // {label, bucket, key, size, etag, lastModified, publicUrl}
@@ -441,7 +130,7 @@ async function main() {
   for (const o of allObjects) keyToInfo.set(o.key, { publicUrl: o.publicUrl });
 
   console.log("2/4 Parsing DB schema from supabase/migrations/*.sql...");
-  const schema = parseSchemaFromMigrations();
+  const schema = parseSchemaFromMigrations(REPO_ROOT);
   const totalCols = [...schema.values()].reduce((sum, s) => sum + s.columns.size, 0);
   console.log(`  tables: ${schema.size}, text/varchar/jsonb columns: ${totalCols}`);
 
@@ -455,7 +144,7 @@ async function main() {
   const refs = await scanDbReferences(supabase, schema, keyToInfo);
 
   console.log("4/4 Scanning DB for ALL R2-looking URLs (to find broken references)...");
-  const urlRegex = buildUrlRegexes(buckets);
+  const urlRegex = buildUrlRegex(buckets);
   const bucketsByPublicUrl = Object.fromEntries(buckets.map((b) => [b.publicUrl, b]));
   const allMentions = await scanDbForAllR2Urls(supabase, schema, bucketsByPublicUrl, urlRegex);
 
