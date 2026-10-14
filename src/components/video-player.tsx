@@ -21,7 +21,7 @@ import {
   Turtle,
 } from "lucide-react";
 import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
-import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
+import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -501,7 +501,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`flex w-full flex-col gap-2 ${className}`}>
       <div
         ref={wrapperRef}
         tabIndex={-1}
@@ -829,6 +829,20 @@ export function VideoPlayer({
           </div>
         </div>
       </div>
+
+      {/* Та сама кнопка, що й під iframe-плеєрами (video-frame.tsx,
+          embed-frame.tsx, FULLSCREEN_BUTTON_CLASS) — лише на телефоні
+          (md:hidden): на планшеті/комп'ютері вистачає кнопки в самій
+          панелі керування вище. Перемикає ТОЙ САМИЙ fullscreen-стан
+          (handleFullscreenToggle), тож обидві кнопки синхронні. Схована під
+          час fullscreen/псевдо-fullscreen — плеєр сам займає весь екран,
+          і кнопка знову з'являється після виходу. */}
+      {!(isFullscreen || isPseudoFullscreen) && (
+        <button type="button" onClick={() => void handleFullscreenToggle()} className={`${FULLSCREEN_BUTTON_CLASS} md:hidden`}>
+          <Maximize size={16} />
+          На весь екран
+        </button>
+      )}
     </div>
   );
 }
