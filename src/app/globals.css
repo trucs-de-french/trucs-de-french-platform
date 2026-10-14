@@ -738,6 +738,14 @@ button, input, textarea, select, label, nav, aside {
   font: inherit;
   color: inherit;
   cursor: pointer;
+  /* Предок (нижній стек субтитрів+панелі, video-player.tsx) — весь
+     pointer-events-none, крім самої панелі керування; .video-subtitle-plate
+     лишається в цьому pointer-events-none шарі навмисно (клік повз слово
+     має пройти крізь до відео, не зупинятись на плашці). Кнопці слова
+     потрібне власне pointer-events: auto, інакше клік на неї теж
+     ігнорується — слова виглядали клікабельними (підкреслення), але нічого
+     не відкривали. */
+  pointer-events: auto;
 }
 .video-word-fr:hover,
 .video-word-fr:focus-visible {
