@@ -7,6 +7,7 @@ import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeaker
 import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 
 type DialogueEntry = {
   speaker: string;
@@ -42,7 +43,15 @@ function TranslationCell({ text, vocab }: { text: string; vocab: VocabItem[] }) 
 // Додаткові script-блоки (scene-content-block.tsx) title не передають —
 // там і сьогодні немає заголовка студенту, поведінка без змін (завжди
 // розгорнуто, без кнопки згортання).
-export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; title?: string }) {
+export function ScriptSection({
+  dialogue,
+  title,
+  onBackground = false,
+}: {
+  dialogue: DialogueEntry[];
+  title?: string;
+  onBackground?: boolean;
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
@@ -91,7 +100,11 @@ export function ScriptSection({ dialogue, title }: { dialogue: DialogueEntry[]; 
       )}
 
       {isOpen && (
-        <div className={`flex flex-col gap-2 ${title ? H2_TO_CONTENT : ""}`}>
+        <div
+          className={`flex flex-col gap-2 ${title ? H2_TO_CONTENT : ""} ${
+            onBackground ? EXERCISE_BLOCK_CLASS : ""
+          }`}
+        >
           {hasTranslation && (
             <button
               type="button"

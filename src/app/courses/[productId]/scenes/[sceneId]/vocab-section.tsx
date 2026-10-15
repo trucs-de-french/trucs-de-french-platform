@@ -12,6 +12,7 @@ import {
 import { STUDENT_TOGGLE_HEADER_BUTTON, BUTTON_SECONDARY } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
+import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 
 // Компактна легенда колір→категорія — над списком груп, щоб орієнтуватись,
 // не гортаючи до заголовка потрібної групи. Розмір/шрифт/колір назви — на
@@ -80,9 +81,50 @@ function VocabGroupTable({
 
 // Той самий тогл-патерн, що ScriptSection (script-section.tsx) — заголовок
 // клікабельний, згорнуто за замовчуванням.
-export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: string }) {
+export function VocabSection({
+  vocab,
+  pdfHref,
+  onBackground = false,
+}: {
+  vocab: VocabItem[];
+  pdfHref: string;
+  onBackground?: boolean;
+}) {
   const [collapsed, setCollapsed] = useState(true);
   const groups = groupVocabByPartOfSpeech(vocab);
+
+  // Текст ховається на вузьких екранах (sm:inline), лишається лише іконка +
+  // aria-label, щоб не розпирати рядок поруч із заголовком/панеллю.
+  const pdfLink = (
+    <a
+      href={pdfHref}
+      aria-label="Завантажити PDF"
+      className={`inline-flex shrink-0 items-center gap-1.5 ${BUTTON_SECONDARY}`}
+    >
+      <Download size={16} className="shrink-0" aria-hidden />
+      <span className="hidden sm:inline">Завантажити PDF</span>
+    </a>
+  );
+
+  const legendAndGroups = (
+    <>
+      {/* Легенда — на всю ширину секції (не max-w-3xl mx-auto, як
+          список слів нижче), по лівому краю. */}
+      <div className="w-full">
+        <Legend />
+      </div>
+
+      {/* Список категорій — ОДНА центрована колонка (max-w-3xl mx-auto,
+          приблизно колишня ширина таблиці), не текст по центру (весь
+          вміст усередині лишається вирівняним по лівому краю) — на
+          мобільній ширині колонка природно займає всю ширину. */}
+      <div className="mx-auto mt-4 flex w-full max-w-3xl flex-col gap-4">
+        {groups.map((g) => (
+          <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <div>
@@ -93,7 +135,11 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
           правого краю. items-center — PDF (менша, py-1.5) вирівнюється по
           центру висоти тогла (py-2), не розтягується на всю висоту. Клік по
           PDF не спливає до тогла просто тому, що це сиблінги, а не вкладені
-          елементи — жодного stopPropagation не треба. */}
+          елементи — жодного stopPropagation не треба.
+          Коли активний фон курсу (onBackground) — PDF-посилання переїжджає
+          всередину панелі нижче (там же, де легенда/слова), бо на фоновій
+          картинці воно так само нечитабельне, як і сам список слів; тут у
+          заголовку лишається лише тогл. */}
       <div className="flex items-center gap-4">
         <button
           type="button"
@@ -107,42 +153,18 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
           <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Вокабуляр</h2>
         </button>
 
-        {/* Видима незалежно від collapsed — і тому, що завантаження PDF не
-            вимагає розгорнутого списку, і тому, що инакше кнопка зникала б
-            одразу після першого кліку на тогл. Текст ховається на вузьких
-            екранах (sm:inline), лишається лише іконка + aria-label, щоб не
-            розпирати рядок поруч із "ВОКАБУЛЯР". */}
-        <a
-          href={pdfHref}
-          aria-label="Завантажити PDF"
-          className={`inline-flex shrink-0 items-center gap-1.5 ${BUTTON_SECONDARY}`}
-        >
-          <Download size={16} className="shrink-0" aria-hidden />
-          <span className="hidden sm:inline">Завантажити PDF</span>
-        </a>
+        {!onBackground && pdfLink}
       </div>
 
-      {!collapsed && (
-        <>
-          {/* Легенда — на всю ширину секції (не max-w-3xl mx-auto, як
-              список слів нижче), по лівому краю на одній вертикалі із
-              заголовком-тоглом "ВОКАБУЛЯР" вище. H2_TO_CONTENT — той самий
-              відступ від заголовка, що й у Відео/Практика/Завдання. */}
-          <div className={`${H2_TO_CONTENT} w-full`}>
-            <Legend />
+      {!collapsed &&
+        (onBackground ? (
+          <div className={`${H2_TO_CONTENT} ${EXERCISE_BLOCK_CLASS}`}>
+            <div className="flex justify-end">{pdfLink}</div>
+            <div className="mt-3">{legendAndGroups}</div>
           </div>
-
-          {/* Список категорій — ОДНА центрована колонка (max-w-3xl mx-auto,
-              приблизно колишня ширина таблиці), не текст по центру (весь
-              вміст усередині лишається вирівняним по лівому краю) — на
-              мобільній ширині колонка природно займає всю ширину. */}
-          <div className="mx-auto mt-4 flex w-full max-w-3xl flex-col gap-4">
-            {groups.map((g) => (
-              <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
-            ))}
-          </div>
-        </>
-      )}
+        ) : (
+          <div className={H2_TO_CONTENT}>{legendAndGroups}</div>
+        ))}
     </div>
   );
 }

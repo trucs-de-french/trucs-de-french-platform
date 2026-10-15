@@ -157,6 +157,18 @@ export default async function ScenePage({
     notFound();
   }
 
+  // Повторна валідація — product щойно з БД, ніколи не довіряємо напряму
+  // (ані тут, ані в SceneBackground нижче, яка валідує ще раз сама по
+  // собі, читай коментар там): значення могло потрапити в рядок повз цю ж
+  // перевірку в updateProductBackground (напр. пряме редагування БД).
+  // Рахується до scriptNode/vocabNode нижче — onBackground (панель під
+  // текстом секцій) залежить від bgMode.
+  const bgDesktopUrl = validateR2ImageUrl(product?.background_desktop_url ?? null);
+  const bgMobileUrl = validateR2ImageUrl(product?.background_mobile_url ?? null);
+  const bgFillColor = validateHexColor(product?.background_fill_color ?? null);
+  const bgMode = sceneBackgroundMode(bgFillColor, Boolean(bgDesktopUrl || bgMobileUrl));
+  const onBackground = bgMode !== null;
+
   const previewCourseId = await getPreviewCourseId();
   const isPreviewing = previewCourseId === productId;
   let previewBlocked = false;
@@ -654,7 +666,7 @@ export default async function ScenePage({
 
   const scriptNode = (
     <section>
-      <ScriptSection dialogue={dialogue} title="Скрипт" />
+      <ScriptSection dialogue={dialogue} title="Скрипт" onBackground={onBackground} />
     </section>
   );
 
@@ -687,7 +699,7 @@ export default async function ScenePage({
 
   const vocabNode = hasVocab && (
     <section>
-      <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} />
+      <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} onBackground={onBackground} />
     </section>
   );
 
@@ -845,15 +857,6 @@ export default async function ScenePage({
     task: tasksNode,
     vocab: vocabNode,
   };
-
-  // Повторна валідація — product щойно з БД, ніколи не довіряємо напряму
-  // (ані тут, ані в SceneBackground нижче, яка валідує ще раз сама по
-  // собі, читай коментар там): значення могло потрапити в рядок повз цю ж
-  // перевірку в updateProductBackground (напр. пряме редагування БД).
-  const bgDesktopUrl = validateR2ImageUrl(product?.background_desktop_url ?? null);
-  const bgMobileUrl = validateR2ImageUrl(product?.background_mobile_url ?? null);
-  const bgFillColor = validateHexColor(product?.background_fill_color ?? null);
-  const bgMode = sceneBackgroundMode(bgFillColor, Boolean(bgDesktopUrl || bgMobileUrl));
 
   return (
     <div className="student-bg-wrapper" data-scene-bg={bgMode ?? undefined}>
