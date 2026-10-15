@@ -46,9 +46,9 @@ export type WordChoicePracticeProps = {
 // (border-gray-200/dark:border-neutral-600, та сама вимога, що в задачі
 // для рамок картки) і фон, що відрізняється від фону картки в обох темах
 // (neutral-50 / neutral-900, а не білий/neutral-800).
-const TILE_INLINE_BASE = "rounded-md border-[1.5px] dark:border px-1.5 py-0.5 transition-colors";
+const TILE_INLINE_BASE = "rounded-md border-[1.5px] dark:border glass-card-shadow px-1.5 py-0.5 transition-colors";
 const TILE_DEFAULT =
-  "glass-gold-edge border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
+  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
 
 export function WordChoiceExercise({
   taskId,
@@ -231,8 +231,8 @@ export function WordChoiceExercise({
       if (!opt) return "";
       // Той самий принцип, що multiple-choice.tsx: правильний варіант
       // завжди зелений, червоним — лише хибний вибір студента.
-      if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
-      if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
+      if (opt.correct) return "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30";
+      if (opt.selected) return "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30";
       return `${TILE_DEFAULT} opacity-60`;
     }
     if (config.mode === "cross_out") {

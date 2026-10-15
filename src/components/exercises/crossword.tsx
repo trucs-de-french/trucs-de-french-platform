@@ -393,10 +393,10 @@ function CrosswordBlockView({
         }}
         className={`${LEGEND_TILE_BASE} flex w-full cursor-pointer flex-col gap-1 p-2 text-left transition-colors ${
           isCorrect
-            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+            ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
-              : "hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-card-hover hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
         <span className={`font-body text-sm font-semibold ${clueTextClass(liveStatus)}`}>{clue.number}.</span>
@@ -480,10 +480,10 @@ function CrosswordBlockView({
         }}
         className={`${LEGEND_LONG_CARD} cursor-pointer ${hasImage ? "pr-9" : ""} ${
           isCorrect
-            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+            ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
-              : "hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-card-hover hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
         {!hasImage && badge}

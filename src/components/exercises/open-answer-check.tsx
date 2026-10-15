@@ -116,7 +116,7 @@ export function OpenAnswerCheckExercise({
                 ? qDetail.isCorrect
                   ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                   : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                : "border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800"
+                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800"
             }`}
             placeholder="Ваша відповідь..."
           />

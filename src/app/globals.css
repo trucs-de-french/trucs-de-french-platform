@@ -1109,7 +1109,11 @@ button, input, textarea, select, label, nav, aside {
      (двошаровий background, padding-box білий + border-box градієнт). */
   --glass-item-border-width: 1px;
   --glass-item-border-color: transparent;
-  --glass-item-shadow: 0 3px 10px rgba(184, 144, 47, 0.1);
+  /* М'яка тінь знизу (замінює симетричну тінь variant 4 вище) — два шари:
+     тонкий контактний контур + більша розмита тінь із негативним spread
+     (-6px), щоб вона лежала переважно ПІД карткою, не розповзаючись по
+     боках. */
+  --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
   --glass-item-radius: 14px;
   --glass-answer-bg: #ffffff;
   --glass-answer-border: rgba(217, 183, 101, 0.55);
@@ -1135,7 +1139,7 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-border: #dcbd6e;
     --glass-item-border-width: 1px;
     --glass-item-border-color: transparent;
-    --glass-item-shadow: 0 3px 10px rgba(184, 144, 47, 0.1);
+    --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
     --glass-item-radius: 14px;
     --glass-answer-bg: #ffffff;
     --glass-answer-border: rgba(217, 183, 101, 0.55);
@@ -1186,6 +1190,77 @@ button, input, textarea, select, label, nav, aside {
     border-width: 1px;
     border-color: transparent;
     background: var(--glass-card-bg-gradient);
+  }
+}
+
+/* Тінь картки (м'яка тінь знизу) — ОКРЕМИЙ клас від .glass-gold-edge:
+   imageCardClass (multiple-choice.tsx) свідомо лишається БЕЗ тіні (тінь
+   дає зовнішній CARD_WRAP), тож рамка/фон і тінь рознесені по двох
+   класах, що додаються разом чи окремо. .light .glass-item-card тут же —
+   та сама тінь, лише transition додається без дублювання box-shadow
+   (власний box-shadow уже є в правилі .glass-item-card нижче). */
+.light .glass-card-shadow {
+  box-shadow: var(--glass-item-shadow);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-card-shadow {
+    box-shadow: var(--glass-item-shadow);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glass-card-shadow,
+  .glass-item-card,
+  .glass-card-hover {
+    transition: box-shadow 150ms;
+  }
+}
+/* Зростання тіні на hover — лише картки, що мають .glass-card-hover
+   (додається ЛИШЕ до клікабельних варіантів: ANSWER_CARD_DEFAULT,
+   TILE_DEFAULT, bankTileClass, sortable-tile-row ідле-стан, imageCardClass
+   клікабельна гілка, крос-ворд легенда-картка). Без transform/filter —
+   лише box-shadow, безпечно для предків video/iframe/audio. */
+.light .glass-card-hover:hover {
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.14), 0 12px 20px -6px rgba(120, 90, 20, 0.32);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-card-hover:hover {
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.14), 0 12px 20px -6px rgba(120, 90, 20, 0.32);
+  }
+}
+/* Тінь картки у стані вибрано/правильно/неправильно — та сама тінь
+   знизу, підфарбована кольором стану замість золотого (колір рамки/фону
+   лишається головним сигналом стану, тінь лише посилює його). Та сама
+   специфічність (0,2,0), що й .glass-card-shadow/.glass-gold-edge вище —
+   перекриває за порядком у файлі (цей блок нижче), незалежно від порядку
+   класів у className. */
+.light .glass-card-shadow-selected {
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(75, 70, 218, 0.25);
+}
+.light .glass-card-shadow-correct {
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(34, 197, 94, 0.25);
+}
+.light .glass-card-shadow-incorrect {
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(239, 68, 68, 0.25);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-card-shadow-selected {
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(75, 70, 218, 0.25);
+  }
+  :root:not(.dark) .glass-card-shadow-correct {
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(34, 197, 94, 0.25);
+  }
+  :root:not(.dark) .glass-card-shadow-incorrect {
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(239, 68, 68, 0.25);
+  }
+}
+/* Легка тінь полів-пропусків/input (НЕ картка) — без зростання на
+   hover/стані, завжди один і той самий легкий шар. */
+.light .glass-gap-shadow {
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-gap-shadow {
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
   }
 }
 

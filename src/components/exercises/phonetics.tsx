@@ -88,7 +88,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               // лишаючи під медіа ~600px замість заданих ~260-300.
               // min-w-0 на самій картці — щоб довгий текст не розпирав
               // grid-колонку (а з нею і сусідню картку) ширше задуманого.
-              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white p-4 shadow-[0_3px_10px_rgba(184,144,47,0.10)] dark:shadow-sm @[480px]:flex-row @[480px]:items-start @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
+              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white p-4 glass-card-shadow dark:shadow-sm @[480px]:flex-row @[480px]:items-start @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span className={NUMBER_BADGE}>{i + 1}</span>

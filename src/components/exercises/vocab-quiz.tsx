@@ -136,9 +136,9 @@ export function VocabQuizExercise({
           const cls = !selected
             ? ANSWER_CARD_DEFAULT
             : isCorrect
-              ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+              ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
               : isSelected
-                ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                ? "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
                 : `${ANSWER_CARD_DEFAULT} opacity-60`;
           const badgeCls = !selected
             ? ITEM_LETTER_BADGE

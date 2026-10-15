@@ -44,10 +44,10 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
   // (вертикальна прокрутка замість горизонтальної, stickyPoolClass), тож
   // надто довге слово без цього могло вилізти за межі пулу й сторінки.
   const base =
-    "max-w-full cursor-grab select-none break-words rounded-md border-[1.5px] dark:border px-3 py-1.5 text-base shadow-[0_3px_10px_rgba(184,144,47,0.10)] dark:shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
+    "max-w-full cursor-grab select-none break-words rounded-md border-[1.5px] dark:border px-3 py-1.5 text-base glass-card-shadow dark:shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
   if (used) return `${base} opacity-40`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
-  return `${base} glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
+  return `${base} glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
 }
 
 export type SlotState = "empty" | "hover" | "filled" | "correct" | "incorrect";
@@ -83,7 +83,7 @@ export function slotClass(
         return `${base} border-dashed border-brand bg-brand/5 dark:bg-brand/10`;
       }
       return opts?.emptyBg === "subtle"
-        ? `${base} border-dashed border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
-        : `${base} border-dashed border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-transparent dark:hover:bg-neutral-800`;
+        ? `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
+        : `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-transparent dark:hover:bg-neutral-800`;
   }
 }

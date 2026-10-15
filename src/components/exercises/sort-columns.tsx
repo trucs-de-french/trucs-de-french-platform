@@ -174,8 +174,8 @@ export function SortColumnsExercise({
     const d = detail?.items.find((x) => x.id === id);
     if (d) {
       return d.isCorrect
-        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-        : "border-red-500 bg-red-50 dark:bg-red-950/30";
+        ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+        : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30";
     }
     return bankTileClass({ selected: selected === id, used: false });
   }

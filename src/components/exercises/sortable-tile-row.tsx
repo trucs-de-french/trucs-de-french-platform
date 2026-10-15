@@ -96,7 +96,7 @@ export function SortableTileRow({
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
-    return `${shadow} glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
+    return `${shadow} glass-gold-edge glass-card-shadow glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
   }
 
   return (

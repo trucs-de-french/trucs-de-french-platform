@@ -356,8 +356,8 @@ export function MatchingExercise({
                   className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                     d
                       ? d.isCorrect
-                        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                        : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                        ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+                        : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
                       : selectedLeft === left
                         ? SELECTED_OPTION_CLASS
                         : right
@@ -450,9 +450,9 @@ export function MatchingExercise({
                   onClick={() => practiceClickLeft(left)}
                   className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                     isCorrect === true
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                      ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
                       : isCorrect === false
-                        ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                        ? "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
                         : selectedLeftPractice === left
                           ? SELECTED_OPTION_CLASS
                           : right
@@ -563,8 +563,8 @@ export function MatchingExercise({
                     className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                       d
                         ? d.isCorrect
-                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                          : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                          ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+                          : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
                         : selectedLeft === left
                           ? SELECTED_OPTION_CLASS
                           : right
