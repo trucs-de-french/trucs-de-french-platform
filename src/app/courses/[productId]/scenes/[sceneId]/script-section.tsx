@@ -102,11 +102,7 @@ export function ScriptSection({
         <button
           type="button"
           onClick={() => setShowTranslation((v) => !v)}
-          className={`mb-1 self-start rounded-md border border-brand px-3 py-1.5 text-sm shadow-sm transition-colors ${
-            showTranslation
-              ? "bg-brand/10 text-brand"
-              : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-700"
-          }`}
+          className="scene-translation-toggle mb-1 self-start"
         >
           {showTranslation ? "Сховати переклад" : "Показати переклад"}
         </button>

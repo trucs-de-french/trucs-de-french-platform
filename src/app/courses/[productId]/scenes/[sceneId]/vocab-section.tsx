@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Download } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { VocabItem, PartOfSpeech } from "@/lib/vocab";
 import { firstVocabVariant, groupVocabByPartOfSpeech } from "@/lib/vocab";
 import {
@@ -9,7 +9,7 @@ import {
   PART_OF_SPEECH_LABELS_FR,
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab-categories";
-import { STUDENT_TOGGLE_HEADER_BUTTON, BUTTON_SECONDARY } from "@/lib/button-styles";
+import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
@@ -94,16 +94,25 @@ export function VocabSection({
   const [collapsed, setCollapsed] = useState(true);
   const groups = groupVocabByPartOfSpeech(vocab);
 
-  // Текст ховається на вузьких екранах (sm:inline), лишається лише іконка +
-  // aria-label, щоб не розпирати рядок поруч із заголовком/панеллю.
   const pdfLink = (
-    <a
-      href={pdfHref}
-      aria-label="Завантажити PDF"
-      className={`inline-flex shrink-0 items-center gap-1.5 ${BUTTON_SECONDARY}`}
-    >
-      <Download size={16} className="shrink-0" aria-hidden />
-      <span className="hidden sm:inline">Завантажити PDF</span>
+    <a href={pdfHref} className="scene-pdf-button shrink-0">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="#1a1640"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <path d="M12 4v11" />
+        <path d="M7 11l5 5 5-5" />
+        <path d="M5 20h14" />
+      </svg>
+      Завантажити PDF
     </a>
   );
 
@@ -144,8 +153,10 @@ export function VocabSection({
               onToggle={() => setCollapsed((c) => !c)}
             />
             <div className={EXERCISE_BLOCK_SURFACE_CLASS}>
-              <div className="flex justify-end">{pdfLink}</div>
-              <div className="mt-3">{legendAndGroups}</div>
+              <div className="flex justify-start" style={{ marginBottom: "18px" }}>
+                {pdfLink}
+              </div>
+              {legendAndGroups}
             </div>
           </div>
         ) : (
