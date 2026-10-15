@@ -8,7 +8,7 @@ import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
 import { bankTileClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb, type HintBulbState } from "./hint-bulb";
-import { ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
@@ -174,8 +174,8 @@ export function SortColumnsExercise({
     const d = detail?.items.find((x) => x.id === id);
     if (d) {
       return d.isCorrect
-        ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
-        : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30";
+        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+        : "border-red-500 bg-red-50 dark:bg-red-950/30";
     }
     return bankTileClass({ selected: selected === id, used: false });
   }
@@ -246,7 +246,7 @@ export function SortColumnsExercise({
               ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
               : isHinted
                 ? "border-blue-300 bg-blue-50 ring-2 ring-inset ring-blue-500 dark:border-blue-600 dark:bg-blue-950/30"
-                : ANSWER_CARD_DEFAULT;
+                : ANSWER_CHIP_DEFAULT;
           // bg-brand/10 + text-brand (без dark:-варіанту) давали ~2.3:1 у
           // темній темі (той самий --color-brand на майже чорному фоні —
           // замалий контраст) — indigo-100/indigo-700 (світла) і

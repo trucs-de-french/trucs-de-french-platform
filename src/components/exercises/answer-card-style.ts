@@ -7,8 +7,27 @@ export const ANSWER_CARD_BASE =
   "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center glass-card-shadow dark:shadow-sm transition-colors";
 
 // Стан "не обрано, ще не перевірено" — нейтральна картка з легким hover.
+// ЛИШЕ для flip_cards (великі картки-грані, лишаються на градієнтній
+// рамці+великій тіні variant 4/3238d64) — усі інші типи (matching/
+// listening/multiple_choice/vocab_quiz/sort_columns/chronological_order/
+// image_match), де ця константа раніше теж бралась, перейшли на менші
+// ANSWER_CHIP_BASE/ANSWER_CHIP_DEFAULT нижче (суцільна рамка-чип, як у
+// полів-пропусків, без градієнта й без великої тіні).
 export const ANSWER_CARD_DEFAULT =
   "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+
+// Той самий розмір/відступ/радіус, що ANSWER_CARD_BASE/DEFAULT, але
+// маленька рамка-чип (border rgba(217,183,101,.55) 1px, легка тінь
+// .glass-gap-shadow, hover лише трохи темнішою рамкою) замість
+// градієнтної рамки+великої тіні картки — для "дрібних" інтерактивних
+// елементів (варіанти відповіді matching/listening/multiple_choice/
+// vocab_quiz/sort_columns/chronological_order/image_match), не великих
+// карток. Колір стану (вибрано/правильно/неправильно) додається
+// викликачем окремо, як і в ANSWER_CARD_BASE/DEFAULT.
+export const ANSWER_CHIP_BASE =
+  "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center glass-gap-shadow dark:shadow-sm transition-colors";
+export const ANSWER_CHIP_DEFAULT =
+  "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
 
 // Зменшений inline-варіант — для варіантів, вплетених прямо в текст
 // речення (word_choice), де повний ANSWER_CARD_BASE (p-3, rounded-lg)
@@ -66,7 +85,7 @@ export const COMPACT_IMAGE_GRID = "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid
 // замість тексту на всю картку. Колір стану (ANSWER_CARD_DEFAULT і т.п.)
 // додається викликачем, як і в ANSWER_CARD_BASE.
 export const COMPACT_IMAGE_CARD =
-  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center glass-card-shadow dark:shadow-sm transition-colors";
+  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center glass-gap-shadow dark:shadow-sm transition-colors";
 
 // Квадратна рамка під картинку: max-w-[6.5rem] — те саме обмеження, що і в
 // chronological_order, щоб картка не розтягувалась на всю ширину колонки
@@ -92,4 +111,4 @@ export const POOL_CLASS =
 // стану додається викликачем окремо (chipClass/tileClass і т.п.) — перенесено
 // з колишнього локального TILE_BASE у multiple-choice.tsx без зміни значення.
 export const TILE_BASE =
-  "flex min-h-12 items-center gap-2 rounded-lg border glass-card-shadow px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+  "flex min-h-12 items-center gap-2 rounded-lg border glass-gap-shadow px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";

@@ -1224,10 +1224,10 @@ button, input, textarea, select, label, nav, aside {
     transition: box-shadow 150ms;
   }
 }
-/* Зростання тіні на hover — лише картки, що мають .glass-card-hover
-   (додається ЛИШЕ до клікабельних варіантів: ANSWER_CARD_DEFAULT,
-   TILE_DEFAULT, bankTileClass, sortable-tile-row ідле-стан, imageCardClass
-   клікабельна гілка, крос-ворд легенда-картка). Без transform/filter —
+/* Зростання тіні на hover — лише великі картки з .glass-card-hover
+   (тепер ЛИШЕ ANSWER_CARD_DEFAULT, тобто flip_cards: усі інші типи, що
+   раніше теж позначались цим класом, перейшли на менший .glass-chip-
+   hover нижче — свій, менший за амплітудою hover). Без transform/filter —
    лише box-shadow, безпечно для предків video/iframe/audio. */
 .light .glass-card-hover:hover {
   box-shadow: 0 1px 2px rgba(184, 144, 47, 0.14), 0 12px 20px -6px rgba(120, 90, 20, 0.32);
@@ -1235,32 +1235,6 @@ button, input, textarea, select, label, nav, aside {
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .glass-card-hover:hover {
     box-shadow: 0 1px 2px rgba(184, 144, 47, 0.14), 0 12px 20px -6px rgba(120, 90, 20, 0.32);
-  }
-}
-/* Тінь картки у стані вибрано/правильно/неправильно — та сама тінь
-   знизу, підфарбована кольором стану замість золотого (колір рамки/фону
-   лишається головним сигналом стану, тінь лише посилює його). Та сама
-   специфічність (0,2,0), що й .glass-card-shadow/.glass-gold-edge вище —
-   перекриває за порядком у файлі (цей блок нижче), незалежно від порядку
-   класів у className. */
-.light .glass-card-shadow-selected {
-  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(75, 70, 218, 0.25);
-}
-.light .glass-card-shadow-correct {
-  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(34, 197, 94, 0.25);
-}
-.light .glass-card-shadow-incorrect {
-  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(239, 68, 68, 0.25);
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .glass-card-shadow-selected {
-    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(75, 70, 218, 0.25);
-  }
-  :root:not(.dark) .glass-card-shadow-correct {
-    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(34, 197, 94, 0.25);
-  }
-  :root:not(.dark) .glass-card-shadow-incorrect {
-    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(239, 68, 68, 0.25);
   }
 }
 /* Легка тінь полів-пропусків/input (НЕ картка) — без зростання на
@@ -1271,6 +1245,38 @@ button, input, textarea, select, label, nav, aside {
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .glass-gap-shadow {
     box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
+  }
+}
+/* Суцільна рамка маленьких інтерактивних елементів (літер-плиток,
+   фіксованих пулів слів/чипів) — той самий вигляд, що й у полів-пропусків
+   (рамка rgba(217,183,101,.55), 1px), ЗАМІСТЬ .glass-gold-edge (без
+   градієнта, без великої тіні картки — тінь додається окремо через
+   .glass-gap-shadow вище). border-width тут перекриває як 1.5px-літерал
+   (border-[1.5px]), так і :hover-рамку нижче — та сама специфічність
+   (0,2,0), що й .glass-gold-edge, тож порядок класів у className не має
+   значення. */
+.light .glass-chip {
+  border-width: 1px;
+  border-color: rgba(217, 183, 101, 0.55);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-chip {
+    border-width: 1px;
+    border-color: rgba(217, 183, 101, 0.55);
+  }
+}
+/* Hover лише для клікабельних/драгабельних чипів/плиток (.glass-chip-
+   hover додається ОКРЕМО, лише де сьогодні вже є hover:bg-* — статичні
+   картки цього не отримують) — рамка трохи темніша, без зміни фону/тіні/
+   transform. */
+@media (hover: hover) {
+  .light .glass-chip-hover:hover {
+    border-color: rgba(217, 183, 101, 0.85);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-chip-hover:hover {
+    border-color: rgba(217, 183, 101, 0.85);
   }
 }
 

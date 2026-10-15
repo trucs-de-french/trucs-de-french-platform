@@ -14,7 +14,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { ImageLightbox } from "./image-lightbox";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -66,7 +66,7 @@ export function ListeningExercise({
     if (!qDetail) {
       return answers[questionId] === optionId
         ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : ANSWER_CARD_DEFAULT;
+        : ANSWER_CHIP_DEFAULT;
     }
     const od = qDetail.options.find((o) => o.id === optionId);
     if (!od) return "";
@@ -156,8 +156,8 @@ export function ListeningExercise({
                       key={o.id}
                       type="button"
                       onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: o.id }))}
-                      className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
-                        answers[q.id] === o.id ? SELECTED_OPTION_CLASS : ANSWER_CARD_DEFAULT
+                      className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
+                        answers[q.id] === o.id ? SELECTED_OPTION_CLASS : ANSWER_CHIP_DEFAULT
                       }`}
                     >
                       {o.text}

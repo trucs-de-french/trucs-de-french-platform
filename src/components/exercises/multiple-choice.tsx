@@ -12,7 +12,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import {
-  ANSWER_CARD_DEFAULT,
+  ANSWER_CHIP_DEFAULT,
   COMPACT_IMAGE_FILL,
   ITEM_NUMBER_BADGE,
   ITEM_CARD_WRAP as CARD_WRAP,
@@ -243,13 +243,13 @@ export function MultipleChoiceExercise({
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
       return sel.includes(optionId)
-        ? "glass-card-shadow-selected border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : ANSWER_CARD_DEFAULT;
+        ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
+        : ANSWER_CHIP_DEFAULT;
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
-    if (opt.correct) return "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30";
-    if (opt.selected) return "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30";
+    if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
+    if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
     return "opacity-60";
   }
 
@@ -671,7 +671,7 @@ export function MultipleChoiceExercise({
   // нумерація ITEM_NUMBER_BADGE, не локальна в межах блоку).
   function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
     return config.display === "dropdown" ? (
-      <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
+      <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
         {items.map((item, i) =>
           renderDropdownRow(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id))
         )}

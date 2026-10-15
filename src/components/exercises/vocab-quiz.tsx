@@ -9,7 +9,7 @@ import {
   type VocabQuizQuestion,
 } from "@/lib/exercises/vocab-quiz-logic";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 
@@ -134,12 +134,12 @@ export function VocabQuizExercise({
           const isCorrect = option === question.correctTranslation;
           const isSelected = option === selected;
           const cls = !selected
-            ? ANSWER_CARD_DEFAULT
+            ? ANSWER_CHIP_DEFAULT
             : isCorrect
-              ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+              ? "border-green-500 bg-green-50 dark:bg-green-950/30"
               : isSelected
-                ? "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
-                : `${ANSWER_CARD_DEFAULT} opacity-60`;
+                ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                : `${ANSWER_CHIP_DEFAULT} opacity-60`;
           const badgeCls = !selected
             ? ITEM_LETTER_BADGE
             : isCorrect
@@ -153,7 +153,7 @@ export function VocabQuizExercise({
               type="button"
               onClick={() => choose(option)}
               disabled={!!selected}
-              className={`${ANSWER_CARD_BASE} ${cls} flex h-full min-h-12 min-w-0 items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 sm:py-3`}
+              className={`${ANSWER_CHIP_BASE} ${cls} flex h-full min-h-12 min-w-0 items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 sm:py-3`}
             >
               <span className={badgeCls}>{LETTERS[i]}</span>
               <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere] hyphens-auto">

@@ -19,7 +19,7 @@ import { InstructionsText } from "./instructions-text";
 import { HintBulb } from "./hint-bulb";
 import { HintExplanation } from "./hint-explanation";
 import {
-  ANSWER_CARD_DEFAULT,
+  ANSWER_CHIP_DEFAULT,
   COMPACT_IMAGE_GRID,
   COMPACT_IMAGE_CARD,
   COMPACT_IMAGE_FRAME,
@@ -280,7 +280,7 @@ export function ChronologicalOrderExercise({
             return (
               <div
                 key={item.id}
-                className={`${COMPACT_IMAGE_CARD} ${ANSWER_CARD_DEFAULT}`}
+                className={`${COMPACT_IMAGE_CARD} ${ANSWER_CHIP_DEFAULT}`}
               >
                 {/* overflow-hidden + img absolute inset-0 — <img> більше не
                     задає власну висоту через проценти (h-full проти
@@ -344,7 +344,7 @@ export function ChronologicalOrderExercise({
         // вмістом (py-2 px-2.5, без фіксованої min-height), тож довге
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
-        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CARD_DEFAULT}`}>
+        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
           {config.items.map((item, i) => {
             const label = indexToLabel(i);
             return (

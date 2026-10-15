@@ -22,7 +22,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
-import { LEGEND_TILE_BASE, CROSSWORD_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
+import { LEGEND_TILE_SHAPE, CROSSWORD_IMAGE_GRID, LEGEND_PILL_SHAPE, LEGEND_LONG_CARD_SHAPE } from "./legend-tile-style";
 import { HintBulb } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -391,12 +391,12 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_TILE_BASE} flex w-full cursor-pointer flex-col gap-1 p-2 text-left transition-colors ${
+        className={`${LEGEND_TILE_SHAPE} flex w-full cursor-pointer flex-col gap-1 p-2 text-left transition-colors ${
           isCorrect
-            ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
-              : "glass-card-hover hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
         <span className={`font-body text-sm font-semibold ${clueTextClass(liveStatus)}`}>{clue.number}.</span>
@@ -478,12 +478,12 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_LONG_CARD} cursor-pointer ${hasImage ? "pr-9" : ""} ${
+        className={`${LEGEND_LONG_CARD_SHAPE} cursor-pointer ${hasImage ? "pr-9" : ""} ${
           isCorrect
-            ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
-              : "glass-card-hover hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
         {!hasImage && badge}
@@ -526,8 +526,12 @@ function CrosswordBlockView({
     return (
       <div
         key={clue.number}
-        className={`${LEGEND_PILL} ${showBadge ? "pl-1.5 pr-3" : ""} ${
-          isCorrect ? "opacity-50" : isActive ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40" : ""
+        className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-1.5 pr-3" : ""} ${
+          isCorrect
+            ? "glass-chip border-[#dcbd6e] opacity-50"
+            : isActive
+              ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+              : "glass-chip border-[#dcbd6e]"
         }`}
       >
         {isCorrect ? (

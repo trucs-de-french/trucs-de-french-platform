@@ -9,7 +9,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -353,16 +353,16 @@ export function MatchingExercise({
                   type="button"
                   onClick={() => clickLeftInBlock(left)}
                   disabled={!!blockResult}
-                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
+                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                     d
                       ? d.isCorrect
-                        ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
-                        : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
+                        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                        : "border-red-500 bg-red-50 dark:bg-red-950/30"
                       : selectedLeft === left
                         ? SELECTED_OPTION_CLASS
                         : right
                           ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                          : ANSWER_CARD_DEFAULT
+                          : ANSWER_CHIP_DEFAULT
                   }`}
                 >
                   {left}
@@ -380,7 +380,7 @@ export function MatchingExercise({
                 type="button"
                 onClick={() => clickRightInBlock(right)}
                 disabled={!!blockResult}
-                className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
+                className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
                   usedRightsInBlock.has(right) ? "opacity-50" : ""
                 }`}
               >
@@ -448,16 +448,16 @@ export function MatchingExercise({
                   key={left}
                   type="button"
                   onClick={() => practiceClickLeft(left)}
-                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
+                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                     isCorrect === true
-                      ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                       : isCorrect === false
-                        ? "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
+                        ? "border-red-500 bg-red-50 dark:bg-red-950/30"
                         : selectedLeftPractice === left
                           ? SELECTED_OPTION_CLASS
                           : right
                             ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                            : ANSWER_CARD_DEFAULT
+                            : ANSWER_CHIP_DEFAULT
                   }`}
                 >
                   {left}
@@ -473,7 +473,7 @@ export function MatchingExercise({
                 key={right}
                 type="button"
                 onClick={() => practiceClickRight(right)}
-                className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
+                className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
                   usedRightsPractice.has(right) ? "opacity-50" : ""
                 }`}
               >
@@ -560,16 +560,16 @@ export function MatchingExercise({
                     type="button"
                     onClick={() => clickLeft(left)}
                     disabled={!!single.result}
-                    className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
+                    className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
                       d
                         ? d.isCorrect
-                          ? "glass-card-shadow-correct border-green-500 bg-green-50 dark:bg-green-950/30"
-                          : "glass-card-shadow-incorrect border-red-500 bg-red-50 dark:bg-red-950/30"
+                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                          : "border-red-500 bg-red-50 dark:bg-red-950/30"
                         : selectedLeft === left
                           ? SELECTED_OPTION_CLASS
                           : right
                             ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                            : ANSWER_CARD_DEFAULT
+                            : ANSWER_CHIP_DEFAULT
                     }`}
                   >
                     {left}
@@ -587,7 +587,7 @@ export function MatchingExercise({
                   type="button"
                   onClick={() => clickRight(right)}
                   disabled={!!single.result}
-                  className={`${ANSWER_CARD_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CARD_DEFAULT} ${
+                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
                     usedRights.has(right) ? "opacity-50" : ""
                   }`}
                 >

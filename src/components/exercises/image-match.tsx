@@ -11,7 +11,7 @@ import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -132,7 +132,7 @@ export function ImageMatchExercise({
             return (
               <div
                 key={item.id}
-                className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
+                className={`flex flex-col items-center gap-1 ${ANSWER_CHIP_BASE} ${ANSWER_CHIP_DEFAULT}`}
               >
                 <button
                   type="button"
@@ -239,7 +239,7 @@ export function ImageMatchExercise({
         {config.items.map((item, i) => {
           const itemDetail = detail?.items[i];
           return (
-          <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}>
+          <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CHIP_BASE} ${ANSWER_CHIP_DEFAULT}`}>
             <button
               type="button"
               onClick={() => setLightboxSrc(item.imageUrl)}
