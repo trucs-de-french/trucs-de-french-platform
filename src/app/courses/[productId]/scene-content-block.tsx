@@ -7,7 +7,8 @@ import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import { collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { EmbedFrame } from "@/components/embed-frame";
-import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
+import { LinkCard } from "@/components/link-card";
+import { resolveSceneLinkMeta } from "@/lib/link-task-icon";
 import { EXERCISE_BODY } from "@/lib/typography-styles";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
@@ -123,18 +124,20 @@ export function SceneContentBlockContent({
       {block.content_type === "script" && <ScriptSection dialogue={block.dialogue ?? []} />}
 
       {block.content_type === "links" && (block.links ?? []).length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {(block.links ?? []).map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={STUDENT_LINK_BUTTON}
-            >
-              {link.label ?? link.platform}
-            </a>
-          ))}
+        <div className="link-card-grid">
+          {(block.links ?? []).map((link) => {
+            const meta = resolveSceneLinkMeta(link.platform);
+            return (
+              <LinkCard
+                key={link.id}
+                href={link.url}
+                icon={meta.icon}
+                title={link.label ?? meta.label}
+                subtitle={meta.label}
+                variant={meta.featured ? "featured" : "default"}
+              />
+            );
+          })}
         </div>
       )}
 

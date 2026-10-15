@@ -10,6 +10,7 @@ import {
   Presentation,
   Cloud,
   Globe,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 
@@ -140,6 +141,24 @@ export function resolveLinkTaskIcon(
       ? (params.icon as LinkTaskIconKey)
       : detectLinkTaskIcon(params);
   return LINK_TASK_ICONS[key];
+}
+
+// platform у scene_links — НЕ те саме поле, що params.platform вище (CHECK-
+// обмеження рівно на 'quizlet' | 'wordwall' | 'custom', 0001_init.sql/0043) —
+// спільна для фіксованої "Практики" (scenes/[sceneId]/page.tsx) і посилань
+// усередині контент-блоку (scene-content-block.tsx), щоб LinkCard виглядала
+// однаково в обох місцях. featured — власна HTML-гра ("custom") отримує
+// золотий variant="featured" на LinkCard.
+const SCENE_LINK_PLATFORM_META: Record<string, { icon: LucideIcon; label: string; featured?: boolean }> = {
+  wordwall: { icon: Puzzle, label: "Wordwall" },
+  quizlet: { icon: Layers, label: "Quizlet" },
+  custom: { icon: Gamepad2, label: "Власна гра ★", featured: true },
+};
+const DEFAULT_SCENE_LINK_META = { icon: ExternalLink, label: "Посилання" };
+
+export function resolveSceneLinkMeta(platform: string): { icon: LucideIcon; label: string; featured: boolean } {
+  const meta = SCENE_LINK_PLATFORM_META[platform] ?? DEFAULT_SCENE_LINK_META;
+  return { icon: meta.icon, label: meta.label, featured: Boolean((meta as { featured?: boolean }).featured) };
 }
 
 // Підпис картки, коли немає description: людська назва відомого сервісу

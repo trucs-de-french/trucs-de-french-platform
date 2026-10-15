@@ -1,3 +1,4 @@
+import { Gamepad2 } from "lucide-react";
 import { TaskMedia } from "@/components/task-media";
 import { LinkCard } from "@/components/link-card";
 import { resolveLinkTaskIcon, linkTaskDefaultSubtitle } from "@/lib/link-task-icon";
@@ -8,7 +9,6 @@ import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-bou
 import { EmbedFrame } from "@/components/embed-frame";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
-import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 
 export type ExerciseTask = {
@@ -114,14 +114,12 @@ export function ExerciseBlock({
       )}
 
       {task.type === "game" && task.games?.embed_url && (
-        <a
+        <LinkCard
           href={task.games.embed_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-        >
-          Відкрити гру ({task.games.provider})
-        </a>
+          icon={Gamepad2}
+          title="Відкрити гру"
+          subtitle={task.games.provider}
+        />
       )}
 
       {task.type === "link" &&
@@ -134,9 +132,8 @@ export function ExerciseBlock({
               href={config.url!}
               download={config.download}
               icon={meta.icon}
-              name={task.title}
+              title={task.title}
               subtitle={description || linkTaskDefaultSubtitle(config)}
-              className="self-start"
             />
           );
         })()}

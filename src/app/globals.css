@@ -1549,3 +1549,124 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+
+/* Спільна темно-скляна картка-посилання (LinkCard, link-card.tsx) —
+   "Практика" (scene_links, фіксована й усередині контент-блоку), задачі
+   link/game, прев'ю в конструкторі. Фіксовані кольори, однакові в обох
+   темах сайту і з/без фону курсу (той самий підхід, що .scene-pdf-button/
+   .scene-fullscreen-btn вище) — картка сама по собі завжди "скляна". */
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 16px;
+  background: rgba(10, 16, 48, 0.82);
+  border: 1px solid rgba(243, 217, 139, 0.5);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.link-card-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1.5px solid #e8c46a;
+  background: transparent;
+  color: #f6dc8e;
+}
+.link-card-text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+.link-card-title {
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.2;
+  color: #ffffff;
+  transition: color 0.15s ease;
+}
+.link-card-subtitle {
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: #f6dc8e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.link-card-arrow {
+  flex-shrink: 0;
+  color: #f6dc8e;
+  transition: transform 0.15s ease;
+}
+
+/* Featured (власна гра, напр. Fake News) — та сама картка, золота рамка й
+   заповнене градієнтом коло іконки замість контурного. */
+.link-card--featured {
+  border-color: #f6dc8e;
+  box-shadow: 0 0 0 1px rgba(246, 220, 142, 0.25), 0 6px 22px rgba(232, 196, 106, 0.28);
+}
+.link-card--featured .link-card-icon {
+  border: none;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #1a1640;
+}
+
+/* Було: hover висвітлював фон (той самий баг, що вже виправляли для
+   .scene-fullscreen-btn вище) — фон лишається темним, яскравішають лише
+   рамка/заголовок/стрілка, плюс м'який золотий glow. */
+@media (hover: hover) {
+  .link-card:hover {
+    border-color: #f6dc8e;
+    box-shadow: 0 8px 24px rgba(232, 196, 106, 0.35);
+    transform: translateY(-2px);
+  }
+  .link-card:hover .link-card-title {
+    color: #fff0b8;
+  }
+  .link-card:hover .link-card-arrow {
+    transform: translate(2px, -2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .link-card:hover {
+    transform: none;
+  }
+}
+.link-card:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 14px rgba(232, 196, 106, 0.22);
+}
+.link-card:focus-visible {
+  outline: 2px solid #f6dc8e;
+  outline-offset: 2px;
+}
+
+/* Сітка карток-посилань ("Практика", посилання контент-блоку) — 3 колонки
+   на десктопі, 2 на планшеті, 1 на телефоні. */
+.link-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .link-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .link-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

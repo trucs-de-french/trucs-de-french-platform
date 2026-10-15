@@ -1115,9 +1115,9 @@ export function TaskConfigFields({
                     href={linkPreview.config.url || "#"}
                     download={linkPreview.config.download}
                     icon={meta.icon}
-                    name={linkPreview.title || "Без назви"}
+                    title={linkPreview.title || "Без назви"}
                     subtitle={description || linkTaskDefaultSubtitle(linkPreview.config)}
-                    className="pointer-events-none self-start"
+                    className="pointer-events-none"
                   />
                 );
               })()}

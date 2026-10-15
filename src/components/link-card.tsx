@@ -1,38 +1,57 @@
-import type { LucideIcon } from "lucide-react";
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
 
-// Спільна картка-посилання — той самий вигляд для фіксованої "Практика"
-// (scene_links) і для завдань типу "link" у списку "Завдання"
-// (scenes/[sceneId]/page.tsx), щоб вигляд ніколи не розходився між двома
-// місцями використання.
+// Спільна темно-скляна картка-посилання — один вигляд для "Практики"
+// (scene_links, і фіксованої, і всередині контент-блоку), задач типу
+// "link"/"game" (студентська сторінка/DELF/матеріали через exercise-
+// block.tsx) і прев'ю в конструкторі (task-config-fields.tsx), щоб вигляд
+// ніколи не розходився між місцями використання. Стилі — .link-card*
+// (globals.css), фіксовані кольори, однакові в обох темах сайту і з/без
+// фону курсу (той самий підхід, що .scene-pdf-button/.scene-fullscreen-btn).
 export function LinkCard({
   href,
   download,
   icon: Icon,
-  name,
+  title,
   subtitle,
+  variant = "default",
   className = "",
 }: {
   href: string;
   download?: boolean;
   icon: LucideIcon;
-  name: string;
+  title: string;
   subtitle: string;
+  // "featured" — власна гра (scene_links platform "custom"): золота рамка,
+  // заповнене градієнтом коло іконки замість контурного.
+  variant?: "default" | "featured";
   className?: string;
 }) {
+  // Сьогодні download-картки відкриваються в ТІЙ Ж вкладці (атрибут
+  // download), решта — завжди в новій (target="_blank") — той самий
+  // поділ, що був і до уніфікації. Стрілка ↗ і прихований текст "(відкриється
+  // в новій вкладці)" показуються лише для другого випадку.
+  const opensInNewTab = !download;
+
   return (
     <a
       href={href}
       {...(download ? { download: true } : { target: "_blank" })}
       rel="noopener noreferrer"
-      className={`group flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 transition duration-150 hover:-translate-y-0.5 hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:border-neutral-700 dark:bg-neutral-800 ${className}`}
+      className={`link-card ${variant === "featured" ? "link-card--featured" : ""} ${className}`}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
-        <Icon size={18} />
+      <span className="link-card-icon" aria-hidden="true">
+        <Icon size={22} strokeWidth={2} />
       </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate font-heading text-base font-semibold">{name}</span>
-        <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{subtitle}</span>
+      <span className="link-card-text">
+        <span className="link-card-title">{title}</span>
+        <span className="link-card-subtitle">{subtitle}</span>
       </span>
+      {opensInNewTab && (
+        <>
+          <ArrowUpRight className="link-card-arrow" aria-hidden="true" size={18} strokeWidth={2.4} />
+          <span className="sr-only">(відкриється в новій вкладці)</span>
+        </>
+      )}
     </a>
   );
 }

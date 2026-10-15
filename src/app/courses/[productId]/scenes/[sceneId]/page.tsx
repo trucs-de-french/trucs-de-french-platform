@@ -1,11 +1,11 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { Puzzle, Layers, Gamepad2, ExternalLink, type LucideIcon } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
-import { resolveLinkTaskIcon, linkTaskDefaultSubtitle } from "@/lib/link-task-icon";
+import { resolveLinkTaskIcon, linkTaskDefaultSubtitle, resolveSceneLinkMeta } from "@/lib/link-task-icon";
 import {
   sanitizeConfigForStudent,
   sanitizeMatchingForPractice,
@@ -52,7 +52,6 @@ import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
-import { STUDENT_LINK_BUTTON } from "@/lib/button-styles";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -107,19 +106,6 @@ const TYPES_WITH_TYPE_BADGE = ["game"];
 
 // ERROR_REVIEW_EXCLUDED_TASK_TYPES — перенесено в error-review.ts (reviewMode()
 // має знати про винятки, не лише фільтр рендеру тут).
-
-// platform у scene_links — НЕ той самий домен, що LinkPlatform/PlatformIcon
-// (lib/platform.ts, для config.platform завдань типу link/embed:
-// youtube/genially/custom за доменом URL) — тут окрема, вужча БД-колонка з
-// CHECK-обмеженням рівно на 3 значення (0001_init.sql, розширено 0043
-// custom для власних HTML-ігор): 'quizlet' | 'wordwall' | 'custom'.
-// Fallback (ключа немає) — суто захисний, БД інших значень не пропустить.
-const SCENE_LINK_PLATFORM_META: Record<string, { icon: LucideIcon; label: string }> = {
-  wordwall: { icon: Puzzle, label: "Wordwall" },
-  quizlet: { icon: Layers, label: "Quizlet" },
-  custom: { icon: Gamepad2, label: "Власна гра" },
-};
-const DEFAULT_SCENE_LINK_META = { icon: ExternalLink, label: "Посилання" };
 
 type MistakeRow = {
   id: string;
@@ -699,22 +685,21 @@ export default async function ScenePage({
       ) : (
         <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
       )}
-      {/* auto-fill(minmax(12rem,1fr)) — кілька карток у ряд на широкому
-          екрані, по одній на всю ширину на мобільних. mt-3 (не H2_TO_CONTENT/
-          mt-4) під баром — STANDALONE-варіант скляного бару (globals.css,
-          SectionHeaderBar) свідомо на 12px, а не 16px. */}
-      <div
-        className={`${onBackground ? "mt-3" : H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}
-      >
+      {/* link-card-grid — 3/2/1 колонки (desktop/tablet/phone), globals.css.
+          mt-3 (не H2_TO_CONTENT/mt-4) під баром — STANDALONE-варіант
+          скляного бару (globals.css, SectionHeaderBar) свідомо на 12px, а
+          не 16px. */}
+      <div className={`${onBackground ? "mt-3" : H2_TO_CONTENT} link-card-grid`}>
         {linkList.map((link) => {
-          const meta = SCENE_LINK_PLATFORM_META[link.platform] ?? DEFAULT_SCENE_LINK_META;
+          const meta = resolveSceneLinkMeta(link.platform);
           return (
             <LinkCard
               key={link.id}
               href={link.url}
               icon={meta.icon}
-              name={link.label ?? meta.label}
+              title={link.label ?? meta.label}
               subtitle={meta.label}
+              variant={meta.featured ? "featured" : "default"}
             />
           );
         })}
@@ -842,14 +827,12 @@ export default async function ScenePage({
               )}
 
               {task.type === "game" && task.games?.embed_url && (
-                <a
+                <LinkCard
                   href={task.games.embed_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 self-start ${STUDENT_LINK_BUTTON}`}
-                >
-                  Відкрити гру ({task.games.provider})
-                </a>
+                  icon={Gamepad2}
+                  title="Відкрити гру"
+                  subtitle={task.games.provider}
+                />
               )}
 
               {task.type === "link" &&
@@ -862,9 +845,8 @@ export default async function ScenePage({
                       href={config.url!}
                       download={config.download}
                       icon={meta.icon}
-                      name={task.title}
+                      title={task.title}
                       subtitle={description || linkTaskDefaultSubtitle(config)}
-                      className="self-start"
                     />
                   );
                 })()}
