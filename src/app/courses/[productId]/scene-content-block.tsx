@@ -5,7 +5,8 @@ import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { ScriptSection } from "./scenes/[sceneId]/script-section";
 import { collectVideoVocab, type VocabItem } from "@/lib/vocab";
-import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
+import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
+import { GlassBlock } from "@/components/glass-block";
 import { EmbedFrame } from "@/components/embed-frame";
 import { LinkCard } from "@/components/link-card";
 import { resolveSceneLinkMeta } from "@/lib/link-task-icon";
@@ -74,9 +75,9 @@ export function SceneContentBlock({
   if (!contentBlockHasRenderableContent(block)) return null;
 
   return (
-    <section className={EXERCISE_BLOCK_CLASS}>
+    <GlassBlock>
       <SceneContentBlockContent block={block} sceneDialogue={sceneDialogue} />
-    </section>
+    </GlassBlock>
   );
 }
 

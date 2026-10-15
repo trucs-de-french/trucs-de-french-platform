@@ -10,7 +10,8 @@ import { isExerciseType } from "@/components/exercises/exercise-card";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
-import { EXERCISE_BLOCK_CLASS, SHARED_CONTENT_PANEL } from "@/components/task-card-style";
+import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
+import { GlassBlock } from "@/components/glass-block";
 import { EmbedFrame } from "@/components/embed-frame";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
@@ -65,7 +66,6 @@ type SceneDialogueLine = { text: string; translationUk?: string | null; vocab?: 
 export function TaskGroupBlock({
   group,
   tasks,
-  bare = false,
   extraSharedContent = null,
   isDelf = false,
   sceneDialogue,
@@ -77,17 +77,12 @@ export function TaskGroupBlock({
   // ExerciseBlock нижче. За замовчуванням false (звичайний блок сцени чи
   // матеріалу); delf-test-tasks.tsx передає true.
   isDelf?: boolean;
-  // true — коли групу прикріплено до scene_content_block і сторінка сцени
-  // сама малює ОДНУ спільну <section className={EXERCISE_BLOCK_CLASS}>
-  // навколо контенту блоку + цього компонента: тоді TaskGroupBlock не додає
-  // власної секції/рамки, лише свій вміст (спільний контент групи, якщо є,
-  // список задач, підсумок балів) — інакше картка розпадалась би на дві
-  // (контент-блок окремо, група окремо), саме той баг, що виправляє ця
-  // задача.
-  bare?: boolean;
   // Вміст САМОГО scene_content_block (SceneContentBlockContent з
   // panelForText) — рендериться ПЕРЕД власним контентом групи, у межах
-  // тієї самої секції, лише коли bare (прикріплена група).
+  // тієї самої спільної скляної картки, коли групу прикріплено до
+  // content-блоку (сторінка сцени передає його сюди замість малювати
+  // окрему зовнішню рамку — інакше картка розпадалась би на дві, саме
+  // той баг, що виправляє ця задача).
   extraSharedContent?: ReactNode;
 }) {
   const [results, setResults] = useState<Record<string, GradeResult>>({});
@@ -127,13 +122,18 @@ export function TaskGroupBlock({
   const hasOwnSharedContent = contentBlockHasRenderableContent(group);
   const hasSharedContent = hasOwnSharedContent || !!extraSharedContent;
 
+  // Правило розміщення назви (детальніше — коментар біля suppressTitle
+  // нижче): рівно одна видима задача в групі → її назва йде в бар
+  // GlassBlock; кілька задач → бар без назви.
+  const titleForBar = visibleTasks.length === 1 ? visibleTasks[0] : undefined;
+
   // Ні спільного контенту (ні свого, ні переданого зовні), ні жодної
   // задачі, що реально щось покаже — показувати голу рамку немає сенсу.
-  // У bare-режимі викликач (сторінка сцени) і так уже перевірив те саме
-  // перед викликом — цей guard тут лише для звичайного (не bare) виклику.
-  // Хуки (useState/useMemo) вище вже викликані безумовно — це не порушує
-  // Rules of Hooks.
-  if (!bare && !hasSharedContent && visibleTasks.length === 0) return null;
+  // Коли групу прикріплено до content-блоку, викликач (сторінка сцени) і
+  // так уже перевірив те саме перед викликом — цей guard тут безпечно
+  // повторний. Хуки (useState/useMemo) вище вже викликані безумовно — це
+  // не порушує Rules of Hooks.
+  if (!hasSharedContent && visibleTasks.length === 0) return null;
 
   // Підсумок рахуємо лише коли ВІДПОВІЛИ на всі задачі блоку, що взагалі
   // мають бали (essay_check/callout/embed/link/game серед tasks ніколи не
@@ -286,6 +286,18 @@ export function TaskGroupBlock({
                 // Лишається видимим лише один загальний підсумок блоку нижче.
                 hidePoints={group.points_mode === "flat"}
                 isDelf={isDelf}
+                // Правило розміщення назви (єдине для всіх типів вправ,
+                // task-group-block.tsx/glass-block.tsx): блок має РІВНО один
+                // бар-заголовок. Сама група назви не має (адмінська мітка,
+                // студенту ніколи не показується) — тож коли в групі РІВНО
+                // одна видима задача, саме її назва переїжджає в бар
+                // GlassBlock нижче (titleForBar), а власний інлайн-заголовок
+                // ЦІЄЇ задачі (лише в link/game/embed) пригнічується тут,
+                // щоб не дублювався. Коли задач кілька — бар лишається без
+                // назви (однієї "головної" серед кількох немає), кожна
+                // задача й далі показує власний маленький підзаголовок
+                // усередині спільної панелі, як і раніше.
+                suppressTitle={task.id === titleForBar?.id}
               />
             </div>
           ))}
@@ -293,18 +305,18 @@ export function TaskGroupBlock({
       )}
 
       {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
-        <p className="border-t border-gray-200 pt-4 text-sm font-medium md:pt-6 dark:border-neutral-700">
+        <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
-          <span className="font-normal text-neutral-500 dark:text-neutral-400">
+          <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
             {pointsEarned} з {pointsPossible} {pluralizePoints(pointsPossible)}
           </span>
         </p>
       )}
 
       {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
-        <p className="border-t border-gray-200 pt-4 text-sm font-medium md:pt-6 dark:border-neutral-700">
+        <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
-          <span className="font-normal text-neutral-500 dark:text-neutral-400">
+          <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
             {flatEarned} з {flatPoints} {pluralizePoints(flatPoints)}
           </span>
         </p>
@@ -312,11 +324,9 @@ export function TaskGroupBlock({
     </>
   );
 
-  // bare — сторінка сцени сама малює зовнішню <section className={EXERCISE_BLOCK_CLASS}>
-  // навколо контенту прикріпленого scene_content_block і цього вмісту разом
-  // (одна спільна картка); інакше (звичайний виклик зі списку "Завдання") —
-  // TaskGroupBlock малює свою секцію сам, як і раніше.
-  if (bare) return body;
-
-  return <section className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>{body}</section>;
+  return (
+    <GlassBlock title={titleForBar?.title}>
+      <div className={EXERCISE_STACK}>{body}</div>
+    </GlassBlock>
+  );
 }

@@ -8,7 +8,7 @@ import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-pre
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { GlassBlock } from "@/components/glass-block";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -205,13 +205,16 @@ export default async function MaterialPage({
                   <TaskGroupBlock group={row.group} tasks={row.members} />
                 </li>
               ) : !taskHasRenderableContent(row.task) ? null : (
-                <li
-                  key={row.task.id}
-                  className={`${EXERCISE_STACK} ${
-                    row.task.type === "callout" || row.task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
-                  }`}
-                >
-                  <ExerciseBlock task={row.task} />
+                <li key={row.task.id} className="scroll-mt-4">
+                  {row.task.type === "callout" || row.task.type === "link" || row.task.type === "game" ? (
+                    <ExerciseBlock task={row.task} />
+                  ) : (
+                    <GlassBlock title={row.task.title}>
+                      <div className={EXERCISE_STACK}>
+                        <ExerciseBlock task={row.task} suppressTitle />
+                      </div>
+                    </GlassBlock>
+                  )}
                 </li>
               )
             )}

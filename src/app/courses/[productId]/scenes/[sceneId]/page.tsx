@@ -52,11 +52,9 @@ import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
-import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import {
   SceneContentBlock,
   SceneContentBlockContent,
@@ -101,10 +99,6 @@ type TaskRow = {
 // Технічна назва типу (напр. "embed") — лише для link/game, де вона реально
 // підказує студенту, із чим він має справу (зовнішнє посилання/гра). Для
 // embed прибрано: студент бачить заголовок вправи ("Jeu" тощо) і сам
-// вміст, службова назва типу йому не потрібна. Той самий підхід, що вже
-// в exercise-block.tsx.
-const TYPES_WITH_TYPE_BADGE = ["game"];
-
 // ERROR_REVIEW_EXCLUDED_TASK_TYPES — перенесено в error-review.ts (reviewMode()
 // має знати про винятки, не лише фільтр рендеру тут).
 
@@ -732,123 +726,23 @@ export default async function ScenePage({
           const config = (task.config ?? {}) as LinkEmbedConfig;
           if (!taskHasRenderableContent(task)) return null;
 
-          // true_false — референс нового уніфікованого скляного вигляду
-          // (glass-block.tsx): заголовок задачі переїхав у бар GlassBlock
-          // замість інлайн <p> нижче, панель — токени --glass-* (globals.css)
-          // замість EXERCISE_BLOCK_CLASS. Решта типів лишається на старій
-          // розмітці до наступного етапу уніфікації.
-          const isGlassReference = task.type === "true_false";
+          // callout/link/game мають власне самодостатнє оформлення
+          // (кольоровий блок CalloutExercise, темно-скляна LinkCard) — друга
+          // картка-обгортка навколо них дублювала б рамку/тінь. Усі інші
+          // типи (включно з embed — голий iframe без власного оформлення)
+          // ідуть крізь GlassBlock: заголовок задачі в барі (замість
+          // колишнього інлайн <p>), тіло — токени --glass-* (globals.css)
+          // замість EXERCISE_BLOCK_CLASS.
+          const skipGlass = task.type === "callout" || task.type === "link" || task.type === "game";
 
           return (
-            <li
-              key={task.id}
-              id={`task-${task.id}`}
-              className={
-                isGlassReference
-                  ? "scroll-mt-4"
-                  : `scroll-mt-4 ${EXERCISE_STACK} ${
-                      task.type === "callout" || task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
-                    }`
-              }
-            >
-              {isGlassReference ? (
-                <GlassBlock title={task.title}>
-                  <div className={EXERCISE_STACK}>
-                    <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
-                    {isExerciseType(task.type) && (
-                      <ExerciseCard
-                        taskId={task.id}
-                        type={task.type}
-                        config={sanitizeConfigForStudent(task.type, task.config ?? {})}
-                        pointsVisible={task.points_visible}
-                      />
-                    )}
-                  </div>
-                </GlassBlock>
-              ) : (
+            <li key={task.id} id={`task-${task.id}`} className="scroll-mt-4">
+              {skipGlass ? (
                 <>
-                  {/* link: назва й бейдж типу вже на самій LinkCard нижче —
-                      окремий заголовок над карткою показував би title двічі. */}
-                  {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && (
-                    <div>
-                      {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
-                        <span className="student-on-bg text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                          {task.type}
-                        </span>
-                      )}
-                      <p className="student-on-bg font-medium">{task.title}</p>
-                    </div>
-                  )}
-
-                  <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
-
-                  {task.type === "vocab_quiz" && (
-                <ExerciseErrorBoundary>
-                  <div className="flex flex-col gap-2">
-                    <div>
-                      <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}</p>
-                      <p className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}>
-                        {DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
-                      </p>
-                    </div>
-                    {(() => {
-                      const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
-                      return (
-                        <VocabQuizExercise
-                          vocab={quizVocab}
-                          initialQuestions={buildQuizQuestions(quizVocab)}
-                        />
-                      );
-                    })()}
-                  </div>
-                </ExerciseErrorBoundary>
-              )}
-
-              {task.type === "error_correction" && (
-                <ExerciseErrorBoundary>
-                  <ErrorReviewBlock entries={errorReviewEntries} emptyState={errorReviewEmptyState} />
-                </ExerciseErrorBoundary>
-              )}
-
-              {task.type === "flip_cards" && (
-                <ExerciseErrorBoundary>
-                  <FlipCardsExercise
-                    config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
-                  />
-                </ExerciseErrorBoundary>
-              )}
-
-              {task.type === "essay_check" && (
-                <ExerciseErrorBoundary>
-                  <EssayCheckExercise
-                    taskId={task.id}
-                    prompt={(task.config as { prompt?: string } | null)?.prompt}
-                    config={(task.config ?? {}) as Record<string, unknown>}
-                  />
-                </ExerciseErrorBoundary>
-              )}
-
-              {task.type === "callout" && (
-                <ExerciseErrorBoundary>
-                  <CalloutExercise config={task.config as unknown as CalloutConfig} />
-                </ExerciseErrorBoundary>
-              )}
-
-              {task.type === "phonetics" && (
-                <ExerciseErrorBoundary>
-                  <PhoneticsExercise
-                    config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
-                  />
-                </ExerciseErrorBoundary>
-              )}
-
-                  {isExerciseType(task.type) && !isGlassReference && (
-                    <ExerciseCard
-                      taskId={task.id}
-                      type={task.type}
-                      config={sanitizeConfigForStudent(task.type, task.config ?? {})}
-                      pointsVisible={task.points_visible}
-                    />
+                  {task.type === "callout" && (
+                    <ExerciseErrorBoundary>
+                      <CalloutExercise config={task.config as unknown as CalloutConfig} />
+                    </ExerciseErrorBoundary>
                   )}
 
                   {task.type === "game" && task.games?.embed_url && (
@@ -875,11 +769,80 @@ export default async function ScenePage({
                         />
                       );
                     })()}
-
-                  {task.type === "embed" && config.url && (
-                    <EmbedFrame url={config.url} height={config.height ?? 480} />
-                  )}
                 </>
+              ) : (
+                <GlassBlock title={task.title}>
+                  <div className={EXERCISE_STACK}>
+                    <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
+
+                    {task.type === "vocab_quiz" && (
+                      <ExerciseErrorBoundary>
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}</p>
+                            <p className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}>
+                              {DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+                            </p>
+                          </div>
+                          {(() => {
+                            const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
+                            return (
+                              <VocabQuizExercise
+                                vocab={quizVocab}
+                                initialQuestions={buildQuizQuestions(quizVocab)}
+                              />
+                            );
+                          })()}
+                        </div>
+                      </ExerciseErrorBoundary>
+                    )}
+
+                    {task.type === "error_correction" && (
+                      <ExerciseErrorBoundary>
+                        <ErrorReviewBlock entries={errorReviewEntries} emptyState={errorReviewEmptyState} />
+                      </ExerciseErrorBoundary>
+                    )}
+
+                    {task.type === "flip_cards" && (
+                      <ExerciseErrorBoundary>
+                        <FlipCardsExercise
+                          config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
+                        />
+                      </ExerciseErrorBoundary>
+                    )}
+
+                    {task.type === "essay_check" && (
+                      <ExerciseErrorBoundary>
+                        <EssayCheckExercise
+                          taskId={task.id}
+                          prompt={(task.config as { prompt?: string } | null)?.prompt}
+                          config={(task.config ?? {}) as Record<string, unknown>}
+                        />
+                      </ExerciseErrorBoundary>
+                    )}
+
+                    {task.type === "phonetics" && (
+                      <ExerciseErrorBoundary>
+                        <PhoneticsExercise
+                          config={(task.config ?? { items: [] }) as unknown as PhoneticsConfig}
+                        />
+                      </ExerciseErrorBoundary>
+                    )}
+
+                    {isExerciseType(task.type) && (
+                      <ExerciseCard
+                        taskId={task.id}
+                        type={task.type}
+                        config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                        pointsVisible={task.points_visible}
+                      />
+                    )}
+
+                    {task.type === "embed" && config.url && (
+                      <EmbedFrame url={config.url} height={config.height ?? 480} />
+                    )}
+                  </div>
+                </GlassBlock>
               )}
             </li>
           );
@@ -941,11 +904,10 @@ export default async function ScenePage({
               // фон/смугу так само НЕ додає для аудіо/відео/embed/лінків.
               if (hasAttachedContent) {
                 return (
-                  <section key={`content-${row.ref_id}`} className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
+                  <section key={`content-${row.ref_id}`}>
                     <TaskGroupBlock
                       group={attachedGroup}
                       tasks={attachedMembers}
-                      bare
                       sceneDialogue={dialogue}
                       extraSharedContent={
                         blockHasOwnContent ? (

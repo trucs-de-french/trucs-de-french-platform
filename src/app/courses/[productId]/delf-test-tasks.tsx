@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { GlassBlock } from "@/components/glass-block";
 import { H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -133,14 +133,22 @@ export async function DelfTestTasks({
     }
     const task = row.task;
     if (!taskHasRenderableContent(task)) return null;
+    // Той самий поділ, що в page.tsx (сцени): callout/link/game мають
+    // власне самодостатнє оформлення, решта — крізь GlassBlock, заголовок
+    // задачі в барі (suppressTitle гасить колишній інлайн <p>, що й так
+    // малює лише ExerciseBlock для embed).
+    const skipGlass = task.type === "callout" || task.type === "link" || task.type === "game";
     return (
-      <li
-        key={task.id}
-        className={`${EXERCISE_STACK} ${
-          task.type === "callout" || task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
-        }`}
-      >
-        <ExerciseBlock task={task} isDelf />
+      <li key={task.id} className="scroll-mt-4">
+        {skipGlass ? (
+          <ExerciseBlock task={task} isDelf />
+        ) : (
+          <GlassBlock title={task.title}>
+            <div className={EXERCISE_STACK}>
+              <ExerciseBlock task={task} isDelf suppressTitle />
+            </div>
+          </GlassBlock>
+        )}
       </li>
     );
   }

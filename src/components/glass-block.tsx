@@ -18,8 +18,13 @@ export function GlassBlock({
   children: ReactNode;
   className?: string;
 }) {
+  // "glass-block" завжди на самому собі (не лише те, що передав викликач)
+  // — токени --glass-* (globals.css) для [data-scene-bg="dark"] скоуплені
+  // саме на цей клас, тож будь-який GlassBlock сам себе ідентифікує як
+  // "справжня скляна панель", незалежно від того, чи викликач додав
+  // власний клас зверху.
   return (
-    <div className={className}>
+    <div className={`glass-block ${className}`.trim()}>
       {title && (
         <div className="glass-block-header">
           <h2 className="glass-block-title">{title}</h2>
