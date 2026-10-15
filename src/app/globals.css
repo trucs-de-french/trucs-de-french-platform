@@ -1535,81 +1535,123 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
 }
 
-/* Приглушена кнопка "На весь екран" під відео, коли активний фон курсу
-   (video-player.tsx/video-frame.tsx) — темне скло того самого сімейства,
-   що скляні бари/золотий тогл вище, НЕ спільний FULLSCREEN_BUTTON_CLASS
-   (use-fullscreen-wrapper.ts), щоб не зачепити кнопку під iframe в інших
-   місцях без фону. Сама кнопка — сиблінг відео/iframe, не їхній предок,
-   тож transform/filter тут нічого не ламають у pseudo-fullscreen.
-
-   [data-scene-bg] .fullscreen-btn — ТА САМА стилізація для решти кнопок
-   "На весь екран" у task/exercise embeds (EmbedFrame, embed-frame.tsx),
-   коли активний фон курсу: FULLSCREEN_BUTTON_CLASS отримав стабільний
-   гачок-клас "fullscreen-btn" саме для цього, і щоразу приєднаний тут ДО
-   .scene-fullscreen-btn (один список оголошень на правило — щоб стилі не
-   розійшлись згодом), а не окремим набором. [data-scene-bg] — та сама
-   атрибутна позначка на student-bg-wrapper (page.tsx), що вже визначає
-   .student-on-bg вище: присутня (dark/light — байдуже) лише коли фон
-   активний, тож без фону FULLSCREEN_BUTTON_CLASS лишається байтово тим
-   самим, що й сьогодні. */
-.scene-fullscreen-btn,
-[data-scene-bg] .fullscreen-btn {
+/* Кнопка "На весь екран" під відео/iframe-ембедами (video-player.tsx,
+   video-frame.tsx, embed-frame.tsx) — ОДИН спільний клас-гачок
+   "fullscreen-btn" (FULLSCREEN_BUTTON_CLASS, use-fullscreen-wrapper.ts) і
+   ОДНЕ визначення стилю, перемикається ТЕМОЮ САЙТУ (.dark/.light на
+   <html>), тим самим принципом, що скляні бари/токени вище — НЕ
+   [data-scene-bg] (яскравістю фонової картинки курсу): кнопка однакова
+   незалежно від того, активний фон курсу чи ні. Сама кнопка — сиблінг
+   відео/iframe, не їхній предок, тож жоден hover/active тут не чіпає
+   transform/filter/backdrop-filter (pseudo-fullscreen-safe). Світлі
+   значення нижче — "variant 5", дефолт теми; темні — попередній вигляд
+   (темне скло/золото), лише з тим самим золотим бейджем-іконкою
+   (.glass-bar-badge), що й у скляних барах. */
+.fullscreen-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.93);
+  border: 1px solid rgba(184, 144, 47, 0.65);
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  border-radius: 12px;
+  padding: 0 16px 0 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: #b8902f;
+    box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.35), 0 4px 14px rgba(0, 0, 0, 0.2);
+  }
+}
+.fullscreen-btn:active {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.fullscreen-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+/* Темна тема — попередній темно-скляний золотий вигляд, байтово ті самі
+   значення, що були в .scene-fullscreen-btn/[data-scene-bg] .fullscreen-btn
+   раніше, лише перемкнуті на .dark замість [data-scene-bg]. */
+.dark .fullscreen-btn {
   background: rgba(10, 16, 48, 0.82);
-  border: 1px solid rgba(243, 217, 139, 0.5);
+  border-color: rgba(243, 217, 139, 0.5);
   color: #f6dc8e;
+  font-family: inherit;
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.02em;
   border-radius: 10px;
-  padding: 8px 14px;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
-    transform 0.15s ease;
+  padding: 8px 14px 8px 8px;
+  box-shadow: none;
 }
-@media (pointer: coarse) {
-  .scene-fullscreen-btn,
-  [data-scene-bg] .fullscreen-btn {
-    min-height: 40px;
-  }
-}
-/* Було: hover міняв фон на напівпрозорий СВІТЛИЙ золотий
-   (rgba(232,196,106,0.18)) замість темного — на світлому/фото тлі курсу
-   позаду кнопки це читалось як "висвітлення", і золотий текст/рамка
-   (обидва теж світло-золоті) губились на такому ж світлому фоні. Тепер фон
-   лишається темним, яскравішають лише рамка/текст/glow. */
 @media (hover: hover) {
-  .scene-fullscreen-btn:hover,
-  [data-scene-bg] .fullscreen-btn:hover {
+  .dark .fullscreen-btn:hover {
     background: rgba(10, 16, 48, 0.92);
     border-color: #f6dc8e;
     color: #fff0b8;
     box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
-    transform: translateY(-1px);
   }
 }
-.scene-fullscreen-btn:active,
-[data-scene-bg] .fullscreen-btn:active {
+.dark .fullscreen-btn:active {
   background: rgba(6, 10, 32, 0.9);
   border-color: #e8c46a;
   box-shadow: none;
-  transform: translateY(0);
 }
-.scene-fullscreen-btn:focus-visible,
-[data-scene-bg] .fullscreen-btn:focus-visible {
+.dark .fullscreen-btn:focus-visible {
   outline: 2px solid #e8c46a;
   outline-offset: 2px;
 }
-/* Той самий відступ під вмістом, що у відео-кнопки (margin-top: 10px
-   inline, video-player.tsx/video-frame.tsx) — тут одним CSS-правилом,
-   бо FULLSCREEN_BUTTON_CLASS спільний для БАГАТЬОХ місць виклику
-   (embed-frame.tsx) без власного пропа onBackground. Картка embed'ів
-   (EXERCISE_BLOCK_CLASS/_SURFACE_CLASS) має свій padding (p-4 md:p-6) —
-   на відміну від .scene-card під відео, їй не потрібна окрема
-   .scene-fullscreen-btn-row-обгортка, щоб кнопку не зрізало краєм. */
-[data-scene-bg] .fullscreen-btn {
-  margin-top: 10px;
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .fullscreen-btn {
+    background: rgba(10, 16, 48, 0.82);
+    border-color: rgba(243, 217, 139, 0.5);
+    color: #f6dc8e;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    border-radius: 10px;
+    padding: 8px 14px 8px 8px;
+    box-shadow: none;
+  }
+  @media (hover: hover) {
+    :root:not(.light) .fullscreen-btn:hover {
+      background: rgba(10, 16, 48, 0.92);
+      border-color: #f6dc8e;
+      color: #fff0b8;
+      box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root:not(.light) .fullscreen-btn:active {
+    background: rgba(6, 10, 32, 0.9);
+    border-color: #e8c46a;
+    box-shadow: none;
+  }
+  :root:not(.light) .fullscreen-btn:focus-visible {
+    outline: 2px solid #e8c46a;
+    outline-offset: 2px;
+  }
+}
+@media (max-width: 640px) {
+  .fullscreen-btn {
+    font-size: 15px;
+  }
+}
+/* Бейдж-іконка всередині кнопки — той самий .glass-bar-badge, що й у
+   скляних барах (однаковий колір/градієнт в обох темах, без дублювання
+   значень): лише власний margin-right скидаємо, бо тут відстань до
+   тексту вже дає gap кнопки (10px), а не margin бейджа (14px, як у барі,
+   де .glass-bar-left без власного gap). */
+.fullscreen-btn .glass-bar-badge {
+  margin-right: 0;
 }
 
 /* Рядок-обгортка кнопки на фоні курсу — звичайний in-flow нащадок усередині

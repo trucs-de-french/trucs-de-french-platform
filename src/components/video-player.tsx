@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
-import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
+import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
 import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
@@ -171,7 +171,6 @@ export function VideoPlayer({
   title,
   poster,
   className = "",
-  onBackground = false,
 }: {
   src: string;
   subtitles?: VideoSubtitleTrack[];
@@ -183,10 +182,6 @@ export function VideoPlayer({
   title?: string;
   poster?: string;
   className?: string;
-  // Чи активний фон курсу (page.tsx) — лише приглушує стиль кнопки "На
-  // весь екран" під відео (.scene-fullscreen-btn, globals.css); жодної
-  // іншої поведінки не змінює.
-  onBackground?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -1078,33 +1073,25 @@ export function VideoPlayer({
       </div>
 
       {/* Та сама кнопка, що й під iframe-плеєрами (video-frame.tsx,
-          embed-frame.tsx, FULLSCREEN_BUTTON_CLASS) — лише на телефоні
+          embed-frame.tsx, клас "fullscreen-btn") — лише на телефоні
           (md:hidden): на планшеті/комп'ютері вистачає кнопки в самій
           панелі керування вище. Перемикає ТОЙ САМИЙ fullscreen-стан
           (handleFullscreenToggle), тож обидві кнопки синхронні. Схована під
           час fullscreen/псевдо-fullscreen — плеєр сам займає весь екран,
-          і кнопка знову з'являється після виходу. */}
-      {!(isFullscreen || isPseudoFullscreen) &&
-        (onBackground ? (
-          // Власний padded рядок (globals.css, .scene-fullscreen-btn-row) —
-          // кнопка лишається повністю всередині .scene-card (page.tsx), не
-          // впритул до його нижнього округленого кута.
-          <div className="scene-fullscreen-btn-row md:hidden">
-            <button type="button" onClick={() => void handleFullscreenToggle()} className="scene-fullscreen-btn">
-              <Maximize size={16} />
-              На весь екран
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => void handleFullscreenToggle()}
-            className={`${FULLSCREEN_BUTTON_CLASS} md:hidden`}
-          >
-            <Maximize size={16} />
+          і кнопка знову з'являється після виходу. Власний padded рядок
+          (globals.css, .scene-fullscreen-btn-row) — кнопка лишається
+          повністю всередині .glass-panel--video (page.tsx), не впритул до
+          його нижнього округленого кута (панель без власного padding). */}
+      {!(isFullscreen || isPseudoFullscreen) && (
+        <div className="scene-fullscreen-btn-row md:hidden">
+          <button type="button" onClick={() => void handleFullscreenToggle()} className="fullscreen-btn">
+            <span className="glass-bar-badge" aria-hidden="true">
+              <Maximize size={16} strokeWidth={2.4} />
+            </span>
             На весь екран
           </button>
-        ))}
+        </div>
+      )}
     </div>
   );
 }

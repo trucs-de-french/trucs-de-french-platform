@@ -632,14 +632,12 @@ export default async function ScenePage({
         subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
         vocab={collectVideoVocab(dialogue)}
         title={scene.title}
-        onBackground={onBackground}
       />
     ) : (
       <VideoFrame
         src={toEmbedUrl(scene.video_url, scene.video_provider)}
         title={scene.title}
         provider={scene.video_provider ?? "youtube"}
-        onBackground={onBackground}
       />
     );
 

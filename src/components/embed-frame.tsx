@@ -47,7 +47,9 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
         .
       </p>
       <button type="button" onClick={toggle} className={FULLSCREEN_BUTTON_CLASS}>
-        <Maximize size={16} />
+        <span className="glass-bar-badge" aria-hidden="true">
+          <Maximize size={16} strokeWidth={2.4} />
+        </span>
         {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
       </button>
     </div>

@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 // Спільний стиль кнопки "На весь екран" під рамкою (video-frame.tsx,
-// embed-frame.tsx) — у дусі STUDENT_BUTTON_SECONDARY (button-styles.ts),
-// лише з min-h-11 (зона дотику ≥44px, якої в самій константі замало).
-// "fullscreen-btn" — стабільний гачок-клас (без власних стилів тут): на
-// фоні курсу [data-scene-bg] .fullscreen-btn (globals.css) перекриває ці
-// утиліти темно-скляним золотим виглядом, тим самим списком оголошень, що
-// .scene-fullscreen-btn (відео) — без фону нічого не змінюється.
-export const FULLSCREEN_BUTTON_CLASS =
-  "fullscreen-btn inline-flex min-h-11 items-center gap-1.5 self-end rounded border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/70";
+// video-player.tsx, embed-frame.tsx) — "fullscreen-btn" — єдиний клас-гачок
+// для ВСІХ таких кнопок, уся візуальна стилізація (фон/рамка/бейдж/
+// світла-темна тема) живе в globals.css (.fullscreen-btn), перемикається
+// темою сайту (.dark/.light), не залежить від фону курсу. self-end —
+// позиціювання кнопки в flex-col-обгортці викликача.
+export const FULLSCREEN_BUTTON_CLASS = "fullscreen-btn inline-flex self-end";
 
 // Спільна логіка повного екрана для iframe-обгорток студентської частини
 // (video-frame.tsx, embed-frame.tsx) — винесена з video-frame.tsx, щоб не

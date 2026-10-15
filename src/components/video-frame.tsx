@@ -10,7 +10,7 @@ import {
   toGdriveOpenUrl,
 } from "@/lib/video";
 import { Z_MODAL } from "@/lib/z-layers";
-import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
+import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
 
 // "Телефон" — не будь-який touch (планшети лишаються на вбудованому
 // плеєрі й fullscreen-кнопці, як комп'ютер): дотиковий екран ТА (вузька
@@ -41,7 +41,7 @@ function getIsPhoneServerSnapshot(): "unknown" {
 // (подвійне керування, обрізаний кадр, див. попередні коміти); тут —
 // лише посилання, що відкривають відео В САМОМУ Google Drive (нова
 // вкладка/застосунок), жодного iframe.
-function GdrivePoster({ fileId, onBackground }: { fileId: string; onBackground: boolean }) {
+function GdrivePoster({ fileId }: { fileId: string }) {
   const [thumbLoaded, setThumbLoaded] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
   const openUrl = toGdriveOpenUrl(fileId);
@@ -81,19 +81,14 @@ function GdrivePoster({ fileId, onBackground }: { fileId: string; onBackground: 
           <span className="text-xs text-white/90">Відео відкриється в Google Drive</span>
         </a>
       </div>
-      {onBackground ? (
-        <div className="scene-fullscreen-btn-row">
-          <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className="scene-fullscreen-btn">
-            <ExternalLink size={16} />
-            На весь екран
-          </a>
-        </div>
-      ) : (
-        <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className={FULLSCREEN_BUTTON_CLASS}>
-          <ExternalLink size={16} />
+      <div className="scene-fullscreen-btn-row">
+        <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className="fullscreen-btn">
+          <span className="glass-bar-badge" aria-hidden="true">
+            <ExternalLink size={16} strokeWidth={2.4} />
+          </span>
           На весь екран
         </a>
-      )}
+      </div>
     </div>
   );
 }
@@ -106,15 +101,10 @@ export function VideoFrame({
   src,
   title,
   provider,
-  onBackground = false,
 }: {
   src: string;
   title: string;
   provider: "youtube" | "gdrive";
-  // Чи активний фон курсу (page.tsx) — лише приглушує стиль кнопки "На
-  // весь екран" під відео/посиланням-постером (.scene-fullscreen-btn,
-  // globals.css); жодної іншої поведінки не змінює.
-  onBackground?: boolean;
 }) {
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: handleToggle, exitPseudoFullscreen } =
     useFullscreenWrapper();
@@ -142,7 +132,7 @@ export function VideoFrame({
 
   if (provider === "gdrive" && isPhone && GDRIVE_TOUCH_MODE === "poster") {
     const fileId = getGdriveFileId(src);
-    if (fileId) return <GdrivePoster fileId={fileId} onBackground={onBackground} />;
+    if (fileId) return <GdrivePoster fileId={fileId} />;
     // ID не розпарсився — фолбек на звичний iframe нижче, а не порожньо.
   }
 
@@ -173,23 +163,20 @@ export function VideoFrame({
           </button>
         )}
       </div>
-      {!hideFullscreenButtonForGdrivePhone &&
-        (onBackground ? (
-          // Власний padded рядок (globals.css, .scene-fullscreen-btn-row) —
-          // кнопка лишається повністю всередині .scene-card (page.tsx), не
-          // впритул до його нижнього округленого кута.
-          <div className="scene-fullscreen-btn-row">
-            <button type="button" onClick={handleToggle} className="scene-fullscreen-btn">
-              <Maximize size={16} />
-              {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
-            </button>
-          </div>
-        ) : (
-          <button type="button" onClick={handleToggle} className={FULLSCREEN_BUTTON_CLASS}>
-            <Maximize size={16} />
+      {!hideFullscreenButtonForGdrivePhone && (
+        // Власний padded рядок (globals.css, .scene-fullscreen-btn-row) —
+        // кнопка лишається повністю всередині .glass-panel--video
+        // (page.tsx), не впритул до його нижнього округленого кута
+        // (панель без власного padding).
+        <div className="scene-fullscreen-btn-row">
+          <button type="button" onClick={handleToggle} className="fullscreen-btn">
+            <span className="glass-bar-badge" aria-hidden="true">
+              <Maximize size={16} strokeWidth={2.4} />
+            </span>
             {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
           </button>
-        ))}
+        </div>
+      )}
     </div>
   );
 }
