@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
-import { ANSWER_CARD_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -118,20 +116,20 @@ export function TrueFalseExercise({
     return (
       <div
         key={s.id}
-        className="flex flex-col gap-2.5 rounded-md border border-gray-100 bg-white px-4 py-2.5 shadow-sm md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-3 dark:border-neutral-700 dark:bg-neutral-800"
+        className="glass-item-card flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-3"
       >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
-            <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+            <span className="glass-number-badge" aria-hidden="true">
               {globalIndex + 1}
             </span>
           )}
-          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]" style={{ color: "var(--glass-text)" }}>
             {frenchNbsp(s.text)}
             {/* До перевірки — лише якщо pointsVisible; після — завжди,
                 ваше підтверджене рішення. */}
             {!hidePoints && (pointsVisible || d) && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+              <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
                 {d
                   ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`
                   : `${s.points} ${pluralizePoints(s.points)}`}
@@ -146,16 +144,16 @@ export function TrueFalseExercise({
               type="button"
               disabled={locked}
               onClick={() => setAnswers((prev) => ({ ...prev, [s.id]: val }))}
-              className={`flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-1.5 text-center text-base shadow-sm transition-colors md:min-h-0 md:w-auto md:min-w-[4.5rem] ${
+              className={`flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-1.5 text-center text-base transition-colors md:min-h-0 md:w-auto md:min-w-[4.5rem] ${
                 d
                   ? val === d.correctAnswer
-                    ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                    ? "border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100"
                     : val === d.studentAnswer
-                      ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                      : ANSWER_CARD_DEFAULT
+                      ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-100"
+                      : "glass-answer-btn"
                   : answers[s.id] === val
-                    ? SELECTED_OPTION_CLASS
-                    : ANSWER_CARD_DEFAULT
+                    ? "glass-answer-btn--selected"
+                    : "glass-answer-btn"
               }`}
             >
               {val ? "Vrai" : "Faux"}
@@ -255,7 +253,7 @@ export function TrueFalseExercise({
               >
                 {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
                 {blockResult.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
                     ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
                     {pluralizePoints(blockResult.pointsPossible)})
                   </span>
@@ -360,7 +358,7 @@ export function TrueFalseExercise({
               >
                 {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
                 {single.result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
+                  <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
                     ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
                     {pluralizePoints(single.result.pointsPossible)})
                   </span>

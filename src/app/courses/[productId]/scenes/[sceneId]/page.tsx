@@ -30,6 +30,7 @@ import { CalloutExercise } from "@/components/exercises/callout";
 import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
 import { LinkCard } from "@/components/link-card";
+import { GlassBlock } from "@/components/glass-block";
 import { EmbedFrame } from "@/components/embed-frame";
 import { collectSceneVocab, collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
@@ -649,27 +650,24 @@ export default async function ScenePage({
 
   const videoNode = scene.video_url && (
     <section>
-      {onBackground ? (
-        // SCENE_CARD_CLASS — лише border-radius/overflow/box-shadow (жодних
-        // transform/filter/backdrop-filter/will-change/contain), щоб не
-        // стати containing-block для position:fixed iOS pseudo-fullscreen/
-        // Fullscreen API wrapper усередині VideoPlayer/VideoFrame.
-        <div className={SCENE_CARD_CLASS}>
-          <SectionHeaderBar title="Відео" attached />
-          <div>{videoBody}</div>
-        </div>
-      ) : (
-        <>
-          <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Відео</h2>
-          <div className={H2_TO_CONTENT}>{videoBody}</div>
-        </>
-      )}
+      {/* Завжди скляний бар+панель (раніше — лише при активному фоні
+          курсу) — уніфікований вигляд незалежно від onBackground, токени
+          --glass-* (globals.css) самі перемикаються світлий/темний через
+          [data-scene-bg]. SCENE_CARD_CLASS — лише border-radius/overflow/
+          box-shadow (жодних transform/filter/backdrop-filter/will-change/
+          contain), щоб не стати containing-block для position:fixed iOS
+          pseudo-fullscreen/Fullscreen API wrapper усередині VideoPlayer/
+          VideoFrame. */}
+      <div className={SCENE_CARD_CLASS}>
+        <SectionHeaderBar title="Відео" attached />
+        <div className="glass-panel-surface">{videoBody}</div>
+      </div>
     </section>
   );
 
   const scriptNode = (
     <section>
-      <ScriptSection dialogue={dialogue} title="Скрипт" onBackground={onBackground} />
+      <ScriptSection dialogue={dialogue} title="Скрипт" />
     </section>
   );
 
@@ -709,7 +707,7 @@ export default async function ScenePage({
 
   const vocabNode = hasVocab && (
     <section>
-      <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} onBackground={onBackground} />
+      <VocabSection vocab={sceneVocab} pdfHref={`/api/scenes/${sceneId}/vocab-pdf`} />
     </section>
   );
 
@@ -734,30 +732,57 @@ export default async function ScenePage({
           const config = (task.config ?? {}) as LinkEmbedConfig;
           if (!taskHasRenderableContent(task)) return null;
 
+          // true_false — референс нового уніфікованого скляного вигляду
+          // (glass-block.tsx): заголовок задачі переїхав у бар GlassBlock
+          // замість інлайн <p> нижче, панель — токени --glass-* (globals.css)
+          // замість EXERCISE_BLOCK_CLASS. Решта типів лишається на старій
+          // розмітці до наступного етапу уніфікації.
+          const isGlassReference = task.type === "true_false";
+
           return (
             <li
               key={task.id}
               id={`task-${task.id}`}
-              className={`scroll-mt-4 ${EXERCISE_STACK} ${
-                task.type === "callout" || task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
-              }`}
+              className={
+                isGlassReference
+                  ? "scroll-mt-4"
+                  : `scroll-mt-4 ${EXERCISE_STACK} ${
+                      task.type === "callout" || task.type === "link" ? "" : EXERCISE_BLOCK_CLASS
+                    }`
+              }
             >
-              {/* link: назва й бейдж типу вже на самій LinkCard нижче —
-                  окремий заголовок над карткою показував би title двічі. */}
-              {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && (
-                <div>
-                  {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
-                    <span className="student-on-bg text-xs uppercase text-neutral-500 dark:text-neutral-400">
-                      {task.type}
-                    </span>
+              {isGlassReference ? (
+                <GlassBlock title={task.title}>
+                  <div className={EXERCISE_STACK}>
+                    <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
+                    {isExerciseType(task.type) && (
+                      <ExerciseCard
+                        taskId={task.id}
+                        type={task.type}
+                        config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                        pointsVisible={task.points_visible}
+                      />
+                    )}
+                  </div>
+                </GlassBlock>
+              ) : (
+                <>
+                  {/* link: назва й бейдж типу вже на самій LinkCard нижче —
+                      окремий заголовок над карткою показував би title двічі. */}
+                  {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && (
+                    <div>
+                      {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
+                        <span className="student-on-bg text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                          {task.type}
+                        </span>
+                      )}
+                      <p className="student-on-bg font-medium">{task.title}</p>
+                    </div>
                   )}
-                  <p className="student-on-bg font-medium">{task.title}</p>
-                </div>
-              )}
 
-              <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
+                  <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
-              {task.type === "vocab_quiz" && (
+                  {task.type === "vocab_quiz" && (
                 <ExerciseErrorBoundary>
                   <div className="flex flex-col gap-2">
                     <div>
@@ -817,42 +842,44 @@ export default async function ScenePage({
                 </ExerciseErrorBoundary>
               )}
 
-              {isExerciseType(task.type) && (
-                <ExerciseCard
-                  taskId={task.id}
-                  type={task.type}
-                  config={sanitizeConfigForStudent(task.type, task.config ?? {})}
-                  pointsVisible={task.points_visible}
-                />
-              )}
-
-              {task.type === "game" && task.games?.embed_url && (
-                <LinkCard
-                  href={task.games.embed_url}
-                  icon={Gamepad2}
-                  title="Відкрити гру"
-                  subtitle={task.games.provider}
-                />
-              )}
-
-              {task.type === "link" &&
-                config.url &&
-                (() => {
-                  const meta = resolveLinkTaskIcon(config);
-                  const description = config.description?.trim();
-                  return (
-                    <LinkCard
-                      href={config.url!}
-                      download={config.download}
-                      icon={meta.icon}
-                      title={task.title}
-                      subtitle={description || linkTaskDefaultSubtitle(config)}
+                  {isExerciseType(task.type) && !isGlassReference && (
+                    <ExerciseCard
+                      taskId={task.id}
+                      type={task.type}
+                      config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                      pointsVisible={task.points_visible}
                     />
-                  );
-                })()}
+                  )}
 
-              {task.type === "embed" && config.url && (
-                <EmbedFrame url={config.url} height={config.height ?? 480} />
+                  {task.type === "game" && task.games?.embed_url && (
+                    <LinkCard
+                      href={task.games.embed_url}
+                      icon={Gamepad2}
+                      title="Відкрити гру"
+                      subtitle={task.games.provider}
+                    />
+                  )}
+
+                  {task.type === "link" &&
+                    config.url &&
+                    (() => {
+                      const meta = resolveLinkTaskIcon(config);
+                      const description = config.description?.trim();
+                      return (
+                        <LinkCard
+                          href={config.url!}
+                          download={config.download}
+                          icon={meta.icon}
+                          title={task.title}
+                          subtitle={description || linkTaskDefaultSubtitle(config)}
+                        />
+                      );
+                    })()}
+
+                  {task.type === "embed" && config.url && (
+                    <EmbedFrame url={config.url} height={config.height ?? 480} />
+                  )}
+                </>
               )}
             </li>
           );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown } from "lucide-react";
 import type { VocabItem, PartOfSpeech } from "@/lib/vocab";
 import { firstVocabVariant, groupVocabByPartOfSpeech } from "@/lib/vocab";
 import {
@@ -11,10 +10,6 @@ import {
 } from "@/lib/vocab-categories";
 import { pluralizeWords } from "@/lib/pluralize-words";
 import { categoryPalette, rgbToHex } from "@/lib/vocab-palette";
-import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
-import { H2_TO_CONTENT } from "@/lib/spacing";
-import { EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
 import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 
 // Той самий шеврон/кнопка, що script-section.tsx (BottomCollapseButton) —
@@ -38,26 +33,10 @@ function CollapseChevronIcon({ stroke }: { stroke: string }) {
   );
 }
 
-function BottomCollapseButton({
-  label,
-  onBackground,
-  onClick,
-}: {
-  label: string;
-  onBackground: boolean;
-  onClick: () => void;
-}) {
+function BottomCollapseButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        onBackground
-          ? "scene-collapse-btn"
-          : `${STUDENT_BUTTON_SECONDARY_TOUCH} mt-[18px] flex w-full items-center justify-center gap-2`
-      }
-    >
-      <CollapseChevronIcon stroke={onBackground ? "#f6dc8e" : "currentColor"} />
+    <button type="button" onClick={onClick} className="scene-collapse-btn">
+      <CollapseChevronIcon stroke="#f6dc8e" />
       {label}
     </button>
   );
@@ -122,11 +101,18 @@ function VocabGroupTable({
               text-base/Lora) — текст вправ на цій же сторінці сцени;
               500 (не 600), бо EXERCISE_BODY сам БЕЗ font-weight класу
               (звичайні 400) — 500 лишає FR-слово трохи жирнішим за
-              переклад, не настільки важким, як колишні 600. */}
-          <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "#1f1d3a" }}>
+              переклад, не настільки важким, як колишні 600. Колір —
+              --glass-text/--glass-text-secondary (globals.css), не
+              фіксований hex: рядок тепер сидить або на світлій, або на
+              темній скляній панелі (data-scene-bg), фіксований темний
+              колір на темній панелі був би нечитабельним. */}
+          <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}>
             {firstVocabVariant(v.word)}
           </span>
-          <span className="font-heading" style={{ fontWeight: 400, fontSize: "16px", color: "#6b6a80" }}>
+          <span
+            className="font-heading"
+            style={{ fontWeight: 400, fontSize: "16px", color: "var(--glass-text-secondary)" }}
+          >
             {v.translation}
           </span>
         </div>
@@ -140,11 +126,9 @@ function VocabGroupTable({
 export function VocabSection({
   vocab,
   pdfHref,
-  onBackground = false,
 }: {
   vocab: VocabItem[];
   pdfHref: string;
-  onBackground?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
   const groups = groupVocabByPartOfSpeech(vocab);
@@ -204,80 +188,44 @@ export function VocabSection({
   // Видима лише поки секція розгорнута — обидва місця виклику нижче вже
   // самі під умовою "розгорнуто" (expanded ? (...) : ... і !collapsed &&).
   const bottomCollapseButton = (
-    <BottomCollapseButton label="Згорнути вокабуляр" onBackground={onBackground} onClick={collapseFromBottomButton} />
+    <BottomCollapseButton label="Згорнути вокабуляр" onClick={collapseFromBottomButton} />
   );
 
-  // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
-  // коли активний фон курсу — інакше розмітка/класи нижче лишаються
-  // байтово тими самими, що й сьогодні (onBackground=false).
-  if (onBackground) {
-    const expanded = !collapsed;
-    return (
-      <div>
-        {expanded ? (
-          <div className={SCENE_CARD_CLASS}>
-            <SectionHeaderBar
-              title="Вокабуляр"
-              attached
-              collapsible
-              expanded
-              onToggle={() => setCollapsed((c) => !c)}
-              toggleRef={headerToggleRef}
-            />
-            <div className={EXERCISE_BLOCK_SURFACE_CLASS}>
-              <div className="flex justify-start" style={{ marginBottom: "18px" }}>
-                {pdfLink}
-              </div>
-              {legendAndGroups}
-              {bottomCollapseButton}
-            </div>
-          </div>
-        ) : (
+  // Завжди скляний бар+панель (раніше — лише при активному фоні курсу):
+  // токени --glass-* (globals.css) самі перемикаються світлий/темний через
+  // [data-scene-bg], світлий лишається дефолтом без фону. pdfLink
+  // переїхав усередину панелі (раніше — поряд із тоглом у плоскому
+  // варіанті) — та сама посилання/behavior, інше місце в розмітці.
+  const expanded = !collapsed;
+  return (
+    <div>
+      {expanded ? (
+        <div className={SCENE_CARD_CLASS}>
           <SectionHeaderBar
             title="Вокабуляр"
-            attached={false}
+            attached
             collapsible
-            expanded={false}
+            expanded
             onToggle={() => setCollapsed((c) => !c)}
             toggleRef={headerToggleRef}
           />
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Кнопка-тогл і посилання PDF — окремі елементи в одному ряду, НЕ
-          вкладені одне в одне (button/a всередині іншого button — невалідний
-          HTML і зламана доступність): тогл сам розміром під контент (без
-          flex-1) — PDF стоїть одразу після заголовка, не притиснутий до
-          правого краю. items-center — PDF (менша, py-1.5) вирівнюється по
-          центру висоти тогла (py-2), не розтягується на всю висоту. Клік по
-          PDF не спливає до тогла просто тому, що це сиблінги, а не вкладені
-          елементи — жодного stopPropagation не треба. */}
-      <div className="flex items-center gap-4">
-        <button
-          ref={headerToggleRef}
-          type="button"
-          onClick={() => setCollapsed((c) => !c)}
-          className={STUDENT_TOGGLE_HEADER_BUTTON}
-        >
-          <ChevronDown
-            size={18}
-            className={`shrink-0 transition-transform ${collapsed ? "" : "rotate-180"}`}
-          />
-          <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Вокабуляр</h2>
-        </button>
-
-        {pdfLink}
-      </div>
-
-      {!collapsed && (
-        <div className={H2_TO_CONTENT}>
-          {legendAndGroups}
-          {bottomCollapseButton}
+          <div className="glass-panel-surface">
+            <div className="flex justify-start" style={{ marginBottom: "18px" }}>
+              {pdfLink}
+            </div>
+            {legendAndGroups}
+            {bottomCollapseButton}
+          </div>
         </div>
+      ) : (
+        <SectionHeaderBar
+          title="Вокабуляр"
+          attached={false}
+          collapsible
+          expanded={false}
+          onToggle={() => setCollapsed((c) => !c)}
+          toggleRef={headerToggleRef}
+        />
       )}
     </div>
   );

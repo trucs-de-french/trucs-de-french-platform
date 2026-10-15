@@ -1,13 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
-import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
-import { H2_TO_CONTENT } from "@/lib/spacing";
-import { EXERCISE_BLOCK_CLASS, EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
 import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
@@ -33,27 +28,14 @@ function CollapseChevronIcon({ stroke }: { stroke: string }) {
 }
 
 // Кнопка "Згорнути..." під вмістом секції — та сама дія, що тогл-заголовок
-// (onClick лише викликає переданий колбек, жодного власного стану).
-function BottomCollapseButton({
-  label,
-  onBackground,
-  onClick,
-}: {
-  label: string;
-  onBackground: boolean;
-  onClick: () => void;
-}) {
+// (onClick лише викликає переданий колбек, жодного власного стану). Завжди
+// скляний вигляд (раніше — лише при активному фоні курсу): секція з
+// заголовком тепер завжди рендериться через SectionHeaderBar/scene-card
+// нижче, незалежно від onBackground.
+function BottomCollapseButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        onBackground
-          ? "scene-collapse-btn"
-          : `${STUDENT_BUTTON_SECONDARY_TOUCH} mt-[18px] flex w-full items-center justify-center gap-2`
-      }
-    >
-      <CollapseChevronIcon stroke={onBackground ? "#f6dc8e" : "currentColor"} />
+    <button type="button" onClick={onClick} className="scene-collapse-btn">
+      <CollapseChevronIcon stroke="#f6dc8e" />
       {label}
     </button>
   );
@@ -96,11 +78,9 @@ function TranslationCell({ text, vocab }: { text: string; vocab: VocabItem[] }) 
 export function ScriptSection({
   dialogue,
   title,
-  onBackground = false,
 }: {
   dialogue: DialogueEntry[];
   title?: string;
-  onBackground?: boolean;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
@@ -155,18 +135,14 @@ export function ScriptSection({
 
   // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
   // коли є сам заголовок (title — фіксований блок "Скрипт" сторінки сцени,
-  // не додаткові script-блоки без title) І активний фон курсу — інакше
-  // розмітка/класи нижче лишаються байтово тими самими, що й сьогодні.
-  const useBar = Boolean(title) && onBackground;
+  // не додаткові script-блоки без title) — завжди, незалежно від
+  // активного фону курсу (раніше — лише onBackground): токени --glass-*
+  // (globals.css) самі перемикаються світлий/темний через [data-scene-bg],
+  // світлий лишається дефолтом без фону.
+  const useBar = Boolean(title);
 
   const body = isOpen && (
-    <div
-      className={`script-body flex flex-col gap-2 ${
-        useBar
-          ? EXERCISE_BLOCK_SURFACE_CLASS
-          : `${title ? H2_TO_CONTENT : ""} ${onBackground ? EXERCISE_BLOCK_CLASS : ""}`
-      }`}
-    >
+    <div className={`script-body flex flex-col gap-2 ${useBar ? "glass-panel-surface" : ""}`}>
       {hasTranslation && (
         <button
           type="button"
@@ -229,9 +205,7 @@ export function ScriptSection({
           script-блоки без заголовка (їх і згортати нема чим). Видима лише
           поки секція розгорнута — body сам під isOpen &&, тож додаткова
           умова тут не потрібна. */}
-      {title && (
-        <BottomCollapseButton label="Згорнути скрипт" onBackground={onBackground} onClick={collapseFromBottomButton} />
-      )}
+      {title && <BottomCollapseButton label="Згорнути скрипт" onClick={collapseFromBottomButton} />}
     </div>
   );
 
@@ -264,24 +238,7 @@ export function ScriptSection({
     );
   }
 
-  return (
-    <div>
-      {title && (
-        <button
-          ref={headerToggleRef}
-          type="button"
-          onClick={() => setCollapsed((c) => !c)}
-          className={STUDENT_TOGGLE_HEADER_BUTTON}
-        >
-          <ChevronDown
-            size={18}
-            className={`shrink-0 transition-transform ${collapsed ? "" : "rotate-180"}`}
-          />
-          <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>{title}</h2>
-        </button>
-      )}
-
-      {body}
-    </div>
-  );
+  // Без title (додаткові script-блоки, scene-content-block.tsx) — голе
+  // тіло, без заголовка й без картки, як і сьогодні.
+  return <div>{body}</div>;
 }

@@ -44,7 +44,7 @@ export function InstructionsText({
       <div className={`instruction-text ${EXERCISE_INSTRUCTION}`} dangerouslySetInnerHTML={{ __html: safeText }} />
       {safeSub && (
         <div
-          className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
+          className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
           dangerouslySetInnerHTML={{ __html: safeSub }}
         />
       )}

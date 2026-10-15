@@ -949,27 +949,208 @@ button, input, textarea, select, label, nav, aside {
   text-shadow: none;
 }
 
-/* Скляні заголовки-бари секцій студентської сторінки сцени, коли активний
-   фон курсу (SectionHeaderBar, scene-header-bar.tsx) — фіксовані кольори,
-   однакові в обох темах сайту (бар лежить на фоновій картинці, не на
-   теми-залежному фоні сторінки). backdrop-filter — ЛИШЕ тут, на самому
-   барі, НІКОЛИ на .scene-card (обгортка нижче) чи будь-якому предку відео/
-   iframe: предок із transform/filter/backdrop-filter/will-change/contain
-   стає containing block для position:fixed нащадків — зламало б iOS
-   pseudo-fullscreen і звичайний Fullscreen API wrapper відео (обидва
-   використовують position:fixed на собі).
-   -webkit-backdrop-filter — Safari досі не підтримує неprefix-ову
-   властивість сама по собі в деяких версіях. */
+/* Уніфіковані "скляні" токени студентської сторінки (дизайн-варіант 2/4,
+   "Glass cards") — ОДНЕ джерело кольору для всіх блоків контенту/вправ
+   (GlassBlock, glass-block.tsx; скляні бари секцій, scene-header-bar.tsx;
+   LinkCard), що перемикається атрибутом [data-scene-bg] на
+   .student-bg-wrapper — ТІЄЮ САМОЮ позначкою, що вже визначає
+   .student-on-bg вище, НЕ залежить від теми сайту (.dark). Світлі значення
+   на :root — дефолт, коли фон курсу неактивний (атрибут відсутній):
+   сторінка в цьому випадку світла, тож панелі/бари мають лишатись
+   світлими, не чорніти разом із .dark сайту. Без blur (backdrop-filter) —
+   на відміну від попередньої ітерації .scene-bar нижче: дизайн свідомо
+   "скло" лише як напівпрозорий фон+рамка+тінь, без розмиття, щоб жоден
+   глянцевий блок не ризикував стати containing-block для
+   position:fixed-нащадків (iOS pseudo-fullscreen/Fullscreen API) навіть
+   випадково. */
+:root {
+  --glass-panel-bg: rgba(255, 255, 255, 0.68);
+  --glass-panel-border: rgba(184, 144, 47, 0.5);
+  --glass-panel-shadow: 0 8px 28px rgba(40, 50, 110, 0.18);
+  --glass-bar-bg: rgba(255, 255, 255, 0.9);
+  --glass-bar-border: rgba(184, 144, 47, 0.5);
+  --glass-bar-text: #7a5a0e;
+  --glass-text: #1f1d3a;
+  --glass-text-secondary: #55546b;
+  --glass-text-meta: #6b6a80;
+  --glass-item-bg: rgba(255, 255, 255, 0.9);
+  --glass-item-border: rgba(75, 70, 218, 0.16);
+  --glass-item-shadow: 0 2px 8px rgba(31, 29, 58, 0.08);
+  --glass-badge-bg: #4b46da;
+  --glass-badge-text: #ffffff;
+  --glass-answer-bg: rgba(255, 255, 255, 0.92);
+  --glass-answer-border: #b9b6ee;
+  --glass-answer-text: #3b36c4;
+  --glass-answer-border-hover: #8c88f5;
+  --glass-answer-text-hover: #2f2ab0;
+  --glass-divider: rgba(75, 70, 218, 0.15);
+  --glass-progress-track: rgba(75, 70, 218, 0.15);
+  --glass-focus-ring: #4b46da;
+}
+[data-scene-bg="dark"] {
+  --glass-panel-bg: rgba(10, 16, 48, 0.82);
+  --glass-panel-border: rgba(243, 217, 139, 0.5);
+  --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  --glass-bar-bg: rgba(10, 16, 48, 0.92);
+  --glass-bar-border: rgba(243, 217, 139, 0.5);
+  --glass-bar-text: #f6dc8e;
+  --glass-text: #ffffff;
+  --glass-text-secondary: #c9c8e6;
+  --glass-text-meta: #f6dc8e;
+  --glass-item-bg: rgba(255, 255, 255, 0.06);
+  --glass-item-border: rgba(243, 217, 139, 0.25);
+  --glass-item-shadow: none;
+  --glass-badge-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  --glass-badge-text: #1a1640;
+  --glass-answer-bg: transparent;
+  --glass-answer-border: rgba(243, 217, 139, 0.55);
+  --glass-answer-text: #f6dc8e;
+  --glass-answer-border-hover: #f6dc8e;
+  --glass-answer-text-hover: #fff0b8;
+  --glass-divider: rgba(243, 217, 139, 0.22);
+  --glass-progress-track: rgba(255, 255, 255, 0.18);
+  --glass-focus-ring: #f6dc8e;
+}
+
+/* GlassBlock (glass-block.tsx) — єдина уніфікована обгортка "заголовок-бар
+   + панель" для контент-/вправ-блоків студентської сторінки й прев'ю
+   конструктора (крок 2 завдання). Поки підключена лише для true_false
+   (еталонна вправа) — решта типів мігрують пізнішим етапом без зміни цих
+   класів. */
+.glass-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--glass-bar-bg);
+  border: 1px solid var(--glass-bar-border);
+  color: var(--glass-bar-text);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.glass-block-title {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.glass-block-panel {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  border-radius: 16px;
+  padding: 22px 24px 24px;
+  color: var(--glass-text);
+}
+/* Тіло скляних бар-секцій (SectionHeaderBar + .scene-card, Скрипт/
+   Вокабуляр/Відео) — той самий фон/колір, що .glass-block-panel, без
+   власної рамки/тіні/радіуса (їх несе .scene-card-обгортка зверху, body —
+   лише внутрішній шар). */
+.glass-panel-surface {
+  background: var(--glass-panel-bg);
+  color: var(--glass-text);
+  padding: 16px 24px 24px;
+}
+@media (max-width: 640px) {
+  .glass-block-panel,
+  .glass-panel-surface {
+    padding: 16px;
+  }
+  .glass-block-header {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+}
+
+/* Елементи вмісту всередині скляної панелі — тверд/false, згодом і інші
+   типи вправ. */
+.glass-item-card {
+  background: var(--glass-item-bg);
+  border: 1px solid var(--glass-item-border);
+  box-shadow: var(--glass-item-shadow);
+  border-radius: 10px;
+}
+.glass-number-badge {
+  display: flex;
+  height: 24px;
+  width: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--glass-badge-bg);
+  color: var(--glass-badge-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.glass-answer-btn {
+  background: var(--glass-answer-bg);
+  border: 1.5px solid var(--glass-answer-border);
+  color: var(--glass-answer-text);
+  min-height: 44px;
+  transition: border-color 0.15s, color 0.15s;
+}
+@media (hover: hover) {
+  .glass-answer-btn:hover {
+    border-color: var(--glass-answer-border-hover);
+    color: var(--glass-answer-text-hover);
+  }
+}
+.glass-answer-btn:focus-visible {
+  outline: 2px solid var(--glass-focus-ring);
+  outline-offset: 2px;
+}
+/* Обране (до перевірки) — суцільний indigo, той самий градієнт, що й
+   кнопка "Перевірити" (exercise-block-check-btn) — не токен-залежний,
+   однаковий в обох темах за задумом. */
+.glass-answer-btn--selected {
+  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+  border: 1.5px solid #8c88f5;
+  color: #ffffff;
+  min-height: 44px;
+}
+.glass-answer-btn--selected:focus-visible {
+  outline: 2px solid var(--glass-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Інструкція вправи (InstructionsText) усередині скляної панелі — колір
+   типографіки (typography-styles.ts) сам по собі сидить на темі сайту
+   (.dark), не на [data-scene-bg]: без цього перекриття текст міг би
+   лишитись темним на темній панелі (чи навпаки) залежно від того, чи
+   збігаються обидві теми. */
+.glass-block-panel .instruction-text,
+.glass-panel-surface .instruction-text {
+  color: var(--glass-text);
+}
+.glass-block-panel .instruction-subtext,
+.glass-panel-surface .instruction-subtext {
+  color: var(--glass-text-secondary);
+}
+
+/* Скляні заголовки-бари секцій студентської сторінки сцени (SectionHeaderBar,
+   scene-header-bar.tsx) — завжди (раніше — лише при активному фоні
+   курсу), токени --glass-* вище самі перемикаються світлий/темний через
+   [data-scene-bg]. БЕЗ backdrop-filter (дизайн-варіант 2/4) — семантика
+   "скла" тепер лише напівпрозорий фон+рамка+тінь, щоб жоден предок
+   відео/iframe не міг випадково стати containing-block для
+   position:fixed-нащадків (iOS pseudo-fullscreen/Fullscreen API). */
 .scene-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 12px 20px;
-  background: rgba(10, 16, 48, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(243, 217, 139, 0.5);
+  background: var(--glass-bar-bg);
+  border: 1px solid var(--glass-bar-border);
 }
 button.scene-bar {
   width: 100%;
@@ -977,7 +1158,7 @@ button.scene-bar {
   text-align: left;
 }
 button.scene-bar:focus-visible {
-  outline: 2px solid #e8c46a;
+  outline: 2px solid var(--glass-focus-ring);
   outline-offset: 2px;
 }
 .scene-bar-title {
@@ -985,7 +1166,7 @@ button.scene-bar:focus-visible {
   font-size: 20px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #f6dc8e;
+  color: var(--glass-bar-text);
 }
 /* attached — під баром безпосередньо йде тіло картки (JOINED), без
    відступу: нижня межа бару прибрана (щоб не здвоювалась із верхньою
@@ -1000,7 +1181,7 @@ button.scene-bar:focus-visible {
    тінь (у attached-стані тінь несе scene-card, не бар). */
 .scene-bar--detached {
   border-radius: 14px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--glass-panel-shadow);
 }
 .scene-bar-toggle {
   display: flex;
@@ -1041,7 +1222,7 @@ button.scene-bar:active .scene-bar-toggle {
 .scene-card {
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--glass-panel-shadow);
 }
 
 /* Кнопка "Завантажити PDF" (vocab-section.tsx) — фіксовані кольори,
@@ -1114,7 +1295,7 @@ button.scene-bar:active .scene-bar-toggle {
   column-gap: 24px;
   padding: 6px 8px;
   line-height: 1.35;
-  border-bottom: 1px solid #ececf3;
+  border-bottom: 1px solid var(--glass-divider);
 }
 .vocab-row:last-child {
   border-bottom: none;
