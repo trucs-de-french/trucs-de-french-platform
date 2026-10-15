@@ -1084,17 +1084,27 @@ export function VideoPlayer({
           (handleFullscreenToggle), тож обидві кнопки синхронні. Схована під
           час fullscreen/псевдо-fullscreen — плеєр сам займає весь екран,
           і кнопка знову з'являється після виходу. */}
-      {!(isFullscreen || isPseudoFullscreen) && (
-        <button
-          type="button"
-          onClick={() => void handleFullscreenToggle()}
-          className={`self-end md:hidden ${onBackground ? "scene-fullscreen-btn" : FULLSCREEN_BUTTON_CLASS}`}
-          style={onBackground ? { marginTop: "10px" } : undefined}
-        >
-          <Maximize size={16} />
-          На весь екран
-        </button>
-      )}
+      {!(isFullscreen || isPseudoFullscreen) &&
+        (onBackground ? (
+          // Власний padded рядок (globals.css, .scene-fullscreen-btn-row) —
+          // кнопка лишається повністю всередині .scene-card (page.tsx), не
+          // впритул до його нижнього округленого кута.
+          <div className="scene-fullscreen-btn-row md:hidden">
+            <button type="button" onClick={() => void handleFullscreenToggle()} className="scene-fullscreen-btn">
+              <Maximize size={16} />
+              На весь екран
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void handleFullscreenToggle()}
+            className={`${FULLSCREEN_BUTTON_CLASS} md:hidden`}
+          >
+            <Maximize size={16} />
+            На весь екран
+          </button>
+        ))}
     </div>
   );
 }

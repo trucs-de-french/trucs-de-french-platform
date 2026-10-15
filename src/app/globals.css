@@ -1211,3 +1211,14 @@ button.scene-bar:focus-visible {
   outline: 2px solid #e8c46a;
   outline-offset: 2px;
 }
+
+/* Рядок-обгортка кнопки на фоні курсу — звичайний in-flow нащадок усередині
+   .scene-card (overflow:hidden + rounded corners), з власним padding, щоб
+   кнопка не торкалась нижнього краю/округленого кута картки (там і
+   клипалась раніше: кнопка сиділа впритул, без запасу, і скляна картка
+   "зрізала" її нижній правий кут своїм overflow-hidden+border-radius). */
+.scene-fullscreen-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px 12px 12px;
+}

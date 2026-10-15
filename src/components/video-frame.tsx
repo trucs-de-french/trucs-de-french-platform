@@ -81,17 +81,19 @@ function GdrivePoster({ fileId, onBackground }: { fileId: string; onBackground: 
           <span className="text-xs text-white/90">Відео відкриється в Google Drive</span>
         </a>
       </div>
-      <a
-        href={openUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={openLabel}
-        className={onBackground ? "scene-fullscreen-btn self-end" : FULLSCREEN_BUTTON_CLASS}
-        style={onBackground ? { marginTop: "10px" } : undefined}
-      >
-        <ExternalLink size={16} />
-        На весь екран
-      </a>
+      {onBackground ? (
+        <div className="scene-fullscreen-btn-row">
+          <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className="scene-fullscreen-btn">
+            <ExternalLink size={16} />
+            На весь екран
+          </a>
+        </div>
+      ) : (
+        <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className={FULLSCREEN_BUTTON_CLASS}>
+          <ExternalLink size={16} />
+          На весь екран
+        </a>
+      )}
     </div>
   );
 }
@@ -171,17 +173,23 @@ export function VideoFrame({
           </button>
         )}
       </div>
-      {!hideFullscreenButtonForGdrivePhone && (
-        <button
-          type="button"
-          onClick={handleToggle}
-          className={onBackground ? "scene-fullscreen-btn self-end" : FULLSCREEN_BUTTON_CLASS}
-          style={onBackground ? { marginTop: "10px" } : undefined}
-        >
-          <Maximize size={16} />
-          {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
-        </button>
-      )}
+      {!hideFullscreenButtonForGdrivePhone &&
+        (onBackground ? (
+          // Власний padded рядок (globals.css, .scene-fullscreen-btn-row) —
+          // кнопка лишається повністю всередині .scene-card (page.tsx), не
+          // впритул до його нижнього округленого кута.
+          <div className="scene-fullscreen-btn-row">
+            <button type="button" onClick={handleToggle} className="scene-fullscreen-btn">
+              <Maximize size={16} />
+              {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={handleToggle} className={FULLSCREEN_BUTTON_CLASS}>
+            <Maximize size={16} />
+            {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+          </button>
+        ))}
     </div>
   );
 }
