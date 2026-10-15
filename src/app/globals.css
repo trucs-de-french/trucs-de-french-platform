@@ -1082,3 +1082,84 @@ button.scene-bar:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+
+/* Таблиця вокабуляру (vocab-section.tsx) — фіксовані кольори, незалежні
+   від теми сайту (той самий підхід, що скляні бари вище). Колір категорії
+   передається через --cat-rgb (на обгортці групи, не на кожному рядку) —
+   рядки й так успадковують CSS-змінну від батька. */
+.vocab-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+  padding: 11px 8px;
+  border-bottom: 1px solid #ececf3;
+}
+.vocab-row:last-child {
+  border-bottom: none;
+}
+@media (max-width: 380px) {
+  .vocab-row {
+    column-gap: 14px;
+  }
+}
+/* Підсвітка рядка кольором категорії лише на пристроях із hover — на
+   тач-екранах "застиглий" tap-стан не потрібен. */
+@media (hover: hover) {
+  .vocab-row:hover {
+    background: rgba(var(--cat-rgb), 0.07);
+  }
+}
+
+.vocab-category-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 4px;
+}
+.vocab-category-heading:first-child {
+  margin-top: 0;
+}
+.vocab-category-pill {
+  padding: 6px 16px;
+  border-radius: 999px;
+  color: #ffffff;
+  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.vocab-category-line {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 16px;
+}
+.vocab-category-count {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* На дуже вузькому екрані лінія йде першою — пігулка й лічильник лишаються
+   на одному рядку без горизонтальної прокрутки. */
+@media (max-width: 420px) {
+  .vocab-category-line {
+    display: none;
+  }
+}
+
+.vocab-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.vocab-legend-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
