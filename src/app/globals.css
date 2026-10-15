@@ -952,17 +952,22 @@ button, input, textarea, select, label, nav, aside {
 /* Уніфіковані "скляні" токени студентської сторінки (дизайн-варіант 2/4,
    "Glass cards") — ОДНЕ джерело кольору для всіх блоків контенту/вправ
    (GlassBlock, glass-block.tsx; скляні бари секцій, scene-header-bar.tsx;
-   LinkCard), що перемикається атрибутом [data-scene-bg] на
-   .student-bg-wrapper — ТІЄЮ САМОЮ позначкою, що вже визначає
-   .student-on-bg вище, НЕ залежить від теми сайту (.dark). Світлі значення
-   на :root — дефолт, коли фон курсу неактивний (атрибут відсутній):
-   сторінка в цьому випадку світла, тож панелі/бари мають лишатись
-   світлими, не чорніти разом із .dark сайту. Без blur (backdrop-filter) —
-   на відміну від попередньої ітерації .scene-bar нижче: дизайн свідомо
-   "скло" лише як напівпрозорий фон+рамка+тінь, без розмиття, щоб жоден
-   глянцевий блок не ризикував стати containing-block для
-   position:fixed-нащадків (iOS pseudo-fullscreen/Fullscreen API) навіть
-   випадково. */
+   LinkCard), що перемикається ТЕМОЮ САЙТУ (.dark/.light на <html>,
+   theme-toggle.tsx) — ТІЄЮ САМОЮ позначкою, що вже керує dark: утилітами
+   Tailwind по всьому сайту, НЕ атрибутом [data-scene-bg] (яскравість
+   фонової картинки курсу, обчислюється з color/url полів сцени,
+   page.tsx) — свідоме виправлення: студент, що увімкнув світлу тему,
+   має бачити світлі скляні панелі навіть над темною картинкою фону.
+   [data-scene-bg] лишається лише для .student-on-bg вище й
+   .fullscreen-btn нижче — текст/кнопки, що лежать ПРЯМО на самій
+   картинці фону, де саме яскравість картинки (не вибір теми) визначає
+   читабельність. Світлі значення на :root — дефолт теми (якщо немає ні
+   .dark, ні системного prefers-color-scheme: dark — той самий
+   трирівневий порядок, що вже є в --background/--foreground вище). Без
+   blur (backdrop-filter) — дизайн свідомо "скло" лише як напівпрозорий
+   фон+рамка+тінь, без розмиття, щоб жоден глянцевий блок не ризикував
+   стати containing-block для position:fixed-нащадків (iOS pseudo-
+   fullscreen/Fullscreen API) навіть випадково. */
 :root {
   --glass-panel-bg: rgba(255, 255, 255, 0.68);
   --glass-panel-border: rgba(184, 144, 47, 0.5);
@@ -986,19 +991,27 @@ button, input, textarea, select, label, nav, aside {
   --glass-divider: rgba(75, 70, 218, 0.15);
   --glass-progress-track: rgba(75, 70, 218, 0.15);
   --glass-focus-ring: #4b46da;
+  --glass-accent-bar: rgba(75, 70, 218, 0.4);
 }
 /* Темні значення застосовуються ЛИШЕ всередині скляних контейнерів
-   (.glass-block/.scene-card/.scene-bar), НЕ на весь [data-scene-bg="dark"]
-   напряму (як було спочатку) — інакше кожен елемент на сторінці, що
-   випадково успадкував би --glass-text/--glass-item-bg поза реальною
-   темною панеллю (старий білий EXERCISE_BLOCK_CLASS навколо задачі в
-   групі, DELF/матеріали, що ще не мігрували на GlassBlock), отримав би
-   білий текст на білому тлі. Дефолт :root (світлий) лишається фоловбеком
-   для будь-якого такого місця — безпечний, читабельний результат, навіть
-   якщо тип вправи вже й сам використовує нові --glass-* токени. */
-[data-scene-bg="dark"] .glass-block,
-[data-scene-bg="dark"] .scene-card,
-[data-scene-bg="dark"] .scene-bar {
+   (.glass-block/.scene-card/.scene-bar) — та самa обережність, що й
+   раніше (щоб жоден елемент поза реальною скляною панеллю не
+   успадкував --glass-text/--glass-item-bg і не отримав білий текст на
+   білому тлі) — АЛЕ обрані за ПЕРЕМИКАЧЕМ ТЕМИ САЙТУ (.dark/.light на
+   <html>, theme-toggle.tsx/theme-script.tsx), НЕ за [data-scene-bg]
+   (яскравістю фонової картинки курсу): студент, що увімкнув світлу
+   тему, має бачити світлі скляні панелі навіть над темною картинкою
+   фону — [data-scene-bg] лишається лише для .student-on-bg/.fullscreen-
+   btn (текст/кнопки, що лежать ПРЯМО на самій картинці, де яскравість
+   фону, а не вибір теми, і визначає читабельність). Той самий
+   трирівневий порядок визначення теми, що вже є в globals.css вище
+   (--background/--foreground): явний .dark завжди перемагає; без класу
+   — системна prefers-color-scheme: dark як резерв, якщо немає явного
+   .light; інакше (типове :root, тема невідома чи не встановлена) —
+   світлі значення вище лишаються дефолтом. */
+.dark .glass-block,
+.dark .scene-card,
+.dark .scene-bar {
   --glass-panel-bg: rgba(10, 16, 48, 0.82);
   --glass-panel-border: rgba(243, 217, 139, 0.5);
   --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
@@ -1021,6 +1034,36 @@ button, input, textarea, select, label, nav, aside {
   --glass-divider: rgba(243, 217, 139, 0.22);
   --glass-progress-track: rgba(255, 255, 255, 0.18);
   --glass-focus-ring: #f6dc8e;
+  --glass-accent-bar: #e8c46a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .glass-block,
+  :root:not(.light) .scene-card,
+  :root:not(.light) .scene-bar {
+    --glass-panel-bg: rgba(10, 16, 48, 0.82);
+    --glass-panel-border: rgba(243, 217, 139, 0.5);
+    --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    --glass-bar-bg: rgba(10, 16, 48, 0.92);
+    --glass-bar-border: rgba(243, 217, 139, 0.5);
+    --glass-bar-text: #f6dc8e;
+    --glass-text: #ffffff;
+    --glass-text-secondary: #c9c8e6;
+    --glass-text-meta: #f6dc8e;
+    --glass-item-bg: rgba(255, 255, 255, 0.06);
+    --glass-item-border: rgba(243, 217, 139, 0.25);
+    --glass-item-shadow: none;
+    --glass-badge-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    --glass-badge-text: #1a1640;
+    --glass-answer-bg: transparent;
+    --glass-answer-border: rgba(243, 217, 139, 0.55);
+    --glass-answer-text: #f6dc8e;
+    --glass-answer-border-hover: #f6dc8e;
+    --glass-answer-text-hover: #fff0b8;
+    --glass-divider: rgba(243, 217, 139, 0.22);
+    --glass-progress-track: rgba(255, 255, 255, 0.18);
+    --glass-focus-ring: #f6dc8e;
+    --glass-accent-bar: #e8c46a;
+  }
 }
 
 /* GlassBlock (glass-block.tsx) — єдина уніфікована обгортка "заголовок-бар
@@ -1102,6 +1145,26 @@ button, input, textarea, select, label, nav, aside {
   border: 1px solid var(--glass-item-border);
   box-shadow: var(--glass-item-shadow);
   border-radius: 10px;
+  color: var(--glass-text);
+}
+
+/* Читацький уривок/спільний текст блоку задач (SHARED_CONTENT_PANEL,
+   task-card-style.ts) — та сама картка-елемент, що .glass-item-card
+   вище, лише з колірною смугою зліва замість повної рамки й color ЯВНО
+   на собі (не лишається на успадкування від .glass-block-panel): фон
+   цієї картки (--glass-item-bg) інший за фон панелі (--glass-panel-bg)
+   навколо неї, тож текст підбирається в парі з ЦИМ фоном. */
+.glass-reading-passage {
+  background: var(--glass-item-bg);
+  border-left: 4px solid var(--glass-accent-bar);
+  border-radius: 0 10px 10px 0;
+  color: var(--glass-text);
+  padding: 16px 20px;
+}
+@media (max-width: 767px) {
+  .glass-reading-passage {
+    padding: 16px;
+  }
 }
 .glass-number-badge {
   display: flex;
@@ -1159,6 +1222,13 @@ button, input, textarea, select, label, nav, aside {
 .glass-block-panel .instruction-subtext,
 .glass-panel-surface .instruction-subtext {
   color: var(--glass-text-secondary);
+}
+/* <mark> (підсвітка жовтим/амбером — TipTap-розмітка, essay-check.tsx
+   тощо) — завжди темний текст, незалежно від теми: той самий ефект
+   текстового маркера в обох темах, не біла підсвітка-навпаки в темній. */
+.glass-block-panel mark,
+.glass-panel-surface mark {
+  color: #1f1d3a;
 }
 
 /* Скляні заголовки-бари секцій студентської сторінки сцени (SectionHeaderBar,
