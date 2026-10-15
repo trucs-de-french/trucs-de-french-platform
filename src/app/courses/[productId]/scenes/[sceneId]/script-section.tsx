@@ -4,11 +4,60 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
-import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
+import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
 import { EXERCISE_BLOCK_CLASS, EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
-import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
+import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+
+// Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
+// section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
+// залежно від варіанту (золото на фоні курсу, currentColor без фону), а
+// готові lucide-іконки не параметризують stroke так напряму в одному рядку.
+function CollapseChevronIcon({ stroke }: { stroke: string }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke={stroke}
+      strokeWidth="2.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 15l6-6 6 6" />
+    </svg>
+  );
+}
+
+// Кнопка "Згорнути..." під вмістом секції — та сама дія, що тогл-заголовок
+// (onClick лише викликає переданий колбек, жодного власного стану).
+function BottomCollapseButton({
+  label,
+  onBackground,
+  onClick,
+}: {
+  label: string;
+  onBackground: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        onBackground
+          ? "scene-collapse-btn"
+          : `${STUDENT_BUTTON_SECONDARY_TOUCH} mt-[18px] flex w-full items-center justify-center gap-2`
+      }
+    >
+      <CollapseChevronIcon stroke={onBackground ? "#f6dc8e" : "currentColor"} />
+      {label}
+    </button>
+  );
+}
 
 type DialogueEntry = {
   speaker: string;
@@ -60,6 +109,26 @@ export function ScriptSection({
   const hasTranslation = dialogue.some((line) => line.translationUk);
   const isOpen = !title || !collapsed;
 
+  // Кнопка "Згорнути скрипт" під вмістом — та сама дія, що тогл-заголовок
+  // (нижче), без дубльованого стану: headerToggleRef вказує на АКТУАЛЬНИЙ
+  // DOM-вузол тогла (передається в обидва варіанти рендеру нижче — plain
+  // button і обидва стани SectionHeaderBar), pendingHeaderFocusRef лише
+  // позначає "після цього згортання підвести тогл у вид і сфокусувати".
+  const headerToggleRef = useRef<HTMLButtonElement>(null);
+  const pendingHeaderFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (collapsed && pendingHeaderFocusRef.current) {
+      pendingHeaderFocusRef.current = false;
+      scrollToHeaderAndFocus(headerToggleRef.current);
+    }
+  }, [collapsed]);
+
+  function collapseFromBottomButton() {
+    pendingHeaderFocusRef.current = true;
+    setCollapsed(true);
+  }
+
   // Ім'я спікера показуємо лише на першому рядку "серії" його реплік —
   // далі, поки спікер не змінився, DialogueLine ховає підпис (але лишає
   // місце під нього, див. коментар там). Рахується один раз тут (не в
@@ -92,7 +161,7 @@ export function ScriptSection({
 
   const body = isOpen && (
     <div
-      className={`flex flex-col gap-2 ${
+      className={`script-body flex flex-col gap-2 ${
         useBar
           ? EXERCISE_BLOCK_SURFACE_CLASS
           : `${title ? H2_TO_CONTENT : ""} ${onBackground ? EXERCISE_BLOCK_CLASS : ""}`
@@ -115,7 +184,7 @@ export function ScriptSection({
         // ширше — колонки пліч-о-пліч; на вузькому екрані (grid-cols-1)
         // те саме розмічення автоматично складає все послідовно в один
         // стовпець, без окремої мобільної гілки логіки.
-        <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
           {dialogue.map((line, i) => (
             <Fragment key={i}>
               <DialogueLine
@@ -155,6 +224,14 @@ export function ScriptSection({
           />
         ))
       )}
+
+      {/* Лише коли є сам заголовок-тогл (title) — "Скрипт", не додаткові
+          script-блоки без заголовка (їх і згортати нема чим). Видима лише
+          поки секція розгорнута — body сам під isOpen &&, тож додаткова
+          умова тут не потрібна. */}
+      {title && (
+        <BottomCollapseButton label="Згорнути скрипт" onBackground={onBackground} onClick={collapseFromBottomButton} />
+      )}
     </div>
   );
 
@@ -169,6 +246,7 @@ export function ScriptSection({
               collapsible
               expanded={!collapsed}
               onToggle={() => setCollapsed((c) => !c)}
+              toggleRef={headerToggleRef}
             />
             {body}
           </div>
@@ -179,6 +257,7 @@ export function ScriptSection({
             collapsible
             expanded={false}
             onToggle={() => setCollapsed((c) => !c)}
+            toggleRef={headerToggleRef}
           />
         )}
       </div>
@@ -189,6 +268,7 @@ export function ScriptSection({
     <div>
       {title && (
         <button
+          ref={headerToggleRef}
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className={STUDENT_TOGGLE_HEADER_BUTTON}

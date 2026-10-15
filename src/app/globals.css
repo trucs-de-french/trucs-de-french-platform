@@ -1222,3 +1222,65 @@ button.scene-bar:focus-visible {
   justify-content: flex-end;
   padding: 10px 12px 12px 12px;
 }
+
+/* Типографіка рядків скрипту (script-section.tsx, DialogueLine у
+   dialogue-line.tsx) — через нащадкові селектори, НЕ правки dialogue-
+   line.tsx (поза дозволеним списком файлів цієї задачі): .script-body —
+   клас-гачок на контейнері тіла секції (той самий і для звичайного списку
+   реплік, і для grid-розкладки режиму перекладу — обидва містять <p>). */
+.script-body p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+/* Таймкод (TimecodeBadge, dialogue-line.tsx) — завжди text-xs, і в
+   клікабельному (text-blue-600/400), і в простому (text-neutral-400/500)
+   варіанті: обидва класи завжди в розмітці одночасно з dark:-варіантом,
+   тож це ОДНЕ правило перекриває колір в обох темах без !important
+   (@custom-variant dark використовує :where(), нульова спецвага). */
+.script-body p .text-xs {
+  color: #8a899b;
+}
+/* Підсвічені слова глосарію (VocabWord-кнопка й TranslatedText-span,
+   dialogue-line.tsx) — обидва завжди мають класи rounded+bg-blue-100
+   одночасно з dark:-варіантом кольору/фону, тож той самий прийом: лише
+   розмір/padding/радіус, кольори не чіпаємо. */
+.script-body .rounded.bg-blue-100 {
+  font-size: 15px;
+  padding: 0 6px;
+  border-radius: 6px;
+}
+
+/* Кнопка "Згорнути скрипт/вокабуляр" під вмістом секції (script-
+   section.tsx/vocab-section.tsx) — варіант "золота рамка" на фоні курсу.
+   Без-фонового варіанта тут немає — там повторно використовується
+   STUDENT_BUTTON_SECONDARY_TOUCH (button-styles.ts), спільна роль, яку
+   задача прямо забороняє змінювати. */
+.scene-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 18px;
+  border: 1.5px solid #c9a24a;
+  background: rgba(10, 16, 48, 0.92);
+  color: #f6dc8e;
+  border-radius: 12px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+@media (hover: hover) {
+  .scene-collapse-btn:hover {
+    border-color: #e8c46a;
+    background: rgba(232, 196, 106, 0.14);
+  }
+}
+.scene-collapse-btn:focus-visible {
+  outline: 2px solid #e8c46a;
+  outline-offset: 2px;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ChevronDown } from "lucide-react";
 import type { VocabItem, PartOfSpeech } from "@/lib/vocab";
 import { firstVocabVariant, groupVocabByPartOfSpeech } from "@/lib/vocab";
@@ -10,11 +10,57 @@ import {
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab-categories";
 import { pluralizeWords } from "@/lib/pluralize-words";
-import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
+import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
-import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
+import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+
+// Той самий шеврон/кнопка, що script-section.tsx (BottomCollapseButton) —
+// дрібний дублікат тут навмисно: ярлик і сама умова onBackground різні, а
+// спільна поведінка (куди дивиться колір штриха/клас) — лише ці ~20 рядків.
+function CollapseChevronIcon({ stroke }: { stroke: string }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke={stroke}
+      strokeWidth="2.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 15l6-6 6 6" />
+    </svg>
+  );
+}
+
+function BottomCollapseButton({
+  label,
+  onBackground,
+  onClick,
+}: {
+  label: string;
+  onBackground: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        onBackground
+          ? "scene-collapse-btn"
+          : `${STUDENT_BUTTON_SECONDARY_TOUCH} mt-[18px] flex w-full items-center justify-center gap-2`
+      }
+    >
+      <CollapseChevronIcon stroke={onBackground ? "#f6dc8e" : "currentColor"} />
+      {label}
+    </button>
+  );
+}
 
 // Той самий RGB (0-1 на канал), що вже живе в PART_OF_SPEECH_COLORS (dot
 // класи/pdf), переведений у 0-255 для CSS (hex/rgba) — жодних нових
@@ -168,6 +214,23 @@ export function VocabSection({
   const [collapsed, setCollapsed] = useState(true);
   const groups = groupVocabByPartOfSpeech(vocab);
 
+  // Та сама дія, що тогл-заголовок, без дубльованого стану — див.
+  // коментар при headerToggleRef у script-section.tsx.
+  const headerToggleRef = useRef<HTMLButtonElement>(null);
+  const pendingHeaderFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (collapsed && pendingHeaderFocusRef.current) {
+      pendingHeaderFocusRef.current = false;
+      scrollToHeaderAndFocus(headerToggleRef.current);
+    }
+  }, [collapsed]);
+
+  function collapseFromBottomButton() {
+    pendingHeaderFocusRef.current = true;
+    setCollapsed(true);
+  }
+
   const pdfLink = (
     <a href={pdfHref} className="scene-pdf-button shrink-0">
       <svg
@@ -203,6 +266,12 @@ export function VocabSection({
     </div>
   );
 
+  // Видима лише поки секція розгорнута — обидва місця виклику нижче вже
+  // самі під умовою "розгорнуто" (expanded ? (...) : ... і !collapsed &&).
+  const bottomCollapseButton = (
+    <BottomCollapseButton label="Згорнути вокабуляр" onBackground={onBackground} onClick={collapseFromBottomButton} />
+  );
+
   // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
   // коли активний фон курсу — інакше розмітка/класи нижче лишаються
   // байтово тими самими, що й сьогодні (onBackground=false).
@@ -218,12 +287,14 @@ export function VocabSection({
               collapsible
               expanded
               onToggle={() => setCollapsed((c) => !c)}
+              toggleRef={headerToggleRef}
             />
             <div className={EXERCISE_BLOCK_SURFACE_CLASS}>
               <div className="flex justify-start" style={{ marginBottom: "18px" }}>
                 {pdfLink}
               </div>
               {legendAndGroups}
+              {bottomCollapseButton}
             </div>
           </div>
         ) : (
@@ -233,6 +304,7 @@ export function VocabSection({
             collapsible
             expanded={false}
             onToggle={() => setCollapsed((c) => !c)}
+            toggleRef={headerToggleRef}
           />
         )}
       </div>
@@ -251,6 +323,7 @@ export function VocabSection({
           елементи — жодного stopPropagation не треба. */}
       <div className="flex items-center gap-4">
         <button
+          ref={headerToggleRef}
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className={STUDENT_TOGGLE_HEADER_BUTTON}
@@ -265,7 +338,12 @@ export function VocabSection({
         {pdfLink}
       </div>
 
-      {!collapsed && <div className={H2_TO_CONTENT}>{legendAndGroups}</div>}
+      {!collapsed && (
+        <div className={H2_TO_CONTENT}>
+          {legendAndGroups}
+          {bottomCollapseButton}
+        </div>
+      )}
     </div>
   );
 }
