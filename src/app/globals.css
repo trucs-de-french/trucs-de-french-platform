@@ -1199,8 +1199,20 @@ button.scene-bar:active .scene-bar-toggle {
    що скляні бари/золотий тогл вище, НЕ спільний FULLSCREEN_BUTTON_CLASS
    (use-fullscreen-wrapper.ts), щоб не зачепити кнопку під iframe в інших
    місцях без фону. Сама кнопка — сиблінг відео/iframe, не їхній предок,
-   тож transform/filter тут нічого не ламають у pseudo-fullscreen. */
-.scene-fullscreen-btn {
+   тож transform/filter тут нічого не ламають у pseudo-fullscreen.
+
+   [data-scene-bg] .fullscreen-btn — ТА САМА стилізація для решти кнопок
+   "На весь екран" у task/exercise embeds (EmbedFrame, embed-frame.tsx),
+   коли активний фон курсу: FULLSCREEN_BUTTON_CLASS отримав стабільний
+   гачок-клас "fullscreen-btn" саме для цього, і щоразу приєднаний тут ДО
+   .scene-fullscreen-btn (один список оголошень на правило — щоб стилі не
+   розійшлись згодом), а не окремим набором. [data-scene-bg] — та сама
+   атрибутна позначка на student-bg-wrapper (page.tsx), що вже визначає
+   .student-on-bg вище: присутня (dark/light — байдуже) лише коли фон
+   активний, тож без фону FULLSCREEN_BUTTON_CLASS лишається байтово тим
+   самим, що й сьогодні. */
+.scene-fullscreen-btn,
+[data-scene-bg] .fullscreen-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1216,7 +1228,8 @@ button.scene-bar:active .scene-bar-toggle {
     transform 0.15s ease;
 }
 @media (pointer: coarse) {
-  .scene-fullscreen-btn {
+  .scene-fullscreen-btn,
+  [data-scene-bg] .fullscreen-btn {
     min-height: 40px;
   }
 }
@@ -1226,7 +1239,8 @@ button.scene-bar:active .scene-bar-toggle {
    (обидва теж світло-золоті) губились на такому ж світлому фоні. Тепер фон
    лишається темним, яскравішають лише рамка/текст/glow. */
 @media (hover: hover) {
-  .scene-fullscreen-btn:hover {
+  .scene-fullscreen-btn:hover,
+  [data-scene-bg] .fullscreen-btn:hover {
     background: rgba(10, 16, 48, 0.92);
     border-color: #f6dc8e;
     color: #fff0b8;
@@ -1234,15 +1248,27 @@ button.scene-bar:active .scene-bar-toggle {
     transform: translateY(-1px);
   }
 }
-.scene-fullscreen-btn:active {
+.scene-fullscreen-btn:active,
+[data-scene-bg] .fullscreen-btn:active {
   background: rgba(6, 10, 32, 0.9);
   border-color: #e8c46a;
   box-shadow: none;
   transform: translateY(0);
 }
-.scene-fullscreen-btn:focus-visible {
+.scene-fullscreen-btn:focus-visible,
+[data-scene-bg] .fullscreen-btn:focus-visible {
   outline: 2px solid #e8c46a;
   outline-offset: 2px;
+}
+/* Той самий відступ під вмістом, що у відео-кнопки (margin-top: 10px
+   inline, video-player.tsx/video-frame.tsx) — тут одним CSS-правилом,
+   бо FULLSCREEN_BUTTON_CLASS спільний для БАГАТЬОХ місць виклику
+   (embed-frame.tsx) без власного пропа onBackground. Картка embed'ів
+   (EXERCISE_BLOCK_CLASS/_SURFACE_CLASS) має свій padding (p-4 md:p-6) —
+   на відміну від .scene-card під відео, їй не потрібна окрема
+   .scene-fullscreen-btn-row-обгортка, щоб кнопку не зрізало краєм. */
+[data-scene-bg] .fullscreen-btn {
+  margin-top: 10px;
 }
 
 /* Рядок-обгортка кнопки на фоні курсу — звичайний in-flow нащадок усередині
