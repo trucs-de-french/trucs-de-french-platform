@@ -3,6 +3,7 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { GlassBlock } from "@/components/glass-block";
+import { resolveBlockIcon } from "@/lib/block-icons";
 import { H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -143,7 +144,7 @@ export async function DelfTestTasks({
         {skipGlass ? (
           <ExerciseBlock task={task} isDelf />
         ) : (
-          <GlassBlock title={task.title}>
+          <GlassBlock title={task.title} icon={resolveBlockIcon(task.type)}>
             <div className={EXERCISE_STACK}>
               <ExerciseBlock task={task} isDelf suppressTitle />
             </div>

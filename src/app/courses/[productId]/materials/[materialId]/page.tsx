@@ -9,6 +9,7 @@ import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { ExerciseBlock, type ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { GlassBlock } from "@/components/glass-block";
+import { resolveBlockIcon } from "@/lib/block-icons";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -209,7 +210,7 @@ export default async function MaterialPage({
                   {row.task.type === "callout" || row.task.type === "link" || row.task.type === "game" ? (
                     <ExerciseBlock task={row.task} />
                   ) : (
-                    <GlassBlock title={row.task.title}>
+                    <GlassBlock title={row.task.title} icon={resolveBlockIcon(row.task.type)}>
                       <div className={EXERCISE_STACK}>
                         <ExerciseBlock task={row.task} suppressTitle />
                       </div>

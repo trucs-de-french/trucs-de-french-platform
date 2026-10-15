@@ -10,7 +10,8 @@ import {
 } from "@/lib/vocab-categories";
 import { pluralizeWords } from "@/lib/pluralize-words";
 import { categoryPalette, rgbToHex } from "@/lib/vocab-palette";
-import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+import { resolveBlockIcon } from "@/lib/block-icons";
 
 // Той самий шеврон/кнопка, що script-section.tsx (BottomCollapseButton) —
 // дрібний дублікат тут навмисно: ярлик і сама умова onBackground різні, а
@@ -191,41 +192,29 @@ export function VocabSection({
     <BottomCollapseButton label="Згорнути вокабуляр" onClick={collapseFromBottomButton} />
   );
 
-  // Завжди скляний бар+панель (раніше — лише при активному фоні курсу):
-  // токени --glass-* (globals.css) самі перемикаються світлий/темний через
-  // [data-scene-bg], світлий лишається дефолтом без фону. pdfLink
-  // переїхав усередину панелі (раніше — поряд із тоглом у плоскому
-  // варіанті) — та сама посилання/behavior, інше місце в розмітці.
+  // Завжди скляний бар+панель, окремими сиблінгами з 14px відступом
+  // (.scene-bar margin-bottom, globals.css) — та сама "скляна" мова, що й
+  // GlassBlock-вправи. pdfLink сидить усередині панелі (не поряд із
+  // тоглом) — та сама посилання/behavior, інше місце в розмітці.
   const expanded = !collapsed;
   return (
-    <div>
-      {expanded ? (
-        <div className={SCENE_CARD_CLASS}>
-          <SectionHeaderBar
-            title="Вокабуляр"
-            attached
-            collapsible
-            expanded
-            onToggle={() => setCollapsed((c) => !c)}
-            toggleRef={headerToggleRef}
-          />
-          <div className="glass-panel-surface">
-            <div className="flex justify-start" style={{ marginBottom: "18px" }}>
-              {pdfLink}
-            </div>
-            {legendAndGroups}
-            {bottomCollapseButton}
+    <div className="flex flex-col gap-[14px]">
+      <SectionHeaderBar
+        title="Вокабуляр"
+        icon={resolveBlockIcon("vocabulary")}
+        collapsible
+        expanded={expanded}
+        onToggle={() => setCollapsed((c) => !c)}
+        toggleRef={headerToggleRef}
+      />
+      {expanded && (
+        <div className="glass-block-panel">
+          <div className="flex justify-start" style={{ marginBottom: "18px" }}>
+            {pdfLink}
           </div>
+          {legendAndGroups}
+          {bottomCollapseButton}
         </div>
-      ) : (
-        <SectionHeaderBar
-          title="Вокабуляр"
-          attached={false}
-          collapsible
-          expanded={false}
-          onToggle={() => setCollapsed((c) => !c)}
-          toggleRef={headerToggleRef}
-        />
       )}
     </div>
   );

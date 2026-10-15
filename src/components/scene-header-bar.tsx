@@ -1,10 +1,5 @@
 import type { Ref } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
-
-// Обгортка JOINED-картки (бар+тіло одним блоком, globals.css) — videoNode/
-// ScriptSection/VocabSection (сторінка сцени) підставляють напряму в
-// className=, коли секція і розгорнута, і на фоні курсу.
-export const SCENE_CARD_CLASS = "scene-card";
+import { ChevronDown, ChevronUp, type LucideIcon } from "lucide-react";
 
 // Невеликий "запас" на майбутній зафіксований (position: fixed/sticky) бар
 // нагорі сторінки — сьогодні такого бару немає (перевірено — ніде в
@@ -29,54 +24,52 @@ export function scrollToHeaderAndFocus(header: HTMLButtonElement | null) {
   header.focus();
 }
 
-// Скляний заголовок-бар секції студентської сторінки сцени, коли активний
-// фон курсу (onBackground) — замінює student-on-bg h2/тогл-кнопку (видно
-// лише на самому фоні) там, де текст інакше лежить прямо на фоновій
-// картинці. attached — бар безпосередньо над тілом картки (JOINED,
-// розгорнуто): верхні кути округлені, нижньої межі нема, тінь на обгортці
-// (SCENE_CARD_CLASS). !attached — бар сам по собі (JOINED згорнуто, або
-// STANDALONE секція): повне округлення/рамка/власна тінь. collapsible —
-// рендериться як <button aria-expanded>, увесь бар лишається зоною кліку
-// (великий тач-таргет); інакше — звичайний div без тоглу (напр. "Відео",
-// не згортається).
+// Скляний заголовок-бар секції студентської сторінки сцени ("Відео"/
+// "Скрипт"/"Вокабуляр") — завжди власна картка (повне округлення/рамка/
+// тінь, margin-bottom 14px до панелі під ним — той самий відступ, що й у
+// GlassBlock.glass-block-header, одна й та сама "скляна" мова). icon —
+// золотий бейдж зліва від назви (block-icons.ts, підбирається
+// викликачем). collapsible — рендериться як <button aria-expanded>, увесь
+// бар лишається зоною кліку (великий тач-таргет); інакше — звичайний div
+// без тоглу (напр. "Відео", не згортається).
 export function SectionHeaderBar({
   title,
-  attached,
+  icon: Icon,
   collapsible = false,
   expanded,
   onToggle,
   toggleRef,
 }: {
   title: string;
-  attached: boolean;
+  icon: LucideIcon;
   collapsible?: boolean;
   expanded?: boolean;
   onToggle?: () => void;
   // Для кнопки "Згорнути..." під вмістом секції (script-section.tsx/
   // vocab-section.tsx) — щоб після кліку могти підвести ЦЕЙ тогл у видиму
   // область і перенести на нього фокус (scrollToHeaderAndFocus вище).
-  // Передається в ОБИДВА рендери (attached-розгорнутий і detached-
-  // згорнутий варіант нижче) — після згортання React монтує інший button,
-  // ref має вказувати саме на нього.
   toggleRef?: Ref<HTMLButtonElement>;
 }) {
-  const barClass = `scene-bar ${attached ? "scene-bar--attached" : "scene-bar--detached"}`;
+  const left = (
+    <span className="glass-bar-left">
+      <span className="glass-bar-badge" aria-hidden="true">
+        <Icon size={16} strokeWidth={2.5} />
+      </span>
+      <h2 className="scene-bar-title">{title}</h2>
+    </span>
+  );
 
   if (!collapsible) {
-    return (
-      <div className={barClass}>
-        <h2 className="scene-bar-title">{title}</h2>
-      </div>
-    );
+    return <div className="scene-bar">{left}</div>;
   }
 
   const Chevron = expanded ? ChevronUp : ChevronDown;
 
   return (
-    <button ref={toggleRef} type="button" onClick={onToggle} aria-expanded={expanded} className={barClass}>
-      <h2 className="scene-bar-title">{title}</h2>
+    <button ref={toggleRef} type="button" onClick={onToggle} aria-expanded={expanded} className="scene-bar">
+      {left}
       <span className="scene-bar-toggle" aria-hidden>
-        <Chevron size={18} strokeWidth={2.8} className="text-[#f6dc8e]" />
+        <Chevron size={18} strokeWidth={2.8} />
       </span>
     </button>
   );

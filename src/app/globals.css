@@ -972,9 +972,16 @@ button, input, textarea, select, label, nav, aside {
   --glass-panel-bg: rgba(255, 255, 255, 0.68);
   --glass-panel-border: rgba(184, 144, 47, 0.5);
   --glass-panel-shadow: 0 8px 28px rgba(40, 50, 110, 0.18);
-  --glass-bar-bg: rgba(255, 255, 255, 0.9);
-  --glass-bar-border: rgba(184, 144, 47, 0.5);
-  --glass-bar-text: #7a5a0e;
+  /* "Variant 5" — світла тема: білий бар, темно-навi текст, золотий
+     бейдж-іконка (однаковий в обох темах, .glass-bar-badge нижче). */
+  --glass-bar-bg: rgba(255, 255, 255, 0.93);
+  --glass-bar-border: rgba(184, 144, 47, 0.65);
+  --glass-bar-text: #1a1640;
+  --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  --glass-toggle-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  --glass-toggle-border: #e0aa3e;
+  --glass-toggle-chevron: #1a1640;
+  --glass-toggle-hover-ring: rgba(224, 170, 62, 0.35);
   --glass-text: #1f1d3a;
   --glass-text-secondary: #55546b;
   --glass-text-meta: #6b6a80;
@@ -1010,7 +1017,6 @@ button, input, textarea, select, label, nav, aside {
    .light; інакше (типове :root, тема невідома чи не встановлена) —
    світлі значення вище лишаються дефолтом. */
 .dark .glass-block,
-.dark .scene-card,
 .dark .scene-bar {
   --glass-panel-bg: rgba(10, 16, 48, 0.82);
   --glass-panel-border: rgba(243, 217, 139, 0.5);
@@ -1018,6 +1024,10 @@ button, input, textarea, select, label, nav, aside {
   --glass-bar-bg: rgba(10, 16, 48, 0.92);
   --glass-bar-border: rgba(243, 217, 139, 0.5);
   --glass-bar-text: #f6dc8e;
+  --glass-bar-shadow: none;
+  --glass-toggle-bg: transparent;
+  --glass-toggle-border: #e8c46a;
+  --glass-toggle-chevron: #f6dc8e;
   --glass-text: #ffffff;
   --glass-text-secondary: #c9c8e6;
   --glass-text-meta: #f6dc8e;
@@ -1038,7 +1048,6 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .glass-block,
-  :root:not(.light) .scene-card,
   :root:not(.light) .scene-bar {
     --glass-panel-bg: rgba(10, 16, 48, 0.82);
     --glass-panel-border: rgba(243, 217, 139, 0.5);
@@ -1046,6 +1055,10 @@ button, input, textarea, select, label, nav, aside {
     --glass-bar-bg: rgba(10, 16, 48, 0.92);
     --glass-bar-border: rgba(243, 217, 139, 0.5);
     --glass-bar-text: #f6dc8e;
+    --glass-bar-shadow: none;
+    --glass-toggle-bg: transparent;
+    --glass-toggle-border: #e8c46a;
+    --glass-toggle-chevron: #f6dc8e;
     --glass-text: #ffffff;
     --glass-text-secondary: #c9c8e6;
     --glass-text-meta: #f6dc8e;
@@ -1079,15 +1092,16 @@ button, input, textarea, select, label, nav, aside {
   gap: 12px;
   background: var(--glass-bar-bg);
   border: 1px solid var(--glass-bar-border);
+  box-shadow: var(--glass-bar-shadow);
   color: var(--glass-bar-text);
-  border-radius: 12px;
-  padding: 12px 18px;
+  border-radius: 14px;
+  padding: 14px 22px;
   margin-bottom: 14px;
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 18px;
+  font-size: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 .glass-block-title {
   margin: 0;
@@ -1095,6 +1109,31 @@ button, input, textarea, select, label, nav, aside {
   font: inherit;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+/* Ліва група бейдж+назва в будь-якому скляному барі (GlassBlock і
+   SectionHeaderBar — Відео/Скрипт/Вокабуляр) — праворуч від неї лишається
+   місце під headerExtra/тогл-шеврон (justify-content: space-between на
+   самому барі). */
+.glass-bar-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* Золотий бейдж-іконка зліва від назви — однаковий в ОБОХ темах (варіант
+   5 дизайну), не токенізований: "гold = структура сторінки" лишається
+   візуально однаковим орієнтиром незалежно від світлої/темної панелі під
+   ним. */
+.glass-bar-badge {
+  display: flex;
+  height: 30px;
+  width: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  margin-right: 14px;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #1a1640;
 }
 .glass-block-panel {
   background: var(--glass-panel-bg);
@@ -1104,37 +1143,39 @@ button, input, textarea, select, label, nav, aside {
   padding: 22px 24px 24px;
   color: var(--glass-text);
 }
-/* Тіло скляних бар-секцій (SectionHeaderBar + .scene-card, Скрипт/
-   Вокабуляр/Відео) — той самий фон/колір, що .glass-block-panel, без
-   власної рамки/тіні/радіуса (їх несе .scene-card-обгортка зверху, body —
-   лише внутрішній шар). */
-.glass-panel-surface {
-  background: var(--glass-panel-bg);
-  color: var(--glass-text);
-  padding: 16px 24px 24px;
-}
-/* Відео-панель — варіант без заливки/падінгу (той самий вигляд, що й ДО
-   уніфікованого скляного блоку: videoNode раніше рендерив голий <div>
-   без жодного класу, скло давав лише бар+scene-card overflow:hidden/
-   radius/shadow). Один і той самий, теми-незалежний transparent в усіх
-   трьох станах [data-scene-bg] — старого значення "напівпрозорий темний"
-   ніколи не було, картка завжди лишалась наскрізь прозорою, курс-фон
-   просвічував повністю. padding:0 (не 16/24/24, як .glass-panel-surface
-   вище) — кнопка "На весь екран" уже має власний відступ від країв
-   картки (.scene-fullscreen-btn-row нижче, 10/12/12/12), подвійний
-   padding тут давав би зайвий порожній простір під кнопкою. */
+/* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
+   й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
+   <div> без жодного класу, скло давав лише бар+overflow:hidden/radius/
+   shadow навколо обох). Той самий .glass-block-panel, лише ці 4 власності
+   перекриті — радіус/тінь (--glass-panel-shadow) лишаються спільними з
+   усіма іншими панелями. overflow:hidden — щоб прямокутний iframe/плеєр
+   усередині обрізався під округлені кути картки (сам елемент — не
+   предок/нащадок відео в сенсі containing block, тож безпечно й для
+   position:fixed pseudo-fullscreen). padding:0 — кнопка "На весь екран"
+   уже має власний відступ від країв картки (.scene-fullscreen-btn-row
+   нижче, 10/12/12/12), подвійний padding тут давав би зайвий порожній
+   простір під кнопкою. */
 .glass-panel--video {
   background: transparent;
+  border: none;
   padding: 0;
+  overflow: hidden;
 }
 @media (max-width: 640px) {
-  .glass-block-panel,
-  .glass-panel-surface {
+  .glass-block-panel {
     padding: 16px;
   }
-  .glass-block-header {
+  .glass-bar-badge {
+    height: 26px;
+    width: 26px;
+  }
+  .glass-block-header,
+  .scene-bar {
     font-size: 16px;
-    padding: 12px 14px;
+    padding: 12px 16px;
+  }
+  .scene-bar-title {
+    font-size: 16px;
   }
 }
 
@@ -1215,19 +1256,16 @@ button, input, textarea, select, label, nav, aside {
    (.dark), не на [data-scene-bg]: без цього перекриття текст міг би
    лишитись темним на темній панелі (чи навпаки) залежно від того, чи
    збігаються обидві теми. */
-.glass-block-panel .instruction-text,
-.glass-panel-surface .instruction-text {
+.glass-block-panel .instruction-text {
   color: var(--glass-text);
 }
-.glass-block-panel .instruction-subtext,
-.glass-panel-surface .instruction-subtext {
+.glass-block-panel .instruction-subtext {
   color: var(--glass-text-secondary);
 }
 /* <mark> (підсвітка жовтим/амбером — TipTap-розмітка, essay-check.tsx
    тощо) — завжди темний текст, незалежно від теми: той самий ефект
    текстового маркера в обох темах, не біла підсвітка-навпаки в темній. */
-.glass-block-panel mark,
-.glass-panel-surface mark {
+.glass-block-panel mark {
   color: #1f1d3a;
 }
 
@@ -1238,14 +1276,27 @@ button, input, textarea, select, label, nav, aside {
    "скла" тепер лише напівпрозорий фон+рамка+тінь, щоб жоден предок
    відео/iframe не міг випадково стати containing-block для
    position:fixed-нащадків (iOS pseudo-fullscreen/Fullscreen API). */
+/* Завжди власна картка (повне округлення/рамка/тінь) — та сама "скляна"
+   мова, що й .glass-block-header. Відступ до панелі під ним (коли вона
+   є) — НЕ margin тут (додав би зайвий простір і для СТАНДАЛОН-барів без
+   жодної панелі під ними — "Практика"/"Завдання", page.tsx, і для
+   згорнутого стану Скрипту/Вокабуляру, де після бару взагалі нічого
+   немає): замість margin — викликач (video/script/vocab) сам огортає
+   бар+панель у flex-col gap-[14px] — gap спрацьовує лише МІЖ реально
+   відрендереними сиблінгами, тож у згорнутому стані (панелі немає зовсім)
+   жодного зайвого відступу не з'являється сам собою. Раніше JOINED-варіант
+   (attached, спільна .scene-card-обгортка без жодного відступу взагалі)
+   прибраний — саме відсутність відступу під відео була помічена як баг. */
 .scene-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 12px 20px;
+  padding: 14px 22px;
   background: var(--glass-bar-bg);
   border: 1px solid var(--glass-bar-border);
+  border-radius: 14px;
+  box-shadow: var(--glass-bar-shadow);
 }
 button.scene-bar {
   width: 100%;
@@ -1256,68 +1307,82 @@ button.scene-bar:focus-visible {
   outline: 2px solid var(--glass-focus-ring);
   outline-offset: 2px;
 }
+/* Наведення на сам бар — лише світла тема підсилює рамку (темна лишається
+   незмінною, "ніколи не світлішає"); фон (background) ніде не змінюється
+   на hover, лише рамка/тогл. */
+@media (hover: hover) {
+  button.scene-bar:hover {
+    border-color: #b8902f;
+  }
+  .dark button.scene-bar:hover {
+    border-color: var(--glass-bar-border);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) button.scene-bar:hover {
+    border-color: var(--glass-bar-border);
+  }
+}
 .scene-bar-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 800;
   font-size: 20px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--glass-bar-text);
 }
-/* attached — під баром безпосередньо йде тіло картки (JOINED), без
-   відступу: нижня межа бару прибрана (щоб не здвоювалась із верхньою
-   межею тіла), округлені лише верхні кути — решту округлення картки
-   (scene-card нижче) бере на себе через overflow:hidden. */
-.scene-bar--attached {
-  border-radius: 14px 14px 0 0;
-  border-bottom: none;
-}
-/* detached — бар сам по собі (згорнутий JOINED стан або STANDALONE
-   секція без спільного тіла) — повна рамка, повне округлення, власна
-   тінь (у attached-стані тінь несе scene-card, не бар). */
-.scene-bar--detached {
-  border-radius: 14px;
-  box-shadow: var(--glass-panel-shadow);
-}
+/* Тогл-коло (шеврон згорнути/розгорнути) — токени --glass-toggle-*
+   (globals.css, разом з --glass-bar-*): світла тема — залита
+   золотим градієнтом (варіант 5), темна — лишається прозорим
+   золотим кільцем (попередній вигляд, не змінюється). color — щоб
+   вкладений lucide-іконка (stroke="currentColor") підхоплювала
+   --glass-toggle-chevron без власного className на самій іконці. */
 .scene-bar-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1.5px solid #e8c46a;
-  background: rgba(232, 196, 106, 0.14);
-  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  border: 1.5px solid var(--glass-toggle-border);
+  background: var(--glass-toggle-bg);
+  color: var(--glass-toggle-chevron);
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
-/* Наведення на сам бар (не на коло окремо — воно лише span усередині
-   button.scene-bar) мало ставати світлішим, не темнішим: фон кола й так
-   напівпрозоро-золотий, тож без явного hover-правила тут бар покладався б
-   на дефолтну браузерну підсвітку <button> при наведенні — саме вона й
-   "висвітлювала" коло, гасячи контраст золотого штриха/рамки на ньому. */
+/* Світла тема — лише глов-кільце на hover (НЕ світлішає заливка). */
 @media (hover: hover) {
   button.scene-bar:hover .scene-bar-toggle {
+    box-shadow: 0 0 0 3px var(--glass-toggle-hover-ring);
+  }
+}
+/* Темна тема — той самий вигляд hover, що й раніше (яскравіші
+   рамка/фон/штрих кільця), вища специфічність (.dark) природно
+   перемагає світле правило вище. Наведення на сам бар (не на коло
+   окремо — воно лише span усередині button.scene-bar) мало ставати
+   світлішим, не темнішим: фон кола й так напівпрозоро-золотий, тож без
+   явного hover-правила тут бар покладався б на дефолтну браузерну
+   підсвітку <button> при наведенні — саме вона й "висвітлювала" коло,
+   гасячи контраст золотого штриха/рамки на ньому. */
+@media (hover: hover) {
+  .dark button.scene-bar:hover .scene-bar-toggle {
     border-color: #f6dc8e;
     background: rgba(232, 196, 106, 0.22);
+    color: #fff0b8;
     box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
   }
-  button.scene-bar:hover .scene-bar-toggle svg {
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) button.scene-bar:hover .scene-bar-toggle {
+    border-color: #f6dc8e;
+    background: rgba(232, 196, 106, 0.22);
     color: #fff0b8;
+    box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
   }
 }
 button.scene-bar:active .scene-bar-toggle {
-  border-color: #e8c46a;
-  background: rgba(232, 196, 106, 0.14);
   box-shadow: none;
-}
-/* Обгортка JOINED-картки (бар+тіло одним блоком) — лише border-radius/
-   overflow/box-shadow, свідомо БЕЗ transform/filter/backdrop-filter/
-   will-change/contain (коментар вище) — тіло відео (videoNode, page.tsx)
-   рендериться прямо всередині цієї обгортки. */
-.scene-card {
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: var(--glass-panel-shadow);
 }
 
 /* Кнопка "Завантажити PDF" (vocab-section.tsx) — фіксовані кольори,

@@ -3,7 +3,8 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
-import { SectionHeaderBar, SCENE_CARD_CLASS, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
+import { resolveBlockIcon } from "@/lib/block-icons";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
 // section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
@@ -142,7 +143,7 @@ export function ScriptSection({
   const useBar = Boolean(title);
 
   const body = isOpen && (
-    <div className={`script-body flex flex-col gap-2 ${useBar ? "glass-panel-surface" : ""}`}>
+    <div className={`script-body flex flex-col gap-2 ${useBar ? "glass-block-panel" : ""}`}>
       {hasTranslation && (
         <button
           type="button"
@@ -211,29 +212,16 @@ export function ScriptSection({
 
   if (useBar) {
     return (
-      <div>
-        {isOpen ? (
-          <div className={SCENE_CARD_CLASS}>
-            <SectionHeaderBar
-              title={title!}
-              attached
-              collapsible
-              expanded={!collapsed}
-              onToggle={() => setCollapsed((c) => !c)}
-              toggleRef={headerToggleRef}
-            />
-            {body}
-          </div>
-        ) : (
-          <SectionHeaderBar
-            title={title!}
-            attached={false}
-            collapsible
-            expanded={false}
-            onToggle={() => setCollapsed((c) => !c)}
-            toggleRef={headerToggleRef}
-          />
-        )}
+      <div className="flex flex-col gap-[14px]">
+        <SectionHeaderBar
+          title={title!}
+          icon={resolveBlockIcon("script")}
+          collapsible
+          expanded={!collapsed}
+          onToggle={() => setCollapsed((c) => !c)}
+          toggleRef={headerToggleRef}
+        />
+        {body}
       </div>
     );
   }

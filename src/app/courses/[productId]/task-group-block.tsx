@@ -12,6 +12,7 @@ import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { GlassBlock } from "@/components/glass-block";
+import { resolveBlockIcon } from "@/lib/block-icons";
 import { EmbedFrame } from "@/components/embed-frame";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
@@ -325,7 +326,7 @@ export function TaskGroupBlock({
   );
 
   return (
-    <GlassBlock title={titleForBar?.title}>
+    <GlassBlock title={titleForBar?.title} icon={resolveBlockIcon(titleForBar?.type)}>
       <div className={EXERCISE_STACK}>{body}</div>
     </GlassBlock>
   );

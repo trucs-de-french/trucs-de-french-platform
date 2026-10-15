@@ -31,6 +31,7 @@ import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
 import { LinkCard } from "@/components/link-card";
 import { GlassBlock } from "@/components/glass-block";
+import { resolveBlockIcon } from "@/lib/block-icons";
 import { EmbedFrame } from "@/components/embed-frame";
 import { collectSceneVocab, collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
@@ -62,7 +63,7 @@ import {
   type SceneContentLink,
 } from "../../scene-content-block";
 import { SceneBackground } from "@/components/scene-background";
-import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
+import { SectionHeaderBar } from "@/components/scene-header-bar";
 import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
 import { sceneBackgroundMode } from "@/lib/scene-background-mode";
 
@@ -644,17 +645,17 @@ export default async function ScenePage({
 
   const videoNode = scene.video_url && (
     <section>
-      {/* Завжди скляний бар+панель (раніше — лише при активному фоні
-          курсу) — уніфікований вигляд незалежно від onBackground, токени
-          --glass-* (globals.css) самі перемикаються світлий/темний через
-          [data-scene-bg]. SCENE_CARD_CLASS — лише border-radius/overflow/
-          box-shadow (жодних transform/filter/backdrop-filter/will-change/
-          contain), щоб не стати containing-block для position:fixed iOS
-          pseudo-fullscreen/Fullscreen API wrapper усередині VideoPlayer/
-          VideoFrame. */}
-      <div className={SCENE_CARD_CLASS}>
-        <SectionHeaderBar title="Відео" attached />
-        <div className="glass-panel--video">{videoBody}</div>
+      {/* Бар + панель окремими сиблінгами з 14px відступом (.scene-bar
+          margin-bottom, globals.css) — та сама "скляна" мова, що й усюди
+          інде. glass-panel--video — прозора/без падінгу (попередній
+          вигляд картки), з overflow:hidden під округлені кути; жодних
+          transform/filter/backdrop-filter/will-change/contain ні на барі,
+          ні на панелі, щоб не стати containing-block для position:fixed
+          iOS pseudo-fullscreen/Fullscreen API wrapper усередині
+          VideoPlayer/VideoFrame. */}
+      <div className="flex flex-col gap-[14px]">
+        <SectionHeaderBar title="Відео" icon={resolveBlockIcon("video")} />
+        <div className="glass-block-panel glass-panel--video">{videoBody}</div>
       </div>
     </section>
   );
@@ -673,7 +674,7 @@ export default async function ScenePage({
   const linksNode = hasLinks && (
     <section>
       {onBackground ? (
-        <SectionHeaderBar title="Практика" attached={false} />
+        <SectionHeaderBar title="Практика" icon={resolveBlockIcon("practice")} />
       ) : (
         <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
       )}
@@ -708,7 +709,7 @@ export default async function ScenePage({
   const tasksNode = sceneRows.length > 0 && (
     <section>
       {onBackground ? (
-        <SectionHeaderBar title="Завдання" attached={false} />
+        <SectionHeaderBar title="Завдання" icon={resolveBlockIcon("tasks")} />
       ) : (
         <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
       )}
@@ -771,7 +772,7 @@ export default async function ScenePage({
                     })()}
                 </>
               ) : (
-                <GlassBlock title={task.title}>
+                <GlassBlock title={task.title} icon={resolveBlockIcon(task.type)}>
                   <div className={EXERCISE_STACK}>
                     <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
