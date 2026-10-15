@@ -823,7 +823,7 @@ function WordSearchBlockView({
               type="button"
               onClick={handleSubmit}
               disabled={pending}
-              className={STUDENT_BUTTON_PRIMARY}
+              className="exercise-block-check-btn"
             >
               {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
             </button>

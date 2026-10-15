@@ -760,7 +760,7 @@ export function MultipleChoiceExercise({
               type="button"
               onClick={() => submitBlock(activeBlock)}
               disabled={isPending || !blockAllAnswered}
-              className={STUDENT_BUTTON_PRIMARY}
+              className="exercise-block-check-btn"
             >
               {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
             </button>

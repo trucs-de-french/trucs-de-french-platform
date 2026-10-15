@@ -427,7 +427,7 @@ export function LetterRearrangementExercise({
             type="button"
             onClick={() => submitBlock(activeBlock)}
             disabled={isPending}
-            className={STUDENT_BUTTON_PRIMARY}
+            className="exercise-block-check-btn"
           >
             {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
           </button>

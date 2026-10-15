@@ -1368,3 +1368,157 @@ button.scene-bar:active .scene-bar-toggle {
     stroke: #fff0b8;
   }
 }
+
+/* Уніфікована навігація по блоках великих вправ (block-navigation.tsx) —
+   сегментований прогрес-бар угорі + рядок ←/→ знизу, той самий вигляд
+   незалежно від типу вправи (matching/letter_gaps/letter_rearrangement/
+   table_fill/word_search/crossword/... — усі користуються одним
+   компонентом). Фіксовані indigo-кольори сайту (ті самі #4b46da/#3b36c4/
+   #5a55e6, що вже є токенами бренду) — НЕЗАЛЕЖНО від фону сцени (на
+   відміну від .scene-* "скляних" класів вище), бо ця навігація завжди
+   сидить усередині білої/сірої картки вправи (EXERCISE_BLOCK_CLASS), не
+   на фоновій картинці курсу. */
+.exercise-block-progress-label {
+  margin-bottom: 8px;
+}
+.exercise-block-progress-current {
+  font-weight: 800;
+  font-size: 16px;
+  color: #1f1d3a;
+}
+.exercise-block-progress-total {
+  font-weight: 700;
+  font-size: 16px;
+  color: #8a899b;
+}
+/* Текст лежить прямо на фоні картки вправи (не в кольоровій пігулці) —
+   темний #1f1d3a практично зникає на dark:bg-neutral-900 картки, тож тут,
+   на відміну від решти кнопок цього блоку (білий/градієнтний фон,
+   однаково читабельні в обох темах), потрібен явний dark-варіант. Той
+   самий дво-умовний патерн, що --background/--foreground вгорі файлу:
+   системна темна тема (без явного .light) + явний клас .dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-block-progress-current {
+    color: #e8e7fb;
+  }
+  :root:not(.light) .exercise-block-progress-total {
+    color: #a5a3bd;
+  }
+}
+:root.dark .exercise-block-progress-current {
+  color: #e8e7fb;
+}
+:root.dark .exercise-block-progress-total {
+  color: #a5a3bd;
+}
+
+.exercise-block-segments {
+  display: flex;
+  margin-bottom: 20px;
+}
+/* Сегмент — кнопка на всю висоту 24px (комфортна зона дотику), сама
+   кольорова смужка (8px) — вкладений span, центрований flex'ом. */
+.exercise-block-segment {
+  display: flex;
+  flex: 1;
+  min-width: 14px;
+  height: 24px;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.exercise-block-segment-bar {
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+}
+.exercise-block-segment:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+
+.exercise-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  justify-content: flex-end;
+}
+.exercise-block-prev-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid #4b46da;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b36c4;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.exercise-block-next-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid #4b46da;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b36c4;
+  font-weight: 800;
+  font-size: 15px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.exercise-block-prev-btn:disabled,
+.exercise-block-next-btn:disabled {
+  border-color: #c9c8ea;
+  color: #b5b4cc;
+  cursor: not-allowed;
+}
+@media (hover: hover) {
+  .exercise-block-prev-btn:not(:disabled):hover,
+  .exercise-block-next-btn:not(:disabled):hover {
+    background: #ecebfd;
+  }
+}
+.exercise-block-prev-btn:focus-visible,
+.exercise-block-next-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+
+/* Кнопка "Перевірити блок" (STUDENT_BUTTON_PRIMARY раніше, тепер окремий
+   клас — STUDENT_BUTTON_PRIMARY лишається спільною роллю для вправ БЕЗ
+   блоків, її не можна було чіпати) — лишається де малювалась і сьогодні
+   (коментар у block-navigation.tsx), лише новий вигляд: та сама indigo-
+   градієнтна "первинна" кнопка, що інші елементи цієї навігації. */
+.exercise-block-check-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 4px 14px rgba(59, 54, 196, 0.4);
+}
+.exercise-block-check-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.exercise-block-check-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
