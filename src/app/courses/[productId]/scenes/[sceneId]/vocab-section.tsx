@@ -10,6 +10,7 @@ import {
   PART_OF_SPEECH_COLORS,
 } from "@/lib/vocab-categories";
 import { pluralizeWords } from "@/lib/pluralize-words";
+import { categoryPalette, rgbToHex } from "@/lib/vocab-palette";
 import { STUDENT_TOGGLE_HEADER_BUTTON, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
@@ -62,72 +63,6 @@ function BottomCollapseButton({
   );
 }
 
-// Той самий RGB (0-1 на канал), що вже живе в PART_OF_SPEECH_COLORS (dot
-// класи/pdf), переведений у 0-255 для CSS (hex/rgba) — жодних нових
-// кольорів категорій тут не з'являється, лише похідні відтінки нижче.
-function toRgb255(rgb: [number, number, number]): [number, number, number] {
-  return [Math.round(rgb[0] * 255), Math.round(rgb[1] * 255), Math.round(rgb[2] * 255)];
-}
-
-function rgbToHex([r, g, b]: [number, number, number]): string {
-  const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-// WCAG relative luminance — той самий підхід, що scene-background-mode.ts
-// (окремий, невеликий дублікат тут: той файл не експортує цю функцію, а
-// зачіпати його поза списком дозволених файлів задача не дозволяє).
-function relativeLuminance([r, g, b]: [number, number, number]): number {
-  const channel = (v: number) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-}
-
-function contrastRatio(l1: number, l2: number): number {
-  const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-// Темнішає колір категорії (крок -18% яскравості на канал, до 6 кроків),
-// поки контраст із білим не досягне 4.5:1 — для надто світлих категорій
-// (adjectif/зелений і т.п.) даємо темнішу пігулку/текст замість того, щоб
-// міняти колір тексту (простіший варіант, дозволений умовою задачі).
-function darkenUntilContrast(rgb: [number, number, number], minRatio: number): [number, number, number] {
-  let current = rgb;
-  for (let i = 0; i < 6; i++) {
-    if (contrastRatio(relativeLuminance(current), 1) >= minRatio) break;
-    current = current.map((c) => c * 0.82) as [number, number, number];
-  }
-  return current;
-}
-
-type CategoryPalette = {
-  /** rgb "r, g, b" рядок для --cat-rgb / rgba() у підсвітці рядка й чипі легенди. */
-  rgbTriplet: string;
-  /** Пігулка заголовка — сам колір категорії, темніший за потреби для білого тексту. */
-  pillHex: string;
-  pillShadowRgba: string;
-  lineHex: string;
-  /** Темніший відтінок для лічильника слів і тексту чипа легенди (читабельний на майже білому). */
-  textHex: string;
-};
-
-function categoryPalette(rgb01: [number, number, number]): CategoryPalette {
-  const base = toRgb255(rgb01);
-  const pill = contrastRatio(relativeLuminance(base), 1) >= 4.5 ? base : darkenUntilContrast(base, 4.5);
-  const text = darkenUntilContrast(base, 4.5);
-  return {
-    rgbTriplet: `${base[0]}, ${base[1]}, ${base[2]}`,
-    pillHex: rgbToHex(pill),
-    pillShadowRgba: `rgba(${base[0]}, ${base[1]}, ${base[2]}, 0.35)`,
-    lineHex: rgbToHex(base),
-    textHex: rgbToHex(text),
-  };
-}
-
 // Компактна легенда — тоновані чипи категорій, над списком груп, щоб
 // орієнтуватись, не гортаючи до заголовка потрібної групи. Самі чипи — НЕ
 // посилання, лише лейбли; порядок/вміст той самий, що й раніше.
@@ -168,13 +103,13 @@ function VocabGroupTable({
       <div className="vocab-category-heading">
         <h3
           className="vocab-category-pill"
-          style={{ backgroundColor: palette.pillHex, boxShadow: `0 3px 10px ${palette.pillShadowRgba}` }}
+          style={{ backgroundColor: palette.pillHex, boxShadow: `0 3px 10px rgba(${palette.rgbTriplet}, 0.35)` }}
         >
           {label}
         </h3>
         <span
           className="vocab-category-line"
-          style={{ background: `linear-gradient(to right, ${palette.lineHex}, transparent)` }}
+          style={{ background: `linear-gradient(to right, ${rgbToHex(palette.rgb255)}, transparent)` }}
           aria-hidden
         />
         <span className="vocab-category-count" style={{ color: palette.textHex }}>
