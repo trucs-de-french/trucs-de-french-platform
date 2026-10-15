@@ -202,6 +202,8 @@ function shuffleArray<T>(items: T[]): T[] {
 const DECK_SWIPE_THRESHOLD_PX = 100;
 const DECK_SWIPE_VELOCITY_PX_MS = 0.5;
 const DECK_FLY_OUT_MS = 200;
+const DECK_TAP_THRESHOLD_PX = 6;
+const DECK_FLIP_MS = 400;
 
 // useSyncExternalStore, не useState+useEffect (той самий принцип, що
 // video-frame.tsx PHONE_QUERY) — matchMedia недоступний під час SSR,
@@ -231,11 +233,12 @@ function getTouchOnlyServerSnapshot() {
 }
 
 // Колода питань для усної відповіді — front (питання) завжди показаний,
-// back (переклад) опціонально одразу під ним, БЕЗ перевороту (на відміну
-// від manual/random_reveal: тут немає "лицьової/зворотної" семантики
-// клацання, лише "прибрати картку зі стосу"). cards — уже відфільтровано
-// по front.trim() (FlipCardsExercise), у автентичному порядку вчительки:
-// саме цей порядок (не remaining) відновлюється "Почати знову".
+// back (переклад) — на зворотній стороні, перевертається дотиком/кнопкою
+// (на відміну від manual/random_reveal, де "сторона" задається revealSide
+// на всю вправу, тут кожна картка перевертається окремо і скидається при
+// переході до наступної). cards — уже відфільтровано по front.trim()
+// (FlipCardsExercise), у автентичному порядку вчительки: саме цей порядок
+// (не remaining) відновлюється "Почати знову".
 function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   const [remaining, setRemaining] = useState<FlipCardType[]>(cards);
   // Зростає на кожне "прибирання" картки (кнопкою чи свайпом) і на
@@ -248,6 +251,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   const [dragX, setDragX] = useState(0);
   const [flyDir, setFlyDir] = useState<1 | -1 | null>(null);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
     getReducedMotionSnapshot,
@@ -255,6 +259,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   );
   const hideHintOnTouch = useSyncExternalStore(subscribeTouchOnly, getTouchOnlySnapshot, getTouchOnlyServerSnapshot);
   const startXRef = useRef(0);
+  const startYRef = useRef(0);
   const startTimeRef = useRef(0);
 
   const total = cards.length;
@@ -262,12 +267,14 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   const top = remaining[0];
   const peek1 = remaining[1];
   const peek2 = remaining[2];
+  const canFlip = !finished && top.back.trim().length > 0;
 
   function removeTop() {
     setRemaining((prev) => prev.slice(1));
     setRoundKey((k) => k + 1);
     setDragX(0);
     setFlyDir(null);
+    setFlipped(false);
   }
 
   function flyOut(direction: 1 | -1) {
@@ -283,10 +290,12 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     if (flyDir !== null) return;
     // Не починаємо драг, якщо натиск почався на аудіо-плеєрі, кнопці
     // (лупа картинки, тощо) чи посиланні — цим елементам потрібен власний
-    // клік, не перехоплений свайпом картки.
+    // клік, не перехоплений свайпом/тапом картки (і setPointerCapture
+    // нижче теж НЕ викликається, тож клік на <audio> лишається звичайним).
     if ((e.target as HTMLElement).closest("audio, button, a")) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
     startTimeRef.current = performance.now();
     setDragging(true);
   }
@@ -296,11 +305,20 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     setDragX(e.clientX - startXRef.current);
   }
 
-  function endDrag() {
+  // Теж вирізняє "тап" (руху менше DECK_TAP_THRESHOLD_PX по обох осях) —
+  // такий реліз перевертає картку (якщо є переклад) замість свайпу/повернення
+  // на місце; завершений драг (рух більший за порог) НІКОЛИ не перевертає.
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
     if (!dragging) return;
     setDragging(false);
+    const dy = e.clientY - startYRef.current;
     const elapsed = Math.max(1, performance.now() - startTimeRef.current);
     const velocity = Math.abs(dragX) / elapsed;
+    if (Math.abs(dragX) < DECK_TAP_THRESHOLD_PX && Math.abs(dy) < DECK_TAP_THRESHOLD_PX) {
+      setDragX(0);
+      if (canFlip) setFlipped((f) => !f);
+      return;
+    }
     if (Math.abs(dragX) > DECK_SWIPE_THRESHOLD_PX || velocity > DECK_SWIPE_VELOCITY_PX_MS) {
       flyOut(dragX > 0 ? 1 : -1);
     } else {
@@ -315,6 +333,11 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
 
   function handleShuffle() {
     setRemaining((prev) => shuffleArray(prev));
+    setFlipped(false);
+  }
+
+  function toggleFlip() {
+    setFlipped((f) => !f);
   }
 
   function handleRestart() {
@@ -322,12 +345,23 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     setRoundKey((k) => k + 1);
     setDragX(0);
     setFlyDir(null);
+    setFlipped(false);
   }
 
   const topTransform = flyDir
     ? `translateX(${flyDir * 480}px) rotate(${flyDir * 24}deg)`
     : `translateX(${dragX}px) rotate(${dragX / 18}deg)`;
   const topTransition = dragging || reducedMotion ? "none" : `transform ${DECK_FLY_OUT_MS}ms ease-out`;
+  const topCursor = dragging ? "grabbing" : canFlip ? "pointer" : "grab";
+  const faceInnerClass = `flex flex-col items-center justify-center gap-3 px-4 py-6 sm:px-8 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} shadow-xl`;
+  const faceClass = `absolute inset-0 ${faceInnerClass}`;
+  // backfaceVisibility — через inline style, не Tailwind arbitrary-клас:
+  // надійніше для vendor-префіксу (-webkit-), той самий підхід, що вже
+  // transform/transition нижче в цьому компоненті.
+  const backfaceHiddenStyle: React.CSSProperties = {
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -365,39 +399,54 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               key={roundKey}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
-              onPointerUp={endDrag}
+              onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerCancel}
-              className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 px-4 py-6 sm:px-8 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} shadow-xl`}
-              style={{ transform: topTransform, transition: topTransition, touchAction: "pan-y", cursor: dragging ? "grabbing" : "grab" }}
+              className="absolute inset-0 z-20"
+              style={{
+                transform: topTransform,
+                transition: topTransition,
+                touchAction: "pan-y",
+                cursor: topCursor,
+                perspective: reducedMotion ? undefined : "1200px",
+              }}
             >
-              {top.image_url && (
-                <span className="relative w-full">
-                  <ImageZoomBadge onOpen={() => setZoomOpen(true)} />
-                  <ImageOrPlaceholder
-                    src={top.image_url}
-                    alt=""
-                    className="mx-auto max-h-40 w-auto rounded object-contain"
-                  />
-                </span>
-              )}
-              {zoomOpen && top.image_url && (
-                <ImageLightbox src={top.image_url} onClose={() => setZoomOpen(false)} />
-              )}
-              <p className="max-w-full break-words text-center text-2xl font-semibold font-content [overflow-wrap:anywhere] sm:text-3xl">
-                {frenchNbsp(top.front)}
-              </p>
-              {top.back.trim() && (
-                <p className="max-w-full break-words text-center text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
-                  {top.back}
-                </p>
-              )}
-              {top.audio_url && (
-                <audio
-                  controls
-                  src={top.audio_url}
-                  className="w-full"
-                  onClick={(e) => e.stopPropagation()}
-                />
+              {reducedMotion ? (
+                // Без ротації взагалі — миттєва заміна вмісту (не
+                // visibility-трюк над обома гранями): найпростіший спосіб
+                // "без анімації" і однаково коректний для читачів екрана.
+                <div className={`h-full w-full ${faceInnerClass}`}>
+                  {!flipped ? (
+                    <DeckCardFront card={top} zoomOpen={zoomOpen} onZoomOpen={() => setZoomOpen(true)} onZoomClose={() => setZoomOpen(false)} />
+                  ) : (
+                    <DeckCardBack translation={top.back} />
+                  )}
+                </div>
+              ) : (
+                <div
+                  className="relative h-full w-full"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                    transition: `transform ${DECK_FLIP_MS}ms ease`,
+                  }}
+                >
+                  <div
+                    className={faceClass}
+                    style={backfaceHiddenStyle}
+                    aria-hidden={flipped}
+                    inert={flipped}
+                  >
+                    <DeckCardFront card={top} zoomOpen={zoomOpen} onZoomOpen={() => setZoomOpen(true)} onZoomClose={() => setZoomOpen(false)} />
+                  </div>
+                  <div
+                    className={faceClass}
+                    style={{ ...backfaceHiddenStyle, transform: "rotateY(180deg)" }}
+                    aria-hidden={!flipped}
+                    inert={!flipped}
+                  >
+                    <DeckCardBack translation={top.back} />
+                  </div>
+                </div>
               )}
             </div>
           </>
@@ -406,7 +455,15 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
 
       {!finished && !hideHintOnTouch && (
         <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
-          <ArrowLeft size={14} /> перетягни картку або натисни кнопку <ArrowRight size={14} />
+          {canFlip ? (
+            <>
+              торкнись картки: переклад · перетягни: далі <ArrowLeft size={14} /> <ArrowRight size={14} />
+            </>
+          ) : (
+            <>
+              <ArrowLeft size={14} /> перетягни картку або натисни кнопку <ArrowRight size={14} />
+            </>
+          )}
         </p>
       )}
 
@@ -420,6 +477,15 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
           >
             <Shuffle size={14} /> Перемішати
           </button>
+          {canFlip && (
+            <button
+              type="button"
+              onClick={toggleFlip}
+              className={`flex items-center gap-1.5 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
+            >
+              {flipped ? "Показати питання" : "Показати переклад"}
+            </button>
+          )}
           <button
             type="button"
             onClick={removeTop}
@@ -430,6 +496,54 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+// front — питання (завжди велике, serif), опційні картинка/аудіо — та сама
+// форма, що раніше жила прямо в DeckFlipCards, винесена в окремий компонент
+// лише щоб не дублювати JSX між 3D-веткою (дві грані) і reduced-motion
+// веткою (один елемент за раз).
+function DeckCardFront({
+  card,
+  zoomOpen,
+  onZoomOpen,
+  onZoomClose,
+}: {
+  card: FlipCardType;
+  zoomOpen: boolean;
+  onZoomOpen: () => void;
+  onZoomClose: () => void;
+}) {
+  return (
+    <>
+      {card.image_url && (
+        <span className="relative w-full">
+          <ImageZoomBadge onOpen={onZoomOpen} />
+          <ImageOrPlaceholder src={card.image_url} alt="" className="mx-auto max-h-40 w-auto rounded object-contain" />
+        </span>
+      )}
+      {zoomOpen && card.image_url && <ImageLightbox src={card.image_url} onClose={onZoomClose} />}
+      <p className="max-w-full break-words text-center text-2xl font-semibold font-content [overflow-wrap:anywhere] sm:text-3xl">
+        {frenchNbsp(card.front)}
+      </p>
+      {card.audio_url && (
+        <audio controls src={card.audio_url} className="w-full" onClick={(e) => e.stopPropagation()} />
+      )}
+    </>
+  );
+}
+
+// back — лише переклад (жодної картинки/аудіо, за умовою задачі).
+function DeckCardBack({ translation }: { translation: string }) {
+  return (
+    <>
+      <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        Переклад
+      </span>
+      <p className="max-w-full break-words text-center text-xl font-content text-neutral-700 [overflow-wrap:anywhere] sm:text-2xl dark:text-neutral-200">
+        {translation}
+      </p>
+    </>
   );
 }
 
