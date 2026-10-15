@@ -1012,6 +1012,27 @@ button.scene-bar:focus-visible {
   border-radius: 50%;
   border: 1.5px solid #e8c46a;
   background: rgba(232, 196, 106, 0.14);
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+/* Наведення на сам бар (не на коло окремо — воно лише span усередині
+   button.scene-bar) мало ставати світлішим, не темнішим: фон кола й так
+   напівпрозоро-золотий, тож без явного hover-правила тут бар покладався б
+   на дефолтну браузерну підсвітку <button> при наведенні — саме вона й
+   "висвітлювала" коло, гасячи контраст золотого штриха/рамки на ньому. */
+@media (hover: hover) {
+  button.scene-bar:hover .scene-bar-toggle {
+    border-color: #f6dc8e;
+    background: rgba(232, 196, 106, 0.22);
+    box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+  button.scene-bar:hover .scene-bar-toggle svg {
+    color: #fff0b8;
+  }
+}
+button.scene-bar:active .scene-bar-toggle {
+  border-color: #e8c46a;
+  background: rgba(232, 196, 106, 0.14);
+  box-shadow: none;
 }
 /* Обгортка JOINED-картки (бар+тіло одним блоком) — лише border-radius/
    overflow/box-shadow, свідомо БЕЗ transform/filter/backdrop-filter/
@@ -1191,21 +1212,33 @@ button.scene-bar:focus-visible {
   letter-spacing: 0.02em;
   border-radius: 10px;
   padding: 8px 14px;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 @media (pointer: coarse) {
   .scene-fullscreen-btn {
     min-height: 40px;
   }
 }
+/* Було: hover міняв фон на напівпрозорий СВІТЛИЙ золотий
+   (rgba(232,196,106,0.18)) замість темного — на світлому/фото тлі курсу
+   позаду кнопки це читалось як "висвітлення", і золотий текст/рамка
+   (обидва теж світло-золоті) губились на такому ж світлому фоні. Тепер фон
+   лишається темним, яскравішають лише рамка/текст/glow. */
 @media (hover: hover) {
   .scene-fullscreen-btn:hover {
-    background: rgba(232, 196, 106, 0.18);
-    border-color: #e8c46a;
+    background: rgba(10, 16, 48, 0.92);
+    border-color: #f6dc8e;
+    color: #fff0b8;
+    box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
   }
 }
 .scene-fullscreen-btn:active {
   background: rgba(6, 10, 32, 0.9);
+  border-color: #e8c46a;
+  box-shadow: none;
+  transform: translateY(0);
 }
 .scene-fullscreen-btn:focus-visible {
   outline: 2px solid #e8c46a;
@@ -1272,15 +1305,40 @@ button.scene-bar:focus-visible {
   font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.04em;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
+/* Було: hover міняв фон на напівпрозорий СВІТЛИЙ золотий
+   (rgba(232,196,106,0.14)) замість темного — той самий ефект "висвітлення",
+   що в .scene-fullscreen-btn вище (коментар там). Фон лишається темним. */
 @media (hover: hover) {
   .scene-collapse-btn:hover {
-    border-color: #e8c46a;
-    background: rgba(232, 196, 106, 0.14);
+    background: rgba(10, 16, 48, 0.92);
+    border-color: #f6dc8e;
+    color: #fff0b8;
+    box-shadow: 0 0 0 3px rgba(232, 196, 106, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
   }
+}
+.scene-collapse-btn:active {
+  background: rgba(6, 10, 32, 0.9);
+  border-color: #e8c46a;
+  box-shadow: none;
+  transform: translateY(0);
 }
 .scene-collapse-btn:focus-visible {
   outline: 2px solid #e8c46a;
   outline-offset: 2px;
+}
+/* Іконка-шеврон цієї кнопки — inline SVG із буквальним stroke="#f6dc8e"
+   (script-section.tsx/vocab-section.tsx), НЕ currentColor — тому колір
+   тексту вище не підхоплюється нею сама по собі; атрибутний селектор
+   перекриває саме цей буквальний stroke, лишаючись CSS-only правкою. */
+.scene-collapse-btn svg[stroke="#f6dc8e"] {
+  transition: stroke 0.15s ease;
+}
+@media (hover: hover) {
+  .scene-collapse-btn:hover svg[stroke="#f6dc8e"] {
+    stroke: #fff0b8;
+  }
 }
