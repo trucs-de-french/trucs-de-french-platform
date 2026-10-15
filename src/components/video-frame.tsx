@@ -41,7 +41,7 @@ function getIsPhoneServerSnapshot(): "unknown" {
 // (подвійне керування, обрізаний кадр, див. попередні коміти); тут —
 // лише посилання, що відкривають відео В САМОМУ Google Drive (нова
 // вкладка/застосунок), жодного iframe.
-function GdrivePoster({ fileId }: { fileId: string }) {
+function GdrivePoster({ fileId, onBackground }: { fileId: string; onBackground: boolean }) {
   const [thumbLoaded, setThumbLoaded] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
   const openUrl = toGdriveOpenUrl(fileId);
@@ -81,7 +81,14 @@ function GdrivePoster({ fileId }: { fileId: string }) {
           <span className="text-xs text-white/90">Відео відкриється в Google Drive</span>
         </a>
       </div>
-      <a href={openUrl} target="_blank" rel="noopener noreferrer" aria-label={openLabel} className={FULLSCREEN_BUTTON_CLASS}>
+      <a
+        href={openUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={openLabel}
+        className={onBackground ? "scene-fullscreen-btn self-end" : FULLSCREEN_BUTTON_CLASS}
+        style={onBackground ? { marginTop: "10px" } : undefined}
+      >
         <ExternalLink size={16} />
         На весь екран
       </a>
@@ -97,10 +104,15 @@ export function VideoFrame({
   src,
   title,
   provider,
+  onBackground = false,
 }: {
   src: string;
   title: string;
   provider: "youtube" | "gdrive";
+  // Чи активний фон курсу (page.tsx) — лише приглушує стиль кнопки "На
+  // весь екран" під відео/посиланням-постером (.scene-fullscreen-btn,
+  // globals.css); жодної іншої поведінки не змінює.
+  onBackground?: boolean;
 }) {
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: handleToggle, exitPseudoFullscreen } =
     useFullscreenWrapper();
@@ -128,7 +140,7 @@ export function VideoFrame({
 
   if (provider === "gdrive" && isPhone && GDRIVE_TOUCH_MODE === "poster") {
     const fileId = getGdriveFileId(src);
-    if (fileId) return <GdrivePoster fileId={fileId} />;
+    if (fileId) return <GdrivePoster fileId={fileId} onBackground={onBackground} />;
     // ID не розпарсився — фолбек на звичний iframe нижче, а не порожньо.
   }
 
@@ -160,7 +172,12 @@ export function VideoFrame({
         )}
       </div>
       {!hideFullscreenButtonForGdrivePhone && (
-        <button type="button" onClick={handleToggle} className={FULLSCREEN_BUTTON_CLASS}>
+        <button
+          type="button"
+          onClick={handleToggle}
+          className={onBackground ? "scene-fullscreen-btn self-end" : FULLSCREEN_BUTTON_CLASS}
+          style={onBackground ? { marginTop: "10px" } : undefined}
+        >
           <Maximize size={16} />
           {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
         </button>

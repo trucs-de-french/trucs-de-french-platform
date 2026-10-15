@@ -171,6 +171,7 @@ export function VideoPlayer({
   title,
   poster,
   className = "",
+  onBackground = false,
 }: {
   src: string;
   subtitles?: VideoSubtitleTrack[];
@@ -182,6 +183,10 @@ export function VideoPlayer({
   title?: string;
   poster?: string;
   className?: string;
+  // Чи активний фон курсу (page.tsx) — лише приглушує стиль кнопки "На
+  // весь екран" під відео (.scene-fullscreen-btn, globals.css); жодної
+  // іншої поведінки не змінює.
+  onBackground?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -1080,7 +1085,12 @@ export function VideoPlayer({
           час fullscreen/псевдо-fullscreen — плеєр сам займає весь екран,
           і кнопка знову з'являється після виходу. */}
       {!(isFullscreen || isPseudoFullscreen) && (
-        <button type="button" onClick={() => void handleFullscreenToggle()} className={`${FULLSCREEN_BUTTON_CLASS} md:hidden`}>
+        <button
+          type="button"
+          onClick={() => void handleFullscreenToggle()}
+          className={`self-end md:hidden ${onBackground ? "scene-fullscreen-btn" : FULLSCREEN_BUTTON_CLASS}`}
+          style={onBackground ? { marginTop: "10px" } : undefined}
+        >
           <Maximize size={16} />
           На весь екран
         </button>

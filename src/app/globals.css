@@ -1163,3 +1163,42 @@ button.scene-bar:focus-visible {
   font-weight: 700;
   white-space: nowrap;
 }
+
+/* Приглушена кнопка "На весь екран" під відео, коли активний фон курсу
+   (video-player.tsx/video-frame.tsx) — темне скло того самого сімейства,
+   що скляні бари/золотий тогл вище, НЕ спільний FULLSCREEN_BUTTON_CLASS
+   (use-fullscreen-wrapper.ts), щоб не зачепити кнопку під iframe в інших
+   місцях без фону. Сама кнопка — сиблінг відео/iframe, не їхній предок,
+   тож transform/filter тут нічого не ламають у pseudo-fullscreen. */
+.scene-fullscreen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 16, 48, 0.82);
+  border: 1px solid rgba(243, 217, 139, 0.5);
+  color: #f6dc8e;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  border-radius: 10px;
+  padding: 8px 14px;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+@media (pointer: coarse) {
+  .scene-fullscreen-btn {
+    min-height: 40px;
+  }
+}
+@media (hover: hover) {
+  .scene-fullscreen-btn:hover {
+    background: rgba(232, 196, 106, 0.18);
+    border-color: #e8c46a;
+  }
+}
+.scene-fullscreen-btn:active {
+  background: rgba(6, 10, 32, 0.9);
+}
+.scene-fullscreen-btn:focus-visible {
+  outline: 2px solid #e8c46a;
+  outline-offset: 2px;
+}
