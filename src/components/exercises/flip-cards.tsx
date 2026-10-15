@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useSyncExternalStore } from "react";
+import { useState, useRef, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { Shuffle, ArrowLeft, ArrowRight } from "lucide-react";
 import type { FlipCard as FlipCardType, FlipCardsConfig } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -13,7 +13,7 @@ import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { CardPager } from "./card-pager";
+import { BlockProgressHeader, BlockNavFooter } from "./block-navigation";
 
 const PAGE_SIZE = 6;
 
@@ -97,10 +97,21 @@ function RandomRevealFlipCards({
   cards,
   revealSide,
   pageIndices,
+  header,
+  footer,
 }: {
   cards: FlipCardType[];
   revealSide: "front" | "back";
   pageIndices: number[];
+  // Прогрес-заголовок/нижній рядок ←/→ (BlockProgressHeader/BlockNavFooter,
+  // block-navigation.tsx) — рендеряться тут, не в FlipCardsExercise, бо
+  // мають сидіти МІЖ кнопкою "Випадковий вибір" і сіткою/ПІД сіткою САМЕ
+  // цього режиму. Обидва загорнуті разом із сіткою в один div БЕЗ
+  // власного flex/gap (коментар у block-navigation.tsx, BlockNavigation):
+  // інакше gap-3 цієї обгортки додавався б поверх margin-bottom/margin-top
+  // самого прогрес-бару/футера.
+  header: ReactNode;
+  footer: ReactNode;
 }) {
   const [spinning, setSpinning] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
@@ -163,17 +174,21 @@ function RandomRevealFlipCards({
         {spinning ? "Крутимо..." : "Випадковий вибір"}
       </button>
 
-      {/* Усі картки лишаються в DOM на весь час вправи (не лише сторінки) —
-          це й зберігає "клік — перевернути" стан кожної плитки при
-          перемиканні сторінок (немонтування/монтування щоразу скидало б
-          внутрішній useState плитки). Поза поточною сторінкою — просто
-          hidden, не видалено з розмітки. */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {cards.map((card, i) => (
-          <div key={`${roundId}-${i}`} className={pageIndices.includes(i) ? "contents" : "hidden"}>
-            <FlipCardTile card={card} variant={variantFor(i)} initialSide={revealSide} />
-          </div>
-        ))}
+      <div>
+        {header}
+        {/* Усі картки лишаються в DOM на весь час вправи (не лише
+            сторінки) — це й зберігає "клік — перевернути" стан кожної
+            плитки при перемиканні сторінок (немонтування/монтування
+            щоразу скидало б внутрішній useState плитки). Поза поточною
+            сторінкою — просто hidden, не видалено з розмітки. */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {cards.map((card, i) => (
+            <div key={`${roundId}-${i}`} className={pageIndices.includes(i) ? "contents" : "hidden"}>
+              <FlipCardTile card={card} variant={variantFor(i)} initialSide={revealSide} />
+            </div>
+          ))}
+        </div>
+        {footer}
       </div>
     </div>
   );
@@ -589,6 +604,16 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
     );
   }
 
+  // Той самий прогрес-заголовок/нижній рядок ←/→, що й у gradable-вправах
+  // (block-navigation.tsx) — лише підпис "Сторінка" замість "Блок"
+  // (flip_cards нічого не оцінює, тож isBlockChecked не передається).
+  // deck — одна колода з усіма картками, без розбиття на сторінки (ці два
+  // елементи для deck просто не рендеряться нижче).
+  const pagerHeader = (
+    <BlockProgressHeader blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} label="Сторінка" />
+  );
+  const pagerFooter = <BlockNavFooter blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} />;
+
   return (
     <div ref={blockRef} className={EXERCISE_STACK}>
       <InstructionsText
@@ -602,24 +627,28 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
           cards={cards}
           revealSide={config.revealSide ?? "front"}
           pageIndices={pageIndices}
+          header={pagerHeader}
+          footer={pagerFooter}
         />
       ) : (
-        // Усі картки лишаються в DOM на весь час вправи — та сама причина,
-        // що в RandomRevealFlipCards: немонтування плитки при зміні
-        // сторінки скинуло б її внутрішній "перевернуто/ні" стан.
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {cards.map((card, i) => (
-            <div key={i} className={pageIndices.includes(i) ? "contents" : "hidden"}>
-              <FlipCardTile card={card} />
-            </div>
-          ))}
+        // Заголовок/сітка/футер — РАЗОМ в ОДНІЙ обгортці без власного
+        // flex/gap (той самий прийом, що BlockNavigation,
+        // block-navigation.tsx): інакше gap самого EXERCISE_STACK додавався
+        // б поверх margin-bottom/margin-top прогрес-бару/футера.
+        <div>
+          {pagerHeader}
+          {/* Усі картки лишаються в DOM на весь час вправи — та сама
+              причина, що в RandomRevealFlipCards: немонтування плитки при
+              зміні сторінки скинуло б її внутрішній "перевернуто/ні" стан. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {cards.map((card, i) => (
+              <div key={i} className={pageIndices.includes(i) ? "contents" : "hidden"}>
+                <FlipCardTile card={card} />
+              </div>
+            ))}
+          </div>
+          {pagerFooter}
         </div>
-      )}
-      {/* deck — одна колода з усіма картками, без розбиття на сторінки
-          (pageIndices/CardPager вище обчислені лише для manual/
-          random_reveal, тут навмисно не рендеряться). */}
-      {config.mode !== "deck" && (
-        <CardPager page={page} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

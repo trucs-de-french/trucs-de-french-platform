@@ -1378,6 +1378,18 @@ button.scene-bar:active .scene-bar-toggle {
    відміну від .scene-* "скляних" класів вище), бо ця навігація завжди
    сидить усередині білої/сірої картки вправи (EXERCISE_BLOCK_CLASS), не
    на фоновій картинці курсу. */
+/* Обгортка "label + сегменти/трек" — margin-bottom тут (не на самих
+   сегментах/треку) покриває ОБИДВА режими прогрес-бару (segments/track)
+   одним значенням. Компонент (block-navigation.tsx, BlockNavigation)
+   сам обгортає цей блок + children + футер в ОДИН div без flex/gap,
+   тож це значення лишається ЄДИНИМ джерелом відступу до першого елемента
+   вправи — не додається поверх gap батьківського EXERCISE_STACK
+   (spacing.ts), як було до фіксу (видимий відступ був ~50px: 20px тут +
+   gap-6 самого EXERCISE_STACK, бо компонент раніше повертав рівних
+   Fragment-дітей прямо в flex-контейнер виклик-сайту). */
+.exercise-block-progress {
+  margin-bottom: 20px;
+}
 .exercise-block-progress-label {
   margin-bottom: 8px;
 }
@@ -1414,7 +1426,6 @@ button.scene-bar:active .scene-bar-toggle {
 
 .exercise-block-segments {
   display: flex;
-  margin-bottom: 20px;
 }
 /* Сегмент — кнопка на всю висоту 24px (комфортна зона дотику), сама
    кольорова смужка (8px) — вкладений span, центрований flex'ом. */
@@ -1438,6 +1449,22 @@ button.scene-bar:active .scene-bar-toggle {
 .exercise-block-segment:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
+}
+
+/* Суцільний трек (>12 блоків, flip-cards.tsx зі "сторінками" карток) —
+   та сама 8px висота/999px заокруглення, що сегмент, лише один
+   некликабельний бар, заповнений пропорційно до поточної сторінки. */
+.exercise-block-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #dcdbf3;
+  overflow: hidden;
+}
+.exercise-block-track-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5a55e6, #3b36c4);
+  transition: width 0.15s ease;
 }
 
 .exercise-block-actions {
