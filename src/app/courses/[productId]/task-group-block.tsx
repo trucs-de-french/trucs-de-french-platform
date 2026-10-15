@@ -12,7 +12,7 @@ import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { GlassBlock } from "@/components/glass-block";
-import { resolveBlockIcon } from "@/lib/block-icons";
+import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import { EmbedFrame } from "@/components/embed-frame";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
@@ -127,6 +127,7 @@ export function TaskGroupBlock({
   // нижче): рівно одна видима задача в групі → її назва йде в бар
   // GlassBlock; кілька задач → бар без назви.
   const titleForBar = visibleTasks.length === 1 ? visibleTasks[0] : undefined;
+  const barText = titleForBar ? getTaskBarText(titleForBar) : undefined;
 
   // Ні спільного контенту (ні свого, ні переданого зовні), ні жодної
   // задачі, що реально щось покаже — показувати голу рамку немає сенсу.
@@ -326,7 +327,7 @@ export function TaskGroupBlock({
   );
 
   return (
-    <GlassBlock title={titleForBar?.title} icon={resolveBlockIcon(titleForBar?.type)}>
+    <GlassBlock title={barText?.text} hideInstructionInPanel={barText?.fromInstruction ?? false}>
       <div className={EXERCISE_STACK}>{body}</div>
     </GlassBlock>
   );

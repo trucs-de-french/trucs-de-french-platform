@@ -32,6 +32,7 @@ import { TaskMedia } from "@/components/task-media";
 import { LinkCard } from "@/components/link-card";
 import { GlassBlock } from "@/components/glass-block";
 import { resolveBlockIcon } from "@/lib/block-icons";
+import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import { EmbedFrame } from "@/components/embed-frame";
 import { collectSceneVocab, collectVideoVocab, type VocabItem } from "@/lib/vocab";
 import { buildQuizQuestions } from "@/lib/exercises/vocab-quiz-logic";
@@ -733,6 +734,7 @@ export default async function ScenePage({
           // колишнього інлайн <p>), тіло — токени --glass-* (globals.css)
           // замість EXERCISE_BLOCK_CLASS.
           const skipGlass = task.type === "callout" || task.type === "link" || task.type === "game";
+          const barText = skipGlass ? undefined : getTaskBarText(task);
 
           return (
             <li key={task.id} id={`task-${task.id}`} className="scroll-mt-4">
@@ -770,7 +772,7 @@ export default async function ScenePage({
                     })()}
                 </>
               ) : (
-                <GlassBlock title={task.title} icon={resolveBlockIcon(task.type)}>
+                <GlassBlock title={barText!.text} hideInstructionInPanel={barText!.fromInstruction}>
                   <div className={EXERCISE_STACK}>
                     <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 

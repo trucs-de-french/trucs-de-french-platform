@@ -1,30 +1,32 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 
-// Уніфікована "скляна" обгортка контент-/вправ-блоків студентської
-// сторінки й прев'ю конструктора (дизайн-варіант 2/4 "Glass cards") —
-// заголовок-бар (якщо є title) + 14px відступ + панель із вмістом.
-// Токени --glass-* (globals.css) перемикаються СВІТЛИЙ/ТЕМНИЙ перемикачем
-// теми сайту (.dark/.light на <html>, theme-toggle.tsx) — цей компонент
-// сам нічого не знає про тему. icon — ГОТОВИЙ lucide-компонент від
-// викликача (block-icons.ts, resolveBlockIcon — ОДНА точка правди для
-// підбору за типом), НЕ підбирається тут усередині рендеру: React
-// Compiler (react-hooks/static-components) забороняє викликати функцію,
-// що повертає компонент, і зберігати результат у PascalCase-змінну прямо
-// в тілі рендеру — лише прийняти вже готовий компонент як props, той
-// самий підхід, що вже в SectionHeaderBar (scene-header-bar.tsx).
+// Уніфікована "скляна" обгортка вправ/задач студентської сторінки й
+// прев'ю конструктора (дизайн-варіант 2/4 "Glass cards") — компактний
+// заголовок-бар (якщо є title) + 10px відступ + панель із вмістом. Бар
+// тут — ЗАВЖДИ компактний варіант задачі (без іконки-бейджа, без
+// uppercase): великі секційні бари (Відео/Скрипт/Вокабуляр/Практика/
+// Завдання) рендерить ІНШИЙ компонент (SectionHeaderBar, scene-header-
+// bar.tsx), GlassBlock для них не використовується взагалі. Токени
+// --glass-* (globals.css) перемикаються СВІТЛИЙ/ТЕМНИЙ перемикачем теми
+// сайту (.dark/.light на <html>, theme-toggle.tsx) — цей компонент сам
+// нічого не знає про тему.
 // Без title — лише панель (callout/link/embed тощо, де заголовок уже
-// показаний інакше або не потрібен); icon тоді не рендериться.
+// показаний інакше або не потрібен, чи кілька задач в групі без єдиної
+// "головної" назви).
 export function GlassBlock({
   title,
-  icon: Icon,
   headerExtra,
+  hideInstructionInPanel = false,
   children,
   className = "",
 }: {
   title?: string;
-  icon?: LucideIcon;
   headerExtra?: ReactNode;
+  // true — title узято з інструкції вправи (getTaskBarText,
+  // task-bar-text.ts), яку та сама вправа вже малює вдруге всередині
+  // панелі (InstructionsText/.instruction-text) — приховує цей дублікат
+  // CSS-правилом (globals.css), не торкаючись ~25 файлів-вправ.
+  hideInstructionInPanel?: boolean;
   children: ReactNode;
   className?: string;
 }) {
@@ -37,18 +39,15 @@ export function GlassBlock({
     <div className={`glass-block ${className}`.trim()}>
       {title && (
         <div className="glass-block-header">
-          <span className="glass-bar-left">
-            {Icon && (
-              <span className="glass-bar-badge" aria-hidden="true">
-                <Icon size={16} strokeWidth={2.5} />
-              </span>
-            )}
-            <h2 className="glass-block-title">{title}</h2>
-          </span>
+          <h2 className="glass-block-title">{title}</h2>
           {headerExtra}
         </div>
       )}
-      <div className="glass-block-panel">{children}</div>
+      <div
+        className={`glass-block-panel${hideInstructionInPanel ? " glass-block-panel--instruction-in-bar" : ""}`}
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -7,5 +7,18 @@
 // — заміна тегів на "" там просто no-op, лишається сам trim().
 export function isBlankHtml(value: string | null | undefined): boolean {
   if (!value) return true;
-  return value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length === 0;
+  return htmlToPlainText(value).length === 0;
+}
+
+// Той самий підхід до прибирання тегів, що isBlankHtml вище, лише
+// повертає сам текст (не булеве порожньо/не порожньо) — для місць, де
+// потрібен ПЛЕЙН-текст з HTML-поля (напр. компактний бар задачі,
+// getTaskBarText), а не санітизований HTML для dangerouslySetInnerHTML.
+export function htmlToPlainText(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

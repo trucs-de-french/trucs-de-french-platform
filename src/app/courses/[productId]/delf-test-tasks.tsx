@@ -3,7 +3,7 @@ import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { GlassBlock } from "@/components/glass-block";
-import { resolveBlockIcon } from "@/lib/block-icons";
+import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import { H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
@@ -139,12 +139,13 @@ export async function DelfTestTasks({
     // задачі в барі (suppressTitle гасить колишній інлайн <p>, що й так
     // малює лише ExerciseBlock для embed).
     const skipGlass = task.type === "callout" || task.type === "link" || task.type === "game";
+    const barText = skipGlass ? undefined : getTaskBarText(task);
     return (
       <li key={task.id} className="scroll-mt-4">
         {skipGlass ? (
           <ExerciseBlock task={task} isDelf />
         ) : (
-          <GlassBlock title={task.title} icon={resolveBlockIcon(task.type)}>
+          <GlassBlock title={barText!.text} hideInstructionInPanel={barText!.fromInstruction}>
             <div className={EXERCISE_STACK}>
               <ExerciseBlock task={task} isDelf suppressTitle />
             </div>
