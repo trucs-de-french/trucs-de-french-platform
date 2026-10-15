@@ -977,10 +977,10 @@ button, input, textarea, select, label, nav, aside {
   --glass-bar-bg: rgba(255, 255, 255, 0.93);
   --glass-bar-border: rgba(184, 144, 47, 0.65);
   --glass-bar-text: #1a1640;
+  /* Той самий токен для СЕКЦІЙНОГО й КОМПАКТНОГО (GlassBlock) бару —
+     обидва мають виглядати однаково (фон/рамка/тінь/текст), лишається
+     розмір/padding/radius/шрифт свій для кожного. */
   --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  /* Компактний бар задачі (GlassBlock, .glass-block-header) — трохи
-     легша тінь за секційний бар вище. */
-  --glass-bar-shadow-compact: 0 4px 14px rgba(0, 0, 0, 0.2);
   --glass-toggle-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
   --glass-toggle-border: #e0aa3e;
   --glass-toggle-chevron: #1a1640;
@@ -1028,7 +1028,6 @@ button, input, textarea, select, label, nav, aside {
   --glass-bar-border: rgba(243, 217, 139, 0.5);
   --glass-bar-text: #f6dc8e;
   --glass-bar-shadow: none;
-  --glass-bar-shadow-compact: none;
   --glass-toggle-bg: transparent;
   --glass-toggle-border: #e8c46a;
   --glass-toggle-chevron: #f6dc8e;
@@ -1060,7 +1059,6 @@ button, input, textarea, select, label, nav, aside {
     --glass-bar-border: rgba(243, 217, 139, 0.5);
     --glass-bar-text: #f6dc8e;
     --glass-bar-shadow: none;
-  --glass-bar-shadow-compact: none;
     --glass-toggle-bg: transparent;
     --glass-toggle-border: #e8c46a;
     --glass-toggle-chevron: #f6dc8e;
@@ -1100,6 +1098,14 @@ button, input, textarea, select, label, nav, aside {
   --glass-panel-border: #d9b765;
   --glass-panel-border-width: 1.5px;
   --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  /* Секційний бар (.scene-bar) і компактний бар задачі (.glass-block-
+     header) — РІВНО ті самі значення, явно тут (а не лише на :root
+     дефолті вище), щоб джерело правди для обох барів було одним і тим
+     самим токеном у тому самому місці, що решта "variant 3" токенів. */
+  --glass-bar-bg: rgba(255, 255, 255, 0.93);
+  --glass-bar-border: rgba(184, 144, 47, 0.65);
+  --glass-bar-text: #1a1640;
+  --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   --glass-text-meta: #55546b;
   --glass-item-bg: #ffffff;
   --glass-item-border: #dcbd6e;
@@ -1134,6 +1140,10 @@ button, input, textarea, select, label, nav, aside {
     --glass-panel-border: #d9b765;
     --glass-panel-border-width: 1.5px;
     --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --glass-bar-bg: rgba(255, 255, 255, 0.93);
+    --glass-bar-border: rgba(184, 144, 47, 0.65);
+    --glass-bar-text: #1a1640;
+    --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     --glass-text-meta: #55546b;
     --glass-item-bg: #ffffff;
     --glass-item-border: #dcbd6e;
@@ -1274,12 +1284,14 @@ button, input, textarea, select, label, nav, aside {
    іконки (GlassBlock більше не рендерить .glass-bar-badge взагалі), без
    uppercase — текст у ньому тепер зазвичай французька інструкція вправи
    (getTaskBarText, task-bar-text.ts), не технічна назва типу, тож великий
-   "кричущий" заголовок-варіант 5 тут недоречний. Фон/рамка — ті самі
-   токени --glass-bar-bg/--glass-bar-border, що й секційний бар (та сама
-   "скляна" мова, перемикається тим самим .dark/.light), лише тінь
-   світліша (--glass-bar-shadow-compact, легша за --glass-bar-shadow
-   секційного бару) і сам колір тексту — var(--glass-bar-text), той самий
-   токен, що вже дає контраст ≥4.5:1 в обох темах для секційного бару. */
+   "кричущий" заголовок-варіант 5 тут недоречний. Фон/рамка/тінь/колір
+   тексту — РІВНО ті самі токени --glass-bar-bg/--glass-bar-border/
+   --glass-bar-shadow/--glass-bar-text, що й секційний бар (та сама
+   "скляна" мова, перемикається тим самим .dark/.light) — раніше тінь тут
+   була слабшою (--glass-bar-shadow-compact), через що бар читався
+   "сірішим"/прозорішим за секційний при однаковому фоні; тепер обидва
+   бари дають однакову тінь, лишаються розмір/padding/radius/шрифт — усе,
+   що й робить цей бар компактним. */
 .glass-block-header {
   display: flex;
   align-items: center;
@@ -1288,7 +1300,7 @@ button, input, textarea, select, label, nav, aside {
   gap: 12px;
   background: var(--glass-bar-bg);
   border: 1px solid var(--glass-bar-border);
-  box-shadow: var(--glass-bar-shadow-compact);
+  box-shadow: var(--glass-bar-shadow);
   color: var(--glass-bar-text);
   border-radius: 12px;
   padding: 10px 18px;
