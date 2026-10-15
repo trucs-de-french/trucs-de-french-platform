@@ -136,7 +136,7 @@ function ErrorReviewCard({
   const remaining = entry.remainingItemIds.length;
 
   return (
-    <div className="rounded-lg border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+    <div className="rounded-lg border-[1.5px] dark:border border-[#dcbd6e] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
       <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white"

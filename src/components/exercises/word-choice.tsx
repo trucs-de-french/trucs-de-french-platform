@@ -46,9 +46,9 @@ export type WordChoicePracticeProps = {
 // (border-gray-200/dark:border-neutral-600, та сама вимога, що в задачі
 // для рамок картки) і фон, що відрізняється від фону картки в обох темах
 // (neutral-50 / neutral-900, а не білий/neutral-800).
-const TILE_INLINE_BASE = "rounded-md border px-1.5 py-0.5 transition-colors";
+const TILE_INLINE_BASE = "rounded-md border-[1.5px] dark:border px-1.5 py-0.5 transition-colors";
 const TILE_DEFAULT =
-  "border-[#e8d9a8] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
+  "border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
 
 export function WordChoiceExercise({
   taskId,

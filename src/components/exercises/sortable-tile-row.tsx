@@ -96,7 +96,7 @@ export function SortableTileRow({
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
-    return `${shadow} border-[#e8d9a8] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
+    return `${shadow} border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
   }
 
   return (
@@ -147,7 +147,7 @@ export function SortableTileRow({
             }}
             onClick={() => clickTile(i)}
             disabled={locked}
-            className={`select-none rounded-md border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`select-none rounded-md border-[1.5px] dark:border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
             } ${
               // letterTile (letter_rearrangement) — фіксована w/h, однакова

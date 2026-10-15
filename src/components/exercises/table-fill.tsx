@@ -245,7 +245,7 @@ export function TableFillExercise({
     return (
       <div
         key={row.id}
-        className="flex flex-col gap-1.5 rounded border border-[#e8d9a8] p-2 dark:border-neutral-700"
+        className="flex flex-col gap-1.5 rounded border-[1.5px] dark:border border-[#dcbd6e] p-2 dark:border-neutral-700"
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">

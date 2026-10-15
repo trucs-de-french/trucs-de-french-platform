@@ -1098,17 +1098,19 @@ button, input, textarea, select, label, nav, aside {
 .light .scene-bar {
   --glass-panel-bg: #fdfdfb;
   --glass-panel-border: #d9b765;
+  --glass-panel-border-width: 1.5px;
   --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   --glass-text-meta: #55546b;
   --glass-item-bg: #ffffff;
-  --glass-item-border: #e8d9a8;
+  --glass-item-border: #dcbd6e;
+  --glass-item-border-width: 1.5px;
   --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
   --glass-item-radius: 14px;
   --glass-answer-bg: #ffffff;
   --glass-answer-border: #e0cf94;
   --glass-divider: #e6e6f0;
   --glass-accent-bar: #d9b765;
-  --glass-reading-border: 1px solid var(--glass-item-border);
+  --glass-reading-border: var(--glass-item-border-width) solid var(--glass-item-border);
   --glass-input-bg: #ffffff;
   --glass-input-border: #e0cf94;
   --glass-input-text: #1f1d3a;
@@ -1119,17 +1121,19 @@ button, input, textarea, select, label, nav, aside {
   :root:not(.dark) .scene-bar {
     --glass-panel-bg: #fdfdfb;
     --glass-panel-border: #d9b765;
+    --glass-panel-border-width: 1.5px;
     --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     --glass-text-meta: #55546b;
     --glass-item-bg: #ffffff;
-    --glass-item-border: #e8d9a8;
+    --glass-item-border: #dcbd6e;
+    --glass-item-border-width: 1.5px;
     --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
     --glass-item-radius: 14px;
     --glass-answer-bg: #ffffff;
     --glass-answer-border: #e0cf94;
     --glass-divider: #e6e6f0;
     --glass-accent-bar: #d9b765;
-    --glass-reading-border: 1px solid var(--glass-item-border);
+    --glass-reading-border: var(--glass-item-border-width) solid var(--glass-item-border);
     --glass-input-bg: #ffffff;
     --glass-input-border: #e0cf94;
     --glass-input-text: #1f1d3a;
@@ -1201,7 +1205,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .glass-block-panel {
   background: var(--glass-panel-bg);
-  border: 1px solid var(--glass-panel-border);
+  border: var(--glass-panel-border-width, 1px) solid var(--glass-panel-border);
   box-shadow: var(--glass-panel-shadow);
   border-radius: 16px;
   padding: 22px 24px 24px;
@@ -1266,7 +1270,7 @@ button, input, textarea, select, label, nav, aside {
    типи вправ. */
 .glass-item-card {
   background: var(--glass-item-bg);
-  border: 1px solid var(--glass-item-border);
+  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border);
   box-shadow: var(--glass-item-shadow);
   border-radius: var(--glass-item-radius, 10px);
   color: var(--glass-text);

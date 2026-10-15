@@ -51,7 +51,7 @@ export const PHRASE_SPAN_THRESHOLD = 18;
 // тому самому рядку (align-items: stretch за замовчуванням у CSS grid);
 // на горизонтальне вирівнювання (зліва) не впливає — це вісь flex-col.
 export const WORD_CARD =
-  "flex min-w-0 flex-col justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-neutral-700 dark:bg-neutral-800";
+  "flex min-w-0 flex-col justify-center gap-2 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border border-[#dcbd6e] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800";
 
 // Розбиває фразу на "одиниці переносу" за пробілом — сам пробіл ВІДКИДАЄТЬСЯ
 // (він стає gap-2 у розкладці, не окремим елементом). Спільна для

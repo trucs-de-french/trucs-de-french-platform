@@ -399,14 +399,14 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             {peek2 && (
               <div
                 aria-hidden
-                className={`absolute inset-0 z-0 rounded-[14px] dark:rounded-lg border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
+                className={`absolute inset-0 z-0 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border border-[#dcbd6e] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
                 style={{ transform: "translate(-6px, 10px) rotate(-2deg)" }}
               />
             )}
             {peek1 && (
               <div
                 aria-hidden
-                className={`absolute inset-0 z-10 rounded-[14px] dark:rounded-lg border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
+                className={`absolute inset-0 z-10 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border border-[#dcbd6e] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
                 style={{ transform: "translate(6px, 6px) rotate(3deg)" }}
               />
             )}
