@@ -83,12 +83,12 @@ export function ListeningExercise({
     if (!qDetail) {
       return answers[questionId] === optionId
         ? "border-indigo-500 bg-indigo-500"
-        : "border-[#e0cf94] bg-white dark:border-neutral-600 dark:bg-neutral-800";
+        : "border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800";
     }
     const od = qDetail.options.find((o) => o.id === optionId);
     if (od?.correct) return "border-green-500 bg-green-500";
     if (od?.selected) return "border-red-500 bg-red-500";
-    return "border-[#e0cf94] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
+    return "border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
   }
 
   const allAnswered = config.questions.every((q) => answers[q.id]);

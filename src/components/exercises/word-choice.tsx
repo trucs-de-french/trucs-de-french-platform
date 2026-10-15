@@ -48,7 +48,7 @@ export type WordChoicePracticeProps = {
 // (neutral-50 / neutral-900, а не білий/neutral-800).
 const TILE_INLINE_BASE = "rounded-md border-[1.5px] dark:border px-1.5 py-0.5 transition-colors";
 const TILE_DEFAULT =
-  "border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
+  "glass-gold-edge border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
 
 export function WordChoiceExercise({
   taskId,

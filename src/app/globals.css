@@ -1103,16 +1103,23 @@ button, input, textarea, select, label, nav, aside {
   --glass-text-meta: #55546b;
   --glass-item-bg: #ffffff;
   --glass-item-border: #dcbd6e;
-  --glass-item-border-width: 1.5px;
-  --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
+  /* "Variant 4" — м'яка рамка картки, що згасає зверху вниз: справжній
+     колір рамки більше не малює border (border-color стає transparent у
+     .glass-gold-edge/.glass-item-card нижче), а --glass-card-bg-gradient
+     (двошаровий background, padding-box білий + border-box градієнт). */
+  --glass-item-border-width: 1px;
+  --glass-item-border-color: transparent;
+  --glass-item-shadow: 0 3px 10px rgba(184, 144, 47, 0.1);
   --glass-item-radius: 14px;
   --glass-answer-bg: #ffffff;
-  --glass-answer-border: #e0cf94;
+  --glass-answer-border: rgba(217, 183, 101, 0.55);
+  --glass-answer-border-width: 1px;
   --glass-divider: #e6e6f0;
   --glass-accent-bar: #d9b765;
-  --glass-reading-border: var(--glass-item-border-width) solid var(--glass-item-border);
+  --glass-reading-border: var(--glass-item-border-width) solid transparent;
   --glass-input-bg: #ffffff;
-  --glass-input-border: #e0cf94;
+  --glass-input-border: rgba(217, 183, 101, 0.55);
+  --glass-input-border-width: 1px;
   --glass-input-text: #1f1d3a;
   --glass-input-radius: 8px;
 }
@@ -1126,18 +1133,59 @@ button, input, textarea, select, label, nav, aside {
     --glass-text-meta: #55546b;
     --glass-item-bg: #ffffff;
     --glass-item-border: #dcbd6e;
-    --glass-item-border-width: 1.5px;
-    --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
+    --glass-item-border-width: 1px;
+    --glass-item-border-color: transparent;
+    --glass-item-shadow: 0 3px 10px rgba(184, 144, 47, 0.1);
     --glass-item-radius: 14px;
     --glass-answer-bg: #ffffff;
-    --glass-answer-border: #e0cf94;
+    --glass-answer-border: rgba(217, 183, 101, 0.55);
+    --glass-answer-border-width: 1px;
     --glass-divider: #e6e6f0;
     --glass-accent-bar: #d9b765;
-    --glass-reading-border: var(--glass-item-border-width) solid var(--glass-item-border);
+    --glass-reading-border: var(--glass-item-border-width) solid transparent;
     --glass-input-bg: #ffffff;
-    --glass-input-border: #e0cf94;
+    --glass-input-border: rgba(217, 183, 101, 0.55);
+    --glass-input-border-width: 1px;
     --glass-input-text: #1f1d3a;
     --glass-input-radius: 8px;
+  }
+}
+
+/* Токен градієнтної рамки картки (variant 4) — визначений на КОРЕНІ
+   світлої теми (.light / :root:not(.dark) без прив'язки до .glass-block),
+   а не всередині .glass-block/.scene-bar: на відміну від решти --glass-*
+   токенів цей читають і елементи, що НЕ є нащадками .glass-block (картки
+   типів вправ зі своїми літеральними Tailwind-класами, .glass-gold-edge
+   нижче) — кастомна властивість однаково успадковується в обох випадках,
+   тож одне визначення на корені покриває і .glass-item-card, і їх. */
+.light {
+  --glass-card-bg-gradient: linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(180deg, rgba(217, 183, 101, 0.85), rgba(217, 183, 101, 0.12)) border-box;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --glass-card-bg-gradient: linear-gradient(#ffffff, #ffffff) padding-box,
+      linear-gradient(180deg, rgba(217, 183, 101, 0.85), rgba(217, 183, 101, 0.12)) border-box;
+  }
+}
+/* Спільний клас для карток вправ, що й досі стилізовані літеральними
+   Tailwind-класами (border-[1.5px] dark:border border-[#dcbd6e] bg-white
+   ...) замість .glass-item-card — додається ДО існуючого рядка класів, не
+   замінює його: .light .glass-gold-edge має вищу специфічність (0,2,0), ніж
+   одинарний утилітарний клас (0,1,0), тож безпечно перекриває border-width/
+   border-color/background у світлій темі незалежно від порядку в рядку, а
+   в темній (без .light) правило просто не застосовується — dark:-класи
+   лишаються єдиним джерелом правди, як і раніше. */
+.light .glass-gold-edge {
+  border-width: 1px;
+  border-color: transparent;
+  background: var(--glass-card-bg-gradient);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-gold-edge {
+    border-width: 1px;
+    border-color: transparent;
+    background: var(--glass-card-bg-gradient);
   }
 }
 
@@ -1269,8 +1317,8 @@ button, input, textarea, select, label, nav, aside {
 /* Елементи вмісту всередині скляної панелі — тверд/false, згодом і інші
    типи вправ. */
 .glass-item-card {
-  background: var(--glass-item-bg);
-  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border);
+  background: var(--glass-card-bg-gradient, var(--glass-item-bg));
+  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border-color, var(--glass-item-border));
   box-shadow: var(--glass-item-shadow);
   border-radius: var(--glass-item-radius, 10px);
   color: var(--glass-text);
@@ -1283,7 +1331,7 @@ button, input, textarea, select, label, nav, aside {
    цієї картки (--glass-item-bg) інший за фон панелі (--glass-panel-bg)
    навколо неї, тож текст підбирається в парі з ЦИМ фоном. */
 .glass-reading-passage {
-  background: var(--glass-item-bg);
+  background: var(--glass-card-bg-gradient, var(--glass-item-bg));
   /* Повна рамка — лише "variant 3" світла тема (--glass-reading-border
      визначений тільки в .light .glass-block/.scene-bar нижче); темна
      лишається без неї (fallback none), той самий вигляд, що й раніше. */
@@ -1313,7 +1361,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .glass-answer-btn {
   background: var(--glass-answer-bg);
-  border: 1.5px solid var(--glass-answer-border);
+  border: var(--glass-answer-border-width, 1.5px) solid var(--glass-answer-border);
   color: var(--glass-answer-text);
   min-height: 44px;
   transition: border-color 0.15s, color 0.15s;
@@ -1349,7 +1397,7 @@ button, input, textarea, select, label, nav, aside {
    темну тему й будь-який виклик поза скляною панеллю без змін. */
 .glass-input {
   background: var(--glass-input-bg, transparent);
-  border: 1.5px solid var(--glass-input-border, currentColor);
+  border: var(--glass-input-border-width, 1.5px) solid var(--glass-input-border, currentColor);
   color: var(--glass-input-text, inherit);
   border-radius: var(--glass-input-radius, 8px);
 }

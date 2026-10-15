@@ -4,11 +4,11 @@
 // Клас/фон стану (обрано/правильно/неправильно) додається окремо кожним
 // викликачем — тут лише базова форма+відступ+тінь, спільна для ВСІХ станів.
 export const ANSWER_CARD_BASE =
-  "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
+  "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center shadow-[0_3px_10px_rgba(184,144,47,0.10)] dark:shadow-sm transition-colors";
 
 // Стан "не обрано, ще не перевірено" — нейтральна картка з легким hover.
 export const ANSWER_CARD_DEFAULT =
-  "border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+  "glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
 
 // Зменшений inline-варіант — для варіантів, вплетених прямо в текст
 // речення (word_choice), де повний ANSWER_CARD_BASE (p-3, rounded-lg)
@@ -21,7 +21,7 @@ export const ANSWER_CARD_DEFAULT =
 // Використовується ЛИШЕ в word_choice.tsx — усі інші типи (letter_gaps,
 // true_false, перша хвиля) лишаються на повному ANSWER_CARD_BASE.
 export const ANSWER_CARD_INLINE =
-  "rounded-md border px-1.5 py-0.5 shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
+  "rounded-md border px-1.5 py-0.5 shadow-[0_3px_10px_rgba(184,144,47,0.10)] dark:shadow-sm transition-colors";
 
 // Картка-обгортка питання/елемента з рамкою (спершу multiple_choice,
 // тепер і word_choice — для візуальної цілісності сцени, кожне речення в
@@ -31,7 +31,7 @@ export const ANSWER_CARD_INLINE =
 // CARD_WRAP у multiple-choice.tsx БЕЗ зміни значення — рядок той самий,
 // multiple_choice імпортує звідси під тим самим локальним ім'ям.
 export const ITEM_CARD_WRAP =
-  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border border-[#dcbd6e] bg-white dark:border-neutral-700 dark:bg-neutral-800";
+  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white dark:border-neutral-700 dark:bg-neutral-800";
 
 // Кругла позначка-літера (A, B, C...) — єдиний стиль для всіх трьох режимів
 // chronological_order (image/mixed/text), щоб позначка виглядала однаково
@@ -66,7 +66,7 @@ export const COMPACT_IMAGE_GRID = "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid
 // замість тексту на всю картку. Колір стану (ANSWER_CARD_DEFAULT і т.п.)
 // додається викликачем, як і в ANSWER_CARD_BASE.
 export const COMPACT_IMAGE_CARD =
-  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
+  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center shadow-[0_3px_10px_rgba(184,144,47,0.10)] dark:shadow-sm transition-colors";
 
 // Квадратна рамка під картинку: max-w-[6.5rem] — те саме обмеження, що і в
 // chronological_order, щоб картка не розтягувалась на всю ширину колонки

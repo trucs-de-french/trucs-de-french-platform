@@ -262,12 +262,12 @@ export function MultipleChoiceExercise({
       const sel = selections[itemId] ?? [];
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-500"
-        : "border-[#e0cf94] bg-white dark:border-neutral-600 dark:bg-neutral-800";
+        : "border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (opt?.correct) return "border-green-500 bg-green-500";
     if (opt?.selected) return "border-red-500 bg-red-500";
-    return "border-[#e0cf94] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
+    return "border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
   }
 
   // Колір рамки+фону всієї картки-відповіді в сітці картинок (режими
@@ -281,13 +281,13 @@ export function MultipleChoiceExercise({
       const sel = selections[itemId] ?? [];
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
-        : "border-[#e0cf94] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+        : "glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
     if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
     if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-    return "border-[#e0cf94] bg-white opacity-60 dark:border-neutral-700 dark:bg-neutral-800";
+    return "glass-gold-edge border-[#dcbd6e] bg-white opacity-60 dark:border-neutral-700 dark:bg-neutral-800";
   }
 
   // Для варіантів із картинкою підсвічення переноситься з усієї кнопки
@@ -579,7 +579,7 @@ export function MultipleChoiceExercise({
           ? "border-red-500 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-950/30 dark:text-red-300"
           : pillState === "selected"
             ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-            : "border-[#e0cf94] bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+            : "border-[rgba(217,183,101,0.55)] bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
     const label =
       selectedOptions.length === 0
         ? "Оберіть"

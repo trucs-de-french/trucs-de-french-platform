@@ -201,7 +201,7 @@ function KaraokeLineRow({
                 onClick={(e) => e.stopPropagation()}
                 disabled={disabled}
                 className={`mx-1 w-24 rounded border px-1.5 py-0.5 text-base ${
-                  statusClass ?? "border-[#e0cf94] dark:border-neutral-600"
+                  statusClass ?? "border-[rgba(217,183,101,0.55)] dark:border-neutral-600"
                 }`}
               />
             );
@@ -218,7 +218,7 @@ function KaraokeLineRow({
               }}
               disabled={disabled}
               className={`mx-1 min-w-12 rounded border px-2 py-0.5 text-base ${
-                statusClass ?? (isActive ? "border-brand bg-brand/10" : "border-dashed border-[#e0cf94] dark:border-neutral-600")
+                statusClass ?? (isActive ? "border-brand bg-brand/10" : "border-dashed border-[rgba(217,183,101,0.55)] dark:border-neutral-600")
               }`}
             >
               {value || "…"}

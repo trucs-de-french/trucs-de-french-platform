@@ -539,7 +539,7 @@ export function LetterGapsExercise({
                               ? LIVE_CORRECT_CLASS
                               : status === "incorrect"
                                 ? LIVE_INCORRECT_CLASS
-                                : "border-[#e0cf94] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                                : "border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
                         }`}
                       />
                     );
