@@ -23,10 +23,15 @@ function FlipCardRow({
   card,
   onUpdate,
   onRemove,
+  deckMode = false,
 }: {
   card: FlipCard;
   onUpdate: (field: keyof FlipCard, value: string) => void;
   onRemove: () => void;
+  // deck — питання для усної відповіді: back (переклад) необов'язковий,
+  // тож йому не потрібна попереджувальна рамка, коли порожній (на відміну
+  // від manual/random_reveal, де обидві сторони обов'язкові).
+  deckMode?: boolean;
 }) {
   const image = useFileOrLink({
     kind: "image",
@@ -50,15 +55,15 @@ function FlipCardRow({
         <input
           value={card.front}
           onChange={(e) => onUpdate("front", e.target.value)}
-          placeholder="Перед"
+          placeholder={deckMode ? "Питання (французькою)" : "Перед"}
           className={`${card.front.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         <span className="text-neutral-400 dark:text-neutral-500">→</span>
         <input
           value={card.back}
           onChange={(e) => onUpdate("back", e.target.value)}
-          placeholder="Зад"
-          className={`${card.back.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
+          placeholder={deckMode ? "Переклад (необов'язково)" : "Зад"}
+          className={`${deckMode || card.back.trim() ? INPUT_BORDER : INPUT_BORDER_WARNING} flex-1 px-2 py-2 text-base font-medium font-content`}
         />
         {image.icons}
         {audio.icons}
@@ -99,7 +104,7 @@ export const FlipCardsFields = forwardRef<
   const [cards, setCards] = useState<FlipCard[]>(
     initialConfig?.cards?.length ? initialConfig.cards : [emptyCard()]
   );
-  const [mode, setMode] = useState<"manual" | "random_reveal">(initialConfig?.mode ?? "manual");
+  const [mode, setMode] = useState<"manual" | "random_reveal" | "deck">(initialConfig?.mode ?? "manual");
   const [revealSide, setRevealSide] = useState<"front" | "back">(initialConfig?.revealSide ?? "front");
   const [stripArticles, setStripArticles] = useState(STRIP_ARTICLES_DEFAULT.flip_cards ?? false);
 
@@ -161,11 +166,12 @@ export const FlipCardsFields = forwardRef<
           <select
             name="flip_cards_mode"
             value={mode}
-            onChange={(e) => setMode(e.target.value as "manual" | "random_reveal")}
+            onChange={(e) => setMode(e.target.value as "manual" | "random_reveal" | "deck")}
             className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           >
             <option value="manual">Ручне гортання</option>
             <option value="random_reveal">Випадковий вибір</option>
+            <option value="deck">Колода питань</option>
           </select>
         </div>
         {mode === "random_reveal" && (
@@ -192,6 +198,7 @@ export const FlipCardsFields = forwardRef<
           card={card}
           onUpdate={(field, value) => updateCard(i, field, value)}
           onRemove={() => removeCard(i)}
+          deckMode={mode === "deck"}
         />
       ))}
       <button

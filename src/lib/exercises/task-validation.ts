@@ -534,8 +534,12 @@ export function validateTaskConfig(type: string, config: Config): ConfigProblem[
       checkInstructions(config, problems);
       const cards = asArray(config.cards) as { front?: string; back?: string }[];
       if (cards.length === 0) problems.push({ path: "cards", message: "Немає жодної картки", severity: "error" });
+      // deck — питання для усної відповіді: back (переклад) необов'язковий,
+      // на відміну від manual/random_reveal, де картка без back не має
+      // чого показати на перевороті.
+      const isDeck = config.mode === "deck";
       cards.forEach((c, i) => {
-        if (isBlank(c.front) || isBlank(c.back)) {
+        if (isBlank(c.front) || (!isDeck && isBlank(c.back))) {
           problems.push({ path: `cards[${i}]`, message: `Картка ${i + 1}: не заповнена лицьова або зворотна сторона`, severity: "error" });
         }
       });
