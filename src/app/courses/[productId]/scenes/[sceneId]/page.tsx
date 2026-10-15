@@ -63,6 +63,9 @@ import {
   type SceneContentBlockData,
   type SceneContentLink,
 } from "../../scene-content-block";
+import { SceneBackground } from "@/components/scene-background";
+import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
+import { sceneBackgroundMode } from "@/lib/scene-background-mode";
 
 type DialogueEntry = {
   speaker: string;
@@ -134,12 +137,21 @@ export default async function ScenePage({
   const { productId, sceneId } = await params;
   const supabase = await createClient();
 
-  const { data: scene } = await supabase
-    .from("scenes")
-    .select("id, title, video_url, video_provider, subtitles, dialogue")
-    .eq("id", sceneId)
-    .eq("product_id", productId)
-    .single();
+  const [{ data: scene }, { data: product }] = await Promise.all([
+    supabase
+      .from("scenes")
+      .select("id, title, video_url, video_provider, subtitles, dialogue")
+      .eq("id", sceneId)
+      .eq("product_id", productId)
+      .single(),
+    // Фон — курсовий (один на products, не на scenes, SceneBackground нижче)
+    // — окремий запит від scene вище (різні таблиці), той самий productId.
+    supabase
+      .from("products")
+      .select("background_desktop_url, background_mobile_url, background_fill_color")
+      .eq("id", productId)
+      .single(),
+  ]);
 
   if (!scene) {
     notFound();
@@ -620,7 +632,7 @@ export default async function ScenePage({
 
   const videoNode = scene.video_url && (
     <section>
-      <h2 className={STUDENT_SECTION_HEADING}>Відео</h2>
+      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Відео</h2>
       <div className={H2_TO_CONTENT}>
         {scene.video_provider === "file" ? (
           <VideoPlayer
@@ -653,7 +665,7 @@ export default async function ScenePage({
 
   const linksNode = hasLinks && (
     <section>
-      <h2 className={STUDENT_SECTION_HEADING}>Практика</h2>
+      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
       {/* auto-fill(minmax(12rem,1fr)) — кілька карток у ряд на широкому
           екрані, по одній на всю ширину на мобільних. */}
       <div className={`${H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}>
@@ -681,7 +693,7 @@ export default async function ScenePage({
 
   const tasksNode = sceneRows.length > 0 && (
     <section>
-      <h2 className={STUDENT_SECTION_HEADING}>Завдання</h2>
+      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
       <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
         {sceneRows.map((row) => {
           if (row.kind === "group") {
@@ -709,11 +721,11 @@ export default async function ScenePage({
               {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && (
                 <div>
                   {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
-                    <span className="text-xs uppercase text-neutral-500 dark:text-neutral-400">
+                    <span className="student-on-bg text-xs uppercase text-neutral-500 dark:text-neutral-400">
                       {task.type}
                     </span>
                   )}
-                  <p className="font-medium">{task.title}</p>
+                  <p className="student-on-bg font-medium">{task.title}</p>
                 </div>
               )}
 
@@ -834,77 +846,89 @@ export default async function ScenePage({
     vocab: vocabNode,
   };
 
+  // Повторна валідація — product щойно з БД, ніколи не довіряємо напряму
+  // (ані тут, ані в SceneBackground нижче, яка валідує ще раз сама по
+  // собі, читай коментар там): значення могло потрапити в рядок повз цю ж
+  // перевірку в updateProductBackground (напр. пряме редагування БД).
+  const bgDesktopUrl = validateR2ImageUrl(product?.background_desktop_url ?? null);
+  const bgMobileUrl = validateR2ImageUrl(product?.background_mobile_url ?? null);
+  const bgFillColor = validateHexColor(product?.background_fill_color ?? null);
+  const bgMode = sceneBackgroundMode(bgFillColor, Boolean(bgDesktopUrl || bgMobileUrl));
+
   return (
-    <main className="mx-auto w-full max-w-3xl p-6">
-      <Link href={`/courses/${productId}`} className="text-sm underline">
-        ← До курсу
-      </Link>
-      {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
+    <div className="student-bg-wrapper" data-scene-bg={bgMode ?? undefined}>
+      <SceneBackground desktopUrl={bgDesktopUrl} mobileUrl={bgMobileUrl} fillColor={bgFillColor} />
+      <main className="student-bg-content mx-auto w-full max-w-3xl p-6">
+        <Link href={`/courses/${productId}`} className="student-on-bg text-sm underline">
+          ← До курсу
+        </Link>
+        {isPreviewing && <PreviewBanner productId={productId} />}
+        <h1 className={`student-on-bg mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
 
-      {/* H1_TO_CONTENT — відступ від h1 до першої секції; gap-8 — той самий
-          32px МІЖ секціями (Відео/Скрипт/Практика/Вокабуляр/Завдання/
-          довільні content-блоки) — одна спільна обгортка замість mt-8 на
-          КОЖНІЙ із 6 секцій нижче. Секції рендеряться умовно (falsy/null),
-          але це не заважає: React не створює DOM-вузол для false/null,
-          тож flex-gap коректно рахує лише те, що справді відображається. */}
-      <div className={`${H1_TO_CONTENT} flex flex-col gap-8`}>
-        {orderedBlockRows.map((row, i) => {
-          if (row.block_type === "content") {
-            const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
-            if (!content) return null;
-            const block =
-              content.content_type === "links"
-                ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
-                : content;
-            const attachedGroup = attachedGroupByContentBlockId.get(content.id);
-            const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
-            const hasAttachedContent = !!attachedGroup && attachedMembers.length > 0;
-            const blockHasOwnContent = contentBlockHasRenderableContent(block);
-            // Сам content-блок порожній (нема заповненого поля для свого
-            // content_type) І немає прикріпленого набору вправ — секцію
-            // цілком пропускаємо, інакше лишається невидима "рамка" з
-            // padding, а gap-8 батьківського flex усе одно додав би зазор
-            // з обох боків порожнього елемента.
-            if (!blockHasOwnContent && !hasAttachedContent) return null;
+        {/* H1_TO_CONTENT — відступ від h1 до першої секції; gap-8 — той самий
+            32px МІЖ секціями (Відео/Скрипт/Практика/Вокабуляр/Завдання/
+            довільні content-блоки) — одна спільна обгортка замість mt-8 на
+            КОЖНІЙ із 6 секцій нижче. Секції рендеряться умовно (falsy/null),
+            але це не заважає: React не створює DOM-вузол для false/null,
+            тож flex-gap коректно рахує лише те, що справді відображається. */}
+        <div className={`${H1_TO_CONTENT} flex flex-col gap-8`}>
+          {orderedBlockRows.map((row, i) => {
+            if (row.block_type === "content") {
+              const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
+              if (!content) return null;
+              const block =
+                content.content_type === "links"
+                  ? { ...content, links: linksByBlockId.get(content.id) ?? [] }
+                  : content;
+              const attachedGroup = attachedGroupByContentBlockId.get(content.id);
+              const attachedMembers = attachedGroup ? (membersByGroup.get(attachedGroup.id) ?? []) : [];
+              const hasAttachedContent = !!attachedGroup && attachedMembers.length > 0;
+              const blockHasOwnContent = contentBlockHasRenderableContent(block);
+              // Сам content-блок порожній (нема заповненого поля для свого
+              // content_type) І немає прикріпленого набору вправ — секцію
+              // цілком пропускаємо, інакше лишається невидима "рамка" з
+              // padding, а gap-8 батьківського flex усе одно додав би зазор
+              // з обох боків порожнього елемента.
+              if (!blockHasOwnContent && !hasAttachedContent) return null;
 
-            // Прикріплена група — ОДНА спільна секція на контент блоку й
-            // вправи разом (bare-режим TaskGroupBlock, без його власної
-            // <section>) — інакше картка розпадається на дві (баг, що
-            // виправляє ця задача). panelForText на SceneContentBlockContent
-            // додає ту саму сіру підкладку з смугою зліва, що й для
-            // текстового контенту самого TaskGroupBlock — і сірий
-            // фон/смугу так само НЕ додає для аудіо/відео/embed/лінків.
-            if (hasAttachedContent) {
+              // Прикріплена група — ОДНА спільна секція на контент блоку й
+              // вправи разом (bare-режим TaskGroupBlock, без його власної
+              // <section>) — інакше картка розпадається на дві (баг, що
+              // виправляє ця задача). panelForText на SceneContentBlockContent
+              // додає ту саму сіру підкладку з смугою зліва, що й для
+              // текстового контенту самого TaskGroupBlock — і сірий
+              // фон/смугу так само НЕ додає для аудіо/відео/embed/лінків.
+              if (hasAttachedContent) {
+                return (
+                  <section key={`content-${row.ref_id}`} className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
+                    <TaskGroupBlock
+                      group={attachedGroup}
+                      tasks={attachedMembers}
+                      bare
+                      sceneDialogue={dialogue}
+                      extraSharedContent={
+                        blockHasOwnContent ? (
+                          <SceneContentBlockContent block={block} panelForText sceneDialogue={dialogue} />
+                        ) : null
+                      }
+                    />
+                  </section>
+                );
+              }
+
+              // Без прикріпленої групи — звичайна окрема картка content-блоку,
+              // як і раніше (без підкладки, вона потрібна лише коли під
+              // матеріалом є вправи).
               return (
-                <section key={`content-${row.ref_id}`} className={`${EXERCISE_BLOCK_CLASS} ${EXERCISE_STACK}`}>
-                  <TaskGroupBlock
-                    group={attachedGroup}
-                    tasks={attachedMembers}
-                    bare
-                    sceneDialogue={dialogue}
-                    extraSharedContent={
-                      blockHasOwnContent ? (
-                        <SceneContentBlockContent block={block} panelForText sceneDialogue={dialogue} />
-                      ) : null
-                    }
-                  />
+                <section key={`content-${row.ref_id}`}>
+                  <SceneContentBlock block={block} sceneDialogue={dialogue} />
                 </section>
               );
             }
-
-            // Без прикріпленої групи — звичайна окрема картка content-блоку,
-            // як і раніше (без підкладки, вона потрібна лише коли під
-            // матеріалом є вправи).
-            return (
-              <section key={`content-${row.ref_id}`}>
-                <SceneContentBlock block={block} sceneDialogue={dialogue} />
-              </section>
-            );
-          }
-          return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
-        })}
-      </div>
-    </main>
+            return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
+          })}
+        </div>
+      </main>
+    </div>
   );
 }

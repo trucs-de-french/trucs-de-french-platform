@@ -860,3 +860,91 @@ button, input, textarea, select, label, nav, aside {
   width: 100vw;
   height: 100dvh;
 }
+
+/* ----------------------------------------------------------------------
+   Декоративний курсовий фон студентської сторінки сцени (SceneBackground,
+   scene-background.tsx) — URL картинок приходять через CSS custom
+   properties на батьківському div (--scene-bg-desktop/--scene-bg-mobile),
+   щоб картинка НЕ ОБОХ орієнтацій одночасно (браузер не завантажує
+   url(), якщо властивість, що її використовує, не застосовується в
+   поточній @media — лише ОДНА з двох .scene-bg-layer--desktop/
+   .scene-bg-banner активна одночасно).
+
+   z-index:-1 (НЕ дуже негативне число) + .student-bg-wrapper нижче з
+   isolation:isolate — навмисна пара: isolate створює НОВИЙ стекінг-
+   контекст для цього враппера, тож z-index:-1 всередині порівнюється
+   лише з рідними дітьми враппера (контентом сторінки), а не з body чи
+   фіксованим ThemeToggle/Z_MODAL поза враппером. Сам фон завжди позаду
+   звичайного (непозиціонованого) контенту за специфікацією CSS (негативний
+   z-index малюється РАНІШЕ за непозиційовані блоки в тому самому стекінг-
+   контексті) — явний z-10 на самому контенті нижче лише підтверджує це,
+   не обов'язковий технічно, але прибирає будь-яку залежність від порядку
+   в DOM. */
+.student-bg-wrapper {
+  position: relative;
+  isolation: isolate;
+}
+.student-bg-content {
+  position: relative;
+  z-index: 10;
+}
+.scene-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--scene-bg-fill, transparent);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  display: none;
+}
+.scene-bg-layer--desktop {
+  background-image: var(--scene-bg-desktop, none);
+}
+.scene-bg-banner {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1080 / 1350;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--scene-bg-mobile, none);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+@media (orientation: landscape) {
+  .scene-bg-layer--desktop {
+    display: block;
+  }
+}
+@media (orientation: portrait) {
+  .scene-bg-layer--portrait-fill {
+    display: block;
+  }
+  .scene-bg-banner {
+    display: block;
+  }
+}
+
+/* Читабельність тексту, що лежить ПРЯМО на фоні курсу (не всередині
+   білої/сірої панелі) — заголовок сцени, хлібна крихта, h2-заголовки
+   секцій. data-scene-bg визначає СТОРІНКА (page.tsx) за яскравістю
+   fill-кольору (чи "dark" за умовчанням, якщо картинки є, а кольору нема)
+   — НЕ залежить від світлої/темної теми сайту, саме тому обидва правила
+   нижче мають спрацьовувати в ОБОХ темах. Специфічність:
+   :where(.dark, .dark*) у @custom-variant вище дає 0 ваги самому .dark,
+   тож dark:text-* утиліти важать як ОДИН клас — цей селектор
+   (атрибут + клас) важить як ДВА, тому перемагає і світлу, і темну тему
+   без !important. */
+[data-scene-bg="dark"] .student-on-bg {
+  color: #f4efe2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+[data-scene-bg="light"] .student-on-bg {
+  color: #1b1b2e;
+  text-shadow: none;
+}

@@ -104,7 +104,7 @@ export function VocabSection({ vocab, pdfHref }: { vocab: VocabItem[]; pdfHref: 
             size={18}
             className={`shrink-0 transition-transform ${collapsed ? "" : "rotate-180"}`}
           />
-          <h2 className={STUDENT_SECTION_HEADING}>Вокабуляр</h2>
+          <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Вокабуляр</h2>
         </button>
 
         {/* Видима незалежно від collapsed — і тому, що завантаження PDF не

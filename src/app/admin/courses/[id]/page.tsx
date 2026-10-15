@@ -4,11 +4,14 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   updateProduct,
+  updateProductBackground,
   togglePublish,
   toggleArchive,
   startStudentPreview,
   deleteProductPermanently,
 } from "../actions";
+import { BackgroundImageField } from "./background-image-field";
+import { FillColorField } from "./fill-color-field";
 import { createScene } from "@/app/admin/scenes/actions";
 import { deleteMaterial } from "@/app/admin/materials/actions";
 import { SaveForm } from "@/components/save-form";
@@ -256,6 +259,49 @@ export default async function AdminCoursePage({
           </div>
         )}
       </SaveForm>
+
+      {/* Фон сцен курсу — лише для фільмів (сцени, і отже студентська
+          сторінка сцени з цим фоном, існують тільки для type="film",
+          DELF-курси показують задачі тестів, не сцени). Окрема SaveForm
+          від основної вище (actions.ts, updateProductBackground) — та сама
+          причина поділу, що вже для title/video/dialogue сцени: власна
+          валідація й збереження, незалежні одна від одної. */}
+      {isFilm && (
+        <SaveForm
+          action={updateProductBackground.bind(null, product.id)}
+          className="mt-4 flex flex-col gap-4"
+        >
+          <div className="flex flex-col gap-3 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <p className={CARD_GROUP_LABEL}>Фон сцен курсу</p>
+            <div className="flex flex-col gap-1">
+              <label className={LABEL_TEXT}>Фон для комп&apos;ютера</label>
+              <BackgroundImageField
+                name="background_desktop_url"
+                defaultValue={product.background_desktop_url ?? ""}
+                helperText="Для комп'ютера: 2560 × 1440 px, WebP або JPG, до ~500 КБ. Деталі по боках, центр спокійний."
+                thumbClassName="h-20 w-36"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={LABEL_TEXT}>Банер для телефона/планшета</label>
+              <BackgroundImageField
+                name="background_mobile_url"
+                defaultValue={product.background_mobile_url ?? ""}
+                helperText="Для телефона й планшета стоячи: 1080 × 1350 px. Внизу плавно переходить у колір заливки."
+                thumbClassName="h-24 w-20"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={LABEL_TEXT}>Колір заливки</label>
+              <FillColorField
+                name="background_fill_color"
+                defaultValue={product.background_fill_color ?? ""}
+              />
+              <p className={HINT_TEXT}>Суцільний колір — фон там, де нема картинки (чи взагалі без неї).</p>
+            </div>
+          </div>
+        </SaveForm>
+      )}
 
       {isFilm ? (
         <section className="mt-6">

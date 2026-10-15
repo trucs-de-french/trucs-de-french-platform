@@ -1,10 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PREVIEW_COOKIE, previewCookieOptions } from "@/lib/course-preview";
 import type { ActionState } from "@/lib/action-state";
+import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
 
 // Той самий принцип, що resolveAudioUrl/resolveImageUrl у
 // admin/tasks/actions.ts — cover_image_file_url (FileUpload kind="image")
@@ -64,6 +66,56 @@ export async function updateProduct(
     .eq("id", productId);
 
   if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// Фон студентських сторінок сцени — ОДИН на курс (не на сцену), окрема
+// форма/дія від updateProduct вище: інше смислове групування (вигляд
+// сторінки сцени, не дані курсу), і щоб збереження назви/ціни не залежало
+// від валідності URL картинок. Валідація ТУТ (перед записом) — та сама
+// функція, що і при рендері (scene-background.tsx): жодному значенню з
+// формди не довіряємо напряму, навіть щойно завантаженому через FileUpload
+// (FileUpload сам пише лише R2-урл, але сервер усе одно перевіряє origin/
+// розширення/відсутність query, а не просто "непорожній рядок").
+export async function updateProductBackground(
+  productId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  const desktopRaw = (formData.get("background_desktop_url") as string) || "";
+  const mobileRaw = (formData.get("background_mobile_url") as string) || "";
+  const colorRaw = (formData.get("background_fill_color") as string) || "";
+
+  const desktopUrl = desktopRaw ? validateR2ImageUrl(desktopRaw) : null;
+  if (desktopRaw && !desktopUrl) {
+    return { ok: false, error: "Картинка фону для комп'ютера — недійсне посилання." };
+  }
+  const mobileUrl = mobileRaw ? validateR2ImageUrl(mobileRaw) : null;
+  if (mobileRaw && !mobileUrl) {
+    return { ok: false, error: "Банер фону для телефона/планшета — недійсне посилання." };
+  }
+  const fillColor = colorRaw ? validateHexColor(colorRaw) : null;
+  if (colorRaw && !fillColor) {
+    return { ok: false, error: "Колір заливки має бути у форматі #RRGGBB." };
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      background_desktop_url: desktopUrl,
+      background_mobile_url: mobileUrl,
+      background_fill_color: fillColor,
+    })
+    .eq("id", productId);
+
+  if (error) return { ok: false, error: error.message };
+
+  // layout — а не конкретна сторінка: оновлює ВСІ сцени курсу одразу
+  // (фон курсовий, не посценний), без потреби знати/перелічувати sceneId.
+  revalidatePath(`/courses/${productId}`, "layout");
+
   return { ok: true };
 }
 
