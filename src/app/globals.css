@@ -1059,6 +1059,20 @@ button, input, textarea, select, label, nav, aside {
   color: var(--glass-text);
   padding: 16px 24px 24px;
 }
+/* Відео-панель — варіант без заливки/падінгу (той самий вигляд, що й ДО
+   уніфікованого скляного блоку: videoNode раніше рендерив голий <div>
+   без жодного класу, скло давав лише бар+scene-card overflow:hidden/
+   radius/shadow). Один і той самий, теми-незалежний transparent в усіх
+   трьох станах [data-scene-bg] — старого значення "напівпрозорий темний"
+   ніколи не було, картка завжди лишалась наскрізь прозорою, курс-фон
+   просвічував повністю. padding:0 (не 16/24/24, як .glass-panel-surface
+   вище) — кнопка "На весь екран" уже має власний відступ від країв
+   картки (.scene-fullscreen-btn-row нижче, 10/12/12/12), подвійний
+   padding тут давав би зайвий порожній простір під кнопкою. */
+.glass-panel--video {
+  background: transparent;
+  padding: 0;
+}
 @media (max-width: 640px) {
   .glass-block-panel,
   .glass-panel-surface {

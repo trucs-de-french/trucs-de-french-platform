@@ -660,7 +660,7 @@ export default async function ScenePage({
           VideoFrame. */}
       <div className={SCENE_CARD_CLASS}>
         <SectionHeaderBar title="Відео" attached />
-        <div className="glass-panel-surface">{videoBody}</div>
+        <div className="glass-panel--video">{videoBody}</div>
       </div>
     </section>
   );
