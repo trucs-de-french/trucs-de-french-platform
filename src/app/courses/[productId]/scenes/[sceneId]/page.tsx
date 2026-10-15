@@ -64,6 +64,7 @@ import {
   type SceneContentLink,
 } from "../../scene-content-block";
 import { SceneBackground } from "@/components/scene-background";
+import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
 import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
 import { sceneBackgroundMode } from "@/lib/scene-background-mode";
 
@@ -642,25 +643,39 @@ export default async function ScenePage({
     return collectSceneVocab(merged);
   }
 
+  const videoBody =
+    scene.video_provider === "file" ? (
+      <VideoPlayer
+        src={scene.video_url}
+        subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
+        vocab={collectVideoVocab(dialogue)}
+        title={scene.title}
+      />
+    ) : (
+      <VideoFrame
+        src={toEmbedUrl(scene.video_url, scene.video_provider)}
+        title={scene.title}
+        provider={scene.video_provider ?? "youtube"}
+      />
+    );
+
   const videoNode = scene.video_url && (
     <section>
-      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Відео</h2>
-      <div className={H2_TO_CONTENT}>
-        {scene.video_provider === "file" ? (
-          <VideoPlayer
-            src={scene.video_url}
-            subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
-            vocab={collectVideoVocab(dialogue)}
-            title={scene.title}
-          />
-        ) : (
-          <VideoFrame
-            src={toEmbedUrl(scene.video_url, scene.video_provider)}
-            title={scene.title}
-            provider={scene.video_provider ?? "youtube"}
-          />
-        )}
-      </div>
+      {onBackground ? (
+        // SCENE_CARD_CLASS — лише border-radius/overflow/box-shadow (жодних
+        // transform/filter/backdrop-filter/will-change/contain), щоб не
+        // стати containing-block для position:fixed iOS pseudo-fullscreen/
+        // Fullscreen API wrapper усередині VideoPlayer/VideoFrame.
+        <div className={SCENE_CARD_CLASS}>
+          <SectionHeaderBar title="Відео" attached />
+          <div>{videoBody}</div>
+        </div>
+      ) : (
+        <>
+          <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Відео</h2>
+          <div className={H2_TO_CONTENT}>{videoBody}</div>
+        </>
+      )}
     </section>
   );
 
@@ -677,10 +692,18 @@ export default async function ScenePage({
 
   const linksNode = hasLinks && (
     <section>
-      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
+      {onBackground ? (
+        <SectionHeaderBar title="Практика" attached={false} />
+      ) : (
+        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
+      )}
       {/* auto-fill(minmax(12rem,1fr)) — кілька карток у ряд на широкому
-          екрані, по одній на всю ширину на мобільних. */}
-      <div className={`${H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}>
+          екрані, по одній на всю ширину на мобільних. mt-3 (не H2_TO_CONTENT/
+          mt-4) під баром — STANDALONE-варіант скляного бару (globals.css,
+          SectionHeaderBar) свідомо на 12px, а не 16px. */}
+      <div
+        className={`${onBackground ? "mt-3" : H2_TO_CONTENT} grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3`}
+      >
         {linkList.map((link) => {
           const meta = SCENE_LINK_PLATFORM_META[link.platform] ?? DEFAULT_SCENE_LINK_META;
           return (
@@ -705,8 +728,12 @@ export default async function ScenePage({
 
   const tasksNode = sceneRows.length > 0 && (
     <section>
-      <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
-      <ul className={`${H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
+      {onBackground ? (
+        <SectionHeaderBar title="Завдання" attached={false} />
+      ) : (
+        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
+      )}
+      <ul className={`${onBackground ? "mt-3" : H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
         {sceneRows.map((row) => {
           if (row.kind === "group") {
             return (

@@ -18,6 +18,13 @@
 export const EXERCISE_BLOCK_CLASS =
   "rounded-lg border border-gray-100 bg-neutral-50 shadow-sm p-4 md:p-6 dark:border-neutral-700 dark:bg-neutral-900";
 
+// Той самий фон/падинг, що EXERCISE_BLOCK_CLASS, БЕЗ rounded-lg/border/
+// shadow-sm — для тіла секції, яке вже сидить усередині JOINED-картки
+// скляного бару (scene-header-bar.tsx, SCENE_CARD_CLASS): власне
+// округлення/рамка/тінь тіла здвоювались би з тими, що вже на обгортці
+// картки.
+export const EXERCISE_BLOCK_SURFACE_CLASS = "bg-neutral-50 p-4 md:p-6 dark:bg-neutral-900";
+
 // Картка-посилання на сцену на дошці курсу (courses/[productId]/page.tsx) —
 // НЕ блок завдання (нема карток-відповідей усередині, які потребують
 // контрастного тла), тож лишається на bg-white, як і решта карток блоків

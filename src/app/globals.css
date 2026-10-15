@@ -948,3 +948,77 @@ button, input, textarea, select, label, nav, aside {
   color: #1b1b2e;
   text-shadow: none;
 }
+
+/* Скляні заголовки-бари секцій студентської сторінки сцени, коли активний
+   фон курсу (SectionHeaderBar, scene-header-bar.tsx) — фіксовані кольори,
+   однакові в обох темах сайту (бар лежить на фоновій картинці, не на
+   теми-залежному фоні сторінки). backdrop-filter — ЛИШЕ тут, на самому
+   барі, НІКОЛИ на .scene-card (обгортка нижче) чи будь-якому предку відео/
+   iframe: предок із transform/filter/backdrop-filter/will-change/contain
+   стає containing block для position:fixed нащадків — зламало б iOS
+   pseudo-fullscreen і звичайний Fullscreen API wrapper відео (обидва
+   використовують position:fixed на собі).
+   -webkit-backdrop-filter — Safari досі не підтримує неprefix-ову
+   властивість сама по собі в деяких версіях. */
+.scene-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 12px 20px;
+  background: rgba(10, 16, 48, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(243, 217, 139, 0.5);
+}
+button.scene-bar {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+button.scene-bar:focus-visible {
+  outline: 2px solid #e8c46a;
+  outline-offset: 2px;
+}
+.scene-bar-title {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f6dc8e;
+}
+/* attached — під баром безпосередньо йде тіло картки (JOINED), без
+   відступу: нижня межа бару прибрана (щоб не здвоювалась із верхньою
+   межею тіла), округлені лише верхні кути — решту округлення картки
+   (scene-card нижче) бере на себе через overflow:hidden. */
+.scene-bar--attached {
+  border-radius: 14px 14px 0 0;
+  border-bottom: none;
+}
+/* detached — бар сам по собі (згорнутий JOINED стан або STANDALONE
+   секція без спільного тіла) — повна рамка, повне округлення, власна
+   тінь (у attached-стані тінь несе scene-card, не бар). */
+.scene-bar--detached {
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+.scene-bar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid #e8c46a;
+  background: rgba(232, 196, 106, 0.14);
+}
+/* Обгортка JOINED-картки (бар+тіло одним блоком) — лише border-radius/
+   overflow/box-shadow, свідомо БЕЗ transform/filter/backdrop-filter/
+   will-change/contain (коментар вище) — тіло відео (videoNode, page.tsx)
+   рендериться прямо всередині цієї обгортки. */
+.scene-card {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}

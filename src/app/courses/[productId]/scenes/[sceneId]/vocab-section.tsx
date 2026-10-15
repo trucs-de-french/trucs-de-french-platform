@@ -12,7 +12,8 @@ import {
 import { STUDENT_TOGGLE_HEADER_BUTTON, BUTTON_SECONDARY } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
+import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
 
 // Компактна легенда колір→категорія — над списком груп, щоб орієнтуватись,
 // не гортаючи до заголовка потрібної групи. Розмір/шрифт/колір назви — на
@@ -126,6 +127,40 @@ export function VocabSection({
     </>
   );
 
+  // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
+  // коли активний фон курсу — інакше розмітка/класи нижче лишаються
+  // байтово тими самими, що й сьогодні (onBackground=false).
+  if (onBackground) {
+    const expanded = !collapsed;
+    return (
+      <div>
+        {expanded ? (
+          <div className={SCENE_CARD_CLASS}>
+            <SectionHeaderBar
+              title="Вокабуляр"
+              attached
+              collapsible
+              expanded
+              onToggle={() => setCollapsed((c) => !c)}
+            />
+            <div className={EXERCISE_BLOCK_SURFACE_CLASS}>
+              <div className="flex justify-end">{pdfLink}</div>
+              <div className="mt-3">{legendAndGroups}</div>
+            </div>
+          </div>
+        ) : (
+          <SectionHeaderBar
+            title="Вокабуляр"
+            attached={false}
+            collapsible
+            expanded={false}
+            onToggle={() => setCollapsed((c) => !c)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Кнопка-тогл і посилання PDF — окремі елементи в одному ряду, НЕ
@@ -135,11 +170,7 @@ export function VocabSection({
           правого краю. items-center — PDF (менша, py-1.5) вирівнюється по
           центру висоти тогла (py-2), не розтягується на всю висоту. Клік по
           PDF не спливає до тогла просто тому, що це сиблінги, а не вкладені
-          елементи — жодного stopPropagation не треба.
-          Коли активний фон курсу (onBackground) — PDF-посилання переїжджає
-          всередину панелі нижче (там же, де легенда/слова), бо на фоновій
-          картинці воно так само нечитабельне, як і сам список слів; тут у
-          заголовку лишається лише тогл. */}
+          елементи — жодного stopPropagation не треба. */}
       <div className="flex items-center gap-4">
         <button
           type="button"
@@ -153,18 +184,10 @@ export function VocabSection({
           <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Вокабуляр</h2>
         </button>
 
-        {!onBackground && pdfLink}
+        {pdfLink}
       </div>
 
-      {!collapsed &&
-        (onBackground ? (
-          <div className={`${H2_TO_CONTENT} ${EXERCISE_BLOCK_CLASS}`}>
-            <div className="flex justify-end">{pdfLink}</div>
-            <div className="mt-3">{legendAndGroups}</div>
-          </div>
-        ) : (
-          <div className={H2_TO_CONTENT}>{legendAndGroups}</div>
-        ))}
+      {!collapsed && <div className={H2_TO_CONTENT}>{legendAndGroups}</div>}
     </div>
   );
 }

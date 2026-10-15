@@ -7,7 +7,8 @@ import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeaker
 import { STUDENT_TOGGLE_HEADER_BUTTON } from "@/lib/button-styles";
 import { STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { H2_TO_CONTENT } from "@/lib/spacing";
-import { EXERCISE_BLOCK_CLASS } from "@/components/task-card-style";
+import { EXERCISE_BLOCK_CLASS, EXERCISE_BLOCK_SURFACE_CLASS } from "@/components/task-card-style";
+import { SectionHeaderBar, SCENE_CARD_CLASS } from "@/components/scene-header-bar";
 
 type DialogueEntry = {
   speaker: string;
@@ -83,6 +84,111 @@ export function ScriptSection({
     timerRef.current = setTimeout(() => setOpenId(null), HIDE_DELAY_MS);
   }
 
+  // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
+  // коли є сам заголовок (title — фіксований блок "Скрипт" сторінки сцени,
+  // не додаткові script-блоки без title) І активний фон курсу — інакше
+  // розмітка/класи нижче лишаються байтово тими самими, що й сьогодні.
+  const useBar = Boolean(title) && onBackground;
+
+  const body = isOpen && (
+    <div
+      className={`flex flex-col gap-2 ${
+        useBar
+          ? EXERCISE_BLOCK_SURFACE_CLASS
+          : `${title ? H2_TO_CONTENT : ""} ${onBackground ? EXERCISE_BLOCK_CLASS : ""}`
+      }`}
+    >
+      {hasTranslation && (
+        <button
+          type="button"
+          onClick={() => setShowTranslation((v) => !v)}
+          className={`mb-1 self-start rounded-md border border-brand px-3 py-1.5 text-sm shadow-sm transition-colors ${
+            showTranslation
+              ? "bg-brand/10 text-brand"
+              : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-700"
+          }`}
+        >
+          {showTranslation ? "Сховати переклад" : "Показати переклад"}
+        </button>
+      )}
+
+      {showTranslation ? (
+        // Grid, не таблиця: 2 grid-елементи на репліку поспіль (без
+        // спільної обгортки-div — вона зламала б авторозкладку по
+        // колонках) — grid сам розкладає їх по рядках. sm:grid-cols-2 і
+        // ширше — колонки пліч-о-пліч; на вузькому екрані (grid-cols-1)
+        // те саме розмічення автоматично складає все послідовно в один
+        // стовпець, без окремої мобільної гілки логіки.
+        <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+          {dialogue.map((line, i) => (
+            <Fragment key={i}>
+              <DialogueLine
+                lineIndex={i}
+                speaker={line.speaker}
+                text={line.text}
+                vocab={line.vocab ?? []}
+                start={line.start}
+                videoLink={line.videoLink}
+                openId={openId}
+                onWordClick={openWord}
+                showSpeaker={showSpeakerFlags[i]}
+              />
+              <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
+                {line.translationUk ? (
+                  <TranslationCell text={line.translationUk} vocab={line.vocab ?? []} />
+                ) : (
+                  <span className="italic text-neutral-400 dark:text-neutral-600">—</span>
+                )}
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      ) : (
+        dialogue.map((line, i) => (
+          <DialogueLine
+            key={i}
+            lineIndex={i}
+            speaker={line.speaker}
+            text={line.text}
+            vocab={line.vocab ?? []}
+            start={line.start}
+            videoLink={line.videoLink}
+            openId={openId}
+            onWordClick={openWord}
+            showSpeaker={showSpeakerFlags[i]}
+          />
+        ))
+      )}
+    </div>
+  );
+
+  if (useBar) {
+    return (
+      <div>
+        {isOpen ? (
+          <div className={SCENE_CARD_CLASS}>
+            <SectionHeaderBar
+              title={title!}
+              attached
+              collapsible
+              expanded={!collapsed}
+              onToggle={() => setCollapsed((c) => !c)}
+            />
+            {body}
+          </div>
+        ) : (
+          <SectionHeaderBar
+            title={title!}
+            attached={false}
+            collapsible
+            expanded={false}
+            onToggle={() => setCollapsed((c) => !c)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       {title && (
@@ -99,75 +205,7 @@ export function ScriptSection({
         </button>
       )}
 
-      {isOpen && (
-        <div
-          className={`flex flex-col gap-2 ${title ? H2_TO_CONTENT : ""} ${
-            onBackground ? EXERCISE_BLOCK_CLASS : ""
-          }`}
-        >
-          {hasTranslation && (
-            <button
-              type="button"
-              onClick={() => setShowTranslation((v) => !v)}
-              className={`mb-1 self-start rounded-md border border-brand px-3 py-1.5 text-sm shadow-sm transition-colors ${
-                showTranslation
-                  ? "bg-brand/10 text-brand"
-                  : "text-neutral-600 hover:bg-neutral-50 dark:text-neutral-400 dark:hover:bg-neutral-700"
-              }`}
-            >
-              {showTranslation ? "Сховати переклад" : "Показати переклад"}
-            </button>
-          )}
-
-          {showTranslation ? (
-            // Grid, не таблиця: 2 grid-елементи на репліку поспіль (без
-            // спільної обгортки-div — вона зламала б авторозкладку по
-            // колонках) — grid сам розкладає їх по рядках. sm:grid-cols-2 і
-            // ширше — колонки пліч-о-пліч; на вузькому екрані (grid-cols-1)
-            // те саме розмічення автоматично складає все послідовно в один
-            // стовпець, без окремої мобільної гілки логіки.
-            <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {dialogue.map((line, i) => (
-                <Fragment key={i}>
-                  <DialogueLine
-                    lineIndex={i}
-                    speaker={line.speaker}
-                    text={line.text}
-                    vocab={line.vocab ?? []}
-                    start={line.start}
-                    videoLink={line.videoLink}
-                    openId={openId}
-                    onWordClick={openWord}
-                    showSpeaker={showSpeakerFlags[i]}
-                  />
-                  <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
-                    {line.translationUk ? (
-                      <TranslationCell text={line.translationUk} vocab={line.vocab ?? []} />
-                    ) : (
-                      <span className="italic text-neutral-400 dark:text-neutral-600">—</span>
-                    )}
-                  </div>
-                </Fragment>
-              ))}
-            </div>
-          ) : (
-            dialogue.map((line, i) => (
-              <DialogueLine
-                key={i}
-                lineIndex={i}
-                speaker={line.speaker}
-                text={line.text}
-                vocab={line.vocab ?? []}
-                start={line.start}
-                videoLink={line.videoLink}
-                openId={openId}
-                onWordClick={openWord}
-                showSpeaker={showSpeakerFlags[i]}
-              />
-            ))
-          )}
-        </div>
-      )}
+      {body}
     </div>
   );
 }
