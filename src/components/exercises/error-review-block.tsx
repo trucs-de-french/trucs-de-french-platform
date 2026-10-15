@@ -88,7 +88,7 @@ const STATUS_PILL: Record<ErrorReviewStatus, { label: string; className: string 
   not_started: {
     label: "Не виправлено",
     className:
-      "border-gray-300 bg-white text-neutral-600 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+      "border-[#e0cf94] bg-white text-neutral-600 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
   },
   partial: {
     label: "Частково",
@@ -136,7 +136,7 @@ function ErrorReviewCard({
   const remaining = entry.remainingItemIds.length;
 
   return (
-    <div className="rounded-lg border border-gray-100 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+    <div className="rounded-lg border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
       <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white"
@@ -178,7 +178,7 @@ function ErrorReviewCard({
       )}
 
       {isInteractive && !isDone && (
-        <div className="flex items-center gap-2 border-t border-gray-100 p-3 dark:border-neutral-700">
+        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-neutral-700">
           <button
             type="button"
             onClick={onToggleExpanded}
@@ -190,14 +190,14 @@ function ErrorReviewCard({
       )}
 
       {isDone && (
-        <div className="flex items-center gap-2 border-t border-gray-100 p-3 text-sm text-green-600 dark:border-neutral-700 dark:text-green-400">
+        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-neutral-700 dark:text-green-400">
           <Check size={16} aria-hidden />
           Усі помилки цього завдання виправлено
         </div>
       )}
 
       {expanded && isInteractive && !isDone && entry.config && (
-        <div className="border-t border-gray-100 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
+        <div className="border-t border-[#e6e6f0] bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
           {entry.taskType === "multiple_choice" && (
             <MultipleChoiceExercise
               taskId={entry.taskId}

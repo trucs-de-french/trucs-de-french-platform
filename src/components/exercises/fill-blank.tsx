@@ -256,7 +256,7 @@ export function FillBlankExercise({
                 // before — невидимий псевдоелемент, розтягнутий по вертикалі
                 // (-inset-y-0.5 на вузьких/touch-екранах, sm:-inset-y-1 на
                 // десктопі — у сумі завжди +4px до 40 чи +8px до 36 = 44px).
-                className={`relative flex min-h-10 max-w-[12rem] shrink-0 cursor-pointer items-center justify-center break-words rounded-full border border-gray-300 px-2.5 py-0.5 text-sm shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 [overflow-wrap:anywhere] ${
+                className={`relative flex min-h-10 max-w-[12rem] shrink-0 cursor-pointer items-center justify-center break-words rounded-full border border-[#e8d9a8] px-2.5 py-0.5 text-sm shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 [overflow-wrap:anywhere] ${
                   crossedOut.has(i)
                     ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
                     : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
@@ -280,7 +280,7 @@ export function FillBlankExercise({
                 // (FillBlankPublic не містить відповідей).
                 <span
                   aria-hidden
-                  className="mx-1 inline-block w-16 rounded border border-dashed border-neutral-300 px-2 py-0.5 text-center text-neutral-400 dark:border-neutral-600 dark:text-neutral-500"
+                  className="mx-1 inline-block w-16 rounded border border-dashed border-[#e0cf94] px-2 py-0.5 text-center text-neutral-400 dark:border-neutral-600 dark:text-neutral-500"
                 >
                   ···
                 </span>
@@ -309,14 +309,14 @@ export function FillBlankExercise({
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                         : practiceResults[String(i)] === false
                           ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : "border-gray-300 dark:border-neutral-600"
+                          : "border-[#e0cf94] dark:border-neutral-600"
                       : detail
                         ? detail.blanks[i]?.isCorrect
                           ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                           : "border-red-500 bg-red-50 dark:bg-red-950/30"
                         : hintedBlanks.has(i)
                           ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                          : "border-gray-300 dark:border-neutral-600"
+                          : "border-[#e0cf94] dark:border-neutral-600"
                   }`}
                 />
               )}

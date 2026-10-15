@@ -31,13 +31,13 @@ export type CheckboxGridPracticeProps = { whole: true; failedAttempts: Record<st
 // прилипання шапки до сторінки; overflow-clip все одно зрізає кути картки
 // під rounded-xl, просто не створює новий скрол-контейнер.
 const GRID_TABLE_CARD =
-  "w-full max-w-[60rem] overflow-clip rounded-xl border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+  "w-full max-w-[60rem] overflow-clip rounded-[14px] dark:rounded-xl border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-none dark:border-neutral-700 dark:bg-neutral-800";
 
 // Вертикальна риска після першої колонки (твердження) — лише на md+, де
 // твердження справді стоїть окремою колонкою зліва від чекбоксів; на
 // телефоні твердження — банер на всю ширину (col-span-full), риска справа
 // від нього була би не межею колонки, а довільною лінією під текстом.
-const GRID_FIRST_COL_DIVIDER = "md:border-r md:border-gray-200 md:dark:border-neutral-700";
+const GRID_FIRST_COL_DIVIDER = "md:border-r md:border-[#e6e6f0] md:dark:border-neutral-700";
 
 // Обгортка-лейбл клітинки з чекбоксом — min-h-14 (56px) мобільна/md:min-h-16
 // (64px): хіт-зона (мінімум 44px із задачі) з запасом під новий 30px-чекбокс
@@ -52,7 +52,7 @@ const GRID_CELL_LABEL = "flex min-h-14 w-full items-center justify-center md:min
 // currentColor).
 const GRID_CHECKBOX_BOX =
   "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border-2 transition-colors md:h-[30px] md:w-[30px] peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 peer-disabled:opacity-60";
-const GRID_CHECKBOX_UNCHECKED = "border-neutral-300 bg-white dark:border-neutral-500 dark:bg-neutral-800";
+const GRID_CHECKBOX_UNCHECKED = "border-[#e0cf94] bg-white dark:border-neutral-500 dark:bg-neutral-800";
 const GRID_CHECKBOX_CHECKED = "border-brand bg-brand";
 // Білий чекмарк — лише для ДО-перевірочного "позначено" стану (квадрат
 // суцільно залитий кольором бренду, текст на ньому має бути світлим).
@@ -256,14 +256,14 @@ export function CheckboxGridExercise({
               не колонка, заповнювач там не потрібен і схований. */}
           <div
             aria-hidden="true"
-            className={`hidden border-b border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800 md:block ${GRID_FIRST_COL_DIVIDER}`}
+            className={`hidden border-b border-[#e6e6f0] bg-white dark:border-neutral-700 dark:bg-neutral-800 md:block ${GRID_FIRST_COL_DIVIDER}`}
           />
           {columns.map((c) => (
             <div
               key={c.id}
               id={`${uid}col-${c.id}`}
               role="columnheader"
-              className={`sticky top-0 z-10 border-b border-gray-200 bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 md:static md:text-sm ${headerTextSize}`}
+              className={`sticky top-0 z-10 border-b border-[#e6e6f0] bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 md:static md:text-sm ${headerTextSize}`}
             >
               {c.label}
             </div>
@@ -272,7 +272,7 @@ export function CheckboxGridExercise({
 
         {config.rows.map((row, index) => {
           const stmtId = `${uid}stmt-${row.id}`;
-          const rowDivider = index > 0 ? "border-t border-gray-100 dark:border-neutral-800" : "";
+          const rowDivider = index > 0 ? "border-t border-[#e6e6f0] dark:border-neutral-800" : "";
           const pointsLabel = rowPointsLabel(row);
           return (
             <div role="row" key={row.id} className="contents">

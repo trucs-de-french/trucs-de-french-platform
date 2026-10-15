@@ -4,11 +4,11 @@
 // Клас/фон стану (обрано/правильно/неправильно) додається окремо кожним
 // викликачем — тут лише базова форма+відступ+тінь, спільна для ВСІХ станів.
 export const ANSWER_CARD_BASE =
-  "rounded-lg border p-3 text-center shadow-sm transition-colors";
+  "rounded-[14px] dark:rounded-lg border p-3 text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
 
 // Стан "не обрано, ще не перевірено" — нейтральна картка з легким hover.
 export const ANSWER_CARD_DEFAULT =
-  "border-gray-100 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+  "border-[#e8d9a8] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
 
 // Зменшений inline-варіант — для варіантів, вплетених прямо в текст
 // речення (word_choice), де повний ANSWER_CARD_BASE (p-3, rounded-lg)
@@ -20,7 +20,8 @@ export const ANSWER_CARD_DEFAULT =
 // сторінки, важкість регулюється лише відступом усередині картки.
 // Використовується ЛИШЕ в word_choice.tsx — усі інші типи (letter_gaps,
 // true_false, перша хвиля) лишаються на повному ANSWER_CARD_BASE.
-export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm transition-colors";
+export const ANSWER_CARD_INLINE =
+  "rounded-md border px-1.5 py-0.5 shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
 
 // Картка-обгортка питання/елемента з рамкою (спершу multiple_choice,
 // тепер і word_choice — для візуальної цілісності сцени, кожне речення в
@@ -30,7 +31,7 @@ export const ANSWER_CARD_INLINE = "rounded-md border px-1.5 py-0.5 shadow-sm tra
 // CARD_WRAP у multiple-choice.tsx БЕЗ зміни значення — рядок той самий,
 // multiple_choice імпортує звідси під тим самим локальним ім'ям.
 export const ITEM_CARD_WRAP =
-  "overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+  "overflow-hidden rounded-[14px] dark:rounded-xl border border-[#e8d9a8] bg-white dark:border-neutral-700 dark:bg-neutral-800";
 
 // Кругла позначка-літера (A, B, C...) — єдиний стиль для всіх трьох режимів
 // chronological_order (image/mixed/text), щоб позначка виглядала однаково
@@ -65,7 +66,7 @@ export const COMPACT_IMAGE_GRID = "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid
 // замість тексту на всю картку. Колір стану (ANSWER_CARD_DEFAULT і т.п.)
 // додається викликачем, як і в ANSWER_CARD_BASE.
 export const COMPACT_IMAGE_CARD =
-  "flex flex-col items-center gap-1 rounded-lg border p-1.5 text-center shadow-sm transition-colors";
+  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border p-1.5 text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors";
 
 // Квадратна рамка під картинку: max-w-[6.5rem] — те саме обмеження, що і в
 // chronological_order, щоб картка не розтягувалась на всю ширину колонки
@@ -85,7 +86,7 @@ export const COMPACT_IMAGE_FILL = "absolute inset-0 h-full w-full object-cover o
 // БЕЗ зміни значення, щоб listening.tsx міг узяти той самий клас, а не
 // передруковувати його.
 export const POOL_CLASS =
-  "grid grid-cols-1 items-stretch gap-2 border-t border-gray-100 bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
+  "grid grid-cols-1 items-stretch gap-2 border-t border-[#e6e6f0] bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
 
 // Плитка-відповідь у пулі: min-h-12 (48px) — зона дотику на touch. Колір
 // стану додається викликачем окремо (chipClass/tileClass і т.п.) — перенесено

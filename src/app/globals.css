@@ -1084,6 +1084,59 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* "Variant 3" світла тема — непрозора панель+картки з золотою рамкою
+   (замінює "скляний" напівпрозорий варіант 2/4 ЛИШЕ в явній світлій темі,
+   ЛИШЕ всередині .glass-block/.scene-bar — той самий принцип захисту, що
+   й .dark-блок вище: елементи поза скляним контейнером (відео-панель,
+   Скрипт/Вокабуляр — SectionHeaderBar+панель окремими сиблінгами без
+   спільного .glass-block, свідомо лишені "скляними" за проханням
+   користувача) успадковують лише дефолт :root вище, без змін). Токени, що
+   збігаються зі старим значенням (--glass-text, --glass-text-secondary,
+   --glass-answer-text, --glass-focus-ring), сюди НЕ дублюються — лишаються
+   на успадкування з :root. */
+.light .glass-block,
+.light .scene-bar {
+  --glass-panel-bg: #fdfdfb;
+  --glass-panel-border: #d9b765;
+  --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --glass-text-meta: #55546b;
+  --glass-item-bg: #ffffff;
+  --glass-item-border: #e8d9a8;
+  --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
+  --glass-item-radius: 14px;
+  --glass-answer-bg: #ffffff;
+  --glass-answer-border: #e0cf94;
+  --glass-divider: #e6e6f0;
+  --glass-accent-bar: #d9b765;
+  --glass-reading-border: 1px solid var(--glass-item-border);
+  --glass-input-bg: #ffffff;
+  --glass-input-border: #e0cf94;
+  --glass-input-text: #1f1d3a;
+  --glass-input-radius: 8px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-block,
+  :root:not(.dark) .scene-bar {
+    --glass-panel-bg: #fdfdfb;
+    --glass-panel-border: #d9b765;
+    --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --glass-text-meta: #55546b;
+    --glass-item-bg: #ffffff;
+    --glass-item-border: #e8d9a8;
+    --glass-item-shadow: 0 2px 8px rgba(184, 144, 47, 0.15);
+    --glass-item-radius: 14px;
+    --glass-answer-bg: #ffffff;
+    --glass-answer-border: #e0cf94;
+    --glass-divider: #e6e6f0;
+    --glass-accent-bar: #d9b765;
+    --glass-reading-border: 1px solid var(--glass-item-border);
+    --glass-input-bg: #ffffff;
+    --glass-input-border: #e0cf94;
+    --glass-input-text: #1f1d3a;
+    --glass-input-radius: 8px;
+  }
+}
+
 /* GlassBlock (glass-block.tsx) — єдина уніфікована обгортка "заголовок-бар
    + панель" для контент-/вправ-блоків студентської сторінки й прев'ю
    конструктора (крок 2 завдання). Поки підключена лише для true_false
@@ -1215,7 +1268,7 @@ button, input, textarea, select, label, nav, aside {
   background: var(--glass-item-bg);
   border: 1px solid var(--glass-item-border);
   box-shadow: var(--glass-item-shadow);
-  border-radius: 10px;
+  border-radius: var(--glass-item-radius, 10px);
   color: var(--glass-text);
 }
 
@@ -1227,6 +1280,10 @@ button, input, textarea, select, label, nav, aside {
    навколо неї, тож текст підбирається в парі з ЦИМ фоном. */
 .glass-reading-passage {
   background: var(--glass-item-bg);
+  /* Повна рамка — лише "variant 3" світла тема (--glass-reading-border
+     визначений тільки в .light .glass-block/.scene-bar нижче); темна
+     лишається без неї (fallback none), той самий вигляд, що й раніше. */
+  border: var(--glass-reading-border, none);
   border-left: 4px solid var(--glass-accent-bar);
   border-radius: 0 10px 10px 0;
   color: var(--glass-text);
@@ -1279,6 +1336,48 @@ button, input, textarea, select, label, nav, aside {
 .glass-answer-btn--selected:focus-visible {
   outline: 2px solid var(--glass-focus-ring);
   outline-offset: 2px;
+}
+
+/* Поле вводу/проріху (letter_gaps/fill_blank/essay_check/open_answer тощо)
+   усередині скляної панелі — "variant 3" непрозорий варіант лише у
+   світлій темі (--glass-input-* визначені тільки в .light .glass-block/
+   .scene-bar вище); дефолти тут (прозорий/успадкований колір) лишають
+   темну тему й будь-який виклик поза скляною панеллю без змін. */
+.glass-input {
+  background: var(--glass-input-bg, transparent);
+  border: 1.5px solid var(--glass-input-border, currentColor);
+  color: var(--glass-input-text, inherit);
+  border-radius: var(--glass-input-radius, 8px);
+}
+.glass-input:focus-visible,
+.glass-input:focus {
+  outline: none;
+  border-color: var(--glass-focus-ring);
+  box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+}
+
+/* Той самий фокус-індикатор (рамка+кільце #4b46da) — ЛИШЕ світла тема,
+   ЛИШЕ на реальних текстових полях вправ усередині скляної панелі
+   (checkbox/radio НЕ зачіпаємо — їм не потрібне це кільце, у них власний
+   peer-focus-visible). Не чіпає border-color у стані спокою/dark — лише
+   додає :focus-visible/:focus оверлей, той самий принцип, що .glass-input. */
+.light .glass-block-panel input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+.light .glass-block-panel textarea:focus-visible,
+.light .glass-block-panel input:not([type="checkbox"]):not([type="radio"]):focus,
+.light .glass-block-panel textarea:focus {
+  outline: none;
+  border-color: #4b46da;
+  box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-block-panel input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+  :root:not(.dark) .glass-block-panel textarea:focus-visible,
+  :root:not(.dark) .glass-block-panel input:not([type="checkbox"]):not([type="radio"]):focus,
+  :root:not(.dark) .glass-block-panel textarea:focus {
+    outline: none;
+    border-color: #4b46da;
+    box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+  }
 }
 
 /* Інструкція вправи (InstructionsText) усередині скляної панелі — колір
@@ -1814,7 +1913,7 @@ button.scene-bar:active .scene-bar-toggle {
 .exercise-block-progress-total {
   font-weight: 700;
   font-size: 16px;
-  color: #8a899b;
+  color: #55546b;
 }
 /* Текст лежить прямо на фоні картки вправи (не в кольоровій пігулці) —
    темний #1f1d3a практично зникає на dark:bg-neutral-900 картки, тож тут,

@@ -59,7 +59,7 @@ function TableFillColumn({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-base">
           <thead>
-            <tr className="border-b border-gray-200 text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+            <tr className="border-b border-[#e6e6f0] text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
               <th className="py-1 pr-2 font-medium">{columnLabels[0]}</th>
               <th className="py-1 pr-2 font-medium">{columnLabels[1]}</th>
               <th className="py-1 font-medium"></th>
@@ -67,7 +67,7 @@ function TableFillColumn({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-b border-gray-200 last:border-0 dark:border-neutral-700">
+              <tr key={row.id} className="border-b border-[#e6e6f0] last:border-0 dark:border-neutral-700">
                 <td className="py-1 pr-2">{renderCell(row.id, "left", row.left)}</td>
                 <td className="py-1 pr-2">{renderCell(row.id, "right", row.right)}</td>
                 <td className={`py-1 ${SCORE_LABEL_CLASS}`}>{rowPointsLabel(row)}</td>
@@ -224,7 +224,7 @@ export function TableFillExercise({
     const revealedAnswer = practiceCheck.revealed[row.id];
 
     function practiceInputClass() {
-      if (!locked) return "border-gray-300 dark:border-neutral-600";
+      if (!locked) return "border-[#e0cf94] dark:border-neutral-600";
       return isCorrect
         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
         : "border-red-500 bg-red-50 dark:bg-red-950/30";
@@ -245,7 +245,7 @@ export function TableFillExercise({
     return (
       <div
         key={row.id}
-        className="flex flex-col gap-1.5 rounded border border-gray-200 p-2 dark:border-neutral-700"
+        className="flex flex-col gap-1.5 rounded border border-[#e8d9a8] p-2 dark:border-neutral-700"
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
@@ -287,7 +287,7 @@ export function TableFillExercise({
   }
 
   function inputClass(rowId: string, side: "left" | "right", detail: TableFillDetail | undefined) {
-    const idle = "border-gray-300 dark:border-neutral-600";
+    const idle = "border-[#e0cf94] dark:border-neutral-600";
     if (!detail)
       return hintedCells.has(cellKey(rowId, side))
         ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"

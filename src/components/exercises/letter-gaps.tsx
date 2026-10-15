@@ -532,14 +532,14 @@ export function LetterGapsExercise({
                         onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
                         onBlur={diacritics.onBlur}
                         disabled={opts.locked}
-                        className={`${gapSizeClass} rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-sm transition-colors ${
+                        className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
                           hintedGaps.has(`${wi},${gi}`)
                             ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
                             : status === "correct"
                               ? LIVE_CORRECT_CLASS
                               : status === "incorrect"
                                 ? LIVE_INCORRECT_CLASS
-                                : "border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                                : "border-[#e0cf94] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
                         }`}
                       />
                     );

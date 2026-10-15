@@ -181,7 +181,7 @@ export function DragDropExercise({
             return (
               <div
                 key={s.id}
-                className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-neutral-800"
+                className="border-b border-[#e6e6f0] pb-3 last:border-0 last:pb-0 dark:border-neutral-800"
               >
                 <p className="break-words leading-[2.6] [overflow-wrap:anywhere]">
                   {segments.map((seg, i) => {
@@ -324,7 +324,7 @@ export function DragDropExercise({
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
           return (
-            <div key={s.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-neutral-800">
+            <div key={s.id} className="border-b border-[#e6e6f0] pb-3 last:border-0 last:pb-0 dark:border-neutral-800">
               {!hidePoints && (pointsVisible || sentDetail) && (
                 <p className={`mb-1 ${SCORE_LABEL_CLASS}`}>
                   {sentDetail

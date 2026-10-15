@@ -25,14 +25,14 @@ export type StickyPoolVariant = "image-match" | "fill-blank" | "drag-drop";
 export function stickyPoolClass(variant: StickyPoolVariant): string {
   switch (variant) {
     case "image-match":
-      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-1.5 pt-0.5 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-1.5 pt-0.5 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "fill-blank":
       // gap-x-1.5/gap-y-2 (не gap-2) — чипи fill_blank нижчі (fill-blank.tsx),
       // gap-y-2 (8px) лишає місце для невидимої зони дотику (before:-inset-y),
       // щоб сусідні рядки чипів не перекривались.
-      return "sticky top-0 z-10 -mx-1 flex flex-nowrap gap-x-1.5 gap-y-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex flex-nowrap gap-x-1.5 gap-y-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "drag-drop":
-      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-gray-200 bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
   }
 }
 
@@ -44,10 +44,10 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
   // (вертикальна прокрутка замість горизонтальної, stickyPoolClass), тож
   // надто довге слово без цього могло вилізти за межі пулу й сторінки.
   const base =
-    "max-w-full cursor-grab select-none break-words rounded-md border px-3 py-1.5 text-base shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
+    "max-w-full cursor-grab select-none break-words rounded-md border px-3 py-1.5 text-base shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
   if (used) return `${base} opacity-40`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
-  return `${base} border-gray-200 bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
+  return `${base} border-[#e8d9a8] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
 }
 
 export type SlotState = "empty" | "hover" | "filled" | "correct" | "incorrect";
@@ -83,7 +83,7 @@ export function slotClass(
         return `${base} border-dashed border-brand bg-brand/5 dark:bg-brand/10`;
       }
       return opts?.emptyBg === "subtle"
-        ? `${base} border-dashed border-neutral-400 bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
-        : `${base} border-dashed border-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800`;
+        ? `${base} border-dashed border-[#e0cf94] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
+        : `${base} border-dashed border-[#e0cf94] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-transparent dark:hover:bg-neutral-800`;
   }
 }

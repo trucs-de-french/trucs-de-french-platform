@@ -5,7 +5,7 @@
 // плитки філворду (word-search.tsx, ImageTile) і картинкової картки-підказки
 // кросворду (crossword.tsx, ImageClueCard, ЕТАП G).
 export const LEGEND_TILE_BASE =
-  "relative rounded-lg border border-gray-200 bg-white dark:border-neutral-700 dark:bg-neutral-800";
+  "relative rounded-[14px] dark:rounded-lg border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-none dark:border-neutral-700 dark:bg-neutral-800";
 
 // Дрібніші колонки під квадратні картинкові плитки word-search ImageTile
 // (ЕТАП D: картинки більші — менше колонок на вузьких/середніх екранах).
@@ -21,13 +21,13 @@ export const LEGEND_IMAGE_GRID = "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-
 // класів непередбачуваний — Tailwind-специфічність однакова, порядок у
 // згенерованому CSS не збігається з порядком у рядку className).
 export const LEGEND_PILL =
-  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
 
 // ЕТАП F, варіант C — картка довгої підказки-речення word_search (clueMode
 // "long", LongCard): на всю ширину батьківського flex-col, rounded-xl
 // (окремий набір border/bg/dark-класів — та сама причина, що в LEGEND_PILL).
 export const LEGEND_LONG_CARD =
-  "relative flex items-start gap-2.5 rounded-xl border border-gray-200 bg-white p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border border-[#e8d9a8] bg-white shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-none p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
 
 // ЕТАП H — єдиний круглий бейдж лампочки/галочки (раніше LEGEND_BULB_BADGE
 // мав фіксований колір text-white і використовувався лише в LongCard/
@@ -40,7 +40,7 @@ export const LEGEND_LONG_CARD =
 // навколо кільце не потрібне, фон картки й так контрастний).
 export const LEGEND_BULB_BADGE_MD = "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full";
 export const LEGEND_BULB_BADGE_SM = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full";
-export const LEGEND_BULB_BADGE_AMBER = "bg-amber-100 text-amber-600 dark:bg-amber-900/70 dark:text-amber-300";
+export const LEGEND_BULB_BADGE_AMBER = "bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300";
 export const LEGEND_BULB_BADGE_GREEN = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
 export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
 
