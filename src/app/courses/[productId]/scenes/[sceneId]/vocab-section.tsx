@@ -137,10 +137,15 @@ function VocabGroupTable({
       </div>
       {items.map((v) => (
         <div key={v.id ?? v.word} className="vocab-row">
-          <span className="font-body" style={{ fontWeight: 600, fontSize: "18px", color: "#1f1d3a" }}>
+          {/* 16px — той самий розмір, що EXERCISE_BODY (typography-styles.ts,
+              text-base/Lora) — текст вправ на цій же сторінці сцени;
+              500 (не 600), бо EXERCISE_BODY сам БЕЗ font-weight класу
+              (звичайні 400) — 500 лишає FR-слово трохи жирнішим за
+              переклад, не настільки важким, як колишні 600. */}
+          <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "#1f1d3a" }}>
             {firstVocabVariant(v.word)}
           </span>
-          <span className="font-heading" style={{ fontSize: "16px", color: "#6b6a80" }}>
+          <span className="font-heading" style={{ fontWeight: 400, fontSize: "16px", color: "#6b6a80" }}>
             {v.translation}
           </span>
         </div>

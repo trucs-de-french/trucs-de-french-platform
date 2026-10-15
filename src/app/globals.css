@@ -1091,7 +1091,8 @@ button.scene-bar:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 24px;
-  padding: 11px 8px;
+  padding: 6px 8px;
+  line-height: 1.35;
   border-bottom: 1px solid #ececf3;
 }
 .vocab-row:last-child {
@@ -1100,6 +1101,14 @@ button.scene-bar:focus-visible {
 @media (max-width: 380px) {
   .vocab-row {
     column-gap: 14px;
+  }
+}
+/* "Мобільна" ширина (ширша за 380px поріг column-gap вище) — ті самі
+   компактні рядки, лише горизонтальний padding вужчий; НЕ збільшувати
+   вертикальний padding тут. */
+@media (max-width: 640px) {
+  .vocab-row {
+    padding: 6px 4px;
   }
 }
 /* Підсвітка рядка кольором категорії лише на пристроях із hover — на
@@ -1114,7 +1123,7 @@ button.scene-bar:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 26px;
   margin-bottom: 4px;
 }
 .vocab-category-heading:first-child {
