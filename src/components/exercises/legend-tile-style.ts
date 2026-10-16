@@ -62,7 +62,12 @@ export const LEGEND_LONG_CARD_SHAPE =
 // навколо кільце не потрібне, фон картки й так контрастний).
 export const LEGEND_BULB_BADGE_MD = "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full";
 export const LEGEND_BULB_BADGE_SM = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full";
-export const LEGEND_BULB_BADGE_AMBER = "bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300";
+// "lamp-badge" — гачок для світлотемних CSS-правил (globals.css): світла
+// тема перефарбовує цей бляклий крем-жовтий у золотий градієнт з темним
+// бульбом (інакше зливався з кремовою панеллю), темна тема (bg-amber-900/70
+// text-amber-300 нижче) лишається БЕЗ змін — нешаруваний CSS globals.css
+// завжди переважає ці утиліти Tailwind, незалежно від порядку.
+export const LEGEND_BULB_BADGE_AMBER = "lamp-badge bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300";
 export const LEGEND_BULB_BADGE_GREEN = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
 export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
 

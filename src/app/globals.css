@@ -1395,6 +1395,105 @@ button, input, textarea, select, label, nav, aside {
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
   color: #1a1640;
 }
+
+/* Лампочка-підказка (HintBulb/легенда/пілюля заголовка панелі,
+   legend-tile-style.ts LEGEND_BULB_BADGE_AMBER, task-panel-header.tsx) —
+   СВІТЛА тема: той самий золотий градієнт/темний бульб, що бейдж бару
+   вище (.glass-bar-badge) й бейдж кнопки повний екран/згорнути, замість
+   бляклого крем-жовтого (bg-[#fdf0c4] text-[#b8761a] у className), що
+   зливався з кремовою панеллю. .lamp-badge — клас-гачок на самому бейджі,
+   не перефарбовування Tailwind-класів: нешаруваний CSS тут завжди
+   переважає утиліти Tailwind незалежно від порядку/специфічності (той
+   самий принцип, що решта .light-правил файлу). Темна тема (існуючі
+   dark:bg-amber-900/70 dark:text-amber-300 у className) — без змін, ці
+   правила навмисно НЕ зачіпають :disabled-прозорість/hover/фокус у темній
+   темі (жодне з .light/:root:not(.dark) не застосовується там). */
+.light .lamp-badge {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  border: 1px solid rgba(184, 144, 47, 0.55);
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.35);
+  color: #1a1640;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+.light .lamp-badge svg {
+  stroke-width: 2.2;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .lamp-badge {
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    border: 1px solid rgba(184, 144, 47, 0.55);
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.35);
+    color: #1a1640;
+    transition: background-color 150ms ease, box-shadow 150ms ease;
+  }
+  :root:not(.dark) .lamp-badge svg {
+    stroke-width: 2.2;
+  }
+}
+/* Ховер лише на пристроях з реальним курсором (не "застряглий" ховер
+   після тапу на тач-екрані) — той самий прийом, що .exercise-block-*-btn
+   вище (@media (hover: hover)). */
+@media (hover: hover) {
+  .light .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
+    background: linear-gradient(135deg, #fbe7a3, #e8b44c);
+    box-shadow: 0 2px 6px rgba(184, 144, 47, 0.45);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
+      background: linear-gradient(135deg, #fbe7a3, #e8b44c);
+      box-shadow: 0 2px 6px rgba(184, 144, 47, 0.45);
+    }
+  }
+}
+.light .lamp-badge:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .lamp-badge:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
+.light .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
+  background: linear-gradient(135deg, #f0d27a, #d69a2c);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
+    background: linear-gradient(135deg, #f0d27a, #d69a2c);
+  }
+}
+/* Вимкнена/виснажена (немає більше літер/підказок) — плаский колір, не
+   opacity на всьому елементі (інакше крем-панель просвічувала б крізь і
+   бейдж здавався б просто сірим, а не свідомо "вимкненим"): скасовує й
+   opacity-40 Tailwind-утиліти (disabled:opacity-40 у className,
+   hint-bulb.tsx) — лишається чинною лише в темній темі. */
+.light .lamp-badge:disabled,
+.light .lamp-badge[aria-disabled="true"] {
+  background: #efe6c8;
+  border-color: rgba(184, 144, 47, 0.25);
+  color: #b3a574;
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .lamp-badge:disabled,
+  :root:not(.dark) .lamp-badge[aria-disabled="true"] {
+    background: #efe6c8;
+    border-color: rgba(184, 144, 47, 0.25);
+    color: #b3a574;
+    box-shadow: none;
+    opacity: 1;
+    cursor: not-allowed;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lamp-badge {
+    transition: none;
+  }
+}
+
 .glass-block-panel {
   background: var(--glass-panel-bg);
   border: var(--glass-panel-border-width, 1px) solid var(--glass-panel-border);

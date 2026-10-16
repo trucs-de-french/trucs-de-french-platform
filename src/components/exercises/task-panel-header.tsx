@@ -159,7 +159,7 @@ function PointsPill({ text }: { text: string }) {
 function HintPill({ text }: { text: string }) {
   return (
     <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] text-[13px] font-bold text-[#6b4a14] dark:border-transparent dark:bg-transparent dark:text-neutral-400">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
+      <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
         <Lightbulb size={13} aria-hidden />
       </span>
       {text}
