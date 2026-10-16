@@ -1877,7 +1877,7 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  background: rgba(255, 255, 255, 0.93);
+  background: var(--glass-surface);
   border: 1px solid rgba(184, 144, 47, 0.65);
   color: #1a1640;
   font-family: var(--font-heading);
@@ -1890,7 +1890,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (hover: hover) {
   .fullscreen-btn:hover {
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--glass-surface);
     border-color: #b8902f;
     box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.35), 0 4px 14px rgba(0, 0, 0, 0.2);
   }
@@ -2074,6 +2074,100 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) {
   .scene-collapse-btn:hover svg[stroke="#f6dc8e"] {
     stroke: #fff0b8;
+  }
+}
+/* Бейдж-обгортка шеврона (span.scene-collapse-badge, script-section.tsx/
+   vocab-section.tsx) — у темній темі лишається порожньою рамкою без фону,
+   той самий вигляд, що й голий шеврон раніше (жодної зміни розмітки для
+   темної теми). */
+.scene-collapse-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Світла тема: той самий вигляд, що .fullscreen-btn (однакова мова кнопок
+   "на фоні панелі") — суцільний теплий крем замість темно-синього золотого
+   заливу, золотий квадратний бейдж-іконка замість голого шеврону. Фон
+   кнопки читає --glass-surface (єдиний крем-токен), не власне rgba —
+   та сама причина, що для .fullscreen-btn вище. */
+.light .scene-collapse-btn {
+  background: var(--glass-surface);
+  border: 1px solid rgba(184, 144, 47, 0.65);
+  color: #1a1640;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-btn {
+    background: var(--glass-surface);
+    border: 1px solid rgba(184, 144, 47, 0.65);
+    color: #1a1640;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  }
+}
+@media (hover: hover) {
+  .light .scene-collapse-btn:hover {
+    background: var(--glass-surface);
+    border-color: rgba(184, 144, 47, 0.9);
+    color: #1a1640;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    transform: none;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-btn:hover {
+    background: var(--glass-surface);
+    border-color: rgba(184, 144, 47, 0.9);
+    color: #1a1640;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    transform: none;
+  }
+}
+.light .scene-collapse-btn:active {
+  background: var(--glass-surface);
+  border-color: rgba(184, 144, 47, 0.9);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transform: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-btn:active {
+    background: var(--glass-surface);
+    border-color: rgba(184, 144, 47, 0.9);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    transform: none;
+  }
+}
+.light .scene-collapse-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+  }
+}
+.light .scene-collapse-btn svg[stroke="#f6dc8e"] {
+  stroke: #1a1640;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-btn svg[stroke="#f6dc8e"] {
+    stroke: #1a1640;
+  }
+}
+.light .scene-collapse-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
   }
 }
 

@@ -37,7 +37,9 @@ function CollapseChevronIcon({ stroke }: { stroke: string }) {
 function BottomCollapseButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="scene-collapse-btn">
-      <CollapseChevronIcon stroke="#f6dc8e" />
+      <span className="scene-collapse-badge">
+        <CollapseChevronIcon stroke="#f6dc8e" />
+      </span>
       {label}
     </button>
   );
