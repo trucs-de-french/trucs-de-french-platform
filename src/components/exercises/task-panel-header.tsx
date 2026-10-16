@@ -54,8 +54,15 @@ export function TaskPanelHeader({
 }) {
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
-  const showRow1 =
-    (!!blockCount && blockCount > 1 && !!onChangeBlock) || !!pointsText;
+  // ЕТАП M — пагінація блоків (підпис "Блок N з M" + BlockSegments) і
+  // пілюля балів переїхали НАД панель, у вкладки (BlockTabs,
+  // block-navigation.tsx): коли блоків > 1, рядок 1 тут більше не
+  // рендериться взагалі (ні пагінація, ні пілюля — та сама пілюля тепер
+  // малюється самою BlockTabs праворуч у смужці вкладок). Без блоків
+  // (blockCount<=1) поведінка не змінена — рядок 1 лишається єдиним
+  // місцем для пілюлі балів.
+  const hasBlocks = !!blockCount && blockCount > 1 && !!onChangeBlock;
+  const showRow1 = !hasBlocks && !!pointsText;
   const showRow2 = !!safeText || !!hintText;
 
   if (!showRow1 && !showRow2) return null;
@@ -148,7 +155,7 @@ export function TaskPanelProgressRow({
   );
 }
 
-function PointsPill({ text }: { text: string }) {
+export function PointsPill({ text }: { text: string }) {
   return (
     <span className="inline-flex shrink-0 items-center rounded-full bg-[#1a1640] px-3 py-[3px] font-heading text-[13px] font-extrabold text-[#f6dc8e] dark:border dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
       {text}

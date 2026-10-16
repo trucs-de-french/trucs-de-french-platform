@@ -1875,6 +1875,16 @@ button, input, textarea, select, label, nav, aside {
   padding: 22px 24px 24px;
   color: var(--glass-text);
 }
+/* ЕТАП M — коли вправа малює смужку вкладок блоків (.block-tabs-anchor,
+   block-navigation.tsx BlockTabs) своєю першою дитиною, активна вкладка
+   "влітає" у верхню рамку панелі (border-top-left-radius:0) — панель і
+   смужка читаються як ОДНА форма. :has() — панель сама не знає про
+   вкладки (вони живуть усередині вправи, не в GlassBlock), descendant-
+   комбінатор безпечний: торкається лише панелей, що РЕАЛЬНО мають
+   смужку вкладок усередині. */
+.glass-block-panel:has(.block-tabs-anchor) {
+  border-top-left-radius: 0;
+}
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
    <div> без жодного класу, скло давав лише бар+overflow:hidden/radius/
@@ -2828,13 +2838,160 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 0.15s ease;
 }
 
-.exercise-block-actions {
+/* ЕТАП M — смужка вкладок блоків над панеллю (BlockTabs,
+   block-navigation.tsx). .block-tabs-anchor — перша дитина вправи
+   (height:0, position:relative, від'їмний margin гасить padding
+   .glass-block-panel так, щоб верхній-лівий кут anchor збігався з
+   верхнім-лівим кутом РАМКИ панелі) — сам .block-tabs-strip сидить у
+   ньому position:absolute; bottom:0, тож росте ВГОРУ від лінії рамки
+   панелі незалежно від фактичної висоти вкладки (не потрібно знати
+   точну висоту заздалегідь). Тему/колір на 22px/24px/16px тут не
+   чіпати без звірки з .glass-block-panel padding вище. */
+.block-tabs-anchor {
+  position: relative;
+  height: 0;
+  margin: -22px -24px 0 -24px;
+}
+@media (max-width: 640px) {
+  .block-tabs-anchor {
+    margin: -16px -16px 0 -16px;
+  }
+}
+.block-tabs-strip {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 12px 0 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.block-tabs-strip::-webkit-scrollbar {
+  display: none;
+}
+.block-tabs-spacer {
+  flex: 1 0 16px;
+}
+.block-tabs-pill-wrap {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+.block-tab {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.block-tab--active {
+  padding: 10px 22px 12px;
+  border-radius: 14px 14px 0 0;
+  background: var(--glass-panel-bg);
+  border: 1.5px solid #d9b765;
+  border-bottom: none;
+  margin-bottom: -1.5px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1640;
+}
+.block-tab--inactive {
+  padding: 8px 20px;
+  border-radius: 12px 12px 0 0;
+  background: #efe5c4;
+  border: 1px solid rgba(217, 183, 101, 0.6);
+  border-bottom: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: #6b6a80;
+}
+@media (hover: hover) {
+  .block-tab--inactive:hover {
+    background: #f6efd9;
+    color: #1a1640;
+  }
+}
+.block-tab-check {
+  margin-left: 4px;
+  vertical-align: -1px;
+  color: #3b36c4;
+}
+.block-tab:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+/* Зона дотику ≥44px на мобільному — лише padding, вигляд лишається тим
+   самим (текст/рамка не змінюються, тільки клікабельна висота). */
+@media (max-width: 640px) {
+  .block-tab--active {
+    padding-top: 13px;
+    padding-bottom: 15px;
+  }
+  .block-tab--inactive {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+/* Темна тема — панель "variant 3" (--glass-panel-bg темний токен), та
+   сама механіка приєднання, лише золото тьмяніше/прозоріше й текст
+   світлий (--glass-panel-bg тут ВЖЕ темний завдяки .dark/:root:not(.light)
+   на globals.css вище — той самий токен, що читає сама панель, тож
+   активна вкладка і панель гарантовано однакового кольору без дублю). */
+.dark .block-tab--active {
+  border-color: rgba(243, 217, 139, 0.5);
+  color: #f6dc8e;
+}
+.dark .block-tab--inactive {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.25);
+  color: rgba(246, 239, 214, 0.7);
+}
+@media (hover: hover) {
+  .dark .block-tab--inactive:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+.dark .block-tab-check {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .block-tab--active {
+    border-color: rgba(243, 217, 139, 0.5);
+    color: #f6dc8e;
+  }
+  :root:not(.light) .block-tab--inactive {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.25);
+    color: rgba(246, 239, 214, 0.7);
+  }
+  :root:not(.light) .block-tab-check {
+    color: #f6dc8e;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .block-tab--inactive:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ЕТАП M — "Перевірити блок" + ←/→ в ОДНОМУ рядку (раніше кнопка
+   перевірки лишалась у children кожної вправи, а .exercise-block-actions
+   малював лише ←/→ окремим рядком під нею, з margin-top 22px зайвого
+   відступу). checkButton тепер перший flex-item цього самого рядка
+   (block-navigation.tsx, BlockNavFooter) — колишній відступ лишається
+   ЗВЕРХУ рядка (відділяє його від тіла вправи), не МІЖ кнопками. */
+.exercise-bottom-row {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-top: 22px;
-  justify-content: flex-end;
+}
+.exercise-bottom-row-spacer {
+  flex: 1;
+  min-width: 0;
 }
 .exercise-block-prev-btn {
   display: flex;
@@ -2843,28 +3000,33 @@ button.scene-bar:active .scene-bar-toggle {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1.5px solid #4b46da;
+  border: 1.5px solid #c9c4f2;
   border-radius: 12px;
   background: #fff;
   color: #3b36c4;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 .exercise-block-next-btn {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  height: 44px;
   padding: 0 18px;
   border: 1.5px solid #4b46da;
   border-radius: 12px;
   background: #fff;
   color: #3b36c4;
+  font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 15px;
+  font-size: 17px;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.exercise-block-prev-btn:disabled,
+.exercise-block-prev-btn:disabled {
+  opacity: 0.55;
+  color: #a9a5d8;
+  cursor: not-allowed;
+}
 .exercise-block-next-btn:disabled {
   border-color: #c9c8ea;
   color: #b5b4cc;
@@ -2904,6 +3066,76 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.dark) .exercise-block-next-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
+/* Темна тема — той самий контурний "secondary" вигляд, що вже існує для
+   темних другорядних кнопок платформи (grid-zoom-controls.tsx: border-
+   neutral-700/bg-neutral-800/text-neutral-300), а не світла indigo-рамка
+   вище. */
+.dark .exercise-block-prev-btn,
+.dark .exercise-block-next-btn {
+  background: #262626;
+  border-color: #404040;
+  color: #d4d4d4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-block-prev-btn,
+  :root:not(.light) .exercise-block-next-btn {
+    background: #262626;
+    border-color: #404040;
+    color: #d4d4d4;
+  }
+}
+.dark .exercise-block-prev-btn:disabled,
+.dark .exercise-block-next-btn:disabled {
+  opacity: 0.45;
+  color: #d4d4d4;
+  border-color: #404040;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-block-prev-btn:disabled,
+  :root:not(.light) .exercise-block-next-btn:disabled {
+    opacity: 0.45;
+    color: #d4d4d4;
+    border-color: #404040;
+  }
+}
+@media (hover: hover) {
+  .dark .exercise-block-prev-btn:not(:disabled):hover,
+  .dark .exercise-block-next-btn:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-block-prev-btn:not(:disabled):hover,
+  :root:not(.light) .exercise-block-next-btn:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+/* Мобільний рядок (ЕТАП M, п.3): "Перевірити блок" розтягується на решту
+   ширини (flex:1), ←/→ лишаються своїм розміром — рядок не переноситься.
+   <360px — prev звужується до 40px, next показує лише шеврон (підпис
+   приховано, aria-label "Далі" лишається на самій кнопці завжди). */
+@media (max-width: 480px) {
+  .exercise-bottom-row .exercise-block-check-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 360px) {
+  .exercise-block-prev-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .exercise-block-next-btn {
+    padding: 0 12px;
+  }
+  .exercise-block-next-btn-label {
+    display: none;
   }
 }
 

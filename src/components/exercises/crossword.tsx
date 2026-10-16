@@ -29,7 +29,7 @@ import { resolveClueView } from "./resolve-clue-view";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -104,6 +104,9 @@ function CrosswordBlockView({
   cols,
   zoom,
   onResult,
+  blockCount,
+  activeBlock,
+  onChangeBlock,
 }: {
   taskId: string;
   block: CrosswordPublicBlock;
@@ -116,6 +119,14 @@ function CrosswordBlockView({
   cols: number;
   zoom: number;
   onResult: (result: CrosswordBlockResult) => void;
+  // ЕТАП M — той самий глобальний activeBlock/onChangeBlock, що й
+  // BlockTabs/BlockNavigation на рівні CrosswordExercise: усі блоки
+  // змонтовані одночасно (кожен зі своїм pending/result, useExerciseCheck
+  // вище), тож рядок check+←/→ малює САМ активний блок (BlockNavFooter тут,
+  // не CrosswordExercise — hideFooter там), щоб не дублювати рядок.
+  blockCount?: number;
+  activeBlock?: number;
+  onChangeBlock?: (index: number) => void;
 }) {
   const [grid, setGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
@@ -753,15 +764,7 @@ function CrosswordBlockView({
 
       <div className="flex flex-col gap-3">
         {allowRecheck ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={pending}
-              className="exercise-block-check-btn"
-            >
-              {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
-            </button>
+          <div className="flex flex-col gap-2">
             {result && (
               <p
                 className={`${RESULT_MESSAGE_CLASS} ${
@@ -775,6 +778,18 @@ function CrosswordBlockView({
                   </span>
                 )}
               </p>
+            )}
+            {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
+              <BlockNavFooter
+                blockCount={blockCount}
+                activeBlock={activeBlock}
+                onChangeBlock={onChangeBlock}
+                checkButton={
+                  <button type="button" onClick={handleSubmit} disabled={pending} className="exercise-block-check-btn">
+                    {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
+                  </button>
+                }
+              />
             )}
           </div>
         ) : !result ? (
@@ -886,26 +901,34 @@ export function CrosswordExercise({
   }, [aggregateResult, onResult]);
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+  const pointsText =
+    !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
+      ? useBlocks
+        ? aggregateResult
+          ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+          : `${config.points} ${pluralizePoints(config.points)}`
+        : singleResult
+          ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+          : `${config.points} ${pluralizePoints(config.points)}`
+      : undefined;
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        labels={blocks.map((b) => b.title)}
+        pointsText={pointsText}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={
-          !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
-            ? useBlocks
-              ? aggregateResult
-                ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`
-              : singleResult
-                ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`
-            : undefined
-        }
+        pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction}
         hintText={hintExplanationHidden ? null : hintExplanationText("crossword", config.hintsReducePoints)}
@@ -934,11 +957,13 @@ export function CrosswordExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          hideFooter
         >
           {/* Усі блоки змонтовані одразу, неактивні лише приховані класом
               "hidden" — той самий принцип, що WordSearchExercise: кожен
               CrosswordBlockView тримає власну сітку/фокус/підказки, їх не
-              можна втратити при перемиканні вкладок. */}
+              можна втратити при перемиканні вкладок. ЕТАП M — hideFooter:
+              рядок check+←/→ малює сам активний CrosswordBlockView. */}
           {blocks.map((b, i) => (
             <div key={i} className={i === activeBlock ? "" : "hidden"}>
               <CrosswordBlockView
@@ -950,6 +975,9 @@ export function CrosswordExercise({
                 cols={maxCols}
                 zoom={zoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
+                blockCount={blockCount}
+                activeBlock={activeBlock}
+                onChangeBlock={setActiveBlock}
               />
             </div>
           ))}

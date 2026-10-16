@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { PointsPill } from "./task-panel-header";
 
 // Спільний підсумок для рядка "Загалом" — навмисно НЕ повний GradeResult
 // (той несе ще й detail, типізований по-різному для кожного gradable-типу,
@@ -121,17 +122,134 @@ export function BlockSegments({
   );
 }
 
-// Нижній рядок ←/→ — без кнопки перевірки (вона лишається там, де
-// малювалась і раніше, коментар у BlockNavigation нижче; flip-cards
-// взагалі не оцінюється, тож кнопки перевірки там нема й не було).
-export function BlockNavFooter({
+function TabCheckIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="block-tab-check"
+    >
+      <path d="M3 8.5 6.5 12 13 4" />
+    </svg>
+  );
+}
+
+// ЕТАП M — смужка вкладок "Блок N" над панеллю задачі (замінює підпис
+// "Блок N з M" + BlockSegments, що раніше малювались РЯДКОМ 1 усередині
+// панелі, task-panel-header.tsx) — та сама панель (.block-tabs-anchor,
+// CSS, globals.css) "виходить" за падінг .glass-block-panel і підіймає
+// саму смужку вкладок НАД верхню рамку панелі (position:absolute,
+// bottom:0 відносно anchor висотою 0, що сидить рівно на лінії рамки
+// панелі) — без зміни структури GlassBlock/сторінок-викликачів, які
+// самі панель і рендерять. onChangeBlock/isBlockChecked — РІВНО ті самі
+// пропси, що вже йшли в BlockSegments/BlockNavFooter: жодної нової
+// логіки перемикання блоків, вкладка лише кличе той самий обробник з
+// потрібним індексом.
+export function BlockTabs({
   blockCount,
   activeBlock,
   onChangeBlock,
+  isBlockChecked,
+  labels,
+  blockLabel = "Блок",
+  pointsText,
 }: {
   blockCount: number;
   activeBlock: number;
   onChangeBlock: (index: number) => void;
+  isBlockChecked?: (index: number) => boolean;
+  labels?: (string | undefined)[];
+  blockLabel?: string;
+  pointsText?: string;
+}) {
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    tabRefs.current[activeBlock]?.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }, [activeBlock]);
+
+  if (blockCount <= 1) return null;
+
+  function focusAndChange(index: number) {
+    const clamped = Math.max(0, Math.min(blockCount - 1, index));
+    tabRefs.current[clamped]?.focus();
+    onChangeBlock(clamped);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      focusAndChange(index + 1);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusAndChange(index - 1);
+    }
+  }
+
+  return (
+    <div className="block-tabs-anchor">
+      <div className="block-tabs-strip" role="tablist" aria-label="Навігація по блоках">
+        {Array.from({ length: blockCount }, (_, i) => {
+          const isActive = i === activeBlock;
+          const checked = isBlockChecked?.(i);
+          const customLabel = labels?.[i];
+          const text = `${blockLabel} ${i + 1}`;
+          const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", перевірено" : ""}`;
+          return (
+            <button
+              key={i}
+              ref={(el) => {
+                tabRefs.current[i] = el;
+              }}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={a11yLabel}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => onChangeBlock(i)}
+              onKeyDown={(e) => handleKeyDown(e, i)}
+              className={`block-tab ${isActive ? "block-tab--active" : "block-tab--inactive"}`}
+            >
+              {text}
+              {checked && <TabCheckIcon />}
+            </button>
+          );
+        })}
+        <div className="block-tabs-spacer" />
+        {pointsText && (
+          <div className="block-tabs-pill-wrap">
+            <PointsPill text={pointsText} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Нижній рядок: кнопка "Перевірити блок" (checkButton — викликач передає
+// готовий <button>, той самий елемент/обробник, що й раніше, лише
+// вирваний з його старого місця всередині children — див. коментар у
+// BlockNavigation нижче) + spacer + ←/→, усі в ОДНОМУ flex-рядку
+// (ЕТАП M). flip-cards взагалі не оцінюється (checkButton там немає й не
+// було) — цей компонент і сьогодні викликається без checkButton для
+// такого випадку, просто не рендерить лівий слот.
+export function BlockNavFooter({
+  blockCount,
+  activeBlock,
+  onChangeBlock,
+  checkButton,
+}: {
+  blockCount: number;
+  activeBlock: number;
+  onChangeBlock: (index: number) => void;
+  checkButton?: ReactNode;
 }) {
   if (blockCount <= 1) return null;
 
@@ -139,7 +257,9 @@ export function BlockNavFooter({
   const isLast = activeBlock === blockCount - 1;
 
   return (
-    <div className="exercise-block-actions">
+    <div className="exercise-bottom-row">
+      {checkButton}
+      <div className="exercise-bottom-row-spacer" />
       <button
         type="button"
         onClick={() => onChangeBlock(activeBlock - 1)}
@@ -153,10 +273,10 @@ export function BlockNavFooter({
         type="button"
         onClick={() => onChangeBlock(activeBlock + 1)}
         disabled={isLast}
-        aria-label="Наступний блок"
+        aria-label="Далі"
         className="exercise-block-next-btn"
       >
-        Далі
+        <span className="exercise-block-next-btn-label">Далі</span>
         <ChevronIcon direction="right" size={18} />
       </button>
     </div>
@@ -189,12 +309,25 @@ export function BlockNavigation({
   activeBlock,
   onChangeBlock,
   summary,
+  checkButton,
+  hideFooter = false,
   children,
 }: {
   blockCount: number;
   activeBlock: number;
   onChangeBlock: (index: number) => void;
   summary?: BlockNavigationSummary | null;
+  // Кнопка "Перевірити блок" — викликач передає готовий елемент (той
+  // самий onClick/disabled, що й раніше), цей компонент лише ставить
+  // його в один рядок із ←/→ (BlockNavFooter вище).
+  checkButton?: ReactNode;
+  // true — crossword.tsx/word-search.tsx: там усі блоки змонтовані
+  // одночасно, кожен зі СВОЄЮ кнопкою перевірки й локальним
+  // pending/result (useExerciseCheck усередині блоку), тож рядок
+  // check+←/→ там малює САМ активний блок (своя копія BlockNavFooter
+  // поруч із власною кнопкою), а не цей компонент — щоб не рендерити
+  // рядок двічі.
+  hideFooter?: boolean;
   children: ReactNode;
 }) {
   // Один блок — навігація не рендериться взагалі (той самий принцип, що й
@@ -209,7 +342,14 @@ export function BlockNavigation({
     <>
       <div>
         {children}
-        <BlockNavFooter blockCount={blockCount} activeBlock={activeBlock} onChangeBlock={onChangeBlock} />
+        {!hideFooter && (
+          <BlockNavFooter
+            blockCount={blockCount}
+            activeBlock={activeBlock}
+            onChangeBlock={onChangeBlock}
+            checkButton={checkButton}
+          />
+        )}
       </div>
 
       {summary && (

@@ -14,7 +14,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockTabs } from "./block-navigation";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -291,7 +291,6 @@ export function MatchingExercise({
     const blockRight = rightBlocks[activeBlock];
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
-    const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
     const usedRightsInBlock = new Set(blockLeft.map((left) => pairs[left]).filter(Boolean));
 
@@ -405,14 +404,6 @@ export function MatchingExercise({
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => submitBlock(activeBlock)}
-              disabled={isPending || blockLeft.some((left) => !pairs[left])}
-              className="exercise-block-check-btn"
-            >
-              {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
-            </button>
             {blockResult && (
               <p
                 className={`${RESULT_MESSAGE_CLASS} ${
@@ -540,8 +531,34 @@ export function MatchingExercise({
     );
   }
 
+  // ЕТАП M — кнопка "Перевірити блок" для рядка check+←/→
+  // (BlockNavFooter, block-navigation.tsx): ті самі дані/обробник, що
+  // читає сам renderBlock() нижче (blockResults[activeBlock]/
+  // blockPending[activeBlock]/submitBlock), лише обчислені тут —
+  // BlockNavigation.checkButton рендериться ПОЗА деревом, яке повертає
+  // renderBlock().
+  const activeBlockResult = blockResults[activeBlock];
+  const activeBlockPending = !!blockPending[activeBlock];
+  const activeBlockLeft = leftBlocks[activeBlock];
+  const checkButtonEl = useBlocks ? (
+    <button
+      type="button"
+      onClick={() => submitBlock(activeBlock)}
+      disabled={activeBlockPending || activeBlockLeft.some((left) => !pairs[left])}
+      className="exercise-block-check-btn"
+    >
+      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+    </button>
+  ) : null;
+
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
@@ -648,6 +665,7 @@ export function MatchingExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          checkButton={checkButtonEl}
         >
           {renderBlock()}
         </BlockNavigation>

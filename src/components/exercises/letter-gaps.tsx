@@ -33,7 +33,7 @@ import {
 } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 
@@ -555,7 +555,6 @@ export function LetterGapsExercise({
   function renderBlock() {
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
-    const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
     // Порядок автопереходу — за ПОКАЗОВИМ порядком карток (blockDisplayOrder),
     // не за вихідним wordBlocks[activeBlock] — той самий принцип, що
@@ -581,14 +580,6 @@ export function LetterGapsExercise({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => submitBlock(activeBlock)}
-            disabled={isPending}
-            className="exercise-block-check-btn"
-          >
-            {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
-          </button>
           {blockResult && (
             <p
               className={`${RESULT_MESSAGE_CLASS} ${
@@ -700,8 +691,33 @@ export function LetterGapsExercise({
       ? null
       : hintExplanationText("letter_gaps", config.hintsReducePoints);
 
+  // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
+  // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище
+  // (blockResults[activeBlock]/blockPending[activeBlock]/submitBlock),
+  // обчислені тут, бо BlockNavigation.checkButton рендериться поза
+  // деревом, яке повертає renderBlock().
+  const activeBlockResult = blockResults[activeBlock];
+  const activeBlockPending = !!blockPending[activeBlock];
+  const checkButtonEl = useBlocks ? (
+    <button
+      type="button"
+      onClick={() => submitBlock(activeBlock)}
+      disabled={activeBlockPending}
+      className="exercise-block-check-btn"
+    >
+      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+    </button>
+  ) : null;
+
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        pointsText={pointsText}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
@@ -779,6 +795,7 @@ export function LetterGapsExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          checkButton={checkButtonEl}
         >
           {renderBlock()}
           {diacritics.rect && diacritics.activeKey && !blockResults[activeBlock] && (

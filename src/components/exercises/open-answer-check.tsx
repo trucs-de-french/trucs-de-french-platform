@@ -17,7 +17,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockTabs } from "./block-navigation";
 
 type OpenAnswerResult = Extract<GradeResult, { detail: OpenAnswerDetail }>;
 type PublicQuestion = OpenAnswerPublic["questions"][number];
@@ -207,9 +207,7 @@ export function OpenAnswerCheckExercise({
     const blockQuestions = questionBlocks[activeBlock];
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
-    const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
-    const blockAllAnswered = blockQuestions.every((q) => answers[q.id]?.trim());
 
     return (
       <div className="flex flex-col gap-3">
@@ -221,14 +219,6 @@ export function OpenAnswerCheckExercise({
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => submitBlock(activeBlock)}
-              disabled={isPending || !blockAllAnswered}
-              className="exercise-block-check-btn"
-            >
-              {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
-            </button>
             {blockResult && (
               <p
                 className={`${RESULT_MESSAGE_CLASS} ${
@@ -251,8 +241,31 @@ export function OpenAnswerCheckExercise({
     );
   }
 
+  // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
+  // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
+  const activeBlockQuestions = questionBlocks[activeBlock];
+  const activeBlockResult = blockResults[activeBlock];
+  const activeBlockPending = !!blockPending[activeBlock];
+  const activeBlockAllAnswered = activeBlockQuestions?.every((q) => answers[q.id]?.trim());
+  const checkButtonEl = useBlocks ? (
+    <button
+      type="button"
+      onClick={() => submitBlock(activeBlock)}
+      disabled={activeBlockPending || !activeBlockAllAnswered}
+      className="exercise-block-check-btn"
+    >
+      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+    </button>
+  ) : null;
+
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
@@ -312,6 +325,7 @@ export function OpenAnswerCheckExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          checkButton={checkButtonEl}
         >
           {renderBlock()}
         </BlockNavigation>

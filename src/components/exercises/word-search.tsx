@@ -31,7 +31,7 @@ import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { hintHighlightCells } from "./word-search-hint-highlight";
 
 type Cell = { row: number; col: number };
@@ -353,6 +353,9 @@ function WordSearchBlockView({
   cols,
   zoom,
   onResult,
+  blockCount,
+  activeBlock,
+  onChangeBlock,
 }: {
   taskId: string;
   block: WordSearchPublicBlock;
@@ -365,6 +368,14 @@ function WordSearchBlockView({
   cols: number;
   zoom: number;
   onResult: (result: WordSearchBlockResult) => void;
+  // ЕТАП M — той самий глобальний activeBlock/onChangeBlock, що й
+  // BlockTabs/BlockNavigation на рівні WordSearchExercise: усі блоки
+  // змонтовані одночасно (кожен зі своїм pending/result, useExerciseCheck
+  // вище), тож рядок check+←/→ малює САМ активний блок (BlockNavFooter тут,
+  // не WordSearchExercise — hideFooter там), щоб не дублювати рядок.
+  blockCount?: number;
+  activeBlock?: number;
+  onChangeBlock?: (index: number) => void;
 }) {
   // Клієнтський збіг за ЛІТЕРАМИ (не координатами — публічна конфігурація
   // взагалі не містить placements) — лише для миттєвого відгуку "знайдено!"
@@ -937,15 +948,7 @@ function WordSearchBlockView({
 
       <div className="flex flex-col gap-3">
         {allowRecheck ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={pending}
-              className="exercise-block-check-btn"
-            >
-              {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
-            </button>
+          <div className="flex flex-col gap-2">
             {result && (
               <p
                 className={`${RESULT_MESSAGE_CLASS} ${
@@ -959,6 +962,18 @@ function WordSearchBlockView({
                   </span>
                 )}
               </p>
+            )}
+            {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
+              <BlockNavFooter
+                blockCount={blockCount}
+                activeBlock={activeBlock}
+                onChangeBlock={onChangeBlock}
+                checkButton={
+                  <button type="button" onClick={handleSubmit} disabled={pending} className="exercise-block-check-btn">
+                    {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
+                  </button>
+                }
+              />
             )}
           </div>
         ) : !result ? (
@@ -1067,25 +1082,34 @@ export function WordSearchExercise({
   const subInstructionSource = config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction;
   const subInstructionHtml = subInstructionSource ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionSource)) : null;
 
+  const pointsText =
+    !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
+      ? useBlocks
+        ? aggregateResult
+          ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+          : `${config.points} ${pluralizePoints(config.points)}`
+        : singleResult
+          ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+          : `${config.points} ${pluralizePoints(config.points)}`
+      : undefined;
+
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        labels={blocks.map((b) => b.title)}
+        pointsText={pointsText}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={
-          !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
-            ? useBlocks
-              ? aggregateResult
-                ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`
-              : singleResult
-                ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`
-            : undefined
-        }
+        pointsText={pointsText}
       />
 
       {/* ЕТАП K ("плаваючий лист", мокап "варіант 2") — інструкція+підказка
@@ -1141,6 +1165,7 @@ export function WordSearchExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          hideFooter
         >
           {/* Усі блоки змонтовані одразу — неактивні лише приховані класом
               "hidden" (display:none), НЕ умовним рендером: кожен
@@ -1149,7 +1174,10 @@ export function WordSearchExercise({
               при перемиканні вкладок. active — лише цьому, видимому зараз
               блоку дозволено вимірювати переповнення сітки
               (useScrollOverflowHint) — немонтований display:none контейнер
-              дав би хибний (нульовий) вимір. */}
+              дав би хибний (нульовий) вимір. ЕТАП M — hideFooter: рядок
+              check+←/→ малює сам активний WordSearchBlockView
+              (blockCount/activeBlock/onChangeBlock нижче — той самий
+              onChangeBlock=setActiveBlock, що й тут). */}
           {blocks.map((b, i) => (
             <div key={i} className={i === activeBlock ? "" : "hidden"}>
               <WordSearchBlockView
@@ -1161,6 +1189,9 @@ export function WordSearchExercise({
                 cols={cols}
                 zoom={zoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
+                blockCount={blockCount}
+                activeBlock={activeBlock}
+                onChangeBlock={setActiveBlock}
               />
             </div>
           ))}

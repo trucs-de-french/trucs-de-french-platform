@@ -15,7 +15,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { BlockNavigation } from "./block-navigation";
+import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 
 function cellKey(rowId: string, side: "left" | "right") {
@@ -491,7 +491,6 @@ export function TableFillExercise({
     const blockRows = rowBlocks[activeBlock];
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
-    const isPending = !!blockPending[activeBlock];
     const errMsg = blockError[activeBlock];
 
     // Той самий поділ навпіл на 2 таблиці-половини, що й columns вище для
@@ -532,14 +531,6 @@ export function TableFillExercise({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => submitBlock(activeBlock)}
-            disabled={isPending}
-            className="exercise-block-check-btn"
-          >
-            {isPending ? "Перевіряю..." : blockResult ? "Перевірити ще раз" : "Перевірити блок"}
-          </button>
           {blockResult && (
             <p
               className={`${RESULT_MESSAGE_CLASS} ${
@@ -579,8 +570,29 @@ export function TableFillExercise({
     );
   }
 
+  // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
+  // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
+  const activeBlockResult = blockResults[activeBlock];
+  const activeBlockPending = !!blockPending[activeBlock];
+  const checkButtonEl = useBlocks ? (
+    <button
+      type="button"
+      onClick={() => submitBlock(activeBlock)}
+      disabled={activeBlockPending}
+      className="exercise-block-check-btn"
+    >
+      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+    </button>
+  ) : null;
+
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+      />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
@@ -682,6 +694,7 @@ export function TableFillExercise({
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
           summary={aggregateResult}
+          checkButton={checkButtonEl}
         >
           {renderBlock()}
           {diacritics.rect && diacritics.activeKey && !blockResults[activeBlock] && (
