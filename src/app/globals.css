@@ -2409,6 +2409,31 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+/* Світла тема: легший лавандовий ховер (#f4f2ff, не #ecebfd вище — те
+   лишається дефолтом/темною темою) і фокус-кільце через box-shadow
+   замість outline. Та сама подвійна гейтовка .light / prefers-color-
+   scheme, що інші світлотемні правила файлу — вища специфічність
+   безпечно перекриває правила вище лише в світлій темі. */
+.light .exercise-block-prev-btn:not(:disabled):hover,
+.light .exercise-block-next-btn:not(:disabled):hover {
+  background: #f4f2ff;
+}
+.light .exercise-block-prev-btn:focus-visible,
+.light .exercise-block-next-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .exercise-block-prev-btn:not(:disabled):hover,
+  :root:not(.dark) .exercise-block-next-btn:not(:disabled):hover {
+    background: #f4f2ff;
+  }
+  :root:not(.dark) .exercise-block-prev-btn:focus-visible,
+  :root:not(.dark) .exercise-block-next-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
 
 /* Кнопка "Перевірити блок" (STUDENT_BUTTON_PRIMARY раніше, тепер окремий
    клас — STUDENT_BUTTON_PRIMARY лишається спільною роллю для вправ БЕЗ
