@@ -5,13 +5,11 @@ import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } fro
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { frenchNbspHtml } from "@/lib/text/french-typography";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
@@ -517,33 +515,19 @@ export function KaraokeExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction)),
-            }}
-          />
-          {!hidePoints && (pointsVisible || detail) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.pointsEarned ?? 0}/${result?.pointsPossible ?? pointsPossibleTotal} ${pluralizePoints(
-                    result?.pointsPossible ?? pointsPossibleTotal
-                  )}`
-                : `${pointsPossibleTotal} ${pluralizePoints(pointsPossibleTotal)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction)),
-            }}
-          />
-        )}
-      </div>
+      <TaskPanelHeader
+        pointsText={
+          !hidePoints && (pointsVisible || detail)
+            ? detail
+              ? `${result?.pointsEarned ?? 0}/${result?.pointsPossible ?? pointsPossibleTotal} ${pluralizePoints(
+                  result?.pointsPossible ?? pointsPossibleTotal
+                )}`
+              : `${pointsPossibleTotal} ${pluralizePoints(pointsPossibleTotal)}`
+            : undefined
+        }
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction}
+      />
 
       {/* Один вертикальний стовпчик на БУДЬ-ЯКій ширині (не md:flex-row, як
           раніше) — відео зверху по центру, обмежене max-w-3xl, під ним —

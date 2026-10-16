@@ -12,7 +12,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
@@ -442,9 +442,13 @@ export function ReorderExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
       />
 
       {!useBlocks ? (
@@ -502,7 +506,6 @@ export function ReorderExercise({
             blockCount={blockCount}
             activeBlock={activeBlock}
             onChangeBlock={setActiveBlock}
-            isBlockChecked={(i) => i in blockResults}
             summary={aggregateResult}
           >
             {renderBlock()}

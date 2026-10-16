@@ -17,7 +17,8 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { InstructionsText } from "./instructions-text";
 import { HintBulb } from "./hint-bulb";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
+import { TaskPanelHeader } from "./task-panel-header";
 import {
   ANSWER_CHIP_DEFAULT,
   COMPACT_IMAGE_GRID,
@@ -263,10 +264,13 @@ export function ChronologicalOrderExercise({
         )}
       </div>
 
-      <HintExplanation
-        type="chronological_order"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={isPractice || !config.hint}
+      {/* Лише пілюля-пояснення механізму підказки тут — сама інструкція й
+          інтерактивна лампочка-розгортка (toggleHintVisible вище) лишаються
+          в блоці над цим, вони не "статична лампочка-пояснення", яку
+          замінює TaskPanelHeader, а жива кнопка показу/сховування
+          config.hint — інша річ, не торкаємось. */}
+      <TaskPanelHeader
+        hintText={isPractice || !config.hint ? null : hintExplanationText("chronological_order", config.hintsReducePoints)}
       />
 
       {config.mode === "image" || config.mode === "mixed" ? (

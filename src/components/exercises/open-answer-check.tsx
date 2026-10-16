@@ -7,7 +7,7 @@ import { HintBulb } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -253,9 +253,13 @@ export function OpenAnswerCheckExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.open_answer.subInstruction}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.open_answer.subInstruction}
       />
 
       {!useBlocks ? (
@@ -307,7 +311,6 @@ export function OpenAnswerCheckExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

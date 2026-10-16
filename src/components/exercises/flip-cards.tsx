@@ -8,12 +8,12 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader, TaskPanelProgressRow } from "./task-panel-header";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { BlockProgressHeader, BlockNavFooter } from "./block-navigation";
+import { BlockNavFooter } from "./block-navigation";
 import { AudioPill } from "@/components/audio-pill";
 
 const PAGE_SIZE = 6;
@@ -110,8 +110,9 @@ function RandomRevealFlipCards({
   cards: FlipCardType[];
   revealSide: "front" | "back";
   pageIndices: number[];
-  // Прогрес-заголовок/нижній рядок ←/→ (BlockProgressHeader/BlockNavFooter,
-  // block-navigation.tsx) — рендеряться тут, не в FlipCardsExercise, бо
+  // Прогрес-заголовок/нижній рядок ←/→ (TaskPanelProgressRow/BlockNavFooter,
+  // task-panel-header.tsx/block-navigation.tsx) — рендеряться тут, не в
+  // FlipCardsExercise, бо
   // мають сидіти МІЖ кнопкою "Випадковий вибір" і сіткою/ПІД сіткою САМЕ
   // цього режиму. Обидва загорнуті разом із сіткою в один div БЕЗ
   // власного flex/gap (коментар у block-navigation.tsx, BlockNavigation):
@@ -615,15 +616,15 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   // deck — одна колода з усіма картками, без розбиття на сторінки (ці два
   // елементи для deck просто не рендеряться нижче).
   const pagerHeader = (
-    <BlockProgressHeader blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} label="Сторінка" />
+    <TaskPanelProgressRow blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} blockLabel="Сторінка" />
   );
   const pagerFooter = <BlockNavFooter blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} />;
 
   return (
     <div ref={blockRef} className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.flip_cards.subInstruction}
+      <TaskPanelHeader
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.flip_cards.subInstruction}
       />
       {config.mode === "deck" ? (
         <DeckFlipCards cards={cards} />

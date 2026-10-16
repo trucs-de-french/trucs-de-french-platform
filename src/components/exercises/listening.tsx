@@ -12,7 +12,7 @@ import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { ImageLightbox } from "./image-lightbox";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
@@ -211,9 +211,9 @@ export function ListeningExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.listening.subInstruction}
+      <TaskPanelHeader
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.listening.subInstruction}
       />
 
       {isYouTubeUrl(config.audioUrl) ? (

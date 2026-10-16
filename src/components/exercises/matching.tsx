@@ -8,7 +8,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -542,9 +542,13 @@ export function MatchingExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.matching.subInstruction}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.matching.subInstruction}
       />
 
       {!useBlocks ? (
@@ -643,7 +647,6 @@ export function MatchingExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

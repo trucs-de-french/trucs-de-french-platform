@@ -10,7 +10,7 @@ import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -200,9 +200,9 @@ export function ImageMatchExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
+      <TaskPanelHeader
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
       />
 
       {usedBankIndices.size < config.bank.length ? (

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
+import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb } from "./hint-bulb";
 import type {
   LetterRearrangementPublic,
@@ -13,15 +14,13 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
   TWO_COLUMN_WORD_THRESHOLD,
@@ -517,48 +516,29 @@ export function LetterRearrangementExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(
-                sanitizeInstructionsHtml(
-                  config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction
-                )
-              ),
-            }}
-          />
-          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail)) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {useBlocks
-                ? aggregateResult
-                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-                  : `${config.points} ${pluralizePoints(config.points)}`
-                : singleDetail
-                  ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                  : `${config.points} ${pluralizePoints(config.points)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(
-                sanitizeInstructionsHtml(
-                  config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction
-                )
-              ),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation
-        type="letter_rearrangement"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || (useBlocks ? allBlocksChecked : !!single.result)}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        pointsText={
+          !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail))
+            ? useBlocks
+              ? aggregateResult
+                ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                : `${config.points} ${pluralizePoints(config.points)}`
+              : singleDetail
+                ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                : `${config.points} ${pluralizePoints(config.points)}`
+            : undefined
+        }
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction}
+        hintText={
+          isDelf || (useBlocks ? allBlocksChecked : !!single.result)
+            ? null
+            : hintExplanationText("letter_rearrangement", config.hintsReducePoints)
+        }
       />
 
       {!useBlocks ? (
@@ -614,7 +594,6 @@ export function LetterRearrangementExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

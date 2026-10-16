@@ -14,15 +14,15 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { CompactAudioButton } from "./compact-audio-button";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
 import { HintBulb, type HintBulbState } from "./hint-bulb";
@@ -944,37 +944,27 @@ export function WordSearchExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction)),
-            }}
-          />
-          {!hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult)) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {useBlocks
-                ? aggregateResult
-                  ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-                  : `${config.points} ${pluralizePoints(config.points)}`
-                : singleResult
-                  ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                  : `${config.points} ${pluralizePoints(config.points)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction)),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation type="word_search" hintsReducePoints={config.hintsReducePoints} hidden={hintExplanationHidden} />
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        labels={blocks.map((b) => b.title)}
+        pointsText={
+          !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
+            ? useBlocks
+              ? aggregateResult
+                ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
+                : `${config.points} ${pluralizePoints(config.points)}`
+              : singleResult
+                ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+                : `${config.points} ${pluralizePoints(config.points)}`
+            : undefined
+        }
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction}
+        hintText={hintExplanationHidden ? null : hintExplanationText("word_search", config.hintsReducePoints)}
+      />
 
       {/* ЕТАП J — панель масштабу сітки (grid-zoom-controls.tsx), той
           самий рядок/розміщення, що в crossword.tsx (ЕТАП I): над
@@ -996,9 +986,7 @@ export function WordSearchExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
-          labels={blocks.map((b) => b.title)}
         >
           {/* Усі блоки змонтовані одразу — неактивні лише приховані класом
               "hidden" (display:none), НЕ умовним рендером: кожен

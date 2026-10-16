@@ -6,7 +6,7 @@ import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exerci
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
@@ -325,9 +325,13 @@ export function TrueFalseExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.true_false.subInstruction}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.true_false.subInstruction}
       />
 
       {!useBlocks ? (
@@ -373,7 +377,6 @@ export function TrueFalseExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

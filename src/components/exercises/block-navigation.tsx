@@ -39,14 +39,16 @@ function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: n
   );
 }
 
-// Прогрес-заголовок (сегментований бар або, за великої кількості блоків,
-// суцільний трек) — винесений окремо від BlockNavigation, бо flip-
-// cards.tsx (нумеровані сторінки карток) потребує розмістити ЦЕЙ блок в
-// ІНШОМУ місці розмітки (над сіткою карток, під кнопкою "Випадковий
-// вибір"), ніж де сидить {children} у звичайних gradable-вправах —
-// BlockNavigation нижче лише СКЛАДАЄ цей компонент + children + футер
-// докупи для 11 уже мігрованих типів, не дублюючи розмітку.
-export function BlockProgressHeader({
+// Сама смужка прогресу (сегментований бар або, за великої кількості
+// блоків, суцільний трек) — БЕЗ підпису "{label} N з M" (той текст тепер
+// малює TaskPanelHeader, task-panel-header.tsx, у своєму рядку 1, зліва
+// від цієї смужки, одним спільним заголовком зони над картками для
+// ВСІХ типів вправ, не лише block-навігованих). Раніше ця смужка і
+// підпис складали один компонент (BlockProgressHeader) з власним
+// розміщенням прямо над {children} у BlockNavigation — тепер виклик-сайти
+// самі розміщують TaskPanelHeader (із цим компонентом усередині) над усім
+// блоком вправи, а BlockNavigation нижче лише складає children + футер.
+export function BlockSegments({
   blockCount,
   activeBlock,
   onChangeBlock,
@@ -60,13 +62,13 @@ export function BlockProgressHeader({
   // Відсутній — жодна позиція не вважається "перевіреною" (flip-cards не
   // має оцінювання взагалі).
   isBlockChecked?: (index: number) => boolean;
-  // Назва блоку (ЕТАП A/3, word-search.tsx/crossword.tsx) — у новому
-  // дизайні прогрес-заголовок завжди "{label} N з M" (однаковий текст для
-  // всіх типів вправ, без винятків), тож custom-назва більше не
-  // відображається візуально; лишається доступною лише в aria-label
-  // сегмента (не губимо інформацію для читачів з скрінрідером).
+  // Назва блоку (ЕТАП A/3, word-search.tsx/crossword.tsx) — лишається
+  // доступною лише в aria-label сегмента (не губимо інформацію для
+  // читачів з скрінрідером), візуально не відображається.
   labels?: (string | undefined)[];
-  // "Блок" (типово, gradable-вправи) / "Сторінка" (flip-cards.tsx).
+  // "Блок" (типово, gradable-вправи) / "Сторінка" (flip-cards.tsx) — йде
+  // лише в aria-valuetext/aria-label нижче, видимий підпис малює
+  // TaskPanelHeader.
   label?: string;
 }) {
   if (blockCount <= 1) return null;
@@ -74,23 +76,15 @@ export function BlockProgressHeader({
   if (blockCount > MANY_BLOCKS_THRESHOLD) {
     const pct = ((activeBlock + 1) / blockCount) * 100;
     return (
-      <div className="exercise-block-progress">
-        <p className="exercise-block-progress-label">
-          <span className="exercise-block-progress-current">
-            {label} {activeBlock + 1}
-          </span>
-          <span className="exercise-block-progress-total"> з {blockCount}</span>
-        </p>
-        <div
-          className="exercise-block-track"
-          role="progressbar"
-          aria-valuemin={1}
-          aria-valuemax={blockCount}
-          aria-valuenow={activeBlock + 1}
-          aria-valuetext={`${label} ${activeBlock + 1} з ${blockCount}`}
-        >
-          <div className="exercise-block-track-fill" style={{ width: `${pct}%` }} />
-        </div>
+      <div
+        className="exercise-block-track"
+        role="progressbar"
+        aria-valuemin={1}
+        aria-valuemax={blockCount}
+        aria-valuenow={activeBlock + 1}
+        aria-valuetext={`${label} ${activeBlock + 1} з ${blockCount}`}
+      >
+        <div className="exercise-block-track-fill" style={{ width: `${pct}%` }} />
       </div>
     );
   }
@@ -101,36 +95,28 @@ export function BlockProgressHeader({
   const segmentGap = blockCount > 8 ? 4 : 6;
 
   return (
-    <div className="exercise-block-progress">
-      <p className="exercise-block-progress-label">
-        <span className="exercise-block-progress-current">
-          {label} {activeBlock + 1}
-        </span>
-        <span className="exercise-block-progress-total"> з {blockCount}</span>
-      </p>
-      <div className="exercise-block-segments" style={{ gap: `${segmentGap}px` }}>
-        {Array.from({ length: blockCount }, (_, i) => {
-          const customLabel = labels?.[i];
-          const baseLabel = customLabel ? `${label} ${i + 1}: ${customLabel}` : `${label} ${i + 1}`;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onChangeBlock(i)}
-              aria-label={isBlockChecked?.(i) ? `${baseLabel}, перевірено` : baseLabel}
-              aria-current={i === activeBlock ? "step" : undefined}
-              className="exercise-block-segment"
-            >
-              <span
-                className="exercise-block-segment-bar"
-                style={{
-                  background: i <= activeBlock ? "linear-gradient(90deg, #5a55e6, #3b36c4)" : "#dcdbf3",
-                }}
-              />
-            </button>
-          );
-        })}
-      </div>
+    <div className="exercise-block-segments" style={{ gap: `${segmentGap}px` }}>
+      {Array.from({ length: blockCount }, (_, i) => {
+        const customLabel = labels?.[i];
+        const baseLabel = customLabel ? `${label} ${i + 1}: ${customLabel}` : `${label} ${i + 1}`;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onChangeBlock(i)}
+            aria-label={isBlockChecked?.(i) ? `${baseLabel}, перевірено` : baseLabel}
+            aria-current={i === activeBlock ? "step" : undefined}
+            className="exercise-block-segment"
+          >
+            <span
+              className="exercise-block-segment-bar"
+              style={{
+                background: i <= activeBlock ? "linear-gradient(90deg, #5a55e6, #3b36c4)" : "#dcdbf3",
+              }}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -179,17 +165,15 @@ export function BlockNavFooter({
 
 // Навігація по блоках великої вправи (>10 елементів: matching, letter_gaps,
 // letter_rearrangement, table_fill, word_search, crossword та інші
-// gradable-типи — exercise-blocks.ts) — складає BlockProgressHeader +
-// children + BlockNavFooter РАЗОМ в ОДНІЙ обгортці (div без власного
-// flex/gap): виклик-сайти сидять усередині EXERCISE_STACK
-// (flex flex-col gap-4 md:gap-6, spacing.ts) — якби ці три частини були
-// окремими дітьми ТІЄЇ Ж flex-обгортки (як було раніше, простий Fragment),
-// gap-4/gap-6 самого EXERCISE_STACK додавався б ПОВЕРХ margin-bottom/
-// margin-top самого прогрес-бару/футера (20px/22px, CSS) — звідси й
-// зайвих ~50px було видно між баром і першим елементом. Один спільний div
-// без gap прибирає цей подвійний відступ: 20px/22px лишаються єдиним
-// джерелом правди, незалежно від того, усередині якого flex-контейнера
-// опиниться сам компонент.
+// gradable-типи — exercise-blocks.ts) — складає children + BlockNavFooter
+// РАЗОМ в ОДНІЙ обгортці (div без власного flex/gap): виклик-сайт сидить
+// усередині EXERCISE_STACK (flex flex-col gap-4 md:gap-6, spacing.ts) —
+// якби ці дві частини були окремими дітьми ТІЄЇ Ж flex-обгортки, gap-4/
+// gap-6 самого EXERCISE_STACK додавався б ПОВЕРХ margin-top самого футера
+// (22px, CSS). Один спільний div без gap прибирає цей подвійний відступ.
+// Прогрес-смужку (BlockSegments) більше НЕ малює цей компонент — виклик-
+// сайт малює її сам усередині TaskPanelHeader (task-panel-header.tsx), НАД
+// усім цим компонентом, разом із підписом "{label} N з M" і пілюлею балів.
 //
 // Кнопка "Перевірити блок" НЕ рендериться тут — вона й сьогодні лишається
 // всередині children (кожен виклик-сайт малює її сам, одразу при своєму
@@ -204,17 +188,13 @@ export function BlockNavigation({
   blockCount,
   activeBlock,
   onChangeBlock,
-  isBlockChecked,
   summary,
-  labels,
   children,
 }: {
   blockCount: number;
   activeBlock: number;
   onChangeBlock: (index: number) => void;
-  isBlockChecked: (index: number) => boolean;
   summary?: BlockNavigationSummary | null;
-  labels?: (string | undefined)[];
   children: ReactNode;
 }) {
   // Один блок — навігація не рендериться взагалі (той самий принцип, що й
@@ -228,13 +208,6 @@ export function BlockNavigation({
   return (
     <>
       <div>
-        <BlockProgressHeader
-          blockCount={blockCount}
-          activeBlock={activeBlock}
-          onChangeBlock={onChangeBlock}
-          isBlockChecked={isBlockChecked}
-          labels={labels}
-        />
         {children}
         <BlockNavFooter blockCount={blockCount} activeBlock={activeBlock} onChangeBlock={onChangeBlock} />
       </div>

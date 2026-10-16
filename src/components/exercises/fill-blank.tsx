@@ -5,14 +5,13 @@ import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } f
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
-import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
+import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb } from "./hint-bulb";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { stickyPoolClass } from "./tile-styles";
@@ -189,44 +188,21 @@ export function FillBlankExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      {/* БЕЗ власного className (не окремі mb-2 на title/subText) — відступ
-          після всього блоку тепер дає EXERCISE_STACK кореня, а не між
-          заголовком і підзаголомком: той самий принцип, що InstructionsText. */}
-      <div>
-        {/* flex-ряд, не вкладений текст у <p> — санітизований instructions
-            сам може містити <p> (TipTap), а <p> у <p> невалідний HTML (той
-            самий принцип, що InstructionsText). */}
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction)),
-            }}
-          />
-          {/* Бали на ВСЮ вправу (не на пропуск) — до перевірки лише якщо
-              pointsVisible, після — завжди. */}
-          {!hidePoints && (pointsVisible || detail) && (
-            <span className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-                : `${config.points} ${pluralizePoints(config.points)}`}
-            </span>
-          )}
-        </div>
-        {(config.subInstructions ?? defaultSubInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(sanitizeInstructionsHtml(config.subInstructions ?? defaultSubInstruction)),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation
-        type="fill_blank"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || hasWordBank || !!result || isPractice}
+      <TaskPanelHeader
+        pointsText={
+          !hidePoints && (pointsVisible || detail)
+            ? detail
+              ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+              : `${config.points} ${pluralizePoints(config.points)}`
+            : undefined
+        }
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
+        subInstructionText={config.subInstructions ?? defaultSubInstruction}
+        hintText={
+          isDelf || hasWordBank || !!result || isPractice
+            ? null
+            : hintExplanationText("fill_blank", config.hintsReducePoints)
+        }
       />
 
       {/* Банк слів (опційний) і саме речення — разом ОДНЕ тіло вправи, тож

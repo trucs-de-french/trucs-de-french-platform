@@ -7,7 +7,7 @@ import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
@@ -26,7 +26,7 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { HintBulb } from "./hint-bulb";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -808,15 +808,16 @@ export function MultipleChoiceExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
-      />
-
-      <HintExplanation
-        type="multiple_choice"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!config.items.some((it) => it.hint)}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
+        hintText={
+          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice", config.hintsReducePoints) : null
+        }
       />
 
       {!useBlocks ? (
@@ -869,7 +870,6 @@ export function MultipleChoiceExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

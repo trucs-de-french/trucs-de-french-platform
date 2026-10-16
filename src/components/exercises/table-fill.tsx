@@ -6,10 +6,10 @@ import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } f
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -581,15 +581,18 @@ export function TableFillExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.table_fill.subInstruction}
-      />
-
-      <HintExplanation
-        type="table_fill"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!!isDelf || (useBlocks ? allBlocksChecked : !!single.result)}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.table_fill.subInstruction}
+        hintText={
+          isDelf || (useBlocks ? allBlocksChecked : !!single.result)
+            ? null
+            : hintExplanationText("table_fill", config.hintsReducePoints)
+        }
       />
 
       {!useBlocks ? (
@@ -678,7 +681,6 @@ export function TableFillExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

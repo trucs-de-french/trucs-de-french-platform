@@ -8,11 +8,9 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ITEM_NUMBER_BADGE, ITEM_CARD_WRAP } from "./answer-card-style";
-import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -20,7 +18,8 @@ import { BlockNavigation } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { HintBulb } from "./hint-bulb";
-import { HintExplanation } from "./hint-explanation";
+import { hintExplanationText } from "./hint-explanation";
+import { TaskPanelHeader } from "./task-panel-header";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
@@ -245,15 +244,11 @@ export function WordChoiceExercise({
   // aggregateCorrect — лише для гілки блоків (нижче), коли ВСІ блоки
   // перевірені хоч раз: чи вправа повністю правильна загалом. undefined —
   // "ще не рахувати" (детальніше в aggregateResult нижче).
-  function pointsBadge(detailPresent: boolean, aggregateCorrect?: boolean) {
-    if (hidePoints || !(pointsVisible || detailPresent)) return null;
-    return (
-      <span className={SCORE_LABEL_CLASS}>
-        {detailPresent
-          ? `${aggregateCorrect ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`}
-      </span>
-    );
+  function pointsText(detailPresent: boolean, aggregateCorrect?: boolean): string | undefined {
+    if (hidePoints || !(pointsVisible || detailPresent)) return undefined;
+    return detailPresent
+      ? `${aggregateCorrect ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
+      : `${config.points} ${pluralizePoints(config.points)}`;
   }
 
   // Лише mode "select" — той самий принцип, що multiple-choice.tsx
@@ -541,38 +536,15 @@ export function WordChoiceExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <div
-            className={`instruction-text ${EXERCISE_INSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(
-                sanitizeInstructionsHtml(
-                  config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction
-                )
-              ),
-            }}
-          />
-          {pointsBadge(useBlocks ? !!aggregateResult : !!detail, useBlocks ? aggregateResult?.correct : single.result?.correct)}
-        </div>
-        {(config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction) && (
-          <div
-            className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-            dangerouslySetInnerHTML={{
-              __html: frenchNbspHtml(
-                sanitizeInstructionsHtml(
-                  config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction
-                )
-              ),
-            }}
-          />
-        )}
-      </div>
-
-      <HintExplanation
-        type="word_choice"
-        hintsReducePoints={config.hintsReducePoints}
-        hidden={!config.sentences.some((s) => s.hint)}
+      <TaskPanelHeader
+        blockCount={blockCount}
+        activeBlock={activeBlock}
+        onChangeBlock={setActiveBlock}
+        isBlockChecked={(i) => i in blockResults}
+        pointsText={pointsText(useBlocks ? !!aggregateResult : !!detail, useBlocks ? aggregateResult?.correct : single.result?.correct)}
+        instructionText={config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction}
+        subInstructionText={config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction}
+        hintText={config.sentences.some((s) => s.hint) ? hintExplanationText("word_choice", config.hintsReducePoints) : null}
       />
 
       {!useBlocks ? (
@@ -621,7 +593,6 @@ export function WordChoiceExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          isBlockChecked={(i) => i in blockResults}
           summary={aggregateResult}
         >
           {renderBlock()}

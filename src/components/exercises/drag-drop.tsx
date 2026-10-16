@@ -9,7 +9,7 @@ import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -282,9 +282,9 @@ export function DragDropExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
+      <TaskPanelHeader
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
       />
 
       {usedBankIndices.size < config.bank.length ? (
