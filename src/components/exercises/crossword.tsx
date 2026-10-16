@@ -23,6 +23,7 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { LEGEND_TILE_SHAPE, CROSSWORD_IMAGE_GRID, LEGEND_PILL_SHAPE, LEGEND_LONG_CARD_SHAPE } from "./legend-tile-style";
+import { AudioPill } from "@/components/audio-pill";
 import { HintBulb } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { EXERCISE_INSTRUCTION, EXERCISE_SUBINSTRUCTION, CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -430,6 +431,10 @@ function CrosswordBlockView({
             iconSize={14}
           />
         </span>
+        {/* ImageClueCard-колонка лише 96-120px (CROSSWORD_IMAGE_GRID) —
+            вужче за мінімальну ширину AudioPill (play 44px + повільно/
+            повтор/швидкість, ~165px навіть у compact), тож тут лишається
+            нативний контрол, не наша пілюля. */}
         {clue.audioUrl && (
           <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
         )}
@@ -503,7 +508,9 @@ function CrosswordBlockView({
             <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
           </span>
           {clue.audioUrl && (
-            <audio controls src={clue.audioUrl} className="mt-1 h-6 w-full" onClick={(e) => e.stopPropagation()} />
+            <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+              <AudioPill src={clue.audioUrl} compact />
+            </div>
           )}
         </div>
         {hasImage && badge}

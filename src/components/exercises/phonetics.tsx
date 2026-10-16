@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Play } from "lucide-react";
 import type { PhoneticsConfig, PhoneticsItem } from "@/lib/exercises/types";
 import { normalizeLegacyMedia, extractDriveId, driveEmbedUrl, type PhoneticsMedia } from "@/lib/phonetics-media";
-import { PhoneticsAudioPlayer } from "./phonetics-audio-player";
+import { AudioPill } from "@/components/audio-pill";
 import { PhoneticsVideoBlock } from "./phonetics-video-block";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
@@ -134,7 +134,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                   ) : media.source === "drive" ? (
                     <DriveAudioBlock url={media.url} />
                   ) : (
-                    <PhoneticsAudioPlayer src={media.url} />
+                    <AudioPill src={media.url} />
                   )}
                 </div>
               )}

@@ -12,7 +12,10 @@ const FOCUS_RING =
 
 // Один елемент грає за раз: коли стартує новий — попередній ставиться на
 // паузу. Модульний рівень, не React-стан — свідомо просто "хто зараз грає",
-// без підписки/ререндерів чужих карток.
+// без підписки/ререндерів чужих плеєрів. Спільний для ВСІХ AudioPill на
+// сторінці (phonetics і будь-яка картка завдання, що використовує цей
+// плеєр) — великий AudioPlayer (components/audio-player.tsx, "listening" і
+// task-media) має власний окремий трекер, свідомо не об'єднаний із цим.
 let currentlyPlaying: HTMLAudioElement | null = null;
 
 function stopOthersAndRegister(el: HTMLAudioElement) {
@@ -27,7 +30,23 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; className?: string }) {
+// Спільний плеєр-пілюля (індиго-градієнт, кругла play-кнопка з кільцем
+// прогресу, "повільно"/повтор/швидкість) — раніше був приватним для
+// phonetics.tsx (PhoneticsAudioPlayer), тепер єдиний компонент і для картки
+// фонетики, і для аудіо в картках інших вправ (flip_cards, crossword),
+// замість нативного <audio controls>. compact=true — щільніше пакування
+// для вузьких карток (grid_drop/flip_cards-плитка): без тексту "Повільно"
+// і без таймера, кнопки-іконки без текстового лейбла, менші відступи/gap —
+// та сама картка-пілюля, play-кнопка лишається 44px.
+export function AudioPill({
+  src,
+  compact = false,
+  className = "",
+}: {
+  src: string;
+  compact?: boolean;
+  className?: string;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
   const speedButtonRef = useRef<HTMLButtonElement>(null);
@@ -95,13 +114,27 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
     setRate(speed === 0.75 ? 1 : 0.75);
   }
 
+  // Плеєр сидить усередині клікабельних карток (flip_cards-плитка,
+  // кросворд-підказка) — клік/тап/клавіша на самому плеєрі не мають
+  // доходити до картки (перевернути/обрати слово).
+  const guardProps = {
+    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+    onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
+    onKeyDown: (e: React.KeyboardEvent) => e.stopPropagation(),
+  };
+
   if (loadError) {
     return (
       <div
-        className={`flex w-full items-center rounded-full px-3.5 py-2.5 ${className}`}
+        {...guardProps}
+        draggable={false}
+        title="Не вдалося завантажити аудіо"
+        className={`flex w-full min-w-0 max-w-full items-center rounded-full opacity-60 ${
+          compact ? "px-3 py-2" : "px-3.5 py-2.5"
+        } ${className}`}
         style={CARD_GRADIENT}
       >
-        <p className="text-xs text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
+        <p className="truncate text-xs text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
       </div>
     );
   }
@@ -112,7 +145,11 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
 
   return (
     <div
-      className={`@container flex w-full min-w-0 max-w-full items-center gap-2.5 rounded-full p-[6px_14px_6px_6px] ${className}`}
+      {...guardProps}
+      draggable={false}
+      className={`@container flex w-full min-w-0 max-w-full items-center rounded-full ${
+        compact ? "gap-1 p-[4px_8px_4px_4px]" : "gap-2.5 p-[6px_14px_6px_6px]"
+      } ${className}`}
       style={CARD_GRADIENT}
     >
       <audio
@@ -140,9 +177,10 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
       <button
         type="button"
         onClick={togglePlay}
+        disabled={!metadataLoaded}
         aria-label={playing ? "Пауза" : "Відтворити"}
         aria-pressed={playing}
-        className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${FOCUS_RING}`}
+        className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait disabled:opacity-60 ${FOCUS_RING}`}
       >
         <svg width={44} height={44} viewBox="0 0 44 44" className="absolute inset-0">
           <circle cx={22} cy={22} r={RADIUS} strokeWidth={3} fill="none" stroke="rgba(255,255,255,0.3)" />
@@ -170,19 +208,21 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
         onClick={toggleSlow}
         aria-pressed={speed === 0.75}
         aria-label="Повільно"
-        className={`flex shrink-0 items-center gap-1 rounded-full border border-white/35 px-3 py-[5px] font-heading text-[13px] font-bold ${FOCUS_RING} ${
-          speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"
-        }`}
+        className={`flex shrink-0 items-center gap-1 rounded-full border border-white/35 font-heading text-[13px] font-bold ${FOCUS_RING} ${
+          compact ? "h-8 w-8 justify-center" : "px-3 py-[5px]"
+        } ${speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"}`}
       >
         <Turtle size={14} />
-        <span className="@max-[340px]:hidden">Повільно</span>
+        {!compact && <span className="@max-[340px]:hidden">Повільно</span>}
       </button>
 
-      <span className="@max-[340px]:hidden shrink-0 whitespace-nowrap font-heading text-[13px] font-semibold tabular-nums text-[#d6d3ff]">
-        {metadataLoaded ? formatTime(currentTime) : "0:00"} / {metadataLoaded ? formatTime(duration!) : "0:00"}
-      </span>
+      {!compact && (
+        <span className="@max-[340px]:hidden shrink-0 whitespace-nowrap font-heading text-[13px] font-semibold tabular-nums text-[#d6d3ff]">
+          {metadataLoaded ? formatTime(currentTime) : "0:00"} / {metadataLoaded ? formatTime(duration!) : "0:00"}
+        </span>
+      )}
 
-      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+      <div className={`ml-auto flex shrink-0 items-center ${compact ? "gap-1" : "gap-1.5"}`}>
         <button
           type="button"
           onClick={() => setLoop((v) => !v)}
@@ -203,7 +243,9 @@ export function PhoneticsAudioPlayer({ src, className = "" }: { src: string; cla
             aria-label={`Швидкість ${speed}×`}
             aria-haspopup="menu"
             aria-expanded={speedOpen}
-            className={`rounded-full border border-white/35 bg-transparent px-2 py-0.5 text-[13px] font-semibold text-white ${FOCUS_RING}`}
+            className={`rounded-full border border-white/35 bg-transparent text-[13px] font-semibold text-white ${FOCUS_RING} ${
+              compact ? "px-1.5 py-0.5" : "px-2 py-0.5"
+            }`}
           >
             {speed}× ▾
           </button>

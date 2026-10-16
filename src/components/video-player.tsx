@@ -590,7 +590,7 @@ export function VideoPlayer({
     }
   }
 
-  // Той самий ярлик, що toggleSlow у phonetics-audio-player.tsx — без
+  // Той самий ярлик, що toggleSlow у audio-pill.tsx — без
   // окремого стану, активність виводиться напряму з speed.
   function toggleSlow() {
     setRate(speed === 0.75 ? 1 : 0.75);

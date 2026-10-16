@@ -14,6 +14,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { BlockProgressHeader, BlockNavFooter } from "./block-navigation";
+import { AudioPill } from "@/components/audio-pill";
 
 const PAGE_SIZE = 6;
 
@@ -44,12 +45,25 @@ function FlipCardTile({
     dimmed: `${ANSWER_CARD_DEFAULT} opacity-30`,
   }[variant];
 
+  // div[role=button], не <button> — усередині може бути аудіо-пілюля
+  // (audio-pill.tsx) зі справжніми <button>, а вкладати button у button
+  // недопустимо в HTML.
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!clickable) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setFlipped((f) => !f);
+    }
+  }
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={clickable ? 0 : -1}
+      aria-disabled={!clickable}
       onClick={clickable ? () => setFlipped((f) => !f) : undefined}
-      disabled={!clickable}
-      className={`flex min-w-0 flex-col items-center gap-2 text-base transition-all disabled:cursor-default ${ANSWER_CARD_BASE} ${variantClass}`}
+      onKeyDown={handleKeyDown}
+      className={`flex min-w-0 flex-col items-center gap-2 text-base transition-all ${clickable ? "cursor-pointer" : "cursor-default"} ${ANSWER_CARD_BASE} ${variantClass}`}
     >
       {card.image_url && (
         <span className="relative w-full">
@@ -65,21 +79,14 @@ function FlipCardTile({
       {zoomOpen && card.image_url && (
         <ImageLightbox src={card.image_url} onClose={() => setZoomOpen(false)} />
       )}
-      {card.audio_url && (
-        <audio
-          controls
-          src={card.audio_url}
-          className="w-full"
-          onClick={(e) => e.stopPropagation()}
-        />
-      )}
+      {card.audio_url && <AudioPill src={card.audio_url} compact />}
       <span className="min-w-0 max-w-full break-words [overflow-wrap:anywhere]">{frenchNbsp(shown)}</span>
       {clickable && (
         <span className="text-xs text-neutral-400 dark:text-neutral-500">
           {flipped ? "клік — назад" : "клік — перевернути"}
         </span>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -541,9 +548,7 @@ function DeckCardFront({
       <p className="max-w-full break-words text-center text-2xl font-semibold font-content [overflow-wrap:anywhere] sm:text-3xl">
         {frenchNbsp(card.front)}
       </p>
-      {card.audio_url && (
-        <audio controls src={card.audio_url} className="w-full" onClick={(e) => e.stopPropagation()} />
-      )}
+      {card.audio_url && <AudioPill src={card.audio_url} compact />}
     </>
   );
 }
