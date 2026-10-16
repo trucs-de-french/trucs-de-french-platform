@@ -850,21 +850,44 @@ button, input, textarea, select, label, nav, aside {
 
 /* Підказка першої літери (ws-cell-hinted, завжди на клітинці, незалежно
    від теми) — у темній лишається старе синє кільце (dark:bg-blue-900/50
-   dark:text-blue-200 + ring-blue-500, незмінно); у світлій — золоте коло. */
+   dark:text-blue-200 + ring-blue-500, незмінно); у світлій — золоте коло.
+   ЕТАП K3 — коло/кільце НЕ на самій .ws-cell (її розмір = клітинка сітки,
+   змінювати нічим, бо капсули рахують геометрію саме від cellSize), а на
+   ::before (inset:3px → діаметр cellSize-6px, вимога п.3): z-index:-1 у
+   власному stacking-контексті клітинки (z-index:1 на .ws-cell вище creates
+   його), тож кільце лягає ПІД текстом літери (auto > -1), не над ним.
+   Кільце box-shadow 3px (було 5px) від краю кола, що саме = inset 3px —
+   тобто кільце рівно до краю клітинки, не заходить у сусідню. */
 .light .ws-cell-hinted {
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e) !important;
-  box-shadow: 0 0 0 5px rgba(224, 170, 62, 0.25) !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: #1a1640 !important;
   font-weight: 800;
+}
+.light .ws-cell-hinted::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
   border-radius: 50%;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.25);
+  z-index: -1;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-cell-hinted {
-    background: linear-gradient(135deg, #f6dc8e, #e0aa3e) !important;
-    box-shadow: 0 0 0 5px rgba(224, 170, 62, 0.25) !important;
+    background: transparent !important;
+    box-shadow: none !important;
     color: #1a1640 !important;
     font-weight: 800;
+  }
+  :root:not(.dark) .ws-cell-hinted::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
     border-radius: 50%;
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.25);
+    z-index: -1;
   }
 }
 
