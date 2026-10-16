@@ -707,15 +707,33 @@ button, input, textarea, select, label, nav, aside {
    компенсуюча від'ємна margin РІВНО такого ж розміру, щоб сам контейнер не
    займав зайвого місця в розмітці (той самий трюк, що й overflow+shadow у
    будь-якому CSS-довіднику). Низ — трохи більший запас (56px padding/-40px
-   margin), бо тінь офсетна вниз (14px blur-y start). */
+   margin), бо тінь офсетна вниз (14px blur-y start).
+
+   ЕТАП K2, фікс 1 — ГОРИЗОНТАЛЬНО цей трюк НЕ компенсував padding, бо
+   Tailwind width:100% (w-full у className) — ФІКСОВАНА ширина, не auto:
+   при fixed width браузер за CSS2.1 §10.3.3 розв'язує "перенавантажене"
+   рівняння (margin-left+padding-left+width+padding-right+margin-right =
+   ширина батька), ІГНОРУЮЧИ внесок margin-right у позиціювання — працює
+   лише margin-left (зсуває бокс на -40px ЛІВОРУЧ), margin-right -40px на
+   позицію вже НЕ впливає. Результат — бокс (і центр mx-auto-елемента
+   всередині) зсунутий на 40px ліворуч від центру панелі (виміряно
+   Playwright: 1440px — офсет 40px; 375px — той самий 40px). Фікс — явна
+   ширина calc(100% + 80px) ЗАМІСТЬ Tailwind-утиліти w-full (нешаруваний
+   CSS тут переважає): тепер рівняння НЕ перенавантажене (бокс навмисно
+   ширший за батька на 80px), обидві margin -40px коректно зсувають КОЖЕН
+   край на 40px, контент-бокс (після відрахування padding 40px/40px)
+   рівно збігається з межами батька — центр mx-auto-листа = центр панелі
+   в межах 1px на будь-якій ширині/зумі. */
 .light .ws-scroll {
   overflow-x: auto;
+  width: calc(100% + 80px);
   padding: 8px 40px 56px;
   margin: -8px -40px -40px;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-scroll {
     overflow-x: auto;
+    width: calc(100% + 80px);
     padding: 8px 40px 56px;
     margin: -8px -40px -40px;
   }
@@ -770,14 +788,26 @@ button, input, textarea, select, label, nav, aside {
     border-color: transparent;
   }
 }
+/* ЕТАП K2, фікс 2a — position:relative;z-index:1 (без власного фону,
+   прозорий) піднімає кожну клітинку-літеру у ВИЩИЙ z-index-рівень за
+   .ws-capsule-layer (z-index:0, нижче), тож капсула завжди лягає ПІД
+   літерами в тій самій stacking-контексті (обидва — нащадки того самого
+   непозиціонованого .relative, що власного stacking-контексту не creates,
+   тож z-index тут порівнюється напряму, без прихованих рівнів). */
 .light .ws-cell {
   border-color: transparent;
   color: #1f1d3a;
+  position: relative;
+  z-index: 1;
+  background: transparent;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-cell {
     border-color: transparent;
     color: #1f1d3a;
+    position: relative;
+    z-index: 1;
+    background: transparent;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -857,16 +887,23 @@ button, input, textarea, select, label, nav, aside {
    Playwright: document.elementFromPoint у центрі клітинки повертав САМЕ
    цей div, .closest("[data-row]") — null). pointer-events:none тут
    повністю прибирає шар із черги хіт-тестування. */
+/* ЕТАП K2, фікс 2a (продовження) — z-index:0 явно (було auto): той самий
+   stacking-рівень, що й раніше, але ТЕПЕР явно нижчий за .ws-cell
+   (z-index:1 вище) — без цього явного значення порівняння з "auto" теж
+   working би коректно (1 > auto трактується як 1 > 0), але явне 0 тут для
+   однозначності поруч із явним 1 на клітинках. */
 .ws-capsule-layer {
   display: none;
   pointer-events: none;
 }
 .light .ws-capsule-layer {
   display: block;
+  z-index: 0;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-capsule-layer {
     display: block;
+    z-index: 0;
   }
 }
 .ws-capsule {
@@ -874,8 +911,14 @@ button, input, textarea, select, label, nav, aside {
   border-radius: 999px;
   pointer-events: none;
 }
+/* ЕТАП K2, фікс 2b — капсула знайденого слова була суцільним #e1d9fa, що
+   повністю ховала літери під собою (до фіксу 2a літери й так малювались
+   ПІД капсулою stacking-порядком; саме по собі 2a вже виправляло б це, але
+   напівпрозорість тут — додатковий шар захисту, якщо колись z-index-фікс
+   десь не спрацює, і просто м'якший вигляд капсули). */
 .ws-capsule-found {
-  background: #e1d9fa;
+  background: rgba(150, 125, 240, 0.28);
+  border: 1px solid rgba(120, 95, 225, 0.35);
 }
 .ws-capsule-selecting {
   background: rgba(75, 70, 218, 0.06);

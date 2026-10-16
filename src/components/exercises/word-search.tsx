@@ -800,7 +800,7 @@ function WordSearchBlockView({
             .light/:root:not(.dark)); темна лишається без неї, як сьогодні. */}
         <div className="ws-legend hidden">
           <span className="ws-legend-item">
-            <span className="ws-legend-dot" style={{ background: "#cfc4f5" }} />
+            <span className="ws-legend-dot" style={{ background: "rgba(150, 125, 240, 0.45)" }} />
             Знайдено
           </span>
           <span className="ws-legend-item">
