@@ -64,42 +64,64 @@ export function TaskPanelHeader({
   const hasBlocks = !!blockCount && blockCount > 1 && !!onChangeBlock;
   const showRow1 = !hasBlocks && !!pointsText;
   const showRow2 = !!safeText || !!hintText;
+  // ЕТАП M-fix — сама прогрес-смужка (BlockSegments, БЕЗ підпису "Блок N
+  // з M" і без пілюлі — ті лишаються в BlockTabs над панеллю) повертається
+  // як перший елемент усередині панелі, над рядком інструкції: її
+  // забрали разом зі старим рядком 1 ЕТАПУ M за помилкою — задача явно
+  // вимагає лишити її на місці, окремо від вкладок (вкладки — навігація,
+  // смужка — індикатор прогресу). mb-4 (16px) — власний відступ, НЕ
+  // частина gap-[18px] рядків 1/2 нижче (їх власний внутрішній ритм).
+  const showProgressBar = hasBlocks;
 
-  if (!showRow1 && !showRow2) return null;
+  if (!showProgressBar && !showRow1 && !showRow2) return null;
 
   return (
-    <div className="flex flex-col gap-[18px]">
-      {showRow1 && (
-        <TaskPanelProgressRow
-          blockCount={blockCount}
-          activeBlock={activeBlock}
-          onChangeBlock={onChangeBlock}
-          isBlockChecked={isBlockChecked}
-          labels={labels}
-          blockLabel={blockLabel}
-          pointsText={pointsText}
-        />
-      )}
-
-      {showRow2 && (
-        <div className="flex flex-wrap items-center gap-3">
-          {safeText && (
-            <div className="min-w-0 flex-1">
-              <div
-                className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
-                dangerouslySetInnerHTML={{ __html: safeText }}
-              />
-              {safeSub && (
-                <div
-                  className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-                  dangerouslySetInnerHTML={{ __html: safeSub }}
-                />
-              )}
-            </div>
-          )}
-          {hintText && <HintPill text={hintText} />}
+    <div>
+      {showProgressBar && (
+        <div className="mb-4">
+          <BlockSegments
+            blockCount={blockCount!}
+            activeBlock={activeBlock ?? 0}
+            onChangeBlock={onChangeBlock!}
+            isBlockChecked={isBlockChecked}
+            labels={labels}
+            label={blockLabel}
+          />
         </div>
       )}
+      <div className="flex flex-col gap-[18px]">
+        {showRow1 && (
+          <TaskPanelProgressRow
+            blockCount={blockCount}
+            activeBlock={activeBlock}
+            onChangeBlock={onChangeBlock}
+            isBlockChecked={isBlockChecked}
+            labels={labels}
+            blockLabel={blockLabel}
+            pointsText={pointsText}
+          />
+        )}
+
+        {showRow2 && (
+          <div className="flex flex-wrap items-center gap-3">
+            {safeText && (
+              <div className="min-w-0 flex-1">
+                <div
+                  className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
+                  dangerouslySetInnerHTML={{ __html: safeText }}
+                />
+                {safeSub && (
+                  <div
+                    className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
+                    dangerouslySetInnerHTML={{ __html: safeSub }}
+                  />
+                )}
+              </div>
+            )}
+            {hintText && <HintPill text={hintText} />}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1885,6 +1885,22 @@ button, input, textarea, select, label, nav, aside {
 .glass-block-panel:has(.block-tabs-anchor) {
   border-top-left-radius: 0;
 }
+/* ЕТАП M-fix — .glass-block-header спочатку лишає лише 10px до панелі
+   (margin-bottom, саме правило нижче), чого не вистачає, коли над
+   панеллю ще й смужка вкладок (.block-tabs-strip, 46px, position:
+   absolute; bottom:0 всередині .block-tabs-anchor висотою 0 — сам
+   .block-tabs-anchor своїм від'ємним margin-top завжди "приземляється"
+   РІВНО на верхню рамку панелі, незалежно від padding панелі, тож смужка
+   завжди росте вгору від рамки на 46px, хоч на мобільному, хоч на
+   десктопі). 58px = 12px (вимога: відступ від бару до смужки) + 46px
+   (висота смужки) — тож низ бару (margin-bottom) і верх смужки
+   збігаються РІВНО з 12px проміжком, а сама панель (і все, що в ній)
+   просто зсувається нижче на ці 58px замість старих 10px. :has() —
+   спрацьовує лише коли вправа реально малює вкладки; типи без блоків
+   (чи з ≤1 блоком) лишаються на старих 10px. */
+.glass-block:has(.block-tabs-anchor) .glass-block-header {
+  margin-bottom: 58px;
+}
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
    <div> без жодного класу, скло давав лише бар+overflow:hidden/radius/
@@ -2838,15 +2854,22 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 0.15s ease;
 }
 
-/* ЕТАП M — смужка вкладок блоків над панеллю (BlockTabs,
+/* ЕТАП M-fix — смужка вкладок блоків над панеллю (BlockTabs,
    block-navigation.tsx). .block-tabs-anchor — перша дитина вправи
    (height:0, position:relative, від'їмний margin гасить padding
    .glass-block-panel так, щоб верхній-лівий кут anchor збігався з
    верхнім-лівим кутом РАМКИ панелі) — сам .block-tabs-strip сидить у
    ньому position:absolute; bottom:0, тож росте ВГОРУ від лінії рамки
-   панелі незалежно від фактичної висоти вкладки (не потрібно знати
-   точну висоту заздалегідь). Тему/колір на 22px/24px/16px тут не
-   чіпати без звірки з .glass-block-panel padding вище. */
+   панелі. ВИПРАВЛЕННЯ (ЕТАП M-fix): висота смужки раніше бралась з
+   контенту (авто) — непередбачувана й залежна від брейкпоінту (мобільний
+   padding-буст нижче), через що escape-відстань "скільки смужка виходить
+   за межі панелі вгору" не була відома наперед і наїжджала на бар
+   заголовка (.glass-block-header). Тепер висота ФІКСОВАНА (46px, нижче),
+   обидва варіанти вкладки отримують min-height:44px (той самий дотик-
+   розмір, що раніше був лише мобільним бустом — тепер єдиний, без
+   розбіжності між брейкпоінтами) — тож escape-відстань завжди РІВНО 46px,
+   і .glass-block-header margin-bottom (вище, :has(.block-tabs-anchor))
+   може бути одним точним числом (58 = 12 + 46) на всіх екранах. */
 .block-tabs-anchor {
   position: relative;
   height: 0;
@@ -2863,11 +2886,13 @@ button.scene-bar:active .scene-bar-toggle {
   left: 0;
   right: 0;
   bottom: 0;
+  height: 46px;
   display: flex;
   align-items: flex-end;
   gap: 6px;
   padding: 0 12px 0 18px;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
 }
 .block-tabs-strip::-webkit-scrollbar {
@@ -2878,16 +2903,19 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .block-tabs-pill-wrap {
   flex-shrink: 0;
-  margin-bottom: 8px;
+  align-self: center;
 }
 .block-tab {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
   font-family: var(--font-heading);
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .block-tab--active {
+  min-height: 44px;
   padding: 10px 22px 12px;
   border-radius: 14px 14px 0 0;
   background: var(--glass-panel-bg);
@@ -2899,6 +2927,7 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1a1640;
 }
 .block-tab--inactive {
+  min-height: 44px;
   padding: 8px 20px;
   border-radius: 12px 12px 0 0;
   background: #efe5c4;
@@ -2923,24 +2952,19 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
-/* Зона дотику ≥44px на мобільному — лише padding, вигляд лишається тим
-   самим (текст/рамка не змінюються, тільки клікабельна висота). */
-@media (max-width: 640px) {
-  .block-tab--active {
-    padding-top: 13px;
-    padding-bottom: 15px;
-  }
-  .block-tab--inactive {
-    padding-top: 12px;
-    padding-bottom: 12px;
-  }
-}
 /* Темна тема — панель "variant 3" (--glass-panel-bg темний токен), та
    сама механіка приєднання, лише золото тьмяніше/прозоріше й текст
    світлий (--glass-panel-bg тут ВЖЕ темний завдяки .dark/:root:not(.light)
    на globals.css вище — той самий токен, що читає сама панель, тож
    активна вкладка і панель гарантовано однакового кольору без дублю). */
 .dark .block-tab--active {
+  /* Темна панель не задає --glass-panel-border-width (лише світла
+     "variant 3", рядок вище в файлі) — у темній темі фактична рамка
+     панелі падає на дефолтний fallback 1px (var(--glass-panel-border-width,
+     1px) у .glass-block-panel), не 1.5px, як у світлій. Рамка вкладки
+     мусить збігатись з РЕАЛЬНОЮ рамкою панелі, інакше на стику з'являється
+     прямокутний "сходинка"-нотч. */
+  border-width: 1px;
   border-color: rgba(243, 217, 139, 0.5);
   color: #f6dc8e;
 }
@@ -2959,6 +2983,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--active {
+    border-width: 1px;
     border-color: rgba(243, 217, 139, 0.5);
     color: #f6dc8e;
   }
