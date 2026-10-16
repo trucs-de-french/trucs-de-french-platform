@@ -556,52 +556,110 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* word-search.tsx — "плаваючий лист" (ЕТАП K, мокап "варіант 2"), СВІТЛА
-   тема лише: темна тема нічого з цього блоку не бачить (усі правила
-   гейтовані .light / :root:not(.dark)), і далишається на старих
-   Tailwind-класах (border-neutral-700 на сітці/клітинках, bg-blue-800 на
-   виділенні, зелена SVG-лінія знайденого слова, синє кільце підказки) —
-   нешаруваний CSS тут нижче завжди переважає ці Tailwind-утиліти, тож
-   досить додати лише ГАЧКИ-класи в JSX (ws-*), не чіпаючи самі dark:-рядки.
+/* word-search.tsx — "плаваючий лист" (ЕТАП K, мокап "варіант 2"), тепер
+   ОБОМА темами (ЕТАП L — темна тема отримує той самий дизайн зі своєю
+   палітрою): структурні правила (розмір листа, скрол без клipping тіні,
+   геометрія капсул/кільця підказки, флекс-розкладка рядка 2) — СПІЛЬНІ,
+   нижче без .light/.dark гейтів; лише колір/фон/рамка/тінь — через
+   CSS-змінні --ws-*, оголошені тут (світлі значення за замовчуванням на
+   :root — існуючий вигляд СВІТЛОЇ теми, не змінюється) і перевизначені в
+   .dark/:root:not(.light) (системна темна) нижче — той самий принцип, що
+   --found-word вище. Це уникає дублювання самої геометрії між темами
+   (вимога задачі ЕТАП L).
 
-   Row 2 (інструкція+підказка) — у темній лишається старий
-   flex-wrap items-center рядок (пілюля підказки поруч з інструкцією); у
-   світлій стає вертикальним стеком на всю ширину (інструкція окремим
-   рядком, нотатка-підказка під нею). */
-.light .ws-header-row2 {
+   Старі Tailwind dark:-класи в JSX (border-neutral-700, bg-blue-800,
+   dark:bg-blue-900/50 тощо) лишаються в розмітці незмінними, але тепер
+   завжди перебиті цими нешаруваними CSS-правилами (той самий принцип, що
+   вже працював для світлої теми ЕТАП K) — приберати їх з JSX не треба. */
+:root {
+  --ws-sheet-bg: #fff;
+  --ws-sheet-border: none;
+  --ws-sheet-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 14px 30px -14px rgba(120, 90, 20, 0.38);
+  --ws-hint-note-bg: #fff;
+  --ws-hint-note-border: 1px solid rgba(217, 183, 101, 0.55);
+  --ws-hint-text-color: #6b4a14;
+  --ws-hint-lamp-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  --ws-hint-lamp-color: #1a1640;
+  --ws-cell-color: #1f1d3a;
+  --ws-letter-found-color: #2f2488;
+  --ws-letter-selecting-color: #3b36c4;
+  --ws-hint-ring-color: rgba(224, 170, 62, 0.25);
+  --ws-capsule-found-bg: rgba(150, 125, 240, 0.28);
+  --ws-capsule-found-border: 1px solid rgba(120, 95, 225, 0.35);
+  --ws-capsule-selecting-bg: rgba(75, 70, 218, 0.06);
+  --ws-capsule-selecting-border: 2px dashed #4b46da;
+  --ws-legend-text-color: #55546b;
+  --ws-legend-dot-found: rgba(150, 125, 240, 0.45);
+  --ws-legend-dot-selecting: #4b46da;
+}
+.dark {
+  --ws-sheet-bg: #11183f;
+  --ws-sheet-border: 1px solid rgba(243, 217, 139, 0.45);
+  --ws-sheet-shadow: 0 0 0 4px rgba(243, 217, 139, 0.07), 0 18px 40px -14px rgba(0, 0, 0, 0.65);
+  --ws-hint-note-bg: rgba(255, 255, 255, 0.06);
+  --ws-hint-note-border: 1px solid rgba(243, 217, 139, 0.28);
+  --ws-hint-text-color: #f6dc8e;
+  --ws-hint-lamp-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  --ws-hint-lamp-color: #1a1640;
+  --ws-cell-color: #f6efd6;
+  --ws-letter-found-color: #e9e3ff;
+  --ws-letter-selecting-color: #cfcdff;
+  --ws-hint-ring-color: rgba(243, 217, 139, 0.25);
+  --ws-capsule-found-bg: rgba(150, 125, 240, 0.26);
+  --ws-capsule-found-border: 1px solid rgba(180, 160, 255, 0.45);
+  --ws-capsule-selecting-bg: rgba(140, 136, 245, 0.1);
+  --ws-capsule-selecting-border: 2px dashed #8c88f5;
+  --ws-legend-text-color: rgba(246, 239, 214, 0.8);
+  --ws-legend-dot-found: rgba(150, 125, 240, 0.7);
+  --ws-legend-dot-selecting: #8c88f5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --ws-sheet-bg: #11183f;
+    --ws-sheet-border: 1px solid rgba(243, 217, 139, 0.45);
+    --ws-sheet-shadow: 0 0 0 4px rgba(243, 217, 139, 0.07), 0 18px 40px -14px rgba(0, 0, 0, 0.65);
+    --ws-hint-note-bg: rgba(255, 255, 255, 0.06);
+    --ws-hint-note-border: 1px solid rgba(243, 217, 139, 0.28);
+    --ws-hint-text-color: #f6dc8e;
+    --ws-hint-lamp-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    --ws-hint-lamp-color: #1a1640;
+    --ws-cell-color: #f6efd6;
+    --ws-letter-found-color: #e9e3ff;
+    --ws-letter-selecting-color: #cfcdff;
+    --ws-hint-ring-color: rgba(243, 217, 139, 0.25);
+    --ws-capsule-found-bg: rgba(150, 125, 240, 0.26);
+    --ws-capsule-found-border: 1px solid rgba(180, 160, 255, 0.45);
+    --ws-capsule-selecting-bg: rgba(140, 136, 245, 0.1);
+    --ws-capsule-selecting-border: 2px dashed #8c88f5;
+    --ws-legend-text-color: rgba(246, 239, 214, 0.8);
+    --ws-legend-dot-found: rgba(150, 125, 240, 0.7);
+    --ws-legend-dot-selecting: #8c88f5;
+  }
+}
+
+/* Row 2 (інструкція+підказка) — вертикальний стек на всю ширину в ОБОХ
+   темах (раніше темна лишалась на старому flex-wrap рядку поруч). */
+.ws-header-row2 {
   flex-direction: column;
   align-items: flex-start;
   gap: 16px;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-header-row2 {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
 }
 /* Лише інструкція тягнеться на всю ширину (ЕТАП K1, фікс B) — нотатка-
    підказка нижче розраховує СВОЮ ширину сама (fit-content), тож тут
    гачок на самій інструкції (.ws-instruction), а не "> *" по всіх дітях
    рядка 2 — інакше він перебивав би ws-hint-note. */
-.light .ws-header-row2 > .ws-instruction {
+.ws-header-row2 > .ws-instruction {
   flex: none;
   width: 100%;
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-header-row2 > .ws-instruction {
-    flex: none;
-    width: 100%;
-  }
-}
 
-/* Нотатка-підказка — у темній лишається старою компактною пілюлею
-   (border-transparent bg-transparent text-neutral-400, round-full), у
-   світлій стає білим "нотесом" ПІД ІНСТРУКЦІЄЮ (не на всю ширину панелі —
-   ЕТАП K1, фікс B: inline-flex/fit-content + max-width; align-items:center
-   — фікс A: лампа й текст по одній вертикальній осі навіть коли текст
-   переноситься на 2-3 рядки). */
-.light .ws-hint-note {
+/* Нотатка-підказка — "нотес" ПІД ІНСТРУКЦІЄЮ в ОБОХ темах тепер (ЕТАП L;
+   раніше темна лишалась компактною пілюлею border-transparent bg-
+   transparent text-neutral-400 поруч з інструкцією) — не на всю ширину
+   панелі (ЕТАП K1, фікс B: inline-flex/fit-content + max-width;
+   align-items:center — фікс A: лампа й текст по одній вертикальній осі
+   навіть коли текст переноситься на 2-3 рядки). */
+.ws-hint-note {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -609,23 +667,10 @@ button, input, textarea, select, label, nav, aside {
   gap: 12px;
   border-radius: 16px;
   padding: 8px 16px 8px 8px;
-  background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  background: var(--ws-hint-note-bg);
+  border: var(--ws-hint-note-border);
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-hint-note {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    max-width: min(100%, 680px);
-    gap: 12px;
-    border-radius: 16px;
-    padding: 8px 16px 8px 8px;
-    background: #fff;
-    border: 1px solid rgba(217, 183, 101, 0.55);
-  }
-}
-.light .ws-hint-note .ws-hint-text {
+.ws-hint-note .ws-hint-text {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
@@ -633,46 +678,27 @@ button, input, textarea, select, label, nav, aside {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
-  color: #6b4a14;
+  color: var(--ws-hint-text-color);
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-hint-note .ws-hint-text {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin: 0;
-    font-family: var(--font-body);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: #6b4a14;
-  }
-}
-/* Лампа у нотатці — та сама .lamp-badge (ЕТАП H, золотий градієнт/темний
-   бульб), лише більша (32px замість 24px у пілюлі) — розмір гейтується
-   окремо від кольору/стану, щоб не чіпати жоден інший .lamp-badge.
+/* Лампа у нотатці — ТЕ САМЕ золоте коло (градієнт/темний бульб), що
+   .lamp-badge у світлій темі (ЕТАП H), тепер в ОБОХ темах ws-hint-note
+   (було: темна лишалась на бляклих dark:bg-amber-900/70 text-amber-300 з
+   className) — гачок .ws-hint-lamp тут вищої специфічності за інлайн-
+   Tailwind dark:-утиліти, не чіпає жоден ІНШИЙ .lamp-badge (легенда/
+   пілюля заголовка панелі лишаються як є, це НЕ .ws-hint-lamp). Розмір
+   32px замість 24px у пілюлі — та сама причина, що й раніше (ЕТАП K).
    flex:none (фікс A) — коло не стискається/не розтягується поруч із
    текстом, що переноситься на кілька рядків. */
-.light .ws-hint-lamp {
+.ws-hint-lamp {
   width: 32px;
   height: 32px;
   flex: none;
+  background: var(--ws-hint-lamp-bg) !important;
+  color: var(--ws-hint-lamp-color) !important;
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-hint-lamp {
-    width: 32px;
-    height: 32px;
-    flex: none;
-  }
-}
-.light .ws-hint-lamp svg {
+.ws-hint-lamp svg {
   width: 17px;
   height: 17px;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-hint-lamp svg {
-    width: 17px;
-    height: 17px;
-  }
 }
 
 /* Зум-кнопки філворду — обгортка .ws-zoom лише навколо ВИКЛИКУ
@@ -724,19 +750,11 @@ button, input, textarea, select, label, nav, aside {
    край на 40px, контент-бокс (після відрахування padding 40px/40px)
    рівно збігається з межами батька — центр mx-auto-листа = центр панелі
    в межах 1px на будь-якій ширині/зумі. */
-.light .ws-scroll {
+.ws-scroll {
   overflow-x: auto;
   width: calc(100% + 80px);
   padding: 8px 40px 56px;
   margin: -8px -40px -40px;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-scroll {
-    overflow-x: auto;
-    width: calc(100% + 80px);
-    padding: 8px 40px 56px;
-    margin: -8px -40px -40px;
-  }
 }
 
 /* "Плаваючий лист" — САМЕ на .grid-zoom-inner (вже w-max mx-auto, тобто
@@ -750,43 +768,25 @@ button, input, textarea, select, label, nav, aside {
    контейнера на вузьких екранах — на відміну від .grid-zoom-inner, що
    рахує 100cqw без цього віднімання (там зайвого padding немає). Фікс D
    (м'якша тінь) — той самий блок, тут-таки. */
-.light .ws-sheet {
-  background: #fff;
+.ws-sheet {
+  background: var(--ws-sheet-bg);
+  border: var(--ws-sheet-border);
   padding: 16px;
   border-radius: 26px;
-  box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 14px 30px -14px rgba(120, 90, 20, 0.38);
+  box-shadow: var(--ws-sheet-shadow);
   --cw: calc(clamp(1.75rem, (100cqw - 32px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-sheet {
-    background: #fff;
-    padding: 16px;
-    border-radius: 26px;
-    box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 14px 30px -14px rgba(120, 90, 20, 0.38);
-    --cw: calc(clamp(1.75rem, (100cqw - 32px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
-  }
-}
 @media (max-width: 640px) {
-  .light .ws-sheet {
+  .ws-sheet {
     padding: 12px;
-  }
-  @media (prefers-color-scheme: light) {
-    :root:not(.dark) .ws-sheet {
-      padding: 12px;
-    }
   }
 }
 
 /* Сітка без внутрішніх ліній — рамки контейнера й клітинок (border-l/-t на
-   .ws-grid, border-r/-b на .ws-cell) стають прозорими лише у світлій;
-   темна лишається на старому border-neutral-700. */
-.light .ws-grid {
+   .ws-grid, border-r/-b на .ws-cell) стають прозорими в ОБОХ темах тепер
+   (ЕТАП L; раніше темна лишалась на border-neutral-700). */
+.ws-grid {
   border-color: transparent;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-grid {
-    border-color: transparent;
-  }
 }
 /* ЕТАП K2, фікс 2a — position:relative;z-index:1 (без власного фону,
    прозорий) піднімає кожну клітинку-літеру у ВИЩИЙ z-index-рівень за
@@ -794,21 +794,12 @@ button, input, textarea, select, label, nav, aside {
    літерами в тій самій stacking-контексті (обидва — нащадки того самого
    непозиціонованого .relative, що власного stacking-контексту не creates,
    тож z-index тут порівнюється напряму, без прихованих рівнів). */
-.light .ws-cell {
+.ws-cell {
   border-color: transparent;
-  color: #1f1d3a;
+  color: var(--ws-cell-color);
   position: relative;
   z-index: 1;
   background: transparent;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-cell {
-    border-color: transparent;
-    color: #1f1d3a;
-    position: relative;
-    z-index: 1;
-    background: transparent;
-  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .ws-cell {
@@ -816,136 +807,91 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* Старе виділення по клітинці (bg-blue-200, inline у cellClass()) —
-   вимикається у світлій (капсула .ws-capsule-selecting нижче малює
-   виділення замість цього); темна лишається на bg-blue-800. */
-.light .ws-cell-previewing {
+/* Старе виділення по клітинці (bg-blue-200/dark:bg-blue-800, inline у
+   cellClass()) — вимикається в ОБОХ темах (капсула .ws-capsule-selecting
+   нижче малює виділення замість цього, тепер в обох). */
+.ws-cell-previewing {
   background: transparent;
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-cell-previewing {
-    background: transparent;
-  }
-}
-.light .ws-letter-found {
-  color: #2f2488;
+.ws-letter-found {
+  color: var(--ws-letter-found-color);
   font-weight: 800;
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-letter-found {
-    color: #2f2488;
-    font-weight: 800;
-  }
-}
-.light .ws-letter-selecting {
-  color: #3b36c4;
+.ws-letter-selecting {
+  color: var(--ws-letter-selecting-color);
   font-weight: 800;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-letter-selecting {
-    color: #3b36c4;
-    font-weight: 800;
-  }
 }
 
 /* Підказка першої літери (ws-cell-hinted, завжди на клітинці, незалежно
-   від теми) — у темній лишається старе синє кільце (dark:bg-blue-900/50
-   dark:text-blue-200 + ring-blue-500, незмінно); у світлій — золоте коло.
-   ЕТАП K3 — коло/кільце НЕ на самій .ws-cell (її розмір = клітинка сітки,
+   від теми) — ЕТАП L: золоте коло в ОБОХ темах тепер (раніше темна
+   лишалась на старому синьому кільці dark:bg-blue-900/50 dark:text-
+   blue-200 + ring-blue-500); колір кільця-гало (box-shadow) — єдина річ,
+   що різниться між темами (--ws-hint-ring-color), саме коло/бульб —
+   однакові. ЕТАП K3 — коло/кільце НЕ на самій .ws-cell (її розмір = клітинка сітки,
    змінювати нічим, бо капсули рахують геометрію саме від cellSize), а на
    ::before (inset:3px → діаметр cellSize-6px, вимога п.3): z-index:-1 у
    власному stacking-контексті клітинки (z-index:1 на .ws-cell вище creates
    його), тож кільце лягає ПІД текстом літери (auto > -1), не над ним.
    Кільце box-shadow 3px (було 5px) від краю кола, що саме = inset 3px —
    тобто кільце рівно до краю клітинки, не заходить у сусідню. */
-.light .ws-cell-hinted {
+.ws-cell-hinted {
   background: transparent !important;
   box-shadow: none !important;
   color: #1a1640 !important;
   font-weight: 800;
 }
-.light .ws-cell-hinted::before {
+.ws-cell-hinted::before {
   content: "";
   position: absolute;
   inset: 3px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-  box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.25);
+  box-shadow: 0 0 0 3px var(--ws-hint-ring-color);
   z-index: -1;
 }
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-cell-hinted {
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #1a1640 !important;
-    font-weight: 800;
-  }
-  :root:not(.dark) .ws-cell-hinted::before {
-    content: "";
-    position: absolute;
-    inset: 3px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-    box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.25);
-    z-index: -1;
-  }
-}
 
-/* Стара пряма лінія знайденого слова (SVG, зелена) vs нові капсули —
-   взаємовиключні: темна бачить лише .ws-lines-layer (як і раніше), світла
-   — лише .ws-capsule-layer. */
-.light .ws-lines-layer {
+/* Стара пряма лінія знайденого слова (SVG, зелена) — замінена капсулами в
+   ОБОХ темах тепер (ЕТАП L), цей шар завжди вимкнений. */
+.ws-lines-layer {
   display: none;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-lines-layer {
-    display: none;
-  }
 }
 /* ЕТАП K1, фікс E (КРИТИЧНИЙ РЕГРЕС) — ЦЕЙ шар (absolute inset-0 над усією
    сіткою) не мав pointer-events:none на САМОМУ СОБІ, лише на дочірніх
-   .ws-capsule: у світлій темі (display:block) порожній простір між
-   капсулами й так лишався pointer-events:auto й перехоплював elementFrom-
-   Point/клік/дотик ПЕРШИМ, раніше за клітинки під ним (підтверджено
-   Playwright: document.elementFromPoint у центрі клітинки повертав САМЕ
-   цей div, .closest("[data-row]") — null). pointer-events:none тут
-   повністю прибирає шар із черги хіт-тестування. */
-/* ЕТАП K2, фікс 2a (продовження) — z-index:0 явно (було auto): той самий
+   .ws-capsule: порожній простір між капсулами й так лишався
+   pointer-events:auto й перехоплював elementFromPoint/клік/дотик ПЕРШИМ,
+   раніше за клітинки під ним (підтверджено Playwright: document.element-
+   FromPoint у центрі клітинки повертав САМЕ цей div, .closest("[data-row]")
+   — null). pointer-events:none тут повністю прибирає шар із черги
+   хіт-тестування.
+   ЕТАП K2, фікс 2a (продовження) — z-index:0 явно (було auto): той самий
    stacking-рівень, що й раніше, але ТЕПЕР явно нижчий за .ws-cell
    (z-index:1 вище) — без цього явного значення порівняння з "auto" теж
    working би коректно (1 > auto трактується як 1 > 0), але явне 0 тут для
-   однозначності поруч із явним 1 на клітинках. */
+   однозначності поруч із явним 1 на клітинках.
+   ЕТАП L — завжди display:block (було лише .light), капсули тепер і в
+   темній темі замінюють стару зелену SVG-лінію/синє кільце виділення. */
 .ws-capsule-layer {
-  display: none;
-  pointer-events: none;
-}
-.light .ws-capsule-layer {
   display: block;
   z-index: 0;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-capsule-layer {
-    display: block;
-    z-index: 0;
-  }
+  pointer-events: none;
 }
 .ws-capsule {
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
 }
-/* ЕТАП K2, фікс 2b — капсула знайденого слова була суцільним #e1d9fa, що
+/* ЕТАП K2, фікс 2b — капсула знайденого слова була суцільним кольором, що
    повністю ховала літери під собою (до фіксу 2a літери й так малювались
    ПІД капсулою stacking-порядком; саме по собі 2a вже виправляло б це, але
    напівпрозорість тут — додатковий шар захисту, якщо колись z-index-фікс
    десь не спрацює, і просто м'якший вигляд капсули). */
 .ws-capsule-found {
-  background: rgba(150, 125, 240, 0.28);
-  border: 1px solid rgba(120, 95, 225, 0.35);
+  background: var(--ws-capsule-found-bg);
+  border: var(--ws-capsule-found-border);
 }
 .ws-capsule-selecting {
-  background: rgba(75, 70, 218, 0.06);
-  border: 2px dashed #4b46da;
+  background: var(--ws-capsule-selecting-bg);
+  border: var(--ws-capsule-selecting-border);
 }
 @media (prefers-reduced-motion: no-preference) {
   .ws-capsule {
@@ -953,25 +899,17 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* Легенда кольорів під сіткою — нова, лише світла тема (темна й далі без
-   неї, як сьогодні): Tailwind-клас "hidden" — дефолтний стан (темна),
-   .light override показує flex. */
-.light .ws-legend {
-  display: flex;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-legend {
-    display: flex;
-  }
-}
+/* Легенда кольорів під сіткою — ЕТАП L: завжди flex (було лише .light,
+   темна лишалась без неї) — Tailwind-клас "hidden" прибрано з JSX. */
 .ws-legend {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 18px;
   font-size: 13px;
   font-weight: 700;
-  color: #55546b;
+  color: var(--ws-legend-text-color);
 }
 .ws-legend-item {
   display: flex;
@@ -983,6 +921,12 @@ button, input, textarea, select, label, nav, aside {
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+.ws-legend-dot-found {
+  background: var(--ws-legend-dot-found);
+}
+.ws-legend-dot-selecting {
+  background: var(--ws-legend-dot-selecting);
 }
 
 /* reorder.tsx — підказка про спосіб взаємодії (торкнутись двох плиток, щоб

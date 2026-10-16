@@ -800,16 +800,18 @@ function WordSearchBlockView({
           </p>
         )}
 
-        {/* ЕТАП K — легенда кольорів під сіткою, лише світла тема (hidden
-            за замовчуванням, globals.css .ws-legend показує flex лише в
-            .light/:root:not(.dark)); темна лишається без неї, як сьогодні. */}
-        <div className="ws-legend hidden">
+        {/* ЕТАП K/L — легенда кольорів під сіткою, тепер в ОБОХ темах
+            (globals.css .ws-legend завжди flex); кольори крапок "Знайдено"/
+            "Виділяю" — через CSS-змінні --ws-legend-dot-* (теми різні
+            значення), "Підказка" — той самий золотий #e0aa3e в обох темах,
+            лишається inline (не потребує var). */}
+        <div className="ws-legend">
           <span className="ws-legend-item">
-            <span className="ws-legend-dot" style={{ background: "rgba(150, 125, 240, 0.45)" }} />
+            <span className="ws-legend-dot ws-legend-dot-found" />
             Знайдено
           </span>
           <span className="ws-legend-item">
-            <span className="ws-legend-dot" style={{ background: "#4b46da" }} />
+            <span className="ws-legend-dot ws-legend-dot-selecting" />
             Виділяю
           </span>
           <span className="ws-legend-item">
