@@ -29,55 +29,52 @@ export type InstructionDefault = { instruction: string; subInstruction: string }
 export const FILL_BLANK_WORD_BANK_SUBINSTRUCTION =
   "Впишіть слова в пропуски самостійно. Використані викреслюйте зі списку.";
 
+// Текст оновлено під заголовок панелі "варіант 3" (task-panel-header.tsx,
+// 2026) — дефолти на кожен тип тепер і джерело для НАЗВИ типу (короткої,
+// default-task-labels.ts) і для рядка інструкції тут, узгоджені одним
+// автором одночасно, тому можуть відрізнятись словами від попередньої
+// версії цього файлу (git blame/історія — якщо потрібен старий варіант).
 export const DEFAULT_INSTRUCTIONS: Record<string, InstructionDefault> = {
-  fill_blank: { instruction: "Complétez les phrases.", subInstruction: "Впишіть пропущені слова." },
-  drag_drop: { instruction: "Glissez les mots à la bonne place.", subInstruction: "Перетягніть слова в пропуски." },
-  multiple_choice: { instruction: "Choisissez la bonne réponse.", subInstruction: "Оберіть правильний варіант." },
-  // Пробіл перед "?" — нерозривний (U+00A0), французька типографська норма:
-  // подвійний розділовий знак не переноситься на новий рядок окремо.
-  true_false: { instruction: "Vrai ou faux ?", subInstruction: "Визначте, чи твердження правдиве." },
-  matching: { instruction: "Associez les mots à leur traduction.", subInstruction: "З'єднайте слово з перекладом." },
-  table_fill: { instruction: "Complétez le tableau.", subInstruction: "Заповніть порожні клітинки таблиці." },
-  sort_columns: {
-    instruction: "Classez les éléments dans la bonne colonne.",
-    subInstruction: "Розкладіть елементи по колонках.",
-  },
+  fill_blank: { instruction: "Complétez les phrases.", subInstruction: "Заповніть пропуски." },
+  drag_drop: { instruction: "Placez les mots au bon endroit.", subInstruction: "Перетягніть слова на місце." },
+  multiple_choice: { instruction: "Choisissez la bonne réponse.", subInstruction: "Оберіть правильну відповідь." },
+  true_false: { instruction: "Choisissez vrai ou faux.", subInstruction: "Оберіть «правда» чи «неправда»." },
+  matching: { instruction: "Associez les éléments.", subInstruction: "З'єднайте пари." },
+  table_fill: { instruction: "Complétez le tableau.", subInstruction: "Заповніть таблицю." },
+  sort_columns: { instruction: "Classez dans les bonnes colonnes.", subInstruction: "Розподіліть по колонках." },
   checkbox_grid: { instruction: "Cochez les bonnes cases.", subInstruction: "Позначте правильні клітинки." },
-  reorder: { instruction: "Remettez les éléments dans l'ordre.", subInstruction: "Розставте елементи в правильному порядку." },
+  reorder: { instruction: "Remettez dans l'ordre.", subInstruction: "Розставте в правильному порядку." },
   chronological_order: {
-    instruction: "Remettez les événements dans l'ordre chronologique.",
-    subInstruction: "Розставте події в хронологічному порядку.",
+    instruction: "Classez les événements dans l'ordre.",
+    subInstruction: "Розташуйте події в хронологічному порядку.",
   },
   image_match: {
     instruction: "Associez chaque image au bon mot.",
-    subInstruction: "Перетягніть слова під відповідні картинки.",
+    subInstruction: "З'єднайте картинки зі словами.",
   },
-  listening: { instruction: "Écoutez et répondez aux questions.", subInstruction: "Прослухайте аудіо й дайте відповіді." },
-  open_answer: { instruction: "Répondez aux questions.", subInstruction: "Напишіть відповідь." },
-  essay_check: {
-    instruction: "Rédigez votre texte.",
-    subInstruction: "Напишіть текст за завданням, його перевірить AI за критеріями DELF.",
-  },
-  flip_cards: { instruction: "Retournez les cartes.", subInstruction: "Клікніть на картку, щоб побачити переклад." },
-  vocab_quiz: { instruction: "Testez votre vocabulaire.", subInstruction: "Оберіть правильний переклад слова." },
-  phonetics: { instruction: "Écoutez et répétez.", subInstruction: "Прослухайте й повторіть." },
-  letter_gaps: {
-    instruction: "Complétez les mots avec les lettres manquantes.",
-    subInstruction: "Впишіть пропущені літери.",
-  },
+  listening: { instruction: "Écoutez et répondez.", subInstruction: "Послухайте й дайте відповідь." },
+  open_answer: { instruction: "Répondez par écrit.", subInstruction: "Дайте письмову відповідь." },
+  essay_check: { instruction: "Rédigez un texte.", subInstruction: "Напишіть текст." },
+  flip_cards: { instruction: "Retournez les cartes.", subInstruction: "Перегортайте картки." },
+  vocab_quiz: { instruction: "Testez votre vocabulaire.", subInstruction: "Перевірте лексику." },
+  phonetics: { instruction: "Écoutez et répétez.", subInstruction: "Послухайте й повторіть." },
+  letter_gaps: { instruction: "Écrivez les lettres manquantes.", subInstruction: "Впишіть пропущені літери." },
   letter_rearrangement: {
     instruction: "Remettez les lettres dans l'ordre.",
-    subInstruction: "Перетягніть літери, щоб скласти слово.",
+    subInstruction: "Розставте літери в правильному порядку.",
   },
-  word_search: {
-    instruction: "Trouvez les mots dans la grille.",
-    subInstruction: "Знайдіть слова в сітці, виділяючи їх мишею чи пальцем.",
-  },
-  crossword: { instruction: "Complétez la grille de mots croisés.", subInstruction: "Розгадайте кросворд за підказками." },
-  karaoke: {
-    instruction: "Écoutez la chanson et complétez les paroles.",
-    subInstruction: "Слухайте пісню й заповнюйте пропуски в тексті.",
-  },
+  word_search: { instruction: "Trouvez les mots cachés.", subInstruction: "Знайдіть приховані слова." },
+  crossword: { instruction: "Complétez la grille.", subInstruction: "Заповніть кросворд." },
+  karaoke: { instruction: "Chantez avec la chanson.", subInstruction: "Співайте разом з піснею." },
+};
+
+// flip_cards у режимі "випадкова картка" (config.mode === "random_reveal")
+// — окремий варіант інструкції, той самий принцип, що WORD_CHOICE_
+// DEFAULT_INSTRUCTIONS нижче; flip-cards.tsx вибирає цей запис замість
+// DEFAULT_INSTRUCTIONS.flip_cards лише для цього режиму.
+export const FLIP_CARDS_RANDOM_INSTRUCTIONS: InstructionDefault = {
+  instruction: "Tirez une carte.",
+  subInstruction: "Витягніть картку.",
 };
 
 // word_choice — дефолт залежить від режиму (WordChoiceConfig.mode), не лише

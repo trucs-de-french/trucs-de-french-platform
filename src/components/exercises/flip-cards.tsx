@@ -6,7 +6,7 @@ import type { FlipCard as FlipCardType, FlipCardsConfig } from "@/lib/exercises/
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, FLIP_CARDS_RANDOM_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { TaskPanelHeader, TaskPanelProgressRow } from "./task-panel-header";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
@@ -623,8 +623,18 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
   return (
     <div ref={blockRef} className={EXERCISE_STACK}>
       <TaskPanelHeader
-        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.flip_cards.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.flip_cards.subInstruction}
+        instructionText={
+          config.instructions ??
+          (config.mode === "random_reveal"
+            ? FLIP_CARDS_RANDOM_INSTRUCTIONS.instruction
+            : DEFAULT_INSTRUCTIONS.flip_cards.instruction)
+        }
+        subInstructionText={
+          config.subInstructions ??
+          (config.mode === "random_reveal"
+            ? FLIP_CARDS_RANDOM_INSTRUCTIONS.subInstruction
+            : DEFAULT_INSTRUCTIONS.flip_cards.subInstruction)
+        }
       />
       {config.mode === "deck" ? (
         <DeckFlipCards cards={cards} />

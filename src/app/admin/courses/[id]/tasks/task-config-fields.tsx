@@ -82,6 +82,7 @@ import { FileOrLinkField } from "@/components/file-or-link-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { getDefaultTaskName } from "@/lib/exercises/default-task-labels";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -728,6 +729,26 @@ export function TaskConfigFields({
             </button>
           </div>
         )}
+      </div>
+
+      {/* Назва типу (FR) — показується студенту в компактному барі над
+          панеллю задачі (GlassBlock, getTaskBarText) замість старої
+          французької інструкції. Окреме поле від "Назва" вище (та —
+          технічна/адмінська, не студентська) і від instructions/
+          subInstructions (ті — per-тип поля нижче, інструкція в заголовку
+          панелі). Порожнє — дефолтна назва типу (default-task-labels.ts),
+          показана тут плейсхолдером. */}
+      <div className="flex flex-col gap-1">
+        <label className={LABEL_TEXT}>Назва типу (FR)</label>
+        <input
+          name="card_title"
+          defaultValue={(initialConfig?.cardTitle as string) ?? ""}
+          placeholder={getDefaultTaskName(type, configForType(type))}
+          className={`${INPUT_BORDER} px-3 py-2 text-base`}
+        />
+        <p className={HINT_TEXT}>
+          Коротка назва типу вправи у плашці над завданням для студента. Порожнє — назва за типом.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">

@@ -772,7 +772,7 @@ export default async function ScenePage({
                     })()}
                 </>
               ) : (
-                <GlassBlock title={barText!.text} hideInstructionInPanel={barText!.fromInstruction}>
+                <GlassBlock title={barText}>
                   <div className={EXERCISE_STACK}>
                     <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 

@@ -26,7 +26,20 @@ import type {
 // sanitizeInstructionsHtml/sanitizeCalloutHtml — обгортки над sanitize-html,
 // уже ізоморфні (використовувались і на сервері, і в клієнтських
 // *-fields.tsx для швидкого фідбеку задовго до цього перенесення).
+// cardTitle — ручний перепис назви типу в компактному барі задачі (нове
+// поле конструктора "Назва типу (FR)", спільне для ВСІХ типів, на
+// відміну від instructions/subInstructions, що лишаються per-тип полями
+// нижче) — єдина точка, де його додають у config, щоб не повторювати в
+// кожній гілці switch. Порожнє поле — cardTitle взагалі не записується в
+// config (getTaskBarText, task-bar-text.ts, тоді бере дефолтну назву типу).
 export function buildTaskConfig(type: string, formData: FormData): Record<string, unknown> {
+  const config = buildTaskConfigForType(type, formData);
+  const cardTitle = (formData.get("card_title") as string | null)?.trim();
+  if (cardTitle) config.cardTitle = cardTitle;
+  return config;
+}
+
+function buildTaskConfigForType(type: string, formData: FormData): Record<string, unknown> {
   switch (type) {
     case "essay_check": {
       const level = (formData.get("essay_level") as string) || "B1";

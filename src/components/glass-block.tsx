@@ -16,17 +16,11 @@ import type { ReactNode } from "react";
 export function GlassBlock({
   title,
   headerExtra,
-  hideInstructionInPanel = false,
   children,
   className = "",
 }: {
   title?: string;
   headerExtra?: ReactNode;
-  // true — title узято з інструкції вправи (getTaskBarText,
-  // task-bar-text.ts), яку та сама вправа вже малює вдруге всередині
-  // панелі (InstructionsText/.instruction-text) — приховує цей дублікат
-  // CSS-правилом (globals.css), не торкаючись ~25 файлів-вправ.
-  hideInstructionInPanel?: boolean;
   children: ReactNode;
   className?: string;
 }) {
@@ -43,11 +37,7 @@ export function GlassBlock({
           {headerExtra}
         </div>
       )}
-      <div
-        className={`glass-block-panel${hideInstructionInPanel ? " glass-block-panel--instruction-in-bar" : ""}`}
-      >
-        {children}
-      </div>
+      <div className="glass-block-panel">{children}</div>
     </div>
   );
 }

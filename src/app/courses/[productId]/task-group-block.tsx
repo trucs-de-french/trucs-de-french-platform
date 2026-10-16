@@ -327,7 +327,7 @@ export function TaskGroupBlock({
   );
 
   return (
-    <GlassBlock title={barText?.text} hideInstructionInPanel={barText?.fromInstruction ?? false}>
+    <GlassBlock title={barText}>
       <div className={EXERCISE_STACK}>{body}</div>
     </GlassBlock>
   );

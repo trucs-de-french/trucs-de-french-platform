@@ -2,36 +2,26 @@ import { Lightbulb } from "lucide-react";
 import { BlockSegments } from "./block-navigation";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
-import { EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 
-// Єдина "зона заголовка" панелі задачі (дизайн-варіант 3) — замінює РІЗНІ
-// рядки, що раніше кожен тип вправи малював окремо (сірий текст "N балів"
-// біля інструкції, саму інструкцію через InstructionsText, окремий рядок
-// лампочки-підказки HintExplanation, підпис "Блок N з M" + сегменти
-// прогресу BlockProgressHeader) — ОДНИМ спільним компонентом з двома
-// рядками:
-//   Рядок 1 (лише якщо є пагінація блоків АБО бали): підпис блоку зліва,
-//     смужка прогресу (BlockSegments) посередині (flex:1), пілюля балів
-//     праворуч. Без блоків — лише пілюля балів, праворуч.
-//   Рядок 2: українська інструкція зліва, пілюля підказки-лампочки
-//     праворуч; обидва огортаються (wrap) на вузьких екранах.
-// Дані (бали/інструкція/підказка/блок) лишаються СЕРВЕР-ОБЧИСЛЕНИМИ самим
-// викликачем (як і раніше) — цей компонент лише розкладає вже готові
-// рядки/значення у новий вигляд, не додає нових полів і не рахує бали сам.
+// Єдина "зона заголовка" панелі задачі (дизайн-варіант 3) — перший елемент
+// усередині .glass-block-panel, одразу над картками вправи: інструкція
+// (FR / UK, рядок a), пілюля балів + пілюля підказки-лампочки (рядок b),
+// тонка лінія-роздільник (c). Пагінація блоків (підпис "Блок N з M" +
+// прогрес-смужка) більше не живе тут узагалі — вона переїхала у вкладки
+// над панеллю (BlockTabs, block-navigation.tsx); пілюля балів тепер ЗАВЖДИ
+// в рядку (b), незалежно від blockCount. Дані (бали/інструкція/підказка)
+// лишаються СЕРВЕР-ОБЧИСЛЕНИМИ самим викликачем (як і раніше) — цей
+// компонент лише розкладає вже готові значення у новий вигляд.
 export function TaskPanelHeader({
-  blockCount,
-  activeBlock,
-  onChangeBlock,
-  isBlockChecked,
-  labels,
-  blockLabel = "Блок",
   pointsText,
   instructionText,
   subInstructionText,
   hintText,
 }: {
-  // Відсутній/≤1 — рядок 1 не показує підпис блоку й смужку прогресу
-  // (типи без пагінації блоків: fill_blank, image_match, drag_drop тощо).
+  // blockCount/activeBlock/onChangeBlock/isBlockChecked/labels/blockLabel —
+  // пагінація блоків більше не рендериться тут (переїхала у вкладки,
+  // BlockTabs, block-navigation.tsx): лишаються в типі пропсів, щоб ~20
+  // виклик-сайтів вправ, що й досі їх передають, не вимагали правок.
   blockCount?: number;
   activeBlock?: number;
   onChangeBlock?: (index: number) => void;
@@ -54,74 +44,31 @@ export function TaskPanelHeader({
 }) {
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
-  // ЕТАП M — пагінація блоків (підпис "Блок N з M" + BlockSegments) і
-  // пілюля балів переїхали НАД панель, у вкладки (BlockTabs,
-  // block-navigation.tsx): коли блоків > 1, рядок 1 тут більше не
-  // рендериться взагалі (ні пагінація, ні пілюля — та сама пілюля тепер
-  // малюється самою BlockTabs праворуч у смужці вкладок). Без блоків
-  // (blockCount<=1) поведінка не змінена — рядок 1 лишається єдиним
-  // місцем для пілюлі балів.
-  const hasBlocks = !!blockCount && blockCount > 1 && !!onChangeBlock;
-  const showRow1 = !hasBlocks && !!pointsText;
-  const showRow2 = !!safeText || !!hintText;
-  // ЕТАП M-fix — сама прогрес-смужка (BlockSegments, БЕЗ підпису "Блок N
-  // з M" і без пілюлі — ті лишаються в BlockTabs над панеллю) повертається
-  // як перший елемент усередині панелі, над рядком інструкції: її
-  // забрали разом зі старим рядком 1 ЕТАПУ M за помилкою — задача явно
-  // вимагає лишити її на місці, окремо від вкладок (вкладки — навігація,
-  // смужка — індикатор прогресу). mb-4 (16px) — власний відступ, НЕ
-  // частина gap-[18px] рядків 1/2 нижче (їх власний внутрішній ритм).
-  const showProgressBar = hasBlocks;
+  const showInstructionLine = !!safeText;
+  const showPillsRow = !!pointsText || !!hintText;
 
-  if (!showProgressBar && !showRow1 && !showRow2) return null;
+  if (!showInstructionLine && !showPillsRow) return null;
 
   return (
-    <div>
-      {showProgressBar && (
-        <div className="mb-4">
-          <BlockSegments
-            blockCount={blockCount!}
-            activeBlock={activeBlock ?? 0}
-            onChangeBlock={onChangeBlock!}
-            isBlockChecked={isBlockChecked}
-            labels={labels}
-            label={blockLabel}
-          />
+    <div className="task-panel-header">
+      {showInstructionLine && (
+        <div className="task-panel-instruction-line">
+          <span className="task-panel-instruction-fr-group">
+            <span className="task-panel-instruction-fr" dangerouslySetInnerHTML={{ __html: safeText! }} />
+            {safeSub && <span className="task-panel-instruction-slash">/</span>}
+          </span>
+          {safeSub && (
+            <span className="task-panel-instruction-uk" dangerouslySetInnerHTML={{ __html: safeSub }} />
+          )}
         </div>
       )}
-      <div className="flex flex-col gap-[18px]">
-        {showRow1 && (
-          <TaskPanelProgressRow
-            blockCount={blockCount}
-            activeBlock={activeBlock}
-            onChangeBlock={onChangeBlock}
-            isBlockChecked={isBlockChecked}
-            labels={labels}
-            blockLabel={blockLabel}
-            pointsText={pointsText}
-          />
-        )}
-
-        {showRow2 && (
-          <div className="flex flex-wrap items-center gap-3">
-            {safeText && (
-              <div className="min-w-0 flex-1">
-                <div
-                  className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
-                  dangerouslySetInnerHTML={{ __html: safeText }}
-                />
-                {safeSub && (
-                  <div
-                    className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-                    dangerouslySetInnerHTML={{ __html: safeSub }}
-                  />
-                )}
-              </div>
-            )}
-            {hintText && <HintPill text={hintText} />}
-          </div>
-        )}
-      </div>
+      {showPillsRow && (
+        <div className="task-panel-pills-row">
+          {pointsText && <PointsPill text={pointsText} variant="tabs" />}
+          {hintText && <HintPill text={hintText} />}
+        </div>
+      )}
+      <div className="task-panel-header-divider" />
     </div>
   );
 }
@@ -209,11 +156,11 @@ export function PointsPill({ text, variant = "panel" }: { text: string; variant?
 
 function HintPill({ text }: { text: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] text-[13px] font-bold text-[#6b4a14] dark:border-transparent dark:bg-transparent dark:text-neutral-400">
+    <span className="inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
       <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
         <Lightbulb size={13} aria-hidden />
       </span>
-      {text}
+      <span className="min-w-0">{text}</span>
     </span>
   );
 }

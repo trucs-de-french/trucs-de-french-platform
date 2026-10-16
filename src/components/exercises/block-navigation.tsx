@@ -3,7 +3,6 @@
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { PointsPill } from "./task-panel-header";
 
 // Спільний підсумок для рядка "Загалом" — навмисно НЕ повний GradeResult
 // (той несе ще й detail, типізований по-різному для кожного gradable-типу,
@@ -159,7 +158,6 @@ export function BlockTabs({
   isBlockChecked,
   labels,
   blockLabel = "Блок",
-  pointsText,
 }: {
   blockCount: number;
   activeBlock: number;
@@ -167,6 +165,10 @@ export function BlockTabs({
   isBlockChecked?: (index: number) => boolean;
   labels?: (string | undefined)[];
   blockLabel?: string;
+  // ЕТАП N — пілюля балів переїхала в заголовок панелі (TaskPanelHeader),
+  // більше не рендериться тут; пропс лишається у типі, щоб усі існуючі
+  // виклик-сайти (вони й далі передають pointsText і в BlockTabs, і в
+  // TaskPanelHeader) не вимагали правок.
   pointsText?: string;
 }) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -222,12 +224,6 @@ export function BlockTabs({
             </button>
           );
         })}
-        <div className="block-tabs-spacer" />
-        {pointsText && (
-          <div className="block-tabs-pill-wrap">
-            <PointsPill text={pointsText} variant="tabs" />
-          </div>
-        )}
       </div>
     </div>
   );

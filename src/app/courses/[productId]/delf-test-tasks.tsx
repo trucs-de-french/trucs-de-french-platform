@@ -145,7 +145,7 @@ export async function DelfTestTasks({
         {skipGlass ? (
           <ExerciseBlock task={task} isDelf />
         ) : (
-          <GlassBlock title={barText!.text} hideInstructionInPanel={barText!.fromInstruction}>
+          <GlassBlock title={barText}>
             <div className={EXERCISE_STACK}>
               <ExerciseBlock task={task} isDelf suppressTitle />
             </div>

@@ -213,7 +213,7 @@ export default async function MaterialPage({
                     (() => {
                       const barText = getTaskBarText(row.task);
                       return (
-                        <GlassBlock title={barText.text} hideInstructionInPanel={barText.fromInstruction}>
+                        <GlassBlock title={barText}>
                           <div className={EXERCISE_STACK}>
                             <ExerciseBlock task={row.task} suppressTitle />
                           </div>

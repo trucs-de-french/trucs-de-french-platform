@@ -1712,9 +1712,10 @@ button, input, textarea, select, label, nav, aside {
 /* Компактний бар задачі (GlassBlock) — НЕ той самий розмір/вигляд, що
    секційні бари (.scene-bar, SectionHeaderBar): менший, без бейджа-
    іконки (GlassBlock більше не рендерить .glass-bar-badge взагалі), без
-   uppercase — текст у ньому тепер зазвичай французька інструкція вправи
-   (getTaskBarText, task-bar-text.ts), не технічна назва типу, тож великий
-   "кричущий" заголовок-варіант 5 тут недоречний. Фон/рамка/тінь/колір
+   uppercase — текст у ньому коротка французька НАЗВА ТИПУ вправи
+   (getTaskBarText, task-bar-text.ts, default-task-labels.ts), не
+   інструкція (та — у заголовку панелі, task-panel-header.tsx), тож
+   великий "кричущий" заголовок-варіант 5 тут недоречний. Фон/рамка/тінь/колір
    тексту — РІВНО ті самі токени --glass-bar-bg/--glass-bar-border/
    --glass-bar-shadow/--glass-bar-text, що й секційний бар (та сама
    "скляна" мова, перемикається тим самим .dark/.light) — раніше тінь тут
@@ -1899,7 +1900,7 @@ button, input, textarea, select, label, nav, aside {
    спрацьовує лише коли вправа реально малює вкладки; типи без блоків
    (чи з ≤1 блоком) лишаються на старих 10px. */
 .glass-block:has(.block-tabs-anchor) .glass-block-header {
-  margin-bottom: 58px;
+  margin-bottom: 46px;
 }
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
@@ -1942,18 +1943,117 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* Дублікат французької інструкції вправи всередині панелі, коли та сама
-   інструкція вже показана в компактному барі над нею (GlassBlock
-   hideInstructionInPanel, task-bar-text.ts) — приховуємо САМЕ основний
-   текст (.instruction-text, InstructionsText), не весь блок: українська
-   підінструкція (.instruction-subtext) лишається на місці, як і сьогодні
-   (вона ніколи не дублюється в барі). Безпечно для всього піддерева
-   панелі, бо hideInstructionInPanel=true трапляється лише тоді, коли
-   панель показує РІВНО одну задачу (звичайна задача чи єдина видима
-   задача групи, що й дала текст бару) — жодної іншої вправи з власним
-   .instruction-text там немає. */
-.glass-block-panel--instruction-in-bar .instruction-text {
-  display: none;
+/* Заголовок панелі задачі (мокап "варіант 3", task-panel-header.tsx) —
+   перший елемент усередині .glass-block-panel: інструкція FR/UK (a),
+   пілюля балів + пілюля підказки (b), тонка лінія-роздільник (c).
+   margin-bottom на самому контейнері "гасить" частину gap батьківського
+   EXERCISE_STACK (flex gap-4/gap-6, spacing.ts) так, щоб відстань від
+   роздільника до першої картки вправи лишалась ~16px на обох брейкпоінтах
+   (desktop gap-6=24px - 8px = 16px; mobile gap-4=16px - 0 = 16px). */
+.task-panel-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: -8px;
+}
+@media (max-width: 767px) {
+  .task-panel-header {
+    margin-bottom: 0;
+  }
+}
+.task-panel-instruction-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  line-height: 1.5;
+}
+/* FR-текст + "/" — ОДИН flex-елемент батька (інструкція/UK — два items
+   зовнішнього flex), але ВСЕРЕДИНІ себе — звичайний inline-потік (НЕ
+   inline-flex): FR-речення може бути довгим і перенестись на кілька
+   рядків САМЕ як текст (не як 2 flex-item в один ряд із baseline-
+   вирівнюванням по ПЕРШОМУ рядку, що приклеювало би "/" до першого рядка
+   замість останнього слова). Пробіл-розрив між FR-текстом і "/" у JSX
+   відсутній (сусідні <span> без текстового вузла між ними) — тож у браузера
+   фізично нема можливості розірвати рядок рівно там, і "/" завжди лишається
+   на тому ж рядку, що останнє слово французької частини. */
+.task-panel-instruction-fr-group {
+  display: inline;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.task-panel-instruction-fr {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1640;
+}
+.dark .task-panel-instruction-fr {
+  color: #f6efd6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-panel-instruction-fr {
+    color: #f6efd6;
+  }
+}
+.task-panel-instruction-slash {
+  margin-left: 6px;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 300;
+  color: #4b46da;
+}
+.dark .task-panel-instruction-slash {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-panel-instruction-slash {
+    color: #f6dc8e;
+  }
+}
+.task-panel-instruction-uk {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: #55546b;
+}
+.dark .task-panel-instruction-uk {
+  color: rgba(246, 239, 214, 0.72);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-panel-instruction-uk {
+    color: rgba(246, 239, 214, 0.72);
+  }
+}
+@media (max-width: 480px) {
+  .task-panel-instruction-fr,
+  .task-panel-instruction-slash {
+    font-size: 17px;
+  }
+  .task-panel-instruction-uk {
+    font-size: 15px;
+  }
+}
+.task-panel-pills-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+.task-panel-header-divider {
+  height: 1px;
+  margin-top: -2px;
+  background: #e6e0c8;
+}
+.dark .task-panel-header-divider {
+  background: rgba(243, 217, 139, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-panel-header-divider {
+    background: rgba(243, 217, 139, 0.2);
+  }
 }
 
 /* Елементи вмісту всередині скляної панелі — тверд/false, згодом і інші
@@ -2860,16 +2960,12 @@ button.scene-bar:active .scene-bar-toggle {
    .glass-block-panel так, щоб верхній-лівий кут anchor збігався з
    верхнім-лівим кутом РАМКИ панелі) — сам .block-tabs-strip сидить у
    ньому position:absolute; bottom:0, тож росте ВГОРУ від лінії рамки
-   панелі. ВИПРАВЛЕННЯ (ЕТАП M-fix): висота смужки раніше бралась з
-   контенту (авто) — непередбачувана й залежна від брейкпоінту (мобільний
-   padding-буст нижче), через що escape-відстань "скільки смужка виходить
-   за межі панелі вгору" не була відома наперед і наїжджала на бар
-   заголовка (.glass-block-header). Тепер висота ФІКСОВАНА (46px, нижче),
-   обидва варіанти вкладки отримують min-height:44px (той самий дотик-
-   розмір, що раніше був лише мобільним бустом — тепер єдиний, без
-   розбіжності між брейкпоінтами) — тож escape-відстань завжди РІВНО 46px,
-   і .glass-block-header margin-bottom (вище, :has(.block-tabs-anchor))
-   може бути одним точним числом (58 = 12 + 46) на всіх екранах. */
+   панелі. Висота смужки ФІКСОВАНА (34px, нижче — мокап "варіант 3",
+   компактніші вкладки за попередню версію) — тож escape-відстань завжди
+   РІВНО 34px, і .glass-block-header margin-bottom (вище,
+   :has(.block-tabs-anchor)) може бути одним точним числом
+   (46 = 12 + 34) на всіх екранах. Дотик-зона ≥40px на мобільному —
+   псевдоелемент на самій вкладці (.block-tab::before), не висота смужки. */
 .block-tabs-anchor {
   position: relative;
   height: 0;
@@ -2886,7 +2982,7 @@ button.scene-bar:active .scene-bar-toggle {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 46px;
+  height: 34px;
   display: flex;
   align-items: flex-end;
   gap: 6px;
@@ -2898,17 +2994,10 @@ button.scene-bar:active .scene-bar-toggle {
 .block-tabs-strip::-webkit-scrollbar {
   display: none;
 }
-.block-tabs-spacer {
-  flex: 1 0 16px;
-}
-.block-tabs-pill-wrap {
-  flex-shrink: 0;
-  align-self: center;
-}
-/* ЕТАП N — градієнтна пілюля балів у смужці вкладок (та сама родина, що
-   аудіоплеєр/нові prev-next): РІВНО той самий градієнт в обох темах;
-   темна тема (нижче) додає тонке золоте кільце до тіні, той самий
-   прийом, що й кнопки ←/→. */
+/* ЕТАП N — градієнтна пілюля балів (мокап варіант 3): переїхала зі
+   смужки вкладок у заголовок панелі (task-panel-header.tsx,
+   .task-panel-pills-row) — сам клас/градієнт лишається тим самим, лише
+   інше місце застосування. */
 .points-pill-gradient {
   display: inline-flex;
   align-items: center;
@@ -2936,34 +3025,49 @@ button.scene-bar:active .scene-bar-toggle {
   margin-right: 6px;
 }
 .block-tab {
+  position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   font-family: var(--font-heading);
+  line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+/* Мокап "варіант 3" — вкладки навмисно менші за попередню версію
+   (ЕТАП M-fix, 44px/46px), видимий розмір лишається компактним; дотик-
+   зона ≥40px на мобільному — псевдоелемент нижче (::before), що росте
+   вгору від низу вкладки, НЕ сам видимий бокс (інакше вкладки знову
+   стали б візуально великими). */
+@media (max-width: 640px) {
+  .block-tab::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 40px;
+  }
+}
 .block-tab--active {
-  min-height: 44px;
-  padding: 10px 22px 12px;
-  border-radius: 14px 14px 0 0;
+  padding: 7px 18px 9px;
+  border-radius: 12px 12px 0 0;
   background: var(--glass-panel-bg);
   border: 1.5px solid #d9b765;
   border-bottom: none;
   margin-bottom: -1.5px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   color: #1a1640;
 }
 .block-tab--inactive {
-  min-height: 44px;
-  padding: 8px 20px;
-  border-radius: 12px 12px 0 0;
+  padding: 5px 16px;
+  border-radius: 10px 10px 0 0;
   background: #efe5c4;
   border: 1px solid rgba(217, 183, 101, 0.6);
   border-bottom: none;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #6b6a80;
 }
