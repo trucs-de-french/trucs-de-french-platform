@@ -7,7 +7,7 @@ import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 // повністю на сервері (RSC), жодного JS студенту не надсилається.
 
 export const STYLE_CLASSES: Record<CalloutStyle, string> = {
-  none: "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900",
+  none: "border-neutral-300 glass-inset-bg bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900",
   info: "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
   tip: "border-yellow-300 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/40",
   warning: "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40",

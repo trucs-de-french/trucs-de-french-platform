@@ -105,7 +105,7 @@ export const COMPACT_IMAGE_FILL = "absolute inset-0 h-full w-full object-cover o
 // БЕЗ зміни значення, щоб listening.tsx міг узяти той самий клас, а не
 // передруковувати його.
 export const POOL_CLASS =
-  "grid grid-cols-1 items-stretch gap-2 border-t border-[#e6e6f0] bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
+  "grid grid-cols-1 items-stretch gap-2 border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]";
 
 // Плитка-відповідь у пулі: min-h-12 (48px) — зона дотику на touch. Колір
 // стану додається викликачем окремо (chipClass/tileClass і т.п.) — перенесено

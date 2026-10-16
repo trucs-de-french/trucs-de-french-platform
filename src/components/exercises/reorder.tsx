@@ -123,7 +123,7 @@ function ReorderSequenceTiles({
                 : `${points} ${pluralizePoints(points)}`}
             </p>
           )}
-          <div className="max-md:rounded-lg max-md:bg-neutral-50 max-md:p-2 max-md:dark:bg-neutral-900">
+          <div className="max-md:rounded-lg glass-inset-bg-mobile max-md:bg-neutral-50 max-md:p-2 max-md:dark:bg-neutral-900">
             <SortableTileRow
               items={order}
               onChange={onChange}

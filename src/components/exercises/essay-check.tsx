@@ -110,7 +110,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
       </div>
 
       {activeError && (
-        <div className="rounded-md bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
+        <div className="rounded-md glass-inset-bg bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
           <p className="font-medium text-amber-700 dark:text-amber-400">{activeError.category}</p>
           <p className="mt-1">
             <span className="text-neutral-500 dark:text-neutral-400">Виправлення: </span>

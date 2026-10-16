@@ -1093,8 +1093,15 @@ button, input, textarea, select, label, nav, aside {
    --glass-answer-text, --glass-focus-ring), сюди НЕ дублюються — лишаються
    на успадкування з :root. */
 .light .glass-block,
-.light .scene-bar {
-  --glass-panel-bg: #fdfdfb;
+.light .scene-bar,
+.light .glass-block-panel {
+  /* --glass-surface (единий непрозорий теплий крем, визначений на корені
+     .light нижче біля --glass-card-bg-gradient) — панель задачі й
+     панелі Скрипту/Вокабуляру (ScriptSection/VocabSection рендерять
+     .glass-block-panel без спільного предка .glass-block/.scene-bar,
+     тож .glass-block-panel тут у СЕЛЕКТОРІ, не лише як нащадок, —
+     токени застосовуються напряму й на них). */
+  --glass-panel-bg: var(--glass-surface);
   --glass-panel-border: #d9b765;
   --glass-panel-border-width: 1.5px;
   --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -1102,7 +1109,7 @@ button, input, textarea, select, label, nav, aside {
      header) — РІВНО ті самі значення, явно тут (а не лише на :root
      дефолті вище), щоб джерело правди для обох барів було одним і тим
      самим токеном у тому самому місці, що решта "variant 3" токенів. */
-  --glass-bar-bg: rgba(255, 255, 255, 0.93);
+  --glass-bar-bg: var(--glass-surface);
   --glass-bar-border: rgba(184, 144, 47, 0.65);
   --glass-bar-text: #1a1640;
   --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -1135,12 +1142,13 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .glass-block,
-  :root:not(.dark) .scene-bar {
-    --glass-panel-bg: #fdfdfb;
+  :root:not(.dark) .scene-bar,
+  :root:not(.dark) .glass-block-panel {
+    --glass-panel-bg: var(--glass-surface);
     --glass-panel-border: #d9b765;
     --glass-panel-border-width: 1.5px;
     --glass-panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    --glass-bar-bg: rgba(255, 255, 255, 0.93);
+    --glass-bar-bg: var(--glass-surface);
     --glass-bar-border: rgba(184, 144, 47, 0.65);
     --glass-bar-text: #1a1640;
     --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -1175,11 +1183,23 @@ button, input, textarea, select, label, nav, aside {
 .light {
   --glass-card-bg-gradient: linear-gradient(#ffffff, #ffffff) padding-box,
     linear-gradient(180deg, rgba(217, 183, 101, 0.85), rgba(217, 183, 101, 0.12)) border-box;
+  /* Єдина суцільна тепла крем-поверхня світлої теми — панелі/бари
+     (.glass-panel-bg/.glass-bar-bg вище) тепер читають САМЕ цей токен,
+     замість кожен свого близького, але трохи іншого відтінку. Картки/
+     плитки/інпути лишаються на #fff (--glass-item-bg/--glass-answer-bg/
+     --glass-input-bg), контраст "біла картка на кремовій панелі" — те,
+     що й мало бути. --glass-surface-inset — трохи темніший відтінок для
+     контейнерів УСЕРЕДИНІ панелі (пул слів, повідомлення-бокси), щоб
+     вони читались як вставка в панель, не плутались із самою панеллю. */
+  --glass-surface: #fdf8ea;
+  --glass-surface-inset: #f6efd9;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) {
     --glass-card-bg-gradient: linear-gradient(#ffffff, #ffffff) padding-box,
       linear-gradient(180deg, rgba(217, 183, 101, 0.85), rgba(217, 183, 101, 0.12)) border-box;
+    --glass-surface: #fdf8ea;
+    --glass-surface-inset: #f6efd9;
   }
 }
 /* Спільний клас для карток вправ, що й досі стилізовані літеральними
@@ -1277,6 +1297,37 @@ button, input, textarea, select, label, nav, aside {
 @media (hover: hover) and (prefers-color-scheme: light) {
   :root:not(.dark) .glass-chip-hover:hover {
     border-color: rgba(217, 183, 101, 0.85);
+  }
+}
+/* Контейнери-"вставки" всередині панелі (пул слів під питанням/карткою,
+   повідомлення-бокси без власної картки) — трохи темніший за панель
+   суцільний тон (--glass-surface-inset), замість колишнього сірого
+   bg-neutral-50/bg-gray-50 (той тон був підібраний під СТАРИЙ фон
+   EXERCISE_BLOCK_CLASS/панелі, не під крем). Додається ДО існуючого
+   рядка класів (bg-neutral-50 лишається для dark:, не видаляємо його)
+   — та сама специфічність-переможець (0,2,0), що й .glass-chip/.glass-
+   gold-edge вище. */
+.light .glass-inset-bg {
+  background: var(--glass-surface-inset);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-inset-bg {
+    background: var(--glass-surface-inset);
+  }
+}
+/* Той самий інсет-тон, лише МОБІЛЬНИЙ варіант (reorder.tsx, max-md:bg-
+   neutral-50) — без Tailwind-префікса max-md: на самому класі (Tailwind
+   не генерує варіант для невідомого йому класу), замість цього медіа-
+   запит прямо в правилі, той самий злам ширини (767px), що інші max-md-
+   оверайди в цьому файлі (.glass-reading-passage вище). */
+@media (max-width: 767px) {
+  .light .glass-inset-bg-mobile {
+    background: var(--glass-surface-inset);
+  }
+}
+@media (max-width: 767px) and (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-inset-bg-mobile {
+    background: var(--glass-surface-inset);
   }
 }
 

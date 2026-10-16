@@ -25,14 +25,14 @@ export type StickyPoolVariant = "image-match" | "fill-blank" | "drag-drop";
 export function stickyPoolClass(variant: StickyPoolVariant): string {
   switch (variant) {
     case "image-match":
-      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-1.5 pt-0.5 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] glass-inset-bg bg-neutral-50 px-1 pb-1.5 pt-0.5 sm:max-h-[30vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "fill-blank":
       // gap-x-1.5/gap-y-2 (не gap-2) — чипи fill_blank нижчі (fill-blank.tsx),
       // gap-y-2 (8px) лишає місце для невидимої зони дотику (before:-inset-y),
       // щоб сусідні рядки чипів не перекривались.
-      return "sticky top-0 z-10 -mx-1 flex flex-nowrap gap-x-1.5 gap-y-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex flex-nowrap gap-x-1.5 gap-y-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] glass-inset-bg bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
     case "drag-drop":
-      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
+      return "sticky top-0 z-10 -mx-1 flex min-h-12 flex-nowrap gap-2 overflow-x-auto rounded-md border-b border-[#e6e6f0] glass-inset-bg bg-neutral-50 px-1 pb-2 pt-1 sm:max-h-[25vh] sm:flex-wrap sm:overflow-x-visible sm:overflow-y-auto dark:border-neutral-700 dark:bg-neutral-900";
   }
 }
 

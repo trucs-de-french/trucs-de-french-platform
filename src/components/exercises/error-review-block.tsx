@@ -197,7 +197,7 @@ function ErrorReviewCard({
       )}
 
       {expanded && isInteractive && !isDone && entry.config && (
-        <div className="border-t border-[#e6e6f0] bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
+        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
           {entry.taskType === "multiple_choice" && (
             <MultipleChoiceExercise
               taskId={entry.taskId}
