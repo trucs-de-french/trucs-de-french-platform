@@ -765,7 +765,7 @@ function WordSearchBlockView({
                     виключно обробниками на клітинках нижче. Пізніші слова
                     малюються пізніше в DOM — природно лягають ПОВЕРХ раніших
                     при перетині (вимога п.4). */}
-                <div className="ws-capsule-layer absolute inset-0">
+                <div className="ws-capsule-layer pointer-events-none absolute inset-0">
                   {[...foundWords.entries()].map(([word, cells]) => {
                     if (cells.length === 0) return null;
                     return (
@@ -1093,7 +1093,7 @@ export function WordSearchExercise({
       {(instructionHtml || hintText) && (
         <div className="ws-header-row2 flex flex-wrap items-center gap-3">
           {instructionHtml && (
-            <div className="min-w-0 flex-1">
+            <div className="ws-instruction min-w-0 flex-1">
               <div
                 className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
                 dangerouslySetInnerHTML={{ __html: instructionHtml }}

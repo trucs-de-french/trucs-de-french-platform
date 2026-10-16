@@ -570,22 +570,26 @@ button, input, textarea, select, label, nav, aside {
    рядком, нотатка-підказка під нею). */
 .light .ws-header-row2 {
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 16px;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-header-row2 {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 16px;
   }
 }
-.light .ws-header-row2 > * {
+/* Лише інструкція тягнеться на всю ширину (ЕТАП K1, фікс B) — нотатка-
+   підказка нижче розраховує СВОЮ ширину сама (fit-content), тож тут
+   гачок на самій інструкції (.ws-instruction), а не "> *" по всіх дітях
+   рядка 2 — інакше він перебивав би ws-hint-note. */
+.light .ws-header-row2 > .ws-instruction {
   flex: none;
   width: 100%;
 }
 @media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-header-row2 > * {
+  :root:not(.dark) .ws-header-row2 > .ws-instruction {
     flex: none;
     width: 100%;
   }
@@ -593,12 +597,15 @@ button, input, textarea, select, label, nav, aside {
 
 /* Нотатка-підказка — у темній лишається старою компактною пілюлею
    (border-transparent bg-transparent text-neutral-400, round-full), у
-   світлій стає повношириним білим "нотесом", що переноситься на 2-3
-   рядки. */
+   світлій стає білим "нотесом" ПІД ІНСТРУКЦІЄЮ (не на всю ширину панелі —
+   ЕТАП K1, фікс B: inline-flex/fit-content + max-width; align-items:center
+   — фікс A: лампа й текст по одній вертикальній осі навіть коли текст
+   переноситься на 2-3 рядки). */
 .light .ws-hint-note {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: min(100%, 680px);
   gap: 12px;
   border-radius: 16px;
   padding: 8px 16px 8px 8px;
@@ -607,9 +614,10 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-hint-note {
-    display: flex;
-    align-items: flex-start;
-    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: min(100%, 680px);
     gap: 12px;
     border-radius: 16px;
     padding: 8px 16px 8px 8px;
@@ -618,6 +626,9 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 .light .ws-hint-note .ws-hint-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
@@ -626,6 +637,9 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-hint-note .ws-hint-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
     font-family: var(--font-body);
     font-size: 14px;
     font-weight: 600;
@@ -635,15 +649,19 @@ button, input, textarea, select, label, nav, aside {
 }
 /* Лампа у нотатці — та сама .lamp-badge (ЕТАП H, золотий градієнт/темний
    бульб), лише більша (32px замість 24px у пілюлі) — розмір гейтується
-   окремо від кольору/стану, щоб не чіпати жоден інший .lamp-badge. */
+   окремо від кольору/стану, щоб не чіпати жоден інший .lamp-badge.
+   flex:none (фікс A) — коло не стискається/не розтягується поруч із
+   текстом, що переноситься на кілька рядків. */
 .light .ws-hint-lamp {
   width: 32px;
   height: 32px;
+  flex: none;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-hint-lamp {
     width: 32px;
     height: 32px;
+    flex: none;
   }
 }
 .light .ws-hint-lamp svg {
@@ -681,38 +699,53 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* Горизонтальний скрол-контейнер сітки — трохи внутрішнього відступу у
-   світлій, щоб тінь "листа" (.ws-sheet нижче) не обрізалась краєм
-   overflow-x:auto. */
+/* Горизонтальний скрол-контейнер сітки (ЕТАП K1, фікс D) — overflow-x:auto
+   неявно переводить і overflow-y у "auto" (правило узгодження CSS2.1), тож
+   сам скрол-контейнер стає кліп-рамкою для ВСЬОГО намальованого всередині,
+   включно з box-shadow "листа" нижче — звідси пряма рамка тіні з задачі.
+   Фікс — запас padding з усіх боків (достатній для розмитої тіні 30px) +
+   компенсуюча від'ємна margin РІВНО такого ж розміру, щоб сам контейнер не
+   займав зайвого місця в розмітці (той самий трюк, що й overflow+shadow у
+   будь-якому CSS-довіднику). Низ — трохи більший запас (56px padding/-40px
+   margin), бо тінь офсетна вниз (14px blur-y start). */
 .light .ws-scroll {
-  padding: 16px;
+  overflow-x: auto;
+  padding: 8px 40px 56px;
+  margin: -8px -40px -40px;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-scroll {
-    padding: 16px;
+    overflow-x: auto;
+    padding: 8px 40px 56px;
+    margin: -8px -40px -40px;
   }
 }
 
 /* "Плаваючий лист" — САМЕ на .grid-zoom-inner (вже w-max mx-auto, тобто
    інлайн-блок по центру): світла тема додає лише фон/падінг/радіус/тінь,
    не чіпаючи розмір/позиціювання, які лишаються спільними з кросвордом.
-   Більший --cw (46px стеля замість 36px) — лише тут, через вищу
-   специфічність (.light .ws-sheet) за .grid-zoom-inner; кросворд і темна
-   тема філворду лишаються на старому clamp(28px..36px). */
+   ЕТАП K1, фікс C — клітинка повертається до 36px при 100% зумі (та сама
+   стеля 2.25rem, що в БАЗОВОМУ .grid-zoom-inner — ЕТАП J, кросворд і темна
+   тема філворду й так на ній), але формула тут віднімає padding "листа"
+   (32px, по 16px з кожного боку) із 100cqw, щоб клітинки звужувались
+   ФЛЮЇДНО (а не через overflow/скрол) і "лист" ніколи не вилазив за межі
+   контейнера на вузьких екранах — на відміну від .grid-zoom-inner, що
+   рахує 100cqw без цього віднімання (там зайвого padding немає). Фікс D
+   (м'якша тінь) — той самий блок, тут-таки. */
 .light .ws-sheet {
   background: #fff;
   padding: 16px;
   border-radius: 26px;
-  box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 22px 44px -14px rgba(120, 90, 20, 0.5);
-  --cw: calc(clamp(2rem, 100cqw / var(--cols, 12), 2.875rem) * var(--zoom, 1));
+  box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 14px 30px -14px rgba(120, 90, 20, 0.38);
+  --cw: calc(clamp(1.75rem, (100cqw - 32px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .ws-sheet {
     background: #fff;
     padding: 16px;
     border-radius: 26px;
-    box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 22px 44px -14px rgba(120, 90, 20, 0.5);
-    --cw: calc(clamp(2rem, 100cqw / var(--cols, 12), 2.875rem) * var(--zoom, 1));
+    box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 14px 30px -14px rgba(120, 90, 20, 0.38);
+    --cw: calc(clamp(1.75rem, (100cqw - 32px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
   }
 }
 @media (max-width: 640px) {
@@ -816,8 +849,17 @@ button, input, textarea, select, label, nav, aside {
     display: none;
   }
 }
+/* ЕТАП K1, фікс E (КРИТИЧНИЙ РЕГРЕС) — ЦЕЙ шар (absolute inset-0 над усією
+   сіткою) не мав pointer-events:none на САМОМУ СОБІ, лише на дочірніх
+   .ws-capsule: у світлій темі (display:block) порожній простір між
+   капсулами й так лишався pointer-events:auto й перехоплював elementFrom-
+   Point/клік/дотик ПЕРШИМ, раніше за клітинки під ним (підтверджено
+   Playwright: document.elementFromPoint у центрі клітинки повертав САМЕ
+   цей div, .closest("[data-row]") — null). pointer-events:none тут
+   повністю прибирає шар із черги хіт-тестування. */
 .ws-capsule-layer {
   display: none;
+  pointer-events: none;
 }
 .light .ws-capsule-layer {
   display: block;
