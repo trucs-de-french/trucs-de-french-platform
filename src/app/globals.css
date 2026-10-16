@@ -2905,6 +2905,36 @@ button.scene-bar:active .scene-bar-toggle {
   flex-shrink: 0;
   align-self: center;
 }
+/* ЕТАП N — градієнтна пілюля балів у смужці вкладок (та сама родина, що
+   аудіоплеєр/нові prev-next): РІВНО той самий градієнт в обох темах;
+   темна тема (нижче) додає тонке золоте кільце до тіні, той самий
+   прийом, що й кнопки ←/→. */
+.points-pill-gradient {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #1a1640 0%, #4b46da 100%);
+  border: none;
+  padding: 6px 16px;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
+  color: #f6dc8e;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.dark .points-pill-gradient {
+  box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .points-pill-gradient {
+    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+  }
+}
+.points-pill-star {
+  flex-shrink: 0;
+  margin-right: 6px;
+}
 .block-tab {
   flex-shrink: 0;
   display: flex;
@@ -3018,6 +3048,12 @@ button.scene-bar:active .scene-bar-toggle {
   flex: 1;
   min-width: 0;
 }
+/* ЕТАП N — градієнтний індиго-дизайн "Далі"/prev (та сама родина, що
+   аудіоплеєр): РІВНО той самий градієнт в обох темах (contrast-перевірка,
+   звіт) — лише темна тема додає тонке золоте кільце (box-shadow inset-
+   style ring, не border, щоб не губитись на темній панелі), світлотемні
+   правила ховера/бордерів тому НЕ розгалужуються на .light/.dark, як
+   раніше. */
 .exercise-block-prev-btn {
   display: flex;
   flex-shrink: 0;
@@ -3025,11 +3061,12 @@ button.scene-bar:active .scene-bar-toggle {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1.5px solid #c9c4f2;
+  border: none;
   border-radius: 12px;
-  background: #fff;
-  color: #3b36c4;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  background: linear-gradient(135deg, #2f2c6b 0%, #4b46da 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
+  transition: background-image 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 .exercise-block-next-btn {
   display: inline-flex;
@@ -3037,104 +3074,82 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   gap: 8px;
   height: 44px;
-  padding: 0 18px;
-  border: 1.5px solid #4b46da;
+  padding: 0 12px 0 18px;
+  border: none;
   border-radius: 12px;
-  background: #fff;
-  color: #3b36c4;
+  background: linear-gradient(135deg, #2f2c6b 0%, #4b46da 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 17px;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-image 0.15s ease, box-shadow 0.15s ease;
 }
-.exercise-block-prev-btn:disabled {
-  opacity: 0.55;
-  color: #a9a5d8;
-  cursor: not-allowed;
+/* Кругла "плашка" під шеврон "Далі" — замінює голу іконку просто в рядку
+   кнопки. */
+.exercise-block-next-btn-badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
+.exercise-block-prev-btn:disabled,
 .exercise-block-next-btn:disabled {
-  border-color: #c9c8ea;
-  color: #b5b4cc;
+  opacity: 0.4;
+  box-shadow: none;
   cursor: not-allowed;
 }
 @media (hover: hover) {
   .exercise-block-prev-btn:not(:disabled):hover,
   .exercise-block-next-btn:not(:disabled):hover {
-    background: #ecebfd;
+    background-image: linear-gradient(135deg, #3a3787 0%, #5a55e6 100%);
+    box-shadow: 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
 .exercise-block-prev-btn:focus-visible,
 .exercise-block-next-btn:focus-visible {
-  outline: 2px solid #4b46da;
+  outline: 2px solid #f6dc8e;
   outline-offset: 2px;
 }
-/* Світла тема: легший лавандовий ховер (#f4f2ff, не #ecebfd вище — те
-   лишається дефолтом/темною темою) і фокус-кільце через box-shadow
-   замість outline. Та сама подвійна гейтовка .light / prefers-color-
-   scheme, що інші світлотемні правила файлу — вища специфічність
-   безпечно перекриває правила вище лише в світлій темі. */
-.light .exercise-block-prev-btn:not(:disabled):hover,
-.light .exercise-block-next-btn:not(:disabled):hover {
-  background: #f4f2ff;
-}
-.light .exercise-block-prev-btn:focus-visible,
-.light .exercise-block-next-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .exercise-block-prev-btn:not(:disabled):hover,
-  :root:not(.dark) .exercise-block-next-btn:not(:disabled):hover {
-    background: #f4f2ff;
-  }
-  :root:not(.dark) .exercise-block-prev-btn:focus-visible,
-  :root:not(.dark) .exercise-block-next-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
-  }
-}
-/* Темна тема — той самий контурний "secondary" вигляд, що вже існує для
-   темних другорядних кнопок платформи (grid-zoom-controls.tsx: border-
-   neutral-700/bg-neutral-800/text-neutral-300), а не світла indigo-рамка
-   вище. */
+/* Темна тема — тонке золоте кільце ДОДАТКОВО до тіні (та сама панель-
+   приклеєна мова, що .block-tab--active/.ws-sheet): пілюля/кнопки з
+   однаковим градієнтом в обох темах інакше губились би на темній панелі
+   без жодного контуру. */
 .dark .exercise-block-prev-btn,
 .dark .exercise-block-next-btn {
-  background: #262626;
-  border-color: #404040;
-  color: #d4d4d4;
+  box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn,
   :root:not(.light) .exercise-block-next-btn {
-    background: #262626;
-    border-color: #404040;
-    color: #d4d4d4;
+    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
   }
 }
 .dark .exercise-block-prev-btn:disabled,
 .dark .exercise-block-next-btn:disabled {
-  opacity: 0.45;
-  color: #d4d4d4;
-  border-color: #404040;
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn:disabled,
   :root:not(.light) .exercise-block-next-btn:disabled {
-    opacity: 0.45;
-    color: #d4d4d4;
-    border-color: #404040;
+    box-shadow: none;
   }
 }
 @media (hover: hover) {
   .dark .exercise-block-prev-btn:not(:disabled):hover,
   .dark .exercise-block-next-btn:not(:disabled):hover {
-    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn:not(:disabled):hover,
   :root:not(.light) .exercise-block-next-btn:not(:disabled):hover {
-    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
 /* Мобільний рядок (ЕТАП M, п.3): "Перевірити блок" розтягується на решту

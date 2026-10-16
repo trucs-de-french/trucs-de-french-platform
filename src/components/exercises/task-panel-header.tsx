@@ -177,7 +177,29 @@ export function TaskPanelProgressRow({
   );
 }
 
-export function PointsPill({ text }: { text: string }) {
+// variant "panel" (типово) — стара гранатова пілюля всередині рядка 1
+// панелі (TaskPanelProgressRow, лише для вправ БЕЗ блоків/вкладок — ця
+// задача її не чіпає). variant "tabs" — нова градієнтна пілюля САМЕ в
+// смужці вкладок (BlockTabs), з зіркою: окремий вигляд, щоб не зачепити
+// вправи без вкладок через спільний компонент.
+export function PointsPill({ text, variant = "panel" }: { text: string; variant?: "panel" | "tabs" }) {
+  if (variant === "tabs") {
+    return (
+      <span className="points-pill-gradient">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="#f6dc8e"
+          aria-hidden="true"
+          className="points-pill-star"
+        >
+          <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+        </svg>
+        {text}
+      </span>
+    );
+  }
   return (
     <span className="inline-flex shrink-0 items-center rounded-full bg-[#1a1640] px-3 py-[3px] font-heading text-[13px] font-extrabold text-[#f6dc8e] dark:border dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
       {text}

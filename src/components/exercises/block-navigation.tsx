@@ -225,7 +225,7 @@ export function BlockTabs({
         <div className="block-tabs-spacer" />
         {pointsText && (
           <div className="block-tabs-pill-wrap">
-            <PointsPill text={pointsText} />
+            <PointsPill text={pointsText} variant="tabs" />
           </div>
         )}
       </div>
@@ -267,7 +267,7 @@ export function BlockNavFooter({
         aria-label="Попередній блок"
         className="exercise-block-prev-btn"
       >
-        <ChevronIcon direction="left" size={20} />
+        <ChevronIcon direction="left" size={18} />
       </button>
       <button
         type="button"
@@ -277,7 +277,12 @@ export function BlockNavFooter({
         className="exercise-block-next-btn"
       >
         <span className="exercise-block-next-btn-label">Далі</span>
-        <ChevronIcon direction="right" size={18} />
+        {/* Кругла золота "плашка" під шеврон (градієнтний індиго-дизайн,
+            та сама родина, що аудіоплеєр) — замінює голу іконку, яка
+            раніше сиділа прямо в рядку кнопки. */}
+        <span className="exercise-block-next-btn-badge">
+          <ChevronIcon direction="right" size={16} />
+        </span>
       </button>
     </div>
   );
