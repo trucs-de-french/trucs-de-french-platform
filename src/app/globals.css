@@ -556,6 +556,327 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* word-search.tsx — "плаваючий лист" (ЕТАП K, мокап "варіант 2"), СВІТЛА
+   тема лише: темна тема нічого з цього блоку не бачить (усі правила
+   гейтовані .light / :root:not(.dark)), і далишається на старих
+   Tailwind-класах (border-neutral-700 на сітці/клітинках, bg-blue-800 на
+   виділенні, зелена SVG-лінія знайденого слова, синє кільце підказки) —
+   нешаруваний CSS тут нижче завжди переважає ці Tailwind-утиліти, тож
+   досить додати лише ГАЧКИ-класи в JSX (ws-*), не чіпаючи самі dark:-рядки.
+
+   Row 2 (інструкція+підказка) — у темній лишається старий
+   flex-wrap items-center рядок (пілюля підказки поруч з інструкцією); у
+   світлій стає вертикальним стеком на всю ширину (інструкція окремим
+   рядком, нотатка-підказка під нею). */
+.light .ws-header-row2 {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-header-row2 {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+}
+.light .ws-header-row2 > * {
+  flex: none;
+  width: 100%;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-header-row2 > * {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* Нотатка-підказка — у темній лишається старою компактною пілюлею
+   (border-transparent bg-transparent text-neutral-400, round-full), у
+   світлій стає повношириним білим "нотесом", що переноситься на 2-3
+   рядки. */
+.light .ws-hint-note {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  gap: 12px;
+  border-radius: 16px;
+  padding: 8px 16px 8px 8px;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.55);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-hint-note {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    gap: 12px;
+    border-radius: 16px;
+    padding: 8px 16px 8px 8px;
+    background: #fff;
+    border: 1px solid rgba(217, 183, 101, 0.55);
+  }
+}
+.light .ws-hint-note .ws-hint-text {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #6b4a14;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-hint-note .ws-hint-text {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #6b4a14;
+  }
+}
+/* Лампа у нотатці — та сама .lamp-badge (ЕТАП H, золотий градієнт/темний
+   бульб), лише більша (32px замість 24px у пілюлі) — розмір гейтується
+   окремо від кольору/стану, щоб не чіпати жоден інший .lamp-badge. */
+.light .ws-hint-lamp {
+  width: 32px;
+  height: 32px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-hint-lamp {
+    width: 32px;
+    height: 32px;
+  }
+}
+.light .ws-hint-lamp svg {
+  width: 17px;
+  height: 17px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-hint-lamp svg {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+/* Зум-кнопки філворду — обгортка .ws-zoom лише навколо ВИКЛИКУ
+   GridZoomControls у word-search.tsx (кросворд використовує той самий
+   спільний компонент БЕЗ цього класу — його кнопки лишаються як є). */
+.light .ws-zoom button {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(217, 183, 101, 0.55);
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
+  color: #1f1d3a;
+  font-weight: 700;
+  background: #fff;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-zoom button {
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(217, 183, 101, 0.55);
+    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
+    color: #1f1d3a;
+    font-weight: 700;
+    background: #fff;
+  }
+}
+
+/* Горизонтальний скрол-контейнер сітки — трохи внутрішнього відступу у
+   світлій, щоб тінь "листа" (.ws-sheet нижче) не обрізалась краєм
+   overflow-x:auto. */
+.light .ws-scroll {
+  padding: 16px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-scroll {
+    padding: 16px;
+  }
+}
+
+/* "Плаваючий лист" — САМЕ на .grid-zoom-inner (вже w-max mx-auto, тобто
+   інлайн-блок по центру): світла тема додає лише фон/падінг/радіус/тінь,
+   не чіпаючи розмір/позиціювання, які лишаються спільними з кросвордом.
+   Більший --cw (46px стеля замість 36px) — лише тут, через вищу
+   специфічність (.light .ws-sheet) за .grid-zoom-inner; кросворд і темна
+   тема філворду лишаються на старому clamp(28px..36px). */
+.light .ws-sheet {
+  background: #fff;
+  padding: 16px;
+  border-radius: 26px;
+  box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 22px 44px -14px rgba(120, 90, 20, 0.5);
+  --cw: calc(clamp(2rem, 100cqw / var(--cols, 12), 2.875rem) * var(--zoom, 1));
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-sheet {
+    background: #fff;
+    padding: 16px;
+    border-radius: 26px;
+    box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.45), 0 22px 44px -14px rgba(120, 90, 20, 0.5);
+    --cw: calc(clamp(2rem, 100cqw / var(--cols, 12), 2.875rem) * var(--zoom, 1));
+  }
+}
+@media (max-width: 640px) {
+  .light .ws-sheet {
+    padding: 12px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .ws-sheet {
+      padding: 12px;
+    }
+  }
+}
+
+/* Сітка без внутрішніх ліній — рамки контейнера й клітинок (border-l/-t на
+   .ws-grid, border-r/-b на .ws-cell) стають прозорими лише у світлій;
+   темна лишається на старому border-neutral-700. */
+.light .ws-grid {
+  border-color: transparent;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-grid {
+    border-color: transparent;
+  }
+}
+.light .ws-cell {
+  border-color: transparent;
+  color: #1f1d3a;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-cell {
+    border-color: transparent;
+    color: #1f1d3a;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ws-cell {
+    transition: background-color 150ms, color 150ms;
+  }
+}
+
+/* Старе виділення по клітинці (bg-blue-200, inline у cellClass()) —
+   вимикається у світлій (капсула .ws-capsule-selecting нижче малює
+   виділення замість цього); темна лишається на bg-blue-800. */
+.light .ws-cell-previewing {
+  background: transparent;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-cell-previewing {
+    background: transparent;
+  }
+}
+.light .ws-letter-found {
+  color: #2f2488;
+  font-weight: 800;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-letter-found {
+    color: #2f2488;
+    font-weight: 800;
+  }
+}
+.light .ws-letter-selecting {
+  color: #3b36c4;
+  font-weight: 800;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-letter-selecting {
+    color: #3b36c4;
+    font-weight: 800;
+  }
+}
+
+/* Підказка першої літери (ws-cell-hinted, завжди на клітинці, незалежно
+   від теми) — у темній лишається старе синє кільце (dark:bg-blue-900/50
+   dark:text-blue-200 + ring-blue-500, незмінно); у світлій — золоте коло. */
+.light .ws-cell-hinted {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e) !important;
+  box-shadow: 0 0 0 5px rgba(224, 170, 62, 0.25) !important;
+  color: #1a1640 !important;
+  font-weight: 800;
+  border-radius: 50%;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-cell-hinted {
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e) !important;
+    box-shadow: 0 0 0 5px rgba(224, 170, 62, 0.25) !important;
+    color: #1a1640 !important;
+    font-weight: 800;
+    border-radius: 50%;
+  }
+}
+
+/* Стара пряма лінія знайденого слова (SVG, зелена) vs нові капсули —
+   взаємовиключні: темна бачить лише .ws-lines-layer (як і раніше), світла
+   — лише .ws-capsule-layer. */
+.light .ws-lines-layer {
+  display: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-lines-layer {
+    display: none;
+  }
+}
+.ws-capsule-layer {
+  display: none;
+}
+.light .ws-capsule-layer {
+  display: block;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-capsule-layer {
+    display: block;
+  }
+}
+.ws-capsule {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.ws-capsule-found {
+  background: #e1d9fa;
+}
+.ws-capsule-selecting {
+  background: rgba(75, 70, 218, 0.06);
+  border: 2px dashed #4b46da;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ws-capsule {
+    transition: opacity 150ms;
+  }
+}
+
+/* Легенда кольорів під сіткою — нова, лише світла тема (темна й далі без
+   неї, як сьогодні): Tailwind-клас "hidden" — дефолтний стан (темна),
+   .light override показує flex. */
+.light .ws-legend {
+  display: flex;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .ws-legend {
+    display: flex;
+  }
+}
+.ws-legend {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #55546b;
+}
+.ws-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ws-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* reorder.tsx — підказка про спосіб взаємодії (торкнутись двох плиток, щоб
    поміняти місцями) потрібна лише там, де нема миші/трекпада: DnD через
    draggable недоступний на дотик, а click-to-select-then-move (fallback у

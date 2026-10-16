@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { Lightbulb } from "lucide-react";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -14,7 +15,8 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { frenchNbsp } from "@/lib/text/french-typography";
+import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -22,7 +24,7 @@ import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { CLUE_TEXT, HINT_TEXT, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
 import { HintBulb, type HintBulbState } from "./hint-bulb";
@@ -256,6 +258,54 @@ function LongCard({
       )}
     </div>
   );
+}
+
+// ЕТАП K ("плаваючий лист", СВІТЛА тема лише) — повношириний білий "нотес"
+// підказки під інструкцією (замість компактної пілюлі поруч з нею, що
+// лишається в темній теми — див. .ws-hint-note/.ws-header-row2 у
+// globals.css). Ті самі базові Tailwind-класи, що й колишня HintPill
+// (task-panel-header.tsx) — темна тема бачить РІВНО той самий вигляд,
+// лише ws-* гачки для світлового CSS-оверрайду.
+function WordSearchHintNote({ text }: { text: string }) {
+  return (
+    <span className="ws-hint-note inline-flex shrink-0 items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] text-[13px] font-bold text-[#6b4a14] dark:border-transparent dark:bg-transparent dark:text-neutral-400">
+      <span className="ws-hint-lamp lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
+        <Lightbulb size={13} aria-hidden />
+      </span>
+      <span className="ws-hint-text">{text}</span>
+    </span>
+  );
+}
+
+// ЕТАП K — геометрія капсули (знайдене слово / поточне виділення) у
+// px-калькуляціях через var(--cw) (той самий токен, що й сітка/зум), без
+// жодного вимірювання DOM: усі величини (dist/mid/angle) — у "клітинкових"
+// одиницях (1 = ширина клітинки), тож readonly ПОЗИЦІЯ рахується
+// нативним CSS calc() — реагує на zoom/контейнер автоматично, як і решта
+// сітки. +cw+10px — буквально "довжина від центру до центру" + запас по
+// 5px/половину клітинки з кожного боку (п.4 задачі). pointer-events:none
+// на елементі (не лише в класі) — належить лише до СТИЛЮ, але дублюємо
+// тут явно, бо це умова коректності виділення дотиком, не просто вигляд.
+function capsuleStyle(start: Cell, end: Cell): CSSVarStyle {
+  const x1 = start.col + 0.5;
+  const y1 = start.row + 0.5;
+  const x2 = end.col + 0.5;
+  const y2 = end.row + 0.5;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distCells = Math.sqrt(dx * dx + dy * dy);
+  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  return {
+    position: "absolute",
+    left: `calc(var(--cw) * ${midX})`,
+    top: `calc(var(--cw) * ${midY})`,
+    width: `calc(var(--cw) * ${distCells} + var(--cw) + 10px)`,
+    height: `calc(var(--cw) + 10px)`,
+    transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,
+    pointerEvents: "none",
+  } as CSSVarStyle;
 }
 
 // Лише пряма лінія (горизонталь/вертикаль, без діагоналей) — той самий
@@ -511,7 +561,7 @@ function WordSearchBlockView({
   // капсула (оверлей нижче), піднята НАД сіткою.
   function cellClass(cell: Cell) {
     const key = cellKey(cell);
-    if (previewKeys.has(key)) return "bg-blue-200 dark:bg-blue-800";
+    if (previewKeys.has(key)) return "bg-blue-200 dark:bg-blue-800 ws-cell-previewing ws-letter-selecting";
     return "";
   }
 
@@ -532,6 +582,13 @@ function WordSearchBlockView({
   // foundWords), просто у вигляді Set<string> для чистої функції.
   const foundWordsSet = new Set(block.words.filter((w) => isFound(w.word)).map((w) => w.word));
   const hintCells = hintHighlightCells(block.words, hintedWords, foundWordsSet);
+
+  // ЕТАП K — клітинки знайдених слів (для ws-letter-found, лише світлого
+  // кольору/ваги літери) — похідне з того самого foundWords Map, що й
+  // SVG-капсули/лінії нижче, не окремий стан.
+  const foundLetterKeys = new Set(
+    [...foundWords.values()].flatMap((cells) => cells.map(cellKey))
+  );
 
   // hintStart — координата ПЕРШОЇ літери слова, порахована на сервері один
   // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
@@ -600,20 +657,25 @@ function WordSearchBlockView({
         <div className="grid-zoom-wrap w-full min-w-0">
           <div
             ref={scrollRef}
-            className="w-full touch-none select-none overflow-x-auto"
+            className="ws-scroll w-full touch-none select-none overflow-x-auto"
             onPointerDown={handleTouchPointerDown}
             onPointerMove={handleTouchPointerMove}
             onPointerUp={handleTouchPointerUp}
             onPointerCancel={handleTouchPointerUp}
           >
-            <div className="grid-zoom-inner w-max mx-auto" style={{ "--cols": cols, "--zoom": zoom } as CSSVarStyle}>
+            <div
+              className="grid-zoom-inner ws-sheet w-max mx-auto"
+              style={{ "--cols": cols, "--zoom": zoom } as CSSVarStyle}
+            >
               {/* border-l/border-t на контейнері + border-r/border-b на кожній
                   клітинці — той самий візуальний ефект, що border-collapse на
                   <table> (суцільні 1px лінії, без подвоєння на межах між
-                  клітинками). */}
+                  клітинками); у світлій темі (ws-grid/ws-cell, globals.css)
+                  ці рамки стають прозорими — "плаваючий лист" без внутрішніх
+                  ліній (ЕТАП K). */}
               <div className="relative">
                 <div
-                  className="grid border-l border-t border-neutral-200 font-heading font-semibold dark:border-neutral-700"
+                  className="ws-grid grid border-l border-t border-neutral-200 font-heading font-semibold dark:border-neutral-700"
                   style={{ gridTemplateColumns: `repeat(${gridSize}, var(--cw))` }}
                 >
                   {block.grid.flatMap((row, ri) =>
@@ -625,7 +687,9 @@ function WordSearchBlockView({
                       // hintCells) — зелена пілюля знайденого слова (SVG нижче)
                       // і так малюється над сіткою, окремо гасити синій не
                       // потрібно.
-                      const isHinted = hintCells.has(cellKey({ row: ri, col: ci }));
+                      const key = cellKey({ row: ri, col: ci });
+                      const isHinted = hintCells.has(key);
+                      const isFoundLetter = foundLetterKeys.has(key);
                       return (
                         <div
                           key={`${ri}:${ci}`}
@@ -633,11 +697,11 @@ function WordSearchBlockView({
                           data-col={ci}
                           onMouseDown={() => startDrag({ row: ri, col: ci })}
                           onMouseEnter={() => moveDrag({ row: ri, col: ci })}
-                          className={`flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${
+                          className={`ws-cell flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${
                             isHinted
-                              ? "bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
+                              ? "ws-cell-hinted bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
                               : ""
-                          }`}
+                          } ${isFoundLetter ? "ws-letter-found" : ""}`}
                           style={{ fontSize: "max(0.75rem, calc(var(--cw) * 0.5))" }}
                         >
                           {letter}
@@ -650,10 +714,13 @@ function WordSearchBlockView({
                     масштабованого елемента, що сітка (grid-zoom-inner), тож
                     масштабується з нею РАЗОМ: viewBox у координатах "1
                     клітинка = 1 юніт" (не px), width/height 100% —
-                    пропорційно будь-якому --cw/zoom, без перерахунку тут. */}
+                    пропорційно будь-якому --cw/zoom, без перерахунку тут.
+                    ЕТАП K — лише темна тема бачить цей шар (ws-lines-layer,
+                    globals.css); світла бачить капсули (.ws-capsule-layer)
+                    нижче замість нього. */}
                 <svg
                   viewBox={`0 0 ${gridSize} ${gridSize}`}
-                  className="pointer-events-none absolute inset-0 h-full w-full"
+                  className="ws-lines-layer pointer-events-none absolute inset-0 h-full w-full"
                 >
                   {[...foundWords.entries()].map(([word, cells]) => {
                     if (cells.length === 0) return null;
@@ -689,6 +756,33 @@ function WordSearchBlockView({
                     );
                   })}
                 </svg>
+                {/* ЕТАП K ("плаваючий лист", СВІТЛА тема лише) — капсули
+                    знайдених слів (лавандова заливка) і поточного виділення
+                    (пунктирна індигова), position:absolute/transform-rotate,
+                    геометрія — capsuleStyle() вище. pointer-events:none і в
+                    className, і в самому style — не перехоплює ні мишу, ні
+                    дотик (вимога п.5 задачі): виділення й далі керується
+                    виключно обробниками на клітинках нижче. Пізніші слова
+                    малюються пізніше в DOM — природно лягають ПОВЕРХ раніших
+                    при перетині (вимога п.4). */}
+                <div className="ws-capsule-layer absolute inset-0">
+                  {[...foundWords.entries()].map(([word, cells]) => {
+                    if (cells.length === 0) return null;
+                    return (
+                      <div
+                        key={word}
+                        className="ws-capsule ws-capsule-found"
+                        style={capsuleStyle(cells[0], cells[cells.length - 1])}
+                      />
+                    );
+                  })}
+                  {dragging && previewPath.length > 1 && (
+                    <div
+                      className="ws-capsule ws-capsule-selecting"
+                      style={capsuleStyle(previewPath[0], previewPath[previewPath.length - 1])}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -700,6 +794,24 @@ function WordSearchBlockView({
             <span className="scroll-hint-coarse">Сітка ширша за екран — прокрутіть убік двома пальцями</span>
           </p>
         )}
+
+        {/* ЕТАП K — легенда кольорів під сіткою, лише світла тема (hidden
+            за замовчуванням, globals.css .ws-legend показує flex лише в
+            .light/:root:not(.dark)); темна лишається без неї, як сьогодні. */}
+        <div className="ws-legend hidden">
+          <span className="ws-legend-item">
+            <span className="ws-legend-dot" style={{ background: "#cfc4f5" }} />
+            Знайдено
+          </span>
+          <span className="ws-legend-item">
+            <span className="ws-legend-dot" style={{ background: "#4b46da" }} />
+            Виділяю
+          </span>
+          <span className="ws-legend-item">
+            <span className="ws-legend-dot" style={{ background: "#e0aa3e" }} />
+            Підказка: перша літера
+          </span>
+        </div>
 
         {/* Легенда — на всю ширину (той самий принцип, що crossword.tsx:
             ширину секцій підказок НЕ прив'язано до пікселів сітки), не
@@ -941,6 +1053,12 @@ export function WordSearchExercise({
   }, [aggregateResult, onResult]);
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", config.hintsReducePoints);
+  const instructionHtml = frenchNbspHtml(
+    sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction)
+  );
+  const subInstructionSource = config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction;
+  const subInstructionHtml = subInstructionSource ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionSource)) : null;
 
   return (
     <div className={EXERCISE_STACK}>
@@ -961,15 +1079,44 @@ export function WordSearchExercise({
                 : `${config.points} ${pluralizePoints(config.points)}`
             : undefined
         }
-        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction}
-        hintText={hintExplanationHidden ? null : hintExplanationText("word_search", config.hintsReducePoints)}
       />
+
+      {/* ЕТАП K ("плаваючий лист", мокап "варіант 2") — інструкція+підказка
+          рендеряться ТУТ локально (не через TaskPanelHeader вище, що
+          лишається лише для рядка 1 — блоки/бали), бо світла тема потребує
+          СТРУКТУРНО іншого вигляду (інструкція на весь рядок, нотес-
+          підказка під нею, не компактна пілюля поруч), тоді як темна має
+          лишитись РІВНО такою, як була (інструкція+пілюля в одному
+          flex-wrap рядку) — ws-header-row2/ws-hint-note (globals.css)
+          перемикають це лише для .light/:root:not(.dark), base-стилі тут
+          нижче — точна копія старого рядка 2 TaskPanelHeader. */}
+      {(instructionHtml || hintText) && (
+        <div className="ws-header-row2 flex flex-wrap items-center gap-3">
+          {instructionHtml && (
+            <div className="min-w-0 flex-1">
+              <div
+                className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
+                dangerouslySetInnerHTML={{ __html: instructionHtml }}
+              />
+              {subInstructionHtml && (
+                <div
+                  className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
+                  dangerouslySetInnerHTML={{ __html: subInstructionHtml }}
+                />
+              )}
+            </div>
+          )}
+          {hintText && <WordSearchHintNote text={hintText} />}
+        </div>
+      )}
 
       {/* ЕТАП J — панель масштабу сітки (grid-zoom-controls.tsx), той
           самий рядок/розміщення, що в crossword.tsx (ЕТАП I): над
-          BlockNavigation, не всередині неї. */}
-      <GridZoomControls zoom={zoom} onChange={setZoom} />
+          BlockNavigation, не всередині неї. ws-zoom — лише тут (не в
+          crossword.tsx), світлове перестилювання кнопок (ЕТАП K). */}
+      <div className="ws-zoom">
+        <GridZoomControls zoom={zoom} onChange={setZoom} />
+      </div>
 
       {!useBlocks ? (
         <WordSearchBlockView
