@@ -2159,15 +2159,42 @@ button.scene-bar:active .scene-bar-toggle {
 .light .scene-collapse-badge {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  flex: none;
+  border-radius: 10px;
+  padding: 0;
+  line-height: 1;
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .scene-collapse-badge {
     width: 34px;
     height: 34px;
-    border-radius: 8px;
+    flex: none;
+    border-radius: 10px;
+    padding: 0;
+    line-height: 1;
     background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  }
+}
+/* Сам шеврон (CollapseChevronIcon, script-section.tsx/vocab-section.tsx) —
+   viewBox "0 0 18 18" з координатами, скопійованими з 24-одиничної
+   lucide-іконки БЕЗ перерахунку під менший вайвбокс: контур (6,15)-(12,9)-
+   (18,15) центрований у 24-боксі, але у 18-боксі лежить зі зсувом ~+3
+   праворуч і ~+3 вниз від геометричного центру — звідси "нижчий і
+   перекошений" вигляд бейджа. Темну тему (голий шеврон без видимого
+   квадрата-рамки) зсув не чіпає — лишаємо той самий SVG-елемент і його
+   атрибути БЕЗ змін; лише в світлій темі, де сірий квадрат бейджа робить
+   цей зсув помітним, компенсуємо його суто візуально: display:block
+   знімає можливий inline-baseline відступ знизу, а компенсаційний
+   margin зсуває контур назад до оптичного центру квадрата. */
+.light .scene-collapse-badge svg {
+  display: block;
+  margin: -3px 0 0 -3px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .scene-collapse-badge svg {
+    display: block;
+    margin: -3px 0 0 -3px;
   }
 }
 
