@@ -2499,3 +2499,137 @@ button.scene-bar:active .scene-bar-toggle {
     grid-template-columns: 1fr;
   }
 }
+
+/* LIGHT theme — warm cream LinkCard with a gold icon tile, replacing the
+   dark-glass card above. Dark theme (rules above) is untouched; all new
+   rules are gated to .light / :root:not(.dark), same convention as the
+   rest of the token system. */
+.light .link-card {
+  background: var(--glass-surface);
+  border: 1px solid rgba(184, 144, 47, 0.65);
+  min-height: 78px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  transform: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card {
+    background: var(--glass-surface);
+    border: 1px solid rgba(184, 144, 47, 0.65);
+    min-height: 78px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    transform: none;
+  }
+}
+.light .link-card-icon {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #1a1640;
+}
+.light .link-card-icon svg {
+  display: block;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card-icon {
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    color: #1a1640;
+  }
+  :root:not(.dark) .link-card-icon svg {
+    display: block;
+  }
+}
+.light .link-card-title {
+  color: #1a1640;
+}
+.light .link-card-subtitle {
+  color: #8a6414;
+}
+.light .link-card-arrow {
+  color: #8a6414;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card-title {
+    color: #1a1640;
+  }
+  :root:not(.dark) .link-card-subtitle {
+    color: #8a6414;
+  }
+  :root:not(.dark) .link-card-arrow {
+    color: #8a6414;
+  }
+}
+
+/* "Own game" (variant="featured") — warm highlighted card, star stays
+   part of the label text (link-task-icon.ts), no markup change. */
+.light .link-card--featured {
+  background: linear-gradient(180deg, #fff3c8, #fdf8ea);
+  border: 1.5px solid #d9a93d;
+  box-shadow: 0 8px 22px rgba(224, 170, 62, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card--featured {
+    background: linear-gradient(180deg, #fff3c8, #fdf8ea);
+    border: 1.5px solid #d9a93d;
+    box-shadow: 0 8px 22px rgba(224, 170, 62, 0.35);
+  }
+}
+
+/* Hover/focus (real hover only) — border grows 1px -> 1.5px, padding
+   shrinks by the same 0.5px on each side so content does not shift. */
+@media (hover: hover) {
+  .light .link-card:hover {
+    border: 1.5px solid #4b46da;
+    padding: 13.5px 15.5px;
+    box-shadow: 0 10px 24px rgba(75, 70, 218, 0.3);
+    transform: none;
+  }
+  .light .link-card:hover .link-card-title {
+    color: #3b36c4;
+  }
+  .light .link-card:hover .link-card-arrow {
+    color: #3b36c4;
+    transform: none;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .link-card:hover {
+      border: 1.5px solid #4b46da;
+      padding: 13.5px 15.5px;
+      box-shadow: 0 10px 24px rgba(75, 70, 218, 0.3);
+      transform: none;
+    }
+    :root:not(.dark) .link-card:hover .link-card-title {
+      color: #3b36c4;
+    }
+    :root:not(.dark) .link-card:hover .link-card-arrow {
+      color: #3b36c4;
+      transform: none;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light .link-card:hover {
+    transform: none;
+  }
+}
+.light .link-card:active {
+  transform: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card:active {
+    transform: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  }
+}
+.light .link-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .link-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
