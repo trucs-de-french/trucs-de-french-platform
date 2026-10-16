@@ -2214,6 +2214,50 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Підсвітка слів глосарію в тексті скрипту (TranslatedText/VocabWord,
+   dialogue-line.tsx) — спільний клас-гачок замість хардкоду bg-blue-*
+   прямо в розмітці: .vocab-chip лише несе колір (лейаут/розмір —
+   rounded px-1 font-medium лишаються звичайними Tailwind-класами на
+   елементі, без зміни). Темна тема триматься на dark:bg-blue-900/40
+   dark:text-blue-200 (і dark:hover:bg-blue-900/60 для клікабельного
+   слова) — ці Tailwind dark:-класи лишились у розмітці БЕЗ змін, тож
+   темна тема піксель-в-піксель та сама, що й була.
+   .vocab-chip--interactive — лише на клікабельній кнопці (VocabWord):
+   hover/focus-visible додаються ТІЛЬКИ тут, не на статичному
+   TranslatedText-span (там hover у світлій темі раніше й не було). */
+.light .vocab-chip {
+  background-color: #e9e4fb;
+  color: #3d2fa0;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .vocab-chip {
+    background-color: #e9e4fb;
+    color: #3d2fa0;
+  }
+}
+@media (hover: hover) {
+  .light .vocab-chip--interactive:hover {
+    background-color: #ddd5f8;
+    color: #2f2488;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: light) {
+  :root:not(.dark) .vocab-chip--interactive:hover {
+    background-color: #ddd5f8;
+    color: #2f2488;
+  }
+}
+.light .vocab-chip--interactive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .vocab-chip--interactive:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
+
 /* Уніфікована навігація по блоках великих вправ (block-navigation.tsx) —
    сегментований прогрес-бар угорі + рядок ←/→ знизу, той самий вигляд
    незалежно від типу вправи (matching/letter_gaps/letter_rearrangement/

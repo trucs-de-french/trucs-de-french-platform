@@ -31,7 +31,7 @@ export function TranslatedText({ text, vocab }: { text: string; vocab: VocabItem
         part.type === "match" ? (
           <span
             key={i}
-            className="rounded bg-blue-100 px-1 font-medium text-blue-900 dark:bg-blue-900/40 dark:text-blue-200"
+            className="vocab-chip rounded px-1 font-medium dark:bg-blue-900/40 dark:text-blue-200"
           >
             {part.text}
           </span>
@@ -63,7 +63,7 @@ function VocabWord({
     <button
       type="button"
       onClick={() => onClick(id)}
-      className="relative rounded bg-blue-100 px-1 font-medium text-blue-900 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+      className="vocab-chip vocab-chip--interactive relative rounded px-1 font-medium dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
     >
       {word}
       {isOpen && (
