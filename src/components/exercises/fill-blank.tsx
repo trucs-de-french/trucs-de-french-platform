@@ -280,7 +280,7 @@ export function FillBlankExercise({
                 // (FillBlankPublic не містить відповідей).
                 <span
                   aria-hidden
-                  className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] px-2 py-0.5 text-center text-neutral-400 dark:border-neutral-600 dark:text-neutral-500"
+                  className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-0.5 text-center text-neutral-400 dark:bg-transparent dark:border-neutral-600 dark:text-neutral-500"
                 >
                   ···
                 </span>
@@ -309,14 +309,14 @@ export function FillBlankExercise({
                         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                         : practiceResults[String(i)] === false
                           ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] dark:border-neutral-600"
+                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600"
                       : detail
                         ? detail.blanks[i]?.isCorrect
                           ? "border-green-500 bg-green-50 dark:bg-green-950/30"
                           : "border-red-500 bg-red-50 dark:bg-red-950/30"
                         : hintedBlanks.has(i)
                           ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] dark:border-neutral-600"
+                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600"
                   }`}
                 />
               )}

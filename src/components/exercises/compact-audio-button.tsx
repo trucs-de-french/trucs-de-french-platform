@@ -26,7 +26,7 @@ export function CompactAudioButton({ src }: { src: string }) {
         type="button"
         onClick={() => (playing ? audioRef.current?.pause() : audioRef.current?.play())}
         aria-label={playing ? "Зупинити вимову" : "Прослухати вимову"}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800/70"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-transparent dark:text-neutral-300 dark:hover:bg-neutral-800/70"
       >
         {playing ? <Pause size={18} /> : <Play size={18} />}
       </button>

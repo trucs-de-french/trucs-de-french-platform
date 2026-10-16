@@ -45,7 +45,7 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
   // надто довге слово без цього могло вилізти за межі пулу й сторінки.
   const base =
     "max-w-full cursor-grab select-none break-words rounded-md border-[1.5px] dark:border px-3 py-1.5 text-base glass-gap-shadow dark:shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
-  if (used) return `${base} opacity-40`;
+  if (used) return `${base} bg-white opacity-40 dark:bg-transparent`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
   return `${base} glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70`;
 }
