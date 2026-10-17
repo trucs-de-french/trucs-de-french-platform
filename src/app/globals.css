@@ -4153,3 +4153,131 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
   }
 }
+
+/* Табличний диктант (table_fill), мокап "варіант 1" — рядкові картки з
+   чипами замість <table>. .glass-item-card (вище) уже дає градієнтну
+   рамку/фон/тінь (світла й темна теми обидві токенізовані), тут лише
+   внутрішнє розкладання рядка та кольори чипів/номера/заголовка колонок —
+   їх немає в токен-системі .glass-*, бо чипи специфічні саме для
+   французько/українських колонок цього типу задач. */
+.table-fill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+.table-fill-row-num {
+  width: 22px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  color: #b8902f;
+}
+.dark .table-fill-row-num {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-row-num {
+    color: #f6dc8e;
+  }
+}
+.table-fill-row-cell {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.table-fill-row-score {
+  flex-shrink: 0;
+}
+/* Відступ зліва = padding картки (10px) + ширина номера (22px) + gap
+   (10px) рядка нижче, щоб підписи колонок стояли РІВНО над чипами, не
+   над номером рядка. */
+.table-fill-col-header {
+  display: flex;
+  gap: 10px;
+  padding: 0 10px 0 42px;
+}
+.table-fill-col-header-cell {
+  flex: 1 1 0%;
+  min-width: 0;
+  font-family: var(--font-heading);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a7a52;
+}
+.dark .table-fill-col-header-cell {
+  color: rgba(220, 219, 243, 0.7);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-col-header-cell {
+    color: rgba(220, 219, 243, 0.7);
+  }
+}
+/* Коли колонки складаються в один стовпець (md: нижче), заголовок другої
+   половини прибираємо — показуємо лише один раз над першою. */
+@media (max-width: 767px) {
+  .table-fill-col-header--secondary {
+    display: none;
+  }
+}
+.table-fill-chip {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 10px;
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.table-fill-chip-fr {
+  background: #f6efd9;
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 800;
+}
+.table-fill-chip-uk {
+  background: #eeeefb;
+  color: #3b3566;
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+.dark .table-fill-chip-fr {
+  background: rgba(246, 220, 142, 0.12);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-chip-fr {
+    background: rgba(246, 220, 142, 0.12);
+    color: #f6dc8e;
+  }
+}
+.dark .table-fill-chip-uk {
+  background: rgba(220, 219, 243, 0.1);
+  color: #dcdbf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .table-fill-chip-uk {
+    background: rgba(220, 219, 243, 0.1);
+    color: #dcdbf3;
+  }
+}
+@media (max-width: 767px) {
+  .table-fill-chip-fr {
+    font-size: 16px;
+  }
+  .table-fill-chip-uk {
+    font-size: 15px;
+  }
+}
+/* Лампочка-підказка ВСЕРЕДИНІ поля (не окремою кнопкою поряд) — те саме
+   золоте коло, що ClueCardHeader кросворду (HintBulb variant=goldCircle),
+   просто абсолютно позиційоване в правому краї поля; input отримує запас
+   pr-11 (Tailwind, у JSX), щоб текст не йшов під неї. */
+.table-fill-input-lamp {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}

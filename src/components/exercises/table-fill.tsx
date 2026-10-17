@@ -43,40 +43,44 @@ type Row = TableFillPublic["rows"][number];
 type TableFillResult = Extract<GradeResult, { detail: TableFillDetail }>;
 
 // Одна колонка вправи — або половина рядків, або вся вправа одним
-// стовпцем; завжди зі своїм рядком підписів колонок.
+// стовпцем; завжди зі своїм рядком підписів колонок (прибирається (CSS,
+// table-fill-col-header--secondary) на вузьких екранах, де половини
+// складаються в один стовпець — показуємо підписи лише раз, над першою).
+// numberOffset — глобальний порядковий номер (у config.rows, не у межах
+// цієї половини/блоку) першого рядка цієї колонки, щоб нумерація йшла
+// 1..N наскрізно по обох половинах і збігалась із "Рядок N" у списку
+// помилок під вправою (той самий config.rows.findIndex нижче).
 function TableFillColumn({
   rows,
   columnLabels,
   renderCell,
   rowPointsLabel,
+  numberOffset,
+  secondaryHeader,
 }: {
   rows: Row[];
   columnLabels: [string, string];
   renderCell: (rowId: string, side: "left" | "right", value: string | null) => ReactNode;
   rowPointsLabel: (row: Row) => ReactNode;
+  numberOffset: number;
+  secondaryHeader?: boolean;
 }) {
   return (
-    <div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-base">
-          <thead>
-            <tr className="border-b border-[#e6e6f0] text-left text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
-              <th className="py-1 pr-2 font-medium">{columnLabels[0]}</th>
-              <th className="py-1 pr-2 font-medium">{columnLabels[1]}</th>
-              <th className="py-1 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-[#e6e6f0] last:border-0 dark:border-neutral-700">
-                <td className="py-1 pr-2">{renderCell(row.id, "left", row.left)}</td>
-                <td className="py-1 pr-2">{renderCell(row.id, "right", row.right)}</td>
-                <td className="py-1">{rowPointsLabel(row)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="flex flex-col gap-2.5">
+      <div className={`table-fill-col-header ${secondaryHeader ? "table-fill-col-header--secondary" : ""}`}>
+        <span className="table-fill-col-header-cell">{columnLabels[0]}</span>
+        <span className="table-fill-col-header-cell">{columnLabels[1]}</span>
       </div>
+      {rows.map((row, i) => (
+        <div key={row.id} className="table-fill-row glass-item-card">
+          <span className="table-fill-row-num" aria-hidden="true">
+            {numberOffset + i + 1}
+          </span>
+          <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left)}</div>
+          <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right)}</div>
+          {rowPointsLabel(row) && <div className="table-fill-row-score">{rowPointsLabel(row)}</div>}
+        </div>
+      ))}
     </div>
   );
 }
@@ -329,39 +333,46 @@ export function TableFillExercise({
     locked: boolean
   ) {
     if (value !== null) {
-      return <span>{frenchNbsp(value)}</span>;
+      return (
+        <span className={`table-fill-chip ${side === "left" ? "table-fill-chip-fr" : "table-fill-chip-uk"}`}>
+          {frenchNbsp(value)}
+        </span>
+      );
     }
     const key = cellKey(rowId, side);
     const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;
     return (
-      <div className="flex items-center gap-1">
-        <input
-          ref={diacritics.fieldRef(key)}
-          value={answers[key] ?? ""}
-          onChange={(e) => updateAnswer(rowId, side, e.target.value)}
-          onFocus={() => diacritics.onFocus(key)}
-          onBlur={diacritics.onBlur}
-          disabled={locked}
-          className={`w-full rounded border px-2 py-1 text-base ${inputClass(rowId, side, detail)}`}
-        />
-        {/* Статична лампочка одразу біля поля — той самий принцип, що
-            letter-gaps.tsx (окрема кнопка на кожній картці, завжди видима,
-            не залежить від фокуса/попапу діакритики). Раніше лампочка була
-            ЧАСТИНОЮ DiacriticsPopup (onHint), тож з'являлась лише коли
-            попап відкритий (фокус на полі) — не позиційний глюк, а сама
-            умова рендеру попапу (diacritics.rect && ... && activeKey) також
-            гейтила лампочку. */}
-        {!locked && !isDelf && (
-          <HintBulb
-            size="sm"
-            state={hintedCells.has(key) ? "used" : "available"}
-            label="Підказка: відкрити першу літеру"
-            disabled={hintedCells.has(key) || hintPending}
-            onClick={() => applyHint(rowId, side)}
-            className="shrink-0"
+      <div className="flex flex-col gap-1">
+        <div className="relative">
+          <input
+            ref={diacritics.fieldRef(key)}
+            value={answers[key] ?? ""}
+            onChange={(e) => updateAnswer(rowId, side, e.target.value)}
+            onFocus={() => diacritics.onFocus(key)}
+            onBlur={diacritics.onBlur}
+            disabled={locked}
+            className={`h-10 w-full rounded-[10px] border pl-3 pr-11 text-base ${inputClass(rowId, side, detail)}`}
           />
-        )}
-        {hintUsed && <span className="shrink-0 text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>}
+          {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
+              самий золотий гурток, що ClueCardHeader кросворду
+              (variant="goldCircle"), абсолютно позиційований у .relative-
+              обгортці вище; той самий принцип, що letter-gaps.tsx (завжди
+              видима, не залежить від фокуса/попапу діакритики — колишня
+              лампочка DiacriticsPopup (onHint) з'являлась лише коли попап
+              відкритий, тут навмисно інакше). */}
+          {!locked && !isDelf && (
+            <HintBulb
+              size="sm"
+              variant="goldCircle"
+              state={hintedCells.has(key) ? "used" : "available"}
+              label="Підказка: відкрити першу літеру"
+              disabled={hintedCells.has(key) || hintPending}
+              onClick={() => applyHint(rowId, side)}
+              className="table-fill-input-lamp"
+            />
+          )}
+        </div>
+        {hintUsed && <span className="text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>}
       </div>
     );
   }
@@ -398,15 +409,18 @@ export function TableFillExercise({
   // об'єктів row (той самий row.id), відповіді (cellKey/rowId) і список
   // помилок нижче (config.rows.findIndex за ПОВНИМ, неподіленим масивом)
   // узагалі не звертаються до цього поділу — індекси/бали не можуть розійтись.
-  let columns: { key: string; rows: Row[] }[];
+  // numberOffset — позиція першого рядка колонки в ПОВНОМУ config.rows,
+  // той самий принцип, що config.rows.findIndex у списку помилок нижче —
+  // нумерація картки й "Рядок N" там завжди про той самий рядок.
+  let columns: { key: string; rows: Row[]; numberOffset: number }[];
   if (!useBlocks && config.rows.length > SPLIT_THRESHOLD) {
     const mid = Math.ceil(config.rows.length / 2);
     columns = [
-      { key: "col-a", rows: config.rows.slice(0, mid) },
-      { key: "col-b", rows: config.rows.slice(mid) },
+      { key: "col-a", rows: config.rows.slice(0, mid), numberOffset: 0 },
+      { key: "col-b", rows: config.rows.slice(mid), numberOffset: mid },
     ];
   } else {
-    columns = [{ key: "all", rows: config.rows }];
+    columns = [{ key: "all", rows: config.rows, numberOffset: 0 }];
   }
 
   // ==== Гілка блоків (>10 рядків) ====
@@ -505,13 +519,17 @@ export function TableFillExercise({
     // непарний блок (напр. 3 рядки) дає нерівний поділ 2/1 — прийнятно,
     // той самий компроміс, що "зайва порожня клітинка" в сітці карток.
     const blockMid = Math.ceil(blockRows.length / 2);
+    // Глобальна база нумерації цього блоку — сума довжин попередніх
+    // блоків (rowBlocks), той самий принцип, що numberOffset колонок
+    // columns вище, лише з "базою" попередніх блоків додатково.
+    const blockBase = rowBlocks.slice(0, activeBlock).reduce((n, b) => n + b.length, 0);
     const blockColumns =
       blockRows.length > 1
         ? [
-            { key: "block-col-a", rows: blockRows.slice(0, blockMid) },
-            { key: "block-col-b", rows: blockRows.slice(blockMid) },
+            { key: "block-col-a", rows: blockRows.slice(0, blockMid), numberOffset: blockBase },
+            { key: "block-col-b", rows: blockRows.slice(blockMid), numberOffset: blockBase + blockMid },
           ]
-        : [{ key: "block-col-all", rows: blockRows }];
+        : [{ key: "block-col-all", rows: blockRows, numberOffset: blockBase }];
 
     return (
       <div className="flex flex-col gap-3">
@@ -522,11 +540,13 @@ export function TableFillExercise({
               : "max-w-3xl"
           }`}
         >
-          {blockColumns.map((col) => (
+          {blockColumns.map((col, i) => (
             <TableFillColumn
               key={col.key}
               rows={col.rows}
               columnLabels={columnLabels}
+              numberOffset={col.numberOffset}
+              secondaryHeader={i > 0}
               renderCell={(rowId, side, value) => renderCell(rowId, side, value, blockDetail, !!blockResult)}
               rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
             />
@@ -613,11 +633,13 @@ export function TableFillExercise({
                 : "max-w-3xl"
             }`}
           >
-            {columns.map((col) => (
+            {columns.map((col, i) => (
               <TableFillColumn
                 key={col.key}
                 rows={col.rows}
                 columnLabels={columnLabels}
+                numberOffset={col.numberOffset}
+                secondaryHeader={i > 0}
                 renderCell={(rowId, side, value) => renderCell(rowId, side, value, singleDetail, !!single.result)}
                 rowPointsLabel={(row) => rowPointsLabel(row, singleDetail)}
               />
