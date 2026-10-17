@@ -91,18 +91,15 @@ function TableFillColumn({
   );
 }
 
-// Обгортка "дві половини" таблиці. container-type (table-fill-columns-
-// container) мусить сидіти на ПРЕДКОВІ елемента, властивості якого
-// запитує @container (table-fill-columns-grid) — контейнер не може
-// запитувати власні стилі (специфікація CSS: контейнерний запит впливає
-// лише на нащадків контейнера, не на сам контейнер), тож два окремі div,
-// не один із суміщеними класами.
+// Обгортка "дві половини" таблиці. Стек керується viewport-медіа-запитом
+// (768px, у globals.css), тому тут просто grid з двома можливими
+// розкладками класів, без container-query-залежностей.
 function TableFillColumnsGrid({ multiColumn, children }: { multiColumn: boolean; children: ReactNode }) {
   if (!multiColumn) {
     return <div className="mx-auto w-full max-w-3xl">{children}</div>;
   }
   return (
-    <div className="mx-auto w-full max-w-5xl table-fill-columns-container">
+    <div className="mx-auto w-full max-w-5xl">
       <div className="table-fill-columns-grid items-start gap-x-8 gap-y-6">{children}</div>
     </div>
   );
@@ -364,6 +361,7 @@ export function TableFillExercise({
     }
     const key = cellKey(rowId, side);
     const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;
+    const hasValue = (answers[key] ?? "") !== "";
     return (
       <div className="flex flex-col gap-1">
         <div className="relative table-fill-cell-wrap">
@@ -374,8 +372,7 @@ export function TableFillExercise({
             onFocus={() => diacritics.onFocus(key)}
             onBlur={diacritics.onBlur}
             disabled={locked}
-            placeholder=" "
-            className={`table-fill-cell-input h-10 w-full rounded-[10px] border px-[40px] text-center text-[15px] ${inputClass(rowId, side, detail)}`}
+            className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] ${hasValue ? "px-[12px]" : "px-[40px]"} ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
               самий золотий гурток, що ClueCardHeader кросворду
@@ -383,8 +380,10 @@ export function TableFillExercise({
               обгортці вище; той самий принцип, що letter-gaps.tsx (завжди
               видима, не залежить від фокуса/попапу діакритики — колишня
               лампочка DiacriticsPopup (onHint) з'являлась лише коли попап
-              відкритий, тут навмисно інакше). */}
-          {!locked && !isDelf && (
+              відкритий, тут навмисно інакше). Зникає повністю, щойно в полі
+              є текст (а не стискається) — не рендериться взагалі, тож не в
+              DOM, не в tab-порядку, не в a11y-дереві. */}
+          {!locked && !isDelf && !hasValue && (
             <HintBulb
               size="sm"
               variant="goldCircle"
