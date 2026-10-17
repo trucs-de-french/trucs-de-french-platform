@@ -780,10 +780,15 @@ export default async function ScenePage({
                         .task-header-strip-anchor, globals.css, рахує
                         відступ відносно верхнього краю .glass-block-panel).
                         Лише для типів, що НЕ рендерять власну BlockTabs
-                        усередині свого компонента (isExerciseType —
+                        усередині свого компонента: isExerciseType —
                         gradable-типи через ExerciseCard нижче, кожен сам
-                        малює BlockTabs першим елементом власного дерева). */}
-                    {!isExerciseType(task.type) && <BlockTabs plaqueText={barText} />}
+                        малює BlockTabs першим елементом власного дерева;
+                        flip_cards — те саме, власні сторінки-вкладки
+                        (FlipCardsExercise, flip-cards.tsx), бо лише сам
+                        компонент знає totalPages/page/handlePageChange. */}
+                    {!isExerciseType(task.type) && task.type !== "flip_cards" && (
+                      <BlockTabs plaqueText={barText} />
+                    )}
 
                     <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
@@ -819,6 +824,7 @@ export default async function ScenePage({
                       <ExerciseErrorBoundary>
                         <FlipCardsExercise
                           config={(task.config ?? { cards: [] }) as unknown as FlipCardsConfig}
+                          plaqueText={barText}
                         />
                       </ExerciseErrorBoundary>
                     )}

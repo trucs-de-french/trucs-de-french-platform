@@ -1,5 +1,4 @@
 import { Lightbulb } from "lucide-react";
-import { BlockSegments } from "./block-navigation";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 
@@ -12,6 +11,31 @@ import { frenchNbspHtml } from "@/lib/text/french-typography";
 // в рядку (b), незалежно від blockCount. Дані (бали/інструкція/підказка)
 // лишаються СЕРВЕР-ОБЧИСЛЕНИМИ самим викликачем (як і раніше) — цей
 // компонент лише розкладає вже готові значення у новий вигляд.
+// Єдиний рендер рядка "FR-інструкція / UK-пояснення" (мокап "варіант 4") —
+// раніше жив лише тут, інлайн; винесений в окрему функцію, щоб інші
+// заголовки (flip-cards.tsx через TaskPanelHeader нижче, і будь-який
+// майбутній виклик-сайт) не копіювали ту саму розмітку. fr/uk — уже
+// санітизований HTML (sanitizeInstructionsHtml) або null/undefined.
+// "/" рендериться лише коли ОБИДВА тексти не пусті; лишається всередині
+// того самого inline-елемента, що й FR-текст (fr-group), тож не може
+// перенестись на новий рядок окремо чи опинитись після UK-тексту.
+export function TaskInstructionLine({ fr, uk }: { fr?: string | null; uk?: string | null }) {
+  if (!fr && !uk) return null;
+  return (
+    <div className="task-panel-instruction-line">
+      {fr && (
+        <span className="task-panel-instruction-fr-group">
+          <span className="task-panel-instruction-fr" dangerouslySetInnerHTML={{ __html: fr }} />
+          {uk && <span className="task-panel-instruction-slash">/</span>}
+        </span>
+      )}
+      {uk && (
+        <span className="task-panel-instruction-uk" dangerouslySetInnerHTML={{ __html: uk }} />
+      )}
+    </div>
+  );
+}
+
 export function TaskPanelHeader({
   pointsText,
   instructionText,
@@ -44,27 +68,17 @@ export function TaskPanelHeader({
 }) {
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
-  const showInstructionLine = !!safeText;
+  const showInstructionLine = !!safeText || !!safeSub;
   const showPillsRow = !!pointsText || !!hintText;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
   return (
     <div className="task-panel-header">
-      {showInstructionLine && (
-        <div className="task-panel-instruction-line">
-          <span className="task-panel-instruction-fr-group">
-            <span className="task-panel-instruction-fr" dangerouslySetInnerHTML={{ __html: safeText! }} />
-            {safeSub && <span className="task-panel-instruction-slash">/</span>}
-          </span>
-          {safeSub && (
-            <span className="task-panel-instruction-uk" dangerouslySetInnerHTML={{ __html: safeSub }} />
-          )}
-        </div>
-      )}
+      {showInstructionLine && <TaskInstructionLine fr={safeText} uk={safeSub} />}
       {showPillsRow && (
         <div className="task-panel-pills-row">
-          {pointsText && <PointsPill text={pointsText} variant="tabs" />}
+          {pointsText && <PointsPill text={pointsText} />}
           {hintText && <HintPill text={hintText} />}
         </div>
       )}
@@ -73,82 +87,24 @@ export function TaskPanelHeader({
   );
 }
 
-// Рядок 1 окремо (TaskPanelHeader вище рендерить його як частину спільної
-// зони) — потрібен САМ ПО СОБІ лише flip-cards.tsx (режим random_reveal):
-// там пагінація сторінок (←/→) сидить МІЖ кнопкою "Випадковий вибір" і
-// сіткою карток, а не одразу під інструкцією (структурне рішення, що існує
-// до цієї задачі, не торкаємось) — інструкцію там малює ОКРЕМИЙ виклик
-// TaskPanelHeader (лише instructionText, без blockCount) угорі вправи.
-export function TaskPanelProgressRow({
-  blockCount,
-  activeBlock,
-  onChangeBlock,
-  isBlockChecked,
-  labels,
-  blockLabel = "Блок",
-  pointsText,
-}: {
-  blockCount?: number;
-  activeBlock?: number;
-  onChangeBlock?: (index: number) => void;
-  isBlockChecked?: (index: number) => boolean;
-  labels?: (string | undefined)[];
-  blockLabel?: string;
-  pointsText?: string;
-}) {
-  const hasBlocks = !!blockCount && blockCount > 1 && !!onChangeBlock;
-  if (!hasBlocks && !pointsText) return null;
-
+// Остання вправа, що показувала пілюлю балів/прогрес-смужку в "рядку 1"
+// панелі (flip-cards.tsx, TaskPanelProgressRow) тепер малює ту саму смужку
+// вкладок, що й усі інші типи (BlockTabs, block-navigation.tsx) — сам
+// TaskPanelProgressRow і BlockSegments, які він єдиний використовував,
+// стали мертвим кодом і видалені разом.
+export function PointsPill({ text }: { text: string }) {
   return (
-    <div className={`flex items-center gap-3 ${hasBlocks ? "" : "justify-end"}`}>
-      {hasBlocks && (
-        <>
-          <span className="shrink-0 whitespace-nowrap font-body text-[17px] font-bold text-[#2b2a4a] dark:text-white">
-            {blockLabel} {(activeBlock ?? 0) + 1}
-            <span className="font-medium text-neutral-500 dark:text-neutral-400"> з {blockCount}</span>
-          </span>
-          <div className="min-w-0 flex-1">
-            <BlockSegments
-              blockCount={blockCount!}
-              activeBlock={activeBlock ?? 0}
-              onChangeBlock={onChangeBlock!}
-              isBlockChecked={isBlockChecked}
-              labels={labels}
-              label={blockLabel}
-            />
-          </div>
-        </>
-      )}
-      {pointsText && <PointsPill text={pointsText} />}
-    </div>
-  );
-}
-
-// variant "panel" (типово) — стара гранатова пілюля всередині рядка 1
-// панелі (TaskPanelProgressRow, лише для вправ БЕЗ блоків/вкладок — ця
-// задача її не чіпає). variant "tabs" — нова градієнтна пілюля САМЕ в
-// смужці вкладок (BlockTabs), з зіркою: окремий вигляд, щоб не зачепити
-// вправи без вкладок через спільний компонент.
-export function PointsPill({ text, variant = "panel" }: { text: string; variant?: "panel" | "tabs" }) {
-  if (variant === "tabs") {
-    return (
-      <span className="points-pill-gradient">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="#f6dc8e"
-          aria-hidden="true"
-          className="points-pill-star"
-        >
-          <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
-        </svg>
-        {text}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex shrink-0 items-center rounded-full bg-[#1a1640] px-3 py-[3px] font-heading text-[13px] font-extrabold text-[#f6dc8e] dark:border dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
+    <span className="points-pill-gradient">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="#f6dc8e"
+        aria-hidden="true"
+        className="points-pill-star"
+      >
+        <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+      </svg>
       {text}
     </span>
   );

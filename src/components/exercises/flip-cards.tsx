@@ -8,12 +8,12 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS, FLIP_CARDS_RANDOM_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
-import { TaskPanelHeader, TaskPanelProgressRow } from "./task-panel-header";
+import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { BlockNavFooter } from "./block-navigation";
+import { BlockNavFooter, BlockTabs } from "./block-navigation";
 import { AudioPill } from "@/components/audio-pill";
 
 const PAGE_SIZE = 6;
@@ -104,21 +104,18 @@ function RandomRevealFlipCards({
   cards,
   revealSide,
   pageIndices,
-  header,
   footer,
 }: {
   cards: FlipCardType[];
   revealSide: "front" | "back";
   pageIndices: number[];
-  // Прогрес-заголовок/нижній рядок ←/→ (TaskPanelProgressRow/BlockNavFooter,
-  // task-panel-header.tsx/block-navigation.tsx) — рендеряться тут, не в
-  // FlipCardsExercise, бо
-  // мають сидіти МІЖ кнопкою "Випадковий вибір" і сіткою/ПІД сіткою САМЕ
-  // цього режиму. Обидва загорнуті разом із сіткою в один div БЕЗ
-  // власного flex/gap (коментар у block-navigation.tsx, BlockNavigation):
-  // інакше gap-3 цієї обгортки додавався б поверх margin-bottom/margin-top
-  // самого прогрес-бару/футера.
-  header: ReactNode;
+  // Нижній рядок ←/→ (BlockNavFooter, block-navigation.tsx) — рендериться
+  // тут, не в FlipCardsExercise, бо має сидіти ПІД сіткою САМЕ цього
+  // режиму (плашка/вкладки блоків тепер над усією вправою, не тут —
+  // BlockTabs, FlipCardsExercise нижче). Загорнутий разом із сіткою в
+  // один div БЕЗ власного flex/gap (коментар у block-navigation.tsx,
+  // BlockNavigation): інакше gap-3 цієї обгортки додавався б поверх
+  // margin-top самого футера.
   footer: ReactNode;
 }) {
   const [spinning, setSpinning] = useState(false);
@@ -183,7 +180,6 @@ function RandomRevealFlipCards({
       </button>
 
       <div>
-        {header}
         {/* Усі картки лишаються в DOM на весь час вправи (не лише
             сторінки) — це й зберігає "клік — перевернути" стан кожної
             плитки при перемиканні сторінок (немонтування/монтування
@@ -568,7 +564,7 @@ function DeckCardBack({ translation }: { translation: string }) {
   );
 }
 
-export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
+export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsConfig; plaqueText?: string }) {
   // flip_cards не має sanitize-межі (самостійний тип без правильної
   // відповіді — повна конфігурація йде студенту як є, types.ts), тож
   // фільтрація неповної картки (без лицьової чи зворотної сторони) — тут,
@@ -610,18 +606,24 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
     );
   }
 
-  // Той самий прогрес-заголовок/нижній рядок ←/→, що й у gradable-вправах
-  // (block-navigation.tsx) — лише підпис "Сторінка" замість "Блок"
-  // (flip_cards нічого не оцінює, тож isBlockChecked не передається).
-  // deck — одна колода з усіма картками, без розбиття на сторінки (ці два
-  // елементи для deck просто не рендеряться нижче).
-  const pagerHeader = (
-    <TaskPanelProgressRow blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} blockLabel="Сторінка" />
+  // deck — одна колода з усіма картками, без розбиття на сторінки: смужка
+  // нижче показує лише плашку (без вкладок), нижній рядок ←/→ для deck
+  // не рендериться взагалі (BlockNavFooter сам повертає null при
+  // blockCount<=1 — тут примусово isDeck, бо totalPages від cards.length
+  // не має сенсу для суцільної колоди).
+  const isDeck = config.mode === "deck";
+  const pagerFooter = (
+    <BlockNavFooter blockCount={isDeck ? 1 : totalPages} activeBlock={page} onChangeBlock={handlePageChange} />
   );
-  const pagerFooter = <BlockNavFooter blockCount={totalPages} activeBlock={page} onChangeBlock={handlePageChange} />;
 
   return (
     <div ref={blockRef} className={EXERCISE_STACK}>
+      <BlockTabs
+        plaqueText={plaqueText}
+        blockCount={isDeck ? undefined : totalPages}
+        activeBlock={page}
+        onChangeBlock={isDeck ? undefined : handlePageChange}
+      />
       <TaskPanelHeader
         instructionText={
           config.instructions ??
@@ -643,16 +645,13 @@ export function FlipCardsExercise({ config }: { config: FlipCardsConfig }) {
           cards={cards}
           revealSide={config.revealSide ?? "front"}
           pageIndices={pageIndices}
-          header={pagerHeader}
           footer={pagerFooter}
         />
       ) : (
-        // Заголовок/сітка/футер — РАЗОМ в ОДНІЙ обгортці без власного
-        // flex/gap (той самий прийом, що BlockNavigation,
-        // block-navigation.tsx): інакше gap самого EXERCISE_STACK додавався
-        // б поверх margin-bottom/margin-top прогрес-бару/футера.
+        // Сітка/футер — РАЗОМ в ОДНІЙ обгортці без власного flex/gap (той
+        // самий прийом, що BlockNavigation, block-navigation.tsx): інакше
+        // gap самого EXERCISE_STACK додавався б поверх margin-top футера.
         <div>
-          {pagerHeader}
           {/* Усі картки лишаються в DOM на весь час вправи — та сама
               причина, що в RandomRevealFlipCards: немонтування плитки при
               зміні сторінки скинуло б її внутрішній "перевернуто/ні" стан. */}

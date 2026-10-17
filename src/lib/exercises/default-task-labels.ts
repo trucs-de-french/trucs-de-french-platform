@@ -75,12 +75,12 @@ export const DEFAULT_TASK_NAME: Record<TaskTypeKey, string> = {
   error_correction: "Correction des erreurs",
 };
 
-// flip_cards у режимі "випадкова картка" (config.mode === "random_reveal",
-// flip-cards.tsx) — єдиний тип із варіантом назви залежно від режиму (той
-// самий принцип, що WORD_CHOICE_DEFAULT_INSTRUCTIONS, default-instructions.ts).
-const FLIP_CARDS_RANDOM_NAME = "Tirage au sort";
-
+// Плашка типу (BlockTabs, block-navigation.tsx) лишається тією самою для
+// flip_cards незалежно від режиму ("Tirage au sort" для random_reveal
+// прибрано: задача-рефакторинг смужки вимагає, щоб назва не змінювалась
+// між режимами) — лише інструкція/підінструкція все ще різні
+// (FLIP_CARDS_RANDOM_INSTRUCTIONS, default-instructions.ts, flip-cards.tsx).
 export function getDefaultTaskName(type: string, config?: Record<string, unknown> | null): string {
-  if (type === "flip_cards" && config?.mode === "random_reveal") return FLIP_CARDS_RANDOM_NAME;
+  void config;
   return DEFAULT_TASK_NAME[type as TaskTypeKey] ?? type;
 }

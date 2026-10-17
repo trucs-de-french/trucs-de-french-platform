@@ -14,12 +14,6 @@ export type BlockNavigationSummary = {
   pointsPossible?: number;
 };
 
-// Понад цю кількість блоків — сегменти (min-width: 14px кожен, CSS)
-// перестають бути комфортними для пальця на вузькому екрані: прогрес-
-// заголовок перемикається на один суцільний трек (BlockProgressHeader
-// нижче), пряме перемикання лишається лише через ←/→.
-const MANY_BLOCKS_THRESHOLD = 12;
-
 function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: number }) {
   const d = direction === "left" ? "M12.5 4.5 7 10l5.5 5.5" : "M7 3.5 12.5 9 7 14.5";
   return (
@@ -36,88 +30,6 @@ function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: n
     >
       <path d={d} />
     </svg>
-  );
-}
-
-// Сама смужка прогресу (сегментований бар або, за великої кількості
-// блоків, суцільний трек) — БЕЗ підпису "{label} N з M" (той текст тепер
-// малює TaskPanelHeader, task-panel-header.tsx, у своєму рядку 1, зліва
-// від цієї смужки, одним спільним заголовком зони над картками для
-// ВСІХ типів вправ, не лише block-навігованих). Раніше ця смужка і
-// підпис складали один компонент (BlockProgressHeader) з власним
-// розміщенням прямо над {children} у BlockNavigation — тепер виклик-сайти
-// самі розміщують TaskPanelHeader (із цим компонентом усередині) над усім
-// блоком вправи, а BlockNavigation нижче лише складає children + футер.
-export function BlockSegments({
-  blockCount,
-  activeBlock,
-  onChangeBlock,
-  isBlockChecked,
-  labels,
-  label = "Блок",
-}: {
-  blockCount: number;
-  activeBlock: number;
-  onChangeBlock: (index: number) => void;
-  // Відсутній — жодна позиція не вважається "перевіреною" (flip-cards не
-  // має оцінювання взагалі).
-  isBlockChecked?: (index: number) => boolean;
-  // Назва блоку (ЕТАП A/3, word-search.tsx/crossword.tsx) — лишається
-  // доступною лише в aria-label сегмента (не губимо інформацію для
-  // читачів з скрінрідером), візуально не відображається.
-  labels?: (string | undefined)[];
-  // "Блок" (типово, gradable-вправи) / "Сторінка" (flip-cards.tsx) — йде
-  // лише в aria-valuetext/aria-label нижче, видимий підпис малює
-  // TaskPanelHeader.
-  label?: string;
-}) {
-  if (blockCount <= 1) return null;
-
-  if (blockCount > MANY_BLOCKS_THRESHOLD) {
-    const pct = ((activeBlock + 1) / blockCount) * 100;
-    return (
-      <div
-        className="exercise-block-track"
-        role="progressbar"
-        aria-valuemin={1}
-        aria-valuemax={blockCount}
-        aria-valuenow={activeBlock + 1}
-        aria-valuetext={`${label} ${activeBlock + 1} з ${blockCount}`}
-      >
-        <div className="exercise-block-track-fill" style={{ width: `${pct}%` }} />
-      </div>
-    );
-  }
-
-  // Вужчий проміжок між сегментами, коли їх багато (>8) — щоб вузький
-  // телефонний екран не змушував сегменти звужуватись нижче комфортного
-  // tap-розміру (min-width: 14px на самому сегменті, CSS).
-  const segmentGap = blockCount > 8 ? 4 : 6;
-
-  return (
-    <div className="exercise-block-segments" style={{ gap: `${segmentGap}px` }}>
-      {Array.from({ length: blockCount }, (_, i) => {
-        const customLabel = labels?.[i];
-        const baseLabel = customLabel ? `${label} ${i + 1}: ${customLabel}` : `${label} ${i + 1}`;
-        return (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onChangeBlock(i)}
-            aria-label={isBlockChecked?.(i) ? `${baseLabel}, перевірено` : baseLabel}
-            aria-current={i === activeBlock ? "step" : undefined}
-            className="exercise-block-segment"
-          >
-            <span
-              className="exercise-block-segment-bar"
-              style={{
-                background: i <= activeBlock ? "linear-gradient(90deg, #5a55e6, #3b36c4)" : "#dcdbf3",
-              }}
-            />
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
