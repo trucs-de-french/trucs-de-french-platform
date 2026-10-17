@@ -2005,7 +2005,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .task-panel-header-divider {
   height: 1px;
-  margin-top: -2px;
+  margin-top: 14px;
   background: #e6e0c8;
 }
 .dark .task-panel-header-divider {
