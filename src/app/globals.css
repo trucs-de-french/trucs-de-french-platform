@@ -3400,39 +3400,50 @@ button.scene-bar:active .scene-bar-toggle {
 
 /* Плитки "Правильні відповіді" (TaskResultAnswerRows, task-result.tsx,
    table-fill.tsx) — та сама плитка/чипи, що .task-result-pair-row вище,
-   плюс номер рядка зліва і підсвітка клітинки-відповіді; грид — той самий
-   поріг (768px), що table-fill.tsx (.table-fill-columns-grid): дві колонки
-   на столі, одна на телефоні. */
+   плюс номер рядка зліва і підсвітка клітинки-відповіді. auto-fit замість
+   медіа-запиту на 768px: колонки самі згортаються в одну, коли ширина
+   toggle-картки не вміщує 340px на колонку (min(100%, 340px) — щоб підлога
+   колонки не перевищувала доступну ширину на вузьких viewport і не
+   викликала горизонтальний скрол). */
 .task-result-answer-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-@media (min-width: 768px) {
-  .task-result-answer-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 10px;
 }
 .task-result-answer-row {
+  /* Нерівні колонки: український переклад зазвичай довший за французьке
+     слово, тож отримує більше місця (1.15fr проти 0.85fr). */
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 22px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 0.85fr) 14px minmax(0, 1.15fr);
   align-items: center;
   gap: 8px;
-  padding: 9px 14px;
+  padding: 8px 10px;
   border-radius: 14px;
   background: #fff;
   border: 1px solid rgba(217, 183, 101, 0.5);
   min-width: 0;
 }
-/* Довгі слова (без пробілів для розбиття) інакше розпирають 1fr-колонку й,
-   через ланцюжок flex/grid без явної ширини аж до .task-result-card,
-   виштовхують усю картку за межі екрана на вузьких viewport — та сама
-   задача, що overflow-wrap: anywhere у fill-blank.tsx для подібних чипів. */
+/* Компактний розмір лише для чипів у плитках "Правильні відповіді" (щоб
+   слова вміщувались в один рядок) — не чіпає базовий .task-result-pair-chip,
+   яким користується й matching.tsx. Перенос лише по пробілах/комах
+   (word-break/overflow-wrap: normal, hyphens: manual) — слово всередині
+   ніколи не розбивається; якщо переклад завдовгий (напр. "сирітський
+   притулок"), чип переноситься у два рядки й росте у висоту, а французький
+   чип у тій самій плитці лишається вертикально центрованим (align-self). */
 .task-result-answer-row .task-result-pair-chip {
   min-width: 0;
-  overflow-wrap: anywhere;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: manual;
+  align-self: center;
+}
+.task-result-answer-row .task-result-pair-arrow {
+  width: 14px;
+  height: 14px;
 }
 .dark .task-result-answer-row {
   background: rgba(255, 255, 255, 0.04);
@@ -3446,11 +3457,11 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .task-result-answer-num {
   align-self: center;
-  width: 20px;
+  width: 18px;
   flex-shrink: 0;
   text-align: center;
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: #b8902f;
 }
