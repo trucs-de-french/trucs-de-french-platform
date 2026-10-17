@@ -67,7 +67,7 @@ function VocabWord({
     >
       {word}
       {isOpen && (
-        <span className="absolute left-1/2 top-full z-10 mt-1 w-max max-w-56 -translate-x-1/2 rounded bg-neutral-900 px-2 py-1 text-xs font-normal text-white shadow dark:bg-neutral-100 dark:text-neutral-900">
+        <span className="vocab-chip-tooltip absolute left-1/2 top-full z-10 mt-1 w-max max-w-56 -translate-x-1/2 rounded px-2 py-1 text-xs">
           {translation}
         </span>
       )}

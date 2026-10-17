@@ -3513,6 +3513,35 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+.vocab-chip-tooltip {
+  background: #fff;
+  color: #1a1640;
+  opacity: 1;
+  font-weight: 600;
+  border: 1px solid rgba(217, 183, 101, 0.55);
+  box-shadow:
+    0 8px 20px -6px rgba(120, 90, 20, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.dark .vocab-chip-tooltip {
+  background: #dcdbf3;
+  color: #1a1640;
+  opacity: 1;
+  font-weight: 600;
+  border-color: rgba(150, 125, 240, 0.5);
+  box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-chip-tooltip {
+    background: #dcdbf3;
+    color: #1a1640;
+    opacity: 1;
+    font-weight: 600;
+    border-color: rgba(150, 125, 240, 0.5);
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  }
+}
+
 .block-tab {
   position: relative;
   flex: none;
