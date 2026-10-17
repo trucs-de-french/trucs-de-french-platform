@@ -4344,21 +4344,64 @@ button.scene-bar:active .scene-bar-toggle {
 .image-match-pool {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   background: #f6efd9;
   border: 1.5px dashed rgba(217, 183, 101, 0.75);
   border-radius: 16px;
-  padding: 12px 14px 14px;
+  padding: 10px 14px 12px;
   box-sizing: border-box;
+  /* Липкий трей на ВСІХ ширинах (не лише <768px) — попередня версія мала
+     static-трей на десктопі/планшеті; виявилось, що слова ховаються за
+     межами екрана під час скролу карток, тож трей має залишатись
+     "поверх" карток: position:sticky тут, у БАЗОВОМУ правилі (за
+     задумом архітектури файлу — десктопне значення за замовчуванням),
+     повністю перекривається нижче в @media (max-width:767px) під
+     горизонтальну липку смужку (той самий .image-match-pool). top:8px —
+     немає жодного fixed/sticky бару сайту над задачею (перевірено,
+     scene-header-bar.tsx), тож 8px — просто невеликий зазор від верху
+     екрана, а не компенсація чужого бару. */
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  box-shadow: 0 12px 20px -10px rgba(26, 22, 64, 0.35);
+  /* max-height+overflow-y: трей великий на десктопі (до 2 рядків чипів +
+     заголовок) — обмежуємо, щоб липкий трей не займав половину екрана,
+     коли слів багато; скролиться лише сам трей, картки під ним лишаються
+     повністю видимими нижче. */
+  max-height: 34vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 183, 101, 0.6) transparent;
+}
+.image-match-pool::-webkit-scrollbar {
+  width: 6px;
+}
+.image-match-pool::-webkit-scrollbar-thumb {
+  background: rgba(217, 183, 101, 0.6);
+  border-radius: 999px;
 }
 .dark .image-match-pool {
-  background: rgba(255, 255, 255, 0.05);
+  /* Непрозорий (не rgba(255,255,255,.05) як раніше) — трей липкий і
+     мусить повністю перекривати картки, що скроляться під ним, інакше
+     вони просвічували б крізь напівпрозорий фон. Той самий відтінок,
+     що вже обраний нижче для мобільної липкої смужки (той самий
+     принцип "непрозорий темний еквівалент"), аби десктопний і мобільний
+     трей виглядали однаково "суцільними". */
+  background: rgba(10, 16, 48, 0.96);
   border-color: rgba(243, 217, 139, 0.3);
+  scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
+}
+.dark .image-match-pool::-webkit-scrollbar-thumb {
+  background: rgba(243, 217, 139, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-pool {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(10, 16, 48, 0.96);
     border-color: rgba(243, 217, 139, 0.3);
+    scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
+  }
+  :root:not(.light) .image-match-pool::-webkit-scrollbar-thumb {
+    background: rgba(243, 217, 139, 0.45);
   }
 }
 .image-match-pool-label-row {
@@ -4415,7 +4458,7 @@ button.scene-bar:active .scene-bar-toggle {
 .image-match-pool-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 .image-match-chip {
   display: inline-flex;
@@ -4624,6 +4667,11 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 12px 20px -10px rgba(26, 22, 64, 0.4);
     padding: 10px 12px 12px;
     margin: 0 -24px;
+    /* max-height/overflow-y з десктопного правила вище — смужка на
+       телефоні горизонтальна й однорядна, вертикальний скрол тут не
+       потрібен і лише додав би зайву скрол-рамку. */
+    max-height: none;
+    overflow-y: visible;
   }
   .dark .image-match-pool {
     background: rgba(10, 16, 48, 0.96);
