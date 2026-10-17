@@ -357,7 +357,7 @@ export function TableFillExercise({
             onFocus={() => diacritics.onFocus(key)}
             onBlur={diacritics.onBlur}
             disabled={locked}
-            className={`h-10 w-full rounded-[10px] border pl-3 pr-11 text-[15px] ${inputClass(rowId, side, detail)}`}
+            className={`h-10 w-full rounded-[10px] border px-[40px] text-center text-[15px] ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
               самий золотий гурток, що ClueCardHeader кросворду

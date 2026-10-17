@@ -4163,7 +4163,11 @@ button.scene-bar:active .scene-bar-toggle {
 .table-fill-row {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
+  /* stretch (не center): коли слово переноситься на 2 рядки (<768px),
+     обидві комірки рядка мають вирівнятись по висоті найвищої — див.
+     .table-fill-row-cell, де сам вміст все одно центрується по вертикалі
+     всередині вже розтягнутої комірки. */
+  align-items: stretch;
   gap: 8px;
   padding: 8px 8px;
 }
@@ -4174,6 +4178,7 @@ button.scene-bar:active .scene-bar-toggle {
   grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) auto;
 }
 .table-fill-row-num {
+  align-self: center;
   width: 20px;
   flex-shrink: 0;
   text-align: center;
@@ -4191,23 +4196,36 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .table-fill-row-cell {
+  display: flex;
+  align-items: center;
   flex: 1 1 0%;
   min-width: 0;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+/* Єдина пряма дитина комірки — або чип (дано), або обгортка інпута
+   (пусто) — завжди розтягується на всю ширину комірки, інакше
+   justify-content був би потрібен і стискав би чип/інпут до ширини
+   тексту замість рівної ширини обох комірок. */
+.table-fill-row-cell > * {
+  width: 100%;
 }
 .table-fill-row-score {
+  align-self: center;
   flex-shrink: 0;
 }
-/* Відступ зліва = padding картки (10px) + ширина номера (22px) + gap
-   (10px) рядка нижче, щоб підписи колонок стояли РІВНО над чипами, не
+/* Відступ зліва = padding картки (8px) + ширина номера (20px) + gap
+   (8px) рядка нижче, щоб підписи колонок стояли РІВНО над чипами, не
    над номером рядка. */
 .table-fill-col-header {
   display: flex;
-  gap: 10px;
-  padding: 0 10px 0 42px;
+  gap: 8px;
+  padding: 0 8px 0 36px;
 }
 .table-fill-col-header-cell {
   flex: 1 1 0%;
   min-width: 0;
+  text-align: center;
   font-family: var(--font-heading);
   font-size: 11.5px;
   font-weight: 800;
@@ -4231,7 +4249,12 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .table-fill-chip {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 40px;
+  box-sizing: border-box;
   max-width: 100%;
   border-radius: 10px;
   padding: 7px 10px;
@@ -4298,7 +4321,7 @@ button.scene-bar:active .scene-bar-toggle {
    pr-11 (Tailwind, у JSX), щоб текст не йшов під неї. */
 .table-fill-input-lamp {
   position: absolute;
-  right: 2px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
 }
