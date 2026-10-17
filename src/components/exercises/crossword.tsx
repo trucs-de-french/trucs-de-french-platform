@@ -682,14 +682,19 @@ function CrosswordBlockView({
             word-search.tsx (ЕТАП J, grid-zoom-wrap/-inner, globals.css):
             1. grid-zoom-wrap — лише container-type:inline-size, w-full (не
                shrink-to-fit у батьківській flex-колонці з items-center).
-            2. scrollRef — overflow-x-auto, w-full, сам touch-скрол.
+            2. scrollRef — overflow-x-auto, w-full, сам touch-скрол. Клас
+               crossword-scroll (globals.css) замінює w-full власною
+               шириною + запасом padding/компенсуючою від'ємною margin
+               (той самий трюк, що в .ws-scroll), бо overflow-x:auto тут
+               неявно стає й overflow-y:auto та зрізає box-shadow
+               .crossword-tile прямою лінією по краю контейнера.
             3. grid-zoom-inner — оголошує --cols/--zoom (і через них --cw),
                w-max (замість inline-block) + mx-auto: вузька сітка
                центрується в (2), широка — вирівнюється по початку й
                прокручується (auto-margins колапсують у 0, коли вмісту не
                вистачає місця). */}
         <div className="grid-zoom-wrap w-full min-w-0">
-          <div ref={scrollRef} className="w-full overflow-x-auto" style={{ touchAction: "pan-x pan-y" }}>
+          <div ref={scrollRef} className="crossword-scroll" style={{ touchAction: "pan-x pan-y" }}>
             {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
                 (суцільно заповнена сітка, box-shadow там коректно повторює
                 прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима

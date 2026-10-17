@@ -647,6 +647,16 @@ button, input, textarea, select, label, nav, aside {
    край на 40px, контент-бокс (після відрахування padding 40px/40px)
    рівно збігається з межами батька — центр mx-auto-листа = центр панелі
    в межах 1px на будь-якій ширині/зумі. */
+/* Той самий трюк, що в .ws-scroll вище, для кросворду — тут тінь менша
+   (.crossword-tile box-shadow 0 4px 8px -3px ≈ 9px вниз/5px убік + Tailwind
+   drop-shadow-md на .grid-zoom-inner ще кілька px), тож запас менший:
+   16px знизу (зверху тіні нема — лише offset-y додатний), 16px з боків. */
+.crossword-scroll {
+  overflow-x: auto;
+  width: calc(100% + 32px);
+  padding: 8px 16px 16px;
+  margin: -8px -16px -16px;
+}
 .ws-scroll {
   overflow-x: auto;
   width: calc(100% + 80px);
