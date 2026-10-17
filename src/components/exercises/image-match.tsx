@@ -15,8 +15,22 @@ import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult } from "./task-result";
+import { IMAGE_MATCH_POOL_LABEL, imageMatchRemainingLabel } from "@/lib/exercises/default-task-labels";
+
+// 6-крапковий "грип" зліва на чипі пулу (мокап "варіант 1") — суто
+// декоративна підказка "можна тягнути", прибирається на мобільній липкій
+// смужці (.image-match-chip-grip, display:none у @media max-width:767px,
+// globals.css), бо спец мокапу "варіант 5" там її не передбачає.
+function ChipGripIcon() {
+  return (
+    <svg className="image-match-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
+      {[2, 7, 12].map((cy) =>
+        [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
+      )}
+    </svg>
+  );
+}
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що DragDropPracticeProps: config тут УЖЕ звужений сервером
@@ -202,103 +216,119 @@ export function ImageMatchExercise({
     );
   }
 
+  const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
+  const remaining = config.bank.length - usedBankIndices.size;
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
+        pointsText={
+          !hidePoints && (pointsVisible || detail)
+            ? detail
+              ? `${result?.pointsEarned ?? 0}/${totalPoints} ${pluralizePoints(totalPoints)}`
+              : `${totalPoints} ${pluralizePoints(totalPoints)}`
+            : undefined
+        }
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
       />
 
-      {usedBankIndices.size < config.bank.length ? (
-        // Липкий пул: на мобільних вузький по вертикалі екран, тож один
-        // рядок із горизонтальною прокруткою природніший, ніж вертикальний
-        // перенос, що з'їдав би багато висоти над картками; від sm: —
-        // вистачає місця на перенос рядків, тож вертикальна прокрутка з
-        // max-h замість горизонтальної. Непрозорий фон і border-b — той
-        // самий тон/рамка, що в EXERCISE_BLOCK_CLASS, щоб не було видно
-        // картки, що проїжджають крізь пул під час скролу.
-        <div
-          className={stickyPoolClass("image-match")}
-          {...bankDropProps()}
-        >
-          {config.bank.map((name, bi) => (
-            <button
-              key={bi}
-              type="button"
-              {...bankDragProps(bi)}
-              onClick={() => clickBank(bi)}
-              disabled={locked || usedBankIndices.has(bi)}
-              aria-pressed={selected === bi}
-              className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
-            >
-              {name}
-            </button>
-          ))}
+      {remaining > 0 ? (
+        // .image-match-pool — ОДИН контейнер для трея (десктоп, мокап
+        // "варіант 1") і липкої горизонтальної смужки (<768px, "варіант
+        // 5") — різниця лише в CSS (@media max-width:767px, globals.css),
+        // не в розмітці. Розкладені слова прибираються з пулу насправді
+        // (filter за usedBankIndices), не лишаються притемненими.
+        <div className="image-match-pool" {...bankDropProps()}>
+          <div className="image-match-pool-label-row">
+            <span className="image-match-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+            <span className="image-match-pool-count">{imageMatchRemainingLabel(remaining)}</span>
+          </div>
+          <div className="image-match-pool-chips">
+            {config.bank.map((name, bi) =>
+              usedBankIndices.has(bi) ? null : (
+                <button
+                  key={bi}
+                  type="button"
+                  {...bankDragProps(bi)}
+                  onClick={() => clickBank(bi)}
+                  disabled={locked}
+                  aria-pressed={selected === bi}
+                  className={`image-match-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                >
+                  <ChipGripIcon />
+                  {name}
+                </button>
+              )
+            )}
+          </div>
         </div>
       ) : (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="image-match-cards">
         {config.items.map((item, i) => {
           const itemDetail = detail?.items[i];
+          const slotState = itemDetail
+            ? itemDetail.isCorrect
+              ? "correct"
+              : "incorrect"
+            : hoveredSlot === i
+              ? "dragover"
+              : placed[i] !== null
+                ? "filled"
+                : "empty";
+          const slotStateClass =
+            slotState === "correct"
+              ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/30"
+              : slotState === "incorrect"
+                ? "border-2 border-red-500 bg-red-50 dark:bg-red-950/30"
+                : slotState === "dragover"
+                  ? "image-match-slot--dragover"
+                  : slotState === "filled"
+                    ? "image-match-slot--filled"
+                    : "image-match-slot--empty";
           return (
-          <div key={item.id} className={`flex flex-col items-center gap-1 ${ANSWER_CHIP_BASE} ${ANSWER_CHIP_DEFAULT}`}>
-            <button
-              type="button"
-              onClick={() => setLightboxSrc(item.imageUrl)}
-              aria-label="Показати картинку повністю"
-              className="w-full cursor-zoom-in"
-            >
-              <ImageOrPlaceholder
-                src={item.imageUrl}
-                alt=""
-                className="h-24 w-full rounded-md object-cover"
-                useFocus
-              />
-            </button>
-            {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-            {!hidePoints && (pointsVisible || itemDetail) && (
-              <p className="flex justify-center">
-                {itemDetail ? (
-                  <RowScorePill
-                    earned={itemDetail.isCorrect ? item.points : 0}
-                    possible={item.points}
-                    full={itemDetail.isCorrect}
+            <div key={item.id} className="image-match-card glass-item-card">
+              <div className="image-match-card-image-wrap">
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(item.imageUrl)}
+                  aria-label="Показати картинку повністю"
+                  className="block w-full cursor-zoom-in"
+                >
+                  <ImageOrPlaceholder
+                    src={item.imageUrl}
+                    alt=""
+                    className="image-match-card-image"
+                    useFocus
                   />
+                </button>
+                <span className="image-match-card-badge">{i + 1}</span>
+              </div>
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => clickSlot(i)}
+                {...slotDragProps(i)}
+                {...slotDropProps(i)}
+                aria-pressed={selected !== null && placed[i] === selected}
+                className={`image-match-slot ${slotStateClass} ${
+                  selected !== null && placed[i] === selected ? "ring-2 ring-black dark:ring-white" : ""
+                }`}
+              >
+                {placed[i] !== null ? (
+                  <span className="image-match-slot-word">{config.bank[placed[i] as number]}</span>
                 ) : (
-                  <span className={SCORE_LABEL_CLASS}>{`${item.points} ${pluralizePoints(item.points)}`}</span>
+                  <span className="image-match-slot-placeholder">
+                    <span className="image-match-slot-placeholder-full">перетягніть слово</span>
+                    <span className="image-match-slot-placeholder-short">перетягніть</span>
+                  </span>
                 )}
-              </p>
-            )}
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => clickSlot(i)}
-              {...slotDragProps(i)}
-              {...slotDropProps(i)}
-              aria-pressed={selected !== null && placed[i] === selected}
-              className={`flex min-h-11 w-full select-none items-center justify-center break-words px-2 py-1.5 text-center text-base sm:min-h-12 ${slotClass(
-                detail
-                  ? detail.items[i]?.isCorrect
-                    ? "correct"
-                    : "incorrect"
-                  : hoveredSlot === i
-                    ? "hover"
-                    : placed[i] !== null
-                      ? "filled"
-                      : "empty",
-                {
-                  rounded: "lg",
-                  emptyBg: "subtle",
-                  selectableHint: selected !== null && placed[i] === null,
-                }
-              )} ${selected !== null && placed[i] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
-            >
-              {placed[i] !== null ? config.bank[placed[i] as number] : ""}
-            </button>
-          </div>
+              </button>
+            </div>
           );
         })}
       </div>

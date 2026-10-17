@@ -4325,3 +4325,356 @@ button.scene-bar:active .scene-bar-toggle {
   top: 50%;
   transform: translateY(-50%);
 }
+
+/* image_match (мокап "варіант 1" десктоп / "варіант 5" мобільний,
+   image-match.tsx) — лише цей тип, НЕ зачіпає спільні tile-styles.ts/
+   answer-card-style.ts (bankTileClass/slotClass/ANSWER_CHIP_*), якими й
+   досі користуються drag_drop/fill_blank/matching/listening/і т.д.:
+   чипи/слоти/трей тут мають власну, точно задану мокапом геометрію,
+   що не повинна протекти в інші типи. Картки самі лишаються на
+   спільному .glass-item-card (градієнтна рамка біле/золото, globals.css
+   вище) — лише радіус/падінг/gap перекриті під мокап (16/10/8 замість
+   14/—/—).
+   .image-match-pool — ОДИН контейнер для обох розкладок: за
+   замовчуванням (>=768px) — трей з пунктирною рамкою й переносом чипів;
+   у @media (max-width:767px) нижче всі властивості перевизначені під
+   липку горизонтальну смужку (мокап "варіант 5"), а не окремий клас —
+   так розмітка (JSX) лишається однією й тією самою на обох розмірах
+   екрана, різниця лише в CSS. */
+.image-match-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f6efd9;
+  border: 1.5px dashed rgba(217, 183, 101, 0.75);
+  border-radius: 16px;
+  padding: 12px 14px 14px;
+  box-sizing: border-box;
+}
+.dark .image-match-pool {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(243, 217, 139, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-pool {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(243, 217, 139, 0.3);
+  }
+}
+.image-match-pool-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.image-match-pool-label {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a7a52;
+}
+.dark .image-match-pool-label {
+  color: #dcdbf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-pool-label {
+    color: #dcdbf3;
+  }
+}
+.image-match-pool-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.55);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b4a14;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dark .image-match-pool-count {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(243, 217, 139, 0.25);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-pool-count {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(243, 217, 139, 0.25);
+    color: #f6dc8e;
+  }
+}
+.image-match-pool-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.image-match-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px solid rgba(217, 183, 101, 0.7);
+  box-shadow: 0 3px 6px -2px rgba(120, 90, 20, 0.3);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1640;
+  cursor: grab;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.image-match-chip:active {
+  cursor: grabbing;
+}
+.image-match-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.dark .image-match-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(243, 217, 139, 0.35);
+  color: #f4f3ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-chip {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(243, 217, 139, 0.35);
+    color: #f4f3ff;
+  }
+}
+.image-match-chip-grip {
+  flex-shrink: 0;
+  width: 10px;
+  height: 14px;
+  fill: #c9a24a;
+}
+
+/* Картки-картинки — grid 3 колонки на десктопі, спільна карткова рамка
+   (.glass-item-card) перекрита під радіус/падінг/gap мокапу. */
+.image-match-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.image-match-card.glass-item-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.image-match-card-image-wrap {
+  position: relative;
+}
+.image-match-card-image {
+  display: block;
+  width: 100%;
+  height: 110px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.image-match-card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(26, 22, 64, 0.35);
+}
+.image-match-slot {
+  width: 100%;
+  /* min-height (не height): слово, що переноситься на 2 рядки у вузькій
+     картці (2 колонки <768px, прим. "сирітський притулок"), інакше
+     обрізалось би по 40px — тут важливіше показати повне слово, ніж
+     тримати висоту рівно 40 завжди. */
+  min-height: 40px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.image-match-slot:disabled {
+  cursor: not-allowed;
+}
+.image-match-slot--empty {
+  background: #fff;
+  border: 1.5px dashed rgba(217, 183, 101, 0.9);
+}
+.dark .image-match-slot--empty {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(243, 217, 139, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-slot--empty {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(243, 217, 139, 0.45);
+  }
+}
+.image-match-slot-placeholder {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: #b8a67a;
+  overflow-wrap: anywhere;
+}
+.dark .image-match-slot-placeholder {
+  color: rgba(220, 219, 243, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-slot-placeholder {
+    color: rgba(220, 219, 243, 0.6);
+  }
+}
+.image-match-slot--dragover {
+  border: 1.5px dashed #4b46da;
+  background: #eeeefb;
+}
+.dark .image-match-slot--dragover {
+  border-color: #6b76ff;
+  background: rgba(75, 70, 218, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-slot--dragover {
+    border-color: #6b76ff;
+    background: rgba(75, 70, 218, 0.18);
+  }
+}
+.image-match-slot--filled {
+  background: #f6efd9;
+  border: 1.5px solid rgba(217, 183, 101, 0.8);
+}
+.dark .image-match-slot--filled {
+  background: rgba(246, 220, 142, 0.12);
+  border-color: rgba(243, 217, 139, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-slot--filled {
+    background: rgba(246, 220, 142, 0.12);
+    border-color: rgba(243, 217, 139, 0.4);
+  }
+}
+.image-match-slot-word {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1640;
+  overflow-wrap: anywhere;
+}
+.dark .image-match-slot-word {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-slot-word {
+    color: #f6dc8e;
+  }
+}
+/* correct/incorrect — лишені на тих самих Tailwind-утилітах, що й
+   раніше в slotClass (tile-styles.ts), просто разом із базовим
+   .image-match-slot (висота/радіус/box-sizing), не окремим CSS-класом
+   тут — border-green-500/bg-green-50/dark:bg-green-950/30 і дзеркально
+   для incorrect, застосовані прямо в JSX (image-match.tsx). */
+
+.image-match-slot-placeholder-short {
+  display: none;
+}
+
+/* Мобільна липка смужка (<768px, мокап "варіант 5") — ОДИН і той самий
+   .image-match-pool, лише тут усі геометричні властивості перевизначені
+   на "липку смужку зверху вмісту задачі" замість трея-з-переносом. */
+@media (max-width: 767px) {
+  .image-match-pool {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+    border: none;
+    border-top: 1.5px solid #d9b765;
+    border-bottom: 1.5px solid #d9b765;
+    border-radius: 0;
+    box-shadow: 0 12px 20px -10px rgba(26, 22, 64, 0.4);
+    padding: 10px 12px 12px;
+    margin: 0 -24px;
+  }
+  .dark .image-match-pool {
+    background: rgba(10, 16, 48, 0.96);
+    border-top-color: rgba(243, 217, 139, 0.3);
+    border-bottom-color: rgba(243, 217, 139, 0.3);
+  }
+  .image-match-pool-chips {
+    position: relative;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent 100%);
+  }
+  .image-match-pool-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .image-match-chip {
+    height: 36px;
+    font-size: 15px;
+  }
+  .image-match-chip-grip {
+    display: none;
+  }
+  .image-match-slot-placeholder-full {
+    display: none;
+  }
+  .image-match-slot-placeholder-short {
+    display: inline;
+  }
+  .image-match-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .image-match-card.glass-item-card {
+    padding: 8px;
+  }
+  .image-match-card-image {
+    height: 84px;
+  }
+}
+@media (max-width: 640px) {
+  .image-match-pool {
+    margin: 0 -16px;
+  }
+}
+@media (max-width: 767px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .image-match-pool {
+    background: rgba(10, 16, 48, 0.96);
+    border-top-color: rgba(243, 217, 139, 0.3);
+    border-bottom-color: rgba(243, 217, 139, 0.3);
+  }
+}

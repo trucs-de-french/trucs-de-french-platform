@@ -85,6 +85,17 @@ export function getDefaultTaskName(type: string, config?: Record<string, unknown
   return DEFAULT_TASK_NAME[type as TaskTypeKey] ?? type;
 }
 
+// Підписи липкого пула слів image_match (мокап "варіант 1"/"варіант 5",
+// image-match.tsx) — заголовок "Слова" над чипами й пілюля-лічильник
+// "залишилось N", що оновлюється по мірі розкладання слів у картки. Лише
+// UK, той самий принцип, що решта чисто-інтерфейсних (не навчальних)
+// підписів платформи (кнопки "Перевірити"/"Показати відповідь" і т.п.) —
+// без FR-пари, на відміну від DEFAULT_INSTRUCTIONS.
+export const IMAGE_MATCH_POOL_LABEL = "Слова";
+export function imageMatchRemainingLabel(count: number): string {
+  return `залишилось ${count}`;
+}
+
 // Дефолтні FR/UK підписи секцій напрямку кросворду ("Horizontalement" /
 // "Verticalement", мокап "варіант 2", crossword.tsx) — окремо від
 // DEFAULT_TASK_NAME (назва ТИПУ задачі) і DEFAULT_INSTRUCTIONS (інструкція

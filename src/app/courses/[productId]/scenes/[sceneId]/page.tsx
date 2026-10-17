@@ -30,6 +30,7 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { PhoneticsExercise } from "@/components/exercises/phonetics";
 import { TaskMedia } from "@/components/task-media";
+import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { LinkCard } from "@/components/link-card";
 import { GlassBlock } from "@/components/glass-block";
 import { resolveBlockIcon } from "@/lib/block-icons";
@@ -772,7 +773,29 @@ export default async function ScenePage({
                     })()}
                 </>
               ) : (
-                <GlassBlock>
+                <>
+                  {/* image_match: task.image_url — ОПЦІЙНА обкладинка
+                      блоку, не частина спільного заголовка. Рендериться
+                      ПОЗА .glass-block-panel (сестра GlassBlock, не
+                      дитина), бо escape-трюк плашки нижче
+                      (.task-header-strip-anchor) вимагає бути буквально
+                      ПЕРШИМ елементом усередині панелі — якби картинка
+                      лишалась усередині EXERCISE_STACK ПЕРЕД BlockTabs
+                      (як для решти типів через TaskMedia нижче), анкер
+                      рахував би відступ від точки одразу під картинкою,
+                      а не від верхнього краю панелі, і плашка "Images et
+                      mots" наїжджала б на низ картинки. Аудіо (якщо є) —
+                      і далі всередині панелі через TaskMedia, лише
+                      imageUrl там занулено, щоб не рендерити картинку
+                      двічі. */}
+                  {task.type === "image_match" && task.image_url && (
+                    <ImageOrPlaceholder
+                      src={task.image_url}
+                      alt=""
+                      className="mb-4 h-24 w-full rounded-xl object-cover"
+                    />
+                  )}
+                  <GlassBlock>
                   <div className={EXERCISE_STACK}>
                     {/* Плашка/смужка (мокап "варіант 4") — ОБОВ'ЯЗКОВО
                         перший елемент тут (escape-трюк негативних margin,
@@ -789,7 +812,10 @@ export default async function ScenePage({
                       <BlockTabs plaqueText={barText} />
                     )}
 
-                    <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
+                    <TaskMedia
+                      imageUrl={task.type === "image_match" ? null : task.image_url}
+                      audioUrl={task.audio_url}
+                    />
 
                     {task.type === "vocab_quiz" && (
                       <ExerciseErrorBoundary>
@@ -853,6 +879,7 @@ export default async function ScenePage({
                     )}
                   </div>
                 </GlassBlock>
+                </>
               )}
             </li>
           );
