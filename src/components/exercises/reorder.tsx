@@ -17,6 +17,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
@@ -117,10 +118,12 @@ function ReorderSequenceTiles({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-2 max-md:w-full">
           {!hidePoints && (pointsVisible || detail) && (
-            <p className={SCORE_LABEL_CLASS}>
-              {detail
-                ? `${sequenceCorrect ? points : 0}/${points} ${pluralizePoints(points)}`
-                : `${points} ${pluralizePoints(points)}`}
+            <p>
+              {detail ? (
+                <RowScorePill earned={sequenceCorrect ? points : 0} possible={points} full={sequenceCorrect} />
+              ) : (
+                <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>
+              )}
             </p>
           )}
           <div className="max-md:rounded-lg glass-inset-bg-mobile max-md:bg-neutral-50 max-md:p-2 max-md:dark:bg-neutral-900">
@@ -330,19 +333,11 @@ export function ReorderExercise({
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             {blockResult && (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
-                {blockResult.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
-                    {pluralizePoints(blockResult.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={blockResult.correct}
+                pointsEarned={blockResult.pointsEarned}
+                pointsPossible={blockResult.pointsPossible}
+              />
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -493,19 +488,11 @@ export function ReorderExercise({
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>
             ) : (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
-                {single.result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
-                    {pluralizePoints(single.result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={single.result.correct}
+                pointsEarned={single.result.pointsEarned}
+                pointsPossible={single.result.pointsPossible}
+              />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
@@ -521,7 +508,7 @@ export function ReorderExercise({
             blockCount={blockCount}
             activeBlock={activeBlock}
             onChangeBlock={setActiveBlock}
-            summary={aggregateResult}
+            blockResults={blockResults}
             checkButton={checkButtonEl}
           >
             {renderBlock()}

@@ -15,7 +15,8 @@ import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що DragDropPracticeProps: config тут УЖЕ звужений сервером
@@ -259,10 +260,16 @@ export function ImageMatchExercise({
             </button>
             {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
             {!hidePoints && (pointsVisible || itemDetail) && (
-              <p className={`text-center ${SCORE_LABEL_CLASS}`}>
-                {itemDetail
-                  ? `${itemDetail.isCorrect ? item.points : 0}/${item.points} ${pluralizePoints(item.points)}`
-                  : `${item.points} ${pluralizePoints(item.points)}`}
+              <p className="flex justify-center">
+                {itemDetail ? (
+                  <RowScorePill
+                    earned={itemDetail.isCorrect ? item.points : 0}
+                    possible={item.points}
+                    full={itemDetail.isCorrect}
+                  />
+                ) : (
+                  <span className={SCORE_LABEL_CLASS}>{`${item.points} ${pluralizePoints(item.points)}`}</span>
+                )}
               </p>
             )}
             <button
@@ -314,18 +321,7 @@ export function ImageMatchExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
+          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

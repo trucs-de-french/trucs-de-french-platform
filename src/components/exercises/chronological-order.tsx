@@ -31,6 +31,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
@@ -173,9 +174,9 @@ export function ChronologicalOrderExercise({
     const d = itemDetail(itemId);
     if (!pointsVisible && !d) return null;
     if (d) {
-      return `${d.isCorrect ? points : 0}/${points} ${pluralizePoints(points)}`;
+      return <RowScorePill earned={d.isCorrect ? points : 0} possible={points} full={d.isCorrect} />;
     }
-    return `${points} ${pluralizePoints(points)}`;
+    return <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>;
   }
 
   function handleSubmit() {
@@ -342,9 +343,7 @@ export function ChronologicalOrderExercise({
                   {numberInput(item.id, "compact", label)}
                 </div>
                 {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
-                  <p className={`text-center ${SCORE_LABEL_CLASS}`}>
-                    {pointsLabel(item.id, item.points)}
-                  </p>
+                  <p className="flex justify-center">{pointsLabel(item.id, item.points)}</p>
                 ) : null}
               </div>
             );
@@ -371,9 +370,7 @@ export function ChronologicalOrderExercise({
                 <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">{frenchNbsp(item.content)}</span>
                 {numberInput(item.id, "line", label)}
                 {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
-                  <span className={`flex-none text-right ${SCORE_LABEL_CLASS}`}>
-                    {pointsLabel(item.id, item.points)}
-                  </span>
+                  <span className="flex-none">{pointsLabel(item.id, item.points)}</span>
                 )}
               </div>
             );
@@ -435,18 +432,7 @@ export function ChronologicalOrderExercise({
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
           ) : (
-            <p
-              className={`${RESULT_MESSAGE_CLASS} ${
-                result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-              }`}
-            >
-              {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-              {result.pointsPossible !== undefined && (
-                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                  ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-                </span>
-              )}
-            </p>
+            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>

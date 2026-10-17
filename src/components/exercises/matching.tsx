@@ -12,8 +12,9 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
+import { SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, TaskResultPairRows, RowScorePill } from "./task-result";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
@@ -214,8 +215,15 @@ export function MatchingExercise({
     const points = config.pairs.find((p) => p.left === left)?.points;
     if (points === undefined) return "";
     if (!pointsVisible && !pd) return "";
-    if (pd) return ` (${pd.isCorrect ? pd.points : 0}/${pd.points} ${pluralizePoints(pd.points)})`;
+    if (pd) return "";
     return ` (${points} ${pluralizePoints(points)})`;
+  }
+
+  function pointsScorePill(left: string, detail: MatchingDetail | undefined) {
+    if (hidePoints) return null;
+    const pd = detail?.pairPoints.find((p) => p.left === left);
+    if (!pd) return null;
+    return <RowScorePill earned={pd.isCorrect ? pd.points : 0} possible={pd.points} full={pd.isCorrect} />;
   }
 
   // ==== Гілка блоків (>10 елементів) ====
@@ -368,7 +376,8 @@ export function MatchingExercise({
                 >
                   {left}
                   {right ? ` → ${right}` : ""}
-                  <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>
+                  <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>{" "}
+                  {pointsScorePill(left, blockDetail)}
                 </button>
               );
             })}
@@ -391,35 +400,18 @@ export function MatchingExercise({
           </div>
         </div>
 
-        {blockDetail && (
-          <div className="text-sm">
-            <p className="font-medium">Правильні пари цього блоку:</p>
-            <ul className="mt-1 flex flex-col gap-0.5 text-neutral-600 dark:text-neutral-400">
-              {blockDetail.correctPairs.map((p, i) => (
-                <li key={i}>
-                  {p.left} → {p.right}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             {blockResult && (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
+              <TaskResult
+                correct={blockResult.correct}
+                pointsEarned={blockResult.pointsEarned}
+                pointsPossible={blockResult.pointsPossible}
+                toggleTitle="Правильні пари"
+                toggleCount={blockDetail?.correctPairs.length}
               >
-                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
-                {blockResult.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
-                    {pluralizePoints(blockResult.pointsPossible)})
-                  </span>
-                )}
-              </p>
+                {blockDetail && <TaskResultPairRows pairs={blockDetail.correctPairs} />}
+              </TaskResult>
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -598,7 +590,8 @@ export function MatchingExercise({
                   >
                     {left}
                     {right ? ` → ${right}` : ""}
-                    <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>
+                    <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>{" "}
+                    {pointsScorePill(left, singleDetail)}
                   </button>
                 );
               })}
@@ -621,19 +614,6 @@ export function MatchingExercise({
             </div>
           </div>
 
-          {singleDetail && (
-            <div className="text-sm">
-              <p className="font-medium">Правильні пари:</p>
-              <ul className="mt-1 flex flex-col gap-0.5 text-neutral-600 dark:text-neutral-400">
-                {singleDetail.correctPairs.map((p, i) => (
-                  <li key={i}>
-                    {p.left} → {p.right}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <div className="flex flex-col gap-3">
             {!single.result ? (
               <button
@@ -645,19 +625,15 @@ export function MatchingExercise({
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>
             ) : (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
+              <TaskResult
+                correct={single.result.correct}
+                pointsEarned={single.result.pointsEarned}
+                pointsPossible={single.result.pointsPossible}
+                toggleTitle="Правильні пари"
+                toggleCount={singleDetail?.correctPairs.length}
               >
-                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
-                {single.result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
-                    {pluralizePoints(single.result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+                {singleDetail && <TaskResultPairRows pairs={singleDetail.correctPairs} />}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
@@ -667,7 +643,7 @@ export function MatchingExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          summary={aggregateResult}
+          blockResults={blockResults}
           checkButton={checkButtonEl}
         >
           {renderBlock()}

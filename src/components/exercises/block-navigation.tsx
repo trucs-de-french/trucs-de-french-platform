@@ -1,20 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { pluralizePoints } from "@/lib/pluralize-points";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { formatPoints } from "@/lib/exercises/format-points";
 
-// Спільний підсумок для рядка "Загалом" — навмисно НЕ повний GradeResult
-// (той несе ще й detail, типізований по-різному для кожного gradable-типу,
-// тут не потрібен): лише 4 поля, які реально показує рядок.
-export type BlockNavigationSummary = {
-  correct: boolean;
-  score: number;
-  pointsEarned?: number;
-  pointsPossible?: number;
-};
-
-function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: number }) {
+function ChevronIcon({
+  direction,
+  size,
+  strokeWidth = 2.6,
+}: {
+  direction: "left" | "right";
+  size: number;
+  strokeWidth?: number;
+}) {
   const d = direction === "left" ? "M12.5 4.5 7 10l5.5 5.5" : "M7 3.5 12.5 9 7 14.5";
   return (
     <svg
@@ -23,7 +20,7 @@ function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: n
       viewBox="0 0 20 20"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.6"
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -32,6 +29,16 @@ function ChevronIcon({ direction, size }: { direction: "left" | "right"; size: n
     </svg>
   );
 }
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Відстань, яку лишаємо під круглу стрілку (28px + відступ від краю),
+// щоб авто-скрол не ставив активну вкладку рівно під кнопку, коли вона
+// показана (fade.left/right — та сама умова, що й показ самої стрілки).
+const TAB_SCROLL_EDGE_MARGIN = 24;
+const TAB_SCROLL_ARROW_ALLOWANCE = 34;
 
 function TabCheckIcon() {
   return (
@@ -106,9 +113,35 @@ export function BlockTabs({
 
   const hasTabs = !!blockCount && blockCount > 1 && !!onChangeBlock;
 
+  // Горизонтальний скрол ЛИШЕ самого скролера (scrollTo з offsetLeft/
+  // offsetWidth) — НЕ scrollIntoView, який міг би зсунути всю сторінку
+  // вертикально. Відступ від краю більший, коли з того боку показана
+  // кругла стрілка (інакше активна вкладка опиняється рівно під нею).
   useEffect(() => {
     if (!hasTabs) return;
-    tabRefs.current[activeBlock]?.scrollIntoView({ inline: "nearest", block: "nearest" });
+    const scroller = scrollRef.current;
+    const tab = tabRefs.current[activeBlock];
+    if (!scroller || !tab) return;
+
+    const leftOverflow = scroller.scrollLeft > 1;
+    const rightOverflow = scroller.scrollLeft < scroller.scrollWidth - scroller.clientWidth - 1;
+    const leftMargin = TAB_SCROLL_EDGE_MARGIN + (leftOverflow ? TAB_SCROLL_ARROW_ALLOWANCE : 0);
+    const rightMargin = TAB_SCROLL_EDGE_MARGIN + (rightOverflow ? TAB_SCROLL_ARROW_ALLOWANCE : 0);
+
+    const tabLeft = tab.offsetLeft;
+    const tabRight = tabLeft + tab.offsetWidth;
+    const viewLeft = scroller.scrollLeft;
+    const viewRight = viewLeft + scroller.clientWidth;
+
+    let target: number | null = null;
+    if (tabLeft - leftMargin < viewLeft) {
+      target = tabLeft - leftMargin;
+    } else if (tabRight + rightMargin > viewRight) {
+      target = tabRight + rightMargin - scroller.clientWidth;
+    }
+    if (target != null) {
+      scroller.scrollTo({ left: Math.max(0, target), behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
   }, [activeBlock, hasTabs]);
 
   function updateFade() {
@@ -127,8 +160,21 @@ export function BlockTabs({
     if (!el) return;
     const onResize = () => updateFade();
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const ro = new ResizeObserver(() => updateFade());
+    ro.observe(el);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ro.disconnect();
+    };
   }, [hasTabs, blockCount]);
+
+  function scrollByDirection(direction: "left" | "right") {
+    const el = scrollRef.current;
+    if (!el) return;
+    const delta = el.clientWidth * 0.6;
+    const left = direction === "left" ? el.scrollLeft - delta : el.scrollLeft + delta;
+    el.scrollTo({ left, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
 
   if (!plaqueText && !hasTabs) return null;
 
@@ -176,37 +222,61 @@ export function BlockTabs({
         {hasTabs && (
           <>
             {plaqueText && <span className="task-plaque-divider" aria-hidden="true" />}
-            <div ref={scrollRef} className={`task-tabs-scroll ${fadeClass}`.trim()} onScroll={updateFade}>
-              <div className="task-tabs-track" role="tablist" aria-label="Навігація по блоках">
-                {Array.from({ length: blockCount! }, (_, i) => {
-                  const isActive = i === activeBlock;
-                  const checked = isBlockChecked?.(i);
-                  const disabled = isBlockDisabled?.(i) ?? false;
-                  const customLabel = labels?.[i];
-                  const text = `${blockLabel} ${i + 1}`;
-                  const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", перевірено" : ""}`;
-                  return (
-                    <button
-                      key={i}
-                      ref={(el) => {
-                        tabRefs.current[i] = el;
-                      }}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      aria-disabled={disabled || undefined}
-                      aria-label={a11yLabel}
-                      tabIndex={isActive ? 0 : -1}
-                      onClick={() => !disabled && onChangeBlock!(i)}
-                      onKeyDown={(e) => handleKeyDown(e, i)}
-                      className={`block-tab ${isActive ? "block-tab--active" : "block-tab--inactive"}`}
-                    >
-                      {checked && <TabCheckIcon />}
-                      {text}
-                    </button>
-                  );
-                })}
+            <div className="task-tabs-wrap">
+              {fade.left && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label="Прокрутити вкладки блоків ліворуч"
+                  className="tabs-scroll-arrow tabs-scroll-arrow--left"
+                  onClick={() => scrollByDirection("left")}
+                >
+                  <ChevronIcon direction="left" size={14} strokeWidth={2.4} />
+                </button>
+              )}
+              <div ref={scrollRef} className={`task-tabs-scroll ${fadeClass}`.trim()} onScroll={updateFade}>
+                <div className="task-tabs-track" role="tablist" aria-label="Навігація по блоках">
+                  {Array.from({ length: blockCount! }, (_, i) => {
+                    const isActive = i === activeBlock;
+                    const checked = isBlockChecked?.(i);
+                    const disabled = isBlockDisabled?.(i) ?? false;
+                    const customLabel = labels?.[i];
+                    const text = `${blockLabel} ${i + 1}`;
+                    const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", виконано" : ""}`;
+                    return (
+                      <button
+                        key={i}
+                        ref={(el) => {
+                          tabRefs.current[i] = el;
+                        }}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        aria-disabled={disabled || undefined}
+                        aria-label={a11yLabel}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={() => !disabled && onChangeBlock!(i)}
+                        onKeyDown={(e) => handleKeyDown(e, i)}
+                        className={`block-tab ${isActive ? "block-tab--active" : "block-tab--inactive"}`}
+                      >
+                        {checked && <TabCheckIcon />}
+                        {isActive ? text : String(i + 1)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+              {fade.right && (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label="Прокрутити вкладки блоків праворуч"
+                  className="tabs-scroll-arrow tabs-scroll-arrow--right"
+                  onClick={() => scrollByDirection("right")}
+                >
+                  <ChevronIcon direction="right" size={14} strokeWidth={2.4} />
+                </button>
+              )}
             </div>
           </>
         )}
@@ -291,11 +361,13 @@ export function BlockNavFooter({
 // переробки цих двох типів вивести неможливо. Щоб не переробляти механіку
 // двох типів вправ заради суто презентаційної задачі, кнопка лишається на
 // місці й лише перефарбовується (className на кожному виклик-сайті).
+export type TaskBlockResult = { correct: boolean; pointsEarned?: number; pointsPossible?: number };
+
 export function BlockNavigation({
   blockCount,
   activeBlock,
   onChangeBlock,
-  summary,
+  blockResults,
   checkButton,
   hideFooter = false,
   children,
@@ -303,7 +375,10 @@ export function BlockNavigation({
   blockCount: number;
   activeBlock: number;
   onChangeBlock: (index: number) => void;
-  summary?: BlockNavigationSummary | null;
+  // per-блок GradeResult (той самий стан, що вже тримає кожен виклик-сайт,
+  // напр. table-fill.tsx: Record<number, TableFillResult>) — лише для
+  // плиток підсумку нижче, жодної нової логіки підрахунку.
+  blockResults?: Record<number, TaskBlockResult>;
   // Кнопка "Перевірити блок" — викликач передає готовий елемент (той
   // самий onClick/disabled, що й раніше), цей компонент лише ставить
   // його в один рядок із ←/→ (BlockNavFooter вище).
@@ -339,20 +414,65 @@ export function BlockNavigation({
         )}
       </div>
 
-      {summary && (
-        <p
-          className={`${RESULT_MESSAGE_CLASS} ${
-            summary.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          Загалом: {summary.correct ? "Правильно! ✓" : `${summary.score}%`}
-          {summary.pointsPossible !== undefined && (
-            <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-              ({summary.pointsEarned} з {summary.pointsPossible} {pluralizePoints(summary.pointsPossible)})
-            </span>
-          )}
-        </p>
+      {blockResults && Object.keys(blockResults).length > 0 && (
+        <TaskSummaryCard blockCount={blockCount} blockResults={blockResults} />
       )}
     </>
+  );
+}
+
+// Картка "Підсумок завдання" — замінює колишні дві паралельні лінії
+// ("Загалом: N% (X з Y балів)" тут і, в іншому компоненті, "Підсумок
+// блоку") для tasks із 2+ блоками: сума БАЛІВ лише по вже перевірених
+// блоках (неперевірені не входять у суму) + плитка на кожен блок.
+function TaskSummaryCard({
+  blockCount,
+  blockResults,
+}: {
+  blockCount: number;
+  blockResults: Record<number, TaskBlockResult>;
+}) {
+  const checked = Object.values(blockResults);
+  const sumEarned = checked.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
+  const sumPossible = checked.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0);
+
+  return (
+    <div className="task-result-card task-summary-card">
+      <div className="task-summary-top">
+        <span className="task-summary-title">Підсумок завдання</span>
+        {sumPossible > 0 && (
+          <span className="task-summary-total-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#b8902f" aria-hidden="true">
+              <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+            </svg>
+            Загалом: {formatPoints(sumEarned, sumPossible)}
+          </span>
+        )}
+      </div>
+      <div className="task-summary-tiles">
+        {Array.from({ length: blockCount }, (_, i) => {
+          const r = blockResults[i];
+          if (!r) {
+            return (
+              <span key={i} className="task-summary-tile task-summary-tile--pending">
+                Блок {i + 1} — —
+              </span>
+            );
+          }
+          const possible = r.pointsPossible ?? 0;
+          const earned = r.pointsEarned ?? 0;
+          const full = possible > 0 ? earned >= possible : r.correct;
+          return (
+            <span
+              key={i}
+              className={`task-summary-tile ${full ? "task-summary-tile--success" : "task-summary-tile--warn"}`}
+            >
+              Блок {i + 1} <span className="task-summary-tile-value">{earned}/{possible}</span>
+              {full ? " ✓" : ""}
+            </span>
+          );
+        })}
+      </div>
+    </div>
   );
 }

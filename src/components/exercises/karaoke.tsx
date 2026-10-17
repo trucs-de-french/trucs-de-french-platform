@@ -12,7 +12,7 @@ import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor 
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult } from "./task-result";
 
 const POLL_INTERVAL_MS = 200;
 // Останній рядок не має "наступного", що позначив би його кінець — якщо
@@ -686,18 +686,7 @@ export function KaraokeExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
+          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

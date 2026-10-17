@@ -15,7 +15,8 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { RESULT_MESSAGE_CLASS } from "./score-style";
+import { TaskResult } from "./task-result";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps/ChronologicalOrderPracticeProps.
@@ -375,18 +376,7 @@ export function SortColumnsExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
+          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

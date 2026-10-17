@@ -10,7 +10,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -131,10 +131,14 @@ export function TrueFalseExercise({
             {/* До перевірки — лише якщо pointsVisible; після — завжди,
                 ваше підтверджене рішення. */}
             {!hidePoints && (pointsVisible || d) && (
-              <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
-                {d
-                  ? `${d.isCorrect ? d.points : 0}/${d.points} ${pluralizePoints(d.points)}`
-                  : `${s.points} ${pluralizePoints(s.points)}`}
+              <span className="ml-2 inline-flex align-middle">
+                {d ? (
+                  <RowScorePill earned={d.isCorrect ? d.points : 0} possible={d.points} full={d.isCorrect} />
+                ) : (
+                  <span className="font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
+                    {`${s.points} ${pluralizePoints(s.points)}`}
+                  </span>
+                )}
               </span>
             )}
           </span>
@@ -238,19 +242,11 @@ export function TrueFalseExercise({
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             {blockResult && (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
-                {blockResult.pointsPossible !== undefined && (
-                  <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
-                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
-                    {pluralizePoints(blockResult.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={blockResult.correct}
+                pointsEarned={blockResult.pointsEarned}
+                pointsPossible={blockResult.pointsPossible}
+              />
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -371,19 +367,11 @@ export function TrueFalseExercise({
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>
             ) : (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
-                {single.result.pointsPossible !== undefined && (
-                  <span className="ml-2 font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
-                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
-                    {pluralizePoints(single.result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={single.result.correct}
+                pointsEarned={single.result.pointsEarned}
+                pointsPossible={single.result.pointsPossible}
+              />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
@@ -393,7 +381,7 @@ export function TrueFalseExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          summary={aggregateResult}
+          blockResults={blockResults}
           checkButton={checkButtonEl}
         >
           {renderBlock()}

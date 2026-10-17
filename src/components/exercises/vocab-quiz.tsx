@@ -14,6 +14,7 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { TaskResult } from "./task-result";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -82,9 +83,11 @@ export function VocabQuizExercise({
           instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
           subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
         />
-        <p className="font-medium">
-          Результат: {correctCount} з {questions.length}
-        </p>
+        <TaskResult
+          correct={correctCount === questions.length}
+          pointsEarned={correctCount}
+          pointsPossible={questions.length}
+        />
         <button
           type="button"
           onClick={restart}

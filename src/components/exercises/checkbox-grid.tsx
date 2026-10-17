@@ -18,7 +18,8 @@ import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { RESULT_MESSAGE_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps тощо.
@@ -75,9 +76,9 @@ const LEGEND_SQUARE = "flex h-4 w-4 shrink-0 items-center justify-center rounded
 const LEGEND_ICON_CORRECT = "h-2.5 w-2.5 text-green-700 dark:text-green-400";
 const LEGEND_ICON_WRONG = "h-2.5 w-2.5 text-red-700 dark:text-red-400";
 
-// Бал рядка під твердженням — дрібніше й приглушеніше за SCORE_LABEL_CLASS
-// (той лишається для підсумкового рядка "Результат: X%", тут навмисно
-// локальний text-xs, задача просить саме його, не спільну константу).
+// Бал рядка під твердженням ДО перевірки (просто текст "N балів") — дрібніше
+// й приглушеніше за SCORE_LABEL_CLASS; ПІСЛЯ перевірки замінюється пілюлею
+// RowScorePill (task-result.tsx), цей клас уже не застосовується.
 const ROW_POINTS_LABEL_CLASS = "text-xs text-neutral-500 dark:text-neutral-400";
 
 // Український дробовий запис балів (крок 0.5 і дробові частки часткового
@@ -159,14 +160,27 @@ export function CheckboxGridExercise({
 
   // Частковий залік за рядком (формула з grade.ts — earnedPoints уже
   // прийшов рахованим із сервера, тут лише форматування підпису).
+  // Пілюля "0/1" після перевірки (RowScorePill) — текст "{бали}" лише ДО
+  // перевірки (поки немає cell-результату, кольорувати ще нічого).
   function rowPointsLabel(row: CheckboxGridPublic["rows"][number]) {
     if (hidePoints) return null;
     const rowCell = detail?.cells.find((c) => c.rowId === row.id);
     if (!pointsVisible && !rowCell) return null;
-    if (rowCell) {
-      return `${formatPointsValue(rowCell.earnedPoints)}/${formatPointsValue(row.points)} ${pluralizePoints(row.points)}`;
-    }
+    if (rowCell) return null;
     return `${formatPointsValue(row.points)} ${pluralizePoints(row.points)}`;
+  }
+
+  function rowScorePill(row: CheckboxGridPublic["rows"][number]) {
+    if (hidePoints) return null;
+    const rowCell = detail?.cells.find((c) => c.rowId === row.id);
+    if (!rowCell) return null;
+    return (
+      <RowScorePill
+        earned={formatPointsValue(rowCell.earnedPoints)}
+        possible={formatPointsValue(row.points)}
+        full={rowCell.earnedPoints >= row.points}
+      />
+    );
   }
 
   // Спільний для всіх клітинок грід — малює чекбокс-квадрат і визначає,
@@ -277,6 +291,7 @@ export function CheckboxGridExercise({
           const stmtId = `${uid}stmt-${row.id}`;
           const rowDivider = index > 0 ? "border-t border-[#e6e6f0] dark:border-neutral-800" : "";
           const pointsLabel = rowPointsLabel(row);
+          const scorePill = rowScorePill(row);
           return (
             <div role="row" key={row.id} className="contents">
               <div
@@ -288,6 +303,7 @@ export function CheckboxGridExercise({
                   {frenchNbsp(row.label)}
                 </span>
                 {pointsLabel && <span className={ROW_POINTS_LABEL_CLASS}>{pointsLabel}</span>}
+                {scorePill}
               </div>
               {columns.map((c) => {
                 const colId = `${uid}col-${c.id}`;
@@ -402,18 +418,11 @@ export function CheckboxGridExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+          />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

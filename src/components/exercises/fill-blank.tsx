@@ -14,8 +14,8 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { stickyPoolClass } from "./tile-styles";
+import { TaskResult } from "./task-result";
 
 // Режим практики "Робота над помилками" (пілот, частина 2) — лише
 // помилкові ще не виправлені пропуски (onlyItemIds — String(blankIndex),
@@ -416,18 +416,11 @@ export function FillBlankExercise({
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
           ) : (
-            <p
-              className={`${RESULT_MESSAGE_CLASS} ${
-                result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-              }`}
-            >
-              {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-              {result.pointsPossible !== undefined && (
-                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                  ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-                </span>
-              )}
-            </p>
+            <TaskResult
+              correct={result.correct}
+              pointsEarned={result.pointsEarned}
+              pointsPossible={result.pointsPossible}
+            />
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>

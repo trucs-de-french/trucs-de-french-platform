@@ -28,7 +28,7 @@ import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } fr
 import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult } from "./task-result";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { hintHighlightCells } from "./word-search-hint-highlight";
 
@@ -931,18 +931,7 @@ function WordSearchBlockView({
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
             {result && (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-                {result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
               <BlockNavFooter
@@ -967,18 +956,7 @@ function WordSearchBlockView({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <p
-            className={`${RESULT_MESSAGE_CLASS} ${
-              result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {result.correct ? "Правильно! ✓" : `Результат: ${result.score}%`}
-            {result.pointsPossible !== undefined && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                ({result.pointsEarned} з {result.pointsPossible} {pluralizePoints(result.pointsPossible)})
-              </span>
-            )}
-          </p>
+          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
@@ -1110,7 +1088,7 @@ export function WordSearchExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          summary={aggregateResult}
+          blockResults={blockResults}
           hideFooter
         >
           {/* Усі блоки змонтовані одразу — неактивні лише приховані класом

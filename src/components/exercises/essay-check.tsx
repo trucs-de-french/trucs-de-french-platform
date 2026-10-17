@@ -14,6 +14,7 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { formatPoints } from "@/lib/exercises/format-points";
 
 // Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
 // одночасно (isFormulaire — взаємовиключна гілка нижче), тож один спільний
@@ -166,8 +167,13 @@ function FormulaireResultView({ result }: { result: FormulaireResult }) {
           )}
         </div>
       ))}
-      <p className="mt-1 text-sm font-medium">
-        {result.totalScore} / {result.maxScore}
+      <p className="mt-1">
+        <span className="task-result-points-pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#f6dc8e" aria-hidden="true">
+            <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+          </svg>
+          {formatPoints(result.totalScore, result.maxScore)}
+        </span>
       </p>
     </div>
   );

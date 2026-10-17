@@ -12,7 +12,8 @@ import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor 
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -52,7 +53,7 @@ function TableFillColumn({
   rows: Row[];
   columnLabels: [string, string];
   renderCell: (rowId: string, side: "left" | "right", value: string | null) => ReactNode;
-  rowPointsLabel: (row: Row) => string | null;
+  rowPointsLabel: (row: Row) => ReactNode;
 }) {
   return (
     <div>
@@ -70,7 +71,7 @@ function TableFillColumn({
               <tr key={row.id} className="border-b border-[#e6e6f0] last:border-0 dark:border-neutral-700">
                 <td className="py-1 pr-2">{renderCell(row.id, "left", row.left)}</td>
                 <td className="py-1 pr-2">{renderCell(row.id, "right", row.right)}</td>
-                <td className={`py-1 ${SCORE_LABEL_CLASS}`}>{rowPointsLabel(row)}</td>
+                <td className="py-1">{rowPointsLabel(row)}</td>
               </tr>
             ))}
           </tbody>
@@ -315,9 +316,9 @@ export function TableFillExercise({
 
     if (rowBlanks?.length) {
       const isCorrect = rowBlanks.every((b) => b.isCorrect);
-      return `${isCorrect ? row.points : 0}/${row.points} ${pluralizePoints(row.points)}`;
+      return <RowScorePill earned={isCorrect ? row.points : 0} possible={row.points} full={isCorrect} />;
     }
-    return `${row.points} ${pluralizePoints(row.points)}`;
+    return <span className={SCORE_LABEL_CLASS}>{`${row.points} ${pluralizePoints(row.points)}`}</span>;
   }
 
   function renderCell(
@@ -534,18 +535,11 @@ export function TableFillExercise({
 
         <div className="flex flex-wrap items-center gap-3">
           {blockResult && (
-            <p
-              className={`${RESULT_MESSAGE_CLASS} ${
-                blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-              }`}
-            >
-              {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
-              {blockResult.pointsPossible !== undefined && (
-                <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                  ({blockResult.pointsEarned} з {blockResult.pointsPossible} {pluralizePoints(blockResult.pointsPossible)})
-                </span>
-              )}
-            </p>
+            <TaskResult
+              correct={blockResult.correct}
+              pointsEarned={blockResult.pointsEarned}
+              pointsPossible={blockResult.pointsPossible}
+            />
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -674,19 +668,11 @@ export function TableFillExercise({
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>
             ) : (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
-                {single.result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
-                    {pluralizePoints(single.result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={single.result.correct}
+                pointsEarned={single.result.pointsEarned}
+                pointsPossible={single.result.pointsPossible}
+              />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
@@ -696,7 +682,7 @@ export function TableFillExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          summary={aggregateResult}
+          blockResults={blockResults}
           checkButton={checkButtonEl}
         >
           {renderBlock()}

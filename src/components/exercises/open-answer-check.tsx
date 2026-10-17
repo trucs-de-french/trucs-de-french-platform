@@ -15,7 +15,8 @@ import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
+import { SCORE_LABEL_CLASS } from "./score-style";
+import { TaskResult, RowScorePill } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
@@ -97,10 +98,12 @@ export function OpenAnswerCheckExercise({
           <p className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
             {frenchNbsp(q.question)}
             {!hidePoints && (pointsVisible || qDetail) && (
-              <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                {qDetail
-                  ? `${qDetail.isCorrect ? qDetail.points : 0}/${qDetail.points} ${pluralizePoints(qDetail.points)}`
-                  : `${q.points} ${pluralizePoints(q.points)}`}
+              <span className="ml-2 inline-flex align-middle">
+                {qDetail ? (
+                  <RowScorePill earned={qDetail.isCorrect ? qDetail.points : 0} possible={qDetail.points} full={qDetail.isCorrect} />
+                ) : (
+                  <span className={SCORE_LABEL_CLASS}>{`${q.points} ${pluralizePoints(q.points)}`}</span>
+                )}
               </span>
             )}
           </p>
@@ -222,19 +225,11 @@ export function OpenAnswerCheckExercise({
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             {blockResult && (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  blockResult.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {blockResult.correct ? "Правильно! ✓" : `Результат: ${blockResult.score}%`}
-                {blockResult.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({blockResult.pointsEarned} з {blockResult.pointsPossible}{" "}
-                    {pluralizePoints(blockResult.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={blockResult.correct}
+                pointsEarned={blockResult.pointsEarned}
+                pointsPossible={blockResult.pointsPossible}
+              />
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -305,19 +300,11 @@ export function OpenAnswerCheckExercise({
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>
             ) : (
-              <p
-                className={`${RESULT_MESSAGE_CLASS} ${
-                  single.result.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {single.result.correct ? "Правильно! ✓" : `Результат: ${single.result.score}%`}
-                {single.result.pointsPossible !== undefined && (
-                  <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-                    ({single.result.pointsEarned} з {single.result.pointsPossible}{" "}
-                    {pluralizePoints(single.result.pointsPossible)})
-                  </span>
-                )}
-              </p>
+              <TaskResult
+                correct={single.result.correct}
+                pointsEarned={single.result.pointsEarned}
+                pointsPossible={single.result.pointsPossible}
+              />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
@@ -327,7 +314,7 @@ export function OpenAnswerCheckExercise({
           blockCount={blockCount}
           activeBlock={activeBlock}
           onChangeBlock={setActiveBlock}
-          summary={aggregateResult}
+          blockResults={blockResults}
           checkButton={checkButtonEl}
         >
           {renderBlock()}
