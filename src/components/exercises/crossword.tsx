@@ -1003,14 +1003,8 @@ export function CrosswordExercise({
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction}
         hintText={hintExplanationHidden ? null : hintExplanationText("crossword", config.hintsReducePoints)}
+        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />
-
-      {/* ЕТАП I — панель масштабу сітки (grid-zoom-controls.tsx, спільна з
-          word-search.tsx, ЕТАП J), справа, безпосередньо над нею (над
-          BlockNavigation теж — той самий рядок, що й над самотнім блоком,
-          не всередині спільного block-navigation.tsx, щоб не чіпати решту
-          типів вправ, які теж ним користуються). */}
-      <GridZoomControls zoom={zoom} onChange={setZoom} />
 
       {!useBlocks ? (
         <CrosswordBlockView

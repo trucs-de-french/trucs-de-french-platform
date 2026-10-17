@@ -622,30 +622,6 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* Зум-кнопки філворду — обгортка .ws-zoom лише навколо ВИКЛИКУ
-   GridZoomControls у word-search.tsx (кросворд використовує той самий
-   спільний компонент БЕЗ цього класу — його кнопки лишаються як є). */
-.light .ws-zoom button {
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(217, 183, 101, 0.55);
-  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
-  color: #1f1d3a;
-  font-weight: 700;
-  background: #fff;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .ws-zoom button {
-    height: 36px;
-    border-radius: 10px;
-    border: 1px solid rgba(217, 183, 101, 0.55);
-    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
-    color: #1f1d3a;
-    font-weight: 700;
-    background: #fff;
-  }
-}
-
 /* Горизонтальний скрол-контейнер сітки (ЕТАП K1, фікс D) — overflow-x:auto
    неявно переводить і overflow-y у "auto" (правило узгодження CSS2.1), тож
    сам скрол-контейнер стає кліп-рамкою для ВСЬОГО намальованого всередині,
@@ -1831,7 +1807,7 @@ button, input, textarea, select, label, nav, aside {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0 10px;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 /* FR-текст + "/" — ОДИН flex-елемент батька (інструкція/UK — два items
    зовнішнього flex), але ВСЕРЕДИНІ себе — звичайний inline-потік (НЕ
@@ -1849,7 +1825,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .task-panel-instruction-fr {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #1a1640;
 }
@@ -1864,7 +1840,7 @@ button, input, textarea, select, label, nav, aside {
 .task-panel-instruction-slash {
   margin-left: 6px;
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 300;
   color: #4b46da;
 }
@@ -1896,7 +1872,7 @@ button, input, textarea, select, label, nav, aside {
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: 15px;
   color: #55546b;
 }
 .dark .task-panel-instruction-uk {
@@ -1910,18 +1886,26 @@ button, input, textarea, select, label, nav, aside {
 @media (max-width: 480px) {
   .task-panel-instruction-fr,
   .task-panel-instruction-slash {
-    font-size: 17px;
+    font-size: 16px;
   }
   .task-panel-instruction-uk {
-    font-size: 15px;
+    font-size: 14px;
   }
 }
+/* Мокап "варіант 1" — компактний інфо-рядок: пілюля балів + коротка
+   пілюля-підказка згруповані ЛІВОРУЧ (.task-panel-pills-left, разом, у
+   порядку "бали, потім підказка"), task-специфічні контролі (зум сітки
+   word_search/crossword) — ОКРЕМИЙ елемент .task-panel-controls-right;
+   justify-content:space-between лишає лівий блок природно на початку
+   рядка, коли правого блоку нема (більшість типів), і розсуває їх по
+   кінцях рядка, коли він є. */
 .task-panel-pills-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+  min-height: 32px;
   margin-top: 12px;
 }
 .task-panel-pills-left {
@@ -1929,14 +1913,23 @@ button, input, textarea, select, label, nav, aside {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+}
+.task-panel-controls-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .counter-pill {
   display: inline-flex;
   align-items: center;
+  height: 32px;
+  box-sizing: border-box;
   background: #fff;
   border: 1px solid rgba(217, 183, 101, 0.55);
   border-radius: 999px;
-  padding: 6px 14px;
+  padding: 0 14px;
   font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 800;
@@ -3030,9 +3023,11 @@ button.scene-bar:active .scene-bar-toggle {
 .points-pill-gradient {
   display: inline-flex;
   align-items: center;
+  height: 32px;
+  box-sizing: border-box;
   background: linear-gradient(135deg, #1a1640 0%, #4b46da 100%);
   border: none;
-  padding: 6px 16px;
+  padding: 0 14px;
   border-radius: 999px;
   box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
   color: #f6dc8e;

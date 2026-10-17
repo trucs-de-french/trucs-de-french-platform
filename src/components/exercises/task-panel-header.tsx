@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Lightbulb } from "lucide-react";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
@@ -54,6 +55,7 @@ export function TaskPanelHeader({
   subInstructionText,
   hintText,
   counter,
+  rightContent,
 }: {
   // blockCount/activeBlock/onChangeBlock/isBlockChecked/labels/blockLabel —
   // пагінація блоків більше не рендериться тут (переїхала у вкладки,
@@ -83,11 +85,15 @@ export function TaskPanelHeader({
   // counter (vocab-quiz.tsx ховає пілюлю на екрані результату й коли
   // питань замало для лічильника).
   counter?: { current: number; total: number } | null;
+  // Мокап "варіант 1" — task-специфічні контролі праворуч у тому самому
+  // інфо-рядку (зараз лише зум сітки word_search/crossword,
+  // GridZoomControls) — відсутній, слот просто не рендериться.
+  rightContent?: ReactNode;
 }) {
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
-  const showPillsRow = !!pointsText || !!hintText || !!counter;
+  const showPillsRow = !!pointsText || !!hintText || !!counter || !!rightContent;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -99,8 +105,9 @@ export function TaskPanelHeader({
           <div className="task-panel-pills-left">
             {pointsText && <PointsPill text={pointsText} />}
             {counter && <CounterPill current={counter.current} total={counter.total} />}
+            {hintText && <HintPill text={hintText} />}
           </div>
-          {hintText && <HintPill text={hintText} />}
+          {rightContent && <div className="task-panel-controls-right">{rightContent}</div>}
         </div>
       )}
       <div className="task-panel-header-divider" data-header-divider="" />
@@ -145,13 +152,19 @@ export function CounterPill({ current, total }: { current: number; total: number
   );
 }
 
+// Мокап "варіант 1" — коротка пілюля-підказка: 32px висота (=рядок),
+// лампочка 24px, текст тепер короткий, з жирним напівжирним лейблом
+// "Підказка:" перед ним (решта тексту — weight 600 через font-semibold на
+// самому контейнері, лейбл локально переважає його font-bold'ом).
 function HintPill({ text }: { text: string }) {
   return (
-    <span className="inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
+    <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
       <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
         <Lightbulb size={13} aria-hidden />
       </span>
-      <span className="min-w-0">{text}</span>
+      <span className="min-w-0">
+        <span className="font-bold">Підказка:</span> {text}
+      </span>
     </span>
   );
 }

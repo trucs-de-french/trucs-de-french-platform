@@ -1092,15 +1092,8 @@ export function WordSearchExercise({
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction}
         hintText={hintText}
+        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />
-
-      {/* ЕТАП J — панель масштабу сітки (grid-zoom-controls.tsx), той
-          самий рядок/розміщення, що в crossword.tsx (ЕТАП I): над
-          BlockNavigation, не всередині неї. ws-zoom — лише тут (не в
-          crossword.tsx), світлове перестилювання кнопок (ЕТАП K). */}
-      <div className="ws-zoom">
-        <GridZoomControls zoom={zoom} onChange={setZoom} />
-      </div>
 
       {!useBlocks ? (
         <WordSearchBlockView
