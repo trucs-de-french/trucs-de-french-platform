@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { ArrowRight, ArrowDown } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
+import { DEFAULT_CROSSWORD_DIRECTION_LABELS } from "@/lib/exercises/default-task-labels";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -84,6 +86,67 @@ function buildClueCells(block: CrosswordPublicBlock): Map<ClueKey, { row: number
     }
   }
   return map;
+}
+
+// Мокап "варіант 2" — заголовок картки-підказки кросворду: номер зліва,
+// лампочка-підказка справа (HintBulb variant="goldCircle"), над
+// картинкою/текстом підказки (ImageClueCard/LongClueCard нижче) — лампочка
+// більше ніколи не лежить ПОВЕРХ картинки. isCorrect — неклікабельна
+// "галочка" (as="span", та сама логіка, що була раніше інлайн у кожній
+// картці); canHint=false (DELF чи вже перевірено) і !isCorrect — лампочка
+// не рендериться взагалі (слово ще не повне, але перевірка вже відбулась).
+function ClueCardHeader({
+  number,
+  isCorrect,
+  canHint,
+  hinted,
+  onHint,
+}: {
+  number: number;
+  isCorrect: boolean;
+  canHint: boolean;
+  hinted: boolean;
+  onHint: () => void;
+}) {
+  return (
+    <div className="crossword-clue-card-header">
+      <span className="crossword-clue-card-number">{number}.</span>
+      {(isCorrect || canHint) && (
+        <HintBulb
+          size="md"
+          variant="goldCircle"
+          as={isCorrect ? "span" : "button"}
+          state={isCorrect ? "done" : hinted ? "used" : "available"}
+          label="Підказка: відкрити наступну літеру"
+          stopPropagation
+          onClick={onHint}
+        />
+      )}
+    </div>
+  );
+}
+
+// Мокап "варіант 2" — заголовок секції напрямку ("Horizontalement"/
+// "Verticalement"): стрілка (право для горизонталі, вниз для вертикалі) +
+// той самий вигляд FR/UK, що й TaskInstructionLine (task-panel-header.tsx,
+// task-panel-instruction-fr-group/-fr/-slash/-uk), але без вкладеного
+// <div> — цей заголовок лишається <p> (попередній тип елемента тут), а
+// <div> усередині <p> браузер розірвав би, зламавши рядок. + золота лінія
+// праворуч (crossword-direction-rule, globals.css).
+function DirectionHeading({ direction }: { direction: Direction }) {
+  const { fr, uk } = DEFAULT_CROSSWORD_DIRECTION_LABELS[direction === "horizontal" ? "horizontal" : "vertical"];
+  const ArrowIcon = direction === "horizontal" ? ArrowRight : ArrowDown;
+  return (
+    <p className="crossword-direction-heading">
+      <ArrowIcon size={18} strokeWidth={2.4} aria-hidden className="crossword-direction-arrow" />
+      <span className="task-panel-instruction-fr-group">
+        <span className="task-panel-instruction-fr">{fr}</span>
+        <span className="task-panel-instruction-slash">/</span>
+      </span>
+      <span className="task-panel-instruction-uk">{uk}</span>
+      <span className="crossword-direction-rule" aria-hidden />
+    </p>
+  );
 }
 
 // Один блок — власний кросворд, власна 2D-мапа клітинка→літера, власні
@@ -403,7 +466,7 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_TILE_SHAPE} flex w-full cursor-pointer flex-col gap-1 p-2 text-left transition-colors ${
+        className={`${LEGEND_TILE_SHAPE} flex w-full cursor-pointer flex-col p-2 text-left transition-colors ${
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
@@ -411,7 +474,13 @@ function CrosswordBlockView({
               : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
-        <span className={`font-body text-sm font-semibold ${clueTextClass(liveStatus)}`}>{clue.number}.</span>
+        <ClueCardHeader
+          number={clue.number}
+          isCorrect={isCorrect}
+          canHint={!result && !isDelf}
+          hinted={hintedWords.has(`${direction}-${clue.number}`)}
+          onHint={() => applyHint(direction, clue.number)}
+        />
         <span className="relative aspect-square w-full overflow-hidden rounded-lg">
           <ImageOrPlaceholder
             src={clue.imageUrl}
@@ -419,22 +488,6 @@ function CrosswordBlockView({
             className={`h-full w-full object-cover transition-opacity ${isCorrect ? "opacity-50" : ""}`}
             useFocus
           />
-          {isCorrect ? (
-            <HintBulb size="md" state="done" as="span" overImage className="absolute right-1.5 top-1.5" />
-          ) : (
-            !result &&
-            !isDelf && (
-              <HintBulb
-                size="md"
-                state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
-                overImage
-                label="Підказка: відкрити наступну літеру"
-                stopPropagation
-                onClick={() => applyHint(direction, clue.number)}
-                className="absolute right-1.5 top-1.5"
-              />
-            )
-          )}
           <ImageZoomBadge
             onOpen={() => setLightboxSrc(clue.imageUrl!)}
             position="bottom-1 right-1"
@@ -447,41 +500,32 @@ function CrosswordBlockView({
             повтор/швидкість, ~165px навіть у compact), тож тут лишається
             нативний контрол, не наша пілюля. */}
         {clue.audioUrl && (
-          <audio controls src={clue.audioUrl} className="h-6 w-full" onClick={(e) => e.stopPropagation()} />
+          <audio
+            controls
+            src={clue.audioUrl}
+            className="mt-1 h-6 w-full"
+            onClick={(e) => e.stopPropagation()}
+          />
         )}
       </div>
     );
   }
 
-  // ЕТАП G, п.3 — картка довгої підказки-речення кросворду (view
-  // "text-card") — той самий LEGEND_LONG_CARD/HintBulb вигляд, що LongCard
-  // короткого філворду (word-search.tsx, ЕТАП F), лише дані —
-  // liveStatus/applyHint кросворду, а не found/hintStart слова. Картка сама
-  // (role=button) обирає слово в сітці; лампочка — ОКРЕМА вкладена кнопка
-  // (підказка не мусить збігатись із вибором слова) — div[role=button] із
-  // вкладеним справжнім <button> лишається валідним HTML (на відміну від
-  // button-у-button).
+  // ЕТАП G, п.3 (мокап "варіант 2" — заголовок ClueCardHeader винесено над
+  // вмістом, лампочка більше не лежить абсолютно поверх картинки) — картка
+  // довгої підказки-речення кросворду (view "text-card") — той самий
+  // LEGEND_LONG_CARD/HintBulb вигляд, що LongCard короткого філворду
+  // (word-search.tsx, ЕТАП F), лише дані — liveStatus/applyHint кросворду,
+  // а не found/hintStart слова. Картка сама (role=button) обирає слово в
+  // сітці; лампочка — ОКРЕМА вкладена кнопка (підказка не мусить збігатись
+  // із вибором слова) — div[role=button] із вкладеним справжнім <button>
+  // лишається валідним HTML (на відміну від button-у-button).
   function LongClueCard(direction: Direction, clue: CrosswordPublicBlock["across"][number]) {
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     const isCorrect = liveStatus === "correct";
     const hasImage = !!clue.imageUrl;
     const canHint = !result && !isDelf;
-    const badge =
-      isCorrect || canHint ? (
-        isCorrect ? (
-          <HintBulb size="md" state="done" as="span" className={hasImage ? "absolute right-2 top-2" : ""} />
-        ) : (
-          <HintBulb
-            size="md"
-            state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
-            label="Підказка: відкрити наступну літеру"
-            stopPropagation
-            onClick={() => applyHint(direction, clue.number)}
-            className={hasImage ? "absolute right-2 top-2" : ""}
-          />
-        )
-      ) : null;
     return (
       <div
         key={clue.number}
@@ -494,7 +538,14 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
-        className={`${LEGEND_LONG_CARD_SHAPE} cursor-pointer ${hasImage ? "pr-9" : ""} ${
+        // style gap:0 — надійне перекриття вбудованого в LEGEND_LONG_CARD_SHAPE
+        // "gap-2.5" (рядковий Tailwind-клас-рядка, не колонки): порядок
+        // класів у className не визначає порядок у згенерованому CSS
+        // (той самий урок, що в legend-tile-style.ts), тож inline style —
+        // єдиний надійний спосіб. Єдиний зазор між заголовком і вмістом —
+        // margin-bottom самого ClueCardHeader (globals.css).
+        style={{ gap: 0 }}
+        className={`${LEGEND_LONG_CARD_SHAPE} flex-col cursor-pointer ${
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
@@ -502,29 +553,36 @@ function CrosswordBlockView({
               : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
-        {!hasImage && badge}
-        {hasImage && (
-          <span className="relative shrink-0">
-            <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} iconSize={14} />
-            <ImageOrPlaceholder
-              src={clue.imageUrl}
-              alt=""
-              className="h-[72px] w-[72px] rounded-lg object-cover"
-              useFocus
-            />
-          </span>
-        )}
-        <div className="min-w-0 flex-1 pt-[3px]">
-          <span className={`break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
-            <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
-          </span>
-          {clue.audioUrl && (
-            <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-              <AudioPill src={clue.audioUrl} compact />
-            </div>
+        <ClueCardHeader
+          number={clue.number}
+          isCorrect={isCorrect}
+          canHint={canHint}
+          hinted={hintedWords.has(`${direction}-${clue.number}`)}
+          onHint={() => applyHint(direction, clue.number)}
+        />
+        <div className="flex items-start gap-2.5">
+          {hasImage && (
+            <span className="relative shrink-0">
+              <ImageZoomBadge onOpen={() => setLightboxSrc(clue.imageUrl!)} iconSize={14} />
+              <ImageOrPlaceholder
+                src={clue.imageUrl}
+                alt=""
+                className="h-[72px] w-[72px] rounded-lg object-cover"
+                useFocus
+              />
+            </span>
           )}
+          <div className="min-w-0 flex-1">
+            <span className={`break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}>
+              {frenchNbsp(clue.clue)}
+            </span>
+            {clue.audioUrl && (
+              <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+                <AudioPill src={clue.audioUrl} compact />
+              </div>
+            )}
+          </div>
         </div>
-        {hasImage && badge}
       </div>
     );
   }
@@ -584,7 +642,7 @@ function CrosswordBlockView({
   // текстовий рядок у тій самій клітинці зламав би вирівнювання картинок/
   // карток): картинки (CROSSWORD_IMAGE_GRID), довгі картки (flex-col),
   // пілюлі (flex-wrap).
-  function renderClueSection(direction: Direction, clues: CrosswordPublicBlock["across"], title: string) {
+  function renderClueSection(direction: Direction, clues: CrosswordPublicBlock["across"]) {
     if (clues.length === 0) return null;
     const views = clues.map((clue) => ({ clue, view: resolveClueView(block.clueMode, clue) }));
     const imageViews = views.filter((v) => v.view === "image-card");
@@ -592,18 +650,18 @@ function CrosswordBlockView({
     const flatViews = views.filter((v) => v.view === "text-compact");
     return (
       <div className="w-full">
-        <p className="mb-2 font-heading text-sm font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</p>
+        <DirectionHeading direction={direction} />
         {imageViews.length > 0 && (
           <div className={CROSSWORD_IMAGE_GRID}>{imageViews.map(({ clue }) => ImageClueCard(direction, clue))}</div>
         )}
         {longViews.length > 0 && (
-          <div className={`flex flex-col gap-2 ${imageViews.length > 0 ? "mt-2" : ""}`}>
+          <div className={`flex flex-col gap-3.5 ${imageViews.length > 0 ? "mt-3.5" : ""}`}>
             {longViews.map(({ clue }) => LongClueCard(direction, clue))}
           </div>
         )}
         {flatViews.length > 0 && (
           <div
-            className={`flex flex-wrap gap-2 ${imageViews.length > 0 || longViews.length > 0 ? "mt-2" : ""}`}
+            className={`flex flex-wrap gap-2 ${imageViews.length > 0 || longViews.length > 0 ? "mt-3.5" : ""}`}
           >
             {flatViews.map(({ clue }) => CluePill(direction, clue))}
           </div>
@@ -683,7 +741,7 @@ function CrosswordBlockView({
                       return (
                         <td
                           key={ci}
-                          className="relative border border-neutral-300 p-0 dark:border-neutral-700"
+                          className="relative p-0"
                           style={{
                             width: "var(--cw)",
                             height: "var(--cw)",
@@ -691,42 +749,52 @@ function CrosswordBlockView({
                             minHeight: "calc(1.75rem * var(--zoom, 1))",
                           }}
                         >
-                          {number !== null && (
-                            <span
-                              className="pointer-events-none absolute left-0.5 top-0 leading-none text-neutral-500 dark:text-neutral-400"
-                              style={{ fontSize: "max(0.5625rem, calc(var(--cw) * 0.28))" }}
-                            >
-                              {number}
-                            </span>
-                          )}
-                          <input
-                            ref={diacritics.fieldRef(cellKey(ri, ci))}
-                            maxLength={1}
-                            value={grid[ri][ci]}
-                            onChange={(e) => updateLetter(ri, ci, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Backspace") handleBackspace(ri, ci);
-                            }}
-                            onFocus={() => {
-                              diacritics.onFocus(cellKey(ri, ci));
-                              const words = wordsAtCell.get(`${ri},${ci}`) ?? [];
-                              if (words.length > 0 && !isActiveCell(ri, ci)) setActiveClue(words[0]);
-                            }}
-                            onBlur={diacritics.onBlur}
-                            disabled={!!result}
-                            style={{ fontSize: "max(0.6875rem, calc(var(--cw) * 0.5))" }}
-                            className={`h-full w-full bg-white text-center font-heading font-medium uppercase outline-none dark:bg-neutral-800 dark:text-neutral-100 ${
-                              hintedCells.has(cellKey(ri, ci))
-                                ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                                : status === "correct"
-                                  ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
-                                  : status === "incorrect"
-                                    ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                    : isActiveCell(ri, ci)
-                                      ? "bg-blue-50 dark:bg-blue-950/40"
-                                      : ""
-                            }`}
-                          />
+                          {/* Мокап "варіант 2" — плитка-клітинка: окремий шар
+                              усередині <td> з 1px інсетом з усіх боків
+                              (crossword-tile, globals.css) — сусідні плитки
+                              разом дають 2px видимий зазор, а сама <td>
+                              лишається тим самим var(--cw), тож загальна
+                              ширина таблиці НЕ змінюється (table-клітинки
+                              ігнорують margin, тому зазор не можна покласти
+                              прямо на <td>). */}
+                          <div className="crossword-tile">
+                            {number !== null && (
+                              <span
+                                className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 leading-none"
+                                style={{ fontSize: "max(0.5625rem, calc(var(--cw) * 0.28))" }}
+                              >
+                                {number}
+                              </span>
+                            )}
+                            <input
+                              ref={diacritics.fieldRef(cellKey(ri, ci))}
+                              maxLength={1}
+                              value={grid[ri][ci]}
+                              onChange={(e) => updateLetter(ri, ci, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Backspace") handleBackspace(ri, ci);
+                              }}
+                              onFocus={() => {
+                                diacritics.onFocus(cellKey(ri, ci));
+                                const words = wordsAtCell.get(`${ri},${ci}`) ?? [];
+                                if (words.length > 0 && !isActiveCell(ri, ci)) setActiveClue(words[0]);
+                              }}
+                              onBlur={diacritics.onBlur}
+                              disabled={!!result}
+                              style={{ fontSize: "max(0.6875rem, calc(var(--cw) * 0.5))" }}
+                              className={`h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none dark:text-neutral-100 ${
+                                hintedCells.has(cellKey(ri, ci))
+                                  ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                  : status === "correct"
+                                    ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                                    : status === "incorrect"
+                                      ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                                      : isActiveCell(ri, ci)
+                                        ? "bg-blue-50 dark:bg-blue-950/40"
+                                        : ""
+                              }`}
+                            />
+                          </div>
                         </td>
                       );
                     })}
@@ -756,9 +824,9 @@ function CrosswordBlockView({
           />
         )}
 
-        <div className="flex w-full flex-col gap-6">
-          {renderClueSection("horizontal", block.across, "Horizontalement")}
-          {renderClueSection("vertical", block.down, "Verticalement")}
+        <div className="flex w-full flex-col gap-5">
+          {renderClueSection("horizontal", block.across)}
+          {renderClueSection("vertical", block.down)}
         </div>
       </div>
 

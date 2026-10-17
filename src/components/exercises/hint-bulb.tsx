@@ -8,6 +8,10 @@ import {
   LEGEND_BULB_BADGE_AMBER,
   LEGEND_BULB_BADGE_GREEN,
   LEGEND_BULB_BADGE_ON_IMAGE,
+  GOLD_CIRCLE_SIZE,
+  GOLD_CIRCLE_HIT_AREA_PADDING,
+  GOLD_CIRCLE_AVAILABLE,
+  GOLD_CIRCLE_DONE,
 } from "./legend-tile-style";
 
 export type HintBulbSize = "md" | "sm";
@@ -30,6 +34,7 @@ export function HintBulb({
   size,
   state,
   as = "button",
+  variant = "legend",
   onClick,
   onMouseDown,
   disabled,
@@ -41,6 +46,12 @@ export function HintBulb({
   size: HintBulbSize;
   state: HintBulbState;
   as?: "button" | "span";
+  // "legend" (типово) — незмінний плоский вигляд (word-search.tsx, старі
+  // картки кросворду). "goldCircle" — новий заголовок картки-підказки
+  // кросворду (ClueCardHeader, crossword.tsx, мокап "варіант 2"): золотий
+  // градієнтний гурток 28px із зоною дотику ≥40×40 через padding, а не
+  // розмір самого гуртка.
+  variant?: "legend" | "goldCircle";
   onClick?: () => void;
   // Прокидається як є (без обгортки stopPropagation/onClick вище) — лише
   // diacritics-popup.tsx (preventDefault, щоб клік не забирав фокус з
@@ -62,6 +73,39 @@ export function HintBulb({
     ) : (
       <Lightbulb size={size === "md" ? 15 : 13} aria-hidden />
     );
+
+  if (variant === "goldCircle") {
+    const circleColorClass = state === "done" ? GOLD_CIRCLE_DONE : GOLD_CIRCLE_AVAILABLE;
+    const circleIcon =
+      state === "done" ? (
+        <Check size={14} strokeWidth={3} aria-hidden />
+      ) : (
+        <Lightbulb size={15} strokeWidth={2} aria-hidden />
+      );
+    if (as === "span") {
+      return (
+        <span aria-hidden className={`${GOLD_CIRCLE_SIZE} ${circleColorClass} ${className}`}>
+          {circleIcon}
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        disabled={disabled}
+        onMouseDown={onMouseDown}
+        onClick={(e) => {
+          if (stopPropagation) e.stopPropagation();
+          onClick?.();
+        }}
+        className={`${GOLD_CIRCLE_HIT_AREA_PADDING} ${usedClass} flex shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      >
+        <span className={`${GOLD_CIRCLE_SIZE} ${circleColorClass}`}>{circleIcon}</span>
+      </button>
+    );
+  }
 
   if (as === "span") {
     return (

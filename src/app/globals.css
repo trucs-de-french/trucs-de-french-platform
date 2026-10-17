@@ -1986,6 +1986,115 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Мокап "варіант 2" — золота плитка клітинки кросворду (crossword.tsx):
+   видима форма — ОКРЕМИЙ абсолютно позиційований шар (top/right/bottom/
+   left: 1px) усередині незмінної за розміром <td> (var(--cw)), а не рамка
+   на самій <td> — табличні клітинки ігнорують margin (CSS2.1 §17.6.1), тож
+   2px зазор між сусідніми плитками отримується як сума двох таких 1px
+   інсетів, без збільшення загальної ширини таблиці. */
+.crossword-tile {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(180deg, rgba(217, 183, 101, 0.95), rgba(217, 183, 101, 0.3)) border-box;
+  box-shadow: 0 4px 8px -3px rgba(120, 90, 20, 0.3);
+}
+.dark .crossword-tile {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.45);
+  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-tile {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.45);
+    box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+  }
+}
+.crossword-tile-number {
+  color: #b8902f;
+}
+.dark .crossword-tile-number {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-tile-number {
+    color: #f6dc8e;
+  }
+}
+
+/* Секція напрямку кросворду ("Horizontalement"/"Verticalement") — стрілка +
+   FR/UK (ті самі класи, що TaskInstructionLine, task-panel-header.tsx:
+   task-panel-instruction-fr-group/-fr/-slash/-uk — без вкладеного <div>,
+   щоб лишитись у <p>, сумісному з попереднім типом елемента) + золота
+   лінія, що звужується до 0 й зникає, якщо рядку затісно (замінює перенос
+   на другий рядок порожньою смугою). */
+.crossword-direction-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.crossword-direction-arrow {
+  flex-shrink: 0;
+  color: #b8902f;
+}
+.dark .crossword-direction-arrow {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-direction-arrow {
+    color: #f6dc8e;
+  }
+}
+.crossword-direction-rule {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #d9b765, rgba(217, 183, 101, 0));
+}
+.dark .crossword-direction-rule {
+  background: linear-gradient(90deg, rgba(243, 217, 139, 0.55), rgba(243, 217, 139, 0));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-direction-rule {
+    background: linear-gradient(90deg, rgba(243, 217, 139, 0.55), rgba(243, 217, 139, 0));
+  }
+}
+@media (max-width: 480px) {
+  .crossword-direction-rule {
+    display: none;
+  }
+}
+
+/* Заголовок картки-підказки кросворду (ClueCardHeader, crossword.tsx) —
+   номер зліва, лампочка-підказка справа, над картинкою/текстом. */
+.crossword-clue-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.crossword-clue-card-number {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1640;
+}
+.dark .crossword-clue-card-number {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-clue-card-number {
+    color: #f6dc8e;
+  }
+}
+
 /* Елементи вмісту всередині скляної панелі — тверд/false, згодом і інші
    типи вправ. */
 .glass-item-card {

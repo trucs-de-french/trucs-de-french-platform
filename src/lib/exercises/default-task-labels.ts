@@ -84,3 +84,15 @@ export function getDefaultTaskName(type: string, config?: Record<string, unknown
   void config;
   return DEFAULT_TASK_NAME[type as TaskTypeKey] ?? type;
 }
+
+// Дефолтні FR/UK підписи секцій напрямку кросворду ("Horizontalement" /
+// "Verticalement", мокап "варіант 2", crossword.tsx) — окремо від
+// DEFAULT_TASK_NAME (назва ТИПУ задачі) і DEFAULT_INSTRUCTIONS (інструкція
+// самої вправи): це підписи ДВОХ секцій підказок усередині однієї вправи.
+export const DEFAULT_CROSSWORD_DIRECTION_LABELS: Record<
+  "horizontal" | "vertical",
+  { fr: string; uk: string }
+> = {
+  horizontal: { fr: "Horizontalement", uk: "по горизонталі" },
+  vertical: { fr: "Verticalement", uk: "по вертикалі" },
+};

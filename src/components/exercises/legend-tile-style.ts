@@ -16,8 +16,13 @@ export const LEGEND_TILE_BASE =
 // CSS-класу колір стану не бачився. word-search.tsx (ImageTile) і далі
 // бере LEGEND_TILE_BASE як є — там немає кольорового стану, що
 // конфліктував би.
+// Мокап "варіант 2" — темна тема картки-підказки кросворду тепер на
+// токенах .glass-item-card (rgba(255,255,255,.06) / rgba(243,217,139,.25)),
+// НЕ на neutral-700/800: LEGEND_TILE_SHAPE лишається виключним для
+// crossword.tsx (word-search.tsx бере LEGEND_TILE_BASE вище, не цю
+// константу), тож зміна тут не чіпає філворд.
 export const LEGEND_TILE_SHAPE =
-  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none dark:border-neutral-700 dark:bg-neutral-800";
+  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
 
 // Дрібніші колонки під квадратні картинкові плитки word-search ImageTile
 // (ЕТАП D: картинки більші — менше колонок на вузьких/середніх екранах).
@@ -47,9 +52,12 @@ export const LEGEND_LONG_CARD =
   "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
 
 // Та сама форма без кольору рамки, для крос-ворду — та сама причина, що
-// LEGEND_TILE_SHAPE вище.
+// LEGEND_TILE_SHAPE вище. Темна тема — токени .glass-item-card
+// (rgba(255,255,255,.06) / rgba(243,217,139,.25)), не neutral-700/800:
+// LEGEND_LONG_CARD_SHAPE лишається виключним для crossword.tsx (word-
+// search.tsx бере LEGEND_LONG_CARD вище, не цю константу).
 export const LEGEND_LONG_CARD_SHAPE =
-  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
 
 // ЕТАП H — єдиний круглий бейдж лампочки/галочки (раніше LEGEND_BULB_BADGE
 // мав фіксований колір text-white і використовувався лише в LongCard/
@@ -71,10 +79,29 @@ export const LEGEND_BULB_BADGE_AMBER = "lamp-badge bg-[#fdf0c4] text-[#b8761a] d
 export const LEGEND_BULB_BADGE_GREEN = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
 export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
 
+// Мокап "варіант 2" — нова лампочка-підказка в заголовку картки-підказки
+// кросворду (ClueCardHeader, crossword.tsx): золотий градієнтний гурток
+// 28px (видима форма), ЗАМІСТЬ плоского LEGEND_BULB_BADGE_AMBER/MD — лише
+// для цього нового заголовка, щоб не чіпати лампочку в інших місцях
+// (word-search.tsx TextPill/LongCard, старий вигляд ImageClueCard/
+// LongClueCard/CluePill кросворду тепер прибраний із самої картинки/
+// пілюлі — HintBulb variant="goldCircle" нижче додається ЯК ОКРЕМА опція,
+// лампочка-вигляд за замовчуванням (legend) лишається байтово незмінним
+// для решти викликів).
+export const GOLD_CIRCLE_SIZE = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full";
+// Зона дотику ≥40×40 — padding 6px навколо видимого 28px (h-7 w-7) гуртка
+// замість збільшення самого гуртка (видима форма лишається 28px, як у
+// мокапі): 28 + 6*2 = 40.
+export const GOLD_CIRCLE_HIT_AREA_PADDING = "p-[6px]";
+export const GOLD_CIRCLE_AVAILABLE =
+  "bg-gradient-to-b from-[#f6dc8e] to-[#e0aa3e] text-[#6b4a14] shadow-[0_3px_8px_rgba(184,144,47,0.45)]";
+export const GOLD_CIRCLE_DONE = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
+
 // ЕТАП H — сітка картинкових карток-підказок кросворду (ImageClueCard,
 // crossword.tsx): auto-fit (не auto-fill, ЕТАП G) з вужчою колонкою
 // (96-120px) — auto-fit стискає колонки, щоб рівно заповнити рядок (а не
 // лишає останню колонку "про запас" як auto-fill), тож 5 карток на
 // десктопі впевнено влазять в один ряд замість переносу через пару
 // пікселів недостачі ширини.
-export const CROSSWORD_IMAGE_GRID = "grid grid-cols-[repeat(auto-fit,minmax(6rem,7.5rem))] gap-2 justify-start";
+// gap-3.5 (14px) — мокап "варіант 2", п.3, "14px gap between cards".
+export const CROSSWORD_IMAGE_GRID = "grid grid-cols-[repeat(auto-fit,minmax(6rem,7.5rem))] gap-3.5 justify-start";
