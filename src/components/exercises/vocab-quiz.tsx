@@ -12,6 +12,8 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { TaskPanelHeader } from "./task-panel-header";
+import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -76,6 +78,10 @@ export function VocabQuizExercise({
   if (index >= questions.length) {
     return (
       <div className={EXERCISE_STACK}>
+        <TaskPanelHeader
+          instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
+          subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+        />
         <p className="font-medium">
           Результат: {correctCount} з {questions.length}
         </p>
@@ -91,7 +97,6 @@ export function VocabQuizExercise({
   }
 
   const question = questions[index];
-  const progressPercent = Math.max(2, ((index + 1) / questions.length) * 100);
 
   function choose(option: string) {
     if (selected) return;
@@ -108,19 +113,13 @@ export function VocabQuizExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <TaskPanelHeader
+        instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
+        subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+        counter={questions.length > 1 ? { current: index + 1, total: questions.length } : null}
+      />
       <div className="min-w-0">
-        <div className="flex items-baseline justify-between">
-          <p className="font-heading text-xs text-neutral-500 dark:text-neutral-400">
-            Питання {index + 1} з {questions.length}
-          </p>
-        </div>
-        <div className="mt-2 h-1 rounded-full bg-gray-100 dark:bg-neutral-700">
-          <div
-            className="h-1 rounded-full bg-brand transition-all"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <p className="font-body mt-5 min-w-0 break-words text-center text-2xl [overflow-wrap:anywhere] sm:text-3xl">
+        <p className="font-body min-w-0 break-words text-center text-2xl [overflow-wrap:anywhere] sm:text-3xl">
           {frenchNbsp(firstFormOnly(question.word))}
         </p>
       </div>

@@ -53,6 +53,7 @@ export function TaskPanelHeader({
   instructionText,
   subInstructionText,
   hintText,
+  counter,
 }: {
   // blockCount/activeBlock/onChangeBlock/isBlockChecked/labels/blockLabel —
   // пагінація блоків більше не рендериться тут (переїхала у вкладки,
@@ -77,11 +78,16 @@ export function TaskPanelHeader({
   // Готовий текст підказки (hintExplanationText, hint-explanation.tsx) —
   // відсутній/null — пілюля підказки не рендериться.
   hintText?: string | null;
+  // Пілюля-лічильник питань вікторини ("N / M") — поруч із пілюлею балів,
+  // ліворуч від пілюлі підказки. total <= 1 — викликач сам не передає
+  // counter (vocab-quiz.tsx ховає пілюлю на екрані результату й коли
+  // питань замало для лічильника).
+  counter?: { current: number; total: number } | null;
 }) {
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
-  const showPillsRow = !!pointsText || !!hintText;
+  const showPillsRow = !!pointsText || !!hintText || !!counter;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -90,7 +96,10 @@ export function TaskPanelHeader({
       {showInstructionLine && <TaskInstructionLine fr={safeText} uk={safeSub} />}
       {showPillsRow && (
         <div className="task-panel-pills-row">
-          {pointsText && <PointsPill text={pointsText} />}
+          <div className="task-panel-pills-left">
+            {pointsText && <PointsPill text={pointsText} />}
+            {counter && <CounterPill current={counter.current} total={counter.total} />}
+          </div>
           {hintText && <HintPill text={hintText} />}
         </div>
       )}
@@ -118,6 +127,20 @@ export function PointsPill({ text }: { text: string }) {
         <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
       </svg>
       {text}
+    </span>
+  );
+}
+
+// Лічильник питань вікторини ("N / M") у рядку (b) поруч із пілюлею балів
+// (мокап "варіант 1") — замінює колишній тонкий прогрес-бар/текст
+// "Питання N з M" під роздільником (vocab-quiz.tsx). role="status" +
+// aria-live="polite" на самій пілюлі — зміна current/total (новий
+// aria-label) оголошується скрінридером без окремого live-region-елемента.
+export function CounterPill({ current, total }: { current: number; total: number }) {
+  return (
+    <span className="counter-pill" role="status" aria-live="polite" aria-label={`Питання ${current} з ${total}`}>
+      <span className="counter-pill-current">{current}</span>
+      <span className="counter-pill-total">{` / ${total}`}</span>
     </span>
   );
 }

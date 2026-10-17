@@ -25,7 +25,6 @@ import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-ca
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { BlockTabs } from "@/components/exercises/block-navigation";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
-import { TaskPanelHeader } from "@/components/exercises/task-panel-header";
 import { FlipCardsExercise } from "@/components/exercises/flip-cards";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
@@ -47,7 +46,6 @@ import type {
   DragDropConfig,
   ImageMatchConfig,
 } from "@/lib/exercises/types";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
@@ -795,21 +793,15 @@ export default async function ScenePage({
 
                     {task.type === "vocab_quiz" && (
                       <ExerciseErrorBoundary>
-                        <div className="flex flex-col gap-2">
-                          <TaskPanelHeader
-                            instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
-                            subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
-                          />
-                          {(() => {
-                            const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
-                            return (
-                              <VocabQuizExercise
-                                vocab={quizVocab}
-                                initialQuestions={buildQuizQuestions(quizVocab)}
-                              />
-                            );
-                          })()}
-                        </div>
+                        {(() => {
+                          const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
+                          return (
+                            <VocabQuizExercise
+                              vocab={quizVocab}
+                              initialQuestions={buildQuizQuestions(quizVocab)}
+                            />
+                          );
+                        })()}
                       </ExerciseErrorBoundary>
                     )}
 

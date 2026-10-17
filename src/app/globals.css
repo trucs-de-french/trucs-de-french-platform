@@ -1924,6 +1924,54 @@ button, input, textarea, select, label, nav, aside {
   gap: 12px;
   margin-top: 12px;
 }
+.task-panel-pills-left {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.counter-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.55);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.counter-pill-current {
+  color: #3b2f66;
+}
+.counter-pill-total {
+  color: #8a7a52;
+  font-weight: 600;
+}
+.dark .counter-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.28);
+}
+.dark .counter-pill-current {
+  color: #f6dc8e;
+}
+.dark .counter-pill-total {
+  color: rgba(246, 220, 139, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .counter-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.28);
+  }
+  :root:not(.light) .counter-pill-current {
+    color: #f6dc8e;
+  }
+  :root:not(.light) .counter-pill-total {
+    color: rgba(246, 220, 139, 0.6);
+  }
+}
 .task-panel-header-divider {
   height: 1px;
   margin-top: 14px;
