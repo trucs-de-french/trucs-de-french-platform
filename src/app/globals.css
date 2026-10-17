@@ -3211,6 +3211,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 .task-result-card {
+  width: 100%;
+  align-self: stretch;
+  min-width: 0;
   border-radius: 16px;
   border: 1.5px solid transparent;
   background:
@@ -3400,14 +3403,16 @@ button.scene-bar:active .scene-bar-toggle {
 
 /* Плитки "Правильні відповіді" (TaskResultAnswerRows, task-result.tsx,
    table-fill.tsx) — та сама плитка/чипи, що .task-result-pair-row вище,
-   плюс номер рядка зліва і підсвітка клітинки-відповіді. auto-fit замість
-   медіа-запиту на 768px: колонки самі згортаються в одну, коли ширина
-   toggle-картки не вміщує 340px на колонку (min(100%, 340px) — щоб підлога
-   колонки не перевищувала доступну ширину на вузьких viewport і не
-   викликала горизонтальний скрол). */
+   плюс номер рядка зліва і підсвітка клітинки-відповіді. flex-wrap замість
+   grid auto-fit: той самий ефект (колонки самі згортаються, коли ширина
+   toggle-картки не вміщує 340px на плитку), але на відміну від grid,
+   justify-content: center центрує неповний останній рядок плиток (і єдину
+   плитку, коли вона одна — тоді max-width 560px не дає їй розтягнутись на
+   всю картку) замість порожньої смуги з одного боку. */
 .task-result-answer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 .task-result-answer-row {
@@ -3422,6 +3427,8 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff;
   border: 1px solid rgba(217, 183, 101, 0.5);
   min-width: 0;
+  flex: 1 1 min(100%, 340px);
+  max-width: 560px;
 }
 /* Компактний розмір лише для чипів у плитках "Правильні відповіді" (щоб
    слова вміщувались в один рядок) — не чіпає базовий .task-result-pair-chip,

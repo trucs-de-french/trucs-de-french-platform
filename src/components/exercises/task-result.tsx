@@ -68,7 +68,7 @@ export function TaskResult({
   const showToggle = !!children && !correct;
 
   return (
-    <div className={`flex flex-col gap-3 ${className ?? ""}`.trim()}>
+    <div className={`flex w-full flex-col gap-3 ${className ?? ""}`.trim()}>
       <div className="task-result-row">
         {pointsPossible !== undefined && (
           <span className="task-result-points-pill">
