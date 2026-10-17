@@ -4241,9 +4241,29 @@ button.scene-bar:active .scene-bar-toggle {
     color: rgba(220, 219, 243, 0.7);
   }
 }
-/* Коли колонки складаються в один стовпець (md: нижче), заголовок другої
-   половини прибираємо — показуємо лише один раз над першою. */
-@media (max-width: 767px) {
+/* Стек за шириною КОНТЕЙНЕРА (не вікна) — .table-fill-columns-container
+   (обгортка, що тримає обидві половини) є inline-size контейнером; поріг
+   760px — кожна половина була б вужчою за ~360px, що вже затісно для
+   чипа+інпута. Замінює попередній @media (max-width:767px) (ширина вікна),
+   бо табличний блок часто лежить всередині вужчих колонок/сайдбарів, де
+   важлива ширина самого блоку, а не вікна. */
+.table-fill-columns-container {
+  container-type: inline-size;
+  container-name: table-fill-columns;
+}
+.table-fill-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+@container table-fill-columns (min-width: 760px) {
+  .table-fill-columns-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* Коли половини складаються в один стовпець (контейнер вужчий за 760px),
+   заголовок другої половини прибираємо — показуємо лише один раз над
+   першою. */
+@container table-fill-columns (max-width: 759.98px) {
   .table-fill-col-header--secondary {
     display: none;
   }
@@ -4324,6 +4344,40 @@ button.scene-bar:active .scene-bar-toggle {
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
+}
+/* Компактна лампочка під час введення — поле з текстом/фокусом стискає
+   лампочку (18px замість 28px) і зсуває її ближче до краю, щоб вивільнити
+   місце для тексту; поле отримує той самий внутрішній відступ з обох боків
+   (26px), щоб текст лишався центрованим, а не лише звужений з одного боку.
+   :placeholder-shown працює лише з непорожнім placeholder (" ", один
+   пробіл, у JSX) — порожній рядок у value все одно лишає плейсхолдер
+   видимим.
+   right:2px + padding кнопки 5px (замість спадкового 6px — перекрито тут
+   же) + іконка 18px = 25px "глибини" від правого краю поля — у межах
+   26px текстового відступу (запас 1px), інакше текст міг би піти під
+   ЛІВИЙ край іконки: "right" зсуває РАМКУ кнопки (яка вже включає власний
+   padding), тож глибина = right + padding-кнопки + ширина іконки, а не
+   лише right + ширина іконки. Зона дотику лишається ≥28px з вимоги:
+   18px+2*5px=28px. */
+.table-fill-cell-wrap:focus-within .table-fill-cell-input,
+.table-fill-cell-wrap:has(.table-fill-cell-input:not(:placeholder-shown)) .table-fill-cell-input {
+  padding-left: 26px;
+  padding-right: 26px;
+}
+.table-fill-cell-wrap:focus-within .table-fill-input-lamp,
+.table-fill-cell-wrap:has(.table-fill-cell-input:not(:placeholder-shown)) .table-fill-input-lamp {
+  right: 2px;
+  padding: 5px;
+}
+.table-fill-cell-wrap:focus-within .table-fill-input-lamp > span,
+.table-fill-cell-wrap:has(.table-fill-cell-input:not(:placeholder-shown)) .table-fill-input-lamp > span {
+  width: 18px;
+  height: 18px;
+}
+.table-fill-cell-wrap:focus-within .table-fill-input-lamp > span svg,
+.table-fill-cell-wrap:has(.table-fill-cell-input:not(:placeholder-shown)) .table-fill-input-lamp > span svg {
+  width: 11px;
+  height: 11px;
 }
 
 /* image_match (мокап "варіант 1" десктоп / "варіант 5" мобільний,

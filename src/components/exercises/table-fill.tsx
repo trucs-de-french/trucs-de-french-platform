@@ -91,6 +91,23 @@ function TableFillColumn({
   );
 }
 
+// Обгортка "дві половини" таблиці. container-type (table-fill-columns-
+// container) мусить сидіти на ПРЕДКОВІ елемента, властивості якого
+// запитує @container (table-fill-columns-grid) — контейнер не може
+// запитувати власні стилі (специфікація CSS: контейнерний запит впливає
+// лише на нащадків контейнера, не на сам контейнер), тож два окремі div,
+// не один із суміщеними класами.
+function TableFillColumnsGrid({ multiColumn, children }: { multiColumn: boolean; children: ReactNode }) {
+  if (!multiColumn) {
+    return <div className="mx-auto w-full max-w-3xl">{children}</div>;
+  }
+  return (
+    <div className="mx-auto w-full max-w-5xl table-fill-columns-container">
+      <div className="table-fill-columns-grid items-start gap-x-8 gap-y-6">{children}</div>
+    </div>
+  );
+}
+
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що MatchingPracticeProps: елемент тут rowId (стабільний id, не
 // позиційний індекс, на відміну від letter_rearrangement/letter_gaps).
@@ -349,7 +366,7 @@ export function TableFillExercise({
     const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;
     return (
       <div className="flex flex-col gap-1">
-        <div className="relative">
+        <div className="relative table-fill-cell-wrap">
           <input
             ref={diacritics.fieldRef(key)}
             value={answers[key] ?? ""}
@@ -357,7 +374,8 @@ export function TableFillExercise({
             onFocus={() => diacritics.onFocus(key)}
             onBlur={diacritics.onBlur}
             disabled={locked}
-            className={`h-10 w-full rounded-[10px] border px-[40px] text-center text-[15px] ${inputClass(rowId, side, detail)}`}
+            placeholder=" "
+            className={`table-fill-cell-input h-10 w-full rounded-[10px] border px-[40px] text-center text-[15px] ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
               самий золотий гурток, що ClueCardHeader кросворду
@@ -539,13 +557,7 @@ export function TableFillExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div
-          className={`mx-auto w-full ${
-            blockColumns.length > 1
-              ? "grid max-w-5xl grid-cols-1 items-start gap-x-8 gap-y-6 md:grid-cols-2"
-              : "max-w-3xl"
-          }`}
-        >
+        <TableFillColumnsGrid multiColumn={blockColumns.length > 1}>
           {blockColumns.map((col, i) => (
             <TableFillColumn
               key={col.key}
@@ -557,7 +569,7 @@ export function TableFillExercise({
               rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
             />
           ))}
-        </div>
+        </TableFillColumnsGrid>
 
         <div className="flex flex-wrap items-center gap-3">
           {blockResult && (
@@ -632,13 +644,7 @@ export function TableFillExercise({
 
       {!useBlocks ? (
         <>
-          <div
-            className={`mx-auto w-full ${
-              columns.length > 1
-                ? "grid max-w-5xl grid-cols-1 items-start gap-x-8 gap-y-6 md:grid-cols-2"
-                : "max-w-3xl"
-            }`}
-          >
+          <TableFillColumnsGrid multiColumn={columns.length > 1}>
             {columns.map((col, i) => (
               <TableFillColumn
                 key={col.key}
@@ -650,7 +656,7 @@ export function TableFillExercise({
                 rowPointsLabel={(row) => rowPointsLabel(row, singleDetail)}
               />
             ))}
-          </div>
+          </TableFillColumnsGrid>
 
           {diacritics.rect && !single.result && diacritics.activeKey && (
             <DiacriticsPopup
