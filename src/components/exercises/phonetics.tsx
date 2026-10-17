@@ -9,7 +9,7 @@ import { PhoneticsVideoBlock } from "./phonetics-video-block";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { InstructionsText } from "./instructions-text";
+import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
 
 // "use client" — плеєри/лайтбокс нижче самі "use client", довідковий блок
@@ -68,9 +68,9 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
 
   return (
     <div className={EXERCISE_STACK}>
-      <InstructionsText
-        text={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
-        subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
+      <TaskPanelHeader
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
       />
       <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
         {config.items.map((item, i) => {

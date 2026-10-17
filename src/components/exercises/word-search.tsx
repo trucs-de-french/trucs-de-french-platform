@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
-import { Lightbulb } from "lucide-react";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -15,8 +14,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { frenchNbsp, frenchNbspHtml } from "@/lib/text/french-typography";
-import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -24,7 +22,7 @@ import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { CLUE_TEXT, HINT_TEXT, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
 import { HintBulb, type HintBulbState } from "./hint-bulb";
@@ -257,23 +255,6 @@ function LongCard({
         </span>
       )}
     </div>
-  );
-}
-
-// ЕТАП K ("плаваючий лист", СВІТЛА тема лише) — повношириний білий "нотес"
-// підказки під інструкцією (замість компактної пілюлі поруч з нею, що
-// лишається в темній теми — див. .ws-hint-note/.ws-header-row2 у
-// globals.css). Ті самі базові Tailwind-класи, що й колишня HintPill
-// (task-panel-header.tsx) — темна тема бачить РІВНО той самий вигляд,
-// лише ws-* гачки для світлового CSS-оверрайду.
-function WordSearchHintNote({ text }: { text: string }) {
-  return (
-    <span className="ws-hint-note inline-flex shrink-0 items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white py-[5px] pl-[6px] pr-[14px] text-[13px] font-bold text-[#6b4a14] dark:border-transparent dark:bg-transparent dark:text-neutral-400">
-      <span className="ws-hint-lamp lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
-        <Lightbulb size={13} aria-hidden />
-      </span>
-      <span className="ws-hint-text">{text}</span>
-    </span>
   );
 }
 
@@ -1078,11 +1059,6 @@ export function WordSearchExercise({
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
   const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", config.hintsReducePoints);
-  const instructionHtml = frenchNbspHtml(
-    sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction)
-  );
-  const subInstructionSource = config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction;
-  const subInstructionHtml = subInstructionSource ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionSource)) : null;
 
   const pointsText =
     !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
@@ -1113,36 +1089,10 @@ export function WordSearchExercise({
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
         pointsText={pointsText}
+        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
+        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction}
+        hintText={hintText}
       />
-
-      {/* ЕТАП K ("плаваючий лист", мокап "варіант 2") — інструкція+підказка
-          рендеряться ТУТ локально (не через TaskPanelHeader вище, що
-          лишається лише для рядка 1 — блоки/бали), бо світла тема потребує
-          СТРУКТУРНО іншого вигляду (інструкція на весь рядок, нотес-
-          підказка під нею, не компактна пілюля поруч), тоді як темна має
-          лишитись РІВНО такою, як була (інструкція+пілюля в одному
-          flex-wrap рядку) — ws-header-row2/ws-hint-note (globals.css)
-          перемикають це лише для .light/:root:not(.dark), base-стилі тут
-          нижче — точна копія старого рядка 2 TaskPanelHeader. */}
-      {(instructionHtml || hintText) && (
-        <div className="ws-header-row2 flex flex-wrap items-center gap-3">
-          {instructionHtml && (
-            <div className="ws-instruction min-w-0 flex-1">
-              <div
-                className="instruction-text font-body text-[18px] font-normal text-[#2b2a4a] dark:text-white"
-                dangerouslySetInnerHTML={{ __html: instructionHtml }}
-              />
-              {subInstructionHtml && (
-                <div
-                  className={`instruction-subtext mt-1 ${EXERCISE_SUBINSTRUCTION}`}
-                  dangerouslySetInnerHTML={{ __html: subInstructionHtml }}
-                />
-              )}
-            </div>
-          )}
-          {hintText && <WordSearchHintNote text={hintText} />}
-        </div>
-      )}
 
       {/* ЕТАП J — панель масштабу сітки (grid-zoom-controls.tsx), той
           самий рядок/розміщення, що в crossword.tsx (ЕТАП I): над

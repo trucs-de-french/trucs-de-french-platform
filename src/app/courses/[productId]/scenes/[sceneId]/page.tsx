@@ -25,6 +25,7 @@ import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-ca
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
 import { BlockTabs } from "@/components/exercises/block-navigation";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
+import { TaskPanelHeader } from "@/components/exercises/task-panel-header";
 import { FlipCardsExercise } from "@/components/exercises/flip-cards";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
@@ -56,7 +57,7 @@ import { VocabSection } from "./vocab-section";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
-import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING, EXERCISE_SUBINSTRUCTION } from "@/lib/typography-styles";
+import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent, contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import {
   SceneContentBlock,
@@ -795,12 +796,10 @@ export default async function ScenePage({
                     {task.type === "vocab_quiz" && (
                       <ExerciseErrorBoundary>
                         <div className="flex flex-col gap-2">
-                          <div>
-                            <p className="font-medium">{DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}</p>
-                            <p className={`mt-1 ${EXERCISE_SUBINSTRUCTION}`}>
-                              {DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
-                            </p>
-                          </div>
+                          <TaskPanelHeader
+                            instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
+                            subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+                          />
                           {(() => {
                             const quizVocab = vocabForQuiz(task.config as VocabQuizConfig | null);
                             return (

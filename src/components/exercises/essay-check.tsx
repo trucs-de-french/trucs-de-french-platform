@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { frenchNbsp } from "@/lib/text/french-typography";
 import {
   CRITERIA,
   CRITERION_LABELS,
@@ -13,6 +12,7 @@ import {
 } from "@/lib/delf/evaluation-grids";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
+import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
 
 // Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
@@ -232,16 +232,17 @@ export function EssayCheckExercise({
 
   return (
     <div className={EXERCISE_STACK}>
-      <div>
-        <p className="break-words font-medium [overflow-wrap:anywhere]">{frenchNbsp(prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction)}</p>
-        {grid && (
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Рівень {level}
-            {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {grid.maxScore} балів
-            {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
-          </p>
-        )}
-      </div>
+      <TaskPanelHeader
+        instructionText={prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction}
+        subInstructionText={DEFAULT_INSTRUCTIONS.essay_check.subInstruction}
+      />
+      {grid && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          Рівень {level}
+          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {grid.maxScore} балів
+          {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
+        </p>
+      )}
 
       {isFormulaire ? (
         <div className="flex flex-col gap-2">

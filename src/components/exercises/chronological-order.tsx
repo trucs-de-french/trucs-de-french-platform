@@ -15,10 +15,11 @@ import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { InstructionsText } from "./instructions-text";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
-import { TaskPanelHeader } from "./task-panel-header";
+import { TaskPanelHeader, TaskInstructionLine } from "./task-panel-header";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { BlockTabs } from "./block-navigation";
 import {
   ANSWER_CHIP_DEFAULT,
@@ -246,9 +247,15 @@ export function ChronologicalOrderExercise({
             (п.6 задачі) — hasHintBulb нижче явно враховує це. */}
         <div className="flex items-start gap-1.5">
           <div className="min-w-0 flex-1">
-            <InstructionsText
-              text={config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction}
-              subText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction}
+            <TaskInstructionLine
+              fr={frenchNbspHtml(
+                sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction)
+              )}
+              uk={frenchNbspHtml(
+                sanitizeInstructionsHtml(
+                  config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction
+                )
+              )}
             />
           </div>
           {!isPractice && config.hint && (

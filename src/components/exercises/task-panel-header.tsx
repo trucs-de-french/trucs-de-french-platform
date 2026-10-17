@@ -25,12 +25,24 @@ export function TaskInstructionLine({ fr, uk }: { fr?: string | null; uk?: strin
     <div className="task-panel-instruction-line">
       {fr && (
         <span className="task-panel-instruction-fr-group">
-          <span className="task-panel-instruction-fr" dangerouslySetInnerHTML={{ __html: fr }} />
-          {uk && <span className="task-panel-instruction-slash">/</span>}
+          <span
+            className="task-panel-instruction-fr"
+            data-instruction-fr=""
+            dangerouslySetInnerHTML={{ __html: fr }}
+          />
+          {uk && (
+            <span className="task-panel-instruction-slash" data-instruction-slash="">
+              /
+            </span>
+          )}
         </span>
       )}
       {uk && (
-        <span className="task-panel-instruction-uk" dangerouslySetInnerHTML={{ __html: uk }} />
+        <span
+          className="task-panel-instruction-uk"
+          data-instruction-uk=""
+          dangerouslySetInnerHTML={{ __html: uk }}
+        />
       )}
     </div>
   );
@@ -74,7 +86,7 @@ export function TaskPanelHeader({
   if (!showInstructionLine && !showPillsRow) return null;
 
   return (
-    <div className="task-panel-header">
+    <div className="task-panel-header" data-task-header="">
       {showInstructionLine && <TaskInstructionLine fr={safeText} uk={safeSub} />}
       {showPillsRow && (
         <div className="task-panel-pills-row">
@@ -82,7 +94,7 @@ export function TaskPanelHeader({
           {hintText && <HintPill text={hintText} />}
         </div>
       )}
-      <div className="task-panel-header-divider" />
+      <div className="task-panel-header-divider" data-header-divider="" />
     </div>
   );
 }
