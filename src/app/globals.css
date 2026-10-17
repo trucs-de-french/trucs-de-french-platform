@@ -4161,13 +4161,20 @@ button.scene-bar:active .scene-bar-toggle {
    їх немає в токен-системі .glass-*, бо чипи специфічні саме для
    французько/українських колонок цього типу задач. */
 .table-fill-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 8px 8px;
+}
+/* Колонка пілюлі балів з'являється лише коли вона реально показана
+   (після перевірки) — інакше порожня зарезервована колонка стискала б
+   обидві комірки-чипи. */
+.table-fill-row--scored {
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) auto;
 }
 .table-fill-row-num {
-  width: 22px;
+  width: 20px;
   flex-shrink: 0;
   text-align: center;
   font-family: var(--font-heading);
@@ -4227,21 +4234,30 @@ button.scene-bar:active .scene-bar-toggle {
   display: inline-block;
   max-width: 100%;
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   overflow-wrap: anywhere;
 }
 .table-fill-chip-fr {
   background: #f6efd9;
   color: #1a1640;
   font-family: var(--font-heading);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
 }
 .table-fill-chip-uk {
   background: #eeeefb;
   color: #3b3566;
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
+}
+/* На ширині, де половини стоять поруч (md: і вище), слово не має
+   розбиватись, доки є місце — переносимо лише коли стовпці складені
+   (нижче, медіа-запит під 768px повертає normal wrapping). */
+@media (min-width: 768px) {
+  .table-fill-chip-fr,
+  .table-fill-chip-uk {
+    white-space: nowrap;
+  }
 }
 .dark .table-fill-chip-fr {
   background: rgba(246, 220, 142, 0.12);
@@ -4264,11 +4280,16 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 @media (max-width: 767px) {
+  .table-fill-chip-fr,
+  .table-fill-chip-uk {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .table-fill-chip-fr {
-    font-size: 16px;
+    font-size: 15px;
   }
   .table-fill-chip-uk {
-    font-size: 15px;
+    font-size: 14.5px;
   }
 }
 /* Лампочка-підказка ВСЕРЕДИНІ поля (не окремою кнопкою поряд) — те саме

@@ -71,16 +71,22 @@ function TableFillColumn({
         <span className="table-fill-col-header-cell">{columnLabels[0]}</span>
         <span className="table-fill-col-header-cell">{columnLabels[1]}</span>
       </div>
-      {rows.map((row, i) => (
-        <div key={row.id} className="table-fill-row glass-item-card">
-          <span className="table-fill-row-num" aria-hidden="true">
-            {numberOffset + i + 1}
-          </span>
-          <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left)}</div>
-          <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right)}</div>
-          {rowPointsLabel(row) && <div className="table-fill-row-score">{rowPointsLabel(row)}</div>}
-        </div>
-      ))}
+      {rows.map((row, i) => {
+        const scorePill = rowPointsLabel(row);
+        return (
+          <div
+            key={row.id}
+            className={`table-fill-row glass-item-card ${scorePill ? "table-fill-row--scored" : ""}`}
+          >
+            <span className="table-fill-row-num" aria-hidden="true">
+              {numberOffset + i + 1}
+            </span>
+            <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left)}</div>
+            <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right)}</div>
+            {scorePill && <div className="table-fill-row-score">{scorePill}</div>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -351,7 +357,7 @@ export function TableFillExercise({
             onFocus={() => diacritics.onFocus(key)}
             onBlur={diacritics.onBlur}
             disabled={locked}
-            className={`h-10 w-full rounded-[10px] border pl-3 pr-11 text-base ${inputClass(rowId, side, detail)}`}
+            className={`h-10 w-full rounded-[10px] border pl-3 pr-11 text-[15px] ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
               самий золотий гурток, що ClueCardHeader кросворду
