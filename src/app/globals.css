@@ -3398,6 +3398,88 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Плитки "Правильні відповіді" (TaskResultAnswerRows, task-result.tsx,
+   table-fill.tsx) — та сама плитка/чипи, що .task-result-pair-row вище,
+   плюс номер рядка зліва і підсвітка клітинки-відповіді; грид — той самий
+   поріг (768px), що table-fill.tsx (.table-fill-columns-grid): дві колонки
+   на столі, одна на телефоні. */
+.task-result-answer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .task-result-answer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+}
+.task-result-answer-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.5);
+  min-width: 0;
+}
+/* Довгі слова (без пробілів для розбиття) інакше розпирають 1fr-колонку й,
+   через ланцюжок flex/grid без явної ширини аж до .task-result-card,
+   виштовхують усю картку за межі екрана на вузьких viewport — та сама
+   задача, що overflow-wrap: anywhere у fill-blank.tsx для подібних чипів. */
+.task-result-answer-row .task-result-pair-chip {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dark .task-result-answer-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(243, 217, 139, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-answer-row {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(243, 217, 139, 0.25);
+  }
+}
+.task-result-answer-num {
+  align-self: center;
+  width: 20px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  color: #b8902f;
+}
+.dark .task-result-answer-num {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-answer-num {
+    color: #f6dc8e;
+  }
+}
+.task-result-answer-chip--emphasis {
+  font-weight: 800;
+  border: 1px solid #a9d8b6;
+  background: #eef8f0;
+}
+.dark .task-result-answer-chip--emphasis {
+  background: rgba(31, 122, 61, 0.18);
+  border-color: rgba(110, 200, 140, 0.5);
+  color: #eaf6ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-answer-chip--emphasis {
+    background: rgba(31, 122, 61, 0.18);
+    border-color: rgba(110, 200, 140, 0.5);
+    color: #eaf6ec;
+  }
+}
+
 .task-summary-card {
   display: flex;
   flex-direction: column;

@@ -148,6 +148,52 @@ export function TaskResultPairRows({ pairs }: { pairs: { left: string; right: st
   );
 }
 
+// Плитки "Правильні відповіді" (table-fill.tsx) — той самий принцип
+// плитки, що TaskResultPairRows вище (однакові fr/uk чипи й стрілка), але з
+// номером рядка зліва (та сама нумерація, що в самій таблиці) і без
+// правильно/неправильно студента (таблиця вже це показує) — лише те, яка з
+// двох клітинок була прихованою (answer), підсвічене зеленою рамкою/фоном.
+function AnswerChip({
+  side,
+  value,
+  isAnswer,
+}: {
+  side: "left" | "right";
+  value: string;
+  isAnswer: boolean;
+}) {
+  return (
+    <span
+      className={`task-result-pair-chip ${side === "left" ? "task-result-pair-chip--fr" : "task-result-pair-chip--uk"} ${
+        isAnswer ? "task-result-answer-chip--emphasis" : ""
+      }`}
+    >
+      {value}
+    </span>
+  );
+}
+
+export function TaskResultAnswerRows({
+  rows,
+}: {
+  rows: { number: number; left: string; leftIsAnswer: boolean; right: string; rightIsAnswer: boolean }[];
+}) {
+  return (
+    <div className="task-result-answer-grid">
+      {rows.map((r) => (
+        <div key={r.number} className="task-result-answer-row">
+          <span className="task-result-answer-num" aria-hidden="true">
+            {r.number}
+          </span>
+          <AnswerChip side="left" value={r.left} isAnswer={r.leftIsAnswer} />
+          <PairArrowIcon />
+          <AnswerChip side="right" value={r.right} isAnswer={r.rightIsAnswer} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
 // лише код-пара, без слова "бал": рядкам сітки/таблиці потрібна вузька
 // пілюля, що ніколи не переносить рядок. earned/possible — вже готові

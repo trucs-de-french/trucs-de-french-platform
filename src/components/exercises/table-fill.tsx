@@ -13,7 +13,8 @@ import { hintExplanationText } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, TaskResultAnswerRows, RowScorePill } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -345,6 +346,26 @@ export function TableFillExercise({
     return <span className={SCORE_LABEL_CLASS}>{`${row.points} ${pluralizePoints(row.points)}`}</span>;
   }
 
+  // Рядки для toggle-картки "Правильні відповіді" (TaskResultAnswerRows) —
+  // ТОЙ САМИЙ numberOffset-принцип, що TableFillColumn вище (наскрізна
+  // нумерація 1..N по всій вправі/блоку, не по половині). Клітинка-відповідь
+  // (leftIsAnswer/rightIsAnswer) — за присутністю rowId+сторони в
+  // detail.blanks, незалежно від isCorrect (toggle не показує
+  // правильно/неправильно студента — це вже показує сама таблиця).
+  function buildAnswerRows(rows: Row[], numberOffset: number, detail: TableFillDetail) {
+    return rows.map((row, i) => {
+      const blankLeft = detail.blanks.find((b) => b.rowId === row.id && b.side === "left");
+      const blankRight = detail.blanks.find((b) => b.rowId === row.id && b.side === "right");
+      return {
+        number: numberOffset + i + 1,
+        left: row.left ?? blankLeft?.correctAnswers.join(" / ") ?? "",
+        leftIsAnswer: !!blankLeft,
+        right: row.right ?? blankRight?.correctAnswers.join(" / ") ?? "",
+        rightIsAnswer: !!blankRight,
+      };
+    });
+  }
+
   function renderCell(
     rowId: string,
     side: "left" | "right",
@@ -576,7 +597,11 @@ export function TableFillExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-            />
+              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleCount={blockRows.length}
+            >
+              {blockDetail && <TaskResultAnswerRows rows={buildAnswerRows(blockRows, blockBase, blockDetail)} />}
+            </TaskResult>
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -705,7 +730,11 @@ export function TableFillExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={config.rows.length}
+              >
+                {singleDetail && <TaskResultAnswerRows rows={buildAnswerRows(config.rows, 0, singleDetail)} />}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>

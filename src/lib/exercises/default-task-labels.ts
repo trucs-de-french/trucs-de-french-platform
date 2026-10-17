@@ -96,6 +96,12 @@ export function imageMatchRemainingLabel(count: number): string {
   return `залишилось ${count}`;
 }
 
+// Заголовок toggle-картки "Правильні відповіді" (TaskResult.toggleTitle,
+// task-result.tsx) для table_fill — той самий принцип, що
+// IMAGE_MATCH_POOL_LABEL: лише інтерфейсний підпис (не навчальний текст),
+// без FR-пари.
+export const TABLE_FILL_ANSWERS_TOGGLE_LABEL = "Правильні відповіді";
+
 // Дефолтні FR/UK підписи секцій напрямку кросворду ("Horizontalement" /
 // "Verticalement", мокап "варіант 2", crossword.tsx) — окремо від
 // DEFAULT_TASK_NAME (назва ТИПУ задачі) і DEFAULT_INSTRUCTIONS (інструкція
