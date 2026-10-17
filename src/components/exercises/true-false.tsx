@@ -29,6 +29,7 @@ export type TrueFalsePracticeProps = {
 export function TrueFalseExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -36,6 +37,7 @@ export function TrueFalseExercise({
 }: {
   taskId: string;
   config: TrueFalsePublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   // Опційний — для блоків (task_group_id), щоб TaskGroupBlock рахував
   // живий підсумок балів усіх задач блоку (режим "сума"). Не впливає на
@@ -333,6 +335,7 @@ export function TrueFalseExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

@@ -91,6 +91,7 @@ export type TableFillPracticeProps = {
 export function TableFillExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -99,6 +100,7 @@ export function TableFillExercise({
 }: {
   taskId: string;
   config: TableFillPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -588,6 +590,7 @@ export function TableFillExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

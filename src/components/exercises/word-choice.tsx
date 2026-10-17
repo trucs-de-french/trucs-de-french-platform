@@ -52,6 +52,7 @@ const TILE_DEFAULT =
 export function WordChoiceExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -59,6 +60,7 @@ export function WordChoiceExercise({
 }: {
   taskId: string;
   config: WordChoicePublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -548,6 +550,7 @@ export function WordChoiceExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

@@ -6,10 +6,12 @@ import { EssayCheckExercise } from "@/components/exercises/essay-check";
 import { CalloutExercise } from "@/components/exercises/callout";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
+import { BlockTabs } from "@/components/exercises/block-navigation";
 import { EmbedFrame } from "@/components/embed-frame";
 import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
+import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 
 export type ExerciseTask = {
   id: string;
@@ -54,6 +56,7 @@ export function ExerciseBlock({
   hidePoints,
   isDelf = false,
   suppressTitle = false,
+  showPlaque = true,
 }: {
   task: ExerciseTask;
   // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
@@ -73,11 +76,35 @@ export function ExerciseBlock({
   // (нижче, лише для link/game/embed) пригнічується, щоб назва не
   // показувалась двічі.
   suppressTitle?: boolean;
+  // false — лише TaskGroupBlock, коли кілька задач сидять в ОДНІЙ
+  // спільній панелі: escape-трюк плашки/смужки (.task-header-strip-anchor,
+  // globals.css) рахує відступ відносно верхнього краю .glass-block-panel
+  // і ламається, якщо ПЕРЕД ним у тій самій панелі вже є інший контент
+  // (спільний текст групи, попередні задачі-члени) — тож у групі плашка
+  // не рендериться взагалі. Вкладки блоків (коли в задачі 2+ блоки)
+  // лишаються НЕзалежно від цього пропса (BlockTabs рендерить їх навіть
+  // без plaqueText) — лише сама плашка типу гаситься.
+  showPlaque?: boolean;
 }) {
   const config = (task.config ?? {}) as LinkEmbedConfig;
+  // Плашка типу (мокап "варіант 4") — рахується з СИРОГО task.config
+  // (не з sanitizeConfigForStudent нижче, де cardTitle не входить у
+  // whitelist жодного типу): callout/link/game взагалі не доходять до
+  // GlassBlock-обгортки (викликачі цього компонента самі їх виключають,
+  // page.tsx/task-group-block.tsx), тож плашка потрібна лише
+  // essay_check/embed тут напряму й усім gradable-типам через
+  // ExerciseCard нижче.
+  const plaqueText = showPlaque ? getTaskBarText(task) : undefined;
 
   return (
     <>
+      {/* BlockTabs/плашка — ОБОВ'ЯЗКОВО перший елемент тут: escape-трюк
+          негативних margin (.task-header-strip-anchor, globals.css)
+          рахує відступ відносно верхнього краю .glass-block-panel, тож
+          анкер мусить бути ПЕРШОЮ дитиною контенту панелі, інакше margin
+          зіллється з попереднім сиблінгом, а не з рамкою панелі. */}
+      {(task.type === "essay_check" || task.type === "embed") && <BlockTabs plaqueText={plaqueText} />}
+
       {TASK_TYPES_WITH_VISIBLE_TITLE.includes(task.type) && task.type !== "link" && !suppressTitle && (
         <>
           {TYPES_WITH_TYPE_BADGE.includes(task.type) && (
@@ -112,6 +139,7 @@ export function ExerciseBlock({
           taskId={task.id}
           type={task.type}
           config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+          plaqueText={plaqueText}
           pointsVisible={task.points_visible}
           onResult={onResult}
           hidePoints={hidePoints}

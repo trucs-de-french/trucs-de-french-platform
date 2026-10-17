@@ -10,6 +10,7 @@ import { HintBulb } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -30,6 +31,7 @@ export type DragDropPracticeProps = {
 export function DragDropExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -37,6 +39,7 @@ export function DragDropExercise({
 }: {
   taskId: string;
   config: DragDropPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -282,6 +285,7 @@ export function DragDropExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}

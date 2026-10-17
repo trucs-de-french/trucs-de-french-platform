@@ -32,6 +32,7 @@ export type MatchingPracticeProps = {
 export function MatchingExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -39,6 +40,7 @@ export function MatchingExercise({
 }: {
   taskId: string;
   config: MatchingPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -554,6 +556,7 @@ export function MatchingExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

@@ -14,6 +14,7 @@ import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -88,6 +89,7 @@ function formatPointsValue(n: number): string {
 export function CheckboxGridExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -95,6 +97,7 @@ export function CheckboxGridExercise({
 }: {
   taskId: string;
   config: CheckboxGridPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -304,6 +307,7 @@ export function CheckboxGridExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction}

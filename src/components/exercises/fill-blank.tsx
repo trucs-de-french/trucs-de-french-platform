@@ -11,6 +11,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
@@ -29,6 +30,7 @@ export type FillBlankPracticeProps = {
 export function FillBlankExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -37,6 +39,7 @@ export function FillBlankExercise({
 }: {
   taskId: string;
   config: FillBlankPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   // Опційний — для блоків у режимі "фіксовано" (TaskGroupBlock), щоб
@@ -188,6 +191,7 @@ export function FillBlankExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         pointsText={
           !hidePoints && (pointsVisible || detail)

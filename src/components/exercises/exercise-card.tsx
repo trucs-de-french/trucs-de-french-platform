@@ -48,6 +48,7 @@ export function ExerciseCard({
   taskId,
   type,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -56,6 +57,12 @@ export function ExerciseCard({
   taskId: string;
   type: string;
   config: Record<string, unknown>;
+  // Назва типу для плашки смужки над панеллю (BlockTabs, мокап
+  // "варіант 4") — рахується викликачем із СИРОГО task.config
+  // (getTaskBarText, task-bar-text.ts), не з цього `config` (той уже
+  // пройшов sanitizeConfigForStudent, де cardTitle не входить у жоден
+  // per-типовий whitelist).
+  plaqueText?: string;
   // Пілот системи балів — поки має ефект лише для type === "true_false".
   pointsVisible?: boolean;
   // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
@@ -75,7 +82,7 @@ export function ExerciseCard({
 }) {
   return (
     <ExerciseErrorBoundary>
-      {renderExerciseByType({ taskId, type, config, pointsVisible, onResult, hidePoints, isDelf })}
+      {renderExerciseByType({ taskId, type, config, plaqueText, pointsVisible, onResult, hidePoints, isDelf })}
     </ExerciseErrorBoundary>
   );
 }
@@ -84,6 +91,7 @@ function renderExerciseByType({
   taskId,
   type,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -92,6 +100,7 @@ function renderExerciseByType({
   taskId: string;
   type: string;
   config: Record<string, unknown>;
+  plaqueText?: string;
   pointsVisible?: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -103,6 +112,7 @@ function renderExerciseByType({
         <FillBlankExercise
           taskId={taskId}
           config={config as unknown as FillBlankPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -114,6 +124,7 @@ function renderExerciseByType({
         <LetterGapsExercise
           taskId={taskId}
           config={config as unknown as LetterGapsPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -125,6 +136,7 @@ function renderExerciseByType({
         <LetterRearrangementExercise
           taskId={taskId}
           config={config as unknown as LetterRearrangementPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -136,6 +148,7 @@ function renderExerciseByType({
         <MultipleChoiceExercise
           taskId={taskId}
           config={config as unknown as MultipleChoicePublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -146,6 +159,7 @@ function renderExerciseByType({
         <WordChoiceExercise
           taskId={taskId}
           config={config as unknown as WordChoicePublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -156,6 +170,7 @@ function renderExerciseByType({
         <WordSearchExercise
           taskId={taskId}
           config={config as unknown as WordSearchPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -167,6 +182,7 @@ function renderExerciseByType({
         <CrosswordExercise
           taskId={taskId}
           config={config as unknown as CrosswordPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -178,6 +194,7 @@ function renderExerciseByType({
         <TrueFalseExercise
           taskId={taskId}
           config={config as unknown as TrueFalsePublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -188,6 +205,7 @@ function renderExerciseByType({
         <MatchingExercise
           taskId={taskId}
           config={config as unknown as MatchingPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -198,6 +216,7 @@ function renderExerciseByType({
         <ListeningExercise
           taskId={taskId}
           config={config as unknown as ListeningPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -208,6 +227,7 @@ function renderExerciseByType({
         <ReorderExercise
           taskId={taskId}
           config={config as unknown as ReorderPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -218,6 +238,7 @@ function renderExerciseByType({
         <DragDropExercise
           taskId={taskId}
           config={config as unknown as DragDropPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -228,6 +249,7 @@ function renderExerciseByType({
         <SortColumnsExercise
           taskId={taskId}
           config={config as unknown as SortColumnsPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -239,6 +261,7 @@ function renderExerciseByType({
         <OpenAnswerCheckExercise
           taskId={taskId}
           config={config as unknown as OpenAnswerPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -249,6 +272,7 @@ function renderExerciseByType({
         <TableFillExercise
           taskId={taskId}
           config={config as unknown as TableFillPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -260,6 +284,7 @@ function renderExerciseByType({
         <ImageMatchExercise
           taskId={taskId}
           config={config as unknown as ImageMatchPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -270,6 +295,7 @@ function renderExerciseByType({
         <CheckboxGridExercise
           taskId={taskId}
           config={config as unknown as CheckboxGridPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -280,6 +306,7 @@ function renderExerciseByType({
         <ChronologicalOrderExercise
           taskId={taskId}
           config={config as unknown as ChronologicalOrderPublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
@@ -290,6 +317,7 @@ function renderExerciseByType({
         <KaraokeExercise
           taskId={taskId}
           config={config as unknown as KaraokePublic}
+          plaqueText={plaqueText}
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}

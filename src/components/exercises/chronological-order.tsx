@@ -19,6 +19,7 @@ import { InstructionsText } from "./instructions-text";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import {
   ANSWER_CHIP_DEFAULT,
   COMPACT_IMAGE_GRID,
@@ -67,6 +68,7 @@ function indexToLabel(index: number): string {
 export function ChronologicalOrderExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -74,6 +76,7 @@ export function ChronologicalOrderExercise({
 }: {
   taskId: string;
   config: ChronologicalOrderPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -233,6 +236,7 @@ export function ChronologicalOrderExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <div>
         {/* flex items-start — лампочка притиснута до верху, не по центру
             (можливо багаторядкового) блоку інструкції, той самий принцип

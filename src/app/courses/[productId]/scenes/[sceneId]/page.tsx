@@ -23,6 +23,7 @@ import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/grada
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
+import { BlockTabs } from "@/components/exercises/block-navigation";
 import { VocabQuizExercise } from "@/components/exercises/vocab-quiz";
 import { FlipCardsExercise } from "@/components/exercises/flip-cards";
 import { EssayCheckExercise } from "@/components/exercises/essay-check";
@@ -772,8 +773,18 @@ export default async function ScenePage({
                     })()}
                 </>
               ) : (
-                <GlassBlock title={barText}>
+                <GlassBlock>
                   <div className={EXERCISE_STACK}>
+                    {/* Плашка/смужка (мокап "варіант 4") — ОБОВ'ЯЗКОВО
+                        перший елемент тут (escape-трюк негативних margin,
+                        .task-header-strip-anchor, globals.css, рахує
+                        відступ відносно верхнього краю .glass-block-panel).
+                        Лише для типів, що НЕ рендерять власну BlockTabs
+                        усередині свого компонента (isExerciseType —
+                        gradable-типи через ExerciseCard нижче, кожен сам
+                        малює BlockTabs першим елементом власного дерева). */}
+                    {!isExerciseType(task.type) && <BlockTabs plaqueText={barText} />}
+
                     <TaskMedia imageUrl={task.image_url} audioUrl={task.audio_url} />
 
                     {task.type === "vocab_quiz" && (
@@ -835,6 +846,7 @@ export default async function ScenePage({
                         taskId={task.id}
                         type={task.type}
                         config={sanitizeConfigForStudent(task.type, task.config ?? {})}
+                        plaqueText={barText}
                         pointsVisible={task.points_visible}
                       />
                     )}

@@ -1704,50 +1704,13 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
-/* GlassBlock (glass-block.tsx) — єдина уніфікована обгортка "заголовок-бар
-   + панель" для контент-/вправ-блоків студентської сторінки й прев'ю
-   конструктора (крок 2 завдання). Поки підключена лише для true_false
-   (еталонна вправа) — решта типів мігрують пізнішим етапом без зміни цих
-   класів. */
-/* Компактний бар задачі (GlassBlock) — НЕ той самий розмір/вигляд, що
-   секційні бари (.scene-bar, SectionHeaderBar): менший, без бейджа-
-   іконки (GlassBlock більше не рендерить .glass-bar-badge взагалі), без
-   uppercase — текст у ньому коротка французька НАЗВА ТИПУ вправи
-   (getTaskBarText, task-bar-text.ts, default-task-labels.ts), не
-   інструкція (та — у заголовку панелі, task-panel-header.tsx), тож
-   великий "кричущий" заголовок-варіант 5 тут недоречний. Фон/рамка/тінь/колір
-   тексту — РІВНО ті самі токени --glass-bar-bg/--glass-bar-border/
-   --glass-bar-shadow/--glass-bar-text, що й секційний бар (та сама
-   "скляна" мова, перемикається тим самим .dark/.light) — раніше тінь тут
-   була слабшою (--glass-bar-shadow-compact), через що бар читався
-   "сірішим"/прозорішим за секційний при однаковому фоні; тепер обидва
-   бари дають однакову тінь, лишаються розмір/padding/radius/шрифт — усе,
-   що й робить цей бар компактним. */
-.glass-block-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: var(--glass-bar-bg);
-  border: 1px solid var(--glass-bar-border);
-  box-shadow: var(--glass-bar-shadow);
-  color: var(--glass-bar-text);
-  border-radius: 12px;
-  padding: 10px 18px;
-  margin-bottom: 10px;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 17px;
-  line-height: 1.3;
-}
-.glass-block-title {
-  margin: 0;
-  color: inherit;
-  font: inherit;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
+/* GlassBlock (glass-block.tsx) — уніфікована "скляна" панель для контент-/
+   вправ-блоків студентської сторінки й прев'ю конструктора. Мокап
+   "варіант 4" прибрав окремий компактний бар-заголовок (.glass-block-header,
+   раніше показував getTaskBarText) — та сама назва типу тепер живе в
+   плашці смужки над панеллю (.task-header-strip-plaque,
+   block-navigation.tsx BlockTabs), не в самому GlassBlock: GlassBlock
+   відтепер малює ЛИШЕ панель, без жодного заголовка. */
 .glass-bar-left {
   display: flex;
   align-items: center;
@@ -1868,6 +1831,19 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Плашка/смужка (BlockTabs, block-navigation.tsx) малює себе ВСЕРЕДИНІ
+   вправи (escape-трюк .task-header-strip-anchor, негативний margin "виходить"
+   за падінг панелі й росте вгору на висоту свого вмісту — 44px, плашка
+   найвища), тож без запасу згори вона наповзала б на те, що стоїть ПЕРЕД
+   .glass-block (попередню задачу в списку, EXERCISE_LIST_GAP — лише 16px,
+   закоротко для 44px смужки). margin-top на самому .glass-block резервує
+   рівно ці 44px — той самий принцип, що колишній margin-bottom на тепер
+   видаленому .glass-block-header. :has() — спрацьовує лише коли вправа
+   реально малює смужку (плашка чи вкладки); типи без неї (callout/link/
+   game, що взагалі минають GlassBlock) лишаються без зайвого відступу. */
+.glass-block:has(.task-header-strip-anchor) {
+  margin-top: 44px;
+}
 .glass-block-panel {
   background: var(--glass-panel-bg);
   border: var(--glass-panel-border-width, 1px) solid var(--glass-panel-border);
@@ -1875,32 +1851,6 @@ button, input, textarea, select, label, nav, aside {
   border-radius: 16px;
   padding: 22px 24px 24px;
   color: var(--glass-text);
-}
-/* ЕТАП M — коли вправа малює смужку вкладок блоків (.block-tabs-anchor,
-   block-navigation.tsx BlockTabs) своєю першою дитиною, активна вкладка
-   "влітає" у верхню рамку панелі (border-top-left-radius:0) — панель і
-   смужка читаються як ОДНА форма. :has() — панель сама не знає про
-   вкладки (вони живуть усередині вправи, не в GlassBlock), descendant-
-   комбінатор безпечний: торкається лише панелей, що РЕАЛЬНО мають
-   смужку вкладок усередині. */
-.glass-block-panel:has(.block-tabs-anchor) {
-  border-top-left-radius: 0;
-}
-/* ЕТАП M-fix — .glass-block-header спочатку лишає лише 10px до панелі
-   (margin-bottom, саме правило нижче), чого не вистачає, коли над
-   панеллю ще й смужка вкладок (.block-tabs-strip, 46px, position:
-   absolute; bottom:0 всередині .block-tabs-anchor висотою 0 — сам
-   .block-tabs-anchor своїм від'ємним margin-top завжди "приземляється"
-   РІВНО на верхню рамку панелі, незалежно від padding панелі, тож смужка
-   завжди росте вгору від рамки на 46px, хоч на мобільному, хоч на
-   десктопі). 58px = 12px (вимога: відступ від бару до смужки) + 46px
-   (висота смужки) — тож низ бару (margin-bottom) і верх смужки
-   збігаються РІВНО з 12px проміжком, а сама панель (і все, що в ній)
-   просто зсувається нижче на ці 58px замість старих 10px. :has() —
-   спрацьовує лише коли вправа реально малює вкладки; типи без блоків
-   (чи з ≤1 блоком) лишаються на старих 10px. */
-.glass-block:has(.block-tabs-anchor) .glass-block-header {
-  margin-bottom: 46px;
 }
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
@@ -1935,11 +1885,6 @@ button, input, textarea, select, label, nav, aside {
   }
   .scene-bar-title {
     font-size: 16px;
-  }
-  /* Компактний бар задачі (GlassBlock) — власні, менші значення. */
-  .glass-block-header {
-    font-size: 16px;
-    padding: 9px 14px;
   }
 }
 
@@ -2954,45 +2899,133 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 0.15s ease;
 }
 
-/* ЕТАП M-fix — смужка вкладок блоків над панеллю (BlockTabs,
-   block-navigation.tsx). .block-tabs-anchor — перша дитина вправи
-   (height:0, position:relative, від'їмний margin гасить padding
-   .glass-block-panel так, щоб верхній-лівий кут anchor збігався з
-   верхнім-лівим кутом РАМКИ панелі) — сам .block-tabs-strip сидить у
-   ньому position:absolute; bottom:0, тож росте ВГОРУ від лінії рамки
-   панелі. Висота смужки ФІКСОВАНА (34px, нижче — мокап "варіант 3",
-   компактніші вкладки за попередню версію) — тож escape-відстань завжди
-   РІВНО 34px, і .glass-block-header margin-bottom (вище,
-   :has(.block-tabs-anchor)) може бути одним точним числом
-   (46 = 12 + 34) на всіх екранах. Дотик-зона ≥40px на мобільному —
-   псевдоелемент на самій вкладці (.block-tab::before), не висота смужки. */
-.block-tabs-anchor {
+/* Мокап "варіант 4" — ОДНА смужка над панеллю: плашка типу вправи
+   (не клікабельна, .task-plaque) + роздільник + вкладки блоків (лише
+   коли 2+ блоки) — замінює колишній окремий бар-заголовок GlassBlock
+   (.glass-block-header, видалено) і попередню "лише вкладки" смужку.
+   .task-header-strip-anchor — перша дитина самої вправи (height:0,
+   position:relative, від'їмний margin гасить padding .glass-block-panel
+   так, щоб верхній-лівий кут anchor збігався з верхнім-лівим кутом РАМКИ
+   панелі) — сам .task-header-strip сидить у ньому position:absolute;
+   bottom:0, тож росте ВГОРУ від лінії рамки панелі на висоту свого
+   вмісту (плашка — найвищий елемент смужки, задає висоту). Панель
+   (.glass-block-panel) лишається з радіусом 16px на ВСІХ кутах завжди
+   (плашка сидить НАД лівим верхнім кутом, не зливається з ним) — лише
+   активна вкладка (.block-tab--active, нижче) влазить у верхню РАМКУ
+   панелі (margin-bottom: -1.5px/-1px). Дотик-зона ≥40px на мобільному —
+   псевдоелемент на самій вкладці (.block-tab::before). */
+.task-header-strip-anchor {
   position: relative;
   height: 0;
   margin: -22px -24px 0 -24px;
 }
 @media (max-width: 640px) {
-  .block-tabs-anchor {
+  .task-header-strip-anchor {
     margin: -16px -16px 0 -16px;
   }
 }
-.block-tabs-strip {
+.task-header-strip {
   position: absolute;
   z-index: 1;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 34px;
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  padding: 0 12px 0 18px;
+  padding-left: 6px;
+  min-width: 0;
+}
+/* Плашка типу вправи — НЕ вкладка: не клікабельна, курсор default, не
+   фокусується (немає tabIndex/role=tab). Градієнт/тінь — та сама
+   "гранатова" родина, що й пілюля балів (.points-pill-gradient) і
+   кнопки ←/Далі, лише темніший старт градієнта (#2f2c6b) у світлій
+   темі — варіант 4 просить саме цей, трохи темніший за чисто
+   #1a1640→#4b46da пілюлі балів. */
+.task-plaque {
+  flex-shrink: 0;
+  min-width: 0;
+  margin-bottom: 10px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
+}
+.dark .task-plaque {
+  background: linear-gradient(135deg, #1a1640, #4b46da);
+  color: #f6dc8e;
+  box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-plaque {
+    background: linear-gradient(135deg, #1a1640, #4b46da);
+    color: #f6dc8e;
+    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+  }
+}
+@media (max-width: 640px) {
+  .task-plaque {
+    max-width: 60%;
+  }
+}
+.task-plaque-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 26px;
+  margin: 0 10px 10px;
+  background: rgba(184, 144, 47, 0.4);
+}
+.dark .task-plaque-divider {
+  background: rgba(243, 217, 139, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-plaque-divider {
+    background: rgba(243, 217, 139, 0.3);
+  }
+}
+/* Скролиться лише ЦЯ обгортка (вкладки) — плашка вище лишається
+   пришпиленою зліва (flex-shrink:0, за межами .task-tabs-scroll).
+   mask-image — "м'яка" тінь-підказка на краю, де є ще вкладки за
+   видимою межею (клас .task-tabs-scroll--fade-* додає/прибирає JS,
+   block-navigation.tsx, за onScroll/resize) — ніякого filter/transform. */
+.task-tabs-scroll {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
 }
-.block-tabs-strip::-webkit-scrollbar {
+.task-tabs-scroll::-webkit-scrollbar {
   display: none;
+}
+.task-tabs-scroll--fade-right {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+.task-tabs-scroll--fade-left {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 24px), transparent);
+}
+.task-tabs-scroll--fade-left.task-tabs-scroll--fade-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+.task-tabs-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding-right: 12px;
+  width: max-content;
 }
 /* ЕТАП N — градієнтна пілюля балів (мокап варіант 3): переїхала зі
    смужки вкладок у заголовок панелі (task-panel-header.tsx,
@@ -3078,13 +3111,21 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .block-tab-check {
-  margin-left: 4px;
+  margin-right: 5px;
   vertical-align: -1px;
   color: #3b36c4;
 }
 .block-tab:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
+}
+/* Заблокована вкладка — рендериться лише коли викликач реально передає
+   isTabDisabled (сьогодні жоден тип вправ не має послідовного
+   розблокування блоків, тож це правило чекає на майбутню логіку, не
+   вмикається самостійно). */
+.block-tab[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 /* Темна тема — панель "variant 3" (--glass-panel-bg темний токен), та
    сама механіка приєднання, лише золото тьмяніше/прозоріше й текст

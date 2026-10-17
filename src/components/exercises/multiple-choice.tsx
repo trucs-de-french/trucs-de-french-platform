@@ -75,6 +75,7 @@ export type MultipleChoicePracticeProps = {
 export function MultipleChoiceExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -82,6 +83,7 @@ export function MultipleChoiceExercise({
 }: {
   taskId: string;
   config: MultipleChoicePublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -816,6 +818,7 @@ export function MultipleChoiceExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

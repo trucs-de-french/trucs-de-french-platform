@@ -30,12 +30,14 @@ type PublicQuestion = OpenAnswerPublic["questions"][number];
 export function OpenAnswerCheckExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
 }: {
   taskId: string;
   config: OpenAnswerPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -261,6 +263,7 @@ export function OpenAnswerCheckExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

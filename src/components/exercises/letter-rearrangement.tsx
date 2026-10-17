@@ -48,6 +48,7 @@ export type LetterRearrangementPracticeProps = {
 export function LetterRearrangementExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -56,6 +57,7 @@ export function LetterRearrangementExercise({
 }: {
   taskId: string;
   config: LetterRearrangementPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -533,6 +535,7 @@ export function LetterRearrangementExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

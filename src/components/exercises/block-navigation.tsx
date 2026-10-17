@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 
@@ -124,12 +124,12 @@ export function BlockSegments({
 function TabCheckIcon() {
   return (
     <svg
-      width="12"
-      height="12"
+      width="13"
+      height="13"
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.4"
+      strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -140,29 +140,46 @@ function TabCheckIcon() {
   );
 }
 
-// ЕТАП M — смужка вкладок "Блок N" над панеллю задачі (замінює підпис
-// "Блок N з M" + BlockSegments, що раніше малювались РЯДКОМ 1 усередині
-// панелі, task-panel-header.tsx) — та сама панель (.block-tabs-anchor,
-// CSS, globals.css) "виходить" за падінг .glass-block-panel і підіймає
-// саму смужку вкладок НАД верхню рамку панелі (position:absolute,
-// bottom:0 відносно anchor висотою 0, що сидить рівно на лінії рамки
-// панелі) — без зміни структури GlassBlock/сторінок-викликачів, які
-// самі панель і рендерять. onChangeBlock/isBlockChecked — РІВНО ті самі
-// пропси, що вже йшли в BlockSegments/BlockNavFooter: жодної нової
-// логіки перемикання блоків, вкладка лише кличе той самий обробник з
-// потрібним індексом.
+// Мокап "варіант 4" — ОДНА смужка над панеллю задачі: плашка типу
+// (.task-plaque, назва типу — getTaskBarText/default-task-labels.ts,
+// переданa викликачем як plaqueText, бо лише він знає raw task.config/
+// type) + роздільник + вкладки блоків "Блок N" (лише 2+ блоки; замінює
+// підпис "Блок N з M" + BlockSegments, що раніше малювались РЯДКОМ 1
+// усередині панелі, task-panel-header.tsx). Та сама панель
+// (.task-header-strip-anchor, CSS, globals.css) "виходить" за падінг
+// .glass-block-panel і підіймає саму смужку НАД верхню рамку панелі
+// (position:absolute, bottom:0 відносно anchor висотою 0, що сидить
+// рівно на лінії рамки панелі) — без зміни структури GlassBlock/
+// сторінок-викликачів, які самі панель і рендерять. onChangeBlock/
+// isBlockChecked — РІВНО ті самі пропси, що вже йшли в
+// BlockSegments/BlockNavFooter: жодної нової логіки перемикання блоків,
+// вкладка лише кличе той самий обробник з потрібним індексом.
+//
+// Плашка рендериться ЗАВЖДИ (навіть без вкладок/без plaqueText — тоді
+// лишається порожньою й компонент повертає null, бо немає що показати):
+// одна вправа без блоків все одно показує лише свою плашку, без
+// роздільника й вкладок (режим "один блок").
 export function BlockTabs({
+  plaqueText,
   blockCount,
-  activeBlock,
+  activeBlock = 0,
   onChangeBlock,
   isBlockChecked,
+  isBlockDisabled,
   labels,
   blockLabel = "Блок",
 }: {
-  blockCount: number;
-  activeBlock: number;
-  onChangeBlock: (index: number) => void;
+  // Відсутній — у групі з кількома задачами немає єдиної "головної" назви
+  // (task-group-block.tsx) — компонент тоді не рендерить нічого.
+  plaqueText?: string;
+  blockCount?: number;
+  activeBlock?: number;
+  onChangeBlock?: (index: number) => void;
   isBlockChecked?: (index: number) => boolean;
+  // Жоден тип вправи сьогодні не має послідовного розблокування блоків —
+  // пропс підготовлений про запас (CSS .block-tab[aria-disabled] уже
+  // готовий), не підключений ніде.
+  isBlockDisabled?: (index: number) => boolean;
   labels?: (string | undefined)[];
   blockLabel?: string;
   // ЕТАП N — пілюля балів переїхала в заголовок панелі (TaskPanelHeader),
@@ -172,58 +189,115 @@ export function BlockTabs({
   pointsText?: string;
 }) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [fade, setFade] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
+
+  const hasTabs = !!blockCount && blockCount > 1 && !!onChangeBlock;
 
   useEffect(() => {
+    if (!hasTabs) return;
     tabRefs.current[activeBlock]?.scrollIntoView({ inline: "nearest", block: "nearest" });
-  }, [activeBlock]);
+  }, [activeBlock, hasTabs]);
 
-  if (blockCount <= 1) return null;
+  function updateFade() {
+    const el = scrollRef.current;
+    if (!el) return;
+    setFade({
+      left: el.scrollLeft > 1,
+      right: el.scrollLeft < el.scrollWidth - el.clientWidth - 1,
+    });
+  }
+
+  useEffect(() => {
+    if (!hasTabs) return;
+    updateFade();
+    const el = scrollRef.current;
+    if (!el) return;
+    const onResize = () => updateFade();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [hasTabs, blockCount]);
+
+  if (!plaqueText && !hasTabs) return null;
 
   function focusAndChange(index: number) {
+    if (!blockCount || !onChangeBlock) return;
     const clamped = Math.max(0, Math.min(blockCount - 1, index));
     tabRefs.current[clamped]?.focus();
     onChangeBlock(clamped);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (!blockCount) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       focusAndChange(index + 1);
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       focusAndChange(index - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusAndChange(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusAndChange(blockCount - 1);
     }
   }
 
+  const fadeClass =
+    fade.left && fade.right
+      ? "task-tabs-scroll--fade-left task-tabs-scroll--fade-right"
+      : fade.right
+        ? "task-tabs-scroll--fade-right"
+        : fade.left
+          ? "task-tabs-scroll--fade-left"
+          : "";
+
   return (
-    <div className="block-tabs-anchor">
-      <div className="block-tabs-strip" role="tablist" aria-label="Навігація по блоках">
-        {Array.from({ length: blockCount }, (_, i) => {
-          const isActive = i === activeBlock;
-          const checked = isBlockChecked?.(i);
-          const customLabel = labels?.[i];
-          const text = `${blockLabel} ${i + 1}`;
-          const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", перевірено" : ""}`;
-          return (
-            <button
-              key={i}
-              ref={(el) => {
-                tabRefs.current[i] = el;
-              }}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-label={a11yLabel}
-              tabIndex={isActive ? 0 : -1}
-              onClick={() => onChangeBlock(i)}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              className={`block-tab ${isActive ? "block-tab--active" : "block-tab--inactive"}`}
-            >
-              {text}
-              {checked && <TabCheckIcon />}
-            </button>
-          );
-        })}
+    <div className="task-header-strip-anchor">
+      <div className="task-header-strip">
+        {plaqueText && (
+          <span className="task-plaque" title={plaqueText}>
+            {plaqueText}
+          </span>
+        )}
+        {hasTabs && (
+          <>
+            {plaqueText && <span className="task-plaque-divider" aria-hidden="true" />}
+            <div ref={scrollRef} className={`task-tabs-scroll ${fadeClass}`.trim()} onScroll={updateFade}>
+              <div className="task-tabs-track" role="tablist" aria-label="Навігація по блоках">
+                {Array.from({ length: blockCount! }, (_, i) => {
+                  const isActive = i === activeBlock;
+                  const checked = isBlockChecked?.(i);
+                  const disabled = isBlockDisabled?.(i) ?? false;
+                  const customLabel = labels?.[i];
+                  const text = `${blockLabel} ${i + 1}`;
+                  const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", перевірено" : ""}`;
+                  return (
+                    <button
+                      key={i}
+                      ref={(el) => {
+                        tabRefs.current[i] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-disabled={disabled || undefined}
+                      aria-label={a11yLabel}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => !disabled && onChangeBlock!(i)}
+                      onKeyDown={(e) => handleKeyDown(e, i)}
+                      className={`block-tab ${isActive ? "block-tab--active" : "block-tab--inactive"}`}
+                    >
+                      {checked && <TabCheckIcon />}
+                      {text}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

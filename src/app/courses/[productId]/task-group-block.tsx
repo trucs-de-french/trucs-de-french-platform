@@ -12,7 +12,6 @@ import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { GlassBlock } from "@/components/glass-block";
-import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import { EmbedFrame } from "@/components/embed-frame";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import type { ReactNode } from "react";
@@ -122,12 +121,6 @@ export function TaskGroupBlock({
   const visibleTasks = tasks.filter(taskHasRenderableContent);
   const hasOwnSharedContent = contentBlockHasRenderableContent(group);
   const hasSharedContent = hasOwnSharedContent || !!extraSharedContent;
-
-  // Правило розміщення назви (детальніше — коментар біля suppressTitle
-  // нижче): рівно одна видима задача в групі → її назва йде в бар
-  // GlassBlock; кілька задач → бар без назви.
-  const titleForBar = visibleTasks.length === 1 ? visibleTasks[0] : undefined;
-  const barText = titleForBar ? getTaskBarText(titleForBar) : undefined;
 
   // Ні спільного контенту (ні свого, ні переданого зовні), ні жодної
   // задачі, що реально щось покаже — показувати голу рамку немає сенсу.
@@ -288,18 +281,14 @@ export function TaskGroupBlock({
                 // Лишається видимим лише один загальний підсумок блоку нижче.
                 hidePoints={group.points_mode === "flat"}
                 isDelf={isDelf}
-                // Правило розміщення назви (єдине для всіх типів вправ,
-                // task-group-block.tsx/glass-block.tsx): блок має РІВНО один
-                // бар-заголовок. Сама група назви не має (адмінська мітка,
-                // студенту ніколи не показується) — тож коли в групі РІВНО
-                // одна видима задача, саме її назва переїжджає в бар
-                // GlassBlock нижче (titleForBar), а власний інлайн-заголовок
-                // ЦІЄЇ задачі (лише в link/game/embed) пригнічується тут,
-                // щоб не дублювався. Коли задач кілька — бар лишається без
-                // назви (однієї "головної" серед кількох немає), кожна
-                // задача й далі показує власний маленький підзаголовок
-                // усередині спільної панелі, як і раніше.
-                suppressTitle={task.id === titleForBar?.id}
+                // Кілька задач в ОДНІЙ спільній панелі — плашка типу не
+                // рендериться взагалі (ExerciseBlock, exercise-block.tsx):
+                // escape-трюк плашки рахує відступ відносно верхнього краю
+                // САМЕ цієї панелі, а не позиції задачі всередині неї,
+                // тож для задач, що йдуть не першими (чи коли є спільний
+                // контент групи вище), плашка попала б у довільне місце.
+                // Вкладки блоків (коли задача сама має 2+ блоки) лишаються.
+                showPlaque={false}
               />
             </div>
           ))}
@@ -327,7 +316,7 @@ export function TaskGroupBlock({
   );
 
   return (
-    <GlassBlock title={barText}>
+    <GlassBlock>
       <div className={EXERCISE_STACK}>{body}</div>
     </GlassBlock>
   );

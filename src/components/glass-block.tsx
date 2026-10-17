@@ -10,17 +10,16 @@ import type { ReactNode } from "react";
 // --glass-* (globals.css) перемикаються СВІТЛИЙ/ТЕМНИЙ перемикачем теми
 // сайту (.dark/.light на <html>, theme-toggle.tsx) — цей компонент сам
 // нічого не знає про тему.
-// Без title — лише панель (callout/link/embed тощо, де заголовок уже
-// показаний інакше або не потрібен, чи кілька задач в групі без єдиної
-// "головної" назви).
+// Мокап "варіант 4" прибрав окремий бар-заголовок — назва типу задачі
+// тепер живе в плашці смужки над панеллю (.task-plaque, BlockTabs,
+// block-navigation.tsx), яку малює САМА вправа (єдине місце, що знає її
+// activeBlock/isBlockChecked для вкладок) усередині {children}, з
+// escape-трюком негативних margin (.task-header-strip-anchor,
+// globals.css), а не GlassBlock. GlassBlock відтепер — лише панель.
 export function GlassBlock({
-  title,
-  headerExtra,
   children,
   className = "",
 }: {
-  title?: string;
-  headerExtra?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
@@ -31,12 +30,6 @@ export function GlassBlock({
   // зверху.
   return (
     <div className={`glass-block ${className}`.trim()}>
-      {title && (
-        <div className="glass-block-header">
-          <h2 className="glass-block-title">{title}</h2>
-          {headerExtra}
-        </div>
-      )}
       <div className="glass-block-panel">{children}</div>
     </div>
   );

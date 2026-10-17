@@ -11,6 +11,7 @@ import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -28,6 +29,7 @@ export type ImageMatchPracticeProps = {
 export function ImageMatchExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -35,6 +37,7 @@ export function ImageMatchExercise({
 }: {
   taskId: string;
   config: ImageMatchPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -200,6 +203,7 @@ export function ImageMatchExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}

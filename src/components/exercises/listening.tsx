@@ -13,6 +13,7 @@ import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
+import { BlockTabs } from "./block-navigation";
 import { ImageLightbox } from "./image-lightbox";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
@@ -35,6 +36,7 @@ export type ListeningPracticeProps = {
 export function ListeningExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -42,6 +44,7 @@ export function ListeningExercise({
 }: {
   taskId: string;
   config: ListeningPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -211,6 +214,7 @@ export function ListeningExercise({
 
   return (
     <div className={EXERCISE_STACK}>
+      <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.listening.subInstruction}

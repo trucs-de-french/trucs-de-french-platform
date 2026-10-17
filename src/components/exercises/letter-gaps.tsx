@@ -94,6 +94,7 @@ type LetterGapsResult = Extract<GradeResult, { detail: LetterGapsDetail }>;
 export function LetterGapsExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -102,6 +103,7 @@ export function LetterGapsExercise({
 }: {
   taskId: string;
   config: LetterGapsPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -712,6 +714,7 @@ export function LetterGapsExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}

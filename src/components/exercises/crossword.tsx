@@ -826,6 +826,7 @@ function CrosswordBlockView({
 export function CrosswordExercise({
   taskId,
   config,
+  plaqueText,
   pointsVisible,
   onResult,
   hidePoints,
@@ -833,6 +834,7 @@ export function CrosswordExercise({
 }: {
   taskId: string;
   config: CrosswordPublic;
+  plaqueText?: string;
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
@@ -915,6 +917,7 @@ export function CrosswordExercise({
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
+        plaqueText={plaqueText}
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
