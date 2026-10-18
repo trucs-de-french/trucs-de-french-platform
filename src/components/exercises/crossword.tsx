@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react"
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
-import { DEFAULT_CROSSWORD_DIRECTION_LABELS } from "@/lib/exercises/default-task-labels";
+import { DEFAULT_CROSSWORD_DIRECTION_LABELS, TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -30,7 +30,7 @@ import { HintBulb } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { TaskResult } from "./task-result";
+import { TaskResult, TaskResultCrosswordRows } from "./task-result";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 
 type Direction = "horizontal" | "vertical";
@@ -86,6 +86,26 @@ function buildClueCells(block: CrosswordPublicBlock): Map<ClueKey, { row: number
     }
   }
   return map;
+}
+
+// Плитки toggle-картки "Правильні відповіді" — слово читається прямо з
+// block.solution (рішення й так уже йде студенту одразу, той самий
+// компроміс, що жива підсвітка літер, clueCells вище) — не потребує
+// GradeResult.detail взагалі, на відміну від решти gap-типів.
+function buildCrosswordGroups(
+  block: CrosswordPublicBlock,
+  clueCells: Map<ClueKey, { row: number; col: number }[]>
+): { label: string; items: { number: number; word: string }[] }[] {
+  function wordsFor(direction: Direction, clues: CrosswordPublicBlock["across"]) {
+    return clues.map((clue) => {
+      const cells = clueCells.get(`${direction}-${clue.number}`) ?? [];
+      return { number: clue.number, word: cells.map((c) => block.solution[c.row][c.col]).join("") };
+    });
+  }
+  return [
+    { label: DEFAULT_CROSSWORD_DIRECTION_LABELS.horizontal.fr, items: wordsFor("horizontal", block.across) },
+    { label: DEFAULT_CROSSWORD_DIRECTION_LABELS.vertical.fr, items: wordsFor("vertical", block.down) },
+  ];
 }
 
 // Мокап "варіант 2" — заголовок картки-підказки кросворду: номер зліва,
@@ -839,7 +859,15 @@ function CrosswordBlockView({
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
             {result && (
-              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+              <TaskResult
+                correct={result.correct}
+                pointsEarned={result.pointsEarned}
+                pointsPossible={result.pointsPossible}
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={block.across.length + block.down.length}
+              >
+                <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
+              </TaskResult>
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
               <BlockNavFooter
@@ -864,7 +892,15 @@ function CrosswordBlockView({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleCount={block.across.length + block.down.length}
+          >
+            <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
+          </TaskResult>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

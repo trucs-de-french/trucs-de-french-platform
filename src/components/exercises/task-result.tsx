@@ -274,6 +274,59 @@ export function TaskResultOrderRows({
   );
 }
 
+// Плитки toggle-картки "Правильні відповіді" для image_match — мініатюра
+// 56×40 + номер + правильне слово (той самий .task-result-gap-word
+// емфазис, що решта gap-плиток). Звичайний <img>, не next/image — другорядний
+// вміст закритого за замовчуванням toggle, без власного layout/ancestors із
+// backdrop-filter/filter/transform (п. "жодних filter/transform на предках
+// медіа" задачі).
+export function TaskResultImageWordRows({
+  rows,
+}: {
+  rows: { number: number; imageUrl: string; word: string }[];
+}) {
+  return (
+    <div className="task-result-gap-grid">
+      {rows.map((r) => (
+        <div key={r.number} className="task-result-gap-row items-center">
+          <span className="task-result-answer-num" aria-hidden="true">
+            {r.number}
+          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={r.imageUrl} alt="" className="task-result-image-thumb" />
+          <span className="task-result-gap-word">{r.word}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Групи "Horizontalement"/"Verticalement" (crossword.tsx) — номер+слово
+// чипами (той самий .task-result-gap-word, без стрілки order-chip —
+// звичайний flex-wrap список, не послідовність).
+export function TaskResultCrosswordRows({
+  groups,
+}: {
+  groups: { label: string; items: { number: number; word: string }[] }[];
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {groups.map((g) => (
+        <div key={g.label} className="flex flex-col gap-1.5">
+          <span className="task-result-gap-text font-bold">{g.label}</span>
+          <div className="flex flex-wrap gap-2">
+            {g.items.map((it) => (
+              <span key={it.number} className="task-result-gap-word">
+                {it.number}. {it.word}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
 // лише код-пара, без слова "бал": рядкам сітки/таблиці потрібна вузька
 // пілюля, що ніколи не переносить рядок. earned/possible — вже готові

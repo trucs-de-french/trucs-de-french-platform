@@ -15,8 +15,20 @@ import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { TaskResult } from "./task-result";
-import { IMAGE_MATCH_POOL_LABEL, imageMatchRemainingLabel } from "@/lib/exercises/default-task-labels";
+import { TaskResult, TaskResultImageWordRows } from "./task-result";
+import {
+  IMAGE_MATCH_POOL_LABEL,
+  imageMatchRemainingLabel,
+  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
+} from "@/lib/exercises/default-task-labels";
+
+// Плитки toggle-картки "Правильні відповіді" — мініатюра + номер +
+// правильне слово (п.5 задачі "варіант 1").
+function buildImageMatchRows(
+  detail: ImageMatchDetail
+): { number: number; imageUrl: string; word: string }[] {
+  return detail.items.map((it, i) => ({ number: i + 1, imageUrl: it.imageUrl, word: it.correctName }));
+}
 
 // 6-крапковий "грип" зліва на чипі пулу (мокап "варіант 1") — суто
 // декоративна підказка "можна тягнути", прибирається на мобільній липкій
@@ -351,7 +363,15 @@ export function ImageMatchExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleCount={detail ? detail.items.length : undefined}
+          >
+            {detail && <TaskResultImageWordRows rows={buildImageMatchRows(detail)} />}
+          </TaskResult>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
