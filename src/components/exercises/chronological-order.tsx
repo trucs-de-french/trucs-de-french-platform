@@ -31,7 +31,8 @@ import {
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultOrderRows } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
@@ -65,6 +66,18 @@ function indexToLabel(index: number): string {
     n = Math.floor(n / 26) - 1;
   } while (n >= 0);
   return label;
+}
+
+// Плитка toggle-картки "Правильні відповіді" — ОДНА плитка (ціла вправа —
+// одна послідовність, на відміну від reorder.sequences), елементи
+// відсортовані за correctPosition. text — підпис (якщо є), інакше content
+// (mode: "text"/"mixed" — сам текст; mode: "image" без тексту — URL
+// картинки, як і решта рендеру цього режиму без підпису).
+function buildChronologicalOrderRows(
+  detail: ChronologicalOrderDetail
+): { number: number; items: string[] }[] {
+  const items = [...detail.items].sort((a, b) => a.correctPosition - b.correctPosition).map((it) => it.content);
+  return [{ number: 1, items }];
 }
 
 export function ChronologicalOrderExercise({
@@ -432,7 +445,15 @@ export function ChronologicalOrderExercise({
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
           ) : (
-            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+            <TaskResult
+              correct={result.correct}
+              pointsEarned={result.pointsEarned}
+              pointsPossible={result.pointsPossible}
+              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleCount={detail ? 1 : undefined}
+            >
+              {detail && <TaskResultOrderRows rows={buildChronologicalOrderRows(detail)} />}
+            </TaskResult>
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>

@@ -244,6 +244,36 @@ export function TaskResultGapRows({
   );
 }
 
+// Плитки toggle-картки "Правильні відповіді" для типів-порядку
+// (reorder/chronological_order/letter_rearrangement) — одна плитка на
+// послідовність, правильний порядок показаний нумерованим рядком чипів
+// (а не прозовим текстом, як TaskResultGapRows — тут немає "речення",
+// лише впорядкований список елементів).
+export function TaskResultOrderRows({
+  rows,
+}: {
+  rows: { number: number; items: string[] }[];
+}) {
+  return (
+    <div className="task-result-gap-grid">
+      {rows.map((r) => (
+        <div key={r.number} className="task-result-order-row">
+          <span className="task-result-answer-num" aria-hidden="true">
+            {r.number}
+          </span>
+          <div className="task-result-order-chips">
+            {r.items.map((it, i) => (
+              <span key={i} className="task-result-order-chip">
+                {it}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
 // лише код-пара, без слова "бал": рядкам сітки/таблиці потрібна вузька
 // пілюля, що ніколи не переносить рядок. earned/possible — вже готові
