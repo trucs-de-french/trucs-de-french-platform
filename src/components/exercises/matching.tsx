@@ -13,7 +13,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, TaskResultPairRows, RowScorePill } from "./task-result";
+import { TaskResult, TaskResultPairRows } from "./task-result";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
@@ -218,13 +218,6 @@ export function MatchingExercise({
     return ` (${points} ${pluralizePoints(points)})`;
   }
 
-  function pointsScorePill(left: string, detail: MatchingDetail | undefined) {
-    if (hidePoints) return null;
-    const pd = detail?.pairPoints.find((p) => p.left === left);
-    if (!pd) return null;
-    return <RowScorePill earned={pd.isCorrect ? pd.points : 0} possible={pd.points} full={pd.isCorrect} />;
-  }
-
   // ==== Гілка блоків (>10 елементів) ====
   const [activeBlock, setActiveBlock] = useState(0);
   const [blockResults, setBlockResults] = useState<Record<number, MatchingResult>>({});
@@ -349,7 +342,7 @@ export function MatchingExercise({
     }
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-[14px] md:gap-[16px]">
         <MatchingBoard
           leftItems={blockLeft}
           rightItems={blockRight}
@@ -365,12 +358,7 @@ export function MatchingExercise({
             return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
           }}
           usedRights={usedRightsInBlock}
-          renderLeftExtra={(left) => (
-            <>
-              <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>{" "}
-              {pointsScorePill(left, blockDetail)}
-            </>
-          )}
+          renderLeftExtra={(left) => <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>}
         />
 
         <div className="flex flex-col gap-2">
@@ -507,7 +495,7 @@ export function MatchingExercise({
       />
 
       {!useBlocks ? (
-        <>
+        <div className="flex flex-col gap-[14px] md:gap-[16px]">
           <MatchingBoard
             leftItems={config.left}
             rightItems={config.right}
@@ -523,12 +511,7 @@ export function MatchingExercise({
               return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
             }}
             usedRights={usedRights}
-            renderLeftExtra={(left) => (
-              <>
-                <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>{" "}
-                {pointsScorePill(left, singleDetail)}
-              </>
-            )}
+            renderLeftExtra={(left) => <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>}
           />
 
           <div className="flex flex-col gap-3">
@@ -554,7 +537,7 @@ export function MatchingExercise({
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
-        </>
+        </div>
       ) : (
         <BlockNavigation
           blockCount={blockCount}

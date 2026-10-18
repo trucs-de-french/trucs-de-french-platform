@@ -82,6 +82,16 @@ export function MatchingBoard({
     return "default";
   }
 
+  // Колір рамки/крапки/лінії — не єдиний сигнал правильності: коли пара вже
+  // перевірена, картка отримує aria-label "{слово}: Правильно/Неправильно"
+  // (перекриває звичайне ім'я кнопки з текстового вмісту) для скрінрідерів,
+  // текст картки лишається видимим лише як "{слово}" (без зайвого напису).
+  function ariaLabelForState(word: string, state: PairDotState): string | undefined {
+    if (state === "correct") return `${word}: Правильно`;
+    if (state === "incorrect") return `${word}: Неправильно`;
+    return undefined;
+  }
+
   function dotStateForRight(right: string): PairDotState {
     const left = Object.entries(pairs).find(([, r]) => r === right)?.[0];
     if (left) {
@@ -139,6 +149,7 @@ export function MatchingBoard({
                 }}
                 onClick={() => onClickLeft(left)}
                 disabled={disabled}
+                aria-label={ariaLabelForState(left, state)}
                 className={`matching-card matching-card--fr matching-card--${state} min-w-0 break-words [overflow-wrap:anywhere]`}
               >
                 {left}
@@ -162,6 +173,7 @@ export function MatchingBoard({
                 }}
                 onClick={() => onClickRight(right)}
                 disabled={disabled}
+                aria-label={ariaLabelForState(right, state)}
                 className={`matching-card matching-card--uk min-w-0 break-words [overflow-wrap:anywhere] ${
                   usedRights.has(right) ? "opacity-50" : ""
                 }`}
