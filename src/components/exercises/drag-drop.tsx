@@ -16,6 +16,27 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowScorePill } from "./task-result";
+import {
+  IMAGE_MATCH_POOL_LABEL,
+  imageMatchRemainingLabel,
+  dragDropIntruderLabel,
+  DRAG_DROP_SLOT_PLACEHOLDER,
+} from "@/lib/exercises/default-task-labels";
+
+// 6-крапковий "грип" зліва на чипі пулу — той самий, що image-match.tsx
+// (ChipGripIcon), продубльований тут же: чипи drag_drop (на відміну від
+// fill_blank) лишаються драговані, тож грип їм потрібен, а спільного
+// файлу з image-match.tsx компонентів немає (лише спільні CSS-класи
+// .word-pool*, tile-styles.ts/globals.css).
+function ChipGripIcon() {
+  return (
+    <svg className="word-pool-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
+      {[2, 7, 12].map((cy) =>
+        [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
+      )}
+    </svg>
+  );
+}
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що MatchingPracticeProps: config тут УЖЕ звужений сервером
@@ -292,32 +313,59 @@ export function DragDropExercise({
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
       />
 
-      {usedBankIndices.size < config.bank.length ? (
-        // Липкий пул над реченнями (спільний стиль tile-styles.ts —
-        // stickyPoolClass): той самий принцип "видимий під час скролу"/
-        // схлопування, що image_match, тут — бо слова, як і там,
-        // "розставляються" й зникають з пулу (на відміну від fill_blank,
-        // де банк лише довідковий і завжди повний).
-        <div className={stickyPoolClass("drag-drop")} {...bankDropProps()}>
-          {config.bank.map((word, bi) => (
-            <button
-              key={bi}
-              type="button"
-              {...bankDragProps(bi)}
-              onClick={() => clickBank(bi)}
-              disabled={locked || usedBankIndices.has(bi)}
-              aria-pressed={selected === bi}
-              className={`shrink-0 ${bankTileClass({ selected: selected === bi, used: usedBankIndices.has(bi) })}`}
-            >
-              {word}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
-      )}
+      {(() => {
+        // Зайві слова банку — ті, що лишаться непотрібними, навіть коли всі
+        // пропуски заповнені: bank.length - totalBlanks, рахується з даних
+        // (DragDropPublic не має окремого поля "intruders"), той самий
+        // принцип, що totalBlanks вище. Пілюля рендериться лише коли > 0.
+        const intruderCount = config.bank.length - totalBlanks;
+        const remaining = config.bank.length - usedBankIndices.size;
+        return remaining > 0 ? (
+          // Спільний липкий трей (.word-pool*, globals.css) — той самий, що
+          // image_match (image-match.tsx) і fill_blank вище. На відміну від
+          // fill_blank: чипи тут ДРАГОВАНІ (грип зліва), розставлене слово
+          // прибирається з пулу (filter за usedBankIndices), як у image_match.
+          <div className="word-pool" {...bankDropProps()}>
+            <div className="word-pool-label-row">
+              <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+              {/* Пілюлі згруповані своїм flex-рядком (gap 8px) — третій
+                  елемент (зайві слова) не має ламати .word-pool-label-row
+                  (space-between, розраховане на РІВНО два елементи,
+                  image_match/fill_blank). */}
+              <span className="flex items-center gap-2">
+                <span className="word-pool-count">{imageMatchRemainingLabel(remaining)}</span>
+                {intruderCount > 0 && (
+                  <span className="word-pool-count word-pool-count--intruder">
+                    {dragDropIntruderLabel(intruderCount)}
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="word-pool-chips">
+              {config.bank.map((word, bi) =>
+                usedBankIndices.has(bi) ? null : (
+                  <button
+                    key={bi}
+                    type="button"
+                    {...bankDragProps(bi)}
+                    onClick={() => clickBank(bi)}
+                    disabled={locked}
+                    aria-pressed={selected === bi}
+                    className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                  >
+                    <ChipGripIcon />
+                    {word}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+        );
+      })()}
 
-      <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+      <div className="flex flex-col gap-[10px]">
         {config.sentences.map((s, si) => {
           const segments = sentenceSegments[si];
           const blankCount = blankCounts[si];
@@ -329,97 +377,100 @@ export function DragDropExercise({
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
           return (
-            <div key={s.id} className="border-b border-[#e6e6f0] pb-3 last:border-0 last:pb-0 dark:border-neutral-800">
-              {!hidePoints && (pointsVisible || sentDetail) && (
-                <p className="mb-1">
-                  {sentDetail ? (
-                    <RowScorePill earned={sentenceCorrect ? s.points : 0} possible={s.points} full={sentenceCorrect} />
-                  ) : (
-                    <span className={SCORE_LABEL_CLASS}>{`${s.points} ${pluralizePoints(s.points)}`}</span>
-                  )}
+            <div key={s.id} className="drag-drop-row glass-item-card">
+              <span className="drag-drop-row-number">{si + 1}</span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                {!hidePoints && (pointsVisible || sentDetail) && (
+                  <p>
+                    {sentDetail ? (
+                      <RowScorePill earned={sentenceCorrect ? s.points : 0} possible={s.points} full={sentenceCorrect} />
+                    ) : (
+                      <span className={SCORE_LABEL_CLASS}>{`${s.points} ${pluralizePoints(s.points)}`}</span>
+                    )}
+                  </p>
+                )}
+                <p className="drag-drop-row-text break-words [overflow-wrap:anywhere]">
+                  {segments.map((seg, i) => {
+                    const gi = offset + i;
+                    const hint = s.hints?.[i];
+                    const slotFilled = placed[gi] !== null;
+                    const slotStateClass = sentDetail
+                      ? sentDetail.blanks[i]?.isCorrect
+                        ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/30"
+                        : "border-2 border-red-500 bg-red-50 dark:bg-red-950/30"
+                      : hoveredSlot === gi
+                        ? "drag-drop-slot--dragover"
+                        : slotFilled
+                          ? "drag-drop-slot--filled"
+                          : "drag-drop-slot--empty";
+                    return (
+                      <span key={i}>
+                        {frenchNbsp(seg)}
+                        {i < blankCount && (
+                          <span className="relative inline-block align-middle">
+                            <button
+                              type="button"
+                              disabled={locked}
+                              onClick={() => clickSlot(gi)}
+                              {...slotDragProps(gi)}
+                              {...slotDropProps(gi)}
+                              aria-pressed={selected !== null && placed[gi] === selected}
+                              title={!slotFilled && visibleHints.has(gi) ? hint ?? undefined : undefined}
+                              className={`drag-drop-slot ${slotStateClass} ${
+                                usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
+                              } ${selected !== null && placed[gi] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
+                            >
+                              {slotFilled ? (
+                                <span className="drag-drop-slot-word">{config.bank[placed[gi] as number]}</span>
+                              ) : visibleHints.has(gi) && hint ? (
+                                <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
+                              ) : (
+                                <span className="drag-drop-slot-placeholder">{DRAG_DROP_SLOT_PLACEHOLDER}</span>
+                              )}
+                            </button>
+                            {/* Лампочка ВСЕРЕДИНІ слота (мокап "варіант 1") —
+                                той самий принцип, що fill-blank.tsx/
+                                table-fill.tsx: зникає повністю (не рендериться),
+                                щойно слот заповнений — на відміну від старої
+                                поведінки (лампочка лишалась видимою й після
+                                розстановки слова). */}
+                            {!locked && !slotFilled && hint && (
+                              <HintBulb
+                                size="sm"
+                                variant="goldCircle"
+                                state={translationHints.has(gi) ? "used" : "available"}
+                                label="Підказка: показати переклад слова"
+                                onClick={() => toggleTranslationHint(gi)}
+                                className="drag-drop-slot-lamp"
+                              />
+                            )}
+                          </span>
+                        )}
+                        {i < blankCount && !locked && visibleHints.has(gi) && hint && slotFilled && (
+                          <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
+                            ({hint})
+                          </span>
+                        )}
+                        {i < blankCount && sentDetail?.blanks[i]?.hintUsed && (
+                          <span className="text-xs italic text-amber-600 dark:text-amber-400">(з підказкою)</span>
+                        )}
+                      </span>
+                    );
+                  })}
                 </p>
-              )}
-              <p className="break-words leading-[2.6] [overflow-wrap:anywhere]">
-                {segments.map((seg, i) => {
-                  const gi = offset + i;
-                  const hint = s.hints?.[i];
-                  const slotFilled = placed[gi] !== null;
-                  return (
-                    <span key={i}>
-                      {frenchNbsp(seg)}
-                      {i < blankCount && (
-                        <button
-                          type="button"
-                          disabled={locked}
-                          onClick={() => clickSlot(gi)}
-                          {...slotDragProps(gi)}
-                          {...slotDropProps(gi)}
-                          aria-pressed={selected !== null && placed[gi] === selected}
-                          title={!slotFilled && visibleHints.has(gi) ? hint ?? undefined : undefined}
-                          className={`mx-1 inline-flex min-h-11 min-w-[5.5rem] max-w-full select-none items-center justify-center whitespace-normal break-words px-3 py-1.5 align-middle text-base sm:min-w-[6.5rem] ${
-                            usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
-                          } ${slotClass(
-                            sentDetail
-                              ? sentDetail.blanks[i]?.isCorrect
-                                ? "correct"
-                                : "incorrect"
-                              : hoveredSlot === gi
-                                ? "hover"
-                                : slotFilled
-                                  ? "filled"
-                                  : "empty",
-                            {
-                              rounded: "lg",
-                              emptyBg: "subtle",
-                              selectableHint: selected !== null && placed[gi] === null,
-                            }
-                          )} ${selected !== null && placed[gi] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
-                        >
-                          {slotFilled ? (
-                            config.bank[placed[gi] as number]
-                          ) : visibleHints.has(gi) && hint ? (
-                            <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
-                          ) : (
-                            ""
-                          )}
-                        </button>
-                      )}
-                      {/* !inline-flex — той самий принцип, що fill-blank.tsx
-                          (LEGEND_BULB_BADGE_SM задає "flex", блоковий бокс,
-                          що зламав би перенос рядків у цьому прозовому <p>). */}
-                      {i < blankCount && !locked && hint && (
-                        <HintBulb
-                          size="sm"
-                          state={translationHints.has(gi) ? "used" : "available"}
-                          label="Підказка: показати переклад слова"
-                          onClick={() => toggleTranslationHint(gi)}
-                          className="!inline-flex align-middle"
-                        />
-                      )}
-                      {i < blankCount && !locked && visibleHints.has(gi) && hint && slotFilled && (
-                        <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
-                          ({hint})
-                        </span>
-                      )}
-                      {i < blankCount && sentDetail?.blanks[i]?.hintUsed && (
-                        <span className="text-xs italic text-amber-600 dark:text-amber-400">(з підказкою)</span>
-                      )}
-                    </span>
-                  );
-                })}
-              </p>
 
-              {sentDetail && (
-                <ul className="mt-1 flex flex-col gap-1 text-sm">
-                  {sentDetail.blanks.map((b, i) =>
-                    b.isCorrect ? null : (
-                      <li key={i} className="text-red-600 dark:text-red-400">
-                        Пропуск {i + 1}: правильно — {b.correctAnswers.join(" / ")}
-                      </li>
-                    )
-                  )}
-                </ul>
-              )}
+                {sentDetail && (
+                  <ul className="mt-1 flex flex-col gap-1 text-sm">
+                    {sentDetail.blanks.map((b, i) =>
+                      b.isCorrect ? null : (
+                        <li key={i} className="text-red-600 dark:text-red-400">
+                          Пропуск {i + 1}: правильно — {b.correctAnswers.join(" / ")}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
           );
         })}

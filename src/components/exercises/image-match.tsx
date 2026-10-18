@@ -24,7 +24,7 @@ import { IMAGE_MATCH_POOL_LABEL, imageMatchRemainingLabel } from "@/lib/exercise
 // globals.css), бо спец мокапу "варіант 5" там її не передбачає.
 function ChipGripIcon() {
   return (
-    <svg className="image-match-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
+    <svg className="word-pool-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
       {[2, 7, 12].map((cy) =>
         [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
       )}
@@ -240,12 +240,12 @@ export function ImageMatchExercise({
         // 5") — різниця лише в CSS (@media max-width:767px, globals.css),
         // не в розмітці. Розкладені слова прибираються з пулу насправді
         // (filter за usedBankIndices), не лишаються притемненими.
-        <div className="image-match-pool" {...bankDropProps()}>
-          <div className="image-match-pool-label-row">
-            <span className="image-match-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
-            <span className="image-match-pool-count">{imageMatchRemainingLabel(remaining)}</span>
+        <div className="word-pool" {...bankDropProps()}>
+          <div className="word-pool-label-row">
+            <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+            <span className="word-pool-count">{imageMatchRemainingLabel(remaining)}</span>
           </div>
-          <div className="image-match-pool-chips">
+          <div className="word-pool-chips">
             {config.bank.map((name, bi) =>
               usedBankIndices.has(bi) ? null : (
                 <button
@@ -255,7 +255,7 @@ export function ImageMatchExercise({
                   onClick={() => clickBank(bi)}
                   disabled={locked}
                   aria-pressed={selected === bi}
-                  className={`image-match-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                  className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
                 >
                   <ChipGripIcon />
                   {name}

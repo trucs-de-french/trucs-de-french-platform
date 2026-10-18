@@ -14,8 +14,12 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { stickyPoolClass } from "./tile-styles";
 import { TaskResult } from "./task-result";
+import {
+  IMAGE_MATCH_POOL_LABEL,
+  fillBlankWordPoolUsedLabel,
+  FILL_BLANK_FIELD_PLACEHOLDER,
+} from "@/lib/exercises/default-task-labels";
 
 // Режим практики "Робота над помилками" (пілот, частина 2) — лише
 // помилкові ще не виправлені пропуски (onlyItemIds — String(blankIndex),
@@ -216,39 +220,35 @@ export function FillBlankExercise({
           реченням, щоб студент бачив підказки одразу. */}
       <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
         {config.wordBank && config.wordBank.length > 0 && (
-          // Липкий пул: той самий підхід, що image-match.tsx (58e5ac6) — на
-          // мобільних один рядок із горизонтальною прокруткою (менше висоти
-          // над текстом), від sm: перенос рядків з max-h-[25vh] і
-          // вертикальною прокруткою всередині. Непрозорий фон і border-b —
-          // той самий тон/рамка, що в EXERCISE_BLOCK_CLASS, щоб текст під
-          // час скролу не просвічував крізь пул. На відміну від image-match
-          // пул НЕ схлопується — слова лишаються в банку (лише викреслені
-          // візуально), кількість елементів не змінюється.
-          <div className={stickyPoolClass("fill-blank")}>
-            {config.wordBank.map((word, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => toggleCrossedOut(i)}
-                aria-pressed={crossedOut.has(i)}
-                // Видима висота менша (min-h-10/sm:min-h-9 — 40px/36px, раніше
-                // min-h-11 — 44px), але зона дотику лишається 44px: relative +
-                // before — невидимий псевдоелемент, розтягнутий по вертикалі
-                // (-inset-y-0.5 на вузьких/touch-екранах, sm:-inset-y-1 на
-                // десктопі — у сумі завжди +4px до 40 чи +8px до 36 = 44px).
-                className={`relative flex min-h-10 max-w-[12rem] shrink-0 cursor-pointer items-center justify-center break-words rounded-full border-[1.5px] dark:border glass-chip glass-chip-hover border-[#dcbd6e] bg-white dark:bg-transparent px-2.5 py-0.5 text-sm glass-gap-shadow dark:shadow-sm before:absolute before:inset-x-0 before:-inset-y-0.5 before:content-[''] dark:border-neutral-600 sm:min-h-9 sm:before:-inset-y-1 [overflow-wrap:anywhere] ${
-                  crossedOut.has(i)
-                    ? "text-neutral-400 line-through opacity-60 dark:text-neutral-500"
-                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                }`}
-              >
-                {word}
-              </button>
-            ))}
+          // Спільний липкий трей (.word-pool*, globals.css) — той самий, що
+          // image_match (image-match.tsx) і drag_drop (drag-drop.tsx) нижче.
+          // На відміну від них: чипи тут НЕ драговані (--static, грип не
+          // рендериться), клік лише перемикає "викреслено" (toggleCrossedOut,
+          // логіка незмінна) — слово лишається в банку, не зникає.
+          <div className="word-pool">
+            <div className="word-pool-label-row">
+              <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+              <span className="word-pool-count">
+                {fillBlankWordPoolUsedLabel(crossedOut.size, config.wordBank.length)}
+              </span>
+            </div>
+            <div className="word-pool-chips">
+              {config.wordBank.map((word, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleCrossedOut(i)}
+                  aria-pressed={crossedOut.has(i)}
+                  className={`word-pool-chip word-pool-chip--static ${crossedOut.has(i) ? "word-pool-chip--used" : ""}`}
+                >
+                  {word}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        <p className="break-words leading-8 [overflow-wrap:anywhere]">
+        <p className="glass-reading-passage break-words leading-8 [overflow-wrap:anywhere]">
           {segments.map((seg, i) => (
             <span key={i}>
               {frenchNbsp(seg)}
@@ -266,39 +266,65 @@ export function FillBlankExercise({
                 </span>
               )}
               {i < blankCount && (!isPractice || practiceSet.has(String(i))) && (
-                <input
-                  ref={diacritics.fieldRef(String(i))}
-                  value={answers[i]}
-                  onChange={(e) => updateAnswer(i, e.target.value)}
-                  onFocus={() => diacritics.onFocus(String(i))}
-                  onBlur={diacritics.onBlur}
-                  disabled={isPractice ? practiceCheck.pending : !!result}
-                  // placeholder — лише коли поле ще порожнє (нативно зникає,
-                  // щойно студентка почне вводити, без додаткової логіки);
-                  // title — повний переклад, навіть якщо truncate обрізав
-                  // видиму частину (довгий переклад, вузьке поле).
-                  placeholder={
-                    !result && visibleTranslations.has(i) && !answers[i] ? hints[i] ?? undefined : undefined
-                  }
-                  title={hints[i] ?? undefined}
-                  className={`mx-1 truncate rounded border px-2 py-0.5 text-base placeholder:text-neutral-400 placeholder:not-italic dark:placeholder:text-neutral-500 ${
-                    visibleTranslations.has(i) && !answers[i] && hints[i] ? "w-40" : "w-28"
-                  } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
-                    isPractice
-                      ? practiceResults[String(i)] === true
-                        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                        : practiceResults[String(i)] === false
-                          ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600"
-                      : detail
-                        ? detail.blanks[i]?.isCorrect
+                // relative-обгортка inline-block — та сама схема, що
+                // table-fill.tsx (.table-fill-cell-wrap): лампочка-переклад
+                // (мокап "варіант 1") тепер ВСЕРЕДИНІ поля, абсолютно
+                // позиціонована (.fill-blank-field-lamp), замість окремого
+                // inline-елемента після input. hasFieldValue — той самий
+                // принцип, що table_fill: лампочка не рендериться взагалі,
+                // щойно в полі є текст (padding симетричний замість місця під
+                // лампочку), а не просто ховається.
+                <span className="relative mx-1 inline-block align-middle fill-blank-field-wrap">
+                  <input
+                    ref={diacritics.fieldRef(String(i))}
+                    value={answers[i]}
+                    onChange={(e) => updateAnswer(i, e.target.value)}
+                    onFocus={() => diacritics.onFocus(String(i))}
+                    onBlur={diacritics.onBlur}
+                    disabled={isPractice ? practiceCheck.pending : !!result}
+                    // placeholder — переклад (поки лампочку не натиснули й
+                    // поле порожнє) переважає дефолтний "впишіть слово";
+                    // title — повний переклад, навіть якщо truncate обрізав
+                    // видиму частину (довгий переклад, вузьке поле).
+                    placeholder={
+                      result
+                        ? undefined
+                        : visibleTranslations.has(i) && !answers[i] && hints[i]
+                          ? hints[i]
+                          : !answers[i]
+                            ? FILL_BLANK_FIELD_PLACEHOLDER
+                            : undefined
+                    }
+                    title={hints[i] ?? undefined}
+                    className={`fill-blank-field h-9 w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic dark:placeholder:text-[rgba(220,219,243,0.6)] ${
+                      !result && !isDelf && !isPractice && hints[i] && !answers[i] ? "pl-[12px] pr-[30px]" : "px-[12px]"
+                    } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
+                      isPractice
+                        ? practiceResults[String(i)] === true
                           ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                          : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                        : hintedBlanks.has(i)
-                          ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                          : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600"
-                  }`}
-                />
+                          : practiceResults[String(i)] === false
+                            ? "border-red-500 bg-red-50 dark:bg-red-950/30"
+                            : "border-[rgba(217,183,101,0.7)] bg-white dark:border-[rgba(243,217,139,0.35)] dark:bg-white/[0.04]"
+                        : detail
+                          ? detail.blanks[i]?.isCorrect
+                            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                            : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                          : hintedBlanks.has(i)
+                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                            : "border-[rgba(217,183,101,0.7)] bg-white dark:border-[rgba(243,217,139,0.35)] dark:bg-white/[0.04]"
+                    }`}
+                  />
+                  {!result && !isDelf && !isPractice && hints[i] && !answers[i] && (
+                    <HintBulb
+                      size="sm"
+                      variant="goldCircle"
+                      state={translationHints.has(i) ? "used" : "available"}
+                      label="Підказка: показати переклад слова"
+                      onClick={() => toggleTranslationHint(i)}
+                      className="fill-blank-field-lamp"
+                    />
+                  )}
+                </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceResults[String(i)] === false && (
                 <span className="ml-1 text-xs text-red-600 dark:text-red-400">
@@ -319,24 +345,6 @@ export function FillBlankExercise({
                 >
                   Показати відповідь
                 </button>
-              )}
-              {/* Лампочка-переклад — ОКРЕМА від DiacriticsPopup (перша
-                  літера, popup відкритий лише при фокусі): завжди inline
-                  одразу після поля, лише де є hints[i]. !inline-flex —
-                  LEGEND_BULB_BADGE_SM задає "flex" (блоковий бокс), який у
-                  прозовому <p> ламав би перенос рядків; "!"-модифікатор
-                  Tailwind гарантовано перебиває це саме тут, не чіпаючи
-                  legend-tile-style.ts (та інші вправи, що й далі покладаються
-                  на "flex" усередині своїх flex/absolute контейнерів, де
-                  flex-vs-inline-flex різниці нема). */}
-              {i < blankCount && !result && !isDelf && !isPractice && hints[i] && (
-                <HintBulb
-                  size="sm"
-                  state={translationHints.has(i) ? "used" : "available"}
-                  label="Підказка: показати переклад слова"
-                  onClick={() => toggleTranslationHint(i)}
-                  className="!inline-flex align-middle"
-                />
               )}
               {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (
                 <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hints[i] ?? undefined}>

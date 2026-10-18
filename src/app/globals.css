@@ -4493,22 +4493,199 @@ button.scene-bar:active .scene-bar-toggle {
    CSS display:none тут: кнопка не потрапляє в DOM взагалі, тож
    гарантовано не в tab-порядку й не в accessibility-дереві. */
 
-/* image_match (мокап "варіант 1" десктоп / "варіант 5" мобільний,
-   image-match.tsx) — лише цей тип, НЕ зачіпає спільні tile-styles.ts/
-   answer-card-style.ts (bankTileClass/slotClass/ANSWER_CHIP_*), якими й
-   досі користуються drag_drop/fill_blank/matching/listening/і т.д.:
-   чипи/слоти/трей тут мають власну, точно задану мокапом геометрію,
-   що не повинна протекти в інші типи. Картки самі лишаються на
-   спільному .glass-item-card (градієнтна рамка біле/золото, globals.css
-   вище) — лише радіус/падінг/gap перекриті під мокап (16/10/8 замість
-   14/—/—).
-   .image-match-pool — ОДИН контейнер для обох розкладок: за
-   замовчуванням (>=768px) — трей з пунктирною рамкою й переносом чипів;
-   у @media (max-width:767px) нижче всі властивості перевизначені під
+/* fill_blank (мокап "варіант 1") і drag_drop нижче — та сама лампочка
+   ВСЕРЕДИНІ поля/слота, що .table-fill-input-lamp вище, лише правий
+   відступ під мокап цих двох типів (6px/7px замість 8px) — той самий
+   принцип: абсолютно позиціонована в .relative-обгортці, зникає з DOM
+   повністю (!hasValue у JSX), не просто ховається. */
+.fill-blank-field-lamp {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.drag-drop-slot-lamp {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* drag_drop — рядок-картка речення (мокап "варіант 1"): та сама
+   градієнтна рамка біле/золото, що .image-match-card (.glass-item-card,
+   лише радіус/падінг/gap перекриті під цей мокап — той самий принцип). */
+.drag-drop-row.glass-item-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 16px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+}
+.drag-drop-row-number {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 7px;
+}
+.drag-drop-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 2.6;
+  color: #1a1640;
+  overflow-wrap: anywhere;
+}
+.dark .drag-drop-row-text {
+  color: #f4f3ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-row-text {
+    color: #f4f3ff;
+  }
+}
+@media (max-width: 767px) {
+  .drag-drop-row.glass-item-card {
+    flex-wrap: wrap;
+  }
+  .drag-drop-row-text {
+    flex: 1 1 100%;
+    order: 3;
+  }
+}
+/* Слот перетягування drag_drop — та сама форма/плейсхолдер/лампочка-
+   позиція, що .image-match-slot* вище, лише своя геометрія мокапу
+   (200x40, radius 10) і завжди inline-flex (слот стоїть посеред прозового
+   речення, не в grid-картці картинки). */
+.drag-drop-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 200px;
+  min-height: 40px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 6px 30px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.drag-drop-slot:disabled {
+  cursor: not-allowed;
+}
+.drag-drop-slot--empty {
+  background: #fff;
+  border: 1.5px dashed rgba(217, 183, 101, 0.9);
+}
+.dark .drag-drop-slot--empty {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(243, 217, 139, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-slot--empty {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(243, 217, 139, 0.45);
+  }
+}
+.drag-drop-slot-placeholder {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: #b8a67a;
+  overflow-wrap: anywhere;
+}
+.dark .drag-drop-slot-placeholder {
+  color: rgba(220, 219, 243, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-slot-placeholder {
+    color: rgba(220, 219, 243, 0.6);
+  }
+}
+.drag-drop-slot--dragover {
+  border: 1.5px dashed #4b46da;
+  background: #eeeefb;
+}
+.dark .drag-drop-slot--dragover {
+  border-color: #6b76ff;
+  background: rgba(75, 70, 218, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-slot--dragover {
+    border-color: #6b76ff;
+    background: rgba(75, 70, 218, 0.18);
+  }
+}
+.drag-drop-slot--filled {
+  background: #f6efd9;
+  border: 1.5px solid rgba(217, 183, 101, 0.8);
+  padding: 6px 10px;
+}
+.dark .drag-drop-slot--filled {
+  background: rgba(246, 220, 142, 0.12);
+  border-color: rgba(243, 217, 139, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-slot--filled {
+    background: rgba(246, 220, 142, 0.12);
+    border-color: rgba(243, 217, 139, 0.4);
+  }
+}
+.drag-drop-slot-word {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1640;
+  overflow-wrap: anywhere;
+}
+.dark .drag-drop-slot-word {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .drag-drop-slot-word {
+    color: #f6dc8e;
+  }
+}
+/* correct/incorrect — той самий принцип, що .image-match-slot: лишені на
+   Tailwind-утилітах (border-green-500/bg-green-50 і дзеркально для
+   incorrect), застосованих прямо в JSX (drag-drop.tsx), разом із базовим
+   .drag-drop-slot. */
+@media (max-width: 480px) {
+  .drag-drop-slot {
+    width: 160px;
+  }
+}
+
+/* Спільний липкий трей слів (мокап "варіант 1" десктоп / "варіант 5"
+   мобільний) — .word-pool* (раніше .image-match-pool* / .image-match-chip*,
+   перейменовано тут же, без зміни хоч одного значення нижче): трей/чипи
+   УЖЕ не специфічні для image_match — ту саму розмітку й ті самі класи
+   бере fill_blank (fill-blank.tsx, нередаговані нестатичні чипи, без
+   грипу) і drag_drop (drag-drop.tsx, драговані чипи з грипом, той самий
+   .word-pool-chip-grip). image_match лишається першим і єдиним
+   викликачем .image-match-cards/.image-match-card/.image-match-slot*
+   нижче — та частина НЕ спільна (картки-картинки специфічні лише для
+   цього типу), тому й не перейменована.
+   .word-pool — ОДИН контейнер для обох розкладок: за замовчуванням
+   (>=768px) — трей з пунктирною рамкою й переносом чипів; у
+   @media (max-width:767px) нижче всі властивості перевизначені під
    липку горизонтальну смужку (мокап "варіант 5"), а не окремий клас —
    так розмітка (JSX) лишається однією й тією самою на обох розмірах
    екрана, різниця лише в CSS. */
-.image-match-pool {
+.word-pool {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -4523,7 +4700,7 @@ button.scene-bar:active .scene-bar-toggle {
      "поверх" карток: position:sticky тут, у БАЗОВОМУ правилі (за
      задумом архітектури файлу — десктопне значення за замовчуванням),
      повністю перекривається нижче в @media (max-width:767px) під
-     горизонтальну липку смужку (той самий .image-match-pool). top:8px —
+     горизонтальну липку смужку (той самий .word-pool). top:8px —
      немає жодного fixed/sticky бару сайту над задачею (перевірено,
      scene-header-bar.tsx), тож 8px — просто невеликий зазор від верху
      екрана, а не компенсація чужого бару. */
@@ -4540,14 +4717,14 @@ button.scene-bar:active .scene-bar-toggle {
   scrollbar-width: thin;
   scrollbar-color: rgba(217, 183, 101, 0.6) transparent;
 }
-.image-match-pool::-webkit-scrollbar {
+.word-pool::-webkit-scrollbar {
   width: 6px;
 }
-.image-match-pool::-webkit-scrollbar-thumb {
+.word-pool::-webkit-scrollbar-thumb {
   background: rgba(217, 183, 101, 0.6);
   border-radius: 999px;
 }
-.dark .image-match-pool {
+.dark .word-pool {
   /* Непрозорий (не rgba(255,255,255,.05) як раніше) — трей липкий і
      мусить повністю перекривати картки, що скроляться під ним, інакше
      вони просвічували б крізь напівпрозорий фон. Той самий відтінок,
@@ -4558,27 +4735,27 @@ button.scene-bar:active .scene-bar-toggle {
   border-color: rgba(243, 217, 139, 0.3);
   scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
 }
-.dark .image-match-pool::-webkit-scrollbar-thumb {
+.dark .word-pool::-webkit-scrollbar-thumb {
   background: rgba(243, 217, 139, 0.45);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .image-match-pool {
+  :root:not(.light) .word-pool {
     background: rgba(10, 16, 48, 0.96);
     border-color: rgba(243, 217, 139, 0.3);
     scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
   }
-  :root:not(.light) .image-match-pool::-webkit-scrollbar-thumb {
+  :root:not(.light) .word-pool::-webkit-scrollbar-thumb {
     background: rgba(243, 217, 139, 0.45);
   }
 }
-.image-match-pool-label-row {
+.word-pool-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   flex-shrink: 0;
 }
-.image-match-pool-label {
+.word-pool-label {
   font-family: var(--font-heading);
   font-size: 12px;
   font-weight: 800;
@@ -4586,15 +4763,15 @@ button.scene-bar:active .scene-bar-toggle {
   letter-spacing: 0.08em;
   color: #8a7a52;
 }
-.dark .image-match-pool-label {
+.dark .word-pool-label {
   color: #dcdbf3;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .image-match-pool-label {
+  :root:not(.light) .word-pool-label {
     color: #dcdbf3;
   }
 }
-.image-match-pool-count {
+.word-pool-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4610,24 +4787,44 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
   flex-shrink: 0;
 }
-.dark .image-match-pool-count {
+.dark .word-pool-count {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(243, 217, 139, 0.25);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .image-match-pool-count {
+  :root:not(.light) .word-pool-count {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(243, 217, 139, 0.25);
     color: #f6dc8e;
   }
 }
-.image-match-pool-chips {
+/* Пілюля "N зайві" (drag_drop, лише коли банк більший за кількість
+   пропусків) — той самий .word-pool-count, бурштиновий колір замість
+   нейтрального золота, щоб відрізнятись від "залишилось N" поряд. */
+.word-pool-count--intruder {
+  background: #fff5df;
+  border-color: #efd08a;
+  color: #8a5a00;
+}
+.dark .word-pool-count--intruder {
+  background: rgba(246, 196, 90, 0.16);
+  border-color: rgba(246, 196, 90, 0.16);
+  color: #f6d27a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-count--intruder {
+    background: rgba(246, 196, 90, 0.16);
+    border-color: rgba(246, 196, 90, 0.16);
+    color: #f6d27a;
+  }
+}
+.word-pool-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.image-match-chip {
+.word-pool-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -4648,30 +4845,58 @@ button.scene-bar:active .scene-bar-toggle {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.image-match-chip:active {
+.word-pool-chip:active {
   cursor: grabbing;
 }
-.image-match-chip:disabled {
+.word-pool-chip:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
-.dark .image-match-chip {
+.dark .word-pool-chip {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(243, 217, 139, 0.35);
   color: #f4f3ff;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .image-match-chip {
+  :root:not(.light) .word-pool-chip {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(243, 217, 139, 0.35);
     color: #f4f3ff;
   }
 }
-.image-match-chip-grip {
+.word-pool-chip-grip {
   flex-shrink: 0;
   width: 10px;
   height: 14px;
   fill: #c9a24a;
+}
+/* fill_blank — чипи-слова лише довідкові (клік перемикає "викреслено",
+   не прибирає з банку, не тягнеться): той самий .word-pool-chip, курсор
+   звичайний замість grab/grabbing, грип не рендериться взагалі (JSX). */
+.word-pool-chip--static {
+  cursor: pointer;
+}
+.word-pool-chip--static:active {
+  cursor: pointer;
+}
+/* fill_blank — слово вже вписане в поле (crossedOut, той самий стан, що
+   раніше був на старому inline-чипі) — викреслення замість зникнення зі
+   списку, непрозорість .5, тінь прибрана (вицвіле, не "активне" слово). */
+.word-pool-chip--used {
+  text-decoration: line-through;
+  text-decoration-color: #b8902f;
+  text-decoration-thickness: 2px;
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: pointer;
+}
+.dark .word-pool-chip--used {
+  text-decoration-color: rgba(243, 217, 139, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-chip--used {
+    text-decoration-color: rgba(243, 217, 139, 0.6);
+  }
 }
 
 /* Картки-картинки — grid 3 колонки на десктопі, спільна карткова рамка
@@ -4819,10 +5044,10 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 /* Мобільна липка смужка (<768px, мокап "варіант 5") — ОДИН і той самий
-   .image-match-pool, лише тут усі геометричні властивості перевизначені
+   .word-pool, лише тут усі геометричні властивості перевизначені
    на "липку смужку зверху вмісту задачі" замість трея-з-переносом. */
 @media (max-width: 767px) {
-  .image-match-pool {
+  .word-pool {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -4840,12 +5065,12 @@ button.scene-bar:active .scene-bar-toggle {
     max-height: none;
     overflow-y: visible;
   }
-  .dark .image-match-pool {
+  .dark .word-pool {
     background: rgba(10, 16, 48, 0.96);
     border-top-color: rgba(243, 217, 139, 0.3);
     border-bottom-color: rgba(243, 217, 139, 0.3);
   }
-  .image-match-pool-chips {
+  .word-pool-chips {
     position: relative;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -4854,14 +5079,14 @@ button.scene-bar:active .scene-bar-toggle {
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent 100%);
     mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent 100%);
   }
-  .image-match-pool-chips::-webkit-scrollbar {
+  .word-pool-chips::-webkit-scrollbar {
     display: none;
   }
-  .image-match-chip {
+  .word-pool-chip {
     height: 36px;
     font-size: 15px;
   }
-  .image-match-chip-grip {
+  .word-pool-chip-grip {
     display: none;
   }
   .image-match-slot-placeholder-full {
@@ -4882,12 +5107,12 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 @media (max-width: 640px) {
-  .image-match-pool {
+  .word-pool {
     margin: 0 -16px;
   }
 }
 @media (max-width: 767px) and (prefers-color-scheme: dark) {
-  :root:not(.light) .image-match-pool {
+  :root:not(.light) .word-pool {
     background: rgba(10, 16, 48, 0.96);
     border-top-color: rgba(243, 217, 139, 0.3);
     border-bottom-color: rgba(243, 217, 139, 0.3);

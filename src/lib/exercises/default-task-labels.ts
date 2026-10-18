@@ -96,6 +96,23 @@ export function imageMatchRemainingLabel(count: number): string {
   return `залишилось ${count}`;
 }
 
+// Той самий липкий трей слів (.word-pool*, globals.css), тепер спільний
+// для fill_blank і drag_drop — заголовок перевикористовує
+// IMAGE_MATCH_POOL_LABEL, "залишилось N" (drag_drop) перевикористовує
+// imageMatchRemainingLabel вище; тут лише НОВІ підписи, яких раніше не
+// було: лічильник викреслених слів fill_blank (слова лишаються в банку,
+// на відміну від image_match/drag_drop), пілюля "зайвих" слів банку
+// drag_drop (рахується з даних — bank.length - кількість пропусків, без
+// окремого поля в DragDropPublic) і плейсхолдери полів/слотів.
+export function fillBlankWordPoolUsedLabel(used: number, total: number): string {
+  return `використано ${used} з ${total}`;
+}
+export function dragDropIntruderLabel(count: number): string {
+  return `${count} зайві`;
+}
+export const FILL_BLANK_FIELD_PLACEHOLDER = "впишіть слово";
+export const DRAG_DROP_SLOT_PLACEHOLDER = "перетягніть слово";
+
 // Заголовок toggle-картки "Правильні відповіді" (TaskResult.toggleTitle,
 // task-result.tsx) для table_fill — той самий принцип, що
 // IMAGE_MATCH_POOL_LABEL: лише інтерфейсний підпис (не навчальний текст),
