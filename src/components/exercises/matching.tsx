@@ -6,10 +6,9 @@ import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
-import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
+import { MatchingBoard } from "./matching-board";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -351,54 +350,28 @@ export function MatchingExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            {blockLeft.map((left) => {
-              const right = pairs[left];
-              const d = right ? detailForInBlock(left, right) : undefined;
-              return (
-                <button
-                  key={left}
-                  type="button"
-                  onClick={() => clickLeftInBlock(left)}
-                  disabled={!!blockResult}
-                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
-                    d
-                      ? d.isCorrect
-                        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                        : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                      : selectedLeft === left
-                        ? SELECTED_OPTION_CLASS
-                        : right
-                          ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                          : ANSWER_CHIP_DEFAULT
-                  }`}
-                >
-                  {left}
-                  {right ? ` → ${right}` : ""}
-                  <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>{" "}
-                  {pointsScorePill(left, blockDetail)}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {blockRight.map((right) => (
-              <button
-                key={right}
-                type="button"
-                onClick={() => clickRightInBlock(right)}
-                disabled={!!blockResult}
-                className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
-                  usedRightsInBlock.has(right) ? "opacity-50" : ""
-                }`}
-              >
-                {right}
-              </button>
-            ))}
-          </div>
-        </div>
+        <MatchingBoard
+          leftItems={blockLeft}
+          rightItems={blockRight}
+          pairs={pairs}
+          selectedLeft={selectedLeft}
+          onClickLeft={clickLeftInBlock}
+          onClickRight={clickRightInBlock}
+          disabled={!!blockResult}
+          statusForLeft={(left) => {
+            const right = pairs[left];
+            if (!right) return undefined;
+            const d = detailForInBlock(left, right);
+            return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
+          }}
+          usedRights={usedRightsInBlock}
+          renderLeftExtra={(left) => (
+            <>
+              <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>{" "}
+              {pointsScorePill(left, blockDetail)}
+            </>
+          )}
+        />
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -423,50 +396,20 @@ export function MatchingExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            {config.left.map((left) => {
-              const right = practicePairs[left];
-              const isCorrect = practiceResultByLeft[left];
-              return (
-                <button
-                  key={left}
-                  type="button"
-                  onClick={() => practiceClickLeft(left)}
-                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
-                    isCorrect === true
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                      : isCorrect === false
-                        ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                        : selectedLeftPractice === left
-                          ? SELECTED_OPTION_CLASS
-                          : right
-                            ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                            : ANSWER_CHIP_DEFAULT
-                  }`}
-                >
-                  {left}
-                  {right ? ` → ${right}` : ""}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {config.right.map((right) => (
-              <button
-                key={right}
-                type="button"
-                onClick={() => practiceClickRight(right)}
-                className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
-                  usedRightsPractice.has(right) ? "opacity-50" : ""
-                }`}
-              >
-                {right}
-              </button>
-            ))}
-          </div>
-        </div>
+        <MatchingBoard
+          leftItems={config.left}
+          rightItems={config.right}
+          pairs={practicePairs}
+          selectedLeft={selectedLeftPractice}
+          onClickLeft={practiceClickLeft}
+          onClickRight={practiceClickRight}
+          disabled={false}
+          statusForLeft={(left) => {
+            const isCorrect = practiceResultByLeft[left];
+            return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
+          }}
+          usedRights={usedRightsPractice}
+        />
 
         <div className="flex flex-col gap-1.5">
           {config.left.map((left) => {
@@ -565,54 +508,28 @@ export function MatchingExercise({
 
       {!useBlocks ? (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              {config.left.map((left) => {
-                const right = pairs[left];
-                const d = right ? detailFor(left, right) : undefined;
-                return (
-                  <button
-                    key={left}
-                    type="button"
-                    onClick={() => clickLeft(left)}
-                    disabled={!!single.result}
-                    className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${
-                      d
-                        ? d.isCorrect
-                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                          : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                        : selectedLeft === left
-                          ? SELECTED_OPTION_CLASS
-                          : right
-                            ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
-                            : ANSWER_CHIP_DEFAULT
-                    }`}
-                  >
-                    {left}
-                    {right ? ` → ${right}` : ""}
-                    <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>{" "}
-                    {pointsScorePill(left, singleDetail)}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {config.right.map((right) => (
-                <button
-                  key={right}
-                  type="button"
-                  onClick={() => clickRight(right)}
-                  disabled={!!single.result}
-                  className={`${ANSWER_CHIP_BASE} min-w-0 break-words [overflow-wrap:anywhere] ${ANSWER_CHIP_DEFAULT} ${
-                    usedRights.has(right) ? "opacity-50" : ""
-                  }`}
-                >
-                  {right}
-                </button>
-              ))}
-            </div>
-          </div>
+          <MatchingBoard
+            leftItems={config.left}
+            rightItems={config.right}
+            pairs={pairs}
+            selectedLeft={selectedLeft}
+            onClickLeft={clickLeft}
+            onClickRight={clickRight}
+            disabled={!!single.result}
+            statusForLeft={(left) => {
+              const right = pairs[left];
+              if (!right) return undefined;
+              const d = detailFor(left, right);
+              return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
+            }}
+            usedRights={usedRights}
+            renderLeftExtra={(left) => (
+              <>
+                <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>{" "}
+                {pointsScorePill(left, singleDetail)}
+              </>
+            )}
+          />
 
           <div className="flex flex-col gap-3">
             {!single.result ? (

@@ -5264,6 +5264,200 @@ button.scene-bar:active .scene-bar-toggle {
     margin: 0 -16px;
   }
 }
+/* Дошка matching.tsx (MatchingBoard) — дві колонки FR/UK карток, SVG-шар
+   ліній у проміжку між ними (нижче карток, z-index:1) і крапки на картках
+   (вище карток, z-index:3), крапки/лінії рахуються в JS із реальних
+   getBoundingClientRect, тут лише вигляд. */
+.matching-board {
+  position: relative;
+}
+.matching-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+.matching-line {
+  fill: none;
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+}
+.matching-line--paired,
+.matching-line--default,
+.matching-line--selected {
+  stroke: #d9b765;
+}
+.matching-line--correct {
+  stroke: #2f9e5b;
+}
+.matching-line--incorrect {
+  stroke: #d64545;
+}
+.matching-line-stub {
+  fill: none;
+  stroke: #4b46da;
+  stroke-width: 3px;
+  stroke-dasharray: 2 7;
+  stroke-linecap: round;
+}
+.matching-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  position: relative;
+  z-index: 2;
+}
+.matching-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.matching-card {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 58px;
+  padding: 10px 22px;
+  border-radius: 14px;
+  border-width: 1.5px;
+  border-style: solid;
+  font-size: 17px;
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12);
+  transition: border-color 150ms, background-color 150ms;
+  cursor: pointer;
+}
+.matching-card:disabled {
+  cursor: default;
+}
+.matching-card--fr {
+  background: #f6efd9;
+  border-color: rgba(217, 183, 101, 0.8);
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+.dark .matching-card--fr {
+  background: rgba(243, 217, 139, 0.12);
+  border-color: rgba(243, 217, 139, 0.35);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-card--fr {
+    background: rgba(243, 217, 139, 0.12);
+    border-color: rgba(243, 217, 139, 0.35);
+    color: #f6dc8e;
+  }
+}
+.matching-card--uk {
+  background: #eeeefb;
+  border-color: #cfcdf3;
+  color: #3b3566;
+  font-family: var(--font-body);
+}
+.dark .matching-card--uk {
+  background: rgba(150, 125, 240, 0.2);
+  border-color: rgba(150, 125, 240, 0.4);
+  color: #dcdbf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-card--uk {
+    background: rgba(150, 125, 240, 0.2);
+    border-color: rgba(150, 125, 240, 0.4);
+    color: #dcdbf3;
+  }
+}
+/* selected — лише ліва картка (праву нема коли виділити окремо, клік по
+   правій одразу створює/розриває пару), тож перекриває лише --fr вище. */
+.matching-card--selected {
+  border-width: 2px;
+  border-color: #4b46da;
+  background: #eff6ff;
+}
+.dark .matching-card--selected {
+  background: rgba(23, 37, 84, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-card--selected {
+    background: rgba(23, 37, 84, 0.4);
+  }
+}
+.matching-card--correct {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.dark .matching-card--correct {
+  background: rgba(5, 46, 22, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-card--correct {
+    background: rgba(5, 46, 22, 0.3);
+  }
+}
+.matching-card--incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.dark .matching-card--incorrect {
+  background: rgba(69, 10, 10, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-card--incorrect {
+    background: rgba(69, 10, 10, 0.3);
+  }
+}
+.matching-dot {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  z-index: 3;
+}
+.matching-dot--left {
+  right: -9px;
+}
+.matching-dot--right {
+  left: -9px;
+}
+.matching-dot--default,
+.matching-dot--paired-empty {
+  background: #fff;
+  border-color: rgba(217, 183, 101, 0.9);
+}
+.matching-dot--selected {
+  background: #4b46da;
+  box-shadow: 0 0 0 4px rgba(75, 70, 218, 0.25);
+}
+.matching-dot--paired {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  box-shadow: 0 0 0 1.5px #d9b765;
+}
+.matching-dot--correct {
+  background: #22c55e;
+}
+.matching-dot--incorrect {
+  background: #ef4444;
+}
+@media (max-width: 767px) {
+  .matching-columns {
+    column-gap: 24px;
+  }
+  .matching-card {
+    padding: 10px 16px;
+    font-size: 16px;
+  }
+}
+
 @media (max-width: 767px) and (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool {
     background: rgba(10, 16, 48, 0.96);
