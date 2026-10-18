@@ -159,7 +159,7 @@ export function CounterPill({ current, total }: { current: number; total: number
 function HintPill({ text }: { text: string }) {
   return (
     <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
-      <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a] dark:bg-amber-900/70 dark:text-amber-300">
+      <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a]">
         <Lightbulb size={13} aria-hidden />
       </span>
       <span className="min-w-0">

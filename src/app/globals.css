@@ -1642,16 +1642,17 @@ button, input, textarea, select, label, nav, aside {
 
 /* Лампочка-підказка (HintBulb/легенда/пілюля заголовка панелі,
    legend-tile-style.ts LEGEND_BULB_BADGE_AMBER, task-panel-header.tsx) —
-   СВІТЛА тема: той самий золотий градієнт/темний бульб, що бейдж бару
-   вище (.glass-bar-badge) й бейдж кнопки повний екран/згорнути, замість
-   бляклого крем-жовтого (bg-[#fdf0c4] text-[#b8761a] у className), що
-   зливався з кремовою панеллю. .lamp-badge — клас-гачок на самому бейджі,
-   не перефарбовування Tailwind-класів: нешаруваний CSS тут завжди
-   переважає утиліти Tailwind незалежно від порядку/специфічності (той
-   самий принцип, що решта .light-правил файлу). Темна тема (існуючі
-   dark:bg-amber-900/70 dark:text-amber-300 у className) — без змін, ці
-   правила навмисно НЕ зачіпають :disabled-прозорість/hover/фокус у темній
-   темі (жодне з .light/:root:not(.dark) не застосовується там). */
+   той самий золотий градієнт/темний бульб, що бейдж бару вище
+   (.glass-bar-badge) й бейдж кнопки повний екран/згорнути, в ОБОХ темах:
+   світла замість бляклого крем-жовтого (колишній bg-[#fdf0c4]
+   text-[#b8761a] у className), темна замість напівпрозорого амбера
+   (колишній dark:bg-amber-900/70 dark:text-amber-300, видалено з
+   className — став редундантним). .lamp-badge — клас-гачок на самому
+   бейджі, не перефарбовування Tailwind-класів: нешаруваний CSS тут
+   завжди переважає утиліти Tailwind незалежно від порядку/специфічності.
+   Темна тема лишає той самий градієнт/колір іконки, що світла — лише
+   тінь інша (темний контур + внутрішній світловий відблиск замість
+   золотавої тіні, яка на темній панелі була б непомітною). */
 .light .lamp-badge {
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
   border: 1px solid rgba(184, 144, 47, 0.55);
@@ -1730,6 +1731,52 @@ button, input, textarea, select, label, nav, aside {
     box-shadow: none;
     opacity: 1;
     cursor: not-allowed;
+  }
+}
+/* ТЕМНА тема — той самий золотий градієнт/колір іконки, що світла тема
+   вище, лише тінь адаптована під темну панель (зовнішня темна +
+   внутрішній світловий відблиск замість золотавої тіні, непомітної на
+   темному фоні). */
+.dark .lamp-badge {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  border: 1px solid rgba(184, 144, 47, 0.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #1a1640;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+.dark .lamp-badge svg {
+  stroke-width: 2.2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .lamp-badge {
+    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+    border: 1px solid rgba(184, 144, 47, 0.55);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: #1a1640;
+    transition: background-color 150ms ease, box-shadow 150ms ease;
+  }
+  :root:not(.light) .lamp-badge svg {
+    stroke-width: 2.2;
+  }
+}
+@media (hover: hover) {
+  .dark .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
+    background: linear-gradient(135deg, #fbe7a3, #e8b44c);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
+      background: linear-gradient(135deg, #fbe7a3, #e8b44c);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+.dark .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
+  background: linear-gradient(135deg, #f0d27a, #d69a2c);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
+    background: linear-gradient(135deg, #f0d27a, #d69a2c);
   }
 }
 @media (prefers-reduced-motion: reduce) {
