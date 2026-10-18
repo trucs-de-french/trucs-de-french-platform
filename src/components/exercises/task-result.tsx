@@ -2,6 +2,14 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { formatPoints } from "@/lib/exercises/format-points";
+import {
+  STATUS_LABEL_NONE,
+  STATUS_LABEL_PARTIAL,
+  STATUS_LABEL_FULL,
+  STATUS_LABEL_NONE_UK,
+  STATUS_LABEL_PARTIAL_UK,
+  STATUS_LABEL_FULL_UK,
+} from "@/lib/exercises/default-task-labels";
 
 // Спільний блок результату (мокап "пілюля балів + статус-чіп + toggle") —
 // замінює колишній рядок "Результат: N%" / "Правильно! ✓" + окрему пілюлю
@@ -36,13 +44,14 @@ function ChevronIcon({ open }: { open: boolean }) {
 
 function statusTone(correct: boolean, pointsEarned?: number, pointsPossible?: number) {
   if (pointsEarned !== undefined && pointsPossible !== undefined && pointsPossible > 0) {
-    if (pointsEarned <= 0) return { tone: "error" as const, label: "Є помилки" };
-    if (pointsEarned < pointsPossible) return { tone: "warn" as const, label: "Майже!" };
-    return { tone: "success" as const, label: "Правильно! ✓" };
+    if (pointsEarned <= 0) return { tone: "error" as const, label: STATUS_LABEL_NONE, title: STATUS_LABEL_NONE_UK };
+    if (pointsEarned < pointsPossible)
+      return { tone: "warn" as const, label: STATUS_LABEL_PARTIAL, title: STATUS_LABEL_PARTIAL_UK };
+    return { tone: "success" as const, label: STATUS_LABEL_FULL, title: STATUS_LABEL_FULL_UK };
   }
   return correct
-    ? { tone: "success" as const, label: "Правильно! ✓" }
-    : { tone: "error" as const, label: "Є помилки" };
+    ? { tone: "success" as const, label: STATUS_LABEL_FULL, title: STATUS_LABEL_FULL_UK }
+    : { tone: "error" as const, label: STATUS_LABEL_NONE, title: STATUS_LABEL_NONE_UK };
 }
 
 export function TaskResult({
@@ -64,7 +73,7 @@ export function TaskResult({
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const { tone, label } = statusTone(correct, pointsEarned, pointsPossible);
+  const { tone, label, title } = statusTone(correct, pointsEarned, pointsPossible);
   const showToggle = !!children && !correct;
 
   return (
@@ -76,7 +85,12 @@ export function TaskResult({
             {formatPoints(pointsEarned ?? 0, pointsPossible)}
           </span>
         )}
-        <span className={`task-result-chip task-result-chip--${tone}`} role="status">
+        <span
+          className={`task-result-chip task-result-chip--${tone}`}
+          role="status"
+          title={title}
+          aria-label={title}
+        >
           {label}
         </span>
       </div>

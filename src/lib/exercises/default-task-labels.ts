@@ -114,10 +114,21 @@ export const FILL_BLANK_FIELD_PLACEHOLDER = "впишіть слово";
 export const DRAG_DROP_SLOT_PLACEHOLDER = "перетягніть слово";
 
 // Заголовок toggle-картки "Правильні відповіді" (TaskResult.toggleTitle,
-// task-result.tsx) для table_fill — той самий принцип, що
-// IMAGE_MATCH_POOL_LABEL: лише інтерфейсний підпис (не навчальний текст),
-// без FR-пари.
+// task-result.tsx) — спільний для ВСІХ типів із toggle (раніше лише
+// table_fill, назва константи лишається старою щоб не чіпати існуючий
+// імпорт у table-fill.tsx/matching.tsx use "Правильні пари" своє).
 export const TABLE_FILL_ANSWERS_TOGGLE_LABEL = "Правильні відповіді";
+
+// Статус-пілюля TaskResult (task-result.tsx: statusTone) — видимий текст
+// лише FR (інтерфейс французькою), UK-сенс — у title/aria-label пілюлі
+// (STATUS_LABEL_*_UK), не в тексті самої пілюлі. Без знаків оклику/галочки
+// в тексті — тон передає колір пілюлі (--success/--warn/--error).
+export const STATUS_LABEL_NONE = "À revoir";
+export const STATUS_LABEL_PARTIAL = "Presque";
+export const STATUS_LABEL_FULL = "Parfait";
+export const STATUS_LABEL_NONE_UK = "Є помилки";
+export const STATUS_LABEL_PARTIAL_UK = "Майже";
+export const STATUS_LABEL_FULL_UK = "Усе правильно";
 
 // Дефолтні FR/UK підписи секцій напрямку кросворду ("Horizontalement" /
 // "Verticalement", мокап "варіант 2", crossword.tsx) — окремо від
