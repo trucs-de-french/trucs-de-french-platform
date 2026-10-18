@@ -16,8 +16,26 @@ import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultGapRows } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
+
+// Плитки toggle-картки "Правильні відповіді" — одна плитка на питання:
+// текст питання + прийнятний(і) варіант(и) відповіді підсвічені (кілька
+// прийнятних варіантів — той самий принцип, що fill-blank.tsx:
+// correctAnswers.join(" / "), один chip, не окремі).
+function buildOpenAnswerRows(
+  questions: OpenAnswerPublic["questions"],
+  detail: OpenAnswerDetail
+): { number: number; parts: (string | { word: string })[] }[] {
+  return questions.map((q, i) => {
+    const qDetail = detail.questions.find((d) => d.id === q.id);
+    return {
+      number: i + 1,
+      parts: [`${q.question} — `, { word: qDetail?.correctAnswers.join(" / ") ?? "" }],
+    };
+  });
+}
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
 type OpenAnswerResult = Extract<GradeResult, { detail: OpenAnswerDetail }>;
@@ -229,7 +247,11 @@ export function OpenAnswerCheckExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={blockDetail ? blockQuestions.length : undefined}
+              >
+                {blockDetail && <TaskResultGapRows rows={buildOpenAnswerRows(blockQuestions, blockDetail)} />}
+              </TaskResult>
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -304,7 +326,11 @@ export function OpenAnswerCheckExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={detail ? config.questions.length : undefined}
+              >
+                {detail && <TaskResultGapRows rows={buildOpenAnswerRows(config.questions, detail)} />}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>

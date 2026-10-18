@@ -12,7 +12,8 @@ import { ITEM_NUMBER_BADGE, ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { TaskResult } from "./task-result";
+import { TaskResult, TaskResultGapRows } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -24,6 +25,25 @@ import { TaskPanelHeader } from "./task-panel-header";
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
 type WordChoiceResult = Extract<GradeResult, { detail: WordChoiceDetail }>;
+
+// Плитки toggle-картки "Правильні відповіді" — той самий принцип, що
+// multiple-choice.tsx: речення + всі правильні варіанти підсвічені.
+function buildWordChoiceRows(
+  sentences: PublicSentence[],
+  detail: WordChoiceDetail,
+  startIndex: number
+): { number: number; parts: (string | { word: string })[] }[] {
+  return sentences.map((s, i) => {
+    const sentenceDetail = detail.sentences.find((d) => d.id === s.id);
+    const correctOptions = sentenceDetail?.options.filter((o) => o.correct) ?? [];
+    const parts: (string | { word: string })[] = [`${s.sentence} — `];
+    correctOptions.forEach((o, oi) => {
+      if (oi > 0) parts.push(", ");
+      parts.push({ word: o.text });
+    });
+    return { number: startIndex + i + 1, parts };
+  });
+}
 
 // Режим практики "Робота над помилками" (пілот, частина 3) — лише
 // помилкові ще не виправлені речення (onlyItemIds — sentence.id). Працює
@@ -446,7 +466,13 @@ export function WordChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={blockDetail ? blockSentences.length : undefined}
+              >
+                {blockDetail && (
+                  <TaskResultGapRows rows={buildWordChoiceRows(blockSentences, blockDetail, startIndex)} />
+                )}
+              </TaskResult>
             )}
           </div>
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -588,7 +614,11 @@ export function WordChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={detail ? config.sentences.length : undefined}
+              >
+                {detail && <TaskResultGapRows rows={buildWordChoiceRows(config.sentences, detail, 0)} />}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
