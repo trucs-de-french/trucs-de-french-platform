@@ -3545,6 +3545,82 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Плитки "Правильні відповіді" для gap-типів (TaskResultGapRows,
+   task-result.tsx: fill_blank/letter_gaps/drag_drop) — та сама родина
+   плиток, що .task-result-answer-row (номер + плитка, 14px), але ОДНА
+   текстова колонка (суцільне речення/слово) замість двох чипів fr/uk —
+   ці типи не мають пари "французьке слово — переклад", лише текст із
+   вставленим словом-відповіддю. */
+.task-result-gap-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.task-result-gap-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.5);
+  min-width: 0;
+  flex: 1 1 min(100%, 480px);
+  max-width: 720px;
+}
+.dark .task-result-gap-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(243, 217, 139, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-gap-row {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(243, 217, 139, 0.25);
+  }
+}
+.task-result-gap-text {
+  min-width: 0;
+  padding-top: 1px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1640;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: manual;
+}
+.dark .task-result-gap-text {
+  color: #f1ecd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-gap-text {
+    color: #f1ecd9;
+  }
+}
+.task-result-gap-word {
+  display: inline;
+  font-weight: 800;
+  border: 1px solid #a9d8b6;
+  background: #eef8f0;
+  border-radius: 4px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+.dark .task-result-gap-word {
+  background: rgba(31, 122, 61, 0.18);
+  border-color: rgba(110, 200, 140, 0.5);
+  color: #eaf6ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-gap-word {
+    background: rgba(31, 122, 61, 0.18);
+    border-color: rgba(110, 200, 140, 0.5);
+    color: #eaf6ec;
+  }
+}
+
 .task-summary-card {
   display: flex;
   flex-direction: column;

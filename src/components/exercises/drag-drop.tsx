@@ -15,13 +15,34 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultGapRows } from "./task-result";
 import {
   IMAGE_MATCH_POOL_LABEL,
   imageMatchRemainingLabel,
   dragDropIntruderLabel,
   DRAG_DROP_SLOT_PLACEHOLDER,
+  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
 } from "@/lib/exercises/default-task-labels";
+
+// Плитки toggle-картки "Правильні відповіді" — одна плитка на РЕЧЕННЯ
+// (config.sentences вже цю одиницю й дає, на відміну від fill_blank), з
+// усіма словами-відповідями цього речення підсвіченими.
+function buildDragDropGapRows(
+  sentences: DragDropPublic["sentences"],
+  sentenceSegments: string[][],
+  detail: DragDropDetail
+): { number: number; parts: (string | { word: string })[] }[] {
+  return sentences.map((s, si) => {
+    const segs = sentenceSegments[si];
+    const blanks = detail.sentences.find((d) => d.id === s.id)?.blanks ?? [];
+    const parts: (string | { word: string })[] = [];
+    segs.forEach((seg, i) => {
+      if (seg) parts.push(seg);
+      if (i < segs.length - 1) parts.push({ word: blanks[i]?.correctAnswers[0] ?? "" });
+    });
+    return { number: si + 1, parts };
+  });
+}
 
 // 6-крапковий "грип" зліва на чипі пулу — той самий, що image-match.tsx
 // (ChipGripIcon), продубльований тут же: чипи drag_drop (на відміну від
@@ -503,7 +524,17 @@ export function DragDropExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleCount={detail ? config.sentences.length : undefined}
+          >
+            {detail && (
+              <TaskResultGapRows rows={buildDragDropGapRows(config.sentences, sentenceSegments, detail)} />
+            )}
+          </TaskResult>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

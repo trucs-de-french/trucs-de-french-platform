@@ -14,12 +14,65 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { TaskResult } from "./task-result";
+import { TaskResult, TaskResultGapRows } from "./task-result";
 import {
   IMAGE_MATCH_POOL_LABEL,
   fillBlankWordPoolUsedLabel,
   FILL_BLANK_FIELD_PLACEHOLDER,
+  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
 } from "@/lib/exercises/default-task-labels";
+
+// Плитки toggle-картки "Правильні відповіді" для fill_blank — одна плитка
+// на РЕЧЕННЯ (не на пропуск): template тут один суцільний текст без
+// власного поділу на речення (на відміну від drag_drop.sentences), тож
+// межі речень визначаються на льоту — за розділовими знаками [.!?] у самих
+// сегментах template.split("{{}}"), той самий текст, що й так уже
+// рендериться студенту. Пропуски, що потрапили в межі одного речення,
+// збираються в ОДНУ плитку (кілька { word } підряд) — п.2 задачі "кілька
+// пропусків в одному реченні — підсвічуються всі".
+function buildFillBlankGapRows(
+  segments: string[],
+  detail: FillBlankDetail
+): { number: number; parts: (string | { word: string })[] }[] {
+  type Piece = { text: string } | { blank: number };
+  const blankCount = segments.length - 1;
+  const pieces: Piece[] = [];
+  segments.forEach((seg, i) => {
+    if (seg) pieces.push({ text: seg });
+    if (i < blankCount) pieces.push({ blank: i });
+  });
+
+  const sentencePieces: Piece[][] = [];
+  let current: Piece[] = [];
+  for (const piece of pieces) {
+    if ("text" in piece) {
+      const re = /[.!?]+(\s+|$)/g;
+      let last = 0;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(piece.text))) {
+        const end = m.index + m[0].length;
+        current.push({ text: piece.text.slice(last, end) });
+        sentencePieces.push(current);
+        current = [];
+        last = end;
+      }
+      if (last < piece.text.length) current.push({ text: piece.text.slice(last) });
+    } else {
+      current.push(piece);
+    }
+  }
+  if (current.length) sentencePieces.push(current);
+
+  return sentencePieces.map((pcs, i) => {
+    const parts: (string | { word: string })[] = pcs.map((p) =>
+      "text" in p ? p.text : { word: detail.blanks[p.blank]?.correctAnswers[0] ?? "" }
+    );
+    if (typeof parts[0] === "string") parts[0] = parts[0].replace(/^\s+/, "");
+    const lastIdx = parts.length - 1;
+    if (typeof parts[lastIdx] === "string") parts[lastIdx] = parts[lastIdx].replace(/\s+$/, "");
+    return { number: i + 1, parts: parts.filter((p) => p !== "") };
+  });
+}
 
 // Режим практики "Робота над помилками" (пілот, частина 2) — лише
 // помилкові ще не виправлені пропуски (onlyItemIds — String(blankIndex),
@@ -102,6 +155,7 @@ export function FillBlankExercise({
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
+  const gapRows = detail ? buildFillBlankGapRows(segments, detail) : undefined;
   const hasWordBank = !!config.wordBank && config.wordBank.length > 0;
   const defaultSubInstruction = hasWordBank
     ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION
@@ -428,7 +482,11 @@ export function FillBlankExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-            />
+              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleCount={gapRows?.length}
+            >
+              {gapRows && <TaskResultGapRows rows={gapRows} />}
+            </TaskResult>
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>

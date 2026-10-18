@@ -208,6 +208,42 @@ export function TaskResultAnswerRows({
   );
 }
 
+// Плитки "Правильні відповіді" для gap-типів (fill_blank/letter_gaps/
+// drag_drop) — та сама родина плиток, що TaskResultAnswerRows вище, але
+// ОДНА текстова колонка (речення/слово із вставленим словом-відповіддю)
+// замість пари fr/uk-чипів: ці типи не показують переклад тут, лише де
+// саме була правильна відповідь. parts — впорядкований список: рядок —
+// звичайний текст, { word } — підсвічена вставлена відповідь (один тип
+// може мати кілька { word } у плитці — усі підсвічуються).
+export function TaskResultGapRows({
+  rows,
+}: {
+  rows: { number: number; parts: (string | { word: string })[] }[];
+}) {
+  return (
+    <div className="task-result-gap-grid">
+      {rows.map((r) => (
+        <div key={r.number} className="task-result-gap-row">
+          <span className="task-result-answer-num" aria-hidden="true">
+            {r.number}
+          </span>
+          <span className="task-result-gap-text">
+            {r.parts.map((p, i) =>
+              typeof p === "string" ? (
+                <span key={i}>{p}</span>
+              ) : (
+                <span key={i} className="task-result-gap-word">
+                  {p.word}
+                </span>
+              )
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
 // лише код-пара, без слова "бал": рядкам сітки/таблиці потрібна вузька
 // пілюля, що ніколи не переносить рядок. earned/possible — вже готові

@@ -31,11 +31,43 @@ import {
   splitPhraseUnits,
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
-import { TaskResult } from "./task-result";
+import { TaskResult, TaskResultGapRows } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+
+// Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
+// (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
+// chars (null на місці пропуску) + correctLetters (позиційні правильні
+// літери лише прихованих позицій) зливаються в суцільне слово, підряд
+// приховані літери об'єднуються в один підсвічений фрагмент.
+function buildLetterGapsRows(
+  wordIndices: number[],
+  words: LetterGapsPublic["words"],
+  detail: LetterGapsDetail
+): { number: number; parts: (string | { word: string })[] }[] {
+  return wordIndices.map((wi) => {
+    const word = words[wi];
+    const correct = detail.words[wi]?.correctLetters ?? [];
+    let ci = 0;
+    const parts: (string | { word: string })[] = [];
+    for (const ch of word.chars) {
+      if (ch === null) {
+        const letter = correct[ci++] ?? "";
+        const last = parts[parts.length - 1];
+        if (last && typeof last === "object") last.word += letter;
+        else parts.push({ word: letter });
+      } else {
+        const last = parts[parts.length - 1];
+        if (typeof last === "string") parts[parts.length - 1] = last + ch;
+        else parts.push(ch);
+      }
+    }
+    return { number: wi + 1, parts };
+  });
+}
 
 // Режим практики "Робота над помилками" (пілот, частина 3) — лише
 // помилкові ще не виправлені слова (onlyItemIds — String(wordIndex), той
@@ -587,7 +619,13 @@ export function LetterGapsExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-            />
+              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleCount={blockDetail ? blockDisplayOrder.length : undefined}
+            >
+              {blockDetail && (
+                <TaskResultGapRows rows={buildLetterGapsRows(blockDisplayOrder, config.words, blockDetail)} />
+              )}
+            </TaskResult>
           )}
         </div>
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
@@ -772,7 +810,13 @@ export function LetterGapsExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-              />
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={singleDetail ? displayOrder.length : undefined}
+              >
+                {singleDetail && (
+                  <TaskResultGapRows rows={buildLetterGapsRows(displayOrder, config.words, singleDetail)} />
+                )}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
