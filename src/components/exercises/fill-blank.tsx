@@ -302,7 +302,7 @@ export function FillBlankExercise({
           </div>
         )}
 
-        <p className="glass-reading-passage break-words leading-8 [overflow-wrap:anywhere]">
+        <p className="glass-reading-passage break-words leading-[38px] [overflow-wrap:anywhere]">
           {segments.map((seg, i) => (
             <span key={i}>
               {frenchNbsp(seg)}
@@ -350,7 +350,7 @@ export function FillBlankExercise({
                             : undefined
                     }
                     title={hints[i] ?? undefined}
-                    className={`fill-blank-field h-9 w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic dark:placeholder:text-[rgba(220,219,243,0.6)] ${
+                    className={`fill-blank-field h-[28px] w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic dark:placeholder:text-[rgba(220,219,243,0.6)] ${
                       !result && !isDelf && !isPractice && hints[i] && !answers[i] ? "pl-[12px] pr-[30px]" : "px-[12px]"
                     } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
                       isPractice
@@ -431,18 +431,6 @@ export function FillBlankExercise({
           hintDisabled={hintPending || hintedBlanks.has(Number(diacritics.activeKey))}
           hintUsed={hintedBlanks.has(Number(diacritics.activeKey))}
         />
-      )}
-
-      {detail && (
-        <ul className="flex flex-col gap-1 text-sm">
-          {detail.blanks.map((b, i) =>
-            b.isCorrect ? null : (
-              <li key={i} className="text-red-600 dark:text-red-400">
-                Пропуск {i + 1}: правильно — {b.correctAnswers.join(" / ")}
-              </li>
-            )
-          )}
-        </ul>
       )}
 
       {isPractice ? (
