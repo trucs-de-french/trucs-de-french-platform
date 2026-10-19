@@ -4829,8 +4829,9 @@ button.scene-bar:active .scene-bar-toggle {
    жодного JS-вимірювання: --cell читає cqw САМЕ цього контейнера
    (self-reference — безпечно, бо width:100% контейнера НЕ залежить від
    вмісту/--cell, немає циклу). max(18px, ...) — підлога: клітинка ніколи
-   не стає меншою за 18px. min(32px, ...) — стеля (було 36px, звужено ще
-   раз для щільнішого вигляду). Групи (word-result-group, одне СЛОВО) —
+   не стає меншою за 18px. min(40px, ...) — стеля (було 32px, трохи
+   збільшено за проханням — щільний spacing навколо лишився той самий,
+   зросла лише сама плитка). Групи (word-result-group, одне СЛОВО) —
    nowrap:4px gap, самі групи в flex-wrap-рядку — перенос лише МІЖ словами
    фрази; якщо formula дає <18px (виняткового задовге одне слово) —
    підлога форсує 18px, і ТІЛЬКИ тоді ширина групи може перевищити
@@ -4844,7 +4845,7 @@ button.scene-bar:active .scene-bar-toggle {
    горизонтальний проміжок між словами — тепер вертикаль свідомо вужча). */
 .word-result-tile-row {
   container-type: inline-size;
-  --cell: max(18px, min(32px, calc((100cqw - (var(--n) - 1) * 4px) / var(--n))));
+  --cell: max(18px, min(40px, calc((100cqw - (var(--n) - 1) * 4px) / var(--n))));
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -4860,13 +4861,13 @@ button.scene-bar:active .scene-bar-toggle {
 .word-result-cell {
   flex: none;
   width: var(--cell);
-  height: calc(var(--cell) * 1.1);
+  height: calc(var(--cell) * 1.12);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: max(12px, calc(var(--cell) * 0.42));
+  font-size: max(13px, calc(var(--cell) * 0.5));
 }
 .word-result-cell--tile {
   border-radius: 8px;
