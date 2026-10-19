@@ -393,7 +393,7 @@ export function LetterRearrangementExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className={`flex min-w-0 flex-1 flex-col ${opts.locked ? "gap-2.5" : "gap-2"} ${hasLamp ? "pr-[52px]" : ""}`}
+            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
           >
             <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>

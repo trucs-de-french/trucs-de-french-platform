@@ -4774,11 +4774,13 @@ button.scene-bar:active .scene-bar-toggle {
 /* Результат картки-слова letter_gaps/letter_rearrangement (WordResultRows,
    word-result-rows.tsx) — два вирівняних рядки "Ваша відповідь"/
    "Правильно" замість колишнього текстового рядка "Правильне слово: ...".
-   Відступи: від підказки картки до цього блоку — gap-2.5 (10px) на
-   обгортці контенту картки (letter-gaps.tsx/letter-rearrangement.tsx, лише
-   в locked-гілці — gap-2 докартки лишається 8px, не чіпати); тут —
-   підпис→плитки 8px (.word-result-row), розділювач — 12px згори/знизу
-   (margin, не gap, бо застосовується лише МІЖ двома .word-result-row). */
+   Відступи (стиснуто): від підказки картки до цього блоку — gap-2 (8px) на
+   обгортці контенту картки (letter-gaps.tsx/letter-rearrangement.tsx, в
+   ОБОХ гілках — locked і pre-check — тепер однаково 8px); тут — підпис→
+   плитки 6px (.word-result-row), розділювач — 10px згори/знизу (margin, не
+   gap, бо застосовується лише МІЖ двома .word-result-row: 10px від першого
+   рядка плиток до роздільника і 10px від роздільника до другого підпису,
+   той самий margin дає обидва). */
 .word-result-rows {
   display: flex;
   flex-direction: column;
@@ -4786,11 +4788,11 @@ button.scene-bar:active .scene-bar-toggle {
 .word-result-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .word-result-row-label {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4806,7 +4808,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .word-result-divider {
   height: 1px;
-  margin: 12px 0;
+  margin: 10px 0;
   background: #eee6cf;
 }
 .dark .word-result-divider {
@@ -4827,30 +4829,33 @@ button.scene-bar:active .scene-bar-toggle {
    жодного JS-вимірювання: --cell читає cqw САМЕ цього контейнера
    (self-reference — безпечно, бо width:100% контейнера НЕ залежить від
    вмісту/--cell, немає циклу). max(18px, ...) — підлога: клітинка ніколи
-   не стає меншою за 18px. min(36px, ...) — стеля (було 44px: з єдиним n
-   на всю вправу короткі слова в сітці з довгими давали занадто великі
-   36+px плитки поруч із набагато меншими — 36px лишає короткі слова
-   виразно великими, але вже не "роздутими" за рахунок довгих сусідів).
-   Групи (word-result-group, одне СЛОВО) — nowrap:5px gap, самі групи в
-   flex-wrap-рядку з 14px gap — перенос лише МІЖ словами фрази; якщо
-   formula дає <18px (виняткового задовге одне слово) — підлога форсує
-   18px, і ТІЛЬКИ тоді ширина групи може перевищити контейнер і flex-wrap
-   групи (теж wrap, не nowrap) перенесе зайві літери — без зростання
-   "сироти", бо ширина кожної клітинки ФІКСОВАНА (var(--cell), не
-   flex-grow), на відміну від старої flex:1 1 0. */
+   не стає меншою за 18px. min(32px, ...) — стеля (було 36px, звужено ще
+   раз для щільнішого вигляду). Групи (word-result-group, одне СЛОВО) —
+   nowrap:4px gap, самі групи в flex-wrap-рядку — перенос лише МІЖ словами
+   фрази; якщо formula дає <18px (виняткового задовге одне слово) —
+   підлога форсує 18px, і ТІЛЬКИ тоді ширина групи може перевищити
+   контейнер і flex-wrap групи (теж wrap, не nowrap) перенесе зайві
+   літери — без зростання "сироти", бо ширина кожної клітинки ФІКСОВАНА
+   (var(--cell), не flex-grow), на відміну від старої flex:1 1 0.
+   row-gap/column-gap ОКРЕМО (не спільний gap): column-gap 10px — проміжок
+   МІЖ словами фрази по горизонталі; row-gap 6px — проміжок МІЖ рядками,
+   коли фраза переноситься (раніше обидва були одним значенням 14px через
+   gap-шорткод, тому вертикальний перенос виглядав так само "широко", як
+   горизонтальний проміжок між словами — тепер вертикаль свідомо вужча). */
 .word-result-tile-row {
   container-type: inline-size;
-  --cell: max(18px, min(36px, calc((100cqw - (var(--n) - 1) * 5px) / var(--n))));
+  --cell: max(18px, min(32px, calc((100cqw - (var(--n) - 1) * 4px) / var(--n))));
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 14px;
+  row-gap: 6px;
+  column-gap: 10px;
   width: 100%;
 }
 .word-result-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
 }
 .word-result-cell {
   flex: none;
@@ -4867,15 +4872,23 @@ button.scene-bar:active .scene-bar-toggle {
   border-radius: 8px;
   border: 1.5px solid;
 }
+/* Видимі (дані, не пропущені) літери letter_gaps — тепер ТЕЖ плитка
+   однакового розміру (word-result-cell), але без рамки й з тихим
+   нейтральним фоном, щоб усе слово читалось як один суцільний ряд
+   плиток, а не "рамкові плитки впереміш із голим текстом". */
 .word-result-cell--text {
+  border-radius: 8px;
+  background: #f4efe0;
   color: #1a1640;
 }
 .dark .word-result-cell--text {
-  color: #f1ecd9;
+  background: rgba(255, 255, 255, 0.07);
+  color: #dcdbf3;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-result-cell--text {
-    color: #f1ecd9;
+    background: rgba(255, 255, 255, 0.07);
+    color: #dcdbf3;
   }
 }
 /* Правильна позиція (обидва рядки — "Ваша відповідь" і "Правильно"
