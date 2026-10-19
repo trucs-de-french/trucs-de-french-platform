@@ -479,18 +479,6 @@ export function DragDropExercise({
                     );
                   })}
                 </p>
-
-                {sentDetail && (
-                  <ul className="mt-1 flex flex-col gap-1 text-sm">
-                    {sentDetail.blanks.map((b, i) =>
-                      b.isCorrect ? null : (
-                        <li key={i} className="text-red-600 dark:text-red-400">
-                          Пропуск {i + 1}: правильно — {b.correctAnswers.join(" / ")}
-                        </li>
-                      )
-                    )}
-                  </ul>
-                )}
               </div>
             </div>
           );
