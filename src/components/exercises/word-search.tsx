@@ -112,7 +112,6 @@ function ImageTile({
           вище), бейдж лише декоративний (as="span"). */}
       {(found || word.hintStart) && (
         <HintBulb
-          size="md"
           state={bulbState(found, hintUsed)}
           as="span"
           overImage
@@ -167,7 +166,7 @@ function TextPill({
       }}
       className={`${LEGEND_PILL} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
     >
-      {showIcon && <HintBulb size="sm" state={bulbState(found, hintUsed)} as="span" />}
+      {showIcon && <HintBulb state={bulbState(found, hintUsed)} as="span" />}
       <span className={`min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
       {audioUrl && (
         <span onClick={(e) => e.stopPropagation()}>
@@ -205,7 +204,6 @@ function LongCard({
   const showBadge = found || !!word.hintStart;
   const badge = showBadge ? (
     <HintBulb
-      size="md"
       state={bulbState(found, hintUsed)}
       as="span"
       className={hasImage ? "absolute right-2 top-2" : ""}
@@ -1036,7 +1034,7 @@ export function WordSearchExercise({
   }, [aggregateResult, onResult]);
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
-  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", config.hintsReducePoints);
+  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search");
 
   const pointsText =
     !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))

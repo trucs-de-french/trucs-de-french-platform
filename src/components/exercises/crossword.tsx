@@ -109,7 +109,7 @@ function buildCrosswordGroups(
 }
 
 // Мокап "варіант 2" — заголовок картки-підказки кросворду: номер зліва,
-// лампочка-підказка справа (HintBulb variant="goldCircle"), над
+// лампочка-підказка справа (HintBulb, спільний золотий гурток), над
 // картинкою/текстом підказки (ImageClueCard/LongClueCard нижче) — лампочка
 // більше ніколи не лежить ПОВЕРХ картинки. isCorrect — неклікабельна
 // "галочка" (as="span", та сама логіка, що була раніше інлайн у кожній
@@ -133,8 +133,6 @@ function ClueCardHeader({
       <span className="crossword-clue-card-number">{number}.</span>
       {(isCorrect || canHint) && (
         <HintBulb
-          size="md"
-          variant="goldCircle"
           as={isCorrect ? "span" : "button"}
           state={isCorrect ? "done" : hinted ? "used" : "available"}
           label="Підказка: відкрити наступну літеру"
@@ -631,11 +629,10 @@ function CrosswordBlockView({
         }`}
       >
         {isCorrect ? (
-          <HintBulb size="sm" state="done" as="span" />
+          <HintBulb state="done" as="span" />
         ) : (
           canHint && (
             <HintBulb
-              size="sm"
               state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
               label="Підказка: відкрити наступну літеру"
               onClick={() => applyHint(direction, clue.number)}
@@ -1021,7 +1018,7 @@ export function CrosswordExercise({
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction}
-        hintText={hintExplanationHidden ? null : hintExplanationText("crossword", config.hintsReducePoints)}
+        hintText={hintExplanationHidden ? null : hintExplanationText("crossword")}
         rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />
 

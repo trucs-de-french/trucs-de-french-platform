@@ -406,8 +406,8 @@ export function TableFillExercise({
             className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] ${hasValue ? "px-[12px]" : "px-[40px]"} ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
-              самий золотий гурток, що ClueCardHeader кросворду
-              (variant="goldCircle"), абсолютно позиційований у .relative-
+              самий золотий гурток, що ClueCardHeader кросворду,
+              абсолютно позиційований у .relative-
               обгортці вище; той самий принцип, що letter-gaps.tsx (завжди
               видима, не залежить від фокуса/попапу діакритики — колишня
               лампочка DiacriticsPopup (onHint) з'являлась лише коли попап
@@ -416,8 +416,6 @@ export function TableFillExercise({
               DOM, не в tab-порядку, не в a11y-дереві. */}
           {!locked && !isDelf && !hasValue && (
             <HintBulb
-              size="sm"
-              variant="goldCircle"
               state={hintedCells.has(key) ? "used" : "available"}
               label="Підказка: відкрити першу літеру"
               disabled={hintedCells.has(key) || hintPending}
@@ -672,7 +670,7 @@ export function TableFillExercise({
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null
-            : hintExplanationText("table_fill", config.hintsReducePoints)
+            : hintExplanationText("table_fill")
         }
       />
 

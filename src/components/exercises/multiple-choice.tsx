@@ -387,7 +387,6 @@ export function MultipleChoiceExercise({
             </p>
             {hasHintBulb && (
               <HintBulb
-                size="sm"
                 state={hintShown.has(item.id) ? "used" : "available"}
                 onClick={() => toggleHintVisible(item.id)}
                 label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
@@ -632,7 +631,6 @@ export function MultipleChoiceExercise({
               </p>
               {hasHintBulb && (
                 <HintBulb
-                  size="sm"
                   state={hintShown.has(item.id) ? "used" : "available"}
                   onClick={() => toggleHintVisible(item.id)}
                   label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
@@ -843,7 +841,7 @@ export function MultipleChoiceExercise({
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
         hintText={
-          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice", config.hintsReducePoints) : null
+          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice") : null
         }
       />
 

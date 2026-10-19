@@ -373,7 +373,6 @@ export function WordChoiceExercise({
         </p>
         {hasHintBulb && (
           <HintBulb
-            size="sm"
             state={hintShown.has(s.id) ? "used" : "available"}
             onClick={() => toggleHintVisible(s.id)}
             label={hintVisible.has(s.id) ? "Згорнути підказку" : "Показати підказку"}
@@ -390,7 +389,7 @@ export function WordChoiceExercise({
             існує, тож дублювання озвучення неможливе. */}
         {hintOpen && (
           <div role="status" aria-live="polite" className="word-choice-hint-chip">
-            <HintBulb size="sm" state="available" variant="goldCircle" as="span" />
+            <HintBulb state="available" as="span" />
             <span className="word-choice-hint-chip-text">{s.hint}</span>
           </div>
         )}
@@ -602,7 +601,7 @@ export function WordChoiceExercise({
         subInstructionText={config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction}
         hintText={
           config.sentences.some((s) => s.hint)
-            ? hintExplanationText("word_choice", config.hintsReducePoints, false)
+            ? hintExplanationText("word_choice")
             : null
         }
       />

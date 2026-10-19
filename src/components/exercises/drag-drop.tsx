@@ -265,7 +265,6 @@ export function DragDropExercise({
                         )}
                         {i < blankCount && hint && (
                           <HintBulb
-                            size="sm"
                             state={translationHints.has(gi) ? "used" : "available"}
                             label="Підказка: показати переклад слова"
                             onClick={() => toggleTranslationHint(gi)}
@@ -475,8 +474,6 @@ export function DragDropExercise({
                                 розстановки слова). */}
                             {hasLamp && (
                               <HintBulb
-                                size="sm"
-                                variant="goldCircle"
                                 state={translationHints.has(gi) ? "used" : "available"}
                                 label="Підказка: показати переклад слова"
                                 onClick={() => toggleTranslationHint(gi)}

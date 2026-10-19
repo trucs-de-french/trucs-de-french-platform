@@ -1640,151 +1640,6 @@ button, input, textarea, select, label, nav, aside {
   color: #1a1640;
 }
 
-/* Лампочка-підказка (HintBulb/легенда/пілюля заголовка панелі,
-   legend-tile-style.ts LEGEND_BULB_BADGE_AMBER, task-panel-header.tsx) —
-   той самий золотий градієнт/темний бульб, що бейдж бару вище
-   (.glass-bar-badge) й бейдж кнопки повний екран/згорнути, в ОБОХ темах:
-   світла замість бляклого крем-жовтого (колишній bg-[#fdf0c4]
-   text-[#b8761a] у className), темна замість напівпрозорого амбера
-   (колишній dark:bg-amber-900/70 dark:text-amber-300, видалено з
-   className — став редундантним). .lamp-badge — клас-гачок на самому
-   бейджі, не перефарбовування Tailwind-класів: нешаруваний CSS тут
-   завжди переважає утиліти Tailwind незалежно від порядку/специфічності.
-   Темна тема лишає той самий градієнт/колір іконки, що світла — лише
-   тінь інша (темний контур + внутрішній світловий відблиск замість
-   золотавої тіні, яка на темній панелі була б непомітною). */
-.light .lamp-badge {
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-  border: 1px solid rgba(184, 144, 47, 0.55);
-  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.35);
-  color: #1a1640;
-  transition: background-color 150ms ease, box-shadow 150ms ease;
-}
-.light .lamp-badge svg {
-  stroke-width: 2.2;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .lamp-badge {
-    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-    border: 1px solid rgba(184, 144, 47, 0.55);
-    box-shadow: 0 1px 2px rgba(184, 144, 47, 0.35);
-    color: #1a1640;
-    transition: background-color 150ms ease, box-shadow 150ms ease;
-  }
-  :root:not(.dark) .lamp-badge svg {
-    stroke-width: 2.2;
-  }
-}
-/* Ховер лише на пристроях з реальним курсором (не "застряглий" ховер
-   після тапу на тач-екрані) — той самий прийом, що .exercise-block-*-btn
-   вище (@media (hover: hover)). */
-@media (hover: hover) {
-  .light .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
-    background: linear-gradient(135deg, #fbe7a3, #e8b44c);
-    box-shadow: 0 2px 6px rgba(184, 144, 47, 0.45);
-  }
-  @media (prefers-color-scheme: light) {
-    :root:not(.dark) .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
-      background: linear-gradient(135deg, #fbe7a3, #e8b44c);
-      box-shadow: 0 2px 6px rgba(184, 144, 47, 0.45);
-    }
-  }
-}
-.light .lamp-badge:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .lamp-badge:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
-  }
-}
-.light .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
-  background: linear-gradient(135deg, #f0d27a, #d69a2c);
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
-    background: linear-gradient(135deg, #f0d27a, #d69a2c);
-  }
-}
-/* Вимкнена/виснажена (немає більше літер/підказок) — плаский колір, не
-   opacity на всьому елементі (інакше крем-панель просвічувала б крізь і
-   бейдж здавався б просто сірим, а не свідомо "вимкненим"): скасовує й
-   opacity-40 Tailwind-утиліти (disabled:opacity-40 у className,
-   hint-bulb.tsx) — лишається чинною лише в темній темі. */
-.light .lamp-badge:disabled,
-.light .lamp-badge[aria-disabled="true"] {
-  background: #efe6c8;
-  border-color: rgba(184, 144, 47, 0.25);
-  color: #b3a574;
-  box-shadow: none;
-  opacity: 1;
-  cursor: not-allowed;
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .lamp-badge:disabled,
-  :root:not(.dark) .lamp-badge[aria-disabled="true"] {
-    background: #efe6c8;
-    border-color: rgba(184, 144, 47, 0.25);
-    color: #b3a574;
-    box-shadow: none;
-    opacity: 1;
-    cursor: not-allowed;
-  }
-}
-/* ТЕМНА тема — той самий золотий градієнт/колір іконки, що світла тема
-   вище, лише тінь адаптована під темну панель (зовнішня темна +
-   внутрішній світловий відблиск замість золотавої тіні, непомітної на
-   темному фоні). */
-.dark .lamp-badge {
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-  border: 1px solid rgba(184, 144, 47, 0.55);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  color: #1a1640;
-  transition: background-color 150ms ease, box-shadow 150ms ease;
-}
-.dark .lamp-badge svg {
-  stroke-width: 2.2;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .lamp-badge {
-    background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-    border: 1px solid rgba(184, 144, 47, 0.55);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    color: #1a1640;
-    transition: background-color 150ms ease, box-shadow 150ms ease;
-  }
-  :root:not(.light) .lamp-badge svg {
-    stroke-width: 2.2;
-  }
-}
-@media (hover: hover) {
-  .dark .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
-    background: linear-gradient(135deg, #fbe7a3, #e8b44c);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light) .lamp-badge:not(:disabled):not([aria-disabled="true"]):hover {
-      background: linear-gradient(135deg, #fbe7a3, #e8b44c);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-  }
-}
-.dark .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
-  background: linear-gradient(135deg, #f0d27a, #d69a2c);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .lamp-badge:not(:disabled):not([aria-disabled="true"]):active {
-    background: linear-gradient(135deg, #f0d27a, #d69a2c);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lamp-badge {
-    transition: none;
-  }
-}
-
 /* Плашка/смужка (BlockTabs, block-navigation.tsx) малює себе ВСЕРЕДИНІ
    вправи (escape-трюк .task-header-strip-anchor, негативний margin "виходить"
    за падінг панелі й росте вгору на висоту свого вмісту — 44px, плашка
@@ -2309,6 +2164,39 @@ button, input, textarea, select, label, nav, aside {
   border: 1px solid var(--glass-bar-border);
   border-radius: 14px;
   box-shadow: var(--glass-bar-shadow);
+}
+
+/* Смужка "підказка дає половину балів" (page.tsx сцени) — ОДНА під
+   заголовком "Завдання", над першим завданням/вкладками блоків, замінює
+   колишнє речення, що дублювалось у кожній пілюлі підказки окремого
+   завдання (HINTS_REDUCE_POINTS_SUFFIX). Статична (не dismissible), сама
+   лампочка — стандартний HintBulb (as="span"). 14px відступ зверху/знизу —
+   той самий ритм, що решта gap'ів між секціями сторінки сцени. */
+.hint-points-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 8px 18px 8px 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff6d6, #fbe9b0);
+  border: 1.5px solid #f0d98a;
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #6b4a14;
+}
+.dark .hint-points-notice {
+  background: linear-gradient(135deg, rgba(246, 220, 142, 0.14), rgba(246, 220, 142, 0.22));
+  border-color: rgba(246, 220, 142, 0.45);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .hint-points-notice {
+    background: linear-gradient(135deg, rgba(246, 220, 142, 0.14), rgba(246, 220, 142, 0.22));
+    border-color: rgba(246, 220, 142, 0.45);
+    color: #f6dc8e;
+  }
 }
 button.scene-bar {
   width: 100%;
@@ -5671,7 +5559,11 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 6px;
   margin-top: 6px;
   max-width: 100%;
-  padding: 3px 12px 3px 5px;
+  /* Вертикальний padding 5px (не 3px) — лампочка тепер ОДИН стандартний
+     розмір 28px (hint-bulb.tsx, раніше тут був декоративний 18px варіант):
+     5+28+5=38px висота чипа замість колишніх ~24px, контейнер підлаштований
+     під лампочку, а не навпаки. */
+  padding: 5px 12px 5px 5px;
   border-radius: 999px;
   background: #fff6d6;
   border: 1.5px solid #f0d98a;

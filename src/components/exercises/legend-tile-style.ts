@@ -59,40 +59,16 @@ export const LEGEND_LONG_CARD =
 export const LEGEND_LONG_CARD_SHAPE =
   "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
 
-// ЕТАП H — єдиний круглий бейдж лампочки/галочки (раніше LEGEND_BULB_BADGE
-// мав фіксований колір text-white і використовувався лише в LongCard/
-// LongClueCard; тепер та сама форма йде і на картинки, і в пілюлі, з двома
-// розмірами й спільними кольорами). Форма окремо від кольору: MD (26px,
-// довгі картки й картинки) / SM (22px, пілюлі) — лише розмір; AMBER/GREEN —
-// лише колір (непрозорий фон, не text-white — бейдж тепер лежить і прямо
-// на фото, де напівпрозорий фон був би нечитабельним); ON_IMAGE — додаткове
-// біле кільце для бейджа САМЕ над картинкою (на довгій картці з текстом
-// навколо кільце не потрібне, фон картки й так контрастний).
-export const LEGEND_BULB_BADGE_MD = "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full";
-export const LEGEND_BULB_BADGE_SM = "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full";
-// "lamp-badge" — гачок для світлотемних CSS-правил (globals.css): в ОБОХ
-// темах перефарбовує цей бляклий крем-жовтий/амбер у золотий градієнт з
-// темним бульбом (інакше зливався б із панеллю) — нешаруваний CSS
-// globals.css завжди переважає ці утиліти Tailwind, незалежно від порядку,
-// тож кольорові Tailwind-класи тут лише видимий дефолт до завантаження CSS.
-export const LEGEND_BULB_BADGE_AMBER = "lamp-badge bg-[#fdf0c4] text-[#b8761a]";
-export const LEGEND_BULB_BADGE_GREEN = "bg-green-100 text-green-600 dark:bg-green-900/70 dark:text-green-300";
-export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
+// ОДНА лампочка-підказка в усій студентській частині (раніше кожен тип
+// вправи мав свій розмір/варіант — LEGEND_BULB_BADGE_MD/SM (26/22px, плоский
+// амбер), окремий 28px "goldCircle" заголовка кросворду, 18px декоративний
+// варіант у чипі word_choice): усі замінені на ЦЕЙ один золотий гурток
+// (hint-bulb.tsx бере лише ці константи). ON_IMAGE — додаткове біле кільце
+// для лампочки САМЕ над картинкою (word-search.tsx ImageTile), де фон не
+// контрастний сам по собі.
+export const GOLD_CIRCLE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:ring-white/20";
 
-// Мокап "варіант 2" — нова лампочка-підказка в заголовку картки-підказки
-// кросворду (ClueCardHeader, crossword.tsx): золотий градієнтний гурток
-// 28px (видима форма), ЗАМІСТЬ плоского LEGEND_BULB_BADGE_AMBER/MD — лише
-// для цього нового заголовка, щоб не чіпати лампочку в інших місцях
-// (word-search.tsx TextPill/LongCard, старий вигляд ImageClueCard/
-// LongClueCard/CluePill кросворду тепер прибраний із самої картинки/
-// пілюлі — HintBulb variant="goldCircle" нижче додається ЯК ОКРЕМА опція,
-// лампочка-вигляд за замовчуванням (legend) лишається байтово незмінним
-// для решти викликів).
 export const GOLD_CIRCLE_SIZE = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full";
-// 18px варіант — лампочка ВСЕРЕДИНІ чипа підказки word_choice (декоративна,
-// не кнопка), а не заголовок картки кросворду (28px). Той самий градієнт
-// (GOLD_CIRCLE_AVAILABLE), лише менший розмір.
-export const GOLD_CIRCLE_SIZE_SM = "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full";
 // Зона дотику ≥40×40 — padding 6px навколо видимого 28px (h-7 w-7) гуртка
 // замість збільшення самого гуртка (видима форма лишається 28px, як у
 // мокапі): 28 + 6*2 = 40.

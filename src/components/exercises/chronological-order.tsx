@@ -16,8 +16,7 @@ import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { HintBulb } from "./hint-bulb";
-import { hintExplanationText } from "./hint-explanation";
-import { TaskPanelHeader, TaskInstructionLine } from "./task-panel-header";
+import { TaskInstructionLine } from "./task-panel-header";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { BlockTabs } from "./block-navigation";
@@ -270,7 +269,8 @@ export function ChronologicalOrderExercise({
             flex-sibling, що word-choice.tsx (27fd820) — лампочка ніколи не
             бере участі в перенесенні тексту інструкції, не збільшує висоту
             першого рядка. Практика (isPractice) лампочку не показує взагалі
-            (п.6 задачі) — hasHintBulb нижче явно враховує це. */}
+            (п.6 задачі) — умова `!isPractice && config.hint` нижче явно
+            враховує це. */}
         <div className="flex items-start gap-1.5">
           <div className="min-w-0 flex-1">
             <TaskInstructionLine
@@ -286,29 +286,21 @@ export function ChronologicalOrderExercise({
           </div>
           {!isPractice && config.hint && (
             <HintBulb
-              size="sm"
               state={hintShown ? "used" : "available"}
               onClick={toggleHintVisible}
-              label={hintVisible ? "Згорнути підказку" : "Показати підказку"}
+              label="Підказка до всього завдання"
+              ariaExpanded={hintVisible}
               className="mt-0.5 shrink-0"
             />
           )}
         </div>
         {!isPractice && config.hint && hintVisible && (
-          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
-            {config.hint}
+          <div role="status" aria-live="polite" className="word-choice-hint-chip">
+            <HintBulb state="available" as="span" />
+            <span className="word-choice-hint-chip-text">{config.hint}</span>
           </div>
         )}
       </div>
-
-      {/* Лише пілюля-пояснення механізму підказки тут — сама інструкція й
-          інтерактивна лампочка-розгортка (toggleHintVisible вище) лишаються
-          в блоці над цим, вони не "статична лампочка-пояснення", яку
-          замінює TaskPanelHeader, а жива кнопка показу/сховування
-          config.hint — інша річ, не торкаємось. */}
-      <TaskPanelHeader
-        hintText={isPractice || !config.hint ? null : hintExplanationText("chronological_order", config.hintsReducePoints)}
-      />
 
       {config.mode === "image" || config.mode === "mixed" ? (
         // Щільна сітка: 3/4/5 колонок за брейкпоінтами, gap-2 — щоб 10+

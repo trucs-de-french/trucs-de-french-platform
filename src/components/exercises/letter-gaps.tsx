@@ -503,7 +503,6 @@ export function LetterGapsExercise({
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
         {!opts.locked && !isDelf && !opts.hintDisabled && (
           <HintBulb
-            size="md"
             state={hintUsed ? "used" : "available"}
             label="Підказка: відкрити наступну літеру"
             disabled={nextHintGap(wi) === null}
@@ -722,7 +721,7 @@ export function LetterGapsExercise({
     ? null
     : (useBlocks ? allBlocksChecked : !!single.result)
       ? null
-      : hintExplanationText("letter_gaps", config.hintsReducePoints);
+      : hintExplanationText("letter_gaps");
 
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище

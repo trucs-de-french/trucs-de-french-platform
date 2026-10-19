@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { Lightbulb } from "lucide-react";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
+import { HintBulb } from "./hint-bulb";
 
 // Єдина "зона заголовка" панелі задачі (дизайн-варіант 3) — перший елемент
 // усередині .glass-block-panel, одразу над картками вправи: інструкція
@@ -152,16 +152,17 @@ export function CounterPill({ current, total }: { current: number; total: number
   );
 }
 
-// Мокап "варіант 1" — коротка пілюля-підказка: 32px висота (=рядок),
-// лампочка 24px, текст тепер короткий, з жирним напівжирним лейблом
-// "Підказка:" перед ним (решта тексту — weight 600 через font-semibold на
-// самому контейнері, лейбл локально переважає його font-bold'ом).
+// Мокап "варіант 1" — коротка пілюля-підказка: лампочка — стандартний
+// HintBulb (28px, той самий вигляд, що всюди інде), текст короткий, з
+// жирним напівжирним лейблом "Підказка:" перед ним (решта тексту —
+// weight 600 через font-semibold на самому контейнері, лейбл локально
+// переважає його font-bold'ом). Висота пілюлі — h-9 (36px, було h-8/32px):
+// піднята під лампочку (раніше 24px, тепер 28px), щоб та не впиралась у
+// верх/низ пілюлі.
 function HintPill({ text }: { text: string }) {
   return (
-    <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
-      <span className="lamp-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0c4] text-[#b8761a]">
-        <Lightbulb size={13} aria-hidden />
-      </span>
+    <span className="inline-flex h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
+      <HintBulb state="available" as="span" />
       <span className="min-w-0">
         <span className="font-bold">Підказка:</span> {text}
       </span>

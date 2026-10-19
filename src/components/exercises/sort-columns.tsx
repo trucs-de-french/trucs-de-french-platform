@@ -212,7 +212,6 @@ export function SortColumnsExercise({
         <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
         {hintsEnabled && !locked && (
           <HintBulb
-            size="sm"
             state={bulbState(item.id)}
             stopPropagation
             disabled={hintLoading.has(item.id)}

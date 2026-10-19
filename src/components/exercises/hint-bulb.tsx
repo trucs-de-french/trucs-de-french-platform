@@ -2,40 +2,21 @@
 
 import type { MouseEvent } from "react";
 import { Check, Lightbulb } from "lucide-react";
-import {
-  LEGEND_BULB_BADGE_MD,
-  LEGEND_BULB_BADGE_SM,
-  LEGEND_BULB_BADGE_AMBER,
-  LEGEND_BULB_BADGE_GREEN,
-  LEGEND_BULB_BADGE_ON_IMAGE,
-  GOLD_CIRCLE_SIZE,
-  GOLD_CIRCLE_SIZE_SM,
-  GOLD_CIRCLE_HIT_AREA_PADDING,
-  GOLD_CIRCLE_AVAILABLE,
-  GOLD_CIRCLE_DONE,
-} from "./legend-tile-style";
+import { GOLD_CIRCLE_SIZE, GOLD_CIRCLE_HIT_AREA_PADDING, GOLD_CIRCLE_AVAILABLE, GOLD_CIRCLE_DONE, GOLD_CIRCLE_ON_IMAGE } from "./legend-tile-style";
 
-export type HintBulbSize = "md" | "sm";
 export type HintBulbState = "available" | "used" | "done";
 
-// Єдиний вигляд лампочки-підказки в усіх студентських вправах — раніше
-// кожна вправа мала власну іконку Lightbulb різного розміру й кольору,
-// лише word_search/crossword вже використовували спільний круглий бейдж
-// (legend-tile-style.ts). Тут один компонент розв'язує size+state у ці самі
-// класи, щоб вигляд не розходився між вправами.
-//
-// Зона дотику (before:-inset-2) — на ВНУТРІШНЬОМУ span, не на самій
-// <button>: якби position:relative сидів прямо на кнопці, він конфліктував
-// би з position:absolute, який caller передає через className для кута
-// картки (обидва — те саме CSS-property "position", результат залежить від
-// порядку в згенерованому Tailwind CSS, не від порядку класів у рядку) і
-// міг би зламати абсолютне позиціювання бейджа. Внутрішній span завжди сам
-// собі контекст — не залежить від того, яку позицію caller дав кнопці.
+// Єдиний вигляд лампочки-підказки в усіх студентських вправах (ОДИН розмір,
+// 28px золотий гурток — раніше розходилось на 26/22/28/18px між типами
+// вправ, "legend"/"goldCircle" варіанти прибрані, лишився один вигляд).
+// Зона дотику — padding навколо видимого гуртка на САМІЙ <button> (не
+// position:relative + before:-inset-2 на внутрішньому span, як раніше):
+// видима форма (28px) і тач-таргет (40px) більше не розділені різними
+// елементами, простіше зберегти в синці з caller's absolute-позиціюванням
+// (той caller сам керує position через className).
 export function HintBulb({
-  size,
   state,
   as = "button",
-  variant = "legend",
   onClick,
   onMouseDown,
   disabled,
@@ -45,15 +26,8 @@ export function HintBulb({
   className = "",
   ariaExpanded,
 }: {
-  size: HintBulbSize;
   state: HintBulbState;
   as?: "button" | "span";
-  // "legend" (типово) — незмінний плоский вигляд (word-search.tsx, старі
-  // картки кросворду). "goldCircle" — новий заголовок картки-підказки
-  // кросворду (ClueCardHeader, crossword.tsx, мокап "варіант 2"): золотий
-  // градієнтний гурток 28px із зоною дотику ≥40×40 через padding, а не
-  // розмір самого гуртка.
-  variant?: "legend" | "goldCircle";
   onClick?: () => void;
   // Прокидається як є (без обгортки stopPropagation/onClick вище) — лише
   // diacritics-popup.tsx (preventDefault, щоб клік не забирав фокус з
@@ -70,59 +44,19 @@ export function HintBulb({
   // змінюється.
   ariaExpanded?: boolean;
 }) {
-  const sizeClass = size === "md" ? LEGEND_BULB_BADGE_MD : LEGEND_BULB_BADGE_SM;
-  const colorClass = state === "done" ? LEGEND_BULB_BADGE_GREEN : LEGEND_BULB_BADGE_AMBER;
+  const colorClass = state === "done" ? GOLD_CIRCLE_DONE : GOLD_CIRCLE_AVAILABLE;
   const usedClass = state === "used" ? "opacity-60" : "";
-  const ringClass = overImage ? LEGEND_BULB_BADGE_ON_IMAGE : "";
+  const ringClass = overImage ? GOLD_CIRCLE_ON_IMAGE : "";
   const icon =
     state === "done" ? (
-      <Check size={size === "md" ? 14 : 13} strokeWidth={3} aria-hidden />
+      <Check size={14} strokeWidth={3} aria-hidden />
     ) : (
-      <Lightbulb size={size === "md" ? 15 : 13} aria-hidden />
+      <Lightbulb size={16} strokeWidth={2} aria-hidden />
     );
-
-  if (variant === "goldCircle") {
-    const circleColorClass = state === "done" ? GOLD_CIRCLE_DONE : GOLD_CIRCLE_AVAILABLE;
-    // sm — лише декоративна лампочка всередині чипа підказки word_choice
-    // (as="span", ніколи кнопка); md лишається дефолтом для решти
-    // викликачів (crossword ClueCardHeader), їхній розмір не змінюється.
-    const circleSizeClass = size === "sm" ? GOLD_CIRCLE_SIZE_SM : GOLD_CIRCLE_SIZE;
-    const circleIconSize = size === "sm" ? 11 : 15;
-    const circleIcon =
-      state === "done" ? (
-        <Check size={size === "sm" ? 10 : 14} strokeWidth={3} aria-hidden />
-      ) : (
-        <Lightbulb size={circleIconSize} strokeWidth={2} aria-hidden />
-      );
-    if (as === "span") {
-      return (
-        <span aria-hidden className={`${circleSizeClass} ${circleColorClass} ${className}`}>
-          {circleIcon}
-        </span>
-      );
-    }
-    return (
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={ariaExpanded}
-        title={label}
-        disabled={disabled}
-        onMouseDown={onMouseDown}
-        onClick={(e) => {
-          if (stopPropagation) e.stopPropagation();
-          onClick?.();
-        }}
-        className={`${GOLD_CIRCLE_HIT_AREA_PADDING} ${usedClass} flex shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
-      >
-        <span className={`${GOLD_CIRCLE_SIZE} ${circleColorClass}`}>{circleIcon}</span>
-      </button>
-    );
-  }
 
   if (as === "span") {
     return (
-      <span aria-hidden className={`${sizeClass} ${colorClass} ${usedClass} ${ringClass} ${className}`}>
+      <span aria-hidden className={`${GOLD_CIRCLE_SIZE} ${colorClass} ${ringClass} ${usedClass} ${className}`}>
         {icon}
       </span>
     );
@@ -140,11 +74,9 @@ export function HintBulb({
         if (stopPropagation) e.stopPropagation();
         onClick?.();
       }}
-      className={`${sizeClass} ${colorClass} ${usedClass} ${ringClass} hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100 ${className}`}
+      className={`${GOLD_CIRCLE_HIT_AREA_PADDING} ${usedClass} ${ringClass} flex shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
     >
-      <span className="relative flex h-full w-full items-center justify-center before:absolute before:-inset-2">
-        {icon}
-      </span>
+      <span className={`${GOLD_CIRCLE_SIZE} ${colorClass}`}>{icon}</span>
     </button>
   );
 }

@@ -263,7 +263,7 @@ export function FillBlankExercise({
         hintText={
           isDelf || hasWordBank || !!result || isPractice
             ? null
-            : hintExplanationText("fill_blank", config.hintsReducePoints)
+            : hintExplanationText("fill_blank")
         }
       />
 
@@ -370,8 +370,6 @@ export function FillBlankExercise({
                   />
                   {!result && !isDelf && !isPractice && hints[i] && !answers[i] && (
                     <HintBulb
-                      size="sm"
-                      variant="goldCircle"
                       state={translationHints.has(i) ? "used" : "available"}
                       label="Підказка: показати переклад слова"
                       onClick={() => toggleTranslationHint(i)}

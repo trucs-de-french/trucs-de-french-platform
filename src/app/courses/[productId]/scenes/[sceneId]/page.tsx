@@ -66,6 +66,8 @@ import {
 } from "../../scene-content-block";
 import { SceneBackground } from "@/components/scene-background";
 import { SectionHeaderBar } from "@/components/scene-header-bar";
+import { taskHintReducesPoints } from "@/lib/exercises/hints";
+import { HintBulb } from "@/components/exercises/hint-bulb";
 import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
 import { sceneBackgroundMode } from "@/lib/scene-background-mode";
 
@@ -706,12 +708,29 @@ export default async function ScenePage({
     </section>
   );
 
+  // Смужка "підказка дає половину балів" — ОДНА під заголовком "Завдання",
+  // замінює колишнє речення в КОЖНІЙ пілюлі підказки (HINTS_REDUCE_POINTS_SUFFIX,
+  // прибране разом із самим параметром у hint-explanation.tsx). Рендериться
+  // лише якщо хоч одне завдання сцени (включно з членами групи) реально має
+  // підказку, що знижує бали (taskHintReducesPoints, hints.ts) — інакше
+  // студент бачив би попередження про механізм, якого в сцені нема.
+  const sceneHasHintPenalty = sceneRows.some((row) => {
+    const rowTasks = row.kind === "group" ? row.members : [row.task];
+    return rowTasks.some((t) => taskHintReducesPoints(t.type, t.config));
+  });
+
   const tasksNode = sceneRows.length > 0 && (
     <section>
       {onBackground ? (
         <SectionHeaderBar title="Завдання" icon={resolveBlockIcon("tasks")} />
       ) : (
         <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
+      )}
+      {sceneHasHintPenalty && (
+        <div role="status" className="hint-points-notice">
+          <HintBulb state="available" as="span" />
+          <span>Відповідь з підказкою (лампочка) дає половину балів.</span>
+        </div>
       )}
       <ul className={`${onBackground ? "mt-3" : H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
         {sceneRows.map((row) => {

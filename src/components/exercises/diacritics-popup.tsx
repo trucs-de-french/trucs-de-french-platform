@@ -70,7 +70,6 @@ export function DiacriticsPopup({
     >
       {onHint && (
         <HintBulb
-          size="sm"
           state={hintUsed ? "used" : "available"}
           label="Підказка: відкрити першу літеру"
           disabled={hintDisabled}

@@ -344,7 +344,6 @@ export function LetterRearrangementExercise({
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
         {!opts.locked && !isDelf && !opts.hintDisabled && (
           <HintBulb
-            size="md"
             state={hintUsed ? "used" : "available"}
             label="Підказка: поставити наступну літеру на місце"
             disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
@@ -546,7 +545,7 @@ export function LetterRearrangementExercise({
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null
-            : hintExplanationText("letter_rearrangement", config.hintsReducePoints)
+            : hintExplanationText("letter_rearrangement")
         }
       />
 

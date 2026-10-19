@@ -148,12 +148,11 @@ export function OpenAnswerCheckExercise({
           />
           {q.hint && !locked && (
             <HintBulb
-              size="sm"
               state={hintVisible ? "used" : "available"}
               onClick={() => showHint(q.id)}
               onMouseDown={(e) => e.preventDefault()}
               label={hintVisible ? q.hint : "Показати підказку"}
-              className="!h-7 !w-7 absolute top-1/2 right-2 -translate-y-1/2"
+              className="absolute top-1/2 right-2 -translate-y-1/2"
             />
           )}
         </div>
