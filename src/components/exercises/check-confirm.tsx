@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 
 // Спільний хук "перевірити не все заповнено — підтвердити" для всіх
 // авто-перевірюваних типів (ai_examiner/essay_check НЕ торкаються, бо
@@ -72,12 +71,19 @@ export function CheckConfirmBar({
 
   return (
     <div className="check-confirm-bar" role="alertdialog" aria-live="polite">
-      <p className="check-confirm-text">Незаповнено: {unansweredCount}. Перевірити все одно?</p>
+      <p className="check-confirm-text">
+        Незаповнено: <strong className="check-confirm-count">{unansweredCount}</strong>. Перевірити все одно?
+      </p>
       <div className="check-confirm-actions">
-        <button ref={confirmRef} type="button" onClick={onConfirm} className={STUDENT_BUTTON_PRIMARY}>
+        <button
+          ref={confirmRef}
+          type="button"
+          onClick={onConfirm}
+          className="check-confirm-btn check-confirm-btn--primary"
+        >
           Перевірити
         </button>
-        <button type="button" onClick={onCancel} className={STUDENT_BUTTON_SECONDARY_TOUCH}>
+        <button type="button" onClick={onCancel} className="check-confirm-btn check-confirm-btn--secondary">
           Повернутися
         </button>
       </div>

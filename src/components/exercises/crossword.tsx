@@ -233,21 +233,26 @@ function CrosswordBlockView({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const allowRecheck = blockIndex !== undefined;
   const checkConfirm = useCheckConfirm();
-  // Відкриті (не заблоковані) клітинки сітки — природна одиниця для
-  // CheckConfirmBar (кожна клітинка — окрема буква-відповідь), той самий
-  // принцип, що .flat() нижче для підрахунку.
-  const totalOpenCells = block.openCells.flat().filter(Boolean).length;
-  const unfilledCells = block.openCells.reduce(
-    (sum, row, ri) => sum + row.filter((open, ci) => open && !grid[ri][ci]).length,
-    0
-  );
+  const clueCells = useMemo(() => buildClueCells(block), [block]);
+
+  // Одиниця CheckConfirmBar — СЛОВО (clue), не клітинка/буква: студент
+  // відповідає словами, кросворд лише показує їх по літерах. Слово
+  // рахується незаповненим, лише якщо ЖОДНА його літера не вписана —
+  // часткове заповнення вважається "відповів" (gradeCrossword уже вважає
+  // слово неправильним, доки не заповнені ВСІ його літери правильно, тож
+  // показ як "заповнене" тут нічого не змінює в оцінці, лише в лічильнику
+  // перед кнопкою). Було: лічилися відкриті КЛІТИНКИ сітки — на слові з
+  // кількох довгих перетинів це давало "Незаповнено: 49" при 5 видимих
+  // словах, хоча студент реально не відповів лише на частину з них.
+  const totalWords = block.across.length + block.down.length;
+  const unfilledWords = [...clueCells.values()].filter((cells) =>
+    cells.every(({ row, col }) => !grid[row][col])
+  ).length;
 
   useEffect(() => {
     if (result) onResult(result as CrosswordBlockResult);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
-
-  const clueCells = useMemo(() => buildClueCells(block), [block]);
 
   // Слово(-а), що проходять через кожну клітинку — та сама мапа clueCells,
   // інвертована. Потрібна і для підсвітки активної підказки, і для живого
@@ -893,8 +898,8 @@ function CrosswordBlockView({
                 checkButton={
                   <button
                     type="button"
-                    onClick={() => checkConfirm.attemptCheck(unfilledCells, handleSubmit)}
-                    disabled={pending || unfilledCells === totalOpenCells}
+                    onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
+                    disabled={pending || unfilledWords === totalWords}
                     className="exercise-block-check-btn"
                   >
                     {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
@@ -904,7 +909,7 @@ function CrosswordBlockView({
             )}
             {checkConfirm.confirming && (
               <CheckConfirmBar
-                unansweredCount={unfilledCells}
+                unansweredCount={unfilledWords}
                 onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
                 onCancel={checkConfirm.cancelCheck}
               />
@@ -914,15 +919,15 @@ function CrosswordBlockView({
           <div className="flex flex-col items-start gap-2">
             <button
               type="button"
-              onClick={() => checkConfirm.attemptCheck(unfilledCells, handleSubmit)}
-              disabled={pending || unfilledCells === totalOpenCells}
+              onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
+              disabled={pending || unfilledWords === totalWords}
               className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
-                unansweredCount={unfilledCells}
+                unansweredCount={unfilledWords}
                 onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
                 onCancel={checkConfirm.cancelCheck}
               />

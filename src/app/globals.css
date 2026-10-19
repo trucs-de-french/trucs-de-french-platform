@@ -3117,9 +3117,9 @@ button.scene-bar:active .scene-bar-toggle {
    студентських карток. */
 .check-confirm-bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
   max-width: 100%;
   padding: 12px 16px;
   border-radius: 14px;
@@ -3135,9 +3135,12 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1a1640;
   overflow-wrap: anywhere;
 }
+.check-confirm-count {
+  color: #6b4a14;
+}
 .check-confirm-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-shrink: 0;
   gap: 8px;
 }
 .dark .check-confirm-bar {
@@ -3147,6 +3150,9 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .check-confirm-text {
   color: #f1ecd9;
 }
+.dark .check-confirm-count {
+  color: #f6dc8e;
+}
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .check-confirm-bar {
     border-color: rgba(243, 217, 139, 0.35);
@@ -3154,6 +3160,80 @@ button.scene-bar:active .scene-bar-toggle {
   }
   :root:not(.light) .check-confirm-text {
     color: #f1ecd9;
+  }
+  :root:not(.light) .check-confirm-count {
+    color: #f6dc8e;
+  }
+}
+@media (max-width: 767px) {
+  .check-confirm-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .check-confirm-actions {
+    width: 100%;
+  }
+  .check-confirm-actions .check-confirm-btn {
+    flex: 1 1 0%;
+  }
+}
+
+/* Кнопки панелі CheckConfirmBar — спільна база (44px, radius 12,
+   Nunito 800/16px) + дві ролі: primary (залитий indigo-градієнт, той
+   самий, що .scene-translation-toggle/глобальний "Перевірити"), secondary
+   (контурна indigo — "Повернутися", НЕ STUDENT_BUTTON_SECONDARY_TOUCH:
+   та роль нейтрально-сіра, тут потрібен indigo-акцент, що читається як
+   рівноцінна, не слабша дія). */
+.check-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  transition: filter 0.15s, background-color 0.15s, transform 0.15s;
+}
+.check-confirm-btn:active {
+  transform: translateY(1px);
+}
+.check-confirm-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.check-confirm-btn--primary {
+  border: none;
+  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(59, 54, 196, 0.45);
+}
+.check-confirm-btn--primary:hover {
+  filter: brightness(1.05);
+}
+.check-confirm-btn--secondary {
+  border: 1.5px solid #4b46da;
+  background: transparent;
+  color: #3b36c4;
+}
+.check-confirm-btn--secondary:hover {
+  background: rgba(75, 70, 218, 0.08);
+}
+.dark .check-confirm-btn--secondary {
+  border-color: rgba(220, 219, 243, 0.6);
+  color: #dcdbf3;
+}
+.dark .check-confirm-btn--secondary:hover {
+  background: rgba(220, 219, 243, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .check-confirm-btn--secondary {
+    border-color: rgba(220, 219, 243, 0.6);
+    color: #dcdbf3;
+  }
+  :root:not(.light) .check-confirm-btn--secondary:hover {
+    background: rgba(220, 219, 243, 0.08);
   }
 }
 .task-result-chip {

@@ -154,10 +154,15 @@ export function LetterGapsExercise({
   const diacritics = useDiacriticsPopup<string>();
   const [hintedGaps, setHintedGaps] = useState<Set<string>>(new Set());
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
-  // Незаповнена пропуск-позиція (CheckConfirmBar) — той самий атом, що
-  // TaskResultGapRows/fill-blank.tsx (окремий пропуск, не слово ціле).
-  function wordUnfilledCount(wi: number) {
-    return (answers[wi] ?? []).filter((c) => c.trim() === "").length;
+  // Одиниця CheckConfirmBar — СЛОВО, не окремий пропуск: letter_gaps дає
+  // студенту ціле слово з кількома пропущеними буквами, тож "відповідь" —
+  // слово в цілому. Незаповнене = ЖОДНА літера не вписана; часткове
+  // заповнення вважається "відповів" (gradeLetterGaps і так вимагає ВСІ
+  // літери слова правильними, часткове все одно буде показане хибним —
+  // лічильник тут лише про те, чи студент узагалі торкався слова).
+  function wordIsUnfilled(wi: number) {
+    const gaps = answers[wi] ?? [];
+    return gaps.length > 0 && gaps.every((c) => c.trim() === "");
   }
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
@@ -273,7 +278,7 @@ export function LetterGapsExercise({
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as LetterGapsDetail | undefined;
   const singleCheckConfirm = useCheckConfirm();
-  const singleUnanswered = config.words.reduce((sum, _, wi) => sum + wordUnfilledCount(wi), 0);
+  const singleUnanswered = config.words.filter((_, wi) => wordIsUnfilled(wi)).length;
   function submitSingle() {
     single.submit({ letters: answers, hintedWordIndices: [...hintedWordIndices] });
   }
@@ -759,19 +764,12 @@ export function LetterGapsExercise({
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockWordIndicesForCheck = wordBlocks[activeBlock] ?? [];
-  const activeBlockUnanswered = activeBlockWordIndicesForCheck.reduce(
-    (sum, wi) => sum + wordUnfilledCount(wi),
-    0
-  );
-  const activeBlockTotalGaps = activeBlockWordIndicesForCheck.reduce(
-    (sum, wi) => sum + (answers[wi]?.length ?? 0),
-    0
-  );
+  const activeBlockUnanswered = activeBlockWordIndicesForCheck.filter((wi) => wordIsUnfilled(wi)).length;
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === activeBlockTotalGaps}
+      disabled={activeBlockPending || activeBlockUnanswered === activeBlockWordIndicesForCheck.length}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -834,7 +832,7 @@ export function LetterGapsExercise({
                 <button
                   type="button"
                   onClick={() => singleCheckConfirm.attemptCheck(singleUnanswered, submitSingle)}
-                  disabled={single.pending || singleUnanswered === answers.reduce((n, a) => n + a.length, 0)}
+                  disabled={single.pending || singleUnanswered === config.words.length}
                   className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
