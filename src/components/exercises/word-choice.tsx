@@ -25,8 +25,13 @@ type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
 type WordChoiceResult = Extract<GradeResult, { detail: WordChoiceDetail }>;
 
-// Плитки toggle-картки "Правильні відповіді" — той самий принцип, що
-// multiple-choice.tsx: речення + всі правильні варіанти підсвічені.
+// Плитки toggle-картки "Правильні відповіді" — речення з ВБУДОВАНОЮ
+// правильною відповіддю замість літерального "{{}}" (раніше: "...{{}} —
+// roi" — студент бачив сирий маркер; тепер: "...le roi de la savane.", де
+// "roi" — зелена .task-result-gap-word плитка в самому реченні, без
+// окремого "— слово"). Кілька правильних варіантів — ОДНА плитка,
+// склеєна " / " (той самий принцип, що correctAnswers.join(" / ") у
+// open-answer-check.tsx/table-fill.tsx), а не кома, як було.
 function buildWordChoiceRows(
   sentences: PublicSentence[],
   detail: WordChoiceDetail,
@@ -35,11 +40,12 @@ function buildWordChoiceRows(
   return sentences.map((s, i) => {
     const sentenceDetail = detail.sentences.find((d) => d.id === s.id);
     const correctOptions = sentenceDetail?.options.filter((o) => o.correct) ?? [];
-    const parts: (string | { word: string })[] = [`${s.sentence} — `];
-    correctOptions.forEach((o, oi) => {
-      if (oi > 0) parts.push(", ");
-      parts.push({ word: o.text });
-    });
+    const [before, after] = s.sentence.split("{{}}");
+    const parts: (string | { word: string })[] = [
+      before,
+      { word: correctOptions.map((o) => o.text).join(" / ") },
+      after ?? "",
+    ].filter((p) => p !== "");
     return { number: startIndex + i + 1, parts };
   });
 }
@@ -323,13 +329,21 @@ export function WordChoiceExercise({
             відміну від старої inline-версії всередині <p>, яка саме тому
             й переносилась). */}
         <div className="flex items-start gap-1.5">
-        <p className="min-w-0 flex-1 break-words leading-[2.1] [overflow-wrap:anywhere]">
+        {/* leading-[33px]: висота плитки (.word-choice-pill, globals.css) =
+            26px line-height + 1.5px*2 рамка = 29px; +4px проміжок = 33px —
+            фіксоване px-значення, не ratio, щоб не залежати від
+            невідомого реального font-size <p>. */}
+        <p className="min-w-0 flex-1 break-words leading-[33px] [overflow-wrap:anywhere]">
         {frenchNbsp(before.trimEnd())}
         {s.options.map((o, oi) => {
           const isLast = oi === s.options.length - 1;
           const glued = isLast && glueText.length > 0;
           return (
-            <span key={o.id} className={glued ? "inline-block whitespace-nowrap" : undefined}>
+            // whitespace-nowrap ЗАВЖДИ (не лише glued) — плитка+слеш (і
+            // остання плитка+розділовий знак) мають лишатись одним
+            // нерозривним блоком: перенос рядка може статись лише ПІСЛЯ
+            // слеша, ніколи перед ним ("/ mer" на початку рядка — п.2 задачі).
+            <span key={o.id} className="inline-block whitespace-nowrap">
               <button
                 type="button"
                 onClick={() =>

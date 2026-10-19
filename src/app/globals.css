@@ -5530,9 +5530,12 @@ button.scene-bar:active .scene-bar-toggle {
    layout/розмір), а однакові ЗНАЧЕННЯ кольору, щоб не вигадувати нову
    лавандову пару. Вибраний/правильний/неправильний стани — нижче. */
 .word-choice-pill {
+  /* line-height 26px + border 1.5px*2 = висота плитки 29px. Інтервал
+     речення (leading-[33px] у word-choice.tsx) = 29 + 4px проміжок —
+     значення рядка рахується ВІД цієї висоти, не навмання. */
   border-radius: 10px;
   padding: 0 12px;
-  line-height: 30px;
+  line-height: 26px;
   font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 700;
