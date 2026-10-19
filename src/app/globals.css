@@ -5650,7 +5650,15 @@ button.scene-bar:active .scene-bar-toggle {
    (::before) — класичний прийом "повернутий квадрат 45deg", той самий
    фон+рамка, що бульбашка, перекриває верхній край на половину своєї
    висоти, щоб шов не було видно. */
+/* display тут, у НЕ-layered CSS (не Tailwind-утиліта hidden/md:block) —
+   .word-choice-hint-chip нижче й так уже мав власне "display: inline-
+   block" у цьому самому нешаруваному блоці, що за однакової специфічності
+   переважало Tailwind-утиліту md:hidden (пізніше в згенерованому CSS
+   виграє), тож чип лишався видимим і на десктопі одночасно з бульбашкою —
+   видимість обох елементів тепер ЦІЛКОМ тут, через медіа-запит, а не
+   напів-Tailwind/напів-CSS. */
 .word-choice-hint-bubble {
+  display: none;
   border-radius: 10px;
   padding: 4px 12px;
   font-family: var(--font-body);
@@ -5659,6 +5667,11 @@ button.scene-bar:active .scene-bar-toggle {
   border: 1.5px solid #f0d98a;
   color: #6b4a14;
   box-shadow: 0 6px 14px -6px rgba(120, 90, 20, 0.45);
+}
+@media (min-width: 768px) {
+  .word-choice-hint-bubble {
+    display: block;
+  }
 }
 .word-choice-hint-bubble::before {
   content: "";
@@ -5703,7 +5716,7 @@ button.scene-bar:active .scene-bar-toggle {
    речення, бульбашку з хвостиком там нема куди чітко "прицілити"). Ті самі
    кольори, що .word-choice-hint-bubble. */
 .word-choice-hint-chip {
-  display: inline-block;
+  display: inline-flex;
   border-radius: 10px;
   padding: 4px 12px;
   font-family: var(--font-body);
@@ -5711,6 +5724,11 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff6d6;
   border: 1.5px solid #f0d98a;
   color: #6b4a14;
+}
+@media (min-width: 768px) {
+  .word-choice-hint-chip {
+    display: none;
+  }
 }
 .dark .word-choice-hint-chip {
   background: rgba(246, 220, 142, 0.14);

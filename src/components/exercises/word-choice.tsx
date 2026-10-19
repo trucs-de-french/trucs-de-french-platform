@@ -390,18 +390,24 @@ export function WordChoiceExercise({
             до лампочки (right збігається з card padding, top ~48px —
             одразу під лампочкою). Мобільний варіант нижче — компактний чип
             у потоці, без стрілки (лампочка на мобільному може лежати НАД
-            другим рядком речення — немає куди чітко "прицілити" хвостик). */}
+            другим рядком речення — немає куди чітко "прицілити" хвостик).
+            Видимість (яка з двох видима на якій ширині) — ЦІЛКОМ у
+            @media(min-width:768px) у globals.css, не в Tailwind hidden/
+            md:block/md:hidden — ті губли нешаруваному .word-choice-hint-
+            chip, що мав власний display, з тим самим наслідком, що й цей
+            баг: display:none елемент і так випадає з accessibility tree,
+            тож лише видимий елемент із цих двох озвучується aria-live. */}
         {hintOpen && (
           <div
             role="status"
             aria-live="polite"
-            className="word-choice-hint-bubble absolute right-3 top-12 z-20 hidden w-max max-w-[220px] md:right-4 md:block"
+            className="word-choice-hint-bubble absolute right-3 top-12 z-20 w-max max-w-[220px] md:right-4"
           >
             {s.hint}
           </div>
         )}
         {hintOpen && (
-          <div role="status" aria-live="polite" className="word-choice-hint-chip mt-2 max-w-full md:hidden">
+          <div role="status" aria-live="polite" className="word-choice-hint-chip mt-2 max-w-full">
             {s.hint}
           </div>
         )}
