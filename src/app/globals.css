@@ -5520,3 +5520,124 @@ button.scene-bar:active .scene-bar-toggle {
     border-bottom-color: rgba(243, 217, 139, 0.3);
   }
 }
+
+/* word_choice (word-choice.tsx) — inline option pills ("roi / prince /
+   maître") усередині речення. Світла тема — крем-плитки (той самий
+   #f6efd9/rgba(217,183,101,.85), що інші крем-елементи платформи), ТЕМНА
+   тема (невибрана плитка) — ті самі лавандові токени, що .matching-card--uk/
+   .task-result-pair-chip--uk (rgba(150,125,240,.2)/рамка rgba(150,125,240,.4)/
+   текст #dcdbf3) — свідомо НЕ ті самі CSS-класи (інші екрани мають інший
+   layout/розмір), а однакові ЗНАЧЕННЯ кольору, щоб не вигадувати нову
+   лавандову пару. Вибраний/правильний/неправильний стани — нижче. */
+.word-choice-pill {
+  border-radius: 10px;
+  padding: 0 12px;
+  line-height: 30px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+}
+.word-choice-pill--default {
+  background: #f6efd9;
+  border-color: rgba(217, 183, 101, 0.85);
+  color: #1a1640;
+}
+.dark .word-choice-pill--default {
+  background: rgba(150, 125, 240, 0.2);
+  border-color: rgba(150, 125, 240, 0.4);
+  color: #dcdbf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-pill--default {
+    background: rgba(150, 125, 240, 0.2);
+    border-color: rgba(150, 125, 240, 0.4);
+    color: #dcdbf3;
+  }
+}
+/* Вибраний (до перевірки) — той самий індиго-градієнт в обох темах (на
+   темному тлі білий текст лишається читабельним без змін). */
+.word-choice-pill--selected {
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+  border-color: #3b36c4;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 6px 12px -6px rgba(59, 54, 196, 0.55);
+}
+/* Обраний студентом варіант виявився правильним. Темна — той самий
+   зелений, що .matching-card--correct (bg rgba(5,46,22,.3)/рамка #22c55e),
+   текст — #4ade80 (дзеркально вже наявному dark:text-green-400 деінде). */
+.word-choice-pill--correct {
+  background: #dff3e4;
+  border-color: #6fbf88;
+  color: #1f7a3d;
+  font-weight: 800;
+}
+.dark .word-choice-pill--correct {
+  background: rgba(5, 46, 22, 0.3);
+  border-color: #22c55e;
+  color: #4ade80;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-pill--correct {
+    background: rgba(5, 46, 22, 0.3);
+    border-color: #22c55e;
+    color: #4ade80;
+  }
+}
+/* Обраний студентом варіант виявився неправильним — дзеркально .matching-
+   card--incorrect (bg rgba(69,10,10,.3)/рамка #ef4444), текст #f87171. */
+.word-choice-pill--wrong {
+  background: #fbe0e0;
+  border-color: #e07a7a;
+  color: #b02a2a;
+  font-weight: 800;
+}
+.dark .word-choice-pill--wrong {
+  background: rgba(69, 10, 10, 0.3);
+  border-color: #ef4444;
+  color: #f87171;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-pill--wrong {
+    background: rgba(69, 10, 10, 0.3);
+    border-color: #ef4444;
+    color: #f87171;
+  }
+}
+/* Правильний варіант, показаний поруч (студент його не обирав) — тихіший
+   зелений за --correct вище, та сама пара кольорів у темній темі, нижча
+   прозорість фону/рамки, щоб залишались РІЗНЮ плитки на вигляд. */
+.word-choice-pill--revealed {
+  background: #eef8f0;
+  border-color: #a9d8b6;
+  color: #1f7a3d;
+  font-weight: 800;
+}
+.dark .word-choice-pill--revealed {
+  background: rgba(5, 46, 22, 0.16);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #4ade80;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-pill--revealed {
+    background: rgba(5, 46, 22, 0.16);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #4ade80;
+  }
+}
+/* Розділовий "/" між варіантами — тихий сіро-золотий у світлій, тиха
+   лаванда в темній (та сама логіка пари кольорів, що плитки вище). */
+.word-choice-slash {
+  color: #b8a67a;
+  font-size: 22px;
+  font-weight: 300;
+}
+.dark .word-choice-slash {
+  color: rgba(220, 219, 243, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-slash {
+    color: rgba(220, 219, 243, 0.55);
+  }
+}

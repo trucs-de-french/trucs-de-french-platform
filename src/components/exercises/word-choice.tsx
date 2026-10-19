@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { ITEM_NUMBER_BADGE, ITEM_CARD_WRAP } from "./answer-card-style";
@@ -54,20 +53,10 @@ export type WordChoicePracticeProps = {
   failedAttempts: Record<string, number>;
 };
 
-// Плитка-варіант усередині картки речення — колишній спільний
-// ANSWER_CARD_INLINE (answer-card-style.ts) мав shadow-sm замість рамки:
-// на тлі СТОРІНКИ це читалось, але тепер речення лежить на картці
-// (ITEM_CARD_WRAP, той самий білий/neutral-800 фон, що в multiple_choice)
-// — тінь на однаковому білому фоні картки губилась, а border-gray-100 з
-// попереднього дефолтного стану теж був майже невидимий на білому. Тому
-// локальні класи (не чіпають спільний ANSWER_CARD_INLINE/ANSWER_CARD_DEFAULT
-// — вони й далі використовуються іншими вправами): явна рамка
-// (border-gray-200/dark:border-neutral-600, та сама вимога, що в задачі
-// для рамок картки) і фон, що відрізняється від фону картки в обох темах
-// (neutral-50 / neutral-900, а не білий/neutral-800).
-const TILE_INLINE_BASE = "rounded-md border-[1.5px] dark:border glass-gap-shadow px-1.5 py-0.5 transition-colors";
-const TILE_DEFAULT =
-  "glass-chip glass-chip-hover border-[#dcbd6e] bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60";
+// Плитка-варіант усередині картки речення — крем/лавандові пілюлі
+// (.word-choice-pill* у globals.css), лише тут (не спільний
+// ANSWER_CARD_INLINE/glass-chip — ті й далі використовуються іншими
+// вправами без змін).
 
 export function WordChoiceExercise({
   taskId,
@@ -250,17 +239,24 @@ export function WordChoiceExercise({
     if (sentenceDetail) {
       const opt = sentenceDetail.options.find((o) => o.id === optionId);
       if (!opt) return "";
-      // Той самий принцип, що multiple-choice.tsx: правильний варіант
-      // завжди зелений, червоним — лише хибний вибір студента.
-      if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
-      if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-      return `${TILE_DEFAULT} opacity-60`;
+      // Той самий принцип, що multiple-choice.tsx — правильний завжди
+      // зелений, хибний вибір студента — червоний — але тут ЩЕ й
+      // розрізняємо "студент сам обрав правильний" (--correct, насиченіший
+      // зелений) від "показано правильний, якого студент не обирав"
+      // (--revealed, тихіший зелений) — multiple_choice цього розрізнення
+      // не мав, тож нова пара класів лише тут.
+      if (opt.correct && opt.selected) return "word-choice-pill--correct";
+      if (opt.correct) return "word-choice-pill--revealed";
+      if (opt.selected) return "word-choice-pill--wrong";
+      return "word-choice-pill--default opacity-60";
     }
     if (config.mode === "cross_out") {
       const isCrossedOut = (crossedOut[sentenceId] ?? new Set()).has(optionId);
-      return isCrossedOut ? `${TILE_DEFAULT} text-neutral-400 opacity-60 dark:text-neutral-500` : TILE_DEFAULT;
+      return isCrossedOut ? "word-choice-pill--default opacity-60" : "word-choice-pill--default";
     }
-    return (selections[sentenceId] ?? []).includes(optionId) ? SELECTED_OPTION_CLASS : TILE_DEFAULT;
+    return (selections[sentenceId] ?? []).includes(optionId)
+      ? "word-choice-pill--selected"
+      : "word-choice-pill--default";
   }
 
   // aggregateCorrect — лише для гілки блоків (нижче), коли ВСІ блоки
@@ -327,7 +323,7 @@ export function WordChoiceExercise({
             відміну від старої inline-версії всередині <p>, яка саме тому
             й переносилась). */}
         <div className="flex items-start gap-1.5">
-        <p className="min-w-0 flex-1 break-words leading-[1.625rem] [overflow-wrap:anywhere]">
+        <p className="min-w-0 flex-1 break-words leading-[2.1] [overflow-wrap:anywhere]">
         {frenchNbsp(before.trimEnd())}
         {s.options.map((o, oi) => {
           const isLast = oi === s.options.length - 1;
@@ -342,16 +338,14 @@ export function WordChoiceExercise({
                     : toggleCrossedOut(s.id, o.id)
                 }
                 disabled={locked}
-                className={`relative ${glued ? "ml-1 mr-0" : "mx-1"} inline-flex items-center gap-1 align-middle leading-6 before:absolute before:inset-x-0 before:-inset-y-[5px] before:content-[''] disabled:cursor-not-allowed ${TILE_INLINE_BASE} ${optionClass(s.id, o.id, sentenceDetail)}`}
+                className={`relative ${glued ? "ml-1 mr-0" : "mx-1"} inline-flex items-center gap-1 align-middle before:absolute before:inset-x-0 before:-inset-y-[5px] before:content-[''] disabled:cursor-not-allowed transition-colors word-choice-pill ${optionClass(s.id, o.id, sentenceDetail)}`}
               >
                 {!sentenceDetail &&
                   config.mode === "cross_out" &&
                   (crossedOut[s.id] ?? new Set()).has(o.id) && <X size={12} />}
                 <span className="break-words [overflow-wrap:anywhere]">{o.text}</span>
               </button>
-              {oi < s.options.length - 1 && (
-                <span className="text-neutral-400 dark:text-neutral-500">/</span>
-              )}
+              {oi < s.options.length - 1 && <span className="word-choice-slash">/</span>}
               {glued && frenchNbsp(glueText)}
             </span>
           );
@@ -583,7 +577,11 @@ export function WordChoiceExercise({
         pointsText={pointsPillText}
         instructionText={config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction}
         subInstructionText={config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction}
-        hintText={config.sentences.some((s) => s.hint) ? hintExplanationText("word_choice", config.hintsReducePoints) : null}
+        hintText={
+          config.sentences.some((s) => s.hint)
+            ? hintExplanationText("word_choice", config.hintsReducePoints, false)
+            : null
+        }
       />
 
       {!useBlocks ? (
