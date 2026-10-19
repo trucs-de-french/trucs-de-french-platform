@@ -286,15 +286,15 @@ export function TaskResultImageWordRows({
   rows: { number: number; imageUrl: string; word: string }[];
 }) {
   return (
-    <div className="task-result-gap-grid">
+    <div className="task-result-image-grid">
       {rows.map((r) => (
-        <div key={r.number} className="task-result-gap-row items-center">
+        <div key={r.number} className="task-result-image-row">
           <span className="task-result-answer-num" aria-hidden="true">
             {r.number}
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={r.imageUrl} alt="" className="task-result-image-thumb" />
-          <span className="task-result-gap-word">{r.word}</span>
+          <span className="task-result-gap-word task-result-image-word">{r.word}</span>
         </div>
       ))}
     </div>

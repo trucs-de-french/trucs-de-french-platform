@@ -3690,6 +3690,47 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Сітка "Правильні відповіді" для image_match (TaskResultImageWordRows) —
+   власні класи (не .task-result-gap-grid/.task-result-gap-row), бо ці
+   спільні з TaskResultGapRows (fill_blank/letter_gaps/drag_drop): 1 колонка
+   на мобільних, 2 рівні колонки (minmax(0, 1fr)) від 768px — лише для
+   image_match, інші типи лишаються на flex-wrap розмітці. */
+.task-result-image-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .task-result-image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.task-result-image-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.5);
+  min-width: 0;
+}
+.dark .task-result-image-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(243, 217, 139, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-image-row {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(243, 217, 139, 0.25);
+  }
+}
+.task-result-image-word {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .task-result-image-thumb {
   width: 56px;
   height: 40px;
