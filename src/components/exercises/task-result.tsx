@@ -244,36 +244,6 @@ export function TaskResultGapRows({
   );
 }
 
-// Плитки toggle-картки "Правильні відповіді" для типів-порядку
-// (reorder/chronological_order/letter_rearrangement) — одна плитка на
-// послідовність, правильний порядок показаний нумерованим рядком чипів
-// (а не прозовим текстом, як TaskResultGapRows — тут немає "речення",
-// лише впорядкований список елементів).
-export function TaskResultOrderRows({
-  rows,
-}: {
-  rows: { number: number; items: string[] }[];
-}) {
-  return (
-    <div className="task-result-gap-grid">
-      {rows.map((r) => (
-        <div key={r.number} className="task-result-order-row">
-          <span className="task-result-answer-num" aria-hidden="true">
-            {r.number}
-          </span>
-          <div className="task-result-order-chips">
-            {r.items.map((it, i) => (
-              <span key={i} className="task-result-order-chip">
-                {it}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // Плитки toggle-картки "Правильні відповіді" для image_match — мініатюра
 // 56×40 + номер + правильне слово (той самий .task-result-gap-word
 // емфазис, що решта gap-плиток). Звичайний <img>, не next/image — другорядний

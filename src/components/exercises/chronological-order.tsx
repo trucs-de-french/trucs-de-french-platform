@@ -26,11 +26,12 @@ import {
   COMPACT_IMAGE_CARD,
   COMPACT_IMAGE_FRAME,
   COMPACT_IMAGE_FILL,
+  ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, TaskResultOrderRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
@@ -67,16 +68,13 @@ function indexToLabel(index: number): string {
   return label;
 }
 
-// Плитка toggle-картки "Правильні відповіді" — ОДНА плитка (ціла вправа —
-// одна послідовність, на відміну від reorder.sequences), елементи
-// відсортовані за correctPosition. text — підпис (якщо є), інакше content
-// (mode: "text"/"mixed" — сам текст; mode: "image" без тексту — URL
-// картинки, як і решта рендеру цього режиму без підпису).
-function buildChronologicalOrderRows(
-  detail: ChronologicalOrderDetail
-): { number: number; items: string[] }[] {
-  const items = [...detail.items].sort((a, b) => a.correctPosition - b.correctPosition).map((it) => it.content);
-  return [{ number: 1, items }];
+// Елементи toggle-картки "Правильні відповіді", відсортовані за
+// correctPosition (сервер, grade.ts) — незалежно від того, у якому порядку
+// студент їх бачив/вводив. detail.content для mode:"image"/"mixed" — URL
+// картинки (детейл не містить підпису item.text, тож він береться окремо з
+// initialItems за id), для mode:"text" — сам текст речення/слова.
+function sortedByCorrectPosition(detail: ChronologicalOrderDetail) {
+  return [...detail.items].sort((a, b) => a.correctPosition - b.correctPosition);
 }
 
 export function ChronologicalOrderExercise({
@@ -113,6 +111,13 @@ export function ChronologicalOrderExercise({
   const [initialItems] = useState(() => config.items);
   const initialLabelById = useMemo(
     () => new Map(initialItems.map((item, i) => [item.id, indexToLabel(i)])),
+    [initialItems]
+  );
+  // Підпис картинки (mode: "mixed") для alt toggle-картки "Правильні
+  // відповіді" нижче — ChronologicalOrderDetail.content не містить item.text,
+  // тож беремо його тут за id із захопленого initialItems.
+  const initialTextById = useMemo(
+    () => new Map(initialItems.map((item) => [item.id, item.text])),
     [initialItems]
   );
 
@@ -498,7 +503,42 @@ export function ChronologicalOrderExercise({
               toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
               toggleCount={detail ? 1 : undefined}
             >
-              {detail && <TaskResultOrderRows rows={buildChronologicalOrderRows(detail)} />}
+              {detail && config.mode === "text" && (
+                <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
+                  {sortedByCorrectPosition(detail).map((it) => (
+                    <div key={it.id} className="flex items-start gap-2.5 px-2.5 py-2">
+                      <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                        {it.correctPosition}
+                      </span>
+                      <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">
+                        {frenchNbsp(it.content)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {detail && config.mode !== "text" && (
+                <div className={COMPACT_IMAGE_GRID}>
+                  {sortedByCorrectPosition(detail).map((it) => {
+                    const label = initialLabelById.get(it.id) ?? "";
+                    const caption = initialTextById.get(it.id);
+                    const alt = caption
+                      ? frenchNbsp(caption)
+                      : `Картка ${label}, позиція ${it.correctPosition}`;
+                    return (
+                      <div key={it.id} className={`${COMPACT_IMAGE_CARD} ${ANSWER_CHIP_DEFAULT}`}>
+                        <div className={COMPACT_IMAGE_FRAME}>
+                          <ImageOrPlaceholder src={it.content} alt={alt} className={COMPACT_IMAGE_FILL} useFocus />
+                          <span className={`absolute left-1 top-1 z-10 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
+                            {it.correctPosition}
+                          </span>
+                        </div>
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </TaskResult>
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
