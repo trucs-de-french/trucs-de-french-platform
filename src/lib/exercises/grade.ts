@@ -950,9 +950,24 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
       if (!hidden) return;
 
       const rawValue = side === "left" ? row.left : row.right;
+      // correctAnswers (display, toggle "правильно — X") лишається тим самим
+      // pipe-списком, що й раніше — коми в комі НЕ розбиваються тут, лише
+      // acceptedVariants нижче (окремий набір лише для isCorrect) розбиває
+      // кожен pipe-сегмент і по комі, щоб студент міг набрати один варіант
+      // ("дозвіл" замість повного "дозвіл, шкільний бланк") — toggle і
+      // "правильно — X" однаково показують повний оригінальний рядок.
       const accepted = rawValue.split("|").map((s) => normalize(s));
+      const acceptedVariants = new Set<string>();
+      for (const segment of rawValue.split("|")) {
+        const full = normalize(segment);
+        if (full) acceptedVariants.add(full);
+        for (const part of segment.split(",")) {
+          const variant = normalize(part);
+          if (variant) acceptedVariants.add(variant);
+        }
+      }
       const studentAnswer = answerMap.get(`${row.id}:${side}`) ?? "";
-      const isCorrect = accepted.includes(normalize(studentAnswer));
+      const isCorrect = acceptedVariants.has(normalize(studentAnswer));
       blanks.push({
         rowId: row.id,
         side,
