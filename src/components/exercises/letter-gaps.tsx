@@ -499,9 +499,14 @@ export function LetterGapsExercise({
     const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
     const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
+    // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
+    // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
+    // текст підказки/пропуски могли ховатись під нею. pr-[52px]
+    // (ширина кнопки-лампочки 40px + 12px) на контентній колонці нижче.
+    const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
       <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
-        {!opts.locked && !isDelf && !opts.hintDisabled && (
+        {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
             label="Підказка: відкрити наступну літеру"
@@ -533,7 +538,7 @@ export function LetterGapsExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className="flex min-w-0 flex-1 flex-col gap-1"
+            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
           >
             {word.hintText.trim() && (
               <p className="break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">{frenchNbsp(word.hintText)}</p>
