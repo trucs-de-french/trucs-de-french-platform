@@ -32,7 +32,7 @@ import {
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
-import { WordResultRows, type ResultCell } from "./word-result-rows";
+import { WordResultRows, type ResultGroup } from "./word-result-rows";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -489,43 +489,65 @@ export function LetterGapsExercise({
     }
   }
 
-  // Клітинки результату (WordResultRows) ПО КОЖНІЙ позиції word.chars — на
-  // відміну від groupChars (вище, для живого рядка вводу), сусідні видимі
-  // літери тут НЕ об'єднуються в один <span>: кожна позиція — своя клітинка
-  // ОДНАКОВОЇ ширини в обох рядках ("Ваша відповідь"/"Правильно"), інакше
-  // колонки студентської й правильної відповіді розійдуться там, де
-  // видимі літери різної довжини сусідять із пропуском.
+  // Групи-клітинки результату (WordResultRows) ПО КОЖНІЙ позиції word.chars
+  // — на відміну від groupChars (вище, для живого рядка вводу), сусідні
+  // видимі літери тут НЕ об'єднуються в один <span>: кожна позиція — своя
+  // клітинка ОДНАКОВОЇ ширини в обох рядках ("Ваша відповідь"/"Правильно"),
+  // інакше колонки студентської й правильної відповіді розійдуться там, де
+  // видимі літери різної довжини сусідять із пропуском. Групування за
+  // пробілом (ch === " ") — та сама одиниця переносу, що splitPhraseUnits
+  // вище, щоб WordResultRows міг перенести фразу лише МІЖ словами, не
+  // всередині. empty:true — пропуск, де студент нічого не ввів (порожній
+  // рядок після trim) — показується тьмяним тире, не плутається з коротким
+  // правильним символом.
   function buildGapResultCells(wi: number): {
-    studentCells: ResultCell[];
-    correctCells: ResultCell[];
+    studentGroups: ResultGroup[];
+    correctGroups: ResultGroup[];
     studentWordText: string;
     correctWordText: string;
   } {
     const word = config.words[wi];
     let gi = -1;
-    const studentCells: ResultCell[] = [];
-    const correctCells: ResultCell[] = [];
+    const studentGroups: ResultGroup[] = [[]];
+    const correctGroups: ResultGroup[] = [[]];
     let studentWordText = "";
     let correctWordText = "";
     for (const ch of word.chars) {
+      if (ch === " ") {
+        studentGroups.push([]);
+        correctGroups.push([]);
+        studentWordText += " ";
+        correctWordText += " ";
+        continue;
+      }
       if (ch === null) {
         gi += 1;
         const g = gi;
         const studentLetter = answers[wi][g] ?? "";
         const correctLetter = word.hiddenLetters[g] ?? "";
-        const correct = normalize(studentLetter) === normalize(correctLetter);
-        studentCells.push({ kind: "tile", text: studentLetter, state: correct ? "correct" : "incorrect" });
-        correctCells.push({ kind: "tile", text: correctLetter, state: "correct" });
+        const isEmpty = studentLetter.trim() === "";
+        const correct = !isEmpty && normalize(studentLetter) === normalize(correctLetter);
+        studentGroups[studentGroups.length - 1].push(
+          isEmpty
+            ? { kind: "tile", text: "–", state: "incorrect", empty: true }
+            : { kind: "tile", text: studentLetter, state: correct ? "correct" : "incorrect" }
+        );
+        correctGroups[correctGroups.length - 1].push({ kind: "tile", text: correctLetter, state: "correct" });
         studentWordText += studentLetter;
         correctWordText += correctLetter;
       } else {
-        studentCells.push({ kind: "text", text: ch });
-        correctCells.push({ kind: "text", text: ch });
+        studentGroups[studentGroups.length - 1].push({ kind: "text", text: ch });
+        correctGroups[correctGroups.length - 1].push({ kind: "text", text: ch });
         studentWordText += ch;
         correctWordText += ch;
       }
     }
-    return { studentCells, correctCells, studentWordText, correctWordText };
+    return {
+      studentGroups: studentGroups.filter((g) => g.length > 0),
+      correctGroups: correctGroups.filter((g) => g.length > 0),
+      studentWordText,
+      correctWordText,
+    };
   }
 
   // Рендер однієї картки-слова — СПІЛЬНИЙ для обох гілок (структура карток
@@ -599,7 +621,7 @@ export function LetterGapsExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
+            className={`flex min-w-0 flex-1 flex-col ${opts.locked ? "gap-2.5" : "gap-2"} ${hasLamp ? "pr-[52px]" : ""}`}
           >
             <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
@@ -609,11 +631,11 @@ export function LetterGapsExercise({
             </p>
             {opts.locked ? (
               (() => {
-                const { studentCells, correctCells, studentWordText, correctWordText } = buildGapResultCells(wi);
+                const { studentGroups, correctGroups, studentWordText, correctWordText } = buildGapResultCells(wi);
                 return (
                   <WordResultRows
-                    studentCells={studentCells}
-                    correctCells={correctCells}
+                    studentGroups={studentGroups}
+                    correctGroups={correctGroups}
                     studentWordText={studentWordText}
                     correctWordText={correctWordText}
                     fullyCorrect={nextHintGap(wi) === null}

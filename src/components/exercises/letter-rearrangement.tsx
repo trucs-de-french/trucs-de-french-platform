@@ -380,7 +380,7 @@ export function LetterRearrangementExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
+            className={`flex min-w-0 flex-1 flex-col ${opts.locked ? "gap-2.5" : "gap-2"} ${hasLamp ? "pr-[52px]" : ""}`}
           >
             <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
@@ -390,12 +390,18 @@ export function LetterRearrangementExercise({
             </p>
             {opts.locked && wordDetail ? (
               <WordResultRows
-                studentCells={orders[wi].map((letter, i): ResultCell => ({
-                  kind: "tile",
-                  text: letter,
-                  state: wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect",
-                }))}
-                correctCells={wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" }))}
+                studentGroups={[
+                  orders[wi].map(
+                    (letter, i): ResultCell => ({
+                      kind: "tile",
+                      text: letter,
+                      state: wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect",
+                    })
+                  ),
+                ]}
+                correctGroups={[
+                  wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" })),
+                ]}
                 studentWordText={orders[wi].join("")}
                 correctWordText={wordDetail.letters.map((l) => l.text).join("")}
                 fullyCorrect={wordDetail.isCorrect}
