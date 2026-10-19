@@ -40,6 +40,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { useResultTileLayout } from "./use-result-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -193,17 +194,23 @@ export function LetterGapsExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // Один розмір плитки результату НА ВСЮ ВПРАВУ (не на картку й не на
-  // активний блок) — найдовша "одиниця переносу" (phraseSizeInfo.maxUnitLength,
-  // той самий підрахунок, що й групи WordResultRows: слово без пробілів)
-  // серед УСІХ слів вправи, включно з прихованими блоками. Задається нижче
-  // як CSS-змінна на обгортці EXERCISE_STACK — word-result-rows.tsx більше
-  // не рахує --n сам.
-  const resultN = useMemo(
-    () => Math.max(1, ...config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength)),
+  // Довжина НАЙДОВШОЇ ГРУПИ (слова, без пробілів) ОКРЕМО для кожного слова
+  // вправи — та сама одиниця, що й groups у buildGapResultCells нижче. --n
+  // (на всю вправу) — максимум цих довжин по УСІХ словах, включно з
+  // прихованими блоками; кожна картка окремо (wordUnitLengths[wi]) вирішує
+  // лише чи влізає її НАЙДОВША ВЛАСНА група в половину ширини грід-рядка
+  // (spanForUnitLength, use-result-tile-layout.ts).
+  const wordUnitLengths = useMemo(
+    () => config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength),
     [config.words]
   );
-  const resultNStyle = { "--n": resultN } as CSSProperties;
+  const resultN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
+  // --cell рахується ОДИН раз на всю вправу від ПОВНОШИРИННОЇ картки
+  // (use-result-tile-layout.ts) — gridRef вішається на грід-обгортку карток
+  // нижче (ОДНА й та сама властивість, обидві гілки — non-block і
+  // renderBlock() — монтують лише одну з них одночасно).
+  const { gridRef, cell: resultCell, spanForUnitLength } = useResultTileLayout(resultN);
+  const resultNStyle = { "--n": resultN, "--cell": `${resultCell}px` } as CSSProperties;
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
   // на всю вправу.
@@ -595,7 +602,12 @@ export function LetterGapsExercise({
     const units = splitPhraseUnits(word.chars);
     const { maxUnitLength } = phraseSizeInfo(word.chars);
     const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
-    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
+    // Pre-check (editable) — старий евристичний needsFullSpan (fullFlags),
+    // незмінний. Locked (результат) — НОВИЙ розрахунок від реальної ширини
+    // плитки (spanForUnitLength), той самий принцип, що letter-rearrangement.tsx.
+    const needsFullSpan = opts.locked
+      ? spanForUnitLength(wordUnitLengths[wi]) === 2
+      : !!opts.setContentRef && fullFlags[wi];
     const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
     const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
@@ -717,9 +729,10 @@ export function LetterGapsExercise({
     return (
       <div className="flex flex-col gap-3">
         <div
+          ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 md:grid-cols-2`}
+          } grid items-start gap-3 md:grid-cols-2`}
         >
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
@@ -899,8 +912,9 @@ export function LetterGapsExercise({
       {!useBlocks ? (
         <>
           <div
+            ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
+              isTwoColumn ? "grid items-start gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
             {displayOrder.map((wi, pos) =>

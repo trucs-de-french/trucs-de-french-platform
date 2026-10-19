@@ -17,6 +17,23 @@ export type ResultCell =
 // групами, не всередині).
 export type ResultGroup = ResultCell[];
 
+// Розбиває плаский масив tile-клітинок на групи (слова) за буквальним
+// пробілом-клітинкою (" "), сам пробіл ВІДКИДАЄТЬСЯ (стає проміжком між
+// групами, не власною клітинкою) — letter_rearrangement: фраза раніше йшла
+// ОДНІЄЮ групою (пробіл — звичайна літера-плитка серед інших), тепер
+// переноситься лише МІЖ словами, як і letter_gaps.
+export function splitTileGroupsOnSpace(cells: ResultCell[]): ResultGroup[] {
+  const groups: ResultGroup[] = [[]];
+  for (const cell of cells) {
+    if (cell.kind === "tile" && cell.text === " ") {
+      groups.push([]);
+    } else {
+      groups[groups.length - 1].push(cell);
+    }
+  }
+  return groups.filter((g) => g.length > 0);
+}
+
 function cellAriaLabel(cell: ResultCell): string | undefined {
   if (cell.kind !== "tile") return undefined;
   if (cell.state === "correct") return `${cell.text}, правильно`;

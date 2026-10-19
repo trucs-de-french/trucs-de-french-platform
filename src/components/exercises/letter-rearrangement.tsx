@@ -29,12 +29,14 @@ import {
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
   WORD_CARD,
+  phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
-import { WordResultRows, type ResultCell } from "./word-result-rows";
+import { WordResultRows, splitTileGroupsOnSpace, type ResultCell } from "./word-result-rows";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
+import { useResultTileLayout } from "./use-result-tile-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -137,17 +139,26 @@ export function LetterRearrangementExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // Один розмір плитки результату НА ВСЮ ВПРАВУ (не на картку й не на
-  // активний блок) — найдовше "слово" (shuffledLetters тут НЕ розбивається
-  // на одиниці за пробілом, фраза рахується як одна група, той самий
-  // принцип, що й у WordResultRows для цього типу) серед УСІХ слів вправи,
-  // включно з прихованими блоками. Задається нижче як CSS-змінна на
-  // обгортці EXERCISE_STACK — word-result-rows.tsx більше не рахує --n сам.
-  const resultN = useMemo(
-    () => Math.max(1, ...config.words.map((w) => w.shuffledLetters.length)),
+  // Довжина НАЙДОВШОЇ ГРУПИ (слова, розділеного пробілом — той самий
+  // splitPhraseUnits/phraseSizeInfo, що letter_gaps) ОКРЕМО для кожного
+  // слова вправи — фраза переноситься лише МІЖ словами (splitTileGroupsOnSpace
+  // нижче), а не йде однією групою, як раніше. --n (на всю вправу) —
+  // максимум цих довжин по УСІХ словах, включно з прихованими блоками;
+  // кожна картка окремо (wordUnitLengths[wi]) вирішує лише чи влізає її
+  // НАЙДОВША ВЛАСНА група в половину ширини грід-рядка (spanForUnitLength,
+  // use-result-tile-layout.ts) — звідси тотожний розмір плитки letter_gaps/
+  // letter_rearrangement при однаковій ширині.
+  const wordUnitLengths = useMemo(
+    () => config.words.map((w) => phraseSizeInfo(w.shuffledLetters).maxUnitLength),
     [config.words]
   );
-  const resultNStyle = { "--n": resultN } as CSSProperties;
+  const resultN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
+  // --cell рахується ОДИН раз на всю вправу від ПОВНОШИРИННОЇ картки
+  // (use-result-tile-layout.ts) — gridRef вішається на грід-обгортку карток
+  // нижче (ОДНА й та сама властивість, обидві гілки — non-block і
+  // renderBlock() — монтують лише одну з них одночасно).
+  const { gridRef, cell: resultCell, spanForUnitLength } = useResultTileLayout(resultN);
+  const resultNStyle = { "--n": resultN, "--cell": `${resultCell}px` } as CSSProperties;
 
   // 2-колонковий порядок — для ≤10-гілки, на всю вправу.
   const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
@@ -355,7 +366,12 @@ export function LetterRearrangementExercise({
 
     const totalLength = word.shuffledLetters.length;
     const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
-    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
+    // Pre-check (editable) — старий евристичний needsFullSpan (fullFlags),
+    // незмінний. Locked (результат) — НОВИЙ розрахунок від реальної ширини
+    // плитки (spanForUnitLength), той самий принцип, що letter-gaps.tsx.
+    const needsFullSpan = opts.locked
+      ? spanForUnitLength(wordUnitLengths[wi]) === 2
+      : !!opts.setContentRef && fullFlags[wi];
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
@@ -403,18 +419,18 @@ export function LetterRearrangementExercise({
             </p>
             {opts.locked && wordDetail ? (
               <WordResultRows
-                studentGroups={[
+                studentGroups={splitTileGroupsOnSpace(
                   orders[wi].map(
                     (letter, i): ResultCell => ({
                       kind: "tile",
                       text: letter,
                       state: wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect",
                     })
-                  ),
-                ]}
-                correctGroups={[
-                  wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" })),
-                ]}
+                  )
+                )}
+                correctGroups={splitTileGroupsOnSpace(
+                  wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" }))
+                )}
                 studentWordText={orders[wi].join("")}
                 correctWordText={wordDetail.letters.map((l) => l.text).join("")}
                 fullyCorrect={wordDetail.isCorrect}
@@ -445,9 +461,10 @@ export function LetterRearrangementExercise({
     return (
       <div className="flex flex-col gap-3">
         <div
+          ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 md:grid-cols-2`}
+          } grid items-start gap-3 md:grid-cols-2`}
         >
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
@@ -595,8 +612,9 @@ export function LetterRearrangementExercise({
       {!useBlocks ? (
         <>
           <div
+            ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
+              isTwoColumn ? "grid items-start gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
             {displayOrder.map((wi, pos) =>
