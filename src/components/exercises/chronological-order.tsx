@@ -32,6 +32,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
@@ -97,6 +98,8 @@ export function ChronologicalOrderExercise({
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
+  const checkConfirm = useCheckConfirm();
+  const answeredCount = config.items.filter((item) => positions[item.id]?.trim()).length;
   const singleDetail = result?.detail as ChronologicalOrderDetail | undefined;
 
   // config.items приходить із sanitizeChronologicalOrder, де shuffle()
@@ -487,14 +490,25 @@ export function ChronologicalOrderExercise({
       ) : (
         <div className="flex flex-col gap-3">
           {!result ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={pending}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-            >
-              {pending ? "Перевіряю..." : "Перевірити"}
-            </button>
+            <div className="flex flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  checkConfirm.attemptCheck(config.items.length - answeredCount, handleSubmit)
+                }
+                disabled={pending || answeredCount === 0}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+              {checkConfirm.confirming && (
+                <CheckConfirmBar
+                  unansweredCount={config.items.length - answeredCount}
+                  onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                  onCancel={checkConfirm.cancelCheck}
+                />
+              )}
+            </div>
           ) : (
             <TaskResult
               correct={result.correct}

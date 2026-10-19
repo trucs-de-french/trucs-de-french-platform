@@ -13,6 +13,7 @@ import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 const POLL_INTERVAL_MS = 200;
 // Останній рядок не має "наступного", що позначив би його кінець — якщо
@@ -266,6 +267,8 @@ export function KaraokeExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as KaraokeDetail | undefined;
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const checkConfirm = useCheckConfirm();
+  const filledGaps = answers.reduce((sum, a) => sum + a.filter((v) => v.trim() !== "").length, 0);
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -677,14 +680,23 @@ export function KaraokeExercise({
 
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={() => submit(answers)}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers))}
+              disabled={pending || filledGaps === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={totalGaps - filledGaps}
+                onConfirm={() => checkConfirm.confirmCheck(() => submit(answers))}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}

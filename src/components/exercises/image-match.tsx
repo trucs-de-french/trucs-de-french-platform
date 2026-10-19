@@ -16,6 +16,7 @@ import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   IMAGE_MATCH_POOL_LABEL,
   imageMatchRemainingLabel,
@@ -91,6 +92,16 @@ export function ImageMatchExercise({
     slotDropProps,
     bankDropProps,
   } = useTilePlacement(config.items.length, locked);
+  const checkConfirm = useCheckConfirm();
+  const unplacedCount = placed.filter((p) => p === null).length;
+  function submitImageMatch() {
+    submit(
+      config.items.map((item, i) => ({
+        itemId: item.id,
+        name: placed[i] !== null ? config.bank[placed[i] as number] : "",
+      }))
+    );
+  }
 
   // ==== Гілка практики (onlyItemIds) — незалежна від result/locked вище,
   // той самий принцип, що drag-drop.tsx: той самий useTilePlacement
@@ -347,21 +358,23 @@ export function ImageMatchExercise({
 
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(
-                config.items.map((item, i) => ({
-                  itemId: item.id,
-                  name: placed[i] !== null ? config.bank[placed[i] as number] : "",
-                }))
-              )
-            }
-            disabled={pending || placed.some((p) => p === null)}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(unplacedCount, submitImageMatch)}
+              disabled={pending || config.items.length - unplacedCount === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unplacedCount}
+                onConfirm={() => checkConfirm.confirmCheck(submitImageMatch)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult
             correct={result.correct}

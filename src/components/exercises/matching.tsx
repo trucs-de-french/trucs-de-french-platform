@@ -15,6 +15,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, TaskResultPairRows } from "./task-result";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -71,6 +72,12 @@ export function MatchingExercise({
   // ==== Гілка ≤10 елементів (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as MatchingDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
+  // Кожен left — завжди в answer (right:"" для непарного), той самий
+  // принцип, що submitBlock нижче.
+  function submitSingle() {
+    single.submit(config.left.map((left) => ({ left, right: pairs[left] ?? "" })));
+  }
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -220,6 +227,14 @@ export function MatchingExercise({
 
   // ==== Гілка блоків (>10 елементів) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  // Перемикання блоку ховає підтвердження попереднього блоку — інакше
+  // застарілий бар лишався б видимим під кнопкою вже іншого, щойно
+  // показаного блоку.
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, MatchingResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -258,7 +273,15 @@ export function MatchingExercise({
   // скинути стан сусідніх блоків.
   async function submitBlock(blockIndex: number) {
     const blockLeft = leftBlocks[blockIndex];
-    const answer = blockLeft.filter((left) => pairs[left]).map((left) => ({ left, right: pairs[left] }));
+    // Кожен left цього блоку — завжди в answer, навіть без пари (right: "").
+    // Раніше .filter((left) => pairs[left]) ВІДКИДАВ непарні left, тож
+    // gradeMatching (completePairs = ...filter(p => answeredLefts.has(p.left)))
+    // бачив лише ПАРИ, що прийшли — непарні left зникали зі знаменника
+    // замість рахуватись неправильними (студент міг лишити половину пар
+    // порожньою і все одно отримати 100% за решту). right:"" ніколи не
+    // збігається з жодною реальною правою частиною, тож gradeMatching сам,
+    // без змін, зарахує такий left як неправильний.
+    const answer = blockLeft.map((left) => ({ left, right: pairs[left] ?? "" }));
     setBlockPending((prev) => ({ ...prev, [blockIndex]: true }));
     setBlockError((prev) => ({ ...prev, [blockIndex]: null }));
     try {
@@ -353,7 +376,10 @@ export function MatchingExercise({
           disabled={!!blockResult}
           statusForLeft={(left) => {
             const right = pairs[left];
-            if (!right) return undefined;
+            // Непарний left після перевірки — та сама червона "incorrect"
+            // стилізація, що й неправильна пара (відповідає порожній
+            // відповіді, зарахованій неправильною в gradeMatching вище).
+            if (!right) return blockDetail ? "incorrect" : undefined;
             const d = detailForInBlock(left, right);
             return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
           }}
@@ -375,6 +401,13 @@ export function MatchingExercise({
               </TaskResult>
             )}
           </div>
+          {blockCheckConfirm.confirming && (
+            <CheckConfirmBar
+              unansweredCount={activeBlockUnanswered}
+              onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+              onCancel={blockCheckConfirm.cancelCheck}
+            />
+          )}
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
       </div>
@@ -465,11 +498,12 @@ export function MatchingExercise({
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockLeft = leftBlocks[activeBlock];
+  const activeBlockUnanswered = activeBlockLeft.filter((left) => !pairs[left]).length;
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending || activeBlockLeft.some((left) => !pairs[left])}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === activeBlockLeft.length}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -506,7 +540,9 @@ export function MatchingExercise({
             disabled={!!single.result}
             statusForLeft={(left) => {
               const right = pairs[left];
-              if (!right) return undefined;
+              // Непарний left після перевірки — та сама червона "incorrect"
+              // стилізація, що й неправильна пара.
+              if (!right) return singleDetail ? "incorrect" : undefined;
               const d = detailFor(left, right);
               return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
             }}
@@ -516,14 +552,25 @@ export function MatchingExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() => single.submit(Object.entries(pairs).map(([left, right]) => ({ left, right })))}
-                disabled={single.pending || Object.keys(pairs).length !== config.left.length}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(config.left.length - Object.keys(pairs).length, submitSingle)
+                  }
+                  disabled={single.pending || Object.keys(pairs).length === 0}
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={config.left.length - Object.keys(pairs).length}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(submitSingle)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

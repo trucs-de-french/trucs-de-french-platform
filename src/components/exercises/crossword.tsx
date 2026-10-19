@@ -31,6 +31,7 @@ import { resolveClueView } from "./resolve-clue-view";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultCrosswordRows } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 
 type Direction = "horizontal" | "vertical";
@@ -231,6 +232,15 @@ function CrosswordBlockView({
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const allowRecheck = blockIndex !== undefined;
+  const checkConfirm = useCheckConfirm();
+  // Відкриті (не заблоковані) клітинки сітки — природна одиниця для
+  // CheckConfirmBar (кожна клітинка — окрема буква-відповідь), той самий
+  // принцип, що .flat() нижче для підрахунку.
+  const totalOpenCells = block.openCells.flat().filter(Boolean).length;
+  const unfilledCells = block.openCells.reduce(
+    (sum, row, ri) => sum + row.filter((open, ci) => open && !grid[ri][ci]).length,
+    0
+  );
 
   useEffect(() => {
     if (result) onResult(result as CrosswordBlockResult);
@@ -881,22 +891,43 @@ function CrosswordBlockView({
                 activeBlock={activeBlock}
                 onChangeBlock={onChangeBlock}
                 checkButton={
-                  <button type="button" onClick={handleSubmit} disabled={pending} className="exercise-block-check-btn">
+                  <button
+                    type="button"
+                    onClick={() => checkConfirm.attemptCheck(unfilledCells, handleSubmit)}
+                    disabled={pending || unfilledCells === totalOpenCells}
+                    className="exercise-block-check-btn"
+                  >
                     {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
                   </button>
                 }
               />
             )}
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unfilledCells}
+                onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
           </div>
         ) : !result ? (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(unfilledCells, handleSubmit)}
+              disabled={pending || unfilledCells === totalOpenCells}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unfilledCells}
+                onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult
             correct={result.correct}

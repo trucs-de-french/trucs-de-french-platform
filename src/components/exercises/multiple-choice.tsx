@@ -28,6 +28,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -125,6 +126,16 @@ export function MultipleChoiceExercise({
   const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as MultipleChoiceDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
+  function submitSingle() {
+    single.submit(
+      config.items.map((it) => ({
+        itemId: it.id,
+        selected: selections[it.id] ?? [],
+        hintUsed: hintShown.has(it.id),
+      }))
+    );
+  }
 
   // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
   // вище: завжди плаский список, без BlockNavigation, навіть якщо
@@ -684,7 +695,7 @@ export function MultipleChoiceExercise({
     );
   }
 
-  const allAnswered = config.items.every((it) => (selections[it.id] ?? []).length > 0);
+  const answeredCount = config.items.filter((it) => (selections[it.id] ?? []).length > 0).length;
 
   // startIndex — глобальна позиція ПЕРШОГО питання items (наскрізна
   // нумерація ITEM_NUMBER_BADGE, не локальна в межах блоку).
@@ -704,6 +715,11 @@ export function MultipleChoiceExercise({
 
   // ==== Гілка блоків (>5 питань) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, MultipleChoiceResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -785,6 +801,13 @@ export function MultipleChoiceExercise({
               />
             )}
           </div>
+          {blockCheckConfirm.confirming && (
+            <CheckConfirmBar
+              unansweredCount={activeBlockUnanswered}
+              onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+              onCancel={blockCheckConfirm.cancelCheck}
+            />
+          )}
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
       </div>
@@ -816,12 +839,13 @@ export function MultipleChoiceExercise({
   const activeBlockItems = itemBlocks[activeBlock];
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
-  const activeBlockAllAnswered = activeBlockItems?.every((it) => (selections[it.id] ?? []).length > 0);
+  const activeBlockUnanswered =
+    activeBlockItems?.filter((it) => (selections[it.id] ?? []).length === 0).length ?? 0;
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending || !activeBlockAllAnswered}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockItems?.length ?? 0)}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -860,22 +884,25 @@ export function MultipleChoiceExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() =>
-                  single.submit(
-                    config.items.map((it) => ({
-                      itemId: it.id,
-                      selected: selections[it.id] ?? [],
-                      hintUsed: hintShown.has(it.id),
-                    }))
-                  )
-                }
-                disabled={single.pending || !allAnswered}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(config.items.length - answeredCount, submitSingle)
+                  }
+                  disabled={single.pending || answeredCount === 0}
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={config.items.length - answeredCount}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(submitSingle)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

@@ -32,6 +32,7 @@ import {
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -153,6 +154,11 @@ export function LetterGapsExercise({
   const diacritics = useDiacriticsPopup<string>();
   const [hintedGaps, setHintedGaps] = useState<Set<string>>(new Set());
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
+  // Незаповнена пропуск-позиція (CheckConfirmBar) — той самий атом, що
+  // TaskResultGapRows/fill-blank.tsx (окремий пропуск, не слово ціле).
+  function wordUnfilledCount(wi: number) {
+    return (answers[wi] ?? []).filter((c) => c.trim() === "").length;
+  }
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   // ≤EXERCISE_BLOCK_SIZE слів (≤10) — wordBlocks матиме РІВНО один чанк,
@@ -266,6 +272,11 @@ export function LetterGapsExercise({
   // ==== Гілка ≤10 слів (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as LetterGapsDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
+  const singleUnanswered = config.words.reduce((sum, _, wi) => sum + wordUnfilledCount(wi), 0);
+  function submitSingle() {
+    single.submit({ letters: answers, hintedWordIndices: [...hintedWordIndices] });
+  }
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -340,6 +351,11 @@ export function LetterGapsExercise({
 
   // ==== Гілка блоків (>10 слів) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, LetterGapsResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -632,6 +648,13 @@ export function LetterGapsExercise({
             </TaskResult>
           )}
         </div>
+        {blockCheckConfirm.confirming && (
+          <CheckConfirmBar
+            unansweredCount={activeBlockUnanswered}
+            onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+            onCancel={blockCheckConfirm.cancelCheck}
+          />
+        )}
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
       </div>
     );
@@ -735,11 +758,20 @@ export function LetterGapsExercise({
   // деревом, яке повертає renderBlock().
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
+  const activeBlockWordIndicesForCheck = wordBlocks[activeBlock] ?? [];
+  const activeBlockUnanswered = activeBlockWordIndicesForCheck.reduce(
+    (sum, wi) => sum + wordUnfilledCount(wi),
+    0
+  );
+  const activeBlockTotalGaps = activeBlockWordIndicesForCheck.reduce(
+    (sum, wi) => sum + (answers[wi]?.length ?? 0),
+    0
+  );
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === activeBlockTotalGaps}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -798,17 +830,23 @@ export function LetterGapsExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const answer: LetterGapsAnswer = { letters: answers, hintedWordIndices: [...hintedWordIndices] };
-                  single.submit(answer);
-                }}
-                disabled={single.pending}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => singleCheckConfirm.attemptCheck(singleUnanswered, submitSingle)}
+                  disabled={single.pending || singleUnanswered === answers.reduce((n, a) => n + a.length, 0)}
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={singleUnanswered}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(submitSingle)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

@@ -16,6 +16,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowScorePill, TaskResultGapRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   IMAGE_MATCH_POOL_LABEL,
   imageMatchRemainingLabel,
@@ -126,6 +127,22 @@ export function DragDropExercise({
     slotDropProps,
     bankDropProps,
   } = useTilePlacement(totalBlanks, locked);
+  const checkConfirm = useCheckConfirm();
+  const unfilledSlots = placed.filter((p) => p === null).length;
+  function submitDragDrop() {
+    submit(
+      config.sentences.map((s, si) => ({
+        sentenceId: s.id,
+        words: Array.from({ length: blankCounts[si] }, (_, i) => {
+          const p = placed[offsets[si] + i];
+          return p !== null ? config.bank[p] : "";
+        }),
+        hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
+          translationHints.has(offsets[si] + i)
+        ),
+      }))
+    );
+  }
 
   // Підказка-переклад — ГЛОБАЛЬНИЙ індекс пропуску (offset+i, той самий,
   // що вже використовує placed/selected вище), не локальний за реченням:
@@ -500,30 +517,23 @@ export function DragDropExercise({
 
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(
-                config.sentences.map((s, si) => ({
-                  sentenceId: s.id,
-                  words: Array.from({ length: blankCounts[si] }, (_, i) => {
-                    const p = placed[offsets[si] + i];
-                    return p !== null ? config.bank[p] : "";
-                  }),
-                  // Локальний (у межах цього речення) індекс — переводимо з
-                  // глобального translationHints тут, у payload, той самий
-                  // принцип, що fill-blank.tsx.
-                  hintedWords: Array.from({ length: blankCounts[si] }, (_, i) => i).filter((i) =>
-                    translationHints.has(offsets[si] + i)
-                  ),
-                }))
-              )
-            }
-            disabled={pending || placed.some((p) => p === null)}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(unfilledSlots, submitDragDrop)}
+              disabled={pending || placed.length - unfilledSlots === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unfilledSlots}
+                onConfirm={() => checkConfirm.confirmCheck(submitDragDrop)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult
             correct={result.correct}

@@ -37,6 +37,7 @@ function buildOpenAnswerRows(
   });
 }
 import { BlockNavigation, BlockTabs } from "./block-navigation";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 type OpenAnswerResult = Extract<GradeResult, { detail: OpenAnswerDetail }>;
 type PublicQuestion = OpenAnswerPublic["questions"][number];
@@ -83,6 +84,17 @@ export function OpenAnswerCheckExercise({
   const router = useRouter();
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as OpenAnswerDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
+  const singleAnsweredCount = config.questions.filter((q) => answers[q.id]?.trim()).length;
+  function submitSingle() {
+    single.submit(
+      config.questions.map((q) => ({
+        questionId: q.id,
+        value: answers[q.id] ?? "",
+        hintUsed: hintShown.has(q.id),
+      }))
+    );
+  }
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -173,6 +185,11 @@ export function OpenAnswerCheckExercise({
 
   // ==== Гілка блоків (>5 питань) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, OpenAnswerResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -258,6 +275,13 @@ export function OpenAnswerCheckExercise({
               </TaskResult>
             )}
           </div>
+          {blockCheckConfirm.confirming && (
+            <CheckConfirmBar
+              unansweredCount={activeBlockUnanswered}
+              onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+              onCancel={blockCheckConfirm.cancelCheck}
+            />
+          )}
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
       </div>
@@ -269,12 +293,13 @@ export function OpenAnswerCheckExercise({
   const activeBlockQuestions = questionBlocks[activeBlock];
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
-  const activeBlockAllAnswered = activeBlockQuestions?.every((q) => answers[q.id]?.trim());
+  const activeBlockUnanswered =
+    activeBlockQuestions?.filter((q) => !answers[q.id]?.trim()).length ?? 0;
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending || !activeBlockAllAnswered}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockQuestions?.length ?? 0)}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -309,22 +334,28 @@ export function OpenAnswerCheckExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() =>
-                  single.submit(
-                    config.questions.map((q) => ({
-                      questionId: q.id,
-                      value: answers[q.id] ?? "",
-                      hintUsed: hintShown.has(q.id),
-                    }))
-                  )
-                }
-                disabled={single.pending || !config.questions.every((q) => answers[q.id]?.trim())}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(
+                      config.questions.length - singleAnsweredCount,
+                      submitSingle
+                    )
+                  }
+                  disabled={single.pending || singleAnsweredCount === 0}
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={config.questions.length - singleAnsweredCount}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(submitSingle)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

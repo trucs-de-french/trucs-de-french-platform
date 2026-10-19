@@ -20,6 +20,7 @@ import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 type SentenceDetail = WordChoiceDetail["sentences"][number];
 type PublicSentence = WordChoicePublic["sentences"][number];
@@ -127,6 +128,7 @@ export function WordChoiceExercise({
   const single = useExerciseCheck(taskId);
   const detail = single.result?.detail as WordChoiceDetail | undefined;
   const locked = !!single.result;
+  const singleCheckConfirm = useCheckConfirm();
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -213,14 +215,18 @@ export function WordChoiceExercise({
     return optionIds.filter((id) => !crossed.has(id));
   }
 
-  const allAnswered = config.sentences.every((s) =>
-    config.mode === "select"
+  // "Відповідь дана" — той самий предикат, що раніше рахував лише allAnswered
+  // (.every): тепер ще й рахує, СКІЛЬКИ речень не відповіли (N у
+  // CheckConfirmBar), той самий критерій в обидва боки.
+  function sentenceIsAnswered(s: PublicSentence) {
+    return config.mode === "select"
       ? (selections[s.id] ?? []).length > 0
       : remainingOptions(
           s.id,
           s.options.map((o) => o.id)
-        ).length > 0
-  );
+        ).length > 0;
+  }
+  const answeredCount = config.sentences.filter(sentenceIsAnswered).length;
 
   function sentenceAnswer(s: PublicSentence) {
     return {
@@ -401,6 +407,11 @@ export function WordChoiceExercise({
 
   // ==== Гілка блоків (>5 речень) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, WordChoiceResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -495,6 +506,13 @@ export function WordChoiceExercise({
               </TaskResult>
             )}
           </div>
+          {blockCheckConfirm.confirming && (
+            <CheckConfirmBar
+              unansweredCount={activeBlockUnanswered}
+              onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+              onCancel={blockCheckConfirm.cancelCheck}
+            />
+          )}
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
       </div>
@@ -566,19 +584,13 @@ export function WordChoiceExercise({
   const activeBlockSentences = sentenceBlocks[activeBlock];
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
-  const activeBlockAllAnswered = activeBlockSentences?.every((s) =>
-    config.mode === "select"
-      ? (selections[s.id] ?? []).length > 0
-      : remainingOptions(
-          s.id,
-          s.options.map((o) => o.id)
-        ).length > 0
-  );
+  const activeBlockUnanswered =
+    activeBlockSentences?.filter((s) => !sentenceIsAnswered(s)).length ?? 0;
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending || !activeBlockAllAnswered}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockSentences?.length ?? 0)}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -625,14 +637,25 @@ export function WordChoiceExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={single.pending || !allAnswered}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(config.sentences.length - answeredCount, handleSubmit)
+                  }
+                  disabled={single.pending || answeredCount === 0}
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={config.sentences.length - answeredCount}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(handleSubmit)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

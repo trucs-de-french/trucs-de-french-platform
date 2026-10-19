@@ -14,6 +14,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, TaskResultAnswerRows, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -142,6 +143,22 @@ export function TableFillExercise({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [hintedCells, setHintedCells] = useState<Set<string>>(new Set());
   const [hintPending, setHintPending] = useState(false);
+  // Приховані (підлягають заповненню) клітинки заданих рядків — той самий
+  // прохід, що handleSubmit/submitBlock нижче, лише для підрахунку
+  // незаповнених (CheckConfirmBar), не для побудови payload.
+  function hiddenCellsOf(rows: TableFillPublic["rows"]) {
+    const cells: { rowId: string; side: "left" | "right" }[] = [];
+    for (const row of rows) {
+      (["left", "right"] as const).forEach((side) => {
+        const hidden = side === "left" ? row.left === null : row.right === null;
+        if (hidden) cells.push({ rowId: row.id, side });
+      });
+    }
+    return cells;
+  }
+  function unfilledCellCount(rows: TableFillPublic["rows"]) {
+    return hiddenCellsOf(rows).filter((c) => !answers[cellKey(c.rowId, c.side)]?.trim()).length;
+  }
   const diacritics = useDiacriticsPopup<string>();
   const columnLabels = config.columnLabels ?? DEFAULT_COLUMN_LABELS;
 
@@ -187,6 +204,7 @@ export function TableFillExercise({
   // ==== Гілка ≤10 рядків (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as TableFillDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -477,6 +495,11 @@ export function TableFillExercise({
 
   // ==== Гілка блоків (>10 рядків) ====
   const [activeBlock, setActiveBlock] = useState(0);
+  const blockCheckConfirm = useCheckConfirm();
+  useEffect(() => {
+    blockCheckConfirm.cancelCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBlock]);
   const [blockResults, setBlockResults] = useState<Record<number, TableFillResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
@@ -616,6 +639,13 @@ export function TableFillExercise({
             </TaskResult>
           )}
         </div>
+        {blockCheckConfirm.confirming && (
+          <CheckConfirmBar
+            unansweredCount={activeBlockUnanswered}
+            onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+            onCancel={blockCheckConfirm.cancelCheck}
+          />
+        )}
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
       </div>
     );
@@ -644,11 +674,13 @@ export function TableFillExercise({
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
+  const activeBlockRows = rowBlocks[activeBlock] ?? [];
+  const activeBlockUnanswered = unfilledCellCount(activeBlockRows);
   const checkButtonEl = useBlocks ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
-      disabled={activeBlockPending}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
+      disabled={activeBlockPending || activeBlockUnanswered === hiddenCellsOf(activeBlockRows).length}
       className="exercise-block-check-btn"
     >
       {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
@@ -729,14 +761,28 @@ export function TableFillExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={single.pending}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-              >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(unfilledCellCount(config.rows), handleSubmit)
+                  }
+                  disabled={
+                    single.pending ||
+                    unfilledCellCount(config.rows) === hiddenCellsOf(config.rows).length
+                  }
+                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                >
+                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={unfilledCellCount(config.rows)}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(handleSubmit)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

@@ -17,6 +17,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps/ChronologicalOrderPracticeProps.
@@ -46,6 +47,16 @@ export function SortColumnsExercise({
 }) {
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as SortColumnsDetail | undefined;
+  const checkConfirm = useCheckConfirm();
+  function submitSort() {
+    submit(
+      config.items.map((item) => ({
+        itemId: item.id,
+        columnId: assignment[item.id] ?? "",
+        hintUsed: hintedItemIds.has(item.id),
+      }))
+    );
+  }
 
   // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як один
   // елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що reorder.tsx/
@@ -359,22 +370,23 @@ export function SortColumnsExercise({
       ) : (
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(
-                config.items.map((item) => ({
-                  itemId: item.id,
-                  columnId: assignment[item.id] ?? "",
-                  hintUsed: hintedItemIds.has(item.id),
-                }))
-              )
-            }
-            disabled={pending || !allPlaced}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(pool.length, submitSort)}
+              disabled={pending || config.items.length - pool.length === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={pool.length}
+                onConfirm={() => checkConfirm.confirmCheck(submitSort)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult
             correct={result.correct}

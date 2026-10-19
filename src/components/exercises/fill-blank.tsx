@@ -15,6 +15,7 @@ import { BlockTabs } from "./block-navigation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   IMAGE_MATCH_POOL_LABEL,
   fillBlankWordPoolUsedLabel,
@@ -154,6 +155,18 @@ export function FillBlankExercise({
   const hints = config.hints ?? [];
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
+  const checkConfirm = useCheckConfirm();
+  const filledCount = answers.filter((a) => a.trim() !== "").length;
+  function submitFillBlank() {
+    // Об'єднання двох незалежних "used"-наборів (перша літера + переклад)
+    // лише ТУТ, у payload — grade.ts бачить один спільний hintedBlanks, не
+    // знає про джерело підказки.
+    const answer: FillBlankAnswer = {
+      answers,
+      hintedBlanks: [...new Set([...hintedBlanks, ...translationHints])],
+    };
+    submit(answer);
+  }
   const detail = result?.detail as FillBlankDetail | undefined;
   const gapRows = detail ? buildFillBlankGapRows(segments, detail) : undefined;
   const hintUsedCount = detail?.blanks.filter((b) => b.hintUsed).length ?? 0;
@@ -443,23 +456,23 @@ export function FillBlankExercise({
       ) : (
         <div className="flex flex-col gap-3">
           {!result ? (
-            <button
-              type="button"
-              onClick={() => {
-                // Об'єднання двох незалежних "used"-наборів (перша літера +
-                // переклад) лише ТУТ, у payload — grade.ts бачить один спільний
-                // hintedBlanks, не знає про джерело підказки.
-                const answer: FillBlankAnswer = {
-                  answers,
-                  hintedBlanks: [...new Set([...hintedBlanks, ...translationHints])],
-                };
-                submit(answer);
-              }}
-              disabled={pending}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-            >
-              {pending ? "Перевіряю..." : "Перевірити"}
-            </button>
+            <div className="flex flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={() => checkConfirm.attemptCheck(blankCount - filledCount, submitFillBlank)}
+                disabled={pending || filledCount === 0}
+                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              >
+                {pending ? "Перевіряю..." : "Перевірити"}
+              </button>
+              {checkConfirm.confirming && (
+                <CheckConfirmBar
+                  unansweredCount={blankCount - filledCount}
+                  onConfirm={() => checkConfirm.confirmCheck(submitFillBlank)}
+                  onCancel={checkConfirm.cancelCheck}
+                />
+              )}
+            </div>
           ) : (
             <TaskResult
               correct={result.correct}

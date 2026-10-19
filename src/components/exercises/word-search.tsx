@@ -29,6 +29,7 @@ import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { TaskResult } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { hintHighlightCells } from "./word-search-hint-highlight";
 
@@ -367,6 +368,7 @@ function WordSearchBlockView({
   const detail = result?.detail as WordSearchDetail | undefined;
   const locked = !!result;
   const allowRecheck = blockIndex !== undefined;
+  const checkConfirm = useCheckConfirm();
 
   useEffect(() => {
     if (result) onResult(result as WordSearchBlockResult);
@@ -924,22 +926,43 @@ function WordSearchBlockView({
                 activeBlock={activeBlock}
                 onChangeBlock={onChangeBlock}
                 checkButton={
-                  <button type="button" onClick={handleSubmit} disabled={pending} className="exercise-block-check-btn">
+                  <button
+                    type="button"
+                    onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
+                    disabled={pending || foundCount === 0}
+                    className="exercise-block-check-btn"
+                  >
                     {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
                   </button>
                 }
               />
             )}
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={totalWords - foundCount}
+                onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
           </div>
         ) : !result ? (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
+              disabled={pending || foundCount === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={totalWords - foundCount}
+                onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
         )}

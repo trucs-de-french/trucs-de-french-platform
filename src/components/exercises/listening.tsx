@@ -15,6 +15,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ImageLightbox } from "./image-lightbox";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -55,6 +56,7 @@ export function ListeningExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ListeningDetail | undefined;
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const checkConfirm = useCheckConfirm();
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -95,7 +97,10 @@ export function ListeningExercise({
     return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
   }
 
-  const allAnswered = config.questions.every((q) => answers[q.id]);
+  const answeredCount = config.questions.filter((q) => answers[q.id]).length;
+  function submitAnswers() {
+    submit(config.questions.map((q) => ({ questionId: q.id, optionId: answers[q.id] })));
+  }
 
   // ==== Гілка практики (onlyItemIds) — незалежна від result/allAnswered
   // вище: той самий принцип, що table-fill.tsx — плаский список лише
@@ -289,16 +294,25 @@ export function ListeningExercise({
 
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={() =>
-              submit(config.questions.map((q) => ({ questionId: q.id, optionId: answers[q.id] })))
-            }
-            disabled={pending || !allAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? "Перевіряю..." : "Перевірити"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                checkConfirm.attemptCheck(config.questions.length - answeredCount, submitAnswers)
+              }
+              disabled={pending || answeredCount === 0}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? "Перевіряю..." : "Перевірити"}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={config.questions.length - answeredCount}
+                onConfirm={() => checkConfirm.confirmCheck(submitAnswers)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
         )}
