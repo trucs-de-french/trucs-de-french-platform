@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -155,6 +155,7 @@ export function OpenAnswerCheckExercise({
               className="absolute top-1/2 right-2 -translate-y-1/2"
             />
           )}
+          {qDetail?.hintUsed && <HintUsedBadge />}
         </div>
         {q.hint && (
           <p className="mt-1.5 min-h-5 text-sm break-words text-neutral-600 dark:text-neutral-300">
@@ -251,6 +252,7 @@ export function OpenAnswerCheckExercise({
                 pointsPossible={blockResult.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={blockDetail ? blockQuestions.length : undefined}
+                hintSummary={{ hintCount: blockDetail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
               >
                 {blockDetail && <TaskResultGapRows rows={buildOpenAnswerRows(blockQuestions, blockDetail)} />}
               </TaskResult>
@@ -330,6 +332,7 @@ export function OpenAnswerCheckExercise({
                 pointsPossible={single.result.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={detail ? config.questions.length : undefined}
+                hintSummary={{ hintCount: detail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
               >
                 {detail && <TaskResultGapRows rows={buildOpenAnswerRows(config.questions, detail)} />}
               </TaskResult>

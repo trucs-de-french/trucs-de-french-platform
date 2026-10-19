@@ -10,7 +10,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, TaskResultAnswerRows, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
@@ -423,8 +423,8 @@ export function TableFillExercise({
               className="table-fill-input-lamp"
             />
           )}
+          {hintUsed && <HintUsedBadge />}
         </div>
-        {hintUsed && <span className="text-xs italic text-amber-600 dark:text-amber-400">з підказкою</span>}
       </div>
     );
   }
@@ -607,6 +607,10 @@ export function TableFillExercise({
               pointsPossible={blockResult.pointsPossible}
               toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
               toggleCount={blockRows.length}
+              hintSummary={{
+                hintCount: blockDetail?.blanks.filter((b) => b.hintUsed).length ?? 0,
+                reducesPoints: config.hintsReducePoints,
+              }}
             >
               {blockDetail && <TaskResultAnswerRows rows={buildAnswerRows(blockRows, blockBase, blockDetail)} />}
             </TaskResult>
@@ -740,6 +744,10 @@ export function TableFillExercise({
                 pointsPossible={single.result.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={config.rows.length}
+                hintSummary={{
+                  hintCount: singleDetail?.blanks.filter((b) => b.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               >
                 {singleDetail && <TaskResultAnswerRows rows={buildAnswerRows(config.rows, 0, singleDetail)} />}
               </TaskResult>

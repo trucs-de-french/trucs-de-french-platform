@@ -26,7 +26,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { LEGEND_TILE_SHAPE, CROSSWORD_IMAGE_GRID, LEGEND_PILL_SHAPE, LEGEND_LONG_CARD_SHAPE } from "./legend-tile-style";
 import { AudioPill } from "@/components/audio-pill";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -182,6 +182,7 @@ function CrosswordBlockView({
   blockIndex,
   active,
   isDelf,
+  hintsReducePoints,
   cols,
   zoom,
   onResult,
@@ -194,6 +195,7 @@ function CrosswordBlockView({
   blockIndex?: number;
   active: boolean;
   isDelf?: boolean;
+  hintsReducePoints: boolean;
   // ЕТАП I — спільні для ВСІХ блоків вправи (рахує/тримає CrosswordExercise):
   // cols — max(gridWidth) по всіх блоках (однакова клітинка незалежно від
   // того, який блок вужчий), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -499,6 +501,7 @@ function CrosswordBlockView({
           hinted={hintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
+        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <span className="relative aspect-square w-full overflow-hidden rounded-lg">
           <ImageOrPlaceholder
             src={clue.imageUrl}
@@ -578,6 +581,7 @@ function CrosswordBlockView({
           hinted={hintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
+        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <div className="flex items-start gap-2.5">
           {hasImage && (
             <span className="relative shrink-0">
@@ -639,6 +643,7 @@ function CrosswordBlockView({
             />
           )
         )}
+        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <button
           type="button"
           onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
@@ -862,6 +867,10 @@ function CrosswordBlockView({
                 pointsPossible={result.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={block.across.length + block.down.length}
+                hintSummary={{
+                  hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
+                  reducesPoints: hintsReducePoints,
+                }}
               >
                 <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
               </TaskResult>
@@ -895,6 +904,10 @@ function CrosswordBlockView({
             pointsPossible={result.pointsPossible}
             toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
             toggleCount={block.across.length + block.down.length}
+            hintSummary={{
+              hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
+              reducesPoints: hintsReducePoints,
+            }}
           >
             <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
           </TaskResult>
@@ -1028,6 +1041,7 @@ export function CrosswordExercise({
           block={blocks[0]}
           active
           isDelf={isDelf}
+          hintsReducePoints={config.hintsReducePoints}
           cols={maxCols}
           zoom={zoom}
           onResult={setSingleResult}
@@ -1053,6 +1067,7 @@ export function CrosswordExercise({
                 blockIndex={i}
                 active={i === activeBlock}
                 isDelf={isDelf}
+                hintsReducePoints={config.hintsReducePoints}
                 cols={maxCols}
                 zoom={zoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}

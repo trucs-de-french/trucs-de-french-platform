@@ -118,11 +118,6 @@ function ImageTile({
           className="absolute right-1.5 top-1.5"
         />
       )}
-      {hintUsed && (
-        <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
-          з підказкою
-        </span>
-      )}
     </div>
   );
 }
@@ -171,11 +166,6 @@ function TextPill({
       {audioUrl && (
         <span onClick={(e) => e.stopPropagation()}>
           <CompactAudioButton src={audioUrl} />
-        </span>
-      )}
-      {hintUsed && (
-        <span className="rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
-          з підказкою
         </span>
       )}
     </div>
@@ -247,11 +237,6 @@ function LongCard({
         )}
       </div>
       {hasImage && badge}
-      {hintUsed && (
-        <span className="absolute left-1 top-1 rounded bg-amber-100 px-1 text-[10px] italic text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
-          з підказкою
-        </span>
-      )}
     </div>
   );
 }
@@ -329,6 +314,7 @@ function WordSearchBlockView({
   blockIndex,
   active,
   isDelf,
+  hintsReducePoints,
   cols,
   zoom,
   onResult,
@@ -341,6 +327,7 @@ function WordSearchBlockView({
   blockIndex?: number;
   active: boolean;
   isDelf?: boolean;
+  hintsReducePoints: boolean;
   // ЕТАП J — спільні для ВСІХ блоків вправи (рахує/тримає WordSearchExercise):
   // cols — max(gridSize) по всіх блоках (однакова клітинка незалежно від
   // того, який блок менший), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -929,7 +916,7 @@ function WordSearchBlockView({
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
             {result && (
-              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
               <BlockNavFooter
@@ -954,7 +941,7 @@ function WordSearchBlockView({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
@@ -1077,6 +1064,7 @@ export function WordSearchExercise({
           block={blocks[0]}
           active
           isDelf={isDelf}
+          hintsReducePoints={config.hintsReducePoints}
           cols={cols}
           zoom={zoom}
           onResult={setSingleResult}
@@ -1108,6 +1096,7 @@ export function WordSearchExercise({
                 blockIndex={i}
                 active={i === activeBlock}
                 isDelf={isDelf}
+                hintsReducePoints={config.hintsReducePoints}
                 cols={cols}
                 zoom={zoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}

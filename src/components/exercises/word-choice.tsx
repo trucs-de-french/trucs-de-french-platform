@@ -484,6 +484,10 @@ export function WordChoiceExercise({
                 pointsPossible={blockResult.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={blockDetail ? blockSentences.length : undefined}
+                hintSummary={{
+                  hintCount: blockDetail?.sentences.filter((s) => s.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               >
                 {blockDetail && (
                   <TaskResultGapRows rows={buildWordChoiceRows(blockSentences, blockDetail, startIndex)} />
@@ -636,6 +640,10 @@ export function WordChoiceExercise({
                 pointsPossible={single.result.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={detail ? config.sentences.length : undefined}
+                hintSummary={{
+                  hintCount: detail?.sentences.filter((s) => s.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               >
                 {detail && <TaskResultGapRows rows={buildWordChoiceRows(config.sentences, detail, 0)} />}
               </TaskResult>

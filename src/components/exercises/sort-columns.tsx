@@ -7,7 +7,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
 import { bankTileClass, stickyPoolClass } from "./tile-styles";
-import { HintBulb, type HintBulbState } from "./hint-bulb";
+import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
@@ -207,9 +207,10 @@ export function SortColumnsExercise({
             clickItem(item.id);
           }
         }}
-        className={`flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
+        className={`relative flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
       >
         <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
+        {locked && detail?.items.find((x) => x.id === item.id)?.hintUsed && <HintUsedBadge />}
         {hintsEnabled && !locked && (
           <HintBulb
             state={bulbState(item.id)}
@@ -375,7 +376,15 @@ export function SortColumnsExercise({
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            hintSummary={{
+              hintCount: singleDetail?.items.filter((it) => it.hintUsed).length ?? 0,
+              reducesPoints: config.hintsEnabled,
+            }}
+          />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

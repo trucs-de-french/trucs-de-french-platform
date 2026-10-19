@@ -3071,6 +3071,45 @@ button.scene-bar:active .scene-bar-toggle {
 .task-result-points-pill svg {
   flex-shrink: 0;
 }
+/* Пілюля "З підказкою: N відповідей, половина балів" (мокап 3,
+   HintUsageSummary, task-result.tsx) — під рядком балів/статусу, перед
+   toggle-карткою "Правильні відповіді". Висота/лампочка — як HintPill
+   (task-panel-header.tsx), власний колір (бежевий/золотий, не нейтральний
+   білий) — відрізняється від HintPill візуально, щоб не плутати з
+   підказкою ДО перевірки. */
+.task-result-hint-summary {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 14px 0 4px;
+  border-radius: 999px;
+  border: 1px solid #f0d98a;
+  background: #fff6d6;
+  color: #6b4a14;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+}
+.task-result-hint-summary > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dark .task-result-hint-summary {
+  border-color: rgba(246, 220, 142, 0.45);
+  background: rgba(246, 220, 142, 0.12);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-hint-summary {
+    border-color: rgba(246, 220, 142, 0.45);
+    background: rgba(246, 220, 142, 0.12);
+    color: #f6dc8e;
+  }
+}
 .task-result-chip {
   display: inline-flex;
   align-items: center;
@@ -4541,6 +4580,29 @@ button.scene-bar:active .scene-bar-toggle {
    симетрично, текст лишається центрованим. Не рендеритись — надійніше за
    CSS display:none тут: кнопка не потрапляє в DOM взагалі, тож
    гарантовано не в tab-порядку й не в accessibility-дереві. */
+
+/* Бейдж "відповідь із підказкою" (мокап 3, hint-bulb.tsx HintUsedBadge) —
+   ОДИН вигляд у світлій і темній темі (золоте коло на будь-якому тлі саме
+   собою контрастне, окремого dark-перевизначення не потрібно). Викликач
+   лише додає position:relative на елемент відповіді (без overflow:hidden
+   на ньому) — цей клас сам абсолютно позиціонує бейдж у кут, трохи
+   виступаючи за межі елемента (right/top від'ємні). */
+.hint-used-badge {
+  position: absolute;
+  right: -7px;
+  top: -9px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #6b4a14;
+  box-shadow: 0 1px 4px rgba(120, 90, 20, 0.45);
+  pointer-events: none;
+}
 
 /* fill_blank (мокап "варіант 1") і drag_drop нижче — та сама лампочка
    ВСЕРЕДИНІ поля/слота, що .table-fill-input-lamp вище, лише правий

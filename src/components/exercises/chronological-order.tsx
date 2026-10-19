@@ -502,6 +502,9 @@ export function ChronologicalOrderExercise({
               pointsPossible={result.pointsPossible}
               toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
               toggleCount={detail ? 1 : undefined}
+              hintSummary={
+                detail?.hintUsed ? { hintCount: "task", reducesPoints: config.hintsReducePoints } : undefined
+              }
             >
               {detail && config.mode === "text" && (
                 <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -515,11 +515,7 @@ export function LetterGapsExercise({
             className="absolute right-1.5 top-1.5"
           />
         )}
-        {hintUsed && (
-          <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
-            з підказкою
-          </span>
-        )}
+        {hintUsed && <HintUsedBadge />}
         <div className="flex items-center gap-3">
           {(word.imageUrl || word.audioUrl) && (
             <div className="flex shrink-0 items-center gap-2">
@@ -625,6 +621,10 @@ export function LetterGapsExercise({
               pointsPossible={blockResult.pointsPossible}
               toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
               toggleCount={blockDetail ? blockDisplayOrder.length : undefined}
+              hintSummary={{
+                hintCount: blockDetail?.words.filter((w) => w.hintUsed).length ?? 0,
+                reducesPoints: config.hintsReducePoints,
+              }}
             >
               {blockDetail && (
                 <TaskResultGapRows rows={buildLetterGapsRows(blockDisplayOrder, config.words, blockDetail)} />
@@ -816,6 +816,10 @@ export function LetterGapsExercise({
                 pointsPossible={single.result.pointsPossible}
                 toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
                 toggleCount={singleDetail ? displayOrder.length : undefined}
+                hintSummary={{
+                  hintCount: singleDetail?.words.filter((w) => w.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               >
                 {singleDetail && (
                   <TaskResultGapRows rows={buildLetterGapsRows(displayOrder, config.words, singleDetail)} />

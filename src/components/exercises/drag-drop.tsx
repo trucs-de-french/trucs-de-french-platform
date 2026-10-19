@@ -6,7 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -480,15 +480,13 @@ export function DragDropExercise({
                                 className="drag-drop-slot-lamp"
                               />
                             )}
+                            {sentDetail?.blanks[i]?.hintUsed && <HintUsedBadge />}
                           </span>
                         )}
                         {i < blankCount && !locked && visibleHints.has(gi) && hint && slotFilled && (
                           <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
                             ({hint})
                           </span>
-                        )}
-                        {i < blankCount && sentDetail?.blanks[i]?.hintUsed && (
-                          <span className="text-xs italic text-amber-600 dark:text-amber-400">(з підказкою)</span>
                         )}
                       </span>
                     );
@@ -533,6 +531,10 @@ export function DragDropExercise({
             pointsPossible={result.pointsPossible}
             toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
             toggleCount={detail ? config.sentences.length : undefined}
+            hintSummary={{
+              hintCount: detail?.sentences.reduce((n, s) => n + s.blanks.filter((b) => b.hintUsed).length, 0) ?? 0,
+              reducesPoints: config.hintsReducePoints,
+            }}
           >
             {detail && (
               <TaskResultGapRows rows={buildDragDropGapRows(config.sentences, sentenceSegments, detail)} />

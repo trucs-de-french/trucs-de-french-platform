@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type {
   LetterRearrangementPublic,
   LetterRearrangementDetail,
@@ -356,11 +356,7 @@ export function LetterRearrangementExercise({
             className="absolute right-1.5 top-1.5"
           />
         )}
-        {hintUsed && (
-          <span className="absolute right-1.5 top-1.5 text-[11px] italic text-amber-600 dark:text-amber-400">
-            з підказкою
-          </span>
-        )}
+        {hintUsed && <HintUsedBadge />}
         <div className="flex items-center gap-3">
           {(word.imageUrl || word.audioUrl) && (
             <div className="flex shrink-0 items-center gap-2">
@@ -432,6 +428,10 @@ export function LetterRearrangementExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
+              hintSummary={{
+                hintCount: blockDetail?.words.filter((w) => w.hintUsed).length ?? 0,
+                reducesPoints: config.hintsReducePoints,
+              }}
             />
           )}
         </div>
@@ -589,6 +589,10 @@ export function LetterRearrangementExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hintSummary={{
+                  hintCount: singleDetail?.words.filter((w) => w.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}

@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { formatPoints } from "@/lib/exercises/format-points";
+import { HintBulb } from "./hint-bulb";
 import {
   STATUS_LABEL_NONE,
   STATUS_LABEL_PARTIAL,
@@ -54,6 +55,46 @@ function statusTone(correct: boolean, pointsEarned?: number, pointsPossible?: nu
     : { tone: "error" as const, label: STATUS_LABEL_NONE, title: STATUS_LABEL_NONE_UK };
 }
 
+// Українська плюралізація "відповідь/відповіді/відповідей" — те саме
+// правило mod10/mod100, що pluralizeMistakes (error-review-block.tsx) і
+// pluralizePoints (lib/pluralize-points.ts), інше слово.
+function pluralizeAnswers(n: number): string {
+  const abs = Math.abs(n);
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  if (mod10 === 1 && mod100 !== 11) return "відповідь";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "відповіді";
+  return "відповідей";
+}
+
+// Підсумковий рядок "З підказкою: N відповідей, половина балів" (мокап 3)
+// — одне місце для тексту/плюралізації, щоб усі типи вправ (через
+// TaskResult.hintSummary нижче) показували однаковий рядок. hintCount —
+// кількість відповідей/слів/речень/елементів із hintUsed:true у поточному
+// scope (блок чи вся вправа — той самий scope, що pointsEarned/Possible на
+// цьому ж викликові TaskResult); "task" — підказка одна на все завдання
+// (chronological_order), без рахунку.
+export function HintUsageSummary({
+  hintCount,
+  reducesPoints,
+}: {
+  hintCount: number | "task";
+  reducesPoints: boolean;
+}) {
+  if (hintCount !== "task" && hintCount <= 0) return null;
+  const suffix = reducesPoints ? ", половина балів" : "";
+  const text =
+    hintCount === "task"
+      ? `З підказкою${suffix}`
+      : `З підказкою: ${hintCount} ${pluralizeAnswers(hintCount)}${suffix}`;
+  return (
+    <span className="task-result-hint-summary">
+      <HintBulb state="available" as="span" />
+      <span className="min-w-0">{text}</span>
+    </span>
+  );
+}
+
 export function TaskResult({
   correct,
   pointsEarned,
@@ -62,6 +103,7 @@ export function TaskResult({
   toggleTitle,
   toggleCount,
   className,
+  hintSummary,
 }: {
   correct: boolean;
   pointsEarned?: number;
@@ -70,6 +112,10 @@ export function TaskResult({
   toggleTitle?: string;
   toggleCount?: number;
   className?: string;
+  // {hintCount, reducesPoints} — передається викликачем (кожен тип рахує
+  // hintUsed своєї детейл-структури сам, тут лише рендер однакового
+  // рядка-пілюлі, HintUsageSummary вище); undefined/0 — пілюля не рендериться.
+  hintSummary?: { hintCount: number | "task"; reducesPoints: boolean };
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -94,6 +140,8 @@ export function TaskResult({
           {label}
         </span>
       </div>
+
+      {hintSummary && <HintUsageSummary hintCount={hintSummary.hintCount} reducesPoints={hintSummary.reducesPoints} />}
 
       {showToggle && (
         <div className="task-result-card">

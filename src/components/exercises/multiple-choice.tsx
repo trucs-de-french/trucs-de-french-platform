@@ -778,6 +778,10 @@ export function MultipleChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hintSummary={{
+                  hintCount: blockDetail?.items.filter((it) => it.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               />
             )}
           </div>
@@ -877,6 +881,10 @@ export function MultipleChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hintSummary={{
+                  hintCount: detail?.items.filter((it) => it.hintUsed).length ?? 0,
+                  reducesPoints: config.hintsReducePoints,
+                }}
               />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}

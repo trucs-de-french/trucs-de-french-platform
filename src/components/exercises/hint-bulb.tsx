@@ -80,3 +80,23 @@ export function HintBulb({
     </button>
   );
 }
+
+// Єдиний бейдж "відповідь із підказкою" (мокап 3) — після перевірки, у
+// куті елемента відповіді (поле/слот/клітинка/плитка/картка), замість
+// розрізнених текстових маркерів кожного типу вправи ("(з підказкою)"
+// амбер-курсивом, чипи word-search тощо). Суто декоративний (не кнопка,
+// не HintBulb-варіант — той лишається інтерактивним контролом підказки
+// до перевірки), позиціонування (.hint-used-badge, globals.css) — на
+// викликачі лежить лише relative-обгортка без overflow:hidden.
+export function HintUsedBadge({ halfPoints }: { halfPoints?: boolean }) {
+  return (
+    <span
+      className="hint-used-badge"
+      role="img"
+      aria-label={halfPoints ? "Відповідь з підказкою, половина балів" : "Відповідь з підказкою"}
+      title="Відповідь з підказкою"
+    >
+      <Lightbulb size={12} strokeWidth={2.5} aria-hidden />
+    </span>
+  );
+}

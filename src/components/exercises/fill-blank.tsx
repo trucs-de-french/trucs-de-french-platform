@@ -12,7 +12,7 @@ import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor 
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { HintBulb } from "./hint-bulb";
+import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import {
@@ -156,6 +156,7 @@ export function FillBlankExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as FillBlankDetail | undefined;
   const gapRows = detail ? buildFillBlankGapRows(segments, detail) : undefined;
+  const hintUsedCount = detail?.blanks.filter((b) => b.hintUsed).length ?? 0;
   const hasWordBank = !!config.wordBank && config.wordBank.length > 0;
   const defaultSubInstruction = hasWordBank
     ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION
@@ -376,6 +377,7 @@ export function FillBlankExercise({
                       className="fill-blank-field-lamp"
                     />
                   )}
+                  {detail?.blanks[i]?.hintUsed && <HintUsedBadge />}
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceResults[String(i)] === false && (
@@ -401,11 +403,6 @@ export function FillBlankExercise({
               {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (
                 <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hints[i] ?? undefined}>
                   ({hints[i]})
-                </span>
-              )}
-              {i < blankCount && detail?.blanks[i]?.hintUsed && (
-                <span className="text-xs italic text-amber-600 dark:text-amber-400">
-                  (з підказкою)
                 </span>
               )}
             </span>
@@ -470,6 +467,7 @@ export function FillBlankExercise({
               pointsPossible={result.pointsPossible}
               toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
               toggleCount={gapRows?.length}
+              hintSummary={{ hintCount: hintUsedCount, reducesPoints: config.hintsReducePoints }}
             >
               {gapRows && <TaskResultGapRows rows={gapRows} />}
             </TaskResult>
