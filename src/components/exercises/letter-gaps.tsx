@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -191,6 +192,18 @@ export function LetterGapsExercise({
     [config.words]
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
+
+  // Один розмір плитки результату НА ВСЮ ВПРАВУ (не на картку й не на
+  // активний блок) — найдовша "одиниця переносу" (phraseSizeInfo.maxUnitLength,
+  // той самий підрахунок, що й групи WordResultRows: слово без пробілів)
+  // серед УСІХ слів вправи, включно з прихованими блоками. Задається нижче
+  // як CSS-змінна на обгортці EXERCISE_STACK — word-result-rows.tsx більше
+  // не рахує --n сам.
+  const resultN = useMemo(
+    () => Math.max(1, ...config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength)),
+    [config.words]
+  );
+  const resultNStyle = { "--n": resultN } as CSSProperties;
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
   // на всю вправу.
@@ -752,7 +765,7 @@ export function LetterGapsExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK}>
+      <div className={EXERCISE_STACK} style={resultNStyle}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -863,7 +876,7 @@ export function LetterGapsExercise({
   ) : null;
 
   return (
-    <div className={EXERCISE_STACK}>
+    <div className={EXERCISE_STACK} style={resultNStyle}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}

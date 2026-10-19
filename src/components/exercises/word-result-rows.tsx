@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 // Клітинка результату одного символу — літера-плитка (з рамкою, кольором
 // correct/incorrect) чи звичайний текст без рамки (видима літера
 // letter_gaps). Обидва варіанти мають ОДНАКОВУ геометрію (.word-result-cell,
@@ -53,18 +51,16 @@ function ResultTileRow({ groups, ariaLabel }: { groups: ResultGroup[]; ariaLabel
   );
 }
 
-function maxGroupLen(groups: ResultGroup[]): number {
-  return groups.reduce((max, g) => Math.max(max, g.length), 1);
-}
-
 // Результат картки-слова (letter_gaps/letter_rearrangement) ПІСЛЯ
 // "Перевірити" — заміняє колишній текстовий рядок "Правильне слово: ...".
 // Повністю правильна відповідь — один рядок (студентські плитки, усі
 // зелені, уже позначені state:"correct" викликачем); неправильна — два
-// рядки з підписами й розділювачем. --n (найдовша група З ОБОХ рядків) —
-// ОДИН розмір клітинки на всю картку (обидва рядки, усі групи), щоб
-// літери збігались колонка в колонку й короткі слова не ставали різного
-// розміру між картками — рахується тут, не викликачем.
+// рядки з підписами й розділювачем. --n (розмір клітинки) задається НЕ тут
+// — успадковується як CSS-змінна від спільної обгортки всіх карток вправи
+// (letter-gaps.tsx/letter-rearrangement.tsx, EXERCISE_STACK), щоб плитки
+// мали ОДНАКОВИЙ розмір в УСІХ картках вправи, а не лише в межах однієї
+// картки — інакше 6-літерне слово в одній картці й 11-літерне в сусідній
+// (того самого рядка/блоку) отримували б різні плитки.
 export function WordResultRows({
   studentGroups,
   correctGroups,
@@ -78,18 +74,15 @@ export function WordResultRows({
   correctWordText: string;
   fullyCorrect: boolean;
 }) {
-  const n = Math.max(maxGroupLen(studentGroups), maxGroupLen(correctGroups));
-  const style = { "--n": n } as CSSProperties;
-
   if (fullyCorrect) {
     return (
-      <div className="word-result-rows" style={style}>
+      <div className="word-result-rows">
         <ResultTileRow groups={studentGroups} ariaLabel={`Правильно: ${correctWordText}`} />
       </div>
     );
   }
   return (
-    <div className="word-result-rows" style={style}>
+    <div className="word-result-rows">
       <div className="word-result-row">
         <span className="word-result-row-label">Ваша відповідь</span>
         <ResultTileRow groups={studentGroups} ariaLabel={`Ваша відповідь: ${studentWordText}`} />

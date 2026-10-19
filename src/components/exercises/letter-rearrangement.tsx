@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -135,6 +136,18 @@ export function LetterRearrangementExercise({
     [config.words]
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
+
+  // Один розмір плитки результату НА ВСЮ ВПРАВУ (не на картку й не на
+  // активний блок) — найдовше "слово" (shuffledLetters тут НЕ розбивається
+  // на одиниці за пробілом, фраза рахується як одна група, той самий
+  // принцип, що й у WordResultRows для цього типу) серед УСІХ слів вправи,
+  // включно з прихованими блоками. Задається нижче як CSS-змінна на
+  // обгортці EXERCISE_STACK — word-result-rows.tsx більше не рахує --n сам.
+  const resultN = useMemo(
+    () => Math.max(1, ...config.words.map((w) => w.shuffledLetters.length)),
+    [config.words]
+  );
+  const resultNStyle = { "--n": resultN } as CSSProperties;
 
   // 2-колонковий порядок — для ≤10-гілки, на всю вправу.
   const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
@@ -466,7 +479,7 @@ export function LetterRearrangementExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK}>
+      <div className={EXERCISE_STACK} style={resultNStyle}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -555,7 +568,7 @@ export function LetterRearrangementExercise({
   ) : null;
 
   return (
-    <div className={EXERCISE_STACK}>
+    <div className={EXERCISE_STACK} style={resultNStyle}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
