@@ -310,8 +310,15 @@ export function WordChoiceExercise({
     const glueText = glueMatch ? glueMatch[0] : "";
     const restAfter = glueText ? trimmedAfter.slice(glueText.length) : trimmedAfter;
     const hasHintBulb = showHintBulb && !!s.hint;
+    const hintOpen = hasHintBulb && hintVisible.has(s.id);
+    // relative — контекст позиціювання для десктопної бульбашки нижче
+    // (absolute). md:min-h-[82px] лише коли підказка розкрита — картка не
+    // росте взагалі для однорядкових речень без підказки, і росте лише на
+    // стільки, щоб бульбашка (top ~48px + власна висота) лишалась у межах
+    // overflow-hidden картки, а не була обрізана. Лише md: на мобільному
+    // бульбашка в потоці (нижче), картці не треба штучної висоти.
     return (
-      <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
+      <div key={s.id} className={`${ITEM_CARD_WRAP} relative p-3 md:p-4 ${hintOpen ? "md:min-h-[82px]" : ""}`}>
       <div className="flex items-start gap-2.5">
         {config.sentences.length > 1 && (
           <span className={`mt-1.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
@@ -319,8 +326,9 @@ export function WordChoiceExercise({
           </span>
         )}
         {/* min-w-0 flex-1 тут (не на <p>) — колонка тексту+лампочки разом,
-            щоб жовтий блок підказки нижче міг лягти на всю її ширину, а не
-            лише на ширину <p> в сусідньому flex-ряду. */}
+            щоб мобільний чип підказки нижче міг лягти на всю її ширину, а
+            не лише на ширину <p> в сусідньому flex-ряду (десктопна
+            бульбашка — absolute від цієї ж картки, ширина тут не важлива). */}
         <div className="min-w-0 flex-1">
         {/* items-start — лампочка притиснута до ВЕРХУ першого рядка, не
             по центру всієї (можливо багаторядкової) <p>. shrink-0 на
@@ -373,15 +381,27 @@ export function WordChoiceExercise({
             state={hintShown.has(s.id) ? "used" : "available"}
             onClick={() => toggleHintVisible(s.id)}
             label={hintVisible.has(s.id) ? "Згорнути підказку" : "Показати підказку"}
+            ariaExpanded={hintVisible.has(s.id)}
             className="mt-0.5 shrink-0"
           />
         )}
         </div>
-        {/* У потоці картки (не absolute) — повторний клік на лампочці
-            згортає цей блок назад, isCorrect/hintUsed для балів незалежні
-            від hintVisible (hintShown окремий, перманентний стан вище). */}
-        {hasHintBulb && hintVisible.has(s.id) && (
-          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+        {/* Десктоп (≥768px) — бульбашка з хвостиком, absolute, прив'язана
+            до лампочки (right збігається з card padding, top ~48px —
+            одразу під лампочкою). Мобільний варіант нижче — компактний чип
+            у потоці, без стрілки (лампочка на мобільному може лежати НАД
+            другим рядком речення — немає куди чітко "прицілити" хвостик). */}
+        {hintOpen && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="word-choice-hint-bubble absolute right-3 top-12 z-20 hidden w-max max-w-[220px] md:right-4 md:block"
+          >
+            {s.hint}
+          </div>
+        )}
+        {hintOpen && (
+          <div role="status" aria-live="polite" className="word-choice-hint-chip mt-2 max-w-full md:hidden">
             {s.hint}
           </div>
         )}

@@ -10,7 +10,7 @@ export const HINT_EXPLANATIONS: Partial<Record<string, string>> = {
   letter_rearrangement: "літера стане на своє місце",
   fill_blank: "відкриється перша літера поля",
   table_fill: "відкриється перша літера поля",
-  word_choice: "підказка до речення",
+  word_choice: "підказка українською",
   chronological_order: "підказка до всього завдання",
   multiple_choice: "підказка до запитання",
 };

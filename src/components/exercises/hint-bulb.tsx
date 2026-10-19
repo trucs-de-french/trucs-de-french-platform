@@ -42,6 +42,7 @@ export function HintBulb({
   overImage,
   stopPropagation,
   className = "",
+  ariaExpanded,
 }: {
   size: HintBulbSize;
   state: HintBulbState;
@@ -62,6 +63,11 @@ export function HintBulb({
   overImage?: boolean;
   stopPropagation?: boolean;
   className?: string;
+  // Опційно — лише word_choice передає (розкрита/згорнута бульбашка
+  // підказки); undefined для решти викликачів не рендерить атрибут
+  // узагалі (React пропускає aria-* з undefined), їхня поведінка не
+  // змінюється.
+  ariaExpanded?: boolean;
 }) {
   const sizeClass = size === "md" ? LEGEND_BULB_BADGE_MD : LEGEND_BULB_BADGE_SM;
   const colorClass = state === "done" ? LEGEND_BULB_BADGE_GREEN : LEGEND_BULB_BADGE_AMBER;
@@ -93,6 +99,7 @@ export function HintBulb({
       <button
         type="button"
         aria-label={label}
+        aria-expanded={ariaExpanded}
         title={label}
         disabled={disabled}
         onMouseDown={onMouseDown}
@@ -119,6 +126,7 @@ export function HintBulb({
     <button
       type="button"
       aria-label={label}
+      aria-expanded={ariaExpanded}
       title={label}
       disabled={disabled}
       onMouseDown={onMouseDown}

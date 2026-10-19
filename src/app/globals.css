@@ -5644,3 +5644,83 @@ button.scene-bar:active .scene-bar-toggle {
     color: rgba(220, 219, 243, 0.55);
   }
 }
+/* Бульбашка підказки (десктоп, ≥768px) — заміна старого жовтого бару на
+   всю ширину картки: абсолютна позиція (right/top — Tailwind-утиліти на
+   самому елементі в word-choice.tsx), тут лише форма/колір/тінь. Стрілка
+   (::before) — класичний прийом "повернутий квадрат 45deg", той самий
+   фон+рамка, що бульбашка, перекриває верхній край на половину своєї
+   висоти, щоб шов не було видно. */
+.word-choice-hint-bubble {
+  border-radius: 10px;
+  padding: 4px 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: #fff6d6;
+  border: 1.5px solid #f0d98a;
+  color: #6b4a14;
+  box-shadow: 0 6px 14px -6px rgba(120, 90, 20, 0.45);
+}
+.word-choice-hint-bubble::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: #fff6d6;
+  border-left: 1.5px solid #f0d98a;
+  border-top: 1.5px solid #f0d98a;
+}
+/* Темна тема — існуючий золотий акцент теми (#f6dc8e, CLAUDE.md "dark gold
+   accent"), напівпрозорий фон/рамка з того самого відтінку (не Tailwind
+   amber-900/950, щоб лишатись на ЦИХ токенах, не вигадувати нову пару). */
+.dark .word-choice-hint-bubble {
+  background: rgba(246, 220, 142, 0.14);
+  border-color: rgba(246, 220, 142, 0.45);
+  color: #f6dc8e;
+  box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.55);
+}
+.dark .word-choice-hint-bubble::before {
+  background: rgba(246, 220, 142, 0.14);
+  border-color: rgba(246, 220, 142, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-hint-bubble {
+    background: rgba(246, 220, 142, 0.14);
+    border-color: rgba(246, 220, 142, 0.45);
+    color: #f6dc8e;
+    box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.55);
+  }
+  :root:not(.light) .word-choice-hint-bubble::before {
+    background: rgba(246, 220, 142, 0.14);
+    border-color: rgba(246, 220, 142, 0.45);
+  }
+}
+/* Мобільний компактний чип (<768px) — у звичайному потоці під реченням,
+   без стрілки (лампочка на мобільному може бути НАД другим рядком
+   речення, бульбашку з хвостиком там нема куди чітко "прицілити"). Ті самі
+   кольори, що .word-choice-hint-bubble. */
+.word-choice-hint-chip {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 4px 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: #fff6d6;
+  border: 1.5px solid #f0d98a;
+  color: #6b4a14;
+}
+.dark .word-choice-hint-chip {
+  background: rgba(246, 220, 142, 0.14);
+  border-color: rgba(246, 220, 142, 0.45);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-hint-chip {
+    background: rgba(246, 220, 142, 0.14);
+    border-color: rgba(246, 220, 142, 0.45);
+    color: #f6dc8e;
+  }
+}
