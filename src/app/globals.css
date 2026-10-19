@@ -4736,7 +4736,12 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
   font-family: var(--font-body);
   font-size: 18px;
-  line-height: 2.6;
+  /* 2.6 → 2.3: слот тепер ~38px (було фактично ~51-54px — спадкований
+     line-height:2.6 роздував .drag-drop-slot-word, бо не мав власного
+     line-height, див. нижче), тож рядку більше не треба настільки
+     високого leading, щоб не торкались сусідні слоти; 2.3*18=41.4px
+     лишає ~3px видимого проміжку над/під 38px слотом. */
+  line-height: 2.3;
   color: #1a1640;
   overflow-wrap: anywhere;
 }
@@ -4766,12 +4771,19 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 200px;
-  min-height: 40px;
+  /* 200px → 155px (-22.5%), 40px → 38px (мокап "варіант 1"): реальна
+     причина оверсайзу була не тут, а в .drag-drop-slot-word/-placeholder,
+     що без власного line-height успадковували 2.6 від .drag-drop-row-text
+     (2.6×15px=39px лише на текст, плюс padding — звідси видимі ~54px);
+     line-height:1.2 нижче прибирає це успадкування, тож min-height
+     реально й стає видимою висотою. */
+  width: 155px;
+  min-height: 38px;
+  line-height: 1.2;
   border-radius: 10px;
   box-sizing: border-box;
   text-align: center;
-  padding: 6px 30px;
+  padding: 6px 14px;
   cursor: pointer;
   overflow-wrap: anywhere;
   vertical-align: middle;
@@ -4859,7 +4871,9 @@ button.scene-bar:active .scene-bar-toggle {
    .drag-drop-slot. */
 @media (max-width: 480px) {
   .drag-drop-slot {
-    width: 160px;
+    /* 160px → 130px — та сама -22.5% пропорція, що десктопне звуження
+       вище (200→155), тож мобільний слот лишається вужчим за десктопний. */
+    width: 130px;
   }
 }
 
