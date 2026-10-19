@@ -32,6 +32,7 @@ import {
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { WordResultRows, type ResultCell } from "./word-result-rows";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -488,6 +489,45 @@ export function LetterGapsExercise({
     }
   }
 
+  // Клітинки результату (WordResultRows) ПО КОЖНІЙ позиції word.chars — на
+  // відміну від groupChars (вище, для живого рядка вводу), сусідні видимі
+  // літери тут НЕ об'єднуються в один <span>: кожна позиція — своя клітинка
+  // ОДНАКОВОЇ ширини в обох рядках ("Ваша відповідь"/"Правильно"), інакше
+  // колонки студентської й правильної відповіді розійдуться там, де
+  // видимі літери різної довжини сусідять із пропуском.
+  function buildGapResultCells(wi: number): {
+    studentCells: ResultCell[];
+    correctCells: ResultCell[];
+    studentWordText: string;
+    correctWordText: string;
+  } {
+    const word = config.words[wi];
+    let gi = -1;
+    const studentCells: ResultCell[] = [];
+    const correctCells: ResultCell[] = [];
+    let studentWordText = "";
+    let correctWordText = "";
+    for (const ch of word.chars) {
+      if (ch === null) {
+        gi += 1;
+        const g = gi;
+        const studentLetter = answers[wi][g] ?? "";
+        const correctLetter = word.hiddenLetters[g] ?? "";
+        const correct = normalize(studentLetter) === normalize(correctLetter);
+        studentCells.push({ kind: "tile", text: studentLetter, state: correct ? "correct" : "incorrect" });
+        correctCells.push({ kind: "tile", text: correctLetter, state: "correct" });
+        studentWordText += studentLetter;
+        correctWordText += correctLetter;
+      } else {
+        studentCells.push({ kind: "text", text: ch });
+        correctCells.push({ kind: "text", text: ch });
+        studentWordText += ch;
+        correctWordText += ch;
+      }
+    }
+    return { studentCells, correctCells, studentWordText, correctWordText };
+  }
+
   // Рендер однієї картки-слова — СПІЛЬНИЙ для обох гілок (структура карток
   // ідентична, різниться лише джерело "result"/"detail"/locked і порядок
   // gapIndex-нумерації через gapOrder). Блоки завжди single-column
@@ -567,47 +607,62 @@ export function LetterGapsExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {units.map((unit, ui) => (
-                <div key={ui} className="flex shrink-0 items-center gap-1">
-                  {groupChars(unit).map((group, ci) => {
-                    if (group.type === "letters")
+            {opts.locked ? (
+              (() => {
+                const { studentCells, correctCells, studentWordText, correctWordText } = buildGapResultCells(wi);
+                return (
+                  <WordResultRows
+                    studentCells={studentCells}
+                    correctCells={correctCells}
+                    studentWordText={studentWordText}
+                    correctWordText={correctWordText}
+                    fullyCorrect={nextHintGap(wi) === null}
+                  />
+                );
+              })()
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {units.map((unit, ui) => (
+                  <div key={ui} className="flex shrink-0 items-center gap-1">
+                    {groupChars(unit).map((group, ci) => {
+                      if (group.type === "letters")
+                        return (
+                          <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
+                            {group.text}
+                          </span>
+                        );
+                      gapIndex += 1;
+                      const gi = gapIndex;
+                      const status = gapLiveStatus(wi, gi);
                       return (
-                        <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
-                          {group.text}
-                        </span>
+                        <input
+                          key={ci}
+                          ref={diacritics.fieldRef(`${wi},${gi}`)}
+                          maxLength={1}
+                          value={answers[wi][gi]}
+                          onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
+                          }}
+                          onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                          onBlur={diacritics.onBlur}
+                          disabled={opts.locked}
+                          className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                            hintedGaps.has(`${wi},${gi}`)
+                              ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                              : status === "correct"
+                                ? LIVE_CORRECT_CLASS
+                                : status === "incorrect"
+                                  ? LIVE_INCORRECT_CLASS
+                                  : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                          }`}
+                        />
                       );
-                    gapIndex += 1;
-                    const gi = gapIndex;
-                    const status = gapLiveStatus(wi, gi);
-                    return (
-                      <input
-                        key={ci}
-                        ref={diacritics.fieldRef(`${wi},${gi}`)}
-                        maxLength={1}
-                        value={answers[wi][gi]}
-                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
-                        }}
-                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                        onBlur={diacritics.onBlur}
-                        disabled={opts.locked}
-                        className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                          hintedGaps.has(`${wi},${gi}`)
-                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                            : status === "correct"
-                              ? LIVE_CORRECT_CLASS
-                              : status === "incorrect"
-                                ? LIVE_INCORRECT_CLASS
-                                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -30,6 +30,7 @@ import {
   WORD_CARD,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
+import { WordResultRows, type ResultCell } from "./word-result-rows";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -387,23 +388,32 @@ export function LetterRearrangementExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            <SortableTileRow
-              items={orders[wi]}
-              onChange={(next) => updateOrder(wi, next)}
-              locked={opts.locked}
-              tileState={tileState}
-              compact={isCompact}
-              letterTile
-              gapClassName="gap-1"
-              lockedCount={opts.locked ? 0 : lockedCounts[wi]}
-            />
+            {opts.locked && wordDetail ? (
+              <WordResultRows
+                studentCells={orders[wi].map((letter, i): ResultCell => ({
+                  kind: "tile",
+                  text: letter,
+                  state: wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect",
+                }))}
+                correctCells={wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" }))}
+                studentWordText={orders[wi].join("")}
+                correctWordText={wordDetail.letters.map((l) => l.text).join("")}
+                fullyCorrect={wordDetail.isCorrect}
+              />
+            ) : (
+              <SortableTileRow
+                items={orders[wi]}
+                onChange={(next) => updateOrder(wi, next)}
+                locked={opts.locked}
+                tileState={tileState}
+                compact={isCompact}
+                letterTile
+                gapClassName="gap-1"
+                lockedCount={opts.locked ? 0 : lockedCounts[wi]}
+              />
+            )}
           </div>
         </div>
-        {wordDetail && !wordDetail.isCorrect && (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
-          </p>
-        )}
       </div>
     );
   }
