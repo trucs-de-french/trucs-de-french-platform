@@ -436,6 +436,12 @@ export function DragDropExercise({
                         : slotFilled
                           ? "drag-drop-slot--filled"
                           : "drag-drop-slot--empty";
+                    // Лампочка рендериться лише за цією самою умовою нижче
+                    // (!locked && !slotFilled && hint) — ширший слот
+                    // (.drag-drop-slot--has-lamp, globals.css) має
+                    // з'являтись і зникати РАЗОМ із самою лампочкою, щоб
+                    // текст ніколи не опинявся під коло.
+                    const hasLamp = !locked && !slotFilled && !!hint;
                     return (
                       <span key={i}>
                         {frenchNbsp(seg)}
@@ -449,7 +455,7 @@ export function DragDropExercise({
                               {...slotDropProps(gi)}
                               aria-pressed={selected !== null && placed[gi] === selected}
                               title={!slotFilled && visibleHints.has(gi) ? hint ?? undefined : undefined}
-                              className={`drag-drop-slot ${slotStateClass} ${
+                              className={`drag-drop-slot ${slotStateClass} ${hasLamp ? "drag-drop-slot--has-lamp" : ""} ${
                                 usedBankIndices.size < config.bank.length ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""
                               } ${selected !== null && placed[gi] === selected ? "ring-2 ring-black dark:ring-white" : ""}`}
                             >
@@ -467,7 +473,7 @@ export function DragDropExercise({
                                 щойно слот заповнений — на відміну від старої
                                 поведінки (лампочка лишалась видимою й після
                                 розстановки слова). */}
-                            {!locked && !slotFilled && hint && (
+                            {hasLamp && (
                               <HintBulb
                                 size="sm"
                                 variant="goldCircle"

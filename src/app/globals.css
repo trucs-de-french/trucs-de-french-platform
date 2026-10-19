@@ -4792,6 +4792,22 @@ button.scene-bar:active .scene-bar-toggle {
 .drag-drop-slot:disabled {
   cursor: not-allowed;
 }
+/* Слот ІЗ лампочкою (.drag-drop-slot-lamp, видиме коло 28px, right:7px) —
+   ширший на +28px і з такою ж більшою правою padding, щоб вільна (під
+   текст) площа лишалась ідентичною слоту без лампочки (155-2*14=127px /
+   130-2*14=102px): 14+28=42px правого padding точно покриває видиме коло
+   (28px) + його відступ від краю (7px) + невеликий проміжок до тексту.
+   Складений селектор (дві клас) — свідомо вищий за специфічністю, ніж
+   .drag-drop-slot сам, щоб не залежати від порядку в скомпільованому CSS. */
+.drag-drop-slot.drag-drop-slot--has-lamp {
+  width: 183px;
+  padding-right: 42px;
+}
+@media (max-width: 480px) {
+  .drag-drop-slot.drag-drop-slot--has-lamp {
+    width: 158px;
+  }
+}
 .drag-drop-slot--empty {
   background: #fff;
   border: 1.5px dashed rgba(217, 183, 101, 0.9);
