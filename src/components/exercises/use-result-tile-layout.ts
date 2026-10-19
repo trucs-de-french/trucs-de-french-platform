@@ -8,7 +8,15 @@ const CARD_PADDING_PX = 28;
 const COLUMN_GAP_PX = 12;
 const CELL_GAP_PX = 4;
 const CELL_FLOOR_PX = 18;
-const CELL_CAP_PX = 40;
+// Еталон — РЕАЛЬНА виміряна ширина поля-пропуску letter_gaps у pre-check
+// картці "se conduire" (GAP_SIZE_CLASS=h-9 w-8 → 32px, word-list-layout.ts:19),
+// однакова на 1280/820/390 (не-responsive Tailwind-клас). Висота (×1.125) і
+// шрифт (×0.5625) у globals.css (.word-result-cell) рахуються з ЦІЄЇ ж
+// ширини тими самими пропорціями, що в еталонній картці (36px/18px при
+// 32px). Це СТЕЛЯ (Math.min нижче) — плитка НІКОЛИ не перевищує еталон,
+// лише звужується, якщо найдовша група вправи не влазить навіть у
+// повношириннu картку.
+const REFERENCE_CELL_PX = 32;
 
 // Розмір плитки результату (WordResultRows) рахується ОДИН раз на всю
 // вправу від ширини ПОВНОШИРИННОЇ картки (тієї, що займає ОБИДВІ колонки
@@ -48,7 +56,7 @@ export function useResultTileLayout(n: number) {
   const halfCardInner = Math.max(0, (gridWidth - COLUMN_GAP_PX) / 2 - CARD_PADDING_PX);
   const cell =
     n > 0 && fullCardInner > 0
-      ? Math.max(CELL_FLOOR_PX, Math.min(CELL_CAP_PX, (fullCardInner - (n - 1) * CELL_GAP_PX) / n))
+      ? Math.max(CELL_FLOOR_PX, Math.min(REFERENCE_CELL_PX, (fullCardInner - (n - 1) * CELL_GAP_PX) / n))
       : CELL_FLOOR_PX;
 
   // unitLen — довжина НАЙДОВШОЇ групи (слова) САМЕ ЦІЄЇ картки (не --n,

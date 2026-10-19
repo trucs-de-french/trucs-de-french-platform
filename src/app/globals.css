@@ -4851,36 +4851,57 @@ button.scene-bar:active .scene-bar-toggle {
   flex-wrap: wrap;
   gap: 4px;
 }
+/* Розмір/шрифт — ЕТАЛОН: реальна виміряна коробка поля-пропуску
+   letter_gaps у РОБОЧОМУ (pre-check, не чіпали) стані картки "se conduire"
+   (не-compact слово, maxUnitLength<=9) — 32×36px, font 18px/500, виміряно
+   в браузері на 1280/820/390 (однаково на всіх, бо GAP_SIZE_CLASS/
+   GAP_TEXT_CLASS, word-list-layout.ts:19-20, звичайні, НЕ responsive
+   Tailwind-класи). --cell тут — ширина (32px за замовчуванням, рахується в
+   JS, use-result-tile-layout.ts), 1.125 = 36/32 (висота), 0.5625 = 18/32
+   (шрифт) — ТІ САМІ співвідношення, що в еталонній картці, без окремої
+   підлоги на шрифт (підлога лише на --cell, 18px, яка й тягне за собою
+   шрифт/висоту вниз пропорційно). */
 .word-result-cell {
   flex: none;
   width: var(--cell);
-  height: calc(var(--cell) * 1.12);
+  height: calc(var(--cell) * 1.125);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: max(13px, calc(var(--cell) * 0.5));
+  font-weight: 500;
+  font-size: calc(var(--cell) * 0.5625);
 }
 .word-result-cell--tile {
   border-radius: 8px;
   border: 1.5px solid;
 }
+.dark .word-result-cell--tile {
+  border-radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-result-cell--tile {
+    border-radius: 6px;
+  }
+}
 /* Видимі (дані, не пропущені) літери letter_gaps — тепер ТЕЖ плитка
    однакового розміру (word-result-cell), але без рамки й з тихим
    нейтральним фоном, щоб усе слово читалось як один суцільний ряд
-   плиток, а не "рамкові плитки впереміш із голим текстом". */
+   плиток, а не "рамкові плитки впереміш із голим текстом". Радіус — той
+   самий еталон 8px/6px, що word-result-cell--tile. */
 .word-result-cell--text {
   border-radius: 8px;
   background: #f4efe0;
   color: #1a1640;
 }
 .dark .word-result-cell--text {
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.07);
   color: #dcdbf3;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-result-cell--text {
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.07);
     color: #dcdbf3;
   }
