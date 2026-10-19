@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type {
   ChronologicalOrderPublic,
   ChronologicalOrderDetail,
@@ -101,6 +101,21 @@ export function ChronologicalOrderExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as ChronologicalOrderDetail | undefined;
 
+  // config.items приходить із sanitizeChronologicalOrder, де shuffle()
+  // недетермінований (Math.random, без seed) — кожен серверний рендер
+  // сторінки (зокрема router.refresh() у use-exercise-check.ts після
+  // "Перевірити") дає НОВИЙ порядок у новому config-пропі. Захоплюємо
+  // показаний порядок ОДИН РАЗ при монтуванні (useState-ініціалізатор, не
+  // залежить від подальших змін config) — звідти й стабільність "до
+  // перевірки" (не реагує на сам re-render/resize/theme), і стабільні
+  // мітки A, B, C... (indexToLabel за позицією в ЦЬОМУ захопленому масиві,
+  // не в живому config.items).
+  const [initialItems] = useState(() => config.items);
+  const initialLabelById = useMemo(
+    () => new Map(initialItems.map((item, i) => [item.id, indexToLabel(i)])),
+    [initialItems]
+  );
+
   // Підказка вчительки (лампочка) на все завдання — той самий принцип, що
   // word-choice.tsx (27fd820): hintShown (перманентний, іде в hintUsed) і
   // hintVisible (лише поточна видимість) розділені, щоб згортання/повторне
@@ -126,12 +141,24 @@ export function ChronologicalOrderExercise({
 
   const detail = isPractice ? practiceDetail : singleDetail;
   const locked = isPractice ? practiceCorrect : !!result;
-  // Мітка показу (A, B, C...) за ПОТОЧНИМ (перемішаним) порядком config.items
-  // — та сама indexToLabel, що рендер нижче. Потрібна тут окремо для
-  // reveal-відповіді практики (practiceCheck.revealed — масив id у
-  // правильному порядку, студенту зрозуміліше побачити "C → A → B" (мітки з
-  // екрана), ніж сирі id).
-  const labelById = new Map(config.items.map((item, i) => [item.id, indexToLabel(i)]));
+  // Мітки показу для reveal-відповіді практики (practiceCheck.revealed —
+  // масив id у правильному порядку, студенту зрозуміліше побачити
+  // "C → A → B", ніж сирі id) — те саме захоплене initialLabelById, щоб
+  // літера лишалась тією, що студент бачив на екрані.
+  const labelById = initialLabelById;
+  // Після перевірки елементи показуються у ПРАВИЛЬНОМУ хронологічному
+  // порядку (за detail.items[].correctPosition від сервера) — літера (A,
+  // B, C...) лишається прив'язаною до свого елемента (initialLabelById за
+  // id, не за новою позицією), студентський номер і green/red статус
+  // теж йдуть по itemId, не по позиції в масиві. До перевірки (!detail) —
+  // показуємо initialItems як є, без сортування.
+  const orderedItems = useMemo(() => {
+    if (!detail) return initialItems;
+    const correctPositionById = new Map(detail.items.map((d) => [d.id, d.correctPosition]));
+    return [...initialItems].sort(
+      (a, b) => (correctPositionById.get(a.id) ?? 0) - (correctPositionById.get(b.id) ?? 0)
+    );
+  }, [initialItems, detail]);
 
   useEffect(() => {
     if (!isPractice && result) onResult?.(result);
@@ -260,10 +287,18 @@ export function ChronologicalOrderExercise({
     );
   }
 
+  // Текст-підказка нумерації (дизайн B, задача M) — для image/mixed поле
+  // підписане "n°" (рядок 358 нижче), для text такого підпису біля поля
+  // нема (audit: лише буква-бейдж + текст + поле), тож формулювання інше.
+  const numberingNoteText =
+    config.mode === "text"
+      ? `Впишіть номер за порядком (від 1 до ${config.items.length}) біля кожного пункту.`
+      : `Впишіть у поле n° номер за порядком (від 1 до ${config.items.length}).`;
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
-      <div>
+      <div className="task-panel-header">
         {/* flex items-start — лампочка притиснута до верху, не по центру
             (можливо багаторядкового) блоку інструкції, той самий принцип
             flex-sibling, що word-choice.tsx (27fd820) — лампочка ніколи не
@@ -300,6 +335,13 @@ export function ChronologicalOrderExercise({
             <span className="word-choice-hint-chip-text">{config.hint}</span>
           </div>
         )}
+        <p className="chrono-order-note">
+          <span className="chrono-order-note-badge" aria-hidden="true">
+            n°
+          </span>
+          {numberingNoteText}
+        </p>
+        <div className="task-panel-header-divider" data-header-divider="" />
       </div>
 
       {config.mode === "image" || config.mode === "mixed" ? (
@@ -308,8 +350,8 @@ export function ChronologicalOrderExercise({
         // версія — 2/3 колонки з великим квадратом (до 12rem) — і 10
         // елементів розтягувались на кілька екранів прокрутки).
         <div className={COMPACT_IMAGE_GRID}>
-          {config.items.map((item, i) => {
-            const label = indexToLabel(i);
+          {orderedItems.map((item) => {
+            const label = initialLabelById.get(item.id) ?? "";
             return (
               <div
                 key={item.id}
@@ -376,8 +418,8 @@ export function ChronologicalOrderExercise({
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
         <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
-          {config.items.map((item, i) => {
-            const label = indexToLabel(i);
+          {orderedItems.map((item) => {
+            const label = initialLabelById.get(item.id) ?? "";
             return (
               <div
                 key={item.id}

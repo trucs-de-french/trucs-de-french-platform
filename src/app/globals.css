@@ -1891,6 +1891,42 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Хронологічний порядок (chronological-order.tsx) — допоміжний рядок
+   нумерації під інструкцією, над роздільником (дизайн B): indigo-бейдж
+   "n°" + коротке пояснення тим самим кольором, що UK-рядок інструкції
+   (.task-panel-instruction-uk вище). */
+.chrono-order-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: #55546b;
+}
+.dark .chrono-order-note {
+  color: rgba(246, 239, 214, 0.72);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-order-note {
+    color: rgba(246, 239, 214, 0.72);
+  }
+}
+.chrono-order-note-badge {
+  display: inline-flex;
+  height: 22px;
+  min-width: 22px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 /* Мокап "варіант 2" — золота плитка клітинки кросворду (crossword.tsx):
    видима форма — ОКРЕМИЙ абсолютно позиційований шар (top/right/bottom/
    left: 1px) усередині незмінної за розміром <td> (var(--cw)), а не рамка
