@@ -119,7 +119,7 @@ export function TrueFalseExercise({
 
   const practiceAllAnswered = practiceStatements.every((s) => answers[s.id] !== undefined);
 
-  // globalIndex — нумерація (ITEM_NUMBER_BADGE) наскрізна по всій вправі.
+  // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі.
   function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
     const showPill = !!d && shouldShowRowScorePill(d.points);
     const rowAriaLabel = d && !showPill ? rowResultAriaLabel(d.isCorrect) : undefined;
@@ -132,7 +132,7 @@ export function TrueFalseExercise({
       >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
-            <span className="glass-number-badge" aria-hidden="true">
+            <span className="item-number-badge" aria-label={`Твердження ${globalIndex + 1}`}>
               {globalIndex + 1}
             </span>
           )}

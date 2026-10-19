@@ -80,7 +80,7 @@ function TableFillColumn({
             key={row.id}
             className={`table-fill-row glass-item-card ${scorePill ? "table-fill-row--scored" : ""}`}
           >
-            <span className="table-fill-row-num" aria-hidden="true">
+            <span className="item-number-badge table-fill-row-num" aria-label={`Рядок ${numberOffset + i + 1}`}>
               {numberOffset + i + 1}
             </span>
             <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>

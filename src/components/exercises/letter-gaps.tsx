@@ -602,7 +602,7 @@ export function LetterGapsExercise({
             className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
           >
             <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
-              <span className="word-card-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
+              <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}

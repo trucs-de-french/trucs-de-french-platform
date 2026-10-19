@@ -329,7 +329,9 @@ export function ImageMatchExercise({
                     useFocus
                   />
                 </button>
-                <span className="image-match-card-badge">{i + 1}</span>
+                <span className="item-number-badge image-match-card-badge" aria-label={`Картка ${i + 1}`}>
+                  {i + 1}
+                </span>
               </div>
               <button
                 type="button"

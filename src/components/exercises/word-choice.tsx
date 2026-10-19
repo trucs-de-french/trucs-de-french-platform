@@ -7,7 +7,7 @@ import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult 
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
-import { ITEM_NUMBER_BADGE, ITEM_CARD_WRAP } from "./answer-card-style";
+import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -294,7 +294,7 @@ export function WordChoiceExercise({
     );
   }
 
-  // globalIndex — нумерація (ITEM_NUMBER_BADGE) наскрізна по всій вправі
+  // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі
   // (не локальна в межах блоку): картка №6 у другому блоці показує "6", не
   // "1" — викликач передає позицію в config.sentences, не в межах блоку.
   // showHintBulb — false лише в гілці практики (вимкнено нижче, п.6
@@ -324,7 +324,7 @@ export function WordChoiceExercise({
       <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
       <div className="flex items-start gap-2.5">
         {config.sentences.length > 1 && (
-          <span className={`mt-1.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
+          <span className="item-number-badge mt-1.5" aria-label={`Речення ${globalIndex + 1}`}>
             {globalIndex + 1}
           </span>
         )}

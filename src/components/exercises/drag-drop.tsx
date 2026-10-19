@@ -427,7 +427,9 @@ export function DragDropExercise({
               role={rowAriaLabel ? "group" : undefined}
               aria-label={rowAriaLabel}
             >
-              <span className="drag-drop-row-number">{si + 1}</span>
+              <span className="item-number-badge drag-drop-row-number" aria-label={`Речення ${si + 1}`}>
+                {si + 1}
+              </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 {!hidePoints && (pointsVisible || showPill) && (
                   <p>

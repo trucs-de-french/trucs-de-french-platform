@@ -14,7 +14,6 @@ import { ImageLightbox } from "./image-lightbox";
 import {
   ANSWER_CHIP_DEFAULT,
   COMPACT_IMAGE_FILL,
-  ITEM_NUMBER_BADGE,
   ITEM_CARD_WRAP as CARD_WRAP,
 } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
@@ -145,7 +144,7 @@ export function MultipleChoiceExercise({
   const practiceItems = isPractice
     ? config.items.filter((it) => practice!.onlyItemIds.includes(it.id))
     : [];
-  // originalIndexOf — щоб ITEM_NUMBER_BADGE/aria-label лишались
+  // originalIndexOf — щоб .item-number-badge/aria-label лишались
   // ОРИГІНАЛЬНИМИ номерами питань вправи, а не позицією у звуженому
   // практичному підсписку.
   const originalIndexOf = new Map(config.items.map((it, i) => [it.id, i]));
@@ -386,7 +385,7 @@ export function MultipleChoiceExercise({
     return (
       <div className={`flex items-start gap-2.5 p-3 ${extraClassName}`}>
         {config.items.length > 1 && (
-          <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+          <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
             {index + 1}
           </span>
         )}
@@ -630,7 +629,7 @@ export function MultipleChoiceExercise({
       <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.items.length > 1 && (
-            <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+            <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
               {index + 1}
             </span>
           )}
@@ -698,7 +697,7 @@ export function MultipleChoiceExercise({
   const answeredCount = config.items.filter((it) => (selections[it.id] ?? []).length > 0).length;
 
   // startIndex — глобальна позиція ПЕРШОГО питання items (наскрізна
-  // нумерація ITEM_NUMBER_BADGE, не локальна в межах блоку).
+  // нумерація .item-number-badge, не локальна в межах блоку).
   function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
     return config.display === "dropdown" ? (
       <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>

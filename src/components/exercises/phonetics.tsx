@@ -52,9 +52,6 @@ function DriveAudioBlock({ url }: { url: string }) {
   );
 }
 
-const NUMBER_BADGE =
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white";
-
 export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
@@ -91,7 +88,9 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               className="@container flex min-w-0 flex-col gap-3 rounded-2xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-4 glass-gap-shadow dark:shadow-sm @[480px]:flex-row @[480px]:items-start @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
-                <span className={NUMBER_BADGE}>{i + 1}</span>
+                <span className="item-number-badge" aria-label={`Репліка ${i + 1}`}>
+                  {i + 1}
+                </span>
                 <div className="flex min-w-0 flex-col gap-1">
                   <span className="break-words font-content text-[16px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
                     {item.text}

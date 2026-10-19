@@ -16,7 +16,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ImageLightbox } from "./image-lightbox";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_NUMBER_BADGE } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -244,7 +244,7 @@ export function ListeningExercise({
           const header = (
             <div className="flex items-start gap-2.5 p-3">
               {config.questions.length > 1 && (
-                <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
+                <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
                   {index + 1}
                 </span>
               )}

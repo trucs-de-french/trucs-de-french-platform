@@ -1271,8 +1271,6 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-bg: rgba(255, 255, 255, 0.9);
   --glass-item-border: rgba(75, 70, 218, 0.16);
   --glass-item-shadow: 0 2px 8px rgba(31, 29, 58, 0.08);
-  --glass-badge-bg: #4b46da;
-  --glass-badge-text: #ffffff;
   --glass-answer-bg: rgba(255, 255, 255, 0.92);
   --glass-answer-border: #b9b6ee;
   --glass-answer-text: #3b36c4;
@@ -1317,8 +1315,6 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-bg: rgba(255, 255, 255, 0.06);
   --glass-item-border: rgba(243, 217, 139, 0.25);
   --glass-item-shadow: none;
-  --glass-badge-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-  --glass-badge-text: #1a1640;
   --glass-answer-bg: transparent;
   --glass-answer-border: rgba(243, 217, 139, 0.55);
   --glass-answer-text: #f6dc8e;
@@ -1348,8 +1344,6 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-bg: rgba(255, 255, 255, 0.06);
     --glass-item-border: rgba(243, 217, 139, 0.25);
     --glass-item-shadow: none;
-    --glass-badge-bg: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-    --glass-badge-text: #1a1640;
     --glass-answer-bg: transparent;
     --glass-answer-border: rgba(243, 217, 139, 0.55);
     --glass-answer-text: #f6dc8e;
@@ -2067,19 +2061,6 @@ button, input, textarea, select, label, nav, aside {
   .glass-reading-passage {
     padding: 16px;
   }
-}
-.glass-number-badge {
-  display: flex;
-  height: 24px;
-  width: 24px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: var(--glass-badge-bg);
-  color: var(--glass-badge-text);
-  font-size: 12px;
-  font-weight: 700;
 }
 .glass-answer-btn {
   background: var(--glass-answer-bg);
@@ -4523,7 +4504,7 @@ button.scene-bar:active .scene-bar-toggle {
    французько/українських колонок цього типу задач. */
 .table-fill-row {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr);
   /* stretch (не center): коли слово переноситься на 2 рядки (<768px),
      обидві комірки рядка мають вирівнятись по висоті найвищої — див.
      .table-fill-row-cell, де сам вміст все одно центрується по вертикалі
@@ -4536,25 +4517,12 @@ button.scene-bar:active .scene-bar-toggle {
    (після перевірки) — інакше порожня зарезервована колонка стискала б
    обидві комірки-чипи. */
 .table-fill-row--scored {
-  grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr) auto;
 }
+/* Позиція-виняток: бейдж — комірка grid-рядка (не inline-рядок), тож
+   лише self-alignment тут — форма/колір/шрифт з .item-number-badge. */
 .table-fill-row-num {
   align-self: center;
-  width: 20px;
-  flex-shrink: 0;
-  text-align: center;
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 800;
-  color: #b8902f;
-}
-.dark .table-fill-row-num {
-  color: #f6dc8e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .table-fill-row-num {
-    color: #f6dc8e;
-  }
 }
 .table-fill-row-cell {
   display: flex;
@@ -4759,8 +4727,14 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 14px;
   box-sizing: border-box;
 }
-.drag-drop-row-number,
-.word-card-number-badge {
+/* Єдиний бейдж-номер елемента (питання/речення/рядка/слова) — ОДНЕ
+   джерело правди для всіх типів вправ, що мають порядковий номер.
+   Еталон — колишній .word-card-number-badge (letter_gaps/
+   letter_rearrangement): 26px градієнтний кружок #2f2c6b→#4b46da,
+   білий Nunito 13px/800. Модифікатори-класи нижче (drag-drop-row-number/
+   image-match-card-badge/table-fill-row-num) додають лише позицію,
+   НЕ форму/колір/шрифт — ті завжди беруться звідси. */
+.item-number-badge {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4777,12 +4751,11 @@ button.scene-bar:active .scene-bar-toggle {
 .drag-drop-row-number {
   margin-top: 7px;
 }
-/* Нумерація картки-слова letter_rearrangement/letter_gaps — той самий
-   градієнтний кружок, що drag-drop-row-number/image-match-card-badge,
-   inline на початку рядка з українською підказкою (не абсолютний, як у
-   image-match — там бейдж лежить НАД картинкою, тут немає картинки, якою
-   можна перекритись). align-items:flex-start — якщо підказка переноситься
-   на 2 рядки, бейдж лишається вгорі біля ПЕРШОГО рядка тексту, а не
+/* Нумерація картки-слова letter_rearrangement/letter_gaps — inline на
+   початку рядка з українською підказкою (не абсолютний, як у image-match
+   — там бейдж лежить НАД картинкою, тут немає картинки, якою можна
+   перекритись). align-items:flex-start — якщо підказка переноситься на 2
+   рядки, бейдж лишається вгорі біля ПЕРШОГО рядка тексту, а не
    центрується по всій висоті блоку. */
 .word-card-number-row {
   display: flex;
@@ -5311,21 +5284,12 @@ button.scene-bar:active .scene-bar-toggle {
   border-radius: 12px;
   object-fit: cover;
 }
+/* Позиція-виняток: бейдж лежить НАД картинкою (кут), а не inline у рядку
+   — форма/колір/шрифт беруться з .item-number-badge. */
 .image-match-card-badge {
   position: absolute;
   top: 8px;
   left: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #2f2c6b, #4b46da);
-  color: #fff;
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 800;
   box-shadow: 0 2px 6px rgba(26, 22, 64, 0.35);
 }
 .image-match-slot {
