@@ -311,24 +311,20 @@ export function WordChoiceExercise({
     const restAfter = glueText ? trimmedAfter.slice(glueText.length) : trimmedAfter;
     const hasHintBulb = showHintBulb && !!s.hint;
     const hintOpen = hasHintBulb && hintVisible.has(s.id);
-    // relative — контекст позиціювання для десктопної бульбашки нижче
-    // (absolute). md:min-h-[82px] лише коли підказка розкрита — картка не
-    // росте взагалі для однорядкових речень без підказки, і росте лише на
-    // стільки, щоб бульбашка (top ~48px + власна висота) лишалась у межах
-    // overflow-hidden картки, а не була обрізана. Лише md: на мобільному
-    // бульбашка в потоці (нижче), картці не треба штучної висоти.
+    // Картка просто росте на висоту чипа, коли підказка відкрита — ніяких
+    // min-height трюків (на відміну від попередньої версії з абсолютною
+    // бульбашкою, яка потребувала зарезервованого простору).
     return (
-      <div key={s.id} className={`${ITEM_CARD_WRAP} relative p-3 md:p-4 ${hintOpen ? "md:min-h-[82px]" : ""}`}>
+      <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
       <div className="flex items-start gap-2.5">
         {config.sentences.length > 1 && (
           <span className={`mt-1.5 ${ITEM_NUMBER_BADGE}`} aria-hidden="true">
             {globalIndex + 1}
           </span>
         )}
-        {/* min-w-0 flex-1 тут (не на <p>) — колонка тексту+лампочки разом,
-            щоб мобільний чип підказки нижче міг лягти на всю її ширину, а
-            не лише на ширину <p> в сусідньому flex-ряду (десктопна
-            бульбашка — absolute від цієї ж картки, ширина тут не важлива). */}
+        {/* min-w-0 flex-1 тут (не на <p>) — колонка тексту+лампочки+чипа
+            разом, щоб чип нижче міг лягти на всю ширину колонки, а не лише
+            на ширину <p> в сусідньому flex-ряду. */}
         <div className="min-w-0 flex-1">
         {/* items-start — лампочка притиснута до ВЕРХУ першого рядка, не
             по центру всієї (можливо багаторядкової) <p>. shrink-0 на
@@ -386,29 +382,16 @@ export function WordChoiceExercise({
           />
         )}
         </div>
-        {/* Десктоп (≥768px) — бульбашка з хвостиком, absolute, прив'язана
-            до лампочки (right збігається з card padding, top ~48px —
-            одразу під лампочкою). Мобільний варіант нижче — компактний чип
-            у потоці, без стрілки (лампочка на мобільному може лежати НАД
-            другим рядком речення — немає куди чітко "прицілити" хвостик).
-            Видимість (яка з двох видима на якій ширині) — ЦІЛКОМ у
-            @media(min-width:768px) у globals.css, не в Tailwind hidden/
-            md:block/md:hidden — ті губли нешаруваному .word-choice-hint-
-            chip, що мав власний display, з тим самим наслідком, що й цей
-            баг: display:none елемент і так випадає з accessibility tree,
-            тож лише видимий елемент із цих двох озвучується aria-live. */}
+        {/* Один чип підказки, той самий вигляд на всіх ширинах — у
+            звичайному потоці під реченням, ліворуч (не absolute, без
+            стрілки, без десктоп/мобільної розбіжності — попередня версія з
+            бульбашкою+чипом прибрана, картка просто стає вищою на висоту
+            чипа). role="status"/aria-live — єдиний елемент підказки, що
+            існує, тож дублювання озвучення неможливе. */}
         {hintOpen && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="word-choice-hint-bubble absolute right-3 top-12 z-20 w-max max-w-[220px] md:right-4"
-          >
-            {s.hint}
-          </div>
-        )}
-        {hintOpen && (
-          <div role="status" aria-live="polite" className="word-choice-hint-chip mt-2 max-w-full">
-            {s.hint}
+          <div role="status" aria-live="polite" className="word-choice-hint-chip">
+            <HintBulb size="sm" state="available" variant="goldCircle" as="span" />
+            <span className="word-choice-hint-chip-text">{s.hint}</span>
           </div>
         )}
         </div>

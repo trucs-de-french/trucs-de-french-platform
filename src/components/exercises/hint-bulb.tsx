@@ -9,6 +9,7 @@ import {
   LEGEND_BULB_BADGE_GREEN,
   LEGEND_BULB_BADGE_ON_IMAGE,
   GOLD_CIRCLE_SIZE,
+  GOLD_CIRCLE_SIZE_SM,
   GOLD_CIRCLE_HIT_AREA_PADDING,
   GOLD_CIRCLE_AVAILABLE,
   GOLD_CIRCLE_DONE,
@@ -82,15 +83,20 @@ export function HintBulb({
 
   if (variant === "goldCircle") {
     const circleColorClass = state === "done" ? GOLD_CIRCLE_DONE : GOLD_CIRCLE_AVAILABLE;
+    // sm — лише декоративна лампочка всередині чипа підказки word_choice
+    // (as="span", ніколи кнопка); md лишається дефолтом для решти
+    // викликачів (crossword ClueCardHeader), їхній розмір не змінюється.
+    const circleSizeClass = size === "sm" ? GOLD_CIRCLE_SIZE_SM : GOLD_CIRCLE_SIZE;
+    const circleIconSize = size === "sm" ? 11 : 15;
     const circleIcon =
       state === "done" ? (
-        <Check size={14} strokeWidth={3} aria-hidden />
+        <Check size={size === "sm" ? 10 : 14} strokeWidth={3} aria-hidden />
       ) : (
-        <Lightbulb size={15} strokeWidth={2} aria-hidden />
+        <Lightbulb size={circleIconSize} strokeWidth={2} aria-hidden />
       );
     if (as === "span") {
       return (
-        <span aria-hidden className={`${GOLD_CIRCLE_SIZE} ${circleColorClass} ${className}`}>
+        <span aria-hidden className={`${circleSizeClass} ${circleColorClass} ${className}`}>
           {circleIcon}
         </span>
       );

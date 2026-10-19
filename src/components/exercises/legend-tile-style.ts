@@ -89,6 +89,10 @@ export const LEGEND_BULB_BADGE_ON_IMAGE = "shadow-sm ring-1 ring-white/70 dark:r
 // лампочка-вигляд за замовчуванням (legend) лишається байтово незмінним
 // для решти викликів).
 export const GOLD_CIRCLE_SIZE = "flex h-7 w-7 shrink-0 items-center justify-center rounded-full";
+// 18px варіант — лампочка ВСЕРЕДИНІ чипа підказки word_choice (декоративна,
+// не кнопка), а не заголовок картки кросворду (28px). Той самий градієнт
+// (GOLD_CIRCLE_AVAILABLE), лише менший розмір.
+export const GOLD_CIRCLE_SIZE_SM = "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full";
 // Зона дотику ≥40×40 — padding 6px навколо видимого 28px (h-7 w-7) гуртка
 // замість збільшення самого гуртка (видима форма лишається 28px, як у
 // мокапі): 28 + 6*2 = 40.
