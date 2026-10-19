@@ -4759,7 +4759,8 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 14px;
   box-sizing: border-box;
 }
-.drag-drop-row-number {
+.drag-drop-row-number,
+.word-card-number-badge {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -4772,7 +4773,21 @@ button.scene-bar:active .scene-bar-toggle {
   font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 800;
+}
+.drag-drop-row-number {
   margin-top: 7px;
+}
+/* Нумерація картки-слова letter_rearrangement/letter_gaps — той самий
+   градієнтний кружок, що drag-drop-row-number/image-match-card-badge,
+   inline на початку рядка з українською підказкою (не абсолютний, як у
+   image-match — там бейдж лежить НАД картинкою, тут немає картинки, якою
+   можна перекритись). align-items:flex-start — якщо підказка переноситься
+   на 2 рядки, бейдж лишається вгорі біля ПЕРШОГО рядка тексту, а не
+   центрується по всій висоті блоку. */
+.word-card-number-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 .drag-drop-row-text {
   flex: 1 1 auto;

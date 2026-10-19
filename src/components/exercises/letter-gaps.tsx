@@ -500,6 +500,10 @@ export function LetterGapsExercise({
       locked: boolean;
       gapOrder: GapKey[];
       setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
+      // Порядковий номер картки у ВІЗУАЛЬНОМУ порядку (displayOrder/
+      // blockDisplayOrder/practiceWordIndices, 1-based) — рахується з
+      // нуля в кожному блоці/сторінці окремо, не глобальний wi.
+      cardNumber: number;
       // Практика (пілот, частина 3) — лампочка "наступна літера" вимкнена:
       // той самий принцип, що fill_blank/multiple_choice в режимі практики
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
@@ -557,9 +561,12 @@ export function LetterGapsExercise({
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
             className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
           >
-            {word.hintText.trim() && (
-              <p className="break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">{frenchNbsp(word.hintText)}</p>
-            )}
+            <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
+              <span className="word-card-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
+                {opts.cardNumber}
+              </span>
+              {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               {units.map((unit, ui) => (
                 <div key={ui} className="flex shrink-0 items-center gap-1">
@@ -624,12 +631,13 @@ export function LetterGapsExercise({
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
           } grid gap-3 md:grid-cols-2`}
         >
-          {blockDisplayOrder.map((wi) =>
+          {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
               detail: blockDetail,
               locked: !!blockResult,
               gapOrder: blockGapOrder,
               setContentRef: blockTwoColumn.setContentRef,
+              cardNumber: pos + 1,
             })
           )}
         </div>
@@ -669,7 +677,7 @@ export function LetterGapsExercise({
     return (
       <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3">
-          {practiceWordIndices.map((wi) => {
+          {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
             const isCorrect = practiceResults[key];
             const attempts = practiceFailedAttempts[key] ?? 0;
@@ -682,6 +690,7 @@ export function LetterGapsExercise({
                   gapOrder: practiceGapOrder,
                   setContentRef: null,
                   hintDisabled: true,
+                  cardNumber: pos + 1,
                 })}
                 {isCorrect === true && (
                   <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
@@ -804,12 +813,13 @@ export function LetterGapsExercise({
               isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
-            {displayOrder.map((wi) =>
+            {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
                 detail: singleDetail,
                 locked: !!single.result,
                 gapOrder: singleGapOrder,
                 setContentRef,
+                cardNumber: pos + 1,
               })
             )}
           </div>
