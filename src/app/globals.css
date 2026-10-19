@@ -4740,6 +4740,22 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 13px;
   font-weight: 800;
 }
+/* vocab_quiz: після перевірки гурток літери навмисно повторює колір
+   картки-відповіді (зелена/червона) — той самий суцільний bg-green-600/
+   bg-red-600, що картка мала й раніше, в обох темах однаково (колір уже
+   достатньо контрастний сам по собі, окремого dark-варіанта не було й не
+   потрібно). ОКРЕМІ класи з явним background (не Tailwind bg-green-600
+   поверх .item-number-badge як утиліта в className) — інакше градієнтний
+   background-shorthand вище й кольоровий background-color рівної
+   специфічності конкурували б за порядком у згенерованому CSS, не за
+   порядком класів у рядку className (той самий урок, що
+   .word-result-cell--correct/--incorrect, word-result-rows.tsx). */
+.item-number-badge--correct {
+  background: #16a34a;
+}
+.item-number-badge--incorrect {
+  background: #dc2626;
+}
 .drag-drop-row-number {
   margin-top: 7px;
 }

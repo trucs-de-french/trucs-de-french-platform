@@ -52,23 +52,11 @@ export const ANSWER_CARD_INLINE =
 export const ITEM_CARD_WRAP =
   "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-gold-edge glass-card-shadow border-[#dcbd6e] bg-white dark:border-neutral-700 dark:bg-neutral-800";
 
-// Кругла позначка-літера (A, B, C...) — єдиний стиль для всіх трьох режимів
-// chronological_order (image/mixed/text), щоб позначка виглядала однаково
-// незалежно від верстки навколо неї. h-7 w-7 (28px), колір — той самий
-// bg-brand/text-white, що в STUDENT_BUTTON_PRIMARY (button-styles.ts) —
-// той самий акцент, не окремий відтінок. Позиціонування (absolute у
-// картці-картинці, звичайний flex-item у флет-списку) лишається на
-// викликачі — тут лише форма+колір+розмір.
-export const ITEM_LETTER_BADGE =
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
-
 // Круглий бейдж-номер питання/твердження/рядка (1, 2, 3...) — еталон:
 // колишній QUESTION_NUMBER_BADGE, що жив лише в multiple-choice.tsx
 // (режим dropdown/select). Винесений сюди без зміни класів, щоб той самий
 // вигляд повторити в multiple_choice (картинки/чипи), word_choice,
-// true_false, checkbox_grid. h-6 w-6 (24px) — менший за ITEM_LETTER_BADGE
-// (28px, літерні бейджі chronological_order) — окрема семантика (номер,
-// не літера), не чіпати ITEM_LETTER_BADGE.
+// true_false, checkbox_grid.
 export const ITEM_NUMBER_BADGE =
   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
 

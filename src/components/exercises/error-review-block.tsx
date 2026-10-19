@@ -138,10 +138,7 @@ function ErrorReviewCard({
   return (
     <div className="rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
       <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
-        <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white"
-          aria-hidden
-        >
+        <span className="item-number-badge" aria-hidden>
           {index + 1}
         </span>
         <TaskTypeIconBadge type={entry.taskType} size="sm" />

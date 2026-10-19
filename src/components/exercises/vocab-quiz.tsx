@@ -9,7 +9,7 @@ import {
   type VocabQuizQuestion,
 } from "@/lib/exercises/vocab-quiz-logic";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT, ITEM_LETTER_BADGE } from "./answer-card-style";
+import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -18,15 +18,15 @@ import { TaskResult } from "./task-result";
 
 const LETTERS = ["A", "B", "C", "D"];
 
-// Бейдж літери узгоджений з кольором картки (зелена/червона), текст
-// завжди білий — ніколи чорний на кольоровому фоні. Повні рядки (не
-// доповнення до ITEM_LETTER_BADGE), щоб bg-brand і bg-green-600/bg-red-600
-// не конкурували в одному класі — порядок класів у className НЕ визначає
-// порядок у згенерованому Tailwind CSS.
-const BADGE_SHAPE =
-  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-white sm:h-7 sm:w-7 sm:text-xs";
-const BADGE_CORRECT = `${BADGE_SHAPE} bg-green-600`;
-const BADGE_INCORRECT = `${BADGE_SHAPE} bg-red-600`;
+// Нейтральний стан (ще не обрано/не ця відповідь) — спільний
+// .item-number-badge (26px, градієнт, Nunito 13px/800), той самий вигляд,
+// що порядкові номери/літери інших типів вправ. Після перевірки колір
+// картки-відповіді (зелена/червона) навмисно повторюється й на самому
+// гуртку (BADGE_CORRECT/BADGE_INCORRECT) — лишаємо цю семантику, лише
+// форму/розмір/шрифт тепер беремо з .item-number-badge (26px), а не з
+// колишнього окремого BADGE_SHAPE.
+const BADGE_CORRECT = "item-number-badge item-number-badge--correct";
+const BADGE_INCORRECT = "item-number-badge item-number-badge--incorrect";
 
 // Якщо найдовша відповідь питання за символами перевищує цей порядок АБО
 // містить слово довше WORD_LENGTH_THRESHOLD символів — на мобільній (нижче
@@ -143,12 +143,12 @@ export function VocabQuizExercise({
                 ? "border-red-500 bg-red-50 dark:bg-red-950/30"
                 : `${ANSWER_CHIP_DEFAULT} opacity-60`;
           const badgeCls = !selected
-            ? ITEM_LETTER_BADGE
+            ? "item-number-badge"
             : isCorrect
               ? BADGE_CORRECT
               : isSelected
                 ? BADGE_INCORRECT
-                : ITEM_LETTER_BADGE;
+                : "item-number-badge";
           return (
             <button
               key={option}
@@ -157,7 +157,9 @@ export function VocabQuizExercise({
               disabled={!!selected}
               className={`${ANSWER_CHIP_BASE} ${cls} flex h-full min-h-12 min-w-0 items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 sm:py-3`}
             >
-              <span className={badgeCls}>{LETTERS[i]}</span>
+              <span className={badgeCls} aria-label={`Варіант ${LETTERS[i]}`}>
+                {LETTERS[i]}
+              </span>
               <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere] hyphens-auto">
                 {option}
               </span>
