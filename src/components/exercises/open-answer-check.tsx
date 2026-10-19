@@ -104,9 +104,17 @@ export function OpenAnswerCheckExercise({
     const hintVisible = hintShown.has(q.id);
     const showPill = !!qDetail && shouldShowRowScorePill(qDetail.points);
     const ariaResultLabel = qDetail && !showPill ? rowResultAriaLabel(qDetail.isCorrect) : undefined;
+    // Єдине питання у вправі — номер не показуємо (нема що рахувати):
+    // той самий принцип, що приховані номери в вправах з одним елементом.
+    const number = config.questions.length > 1 ? config.questions.findIndex((cq) => cq.id === q.id) + 1 : null;
     return (
       <div key={q.id}>
         <div className="flex items-start gap-3">
+          {number !== null && (
+            <span className="item-number-badge" aria-label={`Питання ${number}`}>
+              {number}
+            </span>
+          )}
           {(q.imageUrl || q.audioUrl) && (
             <div className="flex shrink-0 items-center gap-2">
               {q.imageUrl && (

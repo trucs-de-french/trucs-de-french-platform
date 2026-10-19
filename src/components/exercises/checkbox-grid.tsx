@@ -297,13 +297,18 @@ export function CheckboxGridExercise({
               <div
                 role="rowheader"
                 id={stmtId}
-                className={`col-span-full flex flex-col gap-0.5 px-2.5 py-2 md:col-span-1 md:min-h-16 md:justify-center ${rowDivider} ${GRID_FIRST_COL_DIVIDER}`}
+                className={`col-span-full flex items-start gap-2.5 px-2.5 py-2 md:col-span-1 md:min-h-16 md:items-center ${rowDivider} ${GRID_FIRST_COL_DIVIDER}`}
               >
-                <span className="min-w-0 break-words text-sm leading-snug md:text-base">
-                  {frenchNbsp(row.label)}
+                <span className="item-number-badge" aria-label={`Рядок ${index + 1}`}>
+                  {index + 1}
                 </span>
-                {pointsLabel && <span className={ROW_POINTS_LABEL_CLASS}>{pointsLabel}</span>}
-                {scorePill}
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="min-w-0 break-words text-sm leading-snug md:text-base">
+                    {frenchNbsp(row.label)}
+                  </span>
+                  {pointsLabel && <span className={ROW_POINTS_LABEL_CLASS}>{pointsLabel}</span>}
+                  {scorePill}
+                </div>
               </div>
               {columns.map((c) => {
                 const colId = `${uid}col-${c.id}`;

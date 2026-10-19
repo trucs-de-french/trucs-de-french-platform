@@ -131,7 +131,12 @@ function ClueCardHeader({
 }) {
   return (
     <div className="crossword-clue-card-header">
-      <span className="crossword-clue-card-number">{number}.</span>
+      <span
+        className={`item-number-badge crossword-clue-card-number ${number >= 10 ? "item-number-badge--wide" : ""}`}
+        aria-label={`Підказка ${number}`}
+      >
+        {number}
+      </span>
       {(isCorrect || canHint) && (
         <HintBulb
           as={isCorrect ? "span" : "button"}
@@ -659,12 +664,18 @@ function CrosswordBlockView({
           )
         )}
         {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
+        <span
+          className={`item-number-badge ${clue.number >= 10 ? "item-number-badge--wide" : ""}`}
+          aria-label={`Підказка ${clue.number}`}
+        >
+          {clue.number}
+        </span>
         <button
           type="button"
           onClick={() => setActiveClue(isActive ? null : { direction, number: clue.number })}
           className={`min-w-0 flex-1 whitespace-normal break-words text-left [overflow-wrap:anywhere] ${CLUE_TEXT} ${clueTextClass(liveStatus)}`}
         >
-          <span className="font-body font-semibold">{clue.number}.</span> {frenchNbsp(clue.clue)}
+          {frenchNbsp(clue.clue)}
         </button>
       </div>
     );

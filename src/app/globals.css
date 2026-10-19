@@ -2008,26 +2008,18 @@ button, input, textarea, select, label, nav, aside {
 }
 
 /* Заголовок картки-підказки кросворду (ClueCardHeader, crossword.tsx) —
-   номер зліва, лампочка-підказка справа, над картинкою/текстом. */
+   номер зліва (.item-number-badge, спільний бейдж), лампочка-підказка
+   справа, над картинкою/текстом. */
 .crossword-clue-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
-.crossword-clue-card-number {
-  font-family: var(--font-body);
-  font-size: 17px;
-  font-weight: 700;
-  color: #1a1640;
-}
-.dark .crossword-clue-card-number {
-  color: #f6dc8e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .crossword-clue-card-number {
-    color: #f6dc8e;
-  }
+/* Двозначний номер (10+) — менший шрифт, щоб не впирався в краї кружка;
+   той самий модифікатор використовує й CluePill нижче. */
+.item-number-badge--wide {
+  font-size: 12px;
 }
 
 /* Елементи вмісту всередині скляної панелі — тверд/false, згодом і інші

@@ -41,18 +41,10 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 // як один елемент (WHOLE_TASK_ITEM_ID, error-review.ts).
 export type ChronologicalOrderPracticeProps = { whole: true; failedAttempts: Record<string, number> };
 
-// Менший за ITEM_LETTER_BADGE (answer-card-style.ts) варіант — лише для
-// щільної сітки image/mixed нижче. ITEM_LETTER_BADGE лишається незмінним:
-// його ще використовують vocab-quiz.tsx і режим text цього ж компонента.
-const ITEM_LETTER_BADGE_SM =
-  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-medium text-white";
-
-// Бейдж для компактних рядків режиму text — трохи більший за SM (бо тут
-// немає сусідньої лупи, яка б з ним конкурувала за місце), але все одно
-// менший за спільний ITEM_LETTER_BADGE (28px): той лишається незмінним,
-// бо його й досі використовує vocab-quiz.tsx.
-const ITEM_LETTER_BADGE_TEXT =
-  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-medium text-white";
+// Літерні позначки (A, B, C...) тепер використовують спільний
+// .item-number-badge (26px градієнтний кружок) — та сама форма, що й
+// порядкові номери інших типів вправ, попри те, що тут це літера, не
+// число (клас лише про форму/колір/шрифт, вміст байдужий).
 
 // Мітка показу (A, B, C...) рахується на льоту з індексу вже перемішаного
 // config.items — публічний тип свідомо не зберігає її окремо (див.
@@ -385,7 +377,12 @@ export function ChronologicalOrderExercise({
                     className={COMPACT_IMAGE_FILL}
                     useFocus
                   />
-                  <span className={`absolute left-1 top-1 z-10 ${ITEM_LETTER_BADGE_SM}`}>{label}</span>
+                  <span
+                    className="item-number-badge image-match-card-badge z-10"
+                    aria-label={`Картка ${label}`}
+                  >
+                    {label}
+                  </span>
                   {/* boxClass без "relative": span уже absolute (своя база
                       класів компонента) — зайвий "relative" поруч з
                       "absolute" в ОДНОМУ className — та сама CSS-властивість
@@ -433,7 +430,9 @@ export function ChronologicalOrderExercise({
                 key={item.id}
                 className={`flex items-center gap-2.5 px-2.5 py-2 transition-colors ${rowStateClass(item.id)}`}
               >
-                <span className={ITEM_LETTER_BADGE_TEXT}>{label}</span>
+                <span className="item-number-badge" aria-label={`Картка ${label}`}>
+                  {label}
+                </span>
                 <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">{frenchNbsp(item.content)}</span>
                 {numberInput(item.id, "line", label, item.points)}
                 {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) && (
