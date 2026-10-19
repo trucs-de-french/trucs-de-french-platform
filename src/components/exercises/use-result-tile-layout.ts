@@ -73,3 +73,30 @@ export function useResultTileLayout(n: number) {
 
   return { gridRef, cell, spanForUnitLength, ready: gridWidth > 0 };
 }
+
+// Пара "коротких" карток (spanForUnitLength === 1) ділять один рядок
+// грід-сітки ЛИШЕ якщо вони СУСІДИ в порядку показу (жодного
+// перевпорядкування — номерація карток лишається, як є). Самотня коротка
+// картка (наступна — довга, або вона остання в списку) теж іде на всю
+// ширину — інакше порожня половина рядка. Результат — масив (1|2) ТІЄЇ Ж
+// довжини й порядку, що unitLengths, для прямого використання як
+// md:col-span-N по кожній картці видимого списку.
+export function computeResultSpans(
+  unitLengths: number[],
+  spanForUnitLength: (unitLen: number) => 1 | 2
+): (1 | 2)[] {
+  const isShort = unitLengths.map((u) => spanForUnitLength(u) === 1);
+  const spans: (1 | 2)[] = new Array(unitLengths.length).fill(2);
+  let i = 0;
+  while (i < unitLengths.length) {
+    if (isShort[i] && i + 1 < unitLengths.length && isShort[i + 1]) {
+      spans[i] = 1;
+      spans[i + 1] = 1;
+      i += 2;
+    } else {
+      spans[i] = 2;
+      i += 1;
+    }
+  }
+  return spans;
+}

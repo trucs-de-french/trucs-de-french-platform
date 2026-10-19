@@ -40,7 +40,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { useResultTileLayout } from "./use-result-tile-layout";
+import { useResultTileLayout, computeResultSpans } from "./use-result-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -591,6 +591,10 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
+      // Locked (результат) ЛИШЕ — заздалегідь порахований span (1|2) для
+      // ВСЬОГО видимого списку карток разом (computeResultSpans), той самий
+      // принцип, що letter-rearrangement.tsx.
+      resultSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -603,11 +607,10 @@ export function LetterGapsExercise({
     const { maxUnitLength } = phraseSizeInfo(word.chars);
     const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
     // Pre-check (editable) — старий евристичний needsFullSpan (fullFlags),
-    // незмінний. Locked (результат) — НОВИЙ розрахунок від реальної ширини
-    // плитки (spanForUnitLength), той самий принцип, що letter-rearrangement.tsx.
-    const needsFullSpan = opts.locked
-      ? spanForUnitLength(wordUnitLengths[wi]) === 2
-      : !!opts.setContentRef && fullFlags[wi];
+    // незмінний. Locked (результат) — opts.resultSpan, порахований ОДИН раз
+    // на весь видимий список (computeResultSpans, з урахуванням сусіда),
+    // той самий принцип, що letter-rearrangement.tsx.
+    const needsFullSpan = opts.locked ? opts.resultSpan === 2 : !!opts.setContentRef && fullFlags[wi];
     const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
     const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
@@ -725,6 +728,16 @@ export function LetterGapsExercise({
     // singleGapOrder/displayOrder у ≤10-гілці ("Tab рухається так, як
     // вправа виглядає на екрані").
     const blockGapOrder = gapOrderFor(blockDisplayOrder);
+    // Номер картки = позиція в blockDisplayOrder (той самий порядок, що вже
+    // показаний студенту до перевірки — карток НЕ перетасовуємо між
+    // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
+    // порядку (computeResultSpans дивиться лише на сусіда в ньому).
+    const blockResultSpans = blockResult
+      ? computeResultSpans(
+          blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
+          spanForUnitLength
+        )
+      : null;
 
     return (
       <div className="flex flex-col gap-3">
@@ -732,7 +745,7 @@ export function LetterGapsExercise({
           ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid items-start gap-3 md:grid-cols-2`}
+          } grid gap-3 md:grid-cols-2`}
         >
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
@@ -741,6 +754,7 @@ export function LetterGapsExercise({
               gapOrder: blockGapOrder,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
+              resultSpan: blockResultSpans?.[pos],
             })
           )}
         </div>
@@ -888,6 +902,17 @@ export function LetterGapsExercise({
     </button>
   ) : null;
 
+  // Номер картки = позиція в displayOrder (той самий порядок, що вже
+  // показаний студенту до перевірки — карток НЕ перетасовуємо між
+  // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
+  // порядку (computeResultSpans дивиться лише на сусіда в ньому).
+  const singleResultSpans = single.result
+    ? computeResultSpans(
+        displayOrder.map((wi) => wordUnitLengths[wi]),
+        spanForUnitLength
+      )
+    : null;
+
   return (
     <div className={EXERCISE_STACK} style={resultNStyle}>
       <BlockTabs
@@ -914,7 +939,7 @@ export function LetterGapsExercise({
           <div
             ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-              isTwoColumn ? "grid items-start gap-3 md:grid-cols-2" : "flex flex-col gap-3"
+              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
           >
             {displayOrder.map((wi, pos) =>
@@ -924,6 +949,7 @@ export function LetterGapsExercise({
                 gapOrder: singleGapOrder,
                 setContentRef,
                 cardNumber: pos + 1,
+                resultSpan: singleResultSpans?.[pos],
               })
             )}
           </div>
