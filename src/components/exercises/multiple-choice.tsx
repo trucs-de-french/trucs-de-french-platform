@@ -21,7 +21,7 @@ import { ChoiceQuestionCard } from "./choice-question-card";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -331,6 +331,7 @@ export function MultipleChoiceExercise({
     if (hidePoints) return null;
     if (!pointsVisible && !itemDetail) return null;
     if (itemDetail) {
+      if (!shouldShowRowScorePill(item.points)) return null;
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
       return (
         <span className="ml-2 inline-flex align-middle">
@@ -343,6 +344,16 @@ export function MultipleChoiceExercise({
         {item.points} {pluralizePoints(item.points)}
       </span>
     );
+  }
+
+  // Коли пілюля схована (рядок ≤1 бал), картка питання отримує aria-label
+  // "Правильно"/"Неправильно" (той самий принцип, що matching-board.tsx) —
+  // спільне для всіх трьох режимів рендеру (без картинок/картинки/dropdown
+  // через pointsBadge вище, тут лише обчислення самого лейбла).
+  function resultAriaLabel(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
+    if (!itemDetail || shouldShowRowScorePill(item.points)) return undefined;
+    const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
+    return rowResultAriaLabel(isCorrect);
   }
 
   // Шапка картки (бейдж номера + текст питання + підпис кількості
@@ -419,6 +430,7 @@ export function MultipleChoiceExercise({
           header={renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
           role={item.multiple ? "group" : "radiogroup"}
           ariaLabelledBy={questionId}
+          resultAriaLabel={resultAriaLabel(item, itemDetail)}
           options={item.options.map((o, idx) => {
             const opt = itemDetail?.options.find((x) => x.id === o.id);
             const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
@@ -472,8 +484,14 @@ export function MultipleChoiceExercise({
           ? "md:grid-cols-[repeat(4,minmax(0,1fr))]"
           : "md:grid-cols-[repeat(3,minmax(0,1fr))]";
 
+    const imgResultAriaLabel = resultAriaLabel(item, itemDetail);
     return (
-      <div key={item.id} className={CARD_WRAP}>
+      <div
+        key={item.id}
+        className={CARD_WRAP}
+        role={imgResultAriaLabel ? "group" : undefined}
+        aria-label={imgResultAriaLabel}
+      >
         {renderQuestionHeader(item, index, itemDetail, questionId, "md:p-4", showHintBulb)}
         <div
           role={item.multiple ? "group" : "radiogroup"}

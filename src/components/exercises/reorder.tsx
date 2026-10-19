@@ -17,7 +17,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 
@@ -88,13 +88,15 @@ function ReorderSequenceTiles({
   // послідовності зараховуються, лише якщо ВСЯ вона правильна (не по
   // окремій плитці, як score) — 0/points, а не часткове.
   const sequenceCorrect = detail?.items.every((i) => i.isCorrect) ?? false;
+  const showPill = !!detail && shouldShowRowScorePill(points);
+  const rowAriaLabel = detail && !showPill ? rowResultAriaLabel(sequenceCorrect) : undefined;
 
   // Та сама картка, що слово letter_rearrangement (WORD_CARD) — картинка
   // зліва, вміст (бали/плитки/правильний порядок) у колонці праворуч від
   // неї. Без медіа внутрішній flex-рядок лишається з ОДНИМ дочірнім
   // елементом (content), жодного порожнього місця зліва не з'являється.
   return (
-    <div className={`${WORD_CARD} max-md:p-3`}>
+    <div className={`${WORD_CARD} max-md:p-3`} role={rowAriaLabel ? "group" : undefined} aria-label={rowAriaLabel}>
       <div className="flex flex-col items-start gap-2.5 md:flex-row md:items-center md:gap-3">
         {(imageUrl || audioUrl) && (
           <div className="flex shrink-0 items-center gap-2">
@@ -117,9 +119,9 @@ function ReorderSequenceTiles({
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-2 max-md:w-full">
-          {!hidePoints && (pointsVisible || detail) && (
+          {!hidePoints && (pointsVisible || showPill) && (
             <p>
-              {detail ? (
+              {showPill ? (
                 <RowScorePill earned={sequenceCorrect ? points : 0} possible={points} full={sequenceCorrect} />
               ) : (
                 <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>

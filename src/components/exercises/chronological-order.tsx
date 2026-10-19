@@ -31,7 +31,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, TaskResultOrderRows } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultOrderRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
@@ -187,9 +187,20 @@ export function ChronologicalOrderExercise({
     const d = itemDetail(itemId);
     if (!pointsVisible && !d) return null;
     if (d) {
+      if (!shouldShowRowScorePill(points)) return null;
       return <RowScorePill earned={d.isCorrect ? points : 0} possible={points} full={d.isCorrect} />;
     }
     return <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>;
+  }
+
+  // Коли пілюля (RowScorePill) схована (рядок ≤1 бал), поле-номер — єдиний
+  // елемент відповіді цього рядка, тож воно отримує aria-label
+  // "Правильно"/"Неправильно" на додачу до власного "Номер події N" (той
+  // самий принцип, що matching-board.tsx).
+  function numberInputAriaLabel(itemId: string, points: number, base: string) {
+    const d = itemDetail(itemId);
+    if (!d || shouldShowRowScorePill(points)) return base;
+    return `${base}: ${rowResultAriaLabel(d.isCorrect)}`;
   }
 
   function handleSubmit() {
@@ -207,6 +218,7 @@ export function ChronologicalOrderExercise({
     itemId: string,
     variant: "wide" | "square" | "compact" | "line" = "wide",
     label?: string,
+    points: number = 1,
   ) {
     // "compact" — лише щільна сітка image/mixed: h-10 (40px) за замовчуванням
     // покриває і дотик, і вузький екран; sm:pointer-fine:h-8 (32px) звужує
@@ -229,7 +241,7 @@ export function ChronologicalOrderExercise({
           onChange={(e) => updatePosition(itemId, e.target.value)}
           disabled={locked}
           placeholder="№"
-          aria-label={label ? `Номер події ${label}` : "Номер події"}
+          aria-label={numberInputAriaLabel(itemId, points, label ? `Номер події ${label}` : "Номер події")}
           className={`h-10 w-12 rounded border text-center text-base ${desktopHeight} ${inputClass(itemId)}`}
         />
       );
@@ -353,9 +365,9 @@ export function ChronologicalOrderExercise({
                 )}
                 <div className="mt-1.5 flex items-center justify-center gap-1.5">
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">n°</span>
-                  {numberInput(item.id, "compact", label)}
+                  {numberInput(item.id, "compact", label, item.points)}
                 </div>
-                {!hidePoints && (pointsVisible || itemDetail(item.id)) ? (
+                {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) ? (
                   <p className="flex justify-center">{pointsLabel(item.id, item.points)}</p>
                 ) : null}
               </div>
@@ -381,8 +393,8 @@ export function ChronologicalOrderExercise({
               >
                 <span className={ITEM_LETTER_BADGE_TEXT}>{label}</span>
                 <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">{frenchNbsp(item.content)}</span>
-                {numberInput(item.id, "line", label)}
-                {!hidePoints && (pointsVisible || itemDetail(item.id)) && (
+                {numberInput(item.id, "line", label, item.points)}
+                {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) && (
                   <span className="flex-none">{pointsLabel(item.id, item.points)}</span>
                 )}
               </div>

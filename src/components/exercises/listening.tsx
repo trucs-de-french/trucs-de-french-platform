@@ -21,7 +21,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що TableFillPracticeProps: елемент тут question.id (стабільний,
@@ -233,6 +233,9 @@ export function ListeningExercise({
         {config.questions.map((q, index) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           const questionId = `listening-q-${q.id}`;
+          const qCorrect = qDetail?.options.every((o) => o.correct === o.selected) ?? false;
+          const showPill = !!qDetail && shouldShowRowScorePill(q.points);
+          const resultAriaLabel = qDetail && !showPill ? rowResultAriaLabel(qCorrect) : undefined;
           const header = (
             <div className="flex items-start gap-2.5 p-3">
               {config.questions.length > 1 && (
@@ -243,14 +246,10 @@ export function ListeningExercise({
               <p id={questionId} className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
                 {frenchNbsp(q.question)}
                 {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-                {!hidePoints && (pointsVisible || qDetail) && (
+                {!hidePoints && (pointsVisible || showPill) && (
                   <span className="ml-2 inline-flex align-middle">
-                    {qDetail ? (
-                      <RowScorePill
-                        earned={qDetail.options.every((o) => o.correct === o.selected) ? q.points : 0}
-                        possible={q.points}
-                        full={qDetail.options.every((o) => o.correct === o.selected)}
-                      />
+                    {showPill ? (
+                      <RowScorePill earned={qCorrect ? q.points : 0} possible={q.points} full={qCorrect} />
                     ) : (
                       <span className={SCORE_LABEL_CLASS}>{`${q.points} ${pluralizePoints(q.points)}`}</span>
                     )}
@@ -265,6 +264,7 @@ export function ListeningExercise({
               header={header}
               role="radiogroup"
               ariaLabelledBy={questionId}
+              resultAriaLabel={resultAriaLabel}
               options={q.options.map((o) => {
                 const od = qDetail?.options.find((x) => x.id === o.id);
                 const chosen = qDetail ? !!od?.selected || !!od?.correct : answers[q.id] === o.id;

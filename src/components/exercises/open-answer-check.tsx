@@ -16,7 +16,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, TaskResultGapRows } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultGapRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 
@@ -90,6 +90,8 @@ export function OpenAnswerCheckExercise({
 
   function renderQuestion(q: PublicQuestion, qDetail: OpenAnswerDetail["questions"][number] | undefined, locked: boolean) {
     const hintVisible = hintShown.has(q.id);
+    const showPill = !!qDetail && shouldShowRowScorePill(qDetail.points);
+    const ariaResultLabel = qDetail && !showPill ? rowResultAriaLabel(qDetail.isCorrect) : undefined;
     return (
       <div key={q.id}>
         <div className="flex items-start gap-3">
@@ -115,10 +117,10 @@ export function OpenAnswerCheckExercise({
           )}
           <p className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
             {frenchNbsp(q.question)}
-            {!hidePoints && (pointsVisible || qDetail) && (
+            {!hidePoints && (pointsVisible || showPill) && (
               <span className="ml-2 inline-flex align-middle">
-                {qDetail ? (
-                  <RowScorePill earned={qDetail.isCorrect ? qDetail.points : 0} possible={qDetail.points} full={qDetail.isCorrect} />
+                {showPill ? (
+                  <RowScorePill earned={qDetail!.isCorrect ? qDetail!.points : 0} possible={qDetail!.points} full={qDetail!.isCorrect} />
                 ) : (
                   <span className={SCORE_LABEL_CLASS}>{`${q.points} ${pluralizePoints(q.points)}`}</span>
                 )}
@@ -134,6 +136,7 @@ export function OpenAnswerCheckExercise({
             onFocus={() => diacritics.onFocus(q.id)}
             onBlur={diacritics.onBlur}
             disabled={locked}
+            aria-label={ariaResultLabel}
             className={`w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
               qDetail
                 ? qDetail.isCorrect

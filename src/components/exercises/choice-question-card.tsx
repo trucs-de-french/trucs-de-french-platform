@@ -32,15 +32,21 @@ export function ChoiceQuestionCard({
   ariaLabelledBy,
   options,
   poolClassName = POOL_CLASS,
+  resultAriaLabel,
 }: {
   header: ReactNode;
   role: "radiogroup" | "group";
   ariaLabelledBy: string;
   options: ChoiceTileOption[];
   poolClassName?: string;
+  // Коли пілюля балів рядка (RowScorePill) схована (рядок ≤1 бал), картка
+  // отримує цей aria-label (role="group") на додачу до своїх плиток-
+  // варіантів — той самий принцип, що matching-board.tsx; sighted-вміст
+  // (питання, плитки) лишається незмінним, group лише дає читалці назву.
+  resultAriaLabel?: string;
 }) {
   return (
-    <div className={ITEM_CARD_WRAP}>
+    <div className={ITEM_CARD_WRAP} role={resultAriaLabel ? "group" : undefined} aria-label={resultAriaLabel}>
       {header}
       <div role={role} aria-labelledby={ariaLabelledBy} className={poolClassName}>
         {options.map((o) => (

@@ -13,7 +13,7 @@ import { hintExplanationText } from "./hint-explanation";
 import { HintBulb } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, TaskResultAnswerRows, RowScorePill } from "./task-result";
+import { TaskResult, TaskResultAnswerRows, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -61,7 +61,7 @@ function TableFillColumn({
 }: {
   rows: Row[];
   columnLabels: [string, string];
-  renderCell: (rowId: string, side: "left" | "right", value: string | null) => ReactNode;
+  renderCell: (rowId: string, side: "left" | "right", value: string | null, points: number) => ReactNode;
   rowPointsLabel: (row: Row) => ReactNode;
   numberOffset: number;
   secondaryHeader?: boolean;
@@ -82,8 +82,8 @@ function TableFillColumn({
             <span className="table-fill-row-num" aria-hidden="true">
               {numberOffset + i + 1}
             </span>
-            <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left)}</div>
-            <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right)}</div>
+            <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>
+            <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right, row.points)}</div>
             {scorePill && <div className="table-fill-row-score">{scorePill}</div>}
           </div>
         );
@@ -340,6 +340,7 @@ export function TableFillExercise({
     if (!pointsVisible && !rowBlanks?.length) return null;
 
     if (rowBlanks?.length) {
+      if (!shouldShowRowScorePill(row.points)) return null;
       const isCorrect = rowBlanks.every((b) => b.isCorrect);
       return <RowScorePill earned={isCorrect ? row.points : 0} possible={row.points} full={isCorrect} />;
     }
@@ -370,6 +371,7 @@ export function TableFillExercise({
     rowId: string,
     side: "left" | "right",
     value: string | null,
+    points: number,
     detail: TableFillDetail | undefined,
     locked: boolean
   ) {
@@ -381,8 +383,15 @@ export function TableFillExercise({
       );
     }
     const key = cellKey(rowId, side);
-    const hintUsed = detail?.blanks.find((b) => b.rowId === rowId && b.side === side)?.hintUsed;
+    const blank = detail?.blanks.find((b) => b.rowId === rowId && b.side === side);
+    const hintUsed = blank?.hintUsed;
     const hasValue = (answers[key] ?? "") !== "";
+    // Коли пілюля балів рядка схована (max≤1 — RowScorePill вище), поле —
+    // єдиний елемент відповіді цієї клітинки, тож саме воно отримує
+    // aria-label "Правильно"/"Неправильно" (той самий принцип, що
+    // matching-board.tsx), щоб колір рамки не був єдиним сигналом для
+    // читалки.
+    const ariaResultLabel = blank && !shouldShowRowScorePill(points) ? rowResultAriaLabel(blank.isCorrect) : undefined;
     return (
       <div className="flex flex-col gap-1">
         <div className="relative table-fill-cell-wrap">
@@ -393,6 +402,7 @@ export function TableFillExercise({
             onFocus={() => diacritics.onFocus(key)}
             onBlur={diacritics.onBlur}
             disabled={locked}
+            aria-label={ariaResultLabel}
             className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] ${hasValue ? "px-[12px]" : "px-[40px]"} ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
@@ -585,7 +595,7 @@ export function TableFillExercise({
               columnLabels={columnLabels}
               numberOffset={col.numberOffset}
               secondaryHeader={i > 0}
-              renderCell={(rowId, side, value) => renderCell(rowId, side, value, blockDetail, !!blockResult)}
+              renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, blockDetail, !!blockResult)}
               rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
             />
           ))}
@@ -676,7 +686,7 @@ export function TableFillExercise({
                 columnLabels={columnLabels}
                 numberOffset={col.numberOffset}
                 secondaryHeader={i > 0}
-                renderCell={(rowId, side, value) => renderCell(rowId, side, value, singleDetail, !!single.result)}
+                renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, singleDetail, !!single.result)}
                 rowPointsLabel={(row) => rowPointsLabel(row, singleDetail)}
               />
             ))}

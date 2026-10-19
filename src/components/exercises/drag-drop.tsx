@@ -15,7 +15,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { TaskResult, RowScorePill, TaskResultGapRows } from "./task-result";
+import { TaskResult, RowScorePill, TaskResultGapRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import {
   IMAGE_MATCH_POOL_LABEL,
   imageMatchRemainingLabel,
@@ -397,13 +397,25 @@ export function DragDropExercise({
           // (не по окремому пропуску, як score) — 0/points, а не часткове.
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
+          // Коли рядок зважує ≤1 бал, пілюля (RowScorePill) ховається
+          // (shouldShowRowScorePill) — <p> тоді не рендериться взагалі
+          // (не лишається порожньою), а колір слота (вже є) доповнюється
+          // aria-label на картці рядка, той самий принцип, що
+          // matching-board.tsx.
+          const showPill = sentDetail && shouldShowRowScorePill(s.points);
+          const rowAriaLabel = sentDetail && !showPill ? rowResultAriaLabel(sentenceCorrect) : undefined;
           return (
-            <div key={s.id} className="drag-drop-row glass-item-card">
+            <div
+              key={s.id}
+              className="drag-drop-row glass-item-card"
+              role={rowAriaLabel ? "group" : undefined}
+              aria-label={rowAriaLabel}
+            >
               <span className="drag-drop-row-number">{si + 1}</span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                {!hidePoints && (pointsVisible || sentDetail) && (
+                {!hidePoints && (pointsVisible || showPill) && (
                   <p>
-                    {sentDetail ? (
+                    {showPill ? (
                       <RowScorePill earned={sentenceCorrect ? s.points : 0} possible={s.points} full={sentenceCorrect} />
                     ) : (
                       <span className={SCORE_LABEL_CLASS}>{`${s.points} ${pluralizePoints(s.points)}`}</span>

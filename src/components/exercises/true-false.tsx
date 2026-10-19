@@ -10,7 +10,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -115,10 +115,14 @@ export function TrueFalseExercise({
 
   // globalIndex — нумерація (ITEM_NUMBER_BADGE) наскрізна по всій вправі.
   function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
+    const showPill = !!d && shouldShowRowScorePill(d.points);
+    const rowAriaLabel = d && !showPill ? rowResultAriaLabel(d.isCorrect) : undefined;
     return (
       <div
         key={s.id}
         className="glass-item-card flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-3"
+        role={rowAriaLabel ? "group" : undefined}
+        aria-label={rowAriaLabel}
       >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
@@ -130,10 +134,10 @@ export function TrueFalseExercise({
             {frenchNbsp(s.text)}
             {/* До перевірки — лише якщо pointsVisible; після — завжди,
                 ваше підтверджене рішення. */}
-            {!hidePoints && (pointsVisible || d) && (
+            {!hidePoints && (pointsVisible || showPill) && (
               <span className="ml-2 inline-flex align-middle">
-                {d ? (
-                  <RowScorePill earned={d.isCorrect ? d.points : 0} possible={d.points} full={d.isCorrect} />
+                {showPill ? (
+                  <RowScorePill earned={d!.isCorrect ? d!.points : 0} possible={d!.points} full={d!.isCorrect} />
                 ) : (
                   <span className="font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
                     {`${s.points} ${pluralizePoints(s.points)}`}

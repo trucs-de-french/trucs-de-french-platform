@@ -327,11 +327,37 @@ export function TaskResultCrosswordRows({
   );
 }
 
+// Правило "пілюля балів рядка лише коли рядок коштує більше 1 бала" —
+// одне місце (не дублюється по кожній вправі): рядки з max=1 вже сигналять
+// правильно/неправильно власною зеленою/червоною рамкою, пілюля "1/1" там
+// не додає інформації. possible приходить або числом, або вже
+// відформатованим рядком (checkbox-grid.tsx: кома замість крапки для
+// дробових часток) — парсимо кому назад у крапку лише для цього порівняння,
+// формат відображення (що передав викликач) не чіпаємо.
+function rowScoreMax(possible: string | number): number {
+  return typeof possible === "number" ? possible : parseFloat(possible.replace(",", "."));
+}
+
+export function shouldShowRowScorePill(possible: string | number): boolean {
+  return rowScoreMax(possible) > 1;
+}
+
+// Текст для aria-label "головного елемента відповіді" рядка, коли пілюля
+// схована (shouldShowRowScorePill === false) — той самий принцип, що
+// matching-board.tsx (ariaLabelForState): видимого тексту немає, але
+// правильність рядка має лишатись доступною для читалки.
+export function rowResultAriaLabel(full: boolean): string {
+  return full ? "Правильно" : "Неправильно";
+}
+
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
 // лише код-пара, без слова "бал": рядкам сітки/таблиці потрібна вузька
 // пілюля, що ніколи не переносить рядок. earned/possible — вже готові
 // рядки (викликач сам форматує, напр. checkbox-grid.tsx коми замість крапки
 // для дробових часток) — компонент лише розфарбовує, не форматує числа.
+// Повертає null для рядків з max≤1 (правило вище) — викликачі самі
+// вирішують, чи обгортка довкола неї теж мусить зникнути (порожнього
+// прогалини не лишати).
 export function RowScorePill({
   earned,
   possible,
@@ -341,6 +367,7 @@ export function RowScorePill({
   possible: string | number;
   full: boolean;
 }) {
+  if (!shouldShowRowScorePill(possible)) return null;
   return (
     <span className={`task-result-row-pill ${full ? "task-result-row-pill--correct" : "task-result-row-pill--wrong"}`}>
       {earned}/{possible}
