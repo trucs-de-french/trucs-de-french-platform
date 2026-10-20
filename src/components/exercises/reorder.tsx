@@ -141,7 +141,7 @@ function ReorderSequenceTiles({
             )}
           </p>
         )}
-        <div className="min-h-11 rounded-[14px] bg-[#f6efd9] p-[10px_12px] dark:bg-[rgba(10,16,48,0.96)]">
+        <div className="min-h-11">
           <SortableTileRow
             items={order}
             onChange={onChange}
