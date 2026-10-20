@@ -392,21 +392,46 @@ export function BlockNavigation({
   hideFooter?: boolean;
   children: ReactNode;
 }) {
-  // contentRef — обгортка навколо children (сам контент активного блоку) —
-  // ТІЛЬКИ для скролу з картки "Підсумок завдання" нижче: клік по плитці
-  // блоку там міг лишити студента внизу сторінки (саму картку підсумку
-  // показано ПІД контентом), а новий активний блок рендериться вгорі,
-  // поза екраном. Звичайні вкладки (BlockTabs) й кнопки ←/→ НЕ скролять —
-  // вони й так уже видні там, де студент на них клацнув.
+  // contentRef — обгортка навколо children (сам контент активного блоку).
+  // contentRef.current.parentElement — це сам div.EXERCISE_STACK, яким
+  // кожен виклик-сайт (table-fill.tsx, letter-gaps.tsx тощо) обгортає
+  // РАЗОМ BlockTabs (вкладки блоків нагорі) + TaskPanelHeader (заголовок/
+  // інструкція) + сам BlockNavigation: contentRef і TaskSummaryCard нижче
+  // повертаються як фрагмент (без власного DOM-вузла), тож їхній спільний
+  // батько в DOM — це і є той зовнішній контейнер вправи. Скрол до НЬОГО
+  // (а не до contentRef) показує студенту вкладки+заголовок+початок блоку,
+  // а не середину — саме це мало зламатись при зміні блоку великим вмістом.
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(false);
 
-  function changeBlockFromSummary(index: number) {
-    onChangeBlock(index);
-    contentRef.current?.scrollIntoView({
+  // Єдина точка скролу для БУДЬ-ЯКОГО перемикання блоку (вкладки BlockTabs
+  // нагорі, кнопки ←/→ у BlockNavFooter, плитки картки "Підсумок завдання"
+  // нижче) — усі три керують тим самим `activeBlock` пропсом, тож ефект,
+  // підписаний на нього, спрацьовує однаково незалежно від контролу. Ефект
+  // (а не скрол одразу в обробнику кліку) спрацьовує ПІСЛЯ коміту нового
+  // DOM — висота нового блоку вже врахована в getBoundingClientRect.
+  // Скролимо лише якщо початок вправи вже НЕ видний (rect.top < 0 — той
+  // самий критерій, що вже є в scene-header-bar.tsx:scrollToHeaderAndFocus);
+  // якщо він і так у вʼюпорті — не чіпаємо скрол узагалі.
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    const container = contentRef.current?.parentElement ?? contentRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    if (rect.top >= 0) return;
+    // Запас під можливий майбутній sticky-бар нагорі сторінки (сьогодні
+    // такого бару немає на студентській сторінці сцени — перевірено,
+    // немає sticky/fixed top у layout.tsx/компонентах), той самий кушон,
+    // що вже застосовано в scene-header-bar.tsx (HEADER_SCROLL_MARGIN_PX).
+    container.style.scrollMarginTop = "12px";
+    container.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "start",
     });
-  }
+  }, [activeBlock]);
 
   // Один блок — навігація не рендериться взагалі (той самий принцип, що й
   // раніше: виклик-сайти й сьогодні обходять BlockNavigation для плоского
@@ -435,7 +460,7 @@ export function BlockNavigation({
           blockCount={blockCount}
           blockResults={blockResults}
           activeBlock={activeBlock}
-          onChangeBlock={changeBlockFromSummary}
+          onChangeBlock={onChangeBlock}
         />
       )}
     </>
@@ -447,8 +472,9 @@ export function BlockNavigation({
 // блоку") для tasks із 2+ блоками: сума БАЛІВ лише по вже перевірених
 // блоках (неперевірені не входять у суму) + плитка на кожен блок. Плитки —
 // РЕАЛЬНІ кнопки (onChangeBlock — той самий перемикач, що вкладки блоків
-// угорі панелі): клік перемикає activeBlock і скролить сторінку до
-// контенту блоку (BlockNavigation.changeBlockFromSummary) — стан блоку
+// угорі панелі): клік перемикає activeBlock, а скрол до початку вправи
+// (якщо він поза видимою зоною) робить спільний ефект у BlockNavigation
+// вище, однаковий для вкладок/←→/цих плиток — стан блоку
 // (відповіді/перевірка/підказки) НЕ перераховується й НЕ втрачається,
 // бо він і так тримається в per-блок мапах виклик-сайту (blockResults
 // тощо), а не локально тут.
