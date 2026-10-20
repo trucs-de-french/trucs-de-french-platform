@@ -747,14 +747,14 @@ export function LetterGapsExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockWordIndicesForCheck = wordBlocks[activeBlock] ?? [];
   const activeBlockUnanswered = activeBlockWordIndicesForCheck.filter((wi) => wordIsUnfilled(wi)).length;
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === activeBlockWordIndicesForCheck.length}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

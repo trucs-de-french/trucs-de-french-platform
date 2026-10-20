@@ -840,14 +840,14 @@ export function MultipleChoiceExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockItems?.filter((it) => (selections[it.id] ?? []).length === 0).length ?? 0;
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockItems?.length ?? 0)}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

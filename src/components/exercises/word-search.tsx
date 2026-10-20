@@ -385,17 +385,25 @@ function WordSearchBlockView({
   // Слова, для яких клікали підказку — надсилається разом із foundWords
   // (WordSearchAnswer.hintedWords), для 50%-балів при hintsReducePoints.
   const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
+  // Практика "Повторити без балів" (не Corrigez vos erreurs — word_search
+  // не підтримується тим механізмом, error-review.ts) — повністю локальний
+  // паралельний стан: нічого з practiceFoundWords/practiceHintedWords
+  // ніколи не йде на сервер (жодного submit у practiceMode), тож бали/
+  // mistakes/block_progress цей режим не чіпає. Вимикається/чиститься при
+  // кожному вході (кнопка "Повторити без балів" нижче), щоб починати з
+  // чистого стану.
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [practiceFoundWords, setPracticeFoundWords] = useState<Map<string, Cell[]>>(new Map());
+  const [practiceHintedWords, setPracticeHintedWords] = useState<Set<string>>(new Set());
 
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as WordSearchDetail | undefined;
   // locked — виділення/підказки вимкнені одразу після ПЕРШОЇ перевірки
-  // (startDrag/triggerHint нижче самі перевіряють locked), незалежно від
-  // того, чи є в цього блоку "Перевірити ще раз" (allowRecheck) — та
-  // кнопка лише ПОВТОРНО надсилає той самий (уже застиглий) набір
-  // foundWords/hintedWords, нового виділення вона не відкриває. Тобто
-  // блок завжди "фінальний" після check — звідси й зелена підсвітка, і
-  // тогл нижче відкриваються автоматично (не чекають другого випадку
-  // "можна продовжувати обирати").
+  // (startDrag/triggerHint нижче самі перевіряють locked) — блок завжди
+  // "фінальний" після check (кнопка "Перевірити ще раз" прибрана, лишається
+  // лише окрема практика без балів нижче). practiceMode тимчасово знімає
+  // це обмеження лише для ЛОКАЛЬНОГО practiceFoundWords/practiceHintedWords
+  // стану, не для справжнього foundWords/hintedWords.
   const locked = !!result;
   const allowRecheck = blockIndex !== undefined;
   const checkConfirm = useCheckConfirm();
@@ -415,7 +423,7 @@ function WordSearchBlockView({
   }, [result]);
 
   function startDrag(cell: Cell) {
-    if (locked) return;
+    if (locked && !practiceMode) return;
     setDragging(true);
     setDragStart(cell);
     setDragEnd(cell);
@@ -438,13 +446,15 @@ function WordSearchBlockView({
         // дефісів, що й у генераторі сітки/gradeWordSearch: w.word лишається
         // оригіналом ("grand-mère"), а в клітинках сітки таких символів
         // немає взагалі, тож звірка без нормалізації ніколи не збіглась би.
+        const currentFound = practiceMode ? practiceFoundWords : foundWords;
         const match = block.words.find((w) => {
-          if (foundWords.has(w.word)) return false;
+          if (currentFound.has(w.word)) return false;
           const sanitized = sanitizeWordForGrid(w.word).toUpperCase();
           return sanitized === letters || sanitized === reversed;
         });
         if (match) {
-          setFoundWords((prev) => new Map(prev).set(match.word, path));
+          if (practiceMode) setPracticeFoundWords((prev) => new Map(prev).set(match.word, path));
+          else setFoundWords((prev) => new Map(prev).set(match.word, path));
         }
       }
     }
@@ -589,11 +599,13 @@ function WordSearchBlockView({
   }
 
   function isFound(word: string): boolean {
+    if (practiceMode) return practiceFoundWords.has(word);
     if (detail) return detail.words.find((d) => d.word === word)?.found ?? false;
     return foundWords.has(word);
   }
 
   function wordHintUsed(word: string): boolean {
+    if (practiceMode) return practiceHintedWords.has(word);
     return detail?.words.find((d) => d.word === word)?.hintUsed ?? false;
   }
 
@@ -603,14 +615,17 @@ function WordSearchBlockView({
   // функції). foundWordsSet — ті самі слова, що isFound() визнає знайденими
   // (детальний результат сервера, якщо вже перевірено, інакше клієнтський
   // foundWords), просто у вигляді Set<string> для чистої функції.
+  const effectiveFoundWords = practiceMode ? practiceFoundWords : foundWords;
+  const effectiveHintedWords = practiceMode ? practiceHintedWords : hintedWords;
   const foundWordsSet = new Set(block.words.filter((w) => isFound(w.word)).map((w) => w.word));
-  const hintCells = hintHighlightCells(block.words, hintedWords, foundWordsSet);
+  const hintCells = hintHighlightCells(block.words, effectiveHintedWords, foundWordsSet);
 
   // ЕТАП K — клітинки знайдених слів (для ws-letter-found, лише світлого
-  // кольору/ваги літери) — похідне з того самого foundWords Map, що й
-  // SVG-капсули/лінії нижче, не окремий стан.
+  // кольору/ваги літери) — похідне з effectiveFoundWords (справжній
+  // foundWords чи, у practiceMode, окремий practiceFoundWords), те саме,
+  // що SVG-капсули/лінії нижче, не окремий стан.
   const foundLetterKeys = new Set(
-    [...foundWords.values()].flatMap((cells) => cells.map(cellKey))
+    [...effectiveFoundWords.values()].flatMap((cells) => cells.map(cellKey))
   );
 
   // Клітинки лише ПРОПУЩЕНИХ слів блоку — заповнюється після перевірки
@@ -619,8 +634,10 @@ function WordSearchBlockView({
   // ніхто не виділяв), тож без цього поля зелену підсвітку пропущеного
   // слова намалювати нічим. Знайдені слова й далі лавандові (foundWords/
   // foundLetterKeys нижче) — зелена підсвітка лише для w.found === false.
+  // practiceMode — ніколи не показуємо (практика не звіряється з сервером,
+  // тож "пропущено" тут не має сенсу).
   const missedCellsByWord = new Map<string, Cell[]>();
-  if (detail) {
+  if (detail && !practiceMode) {
     for (const w of detail.words) {
       if (!w.found && w.cells.length > 0) missedCellsByWord.set(w.word, w.cells);
     }
@@ -636,7 +653,14 @@ function WordSearchBlockView({
   function triggerHint(w: WordSearchPublicBlock["words"][number]) {
     // Повторний тап по вже підказаному (і ще не знайденому) слову — нічого
     // не робить: без повторного списання балів (hintedWords — Set, і так
-    // ідемпотентний) і без зайвого ререндеру підсвічування.
+    // ідемпотентний) і без зайвого ререндеру підсвічування. practiceMode —
+    // підказки безкоштовні й локальні (practiceHintedWords), locked не
+    // застосовується.
+    if (practiceMode) {
+      if (isDelf || isFound(w.word) || !w.hintStart || practiceHintedWords.has(w.word)) return;
+      setPracticeHintedWords((prev) => new Set(prev).add(w.word));
+      return;
+    }
     if (locked || isDelf || isFound(w.word) || !w.hintStart || hintedWords.has(w.word)) return;
     setHintedWords((prev) => new Set(prev).add(w.word));
   }
@@ -676,6 +700,12 @@ function WordSearchBlockView({
 
   return (
     <div className="flex flex-col gap-4">
+      {practiceMode && (
+        <div role="status" className="hint-points-notice">
+          <HintBulb state="available" as="span" />
+          <span>Режим практики: бали не змінюються.</span>
+        </div>
+      )}
       {/* Вертикальна розкладка на всіх ширинах (не flex-wrap "поруч/під") —
           той самий принцип компонування, що crossword.tsx: сітка по центру
           зверху, легенда під нею, відступ між ними — той самий ритм
@@ -768,7 +798,7 @@ function WordSearchBlockView({
                   viewBox={`0 0 ${gridSize} ${gridSize}`}
                   className="ws-lines-layer pointer-events-none absolute inset-0 h-full w-full"
                 >
-                  {[...foundWords.entries()].map(([word, cells]) => {
+                  {[...effectiveFoundWords.entries()].map(([word, cells]) => {
                     if (cells.length === 0) return null;
                     const start = cells[0];
                     const end = cells[cells.length - 1];
@@ -812,7 +842,7 @@ function WordSearchBlockView({
                     малюються пізніше в DOM — природно лягають ПОВЕРХ раніших
                     при перетині (вимога п.4). */}
                 <div className="ws-capsule-layer pointer-events-none absolute inset-0">
-                  {[...foundWords.entries()].map(([word, cells]) => {
+                  {[...effectiveFoundWords.entries()].map(([word, cells]) => {
                     if (cells.length === 0) return null;
                     return (
                       <div
@@ -870,7 +900,7 @@ function WordSearchBlockView({
             <span className="ws-legend-dot" style={{ background: "#e0aa3e" }} />
             Підказка: перша літера
           </span>
-          {locked && (
+          {locked && !practiceMode && (
             <span className="ws-legend-item">
               <span className="ws-legend-dot ws-legend-dot-correct" />
               Не знайдено (правильна відповідь)
@@ -996,7 +1026,7 @@ function WordSearchBlockView({
       <div className="flex flex-col gap-3">
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
-            {result && (
+            {result && !practiceMode && (
               <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
@@ -1005,18 +1035,20 @@ function WordSearchBlockView({
                 activeBlock={activeBlock}
                 onChangeBlock={onChangeBlock}
                 checkButton={
-                  <button
-                    type="button"
-                    onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
-                    disabled={pending || foundCount === 0}
-                    className="exercise-block-check-btn"
-                  >
-                    {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
-                  </button>
+                  !result ? (
+                    <button
+                      type="button"
+                      onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
+                      disabled={pending || foundCount === 0}
+                      className="exercise-block-check-btn"
+                    >
+                      {pending ? "Перевіряю..." : "Перевірити блок"}
+                    </button>
+                  ) : null
                 }
               />
             )}
-            {checkConfirm.confirming && (
+            {!result && checkConfirm.confirming && (
               <CheckConfirmBar
                 unansweredCount={totalWords - foundCount}
                 onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
@@ -1043,15 +1075,51 @@ function WordSearchBlockView({
             )}
           </div>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+          !practiceMode && (
+            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+          )
+        )}
+        {/* Практика "Повторити без балів" — лише коли блок уже фінальний
+            (result) і Corrigez vos erreurs цей тип не підтримує
+            (ERROR_REVIEW_EXCLUDED_TASK_TYPES, error-review.ts). Вхід чистить
+            practiceFoundWords/practiceHintedWords — щоразу новий чистий
+            стан. */}
+        {result && !practiceMode && (
+          <button
+            type="button"
+            onClick={() => {
+              setPracticeFoundWords(new Map());
+              setPracticeHintedWords(new Set());
+              setPracticeMode(true);
+            }}
+            className="check-confirm-btn check-confirm-btn--secondary self-start"
+          >
+            Повторити без балів
+          </button>
+        )}
+        {result && practiceMode && (
+          <div className="flex flex-col items-start gap-2">
+            <span className="font-heading text-sm font-semibold tabular-nums">
+              Знайдено {practiceFoundWords.size} з {totalWords} слів
+            </span>
+            <button
+              type="button"
+              onClick={() => setPracticeMode(false)}
+              className="check-confirm-btn check-confirm-btn--secondary self-start"
+            >
+              Завершити практику
+            </button>
+          </div>
         )}
         {/* Тогл "Правильні відповіді" — та сама картка/заголовок/шеврон, що
             task-result.tsx (TaskResult), але НЕ через сам TaskResult: його
             showToggle = !!children && !correct сховав би тогл саме тоді,
             коли блок пройдено повністю правильно (correct), а тут він має
             лишатись (і бути розгорнутим — answersOpen вище) незалежно від
-            correct, бо зелена підсвітка в сітці видима завжди при locked. */}
-        {result && (
+            correct, бо зелена підсвітка в сітці видима завжди при locked.
+            practiceMode — тогл ховається (справжній результат тимчасово не
+            показується, доки студент не натисне "Завершити практику"). */}
+        {result && !practiceMode && (
           <div className="task-result-card">
             <button
               type="button"

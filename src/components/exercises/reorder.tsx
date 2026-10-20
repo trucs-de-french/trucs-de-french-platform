@@ -449,14 +449,14 @@ export function ReorderExercise({
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => submitBlock(activeBlock)}
       disabled={activeBlockPending}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

@@ -586,14 +586,14 @@ export function WordChoiceExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockSentences?.filter((s) => !sentenceIsAnswered(s)).length ?? 0;
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockSentences?.length ?? 0)}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

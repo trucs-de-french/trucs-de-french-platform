@@ -676,14 +676,14 @@ export function TableFillExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockRows = rowBlocks[activeBlock] ?? [];
   const activeBlockUnanswered = unfilledCellCount(activeBlockRows);
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === hiddenCellsOf(activeBlockRows).length}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

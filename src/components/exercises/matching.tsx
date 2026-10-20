@@ -499,14 +499,14 @@ export function MatchingExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockLeft = leftBlocks[activeBlock];
   const activeBlockUnanswered = activeBlockLeft.filter((left) => !pairs[left]).length;
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === activeBlockLeft.length}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 

@@ -230,6 +230,22 @@ function CrosswordBlockView({
   // на сервер (CrosswordAnswer.hintedWords) для розрахунку балів.
   const [hintedCells, setHintedCells] = useState<Set<string>>(new Set());
   const [hintedWords, setHintedWords] = useState<Set<string>>(new Set());
+  // Практика "Повторити без балів" (не Corrigez vos erreurs — crossword
+  // не підтримується тим механізмом, error-review.ts) — повністю окремий
+  // паралельний стан: practiceGrid/practiceHintedCells/practiceHintedWords
+  // ніколи не йдуть у handleSubmit, тож бали/mistakes/block_progress цей
+  // режим не чіпає. Справжні grid/hintedCells/hintedWords (і їх locked-
+  // вигляд після result) лишаються недоторканими — "Завершити практику"
+  // просто ховає практику назад, нічого не зливаючи.
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [practiceGrid, setPracticeGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
+  const [practiceHintedCells, setPracticeHintedCells] = useState<Set<string>>(new Set());
+  const [practiceHintedWords, setPracticeHintedWords] = useState<Set<string>>(new Set());
+  // Локальна "Перевірити" практики — не submit, лише показує лічильник
+  // правильних слів із practiceGrid проти block.solution (жива підсвітка
+  // по клітинках/словах і так триває без неї, незалежно від режиму —
+  // checked лише розкриває підсумковий рядок "Правильно: N з M слів").
+  const [practiceChecked, setPracticeChecked] = useState(false);
   // Спільний хук (diacritics-popup.tsx) — ключ "row,col" на кожну клітинку.
   // Той самий інстанс дає й реф для програмного .focus() (автоперехід
   // вперед/назад — не пов'язано з попапом самим по собі, але той самий
@@ -239,6 +255,17 @@ function CrosswordBlockView({
   const allowRecheck = blockIndex !== undefined;
   const checkConfirm = useCheckConfirm();
   const clueCells = useMemo(() => buildClueCells(block), [block]);
+  // effectiveGrid/effectiveHintedCells/effectiveHintedWords — усе, що читає
+  // цей компонент ДЛЯ ВІДОБРАЖЕННЯ (сітка, кольори клітинок, canHint/
+  // hinted-бейджі в списку підказок), перемикається на practice* стан у
+  // practiceMode; effectiveResult — так само "вважати вправу незавершеною"
+  // для canHint/бейджів, не для самого action-row нижче (той читає
+  // справжній result напряму, бо лишається фінальним незалежно від
+  // практики).
+  const effectiveGrid = practiceMode ? practiceGrid : grid;
+  const effectiveHintedCells = practiceMode ? practiceHintedCells : hintedCells;
+  const effectiveHintedWords = practiceMode ? practiceHintedWords : hintedWords;
+  const effectiveResult = practiceMode ? null : result;
 
   // Одиниця CheckConfirmBar — СЛОВО (clue), не клітинка/буква: студент
   // відповідає словами, кросворд лише показує їх по літерах. Слово
@@ -323,11 +350,13 @@ function CrosswordBlockView({
 
   function updateLetter(row: number, col: number, value: string) {
     const letter = (value.slice(-1) || "").toUpperCase();
-    setGrid((prev) => prev.map((r, ri) => (ri === row ? r.map((v, ci) => (ci === col ? letter : v)) : r)));
+    const setEffectiveGrid = practiceMode ? setPracticeGrid : setGrid;
+    const setEffectiveHintedCells = practiceMode ? setPracticeHintedCells : setHintedCells;
+    setEffectiveGrid((prev) => prev.map((r, ri) => (ri === row ? r.map((v, ci) => (ci === col ? letter : v)) : r)));
     // Студент сам перетипував клітинку — вона більше не "щойно відкрита
     // підказкою" візуально (hintedWords, для балів, лишається незмінним —
     // підказку вже було використано на цьому слові, факт не скасовується).
-    setHintedCells((prev) => {
+    setEffectiveHintedCells((prev) => {
       if (!prev.has(cellKey(row, col))) return prev;
       const next = new Set(prev);
       next.delete(cellKey(row, col));
@@ -351,7 +380,7 @@ function CrosswordBlockView({
         let nextIndex = index + 1;
         while (nextIndex < cells.length) {
           const c = cells[nextIndex];
-          const filledCorrectly = grid[c.row][c.col] !== "" && grid[c.row][c.col] === block.solution[c.row][c.col];
+          const filledCorrectly = effectiveGrid[c.row][c.col] !== "" && effectiveGrid[c.row][c.col] === block.solution[c.row][c.col];
           if (!filledCorrectly) break;
           nextIndex++;
         }
@@ -369,7 +398,7 @@ function CrosswordBlockView({
   // onChange із порожнім значенням, updateLetter його вже обробляє (без
   // автопереходу, бо letter буде порожній рядок), фокус лишається на місці.
   function handleBackspace(row: number, col: number) {
-    if (grid[row][col] !== "") return;
+    if (effectiveGrid[row][col] !== "") return;
     if (!activeClue) return;
     const cells = clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [];
     const index = cells.findIndex((c) => c.row === row && c.col === col);
@@ -380,8 +409,9 @@ function CrosswordBlockView({
     // ІНШОГО слова через перетин — лишаємо як є: фокус переходить туди,
     // але сам символ видаляється лише наступним явним Backspace, коли
     // курсор буде САМЕ на цій клітинці, а не одразу під час переходу.
-    if (grid[prev.row][prev.col] === "") {
-      setGrid((p) => p.map((r, ri) => (ri === prev.row ? r.map((v, ci) => (ci === prev.col ? "" : v)) : r)));
+    if (effectiveGrid[prev.row][prev.col] === "") {
+      const setEffectiveGrid = practiceMode ? setPracticeGrid : setGrid;
+      setEffectiveGrid((p) => p.map((r, ri) => (ri === prev.row ? r.map((v, ci) => (ci === prev.col ? "" : v)) : r)));
     }
     diacritics.getElement(cellKey(prev.row, prev.col))?.focus();
   }
@@ -398,7 +428,7 @@ function CrosswordBlockView({
   // не чекаючи завершення слова.
   function isWordFilled(direction: Direction, number: number): boolean {
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    return cells.length > 0 && cells.every((c) => grid[c.row][c.col] !== "");
+    return cells.length > 0 && cells.every((c) => effectiveGrid[c.row][c.col] !== "");
   }
 
   // На рівні ЦІЛОГО слова — лише для закреслення підказки в списку
@@ -410,7 +440,7 @@ function CrosswordBlockView({
   function liveWordStatus(direction: Direction, number: number): "correct" | "incorrect" | null {
     if (!isWordFilled(direction, number)) return null;
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    const allCorrect = cells.every((c) => grid[c.row][c.col] === block.solution[c.row][c.col]);
+    const allCorrect = cells.every((c) => effectiveGrid[c.row][c.col] === block.solution[c.row][c.col]);
     return allCorrect ? "correct" : "incorrect";
   }
 
@@ -420,21 +450,26 @@ function CrosswordBlockView({
   // неактивна, "Якщо всі літери слова вже правильні").
   function nextHintCell(direction: Direction, number: number): { row: number; col: number } | null {
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
-    return cells.find((c) => grid[c.row][c.col] !== block.solution[c.row][c.col]) ?? null;
+    return cells.find((c) => effectiveGrid[c.row][c.col] !== block.solution[c.row][c.col]) ?? null;
   }
 
   // Вписує правильну літеру в ПЕРШУ ще не відкриту/не заповнену правильно
   // клітинку слова — фокус НЕ переміщується (на відміну від updateLetter),
-  // студент лишається там, де друкував.
+  // студент лишається там, де друкував. practiceMode — підказки
+  // безкоштовні й локальні (practiceGrid/practiceHintedCells/Words), не
+  // торкаються справжнього hintedWords, що йде на сервер.
   function applyHint(direction: Direction, number: number) {
     const target = nextHintCell(direction, number);
     if (!target) return;
     const letter = block.solution[target.row][target.col];
-    setGrid((prev) =>
+    const setEffectiveGrid = practiceMode ? setPracticeGrid : setGrid;
+    const setEffectiveHintedCells = practiceMode ? setPracticeHintedCells : setHintedCells;
+    const setEffectiveHintedWords = practiceMode ? setPracticeHintedWords : setHintedWords;
+    setEffectiveGrid((prev) =>
       prev.map((r, ri) => (ri === target.row ? r.map((v, ci) => (ci === target.col ? letter : v)) : r))
     );
-    setHintedCells((prev) => new Set(prev).add(cellKey(target.row, target.col)));
-    setHintedWords((prev) => new Set(prev).add(`${direction}-${number}`));
+    setEffectiveHintedCells((prev) => new Set(prev).add(cellKey(target.row, target.col)));
+    setEffectiveHintedWords((prev) => new Set(prev).add(`${direction}-${number}`));
   }
 
   // Посимвольно — на відміну від liveWordStatus, тут перевіряється ЛИШЕ ЦЯ
@@ -450,7 +485,7 @@ function CrosswordBlockView({
     let anyCorrect = false;
     for (const w of words) {
       if (!isWordFilled(w.direction, w.number)) continue;
-      if (grid[row][col] === block.solution[row][col]) {
+      if (effectiveGrid[row][col] === block.solution[row][col]) {
         anyCorrect = true;
       } else {
         return "incorrect";
@@ -517,11 +552,11 @@ function CrosswordBlockView({
         <ClueCardHeader
           number={clue.number}
           isCorrect={isCorrect}
-          canHint={!result && !isDelf}
-          hinted={hintedWords.has(`${direction}-${clue.number}`)}
+          canHint={!effectiveResult && !isDelf}
+          hinted={effectiveHintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
-        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
+        {!!effectiveResult && effectiveHintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <span className="relative aspect-square w-full overflow-hidden rounded-lg">
           <ImageOrPlaceholder
             src={clue.imageUrl}
@@ -566,7 +601,7 @@ function CrosswordBlockView({
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     const isCorrect = liveStatus === "correct";
     const hasImage = !!clue.imageUrl;
-    const canHint = !result && !isDelf;
+    const canHint = !effectiveResult && !isDelf;
     return (
       <div
         key={clue.number}
@@ -598,10 +633,10 @@ function CrosswordBlockView({
           number={clue.number}
           isCorrect={isCorrect}
           canHint={canHint}
-          hinted={hintedWords.has(`${direction}-${clue.number}`)}
+          hinted={effectiveHintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
-        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
+        {!!effectiveResult && effectiveHintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <div className="flex items-start gap-2.5">
           {hasImage && (
             <span className="relative shrink-0">
@@ -639,7 +674,7 @@ function CrosswordBlockView({
     const liveStatus = liveWordStatus(direction, clue.number);
     const isActive = activeClue?.direction === direction && activeClue.number === clue.number;
     const isCorrect = liveStatus === "correct";
-    const canHint = !result && !isDelf;
+    const canHint = !effectiveResult && !isDelf;
     const showBadge = isCorrect || canHint;
     return (
       <div
@@ -665,13 +700,13 @@ function CrosswordBlockView({
         >
           {frenchNbsp(clue.clue)}
         </button>
-        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
+        {!!effectiveResult && effectiveHintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         {isCorrect ? (
           <HintBulb state="done" as="span" className="ml-1.5" />
         ) : (
           canHint && (
             <HintBulb
-              state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
+              state={effectiveHintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
               label="Підказка: відкрити наступну літеру"
               onClick={() => applyHint(direction, clue.number)}
               className="ml-1.5"
@@ -719,8 +754,18 @@ function CrosswordBlockView({
     );
   }
 
+  const practiceCorrectCount =
+    block.across.filter((c) => liveWordStatus("horizontal", c.number) === "correct").length +
+    block.down.filter((c) => liveWordStatus("vertical", c.number) === "correct").length;
+
   return (
     <div className="flex flex-col gap-4">
+      {practiceMode && (
+        <div role="status" className="hint-points-notice">
+          <HintBulb state="available" as="span" />
+          <span>Режим практики: бали не змінюються.</span>
+        </div>
+      )}
       {/* Внутрішній відступ вправи (не входить у систему відступів сторінки,
           src/lib/spacing.ts, — та зумисно лишається поза нею): зазор між
           сіткою й панеллю підказок під нею. */}
@@ -823,7 +868,7 @@ function CrosswordBlockView({
                             <input
                               ref={diacritics.fieldRef(cellKey(ri, ci))}
                               maxLength={1}
-                              value={grid[ri][ci]}
+                              value={effectiveGrid[ri][ci]}
                               onChange={(e) => updateLetter(ri, ci, e.target.value)}
                               onKeyDown={(e) => {
                                 if (e.key === "Backspace") handleBackspace(ri, ci);
@@ -834,10 +879,10 @@ function CrosswordBlockView({
                                 if (words.length > 0 && !isActiveCell(ri, ci)) setActiveClue(words[0]);
                               }}
                               onBlur={diacritics.onBlur}
-                              disabled={!!result}
+                              disabled={!!result && !practiceMode}
                               style={{ fontSize: "max(0.6875rem, calc(var(--cw) * 0.5))" }}
                               className={`h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none dark:text-neutral-100 ${
-                                hintedCells.has(cellKey(ri, ci))
+                                effectiveHintedCells.has(cellKey(ri, ci))
                                   ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
                                   : status === "correct"
                                     ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
@@ -868,7 +913,7 @@ function CrosswordBlockView({
             фокус, інакше onBlur одразу закрив би сам попап під час кліку по
             ньому). updateLetter той самий, що й для вводу з клавіатури —
             автоперехід і автопропуск працюють "з коробки". */}
-        {diacritics.rect && !result && diacritics.activeKey && (
+        {diacritics.rect && !effectiveResult && diacritics.activeKey && (
           <DiacriticsPopup
             rect={diacritics.rect}
             onPick={(ch) => {
@@ -887,7 +932,7 @@ function CrosswordBlockView({
       <div className="flex flex-col gap-3">
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
-            {result && (
+            {result && !practiceMode && (
               <TaskResult
                 correct={result.correct}
                 pointsEarned={result.pointsEarned}
@@ -908,18 +953,20 @@ function CrosswordBlockView({
                 activeBlock={activeBlock}
                 onChangeBlock={onChangeBlock}
                 checkButton={
-                  <button
-                    type="button"
-                    onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
-                    disabled={pending || unfilledWords === totalWords}
-                    className="exercise-block-check-btn"
-                  >
-                    {pending ? "Перевіряю..." : result ? "Перевірити ще раз" : "Перевірити блок"}
-                  </button>
+                  !result ? (
+                    <button
+                      type="button"
+                      onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
+                      disabled={pending || unfilledWords === totalWords}
+                      className="exercise-block-check-btn"
+                    >
+                      {pending ? "Перевіряю..." : "Перевірити блок"}
+                    </button>
+                  ) : null
                 }
               />
             )}
-            {checkConfirm.confirming && (
+            {!result && checkConfirm.confirming && (
               <CheckConfirmBar
                 unansweredCount={unfilledWords}
                 onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
@@ -946,19 +993,63 @@ function CrosswordBlockView({
             )}
           </div>
         ) : (
-          <TaskResult
-            correct={result.correct}
-            pointsEarned={result.pointsEarned}
-            pointsPossible={result.pointsPossible}
-            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
-            toggleCount={block.across.length + block.down.length}
-            hintSummary={{
-              hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
-              reducesPoints: hintsReducePoints,
+          !practiceMode && (
+            <TaskResult
+              correct={result.correct}
+              pointsEarned={result.pointsEarned}
+              pointsPossible={result.pointsPossible}
+              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleCount={block.across.length + block.down.length}
+              hintSummary={{
+                hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
+                reducesPoints: hintsReducePoints,
+              }}
+            >
+              <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
+            </TaskResult>
+          )
+        )}
+        {/* Практика "Повторити без балів" — лише коли блок уже фінальний
+            (result) і Corrigez vos erreurs цей тип не підтримує
+            (ERROR_REVIEW_EXCLUDED_TASK_TYPES, error-review.ts). Вхід чистить
+            весь practice*-стан — щоразу новий чистий бланк. */}
+        {result && !practiceMode && (
+          <button
+            type="button"
+            onClick={() => {
+              setPracticeGrid(emptyGrid(block.gridWidth, block.gridHeight));
+              setPracticeHintedCells(new Set());
+              setPracticeHintedWords(new Set());
+              setPracticeChecked(false);
+              setPracticeMode(true);
             }}
+            className="check-confirm-btn check-confirm-btn--secondary self-start"
           >
-            <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
-          </TaskResult>
+            Повторити без балів
+          </button>
+        )}
+        {result && practiceMode && (
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => setPracticeChecked(true)}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              Перевірити
+            </button>
+            {practiceChecked && (
+              <span className="font-heading text-sm font-semibold tabular-nums">
+                Правильно: {practiceCorrectCount} з {totalWords} слів
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setPracticeMode(false)}
+              className="check-confirm-btn check-confirm-btn--secondary self-start"
+            >
+              Завершити практику
+            </button>
+          </div>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

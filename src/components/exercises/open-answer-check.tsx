@@ -303,14 +303,14 @@ export function OpenAnswerCheckExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockQuestions?.filter((q) => !answers[q.id]?.trim()).length ?? 0;
-  const checkButtonEl = useBlocks ? (
+  const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockQuestions?.length ?? 0)}
       className="exercise-block-check-btn"
     >
-      {activeBlockPending ? "Перевіряю..." : activeBlockResult ? "Перевірити ще раз" : "Перевірити блок"}
+      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
   ) : null;
 
