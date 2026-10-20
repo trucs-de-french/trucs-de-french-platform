@@ -6,17 +6,24 @@ import { useCallback, useEffect, useState } from "react";
 const CARD_PADDING_PX = 28;
 // Грід-обгортка карток (letter-gaps.tsx/letter-rearrangement.tsx): gap-3 = 12px.
 const COLUMN_GAP_PX = 12;
-const CELL_GAP_PX = 4;
-const CELL_FLOOR_PX = 18;
+
 // Еталон — РЕАЛЬНА виміряна ширина поля-пропуску letter_gaps у pre-check
-// картці "se conduire" (GAP_SIZE_CLASS=h-9 w-8 → 32px, word-list-layout.ts:19),
-// однакова на 1280/820/390 (не-responsive Tailwind-клас). Висота (×1.125) і
-// шрифт (×0.5625) у globals.css (.word-result-cell) рахуються з ЦІЄЇ ж
-// ширини тими самими пропорціями, що в еталонній картці (36px/18px при
-// 32px). Це СТЕЛЯ (Math.min нижче) — плитка НІКОЛИ не перевищує еталон,
-// лише звужується, якщо найдовша група вправи не влазить навіть у
-// повношириннu картку.
-const REFERENCE_CELL_PX = 32;
+// картці "se conduire" (GAP_SIZE_CLASS=h-9 w-8 → 32px, word-list-layout.ts:19).
+// Pre-check БОКСИ самі лишаються на цих голих Tailwind-класах (h-9 w-8,
+// text-lg) — жодної спільної CSS-змінної з результатом вони НЕ мають, тож
+// --cell тут і далі ЗАВЖДИ розходиться з pre-check розміром (так само, як
+// і раніше). SCALE — ЄДИНЕ місце, де застосовується множник 0.85 (разом
+// із усіма похідними: ширина/висота/шрифт --cell у globals.css рахуються
+// ЯК ЧАСТКА від REFERENCE_CELL_PX, тож масштабуються автоматично; проміжки
+// між буквами (CELL_GAP_PX) і між словами (globals.css .word-result-tile-row
+// column-gap) та радіус рамки (globals.css --tile/--text) масштабовані тим
+// самим SCALE окремо, бо вони НЕ виводяться з --cell формулою). Підлога
+// (CELL_FLOOR_PX) НЕ масштабується — лишається абсолютним мінімумом 18px,
+// як і раніше.
+const SCALE = 0.85;
+const REFERENCE_CELL_PX = 32 * SCALE;
+const CELL_GAP_PX = 4 * SCALE;
+const CELL_FLOOR_PX = 18;
 
 // Розмір плитки результату (WordResultRows) рахується ОДИН раз на всю
 // вправу від ширини ПОВНОШИРИННОЇ картки (тієї, що займає ОБИДВІ колонки

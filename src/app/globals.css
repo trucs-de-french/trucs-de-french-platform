@@ -4833,34 +4833,40 @@ button.scene-bar:active .scene-bar-toggle {
    обидві колонки), а кожна картка окремо вирішує, чи влізає її НАЙДОВША
    власна група слова в половину цієї ширини — якщо ні, картка сама
    розтягується на обидві колонки (md:col-span-2), плитка не зменшується.
-   Групи (word-result-group, одне СЛОВО) — nowrap:4px gap, самі групи в
+   Групи (word-result-group, одне СЛОВО) — nowrap gap, самі групи в
    flex-wrap-рядку — перенос лише МІЖ словами фрази. row-gap/column-gap
-   ОКРЕМО (не спільний gap): column-gap 10px — проміжок МІЖ словами фрази
-   по горизонталі; row-gap 6px — проміжок МІЖ рядками, коли фраза
-   переноситься. */
+   ОКРЕМО (не спільний gap): column-gap — проміжок МІЖ словами фрази по
+   горизонталі ("word gap"); row-gap 6px — проміжок МІЖ рядками, коли
+   фраза переноситься (вертикальний перенос НЕ входить у список
+   масштабованих властивостей нижче, лишається 6px незалежно від SCALE).
+   SCALE=0.85 — той самий множник, що REFERENCE_CELL_PX/CELL_GAP_PX у
+   use-result-tile-layout.ts (JS-константа тут недоступна, числа нижче —
+   4px*0.85=3.4px, 10px*0.85=8.5px, порахувати вручну при зміні SCALE). */
 .word-result-tile-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   row-gap: 6px;
-  column-gap: 10px;
+  column-gap: 8.5px;
   width: 100%;
 }
 .word-result-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3.4px;
 }
-/* Розмір/шрифт — ЕТАЛОН: реальна виміряна коробка поля-пропуску
+/* Розмір/шрифт — ЕТАЛОН×SCALE: реальна виміряна коробка поля-пропуску
    letter_gaps у РОБОЧОМУ (pre-check, не чіпали) стані картки "se conduire"
    (не-compact слово, maxUnitLength<=9) — 32×36px, font 18px/500, виміряно
    в браузері на 1280/820/390 (однаково на всіх, бо GAP_SIZE_CLASS/
    GAP_TEXT_CLASS, word-list-layout.ts:19-20, звичайні, НЕ responsive
-   Tailwind-класи). --cell тут — ширина (32px за замовчуванням, рахується в
-   JS, use-result-tile-layout.ts), 1.125 = 36/32 (висота), 0.5625 = 18/32
-   (шрифт) — ТІ САМІ співвідношення, що в еталонній картці, без окремої
-   підлоги на шрифт (підлога лише на --cell, 18px, яка й тягне за собою
-   шрифт/висоту вниз пропорційно). */
+   Tailwind-класи). pre-check БОКСИ самі лишаються на цих голих значеннях —
+   жодної спільної CSS-змінної з результатом не мають, тож SCALE=0.85
+   (use-result-tile-layout.ts) застосовується ЛИШЕ до --cell (результат),
+   pre-check і результат після цього комміту остаточно РІЗНОГО розміру.
+   --cell тут — ширина (рахується в JS), 1.125 = 36/32 (висота), 0.5625 =
+   18/32 (шрифт) — ТІ САМІ співвідношення, що в еталонній картці (ratio не
+   залежить від SCALE, бо застосовується вже ДО масштабованого --cell). */
 .word-result-cell {
   flex: none;
   width: var(--cell);
@@ -4873,35 +4879,35 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: calc(var(--cell) * 0.5625);
 }
 .word-result-cell--tile {
-  border-radius: 8px;
+  border-radius: 6.8px;
   border: 1.5px solid;
 }
 .dark .word-result-cell--tile {
-  border-radius: 6px;
+  border-radius: 5.1px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-result-cell--tile {
-    border-radius: 6px;
+    border-radius: 5.1px;
   }
 }
 /* Видимі (дані, не пропущені) літери letter_gaps — тепер ТЕЖ плитка
    однакового розміру (word-result-cell), але без рамки й з тихим
    нейтральним фоном, щоб усе слово читалось як один суцільний ряд
    плиток, а не "рамкові плитки впереміш із голим текстом". Радіус — той
-   самий еталон 8px/6px, що word-result-cell--tile. */
+   самий еталон×SCALE 6.8px/5.1px, що word-result-cell--tile. */
 .word-result-cell--text {
-  border-radius: 8px;
+  border-radius: 6.8px;
   background: #f4efe0;
   color: #1a1640;
 }
 .dark .word-result-cell--text {
-  border-radius: 6px;
+  border-radius: 5.1px;
   background: rgba(255, 255, 255, 0.07);
   color: #dcdbf3;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-result-cell--text {
-    border-radius: 6px;
+    border-radius: 5.1px;
     background: rgba(255, 255, 255, 0.07);
     color: #dcdbf3;
   }
