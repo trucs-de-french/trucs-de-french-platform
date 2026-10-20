@@ -4821,6 +4821,30 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 10px;
 }
 
+/* Єдина клітинка letter_gaps (поле-пропуск + видима літера) і
+   letter_rearrangement (плитка-літера) — ОДИН розмір на всю вправу,
+   рахується в JS (use-working-tile-layout.ts) і передається як --cell на
+   обгортці вправи (inline style на EXERCISE_STACK). Висота/шрифт — та сама
+   частка від ширини, що в еталонній картці "se conduire"
+   (36/32=1.125, 18/32=0.5625) — раніше статичні GAP_SIZE_CLASS/
+   COMPACT_GAP_SIZE_CLASS (word-list-layout.ts), тепер один неперервний
+   розмір без стрибка між "звичайним"/"компактним" варіантом. Радіус і
+   проміжок між літерами — спільні для обох типів (раніше різнились:
+   8px/6px у полів-пропусків, 6px у плиток-літер). */
+.letter-tile-cell {
+  width: var(--cell);
+  height: calc(var(--cell) * 1.125);
+  border-radius: 6px;
+}
+.letter-tile-font {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: calc(var(--cell) * 0.5625);
+}
+.letter-tile-row-gap {
+  gap: calc(var(--cell) * 0.125);
+}
+
 .drag-drop-row-text {
   flex: 1 1 auto;
   min-width: 0;

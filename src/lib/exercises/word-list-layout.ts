@@ -4,40 +4,20 @@
 // константа для обох типів, щоб поріг не розійшовся між ними згодом.
 export const TWO_COLUMN_WORD_THRESHOLD = 10;
 
-// "Одиниця переносу" — окреме слово ФРАЗИ (розділене пробілом), не вся
-// фраза цілком: довжина рахується БЕЗ пробілів. Поріг і розміри — спільні
-// для letter_gaps (поля-input+видимі літери) і letter_rearrangement
-// (плитки SortableTileRow), застосовуються до ВСЬОГО рядка одразу, коли
-// НАЙДОВША одиниця в ньому перевищує поріг — інакше в одній фразі сусідні
-// короткі й довгі слова виглядали б неоднорідно (одне зменшене, інше ні).
-export const LONG_WORD_COMPACT_THRESHOLD = 9;
-// Розмір поля-пропуску/видимої літери (letter_gaps) — звичайний і
-// компактний варіант. Єдине джерело цих чисел — LETTER_TILE_SIZE_CLASS/
-// COMPACT_LETTER_TILE_SIZE_CLASS нижче (letter_rearrangement) виводяться
-// САМЕ з них, щоб обидва типи виглядали як один і той самий розмір поля для
-// однієї літери, не дублюючи числа.
-export const GAP_SIZE_CLASS = "h-9 w-8";
-export const GAP_TEXT_CLASS = "text-lg";
-export const COMPACT_GAP_SIZE_CLASS = "h-8 w-7";
-export const COMPACT_LETTER_TEXT_CLASS = "text-base";
+// Клітинка (поле-пропуск/видима літера letter_gaps, плитка-літера
+// letter_rearrangement) має ОДИН розмір на всю вправу — рахується від
+// реальної ширини картки (use-working-tile-layout.ts), не від довжини
+// власного слова картки (колишній LONG_WORD_COMPACT_THRESHOLD, видалений:
+// давав картці з довгим словом дрібніші клітинки, ніж картці з коротким
+// словом у тій самій вправі).
 
-// Фіксований розмір ОДНОЛІТЕРНОЇ плитки (letter_rearrangement,
-// SortableTileRow letterTile) — однакові w/h незалежно від символу (без
-// цього "i"/"l"/"r" вужчі за "m"/"w" через px-* без w-*, плитки різної
-// ширини в одному слові). Той САМИЙ розмір, що input-поля letter_gaps (ці
-// два типи завдань мають виглядати як одна родина), виведений з GAP_*
-// констант вище, а не задубльований. Застосовується ЛИШЕ до
-// letter_rearrangement — плитки-СЛОВА (reorder.tsx) лишаються
-// variable-width (довжина слова/фрази має значення), letterTile там не
-// передається.
-export const LETTER_TILE_SIZE_CLASS = `${GAP_SIZE_CLASS} ${GAP_TEXT_CLASS}`;
-// Компактний варіант (LONG_WORD_COMPACT_THRESHOLD) — довгі слова (>9 літер).
-export const COMPACT_LETTER_TILE_SIZE_CLASS = `${COMPACT_GAP_SIZE_CLASS} ${COMPACT_LETTER_TEXT_CLASS}`;
-
-// Коли навіть компактний розмір не рятує в режимі двох колонок — рядок
-// займає обидві (md:col-span-2). Два незалежні критерії: одна одиниця сама
-// по собі задовга, АБО сумарна довжина фрази (без пробілів) завелика для
-// половини ширини блоку.
+// Евристичні пороги "це слово завелике" — ЛИШЕ для показового порядку
+// карток (fullFlags → useTwoColumnWordOrder: full-картки не паруються в
+// кластеризації висот, clusterCardHeights/orderForTwoColumns вище).
+// Фінальний md:col-span (чи влазить картка в половину ширини) рахується
+// окремо, за РЕАЛЬНО виміряною шириною (use-working-tile-layout.ts
+// computeWorkingSpans) — ці два пороги з ним не пов'язані, лише з порядком
+// показу.
 export const SINGLE_WORD_SPAN_THRESHOLD = 13;
 export const PHRASE_SPAN_THRESHOLD = 18;
 

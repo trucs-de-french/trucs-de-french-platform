@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -20,13 +21,8 @@ import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
   TWO_COLUMN_WORD_THRESHOLD,
-  LONG_WORD_COMPACT_THRESHOLD,
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
-  GAP_SIZE_CLASS,
-  GAP_TEXT_CLASS,
-  COMPACT_GAP_SIZE_CLASS,
-  COMPACT_LETTER_TEXT_CLASS,
   WORD_CARD,
   splitPhraseUnits,
   phraseSizeInfo,
@@ -38,6 +34,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { useWorkingTileLayout, computeWorkingSpans, LAMP_RESERVE_PX } from "./use-working-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -190,6 +187,26 @@ export function LetterGapsExercise({
     [config.words]
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
+
+  // Довжина НАЙДОВШОЇ групи (слова без пробілів) ОКРЕМО для кожного слова
+  // вправи — вирішує лише чи влізає ВЛАСНА найдовша група картки в
+  // половину ширини рядка (computeWorkingSpans нижче). n (на всю вправу) —
+  // максимум цих довжин по УСІХ словах, включно з прихованими блоками,
+  // визначає ЄДИНИЙ розмір клітинки (use-working-tile-layout.ts).
+  const wordUnitLengths = useMemo(
+    () => config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength),
+    [config.words]
+  );
+  const workingN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
+  // --cell рахується ОДИН раз на всю вправу від ширини ПОВНОШИРИННОЇ картки
+  // (use-working-tile-layout.ts) — gridRef вішається на грід-обгортку
+  // карток нижче (ОДНА й та сама властивість, обидві гілки — non-block і
+  // renderBlock() — монтують лише одну з них одночасно). Резерв лампочки
+  // лічиться від того, чи ЦЯ вправа ВЗАГАЛІ показує лампочку (isDelf), не
+  // від поточного opts.locked конкретної картки — інакше розмір клітинки
+  // "стрибнув" би одразу після "Перевірити".
+  const { gridRef, cell, spanForFit } = useWorkingTileLayout(workingN, isDelf ? 0 : LAMP_RESERVE_PX);
+  const cellStyle = { "--cell": `${cell}px` } as CSSProperties;
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
   // на всю вправу.
@@ -509,6 +526,13 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
+      // Заздалегідь порахований span (1|2) для ВСЬОГО видимого списку
+      // карток разом (computeWorkingSpans, use-working-tile-layout.ts) —
+      // чи влазить НАЙДОВША власна група картки в один рядок половинної
+      // картки за поточного розміру клітинки. undefined (поза грід-гілкою,
+      // напр. практика) — трактується як "не потрібен" (md:col-span-2 без
+      // ефекту поза CSS grid однаково).
+      workingSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -518,11 +542,7 @@ export function LetterGapsExercise({
     if (!word) return null;
     let gapIndex = -1;
     const units = splitPhraseUnits(word.chars);
-    const { maxUnitLength } = phraseSizeInfo(word.chars);
-    const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
-    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
-    const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
-    const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
+    const needsFullSpan = opts.workingSpan === 2;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
@@ -569,11 +589,11 @@ export function LetterGapsExercise({
             </p>
             <div className="flex flex-wrap items-center gap-2">
               {units.map((unit, ui) => (
-                <div key={ui} className="flex shrink-0 items-center gap-1">
+                <div key={ui} className="flex shrink-0 items-center letter-tile-row-gap">
                   {groupChars(unit).map((group, ci) => {
                     if (group.type === "letters")
                       return (
-                        <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
+                        <span key={ci} className="letter-tile-font whitespace-nowrap">
                           {group.text}
                         </span>
                       );
@@ -593,7 +613,7 @@ export function LetterGapsExercise({
                         onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
                         onBlur={diacritics.onBlur}
                         disabled={opts.locked}
-                        className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                        className={`letter-tile-cell letter-tile-font border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
                           hintedGaps.has(`${wi},${gi}`)
                             ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
                             : status === "correct"
@@ -623,10 +643,18 @@ export function LetterGapsExercise({
     // singleGapOrder/displayOrder у ≤10-гілці ("Tab рухається так, як
     // вправа виглядає на екрані").
     const blockGapOrder = gapOrderFor(blockDisplayOrder);
+    // Той самий порядок, що вже показаний студенту (blockDisplayOrder) —
+    // span рахується ПОВЕРХ нього, карток не перетасовуємо.
+    const blockWorkingSpans = computeWorkingSpans(
+      blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
+      1,
+      spanForFit
+    );
 
     return (
       <div className="flex flex-col gap-3">
         <div
+          ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
           } grid gap-3 md:grid-cols-2`}
@@ -638,6 +666,7 @@ export function LetterGapsExercise({
               gapOrder: blockGapOrder,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
+              workingSpan: blockWorkingSpans[pos],
             })
           )}
         </div>
@@ -675,7 +704,7 @@ export function LetterGapsExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK}>
+      <div className={EXERCISE_STACK} style={cellStyle}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -785,8 +814,16 @@ export function LetterGapsExercise({
     </button>
   ) : null;
 
+  // Той самий порядок, що вже показаний студенту (displayOrder) — span
+  // рахується ПОВЕРХ нього, карток не перетасовуємо.
+  const singleWorkingSpans = computeWorkingSpans(
+    displayOrder.map((wi) => wordUnitLengths[wi]),
+    1,
+    spanForFit
+  );
+
   return (
-    <div className={EXERCISE_STACK}>
+    <div className={EXERCISE_STACK} style={cellStyle}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
@@ -809,6 +846,7 @@ export function LetterGapsExercise({
       {!useBlocks ? (
         <>
           <div
+            ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
               isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
@@ -820,6 +858,7 @@ export function LetterGapsExercise({
                 gapOrder: singleGapOrder,
                 setContentRef,
                 cardNumber: pos + 1,
+                workingSpan: singleWorkingSpans[pos],
               })
             )}
           </div>

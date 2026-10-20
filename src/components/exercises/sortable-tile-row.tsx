@@ -2,7 +2,6 @@
 
 import { useState, type DragEvent } from "react";
 import { SELECTED_OPTION_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
-import { LETTER_TILE_SIZE_CLASS, COMPACT_LETTER_TILE_SIZE_CLASS } from "@/lib/exercises/word-list-layout";
 import { arrayMove, computeInsertIndex, resolveDropSide } from "@/lib/sortable-list";
 
 // Спільна DnD-механіка для reorder (плитки-слова) і letter_rearrangement
@@ -30,20 +29,23 @@ export function SortableTileRow({
   // За ІНДЕКСОМ позиції (не значенням) — коректно для дублікатів (однакові
   // слова/літери можуть повторюватись).
   tileState?: (index: number) => "correct" | "incorrect" | undefined;
-  // Менший розмір плитки для задовгих слів (letter_rearrangement,
-  // word-list-layout.ts LONG_WORD_COMPACT_THRESHOLD) — суто презентаційний
-  // проп, ніяк не зачіпає drag/click-move логіку вище.
+  // Менший padding для НЕ-letterTile плиток (суто презентаційний проп,
+  // ніяк не зачіпає drag/click-move логіку вище) — letter_rearrangement
+  // (letterTile) більше не передає compact: розмір однолітерної плитки
+  // тепер ЗАВЖДИ однаковий на всю вправу (.letter-tile-cell, --cell —
+  // use-working-tile-layout.ts), а не перемикається тут.
   compact?: boolean;
   // Однолітерні плитки (letter_rearrangement) — фіксована w/h + центрування
   // замість padding-based розміру (reorder.tsx — плитки-СЛОВА, variable-
-  // width за задумом, letterTile не передає). compact тут вибирає менший
-  // фіксований розмір, а не менший padding.
+  // width за задумом, letterTile не передає) через спільний клас
+  // .letter-tile-cell (globals.css), що читає --cell, встановлений
+  // викликачем на обгортці вправи.
   letterTile?: boolean;
   // Відступ між плитками (і між перенесеними рядками — flex gap задає
-  // обидва) — за замовчуванням gap-2 (reorder.tsx, плитки-слова). У
-  // letter_rearrangement letterTile передає gap-1, той самий, що letter-
-  // gaps.tsx між літерами в межах слова (units-рядок), щоб обидва типи
-  // виглядали як одна родина, а не два різні міжплиткові ритми.
+  // обидва) — за замовчуванням gap-2 (reorder.tsx, плитки-слова).
+  // letter_rearrangement передає "letter-tile-row-gap" (globals.css,
+  // calc(var(--cell)*0.125)) — той самий проміжок, що letter-gaps.tsx між
+  // літерами в межах слова, щоб обидва типи виглядали як одна родина.
   gapClassName?: string;
   // Префікс позицій [0, lockedCount), закріплених кнопкою-підказкою
   // (letter_rearrangement): ці плитки не тягаються й не клікаються, і жодну
@@ -147,23 +149,23 @@ export function SortableTileRow({
             }}
             onClick={() => clickTile(i)}
             disabled={locked}
-            className={`select-none rounded-md border-[1.5px] dark:border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`select-none border-[1.5px] dark:border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
             } ${
               // letterTile (letter_rearrangement) — фіксована w/h, однакова
-              // для будь-якого символу, по центру. compact тут вибирає
-              // менший фіксований розмір (LONG_WORD_COMPACT_THRESHOLD), не
-              // менший padding. Звичайні тайли (reorder — цілі слова/фрази)
-              // мають переноситись усередині себе (max-w-full break-words),
-              // інакше довга фраза вилазить за межі рядка (whitespace-nowrap
-              // без обмеження ширини).
+              // для будь-якого символу, по центру, через спільний клас
+              // .letter-tile-cell (globals.css, читає --cell) — той самий
+              // розмір, що поле-пропуск letter_gaps. Звичайні тайли
+              // (reorder — цілі слова/фрази) мають переноситись усередині
+              // себе (max-w-full break-words), інакше довга фраза вилазить
+              // за межі рядка (whitespace-nowrap без обмеження ширини) —
+              // їм лишається звичайний rounded-md (letterTile бере радіус
+              // з .letter-tile-cell).
               letterTile
-                ? `flex shrink-0 items-center justify-center whitespace-nowrap text-center ${
-                    compact ? COMPACT_LETTER_TILE_SIZE_CLASS : LETTER_TILE_SIZE_CLASS
-                  }`
+                ? "flex shrink-0 items-center justify-center whitespace-nowrap text-center letter-tile-cell letter-tile-font"
                 : compact
-                  ? "whitespace-nowrap px-2 py-1 text-sm"
-                  : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere]"
+                  ? "whitespace-nowrap px-2 py-1 text-sm rounded-md"
+                  : "max-w-full break-words px-3 py-1.5 text-base [overflow-wrap:anywhere] rounded-md"
             } ${tileClass(i)} ${extraTileClassName}`}
           >
             {text}
