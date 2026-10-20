@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -21,6 +21,7 @@ import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/bu
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -60,6 +61,20 @@ const IMAGE_OPTION_FRAME_BASE = "relative w-full overflow-hidden rounded-md";
 // що вже показує літерний префікс чипа/пілюлі вибраної відповіді.
 function optionLetter(index: number): string {
   return String.fromCharCode(65 + index);
+}
+
+// Текст деяких варіантів у БД уже введений із власним префіксом літери
+// ("A) L'éléphant" — зі старих часів, коли рендер сам літеру не додавав),
+// а рендер тепер завжди додає свою (optionLetter) — без зняття виходить
+// подвоєння "A) A) ...". Знімаємо лише цей шаблон з початку тексту перед
+// показом; дані в БД не змінюємо, звірка відповіді йде по id/correct, не
+// по цьому рядку, тож на грейдинг не впливає.
+function stripOptionLetterPrefix(text: string): string {
+  return text.replace(/^[A-Za-z]\)\s*/, "");
+}
+
+function optionDisplayText(text: string, index: number): string {
+  return `${optionLetter(index)}) ${stripOptionLetterPrefix(text)}`;
 }
 
 // Режим практики "Робота над помилками" (пілот, частина 2) — лише
@@ -452,11 +467,7 @@ export function MultipleChoiceExercise({
               tileClassName: chipClass(item.id, o.id, itemDetail),
               indicatorClassName: tileIndicatorClass(item.id, o.id, itemDetail),
               indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
-              label: (
-                <>
-                  {optionLetter(idx)}) {o.text}
-                </>
-              ),
+              label: optionDisplayText(o.text, idx),
             };
           })}
         />
@@ -614,8 +625,11 @@ export function MultipleChoiceExercise({
       selectedOptions.length === 0
         ? "Оберіть"
         : item.multiple
-          ? selectedOptions.map((o) => o.text).join(", ")
-          : `${optionLetter(item.options.findIndex((o) => o.id === selectedOptions[0].id))}) ${selectedOptions[0].text}`;
+          ? selectedOptions.map((o) => stripOptionLetterPrefix(o.text)).join(", ")
+          : optionDisplayText(
+              selectedOptions[0].text,
+              item.options.findIndex((o) => o.id === selectedOptions[0].id)
+            );
 
     // Речення для dropdown могло містити рівно один маркер "{{}}" (адмінка:
     // "Je {{}} au cinéma.") — раніше він позначав місце вбудованого
@@ -670,7 +684,10 @@ export function MultipleChoiceExercise({
           <div
             className={`flex h-10 w-full items-center justify-between gap-2 rounded-full border px-3 text-sm transition-colors md:h-9 group-focus-within:ring-2 group-focus-within:ring-brand ${pillClass}`}
           >
-            <span className="truncate" title={selectedOptions.map((o) => o.text).join(", ") || undefined}>
+            <span
+              className="truncate"
+              title={selectedOptions.map((o) => stripOptionLetterPrefix(o.text)).join(", ") || undefined}
+            >
               {label}
             </span>
             <ChevronDown size={14} className="shrink-0 opacity-60" aria-hidden />
@@ -689,9 +706,9 @@ export function MultipleChoiceExercise({
             className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed"
           >
             {!item.multiple && <option value="">— Оберіть —</option>}
-            {item.options.map((o) => (
+            {item.options.map((o, idx) => (
               <option key={o.id} value={o.id}>
-                {o.text}
+                {optionDisplayText(o.text, idx)}
               </option>
             ))}
           </select>
@@ -714,6 +731,71 @@ export function MultipleChoiceExercise({
     ) : (
       <div className="flex flex-col gap-3">
         {items.map((item, i) => renderItem(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id)))}
+      </div>
+    );
+  }
+
+  // Контент toggle-картки "Правильні відповіді" (TaskResult children) —
+  // одна картка (той самий glass-item-card + item-number-badge, що рядки
+  // самої вправи) на питання поточного скоупу (блок чи вся вправа), у
+  // порядку/нумерації items ("та сама нумерація, що в самій вправі" —
+  // startIndex, як у renderItems/renderDropdownRow вище). detailItems
+  // відсутній до першої перевірки скоупу — тоді toggle не рендериться
+  // (TaskResult сам ховає його без children).
+  function renderAnswersToggle(
+    items: MultipleChoicePublicItem[],
+    startIndex: number,
+    detailItems: ItemDetail[] | undefined
+  ) {
+    if (!detailItems) return null;
+    return (
+      <div className="flex flex-col gap-2">
+        {items.map((item, i) => {
+          const d = detailItems.find((x) => x.id === item.id);
+          if (!d) return null;
+          const correctOpt = d.options.find((o) => o.correct);
+          const selectedOpt = d.options.find((o) => o.selected);
+          const itemCorrect = d.options.every((o) => o.correct === o.selected);
+          const questionText = frenchNbsp(
+            item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim()
+          );
+          return (
+            <div key={item.id} className="glass-item-card flex items-start gap-2.5 px-3 py-2.5">
+              <span className="item-number-badge shrink-0" aria-label={`Питання ${startIndex + i + 1}`}>
+                {startIndex + i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="min-w-0 break-words leading-snug [overflow-wrap:anywhere]">{questionText}</p>
+                <p className="mt-1 flex items-start gap-1 text-base font-semibold text-[#1f7a3d] dark:text-[#bff0d0]">
+                  <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
+                  <span>
+                    <span
+                      className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-[#c9c8e6]"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      Правильна відповідь:
+                    </span>
+                    {correctOpt ? stripOptionLetterPrefix(correctOpt.text) : ""}
+                  </span>
+                </p>
+                {!itemCorrect && (
+                  <p className="mt-1 flex items-start gap-1 text-base font-semibold text-[#b42318] dark:text-[#f87171]">
+                    <X size={14} className="mt-0.5 shrink-0" aria-hidden />
+                    <span>
+                      <span
+                        className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-[#c9c8e6]"
+                        style={{ fontFamily: "var(--font-heading)" }}
+                      >
+                        Ваша відповідь:
+                      </span>
+                      {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : "не обрано"}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -799,11 +881,15 @@ export function MultipleChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={blockItems.length}
                 hintSummary={{
                   hintCount: blockDetail?.items.filter((it) => it.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,
                 }}
-              />
+              >
+                {renderAnswersToggle(blockItems, startIndex, blockDetail?.items)}
+              </TaskResult>
             )}
           </div>
           {blockCheckConfirm.confirming && (
@@ -913,11 +999,15 @@ export function MultipleChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleCount={config.items.length}
                 hintSummary={{
                   hintCount: detail?.items.filter((it) => it.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,
                 }}
-              />
+              >
+                {renderAnswersToggle(config.items, 0, detail?.items)}
+              </TaskResult>
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}
           </div>
