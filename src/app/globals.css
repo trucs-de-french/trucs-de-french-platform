@@ -5925,3 +5925,228 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f6dc8e;
   }
 }
+
+/* chronological_order — ВАРІАНТ ФРАЗИ (mode:"text") лише, chronological-
+   order.tsx: рядок прогресу над картками + сама картка речення + слот
+   номера праворуч. Варіант картинки (COMPACT_IMAGE_*) не зачіпається. */
+
+/* Рядок прогресу — пілюля "Заповнено X з N" (та сама форма, що
+   .counter-pill вище, свій розмір/колір за мокапом) + бар, під тим самим
+   gradient #5a55e6→#3b36c4, що й .chrono-order-note-badge/.item-number-
+   badge (не новий колір). border-bottom тут — та сама тонка лінія, що
+   .task-panel-header-divider, лише під цим рядком замість нього (режим
+   text замінює дивідер цим рядком, не додає другий). */
+.chrono-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e6e0c8;
+}
+.dark .chrono-progress-row {
+  border-bottom-color: rgba(243, 217, 139, 0.2);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-progress-row {
+    border-bottom-color: rgba(243, 217, 139, 0.2);
+  }
+}
+@media (max-width: 767px) {
+  .chrono-progress-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+.chrono-progress-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 28px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid rgba(217, 183, 101, 0.6);
+  border-radius: 999px;
+  padding: 0 12px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #6b4a14;
+  white-space: nowrap;
+}
+.dark .chrono-progress-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.35);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-progress-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.35);
+    color: #f6dc8e;
+  }
+}
+.chrono-progress-track {
+  width: 260px;
+  flex-shrink: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: #efe6c8;
+  overflow: hidden;
+}
+.dark .chrono-progress-track {
+  background: var(--glass-progress-track);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-progress-track {
+    background: var(--glass-progress-track);
+  }
+}
+@media (max-width: 767px) {
+  .chrono-progress-track {
+    width: 100%;
+  }
+}
+.chrono-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5a55e6, #3b36c4);
+  transition: width 200ms ease-out;
+}
+
+/* Буква-бейдж (A, B, C...) — та сама форма/колір/шрифт, що .item-number-
+   badge (спільний бейдж), лише більший розмір під цей мокап (32px
+   десктоп/28px мобільний замість стандартних 26px). */
+.chrono-phrase-badge {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+@media (max-width: 767px) {
+  .chrono-phrase-badge {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Картка речення — layout-шар над .glass-item-card (той самий токен-
+   залежний gold-gradient border/bg/shadow, що й інші типи вправ, image-
+   match-card/table-fill-row/true-false row тощо), лише display/gap/padding
+   свої під цей мокап. */
+.chrono-phrase-row.glass-item-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+}
+.chrono-phrase-text {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/* Результат (після перевірки) — рівно той самий зелений/червоний, що
+   .matching-card--correct/--incorrect (border-green-500/bg-green-50,
+   dark: rgba(5,46,22,.3) / rgba(69,10,10,.3) — Tailwind green-950/red-950
+   у 30%), окремими класами (не Tailwind-утилітами border-green-500 поруч
+   із .glass-item-card на тому самому елементі): обидва unlayered-класи
+   однакової специфічності, .glass-item-card лишається вище в файлі, тож
+   свою рамку/фон перекриває лише клас, визначений ПІЗНІШЕ в каскаді — як
+   і .matching-card--correct вище перекриває базовий .matching-card. */
+.chrono-phrase-row--correct {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.dark .chrono-phrase-row--correct {
+  background: rgba(5, 46, 22, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-phrase-row--correct {
+    background: rgba(5, 46, 22, 0.3);
+  }
+}
+.chrono-phrase-row--incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.dark .chrono-phrase-row--incorrect {
+  background: rgba(69, 10, 10, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-phrase-row--incorrect {
+    background: rgba(69, 10, 10, 0.3);
+  }
+}
+
+/* Слот номера праворуч картки (режим text, line-варіант numberInput) —
+   порожній (пунктир, світло-лавандовий) / заповнений (суцільна рамка,
+   темніший indigo) ДО перевірки; зелена/червона рамка (inline у className,
+   border-green-500/border-red-500 — звичайні Tailwind-утиліти тут ПРАЦЮЮТЬ
+   нормально, бо .chrono-number-slot сам border-color не задає, нема
+   конфлікту каскадних шарів) ПІСЛЯ. */
+.chrono-number-slot {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 800;
+}
+.chrono-number-slot:focus-visible {
+  outline: 2px solid var(--glass-focus-ring);
+  outline-offset: 2px;
+}
+.chrono-number-slot:disabled {
+  opacity: 1;
+}
+@media (max-width: 767px) {
+  .chrono-number-slot {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+}
+.chrono-number-slot--empty {
+  border: 1.5px dashed #b9b2e8;
+  background: #f7f6ff;
+  color: #9a96c8;
+  font-size: 18px;
+  font-weight: 700;
+}
+.chrono-number-slot--empty::placeholder {
+  color: #9a96c8;
+}
+.chrono-number-slot--filled {
+  border: 2px solid #4b46da;
+  background: #eeeefb;
+  color: #2f2c6b;
+}
+.dark .chrono-number-slot--empty {
+  border-color: rgba(185, 178, 232, 0.4);
+  background: rgba(185, 178, 232, 0.07);
+  color: rgba(201, 200, 230, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-number-slot--empty {
+    border-color: rgba(185, 178, 232, 0.4);
+    background: rgba(185, 178, 232, 0.07);
+    color: rgba(201, 200, 230, 0.55);
+  }
+}
+.dark .chrono-number-slot--filled {
+  border-color: #a8a4f5;
+  background: rgba(75, 70, 218, 0.28);
+  color: #e3e2fb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-number-slot--filled {
+    border-color: #a8a4f5;
+    background: rgba(75, 70, 218, 0.28);
+    color: #e3e2fb;
+  }
+}

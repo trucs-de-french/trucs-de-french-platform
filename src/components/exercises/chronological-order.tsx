@@ -199,13 +199,50 @@ export function ChronologicalOrderExercise({
       : "border-red-500 bg-red-50 dark:bg-red-950/30";
   }
 
-  // Фон рядка (режим text) після перевірки — той самий м'який відтінок, що
-  // й на полі (inputClass), лише без рамки: рядки без власних карток, тому
-  // підсвічування рамкою тут недоцільне (злилося б із роздільником).
+  // Рамка+фон КАРТКИ (режим text, окрема картка на кожну фразу) після
+  // перевірки — .chrono-phrase-row--correct/--incorrect (globals.css),
+  // той самий зелений/червоний, що matching-card--correct/--incorrect
+  // (border-green-500/bg-green-50, dark:bg-green-950/30 — рівно ті самі
+  // RGBA, лише окремий клас, бо .glass-item-card (unlayered CSS) інакше
+  // переміг би Tailwind-утиліту border-green-500/border-red-500 тієї ж
+  // специфічності в каскаді шарів).
   function rowStateClass(itemId: string) {
     const d = itemDetail(itemId);
     if (!d) return "";
-    return d.isCorrect ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30";
+    return d.isCorrect ? "chrono-phrase-row--correct" : "chrono-phrase-row--incorrect";
+  }
+
+  // Зелена/червона рамка поля-номера (inputClass вище) лишається
+  // НЕЗМІННОЮ для режиму image/mixed (compact-варіант нижче) — ця функція
+  // обслуговує ЛИШЕ "line" (текстовий режим, слот праворуч картки),
+  // окремо від inputClass, щоб зміна вигляду тут не торкалась image/mixed.
+  function lineSlotClass(itemId: string) {
+    const d = itemDetail(itemId);
+    if (d) {
+      return d.isCorrect
+        ? "chrono-number-slot border border-green-500 bg-green-50 dark:bg-green-950/30"
+        : "chrono-number-slot border border-red-500 bg-red-50 dark:bg-red-950/30";
+    }
+    const filled = !!positions[itemId]?.trim();
+    return `chrono-number-slot ${filled ? "chrono-number-slot--filled" : "chrono-number-slot--empty"}`;
+  }
+
+  // "Marie : « ... »" — якщо текст фрази починається з мітки виступаючого
+  // за цим рівно форматом (пробіл-двокрапка-пробіл-французька лапка),
+  // підсвічуємо її напівжирним (п.3б задачі), без зміни самих даних
+  // (config.items[].content лишається одним рядком, як і було) — текст,
+  // що не відповідає формату, рендериться так само, як і раніше (plain).
+  function renderPhraseText(content: string) {
+    const sepIndex = content.indexOf(" : «");
+    if (sepIndex === -1) return frenchNbsp(content);
+    const speaker = content.slice(0, sepIndex);
+    const rest = content.slice(sepIndex);
+    return (
+      <>
+        <span className="font-heading font-extrabold">{frenchNbsp(speaker)}</span>
+        {frenchNbsp(rest)}
+      </>
+    );
   }
 
   function pointsLabel(itemId: string, points: number) {
@@ -246,18 +283,11 @@ export function ChronologicalOrderExercise({
     label?: string,
     points: number = 1,
   ) {
-    // "compact" — лише щільна сітка image/mixed: h-10 (40px) за замовчуванням
-    // покриває і дотик, і вузький екран; sm:pointer-fine:h-8 (32px) звужує
-    // лише на реальному десктопі з мишкою (sm+ ширина ТА pointer:fine) —
-    // на touch-екрані будь-якої ширини лишається 40px. text-base (16px)
-    // завжди, щоб Safari не зумив сторінку при фокусі на дотику (вимагає
-    // ≥16px), на десктопі це теж ≥14px з запасом.
-    if (variant === "compact" || variant === "line") {
-      // "line" (компактні рядки режиму text) — та сама логіка touch/desktop,
-      // лише десктопна висота трохи більша (h-9=36px, не h-8=32px): тут
-      // немає сусіднього квадрата-картинки, що диктує мінімальний розмір,
-      // тож можна лишити поле трохи вищим і легше читаним у рядку.
-      const desktopHeight = variant === "line" ? "sm:pointer-fine:h-9" : "sm:pointer-fine:h-8";
+    // "line" — слот-картка режиму text (мокап задачі): 56x56 на десктопі,
+    // 48x48 на мобільному, порожній/заповнений вигляд через
+    // lineSlotClass — повністю ОКРЕМИЙ від "compact" (image/mixed), той
+    // не зачіпається.
+    if (variant === "line") {
       return (
         <input
           type="number"
@@ -268,7 +298,29 @@ export function ChronologicalOrderExercise({
           disabled={locked}
           placeholder="№"
           aria-label={numberInputAriaLabel(itemId, points, label ? `Номер події ${label}` : "Номер події")}
-          className={`h-10 w-12 rounded border text-center text-base ${desktopHeight} ${inputClass(itemId)}`}
+          className={lineSlotClass(itemId)}
+        />
+      );
+    }
+    // "compact" — лише щільна сітка image/mixed (НЕ торкається режиму text
+    // вище): h-10 (40px) за замовчуванням покриває і дотик, і вузький
+    // екран; sm:pointer-fine:h-8 (32px) звужує лише на реальному десктопі
+    // з мишкою (sm+ ширина ТА pointer:fine) — на touch-екрані будь-якої
+    // ширини лишається 40px. text-base (16px) завжди, щоб Safari не зумив
+    // сторінку при фокусі на дотику (вимагає ≥16px), на десктопі це теж
+    // ≥14px з запасом.
+    if (variant === "compact") {
+      return (
+        <input
+          type="number"
+          min={1}
+          max={config.items.length}
+          value={positions[itemId] ?? ""}
+          onChange={(e) => updatePosition(itemId, e.target.value)}
+          disabled={locked}
+          placeholder="№"
+          aria-label={numberInputAriaLabel(itemId, points, label ? `Номер події ${label}` : "Номер події")}
+          className={`h-10 w-12 rounded border text-center text-base sm:pointer-fine:h-8 ${inputClass(itemId)}`}
         />
       );
     }
@@ -341,7 +393,35 @@ export function ChronologicalOrderExercise({
           </span>
           {numberingNoteText}
         </p>
-        <div className="task-panel-header-divider" data-header-divider="" />
+        {config.mode === "text" ? (
+          // Рядок прогресу (п.2 задачі) — лише режим text: пілюля
+          // "Заповнено X з N" (X = answeredCount, те саме, що й кнопка
+          // "Перевірити" нижче вже рахує) + смужка-бар, той самий gradient
+          // #5a55e6→#3b36c4, що й .chrono-order-note-badge/.item-number-
+          // badge вище (не новий колір). Власна нижня лінія замінює
+          // task-panel-header-divider для цього режиму (п.2: "Thin hairline
+          // below" — рівно під цим рядком, не над ним вдруге).
+          <div className="chrono-progress-row">
+            <span className="chrono-progress-pill">
+              Заповнено {answeredCount} з {config.items.length}
+            </span>
+            <div
+              className="chrono-progress-track"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={config.items.length}
+              aria-valuenow={answeredCount}
+              aria-label="Заповнено пунктів"
+            >
+              <div
+                className="chrono-progress-fill"
+                style={{ width: `${config.items.length > 0 ? (answeredCount / config.items.length) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="task-panel-header-divider" data-header-divider="" />
+        )}
       </div>
 
       {config.mode === "image" || config.mode === "mixed" ? (
@@ -422,18 +502,20 @@ export function ChronologicalOrderExercise({
         // вмістом (py-2 px-2.5, без фіксованої min-height), тож довге
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
-        <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
+        <div className="flex flex-col gap-2.5">
           {orderedItems.map((item) => {
             const label = initialLabelById.get(item.id) ?? "";
             return (
               <div
                 key={item.id}
-                className={`flex items-center gap-2.5 px-2.5 py-2 transition-colors ${rowStateClass(item.id)}`}
+                className={`chrono-phrase-row glass-item-card transition-colors ${rowStateClass(item.id)}`}
               >
-                <span className="item-number-badge" aria-label={`Картка ${label}`}>
+                <span className="item-number-badge chrono-phrase-badge" aria-label={`Картка ${label}`}>
                   {label}
                 </span>
-                <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">{frenchNbsp(item.content)}</span>
+                <span className="chrono-phrase-text min-w-0 flex-1 break-words text-left [overflow-wrap:anywhere]">
+                  {renderPhraseText(item.content)}
+                </span>
                 {numberInput(item.id, "line", label, item.points)}
                 {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) && (
                   <span className="flex-none">{pointsLabel(item.id, item.points)}</span>
