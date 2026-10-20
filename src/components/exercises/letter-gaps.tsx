@@ -16,15 +16,8 @@ import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
-import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import {
-  SINGLE_WORD_SPAN_THRESHOLD,
-  PHRASE_SPAN_THRESHOLD,
-  WORD_CARD,
-  splitPhraseUnits,
-  phraseSizeInfo,
-} from "@/lib/exercises/word-list-layout";
+import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
@@ -33,7 +26,9 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
-import { splitIntoSyllableChunks } from "@/lib/exercises/syllable-split";
+import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
+import { groupChars } from "@/lib/exercises/letter-cell-groups";
+import { estimateLetterGapsCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -45,7 +40,11 @@ function buildLetterGapsRows(
   words: LetterGapsPublic["words"],
   detail: LetterGapsDetail
 ): { number: number; parts: (string | { word: string })[] }[] {
-  return wordIndices.map((wi) => {
+  // number — ПОЗИЦІЯ в wordIndices (display-порядок, той самий, що номер
+  // картки на екрані), НЕ оригінальний wi: wordIndices сам уже є
+  // displayOrder/blockDisplayOrder (картки перемішані за estimateCardRows),
+  // тож "wi+1" давав би номер, що не збігається з карткою на екрані.
+  return wordIndices.map((wi, pos) => {
     const word = words[wi];
     const correct = detail.words[wi]?.correctLetters ?? [];
     let ci = 0;
@@ -62,7 +61,7 @@ function buildLetterGapsRows(
         else parts.push(ch);
       }
     }
-    return { number: wi + 1, parts };
+    return { number: pos + 1, parts };
   });
 }
 
@@ -93,59 +92,6 @@ function normalize(value: string): string {
 }
 
 type GapKey = { wi: number; gi: number };
-
-type CharGroup = { type: "letters"; text: string } | { type: "gap" };
-
-// Сусідні видимі літери без пропуску між ними ("b"+"e" у "be") — в ОДИН
-// <span>, а не по одному на символ, щоб вони стояли впритул, як звичайне
-// слово, а не розсувались через gap-1 контейнера. Пропуски (null) свідомо
-// НЕ об'єднуються між собою — кожен лишається окремим полем уводу, як і
-// раніше (одна прихована літера = один <input>).
-function groupChars(chars: (string | null)[]): CharGroup[] {
-  const groups: CharGroup[] = [];
-  for (const char of chars) {
-    if (char === null) {
-      groups.push({ type: "gap" });
-      continue;
-    }
-    const last = groups[groups.length - 1];
-    if (last?.type === "letters") {
-      last.text += char;
-    } else {
-      groups.push({ type: "letters", text: char });
-    }
-  }
-  return groups;
-}
-
-// Повне слово (без масок) для ОДНІЄЇ одиниці переносу (артикль/"se"/слово),
-// щоб визначити межі складів (splitIntoSyllableChunks нижче потребує
-// РЕАЛЬНІ літери, не null) — hiddenLetters уже є в публічному config
-// (той самий масив, що gapLiveStatus/nextHintGap читають для живої
-// підсвітки), жодних нових серверних даних тут не потрібно. gapOffset —
-// кількість пропусків у ПОПЕРЕДНІХ одиницях того самого слова (hiddenLetters
-// індексується по всьому слову, не по одиниці).
-function reconstructUnitWord(unit: (string | null)[], hiddenLetters: string[], gapOffset: number): string {
-  let word = "";
-  let hi = gapOffset;
-  for (const ch of unit) {
-    word += ch === null ? hiddenLetters[hi++] ?? "" : ch;
-  }
-  return word;
-}
-
-// Розрізає одиницю (масив символів/null) на фрагменти за довжинами
-// фрагментів splitIntoSyllableChunks (довжини в сумі рівні unit.length —
-// reconstructUnitWord зберігає позиційну відповідність).
-function sliceUnitByChunks(unit: (string | null)[], chunks: string[]): (string | null)[][] {
-  const result: (string | null)[][] = [];
-  let pos = 0;
-  for (const chunk of chunks) {
-    result.push(unit.slice(pos, pos + chunk.length));
-    pos += chunk.length;
-  }
-  return result;
-}
 
 type LetterGapsResult = Extract<GradeResult, { detail: LetterGapsDetail }>;
 
@@ -203,19 +149,6 @@ export function LetterGapsExercise({
   const blockCount = wordBlocks.length;
   const useBlocks = blockCount > 1;
 
-  // "full" (md:col-span-2) — той самий критерій, що й раніше, для кожного
-  // слова окремо; масив, не функція (стабільна ідентичність для хука
-  // нижче).
-  const fullFlags = useMemo(
-    () =>
-      config.words.map((w) => {
-        const { maxUnitLength, totalLength } = phraseSizeInfo(w.chars);
-        return maxUnitLength > SINGLE_WORD_SPAN_THRESHOLD || totalLength > PHRASE_SPAN_THRESHOLD;
-      }),
-    [config.words]
-  );
-  const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
-
   // gridRef вішається на грід-обгортку карток нижче (ОДНА й та сама
   // властивість, обидві гілки — non-block і renderBlock() — монтують лише
   // одну з них одночасно). Розмір клітинки сам тепер ФІКСОВАНИЙ
@@ -227,16 +160,23 @@ export function LetterGapsExercise({
   // резерв лишається лише на самому заголовку (pr-[52px] нижче).
   const { gridRef } = useWorkingTileLayout();
 
-  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — тепер завжди
-  // (колонок у рендері відповідає ШИРИНА контейнера, не кількість слів —
-  // TWO_COLUMN_BREAKPOINT_PX, use-working-tile-layout.ts — тож кластеризація
-  // для парування в рядку потрібна завжди, а не лише коли слів > 10).
-  const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
-    wordCount: config.words.length,
-    fullFlags,
-    imageUrls,
-    enabled: true,
-  });
+  // Показовий порядок карток — за ОЦІНЕНОЮ кількістю рядків клітинок
+  // (estimateLetterGapsCardRows, ЧИСТА функція від даних слова, без
+  // DOM-вимірювання/useEffect/ResizeObserver, що були тут раніше): картки з
+  // однаковою оціненою кількістю рядків стають сусідами в рядку
+  // 2-колонкового grid (orderByEstimatedRows — сортування за зростанням,
+  // стійке в межах того самого значення). Порядок слів студенту НЕ
+  // принциповий (контрольна умова задачі) — номер картки нижче (cardNumber)
+  // це позиція у ЦЬОМУ порядку, 1..N, а не оригінальний wi; відповіді/
+  // помилки/error review лишаються прив'язані до оригінального wi
+  // (String(wordIndex)) всюди нижче — displayOrder лише визначає, ЯКУ
+  // картку показати на якій позиції екрана. useMemo — не useState: чистий
+  // детермінований вивід з config.words, однаковий до/після перевірки, при
+  // перемиканні блоку й після перезавантаження з тими самими даними.
+  const displayOrder = useMemo(
+    () => orderByEstimatedRows(config.words.map((w) => estimateLetterGapsCardRows(w.chars, w.hiddenLetters))),
+    [config.words]
+  );
 
   function isWordFilled(wi: number): boolean {
     return answers[wi].length > 0 && answers[wi].every((v) => v !== "");
@@ -267,7 +207,6 @@ export function LetterGapsExercise({
   }
 
   function updateLetter(wordIndex: number, gapIndex: number, value: string, gapOrder: GapKey[]) {
-    markInteracted();
     setAnswers((prev) =>
       prev.map((word, wi) => (wi === wordIndex ? word.map((v, gi) => (gi === gapIndex ? value : v)) : word))
     );
@@ -301,7 +240,6 @@ export function LetterGapsExercise({
 
   function handleBackspace(wordIndex: number, gapIndex: number, gapOrder: GapKey[]) {
     if (answers[wordIndex][gapIndex] !== "") return;
-    markInteracted();
     const index = gapOrder.findIndex((k) => k.wi === wordIndex && k.gi === gapIndex);
     if (index <= 0) return;
     const prev = gapOrder[index - 1];
@@ -350,8 +288,8 @@ export function LetterGapsExercise({
   );
 
   // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
-  // вище: завжди плаский однoколонковий список, без 2-колонкового
-  // вимірювання висоти (useTwoColumnWordOrder) і без BlockNavigation.
+  // вище: завжди плаский однoколонковий список (вихідний порядок слів, без
+  // estimateCardRows-мішання) і без BlockNavigation.
   const isPractice = !!practice;
   const practiceWordIndices = isPractice
     ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
@@ -402,48 +340,24 @@ export function LetterGapsExercise({
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
 
-  // Та сама 2-колонкова сітка/групування за виміряною висотою, що ≤10-
-  // гілка вище — ОКРЕМИЙ виклик хука, СКОУПЛЕНИЙ на слова АКТИВНОГО блоку
-  // (не на всю вправу): wordCount/fullFlags/imageUrls і похідні
-  // displayOrder/setContentRef цього виклику стосуються лише
-  // activeBlockWordIndices, мапляться назад на глобальний wi через сам
-  // масив (activeBlockWordIndices[localIndex]). enabled: useBlocks —
-  // завжди сітка в блоковому режимі, навіть для неповного останнього
-  // блоку (зайва порожня клітинка grid на 1 непарне слово — не проблема).
+  // Той самий принцип, що displayOrder вище — ОКРЕМЕ обчислення,
+  // СКОУПЛЕНЕ на слова АКТИВНОГО блоку (не на всю вправу): оцінка рядків і
+  // сортування рахуються лише серед activeBlockWordIndices, локальна
+  // позиція мапиться назад на глобальний wi самим масивом
+  // (activeBlockWordIndices[localIndex]) — чисте обчислення щоразу з
+  // поточних даних, без застарілого локального індексу між блоками різного
+  // розміру (на відміну від попереднього DOM-вимірювання, де React-стан
+  // хука міг на кадр лишитись від іншого wordCount).
   const activeBlockWordIndices = useMemo(
     () => (useBlocks ? (wordBlocks[activeBlock] ?? []) : []),
     [useBlocks, wordBlocks, activeBlock]
   );
-  const activeBlockFullFlags = useMemo(
-    () => activeBlockWordIndices.map((wi) => fullFlags[wi]),
-    [activeBlockWordIndices, fullFlags]
-  );
-  const activeBlockImageUrls = useMemo(
-    () => activeBlockWordIndices.map((wi) => imageUrls[wi]),
-    [activeBlockWordIndices, imageUrls]
-  );
-  const blockTwoColumn = useTwoColumnWordOrder({
-    wordCount: activeBlockWordIndices.length,
-    fullFlags: activeBlockFullFlags,
-    imageUrls: activeBlockImageUrls,
-    enabled: useBlocks,
-  });
-  // Глобальні індекси слів активного блоку в ПОКАЗОВОМУ порядку
-  // (blockTwoColumn.displayOrder — локальні індекси 0..розмір_блоку-1).
-  // displayOrder скидається в хуку ПІД ЧАС РЕНДЕРУ при зміні wordCount
-  // (identity(wordCount) — офіційний React-патерн), але споживач тут
-  // читає blockTwoColumn.displayOrder У ТОМУ Ж ПРОХОДІ, ДО того, як цей
-  // прохід для хука завершиться: у вікні між зміною activeBlock (блок
-  // меншого розміру) і стабілізацією displayOrder локальні індекси можуть
-  // лишатись аж до старого (більшого) activeBlockWordIndices.length —
-  // li >= activeBlockWordIndices.length дає undefined при мапінгу на
-  // глобальний wi. Фільтруємо такі li ПЕРЕД мапінгом — прохід, що однаково
-  // буде відкинутий React'ом, не повинен кидати виняток.
-  const blockDisplayOrder = activeBlockWordIndices.length
-    ? blockTwoColumn.displayOrder
-        .filter((li) => li < activeBlockWordIndices.length)
-        .map((li) => activeBlockWordIndices[li])
-    : [];
+  const blockDisplayOrder = useMemo(() => {
+    const rows = activeBlockWordIndices.map((wi) =>
+      estimateLetterGapsCardRows(config.words[wi].chars, config.words[wi].hiddenLetters)
+    );
+    return orderByEstimatedRows(rows).map((li) => activeBlockWordIndices[li]);
+  }, [activeBlockWordIndices, config.words]);
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
 
@@ -535,7 +449,6 @@ export function LetterGapsExercise({
       detail: LetterGapsDetail | undefined;
       locked: boolean;
       gapOrder: GapKey[];
-      setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
       // Порядковий номер картки у ВІЗУАЛЬНОМУ порядку (displayOrder/
       // blockDisplayOrder/practiceWordIndices, 1-based) — рахується з
       // нуля в кожному блоці/сторінці окремо, не глобальний wi.
@@ -600,9 +513,7 @@ export function LetterGapsExercise({
               {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
             </div>
           )}
-          <div
-            ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className="flex min-w-0 flex-1 flex-col gap-2"
+          <div className="flex min-w-0 flex-1 flex-col gap-2"
           >
             <p
               className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
@@ -694,18 +605,12 @@ export function LetterGapsExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div
-          ref={gridRef}
-          className={`transition-opacity duration-150 ${
-            blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
-        >
+        <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
               detail: blockDetail,
               locked: !!blockResult,
               gapOrder: blockGapOrder,
-              setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
             })
           )}
@@ -757,7 +662,6 @@ export function LetterGapsExercise({
                   detail: undefined,
                   locked: false,
                   gapOrder: practiceGapOrder,
-                  setContentRef: null,
                   hintDisabled: true,
                   cardNumber: pos + 1,
                 })}
@@ -877,18 +781,12 @@ export function LetterGapsExercise({
 
       {!useBlocks ? (
         <>
-          <div
-            ref={gridRef}
-            className={`transition-opacity duration-150 ${
-              ready ? "opacity-100" : "opacity-0"
-            } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
-          >
+          <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
                 detail: singleDetail,
                 locked: !!single.result,
                 gapOrder: singleGapOrder,
-                setContentRef,
                 cardNumber: pos + 1,
               })
             )}

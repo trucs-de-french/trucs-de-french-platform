@@ -19,19 +19,15 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import {
-  SINGLE_WORD_SPAN_THRESHOLD,
-  PHRASE_SPAN_THRESHOLD,
-  WORD_CARD,
-} from "@/lib/exercises/word-list-layout";
+import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
+import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -85,14 +81,12 @@ export function LetterRearrangementExercise({
   const useBlocks = blockCount > 1;
 
   function updateOrder(wordIndex: number, next: string[]) {
-    markInteracted();
     setOrders((prev) => prev.map((o, wi) => (wi === wordIndex ? next : o)));
   }
 
   async function applyHint(wi: number) {
     const position = lockedCounts[wi];
     if (position >= orders[wi].length || hintLoading.has(wi)) return;
-    markInteracted();
     setHintLoading((prev) => new Set(prev).add(wi));
     try {
       const res = await fetch("/api/exercises/letter-rearrangement-hint", {
@@ -124,16 +118,6 @@ export function LetterRearrangementExercise({
     }
   }
 
-  const fullFlags = useMemo(
-    () =>
-      config.words.map((w) => {
-        const totalLength = w.shuffledLetters.length;
-        return totalLength > SINGLE_WORD_SPAN_THRESHOLD || totalLength > PHRASE_SPAN_THRESHOLD;
-      }),
-    [config.words]
-  );
-  const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
-
   // gridRef — той самий принцип, що letter-gaps.tsx; колонки визначає
   // ШИРИНА контейнера (TWO_COLUMN_BREAKPOINT_PX), не кількість слів. Картка
   // НІКОЛИ не займає повний рядок — жодного span тут letter_rearrangement і
@@ -143,12 +127,17 @@ export function LetterRearrangementExercise({
   // лишається лише на самому заголовку (pr-[52px] нижче).
   const { gridRef } = useWorkingTileLayout();
 
-  const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
-    wordCount: config.words.length,
-    fullFlags,
-    imageUrls,
-    enabled: true,
-  });
+  // Показовий порядок карток — за ОЦІНЕНОЮ кількістю рядків плиток
+  // (estimateLetterRearrangementCardRows), той самий принцип, що
+  // letter-gaps.tsx: чиста функція від довжини слова, без DOM-вимірювання —
+  // картки з однаковою оціненою кількістю рядків стають сусідами в рядку
+  // 2-колонкового grid. Порядок слів студенту не принциповий; номер картки
+  // (cardNumber нижче) — позиція у ЦЬОМУ порядку, відповіді/помилки лишаються
+  // прив'язані до оригінального wi всюди нижче.
+  const displayOrder = useMemo(
+    () => orderByEstimatedRows(config.words.map((w) => estimateLetterRearrangementCardRows(w.shuffledLetters.length))),
+    [config.words]
+  );
 
   const router = useRouter();
 
@@ -161,9 +150,9 @@ export function LetterRearrangementExercise({
   }, [useBlocks, single.result, onResult]);
 
   // ==== Гілка практики (onlyItemIds) — незалежна від useBlocks/single
-  // вище: завжди плаский однoколонковий список, без 2-колонкового
-  // вимірювання висоти (useTwoColumnWordOrder) і без BlockNavigation — той
-  // самий принцип, що letter-gaps.tsx. practiceWordIndices будується НАПРЯМУ
+  // вище: завжди плаский однoколонковий список (вихідний порядок слів, без
+  // estimateCardRows-мішання) і без BlockNavigation — той самий принцип,
+  // що letter-gaps.tsx. practiceWordIndices будується НАПРЯМУ
   // з config.words (не через displayOrder якогось хука), тож застарілий
   // локальний індекс тут структурно неможливий — фільтр "li < довжина" з
   // фіксу 0e3ad04 не застосовний (нема стану, що міг би лишитись
@@ -213,39 +202,19 @@ export function LetterRearrangementExercise({
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
 
-  // Та сама 2-колонкова сітка/групування за виміряною висотою, що ≤10-
-  // гілка вище — ОКРЕМИЙ виклик хука, СКОУПЛЕНИЙ на слова АКТИВНОГО блоку
-  // (не на всю вправу), той самий принцип, що letter-gaps.tsx.
+  // Той самий принцип, що displayOrder вище — ОКРЕМЕ обчислення, СКОУПЛЕНЕ
+  // на слова АКТИВНОГО блоку (не на всю вправу), той самий принцип, що
+  // letter-gaps.tsx.
   const activeBlockWordIndices = useMemo(
     () => (useBlocks ? (wordBlocks[activeBlock] ?? []) : []),
     [useBlocks, wordBlocks, activeBlock]
   );
-  const activeBlockFullFlags = useMemo(
-    () => activeBlockWordIndices.map((wi) => fullFlags[wi]),
-    [activeBlockWordIndices, fullFlags]
-  );
-  const activeBlockImageUrls = useMemo(
-    () => activeBlockWordIndices.map((wi) => imageUrls[wi]),
-    [activeBlockWordIndices, imageUrls]
-  );
-  const blockTwoColumn = useTwoColumnWordOrder({
-    wordCount: activeBlockWordIndices.length,
-    fullFlags: activeBlockFullFlags,
-    imageUrls: activeBlockImageUrls,
-    enabled: useBlocks,
-  });
-  // displayOrder скидається в хуку ПІД ЧАС РЕНДЕРУ при зміні wordCount, але
-  // споживач тут читає blockTwoColumn.displayOrder У ТОМУ Ж ПРОХОДІ — у
-  // вікні між зміною activeBlock (блок меншого розміру) і стабілізацією
-  // displayOrder локальні індекси можуть лишатись аж до старого (більшого)
-  // activeBlockWordIndices.length. Фільтруємо такі li ПЕРЕД мапінгом —
-  // прохід, що однаково буде відкинутий React'ом, не повинен кидати
-  // виняток (той самий принцип, що letter-gaps.tsx).
-  const blockDisplayOrder = activeBlockWordIndices.length
-    ? blockTwoColumn.displayOrder
-        .filter((li) => li < activeBlockWordIndices.length)
-        .map((li) => activeBlockWordIndices[li])
-    : [];
+  const blockDisplayOrder = useMemo(() => {
+    const rows = activeBlockWordIndices.map((wi) =>
+      estimateLetterRearrangementCardRows(config.words[wi].shuffledLetters.length)
+    );
+    return orderByEstimatedRows(rows).map((li) => activeBlockWordIndices[li]);
+  }, [activeBlockWordIndices, config.words]);
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
 
@@ -323,7 +292,6 @@ export function LetterRearrangementExercise({
     opts: {
       detail: LetterRearrangementDetail | undefined;
       locked: boolean;
-      setContentRef: ((wi: number) => (el: HTMLElement | null) => void) | null;
       // Порядковий номер картки у ВІЗУАЛЬНОМУ порядку (displayOrder/
       // blockDisplayOrder/practiceWordIndices, 1-based) — рахується з
       // нуля в кожному блоці/сторінці окремо, не глобальний wi.
@@ -383,10 +351,7 @@ export function LetterRearrangementExercise({
               {word.audioUrl && <CompactAudioButton src={word.audioUrl} />}
             </div>
           )}
-          <div
-            ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className="flex min-w-0 flex-1 flex-col gap-2"
-          >
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p
               className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
@@ -422,17 +387,11 @@ export function LetterRearrangementExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div
-          ref={gridRef}
-          className={`transition-opacity duration-150 ${
-            blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
-        >
+        <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
               detail: blockDetail,
               locked: !!blockResult,
-              setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
             })
           )}
@@ -470,7 +429,6 @@ export function LetterRearrangementExercise({
                 {renderWordCard(wi, {
                   detail: undefined,
                   locked: false,
-                  setContentRef: null,
                   hintDisabled: true,
                   cardNumber: pos + 1,
                 })}
@@ -573,17 +531,11 @@ export function LetterRearrangementExercise({
 
       {!useBlocks ? (
         <>
-          <div
-            ref={gridRef}
-            className={`transition-opacity duration-150 ${
-              ready ? "opacity-100" : "opacity-0"
-            } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
-          >
+          <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
                 detail: singleDetail,
                 locked: !!single.result,
-                setContentRef,
                 cardNumber: pos + 1,
               })
             )}

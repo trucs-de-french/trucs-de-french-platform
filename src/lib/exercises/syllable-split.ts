@@ -120,3 +120,32 @@ export function splitIntoSyllableChunks(word: string): string[] {
   if (word.length < 4) return [word];
   return mergeShortChunks(splitCore(word, word.toLowerCase()));
 }
+
+// Повне слово (без масок) для ОДНІЄЇ одиниці переносу letter_gaps
+// (артикль/"se"/слово) — splitIntoSyllableChunks вище потребує РЕАЛЬНІ
+// літери, не null. hiddenLetters уже є в публічному config letter_gaps
+// (той самий масив, що gapLiveStatus/nextHintGap у letter-gaps.tsx читають
+// для живої підсвітки) — жодних нових серверних даних тут не потрібно.
+// gapOffset — кількість пропусків у ПОПЕРЕДНІХ одиницях того самого слова
+// (hiddenLetters індексується по всьому слову, не по одиниці).
+export function reconstructUnitWord(unit: (string | null)[], hiddenLetters: string[], gapOffset: number): string {
+  let word = "";
+  let hi = gapOffset;
+  for (const ch of unit) {
+    word += ch === null ? hiddenLetters[hi++] ?? "" : ch;
+  }
+  return word;
+}
+
+// Розрізає одиницю (масив символів/null) на фрагменти за довжинами
+// фрагментів splitIntoSyllableChunks (довжини в сумі рівні unit.length —
+// reconstructUnitWord зберігає позиційну відповідність).
+export function sliceUnitByChunks(unit: (string | null)[], chunks: string[]): (string | null)[][] {
+  const result: (string | null)[][] = [];
+  let pos = 0;
+  for (const chunk of chunks) {
+    result.push(unit.slice(pos, pos + chunk.length));
+    pos += chunk.length;
+  }
+  return result;
+}
