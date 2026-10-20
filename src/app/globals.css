@@ -3795,6 +3795,93 @@ button.scene-bar:active .scene-bar-toggle {
   flex-shrink: 0;
 }
 
+/* Чипи колонок sort_columns ПІСЛЯ перевірки (замінюють колишні
+   border-green-500/border-red-500 Tailwind-класи + суфікс "(0/1)"/"(1/1)"):
+   колір + іконка (не лише колір) передають правильність. Темна "correct" —
+   ті самі числа, що --ws-capsule-correct-* (globals.css, легенда філворду),
+   "wrong" — та сама темна пара, що .matching-card--incorrect/.word-choice-
+   pill--wrong (rgba(69,10,10,.3)/#ef4444), з власним текстовим кольором
+   #f87171 (дзеркально word-choice-pill--wrong). */
+.sort-columns-chip--correct {
+  background: #eafaf0;
+  border-color: #4cc47e;
+  color: #1f7a3d;
+}
+.sort-columns-chip--wrong {
+  background: #fdeeee;
+  border-color: #e5484d;
+  color: #b42318;
+}
+.dark .sort-columns-chip--correct {
+  background: rgba(47, 158, 91, 0.28);
+  border-color: #4cc47e;
+  color: #bff0d0;
+}
+.dark .sort-columns-chip--wrong {
+  background: rgba(69, 10, 10, 0.3);
+  border-color: #ef4444;
+  color: #f87171;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sort-columns-chip--correct {
+    background: rgba(47, 158, 91, 0.28);
+    border-color: #4cc47e;
+    color: #bff0d0;
+  }
+  :root:not(.light) .sort-columns-chip--wrong {
+    background: rgba(69, 10, 10, 0.3);
+    border-color: #ef4444;
+    color: #f87171;
+  }
+}
+.sort-columns-chip-icon {
+  flex-shrink: 0;
+}
+
+/* Toggle "Правильні відповіді" sort_columns (TaskResult children) — картка
+   на слово, що мирно показує колонку, куди воно належить ПРАВИЛЬНО (не
+   студентське розкладання) — звичайна gold-рамка (та сама пара, що .word-
+   pool-chip), без грипу/статус-іконки (тут усі слова "правильні" за
+   визначенням). Заголовок колонки — та сама indigo-пара, що заголовки
+   самих колонок вправи (bg-indigo-100/text-indigo-700 inline, тут лише
+   текст без фону). */
+.sort-columns-answer-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  color: #3b36c4;
+}
+.dark .sort-columns-answer-title {
+  color: #dcdbf3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sort-columns-answer-title {
+    color: #dcdbf3;
+  }
+}
+.sort-columns-answer-card {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: #1a1640;
+  background: #fff;
+  border: 1.5px solid #d9b765;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 10px -6px rgba(60, 40, 0, 0.35);
+}
+.dark .sort-columns-answer-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #d9b765;
+  color: #f1ecd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sort-columns-answer-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #d9b765;
+    color: #f1ecd9;
+  }
+}
+
 .task-summary-card {
   display: flex;
   flex-direction: column;

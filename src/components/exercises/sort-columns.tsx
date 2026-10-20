@@ -18,7 +18,29 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { IMAGE_MATCH_POOL_LABEL, sortColumnsPoolCountLabel } from "@/lib/exercises/default-task-labels";
+import {
+  IMAGE_MATCH_POOL_LABEL,
+  sortColumnsPoolCountLabel,
+  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
+} from "@/lib/exercises/default-task-labels";
+
+// Статус-іконки чипів колонок після перевірки (.sort-columns-chip--correct/
+// --wrong, globals.css) — колір сам по собі недостатній (п. "icons must not
+// rely on color alone"), тож галочка/хрестик завжди йдуть разом із кольором.
+function CorrectIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="sort-columns-chip-icon">
+      <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function WrongIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="sort-columns-chip-icon">
+      <path d="M3 3 11 11M11 3 3 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 // 6-крапковий "грип" зліва на чипі пулу — той самий, що в drag-drop.tsx/
 // image-match.tsx (.word-pool-chip-grip), продубльований тут же: спільного
@@ -189,23 +211,20 @@ export function SortColumnsExercise({
   // не повинен її закрити.
   const scrollMtClass = pool.length > 0 ? "scroll-mt-16 sm:scroll-mt-[27vh]" : "";
 
-  // До перевірки — лише якщо pointsVisible; після — завжди.
+  // До перевірки — лише якщо pointsVisible. Після перевірки суфікс "(0/1)"/
+  // "(1/1)" прибрано — правильність тепер передає колір+іконка чипа
+  // (itemClass/chip нижче), не текст.
   function itemLabel(item: SortColumnsPublic["items"][number]) {
     if (hidePoints) return item.text;
     const d = detail?.items.find((x) => x.id === item.id);
-    if (!pointsVisible && !d) return item.text;
-    const suffix = d
-      ? `${d.isCorrect ? item.points : 0}/${item.points}`
-      : `${item.points} ${pluralizePoints(item.points)}`;
-    return `${item.text} (${suffix})`;
+    if (d || !pointsVisible) return item.text;
+    return `${item.text} (${item.points} ${pluralizePoints(item.points)})`;
   }
 
   function itemClass(id: string) {
     const d = detail?.items.find((x) => x.id === id);
     if (d) {
-      return d.isCorrect
-        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-        : "border-red-500 bg-red-50 dark:bg-red-950/30";
+      return d.isCorrect ? "sort-columns-chip--correct" : "sort-columns-chip--wrong";
     }
     return bankTileClass({ selected: selected === id, used: false });
   }
@@ -215,6 +234,7 @@ export function SortColumnsExercise({
   }
 
   function chip(item: SortColumnsPublic["items"][number]) {
+    const d = detail?.items.find((x) => x.id === item.id);
     return (
       <div
         key={item.id}
@@ -235,8 +255,9 @@ export function SortColumnsExercise({
         }}
         className={`relative flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
       >
+        {d && (d.isCorrect ? <CorrectIcon /> : <WrongIcon />)}
         <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
-        {locked && detail?.items.find((x) => x.id === item.id)?.hintUsed && <HintUsedBadge />}
+        {locked && d?.hintUsed && <HintUsedBadge />}
         {hintsEnabled && !locked && (
           <HintBulb
             state={bulbState(item.id)}
@@ -359,23 +380,6 @@ export function SortColumnsExercise({
         })}
       </div>
 
-      {/* detail-підказка "правильна колонка" одразу після перевірки — лише
-          звичайне проходження. У практиці правильна відповідь розкривається
-          гейтовано (2 невдачі / кнопка), не одразу на кожен "Перевірити" —
-          інакше гейт нижче (practiceCheck.reveal) був би марним, відповідь
-          і так зливалася б з першої спроби. */}
-      {detail && !isPractice && (
-        <ul className="flex flex-col gap-1 text-sm">
-          {detail.items
-            .filter((i) => !i.isCorrect)
-            .map((i) => (
-              <li key={i.id} className="text-red-600 dark:text-red-400">
-                {i.text}: правильна колонка — {i.correctColumnLabel}
-              </li>
-            ))}
-        </ul>
-      )}
-
       {isPractice ? (
         <div className="flex flex-col gap-2">
           {!practiceCorrect && (
@@ -449,11 +453,30 @@ export function SortColumnsExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
+            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleCount={singleDetail ? config.items.length : undefined}
             hintSummary={{
               hintCount: singleDetail?.items.filter((it) => it.hintUsed).length ?? 0,
               reducesPoints: config.hintsEnabled,
             }}
-          />
+          >
+            {singleDetail && (
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-4">
+                {config.columns.map((col) => (
+                  <div key={col.id} className="flex flex-col gap-2">
+                    <span className="sort-columns-answer-title">{col.label}</span>
+                    {config.items
+                      .filter((item) => singleDetail.items.find((d) => d.id === item.id)?.correctColumnId === col.id)
+                      .map((item) => (
+                        <span key={item.id} className="sort-columns-answer-card">
+                          {item.text}
+                        </span>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TaskResult>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
