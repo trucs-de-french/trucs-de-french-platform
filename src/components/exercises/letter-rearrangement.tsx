@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -24,7 +23,6 @@ import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
-  TWO_COLUMN_WORD_THRESHOLD,
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
   WORD_CARD,
@@ -33,7 +31,13 @@ import { TaskResult } from "./task-result";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { useWorkingTileLayout, computeWorkingSpans, LAMP_RESERVE_PX } from "./use-working-tile-layout";
+import {
+  useWorkingTileLayout,
+  computeWorkingSpans,
+  LAMP_RESERVE_PX,
+  TWO_COLUMN_GRID_CLASS,
+  TWO_COLUMN_SPAN_CLASS,
+} from "./use-working-tile-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -137,24 +141,20 @@ export function LetterRearrangementExercise({
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
   // Довжина слова (усі літери — для letter_rearrangement слово завжди ОДНА
-  // група, на відміну від letter_gaps) ОКРЕМО для кожного слова вправи — n
-  // (на всю вправу) визначає ЄДИНИЙ розмір клітинки
-  // (use-working-tile-layout.ts), той самий, що letter_gaps при однаковій
-  // ширині картки.
+  // група, на відміну від letter_gaps) ОКРЕМО для кожного слова вправи —
+  // вирішує лише чи влізає картка в половину рядка (computeWorkingSpans
+  // нижче); розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css).
   const wordUnitLengths = useMemo(() => config.words.map((w) => w.shuffledLetters.length), [config.words]);
-  const workingN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
-  // --cell рахується ОДИН раз на всю вправу від ширини ПОВНОШИРИННОЇ картки
-  // — той самий принцип і резерв лампочки, що letter-gaps.tsx.
-  const { gridRef, cell, spanForFit } = useWorkingTileLayout(workingN, isDelf ? 0 : LAMP_RESERVE_PX);
-  const cellStyle = { "--cell": `${cell}px` } as CSSProperties;
+  // gridRef — той самий принцип і резерв лампочки, що letter-gaps.tsx;
+  // колонки визначає ширина грід-обгортки (TWO_COLUMN_BREAKPOINT_PX), не
+  // кількість слів.
+  const { gridRef, spanForFit } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
 
-  // 2-колонковий порядок — для ≤10-гілки, на всю вправу.
-  const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
     fullFlags,
     imageUrls,
-    enabled: isTwoColumn,
+    enabled: true,
   });
 
   const router = useRouter();
@@ -367,7 +367,7 @@ export function LetterRearrangementExercise({
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
 
     return (
-      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? TWO_COLUMN_SPAN_CLASS : ""}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -442,7 +442,7 @@ export function LetterRearrangementExercise({
           ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 md:grid-cols-2`}
+          } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
         >
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
@@ -475,7 +475,7 @@ export function LetterRearrangementExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK} style={cellStyle}>
+      <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -572,7 +572,7 @@ export function LetterRearrangementExercise({
   );
 
   return (
-    <div className={EXERCISE_STACK} style={cellStyle}>
+    <div className={EXERCISE_STACK}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
@@ -600,9 +600,9 @@ export function LetterRearrangementExercise({
         <>
           <div
             ref={gridRef}
-            className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
-            }`}
+            className={`transition-opacity duration-150 ${
+              ready ? "opacity-100" : "opacity-0"
+            } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
           >
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {

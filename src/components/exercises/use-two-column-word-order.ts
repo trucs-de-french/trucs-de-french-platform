@@ -60,8 +60,9 @@ export function useTwoColumnWordOrder({
   // imageUrls[originalIndex] — картинка-підказка цього слова, якщо є;
   // вимірювання чекає завантаження ВСІХ них (waitUntilMeasurable).
   imageUrls: (string | null | undefined)[];
-  // Групування має сенс лише в режимі двох колонок (words.length >
-  // TWO_COLUMN_WORD_THRESHOLD) — інакше одразу готово, без виміру/фейду.
+  // false — одразу готово (identity-порядок), без виміру/фейду; викликачі
+  // передають true завжди (колонки тепер залежать від ширини контейнера,
+  // не від кількості слів).
   enabled: boolean;
 }) {
   const [displayOrder, setDisplayOrder] = useState<number[]>(() => identity(wordCount));

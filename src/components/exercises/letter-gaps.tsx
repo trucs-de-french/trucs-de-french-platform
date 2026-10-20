@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -20,7 +19,6 @@ import { LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
 import { useTwoColumnWordOrder } from "./use-two-column-word-order";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import {
-  TWO_COLUMN_WORD_THRESHOLD,
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
   WORD_CARD,
@@ -34,7 +32,14 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { useWorkingTileLayout, computeWorkingSpans, LAMP_RESERVE_PX } from "./use-working-tile-layout";
+import {
+  useWorkingTileLayout,
+  computeWorkingSpans,
+  chunkIntoRows,
+  LAMP_RESERVE_PX,
+  TWO_COLUMN_GRID_CLASS,
+  TWO_COLUMN_SPAN_CLASS,
+} from "./use-working-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -190,32 +195,31 @@ export function LetterGapsExercise({
 
   // Довжина НАЙДОВШОЇ групи (слова без пробілів) ОКРЕМО для кожного слова
   // вправи — вирішує лише чи влізає ВЛАСНА найдовша група картки в
-  // половину ширини рядка (computeWorkingSpans нижче). n (на всю вправу) —
-  // максимум цих довжин по УСІХ словах, включно з прихованими блоками,
-  // визначає ЄДИНИЙ розмір клітинки (use-working-tile-layout.ts).
+  // половину ширини рядка (computeWorkingSpans нижче).
   const wordUnitLengths = useMemo(
     () => config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength),
     [config.words]
   );
-  const workingN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
-  // --cell рахується ОДИН раз на всю вправу від ширини ПОВНОШИРИННОЇ картки
-  // (use-working-tile-layout.ts) — gridRef вішається на грід-обгортку
-  // карток нижче (ОДНА й та сама властивість, обидві гілки — non-block і
-  // renderBlock() — монтують лише одну з них одночасно). Резерв лампочки
-  // лічиться від того, чи ЦЯ вправа ВЗАГАЛІ показує лампочку (isDelf), не
-  // від поточного opts.locked конкретної картки — інакше розмір клітинки
-  // "стрибнув" би одразу після "Перевірити".
-  const { gridRef, cell, spanForFit } = useWorkingTileLayout(workingN, isDelf ? 0 : LAMP_RESERVE_PX);
-  const cellStyle = { "--cell": `${cell}px` } as CSSProperties;
+  // gridRef вішається на грід-обгортку карток нижче (ОДНА й та сама
+  // властивість, обидві гілки — non-block і renderBlock() — монтують лише
+  // одну з них одночасно). Резерв лампочки лічиться від того, чи ЦЯ вправа
+  // ВЗАГАЛІ показує лампочку (isDelf), не від поточного opts.locked
+  // конкретної картки — інакше розрахунок "стрибнув" би одразу після
+  // "Перевірити". Розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css) —
+  // хук лише вирішує, чи влізає слово в половину рядка (span) і скільки
+  // клітинок влазить у рядок картки (perLineFor, для переносу всередині
+  // слова нижче).
+  const { gridRef, spanForFit, perLineFor } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
 
-  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
-  // на всю вправу.
-  const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
+  // Показовий порядок карток за РЕАЛЬНО заміряною висотою — тепер завжди
+  // (колонок у рендері відповідає ШИРИНА контейнера, не кількість слів —
+  // TWO_COLUMN_BREAKPOINT_PX, use-working-tile-layout.ts — тож кластеризація
+  // для парування в рядку потрібна завжди, а не лише коли слів > 10).
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
     fullFlags,
     imageUrls,
-    enabled: isTwoColumn,
+    enabled: true,
   });
 
   function isWordFilled(wi: number): boolean {
@@ -507,9 +511,8 @@ export function LetterGapsExercise({
 
   // Рендер однієї картки-слова — СПІЛЬНИЙ для обох гілок (структура карток
   // ідентична, різниться лише джерело "result"/"detail"/locked і порядок
-  // gapIndex-нумерації через gapOrder). Блоки завжди single-column
-  // (isTwoColumn лише для ≤10-гілки) — жодного setContentRef/виміру
-  // висоти тут не потрібно.
+  // gapIndex-нумерації через gapOrder). Колонки в обох гілках визначає
+  // ширина грід-обгортки (TWO_COLUMN_BREAKPOINT_PX), не кількість слів.
   function renderWordCard(
     wi: number,
     opts: {
@@ -550,7 +553,7 @@ export function LetterGapsExercise({
     // (ширина кнопки-лампочки 40px + 12px) на контентній колонці нижче.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
-      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? "md:col-span-2" : ""}`}>
+      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? TWO_COLUMN_SPAN_CLASS : ""}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -588,45 +591,66 @@ export function LetterGapsExercise({
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              {units.map((unit, ui) => (
-                <div key={ui} className="flex shrink-0 items-center letter-tile-row-gap">
-                  {groupChars(unit).map((group, ci) => {
-                    if (group.type === "letters")
-                      return (
-                        <span key={ci} className="letter-tile-font whitespace-nowrap">
-                          {group.text}
-                        </span>
-                      );
-                    gapIndex += 1;
-                    const gi = gapIndex;
-                    const status = gapLiveStatus(wi, gi);
-                    return (
-                      <input
-                        key={ci}
-                        ref={diacritics.fieldRef(`${wi},${gi}`)}
-                        maxLength={1}
-                        value={answers[wi][gi]}
-                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
-                        }}
-                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                        onBlur={diacritics.onBlur}
-                        disabled={opts.locked}
-                        className={`letter-tile-cell letter-tile-font border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                          hintedGaps.has(`${wi},${gi}`)
-                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                            : status === "correct"
-                              ? LIVE_CORRECT_CLASS
-                              : status === "incorrect"
-                                ? LIVE_INCORRECT_CLASS
-                                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+              {units.map((unit, ui) => {
+                // Клітинки картки фіксованого розміру — переносяться
+                // ВСЕРЕДИНІ слова (на нові рядки), а не стискаються, коли
+                // слово не влазить в один рядок картки. perLineFor —
+                // скільки клітинок фіксованого розміру влазить у рядок ЦІЄЇ
+                // картки (half/full залежно від workingSpan). Збалансований
+                // поділ (chunkIntoRows) — щоб останній рядок не лишався з
+                // однією клітинкою.
+                const perLine = perLineFor(opts.workingSpan ?? 2);
+                const rowSizes = chunkIntoRows(unit.length, perLine);
+                let offset = 0;
+                const rows = rowSizes.map((size) => {
+                  const chunk = unit.slice(offset, offset + size);
+                  offset += size;
+                  return chunk;
+                });
+                return (
+                  <div key={ui} className="flex shrink-0 flex-col gap-[3.4px]">
+                    {rows.map((chunk, ri) => (
+                      <div key={ri} className="flex items-center letter-tile-row-gap">
+                        {groupChars(chunk).map((group, ci) => {
+                          if (group.type === "letters")
+                            return (
+                              <span key={ci} className="letter-tile-font whitespace-nowrap">
+                                {group.text}
+                              </span>
+                            );
+                          gapIndex += 1;
+                          const gi = gapIndex;
+                          const status = gapLiveStatus(wi, gi);
+                          return (
+                            <input
+                              key={ci}
+                              ref={diacritics.fieldRef(`${wi},${gi}`)}
+                              maxLength={1}
+                              value={answers[wi][gi]}
+                              onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
+                              }}
+                              onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                              onBlur={diacritics.onBlur}
+                              disabled={opts.locked}
+                              className={`letter-tile-cell letter-tile-font border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                                hintedGaps.has(`${wi},${gi}`)
+                                  ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                  : status === "correct"
+                                    ? LIVE_CORRECT_CLASS
+                                    : status === "incorrect"
+                                      ? LIVE_INCORRECT_CLASS
+                                      : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -657,7 +681,7 @@ export function LetterGapsExercise({
           ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
-          } grid gap-3 md:grid-cols-2`}
+          } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
         >
           {blockDisplayOrder.map((wi, pos) =>
             renderWordCard(wi, {
@@ -704,7 +728,7 @@ export function LetterGapsExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK} style={cellStyle}>
+      <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -823,7 +847,7 @@ export function LetterGapsExercise({
   );
 
   return (
-    <div className={EXERCISE_STACK} style={cellStyle}>
+    <div className={EXERCISE_STACK}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
@@ -847,9 +871,9 @@ export function LetterGapsExercise({
         <>
           <div
             ref={gridRef}
-            className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
-              isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
-            }`}
+            className={`transition-opacity duration-150 ${
+              ready ? "opacity-100" : "opacity-0"
+            } grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}
           >
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
