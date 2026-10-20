@@ -613,21 +613,20 @@ function WordSearchBlockView({
     [...foundWords.values()].flatMap((cells) => cells.map(cellKey))
   );
 
-  // Клітинки ВСІХ слів блоку (знайдених і пропущених) — лише після
-  // перевірки (detail.words[].cells, grade.ts: той самий target, з яким
-  // сервер звіряє відповідь): клієнт сам не знає розміщення пропущених
-  // слів (їх ніхто не виділяв), тож без цього поля зелену підсвітку
-  // пропущеного слова намалювати нічим. Заміняє foundWords/foundLetterKeys
-  // вище ПОКИ блок locked — до перевірки цей Map порожній (detail ще
-  // немає).
-  const correctCellsByWord = new Map<string, Cell[]>();
+  // Клітинки лише ПРОПУЩЕНИХ слів блоку — заповнюється після перевірки
+  // (detail.words[].cells, grade.ts: той самий target, з яким сервер
+  // звіряє відповідь): клієнт сам не знає розміщення пропущених слів (їх
+  // ніхто не виділяв), тож без цього поля зелену підсвітку пропущеного
+  // слова намалювати нічим. Знайдені слова й далі лавандові (foundWords/
+  // foundLetterKeys нижче) — зелена підсвітка лише для w.found === false.
+  const missedCellsByWord = new Map<string, Cell[]>();
   if (detail) {
     for (const w of detail.words) {
-      if (w.cells.length > 0) correctCellsByWord.set(w.word, w.cells);
+      if (!w.found && w.cells.length > 0) missedCellsByWord.set(w.word, w.cells);
     }
   }
-  const correctLetterKeys = new Set(
-    [...correctCellsByWord.values()].flatMap((cells) => cells.map(cellKey))
+  const missedLetterKeys = new Set(
+    [...missedCellsByWord.values()].flatMap((cells) => cells.map(cellKey))
   );
 
   // hintStart — координата ПЕРШОЇ літери слова, порахована на сервері один
@@ -729,11 +728,14 @@ function WordSearchBlockView({
                       // потрібно.
                       const key = cellKey({ row: ri, col: ci });
                       const isHinted = hintCells.has(key);
-                      // Заблокований блок (locked) — зелена "правильна"
-                      // підсвітка ВСІХ слів (correctLetterKeys) замінює
-                      // лавандову "знайдено під час гри" (foundLetterKeys).
-                      const isCorrectLetter = locked && correctLetterKeys.has(key);
-                      const isFoundLetter = !locked && foundLetterKeys.has(key);
+                      // Лавандова "знайдено" лишається й після locked (не
+                      // лише під час гри) — зелена "пропущено" (missedLetterKeys)
+                      // домальовується ТІЛЬКИ для клітинок пропущених слів,
+                      // не чіпаючи вже лавандові. Якщо клітинка належить і
+                      // знайденому, і пропущеному слову (перетин) — лаванда
+                      // пріоритетніша для кольору літери (без змішування).
+                      const isFoundLetter = foundLetterKeys.has(key);
+                      const isCorrectLetter = locked && !isFoundLetter && missedLetterKeys.has(key);
                       return (
                         <div
                           key={`${ri}:${ci}`}
@@ -810,27 +812,27 @@ function WordSearchBlockView({
                     малюються пізніше в DOM — природно лягають ПОВЕРХ раніших
                     при перетині (вимога п.4). */}
                 <div className="ws-capsule-layer pointer-events-none absolute inset-0">
-                  {locked
-                    ? [...correctCellsByWord.entries()].map(([word, cells]) => {
-                        if (cells.length === 0) return null;
-                        return (
-                          <div
-                            key={word}
-                            className="ws-capsule ws-capsule-correct"
-                            style={capsuleStyle(cells[0], cells[cells.length - 1])}
-                          />
-                        );
-                      })
-                    : [...foundWords.entries()].map(([word, cells]) => {
-                        if (cells.length === 0) return null;
-                        return (
-                          <div
-                            key={word}
-                            className="ws-capsule ws-capsule-found"
-                            style={capsuleStyle(cells[0], cells[cells.length - 1])}
-                          />
-                        );
-                      })}
+                  {[...foundWords.entries()].map(([word, cells]) => {
+                    if (cells.length === 0) return null;
+                    return (
+                      <div
+                        key={word}
+                        className="ws-capsule ws-capsule-found"
+                        style={capsuleStyle(cells[0], cells[cells.length - 1])}
+                      />
+                    );
+                  })}
+                  {locked &&
+                    [...missedCellsByWord.entries()].map(([word, cells]) => {
+                      if (cells.length === 0) return null;
+                      return (
+                        <div
+                          key={word}
+                          className="ws-capsule ws-capsule-correct"
+                          style={capsuleStyle(cells[0], cells[cells.length - 1])}
+                        />
+                      );
+                    })}
                   {dragging && previewPath.length > 1 && (
                     <div
                       className="ws-capsule ws-capsule-selecting"
@@ -871,7 +873,7 @@ function WordSearchBlockView({
           {locked && (
             <span className="ws-legend-item">
               <span className="ws-legend-dot ws-legend-dot-correct" />
-              Правильні відповіді
+              Не знайдено (правильна відповідь)
             </span>
           )}
         </div>
@@ -1069,7 +1071,7 @@ function WordSearchBlockView({
             </button>
             {answersOpen && (
               <div id={answersPanelId} className="task-result-toggle-panel flex flex-col gap-2">
-                <p className={HINT_TEXT}>Правильні відповіді позначені в сітці зеленим.</p>
+                <p className={HINT_TEXT}>Слова, які не знайдено, позначені в сітці зеленим.</p>
                 <div className="task-result-gap-grid task-result-gap-grid--two-col">
                   {block.words.map((w) => (
                     <div key={w.word} className="task-result-gap-row">
