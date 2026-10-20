@@ -644,7 +644,7 @@ function CrosswordBlockView({
     return (
       <div
         key={clue.number}
-        className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-1.5 pr-3" : ""} ${
+        className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-3 pr-1.5" : ""} ${
           isCorrect
             ? "glass-chip border-[#dcbd6e] opacity-50"
             : isActive
@@ -652,18 +652,6 @@ function CrosswordBlockView({
               : "glass-chip border-[#dcbd6e]"
         }`}
       >
-        {isCorrect ? (
-          <HintBulb state="done" as="span" />
-        ) : (
-          canHint && (
-            <HintBulb
-              state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
-              label="Підказка: відкрити наступну літеру"
-              onClick={() => applyHint(direction, clue.number)}
-            />
-          )
-        )}
-        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
         <span
           className={`item-number-badge ${clue.number >= 10 ? "item-number-badge--wide" : ""}`}
           aria-label={`Підказка ${clue.number}`}
@@ -677,6 +665,19 @@ function CrosswordBlockView({
         >
           {frenchNbsp(clue.clue)}
         </button>
+        {!!result && hintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
+        {isCorrect ? (
+          <HintBulb state="done" as="span" className="ml-1.5" />
+        ) : (
+          canHint && (
+            <HintBulb
+              state={hintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
+              label="Підказка: відкрити наступну літеру"
+              onClick={() => applyHint(direction, clue.number)}
+              className="ml-1.5"
+            />
+          )
+        )}
       </div>
     );
   }
