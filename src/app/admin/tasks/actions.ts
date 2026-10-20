@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 import { blockDomId } from "@/lib/block-dom-id";
@@ -508,6 +508,107 @@ export async function deleteTask(taskId: string) {
   }
 
   redirect(backPath);
+}
+
+// Той самий резолв батьківського шляху, що deleteTask/updateTask (вище),
+// але для СТУДЕНТСЬКОЇ сторінки (/courses/..., не /admin/courses/...) —
+// потрібен окремо, бо після "Скинути мій прогрес" студентська сторінка
+// вчительки (якщо відкрита в іншій вкладці) має підхопити чисті блоки без
+// ручного F5 на адмінці.
+async function resolveStudentTaskPath(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  task: {
+    product_id: string;
+    scene_id: string | null;
+    material_id: string | null;
+    task_group_id: string | null;
+    delf_test_number?: number | null;
+  }
+): Promise<string> {
+  if (task.scene_id) return `/courses/${task.product_id}/scenes/${task.scene_id}`;
+  if (task.material_id) return `/courses/${task.product_id}/materials/${task.material_id}`;
+  if (task.task_group_id) {
+    const { data: group } = await supabase
+      .from("task_groups")
+      .select("scene_id, material_id, delf_test_number")
+      .eq("id", task.task_group_id)
+      .single();
+    if (group?.scene_id) return `/courses/${task.product_id}/scenes/${group.scene_id}`;
+    if (group?.material_id) return `/courses/${task.product_id}/materials/${group.material_id}`;
+    if (group?.delf_test_number) return `/courses/${task.product_id}/tests/${group.delf_test_number}`;
+  }
+  if (task.delf_test_number) return `/courses/${task.product_id}/tests/${task.delf_test_number}`;
+  return `/courses/${task.product_id}`;
+}
+
+// "Скинути мій прогрес" (конструктор, task-drag-list.tsx) — дозволяє
+// вчительці перевірити вправу ще раз зараз, коли перевірений блок
+// остаточний і /api/exercises/check більше не перерахунковує збережений
+// блок (route.ts, alreadyScored-guard). Видаляє СТРОГО (user_id = поточна
+// вчителька із сесії, НІКОЛИ з клієнта; task_id = параметр) — лише її
+// власний рядок progress/mistakes/mistake_corrections на ЦЬОМУ завданні,
+// жодного іншого студента чи завдання.
+//
+// progress і mistakes НЕ мають delete-політики в RLS (0001_init.sql) —
+// навіть вчителька не може видалити звідти через звичайний клієнт, тож
+// видалення йде через createAdminClient() (service-role, обходить RLS),
+// АЛЕ лише ПІСЛЯ явної перевірки ролі нижче через звичайний сесійний
+// клієнт — сама ця перевірка тут єдина точка захисту (RLS її вже не
+// підстрахує, бо service-role її ігнорує повністю).
+export async function resetMyTaskProgress(
+  taskId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Потрібна авторизація" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (profile?.role !== "teacher") {
+    return { ok: false, error: "Доступ лише для викладача" };
+  }
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("product_id, scene_id, material_id, task_group_id, delf_test_number")
+    .eq("id", taskId)
+    .single();
+  if (!task) return { ok: false, error: "Завдання не знайдено" };
+
+  const admin = createAdminClient();
+  const userId = user.id;
+
+  const { error: correctionsError } = await admin
+    .from("mistake_corrections")
+    .delete()
+    .eq("user_id", userId)
+    .eq("task_id", taskId);
+  if (correctionsError) return { ok: false, error: correctionsError.message };
+
+  const { error: mistakesError } = await admin
+    .from("mistakes")
+    .delete()
+    .eq("user_id", userId)
+    .eq("task_id", taskId);
+  if (mistakesError) return { ok: false, error: mistakesError.message };
+
+  const { error: progressError } = await admin
+    .from("progress")
+    .delete()
+    .eq("user_id", userId)
+    .eq("task_id", taskId);
+  if (progressError) return { ok: false, error: progressError.message };
+
+  const adminParent = await resolveTaskParentPath(supabase, task);
+  revalidatePath(adminParent.path);
+  revalidatePath(await resolveStudentTaskPath(supabase, task));
+
+  return { ok: true };
 }
 
 export async function moveTask(taskId: string, direction: "up" | "down") {

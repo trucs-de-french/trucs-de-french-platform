@@ -2,10 +2,11 @@
 
 import { useState, type DragEvent } from "react";
 import Link from "next/link";
-import { GripVertical, Copy, Trash2, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
-import { deleteTask, reorderSceneRows } from "@/app/admin/tasks/actions";
+import { GripVertical, Copy, Trash2, RotateCcw, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
+import { deleteTask, reorderSceneRows, resetMyTaskProgress } from "@/app/admin/tasks/actions";
 import { deleteTaskGroup, attachTaskInline } from "@/app/admin/task-groups/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { BUTTON_PRIMARY_SM, BUTTON_SECONDARY_SM } from "@/lib/button-styles";
 import {
   TASK_TYPE_COLORS,
   TASK_GROUP_CONTENT_COLORS,
@@ -130,7 +131,28 @@ export function TaskDragList({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // "Скинути мій прогрес" (actions.ts: resetMyTaskProgress) — інлайн-
+  // підтвердження на одному рядку задачі за раз (resetOpenId), окремий
+  // pending лише на час самого запиту, resetDoneIds — які вже скинуто в
+  // ЦЬОМУ сеансі конструктора (постійна позначка замість тосту, що зникає).
+  // Помилки йдуть у вже наявний спільний банер `error` вище списку.
+  const [resetOpenId, setResetOpenId] = useState<string | null>(null);
+  const [resetPendingId, setResetPendingId] = useState<string | null>(null);
+  const [resetDoneIds, setResetDoneIds] = useState<Set<string>>(new Set());
   const draggingRow = rows.find((r) => r.id === draggingId) ?? null;
+
+  async function resetProgress(taskId: string) {
+    setResetPendingId(taskId);
+    setError(null);
+    const result = await resetMyTaskProgress(taskId);
+    setResetPendingId(null);
+    setResetOpenId(null);
+    if (result.ok) {
+      setResetDoneIds((prev) => new Set(prev).add(taskId));
+    } else {
+      setError(result.error ?? "Не вдалося скинути прогрес");
+    }
+  }
 
   function toggleExpanded(id: string) {
     setExpanded((prev) => {
@@ -387,7 +409,7 @@ export function TaskDragList({
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center justify-end gap-1">
                   <button
                     type="button"
                     onClick={() => void moveByIndex(i, i - 1)}
@@ -416,6 +438,42 @@ export function TaskDragList({
                   >
                     <Copy size={16} />
                   </Link>
+                  {resetDoneIds.has(row.id) ? (
+                    <span className="px-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                      Прогрес скинуто
+                    </span>
+                  ) : resetOpenId === row.id ? (
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                        Скинути ваш прогрес у цьому завданні? Бали, підказки та помилки буде видалено.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setResetOpenId(null)}
+                        className={BUTTON_SECONDARY_SM}
+                      >
+                        Скасувати
+                      </button>
+                      <button
+                        type="button"
+                        disabled={resetPendingId === row.id}
+                        onClick={() => void resetProgress(row.id)}
+                        className={BUTTON_PRIMARY_SM}
+                      >
+                        {resetPendingId === row.id ? "…" : "Скинути"}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setResetOpenId(row.id)}
+                      aria-label="Скинути мій прогрес"
+                      title="Видаляє лише ваш власний прогрес з цього завдання"
+                      className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
+                    >
+                      <RotateCcw size={16} />
+                    </button>
+                  )}
                   <form action={deleteTask.bind(null, row.id)}>
                     <SubmitButton
                       pendingChildren="…"
