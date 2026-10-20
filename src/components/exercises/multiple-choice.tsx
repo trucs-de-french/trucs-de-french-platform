@@ -625,8 +625,14 @@ export function MultipleChoiceExercise({
     // цього згортаю в один пробіл, щоб речення читалось природно.
     const questionText = frenchNbsp(item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim());
 
+    const resultStateClass =
+      isCorrect === true ? "chrono-phrase-row--correct" : isCorrect === false ? "chrono-phrase-row--incorrect" : "";
+
     return (
-      <div key={item.id} className="flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3">
+      <div
+        key={item.id}
+        className={`glass-item-card flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3 ${resultStateClass}`}
+      >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.items.length > 1 && (
             <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
@@ -700,7 +706,7 @@ export function MultipleChoiceExercise({
   // нумерація .item-number-badge, не локальна в межах блоку).
   function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
     return config.display === "dropdown" ? (
-      <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
+      <div className="flex flex-col gap-2.5">
         {items.map((item, i) =>
           renderDropdownRow(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id))
         )}
