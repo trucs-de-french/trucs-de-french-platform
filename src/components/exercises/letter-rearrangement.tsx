@@ -31,13 +31,7 @@ import { TaskResult } from "./task-result";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import {
-  useWorkingTileLayout,
-  computeWorkingSpans,
-  LAMP_RESERVE_PX,
-  TWO_COLUMN_GRID_CLASS,
-  TWO_COLUMN_SPAN_CLASS,
-} from "./use-working-tile-layout";
+import { useWorkingTileLayout, LAMP_RESERVE_PX, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -140,15 +134,12 @@ export function LetterRearrangementExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // Довжина слова (усі літери — для letter_rearrangement слово завжди ОДНА
-  // група, на відміну від letter_gaps) ОКРЕМО для кожного слова вправи —
-  // вирішує лише чи влізає картка в половину рядка (computeWorkingSpans
-  // нижче); розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css).
-  const wordUnitLengths = useMemo(() => config.words.map((w) => w.shuffledLetters.length), [config.words]);
   // gridRef — той самий принцип і резерв лампочки, що letter-gaps.tsx;
-  // колонки визначає ширина грід-обгортки (TWO_COLUMN_BREAKPOINT_PX), не
-  // кількість слів.
-  const { gridRef, spanForFit } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
+  // колонки визначає ШИРИНА контейнера (TWO_COLUMN_BREAKPOINT_PX), не
+  // кількість слів. Картка НІКОЛИ не займає повний рядок — жодного span
+  // тут letter_rearrangement і не потребував (плитки самі переносяться
+  // flex-wrap'ом, sortable-tile-row.tsx).
+  const { gridRef } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
 
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
@@ -338,12 +329,6 @@ export function LetterRearrangementExercise({
       // Практика (пілот, частина 4) — лампочка "поставити наступну літеру"
       // вимкнена, той самий принцип, що letter-gaps.tsx hintDisabled.
       hintDisabled?: boolean;
-      // Заздалегідь порахований span (1|2) для ВСЬОГО видимого списку
-      // карток разом (computeWorkingSpans, use-working-tile-layout.ts) —
-      // чи влазять УСІ літери слова у ДВА рядки половинної картки (на
-      // відміну від letter_gaps тут дозволено перенесення плиток
-      // усередині картки на другий рядок, тож поріг — 2 рядки, не 1).
-      workingSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -358,7 +343,6 @@ export function LetterRearrangementExercise({
       return wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect";
     }
 
-    const needsFullSpan = opts.workingSpan === 2;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
@@ -367,7 +351,9 @@ export function LetterRearrangementExercise({
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
 
     return (
-      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? TWO_COLUMN_SPAN_CLASS : ""}`}>
+      // Картка НІКОЛИ не займає повний рядок — завжди half-width у
+      // 2-колонковому режимі, full-width в 1-колонковому.
+      <div key={wi} className={`relative ${WORD_CARD}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -428,13 +414,6 @@ export function LetterRearrangementExercise({
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
     const errMsg = blockError[activeBlock];
-    // Той самий порядок, що вже показаний студенту (blockDisplayOrder) —
-    // span рахується ПОВЕРХ нього, карток не перетасовуємо.
-    const blockWorkingSpans = computeWorkingSpans(
-      blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
-      2,
-      spanForFit
-    );
 
     return (
       <div className="flex flex-col gap-3">
@@ -450,7 +429,6 @@ export function LetterRearrangementExercise({
               locked: !!blockResult,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
-              workingSpan: blockWorkingSpans[pos],
             })
           )}
         </div>
@@ -563,14 +541,6 @@ export function LetterRearrangementExercise({
     </button>
   ) : null;
 
-  // Той самий порядок, що вже показаний студенту (displayOrder) — span
-  // рахується ПОВЕРХ нього, карток не перетасовуємо.
-  const singleWorkingSpans = computeWorkingSpans(
-    displayOrder.map((wi) => wordUnitLengths[wi]),
-    2,
-    spanForFit
-  );
-
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
@@ -610,7 +580,6 @@ export function LetterRearrangementExercise({
                 locked: !!single.result,
                 setContentRef,
                 cardNumber: pos + 1,
-                workingSpan: singleWorkingSpans[pos],
               })
             )}
           </div>

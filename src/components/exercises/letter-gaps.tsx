@@ -34,11 +34,9 @@ import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import {
   useWorkingTileLayout,
-  computeWorkingSpans,
   chunkIntoRows,
   LAMP_RESERVE_PX,
   TWO_COLUMN_GRID_CLASS,
-  TWO_COLUMN_SPAN_CLASS,
 } from "./use-working-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
@@ -193,23 +191,17 @@ export function LetterGapsExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // Довжина НАЙДОВШОЇ групи (слова без пробілів) ОКРЕМО для кожного слова
-  // вправи — вирішує лише чи влізає ВЛАСНА найдовша група картки в
-  // половину ширини рядка (computeWorkingSpans нижче).
-  const wordUnitLengths = useMemo(
-    () => config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength),
-    [config.words]
-  );
   // gridRef вішається на грід-обгортку карток нижче (ОДНА й та сама
   // властивість, обидві гілки — non-block і renderBlock() — монтують лише
   // одну з них одночасно). Резерв лампочки лічиться від того, чи ЦЯ вправа
   // ВЗАГАЛІ показує лампочку (isDelf), не від поточного opts.locked
   // конкретної картки — інакше розрахунок "стрибнув" би одразу після
-  // "Перевірити". Розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css) —
-  // хук лише вирішує, чи влізає слово в половину рядка (span) і скільки
-  // клітинок влазить у рядок картки (perLineFor, для переносу всередині
-  // слова нижче).
-  const { gridRef, spanForFit, perLineFor } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
+  // "Перевірити". Розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css) — хук
+  // лише вирішує, скільки клітинок влазить у рядок картки (perLineFor, для
+  // переносу всередині слова нижче) — картка завжди half-width у
+  // 2-колонковому режимі, full-width в 1-колонковому, без винятків
+  // (жодного "картці потрібен повний рядок" більше немає).
+  const { gridRef, perLineFor } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — тепер завжди
   // (колонок у рендері відповідає ШИРИНА контейнера, не кількість слів —
@@ -529,13 +521,6 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
-      // Заздалегідь порахований span (1|2) для ВСЬОГО видимого списку
-      // карток разом (computeWorkingSpans, use-working-tile-layout.ts) —
-      // чи влазить НАЙДОВША власна група картки в один рядок половинної
-      // картки за поточного розміру клітинки. undefined (поза грід-гілкою,
-      // напр. практика) — трактується як "не потрібен" (md:col-span-2 без
-      // ефекту поза CSS grid однаково).
-      workingSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -545,7 +530,6 @@ export function LetterGapsExercise({
     if (!word) return null;
     let gapIndex = -1;
     const units = splitPhraseUnits(word.chars);
-    const needsFullSpan = opts.workingSpan === 2;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
@@ -553,7 +537,9 @@ export function LetterGapsExercise({
     // (ширина кнопки-лампочки 40px + 12px) на контентній колонці нижче.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
-      <div key={wi} className={`relative ${WORD_CARD} ${needsFullSpan ? TWO_COLUMN_SPAN_CLASS : ""}`}>
+      // Картка НІКОЛИ не займає повний рядок (жодного col-span) — завжди
+      // half-width у 2-колонковому режимі, full-width в 1-колонковому.
+      <div key={wi} className={`relative ${WORD_CARD}`}>
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
@@ -596,10 +582,12 @@ export function LetterGapsExercise({
                 // ВСЕРЕДИНІ слова (на нові рядки), а не стискаються, коли
                 // слово не влазить в один рядок картки. perLineFor —
                 // скільки клітинок фіксованого розміру влазить у рядок ЦІЄЇ
-                // картки (half/full залежно від workingSpan). Збалансований
+                // картки (half-width у 2-колонковому режимі, full в
+                // 1-колонковому — одне й те саме для всіх карток вправи,
+                // жодного per-картка span більше немає). Збалансований
                 // поділ (chunkIntoRows) — щоб останній рядок не лишався з
                 // однією клітинкою.
-                const perLine = perLineFor(opts.workingSpan ?? 2);
+                const perLine = perLineFor();
                 const rowSizes = chunkIntoRows(unit.length, perLine);
                 let offset = 0;
                 const rows = rowSizes.map((size) => {
@@ -667,13 +655,6 @@ export function LetterGapsExercise({
     // singleGapOrder/displayOrder у ≤10-гілці ("Tab рухається так, як
     // вправа виглядає на екрані").
     const blockGapOrder = gapOrderFor(blockDisplayOrder);
-    // Той самий порядок, що вже показаний студенту (blockDisplayOrder) —
-    // span рахується ПОВЕРХ нього, карток не перетасовуємо.
-    const blockWorkingSpans = computeWorkingSpans(
-      blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
-      1,
-      spanForFit
-    );
 
     return (
       <div className="flex flex-col gap-3">
@@ -690,7 +671,6 @@ export function LetterGapsExercise({
               gapOrder: blockGapOrder,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
-              workingSpan: blockWorkingSpans[pos],
             })
           )}
         </div>
@@ -838,14 +818,6 @@ export function LetterGapsExercise({
     </button>
   ) : null;
 
-  // Той самий порядок, що вже показаний студенту (displayOrder) — span
-  // рахується ПОВЕРХ нього, карток не перетасовуємо.
-  const singleWorkingSpans = computeWorkingSpans(
-    displayOrder.map((wi) => wordUnitLengths[wi]),
-    1,
-    spanForFit
-  );
-
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs
@@ -882,7 +854,6 @@ export function LetterGapsExercise({
                 gapOrder: singleGapOrder,
                 setContentRef,
                 cardNumber: pos + 1,
-                workingSpan: singleWorkingSpans[pos],
               })
             )}
           </div>
