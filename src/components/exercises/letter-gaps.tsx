@@ -630,7 +630,7 @@ export function LetterGapsExercise({
               }}
             >
               {blockDetail && (
-                <TaskResultGapRows rows={buildLetterGapsRows(blockDisplayOrder, config.words, blockDetail)} />
+                <TaskResultGapRows rows={buildLetterGapsRows(blockDisplayOrder, config.words, blockDetail)} twoColumn />
               )}
             </TaskResult>
           )}
@@ -836,7 +836,7 @@ export function LetterGapsExercise({
                 }}
               >
                 {singleDetail && (
-                  <TaskResultGapRows rows={buildLetterGapsRows(displayOrder, config.words, singleDetail)} />
+                  <TaskResultGapRows rows={buildLetterGapsRows(displayOrder, config.words, singleDetail)} twoColumn />
                 )}
               </TaskResult>
             )}

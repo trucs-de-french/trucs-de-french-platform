@@ -265,11 +265,18 @@ export function TaskResultAnswerRows({
 // може мати кілька { word } у плитці — усі підсвічуються).
 export function TaskResultGapRows({
   rows,
+  twoColumn,
 }: {
   rows: { number: number; parts: (string | { word: string })[] }[];
+  // letter_gaps лише: короткі слова/фрази — 2 рівні колонки від 768px (той
+  // самий брейкпоінт, що картки letter_gaps/letter_rearrangement), щоб
+  // позиція запису відповідала позиції картки на екрані. Інші типи
+  // (fill_blank/drag_drop/open_answer/word_choice) мають довгі речення —
+  // лишаються на звичайній flex-wrap розкладці (prop не передають).
+  twoColumn?: boolean;
 }) {
   return (
-    <div className="task-result-gap-grid">
+    <div className={`task-result-gap-grid${twoColumn ? " task-result-gap-grid--two-col" : ""}`}>
       {rows.map((r) => (
         <div key={r.number} className="task-result-gap-row">
           <span className="task-result-answer-num" aria-hidden="true">
