@@ -25,7 +25,7 @@ function StarIcon() {
   );
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
+export function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
       width="16"

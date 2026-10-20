@@ -586,6 +586,14 @@ button, input, textarea, select, label, nav, aside {
   --ws-legend-text-color: #55546b;
   --ws-legend-dot-found: rgba(150, 125, 240, 0.45);
   --ws-legend-dot-selecting: #4b46da;
+  /* Правильні відповіді (після перевірки блоку) — завжди зелений, незалежно
+     від теми капсули "виділяю"/"знайдено" (ті лавандові): окрема палітра,
+     щоб "правильно" (зелений — той самий сенс, що й усюди на сайті) не
+     плутався з лавандовим "знайдено під час гри". */
+  --ws-capsule-correct-bg: rgba(76, 196, 126, 0.22);
+  --ws-capsule-correct-border: 1px solid #7fd69a;
+  --ws-letter-correct-color: #1f7a3d;
+  --ws-legend-dot-correct: #7fd69a;
 }
 .dark {
   --ws-sheet-bg: #11183f;
@@ -602,6 +610,10 @@ button, input, textarea, select, label, nav, aside {
   --ws-legend-text-color: rgba(246, 239, 214, 0.8);
   --ws-legend-dot-found: rgba(150, 125, 240, 0.7);
   --ws-legend-dot-selecting: #8c88f5;
+  --ws-capsule-correct-bg: rgba(47, 158, 91, 0.28);
+  --ws-capsule-correct-border: 1px solid #4cc47e;
+  --ws-letter-correct-color: #bff0d0;
+  --ws-legend-dot-correct: #4cc47e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -619,6 +631,10 @@ button, input, textarea, select, label, nav, aside {
     --ws-legend-text-color: rgba(246, 239, 214, 0.8);
     --ws-legend-dot-found: rgba(150, 125, 240, 0.7);
     --ws-legend-dot-selecting: #8c88f5;
+    --ws-capsule-correct-bg: rgba(47, 158, 91, 0.28);
+    --ws-capsule-correct-border: 1px solid #4cc47e;
+    --ws-letter-correct-color: #bff0d0;
+    --ws-legend-dot-correct: #4cc47e;
   }
 }
 
@@ -728,6 +744,13 @@ button, input, textarea, select, label, nav, aside {
   color: var(--ws-letter-selecting-color);
   font-weight: 800;
 }
+/* Правильні відповіді блоку (після перевірки) — зелена, не лавандова:
+   замінює .ws-letter-found на клітинках ВСІХ слів блоку (знайдених і
+   пропущених), доки блок заблокований (locked, word-search.tsx). */
+.ws-letter-correct {
+  color: var(--ws-letter-correct-color);
+  font-weight: 800;
+}
 
 /* Підказка першої літери (ws-cell-hinted, завжди на клітинці, незалежно
    від теми) — ЕТАП L: золоте коло в ОБОХ темах тепер (раніше темна
@@ -800,6 +823,14 @@ button, input, textarea, select, label, nav, aside {
   background: var(--ws-capsule-selecting-bg);
   border: var(--ws-capsule-selecting-border);
 }
+/* Правильні відповіді блоку (після перевірки) — та сама форма капсули,
+   що .ws-capsule-found, лише зелена палітра; замінює лавандову капсулу
+   ПОКИ блок заблокований (locked) — малюється для ВСІХ слів блоку
+   (знайдених і пропущених), не лише foundWords. */
+.ws-capsule-correct {
+  background: var(--ws-capsule-correct-bg);
+  border: var(--ws-capsule-correct-border);
+}
 @media (prefers-reduced-motion: no-preference) {
   .ws-capsule {
     transition: opacity 150ms;
@@ -831,6 +862,16 @@ button, input, textarea, select, label, nav, aside {
 }
 .ws-legend-dot-found {
   background: var(--ws-legend-dot-found);
+}
+.ws-legend-dot-correct {
+  background: var(--ws-legend-dot-correct);
+}
+
+/* Галочка знайденого слова в тоглі "Правильні відповіді цього блоку"
+   (WsAnswerCheck, word-search.tsx) — той самий зелений, що .ws-letter-correct. */
+.ws-answer-check {
+  color: var(--ws-letter-correct-color);
+  flex-shrink: 0;
 }
 .ws-legend-dot-selecting {
   background: var(--ws-legend-dot-selecting);

@@ -1247,8 +1247,14 @@ export type WordChoiceDetail = {
 // blockIndex — ехо WordSearchAnswer.blockIndex (той самий, що прийшов у
 // запиті) — лише для клієнта (word-search.tsx, етап 3) розрізнити, якому
 // блоку належить цей результат; відсутнє — результат за всю вправу.
+// cells — координати слова в сітці (той самий target, що gradeWordSearch
+// звіряє з відповіддю студента), для КОЖНОГО слова блоку, не лише
+// знайдених: клієнт не має placements (WordSearchPublicBlock їх ховає),
+// тож без цього поля не міг би намалювати зелену підсвітку пропущених
+// слів після перевірки. Порожній масив — слово не розмістилось у сітці
+// (той самий рідкісний випадок, що й hintStart: null у Public).
 export type WordSearchDetail = {
-  words: { word: string; found: boolean; hintUsed: boolean }[];
+  words: { word: string; found: boolean; hintUsed: boolean; cells: { row: number; col: number }[] }[];
   blockIndex?: number;
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useMemo, useRef, useId, type CSSProperties } from "react";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -28,7 +28,7 @@ import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } fr
 import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
-import { TaskResult } from "./task-result";
+import { TaskResult, ChevronIcon } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { hintHighlightCells } from "./word-search-hint-highlight";
@@ -44,6 +44,28 @@ type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
 // брали) чи "available" (ще ні).
 function bulbState(found: boolean, hintUsed: boolean): HintBulbState {
   return found ? "done" : hintUsed ? "used" : "available";
+}
+
+// Галочка знайденого слова в тоглі "Правильні відповіді" — та сама форма,
+// що TabCheckIcon (block-navigation.tsx), колір через task-result-answer-num
+// (той самий золотий), перефарбована в зелений класом ws-answer-check.
+function WsAnswerCheck() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="ws-answer-check"
+    >
+      <path d="M3 8.5 6.5 12 13 4" />
+    </svg>
+  );
 }
 
 // Картка-картинка — квадратна (aspect-square), картинка займає ВСЮ плитку
@@ -366,9 +388,26 @@ function WordSearchBlockView({
 
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as WordSearchDetail | undefined;
+  // locked — виділення/підказки вимкнені одразу після ПЕРШОЇ перевірки
+  // (startDrag/triggerHint нижче самі перевіряють locked), незалежно від
+  // того, чи є в цього блоку "Перевірити ще раз" (allowRecheck) — та
+  // кнопка лише ПОВТОРНО надсилає той самий (уже застиглий) набір
+  // foundWords/hintedWords, нового виділення вона не відкриває. Тобто
+  // блок завжди "фінальний" після check — звідси й зелена підсвітка, і
+  // тогл нижче відкриваються автоматично (не чекають другого випадку
+  // "можна продовжувати обирати").
   const locked = !!result;
   const allowRecheck = blockIndex !== undefined;
   const checkConfirm = useCheckConfirm();
+  // null — студент ще не торкався тоглу: тоді відкритість іде за locked
+  // (розгортається САМА одразу після перевірки, без ефекту/setState —
+  // просто похідне значення нижче, answersOpen). Явний true/false — студент
+  // сам клацнув заголовок хоч раз, це вже остаточний стан, locked більше не
+  // перебиває його (повторна "Перевірити ще раз" не повинна знову
+  // розгортати тогл, який студент щойно сам згорнув).
+  const [answersOpenOverride, setAnswersOpenOverride] = useState<boolean | null>(null);
+  const answersOpen = answersOpenOverride ?? locked;
+  const answersPanelId = useId();
 
   useEffect(() => {
     if (result) onResult(result as WordSearchBlockResult);
@@ -574,6 +613,23 @@ function WordSearchBlockView({
     [...foundWords.values()].flatMap((cells) => cells.map(cellKey))
   );
 
+  // Клітинки ВСІХ слів блоку (знайдених і пропущених) — лише після
+  // перевірки (detail.words[].cells, grade.ts: той самий target, з яким
+  // сервер звіряє відповідь): клієнт сам не знає розміщення пропущених
+  // слів (їх ніхто не виділяв), тож без цього поля зелену підсвітку
+  // пропущеного слова намалювати нічим. Заміняє foundWords/foundLetterKeys
+  // вище ПОКИ блок locked — до перевірки цей Map порожній (detail ще
+  // немає).
+  const correctCellsByWord = new Map<string, Cell[]>();
+  if (detail) {
+    for (const w of detail.words) {
+      if (w.cells.length > 0) correctCellsByWord.set(w.word, w.cells);
+    }
+  }
+  const correctLetterKeys = new Set(
+    [...correctCellsByWord.values()].flatMap((cells) => cells.map(cellKey))
+  );
+
   // hintStart — координата ПЕРШОЇ літери слова, порахована на сервері один
   // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
   // сітки й так видимі студенту, тож розкриття лише СТАРТОВОЇ клітинки —
@@ -673,7 +729,11 @@ function WordSearchBlockView({
                       // потрібно.
                       const key = cellKey({ row: ri, col: ci });
                       const isHinted = hintCells.has(key);
-                      const isFoundLetter = foundLetterKeys.has(key);
+                      // Заблокований блок (locked) — зелена "правильна"
+                      // підсвітка ВСІХ слів (correctLetterKeys) замінює
+                      // лавандову "знайдено під час гри" (foundLetterKeys).
+                      const isCorrectLetter = locked && correctLetterKeys.has(key);
+                      const isFoundLetter = !locked && foundLetterKeys.has(key);
                       return (
                         <div
                           key={`${ri}:${ci}`}
@@ -685,7 +745,7 @@ function WordSearchBlockView({
                             isHinted
                               ? "ws-cell-hinted bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
                               : ""
-                          } ${isFoundLetter ? "ws-letter-found" : ""}`}
+                          } ${isCorrectLetter ? "ws-letter-correct" : isFoundLetter ? "ws-letter-found" : ""}`}
                           style={{ fontSize: "max(0.75rem, calc(var(--cw) * 0.5))" }}
                         >
                           {letter}
@@ -750,16 +810,27 @@ function WordSearchBlockView({
                     малюються пізніше в DOM — природно лягають ПОВЕРХ раніших
                     при перетині (вимога п.4). */}
                 <div className="ws-capsule-layer pointer-events-none absolute inset-0">
-                  {[...foundWords.entries()].map(([word, cells]) => {
-                    if (cells.length === 0) return null;
-                    return (
-                      <div
-                        key={word}
-                        className="ws-capsule ws-capsule-found"
-                        style={capsuleStyle(cells[0], cells[cells.length - 1])}
-                      />
-                    );
-                  })}
+                  {locked
+                    ? [...correctCellsByWord.entries()].map(([word, cells]) => {
+                        if (cells.length === 0) return null;
+                        return (
+                          <div
+                            key={word}
+                            className="ws-capsule ws-capsule-correct"
+                            style={capsuleStyle(cells[0], cells[cells.length - 1])}
+                          />
+                        );
+                      })
+                    : [...foundWords.entries()].map(([word, cells]) => {
+                        if (cells.length === 0) return null;
+                        return (
+                          <div
+                            key={word}
+                            className="ws-capsule ws-capsule-found"
+                            style={capsuleStyle(cells[0], cells[cells.length - 1])}
+                          />
+                        );
+                      })}
                   {dragging && previewPath.length > 1 && (
                     <div
                       className="ws-capsule ws-capsule-selecting"
@@ -797,6 +868,12 @@ function WordSearchBlockView({
             <span className="ws-legend-dot" style={{ background: "#e0aa3e" }} />
             Підказка: перша літера
           </span>
+          {locked && (
+            <span className="ws-legend-item">
+              <span className="ws-legend-dot ws-legend-dot-correct" />
+              Правильні відповіді
+            </span>
+          )}
         </div>
 
         {/* Легенда — на всю ширину (той самий принцип, що crossword.tsx:
@@ -965,6 +1042,45 @@ function WordSearchBlockView({
           </div>
         ) : (
           <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+        )}
+        {/* Тогл "Правильні відповіді" — та сама картка/заголовок/шеврон, що
+            task-result.tsx (TaskResult), але НЕ через сам TaskResult: його
+            showToggle = !!children && !correct сховав би тогл саме тоді,
+            коли блок пройдено повністю правильно (correct), а тут він має
+            лишатись (і бути розгорнутим — answersOpen вище) незалежно від
+            correct, бо зелена підсвітка в сітці видима завжди при locked. */}
+        {result && (
+          <div className="task-result-card">
+            <button
+              type="button"
+              aria-expanded={answersOpen}
+              aria-controls={answersPanelId}
+              onClick={() => setAnswersOpenOverride(!answersOpen)}
+              className="task-result-toggle-header"
+            >
+              <span className="task-result-toggle-title">
+                <span className="task-result-toggle-title-main">Правильні відповіді</span>
+                <span className="task-result-toggle-title-sub">цього блоку · {totalWords}</span>
+              </span>
+              <span className="task-result-toggle-action">
+                {answersOpen ? "Сховати" : "Показати"}
+                <ChevronIcon open={answersOpen} />
+              </span>
+            </button>
+            {answersOpen && (
+              <div id={answersPanelId} className="task-result-toggle-panel flex flex-col gap-2">
+                <p className={HINT_TEXT}>Правильні відповіді позначені в сітці зеленим.</p>
+                <div className="task-result-gap-grid task-result-gap-grid--two-col">
+                  {block.words.map((w) => (
+                    <div key={w.word} className="task-result-gap-row">
+                      {isFound(w.word) && <WsAnswerCheck />}
+                      <span className="task-result-gap-text">{w.word}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

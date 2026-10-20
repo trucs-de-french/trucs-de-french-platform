@@ -533,12 +533,12 @@ function gradeWordSearch(rawConfig: WordSearchConfig, answer: WordSearchAnswer):
     // завжди повертав би found: false.
     const placement = scopePlacements.find((p) => p.word === sanitizeWordForGrid(w.word).toUpperCase());
     const hintUsed = hintedSet.has(w.word);
-    if (!placement) return { word: w.word, found: false, hintUsed };
+    if (!placement) return { word: w.word, found: false, hintUsed, cells: [] };
 
     const target = placementCells(placement, w.word.length);
     const studentCells = answerByWord.get(w.word) ?? [];
     const found = cellsMatch(studentCells, target) || cellsMatch(studentCells, [...target].reverse());
-    return { word: w.word, found, hintUsed };
+    return { word: w.word, found, hintUsed, cells: target };
   });
 
   const foundCount = words.filter((w) => w.found).length;
