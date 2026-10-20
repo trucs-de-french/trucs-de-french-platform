@@ -577,7 +577,14 @@ export function LetterGapsExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Кожна одиниця перенесення (артикль/"se"/слово) — на СВОЄМУ
+                рядку, одна під одною, зліва (flex-col items-start), а не
+                side-by-side: раніше flex-wrap клав короткий артикль поряд з
+                довгим словом і items-center вертикально центрував їх один
+                відносно одного, через що артикль виглядав "посередині"
+                висоти слова, що зайняло 2 рядки переносу. gap-2 — той
+                самий відступ, що був МІЖ одиницями в старому flex-wrap. */}
+            <div className="flex flex-col items-start gap-2">
               {units.map((unit, ui) => {
                 // Клітинки картки фіксованого розміру — переносяться
                 // ВСЕРЕДИНІ слова (на нові рядки), а не стискаються, коли
