@@ -33,6 +33,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
+import { splitIntoSyllableChunks } from "@/lib/exercises/syllable-split";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -115,6 +116,35 @@ function groupChars(chars: (string | null)[]): CharGroup[] {
     }
   }
   return groups;
+}
+
+// Повне слово (без масок) для ОДНІЄЇ одиниці переносу (артикль/"se"/слово),
+// щоб визначити межі складів (splitIntoSyllableChunks нижче потребує
+// РЕАЛЬНІ літери, не null) — hiddenLetters уже є в публічному config
+// (той самий масив, що gapLiveStatus/nextHintGap читають для живої
+// підсвітки), жодних нових серверних даних тут не потрібно. gapOffset —
+// кількість пропусків у ПОПЕРЕДНІХ одиницях того самого слова (hiddenLetters
+// індексується по всьому слову, не по одиниці).
+function reconstructUnitWord(unit: (string | null)[], hiddenLetters: string[], gapOffset: number): string {
+  let word = "";
+  let hi = gapOffset;
+  for (const ch of unit) {
+    word += ch === null ? hiddenLetters[hi++] ?? "" : ch;
+  }
+  return word;
+}
+
+// Розрізає одиницю (масив символів/null) на фрагменти за довжинами
+// фрагментів splitIntoSyllableChunks (довжини в сумі рівні unit.length —
+// reconstructUnitWord зберігає позиційну відповідність).
+function sliceUnitByChunks(unit: (string | null)[], chunks: string[]): (string | null)[][] {
+  const result: (string | null)[][] = [];
+  let pos = 0;
+  for (const chunk of chunks) {
+    result.push(unit.slice(pos, pos + chunk.length));
+    pos += chunk.length;
+  }
+  return result;
 }
 
 type LetterGapsResult = Extract<GradeResult, { detail: LetterGapsDetail }>;
@@ -524,6 +554,15 @@ export function LetterGapsExercise({
     if (!word) return null;
     let gapIndex = -1;
     const units = splitPhraseUnits(word.chars);
+    // Фрагменти для кожної одиниці (артикль/"se"/слово) — рахуються один
+    // раз тут, не в JSX нижче, бо потребують бігучого offset пропусків
+    // (gapOffset) окремого від gapIndex, яким нумеруються самі <input>.
+    let gapOffset = 0;
+    const unitChunkGroups = units.map((unit) => {
+      const unitWord = reconstructUnitWord(unit, word.hiddenLetters, gapOffset);
+      gapOffset += unit.filter((c) => c === null).length;
+      return sliceUnitByChunks(unit, splitIntoSyllableChunks(unitWord));
+    });
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб першого рядка — без резерву текст
@@ -573,71 +612,68 @@ export function LetterGapsExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            {/* Кожна одиниця перенесення (артикль/"se"/слово) — на СВОЄМУ
-                рядку, одна під одною, зліва (flex-col items-start), а не
-                side-by-side: раніше flex-wrap клав короткий артикль поряд з
-                довгим словом і items-center вертикально центрував їх один
-                відносно одного, через що артикль виглядав "посередині"
-                висоти слова, що зайняло 2 рядки переносу. gap-2 — той
-                самий відступ, що був МІЖ одиницями в старому flex-wrap. */}
-            <div className="flex flex-col items-start gap-2">
+            {/* Пакування одиниць переносу (артикль/"se"/слово) у рядки за
+                реальною шириною — одиниці ("faire", "un", "bisou"...) течуть
+                як текст (display:inline-block, .word-unit-group), браузер
+                переносить МІЖ одиницями, коли вони не влазять на поточний
+                рядок разом (не JS-розрахунок за кількістю клітинок, як
+                раніше). Усередині одиниці перенос можливий лише МІЖ
+                складовими фрагментами (splitIntoSyllableChunks вище,
+                .syllable-chunk, nowrap) — рядок, подовжений за середину
+                голосної групи чи нерозривного кластера (ch/gr/...),
+                неможливий; якщо одиниця ціла влазить у рядок, вона лишається
+                одним суцільним словом (inline-block + max-width:100% — не
+                форсований розрив, лише дозволений, коли реально не влазить).
+                margin-bottom на .word-units-row скасовує нижній відступ
+                ОСТАННЬОГО рядка (той самий трюк, що раніше в
+                .letter-group-row), щоб не подвоювався з gap-2 зовнішнього
+                flex-col контейнера. */}
+            <div className="word-units-row">
               {units.map((unit, ui) => (
-                // Перенос ВСЕРЕДИНІ слова — природний (CSS text-wrap:
-                // balance на блоковому контейнері з inline-block дітьми, не
-                // JS-розрахунок за кількістю клітинок): раніше rowSizes
-                // рахувався від unit.length (кожен символ — повна 32px
-                // клітинка), а groupChars() застосовувався ПІСЛЯ розбиття
-                // на рядки — тож суцільний фрагмент видимих літер міг
-                // опинитись розрізаним між двома рядками (половина в
-                // одному, половина в іншому), а сам розрахунок ширини рядка
-                // був завжди завеликим (видимі літери — вузький текст, не
-                // 32px клітинка). Тепер groupChars(unit) викликається ОДИН
-                // раз на все слово, кожен фрагмент — один inline-block
-                // елемент (unbreakable, white-space:nowrap), і браузер сам
-                // переносить рядок МІЖ елементами за їхньою реальною
-                // шириною; text-wrap:balance (.letter-group-row,
-                // globals.css) рівномірно розподіляє елементи між рядками,
-                // щоб на останньому не лишалась самотня клітинка.
-                <div key={ui} className="letter-group-row">
-                  {groupChars(unit).map((group, ci) => {
-                    if (group.type === "letters")
-                      return (
-                        <span
-                          key={ci}
-                          className="letter-tile-font letter-group-item whitespace-nowrap"
-                        >
-                          {group.text}
-                        </span>
-                      );
-                    gapIndex += 1;
-                    const gi = gapIndex;
-                    const status = gapLiveStatus(wi, gi);
-                    return (
-                      <input
-                        key={ci}
-                        ref={diacritics.fieldRef(`${wi},${gi}`)}
-                        maxLength={1}
-                        value={answers[wi][gi]}
-                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
-                        }}
-                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                        onBlur={diacritics.onBlur}
-                        disabled={opts.locked}
-                        className={`letter-tile-cell letter-tile-font letter-group-item border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                          hintedGaps.has(`${wi},${gi}`)
-                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                            : status === "correct"
-                              ? LIVE_CORRECT_CLASS
-                              : status === "incorrect"
-                                ? LIVE_INCORRECT_CLASS
-                                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
+                <span key={ui} className="word-unit-group">
+                  {unitChunkGroups[ui].map((chunkChars, ci) => (
+                    <span key={ci} className="syllable-chunk">
+                      {groupChars(chunkChars).map((group, gi) => {
+                        if (group.type === "letters")
+                          return (
+                            <span
+                              key={gi}
+                              className="letter-tile-font letter-group-item whitespace-nowrap"
+                            >
+                              {group.text}
+                            </span>
+                          );
+                        gapIndex += 1;
+                        const gIdx = gapIndex;
+                        const status = gapLiveStatus(wi, gIdx);
+                        return (
+                          <input
+                            key={gi}
+                            ref={diacritics.fieldRef(`${wi},${gIdx}`)}
+                            maxLength={1}
+                            value={answers[wi][gIdx]}
+                            onChange={(e) => updateLetter(wi, gIdx, e.target.value, opts.gapOrder)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Backspace") handleBackspace(wi, gIdx, opts.gapOrder);
+                            }}
+                            onFocus={() => diacritics.onFocus(`${wi},${gIdx}`)}
+                            onBlur={diacritics.onBlur}
+                            disabled={opts.locked}
+                            className={`letter-tile-cell letter-tile-font letter-group-item border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                              hintedGaps.has(`${wi},${gIdx}`)
+                                ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                                : status === "correct"
+                                  ? LIVE_CORRECT_CLASS
+                                  : status === "incorrect"
+                                    ? LIVE_INCORRECT_CLASS
+                                    : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                            }`}
+                          />
+                        );
+                      })}
+                    </span>
+                  ))}
+                </span>
               ))}
             </div>
           </div>
