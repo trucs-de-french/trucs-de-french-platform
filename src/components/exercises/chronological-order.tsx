@@ -146,12 +146,11 @@ export function ChronologicalOrderExercise({
   // "C → A → B", ніж сирі id) — те саме захоплене initialLabelById, щоб
   // літера лишалась тією, що студент бачив на екрані.
   const labelById = initialLabelById;
-  // Після перевірки елементи показуються у ПРАВИЛЬНОМУ хронологічному
-  // порядку (за detail.items[].correctPosition від сервера) — літера (A,
-  // B, C...) лишається прив'язаною до свого елемента (initialLabelById за
-  // id, не за новою позицією), студентський номер і green/red статус
-  // теж йдуть по itemId, не по позиції в масиві. До перевірки (!detail) —
-  // показуємо initialItems як є, без сортування.
+  // Режим image/mixed (компактна сітка нижче) й надалі перебудовується у
+  // ПРАВИЛЬНИЙ хронологічний порядок після перевірки (той самий вигляд, що
+  // й раніше, — цей варіант свідомо НЕ торкаємося). Літера (A, B, C...)
+  // лишається прив'язаною до свого елемента (initialLabelById за id, не за
+  // новою позицією). До перевірки (!detail) — показуємо initialItems як є.
   const orderedItems = useMemo(() => {
     if (!detail) return initialItems;
     const correctPositionById = new Map(detail.items.map((d) => [d.id, d.correctPosition]));
@@ -503,7 +502,14 @@ export function ChronologicalOrderExercise({
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
         <div className="flex flex-col gap-2.5">
-          {orderedItems.map((item) => {
+          {/* initialItems, НЕ orderedItems — п.1 задачі: після перевірки
+              картки лишаються у тому самому порядку/позиціях, що студент
+              бачив під час роботи (той самий порядок і при "Corrigez vos
+              erreurs", і при поверненні до перевіреного блоку через чипи
+              навігації), жоден автосорт за correctPosition тут не
+              застосовується. Правильний порядок видно лише в toggle-списку
+              нижче (TaskResult children). */}
+          {initialItems.map((item) => {
             const label = initialLabelById.get(item.id) ?? "";
             return (
               <div
@@ -602,14 +608,23 @@ export function ChronologicalOrderExercise({
               }
             >
               {detail && config.mode === "text" && (
-                <div className={`divide-y divide-gray-100 overflow-hidden rounded-xl border dark:divide-neutral-700 ${ANSWER_CHIP_DEFAULT}`}>
+                // Окремі картки (п.2 задачі), не один контейнер з hairline-
+                // розділювачами: той самий .chrono-phrase-row.glass-item-
+                // card, що й картки вправи вище (gold-gradient рамка 1.5px,
+                // radius 14px, тінь, light/dark — токен-залежні, нічого не
+                // хардкодиться тут), gap-2 (8px) між картками. Без слота-
+                // номера й без letter-бейджа — лише індиго-кружок
+                // ITEM_NUMBER_BADGE із правильною позицією і текст того
+                // самого розміру/стилю (renderPhraseText — Nunito bold
+                // спікер + Lora цитата), що й у фразових картках вище.
+                <div className="flex flex-col gap-2">
                   {sortedByCorrectPosition(detail).map((it) => (
-                    <div key={it.id} className="flex items-start gap-2.5 px-2.5 py-2">
+                    <div key={it.id} className="chrono-phrase-row glass-item-card">
                       <span className={ITEM_NUMBER_BADGE} aria-hidden="true">
                         {it.correctPosition}
                       </span>
-                      <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere]">
-                        {frenchNbsp(it.content)}
+                      <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
+                        {renderPhraseText(it.content)}
                       </span>
                     </div>
                   ))}
