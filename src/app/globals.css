@@ -6017,20 +6017,11 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 200ms ease-out;
 }
 
-/* Буква-бейдж (A, B, C...) — та сама форма/колір/шрифт, що .item-number-
-   badge (спільний бейдж), лише більший розмір під цей мокап (32px
-   десктоп/28px мобільний замість стандартних 26px). */
-.chrono-phrase-badge {
-  width: 32px;
-  height: 32px;
-  font-size: 14px;
-}
-@media (max-width: 767px) {
-  .chrono-phrase-badge {
-    width: 28px;
-    height: 28px;
-  }
-}
+/* Буква-бейдж (A, B, C...) — РІВНО .item-number-badge (26px), без власного
+   модифікатора розміру: той самий бейдж, що drag-drop-row-number (гейдж-
+   рядки "Glissez les mots..."), жодного окремого мобільного розміру там
+   немає, тож і тут не додаємо. (Раніше був .chrono-phrase-badge 32/28px —
+   забагато, прибрано разом з ремонтом розмірів нижче.) */
 
 /* Картка речення — layout-шар над .glass-item-card (той самий токен-
    залежний gold-gradient border/bg/shadow, що й інші типи вправ, image-
@@ -6042,11 +6033,14 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 14px;
   padding: 10px 14px;
 }
-.chrono-phrase-text {
-  font-family: var(--font-body);
-  font-size: 18px;
-  line-height: 1.4;
-}
+/* Текст фрази — font-size/line-height НЕ тут: аудит (git log -p) показав,
+   що ДО рестайлу рядок узагалі не мав власного text-size класу (лише
+   leading-snug), тобто успадковував звичайний body-розмір сторінки
+   (16px, Lora — body { font-family: var(--font-body) } вище в цьому
+   файлі) — той самий розмір, що в true-false.tsx/matching.tsx карток
+   відповідей. .chrono-phrase-text (18px/1.4, окремий хардкод) прибраний —
+   замінено на ті самі Tailwind-токени text-base/leading-snug прямо в
+   className (chronological-order.tsx), як і було. */
 
 /* Результат (після перевірки) — рівно той самий зелений/червоний, що
    .matching-card--correct/--incorrect (border-green-500/bg-green-50,
@@ -6088,13 +6082,19 @@ button.scene-bar:active .scene-bar-toggle {
    нормально, бо .chrono-number-slot сам border-color не задає, нема
    конфлікту каскадних шарів) ПІСЛЯ. */
 .chrono-number-slot {
-  width: 56px;
-  height: 56px;
+  /* 56px → 44px: аудит (git log -p, 62c1c65) — слот "№" ДО рестайлу був
+     h-10 w-12 (40x48px, 36px висота на десктопі), тобто вже значно
+     менший за 56px; задача просить "розмір ДО рестайлу, або максимум
+     44x44, якщо він більший" — w-12=48px > 44px, тож стеля 44x44. */
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
-  border-radius: 14px;
+  /* 14px → 12px за задачею. */
+  border-radius: 12px;
   text-align: center;
   font-family: var(--font-heading);
-  font-size: 24px;
+  /* Той самий розмір, що текст фрази вище (16px, text-base) — не більший. */
+  font-size: 16px;
   font-weight: 800;
 }
 .chrono-number-slot:focus-visible {
@@ -6106,16 +6106,18 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (max-width: 767px) {
   .chrono-number-slot {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
+    width: 40px;
+    height: 40px;
   }
 }
 .chrono-number-slot--empty {
   border: 1.5px dashed #b9b2e8;
   background: #f7f6ff;
   color: #9a96c8;
-  font-size: 18px;
+  /* Менший за заповнений номер (16px) — той самий розмір, що плейсхолдер
+     "№" у "square"-варіанті numberInput (chronological-order.tsx, режим
+     image/mixed) — text-sm, не новий хардкод. */
+  font-size: 14px;
   font-weight: 700;
 }
 .chrono-number-slot--empty::placeholder {

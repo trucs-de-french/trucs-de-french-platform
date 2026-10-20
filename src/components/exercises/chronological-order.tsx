@@ -510,10 +510,10 @@ export function ChronologicalOrderExercise({
                 key={item.id}
                 className={`chrono-phrase-row glass-item-card transition-colors ${rowStateClass(item.id)}`}
               >
-                <span className="item-number-badge chrono-phrase-badge" aria-label={`Картка ${label}`}>
+                <span className="item-number-badge" aria-label={`Картка ${label}`}>
                   {label}
                 </span>
-                <span className="chrono-phrase-text min-w-0 flex-1 break-words text-left [overflow-wrap:anywhere]">
+                <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
                   {renderPhraseText(item.content)}
                 </span>
                 {numberInput(item.id, "line", label, item.points)}
