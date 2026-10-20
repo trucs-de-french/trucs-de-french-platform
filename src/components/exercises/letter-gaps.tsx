@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -33,14 +32,12 @@ import {
   phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
-import { WordResultRows, type ResultGroup } from "./word-result-rows";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { useResultTileLayout, computeResultSpans } from "./use-result-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -193,24 +190,6 @@ export function LetterGapsExercise({
     [config.words]
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
-
-  // Довжина НАЙДОВШОЇ ГРУПИ (слова, без пробілів) ОКРЕМО для кожного слова
-  // вправи — та сама одиниця, що й groups у buildGapResultCells нижче. --n
-  // (на всю вправу) — максимум цих довжин по УСІХ словах, включно з
-  // прихованими блоками; кожна картка окремо (wordUnitLengths[wi]) вирішує
-  // лише чи влізає її НАЙДОВША ВЛАСНА група в половину ширини грід-рядка
-  // (spanForUnitLength, use-result-tile-layout.ts).
-  const wordUnitLengths = useMemo(
-    () => config.words.map((w) => phraseSizeInfo(w.chars).maxUnitLength),
-    [config.words]
-  );
-  const resultN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
-  // --cell рахується ОДИН раз на всю вправу від ПОВНОШИРИННОЇ картки
-  // (use-result-tile-layout.ts) — gridRef вішається на грід-обгортку карток
-  // нижче (ОДНА й та сама властивість, обидві гілки — non-block і
-  // renderBlock() — монтують лише одну з них одночасно).
-  const { gridRef, cell: resultCell, spanForUnitLength } = useResultTileLayout(resultN);
-  const resultNStyle = { "--n": resultN, "--cell": `${resultCell}px` } as CSSProperties;
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — для ≤10-гілки,
   // на всю вправу.
@@ -509,67 +488,6 @@ export function LetterGapsExercise({
     }
   }
 
-  // Групи-клітинки результату (WordResultRows) ПО КОЖНІЙ позиції word.chars
-  // — на відміну від groupChars (вище, для живого рядка вводу), сусідні
-  // видимі літери тут НЕ об'єднуються в один <span>: кожна позиція — своя
-  // клітинка ОДНАКОВОЇ ширини в обох рядках ("Ваша відповідь"/"Правильно"),
-  // інакше колонки студентської й правильної відповіді розійдуться там, де
-  // видимі літери різної довжини сусідять із пропуском. Групування за
-  // пробілом (ch === " ") — та сама одиниця переносу, що splitPhraseUnits
-  // вище, щоб WordResultRows міг перенести фразу лише МІЖ словами, не
-  // всередині. empty:true — пропуск, де студент нічого не ввів (порожній
-  // рядок після trim) — показується тьмяним тире, не плутається з коротким
-  // правильним символом.
-  function buildGapResultCells(wi: number): {
-    studentGroups: ResultGroup[];
-    correctGroups: ResultGroup[];
-    studentWordText: string;
-    correctWordText: string;
-  } {
-    const word = config.words[wi];
-    let gi = -1;
-    const studentGroups: ResultGroup[] = [[]];
-    const correctGroups: ResultGroup[] = [[]];
-    let studentWordText = "";
-    let correctWordText = "";
-    for (const ch of word.chars) {
-      if (ch === " ") {
-        studentGroups.push([]);
-        correctGroups.push([]);
-        studentWordText += " ";
-        correctWordText += " ";
-        continue;
-      }
-      if (ch === null) {
-        gi += 1;
-        const g = gi;
-        const studentLetter = answers[wi][g] ?? "";
-        const correctLetter = word.hiddenLetters[g] ?? "";
-        const isEmpty = studentLetter.trim() === "";
-        const correct = !isEmpty && normalize(studentLetter) === normalize(correctLetter);
-        studentGroups[studentGroups.length - 1].push(
-          isEmpty
-            ? { kind: "tile", text: "–", state: "incorrect", empty: true }
-            : { kind: "tile", text: studentLetter, state: correct ? "correct" : "incorrect" }
-        );
-        correctGroups[correctGroups.length - 1].push({ kind: "tile", text: correctLetter, state: "correct" });
-        studentWordText += studentLetter;
-        correctWordText += correctLetter;
-      } else {
-        studentGroups[studentGroups.length - 1].push({ kind: "text", text: ch });
-        correctGroups[correctGroups.length - 1].push({ kind: "text", text: ch });
-        studentWordText += ch;
-        correctWordText += ch;
-      }
-    }
-    return {
-      studentGroups: studentGroups.filter((g) => g.length > 0),
-      correctGroups: correctGroups.filter((g) => g.length > 0),
-      studentWordText,
-      correctWordText,
-    };
-  }
-
   // Рендер однієї картки-слова — СПІЛЬНИЙ для обох гілок (структура карток
   // ідентична, різниться лише джерело "result"/"detail"/locked і порядок
   // gapIndex-нумерації через gapOrder). Блоки завжди single-column
@@ -591,10 +509,6 @@ export function LetterGapsExercise({
       // (інший, непов'язаний механізм підказки, недоречний у ремедіальному
       // повторі помилок).
       hintDisabled?: boolean;
-      // Locked (результат) ЛИШЕ — заздалегідь порахований span (1|2) для
-      // ВСЬОГО видимого списку карток разом (computeResultSpans), той самий
-      // принцип, що letter-rearrangement.tsx.
-      resultSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -606,11 +520,7 @@ export function LetterGapsExercise({
     const units = splitPhraseUnits(word.chars);
     const { maxUnitLength } = phraseSizeInfo(word.chars);
     const isCompact = maxUnitLength > LONG_WORD_COMPACT_THRESHOLD;
-    // Pre-check (editable) — старий евристичний needsFullSpan (fullFlags),
-    // незмінний. Locked (результат) — opts.resultSpan, порахований ОДИН раз
-    // на весь видимий список (computeResultSpans, з урахуванням сусіда),
-    // той самий принцип, що letter-rearrangement.tsx.
-    const needsFullSpan = opts.locked ? opts.resultSpan === 2 : !!opts.setContentRef && fullFlags[wi];
+    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
     const gapSizeClass = isCompact ? COMPACT_GAP_SIZE_CLASS : GAP_SIZE_CLASS;
     const letterTextClass = isCompact ? COMPACT_LETTER_TEXT_CLASS : GAP_TEXT_CLASS;
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
@@ -657,62 +567,47 @@ export function LetterGapsExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            {opts.locked ? (
-              (() => {
-                const { studentGroups, correctGroups, studentWordText, correctWordText } = buildGapResultCells(wi);
-                return (
-                  <WordResultRows
-                    studentGroups={studentGroups}
-                    correctGroups={correctGroups}
-                    studentWordText={studentWordText}
-                    correctWordText={correctWordText}
-                    fullyCorrect={nextHintGap(wi) === null}
-                  />
-                );
-              })()
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                {units.map((unit, ui) => (
-                  <div key={ui} className="flex shrink-0 items-center gap-1">
-                    {groupChars(unit).map((group, ci) => {
-                      if (group.type === "letters")
-                        return (
-                          <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
-                            {group.text}
-                          </span>
-                        );
-                      gapIndex += 1;
-                      const gi = gapIndex;
-                      const status = gapLiveStatus(wi, gi);
+            <div className="flex flex-wrap items-center gap-2">
+              {units.map((unit, ui) => (
+                <div key={ui} className="flex shrink-0 items-center gap-1">
+                  {groupChars(unit).map((group, ci) => {
+                    if (group.type === "letters")
                       return (
-                        <input
-                          key={ci}
-                          ref={diacritics.fieldRef(`${wi},${gi}`)}
-                          maxLength={1}
-                          value={answers[wi][gi]}
-                          onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
-                          }}
-                          onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                          onBlur={diacritics.onBlur}
-                          disabled={opts.locked}
-                          className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                            hintedGaps.has(`${wi},${gi}`)
-                              ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                              : status === "correct"
-                                ? LIVE_CORRECT_CLASS
-                                : status === "incorrect"
-                                  ? LIVE_INCORRECT_CLASS
-                                  : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                          }`}
-                        />
+                        <span key={ci} className={`whitespace-nowrap font-heading font-medium ${letterTextClass}`}>
+                          {group.text}
+                        </span>
                       );
-                    })}
-                  </div>
-                ))}
-              </div>
-            )}
+                    gapIndex += 1;
+                    const gi = gapIndex;
+                    const status = gapLiveStatus(wi, gi);
+                    return (
+                      <input
+                        key={ci}
+                        ref={diacritics.fieldRef(`${wi},${gi}`)}
+                        maxLength={1}
+                        value={answers[wi][gi]}
+                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
+                        }}
+                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                        onBlur={diacritics.onBlur}
+                        disabled={opts.locked}
+                        className={`${gapSizeClass} rounded-[8px] dark:rounded-md border text-center font-heading ${letterTextClass} font-medium shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                          hintedGaps.has(`${wi},${gi}`)
+                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                            : status === "correct"
+                              ? LIVE_CORRECT_CLASS
+                              : status === "incorrect"
+                                ? LIVE_INCORRECT_CLASS
+                                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -728,21 +623,10 @@ export function LetterGapsExercise({
     // singleGapOrder/displayOrder у ≤10-гілці ("Tab рухається так, як
     // вправа виглядає на екрані").
     const blockGapOrder = gapOrderFor(blockDisplayOrder);
-    // Номер картки = позиція в blockDisplayOrder (той самий порядок, що вже
-    // показаний студенту до перевірки — карток НЕ перетасовуємо між
-    // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
-    // порядку (computeResultSpans дивиться лише на сусіда в ньому).
-    const blockResultSpans = blockResult
-      ? computeResultSpans(
-          blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
-          spanForUnitLength
-        )
-      : null;
 
     return (
       <div className="flex flex-col gap-3">
         <div
-          ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
           } grid gap-3 md:grid-cols-2`}
@@ -754,7 +638,6 @@ export function LetterGapsExercise({
               gapOrder: blockGapOrder,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
-              resultSpan: blockResultSpans?.[pos],
             })
           )}
         </div>
@@ -792,7 +675,7 @@ export function LetterGapsExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK} style={resultNStyle}>
+      <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -902,19 +785,8 @@ export function LetterGapsExercise({
     </button>
   ) : null;
 
-  // Номер картки = позиція в displayOrder (той самий порядок, що вже
-  // показаний студенту до перевірки — карток НЕ перетасовуємо між
-  // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
-  // порядку (computeResultSpans дивиться лише на сусіда в ньому).
-  const singleResultSpans = single.result
-    ? computeResultSpans(
-        displayOrder.map((wi) => wordUnitLengths[wi]),
-        spanForUnitLength
-      )
-    : null;
-
   return (
-    <div className={EXERCISE_STACK} style={resultNStyle}>
+    <div className={EXERCISE_STACK}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
@@ -937,7 +809,6 @@ export function LetterGapsExercise({
       {!useBlocks ? (
         <>
           <div
-            ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
               isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
@@ -949,7 +820,6 @@ export function LetterGapsExercise({
                 gapOrder: singleGapOrder,
                 setContentRef,
                 cardNumber: pos + 1,
-                resultSpan: singleResultSpans?.[pos],
               })
             )}
           </div>

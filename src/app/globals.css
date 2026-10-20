@@ -3796,7 +3796,7 @@ button.scene-bar:active .scene-bar-toggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 36px;
+  min-height: 40px;
   box-sizing: border-box;
   padding: 0 14px;
   border-radius: 12px;
@@ -3805,6 +3805,16 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.task-summary-tile:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.task-summary-tile--active {
+  border-color: #5a55e6;
+  box-shadow: 0 0 0 1.5px #5a55e6;
 }
 .task-summary-tile-value {
   font-weight: 600;
@@ -3824,6 +3834,17 @@ button.scene-bar:active .scene-bar-toggle {
   border-color: rgba(217, 183, 101, 0.45);
   color: #8a7a52;
 }
+@media (hover: hover) {
+  .task-summary-tile--success:hover {
+    background: #e2f3e5;
+  }
+  .task-summary-tile--warn:hover {
+    background: #ffefc7;
+  }
+  .task-summary-tile--pending:hover {
+    background: #f6efd9;
+  }
+}
 .dark .task-summary-tile--success {
   background: rgba(120, 220, 150, 0.12);
   border-color: rgba(130, 220, 160, 0.4);
@@ -3838,6 +3859,21 @@ button.scene-bar:active .scene-bar-toggle {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(243, 217, 139, 0.25);
   color: rgba(246, 220, 139, 0.6);
+}
+.dark .task-summary-tile--active {
+  border-color: #f6dc8e;
+  box-shadow: 0 0 0 1.5px #f6dc8e;
+}
+@media (hover: hover) {
+  .dark .task-summary-tile--success:hover {
+    background: rgba(120, 220, 150, 0.2);
+  }
+  .dark .task-summary-tile--warn:hover {
+    background: rgba(246, 220, 139, 0.2);
+  }
+  .dark .task-summary-tile--pending:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-summary-tile--success {
@@ -3854,6 +3890,21 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(243, 217, 139, 0.25);
     color: rgba(246, 220, 139, 0.6);
+  }
+  :root:not(.light) .task-summary-tile--active {
+    border-color: #f6dc8e;
+    box-shadow: 0 0 0 1.5px #f6dc8e;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .task-summary-tile--success:hover {
+    background: rgba(120, 220, 150, 0.2);
+  }
+  :root:not(.light) .task-summary-tile--warn:hover {
+    background: rgba(246, 220, 139, 0.2);
+  }
+  :root:not(.light) .task-summary-tile--pending:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -4748,8 +4799,7 @@ button.scene-bar:active .scene-bar-toggle {
    поверх .item-number-badge як утиліта в className) — інакше градієнтний
    background-shorthand вище й кольоровий background-color рівної
    специфічності конкурували б за порядком у згенерованому CSS, не за
-   порядком класів у рядку className (той самий урок, що
-   .word-result-cell--correct/--incorrect, word-result-rows.tsx). */
+   порядком класів у рядку className). */
 .item-number-badge--correct {
   background: #16a34a;
 }
@@ -4771,193 +4821,6 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 10px;
 }
 
-/* Результат картки-слова letter_gaps/letter_rearrangement (WordResultRows,
-   word-result-rows.tsx) — два вирівняних рядки "Ваша відповідь"/
-   "Правильно" замість колишнього текстового рядка "Правильне слово: ...".
-   Відступи (стиснуто): від підказки картки до цього блоку — gap-2 (8px) на
-   обгортці контенту картки (letter-gaps.tsx/letter-rearrangement.tsx, в
-   ОБОХ гілках — locked і pre-check — тепер однаково 8px); тут — підпис→
-   плитки 6px (.word-result-row), розділювач — 10px згори/знизу (margin, не
-   gap, бо застосовується лише МІЖ двома .word-result-row: 10px від першого
-   рядка плиток до роздільника і 10px від роздільника до другого підпису,
-   той самий margin дає обидва). */
-.word-result-rows {
-  display: flex;
-  flex-direction: column;
-}
-.word-result-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.word-result-row-label {
-  font-family: var(--font-heading);
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #8a7a52;
-}
-.dark .word-result-row-label {
-  color: #a9a8c9;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-row-label {
-    color: #a9a8c9;
-  }
-}
-.word-result-divider {
-  height: 1px;
-  margin: 10px 0;
-  background: #eee6cf;
-}
-.dark .word-result-divider {
-  background: rgba(255, 255, 255, 0.14);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-divider {
-    background: rgba(255, 255, 255, 0.14);
-  }
-}
-/* --n і --cell тепер ОБИДВА задаються ОДИН РАЗ на всю вправу
-   (letter-gaps.tsx/letter-rearrangement.tsx передають їх як inline-style
-   на спільній обгортці всіх карток — EXERCISE_STACK div, не на кожній
-   картці/WordResultRows окремо) і успадковуються сюди як звичайні
-   CSS-змінні — так УСІ картки вправи (і видимі в активному блоці, і
-   сусідні в тому самому grid-рядку, і в одній, і в обох колонках)
-   показують ОДНАКОВУ плитку. Раніше --cell рахувався в CSS через container
-   query (cqw) від ширини КОЖНОЇ картки окремо — через це коротке слово в
-   двоколонковій картці діставало ВТРИЧІ меншу плитку за те саме слово в
-   одноколонковій картці. Тепер --cell рахується в JS
-   (use-result-tile-layout.ts) від ширини ПОВНОШИРИННОЇ картки (що займає
-   обидві колонки), а кожна картка окремо вирішує, чи влізає її НАЙДОВША
-   власна група слова в половину цієї ширини — якщо ні, картка сама
-   розтягується на обидві колонки (md:col-span-2), плитка не зменшується.
-   Групи (word-result-group, одне СЛОВО) — nowrap gap, самі групи в
-   flex-wrap-рядку — перенос лише МІЖ словами фрази. row-gap/column-gap
-   ОКРЕМО (не спільний gap): column-gap — проміжок МІЖ словами фрази по
-   горизонталі ("word gap"); row-gap 6px — проміжок МІЖ рядками, коли
-   фраза переноситься (вертикальний перенос НЕ входить у список
-   масштабованих властивостей нижче, лишається 6px незалежно від SCALE).
-   SCALE=0.85 — той самий множник, що REFERENCE_CELL_PX/CELL_GAP_PX у
-   use-result-tile-layout.ts (JS-константа тут недоступна, числа нижче —
-   4px*0.85=3.4px, 10px*0.85=8.5px, порахувати вручну при зміні SCALE). */
-.word-result-tile-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  row-gap: 6px;
-  column-gap: 8.5px;
-  width: 100%;
-}
-.word-result-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3.4px;
-}
-/* Розмір/шрифт — ЕТАЛОН×SCALE: реальна виміряна коробка поля-пропуску
-   letter_gaps у РОБОЧОМУ (pre-check, не чіпали) стані картки "se conduire"
-   (не-compact слово, maxUnitLength<=9) — 32×36px, font 18px/500, виміряно
-   в браузері на 1280/820/390 (однаково на всіх, бо GAP_SIZE_CLASS/
-   GAP_TEXT_CLASS, word-list-layout.ts:19-20, звичайні, НЕ responsive
-   Tailwind-класи). pre-check БОКСИ самі лишаються на цих голих значеннях —
-   жодної спільної CSS-змінної з результатом не мають, тож SCALE=0.85
-   (use-result-tile-layout.ts) застосовується ЛИШЕ до --cell (результат),
-   pre-check і результат після цього комміту остаточно РІЗНОГО розміру.
-   --cell тут — ширина (рахується в JS), 1.125 = 36/32 (висота), 0.5625 =
-   18/32 (шрифт) — ТІ САМІ співвідношення, що в еталонній картці (ratio не
-   залежить від SCALE, бо застосовується вже ДО масштабованого --cell). */
-.word-result-cell {
-  flex: none;
-  width: var(--cell);
-  height: calc(var(--cell) * 1.125);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: 500;
-  font-size: calc(var(--cell) * 0.5625);
-}
-.word-result-cell--tile {
-  border-radius: 6.8px;
-  border: 1.5px solid;
-}
-.dark .word-result-cell--tile {
-  border-radius: 5.1px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-cell--tile {
-    border-radius: 5.1px;
-  }
-}
-/* Видимі (дані, не пропущені) літери letter_gaps — тепер ТЕЖ плитка
-   однакового розміру (word-result-cell), але без рамки й з тихим
-   нейтральним фоном, щоб усе слово читалось як один суцільний ряд
-   плиток, а не "рамкові плитки впереміш із голим текстом". Радіус — той
-   самий еталон×SCALE 6.8px/5.1px, що word-result-cell--tile. */
-.word-result-cell--text {
-  border-radius: 6.8px;
-  background: #f4efe0;
-  color: #1a1640;
-}
-.dark .word-result-cell--text {
-  border-radius: 5.1px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #dcdbf3;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-cell--text {
-    border-radius: 5.1px;
-    background: rgba(255, 255, 255, 0.07);
-    color: #dcdbf3;
-  }
-}
-/* Правильна позиція (обидва рядки — "Ваша відповідь" і "Правильно"
-   однаковою зеленою плиткою, та сама рамка/вага, ніяких "блідих
-   безрамкових" варіантів). */
-.word-result-cell--correct {
-  background: #f2fbf4;
-  border-color: #7fd69a;
-  color: #1f7a3d;
-}
-.dark .word-result-cell--correct {
-  background: rgba(47, 158, 91, 0.2);
-  border-color: #4cc47e;
-  color: #bff0d0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-cell--correct {
-    background: rgba(47, 158, 91, 0.2);
-    border-color: #4cc47e;
-    color: #bff0d0;
-  }
-}
-/* Неправильна позиція ("Ваша відповідь" лише) — завжди з рамкою, той
-   самий принцип, що --correct, інакше два рядки виглядали б як різні
-   компоненти (стара помилка: безрамкові бліді плитки тут). */
-.word-result-cell--incorrect {
-  background: #fdf3f2;
-  border-color: #ef8a8a;
-  color: #6a5a6a;
-}
-.dark .word-result-cell--incorrect {
-  background: rgba(214, 69, 69, 0.16);
-  border-color: #e07a7a;
-  color: #ffd0d0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .word-result-cell--incorrect {
-    background: rgba(214, 69, 69, 0.16);
-    border-color: #e07a7a;
-    color: #ffd0d0;
-  }
-}
-/* Порожній пропуск letter_gaps (студент нічого не ввів) — тьмяне тире,
-   щоб відсутня відповідь була ВИДНА (не плутається з коротким правильним
-   символом), та сама червона рамка --incorrect. */
-.word-result-cell--empty {
-  opacity: 0.55;
-}
 .drag-drop-row-text {
   flex: 1 1 auto;
   min-width: 0;

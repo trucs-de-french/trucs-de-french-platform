@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -29,14 +28,11 @@ import {
   SINGLE_WORD_SPAN_THRESHOLD,
   PHRASE_SPAN_THRESHOLD,
   WORD_CARD,
-  phraseSizeInfo,
 } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
-import { WordResultRows, splitTileGroupsOnSpace, type ResultCell } from "./word-result-rows";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { useResultTileLayout, computeResultSpans } from "./use-result-tile-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -138,27 +134,6 @@ export function LetterRearrangementExercise({
     [config.words]
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
-
-  // Довжина НАЙДОВШОЇ ГРУПИ (слова, розділеного пробілом — той самий
-  // splitPhraseUnits/phraseSizeInfo, що letter_gaps) ОКРЕМО для кожного
-  // слова вправи — фраза переноситься лише МІЖ словами (splitTileGroupsOnSpace
-  // нижче), а не йде однією групою, як раніше. --n (на всю вправу) —
-  // максимум цих довжин по УСІХ словах, включно з прихованими блоками;
-  // кожна картка окремо (wordUnitLengths[wi]) вирішує лише чи влізає її
-  // НАЙДОВША ВЛАСНА група в половину ширини грід-рядка (spanForUnitLength,
-  // use-result-tile-layout.ts) — звідси тотожний розмір плитки letter_gaps/
-  // letter_rearrangement при однаковій ширині.
-  const wordUnitLengths = useMemo(
-    () => config.words.map((w) => phraseSizeInfo(w.shuffledLetters).maxUnitLength),
-    [config.words]
-  );
-  const resultN = useMemo(() => Math.max(1, ...wordUnitLengths), [wordUnitLengths]);
-  // --cell рахується ОДИН раз на всю вправу від ПОВНОШИРИННОЇ картки
-  // (use-result-tile-layout.ts) — gridRef вішається на грід-обгортку карток
-  // нижче (ОДНА й та сама властивість, обидві гілки — non-block і
-  // renderBlock() — монтують лише одну з них одночасно).
-  const { gridRef, cell: resultCell, spanForUnitLength } = useResultTileLayout(resultN);
-  const resultNStyle = { "--n": resultN, "--cell": `${resultCell}px` } as CSSProperties;
 
   // 2-колонковий порядок — для ≤10-гілки, на всю вправу.
   const isTwoColumn = !useBlocks && config.words.length > TWO_COLUMN_WORD_THRESHOLD;
@@ -350,13 +325,6 @@ export function LetterRearrangementExercise({
       // Практика (пілот, частина 4) — лампочка "поставити наступну літеру"
       // вимкнена, той самий принцип, що letter-gaps.tsx hintDisabled.
       hintDisabled?: boolean;
-      // Locked (результат) ЛИШЕ — заздалегідь порахований span (1|2) для
-      // ВСЬОГО видимого списку карток разом (computeResultSpans), не для
-      // цієї картки окремо: коротка картка лишається в одній колонці
-      // ТІЛЬКИ якщо її пара в рядку — теж коротка картка, інакше (сусід —
-      // довгий, або вона остання) сама йде на всю ширину, щоб порожньої
-      // половини рядка ніколи не лишалось.
-      resultSpan?: 1 | 2;
     }
   ) {
     const word = config.words[wi];
@@ -373,11 +341,7 @@ export function LetterRearrangementExercise({
 
     const totalLength = word.shuffledLetters.length;
     const isCompact = totalLength > LONG_WORD_COMPACT_THRESHOLD;
-    // Pre-check (editable) — старий евристичний needsFullSpan (fullFlags),
-    // незмінний. Locked (результат) — opts.resultSpan, порахований ОДИН раз
-    // на весь видимий список (computeResultSpans, з урахуванням сусіда),
-    // той самий принцип, що letter-gaps.tsx.
-    const needsFullSpan = opts.locked ? opts.resultSpan === 2 : !!opts.setContentRef && fullFlags[wi];
+    const needsFullSpan = !!opts.setContentRef && fullFlags[wi];
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
     // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
@@ -423,38 +387,23 @@ export function LetterRearrangementExercise({
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
             </p>
-            {opts.locked && wordDetail ? (
-              <WordResultRows
-                studentGroups={splitTileGroupsOnSpace(
-                  orders[wi].map(
-                    (letter, i): ResultCell => ({
-                      kind: "tile",
-                      text: letter,
-                      state: wordDetail.letters[i]?.isCorrect ? "correct" : "incorrect",
-                    })
-                  )
-                )}
-                correctGroups={splitTileGroupsOnSpace(
-                  wordDetail.letters.map((l): ResultCell => ({ kind: "tile", text: l.text, state: "correct" }))
-                )}
-                studentWordText={orders[wi].join("")}
-                correctWordText={wordDetail.letters.map((l) => l.text).join("")}
-                fullyCorrect={wordDetail.isCorrect}
-              />
-            ) : (
-              <SortableTileRow
-                items={orders[wi]}
-                onChange={(next) => updateOrder(wi, next)}
-                locked={opts.locked}
-                tileState={tileState}
-                compact={isCompact}
-                letterTile
-                gapClassName="gap-1"
-                lockedCount={opts.locked ? 0 : lockedCounts[wi]}
-              />
-            )}
+            <SortableTileRow
+              items={orders[wi]}
+              onChange={(next) => updateOrder(wi, next)}
+              locked={opts.locked}
+              tileState={tileState}
+              compact={isCompact}
+              letterTile
+              gapClassName="gap-1"
+              lockedCount={opts.locked ? 0 : lockedCounts[wi]}
+            />
           </div>
         </div>
+        {wordDetail && !wordDetail.isCorrect && (
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
+          </p>
+        )}
       </div>
     );
   }
@@ -463,21 +412,10 @@ export function LetterRearrangementExercise({
     const blockResult = blockResults[activeBlock];
     const blockDetail = blockResult?.detail;
     const errMsg = blockError[activeBlock];
-    // Номер картки = позиція в blockDisplayOrder (той самий порядок, що вже
-    // показаний студенту до перевірки — карток НЕ перетасовуємо між
-    // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
-    // порядку (computeResultSpans дивиться лише на сусіда в ньому).
-    const blockResultSpans = blockResult
-      ? computeResultSpans(
-          blockDisplayOrder.map((wi) => wordUnitLengths[wi]),
-          spanForUnitLength
-        )
-      : null;
 
     return (
       <div className="flex flex-col gap-3">
         <div
-          ref={gridRef}
           className={`transition-opacity duration-150 ${
             blockTwoColumn.ready ? "opacity-100" : "opacity-0"
           } grid gap-3 md:grid-cols-2`}
@@ -488,7 +426,6 @@ export function LetterRearrangementExercise({
               locked: !!blockResult,
               setContentRef: blockTwoColumn.setContentRef,
               cardNumber: pos + 1,
-              resultSpan: blockResultSpans?.[pos],
             })
           )}
         </div>
@@ -513,7 +450,7 @@ export function LetterRearrangementExercise({
 
   if (isPractice) {
     return (
-      <div className={EXERCISE_STACK} style={resultNStyle}>
+      <div className={EXERCISE_STACK}>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -601,19 +538,8 @@ export function LetterRearrangementExercise({
     </button>
   ) : null;
 
-  // Номер картки = позиція в displayOrder (той самий порядок, що вже
-  // показаний студенту до перевірки — карток НЕ перетасовуємо між
-  // pre-check і locked). Пари коротких карток рахуються ПО ЦЬОМУ Ж
-  // порядку (computeResultSpans дивиться лише на сусіда в ньому).
-  const singleResultSpans = single.result
-    ? computeResultSpans(
-        displayOrder.map((wi) => wordUnitLengths[wi]),
-        spanForUnitLength
-      )
-    : null;
-
   return (
-    <div className={EXERCISE_STACK} style={resultNStyle}>
+    <div className={EXERCISE_STACK}>
       <BlockTabs
         plaqueText={plaqueText}
         blockCount={blockCount}
@@ -640,7 +566,6 @@ export function LetterRearrangementExercise({
       {!useBlocks ? (
         <>
           <div
-            ref={gridRef}
             className={`transition-opacity duration-150 ${ready ? "opacity-100" : "opacity-0"} ${
               isTwoColumn ? "grid gap-3 md:grid-cols-2" : "flex flex-col gap-3"
             }`}
@@ -651,7 +576,6 @@ export function LetterRearrangementExercise({
                 locked: !!single.result,
                 setContentRef,
                 cardNumber: pos + 1,
-                resultSpan: singleResultSpans?.[pos],
               })
             )}
           </div>

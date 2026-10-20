@@ -392,6 +392,22 @@ export function BlockNavigation({
   hideFooter?: boolean;
   children: ReactNode;
 }) {
+  // contentRef — обгортка навколо children (сам контент активного блоку) —
+  // ТІЛЬКИ для скролу з картки "Підсумок завдання" нижче: клік по плитці
+  // блоку там міг лишити студента внизу сторінки (саму картку підсумку
+  // показано ПІД контентом), а новий активний блок рендериться вгорі,
+  // поза екраном. Звичайні вкладки (BlockTabs) й кнопки ←/→ НЕ скролять —
+  // вони й так уже видні там, де студент на них клацнув.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  function changeBlockFromSummary(index: number) {
+    onChangeBlock(index);
+    contentRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
   // Один блок — навігація не рендериться взагалі (той самий принцип, що й
   // раніше: виклик-сайти й сьогодні обходять BlockNavigation для плоского
   // списку без блоків; цей захист — лише додаткова гарантія на рівні самого
@@ -402,7 +418,7 @@ export function BlockNavigation({
 
   return (
     <>
-      <div>
+      <div ref={contentRef}>
         {children}
         {!hideFooter && (
           <BlockNavFooter
@@ -415,7 +431,12 @@ export function BlockNavigation({
       </div>
 
       {blockResults && Object.keys(blockResults).length > 0 && (
-        <TaskSummaryCard blockCount={blockCount} blockResults={blockResults} />
+        <TaskSummaryCard
+          blockCount={blockCount}
+          blockResults={blockResults}
+          activeBlock={activeBlock}
+          onChangeBlock={changeBlockFromSummary}
+        />
       )}
     </>
   );
@@ -424,13 +445,23 @@ export function BlockNavigation({
 // Картка "Підсумок завдання" — замінює колишні дві паралельні лінії
 // ("Загалом: N% (X з Y балів)" тут і, в іншому компоненті, "Підсумок
 // блоку") для tasks із 2+ блоками: сума БАЛІВ лише по вже перевірених
-// блоках (неперевірені не входять у суму) + плитка на кожен блок.
+// блоках (неперевірені не входять у суму) + плитка на кожен блок. Плитки —
+// РЕАЛЬНІ кнопки (onChangeBlock — той самий перемикач, що вкладки блоків
+// угорі панелі): клік перемикає activeBlock і скролить сторінку до
+// контенту блоку (BlockNavigation.changeBlockFromSummary) — стан блоку
+// (відповіді/перевірка/підказки) НЕ перераховується й НЕ втрачається,
+// бо він і так тримається в per-блок мапах виклик-сайту (blockResults
+// тощо), а не локально тут.
 function TaskSummaryCard({
   blockCount,
   blockResults,
+  activeBlock,
+  onChangeBlock,
 }: {
   blockCount: number;
   blockResults: Record<number, TaskBlockResult>;
+  activeBlock: number;
+  onChangeBlock: (index: number) => void;
 }) {
   const checked = Object.values(blockResults);
   const sumEarned = checked.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
@@ -451,25 +482,39 @@ function TaskSummaryCard({
       </div>
       <div className="task-summary-tiles">
         {Array.from({ length: blockCount }, (_, i) => {
+          const isActive = i === activeBlock;
           const r = blockResults[i];
           if (!r) {
             return (
-              <span key={i} className="task-summary-tile task-summary-tile--pending">
+              <button
+                key={i}
+                type="button"
+                onClick={() => onChangeBlock(i)}
+                aria-current={isActive ? "true" : undefined}
+                className={`task-summary-tile task-summary-tile--pending ${
+                  isActive ? "task-summary-tile--active" : ""
+                }`}
+              >
                 Блок {i + 1} — —
-              </span>
+              </button>
             );
           }
           const possible = r.pointsPossible ?? 0;
           const earned = r.pointsEarned ?? 0;
           const full = possible > 0 ? earned >= possible : r.correct;
           return (
-            <span
+            <button
               key={i}
-              className={`task-summary-tile ${full ? "task-summary-tile--success" : "task-summary-tile--warn"}`}
+              type="button"
+              onClick={() => onChangeBlock(i)}
+              aria-current={isActive ? "true" : undefined}
+              className={`task-summary-tile ${full ? "task-summary-tile--success" : "task-summary-tile--warn"} ${
+                isActive ? "task-summary-tile--active" : ""
+              }`}
             >
               Блок {i + 1} <span className="task-summary-tile-value">{earned}/{possible}</span>
               {full ? " ✓" : ""}
-            </span>
+            </button>
           );
         })}
       </div>
