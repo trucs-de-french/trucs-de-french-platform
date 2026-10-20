@@ -32,11 +32,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import {
-  useWorkingTileLayout,
-  chunkIntoRows,
-  TWO_COLUMN_GRID_CLASS,
-} from "./use-working-tile-layout";
+import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -199,7 +195,7 @@ export function LetterGapsExercise({
   // винятків. Без резерву лампочки: рядки клітинок ідуть НИЖЧЕ заголовка
   // картки, де лампочка (абсолютна, верхній правий кут) уже не заважає —
   // резерв лишається лише на самому заголовку (pr-[52px] нижче).
-  const { gridRef, perLineFor } = useWorkingTileLayout();
+  const { gridRef } = useWorkingTileLayout();
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — тепер завжди
   // (колонок у рендері відповідає ШИРИНА контейнера, не кількість слів —
@@ -585,68 +581,64 @@ export function LetterGapsExercise({
                 висоти слова, що зайняло 2 рядки переносу. gap-2 — той
                 самий відступ, що був МІЖ одиницями в старому flex-wrap. */}
             <div className="flex flex-col items-start gap-2">
-              {units.map((unit, ui) => {
-                // Клітинки картки фіксованого розміру — переносяться
-                // ВСЕРЕДИНІ слова (на нові рядки), а не стискаються, коли
-                // слово не влазить в один рядок картки. perLineFor —
-                // скільки клітинок фіксованого розміру влазить у рядок ЦІЄЇ
-                // картки (half-width у 2-колонковому режимі, full в
-                // 1-колонковому — одне й те саме для всіх карток вправи,
-                // жодного per-картка span більше немає). Збалансований
-                // поділ (chunkIntoRows) — щоб останній рядок не лишався з
-                // однією клітинкою.
-                const perLine = perLineFor();
-                const rowSizes = chunkIntoRows(unit.length, perLine);
-                let offset = 0;
-                const rows = rowSizes.map((size) => {
-                  const chunk = unit.slice(offset, offset + size);
-                  offset += size;
-                  return chunk;
-                });
-                return (
-                  <div key={ui} className="flex shrink-0 flex-col gap-[3.4px]">
-                    {rows.map((chunk, ri) => (
-                      <div key={ri} className="flex items-center letter-tile-row-gap">
-                        {groupChars(chunk).map((group, ci) => {
-                          if (group.type === "letters")
-                            return (
-                              <span key={ci} className="letter-tile-font whitespace-nowrap">
-                                {group.text}
-                              </span>
-                            );
-                          gapIndex += 1;
-                          const gi = gapIndex;
-                          const status = gapLiveStatus(wi, gi);
-                          return (
-                            <input
-                              key={ci}
-                              ref={diacritics.fieldRef(`${wi},${gi}`)}
-                              maxLength={1}
-                              value={answers[wi][gi]}
-                              onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
-                              }}
-                              onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
-                              onBlur={diacritics.onBlur}
-                              disabled={opts.locked}
-                              className={`letter-tile-cell letter-tile-font border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
-                                hintedGaps.has(`${wi},${gi}`)
-                                  ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                                  : status === "correct"
-                                    ? LIVE_CORRECT_CLASS
-                                    : status === "incorrect"
-                                      ? LIVE_INCORRECT_CLASS
-                                      : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+              {units.map((unit, ui) => (
+                // Перенос ВСЕРЕДИНІ слова — природний (CSS text-wrap:
+                // balance на блоковому контейнері з inline-block дітьми, не
+                // JS-розрахунок за кількістю клітинок): раніше rowSizes
+                // рахувався від unit.length (кожен символ — повна 32px
+                // клітинка), а groupChars() застосовувався ПІСЛЯ розбиття
+                // на рядки — тож суцільний фрагмент видимих літер міг
+                // опинитись розрізаним між двома рядками (половина в
+                // одному, половина в іншому), а сам розрахунок ширини рядка
+                // був завжди завеликим (видимі літери — вузький текст, не
+                // 32px клітинка). Тепер groupChars(unit) викликається ОДИН
+                // раз на все слово, кожен фрагмент — один inline-block
+                // елемент (unbreakable, white-space:nowrap), і браузер сам
+                // переносить рядок МІЖ елементами за їхньою реальною
+                // шириною; text-wrap:balance (.letter-group-row,
+                // globals.css) рівномірно розподіляє елементи між рядками,
+                // щоб на останньому не лишалась самотня клітинка.
+                <div key={ui} className="letter-group-row">
+                  {groupChars(unit).map((group, ci) => {
+                    if (group.type === "letters")
+                      return (
+                        <span
+                          key={ci}
+                          className="letter-tile-font letter-group-item whitespace-nowrap"
+                        >
+                          {group.text}
+                        </span>
+                      );
+                    gapIndex += 1;
+                    const gi = gapIndex;
+                    const status = gapLiveStatus(wi, gi);
+                    return (
+                      <input
+                        key={ci}
+                        ref={diacritics.fieldRef(`${wi},${gi}`)}
+                        maxLength={1}
+                        value={answers[wi][gi]}
+                        onChange={(e) => updateLetter(wi, gi, e.target.value, opts.gapOrder)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace") handleBackspace(wi, gi, opts.gapOrder);
+                        }}
+                        onFocus={() => diacritics.onFocus(`${wi},${gi}`)}
+                        onBlur={diacritics.onBlur}
+                        disabled={opts.locked}
+                        className={`letter-tile-cell letter-tile-font letter-group-item border text-center shadow-[0_2px_8px_rgba(184,144,47,0.15)] dark:shadow-sm transition-colors ${
+                          hintedGaps.has(`${wi},${gi}`)
+                            ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
+                            : status === "correct"
+                              ? LIVE_CORRECT_CLASS
+                              : status === "incorrect"
+                                ? LIVE_INCORRECT_CLASS
+                                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>

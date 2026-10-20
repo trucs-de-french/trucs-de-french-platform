@@ -4845,6 +4845,30 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 3.4px;
 }
 
+/* letter_gaps: один рядок перенесення слова (letter-gaps.tsx,
+   groupChars(unit).map) — блоковий inline-formatting контекст (не flex),
+   щоб text-wrap:balance міг рівномірно розподілити елементи між рядками
+   переносу (уникнути самотньої клітинки на останньому рядку). margin-bottom
+   на контейнері скасовує нижній відступ ОСТАННЬОГО рядка (margin-bottom
+   .letter-group-item нижче), щоб міжрядковий gap-2 (8px) між одиницями
+   переносу (артикль/слово) не подвоювався. */
+.letter-group-row {
+  text-wrap: balance;
+  margin-bottom: -8px;
+}
+/* Кожен елемент рядка (клітинка-пропуск або суцільний фрагмент видимих
+   літер) — inline-block, щоб браузер переносив рядок МІЖ елементами за їх
+   реальною шириною, ніколи всередині фрагмента. margin замінює gap (flex
+   тут не можна — balance не працює для flex-елементів): 3.4px праворуч —
+   та сама горизонтальна відстань, що й раніше (letter-tile-row-gap); 8px
+   знизу — відстань між рядками переносу, та сама, що між одиницями
+   переносу (gap-2 вище). */
+.letter-group-item {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 3.4px 8px 0;
+}
+
 .drag-drop-row-text {
   flex: 1 1 auto;
   min-width: 0;
