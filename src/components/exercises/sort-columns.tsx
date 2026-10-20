@@ -6,7 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
-import { bankTileClass, stickyPoolClass } from "./tile-styles";
+import { bankTileClass } from "./tile-styles";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
@@ -18,6 +18,21 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
+import { IMAGE_MATCH_POOL_LABEL, sortColumnsPoolCountLabel } from "@/lib/exercises/default-task-labels";
+
+// 6-крапковий "грип" зліва на чипі пулу — той самий, що в drag-drop.tsx/
+// image-match.tsx (.word-pool-chip-grip), продубльований тут же: спільного
+// файлу з компонентами цих типів немає (лише спільні CSS-класи .word-pool*,
+// tile-styles.ts/globals.css).
+function ChipGripIcon() {
+  return (
+    <svg className="word-pool-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
+      {[2, 7, 12].map((cy) =>
+        [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
+      )}
+    </svg>
+  );
+}
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps/ChronologicalOrderPracticeProps.
@@ -235,6 +250,50 @@ export function SortColumnsExercise({
     );
   }
 
+  // Чип ЛИШЕ для пулу (.word-pool-chip, той самий вигляд, що в drag-drop.tsx/
+  // image-match.tsx) — картки в колонках лишаються на старому chip() без
+  // змін (п. "Do NOT touch the image variant" / цілі колонки задачі тут не
+  // стосується). Рідкий кейс: елемент лишився непоставленим і вже
+  // перевірений (часткова здача дозволена) — тоді лишаємо старий
+  // статус-вигляд (зелена/червона рамка) замість нового дизайну пулу
+  // (що станів узагалі не має), тож просто делегуємо в chip(item).
+  function poolChip(item: SortColumnsPublic["items"][number]) {
+    if (detail?.items.find((x) => x.id === item.id)) return chip(item);
+    return (
+      <div
+        key={item.id}
+        role="button"
+        tabIndex={locked ? -1 : 0}
+        {...itemDragProps(item.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          clickItem(item.id);
+        }}
+        onKeyDown={(e) => {
+          if (locked) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            clickItem(item.id);
+          }
+        }}
+        className={`word-pool-chip ${selected === item.id ? "ring-2 ring-black dark:ring-white" : ""}`}
+      >
+        <ChipGripIcon />
+        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
+        {hintsEnabled && !locked && (
+          <HintBulb
+            state={bulbState(item.id)}
+            stopPropagation
+            disabled={hintLoading.has(item.id)}
+            onClick={() => toggleHint(item.id)}
+            label={`Підказка: колонка для «${item.text}»`}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
@@ -243,14 +302,12 @@ export function SortColumnsExercise({
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.sort_columns.subInstruction}
       />
 
-      <div {...poolDropProps()} onClick={clickPool} className={stickyPoolClass("drag-drop")}>
-        {pool.length === 0 ? (
-          <span className="text-xs text-neutral-400 dark:text-neutral-500">
-            Усі елементи розкладено
-          </span>
-        ) : (
-          pool.map((item) => chip(item))
-        )}
+      <div className="word-pool" {...poolDropProps()} onClick={clickPool}>
+        <div className="word-pool-label-row">
+          <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+          <span className="word-pool-count">{sortColumnsPoolCountLabel(pool.length)}</span>
+        </div>
+        <div className="word-pool-chips">{pool.map((item) => poolChip(item))}</div>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2.5">

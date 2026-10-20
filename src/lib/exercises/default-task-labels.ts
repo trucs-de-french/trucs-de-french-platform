@@ -110,6 +110,13 @@ export function fillBlankWordPoolUsedLabel(used: number, total: number): string 
 export function dragDropIntruderLabel(count: number): string {
   return `${count} зайві`;
 }
+// sort_columns — той самий .word-pool, що fill_blank/drag_drop/image_match,
+// але пул (на відміну від них) не зникає з розмітки, коли спорожнів (часткова
+// здача дозволена — елемент може лишитись непоставленим і після перевірки),
+// тож пілюля-лічильник сама показує "все розкладено" замість "залишилось 0".
+export function sortColumnsPoolCountLabel(remaining: number): string {
+  return remaining === 0 ? "всі слова розміщено" : imageMatchRemainingLabel(remaining);
+}
 export const FILL_BLANK_FIELD_PLACEHOLDER = "впишіть слово";
 export const DRAG_DROP_SLOT_PLACEHOLDER = "перетягніть слово";
 
