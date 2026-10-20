@@ -31,7 +31,7 @@ import { TaskResult } from "./task-result";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
-import { useWorkingTileLayout, LAMP_RESERVE_PX, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
+import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 
 type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangementDetail }>;
 
@@ -134,12 +134,14 @@ export function LetterRearrangementExercise({
   );
   const imageUrls = useMemo(() => config.words.map((w) => w.imageUrl), [config.words]);
 
-  // gridRef — той самий принцип і резерв лампочки, що letter-gaps.tsx;
-  // колонки визначає ШИРИНА контейнера (TWO_COLUMN_BREAKPOINT_PX), не
-  // кількість слів. Картка НІКОЛИ не займає повний рядок — жодного span
-  // тут letter_rearrangement і не потребував (плитки самі переносяться
-  // flex-wrap'ом, sortable-tile-row.tsx).
-  const { gridRef } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
+  // gridRef — той самий принцип, що letter-gaps.tsx; колонки визначає
+  // ШИРИНА контейнера (TWO_COLUMN_BREAKPOINT_PX), не кількість слів. Картка
+  // НІКОЛИ не займає повний рядок — жодного span тут letter_rearrangement і
+  // не потребував (плитки самі переносяться flex-wrap'ом,
+  // sortable-tile-row.tsx). Без резерву лампочки: плитки йдуть НИЖЧЕ
+  // заголовка картки, лампочка (верхній правий кут) туди не сягає — резерв
+  // лишається лише на самому заголовку (pr-[52px] нижче).
+  const { gridRef } = useWorkingTileLayout();
 
   const { displayOrder, ready, setContentRef, markInteracted } = useTwoColumnWordOrder({
     wordCount: config.words.length,
@@ -345,9 +347,10 @@ export function LetterRearrangementExercise({
 
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
-    // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
-    // текст підказки/перші плитки могли ховатись під нею. pr-[52px]
-    // (ширина кнопки-лампочки 40px + 12px) на контентній колонці нижче.
+    // px-4) виступає ще на ~30px углиб першого рядка — без резерву текст
+    // підказки міг ховатись під нею. pr-[52px] (ширина кнопки-лампочки
+    // 40px + 12px) лише на заголовку нижче — рядок плиток ідe НИЖЧЕ
+    // заголовка, лампочка туди не сягає, резерв там не потрібен.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
 
     return (
@@ -382,9 +385,11 @@ export function LetterRearrangementExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
+            className="flex min-w-0 flex-1 flex-col gap-2"
           >
-            <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
+            <p
+              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
+            >
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}
               </span>

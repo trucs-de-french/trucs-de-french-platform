@@ -35,7 +35,6 @@ import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import {
   useWorkingTileLayout,
   chunkIntoRows,
-  LAMP_RESERVE_PX,
   TWO_COLUMN_GRID_CLASS,
 } from "./use-working-tile-layout";
 
@@ -193,15 +192,14 @@ export function LetterGapsExercise({
 
   // gridRef вішається на грід-обгортку карток нижче (ОДНА й та сама
   // властивість, обидві гілки — non-block і renderBlock() — монтують лише
-  // одну з них одночасно). Резерв лампочки лічиться від того, чи ЦЯ вправа
-  // ВЗАГАЛІ показує лампочку (isDelf), не від поточного opts.locked
-  // конкретної картки — інакше розрахунок "стрибнув" би одразу після
-  // "Перевірити". Розмір клітинки сам тепер ФІКСОВАНИЙ (globals.css) — хук
-  // лише вирішує, скільки клітинок влазить у рядок картки (perLineFor, для
-  // переносу всередині слова нижче) — картка завжди half-width у
-  // 2-колонковому режимі, full-width в 1-колонковому, без винятків
-  // (жодного "картці потрібен повний рядок" більше немає).
-  const { gridRef, perLineFor } = useWorkingTileLayout(isDelf ? 0 : LAMP_RESERVE_PX);
+  // одну з них одночасно). Розмір клітинки сам тепер ФІКСОВАНИЙ
+  // (globals.css) — хук лише вирішує, скільки клітинок влазить у рядок
+  // картки (perLineFor, для переносу всередині слова нижче) — картка завжди
+  // half-width у 2-колонковому режимі, full-width в 1-колонковому, без
+  // винятків. Без резерву лампочки: рядки клітинок ідуть НИЖЧЕ заголовка
+  // картки, де лампочка (абсолютна, верхній правий кут) уже не заважає —
+  // резерв лишається лише на самому заголовку (pr-[52px] нижче).
+  const { gridRef, perLineFor } = useWorkingTileLayout();
 
   // Показовий порядок карток за РЕАЛЬНО заміряною висотою — тепер завжди
   // (колонок у рендері відповідає ШИРИНА контейнера, не кількість слів —
@@ -532,9 +530,10 @@ export function LetterGapsExercise({
     const units = splitPhraseUnits(word.chars);
     const hintUsed = opts.detail?.words[wi]?.hintUsed;
     // Лампочка (28px, абсолютна right-1.5/top-1.5 відносно картки з
-    // px-4) виступає ще на ~30px углиб контентної колонки — без резерву
-    // текст підказки/пропуски могли ховатись під нею. pr-[52px]
-    // (ширина кнопки-лампочки 40px + 12px) на контентній колонці нижче.
+    // px-4) виступає ще на ~30px углиб першого рядка — без резерву текст
+    // підказки міг ховатись під нею. pr-[52px] (ширина кнопки-лампочки
+    // 40px + 12px) лише на заголовку нижче — рядок пропусків/літер ідe
+    // НИЖЧЕ заголовка, лампочка туди не сягає, резерв там не потрібен.
     const hasLamp = !opts.locked && !isDelf && !opts.hintDisabled;
     return (
       // Картка НІКОЛИ не займає повний рядок (жодного col-span) — завжди
@@ -568,9 +567,11 @@ export function LetterGapsExercise({
           )}
           <div
             ref={opts.setContentRef ? opts.setContentRef(wi) : undefined}
-            className={`flex min-w-0 flex-1 flex-col gap-2 ${hasLamp ? "pr-[52px]" : ""}`}
+            className="flex min-w-0 flex-1 flex-col gap-2"
           >
-            <p className="word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere]">
+            <p
+              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
+            >
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}
               </span>

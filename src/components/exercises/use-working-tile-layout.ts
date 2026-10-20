@@ -14,14 +14,6 @@ const COLUMN_GAP_PX = 12;
 export const FIXED_CELL_PX = 32;
 export const FIXED_CELL_GAP_PX = 3.4;
 
-// Пре-чек картка з лампочкою-підказкою резервує pr-[52px] (40px кнопка +
-// 12px, word-card-number-row) у контентній колонці — викликач передає 0,
-// коли лампочка не рендериться взагалі (isDelf), інакше це число, щоб
-// розрахунок не "стрибав" після перевірки (locked прибирає лампочку, але
-// розмір клітинки й так фіксований — резерв тут потрібен лише для
-// коректного підрахунку, скільки клітинок влазить в рядок картки).
-export const LAMP_RESERVE_PX = 52;
-
 // Поріг переходу на дві колонки — ОДИН і той самий для letter_gaps і
 // letter_rearrangement (раніше розійшлися: letter_rearrangement завжди мав
 // md:grid-cols-2 = 768px у блоковій гілці, letter_gaps — 768px лише коли
@@ -55,14 +47,19 @@ export function chunkIntoRows(n: number, perLine: number): number[] {
 
 // Вимірює ширину грід-обгортки карток (gridRef) і стежить за медіа-запитом
 // двоколонкового порогу — звідси й "внутрішня" ширина картки (за
-// відрахуванням padding картки й резерву лампочки, half — коли двоколонково,
-// інакше full), яка потрібна лише для перенесення рядків ВСЕРЕДИНІ слова
+// відрахуванням ЛИШЕ padding картки, half — коли двоколонково, інакше
+// full), яка потрібна лише для перенесення рядків ВСЕРЕДИНІ слова
 // (perLineFor, letter-gaps.tsx — letter_rearrangement її не викликає, там
-// звичайний flex-wrap плиток). Сам розмір клітинки тут більше НЕ рахується —
-// він завжди FIXED_CELL_PX (CSS, globals.css). Жодного "чи картці потрібен
-// повний рядок" тут більше немає — картка завжди half-width у 2-колонковому
-// режимі, full-width в 1-колонковому, без винятків.
-export function useWorkingTileLayout(lampReservePx: number) {
+// звичайний flex-wrap плиток). Без резерву лампочки: лампочка сидить у
+// верхньому правому куті картки, а рядки клітинок/плиток ідуть НИЖЧЕ
+// заголовка (word-card-number-row) — резерв під лампочку лишається лише на
+// самому заголовку (pr-[52px] у letter-gaps.tsx/letter-rearrangement.tsx),
+// рядки клітинок використовують повну внутрішню ширину картки. Сам розмір
+// клітинки тут більше НЕ рахується — він завжди FIXED_CELL_PX (CSS,
+// globals.css). Жодного "чи картці потрібен повний рядок" тут більше немає —
+// картка завжди half-width у 2-колонковому режимі, full-width в
+// 1-колонковому, без винятків.
+export function useWorkingTileLayout() {
   const [gridEl, setGridEl] = useState<HTMLElement | null>(null);
   const [gridWidth, setGridWidth] = useState(0);
   const gridRef = useCallback((el: HTMLElement | null) => setGridEl(el), []);
@@ -86,8 +83,8 @@ export function useWorkingTileLayout(lampReservePx: number) {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  const fullCardInner = Math.max(0, gridWidth - CARD_PADDING_PX - lampReservePx);
-  const halfCardInner = Math.max(0, (gridWidth - COLUMN_GAP_PX) / 2 - CARD_PADDING_PX - lampReservePx);
+  const fullCardInner = Math.max(0, gridWidth - CARD_PADDING_PX);
+  const halfCardInner = Math.max(0, (gridWidth - COLUMN_GAP_PX) / 2 - CARD_PADDING_PX);
   const step = FIXED_CELL_PX + FIXED_CELL_GAP_PX;
 
   const perLineFull = gridWidth > 0 ? Math.max(1, Math.floor((fullCardInner + FIXED_CELL_GAP_PX) / step)) : 1;
