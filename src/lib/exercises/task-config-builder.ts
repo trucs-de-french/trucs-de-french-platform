@@ -261,6 +261,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         ...(subInstructions ? { subInstructions } : {}),
         sequences: parseJsonField(formData.get("reorder_sequences")),
         liveFeedback: formData.get("reorder_live_feedback") === "true",
+        hintsReducePoints: formData.get("reorder_hints_reduce_points") === "true",
       };
     }
     case "drag_drop": {

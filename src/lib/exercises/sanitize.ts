@@ -532,18 +532,25 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     liveFeedback,
+    hintsReducePoints: !!config.hintsReducePoints,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
     // перемішалися б між собою.
-    sequences: getReorderSequences(config).map((s) => ({
-      id: s.id,
-      items: shuffle(s.items),
-      points: resolveReorderPoints(s),
-      imageUrl: s.imageUrl,
-      audioUrl: s.audioUrl,
-      // s.items — уже правильний порядок (ReorderSequence), копіюється
-      // без змін, НЕ той самий масив, що перемішаний items вище.
-      ...(liveFeedback ? { correctOrder: s.items } : {}),
-    })),
+    sequences: getReorderSequences(config).map((s) => {
+      // trim — пробільний рядок рахується як "нема підказки" (той самий
+      // принцип, що sanitizeMultipleChoice).
+      const hint = s.hint?.trim();
+      return {
+        id: s.id,
+        items: shuffle(s.items),
+        points: resolveReorderPoints(s),
+        imageUrl: s.imageUrl,
+        audioUrl: s.audioUrl,
+        // s.items — уже правильний порядок (ReorderSequence), копіюється
+        // без змін, НЕ той самий масив, що перемішаний items вище.
+        ...(liveFeedback ? { correctOrder: s.items } : {}),
+        ...(hint ? { hint } : {}),
+      };
+    }),
   };
 }
 

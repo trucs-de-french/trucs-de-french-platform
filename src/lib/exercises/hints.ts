@@ -13,6 +13,7 @@ export const HINT_EXPLANATIONS: Partial<Record<string, string>> = {
   word_choice: "відповідь українською",
   chronological_order: "підказка до всього завдання",
   multiple_choice: "підказка до запитання",
+  reorder: "переклад речення українською",
 };
 
 // Пояснення "підказка дає половину балів" тепер одна спільна смужка під
@@ -56,6 +57,12 @@ export function taskHintReducesPoints(type: string, config: Record<string, unkno
       // sort_columns немає окремого hintsReducePoints — hintsEnabled сам
       // відмикає й лампочку, і 50%-знижку разом (grade.ts).
       return !!config.hintsEnabled;
+    case "reorder":
+      return (
+        !!config.hintsReducePoints &&
+        Array.isArray(config.sequences) &&
+        (config.sequences as { hint?: string }[]).some((s) => !!s?.hint)
+      );
     default:
       // open_answer (й решта типів без підказки взагалі) ніколи не
       // зменшує бали за підказку — OpenAnswerPublic не має hintsReducePoints.

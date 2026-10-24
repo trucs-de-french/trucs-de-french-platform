@@ -39,6 +39,7 @@ function ReorderSequenceBlock({
   onSplitIntoWords,
   onUpdateImageUrl,
   onUpdateAudioUrl,
+  onUpdateHint,
 }: {
   seq: ReorderSequence;
   index: number;
@@ -51,6 +52,7 @@ function ReorderSequenceBlock({
   onSplitIntoWords: (words: string[]) => void;
   onUpdateImageUrl: (url: string) => void;
   onUpdateAudioUrl: (url: string) => void;
+  onUpdateHint: (hint: string) => void;
 }) {
   const [draft, setDraft] = useState("");
   const image = useFileOrLink({
@@ -115,6 +117,16 @@ function ReorderSequenceBlock({
           {audio.input && <div className="flex-1">{audio.input}</div>}
         </div>
       )}
+
+      <div className="mt-2 flex flex-col gap-1">
+        <label className={LABEL_TEXT}>Підказка (переклад речення українською)</label>
+        <input
+          value={seq.hint ?? ""}
+          onChange={(e) => onUpdateHint(e.target.value)}
+          placeholder="Наприклад: Корова — тварина, що їсть траву."
+          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+        />
+      </div>
 
       <div className="mt-2 flex flex-col gap-1">
         <textarea
@@ -193,6 +205,9 @@ export const ReorderFields = forwardRef<
     initialConfig?.sequences?.length ? initialConfig.sequences : [emptySequence()]
   );
   const [liveFeedback, setLiveFeedback] = useState(initialConfig?.liveFeedback !== false);
+  const [hintsReducePoints, setHintsReducePoints] = useState(
+    initialConfig?.hintsReducePoints ?? false
+  );
 
   useImperativeHandle(ref, () => ({
     // Слова додаються в кінець ОСТАННЬОЇ послідовності — щоб імпортувати в
@@ -215,6 +230,7 @@ export const ReorderFields = forwardRef<
       subInstructions: initialConfig?.subInstructions,
       sequences,
       liveFeedback,
+      hintsReducePoints,
     }),
   }));
 
@@ -277,9 +293,19 @@ export const ReorderFields = forwardRef<
     setSequences((prev) => prev.map((s) => (s.id === seqId ? { ...s, audioUrl: url } : s)));
   }
 
+  function updateHint(seqId: string, hint: string) {
+    setSequences((prev) => prev.map((s) => (s.id === seqId ? { ...s, hint } : s)));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
       <input type="hidden" name="reorder_sequences" value={JSON.stringify(sequences)} readOnly />
+      <input
+        type="hidden"
+        name="reorder_hints_reduce_points"
+        value={hintsReducePoints ? "true" : ""}
+        readOnly
+      />
 
       <InstructionsRichTextField
         name="reorder_instructions"
@@ -317,6 +343,15 @@ export const ReorderFields = forwardRef<
         вимикайте для контрольних робіт.
       </p>
 
+      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+        <input
+          type="checkbox"
+          checked={hintsReducePoints}
+          onChange={(e) => setHintsReducePoints(e.target.checked)}
+        />
+        Підказка зменшує бали (послідовність із показаною підказкою дає 50% балів)
+      </label>
+
       <div className="flex flex-col gap-3">
         {sequences.map((seq, si) => (
           <ReorderSequenceBlock
@@ -332,6 +367,7 @@ export const ReorderFields = forwardRef<
             onSplitIntoWords={(words) => splitIntoWordsFor(seq.id, words)}
             onUpdateImageUrl={(url) => updateImageUrl(seq.id, url)}
             onUpdateAudioUrl={(url) => updateAudioUrl(seq.id, url)}
+            onUpdateHint={(hint) => updateHint(seq.id, hint)}
           />
         ))}
         <button

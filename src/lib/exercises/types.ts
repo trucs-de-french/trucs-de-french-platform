@@ -460,6 +460,12 @@ export type ReorderSequence = {
   points?: number;
   imageUrl?: string;
   audioUrl?: string;
+  // Опційний переклад речення українською — той самий принцип, що
+  // MultipleChoiceItem.hint/WordChoiceSentence.hint: лампочка-підказка на
+  // картці, половина балів послідовності, якщо її бодай раз відкрили
+  // (hintsReducePoints нижче). Не секрет (на відміну від correctOrder) —
+  // sanitizeReorder копіює без змін у ReorderPublic.
+  hint?: string;
 };
 export type ReorderConfig = {
   instructions?: string;
@@ -473,6 +479,9 @@ export type ReorderConfig = {
   // порядок має лишатись секретом до "Перевірити" (контрольні роботи).
   liveFeedback?: boolean;
   sequences: ReorderSequence[];
+  // Той самий принцип, що MultipleChoiceConfig.hintsReducePoints —
+  // "елемент" тут ПОСЛІДОВНІСТЬ (та сама гранулярність, що points).
+  hintsReducePoints?: boolean;
 };
 
 // Кілька окремих речень із пропусками під однією спільною instructions —
@@ -977,7 +986,11 @@ export type ReorderPublic = {
     imageUrl?: string;
     audioUrl?: string;
     correctOrder?: string[];
+    hint?: string;
   }[];
+  // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
+  // рахується на сервері.
+  hintsReducePoints: boolean;
 };
 
 export type DragDropPublic = {
@@ -1153,7 +1166,9 @@ export type CrosswordAnswer = {
 export type TrueFalseAnswer = { id: string; value: boolean }[];
 export type MatchingAnswer = { left: string; right: string }[];
 export type ListeningAnswer = { questionId: string; optionId: string }[];
-export type ReorderAnswer = { sequenceId: string; order: string[] }[]; // порядок на кожну послідовність
+// hintUsed — той самий сенс, що MultipleChoiceAnswer[].hintUsed (лампочка-
+// переклад речення, перманентно: раз відкрив — рахується використаною).
+export type ReorderAnswer = { sequenceId: string; order: string[]; hintUsed?: boolean }[];
 // hintedWords — ЛОКАЛЬНІ (у межах цього речення) індекси пропусків, де
 // брали підказку-переклад — той самий принцип, що FillBlankAnswer.hintedBlanks.
 export type DragDropAnswer = { sentenceId: string; words: string[]; hintedWords?: number[] }[]; // слова на кожен пропуск, за реченням
@@ -1308,6 +1323,7 @@ export type ReorderDetail = {
     id: string;
     items: { text: string; correctIndex: number; studentIndex: number; isCorrect: boolean }[];
     points: number;
+    hintUsed: boolean;
   }[];
 };
 

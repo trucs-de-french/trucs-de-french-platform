@@ -743,14 +743,15 @@ function gradeListening(config: ListeningConfig, answer: ListeningAnswer): Grade
 
 function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult {
   const sequences = getReorderSequences(config);
-  const answerBySequence = new Map((answer ?? []).map((a) => [a.sequenceId, a.order]));
+  const answerBySequence = new Map((answer ?? []).map((a) => [a.sequenceId, a]));
 
   // Скоуп — за sequence, що реально прийшла в answer: той самий принцип,
   // що gradeTrueFalse/gradeMultipleChoice (CARD_BLOCK_MAX).
   const scopedSequences = sequences.filter((seq) => answerBySequence.has(seq.id));
 
   const sequencesDetail: ReorderDetail["sequences"] = scopedSequences.map((seq) => {
-    const studentOrder = answerBySequence.get(seq.id) ?? [];
+    const a = answerBySequence.get(seq.id);
+    const studentOrder = a?.order ?? [];
     // Порівняння за позицією, а не пошуком тексту (indexOf) — items можуть
     // містити дублікати (той самий текст двічі), і пошук за значенням
     // завжди знаходить лише перше входження, ігноруючи решту.
@@ -758,7 +759,7 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
       const studentIndex = correctIndex;
       return { text, correctIndex, studentIndex, isCorrect: studentOrder[correctIndex] === text };
     });
-    return { id: seq.id, items, points: resolveReorderPoints(seq) };
+    return { id: seq.id, items, points: resolveReorderPoints(seq), hintUsed: !!a?.hintUsed };
   });
 
   // Атомарна одиниця часткового заліку для SCORE — кожна плитка-позиція
@@ -768,9 +769,15 @@ function gradeReorder(config: ReorderConfig, answer: ReorderAnswer): GradeResult
   const allItems = sequencesDetail.flatMap((s) => s.items);
   const correctCount = allItems.filter((i) => i.isCorrect).length;
   const pointsPossible = sequencesDetail.reduce((sum, s) => sum + s.points, 0);
+  // hintsReducePoints — той самий принцип, що gradeMultipleChoice: правильна
+  // послідовність, де підказку бодай раз відкрили, дає 50% своїх балів
+  // замість повної.
   const pointsEarned = sequencesDetail
     .filter((s) => s.items.every((i) => i.isCorrect))
-    .reduce((sum, s) => sum + s.points, 0);
+    .reduce((sum, s) => {
+      const reduced = !!config.hintsReducePoints && s.hintUsed;
+      return sum + (reduced ? s.points * 0.5 : s.points);
+    }, 0);
   const totalPointsPossible = sequences.reduce((sum, s) => sum + resolveReorderPoints(s), 0);
 
   return {
