@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -274,11 +274,9 @@ export function WordChoiceExercise({
   // aggregateCorrect — лише для гілки блоків (нижче), коли ВСІ блоки
   // перевірені хоч раз: чи вправа повністю правильна загалом. undefined —
   // "ще не рахувати" (детальніше в aggregateResult нижче).
-  function pointsText(detailPresent: boolean, aggregateCorrect?: boolean): string | undefined {
-    if (hidePoints || !(pointsVisible || detailPresent)) return undefined;
-    return detailPresent
-      ? `${aggregateCorrect ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-      : `${config.points} ${pluralizePoints(config.points)}`;
+  function pointsText(detailPresent: boolean): string | undefined {
+    if (hidePoints || detailPresent || !pointsVisible) return undefined;
+    return formatPointsCount(config.points);
   }
 
   // Лише mode "select" — той самий принцип, що multiple-choice.tsx
@@ -575,10 +573,7 @@ export function WordChoiceExercise({
     );
   }
 
-  const pointsPillText = pointsText(
-    useBlocks ? !!aggregateResult : !!detail,
-    useBlocks ? aggregateResult?.correct : single.result?.correct
-  );
+  const pointsPillText = pointsText(useBlocks ? !!aggregateResult : !!detail);
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockSentences = sentenceBlocks[activeBlock];

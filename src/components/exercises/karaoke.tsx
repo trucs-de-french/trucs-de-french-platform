@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -523,15 +523,7 @@ export function KaraokeExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={
-          !hidePoints && (pointsVisible || detail)
-            ? detail
-              ? `${result?.pointsEarned ?? 0}/${result?.pointsPossible ?? pointsPossibleTotal} ${pluralizePoints(
-                  result?.pointsPossible ?? pointsPossibleTotal
-                )}`
-              : `${pointsPossibleTotal} ${pluralizePoints(pointsPossibleTotal)}`
-            : undefined
-        }
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(pointsPossibleTotal) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction}
       />

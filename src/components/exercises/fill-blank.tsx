@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
@@ -265,13 +265,7 @@ export function FillBlankExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={
-          !hidePoints && (pointsVisible || detail)
-            ? detail
-              ? `${result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-              : `${config.points} ${pluralizePoints(config.points)}`
-            : undefined
-        }
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(config.points) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
         subInstructionText={config.subInstructions ?? defaultSubInstruction}
         hintText={

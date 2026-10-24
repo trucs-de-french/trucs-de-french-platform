@@ -17,7 +17,7 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -1140,14 +1140,8 @@ export function CrosswordExercise({
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
   const pointsText =
-    !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleResult))
-      ? useBlocks
-        ? aggregateResult
-          ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
-        : singleResult
-          ? `${singleResult.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
+    !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible
+      ? formatPointsCount(config.points)
       : undefined;
 
   return (

@@ -8,7 +8,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -723,14 +723,8 @@ export function LetterGapsExercise({
   }
 
   const pointsText =
-    !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail))
-      ? useBlocks
-        ? aggregateResult
-          ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
-        : singleDetail
-          ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
+    !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
+      ? formatPointsCount(config.points)
       : undefined;
   const hintText = isDelf
     ? null

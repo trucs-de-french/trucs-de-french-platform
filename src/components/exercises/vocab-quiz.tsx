@@ -14,7 +14,6 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { TaskResult } from "./task-result";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -83,11 +82,14 @@ export function VocabQuizExercise({
           instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
           subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
         />
-        <TaskResult
-          correct={correctCount === questions.length}
-          pointsEarned={correctCount}
-          pointsPossible={questions.length}
-        />
+        <div className="flex w-full flex-col gap-2">
+          <span className="counter-pill" role="status">
+            Правильних відповідей: {correctCount} з {questions.length}
+          </span>
+          <p className="font-body text-sm text-[#55546b] dark:text-[#c9c8e6]">
+            Тренування: бали не нараховуються
+          </p>
+        </div>
         <button
           type="button"
           onClick={restart}

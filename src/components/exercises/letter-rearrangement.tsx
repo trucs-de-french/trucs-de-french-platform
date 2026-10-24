@@ -13,7 +13,7 @@ import type {
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
@@ -480,14 +480,8 @@ export function LetterRearrangementExercise({
   }
 
   const pointsText =
-    !hidePoints && (pointsVisible || (useBlocks ? aggregateResult : singleDetail))
-      ? useBlocks
-        ? aggregateResult
-          ? `${aggregateResult.pointsEarned}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
-        : singleDetail
-          ? `${single.result?.correct ? config.points : 0}/${config.points} ${pluralizePoints(config.points)}`
-          : `${config.points} ${pluralizePoints(config.points)}`
+    !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
+      ? formatPointsCount(config.points)
       : undefined;
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.

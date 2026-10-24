@@ -9,7 +9,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
@@ -246,13 +246,7 @@ export function ImageMatchExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={
-          !hidePoints && (pointsVisible || detail)
-            ? detail
-              ? `${result?.pointsEarned ?? 0}/${totalPoints} ${pluralizePoints(totalPoints)}`
-              : `${totalPoints} ${pluralizePoints(totalPoints)}`
-            : undefined
-        }
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(totalPoints) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
       />
