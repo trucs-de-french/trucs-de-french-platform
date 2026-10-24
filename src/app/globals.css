@@ -3360,6 +3360,94 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Вкладка балів рядка на верхній рамці картки (RowPointsTab,
+   task-result.tsx) — обгортка-сусід картки (.row-points-tab-wrap,
+   position: relative), сама вкладка абсолютно позиціонована над
+   верхньою рамкою картки, тож overflow-hidden картки (ITEM_CARD_WRAP)
+   її не підрізає. */
+.row-points-tab-wrap {
+  position: relative;
+}
+.row-points-tab {
+  position: absolute;
+  top: -13px;
+  left: 18px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1.5px solid;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  background: #e0e4fb;
+  border-color: #c9cdf5;
+  color: #3b36c4;
+}
+.row-points-tab--correct {
+  background: #eafaf0;
+  border-color: #4cc47e;
+  color: #1f7a3d;
+}
+.row-points-tab--partial {
+  background: #fdf3d6;
+  border-color: #d9b765;
+  color: #6b4a14;
+}
+.row-points-tab--wrong {
+  background: #fdeeee;
+  border-color: #e5484d;
+  color: #b42318;
+}
+.dark .row-points-tab {
+  background: rgba(150, 150, 255, 0.18);
+  border-color: rgba(150, 150, 255, 0.4);
+  color: #dcdbf3;
+}
+.dark .row-points-tab--correct {
+  background: rgba(120, 220, 150, 0.16);
+  border-color: rgba(130, 220, 160, 0.45);
+  color: #bff0d0;
+}
+.dark .row-points-tab--partial {
+  background: rgba(246, 220, 139, 0.16);
+  border-color: rgba(246, 220, 139, 0.45);
+  color: #f6dc8e;
+}
+.dark .row-points-tab--wrong {
+  background: rgba(255, 120, 120, 0.16);
+  border-color: rgba(255, 140, 140, 0.45);
+  color: #ffb4ae;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .row-points-tab {
+    background: rgba(150, 150, 255, 0.18);
+    border-color: rgba(150, 150, 255, 0.4);
+    color: #dcdbf3;
+  }
+  :root:not(.light) .row-points-tab--correct {
+    background: rgba(120, 220, 150, 0.16);
+    border-color: rgba(130, 220, 160, 0.45);
+    color: #bff0d0;
+  }
+  :root:not(.light) .row-points-tab--partial {
+    background: rgba(246, 220, 139, 0.16);
+    border-color: rgba(246, 220, 139, 0.45);
+    color: #f6dc8e;
+  }
+  :root:not(.light) .row-points-tab--wrong {
+    background: rgba(255, 120, 120, 0.16);
+    border-color: rgba(255, 140, 140, 0.45);
+    color: #ffb4ae;
+  }
+}
+
 .task-result-card {
   width: 100%;
   align-self: stretch;
@@ -4704,13 +4792,11 @@ button.scene-bar:active .scene-bar-toggle {
      всередині вже розтягнутої комірки. */
   align-items: stretch;
   gap: 8px;
-  padding: 8px 8px;
-}
-/* Колонка пілюлі балів з'являється лише коли вона реально показана
-   (після перевірки) — інакше порожня зарезервована колонка стискала б
-   обидві комірки-чипи. */
-.table-fill-row--scored {
-  grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr) auto;
+  /* +6px зверху (14 замість 8) — місце під вкладку балів (RowPointsTab,
+     .row-points-tab-wrap), що виступає над верхньою рамкою картки;
+     колонка пілюлі (4-та grid-колонка) прибрана разом із цим —
+     RowPointsTab більше не живе всередині рядка. */
+  padding: 14px 8px 8px;
 }
 /* Позиція-виняток: бейдж — комірка grid-рядка (не inline-рядок), тож
    лише self-alignment тут — форма/колір/шрифт з .item-number-badge. */
@@ -4731,10 +4817,6 @@ button.scene-bar:active .scene-bar-toggle {
    тексту замість рівної ширини обох комірок. */
 .table-fill-row-cell > * {
   width: 100%;
-}
-.table-fill-row-score {
-  align-self: center;
-  flex-shrink: 0;
 }
 /* Відступ зліва = padding картки (8px) + ширина номера (20px) + gap
    (8px) рядка нижче, щоб підписи колонок стояли РІВНО над чипами, не
@@ -4917,7 +4999,9 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: flex-start;
   gap: 12px;
   border-radius: 16px;
-  padding: 8px 14px;
+  /* +6px зверху (14 замість 8) — місце під вкладку балів (RowPointsTab),
+     що виступає над верхньою рамкою картки (.row-points-tab-wrap). */
+  padding: 14px 14px 8px;
   box-sizing: border-box;
 }
 /* Єдиний бейдж-номер елемента (питання/речення/рядка/слова) — ОДНЕ
@@ -6118,7 +6202,11 @@ button.scene-bar:active .scene-bar-toggle {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  /* +6px зверху (16 замість 10) — місце під вкладку балів (RowPointsTab)
+     у режимі "line" (chronological-order.tsx), що виступає над верхньою
+     рамкою картки; у списку правильних відповідей (без вкладки) трохи
+     зайвого простору зверху не шкодить. */
+  padding: 16px 14px 10px;
 }
 /* Текст фрази — font-size/line-height НЕ тут: аудит (git log -p) показав,
    що ДО рестайлу рядок узагалі не мав власного text-size класу (лише

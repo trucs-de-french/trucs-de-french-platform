@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { formatPoints } from "@/lib/exercises/format-points";
+import { formatPoints, formatPointsCount } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
 import {
   STATUS_LABEL_NONE,
@@ -396,6 +396,74 @@ export function RowScorePill({
   return (
     <span className={`task-result-row-pill ${full ? "task-result-row-pill--correct" : "task-result-row-pill--wrong"}`}>
       {earned}/{possible}
+    </span>
+  );
+}
+
+// Уніфікована "вкладка балів" на верхній рамці картки-рядка (мокап
+// "лавандова вкладка") — замінює SCORE_LABEL_CLASS (плоский сірий текст)
+// і RowScorePill (пілюля, схована для рядків ≤1 бал) УСЮДИ, де рядок
+// рендериться як окрема картка. На відміну від RowScorePill, завжди
+// видима (включно з рядками на 1 бал і до перевірки) — узгоджене рішення
+// цього завдання, замінює правило 1bba320. earned === undefined — рядок
+// ще не перевірено (лавандовий нейтральний стан, показує лише possible,
+// рахункова форма "1 бал"/"2 бали"). earned задано — показує "earned з
+// possible" (без слова "бал", напр. "1,5 з 3") і статусний колір: earned=0
+// → wrong (червоний), earned>=possible → correct (зелений, включно з
+// половинним заліком за використану підказку — earned уже прийшов
+// зменшеним від викликача), інакше → partial (золотий, частковий залік).
+// Рендериться як АБСОЛЮТНО позиційований сусід картки (не нащадок) —
+// картки з overflow-hidden (ITEM_CARD_WRAP) інакше підрізали б вкладку,
+// що виступає над верхньою рамкою; викликач оточує і вкладку, і картку
+// спільною обгорткою .row-points-tab-wrap (position: relative).
+export type RowPointsTabStatus = "correct" | "partial" | "wrong";
+
+function toRowPointsNum(v: string | number): number {
+  return typeof v === "number" ? v : parseFloat(v.replace(",", "."));
+}
+
+export function rowPointsTabStatus(earned: string | number, possible: string | number): RowPointsTabStatus {
+  const e = toRowPointsNum(earned);
+  const p = toRowPointsNum(possible);
+  if (e <= 0) return "wrong";
+  if (e >= p) return "correct";
+  return "partial";
+}
+
+function RowPointsTabIcon({ status }: { status: RowPointsTabStatus }) {
+  if (status === "correct") {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 6L9 17l-5-5" />
+      </svg>
+    );
+  }
+  if (status === "wrong") {
+    return (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M18 6L6 18M6 6l12 12" />
+      </svg>
+    );
+  }
+  return null;
+}
+
+export function RowPointsTab({
+  earned,
+  possible,
+}: {
+  earned?: string | number;
+  possible: string | number;
+}) {
+  if (earned === undefined) {
+    const n = toRowPointsNum(possible);
+    return <span className="row-points-tab">{formatPointsCount(n)}</span>;
+  }
+  const status = rowPointsTabStatus(earned, possible);
+  return (
+    <span className={`row-points-tab row-points-tab--${status}`}>
+      <RowPointsTabIcon status={status} />
+      {earned} з {possible}
     </span>
   );
 }

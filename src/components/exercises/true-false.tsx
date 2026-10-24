@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { EXERCISE_STACK } from "@/lib/spacing";
+import { TaskResult, RowPointsTab } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -121,15 +120,11 @@ export function TrueFalseExercise({
 
   // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі.
   function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
-    const showPill = !!d && shouldShowRowScorePill(d.points);
-    const rowAriaLabel = d && !showPill ? rowResultAriaLabel(d.isCorrect) : undefined;
+    const showTab = !hidePoints && (pointsVisible || !!d);
     return (
-      <div
-        key={s.id}
-        className="glass-item-card flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:py-3"
-        role={rowAriaLabel ? "group" : undefined}
-        aria-label={rowAriaLabel}
-      >
+      <div key={s.id} className="row-points-tab-wrap">
+        {showTab && <RowPointsTab earned={d ? (d.isCorrect ? d.points : 0) : undefined} possible={s.points} />}
+        <div className="glass-item-card flex flex-col gap-2.5 px-4 pt-4 pb-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:pt-[18px] md:pb-3">
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
             <span className="item-number-badge" aria-label={`Твердження ${globalIndex + 1}`}>
@@ -138,19 +133,6 @@ export function TrueFalseExercise({
           )}
           <span className="min-w-0 break-words [overflow-wrap:anywhere]" style={{ color: "var(--glass-text)" }}>
             {frenchNbsp(s.text)}
-            {/* До перевірки — лише якщо pointsVisible; після — завжди,
-                ваше підтверджене рішення. */}
-            {!hidePoints && (pointsVisible || showPill) && (
-              <span className="ml-2 inline-flex align-middle">
-                {showPill ? (
-                  <RowScorePill earned={d!.isCorrect ? d!.points : 0} possible={d!.points} full={d!.isCorrect} />
-                ) : (
-                  <span className="font-heading text-sm font-semibold" style={{ color: "var(--glass-text-meta)" }}>
-                    {`${s.points} ${pluralizePoints(s.points)}`}
-                  </span>
-                )}
-              </span>
-            )}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2 md:flex md:w-auto md:shrink-0">
@@ -175,6 +157,7 @@ export function TrueFalseExercise({
               {val ? "Vrai" : "Faux"}
             </button>
           ))}
+        </div>
         </div>
       </div>
     );
@@ -248,7 +231,7 @@ export function TrueFalseExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+        <div className="flex flex-col gap-[22px] pt-3">
           {blockStatements.map((s, i) =>
             renderStatement(s, startIndex + i, blockDetail?.statements.find((x) => x.id === s.id), !!blockResult)
           )}
@@ -280,7 +263,7 @@ export function TrueFalseExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+        <div className="flex flex-col gap-[22px] pt-3">
           {practiceStatements.map((s) => {
             const idx = originalIndexOf.get(s.id)!;
             const isCorrect = practiceResults[s.id];
@@ -371,7 +354,7 @@ export function TrueFalseExercise({
 
       {!useBlocks ? (
         <>
-          <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+          <div className="flex flex-col gap-[22px] pt-3">
             {config.statements.map((s, index) =>
               renderStatement(s, index, detail?.statements.find((x) => x.id === s.id), !!single.result)
             )}

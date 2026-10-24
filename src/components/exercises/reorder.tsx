@@ -11,12 +11,11 @@ import { SortableTileRow } from "./sortable-tile-row";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { RESULT_MESSAGE_CLASS } from "./score-style";
+import { TaskResult, RowPointsTab } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
@@ -108,8 +107,7 @@ function ReorderSequenceTiles({
   // послідовності зараховуються, лише якщо ВСЯ вона правильна (не по
   // окремій плитці, як score) — 0/points, а не часткове.
   const sequenceCorrect = detail?.items.every((i) => i.isCorrect) ?? false;
-  const showPill = !!detail && shouldShowRowScorePill(points);
-  const rowAriaLabel = detail && !showPill ? rowResultAriaLabel(sequenceCorrect) : undefined;
+  const showTab = !hidePoints && (pointsVisible || !!detail);
 
   const hasHintBulb = !!hint && !!onToggleHint;
 
@@ -120,85 +118,78 @@ function ReorderSequenceTiles({
   // зовнішньому флексі), середня колонка (бали/плитки/підказка/правильний
   // порядок) займає решту ширини (flex-1 min-w-0), лампочка не забирає
   // місце в розкладці взагалі, коли підказки немає (умовний рендер, не
-  // прихований елемент).
+  // прихований елемент). Вкладка балів (RowPointsTab) — сусід картки в
+  // .row-points-tab-wrap, не нащадок (деталі — task-result.tsx).
   return (
-    <div
-      className="glass-item-card flex items-center gap-3.5 px-3.5 py-2.5 max-md:items-start max-md:gap-2.5 max-md:p-3"
-      role={rowAriaLabel ? "group" : undefined}
-      aria-label={rowAriaLabel}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="item-number-badge shrink-0" aria-label={`Речення ${number}`}>
-            {number}
-          </span>
-          {(imageUrl || audioUrl) && (
-            <div className="flex shrink-0 items-center gap-2">
-              {imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => onOpenImage(imageUrl)}
-                  aria-label="Показати картинку повністю"
-                  className="shrink-0 cursor-zoom-in"
-                >
-                  <ImageOrPlaceholder
-                    src={imageUrl}
-                    alt=""
-                    className="h-14 w-14 rounded-xl border-[1.5px] border-[#d9b765] object-cover dark:border-[rgba(243,217,139,0.4)] md:h-11 md:w-11"
-                    useFocus
-                  />
-                </button>
-              )}
-              {audioUrl && <CompactAudioButton src={audioUrl} />}
-            </div>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2 max-md:w-full">
-          {!hidePoints && (pointsVisible || showPill) && (
-            <p>
-              {showPill ? (
-                <RowScorePill earned={sequenceCorrect ? points : 0} possible={points} full={sequenceCorrect} />
-              ) : (
-                <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>
-              )}
-            </p>
-          )}
-          <div className="min-h-11">
-            <SortableTileRow
-              items={order}
-              onChange={onChange}
-              locked={locked}
-              tileState={tileState}
-              extraContainerClassName="max-md:gap-x-2 max-md:gap-y-1.5"
-              extraTileClassName="max-md:min-h-11 touch-manipulation"
-            />
-          </div>
-
-          {hasHintBulb && hintVisible && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
-              {hint}
-            </div>
-          )}
-
-          {detail && (
-            <p className="break-words text-sm text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
-              Правильний порядок:{" "}
-              {[...detail.items]
-                .sort((a, b) => a.correctIndex - b.correctIndex)
-                .map((i) => i.text)
-                .join(" → ")}
-            </p>
-          )}
-        </div>
-      </div>
-      {hasHintBulb && (
-        <HintBulb
-          state={hintShown ? "used" : "available"}
-          onClick={onToggleHint}
-          label={hintVisible ? "Згорнути підказку" : "Показати підказку"}
-          className="shrink-0 max-md:min-h-11 max-md:min-w-11"
-        />
+    <div className="row-points-tab-wrap">
+      {showTab && (
+        <RowPointsTab earned={detail ? (sequenceCorrect ? points : 0) : undefined} possible={points} />
       )}
+      <div className="glass-item-card flex items-center gap-3.5 px-3.5 pt-4 pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 max-md:pt-[18px] max-md:pb-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="item-number-badge shrink-0" aria-label={`Речення ${number}`}>
+              {number}
+            </span>
+            {(imageUrl || audioUrl) && (
+              <div className="flex shrink-0 items-center gap-2">
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenImage(imageUrl)}
+                    aria-label="Показати картинку повністю"
+                    className="shrink-0 cursor-zoom-in"
+                  >
+                    <ImageOrPlaceholder
+                      src={imageUrl}
+                      alt=""
+                      className="h-14 w-14 rounded-xl border-[1.5px] border-[#d9b765] object-cover dark:border-[rgba(243,217,139,0.4)] md:h-11 md:w-11"
+                      useFocus
+                    />
+                  </button>
+                )}
+                {audioUrl && <CompactAudioButton src={audioUrl} />}
+              </div>
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2 max-md:w-full">
+            <div className="min-h-11">
+              <SortableTileRow
+                items={order}
+                onChange={onChange}
+                locked={locked}
+                tileState={tileState}
+                extraContainerClassName="max-md:gap-x-2 max-md:gap-y-1.5"
+                extraTileClassName="max-md:min-h-11 touch-manipulation"
+              />
+            </div>
+
+            {hasHintBulb && hintVisible && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-sm break-words text-neutral-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-neutral-200">
+                {hint}
+              </div>
+            )}
+
+            {detail && (
+              <p className="break-words text-sm text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
+                Правильний порядок:{" "}
+                {[...detail.items]
+                  .sort((a, b) => a.correctIndex - b.correctIndex)
+                  .map((i) => i.text)
+                  .join(" → ")}
+              </p>
+            )}
+          </div>
+        </div>
+        {hasHintBulb && (
+          <HintBulb
+            state={hintShown ? "used" : "available"}
+            onClick={onToggleHint}
+            label={hintVisible ? "Згорнути підказку" : "Показати підказку"}
+            className="shrink-0 max-md:min-h-11 max-md:min-w-11"
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -404,7 +395,7 @@ export function ReorderExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-[22px] pt-3">
           {blockSequences.map((seq) =>
             renderSequence(seq, blockDetail?.sequences.find((d) => d.id === seq.id), !!blockResult)
           )}
@@ -555,7 +546,7 @@ export function ReorderExercise({
             </p>
           )}
 
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-[22px] pt-3">
             {config.sequences.map((seq) =>
               renderSequence(seq, detail?.sequences.find((d) => d.id === seq.id), singleLocked)
             )}

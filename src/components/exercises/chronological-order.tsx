@@ -31,7 +31,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowScorePill, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -501,7 +501,7 @@ export function ChronologicalOrderExercise({
         // вмістом (py-2 px-2.5, без фіксованої min-height), тож довге
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-[22px] pt-3">
           {/* initialItems, НЕ orderedItems — п.1 задачі: після перевірки
               картки лишаються у тому самому порядку/позиціях, що студент
               бачив під час роботи (той самий порядок і при "Corrigez vos
@@ -511,21 +511,22 @@ export function ChronologicalOrderExercise({
               нижче (TaskResult children). */}
           {initialItems.map((item) => {
             const label = initialLabelById.get(item.id) ?? "";
+            const d = itemDetail(item.id);
+            const showTab = !hidePoints && (pointsVisible || !!d);
             return (
-              <div
-                key={item.id}
-                className={`chrono-phrase-row glass-item-card transition-colors ${rowStateClass(item.id)}`}
-              >
-                <span className="item-number-badge" aria-label={`Картка ${label}`}>
-                  {label}
-                </span>
-                <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
-                  {renderPhraseText(item.content)}
-                </span>
-                {numberInput(item.id, "line", label, item.points)}
-                {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) && (
-                  <span className="flex-none">{pointsLabel(item.id, item.points)}</span>
+              <div key={item.id} className="row-points-tab-wrap">
+                {showTab && (
+                  <RowPointsTab earned={d ? (d.isCorrect ? item.points : 0) : undefined} possible={item.points} />
                 )}
+                <div className={`chrono-phrase-row glass-item-card transition-colors ${rowStateClass(item.id)}`}>
+                  <span className="item-number-badge" aria-label={`Картка ${label}`}>
+                    {label}
+                  </span>
+                  <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
+                    {renderPhraseText(item.content)}
+                  </span>
+                  {numberInput(item.id, "line", label, item.points)}
+                </div>
               </div>
             );
           })}

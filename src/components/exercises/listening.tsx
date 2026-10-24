@@ -11,7 +11,6 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ImageLightbox } from "./image-lightbox";
@@ -21,8 +20,7 @@ import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowPointsTab } from "./task-result";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що TableFillPracticeProps: елемент тут question.id (стабільний,
@@ -234,15 +232,14 @@ export function ListeningExercise({
         <AudioPlayer src={config.audioUrl} />
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-[22px] pt-3">
         {config.questions.map((q, index) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           const questionId = `listening-q-${q.id}`;
           const qCorrect = qDetail?.options.every((o) => o.correct === o.selected) ?? false;
-          const showPill = !!qDetail && shouldShowRowScorePill(q.points);
-          const resultAriaLabel = qDetail && !showPill ? rowResultAriaLabel(qCorrect) : undefined;
+          const showTab = !hidePoints && (pointsVisible || !!qDetail);
           const header = (
-            <div className="flex items-start gap-2.5 p-3">
+            <div className="flex items-start gap-2.5 pt-[18px] px-3 pb-3">
               {config.questions.length > 1 && (
                 <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
                   {index + 1}
@@ -250,44 +247,37 @@ export function ListeningExercise({
               )}
               <p id={questionId} className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
                 {frenchNbsp(q.question)}
-                {/* До перевірки — лише якщо pointsVisible; після — завжди. */}
-                {!hidePoints && (pointsVisible || showPill) && (
-                  <span className="ml-2 inline-flex align-middle">
-                    {showPill ? (
-                      <RowScorePill earned={qCorrect ? q.points : 0} possible={q.points} full={qCorrect} />
-                    ) : (
-                      <span className={SCORE_LABEL_CLASS}>{`${q.points} ${pluralizePoints(q.points)}`}</span>
-                    )}
-                  </span>
-                )}
               </p>
             </div>
           );
           return (
-            <ChoiceQuestionCard
-              key={q.id}
-              header={header}
-              role="radiogroup"
-              ariaLabelledBy={questionId}
-              resultAriaLabel={resultAriaLabel}
-              options={q.options.map((o) => {
-                const od = qDetail?.options.find((x) => x.id === o.id);
-                const chosen = qDetail ? !!od?.selected || !!od?.correct : answers[q.id] === o.id;
-                return {
-                  id: o.id,
-                  role: "radio" as const,
-                  selected: !!od?.selected || answers[q.id] === o.id,
-                  disabled: !!result,
-                  onClick: () => setAnswers((prev) => ({ ...prev, [q.id]: o.id })),
-                  tileClassName: tileClass(q.id, o.id, qDetail),
-                  indicatorClassName: indicatorClass(q.id, o.id, qDetail),
-                  indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
-                  imageUrl: o.imageUrl,
-                  onZoomImage: o.imageUrl ? () => setLightboxSrc(o.imageUrl!) : undefined,
-                  label: o.text,
-                };
-              })}
-            />
+            <div key={q.id} className="row-points-tab-wrap">
+              {showTab && (
+                <RowPointsTab earned={qDetail ? (qCorrect ? q.points : 0) : undefined} possible={q.points} />
+              )}
+              <ChoiceQuestionCard
+                header={header}
+                role="radiogroup"
+                ariaLabelledBy={questionId}
+                options={q.options.map((o) => {
+                  const od = qDetail?.options.find((x) => x.id === o.id);
+                  const chosen = qDetail ? !!od?.selected || !!od?.correct : answers[q.id] === o.id;
+                  return {
+                    id: o.id,
+                    role: "radio" as const,
+                    selected: !!od?.selected || answers[q.id] === o.id,
+                    disabled: !!result,
+                    onClick: () => setAnswers((prev) => ({ ...prev, [q.id]: o.id })),
+                    tileClassName: tileClass(q.id, o.id, qDetail),
+                    indicatorClassName: indicatorClass(q.id, o.id, qDetail),
+                    indicatorContent: chosen ? <Check size={12} className="text-white" aria-hidden /> : null,
+                    imageUrl: o.imageUrl,
+                    onZoomImage: o.imageUrl ? () => setLightboxSrc(o.imageUrl!) : undefined,
+                    label: o.text,
+                  };
+                })}
+              />
+            </div>
           );
         })}
       </div>

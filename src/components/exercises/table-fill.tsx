@@ -5,15 +5,13 @@ import { useRouter } from "next/navigation";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, TaskResultAnswerRows, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, TaskResultAnswerRows, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -73,22 +71,23 @@ function TableFillColumn({
         <span className="table-fill-col-header-cell">{columnLabels[0]}</span>
         <span className="table-fill-col-header-cell">{columnLabels[1]}</span>
       </div>
-      {rows.map((row, i) => {
-        const scorePill = rowPointsLabel(row);
-        return (
-          <div
-            key={row.id}
-            className={`table-fill-row glass-item-card ${scorePill ? "table-fill-row--scored" : ""}`}
-          >
-            <span className="item-number-badge table-fill-row-num" aria-label={`Рядок ${numberOffset + i + 1}`}>
-              {numberOffset + i + 1}
-            </span>
-            <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>
-            <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right, row.points)}</div>
-            {scorePill && <div className="table-fill-row-score">{scorePill}</div>}
-          </div>
-        );
-      })}
+      <div className="flex flex-col gap-[22px] pt-3">
+        {rows.map((row, i) => {
+          const tab = rowPointsLabel(row);
+          return (
+            <div key={row.id} className="row-points-tab-wrap">
+              {tab}
+              <div className="table-fill-row glass-item-card">
+                <span className="item-number-badge table-fill-row-num" aria-label={`Рядок ${numberOffset + i + 1}`}>
+                  {numberOffset + i + 1}
+                </span>
+                <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>
+                <div className="table-fill-row-cell">{renderCell(row.id, "right", row.right, row.points)}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -358,11 +357,10 @@ export function TableFillExercise({
     if (!pointsVisible && !rowBlanks?.length) return null;
 
     if (rowBlanks?.length) {
-      if (!shouldShowRowScorePill(row.points)) return null;
       const isCorrect = rowBlanks.every((b) => b.isCorrect);
-      return <RowScorePill earned={isCorrect ? row.points : 0} possible={row.points} full={isCorrect} />;
+      return <RowPointsTab earned={isCorrect ? row.points : 0} possible={row.points} />;
     }
-    return <span className={SCORE_LABEL_CLASS}>{`${row.points} ${pluralizePoints(row.points)}`}</span>;
+    return <RowPointsTab possible={row.points} />;
   }
 
   // Рядки для toggle-картки "Правильні відповіді" (TaskResultAnswerRows) —

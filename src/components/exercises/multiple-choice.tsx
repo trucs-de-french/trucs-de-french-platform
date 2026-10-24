@@ -6,7 +6,6 @@ import { Check, ChevronDown, X } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
@@ -19,8 +18,7 @@ import {
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowPointsTab } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -352,33 +350,16 @@ export function MultipleChoiceExercise({
 
   // До перевірки — лише якщо pointsVisible; після — завжди. Речення
   // зараховується цілком (atomic unit = item), тому 0/points — не часткове.
-  function pointsBadge(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
+  // Вкладка (RowPointsTab) рендериться як сусід картки (у .row-points-tab-
+  // -wrap на викликачі), не тут — pointsTab лише вирішує, чи й яку.
+  function pointsTab(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
     if (hidePoints) return null;
     if (!pointsVisible && !itemDetail) return null;
     if (itemDetail) {
-      if (!shouldShowRowScorePill(item.points)) return null;
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
-      return (
-        <span className="ml-2 inline-flex align-middle">
-          <RowScorePill earned={isCorrect ? item.points : 0} possible={item.points} full={isCorrect} />
-        </span>
-      );
+      return <RowPointsTab earned={isCorrect ? item.points : 0} possible={item.points} />;
     }
-    return (
-      <span className={`ml-2 ${SCORE_LABEL_CLASS}`}>
-        {item.points} {pluralizePoints(item.points)}
-      </span>
-    );
-  }
-
-  // Коли пілюля схована (рядок ≤1 бал), картка питання отримує aria-label
-  // "Правильно"/"Неправильно" (той самий принцип, що matching-board.tsx) —
-  // спільне для всіх трьох режимів рендеру (без картинок/картинки/dropdown
-  // через pointsBadge вище, тут лише обчислення самого лейбла).
-  function resultAriaLabel(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
-    if (!itemDetail || shouldShowRowScorePill(item.points)) return undefined;
-    const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
-    return rowResultAriaLabel(isCorrect);
+    return <RowPointsTab possible={item.points} />;
   }
 
   // Шапка картки (бейдж номера + текст питання + підпис кількості
@@ -398,7 +379,7 @@ export function MultipleChoiceExercise({
   ) {
     const hasHintBulb = showHintBulb && !!item.hint;
     return (
-      <div className={`flex items-start gap-2.5 p-3 ${extraClassName}`}>
+      <div className={`flex items-start gap-2.5 pt-[18px] px-3 pb-3 ${extraClassName}`}>
         {config.items.length > 1 && (
           <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
             {index + 1}
@@ -408,7 +389,6 @@ export function MultipleChoiceExercise({
           <div className="flex items-start gap-1.5">
             <p id={questionId} className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
               {frenchNbsp(item.sentence)}
-              {pointsBadge(item, itemDetail)}
             </p>
             {hasHintBulb && (
               <HintBulb
@@ -449,12 +429,12 @@ export function MultipleChoiceExercise({
     // замість дублювання тексту в кожній плитці aria-label.
     if (!hasImages) {
       return (
-        <ChoiceQuestionCard
-          key={item.id}
+        <div key={item.id} className="row-points-tab-wrap">
+          {pointsTab(item, itemDetail)}
+          <ChoiceQuestionCard
           header={renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
           role={item.multiple ? "group" : "radiogroup"}
           ariaLabelledBy={questionId}
-          resultAriaLabel={resultAriaLabel(item, itemDetail)}
           options={item.options.map((o, idx) => {
             const opt = itemDetail?.options.find((x) => x.id === o.id);
             const chosen = itemDetail ? !!opt?.selected : sel.includes(o.id);
@@ -470,7 +450,8 @@ export function MultipleChoiceExercise({
               label: optionDisplayText(o.text, idx),
             };
           })}
-        />
+          />
+        </div>
       );
     }
 
@@ -504,15 +485,11 @@ export function MultipleChoiceExercise({
           ? "md:grid-cols-[repeat(4,minmax(0,1fr))]"
           : "md:grid-cols-[repeat(3,minmax(0,1fr))]";
 
-    const imgResultAriaLabel = resultAriaLabel(item, itemDetail);
     return (
-      <div
-        key={item.id}
-        className={CARD_WRAP}
-        role={imgResultAriaLabel ? "group" : undefined}
-        aria-label={imgResultAriaLabel}
-      >
-        {renderQuestionHeader(item, index, itemDetail, questionId, "md:p-4", showHintBulb)}
+      <div key={item.id} className="row-points-tab-wrap">
+        {pointsTab(item, itemDetail)}
+        <div className={CARD_WRAP}>
+        {renderQuestionHeader(item, index, itemDetail, questionId, "md:pt-[22px] md:px-4 md:pb-4", showHintBulb)}
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
@@ -589,6 +566,7 @@ export function MultipleChoiceExercise({
             })}
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -643,10 +621,11 @@ export function MultipleChoiceExercise({
       isCorrect === true ? "chrono-phrase-row--correct" : isCorrect === false ? "chrono-phrase-row--incorrect" : "";
 
     return (
-      <div
-        key={item.id}
-        className={`glass-item-card flex flex-col gap-2 px-3 py-2.5 transition-colors md:flex-row md:items-center md:gap-3 ${resultStateClass}`}
-      >
+      <div key={item.id} className="row-points-tab-wrap">
+        {pointsTab(item, itemDetail)}
+        <div
+          className={`glass-item-card flex flex-col gap-2 px-3 pt-4 pb-2.5 transition-colors md:flex-row md:items-center md:gap-3 md:pt-[18px] ${resultStateClass}`}
+        >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.items.length > 1 && (
             <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
@@ -657,7 +636,6 @@ export function MultipleChoiceExercise({
             <div className="flex items-start gap-1.5">
               <p className="min-w-0 flex-1 break-words leading-snug [overflow-wrap:anywhere]">
                 {questionText}
-                {pointsBadge(item, itemDetail)}
               </p>
               {hasHintBulb && (
                 <HintBulb
@@ -713,6 +691,7 @@ export function MultipleChoiceExercise({
             ))}
           </select>
         </div>
+        </div>
       </div>
     );
   }
@@ -723,13 +702,13 @@ export function MultipleChoiceExercise({
   // нумерація .item-number-badge, не локальна в межах блоку).
   function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
     return config.display === "dropdown" ? (
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-[22px] pt-3">
         {items.map((item, i) =>
           renderDropdownRow(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id))
         )}
       </div>
     ) : (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-[22px] pt-3">
         {items.map((item, i) => renderItem(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id)))}
       </div>
     );

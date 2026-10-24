@@ -8,14 +8,12 @@ import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
-import { SCORE_LABEL_CLASS } from "./score-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { TaskResult, RowScorePill, TaskResultGapRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   IMAGE_MATCH_POOL_LABEL,
@@ -402,7 +400,7 @@ export function DragDropExercise({
         );
       })()}
 
-      <div className="flex flex-col gap-[10px]">
+      <div className="flex flex-col gap-[22px] pt-3">
         {config.sentences.map((s, si) => {
           const segments = sentenceSegments[si];
           const blankCount = blankCounts[si];
@@ -413,33 +411,20 @@ export function DragDropExercise({
           // (не по окремому пропуску, як score) — 0/points, а не часткове.
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
-          // Коли рядок зважує ≤1 бал, пілюля (RowScorePill) ховається
-          // (shouldShowRowScorePill) — <p> тоді не рендериться взагалі
-          // (не лишається порожньою), а колір слота (вже є) доповнюється
-          // aria-label на картці рядка, той самий принцип, що
-          // matching-board.tsx.
-          const showPill = sentDetail && shouldShowRowScorePill(s.points);
-          const rowAriaLabel = sentDetail && !showPill ? rowResultAriaLabel(sentenceCorrect) : undefined;
+          const showTab = !hidePoints && (pointsVisible || !!sentDetail);
           return (
-            <div
-              key={s.id}
-              className="drag-drop-row glass-item-card"
-              role={rowAriaLabel ? "group" : undefined}
-              aria-label={rowAriaLabel}
-            >
+            <div key={s.id} className="row-points-tab-wrap">
+              {showTab && (
+                <RowPointsTab
+                  earned={sentDetail ? (sentenceCorrect ? s.points : 0) : undefined}
+                  possible={s.points}
+                />
+              )}
+              <div className="drag-drop-row glass-item-card">
               <span className="item-number-badge drag-drop-row-number" aria-label={`Речення ${si + 1}`}>
                 {si + 1}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                {!hidePoints && (pointsVisible || showPill) && (
-                  <p>
-                    {showPill ? (
-                      <RowScorePill earned={sentenceCorrect ? s.points : 0} possible={s.points} full={sentenceCorrect} />
-                    ) : (
-                      <span className={SCORE_LABEL_CLASS}>{`${s.points} ${pluralizePoints(s.points)}`}</span>
-                    )}
-                  </p>
-                )}
                 <p className="drag-drop-row-text break-words [overflow-wrap:anywhere]">
                   {segments.map((seg, i) => {
                     const gi = offset + i;
@@ -511,6 +496,7 @@ export function DragDropExercise({
                     );
                   })}
                 </p>
+              </div>
               </div>
             </div>
           );
