@@ -391,7 +391,7 @@ export function TaskConfigFields({
   // SaveForm сабмітить через onSubmit (не <form action>), тож React 19 тут
   // ніколи не викликає нативний form.reset() — жодного reset-listener на
   // цьому чи будь-якому іншому полі форми не потрібно.
-  const [pointsVisible, setPointsVisible] = useState(initialPointsVisible ?? false);
+  const [pointsVisible, setPointsVisible] = useState(initialPointsVisible ?? isNewTask);
   const [prevInitialPointsVisible, setPrevInitialPointsVisible] = useState(initialPointsVisible);
   if (initialPointsVisible !== prevInitialPointsVisible) {
     setPrevInitialPointsVisible(initialPointsVisible);
@@ -1000,7 +1000,10 @@ export function TaskConfigFields({
       )}
 
       {type === "open_answer" && (
-        <OpenAnswerFields initialConfig={configForType("open_answer") as Partial<OpenAnswerConfig>} />
+        <OpenAnswerFields
+          initialConfig={configForType("open_answer") as Partial<OpenAnswerConfig>}
+          isNewTask={isNewTask}
+        />
       )}
 
       {type === "embed" && (
@@ -1263,6 +1266,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("letter_gaps") as Partial<LetterGapsConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1274,6 +1278,7 @@ export function TaskConfigFields({
             >
           }
           initialConfig={configForType("letter_rearrangement") as Partial<LetterRearrangementConfig>}
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1283,6 +1288,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("multiple_choice") as Partial<MultipleChoiceConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1292,6 +1298,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("word_choice") as Partial<WordChoiceConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1303,6 +1310,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("word_search") as Partial<WordSearchConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1314,6 +1322,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("crossword") as Partial<CrosswordConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1383,6 +1392,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("reorder") as Partial<ReorderConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1392,6 +1402,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("drag_drop") as Partial<DragDropConfig>
           }
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1434,6 +1445,7 @@ export function TaskConfigFields({
             configForType("table_fill") as Partial<TableFillConfig>
           }
           isDelf={isDelfTask}
+          isNewTask={isNewTask}
         />
       )}
 
@@ -1454,6 +1466,7 @@ export function TaskConfigFields({
         <ChronologicalOrderFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>) | null>}
           initialConfig={configForType("chronological_order") as Partial<ChronologicalOrderConfig>}
+          isNewTask={isNewTask}
         />
       )}
 

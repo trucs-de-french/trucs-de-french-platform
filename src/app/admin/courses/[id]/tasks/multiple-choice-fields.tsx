@@ -90,8 +90,8 @@ function emptyItem(): MultipleChoiceItem {
 
 export const MultipleChoiceFields = forwardRef<
   TypeSwitchHandle<MultipleChoiceConfig>,
-  { initialConfig?: Partial<MultipleChoiceConfig> }
->(function MultipleChoiceFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<MultipleChoiceConfig>; isNewTask?: boolean }
+>(function MultipleChoiceFields({ initialConfig, isNewTask }, ref) {
   const [display, setDisplay] = useState<"buttons" | "dropdown">(
     initialConfig?.display ?? "buttons"
   );
@@ -99,7 +99,7 @@ export const MultipleChoiceFields = forwardRef<
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
   const [hintsReducePoints, setHintsReducePoints] = useState(
-    initialConfig?.hintsReducePoints ?? false
+    initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
 
   // Для переносу сумісних даних при зміні типу (напр. → listening) —

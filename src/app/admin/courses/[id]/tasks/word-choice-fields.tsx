@@ -67,14 +67,14 @@ function emptySentence(): WordChoiceSentence {
 
 export const WordChoiceFields = forwardRef<
   TypeSwitchHandle<WordChoiceConfig>,
-  { initialConfig?: Partial<WordChoiceConfig> }
->(function WordChoiceFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<WordChoiceConfig>; isNewTask?: boolean }
+>(function WordChoiceFields({ initialConfig, isNewTask }, ref) {
   const [mode, setMode] = useState<"select" | "cross_out">(initialConfig?.mode ?? "select");
   const [sentences, setSentences] = useState<WordChoiceSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
   const [hintsReducePoints, setHintsReducePoints] = useState(
-    initialConfig?.hintsReducePoints ?? false
+    initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
   const rootRef = useRef<HTMLDivElement>(null);
   // Автозаповнення інструкцій дефолтом при перемиканні РЕЖИМУ (select ↔

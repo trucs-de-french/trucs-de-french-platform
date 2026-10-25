@@ -199,14 +199,14 @@ function ReorderSequenceBlock({
 // а не два окремі ref-и.
 export const ReorderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>,
-  { initialConfig?: Partial<ReorderConfig> }
->(function ReorderFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<ReorderConfig>; isNewTask?: boolean }
+>(function ReorderFields({ initialConfig, isNewTask }, ref) {
   const [sequences, setSequences] = useState<ReorderSequence[]>(
     initialConfig?.sequences?.length ? initialConfig.sequences : [emptySequence()]
   );
   const [liveFeedback, setLiveFeedback] = useState(initialConfig?.liveFeedback !== false);
   const [hintsReducePoints, setHintsReducePoints] = useState(
-    initialConfig?.hintsReducePoints ?? false
+    initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
 
   useImperativeHandle(ref, () => ({

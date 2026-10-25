@@ -125,8 +125,8 @@ function LetterRearrangementWordRow({
 
 export const LetterRearrangementFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<LetterRearrangementConfig>,
-  { initialConfig?: Partial<LetterRearrangementConfig> }
->(function LetterRearrangementFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<LetterRearrangementConfig>; isNewTask?: boolean }
+>(function LetterRearrangementFields({ initialConfig, isNewTask }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
@@ -248,7 +248,11 @@ export const LetterRearrangementFields = forwardRef<
           type="checkbox"
           name="letter_rearrangement_hints_reduce_points"
           value="true"
-          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          defaultChecked={
+            initialConfig?.hintsReducePoints !== undefined
+              ? Boolean(initialConfig.hintsReducePoints)
+              : !!isNewTask
+          }
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>

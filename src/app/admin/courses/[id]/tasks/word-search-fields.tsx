@@ -165,8 +165,8 @@ function GridPreview({ grid }: { grid: string[][] }) {
 
 export const WordSearchFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>,
-  { initialConfig?: Partial<WordSearchConfig> }
->(function WordSearchFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<WordSearchConfig>; isNewTask?: boolean }
+>(function WordSearchFields({ initialConfig, isNewTask }, ref) {
   // Джерело правди — EditorState (block-editing.ts): editor.words несе
   // blockId (null = "Нерозподілені") поряд з текстом/перекладом/картинкою/
   // аудіо слова; editor.blocks — назва/режим підказок/сітка кожного блоку.
@@ -342,7 +342,11 @@ export const WordSearchFields = forwardRef<
           type="checkbox"
           name="word_search_hints_reduce_points"
           value="true"
-          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          defaultChecked={
+            initialConfig?.hintsReducePoints !== undefined
+              ? Boolean(initialConfig.hintsReducePoints)
+              : !!isNewTask
+          }
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>

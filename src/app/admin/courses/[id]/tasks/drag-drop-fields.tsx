@@ -15,8 +15,8 @@ function emptySentence(): DragDropSentence {
 
 export const DragDropFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>,
-  { initialConfig?: Partial<DragDropConfig> }
->(function DragDropFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<DragDropConfig>; isNewTask?: boolean }
+>(function DragDropFields({ initialConfig, isNewTask }, ref) {
   const [sentences, setSentences] = useState<DragDropSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
@@ -139,7 +139,11 @@ export const DragDropFields = forwardRef<
           type="checkbox"
           name="drag_drop_hints_reduce_points"
           value="true"
-          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          defaultChecked={
+            initialConfig?.hintsReducePoints !== undefined
+              ? Boolean(initialConfig.hintsReducePoints)
+              : !!isNewTask
+          }
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>

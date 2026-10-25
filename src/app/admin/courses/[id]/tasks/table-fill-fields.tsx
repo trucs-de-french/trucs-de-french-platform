@@ -24,8 +24,8 @@ function emptyRow(): TableFillRow {
 
 export const TableFillFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>,
-  { initialConfig?: Partial<TableFillConfig>; isDelf?: boolean }
->(function TableFillFields({ initialConfig, isDelf }, ref) {
+  { initialConfig?: Partial<TableFillConfig>; isDelf?: boolean; isNewTask?: boolean }
+>(function TableFillFields({ initialConfig, isDelf, isNewTask }, ref) {
   const [columnLabels, setColumnLabels] = useState<[string, string]>(
     initialConfig?.columnLabels ?? ["Французька", "Переклад"]
   );
@@ -184,7 +184,11 @@ export const TableFillFields = forwardRef<
             type="checkbox"
             name="table_fill_hints_reduce_points"
             value="true"
-            defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+            defaultChecked={
+              initialConfig?.hintsReducePoints !== undefined
+                ? Boolean(initialConfig.hintsReducePoints)
+                : !!isNewTask
+            }
           />
           Підказки зменшують бали (50% за елемент, де використана підказка)
         </label>

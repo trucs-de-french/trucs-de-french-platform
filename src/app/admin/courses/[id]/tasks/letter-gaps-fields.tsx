@@ -202,8 +202,8 @@ function LetterGapsWordRow({
 
 export const LetterGapsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>,
-  { initialConfig?: Partial<LetterGapsConfig> }
->(function LetterGapsFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<LetterGapsConfig>; isNewTask?: boolean }
+>(function LetterGapsFields({ initialConfig, isNewTask }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
@@ -358,7 +358,11 @@ export const LetterGapsFields = forwardRef<
           type="checkbox"
           name="letter_gaps_hints_reduce_points"
           value="true"
-          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          defaultChecked={
+            initialConfig?.hintsReducePoints !== undefined
+              ? Boolean(initialConfig.hintsReducePoints)
+              : !!isNewTask
+          }
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>

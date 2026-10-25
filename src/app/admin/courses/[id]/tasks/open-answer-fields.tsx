@@ -138,14 +138,16 @@ function OpenAnswerQuestionRow({
 
 export function OpenAnswerFields({
   initialConfig,
+  isNewTask,
 }: {
   initialConfig?: Partial<OpenAnswerConfig>;
+  isNewTask?: boolean;
 }) {
   const [questions, setQuestions] = useState<OpenAnswerQuestion[]>(
     initialConfig?.questions?.length ? initialConfig.questions : [emptyQuestion()]
   );
   const [hintsReducePoints, setHintsReducePoints] = useState(
-    initialConfig?.hintsReducePoints ?? false
+    initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
 
   function addQuestion() {

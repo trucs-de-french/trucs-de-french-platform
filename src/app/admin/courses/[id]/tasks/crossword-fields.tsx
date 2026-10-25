@@ -226,8 +226,8 @@ function CrosswordPreview({
 
 export const CrosswordFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>,
-  { initialConfig?: Partial<CrosswordConfig> }
->(function CrosswordFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<CrosswordConfig>; isNewTask?: boolean }
+>(function CrosswordFields({ initialConfig, isNewTask }, ref) {
   // Той самий принцип, що word-search-fields.tsx (ЕТАП B/3) — EditorState
   // (block-editing.ts) — джерело правди, blockId на кожному слові.
   const [editor, setEditor] = useState<CrosswordEditorState>(() =>
@@ -409,7 +409,11 @@ export const CrosswordFields = forwardRef<
           type="checkbox"
           name="crossword_hints_reduce_points"
           value="true"
-          defaultChecked={Boolean(initialConfig?.hintsReducePoints)}
+          defaultChecked={
+            initialConfig?.hintsReducePoints !== undefined
+              ? Boolean(initialConfig.hintsReducePoints)
+              : !!isNewTask
+          }
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>

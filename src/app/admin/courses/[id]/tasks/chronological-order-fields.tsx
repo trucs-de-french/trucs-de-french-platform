@@ -131,14 +131,14 @@ function ChronologicalOrderItemRow({
 
 export const ChronologicalOrderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>,
-  { initialConfig?: Partial<ChronologicalOrderConfig> }
->(function ChronologicalOrderFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<ChronologicalOrderConfig>; isNewTask?: boolean }
+>(function ChronologicalOrderFields({ initialConfig, isNewTask }, ref) {
   const [mode, setMode] = useState<"image" | "text" | "mixed">(initialConfig?.mode ?? "image");
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
   );
   const [hintsReducePoints, setHintsReducePoints] = useState(
-    initialConfig?.hintsReducePoints ?? false
+    initialConfig?.hintsReducePoints ?? isNewTask ?? false
   );
 
   useImperativeHandle(ref, () => ({
