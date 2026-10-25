@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useLayoutEffect, useId, useRef } from "react";
 import { Check, X } from "lucide-react";
 import type {
   CheckboxGridPublic,
@@ -65,6 +65,32 @@ export function CheckboxGridExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as CheckboxGridDetail | undefined;
   const uid = useId();
+
+  // Ширина колонки-опції — вужча (56px), коли опцій багато (>6), щоб
+  // N×colW не випирало за ширину контейнера/карти навіть на десктопі.
+  const colW = config.columns.length > 6 ? 56 : 64;
+
+  // Перемикач таблиця/картки за шириною ОБГОРТКИ (не вікна, CLAUDE.md-
+  // задача): картка сцени на широкому екрані однаково може бути вузькою
+  // (700-750px), тож фіксований @media-брейкпоінт за шириною вікна раніше
+  // показував таблицю, яка не вміщувалась у саму картку. SSR/перший рендер
+  // — завжди картки (tableFits=false, без флешу "спершу таблиця"); після
+  // монтування ResizeObserver вимірює РЕАЛЬНУ ширину обгортки й перемикає
+  // на таблицю лише якщо statement (мін. 360px) + N×colW + 2px дійсно
+  // влізають.
+  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const [tableFits, setTableFits] = useState(false);
+  useLayoutEffect(() => {
+    const el = tableWrapRef.current;
+    if (!el) return;
+    const minWidth = 360 + config.columns.length * colW + 2;
+    const ro = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      setTableFits(width >= minWidth);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [config.columns.length, colW]);
 
   // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як один
   // елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що інші whole-типи.
@@ -153,17 +179,19 @@ export function CheckboxGridExercise({
     const cell = detail?.cells.find((c) => c.rowId === rowId && c.columnId === columnId);
 
     let stateClass = checked ? "cg-checkbox--checked" : "";
-    let icon: React.ReactNode = checked ? <Check strokeWidth={3.6} className="h-4 w-4 text-white" /> : null;
+    let icon: React.ReactNode = checked ? (
+      <Check strokeWidth={3.6} className="h-[15px] w-[15px] text-white" />
+    ) : null;
     let stateText = "";
 
     if (cell) {
       if (cell.studentChecked && cell.correctChecked) {
         stateClass = "cg-checkbox--correct";
-        icon = <Check strokeWidth={3.6} className="h-4 w-4 text-[#1f7a3d] dark:text-[#bff0d0]" />;
+        icon = <Check strokeWidth={3.6} className="h-[15px] w-[15px] text-[#1f7a3d] dark:text-[#bff0d0]" />;
         stateText = "правильно";
       } else if (cell.studentChecked && !cell.correctChecked) {
         stateClass = "cg-checkbox--wrong";
-        icon = <X strokeWidth={3.6} className="h-4 w-4 text-[#b42318] dark:text-[#ffb4ae]" />;
+        icon = <X strokeWidth={3.6} className="h-[15px] w-[15px] text-[#b42318] dark:text-[#ffb4ae]" />;
         stateText = "помилково";
       } else {
         stateClass = "";
@@ -253,23 +281,17 @@ export function CheckboxGridExercise({
     submit(answer);
   }
 
-  // Десктоп-таблиця (900px+, п.1 задачі) — справжня CSS-grid таблиця.
-  // grid-template-columns рахується тут, у JS, ОДНИМ рядком — і header, і
-  // КОЖНЕ твердження отримують рівно той самий рядок через inline style
-  // (а не CSS-змінну, що лише ЗДАВАЛОСЬ мала діяти — попередній overflow
-  // насправді походив від того, що .cg-header-cell/.cg-stmt-cell/
-  // .cg-option-cell не мали min-width:0: grid-елемент за замовчуванням має
+  // Десктоп-таблиця — рендериться лише коли tableFits (ResizeObserver на
+  // обгортці, вище) справжня CSS-grid таблиця. grid-template-columns
+  // рахується тут, у JS, ОДНИМ рядком — і header, і КОЖНЕ твердження
+  // отримують рівно той самий рядок через inline style (не CSS-змінну:
+  // попередній overflow походив від того, що .cg-header-cell/.cg-stmt-cell/
+  // .cg-option-cell не мали min-width:0 — grid-елемент за замовчуванням має
   // min-width:auto = min-content свого вмісту, і ця авто-мінімальна ширина
-  // ПЕРЕВАЖАЄ фіксований розмір треку, розтягуючи колонку опції під
-  // підпис/чекбокс замість заданих 96px — звідси ~190px і обрізані останні
-  // колонки картки з overflow:hidden). Тепер і темплейт, і min-width:0 на
-  // кожній клітинці (globals.css) прибирають цю причину одночасно.
+  // переважала фіксований розмір треку). Темплейт + min-width:0 на кожній
+  // клітинці (globals.css) прибирають цю причину одночасно.
   function renderDesktopTable() {
     const columns = config.columns;
-    // Фіксована ширина колонки-опції — вужча (76px), коли опцій багато
-    // (>6), щоб N×colW не випирало за ширину контейнера/карти навіть на
-    // десктопі (п.5 задачі).
-    const colW = columns.length > 6 ? 76 : 96;
     const gridTemplateColumns = `minmax(0, 1fr) repeat(${columns.length}, ${colW}px)`;
     return (
       <div className="cg-desktop">
@@ -324,7 +346,8 @@ export function CheckboxGridExercise({
     );
   }
 
-  // Мобільні картки (<768px, п.2 задачі) — одна gold-рамкована картка на
+  // Картки-твердження (рендеряться, коли !tableFits — замовчування до
+  // вимірювання обгортки, SSR-безпечно) — одна gold-рамкована картка на
   // твердження (.cg-mobile-card), бали — RowPointsTab-патерн на верхній
   // рамці (.row-points-tab-wrap, той самий, що table-fill.tsx), під
   // твердженням — 2-колонкова сітка компактних плиток-опцій (.cg-tile).
@@ -370,8 +393,7 @@ export function CheckboxGridExercise({
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction}
       />
 
-      {renderDesktopTable()}
-      {renderMobileCards()}
+      <div ref={tableWrapRef}>{tableFits ? renderDesktopTable() : renderMobileCards()}</div>
 
       {/* Легенда позначок — лише після "Перевірити", один раз під таблицею. */}
       {detail && (
