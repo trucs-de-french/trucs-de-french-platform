@@ -19,7 +19,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
-import { TaskResult, RowScorePill } from "./task-result";
+import { TaskResult, rowPointsTabStatus } from "./task-result";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps тощо.
@@ -75,11 +75,6 @@ const RESULT_ICON_WRONG = "h-3.5 w-3.5 text-red-700 dark:text-red-400 md:h-4 md:
 const LEGEND_SQUARE = "flex h-4 w-4 shrink-0 items-center justify-center rounded-md border-2";
 const LEGEND_ICON_CORRECT = "h-2.5 w-2.5 text-green-700 dark:text-green-400";
 const LEGEND_ICON_WRONG = "h-2.5 w-2.5 text-red-700 dark:text-red-400";
-
-// Бал рядка під твердженням ДО перевірки (просто текст "N балів") — дрібніше
-// й приглушеніше за SCORE_LABEL_CLASS; ПІСЛЯ перевірки замінюється пілюлею
-// RowScorePill (task-result.tsx), цей клас уже не застосовується.
-const ROW_POINTS_LABEL_CLASS = "text-xs text-neutral-500 dark:text-neutral-400";
 
 // Український дробовий запис балів (крок 0.5 і дробові частки часткового
 // заліку) — через кому, однією десятковою: "0,5", не "0.5".
@@ -158,28 +153,32 @@ export function CheckboxGridExercise({
     });
   }
 
-  // Частковий залік за рядком (формула з grade.ts — earnedPoints уже
-  // прийшов рахованим із сервера, тут лише форматування підпису).
-  // Пілюля "0/1" після перевірки (RowScorePill) — текст "{бали}" лише ДО
-  // перевірки (поки немає cell-результату, кольорувати ще нічого).
-  function rowPointsLabel(row: CheckboxGridPublic["rows"][number]) {
+  // Компактна лавандова вкладка балів рядка — той самий вигляд
+  // (.row-points-tab/--correct/--partial/--wrong), що RowPointsTab
+  // (task-result.tsx), але statically позиціонована (не абсолютний
+  // сусід картки — тут немає картки, лише grid-клітинка), тож рендериться
+  // окремо, а не через сам компонент RowPointsTab. Завжди видима (на
+  // відміну від колишнього RowScorePill, схованого для рядків ≤1 бал) —
+  // рядок із 1 балом однаково показує вкладку. formatPointsValue —
+  // той самий дробовий запис (кома), що решта цього файлу.
+  function rowPointsTab(row: CheckboxGridPublic["rows"][number]) {
     if (hidePoints) return null;
     const rowCell = detail?.cells.find((c) => c.rowId === row.id);
     if (!pointsVisible && !rowCell) return null;
-    if (rowCell) return null;
-    return `${formatPointsValue(row.points)} ${pluralizePoints(row.points)}`;
-  }
-
-  function rowScorePill(row: CheckboxGridPublic["rows"][number]) {
-    if (hidePoints) return null;
-    const rowCell = detail?.cells.find((c) => c.rowId === row.id);
-    if (!rowCell) return null;
+    if (!rowCell) {
+      return (
+        <span className="row-points-tab" style={{ position: "static" }}>
+          {formatPointsValue(row.points)} {pluralizePoints(row.points)}
+        </span>
+      );
+    }
+    const status = rowPointsTabStatus(rowCell.earnedPoints, row.points);
     return (
-      <RowScorePill
-        earned={formatPointsValue(rowCell.earnedPoints)}
-        possible={formatPointsValue(row.points)}
-        full={rowCell.earnedPoints >= row.points}
-      />
+      <span className={`row-points-tab row-points-tab--${status}`} style={{ position: "static" }}>
+        {status === "correct" && <Check strokeWidth={3} className="h-3 w-3" />}
+        {status === "wrong" && <X strokeWidth={3} className="h-3 w-3" />}
+        {formatPointsValue(rowCell.earnedPoints)} з {formatPointsValue(row.points)}
+      </span>
     );
   }
 
@@ -265,7 +264,7 @@ export function CheckboxGridExercise({
       <div
         role="table"
         style={{ "--cb-cols": columns.length } as React.CSSProperties}
-        className={`grid ${mobileColTemplate} md:grid-cols-[minmax(12rem,2.4fr)_repeat(var(--cb-cols),minmax(4.5rem,1fr))] ${GRID_TABLE_CARD}`}
+        className={`grid ${mobileColTemplate} md:grid-cols-[minmax(12rem,2.4fr)_repeat(var(--cb-cols),minmax(4.5rem,1fr))_auto] ${GRID_TABLE_CARD}`}
       >
         <div role="row" className="contents">
           {/* Порожній заповнювач над колонкою твердження — лише на md+,
@@ -285,13 +284,19 @@ export function CheckboxGridExercise({
               {c.label}
             </div>
           ))}
+          {/* Порожній заповнювач над крайньою колонкою балів — лише
+              md+ (там же й сама колонка, п.3 задачі); на телефоні бали
+              рядка показані всередині банера твердження, цієї колонки
+              нема взагалі. */}
+          <div
+            aria-hidden="true"
+            className="hidden border-b border-[#e6e6f0] bg-white dark:border-neutral-700 dark:bg-neutral-800 md:block"
+          />
         </div>
 
         {config.rows.map((row, index) => {
           const stmtId = `${uid}stmt-${row.id}`;
           const rowDivider = index > 0 ? "border-t border-[#e6e6f0] dark:border-neutral-800" : "";
-          const pointsLabel = rowPointsLabel(row);
-          const scorePill = rowScorePill(row);
           return (
             <div role="row" key={row.id} className="contents">
               <div
@@ -306,8 +311,7 @@ export function CheckboxGridExercise({
                   <span className="min-w-0 break-words text-sm leading-snug md:text-base">
                     {frenchNbsp(row.label)}
                   </span>
-                  {pointsLabel && <span className={ROW_POINTS_LABEL_CLASS}>{pointsLabel}</span>}
-                  {scorePill}
+                  <span className="md:hidden">{rowPointsTab(row)}</span>
                 </div>
               </div>
               {columns.map((c) => {
@@ -319,6 +323,12 @@ export function CheckboxGridExercise({
                   </div>
                 );
               })}
+              <div
+                role="gridcell"
+                className={`hidden items-center justify-center px-2 md:flex ${rowDivider}`}
+              >
+                {rowPointsTab(row)}
+              </div>
             </div>
           );
         })}

@@ -6,17 +6,15 @@ import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exer
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, TaskResultGapRows, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 
@@ -102,91 +100,85 @@ export function OpenAnswerCheckExercise({
 
   function renderQuestion(q: PublicQuestion, qDetail: OpenAnswerDetail["questions"][number] | undefined, locked: boolean) {
     const hintVisible = hintShown.has(q.id);
-    const showPill = !!qDetail && shouldShowRowScorePill(qDetail.points);
-    const ariaResultLabel = qDetail && !showPill ? rowResultAriaLabel(qDetail.isCorrect) : undefined;
+    const showTab = !hidePoints && (pointsVisible || !!qDetail);
     // Єдине питання у вправі — номер не показуємо (нема що рахувати):
     // той самий принцип, що приховані номери в вправах з одним елементом.
     const number = config.questions.length > 1 ? config.questions.findIndex((cq) => cq.id === q.id) + 1 : null;
     return (
-      <div key={q.id}>
-        <div className="flex items-start gap-3">
-          {number !== null && (
-            <span className="item-number-badge" aria-label={`Питання ${number}`}>
-              {number}
-            </span>
-          )}
-          {(q.imageUrl || q.audioUrl) && (
-            <div className="flex shrink-0 items-center gap-2">
-              {q.imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => setLightboxSrc(q.imageUrl!)}
-                  aria-label="Показати картинку повністю"
-                  className="shrink-0 cursor-zoom-in"
-                >
-                  <ImageOrPlaceholder
-                    src={q.imageUrl}
-                    alt=""
-                    className="h-11 w-11 rounded-lg object-cover"
-                    useFocus
-                  />
-                </button>
-              )}
-              {q.audioUrl && <CompactAudioButton src={q.audioUrl} />}
-            </div>
-          )}
-          <p className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
-            {frenchNbsp(q.question)}
-            {!hidePoints && (pointsVisible || showPill) && (
-              <span className="ml-2 inline-flex align-middle">
-                {showPill ? (
-                  <RowScorePill earned={qDetail!.isCorrect ? qDetail!.points : 0} possible={qDetail!.points} full={qDetail!.isCorrect} />
-                ) : (
-                  <span className={SCORE_LABEL_CLASS}>{`${q.points} ${pluralizePoints(q.points)}`}</span>
-                )}
+      <div key={q.id} className="row-points-tab-wrap">
+        {showTab && (
+          <RowPointsTab earned={qDetail ? (qDetail.isCorrect ? qDetail.points : 0) : undefined} possible={q.points} />
+        )}
+        <div className="glass-item-card flex flex-col gap-2 px-3 pt-4 pb-3">
+          <div className="flex items-start gap-3">
+            {number !== null && (
+              <span className="item-number-badge" aria-label={`Питання ${number}`}>
+                {number}
               </span>
             )}
-          </p>
-        </div>
-        <div className="relative mt-1">
-          <input
-            ref={diacritics.fieldRef(q.id)}
-            value={answers[q.id] ?? ""}
-            onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-            onFocus={() => diacritics.onFocus(q.id)}
-            onBlur={diacritics.onBlur}
-            disabled={locked}
-            aria-label={ariaResultLabel}
-            className={`w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
-              qDetail
-                ? qDetail.isCorrect
-                  ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                  : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800"
-            }`}
-            placeholder="Ваша відповідь..."
-          />
-          {q.hint && !locked && (
-            <HintBulb
-              state={hintVisible ? "used" : "available"}
-              onClick={() => showHint(q.id)}
-              onMouseDown={(e) => e.preventDefault()}
-              label={hintVisible ? q.hint : "Показати підказку"}
-              className="absolute top-1/2 right-2 -translate-y-1/2"
+            {(q.imageUrl || q.audioUrl) && (
+              <div className="flex shrink-0 items-center gap-2">
+                {q.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setLightboxSrc(q.imageUrl!)}
+                    aria-label="Показати картинку повністю"
+                    className="shrink-0 cursor-zoom-in"
+                  >
+                    <ImageOrPlaceholder
+                      src={q.imageUrl}
+                      alt=""
+                      className="h-11 w-11 rounded-lg object-cover"
+                      useFocus
+                    />
+                  </button>
+                )}
+                {q.audioUrl && <CompactAudioButton src={q.audioUrl} />}
+              </div>
+            )}
+            <p className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
+              {frenchNbsp(q.question)}
+            </p>
+          </div>
+          <div className="relative">
+            <input
+              ref={diacritics.fieldRef(q.id)}
+              value={answers[q.id] ?? ""}
+              onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+              onFocus={() => diacritics.onFocus(q.id)}
+              onBlur={diacritics.onBlur}
+              disabled={locked}
+              className={`w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
+                qDetail
+                  ? qDetail.isCorrect
+                    ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                    : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                  : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800"
+              }`}
+              placeholder="Ваша відповідь..."
             />
+            {q.hint && !locked && (
+              <HintBulb
+                state={hintVisible ? "used" : "available"}
+                onClick={() => showHint(q.id)}
+                onMouseDown={(e) => e.preventDefault()}
+                label={hintVisible ? q.hint : "Показати підказку"}
+                className="absolute top-1/2 right-2 -translate-y-1/2"
+              />
+            )}
+            {qDetail?.hintUsed && <HintUsedBadge />}
+          </div>
+          {q.hint && (
+            <p className="min-h-5 text-sm break-words text-neutral-600 dark:text-neutral-300">
+              {hintVisible ? q.hint : ""}
+            </p>
           )}
-          {qDetail?.hintUsed && <HintUsedBadge />}
+          {qDetail && !qDetail.isCorrect && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              Правильно: {qDetail.correctAnswers.join(" / ")}
+            </p>
+          )}
         </div>
-        {q.hint && (
-          <p className="mt-1.5 min-h-5 text-sm break-words text-neutral-600 dark:text-neutral-300">
-            {hintVisible ? q.hint : ""}
-          </p>
-        )}
-        {qDetail && !qDetail.isCorrect && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            Правильно: {qDetail.correctAnswers.join(" / ")}
-          </p>
-        )}
       </div>
     );
   }
@@ -262,7 +254,7 @@ export function OpenAnswerCheckExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+        <div className="flex flex-col gap-[22px]">
           {blockQuestions.map((q) =>
             renderQuestion(q, blockDetail?.questions.find((d) => d.id === q.id), !!blockResult)
           )}
@@ -334,7 +326,7 @@ export function OpenAnswerCheckExercise({
 
       {!useBlocks ? (
         <>
-          <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
+          <div className="flex flex-col gap-[22px]">
             {config.questions.map((q) =>
               renderQuestion(q, detail?.questions.find((d) => d.id === q.id), !!single.result)
             )}
