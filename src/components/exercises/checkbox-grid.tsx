@@ -253,26 +253,28 @@ export function CheckboxGridExercise({
     submit(answer);
   }
 
-  // Десктоп-таблиця (900px+, п.1 задачі) — справжня CSS-grid таблиця
-  // (.cg-grid-row: minmax(320px,1fr) + N×var(--cg-col-w) ФІКСОВАНОЇ
-  // довжини, не minmax-діапазон — --cg-cols/--cg-col-w — інлайн-стиль на
-  // КОЖНОМУ рядку, довільна кількість опцій без зміни CSS). Жодного
-  // display, що конкурує сам із собою — .cg-desktop/.cg-card/.cg-grid-row —
-  // власні класи з ОДНИМ значенням display кожен.
+  // Десктоп-таблиця (900px+, п.1 задачі) — справжня CSS-grid таблиця.
+  // grid-template-columns рахується тут, у JS, ОДНИМ рядком — і header, і
+  // КОЖНЕ твердження отримують рівно той самий рядок через inline style
+  // (а не CSS-змінну, що лише ЗДАВАЛОСЬ мала діяти — попередній overflow
+  // насправді походив від того, що .cg-header-cell/.cg-stmt-cell/
+  // .cg-option-cell не мали min-width:0: grid-елемент за замовчуванням має
+  // min-width:auto = min-content свого вмісту, і ця авто-мінімальна ширина
+  // ПЕРЕВАЖАЄ фіксований розмір треку, розтягуючи колонку опції під
+  // підпис/чекбокс замість заданих 96px — звідси ~190px і обрізані останні
+  // колонки картки з overflow:hidden). Тепер і темплейт, і min-width:0 на
+  // кожній клітинці (globals.css) прибирають цю причину одночасно.
   function renderDesktopTable() {
     const columns = config.columns;
     // Фіксована ширина колонки-опції — вужча (76px), коли опцій багато
     // (>6), щоб N×colW не випирало за ширину контейнера/карти навіть на
     // десктопі (п.5 задачі).
-    const colWidth = columns.length > 6 ? "76px" : "96px";
-    const cgCols = {
-      "--cg-cols": columns.length,
-      "--cg-col-w": colWidth,
-    } as React.CSSProperties;
+    const colW = columns.length > 6 ? 76 : 96;
+    const gridTemplateColumns = `minmax(0, 1fr) repeat(${columns.length}, ${colW}px)`;
     return (
       <div className="cg-desktop">
         <div className="cg-card" role="table">
-          <div className="cg-grid-row" style={cgCols} role="row">
+          <div className="cg-grid-row" style={{ gridTemplateColumns }} role="row">
             {/* Клітинка над колонкою твердження — порожня (п.1 задачі:
                 "empty first cell"). */}
             <div aria-hidden="true" className="cg-header-empty" />
@@ -291,7 +293,7 @@ export function CheckboxGridExercise({
           {config.rows.map((row, index) => {
             const stmtId = `${uid}stmt-${row.id}`;
             return (
-              <div key={row.id} className="cg-grid-row" style={cgCols} role="row">
+              <div key={row.id} className="cg-grid-row" style={{ gridTemplateColumns }} role="row">
                 <div role="rowheader" id={stmtId} className="cg-stmt-cell">
                   <span className="item-number-badge" aria-label={`Рядок ${index + 1}`}>
                     {index + 1}
