@@ -6327,3 +6327,482 @@ button.scene-bar:active .scene-bar-toggle {
     color: #e3e2fb;
   }
 }
+
+/* ============================================================================
+   checkbox_grid (Grille à cocher) — справжня CSS-grid таблиця на десктопі,
+   картки-твердження з плитками-опціями на мобільному. Власні класи (не
+   довгі Tailwind arbitrary-рядки) — display:grid/none тут більше не
+   конкурує за порядок генерації з іншими utility-класами того самого
+   елемента (саме це зламало попередню версію: "hidden md:block" і "grid"
+   на одному className мають однакову специфічність, порядок у згенерованому
+   stylesheet — не порядок у рядку класів — вирішував, яка властивість
+   display виграє). Один @media-перемикач (768px) керує видимістю ОБОХ
+   розкладок одразу — рендериться завжди обидві, видима лише одна. */
+.cg-desktop {
+  display: none;
+}
+.cg-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .cg-desktop {
+    display: block;
+  }
+  .cg-mobile {
+    display: none;
+  }
+}
+
+/* Картка-обгортка десктоп-таблиці — gold-градієнтна рамка (той самий
+   принцип двошарового background, що --glass-card-bg-gradient), власний
+   літеральний запис тут, щоб не залежати від --glass-* токенів теми. */
+.cg-card {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(180deg, rgba(217, 183, 101, 0.9), rgba(217, 183, 101, 0.15)) border-box;
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
+}
+.dark .cg-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.25);
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.25);
+    box-shadow: none;
+  }
+}
+
+/* Один рядок таблиці (заголовок і кожне твердження) — РІВНО та сітка, що
+   задача просила: перша колонка гнучка (твердження), далі N колонок по
+   84-110px (--cg-cols — інлайн-стиль на обгортці, довільна кількість
+   опцій без зміни CSS). */
+.cg-grid-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(var(--cg-cols), minmax(84px, 110px));
+  align-items: stretch;
+}
+
+.cg-header-empty {
+  background: #fff;
+}
+.dark .cg-header-empty {
+  background: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-header-empty {
+    background: transparent;
+  }
+}
+.cg-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 4px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fff;
+  word-break: break-word;
+}
+.cg-header-cell--a {
+  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+}
+.cg-header-cell--b {
+  background: linear-gradient(180deg, #4b46da, #2f2c6b);
+}
+
+.cg-stmt-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px 14px 18px 18px;
+  background: #fff;
+  border-top: 1px solid #f0e8cf;
+}
+.dark .cg-stmt-cell {
+  background: transparent;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-stmt-cell {
+    background: transparent;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+}
+.cg-stmt-text-col {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+}
+.cg-stmt-text {
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1a1640;
+  word-break: break-word;
+}
+.dark .cg-stmt-text {
+  color: #f1ecd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-stmt-text {
+    color: #f1ecd9;
+  }
+}
+
+/* Пілюля балів під текстом твердження — ширина за вмістом (не на всю
+   ширину клітинки), align-self:flex-start у flex-колонці .cg-stmt-text-col
+   вище. */
+.cg-points-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1.5px solid #c9cdf5;
+  background: #e0e4fb;
+  color: #3b36c4;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.cg-points-pill--correct {
+  background: #eafaf0;
+  border-color: #4cc47e;
+  color: #1f7a3d;
+}
+.cg-points-pill--wrong {
+  background: #fdeeee;
+  border-color: #e5484d;
+  color: #b42318;
+}
+.dark .cg-points-pill {
+  background: rgba(150, 150, 255, 0.18);
+  border-color: rgba(150, 150, 255, 0.4);
+  color: #dcdbf3;
+}
+.dark .cg-points-pill--correct {
+  background: rgba(120, 220, 150, 0.16);
+  border-color: rgba(130, 220, 160, 0.45);
+  color: #bff0d0;
+}
+.dark .cg-points-pill--wrong {
+  background: rgba(255, 120, 120, 0.16);
+  border-color: rgba(255, 140, 140, 0.45);
+  color: #ffb4ae;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-points-pill {
+    background: rgba(150, 150, 255, 0.18);
+    border-color: rgba(150, 150, 255, 0.4);
+    color: #dcdbf3;
+  }
+  :root:not(.light) .cg-points-pill--correct {
+    background: rgba(120, 220, 150, 0.16);
+    border-color: rgba(130, 220, 160, 0.45);
+    color: #bff0d0;
+  }
+  :root:not(.light) .cg-points-pill--wrong {
+    background: rgba(255, 120, 120, 0.16);
+    border-color: rgba(255, 140, 140, 0.45);
+    color: #ffb4ae;
+  }
+}
+
+.cg-option-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #f0e8cf;
+}
+.dark .cg-option-cell {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-option-cell {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+}
+.cg-option-cell--odd {
+  background: #fbf6e6;
+}
+.dark .cg-option-cell--odd {
+  background: rgba(255, 255, 255, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-option-cell--odd {
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+.cg-option-cell--even {
+  background: #fff;
+}
+.dark .cg-option-cell--even {
+  background: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-option-cell--even {
+    background: transparent;
+  }
+}
+
+/* Квадрат-чекбокс таблиці (32×32) — сусідній <span> поруч зі sr-only
+   <input>, стан визначає JS (answers-set), не CSS :checked. */
+.cg-checkbox {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 2px solid #e0cf9a;
+  background: #fff;
+  transition: background-color 150ms, border-color 150ms;
+}
+.dark .cg-checkbox {
+  border-color: rgba(243, 217, 139, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-checkbox {
+    border-color: rgba(243, 217, 139, 0.45);
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+.cg-checkbox--checked {
+  border-color: #4b46da;
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+}
+.cg-checkbox--correct {
+  border-color: #4cc47e;
+  background: #eafaf0;
+}
+.dark .cg-checkbox--correct {
+  border-color: #4cc47e;
+  background: rgba(47, 158, 91, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-checkbox--correct {
+    border-color: #4cc47e;
+    background: rgba(47, 158, 91, 0.28);
+  }
+}
+.cg-checkbox--wrong {
+  border-color: #e5484d;
+  background: #fdeeee;
+}
+.dark .cg-checkbox--wrong {
+  border-color: rgba(255, 140, 140, 0.45);
+  background: rgba(255, 120, 120, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-checkbox--wrong {
+    border-color: rgba(255, 140, 140, 0.45);
+    background: rgba(255, 120, 120, 0.16);
+  }
+}
+.cg-checkbox-input:focus-visible ~ .cg-checkbox {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+
+/* Мобільні картки-твердження — та сама gold-рамка-картка, що .cg-card, але
+   своя обгортка (padding за задачею відрізняється від табличної картки). */
+.cg-mobile-card {
+  position: relative;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(180deg, rgba(217, 183, 101, 0.9), rgba(217, 183, 101, 0.15)) border-box;
+  box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
+  padding: 20px 16px 16px;
+}
+.dark .cg-mobile-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(243, 217, 139, 0.25);
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-mobile-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(243, 217, 139, 0.25);
+    box-shadow: none;
+  }
+}
+.cg-mobile-stmt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cg-mobile-stmt-text {
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1a1640;
+  word-break: break-word;
+}
+.dark .cg-mobile-stmt-text {
+  color: #f1ecd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-mobile-stmt-text {
+    color: #f1ecd9;
+  }
+}
+
+.cg-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Плитка-опція мобільної картки — компактний рядок (НЕ розтягнутий на всю
+   ширину банер): checkbox-коло 24px + назва опції. */
+.cg-tile {
+  position: relative;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #ead9a6;
+  background: #faf5e4;
+  transition: background-color 150ms, border-color 150ms, color 150ms;
+}
+.dark .cg-tile {
+  border-color: rgba(243, 217, 139, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile {
+    border-color: rgba(243, 217, 139, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+.cg-tile--checked {
+  border-color: #4b46da;
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+  color: #fff;
+}
+.cg-tile--correct {
+  border-color: #4cc47e;
+  background: #eafaf0;
+  color: #1f7a3d;
+}
+.dark .cg-tile--correct {
+  border-color: #4cc47e;
+  background: rgba(47, 158, 91, 0.28);
+  color: #bff0d0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile--correct {
+    border-color: #4cc47e;
+    background: rgba(47, 158, 91, 0.28);
+    color: #bff0d0;
+  }
+}
+.cg-tile--wrong {
+  border-color: #e5484d;
+  background: #fdeeee;
+  color: #b42318;
+}
+.dark .cg-tile--wrong {
+  border-color: rgba(255, 140, 140, 0.45);
+  background: rgba(255, 120, 120, 0.16);
+  color: #ffb4ae;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile--wrong {
+    border-color: rgba(255, 140, 140, 0.45);
+    background: rgba(255, 120, 120, 0.16);
+    color: #ffb4ae;
+  }
+}
+.cg-tile:focus-within {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.cg-tile-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+/* Чекбокс-коло 24px усередині плитки — непозначений: золота рамка на тон
+   плитки; позначено (до перевірки): біле коло на indigo-плитці; після
+   перевірки — колір кола узгоджений з .cg-tile--correct/--wrong вище. */
+.cg-tile-check {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid #c9b67a;
+  background: transparent;
+  transition: background-color 150ms, border-color 150ms;
+}
+.dark .cg-tile-check {
+  border-color: rgba(243, 217, 139, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile-check {
+    border-color: rgba(243, 217, 139, 0.35);
+  }
+}
+.cg-tile--checked .cg-tile-check {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.25);
+}
+.cg-tile--correct .cg-tile-check {
+  border-color: #1f7a3d;
+  background: #fff;
+}
+.dark .cg-tile--correct .cg-tile-check {
+  border-color: #bff0d0;
+  background: rgba(255, 255, 255, 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile--correct .cg-tile-check {
+    border-color: #bff0d0;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+.cg-tile--wrong .cg-tile-check {
+  border-color: #b42318;
+  background: #fff;
+}
+.dark .cg-tile--wrong .cg-tile-check {
+  border-color: #ffb4ae;
+  background: rgba(255, 255, 255, 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-tile--wrong .cg-tile-check {
+    border-color: #ffb4ae;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
