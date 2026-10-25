@@ -253,14 +253,22 @@ export function CheckboxGridExercise({
     submit(answer);
   }
 
-  // Десктоп-таблиця (md+, п.1 задачі) — справжня CSS-grid таблиця
-  // (.cg-grid-row: minmax(0,1fr) + N×minmax(84px,110px), --cg-cols —
-  // інлайн-стиль на КОЖНОМУ рядку, довільна кількість опцій без зміни CSS).
-  // Жодного display, що конкурує сам із собою — .cg-desktop/.cg-card/
-  // .cg-grid-row — власні класи з ОДНИМ значенням display кожен.
+  // Десктоп-таблиця (900px+, п.1 задачі) — справжня CSS-grid таблиця
+  // (.cg-grid-row: minmax(320px,1fr) + N×var(--cg-col-w) ФІКСОВАНОЇ
+  // довжини, не minmax-діапазон — --cg-cols/--cg-col-w — інлайн-стиль на
+  // КОЖНОМУ рядку, довільна кількість опцій без зміни CSS). Жодного
+  // display, що конкурує сам із собою — .cg-desktop/.cg-card/.cg-grid-row —
+  // власні класи з ОДНИМ значенням display кожен.
   function renderDesktopTable() {
     const columns = config.columns;
-    const cgCols = { "--cg-cols": columns.length } as React.CSSProperties;
+    // Фіксована ширина колонки-опції — вужча (76px), коли опцій багато
+    // (>6), щоб N×colW не випирало за ширину контейнера/карти навіть на
+    // десктопі (п.5 задачі).
+    const colWidth = columns.length > 6 ? "76px" : "96px";
+    const cgCols = {
+      "--cg-cols": columns.length,
+      "--cg-col-w": colWidth,
+    } as React.CSSProperties;
     return (
       <div className="cg-desktop">
         <div className="cg-card" role="table">
