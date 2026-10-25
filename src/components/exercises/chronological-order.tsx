@@ -14,9 +14,9 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
-import { TaskInstructionLine } from "./task-panel-header";
+import { TaskInstructionLine, PointsPill } from "./task-panel-header";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { BlockTabs } from "./block-navigation";
@@ -30,8 +30,8 @@ import {
 } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { RESULT_MESSAGE_CLASS, SCORE_LABEL_CLASS } from "./score-style";
-import { TaskResult, RowScorePill, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { RESULT_MESSAGE_CLASS } from "./score-style";
+import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -244,17 +244,6 @@ export function ChronologicalOrderExercise({
     );
   }
 
-  function pointsLabel(itemId: string, points: number) {
-    if (hidePoints) return null;
-    const d = itemDetail(itemId);
-    if (!pointsVisible && !d) return null;
-    if (d) {
-      if (!shouldShowRowScorePill(points)) return null;
-      return <RowScorePill earned={d.isCorrect ? points : 0} possible={points} full={d.isCorrect} />;
-    }
-    return <span className={SCORE_LABEL_CLASS}>{`${points} ${pluralizePoints(points)}`}</span>;
-  }
-
   // Коли пілюля (RowScorePill) схована (рядок ≤1 бал), поле-номер — єдиний
   // елемент відповіді цього рядка, тож воно отримує aria-label
   // "Правильно"/"Неправильно" на додачу до власного "Номер події N" (той
@@ -346,6 +335,16 @@ export function ChronologicalOrderExercise({
       ? `Впишіть номер за порядком (від 1 до ${config.items.length}) біля кожного пункту.`
       : `Впишіть у поле n° номер за порядком (від 1 до ${config.items.length}).`;
 
+  // Пілюля "N балів" у заголовку панелі — лише image/mixed (режим text уже
+  // показує бали на рядку кожної картки через RowPointsTab, той самий
+  // принцип, що pooled-score вправи з одним блоком). Без балів/пілюлі в
+  // практиці.
+  const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
+  const pointsText =
+    config.mode !== "text" && !hidePoints && !isPractice && !detail && pointsVisible
+      ? formatPointsCount(totalPoints)
+      : undefined;
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
@@ -419,7 +418,16 @@ export function ChronologicalOrderExercise({
             </div>
           </div>
         ) : (
-          <div className="task-panel-header-divider" data-header-divider="" />
+          <>
+            {pointsText && (
+              <div className="task-panel-pills-row">
+                <div className="task-panel-pills-left">
+                  <PointsPill text={pointsText} />
+                </div>
+              </div>
+            )}
+            <div className="task-panel-header-divider" data-header-divider="" />
+          </>
         )}
       </div>
 
@@ -485,9 +493,6 @@ export function ChronologicalOrderExercise({
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">n°</span>
                   {numberInput(item.id, "compact", label, item.points)}
                 </div>
-                {!hidePoints && (pointsVisible || (itemDetail(item.id) && shouldShowRowScorePill(item.points))) ? (
-                  <p className="flex justify-center">{pointsLabel(item.id, item.points)}</p>
-                ) : null}
               </div>
             );
           })}

@@ -10,7 +10,7 @@ import { bankTileClass } from "./tile-styles";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -205,21 +205,18 @@ export function SortColumnsExercise({
 
   const pool = config.items.filter((i) => !assignment[i.id]);
   const allPlaced = pool.length === 0;
+
+  // Пілюля "N балів" у заголовку панелі — той самий принцип, що pooled-
+  // score вправи з одним блоком (fill-blank.tsx тощо): без балів/пілюлі в
+  // практиці (та сама умова, що й решта балів у цьому файлі).
+  const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
+  const pointsText =
+    !hidePoints && !isPractice && !result && pointsVisible ? formatPointsCount(totalPoints) : undefined;
   // scroll-mt (той самий принцип і літеральні значення, що drag-drop.tsx/
   // fill-blank.tsx): клік-вибір не викликає сам по собі scroll, але якщо
   // браузер (напр. фокус/якір) підведе колонку до самого верху, липкий пул
   // не повинен її закрити.
   const scrollMtClass = pool.length > 0 ? "scroll-mt-16 sm:scroll-mt-[27vh]" : "";
-
-  // До перевірки — лише якщо pointsVisible. Після перевірки суфікс "(0/1)"/
-  // "(1/1)" прибрано — правильність тепер передає колір+іконка чипа
-  // (itemClass/chip нижче), не текст.
-  function itemLabel(item: SortColumnsPublic["items"][number]) {
-    if (hidePoints) return item.text;
-    const d = detail?.items.find((x) => x.id === item.id);
-    if (d || !pointsVisible) return item.text;
-    return `${item.text} (${item.points} ${pluralizePoints(item.points)})`;
-  }
 
   function itemClass(id: string) {
     const d = detail?.items.find((x) => x.id === id);
@@ -256,7 +253,7 @@ export function SortColumnsExercise({
         className={`relative flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
       >
         {d && (d.isCorrect ? <CorrectIcon /> : <WrongIcon />)}
-        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
+        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{item.text}</span>
         {locked && d?.hintUsed && <HintUsedBadge />}
         {hintsEnabled && !locked && (
           <HintBulb
@@ -301,7 +298,7 @@ export function SortColumnsExercise({
         className={`word-pool-chip ${selected === item.id ? "ring-2 ring-black dark:ring-white" : ""}`}
       >
         <ChipGripIcon />
-        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{itemLabel(item)}</span>
+        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{item.text}</span>
         {hintsEnabled && !locked && (
           <HintBulb
             state={bulbState(item.id)}
@@ -319,6 +316,7 @@ export function SortColumnsExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
+        pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.sort_columns.subInstruction}
       />

@@ -6,13 +6,12 @@ import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
-import { SCORE_LABEL_CLASS } from "./score-style";
 import { TaskResult, TaskResultPairRows } from "./task-result";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
@@ -212,19 +211,6 @@ export function MatchingExercise({
     return singleDetail?.studentPairs.find((p) => p.left === left && p.right === right);
   }
 
-  // До перевірки — лише якщо pointsVisible; після — завжди. left тут НЕ
-  // перемішаний (config.pairs у тому самому порядку), тож можна знайти
-  // бали цієї пари напряму за текстом лівого елемента.
-  function pointsLabel(left: string, detail: MatchingDetail | undefined) {
-    if (hidePoints) return "";
-    const pd = detail?.pairPoints.find((p) => p.left === left);
-    const points = config.pairs.find((p) => p.left === left)?.points;
-    if (points === undefined) return "";
-    if (!pointsVisible && !pd) return "";
-    if (pd) return "";
-    return ` (${points} ${pluralizePoints(points)})`;
-  }
-
   // ==== Гілка блоків (>10 елементів) ====
   const [activeBlock, setActiveBlock] = useState(0);
   const blockCheckConfirm = useCheckConfirm();
@@ -384,7 +370,6 @@ export function MatchingExercise({
             return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
           }}
           usedRights={usedRightsInBlock}
-          renderLeftExtra={(left) => <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, blockDetail)}</span>}
         />
 
         <div className="flex flex-col gap-2">
@@ -499,6 +484,21 @@ export function MatchingExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockLeft = leftBlocks[activeBlock];
   const activeBlockUnanswered = activeBlockLeft.filter((left) => !pairs[left]).length;
+  // Пілюля "N балів" у заголовку панелі — той самий принцип, що pooled-
+  // score вправи (word-search.tsx тощо): до перевірки показує максимум
+  // ПОТОЧНОГО блоку (сума points пар цього блоку, left тут не перемішаний
+  // — той самий порядок, що в leftBlocks), ховається, коли всі блоки вже
+  // перевірені (aggregateResult готовий) — саме тоді під блоком з'являється
+  // підсумковий TaskResult "earned з max".
+  const currentMaxPoints = (useBlocks ? activeBlockLeft : config.left).reduce(
+    (sum, left) => sum + (config.pairs.find((p) => p.left === left)?.points ?? 0),
+    0
+  );
+  const pointsText =
+    !hidePoints && !(useBlocks ? aggregateResult : single.result) && pointsVisible
+      ? formatPointsCount(currentMaxPoints)
+      : undefined;
+
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -524,6 +524,7 @@ export function MatchingExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.matching.subInstruction}
       />
@@ -547,7 +548,6 @@ export function MatchingExercise({
               return d ? (d.isCorrect ? "correct" : "incorrect") : undefined;
             }}
             usedRights={usedRights}
-            renderLeftExtra={(left) => <span className={SCORE_LABEL_CLASS}>{pointsLabel(left, singleDetail)}</span>}
           />
 
           <div className="flex flex-col gap-3">
