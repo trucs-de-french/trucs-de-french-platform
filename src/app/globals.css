@@ -2314,28 +2314,18 @@ button, input, textarea, select, label, nav, aside {
 .light .diacritics-popup {
   background: #fffdf6;
   border: 1.5px solid #d9b765;
-  border-radius: 14px;
-  padding: 12px;
-  gap: 6px;
   box-shadow: 0 10px 24px rgba(40, 30, 90, 0.22);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .diacritics-popup {
     background: #fffdf6;
     border: 1.5px solid #d9b765;
-    border-radius: 14px;
-    padding: 12px;
-    gap: 6px;
     box-shadow: 0 10px 24px rgba(40, 30, 90, 0.22);
   }
 }
 .light .diacritics-key-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
   background: #fff;
-  border: 1.5px solid #d9b765;
-  font-size: 18px;
+  border-color: #d9b765;
   color: #1a1640;
   box-shadow: 0 1px 2px rgba(60, 40, 10, 0.12);
 }
@@ -2345,12 +2335,8 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .diacritics-key-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
     background: #fff;
-    border: 1.5px solid #d9b765;
-    font-size: 18px;
+    border-color: #d9b765;
     color: #1a1640;
     box-shadow: 0 1px 2px rgba(60, 40, 10, 0.12);
   }
@@ -2367,32 +2353,32 @@ button, input, textarea, select, label, nav, aside {
    none і там, і в системному dark-mirror, щоб не змінювати темну тему. */
 .diacritics-popup-arrow {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   transform: translateX(-50%) rotate(45deg);
   pointer-events: none;
 }
 .light .diacritics-popup-arrow--up {
-  top: -7px;
+  top: -6px;
   background: #fffdf6;
   border-top: 1.5px solid #d9b765;
   border-left: 1.5px solid #d9b765;
 }
 .light .diacritics-popup-arrow--down {
-  bottom: -7px;
+  bottom: -6px;
   background: #fffdf6;
   border-bottom: 1.5px solid #d9b765;
   border-right: 1.5px solid #d9b765;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .diacritics-popup-arrow--up {
-    top: -7px;
+    top: -6px;
     background: #fffdf6;
     border-top: 1.5px solid #d9b765;
     border-left: 1.5px solid #d9b765;
   }
   :root:not(.dark) .diacritics-popup-arrow--down {
-    bottom: -7px;
+    bottom: -6px;
     background: #fffdf6;
     border-bottom: 1.5px solid #d9b765;
     border-right: 1.5px solid #d9b765;
