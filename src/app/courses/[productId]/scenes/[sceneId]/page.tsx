@@ -767,12 +767,14 @@ export default async function ScenePage({
                   )}
 
                   {task.type === "game" && task.games?.embed_url && (
-                    <LinkCard
-                      href={task.games.embed_url}
-                      icon={Gamepad2}
-                      title="Відкрити гру"
-                      subtitle={task.games.provider}
-                    />
+                    <div className="link-card-grid">
+                      <LinkCard
+                        href={task.games.embed_url}
+                        icon={Gamepad2}
+                        title="Відкрити гру"
+                        subtitle={task.games.provider}
+                      />
+                    </div>
                   )}
 
                   {task.type === "link" &&
@@ -781,13 +783,15 @@ export default async function ScenePage({
                       const meta = resolveLinkTaskIcon(config);
                       const description = config.description?.trim();
                       return (
-                        <LinkCard
-                          href={config.url!}
-                          download={config.download}
-                          icon={meta.icon}
-                          title={task.title}
-                          subtitle={description || linkTaskDefaultSubtitle(config)}
-                        />
+                        <div className="link-card-grid">
+                          <LinkCard
+                            href={config.url!}
+                            download={config.download}
+                            icon={meta.icon}
+                            title={task.title}
+                            subtitle={description || linkTaskDefaultSubtitle(config)}
+                          />
+                        </div>
                       );
                     })()}
                 </>

@@ -1135,14 +1135,16 @@ export function TaskConfigFields({
                 const meta = resolveLinkTaskIcon(linkPreview.config);
                 const description = linkPreview.config.description?.trim();
                 return (
-                  <LinkCard
-                    href={linkPreview.config.url || "#"}
-                    download={linkPreview.config.download}
-                    icon={meta.icon}
-                    title={linkPreview.title || "Без назви"}
-                    subtitle={description || linkTaskDefaultSubtitle(linkPreview.config)}
-                    className="pointer-events-none"
-                  />
+                  <div className="link-card-grid">
+                    <LinkCard
+                      href={linkPreview.config.url || "#"}
+                      download={linkPreview.config.download}
+                      icon={meta.icon}
+                      title={linkPreview.title || "Без назви"}
+                      subtitle={description || linkTaskDefaultSubtitle(linkPreview.config)}
+                      className="pointer-events-none"
+                    />
+                  </div>
                 );
               })()}
             </div>
