@@ -7614,3 +7614,38 @@ button.scene-bar:active .scene-bar-toggle {
     border-color: #a9bcff;
   }
 }
+
+/* checkbox_grid (Grille à cocher) — тонша striping рядків (кожен другий)
+   і наведення на весь рядок, темна тема лише. Рядок грід-таблиці — div
+   role="row" class="contents" (без власного боксу, лише CSS grid), тож
+   фон не можна поставити на сам рядок — rowStripe додається напряму на
+   кожну дочірню клітинку (rowheader/gridcell) з JS (checkbox-grid.tsx,
+   index % 2). Наведення всього рядка — через :has() на батьківському
+   [role="row"], без JS-стану: при :hover будь-якої gridcell у рядку
+   підсвічуються всі клітинки того ж рядка. */
+.dark .cg-row-stripe {
+  background: rgba(255, 255, 255, 0.035);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-row-stripe {
+    background: rgba(255, 255, 255, 0.035);
+  }
+}
+@media (hover: hover) {
+  .dark .cg-cb-unchecked:hover {
+    border-color: #7f9cf0;
+  }
+  .dark .cg-grid-table [role="row"]:has(> [role="gridcell"]:hover) > [role="rowheader"],
+  .dark .cg-grid-table [role="row"]:has(> [role="gridcell"]:hover) > [role="gridcell"] {
+    background: rgba(127, 156, 240, 0.08);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .cg-cb-unchecked:hover {
+    border-color: #7f9cf0;
+  }
+  :root:not(.light) .cg-grid-table [role="row"]:has(> [role="gridcell"]:hover) > [role="rowheader"],
+  :root:not(.light) .cg-grid-table [role="row"]:has(> [role="gridcell"]:hover) > [role="gridcell"] {
+    background: rgba(127, 156, 240, 0.08);
+  }
+}
