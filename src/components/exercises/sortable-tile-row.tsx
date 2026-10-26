@@ -98,6 +98,16 @@ export function SortableTileRow({
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
+    // letterTile (letter_rearrangement) — ті самі токени поля, що й пропуск
+    // letter_gaps (--card-field-bg/--card-field-border/--field-ink,
+    // .exercise-field у globals.css), а не --card-bg/--card-border картки:
+    // плитка-літера тут має виглядати як те саме поле, просто заповнене.
+    // Hover-фон #20247a — те саме літеральне значення, що
+    // .dark .exercise-field:hover (globals.css), без card-скоупінгу, тож це
+    // й реальний hover-колір полів-пропусків на картці; рамка на hover —
+    // --card-hover-border (трохи яскравіша за --card-field-border).
+    if (letterTile)
+      return `${shadow} glass-chip glass-chip-hover glass-gap-shadow border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:text-[var(--field-ink)] dark:hover:bg-[#20247a] dark:hover:border-[var(--card-hover-border)]`;
     return `${shadow} glass-chip glass-chip-hover glass-gap-shadow border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]`;
   }
 
