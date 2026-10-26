@@ -6636,25 +6636,52 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1a1640;
 }
 .dark .word-choice-pill--default {
-  background: rgba(150, 125, 240, 0.2);
-  border-color: rgba(150, 125, 240, 0.4);
-  color: #dcdbf3;
+  background: rgba(217, 183, 101, 0.14);
+  border-color: rgba(217, 183, 101, 0.75);
+  color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--default {
-    background: rgba(150, 125, 240, 0.2);
-    border-color: rgba(150, 125, 240, 0.4);
-    color: #dcdbf3;
+    background: rgba(217, 183, 101, 0.14);
+    border-color: rgba(217, 183, 101, 0.75);
+    color: #f5ecd0;
   }
 }
-/* Вибраний (до перевірки) — той самий індиго-градієнт в обох темах (на
-   темному тлі білий текст лишається читабельним без змін). */
+@media (hover: hover) {
+  .dark .word-choice-pill--default:hover {
+    background: rgba(217, 183, 101, 0.24);
+    border-color: rgba(217, 183, 101, 0.95);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .word-choice-pill--default:hover {
+    background: rgba(217, 183, 101, 0.24);
+    border-color: rgba(217, 183, 101, 0.95);
+  }
+}
+/* Вибраний (до перевірки) — світла: той самий індиго-градієнт, що раніше.
+   Темна — золота пілюля замість індиго (індиго вже є у фону картки,
+   золото тут читається чіткіше й узгоджено з default/hover вище). */
 .word-choice-pill--selected {
   background: linear-gradient(135deg, #5a55e6, #3b36c4);
   border-color: #3b36c4;
   color: #fff;
   font-weight: 800;
   box-shadow: 0 6px 12px -6px rgba(59, 54, 196, 0.55);
+}
+.dark .word-choice-pill--selected {
+  background: rgba(217, 183, 101, 0.34);
+  border-color: #e0b85a;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(217, 183, 101, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-choice-pill--selected {
+    background: rgba(217, 183, 101, 0.34);
+    border-color: #e0b85a;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(217, 183, 101, 0.3);
+  }
 }
 /* Обраний студентом варіант виявився правильним. Темна — той самий
    зелений, що .matching-card--correct (bg rgba(5,46,22,.3)/рамка #22c55e),
@@ -6726,11 +6753,11 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 300;
 }
 .dark .word-choice-slash {
-  color: rgba(220, 219, 243, 0.55);
+  color: rgba(245, 236, 208, 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-slash {
-    color: rgba(220, 219, 243, 0.55);
+    color: rgba(245, 236, 208, 0.5);
   }
 }
 /* Чип підказки — один вигляд на всіх ширинах, у звичайному потоці під
