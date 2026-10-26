@@ -80,9 +80,13 @@ function FlipCardTile({
         <ImageLightbox src={card.image_url} onClose={() => setZoomOpen(false)} />
       )}
       {card.audio_url && <AudioPill src={card.audio_url} compact />}
-      <span className="min-w-0 max-w-full break-words [overflow-wrap:anywhere]">{frenchNbsp(shown)}</span>
+      <span
+        className={`min-w-0 max-w-full break-words [overflow-wrap:anywhere] ${flipped ? "dark:text-[#c9c6e8]" : "dark:text-[#f5ecd0]"}`}
+      >
+        {frenchNbsp(shown)}
+      </span>
       {clickable && (
-        <span className="text-xs text-neutral-400 dark:text-neutral-500">
+        <span className="text-xs text-neutral-400 dark:text-[rgba(245,236,208,0.6)]">
           {flipped ? "клік — назад" : "клік — перевернути"}
         </span>
       )}
@@ -379,7 +383,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   // під довгий текст замість колапсу (був колапс через height:100% проти
   // предка з auto-height — класична відсоткова пастка CSS).
   const faceVisualClass =
-    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:rounded-lg dark:border dark:border-neutral-700 dark:bg-neutral-800 dark:shadow-sm";
+    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] dark:shadow-none";
   const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
 

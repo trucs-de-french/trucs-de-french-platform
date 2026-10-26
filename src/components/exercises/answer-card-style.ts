@@ -4,7 +4,7 @@
 // Клас/фон стану (обрано/правильно/неправильно) додається окремо кожним
 // викликачем — тут лише базова форма+відступ+тінь, спільна для ВСІХ станів.
 export const ANSWER_CARD_BASE =
-  "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center glass-card-shadow dark:shadow-sm transition-colors";
+  "rounded-[14px] border-[1.5px] p-3 text-center glass-card-shadow dark:shadow-none transition-colors";
 
 // Стан "не обрано, ще не перевірено" — нейтральна картка з легким hover.
 // ЛИШЕ для flip_cards (великі картки-грані, лишаються на градієнтній
@@ -14,7 +14,7 @@ export const ANSWER_CARD_BASE =
 // ANSWER_CHIP_BASE/ANSWER_CHIP_DEFAULT нижче (суцільна рамка-чип, як у
 // полів-пропусків, без градієнта й без великої тіні).
 export const ANSWER_CARD_DEFAULT =
-  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] dark:hover:bg-[rgba(255,255,255,0.09)] dark:hover:border-[rgba(217,183,101,0.75)]";
 
 // Той самий розмір/відступ/радіус, що ANSWER_CARD_BASE/DEFAULT, але
 // маленька рамка-чип (border rgba(217,183,101,.55) 1px, легка тінь
