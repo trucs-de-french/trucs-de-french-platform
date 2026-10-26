@@ -2869,13 +2869,11 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 /* Підсвітка слів глосарію в тексті скрипту (TranslatedText/VocabWord,
-   dialogue-line.tsx) — спільний клас-гачок замість хардкоду bg-blue-*
+   dialogue-line.tsx) — спільний клас-гачок замість хардкоду кольору
    прямо в розмітці: .vocab-chip лише несе колір (лейаут/розмір —
    rounded px-1 font-medium лишаються звичайними Tailwind-класами на
-   елементі, без зміни). Темна тема триматься на dark:bg-blue-900/40
-   dark:text-blue-200 (і dark:hover:bg-blue-900/60 для клікабельного
-   слова) — ці Tailwind dark:-класи лишились у розмітці БЕЗ змін, тож
-   темна тема піксель-в-піксель та сама, що й була.
+   елементі, без зміни). Клас використовується ЛИШЕ в цьому компоненті
+   (панель скрипту) — зміна теми нижче нічого іншого не торкається.
    .vocab-chip--interactive — лише на клікабельній кнопці (VocabWord):
    hover/focus-visible додаються ТІЛЬКИ тут, не на статичному
    TranslatedText-span (там hover у світлій темі раніше й не було). */
@@ -2909,6 +2907,54 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.dark) .vocab-chip--interactive:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(75, 70, 218, 0.35);
+  }
+}
+/* Темна тема — лише тут, усередині скрипту (.vocab-chip більше ніде в
+   коді не використовується): замість блакитно-сірого (колишні inline
+   dark:bg-blue-900/40 dark:text-blue-200 у dialogue-line.tsx, прибрані
+   звідти) — золотий градієнт платформи, той самий тон, що лампа-підказка
+   й золоті рамки карток. border-radius/font-weight тут явно (6px/600),
+   бо мають перемогти звичайні Tailwind-класи rounded/font-medium на
+   самому елементі (однакова специфічність класу — порядок у CSS вирішує;
+   це правило йде пізніше за jsx-класи самим фактом підключення файла). */
+.dark .vocab-chip {
+  background: linear-gradient(180deg, #f6dc8e, #e9bd5e);
+  border: 1px solid #d9b765;
+  border-radius: 6px;
+  color: #3a2a08;
+  font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-chip {
+    background: linear-gradient(180deg, #f6dc8e, #e9bd5e);
+    border: 1px solid #d9b765;
+    border-radius: 6px;
+    color: #3a2a08;
+    font-weight: 600;
+  }
+}
+@media (hover: hover) {
+  .dark .vocab-chip--interactive:hover {
+    background: linear-gradient(180deg, #f8e3a4, #eec873);
+    border-color: #f6dc8e;
+    color: #3a2a08;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-chip--interactive:hover {
+    background: linear-gradient(180deg, #f8e3a4, #eec873);
+    border-color: #f6dc8e;
+    color: #3a2a08;
+  }
+}
+.dark .vocab-chip--interactive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(246, 220, 142, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-chip--interactive:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(246, 220, 142, 0.45);
   }
 }
 
