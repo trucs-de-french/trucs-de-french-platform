@@ -545,7 +545,7 @@ function CrosswordBlockView({
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
-              ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
               : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
@@ -625,7 +625,7 @@ function CrosswordBlockView({
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
-              ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
               : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
         }`}
       >
@@ -683,7 +683,7 @@ function CrosswordBlockView({
           isCorrect
             ? "glass-chip border-[#dcbd6e] opacity-50"
             : isActive
-              ? "border-blue-400 bg-blue-50 dark:bg-blue-950/40"
+              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
               : "glass-chip border-[#dcbd6e]"
         }`}
       >

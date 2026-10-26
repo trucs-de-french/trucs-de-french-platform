@@ -2279,6 +2279,21 @@ button, input, textarea, select, label, nav, aside {
     background: rgba(127, 156, 240, 0.18);
   }
 }
+/* Активна картка-підказка (ImageClueCard/LongClueCard/CluePill) — та сама
+   периwinkle-підсвітка, що активне слово в сітці (crossword-tile--active
+   вище), лише для картки підказки під сіткою. */
+.dark .crossword-clue-card--active {
+  background: rgba(127, 156, 240, 0.22);
+  border-color: #7f9cf0;
+  box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-clue-card--active {
+    background: rgba(127, 156, 240, 0.22);
+    border-color: #7f9cf0;
+    box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
+  }
+}
 .crossword-tile-number {
   color: #b8902f;
 }
