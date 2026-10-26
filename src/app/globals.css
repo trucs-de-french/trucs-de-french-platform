@@ -7138,8 +7138,10 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 18px;
 }
 .karaoke-line--active {
-  background: linear-gradient(90deg, #eeeefb, rgba(238, 238, 251, 0.2));
-  border-left-color: #4b46da;
+  background: rgba(224, 228, 251, 0.7);
+  border-left: 3px solid #5a55e6;
+  border-radius: 6px;
+  color: #1a1640;
 }
 .dark .karaoke-line--active {
   background: linear-gradient(90deg, rgba(127, 156, 240, 0.22), rgba(127, 156, 240, 0.06));

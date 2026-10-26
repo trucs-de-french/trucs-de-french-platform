@@ -462,10 +462,30 @@ export function KaraokeExercise({
     };
   }, [isPlaying, player, config.lines, pauseEnabled, pauseTargetFor, triggerPauseForLine, cancelScheduledPause]);
 
-  // Під час паузи-в-кінці-рядка підсвічуємо саме ЩОЙНО ПРОСПІВАНИЙ рядок
-  // (pausedForGapLine), не "сиру" позицію за часом, що вже перейшла на
-  // наступний.
-  const displayLineIndex = pausedForGapLine ?? currentLineIndex;
+  // Рядок, що зараз грає — ЄДИНЕ джерело підсвітки й автоскролу (раніше в
+  // режимі "вибір" підсвітку перехоплював activeGap.li, через що вона
+  // статично сиділа на рядку з першим незаповненим пропуском і ніколи не
+  // рухалась услід за відео — це й був баг). Під час паузи-в-кінці-рядка
+  // підсвічуємо саме ЩОЙНО ПРОСПІВАНИЙ рядок (pausedForGapLine), не "сиру"
+  // позицію за часом, що вже перейшла на наступний.
+  const playingLineIndex = pausedForGapLine ?? currentLineIndex;
+
+  // Автоскрол призупиняється на 3с після ручного скролу студента в
+  // контейнері рядків — lastManualScrollAtRef пишеться лише в onScroll
+  // нижче, АЛЕ той самий onScroll спрацьовує і на НАШ програмний
+  // scrollLineIntoContainer (smooth-скрол сам генерує scroll-події) —
+  // programmaticScrollUntilRef відмежовує "цей scroll — наш" (ефект ставить
+  // його ПЕРЕД викликом, на час, довший за typical smooth-scroll) від
+  // реального дотику студента до контейнера.
+  const lastManualScrollAtRef = useRef(0);
+  const programmaticScrollUntilRef = useRef(0);
+  const MANUAL_SCROLL_SUPPRESS_MS = 3000;
+  const PROGRAMMATIC_SCROLL_WINDOW_MS = 1000;
+
+  function handleLinesContainerScroll() {
+    if (Date.now() < programmaticScrollUntilRef.current) return;
+    lastManualScrollAtRef.current = Date.now();
+  }
 
   // Автоскрол лише ВСЕРЕДИНІ linesContainerRef (scrollLineIntoContainer
   // вище), ніколи вікна — scrollIntoView ЗАМІНЕНО саме тому, що воно сам
@@ -492,22 +512,23 @@ export function KaraokeExercise({
       return;
     }
     if (!isPlaying && pausedForGapLine === null) return;
-    if (displayLineIndex < 0) return;
+    if (playingLineIndex < 0) return;
+    if (Date.now() - lastManualScrollAtRef.current < MANUAL_SCROLL_SUPPRESS_MS) return;
     const container = linesContainerRef.current;
-    const lineEl = lineRefs.current[displayLineIndex];
-    if (container && lineEl) scrollLineIntoContainer(container, lineEl);
-  }, [displayLineIndex, isPlaying, pausedForGapLine]);
+    const lineEl = lineRefs.current[playingLineIndex];
+    if (container && lineEl) {
+      programmaticScrollUntilRef.current = Date.now() + PROGRAMMATIC_SCROLL_WINDOW_MS;
+      scrollLineIntoContainer(container, lineEl);
+    }
+  }, [playingLineIndex, isPlaying, pausedForGapLine]);
 
-  // Підсвітка рядка — лінія, що МІСТИТЬ активний пропуск (ту, чиї варіанти
-  // показані нижче), не "сира" позиція відео (displayLineIndex): вони
-  // можуть розійтись — студент уже обрав відповідь у поточному рядку,
-  // pickOption/findNextEmptyGap уже перевели activeGap на пропуск у
-  // НАСТУПНОМУ рядку, поки відео ще доспівує попередній (displayLineIndex
-  // на нього не встиг перейти) — підсвітка мусить сидіти саме на рядку з
-  // активним пропуском. Лише для режиму "вибір" (єдиний, де activeGap
-  // існує) — typing-режим і скрол (displayLineIndex вище) лишаються як
-  // були.
-  const highlightLineIndex = config.answerMode === "choice" && activeGap ? activeGap.li : displayLineIndex;
+  // Підсвітка рядка — ЗАВЖДИ рядок, що зараз грає (playingLineIndex), для
+  // обох режимів відповіді. Активний пропуск (activeGap, лише в режимі
+  // "вибір") має власну підсвітку самого поля (.karaoke-gap--active-empty)
+  // і НЕ підсвічує свій рядок цілком — він може бути в іншому рядку, ніж
+  // той, що зараз грає (студент ще добирає відповідь у попередньому рядку,
+  // поки відео вже перейшло на наступний).
+  const highlightLineIndex = playingLineIndex;
 
   const totalGaps = useMemo(
     () => config.lines.reduce((sum, l) => sum + l.tokens.filter((t) => t === null).length, 0),
@@ -615,7 +636,7 @@ export function KaraokeExercise({
 
         {/* ~6-7 рядків висотою (clamp у .karaoke-card, globals.css) —
             власний скрол-контейнер, не сторінка. */}
-        <div ref={linesContainerRef} className="karaoke-card">
+        <div ref={linesContainerRef} className="karaoke-card" onScroll={handleLinesContainerScroll}>
           {config.lines.map((line, li) => (
             <KaraokeLineRow
               key={li}
