@@ -65,7 +65,7 @@ export function DiacriticsPopup({
 
   return (
     <div
-      className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg dark:border-neutral-700 dark:bg-neutral-800`}
+      className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg diacritics-popup`}
       style={{ top, left, width: POPUP_WIDTH }}
     >
       {onHint && (
@@ -86,7 +86,7 @@ export function DiacriticsPopup({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onPick(ch)}
-          className={STUDENT_BUTTON_SECONDARY_IDLE}
+          className={`${STUDENT_BUTTON_SECONDARY_IDLE} diacritics-key-btn`}
         >
           {ch}
         </button>

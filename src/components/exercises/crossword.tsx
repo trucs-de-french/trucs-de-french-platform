@@ -837,6 +837,11 @@ function CrosswordBlockView({
                       }
                       const number = block.cellNumbers[ri][ci];
                       const status = cellLiveStatus(ri, ci);
+                      const isUncheckedActive =
+                        !effectiveHintedCells.has(cellKey(ri, ci)) &&
+                        status !== "correct" &&
+                        status !== "incorrect" &&
+                        isActiveCell(ri, ci);
                       return (
                         <td
                           key={ci}
@@ -856,7 +861,7 @@ function CrosswordBlockView({
                               ширина таблиці НЕ змінюється (table-клітинки
                               ігнорують margin, тому зазор не можна покласти
                               прямо на <td>). */}
-                          <div className="crossword-tile">
+                          <div className={`crossword-tile ${isUncheckedActive ? "crossword-tile--active" : ""}`}>
                             {number !== null && (
                               <span
                                 className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 leading-none"
@@ -888,8 +893,8 @@ function CrosswordBlockView({
                                     ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                                     : status === "incorrect"
                                       ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                      : isActiveCell(ri, ci)
-                                        ? "bg-blue-50 dark:bg-blue-950/40"
+                                      : isUncheckedActive
+                                        ? "bg-blue-50"
                                         : ""
                               }`}
                             />

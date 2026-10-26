@@ -2222,6 +2222,63 @@ button, input, textarea, select, label, nav, aside {
     box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
   }
 }
+.dark .crossword-tile--active {
+  background: rgba(127, 156, 240, 0.28);
+  border-color: #7f9cf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-tile--active {
+    background: rgba(127, 156, 240, 0.28);
+    border-color: #7f9cf0;
+  }
+}
+.dark .crossword-tile--active:focus-within {
+  background: rgba(127, 156, 240, 0.45);
+  border-color: #a9bcff;
+  box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-tile--active:focus-within {
+    background: rgba(127, 156, 240, 0.45);
+    border-color: #a9bcff;
+    box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+  }
+}
+/* Попап діакритики (DiacriticsPopup, diacritics-popup.tsx) — темна тема:
+   той самий колір поля, що "лист" філворду (--ws-sheet-bg, ws-sheet вище),
+   замість нейтрального темно-сірого. */
+.dark .diacritics-popup {
+  background: var(--ws-sheet-bg);
+  border: 1.5px solid rgba(150, 160, 245, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .diacritics-popup {
+    background: var(--ws-sheet-bg);
+    border: 1.5px solid rgba(150, 160, 245, 0.4);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+}
+.dark .diacritics-key-btn {
+  background: var(--card-field-bg);
+  border-color: var(--card-field-border);
+  color: #f5ecd0;
+}
+.dark .diacritics-key-btn:hover {
+  border-color: #7f9cf0;
+  background: rgba(127, 156, 240, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .diacritics-key-btn {
+    background: var(--card-field-bg);
+    border-color: var(--card-field-border);
+    color: #f5ecd0;
+  }
+  :root:not(.light) .diacritics-key-btn:hover {
+    border-color: #7f9cf0;
+    background: rgba(127, 156, 240, 0.18);
+  }
+}
 .crossword-tile-number {
   color: #b8902f;
 }
