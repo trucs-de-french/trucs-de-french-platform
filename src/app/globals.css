@@ -7569,3 +7569,46 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f5ecd0;
   }
 }
+
+/* Темна — плитка-слово reorder (Mise en ordre): темно-наvy фон з дуже
+   тонкою періwinkle рамкою й м'якою тінню-підйомом, тихіше за
+   letter_rearrangement's --card-field-bg (дивись tileClass у
+   sortable-tile-row.tsx). .glass-chip/.glass-gap-shadow лишаються лише
+   для світлої теми (вони самі скоуплені на .light/:root:not(.dark)) —
+   тут перекриваю фон/рамку/тінь для .dark напряму. */
+.dark .reorder-word-tile {
+  background: rgba(8, 10, 40, 0.55);
+  border-color: rgba(130, 160, 240, 0.28);
+  box-shadow: 0 2px 4px rgba(0, 0, 10, 0.45);
+  color: #f5ecd0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .reorder-word-tile {
+    background: rgba(8, 10, 40, 0.55);
+    border-color: rgba(130, 160, 240, 0.28);
+    box-shadow: 0 2px 4px rgba(0, 0, 10, 0.45);
+    color: #f5ecd0;
+  }
+}
+@media (hover: hover) {
+  .dark .reorder-word-tile:hover {
+    border-color: rgba(130, 160, 240, 0.6);
+    background: rgba(8, 10, 40, 0.65);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .reorder-word-tile:hover {
+    border-color: rgba(130, 160, 240, 0.6);
+    background: rgba(8, 10, 40, 0.65);
+  }
+}
+.dark .reorder-word-tile--dragging {
+  box-shadow: 0 6px 14px rgba(0, 0, 10, 0.55);
+  border-color: #7f9cf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .reorder-word-tile--dragging {
+    box-shadow: 0 6px 14px rgba(0, 0, 10, 0.55);
+    border-color: #7f9cf0;
+  }
+}
