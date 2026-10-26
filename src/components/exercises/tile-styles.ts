@@ -72,7 +72,10 @@ export function slotClass(
     case "incorrect":
       return `${base} border-red-500 bg-red-50 dark:bg-red-950/30`;
     case "hover":
-      return `${base} border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30`;
+      // Темна тема — яскравіша рамка з тієї ж периwinkle-родини, що
+      // --card-hover-border/#7f9cf0 (летер-тайли, sortable-tile-row.tsx),
+      // замість старого синього border-blue-500.
+      return `${base} border-blue-400 bg-blue-50 dark:border-[#7f9cf0] dark:bg-blue-950/30`;
     case "filled":
       // Слот зі словом до перевірки — той самий вигляд "обрано", що й у
       // multiple_choice/true_false/matching, щоб студент бачив свій вибір
@@ -82,8 +85,10 @@ export function slotClass(
       if (opts?.selectableHint) {
         return `${base} border-dashed border-brand bg-brand/5 dark:bg-brand/10`;
       }
-      return opts?.emptyBg === "subtle"
-        ? `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-neutral-900/50 dark:hover:bg-neutral-900`
-        : `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-neutral-400 dark:bg-transparent dark:hover:bg-neutral-800`;
+      // Порожній слот (drag_drop/image_match практика) — ті самі токени
+      // поля, що пропуск letter_gaps (--card-field-bg/--card-field-border,
+      // .exercise-field у globals.css), замість старого
+      // dark:border-neutral-400/dark:bg-neutral-900 (чи transparent).
+      return `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:hover:bg-[#20247a]`;
   }
 }

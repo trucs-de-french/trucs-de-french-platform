@@ -322,7 +322,7 @@ export function FillBlankExercise({
                 // (FillBlankPublic не містить відповідей).
                 <span
                   aria-hidden
-                  className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-0.5 text-center text-neutral-400 dark:bg-transparent dark:border-neutral-600 dark:text-neutral-500"
+                  className="mx-1 inline-block w-16 rounded border border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-0.5 text-center text-neutral-400 dark:bg-[var(--card-field-bg)] dark:border-[var(--card-field-border)] dark:text-[rgba(179,191,224,0.8)]"
                 >
                   ···
                 </span>

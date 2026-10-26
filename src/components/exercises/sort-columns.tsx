@@ -335,7 +335,7 @@ export function SortColumnsExercise({
           const isHinted = activeHint?.columnId === col.id;
           const stateClass =
             dragOverColumn === col.id
-              ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+              ? "border-blue-400 bg-blue-50 dark:border-[#7f9cf0] dark:bg-blue-950/30"
               : isHinted
                 ? "border-blue-300 bg-blue-50 ring-2 ring-inset ring-blue-500 dark:border-blue-600 dark:bg-blue-950/30"
                 : ANSWER_CHIP_DEFAULT;

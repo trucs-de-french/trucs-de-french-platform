@@ -192,7 +192,8 @@ export function ChronologicalOrderExercise({
 
   function inputClass(itemId: string) {
     const d = itemDetail(itemId);
-    if (!d) return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-[var(--card-field-border)]";
+    if (!d)
+      return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-[var(--card-field-bg)] dark:border-[var(--card-field-border)] dark:placeholder:text-[rgba(179,191,224,0.8)]";
     return d.isCorrect
       ? "border-green-500 bg-green-50 dark:bg-green-950/30"
       : "border-red-500 bg-red-50 dark:bg-red-950/30";

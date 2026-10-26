@@ -68,8 +68,10 @@
   --field-ink: #f5ecd0;
   --field-placeholder: #a4a2dc;
   --field-caret: #f6dc8e;
-  --field-focus-border: #8a88f5;
-  --field-focus-shadow: rgba(138, 136, 245, 0.25);
+  /* periwinkle #7f9cf0 (та сама родина, що --card-hover-border) замість
+     старого #8a88f5 — яскравіша рамка на фокусі поля. */
+  --field-focus-border: #7f9cf0;
+  --field-focus-shadow: rgba(127, 156, 240, 0.25);
   --field-disabled-bg: #15184f;
   --field-disabled-ink: rgba(245, 236, 208, 0.7);
   --field-disabled-border: rgba(138, 136, 245, 0.3);
@@ -117,8 +119,8 @@
     --field-ink: #f5ecd0;
     --field-placeholder: #a4a2dc;
     --field-caret: #f6dc8e;
-    --field-focus-border: #8a88f5;
-    --field-focus-shadow: rgba(138, 136, 245, 0.25);
+    --field-focus-border: #7f9cf0;
+    --field-focus-shadow: rgba(127, 156, 240, 0.25);
     --field-disabled-bg: #15184f;
     --field-disabled-ink: rgba(245, 236, 208, 0.7);
     --field-disabled-border: rgba(138, 136, 245, 0.3);
@@ -161,7 +163,8 @@
    тож стани перевірки завжди лишаються їхніми власними кольорами незалежно
    від порядку правил у файлі. */
 .dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
-.dark .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+.dark .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+.dark .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
   background: var(--card-field-bg);
   border-color: var(--card-field-border);
 }
@@ -212,7 +215,8 @@
     opacity: 1;
   }
   :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
-  :root:not(.light) .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+  :root:not(.light) .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+  :root:not(.light) .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
     background: var(--card-field-bg);
     border-color: var(--card-field-border);
   }
@@ -5562,14 +5566,16 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff;
   border: 1.5px dashed rgba(217, 183, 101, 0.9);
 }
+/* Та сама причина, що .image-match-slot--empty вище — спільні токени поля
+   замість старого хардкоду. */
 .dark .drag-drop-slot--empty {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.45);
+  background: var(--card-field-bg);
+  border-color: var(--card-field-border);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .drag-drop-slot--empty {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.45);
+    background: var(--card-field-bg);
+    border-color: var(--card-field-border);
   }
 }
 .drag-drop-slot-placeholder {
@@ -5580,11 +5586,11 @@ button.scene-bar:active .scene-bar-toggle {
   overflow-wrap: anywhere;
 }
 .dark .drag-drop-slot-placeholder {
-  color: rgba(220, 219, 243, 0.6);
+  color: rgba(179, 191, 224, 0.8);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .drag-drop-slot-placeholder {
-    color: rgba(220, 219, 243, 0.6);
+    color: rgba(179, 191, 224, 0.8);
   }
 }
 .drag-drop-slot--dragover {
@@ -5592,12 +5598,12 @@ button.scene-bar:active .scene-bar-toggle {
   background: #eeeefb;
 }
 .dark .drag-drop-slot--dragover {
-  border-color: #6b76ff;
+  border-color: #7f9cf0;
   background: rgba(75, 70, 218, 0.18);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .drag-drop-slot--dragover {
-    border-color: #6b76ff;
+    border-color: #7f9cf0;
     background: rgba(75, 70, 218, 0.18);
   }
 }
@@ -5930,14 +5936,17 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff;
   border: 1.5px dashed rgba(217, 183, 101, 0.9);
 }
+/* Темна тема — ті самі токени поля, що пропуск letter_gaps
+   (--card-field-bg/--card-field-border, .exercise-field), замість старого
+   хардкоду rgba(255,255,255,.04)/rgba(243,217,139,.45). */
 .dark .image-match-slot--empty {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.45);
+  background: var(--card-field-bg);
+  border-color: var(--card-field-border);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot--empty {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.45);
+    background: var(--card-field-bg);
+    border-color: var(--card-field-border);
   }
 }
 .image-match-slot-placeholder {
@@ -5947,25 +5956,29 @@ button.scene-bar:active .scene-bar-toggle {
   color: #b8a67a;
   overflow-wrap: anywhere;
 }
+/* Приглушений лавандовий, той самий, що --card-ink-2 (b3bfe0) при .8
+   opacity, замість старого сіро-лавандового rgba(220,219,243,.6). */
 .dark .image-match-slot-placeholder {
-  color: rgba(220, 219, 243, 0.6);
+  color: rgba(179, 191, 224, 0.8);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot-placeholder {
-    color: rgba(220, 219, 243, 0.6);
+    color: rgba(179, 191, 224, 0.8);
   }
 }
 .image-match-slot--dragover {
   border: 1.5px dashed #4b46da;
   background: #eeeefb;
 }
+/* Рамка яскравіша за --card-field-border (periwinkle #7f9cf0), фон лишено
+   на місці — це окремий "сюди можна покласти" стан, не порожній/заповнений. */
 .dark .image-match-slot--dragover {
-  border-color: #6b76ff;
+  border-color: #7f9cf0;
   background: rgba(75, 70, 218, 0.18);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot--dragover {
-    border-color: #6b76ff;
+    border-color: #7f9cf0;
     background: rgba(75, 70, 218, 0.18);
   }
 }
@@ -6673,16 +6686,26 @@ button.scene-bar:active .scene-bar-toggle {
   background: #eeeefb;
   color: #2f2c6b;
 }
+/* Токени поля (--card-field-bg/--card-field-border), ті самі, що пропуск
+   letter_gaps, замість старого хардкоду rgba(185,178,232,...); колір —
+   приглушений лавандовий #b3bfe0 при .8 opacity (той самий, що плейсхолдер
+   image-match-slot/drag-drop-slot вище), а не сірий. */
 .dark .chrono-number-slot--empty {
-  border-color: rgba(185, 178, 232, 0.4);
-  background: rgba(185, 178, 232, 0.07);
-  color: rgba(201, 200, 230, 0.55);
+  border-color: var(--card-field-border);
+  background: var(--card-field-bg);
+  color: rgba(179, 191, 224, 0.8);
+}
+.dark .chrono-number-slot--empty::placeholder {
+  color: rgba(179, 191, 224, 0.8);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-number-slot--empty {
-    border-color: rgba(185, 178, 232, 0.4);
-    background: rgba(185, 178, 232, 0.07);
-    color: rgba(201, 200, 230, 0.55);
+    border-color: var(--card-field-border);
+    background: var(--card-field-bg);
+    color: rgba(179, 191, 224, 0.8);
+  }
+  :root:not(.light) .chrono-number-slot--empty::placeholder {
+    color: rgba(179, 191, 224, 0.8);
   }
 }
 .dark .chrono-number-slot--filled {
@@ -6833,17 +6856,21 @@ button.scene-bar:active .scene-bar-toggle {
   color: #8a88b5;
   box-shadow: 0 0 0 4px rgba(75, 70, 218, 0.15);
 }
+/* Активний (можна клікнути зараз) слот караоке — та сама яскравіша
+   periwinkle-рамка #7f9cf0, що hover/dragover у image-match/drag-drop
+   слотах, замість старого #8a88f5; фон лишено (окрема підсвітка "це
+   активний слот", не порожній стан сам по собі). */
 .dark .karaoke-gap--active-empty {
   background: rgba(255, 255, 255, 0.08);
-  border-color: #8a88f5;
-  color: rgba(255, 255, 255, 0.5);
+  border-color: #7f9cf0;
+  color: rgba(179, 191, 224, 0.8);
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--active-empty {
     background: rgba(255, 255, 255, 0.08);
-    border-color: #8a88f5;
-    color: rgba(255, 255, 255, 0.5);
+    border-color: #7f9cf0;
+    color: rgba(179, 191, 224, 0.8);
     box-shadow: none;
   }
 }
@@ -6852,16 +6879,25 @@ button.scene-bar:active .scene-bar-toggle {
   border: 2px dashed #d9b765;
   color: #b3a77a;
 }
+/* Токени поля (--card-field-bg/--card-field-border), ті самі, що пропуск
+   letter_gaps, замість --field-bg/--field-border (не-картковий фон); "…"
+   плейсхолдер — приглушений лавандовий #b3bfe0 при .8, не --field-ink. */
 .dark .karaoke-gap--upcoming-empty {
-  background: var(--field-bg);
-  border-color: var(--field-border);
-  color: var(--field-ink);
+  background: var(--card-field-bg);
+  border-color: var(--card-field-border);
+  color: rgba(179, 191, 224, 0.8);
+}
+.dark .karaoke-gap--upcoming-empty::placeholder {
+  color: rgba(179, 191, 224, 0.8);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--upcoming-empty {
-    background: var(--field-bg);
-    border-color: var(--field-border);
-    color: var(--field-ink);
+    background: var(--card-field-bg);
+    border-color: var(--card-field-border);
+    color: rgba(179, 191, 224, 0.8);
+  }
+  :root:not(.light) .karaoke-gap--upcoming-empty::placeholder {
+    color: rgba(179, 191, 224, 0.8);
   }
 }
 .karaoke-gap--filled {
