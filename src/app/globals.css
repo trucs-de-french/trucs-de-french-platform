@@ -51,7 +51,7 @@
    відрізнялось від звичайного тексту панелі. */
 :root.dark {
   --points-bg: linear-gradient(135deg, #2f2c6b, #4b46da);
-  --points-border: rgba(217, 183, 101, 0.65);
+  --points-border: rgba(217, 183, 101, 0.45);
   --points-ink: #fff;
   --points-ok-bg: #1f7a3d;
   --points-ok-border: #4cc47e;
@@ -102,7 +102,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     --points-bg: linear-gradient(135deg, #2f2c6b, #4b46da);
-    --points-border: rgba(217, 183, 101, 0.65);
+    --points-border: rgba(217, 183, 101, 0.45);
     --points-ink: #fff;
     --points-ok-bg: #1f7a3d;
     --points-ok-border: #4cc47e;
@@ -3379,14 +3379,14 @@ button.scene-bar:active .scene-bar-toggle {
   background: var(--points-bg);
   border: 1.5px solid var(--points-border);
   color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 0 10px rgba(217, 183, 101, 0.25);
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 6px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .points-pill-gradient {
     background: var(--points-bg);
     border: 1.5px solid var(--points-border);
     color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 0 10px rgba(217, 183, 101, 0.25);
+    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 6px rgba(217, 183, 101, 0.22);
   }
 }
 .points-pill-star {
@@ -3423,14 +3423,14 @@ button.scene-bar:active .scene-bar-toggle {
   background: var(--points-bg);
   border: 1.5px solid var(--points-border);
   color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 0 10px rgba(217, 183, 101, 0.25);
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 6px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-points-pill {
     background: var(--points-bg);
     border: 1.5px solid var(--points-border);
     color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 0 10px rgba(217, 183, 101, 0.25);
+    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 6px rgba(217, 183, 101, 0.22);
   }
 }
 .task-result-points-pill svg {
@@ -3760,7 +3760,7 @@ button.scene-bar:active .scene-bar-toggle {
   background: var(--points-bg);
   border-color: var(--points-border);
   color: var(--points-ink);
-  box-shadow: 0 0 10px rgba(217, 183, 101, 0.25);
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.22);
 }
 .dark .row-points-tab--correct {
   background: var(--points-ok-bg);
@@ -3782,7 +3782,7 @@ button.scene-bar:active .scene-bar-toggle {
     background: var(--points-bg);
     border-color: var(--points-border);
     color: var(--points-ink);
-    box-shadow: 0 0 10px rgba(217, 183, 101, 0.25);
+    box-shadow: 0 2px 6px rgba(217, 183, 101, 0.22);
   }
   :root:not(.light) .row-points-tab--correct {
     background: var(--points-ok-bg);
@@ -5405,14 +5405,14 @@ button.scene-bar:active .scene-bar-toggle {
    їх лишаємо без кільця, як і було. */
 .dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
   box-sizing: border-box;
-  border: 1.5px solid rgba(217, 183, 101, 0.65);
-  box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.12), 0 0 10px rgba(217, 183, 101, 0.28);
+  border: 1.5px solid rgba(217, 183, 101, 0.45);
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
     box-sizing: border-box;
-    border: 1.5px solid rgba(217, 183, 101, 0.65);
-    box-shadow: 0 0 0 1px rgba(217, 183, 101, 0.12), 0 0 10px rgba(217, 183, 101, 0.28);
+    border: 1.5px solid rgba(217, 183, 101, 0.45);
+    box-shadow: 0 2px 6px rgba(217, 183, 101, 0.22);
   }
 }
 .drag-drop-row-number {
