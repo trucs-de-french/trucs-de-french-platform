@@ -2447,6 +2447,27 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Переклад (друга колонка .vocab-row) — у світлій темі лишається
+   --glass-text-secondary (сірий, нижча ієрархія за FR-слово), але в темній
+   темі переозначається на той самий --glass-text, що й FR-слово: .glass-
+   block-panel (Скрипт/Вокабуляр) НЕ входить у .dark .glass-block/.scene-bar
+   (ті токени там лишаються світлими завжди), тож без цього правила переклад
+   мав би той самий сірий колір на тій самій світлій панелі в обох темах —
+   на темному фоні сторінки навколо панелі це читалось як "світло-сірий,
+   зливається". inline style на елементі (vocab-section.tsx) прибрано, щоб
+   цей клас міг його перевизначити без !important. */
+.vocab-translation {
+  color: var(--glass-text-secondary);
+}
+.dark .vocab-translation {
+  color: var(--glass-text);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-translation {
+    color: var(--glass-text);
+  }
+}
+
 /* padding, не margin: кожна група вокабуляру (VocabGroupTable, vocab-
    section.tsx) — ОКРЕМИЙ div-обгортка (там живе --cat-rgb), тож .vocab-
    category-heading є :first-child у КОЖНІЙ з них, не лише в першій групі

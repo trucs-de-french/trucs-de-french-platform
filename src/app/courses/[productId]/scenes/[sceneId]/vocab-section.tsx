@@ -115,13 +115,19 @@ function VocabGroupTable({
               --glass-text/--glass-text-secondary (globals.css), не
               фіксований hex: рядок тепер сидить або на світлій, або на
               темній скляній панелі (data-scene-bg), фіксований темний
-              колір на темній панелі був би нечитабельним. */}
+              колір на темній панелі був би нечитабельним.
+              --glass-text-secondary (переклад) переозначений у темній темі
+              на .vocab-translation нижче — .glass-block-panel сам НЕ має
+              .dark-перевизначення (Скрипт/Вокабуляр свідомо лишені
+              "скляними" й у темній темі, панель лишається світлою), тож без
+              цього класу переклад мав би той самий сірий колір, що й у
+              світлій темі, й зливався б із такою ж світлою панеллю. */}
           <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}>
             {firstVocabVariant(v.word)}
           </span>
           <span
-            className="font-heading"
-            style={{ fontWeight: 400, fontSize: "16px", color: "var(--glass-text-secondary)" }}
+            className="font-heading vocab-translation"
+            style={{ fontWeight: 400, fontSize: "16px" }}
           >
             {v.translation}
           </span>
