@@ -7177,10 +7177,12 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  width: auto;
   min-width: 96px;
   height: 38px;
   margin: 0 4px;
-  padding: 0;
+  padding-inline: 14px;
+  white-space: nowrap;
   border-radius: 10px;
   border: 2px solid;
   font-size: 16px;
@@ -7227,21 +7229,27 @@ button.scene-bar:active .scene-bar-toggle {
    letter_gaps, замість --field-bg/--field-border (не-картковий фон); "…"
    плейсхолдер — приглушений лавандовий #b3bfe0 при .8, не --field-ink. */
 .dark .karaoke-gap--upcoming-empty {
-  background: var(--card-field-bg);
-  border-color: var(--card-field-border);
-  color: #b3bfe0;
+  background: rgba(8, 10, 40, 0.45);
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgba(130, 160, 240, 0.6);
+  color: var(--card-ink);
+  font-weight: 700;
 }
 .dark .karaoke-gap--upcoming-empty::placeholder {
-  color: #b3bfe0;
+  color: var(--card-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--upcoming-empty {
-    background: var(--card-field-bg);
-    border-color: var(--card-field-border);
-    color: #b3bfe0;
+    background: rgba(8, 10, 40, 0.45);
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgba(130, 160, 240, 0.6);
+    color: var(--card-ink);
+    font-weight: 700;
   }
   :root:not(.light) .karaoke-gap--upcoming-empty::placeholder {
-    color: #b3bfe0;
+    color: var(--card-ink);
   }
 }
 .karaoke-gap--filled {
@@ -7250,15 +7258,17 @@ button.scene-bar:active .scene-bar-toggle {
   color: #3b36c4;
 }
 .dark .karaoke-gap--filled {
-  background: rgba(8, 10, 40, 0.55);
+  background: rgba(127, 156, 240, 0.22);
   border-color: #7f9cf0;
-  color: #f5ecd0;
+  color: var(--card-ink);
+  font-weight: 700;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--filled {
-    background: rgba(8, 10, 40, 0.55);
+    background: rgba(127, 156, 240, 0.22);
     border-color: #7f9cf0;
-    color: #f5ecd0;
+    color: var(--card-ink);
+    font-weight: 700;
   }
 }
 .karaoke-gap--correct {
@@ -7363,29 +7373,31 @@ button.scene-bar:active .scene-bar-toggle {
   cursor: default;
 }
 .dark .karaoke-option-chip {
-  background: rgba(217, 183, 101, 0.14);
-  border-color: rgba(217, 183, 101, 0.75);
+  padding: 10px 22px;
+  background: rgba(127, 156, 240, 0.22);
+  border-color: #7f9cf0;
   color: #f5ecd0;
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip {
-    background: rgba(217, 183, 101, 0.14);
-    border-color: rgba(217, 183, 101, 0.75);
+    padding: 10px 22px;
+    background: rgba(127, 156, 240, 0.22);
+    border-color: #7f9cf0;
     color: #f5ecd0;
     box-shadow: none;
   }
 }
 @media (hover: hover) {
   .dark .karaoke-option-chip:hover:not(:disabled) {
-    background: rgba(217, 183, 101, 0.24);
-    border-color: rgba(217, 183, 101, 0.95);
+    background: rgba(127, 156, 240, 0.34);
+    border-color: #a9bcff;
   }
 }
 @media (prefers-color-scheme: dark) and (hover: hover) {
   :root:not(.light) .karaoke-option-chip:hover:not(:disabled) {
-    background: rgba(217, 183, 101, 0.24);
-    border-color: rgba(217, 183, 101, 0.95);
+    background: rgba(127, 156, 240, 0.34);
+    border-color: #a9bcff;
   }
 }
 .dark .karaoke-option-chip:active:not(:disabled) {
