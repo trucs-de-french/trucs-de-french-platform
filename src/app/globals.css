@@ -6336,12 +6336,8 @@ button.scene-bar:active .scene-bar-toggle {
    елемента (саме це зламало попередню версію: "hidden md:block" і "grid"
    на одному className мають однакову специфічність, порядок у згенерованому
    stylesheet — не порядок у рядку класів — вирішував, яка властивість
-   display виграє). Один @media-перемикач керує видимістю ОБОХ розкладок
-   одразу — рендериться завжди обидві, видима лише одна. Межа 900px (не
-   768px) — мінімальна ширина, на якій таблиця реально вміщується:
-   statement-колонка (мінімум 320px) + до 6 колонок-опцій по 96px
-   (320+576=896) — на вужчому екрані (планшет-портрет, 768-899px) таблиця
-   стискалась би знову, тож там лишаються мобільні картки. */
+   display виграє). Один @media-перемикач (768px) керує видимістю ОБОХ
+   розкладок одразу — рендериться завжди обидві, видима лише одна. */
 .cg-desktop {
   display: none;
 }
@@ -6350,7 +6346,7 @@ button.scene-bar:active .scene-bar-toggle {
   flex-direction: column;
   gap: 12px;
 }
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .cg-desktop {
     display: block;
   }
@@ -6390,16 +6386,7 @@ button.scene-bar:active .scene-bar-toggle {
    опцій без зміни CSS). */
 .cg-grid-row {
   display: grid;
-  /* Колонки-опції — ФІКСОВАНА довжина (var(--cg-col-w), не minmax-діапазон):
-     minmax(84px,110px) раніше теж технічно "обмежувався" 110px, але це
-     ДІАПАЗОН, не тверде значення — на етапі розподілу вільного простору
-     grid росте нефлексибельні (не-fr) треки до їхнього max РІВНОЧАСНО з
-     тим, як fr-трек претендує на залишок, і на практиці (контент клітинки
-     — центрований 32px чекбокс, без власного тиску на ширину) усі 6 треків
-     ділили простір майже рівними частками замість "твердих 110px". Фіксоване
-     значення (не minmax) прибирає цю конкуренцію: statement-трек (1fr)
-     отримує РІВНО все, що лишилось після N точних var(--cg-col-w). */
-  grid-template-columns: minmax(320px, 1fr) repeat(var(--cg-cols), var(--cg-col-w, 96px));
+  grid-template-columns: minmax(0, 1fr) repeat(var(--cg-cols), minmax(84px, 110px));
   align-items: stretch;
 }
 
@@ -6465,9 +6452,7 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 16px;
   line-height: 1.5;
   color: #1a1640;
-  word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: none;
+  word-break: break-word;
 }
 .dark .cg-stmt-text {
   color: #f1ecd9;
