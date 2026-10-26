@@ -347,7 +347,7 @@ export function SortColumnsExercise({
           // ~6.4:1/~7:1 (докладніше — звіт).
           const headerClass = isHinted
             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200"
-            : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300";
+            : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-[#f3d98b]";
           return (
             <div
               key={col.id}
