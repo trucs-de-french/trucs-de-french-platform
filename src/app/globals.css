@@ -7329,18 +7329,15 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Компактний чип "у стилі .word-pool-chip" (той самий грип-компонент,
-   та сама форма), але зі своїми (karaoke) кольоровими токенами — узгоджено
-   з карткою/пропуском цієї ж вправи, а не буквально той самий клас (бо
-   .word-pool-chip не має стану "обрано/натиснуто" індиго, який тут уже
-   був визначений раніше під :active). font-family не задано навмисно —
-   успадковує Nunito (font-heading) з глобального правила "button {...}". */
+/* Клікабельна пілюля-варіант (без грипу — слово вибирають кліком, не
+   тягнуть; drag-and-drop тут ніколи не було в логіці, лише візуальний
+   намір через грип-іконку, тож прибираємо саме її). font-family не задано
+   навмисно — успадковує Nunito (font-heading) з глобального правила
+   "button {...}". */
 .karaoke-option-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 8px 14px 8px 10px;
+  padding: 10px 20px;
   border-radius: 12px;
   border: 1.5px solid #ead9a6;
   background: #fff;
@@ -7348,52 +7345,57 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 16px;
   font-weight: 700;
   color: #1a1640;
+  cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.karaoke-option-chip-grip {
-  flex-shrink: 0;
-  width: 10px;
-  height: 14px;
-  fill: #c9a24a;
-}
-.karaoke-option-chip:hover:not(:disabled) {
-  border-color: #d9b765;
+@media (hover: hover) {
+  .karaoke-option-chip:hover:not(:disabled) {
+    background: rgba(217, 183, 101, 0.12);
+    border-color: #d9b765;
+  }
 }
 .karaoke-option-chip:active:not(:disabled) {
-  background: #e0e4fb;
-  border-color: #4b46da;
-  color: #3b36c4;
-}
-.karaoke-option-chip:active:not(:disabled) .karaoke-option-chip-grip {
-  fill: #4b46da;
+  background: rgba(217, 183, 101, 0.22);
+  border-color: #c9a24a;
 }
 .karaoke-option-chip:disabled {
   opacity: 0.55;
+  cursor: default;
 }
 .dark .karaoke-option-chip {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(217, 183, 101, 0.45);
+  background: rgba(217, 183, 101, 0.14);
+  border-color: rgba(217, 183, 101, 0.75);
   color: #f5ecd0;
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(217, 183, 101, 0.45);
+    background: rgba(217, 183, 101, 0.14);
+    border-color: rgba(217, 183, 101, 0.75);
     color: #f5ecd0;
     box-shadow: none;
   }
 }
+@media (hover: hover) {
+  .dark .karaoke-option-chip:hover:not(:disabled) {
+    background: rgba(217, 183, 101, 0.24);
+    border-color: rgba(217, 183, 101, 0.95);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .karaoke-option-chip:hover:not(:disabled) {
+    background: rgba(217, 183, 101, 0.24);
+    border-color: rgba(217, 183, 101, 0.95);
+  }
+}
 .dark .karaoke-option-chip:active:not(:disabled) {
-  background: rgba(75, 70, 218, 0.3);
-  border-color: #8a88f5;
-  color: #dcdbf3;
+  background: rgba(217, 183, 101, 0.34);
+  border-color: #e0b85a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip:active:not(:disabled) {
-    background: rgba(75, 70, 218, 0.3);
-    border-color: #8a88f5;
-    color: #dcdbf3;
+    background: rgba(217, 183, 101, 0.34);
+    border-color: #e0b85a;
   }
 }
 

@@ -15,22 +15,6 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
-// 6-крапковий "грип" зліва на чипі варіанта — той самий SVG/компонент, що
-// в пулі слів інших вправ (ChipGripIcon у image-match.tsx/drag-drop.tsx/
-// sort-columns.tsx, .word-pool-chip-grip), продубльований тут же: спільного
-// файлу для нього немає, а .karaoke-option-chip-grip — свій клас (колір
-// змінюється на :active разом з рамкою/текстом чипа, чого немає в
-// .word-pool-chip-grip).
-function ChipGripIcon() {
-  return (
-    <svg className="karaoke-option-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
-      {[2, 7, 12].map((cy) =>
-        [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
-      )}
-    </svg>
-  );
-}
-
 const POLL_INTERVAL_MS = 200;
 // Останній рядок не має "наступного", що позначив би його кінець — якщо
 // після його start ще довго триває музика (інструментал/аутро), вважаємо
@@ -718,7 +702,7 @@ export function KaraokeExercise({
               <span className="karaoke-progress-pill">
                 Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
               </span>
-              <p className="text-sm text-[#55546b] dark:text-neutral-400">Оберіть слово для пропуску</p>
+              <p className="text-sm text-[#55546b] dark:text-neutral-400">Клікніть на правильне слово</p>
             </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
@@ -726,7 +710,6 @@ export function KaraokeExercise({
             <div className="flex flex-wrap gap-2">
               {(config.lines[activeGap.li].gapOptions?.[activeGap.gi] ?? []).map((opt, i) => (
                 <button key={i} type="button" onClick={() => pickOption(opt)} className="karaoke-option-chip">
-                  <ChipGripIcon />
                   {opt}
                 </button>
               ))}
