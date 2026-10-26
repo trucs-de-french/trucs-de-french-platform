@@ -50,8 +50,8 @@
    замість нейтрального сірого/чорного (bg-neutral-800 і подібні), що не
    відрізнялось від звичайного тексту панелі. */
 :root.dark {
-  --points-bg: linear-gradient(135deg, #5a55e6, #3b36c4);
-  --points-border: #8a88f5;
+  --points-bg: #3a55a8;
+  --points-border: #7f9cf0;
   --points-ink: #fff;
   --points-ok-bg: #1f7a3d;
   --points-ok-border: #4cc47e;
@@ -87,20 +87,20 @@
      legend-tile-style.ts/tile-styles.ts/flip-cards.tsx/checkbox-grid.tsx —
      одна точка правди замість rgba(255,255,255,.06-.09) напівпрозорого
      фону й bg-neutral-800 сірого, які раніше дублювались по файлах. */
-  --card-bg: #171b63;
-  --card-border: rgba(138, 136, 245, 0.5);
+  --card-bg: rgba(120, 150, 235, 0.15);
+  --card-border: rgba(130, 160, 240, 0.42);
   --card-border-width: 1.5px;
   --card-ink: #f5ecd0;
-  --card-ink-2: #c9c6e8;
-  --card-hover-bg: #1b1f70;
-  --card-hover-border: rgba(138, 136, 245, 0.8);
-  --card-field-bg: #0e1142;
-  --card-field-border: #8a88f5;
+  --card-ink-2: #b3bfe0;
+  --card-hover-bg: rgba(120, 150, 235, 0.22);
+  --card-hover-border: rgba(130, 160, 240, 0.65);
+  --card-field-bg: rgba(8, 10, 40, 0.45);
+  --card-field-border: rgba(130, 160, 240, 0.6);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --points-bg: linear-gradient(135deg, #5a55e6, #3b36c4);
-    --points-border: #8a88f5;
+    --points-bg: #3a55a8;
+    --points-border: #7f9cf0;
     --points-ink: #fff;
     --points-ok-bg: #1f7a3d;
     --points-ok-border: #4cc47e;
@@ -129,15 +129,15 @@
     --field-wrong-border: #e5484d;
     --field-wrong-ink: #ffd0d0;
 
-    --card-bg: #171b63;
-    --card-border: rgba(138, 136, 245, 0.5);
+    --card-bg: rgba(120, 150, 235, 0.15);
+    --card-border: rgba(130, 160, 240, 0.42);
     --card-border-width: 1.5px;
     --card-ink: #f5ecd0;
-    --card-ink-2: #c9c6e8;
-    --card-hover-bg: #1b1f70;
-    --card-hover-border: rgba(138, 136, 245, 0.8);
-    --card-field-bg: #0e1142;
-    --card-field-border: #8a88f5;
+    --card-ink-2: #b3bfe0;
+    --card-hover-bg: rgba(120, 150, 235, 0.22);
+    --card-hover-border: rgba(130, 160, 240, 0.65);
+    --card-field-bg: rgba(8, 10, 40, 0.45);
+    --card-field-border: rgba(130, 160, 240, 0.6);
   }
 }
 
@@ -4868,6 +4868,20 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+/* Мокап L6 "Блакитна лаванда" — лише темна тема: суцільний синій замість
+   градієнта #5a55e6→#3b36c4 (світла тема лишається на градієнті вище). */
+.dark .exercise-block-check-btn:not(:disabled) {
+  background: #3a55a8;
+  border: 1.5px solid #7f9cf0;
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-block-check-btn:not(:disabled) {
+    background: #3a55a8;
+    border: 1.5px solid #7f9cf0;
+    box-shadow: none;
+  }
+}
 
 /* Спільна темно-скляна картка-посилання (LinkCard, link-card.tsx) —
    "Практика" (scene_links, фіксована й усередині контент-блоку), задачі
@@ -5392,6 +5406,18 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .item-number-badge--incorrect {
   background: #dc2626;
+}
+/* Мокап L6 "Блакитна лаванда" — лише темна тема: плаский синій замість
+   градієнта #2f2c6b→#4b46da (світла тема лишається на градієнті вище).
+   :not() — щоб не перебити --correct/--incorrect (нижча специфічність
+   без :not() інакше втратила б до .dark .item-number-badge). */
+.dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
+  background: #35509e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
+    background: #35509e;
+  }
 }
 .drag-drop-row-number {
   margin-top: 7px;
@@ -6109,6 +6135,14 @@ button.scene-bar:active .scene-bar-toggle {
 .matching-line--incorrect {
   stroke: #d64545;
 }
+.dark .matching-line-stub {
+  stroke: rgba(130, 160, 240, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-line-stub {
+    stroke: rgba(130, 160, 240, 0.55);
+  }
+}
 .matching-line-stub {
   fill: none;
   stroke: #4b46da;
@@ -6250,6 +6284,16 @@ button.scene-bar:active .scene-bar-toggle {
 .matching-dot--selected {
   background: #4b46da;
   box-shadow: 0 0 0 4px rgba(75, 70, 218, 0.25);
+}
+.dark .matching-dot--selected {
+  background: rgba(130, 160, 240, 0.9);
+  box-shadow: 0 0 0 4px rgba(130, 160, 240, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-dot--selected {
+    background: rgba(130, 160, 240, 0.9);
+    box-shadow: 0 0 0 4px rgba(130, 160, 240, 0.25);
+  }
 }
 .matching-dot--paired {
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
