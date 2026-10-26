@@ -749,7 +749,7 @@ export function MultipleChoiceExercise({
                   <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
                   <span>
                     <span
-                      className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-[#c9c8e6]"
+                      className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
                       style={{ fontFamily: "var(--font-heading)" }}
                     >
                       Правильна відповідь:
@@ -762,7 +762,7 @@ export function MultipleChoiceExercise({
                     <X size={14} className="mt-0.5 shrink-0" aria-hidden />
                     <span>
                       <span
-                        className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-[#c9c8e6]"
+                        className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
                         style={{ fontFamily: "var(--font-heading)" }}
                       >
                         Ваша відповідь:

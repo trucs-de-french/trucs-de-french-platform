@@ -633,7 +633,7 @@ function DeckCardBack({ translation }: { translation: string }) {
         <DeckSideChip label="UK" />
       </span>
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 text-center">
-        <p className="max-w-full break-words text-[17px] italic font-medium leading-[1.4] font-content text-[#55546b] [overflow-wrap:anywhere] dark:text-neutral-300 sm:text-[22px]">
+        <p className="max-w-full break-words text-[17px] italic font-medium leading-[1.4] font-content text-[#55546b] [overflow-wrap:anywhere] dark:text-white sm:text-[22px]">
           {translation}
         </p>
       </div>

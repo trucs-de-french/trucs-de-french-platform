@@ -93,7 +93,7 @@
   --card-border: rgba(130, 160, 240, 0.42);
   --card-border-width: 1.5px;
   --card-ink: #f5ecd0;
-  --card-ink-2: #b3bfe0;
+  --card-ink-2: #ffffff;
   --card-hover-bg: rgba(120, 150, 235, 0.22);
   --card-hover-border: rgba(130, 160, 240, 0.65);
   --card-field-bg: rgba(8, 10, 40, 0.45);
@@ -135,7 +135,7 @@
     --card-border: rgba(130, 160, 240, 0.42);
     --card-border-width: 1.5px;
     --card-ink: #f5ecd0;
-    --card-ink-2: #b3bfe0;
+    --card-ink-2: #ffffff;
     --card-hover-bg: rgba(120, 150, 235, 0.22);
     --card-hover-border: rgba(130, 160, 240, 0.65);
     --card-field-bg: rgba(8, 10, 40, 0.45);
