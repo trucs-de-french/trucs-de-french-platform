@@ -6345,6 +6345,16 @@ button.scene-bar:active .scene-bar-toggle {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #d9b765 transparent;
+  /* ~6-7 рядків видно без скролу: мобільна висота менша (менше вертикального
+     простору на екрані), десктопна — більша; внутрішній скрол і
+     центрування активного рядка (scrollLineIntoContainer, karaoke.tsx)
+     лишаються як були. */
+  max-height: clamp(280px, 45vh, 420px);
+}
+@media (min-width: 768px) {
+  .karaoke-card {
+    max-height: clamp(360px, 52vh, 520px);
+  }
 }
 .karaoke-card::-webkit-scrollbar {
   width: 6px;
@@ -6370,7 +6380,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .karaoke-line {
   border-radius: 12px;
-  padding: 12px 18px;
+  padding: 8px 16px;
   border-left: 4px solid transparent;
   cursor: pointer;
   color: #1a1640;
@@ -6567,18 +6577,32 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* font-family не задано навмисно — успадковує Nunito (font-heading) з
-   глобального правила "button {...}", той самий шрифт, що й до рестайлу
-   (було без font-content; рестайл помилково додав Lora+18px). */
+/* Компактний чип "у стилі .word-pool-chip" (той самий грип-компонент,
+   та сама форма), але зі своїми (karaoke) кольоровими токенами — узгоджено
+   з карткою/пропуском цієї ж вправи, а не буквально той самий клас (бо
+   .word-pool-chip не має стану "обрано/натиснуто" індиго, який тут уже
+   був визначений раніше під :active). font-family не задано навмисно —
+   успадковує Nunito (font-heading) з глобального правила "button {...}". */
 .karaoke-option-chip {
-  padding: 12px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 8px 14px 8px 10px;
   border-radius: 12px;
   border: 1.5px solid #ead9a6;
   background: #fff;
   box-shadow: 0 2px 5px -2px rgba(120, 90, 20, 0.3);
   font-size: 16px;
+  font-weight: 700;
   color: #1a1640;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.karaoke-option-chip-grip {
+  flex-shrink: 0;
+  width: 10px;
+  height: 14px;
+  fill: #c9a24a;
 }
 .karaoke-option-chip:hover:not(:disabled) {
   border-color: #d9b765;
@@ -6587,6 +6611,9 @@ button.scene-bar:active .scene-bar-toggle {
   background: #e0e4fb;
   border-color: #4b46da;
   color: #3b36c4;
+}
+.karaoke-option-chip:active:not(:disabled) .karaoke-option-chip-grip {
+  fill: #4b46da;
 }
 .karaoke-option-chip:disabled {
   opacity: 0.55;
@@ -6615,11 +6642,6 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(75, 70, 218, 0.3);
     border-color: #8a88f5;
     color: #dcdbf3;
-  }
-}
-@media (max-width: 767px) {
-  .karaoke-option-chip {
-    min-height: 44px;
   }
 }
 

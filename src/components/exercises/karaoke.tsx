@@ -15,6 +15,22 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
+// 6-крапковий "грип" зліва на чипі варіанта — той самий SVG/компонент, що
+// в пулі слів інших вправ (ChipGripIcon у image-match.tsx/drag-drop.tsx/
+// sort-columns.tsx, .word-pool-chip-grip), продубльований тут же: спільного
+// файлу для нього немає, а .karaoke-option-chip-grip — свій клас (колір
+// змінюється на :active разом з рамкою/текстом чипа, чого немає в
+// .word-pool-chip-grip).
+function ChipGripIcon() {
+  return (
+    <svg className="karaoke-option-chip-grip" viewBox="0 0 10 14" aria-hidden="true">
+      {[2, 7, 12].map((cy) =>
+        [2.5, 7.5].map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />)
+      )}
+    </svg>
+  );
+}
+
 const POLL_INTERVAL_MS = 200;
 // Останній рядок не має "наступного", що позначив би його кінець — якщо
 // після його start ще довго триває музика (інструментал/аутро), вважаємо
@@ -597,9 +613,9 @@ export function KaraokeExercise({
           </button>
         )}
 
-        {/* ~5-6 рядків висотою (leading-8=2rem на рядок) — власний
-            скрол-контейнер, не сторінка. */}
-        <div ref={linesContainerRef} className="karaoke-card h-44">
+        {/* ~6-7 рядків висотою (clamp у .karaoke-card, globals.css) —
+            власний скрол-контейнер, не сторінка. */}
+        <div ref={linesContainerRef} className="karaoke-card">
           {config.lines.map((line, li) => (
             <KaraokeLineRow
               key={li}
@@ -632,7 +648,10 @@ export function KaraokeExercise({
         </div>
 
         {config.answerMode === "choice" && activeGap && !result && (
-          <div className="flex flex-col gap-3">
+          // mt-0.5 — додає 2px до спадкованого gap-3 (12px) батьківського
+          // flex-col, разом 14px до картки з текстом, як просить задача
+          // (не чіпаючи сам gap-3, спільний і для інших сусідів вище).
+          <div className="mt-0.5 flex flex-col gap-2.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="karaoke-progress-pill">
                 Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
@@ -642,9 +661,10 @@ export function KaraokeExercise({
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
                 "один рядок, коли влазить" без жодних додаткових умов. */}
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2">
               {(config.lines[activeGap.li].gapOptions?.[activeGap.gi] ?? []).map((opt, i) => (
                 <button key={i} type="button" onClick={() => pickOption(opt)} className="karaoke-option-chip">
+                  <ChipGripIcon />
                   {opt}
                 </button>
               ))}
@@ -686,7 +706,17 @@ export function KaraokeExercise({
         </ul>
       )}
 
-      <div className="flex flex-col gap-3">
+      {/* md:-mt-2 — лише коли щойно над цим блоком рендерились чипи
+          (режим "вибір", !result): EXERCISE_STACK (gap-4 md:gap-6) дає тут
+          16px моб./24px десктоп, задача просить рівно 16px на обох, тож
+          компенсуємо зайві 8px на десктопі саме для цієї пари сусідів, не
+          чіпаючи сам спільний EXERCISE_STACK чи інші стани (typing-режим,
+          після перевірки). */}
+      <div
+        className={`flex flex-col gap-3 ${
+          config.answerMode === "choice" && activeGap && !result ? "md:-mt-2" : ""
+        }`}
+      >
         {!result ? (
           <div className="flex flex-col items-start gap-2">
             <button
