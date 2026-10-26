@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { Shuffle, ArrowLeft, ArrowRight } from "lucide-react";
+import { Shuffle, ArrowRight, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
 import type { FlipCard as FlipCardType, FlipCardsConfig } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
@@ -11,7 +11,7 @@ import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { BlockNavFooter, BlockTabs } from "./block-navigation";
 import { AudioPill } from "@/components/audio-pill";
@@ -372,7 +372,14 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     : `translateX(${dragX}px) rotate(${dragX / 18}deg)`;
   const topTransition = dragging || reducedMotion ? "none" : `transform ${DECK_FLY_OUT_MS}ms ease-out`;
   const topCursor = dragging ? "grabbing" : canFlip ? "pointer" : "grab";
-  const faceInnerClass = `flex flex-col items-center justify-center gap-3 px-4 py-6 sm:px-8 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT} shadow-xl`;
+  // Платформова картка-грань: рамка/фон/тінь/radius/padding — ТУТ (на
+  // самій грані, що обертається в 3D), не на зовнішній draggable-обгортці
+  // нижче: рамка має "перевертатись" разом із вмістом граней, а не
+  // лишатись статичним контуром. min-height — на draggable-обгортці
+  // (height-карту), бо грані всередині absolute inset-0 і самі по собі не
+  // задають висоту предка.
+  const faceInnerClass =
+    "flex flex-col items-center justify-between gap-2 rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white p-[18px_16px_14px] dark:rounded-lg dark:border dark:border-neutral-700 dark:bg-neutral-800 dark:shadow-sm sm:p-[26px_34px_20px]";
   const faceClass = `absolute inset-0 ${faceInnerClass}`;
   // backfaceVisibility — через inline style, не Tailwind arbitrary-клас:
   // надійніше для vendor-префіксу (-webkit-), той самий підхід, що вже
@@ -381,17 +388,17 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
   };
+  const canGoNext = !finished && flyDir === null && !dragging;
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-right text-sm text-neutral-500 dark:text-neutral-400">
-        Залишилось {remaining.length} з {total}
-      </p>
-
-      <div className="relative mx-auto min-h-72 w-full max-w-xl sm:min-h-80">
+    <div className="flex flex-col gap-5">
+      {/* pb — місце під декоративні смужки-"картки позаду", щоб вони
+          виглядали стопкою знизу стику, не перекриваючи ряд навігації під
+          стеком (проблема 1 з завдання). */}
+      <div className="relative mx-auto w-full max-w-[640px] pb-[14px] sm:pb-[20px]">
         {finished ? (
           <div
-            className={`absolute inset-0 flex flex-col items-center justify-center gap-3 ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
+            className={`flex w-full min-h-[250px] flex-col items-center justify-center gap-3 sm:min-h-[270px] ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
           >
             <p className="text-base text-neutral-600 dark:text-neutral-300">Усі питання пройдено</p>
             <button type="button" onClick={handleRestart} className={STUDENT_BUTTON_PRIMARY}>
@@ -403,15 +410,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             {peek2 && (
               <div
                 aria-hidden
-                className={`absolute inset-0 z-0 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
-                style={{ transform: "translate(-6px, 10px) rotate(-2deg)" }}
+                className="absolute inset-x-[26px] bottom-0 z-0 h-10 rounded-[14px] border-[1.5px] border-[#ead9a6] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:inset-x-[36px] sm:h-[60px]"
               />
             )}
             {peek1 && (
               <div
                 aria-hidden
-                className={`absolute inset-0 z-10 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800`}
-                style={{ transform: "translate(6px, 6px) rotate(3deg)" }}
+                className="absolute inset-x-[13px] bottom-[9px] z-10 h-10 rounded-[14px] border-[1.5px] border-[#ead9a6] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.04)] sm:inset-x-[18px] sm:h-[60px]"
               />
             )}
             <div
@@ -420,7 +425,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerCancel}
-              className="absolute inset-0 z-20"
+              className="relative z-20 min-h-[250px] w-full sm:min-h-[270px]"
               style={{
                 transform: topTransform,
                 transition: topTransition,
@@ -435,7 +440,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
                 // "без анімації" і однаково коректний для читачів екрана.
                 <div className={`h-full w-full ${faceInnerClass}`}>
                   {!flipped ? (
-                    <DeckCardFront card={top} zoomOpen={zoomOpen} onZoomOpen={() => setZoomOpen(true)} onZoomClose={() => setZoomOpen(false)} />
+                    <DeckCardFront
+                      card={top}
+                      canFlip={canFlip && !hideHintOnTouch}
+                      zoomOpen={zoomOpen}
+                      onZoomOpen={() => setZoomOpen(true)}
+                      onZoomClose={() => setZoomOpen(false)}
+                    />
                   ) : (
                     <DeckCardBack translation={top.back} />
                   )}
@@ -455,7 +466,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
                     aria-hidden={flipped}
                     inert={flipped}
                   >
-                    <DeckCardFront card={top} zoomOpen={zoomOpen} onZoomOpen={() => setZoomOpen(true)} onZoomClose={() => setZoomOpen(false)} />
+                    <DeckCardFront
+                      card={top}
+                      canFlip={canFlip && !hideHintOnTouch}
+                      zoomOpen={zoomOpen}
+                      onZoomOpen={() => setZoomOpen(true)}
+                      onZoomClose={() => setZoomOpen(false)}
+                    />
                   </div>
                   <div
                     className={faceClass}
@@ -472,45 +489,66 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
         )}
       </div>
 
-      {!finished && !hideHintOnTouch && (
-        <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
-          {canFlip ? (
-            <>
-              торкнись картки: переклад · перетягни: далі <ArrowLeft size={14} /> <ArrowRight size={14} />
-            </>
-          ) : (
-            <>
-              <ArrowLeft size={14} /> перетягни картку або натисни кнопку <ArrowRight size={14} />
-            </>
-          )}
-        </p>
+      {!finished && (
+        <div className="flex items-center justify-center gap-4">
+          {/* Ліва стрілка — лише візуальна підказка напрямку свайпу: у
+              компоненті немає механіки "повернутись до попередньої
+              картки" (remaining лише зменшується), тож додавати нову дію
+              тут не можна (умова задачі) — кнопка задизейблена навмисно. */}
+          <button
+            type="button"
+            disabled
+            aria-hidden
+            tabIndex={-1}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white opacity-40 shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] sm:h-[46px] sm:w-[46px]"
+          >
+            <ChevronLeft size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#8a88f5]" />
+          </button>
+          <span className="inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-full border-[1.5px] border-[#c9cdf5] bg-[#e0e4fb] px-4 text-[14px] font-extrabold text-[#3b36c4] dark:border-[#8a88f5] dark:bg-[rgba(75,70,218,0.3)] dark:text-[#dcdbf3]">
+            Залишилось {remaining.length} з {total}
+          </span>
+          {/* Права стрілка — та сама дія, що свайп/"Відповів(ла), далі"
+              (flyOut(1) → removeTop): дія вже існує в коді, кнопка лише
+              дає їй другий видимий тригер. */}
+          <button
+            type="button"
+            onClick={() => flyOut(1)}
+            disabled={!canGoNext}
+            aria-label="Наступна картка"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[#ead9a6] dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] sm:h-[46px] sm:w-[46px]"
+          >
+            <ChevronRight size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#8a88f5]" />
+          </button>
+        </div>
       )}
 
       {!finished && (
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={handleShuffle}
-            disabled={remaining.length <= 1}
-            className={`flex items-center gap-1.5 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
-          >
-            <Shuffle size={14} /> Перемішати
-          </button>
-          {canFlip && (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="order-2 flex w-full gap-3 sm:order-1 sm:w-auto">
             <button
               type="button"
-              onClick={toggleFlip}
-              className={`flex items-center gap-1.5 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
+              onClick={handleShuffle}
+              disabled={remaining.length <= 1}
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[#ead9a6] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] dark:text-neutral-100 sm:h-[46px] sm:flex-none sm:w-auto"
             >
-              {flipped ? "Показати питання" : "Показати переклад"}
+              <Shuffle size={18} className="text-[#b8902f] dark:text-[#f6dc8e]" /> Перемішати
             </button>
-          )}
+            {canFlip && (
+              <button
+                type="button"
+                onClick={toggleFlip}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[#ead9a6] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] dark:text-neutral-100 sm:h-[46px] sm:flex-none sm:w-auto"
+              >
+                {flipped ? "Показати питання" : "Показати переклад"}
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={removeTop}
-            className={`flex items-center gap-1.5 ${STUDENT_BUTTON_PRIMARY}`}
+            className="order-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[linear-gradient(135deg,#5a55e6,#3b36c4)] px-[22px] text-[15px] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(59,54,196,0.6)] sm:order-2 sm:h-[46px] sm:w-auto"
           >
-            Відповів(ла), далі <ArrowRight size={16} />
+            Відповів(ла), далі <ArrowRight size={18} />
           </button>
         </div>
       )}
@@ -518,48 +556,84 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   );
 }
 
+// Плашка "FR"/"UK" у верхньому лівому куті грані — яка сторона зараз
+// показана (питання чи переклад). self-start на викликачі притискає її
+// ліворуч, не по центру решти вмісту грані.
+function DeckSideChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex h-[22px] items-center rounded-full border-[1.5px] border-[#c9cdf5] bg-[#e0e4fb] px-3 text-[12px] font-extrabold text-[#3b36c4] dark:border-[#8a88f5] dark:bg-[rgba(75,70,218,0.3)] dark:text-[#dcdbf3] sm:h-6">
+      {label}
+    </span>
+  );
+}
+
 // front — питання (завжди велике, serif), опційні картинка/аудіо — та сама
 // форма, що раніше жила прямо в DeckFlipCards, винесена в окремий компонент
 // лише щоб не дублювати JSX між 3D-веткою (дві грані) і reduced-motion
-// веткою (один елемент за раз).
+// веткою (один елемент за раз). canFlip — чи є переклад: лише тоді внизу
+// грані показана підказка "торкніться — переклад" (замінює колишній
+// рядок-підказку під стеком, що перекривав стрілки, проблема 1 задачі).
 function DeckCardFront({
   card,
+  canFlip,
   zoomOpen,
   onZoomOpen,
   onZoomClose,
 }: {
   card: FlipCardType;
+  canFlip: boolean;
   zoomOpen: boolean;
   onZoomOpen: () => void;
   onZoomClose: () => void;
 }) {
   return (
     <>
-      {card.image_url && (
-        <span className="relative w-full">
-          <ImageZoomBadge onOpen={onZoomOpen} />
-          <ImageOrPlaceholder src={card.image_url} alt="" className="mx-auto max-h-40 w-auto rounded object-contain" />
+      <span className="self-start">
+        <DeckSideChip label="FR" />
+      </span>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-2 text-center">
+        {card.image_url && (
+          <span className="relative w-full">
+            <ImageZoomBadge onOpen={onZoomOpen} />
+            <ImageOrPlaceholder src={card.image_url} alt="" className="mx-auto max-h-40 w-auto rounded object-contain" />
+          </span>
+        )}
+        {zoomOpen && card.image_url && <ImageLightbox src={card.image_url} onClose={onZoomClose} />}
+        <p className="max-w-full break-words text-[18px] font-semibold leading-[1.4] font-content text-[#1a1640] [overflow-wrap:anywhere] dark:text-neutral-100 sm:text-[24px]">
+          {frenchNbsp(card.front)}
+        </p>
+        {card.audio_url && <AudioPill src={card.audio_url} compact />}
+      </div>
+      {canFlip ? (
+        <span className="flex items-center gap-1.5 text-[12px] font-content text-[#8a7a4a] dark:text-neutral-400 sm:text-[14px]">
+          <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
+          Торкніться картки, щоб побачити переклад
         </span>
+      ) : (
+        <span />
       )}
-      {zoomOpen && card.image_url && <ImageLightbox src={card.image_url} onClose={onZoomClose} />}
-      <p className="max-w-full break-words text-center text-2xl font-semibold font-content [overflow-wrap:anywhere] sm:text-3xl">
-        {frenchNbsp(card.front)}
-      </p>
-      {card.audio_url && <AudioPill src={card.audio_url} compact />}
     </>
   );
 }
 
-// back — лише переклад (жодної картинки/аудіо, за умовою задачі).
+// back — лише переклад (жодної картинки/аудіо, за умовою задачі). UK-чип
+// замінює колишній текстовий лейбл "Переклад" — та сама роль, уже видно з
+// контрасту "FR"/"UK" між двома гранями.
 function DeckCardBack({ translation }: { translation: string }) {
   return (
     <>
-      <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-        Переклад
+      <span className="self-start">
+        <DeckSideChip label="UK" />
       </span>
-      <p className="max-w-full break-words text-center text-xl font-content text-neutral-700 [overflow-wrap:anywhere] sm:text-2xl dark:text-neutral-200">
-        {translation}
-      </p>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 text-center">
+        <p className="max-w-full break-words text-[17px] italic font-medium leading-[1.4] font-content text-[#55546b] [overflow-wrap:anywhere] dark:text-neutral-300 sm:text-[22px]">
+          {translation}
+        </p>
+      </div>
+      <span className="flex items-center gap-1.5 text-[12px] font-content text-[#8a7a4a] dark:text-neutral-400 sm:text-[14px]">
+        <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
+        Торкніться картки, щоб сховати переклад
+      </span>
     </>
   );
 }
