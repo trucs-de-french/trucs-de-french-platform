@@ -109,7 +109,7 @@ export function OpenAnswerCheckExercise({
         {showTab && (
           <RowPointsTab earned={qDetail ? (qDetail.isCorrect ? qDetail.points : 0) : undefined} possible={q.points} />
         )}
-        <div className="glass-item-card flex flex-col gap-2 px-3 pt-4 pb-3">
+        <div className="glass-item-card flex flex-col gap-2 px-3 pt-4 pb-[14px]">
           <div className="flex items-start gap-3">
             {number !== null && (
               <span className="item-number-badge" aria-label={`Питання ${number}`}>
@@ -168,10 +168,8 @@ export function OpenAnswerCheckExercise({
             )}
             {qDetail?.hintUsed && <HintUsedBadge />}
           </div>
-          {q.hint && (
-            <p className="min-h-5 text-sm break-words text-neutral-600 dark:text-neutral-300">
-              {hintVisible ? q.hint : ""}
-            </p>
+          {hintVisible && q.hint && (
+            <p className="text-sm break-words text-neutral-600 dark:text-neutral-300">{q.hint}</p>
           )}
           {qDetail && !qDetail.isCorrect && (
             <p className="text-sm text-red-600 dark:text-red-400">
