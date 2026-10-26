@@ -3285,14 +3285,16 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-plaque {
   background: linear-gradient(135deg, #1a1640, #4b46da);
+  border: var(--glass-panel-border-width, 1px) solid rgba(243, 217, 139, 0.28);
   color: #f6dc8e;
-  box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-plaque {
     background: linear-gradient(135deg, #1a1640, #4b46da);
+    border: var(--glass-panel-border-width, 1px) solid rgba(243, 217, 139, 0.28);
     color: #f6dc8e;
-    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.22);
   }
 }
 @media (max-width: 640px) {
@@ -6295,18 +6297,30 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fff;
   border-color: rgba(217, 183, 101, 0.9);
 }
+.dark .matching-dot--default,
+.dark .matching-dot--paired-empty {
+  background: #7f9cf0;
+  border-color: #b3bfe0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .matching-dot--default,
+  :root:not(.light) .matching-dot--paired-empty {
+    background: #7f9cf0;
+    border-color: #b3bfe0;
+  }
+}
 .matching-dot--selected {
   background: #4b46da;
   box-shadow: 0 0 0 4px rgba(75, 70, 218, 0.25);
 }
 .dark .matching-dot--selected {
-  background: rgba(130, 160, 240, 0.9);
-  box-shadow: 0 0 0 4px rgba(130, 160, 240, 0.25);
+  background: #a9bcff;
+  box-shadow: 0 0 0 4px rgba(127, 156, 240, 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .matching-dot--selected {
-    background: rgba(130, 160, 240, 0.9);
-    box-shadow: 0 0 0 4px rgba(130, 160, 240, 0.25);
+    background: #a9bcff;
+    box-shadow: 0 0 0 4px rgba(127, 156, 240, 0.5);
   }
 }
 .matching-dot--paired {
