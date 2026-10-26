@@ -7088,15 +7088,25 @@ button.scene-bar:active .scene-bar-toggle {
   background: transparent;
 }
 .dark .karaoke-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(243, 217, 139, 0.25);
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
   box-shadow: none;
+  scrollbar-color: rgba(127, 156, 240, 0.6) transparent;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(243, 217, 139, 0.25);
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
     box-shadow: none;
+    scrollbar-color: rgba(127, 156, 240, 0.6) transparent;
+  }
+}
+.dark .karaoke-card::-webkit-scrollbar-thumb {
+  background: rgba(127, 156, 240, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .karaoke-card::-webkit-scrollbar-thumb {
+    background: rgba(127, 156, 240, 0.6);
   }
 }
 .karaoke-line {
@@ -7108,11 +7118,11 @@ button.scene-bar:active .scene-bar-toggle {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .dark .karaoke-line {
-  color: #e3e2fb;
+  color: rgba(245, 236, 208, 0.78);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-line {
-    color: #e3e2fb;
+    color: rgba(245, 236, 208, 0.78);
   }
 }
 /* Оригінальні розміри (до рестайлу): leading-8 (line-height 2rem) для
@@ -7132,24 +7142,28 @@ button.scene-bar:active .scene-bar-toggle {
   border-left-color: #4b46da;
 }
 .dark .karaoke-line--active {
-  background: linear-gradient(90deg, rgba(75, 70, 218, 0.22), rgba(75, 70, 218, 0));
-  border-left-color: #8a88f5;
+  background: linear-gradient(90deg, rgba(127, 156, 240, 0.22), rgba(127, 156, 240, 0.06));
+  border-left: 3px solid #e0b85a;
+  border-radius: 6px;
+  color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-line--active {
-    background: linear-gradient(90deg, rgba(75, 70, 218, 0.22), rgba(75, 70, 218, 0));
-    border-left-color: #8a88f5;
+    background: linear-gradient(90deg, rgba(127, 156, 240, 0.22), rgba(127, 156, 240, 0.06));
+    border-left: 3px solid #e0b85a;
+    border-radius: 6px;
+    color: #f5ecd0;
   }
 }
 .karaoke-line--upcoming {
   color: #a3a1b8;
 }
 .dark .karaoke-line--upcoming {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(245, 236, 208, 0.78);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-line--upcoming {
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(245, 236, 208, 0.78);
   }
 }
 
@@ -7189,17 +7203,17 @@ button.scene-bar:active .scene-bar-toggle {
    слотах, замість старого #8a88f5; фон лишено (окрема підсвітка "це
    активний слот", не порожній стан сам по собі). */
 .dark .karaoke-gap--active-empty {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: #7f9cf0;
-  color: rgba(179, 191, 224, 0.8);
-  box-shadow: none;
+  background: rgba(127, 156, 240, 0.28);
+  border-color: #a9bcff;
+  color: #f5ecd0;
+  box-shadow: 0 0 10px rgba(127, 156, 240, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--active-empty {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #7f9cf0;
-    color: rgba(179, 191, 224, 0.8);
-    box-shadow: none;
+    background: rgba(127, 156, 240, 0.28);
+    border-color: #a9bcff;
+    color: #f5ecd0;
+    box-shadow: 0 0 10px rgba(127, 156, 240, 0.45);
   }
 }
 .karaoke-gap--upcoming-empty {
@@ -7213,19 +7227,19 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .karaoke-gap--upcoming-empty {
   background: var(--card-field-bg);
   border-color: var(--card-field-border);
-  color: rgba(179, 191, 224, 0.8);
+  color: #b3bfe0;
 }
 .dark .karaoke-gap--upcoming-empty::placeholder {
-  color: rgba(179, 191, 224, 0.8);
+  color: #b3bfe0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--upcoming-empty {
     background: var(--card-field-bg);
     border-color: var(--card-field-border);
-    color: rgba(179, 191, 224, 0.8);
+    color: #b3bfe0;
   }
   :root:not(.light) .karaoke-gap--upcoming-empty::placeholder {
-    color: rgba(179, 191, 224, 0.8);
+    color: #b3bfe0;
   }
 }
 .karaoke-gap--filled {
@@ -7234,15 +7248,15 @@ button.scene-bar:active .scene-bar-toggle {
   color: #3b36c4;
 }
 .dark .karaoke-gap--filled {
-  background: rgba(75, 70, 218, 0.3);
-  border-color: #8a88f5;
-  color: #dcdbf3;
+  background: rgba(8, 10, 40, 0.55);
+  border-color: #7f9cf0;
+  color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--filled {
-    background: rgba(75, 70, 218, 0.3);
-    border-color: #8a88f5;
-    color: #dcdbf3;
+    background: rgba(8, 10, 40, 0.55);
+    border-color: #7f9cf0;
+    color: #f5ecd0;
   }
 }
 .karaoke-gap--correct {
@@ -7299,15 +7313,17 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
 }
 .dark .karaoke-progress-pill {
-  background: rgba(150, 150, 255, 0.18);
-  border-color: rgba(150, 150, 255, 0.4);
-  color: #dcdbf3;
+  background: var(--points-bg);
+  border: none;
+  color: var(--points-ink);
+  box-shadow: 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-progress-pill {
-    background: rgba(150, 150, 255, 0.18);
-    border-color: rgba(150, 150, 255, 0.4);
-    color: #dcdbf3;
+    background: var(--points-bg);
+    border: none;
+    color: var(--points-ink);
+    box-shadow: 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
 }
 
@@ -7355,14 +7371,14 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .karaoke-option-chip {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(217, 183, 101, 0.45);
-  color: #e3e2fb;
+  color: #f5ecd0;
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(217, 183, 101, 0.45);
-    color: #e3e2fb;
+    color: #f5ecd0;
     box-shadow: none;
   }
 }
@@ -7399,6 +7415,16 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 767px) {
   .karaoke-check-btn {
     width: 100%;
+  }
+}
+.dark .karaoke-check-btn:not(:disabled) {
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+  color: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .karaoke-check-btn:not(:disabled) {
+    background: linear-gradient(135deg, #5a55e6, #3b36c4);
+    color: #fff;
   }
 }
 
