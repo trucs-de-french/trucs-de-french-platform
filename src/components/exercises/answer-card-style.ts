@@ -14,7 +14,7 @@ export const ANSWER_CARD_BASE =
 // ANSWER_CHIP_BASE/ANSWER_CHIP_DEFAULT нижче (суцільна рамка-чип, як у
 // полів-пропусків, без градієнта й без великої тіні).
 export const ANSWER_CARD_DEFAULT =
-  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[rgba(217,183,101,0.6)] dark:bg-[rgba(255,255,255,0.09)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:hover:border-[rgba(217,183,101,0.85)]";
+  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
 
 // Той самий розмір/відступ/радіус, що ANSWER_CARD_BASE/DEFAULT, але
 // маленька рамка-чип (border rgba(217,183,101,.55) 1px, легка тінь
@@ -27,7 +27,7 @@ export const ANSWER_CARD_DEFAULT =
 export const ANSWER_CHIP_BASE =
   "rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-3 text-center glass-gap-shadow dark:shadow-sm transition-colors";
 export const ANSWER_CHIP_DEFAULT =
-  "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+  "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
 
 // Зменшений inline-варіант — для варіантів, вплетених прямо в текст
 // речення (word_choice), де повний ANSWER_CARD_BASE (p-3, rounded-lg)
@@ -50,7 +50,7 @@ export const ANSWER_CARD_INLINE =
 // CARD_WRAP у multiple-choice.tsx БЕЗ зміни значення — рядок той самий,
 // multiple_choice імпортує звідси під тим самим локальним ім'ям.
 export const ITEM_CARD_WRAP =
-  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-gold-edge glass-card-shadow border-[#dcbd6e] bg-white dark:border-neutral-700 dark:bg-neutral-800";
+  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-gold-edge glass-card-shadow border-[#dcbd6e] bg-white dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Круглий бейдж-номер питання/твердження/рядка (1, 2, 3...) — еталон:
 // колишній QUESTION_NUMBER_BADGE, що жив лише в multiple-choice.tsx

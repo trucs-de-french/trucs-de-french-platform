@@ -79,6 +79,23 @@
   --field-wrong-bg: #4a1a1d;
   --field-wrong-border: #e5484d;
   --field-wrong-ink: #ffd0d0;
+
+  /* "Індиго-скло" — спільна непрозора підкладка карток-елементів вправ
+     (темна тема): ці токени тепер керують .glass-item-card (через
+     --glass-item-bg/--glass-item-border нижче, .dark .glass-block/
+     .scene-bar) і дослівними dark:-утилітами в answer-card-style.ts/
+     legend-tile-style.ts/tile-styles.ts/flip-cards.tsx/checkbox-grid.tsx —
+     одна точка правди замість rgba(255,255,255,.06-.09) напівпрозорого
+     фону й bg-neutral-800 сірого, які раніше дублювались по файлах. */
+  --card-bg: #171b63;
+  --card-border: rgba(138, 136, 245, 0.5);
+  --card-border-width: 1.5px;
+  --card-ink: #f5ecd0;
+  --card-ink-2: #c9c6e8;
+  --card-hover-bg: #1b1f70;
+  --card-hover-border: rgba(138, 136, 245, 0.8);
+  --card-field-bg: #0e1142;
+  --card-field-border: #8a88f5;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -111,6 +128,16 @@
     --field-wrong-bg: #4a1a1d;
     --field-wrong-border: #e5484d;
     --field-wrong-ink: #ffd0d0;
+
+    --card-bg: #171b63;
+    --card-border: rgba(138, 136, 245, 0.5);
+    --card-border-width: 1.5px;
+    --card-ink: #f5ecd0;
+    --card-ink-2: #c9c6e8;
+    --card-hover-bg: #1b1f70;
+    --card-hover-border: rgba(138, 136, 245, 0.8);
+    --card-field-bg: #0e1142;
+    --card-field-border: #8a88f5;
   }
 }
 
@@ -125,6 +152,17 @@
   color: var(--field-ink);
   caret-color: var(--field-caret);
   outline: none;
+}
+/* Поле на картці (Lettres manquantes/table_fill/open_answer тощо, усередині
+   .glass-item-card) — темніший фон+рамка, щоб відрізнятись від самої
+   картки (--card-bg/--card-border), а не лишатись на --field-bg поза
+   карткою. :not()-винятки замість простого порядку в файлі — специфічність
+   (0,6,0) гарантовано вища за :disabled/--correct/--wrong (0,3,0) нижче,
+   тож стани перевірки завжди лишаються їхніми власними кольорами незалежно
+   від порядку правил у файлі. */
+.dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+  background: var(--card-field-bg);
+  border-color: var(--card-field-border);
 }
 .dark .exercise-field::placeholder {
   color: var(--field-placeholder);
@@ -171,6 +209,10 @@
   :root:not(.light) .exercise-field::placeholder {
     color: var(--field-placeholder);
     opacity: 1;
+  }
+  :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+    background: var(--card-field-bg);
+    border-color: var(--card-field-border);
   }
 }
 @media (hover: hover) and (prefers-color-scheme: dark) {
@@ -1530,15 +1572,16 @@ button, input, textarea, select, label, nav, aside {
   --glass-toggle-bg: transparent;
   --glass-toggle-border: #e8c46a;
   --glass-toggle-chevron: #f6dc8e;
-  --glass-text: #ffffff;
-  --glass-text-secondary: #c9c8e6;
+  --glass-text: var(--card-ink);
+  --glass-text-secondary: var(--card-ink-2);
   --glass-text-meta: #f6dc8e;
-  --glass-item-bg: rgba(255, 255, 255, 0.06);
-  --glass-item-border: rgba(243, 217, 139, 0.25);
+  --glass-item-bg: var(--card-bg);
+  --glass-item-border: var(--card-border);
+  --glass-item-border-width: var(--card-border-width);
   --glass-item-shadow: none;
   --glass-answer-bg: transparent;
-  --glass-answer-border: rgba(243, 217, 139, 0.55);
-  --glass-answer-text: #f6dc8e;
+  --glass-answer-border: rgba(217, 183, 101, 0.7);
+  --glass-answer-text: var(--card-ink);
   --glass-answer-border-hover: #f6dc8e;
   --glass-answer-text-hover: #fff0b8;
   --glass-divider: rgba(243, 217, 139, 0.22);
@@ -1559,15 +1602,16 @@ button, input, textarea, select, label, nav, aside {
     --glass-toggle-bg: transparent;
     --glass-toggle-border: #e8c46a;
     --glass-toggle-chevron: #f6dc8e;
-    --glass-text: #ffffff;
-    --glass-text-secondary: #c9c8e6;
+    --glass-text: var(--card-ink);
+    --glass-text-secondary: var(--card-ink-2);
     --glass-text-meta: #f6dc8e;
-    --glass-item-bg: rgba(255, 255, 255, 0.06);
-    --glass-item-border: rgba(243, 217, 139, 0.25);
+    --glass-item-bg: var(--card-bg);
+    --glass-item-border: var(--card-border);
+    --glass-item-border-width: var(--card-border-width);
     --glass-item-shadow: none;
     --glass-answer-bg: transparent;
-    --glass-answer-border: rgba(243, 217, 139, 0.55);
-    --glass-answer-text: #f6dc8e;
+    --glass-answer-border: rgba(217, 183, 101, 0.7);
+    --glass-answer-text: var(--card-ink);
     --glass-answer-border-hover: #f6dc8e;
     --glass-answer-text-hover: #fff0b8;
     --glass-divider: rgba(243, 217, 139, 0.22);

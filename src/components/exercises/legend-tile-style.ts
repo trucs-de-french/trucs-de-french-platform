@@ -5,7 +5,7 @@
 // плитки філворду (word-search.tsx, ImageTile) і картинкової картки-підказки
 // кросворду (crossword.tsx, ImageClueCard, ЕТАП G).
 export const LEGEND_TILE_BASE =
-  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none dark:border-neutral-700 dark:bg-neutral-800";
+  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Та сама форма (радіус/фон/тінь), але БЕЗ кольору рамки — для крос-
 // ворду (crossword.tsx), де рамка має РЕАЛЬНО чергуватись (ідле-чип/
@@ -38,7 +38,7 @@ export const LEGEND_IMAGE_GRID = "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-
 // класів непередбачуваний — Tailwind-специфічність однакова, порядок у
 // згенерованому CSS не збігається з порядком у рядку className).
 export const LEGEND_PILL =
-  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Та сама форма без кольору рамки, для крос-ворду — та сама причина, що
 // LEGEND_TILE_SHAPE вище.
@@ -49,7 +49,7 @@ export const LEGEND_PILL_SHAPE =
 // "long", LongCard): на всю ширину батьківського flex-col, rounded-xl
 // (окремий набір border/bg/dark-класів — та сама причина, що в LEGEND_PILL).
 export const LEGEND_LONG_CARD =
-  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Та сама форма без кольору рамки, для крос-ворду — та сама причина, що
 // LEGEND_TILE_SHAPE вище. Темна тема — токени .glass-item-card

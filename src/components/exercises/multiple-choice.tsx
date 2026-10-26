@@ -307,13 +307,13 @@ export function MultipleChoiceExercise({
       const sel = selections[itemId] ?? [];
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
-        : "glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800/70";
+        : "glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
     if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
     if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-    return "glass-gold-edge border-[#dcbd6e] bg-white opacity-60 dark:border-neutral-700 dark:bg-neutral-800";
+    return "glass-gold-edge border-[#dcbd6e] bg-white opacity-60 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
   }
 
   // Для варіантів із картинкою підсвічення переноситься з усієї кнопки
