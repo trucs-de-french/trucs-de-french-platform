@@ -68,9 +68,12 @@ export function ListeningExercise({
   // Значення класів — ті самі рядки, що були тут до картки-плитки.
   function tileClass(questionId: string, optionId: string, qDetail?: ListeningDetail["questions"][number]) {
     if (!qDetail) {
+      // .pool-tile-dark — той самий темно-наvy токен, що тепер і в
+      // multiple-choice.tsx (chipClass/imageCardClass), щоб пул
+      // ChoiceQuestionCard виглядав однаково в обох вправах.
       return answers[questionId] === optionId
         ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : ANSWER_CHIP_DEFAULT;
+        : "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
     }
     const od = qDetail.options.find((o) => o.id === optionId);
     if (!od) return "";

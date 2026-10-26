@@ -7441,3 +7441,40 @@ button.scene-bar:active .scene-bar-toggle {
 .flip-face--back {
   transform: rotateY(180deg);
 }
+
+/* Темна навy-підкладка пулу відповідей (та сама темрява, що .word-pool) —
+   один спільний токен фону, щоб картинковий і текстовий режими
+   multiple_choice та пул listening (ChoiceQuestionCard/POOL_CLASS) не
+   розійшлись знову. Лише фон — без рамки/hover (ті в .pool-tile-dark
+   нижче, для самих інтерактивних плиток, не для смужки-контейнера). */
+.dark .pool-dark-bg {
+  background: rgba(10, 16, 48, 0.96);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .pool-dark-bg {
+    background: rgba(10, 16, 48, 0.96);
+  }
+}
+
+/* Той самий фон, що .pool-dark-bg, + hover лише під (hover: hover) —
+   для самих плиток-варіантів (кнопки), не смужки-контейнера. */
+.dark .pool-tile-dark {
+  background: rgba(10, 16, 48, 0.96);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .pool-tile-dark {
+    background: rgba(10, 16, 48, 0.96);
+  }
+}
+@media (hover: hover) {
+  .dark .pool-tile-dark:hover {
+    border-color: #7f9cf0;
+    background: rgba(127, 156, 240, 0.12);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .pool-tile-dark:hover {
+    border-color: #7f9cf0;
+    background: rgba(127, 156, 240, 0.12);
+  }
+}

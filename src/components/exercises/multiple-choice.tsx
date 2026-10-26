@@ -10,11 +10,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
-import {
-  ANSWER_CHIP_DEFAULT,
-  COMPACT_IMAGE_FILL,
-  ITEM_CARD_WRAP as CARD_WRAP,
-} from "./answer-card-style";
+import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
@@ -268,9 +264,15 @@ export function MultipleChoiceExercise({
   function chipClass(itemId: string, optionId: string, itemDetail?: ItemDetail) {
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
+      // Той самий темно-наvy .pool-tile-dark, що картки з картинкою вище
+      // (imageCardClass) і плитки listening.tsx — текстовий і картинковий
+      // варіант multiple_choice тепер на одному токені фону/hover, щоб не
+      // розійшлись знову (ANSWER_CHIP_DEFAULT лишається незмінним для
+      // vocab_quiz/sort_columns/image_match/chronological_order — ті не
+      // мають цієї ж "рамка+смужка пулу" розкладки).
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : ANSWER_CHIP_DEFAULT;
+        : "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
@@ -305,14 +307,15 @@ export function MultipleChoiceExercise({
   function imageCardClass(itemId: string, optionId: string, itemDetail?: ItemDetail, hasImage = false) {
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
-      // hasImage — лише картки з картинкою отримують темно-навy підкладку,
-      // як у пулі слів ("СЛОВА"), замість звичної періwinkle --card-bg;
-      // текстові картки в тій самій сітці (мішаний режим) лишаються на
-      // --card-bg без змін.
-      const defaultDarkBg = hasImage ? "dark:bg-[rgba(10,16,48,0.96)]" : "dark:bg-[var(--card-bg)]";
+      // hasImage — лише картки з картинкою отримують темно-навy підкладку
+      // (.pool-tile-dark, той самий токен, що пул слів "СЛОВА" і текстові
+      // плитки chipClass/tileClass нижче/в listening.tsx), замість звичної
+      // періwinkle --card-bg; текстові картки в тій самій сітці (мішаний
+      // режим) лишаються на --card-bg без змін.
+      const defaultDarkBg = hasImage ? "pool-tile-dark" : "dark:bg-[var(--card-bg)]";
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
-        : `glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] ${defaultDarkBg} dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]`;
+        : `glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] ${defaultDarkBg} ${hasImage ? "" : "dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]"}`;
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
@@ -498,7 +501,7 @@ export function MultipleChoiceExercise({
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
-          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] dark:bg-[rgba(10,16,48,0.96)]"
+          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] pool-dark-bg"
         >
           <div
             className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}
