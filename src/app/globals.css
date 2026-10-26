@@ -3543,17 +3543,17 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .task-plaque {
   background: linear-gradient(135deg, #1a1640, #4b46da);
   background-clip: padding-box;
-  border: var(--glass-panel-border-width, 1px) solid rgba(170, 175, 250, 0.85);
+  border: var(--glass-panel-border-width, 1px) solid rgba(217, 183, 101, 0.9);
   color: #f6dc8e;
-  box-shadow: 0 3px 8px rgba(217, 183, 101, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(217, 183, 101, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-plaque {
     background: linear-gradient(135deg, #1a1640, #4b46da);
     background-clip: padding-box;
-    border: var(--glass-panel-border-width, 1px) solid rgba(170, 175, 250, 0.85);
+    border: var(--glass-panel-border-width, 1px) solid rgba(217, 183, 101, 0.9);
     color: #f6dc8e;
-    box-shadow: 0 3px 8px rgba(217, 183, 101, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(217, 183, 101, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 }
 @media (max-width: 640px) {
