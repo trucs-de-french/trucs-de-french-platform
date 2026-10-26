@@ -139,7 +139,7 @@ function findFirstGap(lines: KaraokePublicLine[]): ActiveGap | null {
 function KaraokeLineRow({
   line,
   lineIndex,
-  isCurrent,
+  lineState,
   answers,
   detail,
   disabled,
@@ -153,7 +153,7 @@ function KaraokeLineRow({
 }: {
   line: KaraokePublicLine;
   lineIndex: number;
-  isCurrent: boolean;
+  lineState: "sung" | "active" | "upcoming";
   answers: string[];
   detail?: KaraokeDetail["lines"][number];
   disabled: boolean;
@@ -171,13 +171,11 @@ function KaraokeLineRow({
     <div
       ref={lineRef}
       onClick={onSeek}
-      className="cursor-pointer rounded-md px-2 py-1 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+      className={`karaoke-line ${
+        lineState === "active" ? "karaoke-line--active" : lineState === "upcoming" ? "karaoke-line--upcoming" : ""
+      }`}
     >
-      <p
-        className={`font-content leading-8 ${
-          isCurrent ? "text-lg" : "text-base text-neutral-500 dark:text-neutral-400"
-        }`}
-      >
+      <p className="font-content">
         {line.tokens.map((token, ti) => {
           if (token !== null) return <span key={ti}>{token}</span>;
           const gi = gapIndexByToken[ti];
@@ -185,8 +183,8 @@ function KaraokeLineRow({
           const gapDetail = detail?.gaps[gi];
           const statusClass = gapDetail
             ? gapDetail.isCorrect
-              ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-              : "border-red-500 bg-red-50 dark:bg-red-950/30"
+              ? "karaoke-gap--correct"
+              : "karaoke-gap--wrong"
             : null;
 
           if (answerMode === "typing") {
@@ -195,14 +193,13 @@ function KaraokeLineRow({
                 key={ti}
                 ref={diacritics.fieldRef(`${lineIndex}-${gi}`)}
                 value={value}
+                placeholder="…"
                 onChange={(e) => onTypeAnswer(gi, e.target.value)}
                 onFocus={() => diacritics.onFocus(`${lineIndex}-${gi}`)}
                 onBlur={diacritics.onBlur}
                 onClick={(e) => e.stopPropagation()}
                 disabled={disabled}
-                className={`mx-1 w-24 rounded border px-1.5 py-0.5 text-base ${
-                  statusClass ?? "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600"
-                }`}
+                className={`karaoke-gap ${statusClass ?? (value ? "karaoke-gap--filled" : "karaoke-gap--upcoming-empty")}`}
               />
             );
           }
@@ -217,8 +214,8 @@ function KaraokeLineRow({
                 if (!disabled) onSetActiveGap(gi);
               }}
               disabled={disabled}
-              className={`mx-1 min-w-12 rounded border px-2 py-0.5 text-base ${
-                statusClass ?? (isActive ? "border-brand bg-brand/10" : "border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600")
+              className={`karaoke-gap ${
+                statusClass ?? (value ? "karaoke-gap--filled" : isActive ? "karaoke-gap--active-empty" : "karaoke-gap--upcoming-empty")
               }`}
             >
               {value || "…"}
@@ -519,6 +516,14 @@ export function KaraokeExercise({
     return null;
   }
 
+  // 1-based порядковий номер пропуску {li, gi} серед УСІХ пропусків пісні
+  // (наскрізно, не в межах рядка) — для пілюлі "Пропуск N з M".
+  function globalGapNumber(li: number, gi: number): number {
+    let count = 0;
+    for (let i = 0; i < li; i++) count += config.lines[i].tokens.filter((t) => t === null).length;
+    return count + gi + 1;
+  }
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
@@ -583,13 +588,13 @@ export function KaraokeExercise({
 
         {/* ~5-6 рядків висотою (leading-8=2rem на рядок) — власний
             скрол-контейнер, не сторінка. */}
-        <div ref={linesContainerRef} className="flex h-44 flex-col gap-1 overflow-y-auto">
+        <div ref={linesContainerRef} className="karaoke-card h-44">
           {config.lines.map((line, li) => (
             <KaraokeLineRow
               key={li}
               line={line}
               lineIndex={li}
-              isCurrent={li === displayLineIndex}
+              lineState={li === displayLineIndex ? "active" : li > displayLineIndex ? "upcoming" : "sung"}
               answers={answers[li]}
               detail={detail?.lines[li]}
               disabled={!!result}
@@ -616,19 +621,19 @@ export function KaraokeExercise({
         </div>
 
         {config.answerMode === "choice" && activeGap && !result && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Оберіть слово для пропуску</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="karaoke-progress-pill">
+                Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
+              </span>
+              <p className="font-content text-base text-[#55546b] dark:text-neutral-400">Оберіть слово для пропуску</p>
+            </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
                 "один рядок, коли влазить" без жодних додаткових умов. */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {(config.lines[activeGap.li].gapOptions?.[activeGap.gi] ?? []).map((opt, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => pickOption(opt)}
-                  className="rounded-xl border-2 border-brand/30 bg-white px-4 py-2 text-base transition hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:bg-neutral-800 shadow-sm"
-                >
+                <button key={i} type="button" onClick={() => pickOption(opt)} className="karaoke-option-chip">
                   {opt}
                 </button>
               ))}
@@ -677,7 +682,7 @@ export function KaraokeExercise({
               type="button"
               onClick={() => checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers))}
               disabled={pending || filledGaps === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className="karaoke-check-btn self-start"
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
