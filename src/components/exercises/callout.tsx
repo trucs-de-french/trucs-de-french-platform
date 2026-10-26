@@ -42,18 +42,18 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
     // callout), не на .rich-text: щоб box-sizing:content-box у
     // .rich-text--article (globals.css) рахував 46rem рівно для
     // текстового контенту, незалежно від padding/border картки. Іконка —
-    // absolute, НЕ в flex-колонці: інакше вона забирає власну колонку й
-    // зсуває весь контент (заголовки/списки/параграфи) праворуч, роблячи
-    // лівий відступ більшим за правий. absolute left/top тут влізає в
-    // саму padding-smugu (12px < 18/32px лівого padding) — текст не
-    // зсувається і не перекривається іконкою по горизонталі.
+    // звичайний flex-рядок НАД текстом (не колонка поруч із ним і не
+    // absolute поверх першого рядка — абсолютне позиціювання з минулого
+    // коміту перекривало перший рядок параграфа): висота рядка з
+    // margin-bottom не зсуває текст по горизонталі, лише додає рядок
+    // зверху, тож лівий/правий padding лишаються симетричними.
     // callout-box — хук для scoped-override плаваючої картинки
     // (globals.css), щоб не чіпати ту саму .rich-text--article картинку
     // в статті Матеріалу/редакторі.
-    <div className={`callout-box relative rounded-md border-2 p-[16px_18px] sm:p-[24px_32px] ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
-      <span aria-hidden className="absolute left-3 top-[14px] text-[20px] leading-none">
-        {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
-      </span>
+    <div className={`callout-box rounded-md border-2 p-[16px_18px] sm:p-[24px_32px] ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
+      <div className="mb-[10px] flex" aria-hidden>
+        <span className="text-[24px] leading-none">{STYLE_ICONS[config.style] ?? STYLE_ICONS.none}</span>
+      </div>
       <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: frenchNbspHtml(safeHtml) }} />
     </div>
   );
