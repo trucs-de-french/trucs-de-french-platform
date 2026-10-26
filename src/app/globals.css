@@ -3542,16 +3542,18 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-plaque {
   background: linear-gradient(135deg, #1a1640, #4b46da);
-  border: var(--glass-panel-border-width, 1px) solid rgba(243, 217, 139, 0.28);
+  background-clip: padding-box;
+  border: var(--glass-panel-border-width, 1px) solid rgba(170, 175, 250, 0.85);
   color: #f6dc8e;
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.22);
+  box-shadow: 0 3px 8px rgba(217, 183, 101, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-plaque {
     background: linear-gradient(135deg, #1a1640, #4b46da);
-    border: var(--glass-panel-border-width, 1px) solid rgba(243, 217, 139, 0.28);
+    background-clip: padding-box;
+    border: var(--glass-panel-border-width, 1px) solid rgba(170, 175, 250, 0.85);
     color: #f6dc8e;
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.22);
+    box-shadow: 0 3px 8px rgba(217, 183, 101, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
 @media (max-width: 640px) {
