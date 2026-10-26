@@ -63,7 +63,7 @@ function FlipCardTile({
       aria-disabled={!clickable}
       onClick={clickable ? () => setFlipped((f) => !f) : undefined}
       onKeyDown={handleKeyDown}
-      className={`flex min-w-0 flex-col items-center gap-2 text-base transition-all ${clickable ? "cursor-pointer" : "cursor-default"} ${ANSWER_CARD_BASE} ${variantClass}`}
+      className={`flex min-w-0 flex-col items-center gap-2 text-base transition-all dark:pb-4 ${clickable ? "cursor-pointer" : "cursor-default"} ${ANSWER_CARD_BASE} ${variantClass}`}
     >
       {card.image_url && (
         <span className="relative w-full">
@@ -81,12 +81,20 @@ function FlipCardTile({
       )}
       {card.audio_url && <AudioPill src={card.audio_url} compact />}
       <span
-        className={`min-w-0 max-w-full break-words [overflow-wrap:anywhere] ${flipped ? "dark:text-[#c9c6e8]" : "dark:text-[#f5ecd0]"}`}
+        className={`min-w-0 max-w-full break-words [overflow-wrap:anywhere] dark:mt-3.5 dark:tracking-[0.01em] dark:leading-[1.25] ${
+          flipped
+            ? "dark:font-semibold dark:text-[#fff3c4] md:dark:text-[16px]"
+            : "dark:font-bold dark:text-[#f5ecd0] md:dark:text-[18px]"
+        }`}
       >
         {frenchNbsp(shown)}
       </span>
       {clickable && (
-        <span className="text-xs text-neutral-400 dark:text-[rgba(245,236,208,0.6)]">
+        <span className="flex items-center gap-1 text-xs text-neutral-400 dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[rgba(245,236,208,0.55)]">
+          <RotateCw
+            aria-hidden="true"
+            className="hidden h-3.5 w-3.5 shrink-0 dark:inline-block dark:text-[rgba(217,183,101,0.8)]"
+          />
           {flipped ? "клік — назад" : "клік — перевернути"}
         </span>
       )}
