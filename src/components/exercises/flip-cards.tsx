@@ -372,22 +372,15 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     : `translateX(${dragX}px) rotate(${dragX / 18}deg)`;
   const topTransition = dragging || reducedMotion ? "none" : `transform ${DECK_FLY_OUT_MS}ms ease-out`;
   const topCursor = dragging ? "grabbing" : canFlip ? "pointer" : "grab";
-  // Платформова картка-грань: рамка/фон/тінь/radius/padding — ТУТ (на
-  // самій грані, що обертається в 3D), не на зовнішній draggable-обгортці
-  // нижче: рамка має "перевертатись" разом із вмістом граней, а не
-  // лишатись статичним контуром. min-height — на draggable-обгортці
-  // (height-карту), бо грані всередині absolute inset-0 і самі по собі не
-  // задають висоту предка.
-  const faceInnerClass =
-    "flex flex-col items-center justify-between gap-2 rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white p-[18px_16px_14px] dark:rounded-lg dark:border dark:border-neutral-700 dark:bg-neutral-800 dark:shadow-sm sm:p-[26px_34px_20px]";
-  const faceClass = `absolute inset-0 ${faceInnerClass}`;
-  // backfaceVisibility — через inline style, не Tailwind arbitrary-клас:
-  // надійніше для vendor-префіксу (-webkit-), той самий підхід, що вже
-  // transform/transition нижче в цьому компоненті.
-  const backfaceHiddenStyle: React.CSSProperties = {
-    backfaceVisibility: "hidden",
-    WebkitBackfaceVisibility: "hidden",
-  };
+  // Візуальні токени грані (рамка/фон/тінь/radius) — лейаут/padding/розмір
+  // тепер у .flip-face/.flip-card (globals.css): грані лежать в ОДНІЙ
+  // grid-клітинці (grid-area:1/1), а не position:absolute+inset:0 —
+  // грід-трек рахується від реального контенту грані, тож картка росте
+  // під довгий текст замість колапсу (був колапс через height:100% проти
+  // предка з auto-height — класична відсоткова пастка CSS).
+  const faceVisualClass =
+    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:rounded-lg dark:border dark:border-neutral-700 dark:bg-neutral-800 dark:shadow-sm";
+  const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
 
   return (
@@ -425,7 +418,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerCancel}
-              className="relative z-20 min-h-[250px] w-full sm:min-h-[270px]"
+              className="relative z-20 w-full"
               style={{
                 transform: topTransform,
                 transition: topTransition,
@@ -438,31 +431,34 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
                 // Без ротації взагалі — миттєва заміна вмісту (не
                 // visibility-трюк над обома гранями): найпростіший спосіб
                 // "без анімації" і однаково коректний для читачів екрана.
-                <div className={`h-full w-full ${faceInnerClass}`}>
-                  {!flipped ? (
-                    <DeckCardFront
-                      card={top}
-                      canFlip={canFlip && !hideHintOnTouch}
-                      zoomOpen={zoomOpen}
-                      onZoomOpen={() => setZoomOpen(true)}
-                      onZoomClose={() => setZoomOpen(false)}
-                    />
-                  ) : (
-                    <DeckCardBack translation={top.back} />
-                  )}
+                // Та сама .flip-card (одна грань — grid-area:1/1 з єдиним
+                // елементом, нешкідливо), щоб min-height/ріст під текст
+                // лишались ідентичними обом гілкам.
+                <div className="flip-card">
+                  <div className={faceVisualClass}>
+                    {!flipped ? (
+                      <DeckCardFront
+                        card={top}
+                        canFlip={canFlip && !hideHintOnTouch}
+                        zoomOpen={zoomOpen}
+                        onZoomOpen={() => setZoomOpen(true)}
+                        onZoomClose={() => setZoomOpen(false)}
+                      />
+                    ) : (
+                      <DeckCardBack translation={top.back} />
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div
-                  className="relative h-full w-full"
+                  className="flip-card"
                   style={{
-                    transformStyle: "preserve-3d",
                     transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
                     transition: `transform ${DECK_FLIP_MS}ms ease`,
                   }}
                 >
                   <div
-                    className={faceClass}
-                    style={backfaceHiddenStyle}
+                    className={faceVisualClass}
                     aria-hidden={flipped}
                     inert={flipped}
                   >
@@ -476,7 +472,6 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
                   </div>
                   <div
                     className={faceClass}
-                    style={{ ...backfaceHiddenStyle, transform: "rotateY(180deg)" }}
                     aria-hidden={!flipped}
                     inert={!flipped}
                   >

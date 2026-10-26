@@ -6689,3 +6689,43 @@ button.scene-bar:active .scene-bar-toggle {
     width: 100%;
   }
 }
+
+/* flip_cards (deck) — DeckFlipCards, flip-cards.tsx. Обидві грані
+   (.flip-face) в ОДНІЙ grid-клітинці grid-area:1/1 замість колишнього
+   position:absolute + inset:0: той підхід вимагав height:100% на предку,
+   чия власна height була "auto" (лише min-height), а відсоткова height
+   проти предка з auto-height за специфікацією CSS рахується як 0 — звідси
+   колапс картки до смужки й текст, що вилазив за її межі. Grid-трек
+   рахується від intrinsic-висоти граней (реального контенту), тож
+   .flip-card росте під довгий текст без цієї пастки. */
+.flip-card {
+  display: grid;
+  position: relative;
+  min-height: 250px;
+  transform-style: preserve-3d;
+}
+@media (min-width: 640px) {
+  .flip-card {
+    min-height: 270px;
+  }
+}
+.flip-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  gap: 8px;
+  padding: 18px 16px 14px;
+}
+@media (min-width: 640px) {
+  .flip-face {
+    padding: 26px 34px 20px;
+  }
+}
+.flip-face--back {
+  transform: rotateY(180deg);
+}
