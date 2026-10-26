@@ -3377,16 +3377,16 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .points-pill-gradient {
   background: var(--points-bg);
-  border: 1.5px solid var(--points-border);
+  border: none;
   color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.28);
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .points-pill-gradient {
     background: var(--points-bg);
-    border: 1.5px solid var(--points-border);
+    border: none;
     color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.28);
+    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
 }
 .points-pill-star {
@@ -3421,16 +3421,16 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-result-points-pill {
   background: var(--points-bg);
-  border: 1.5px solid var(--points-border);
+  border: none;
   color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.28);
+  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-points-pill {
     background: var(--points-bg);
-    border: 1.5px solid var(--points-border);
+    border: none;
     color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 2px 8px rgba(217, 183, 101, 0.28);
+    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
 }
 .task-result-points-pill svg {
@@ -3758,9 +3758,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .row-points-tab {
   background: var(--points-bg);
-  border-color: var(--points-border);
+  border: none;
   color: var(--points-ink);
-  box-shadow: 0 2px 8px rgba(217, 183, 101, 0.28);
+  box-shadow: 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 .dark .row-points-tab--correct {
   background: var(--points-ok-bg);
@@ -3780,9 +3780,9 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .row-points-tab {
     background: var(--points-bg);
-    border-color: var(--points-border);
+    border: none;
     color: var(--points-ink);
-    box-shadow: 0 2px 8px rgba(217, 183, 101, 0.28);
+    box-shadow: 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
   :root:not(.light) .row-points-tab--correct {
     background: var(--points-ok-bg);
