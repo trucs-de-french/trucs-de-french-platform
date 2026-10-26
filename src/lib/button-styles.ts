@@ -57,11 +57,8 @@ export const BUTTON_PREVIEW =
 // font-medium і трохи більший розмір (px-4 py-2) — навмисно інші від
 // BUTTON_PRIMARY/_LG вище: студентська CTA сприймається як самостійна дія
 // під карткою вправи, не рядок компактних адмін-дій.
-// dark: мокап L6 "Блакитна лаванда" — лише темна тема: плаский #3a55a8
-// з рамкою #7f9cf0 замість --color-brand (світла тема лишається на
-// --color-brand без змін).
 export const STUDENT_BUTTON_PRIMARY =
-  "font-heading rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand/90 disabled:opacity-50 dark:border-[1.5px] dark:border-[#7f9cf0] dark:bg-[#3a55a8] dark:shadow-none dark:hover:bg-[#3a55a8]";
+  "font-heading rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand/90 disabled:opacity-50";
 
 // Другорядна кнопка-перемикач студентської сторінки (швидкість відтворення
 // аудіо тощо) — ДВА стани, не один: неактивний — нейтральна картка
