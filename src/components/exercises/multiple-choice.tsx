@@ -302,12 +302,17 @@ export function MultipleChoiceExercise({
   // border-neutral-200 (не border-gray-100 з ANSWER_CARD_DEFAULT) за явною
   // вимогою задачі; без shadow — тінь картки більше НЕ додається (задача:
   // "БЕЗ box-shadow"), лишається лише з CARD_WRAP ззовні.
-  function imageCardClass(itemId: string, optionId: string, itemDetail?: ItemDetail) {
+  function imageCardClass(itemId: string, optionId: string, itemDetail?: ItemDetail, hasImage = false) {
     if (!itemDetail) {
       const sel = selections[itemId] ?? [];
+      // hasImage — лише картки з картинкою отримують темно-навy підкладку,
+      // як у пулі слів ("СЛОВА"), замість звичної періwinkle --card-bg;
+      // текстові картки в тій самій сітці (мішаний режим) лишаються на
+      // --card-bg без змін.
+      const defaultDarkBg = hasImage ? "dark:bg-[rgba(10,16,48,0.96)]" : "dark:bg-[var(--card-bg)]";
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
-        : "glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
+        : `glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] ${defaultDarkBg} dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]`;
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
@@ -493,7 +498,7 @@ export function MultipleChoiceExercise({
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
-          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] dark:bg-neutral-900/50"
+          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] dark:bg-[rgba(10,16,48,0.96)]"
         >
           <div
             className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}
@@ -511,7 +516,7 @@ export function MultipleChoiceExercise({
                     type="button"
                     onClick={() => toggle(item.id, o.id, item.multiple)}
                     disabled={!!itemDetail}
-                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail)}`}
+                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, false)}`}
                   >
                     {frenchNbsp(o.text)}
                   </button>
@@ -527,7 +532,7 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail)}`}
+                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, true)}`}
                 >
                   <div className={`${IMAGE_OPTION_FRAME_BASE} ${mobileAspectClass} sm:aspect-[4/3]`}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
