@@ -2451,11 +2451,20 @@ button.scene-bar:active .scene-bar-toggle {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 26px;
-  margin-bottom: 4px;
+  margin-top: 28px;
+  margin-bottom: 14px;
 }
 .vocab-category-heading:first-child {
   margin-top: 0;
+}
+@media (max-width: 640px) {
+  .vocab-category-heading {
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
+  .vocab-category-heading:first-child {
+    margin-top: 0;
+  }
 }
 .vocab-category-pill {
   padding: 6px 16px;
