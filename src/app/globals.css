@@ -5398,20 +5398,18 @@ button.scene-bar:active .scene-bar-toggle {
 .item-number-badge--incorrect {
   background: #dc2626;
 }
-/* Темна тема — лише м'яке золоте сяйво (без кільця/рамки, --points-border
-   тепер transparent) на індиго-градієнтному бейджі-номері, щоб кружок
-   відривався від темної панелі. Виключено зі станів --correct/--incorrect
-   (зелений/червоний після перевірки) — їх лишаємо без сяйва, як і було. */
+/* Темна тема — крихкий світлий внутрішній контур (inset) + вузьке м'яке
+   золоте сяйво на індиго-градієнтному бейджі-номері, щоб кружок
+   відривався від темної панелі. Без border — прозора рамка над градієнтом
+   давала легкий муарний/розмитий край; inset box-shadow дає чіткий
+   контур без зміни розміру кружка (box-sizing не потрібен). Виключено зі
+   станів --correct/--incorrect (зелений/червоний після перевірки). */
 .dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
-  box-sizing: border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 2px 8px rgba(217, 183, 101, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
-    box-sizing: border-box;
-    border: 1.5px solid transparent;
-    box-shadow: 0 2px 8px rgba(217, 183, 101, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
   }
 }
 .drag-drop-row-number {
