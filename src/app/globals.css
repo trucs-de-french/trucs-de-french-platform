@@ -186,6 +186,14 @@ button, input, textarea, select, label, nav, aside {
   float: right;
   margin: 0.25rem 0 0.5rem 1rem;
 }
+/* Callout-only override: той самий float вправо, лише інший відступ
+   (0 0 12px 24px) — щоб картинка лишалась у межах ПРАВОГО padding
+   callout-бокса (CalloutExercise, .callout-box) без зайвого margin-right.
+   Скоуп через .callout-box — не чіпає ту саму картинку в статті
+   Матеріалу/редакторі (.rich-text--article поза .callout-box). */
+.callout-box .rich-text img[data-align="right"] {
+  margin: 0 0 12px 24px;
+}
 .rich-text img[data-align="center"] {
   display: block;
   margin: 1rem auto;
@@ -347,6 +355,14 @@ button, input, textarea, select, label, nav, aside {
     display: block;
     width: min(100%, 22rem);
     margin: 1rem auto;
+  }
+  /* Callout-only: той самий "full width, no float, centered", лише
+     margin-bottom 12px замість 1rem зверху й знизу — узгоджено з desktop
+     margin цього ж блоку вище (.callout-box .rich-text img[data-align="right"]). */
+  .callout-box .rich-text img[data-align="left"],
+  .callout-box .rich-text img[data-align="right"],
+  .callout-box .rich-text img[data-align="center"] {
+    margin: 0 auto 12px;
   }
 }
 

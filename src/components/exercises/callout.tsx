@@ -38,20 +38,23 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
   if (isBlankHtml(safeHtml)) return null;
 
   return (
-    // ЕТАП 3: border-2/p-3 — на цій зовнішній обгортці (рамка/фон
-    // callout), НЕ на flex-рядку з іконкою й текстом — так само, як
-    // RichArticleEditor тепер тримає свою рамку/px-3 py-2 на окремій
-    // обгортці навколо EditorContent, не на самому .rich-text: щоб
-    // box-sizing:content-box у .rich-text--article (globals.css) рахував
-    // 46rem рівно для текстового контенту, незалежно від padding/border
-    // картки. Рамка/фон не змінились — лише перенесені на рівень вище.
-    <div className={`rounded-md border-2 p-3 ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
-      <div className="flex gap-2">
-        <span aria-hidden className="shrink-0">
-          {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
-        </span>
-        <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: frenchNbspHtml(safeHtml) }} />
-      </div>
+    // ЕТАП 3: border-2/padding — на цій зовнішній обгортці (рамка/фон
+    // callout), не на .rich-text: щоб box-sizing:content-box у
+    // .rich-text--article (globals.css) рахував 46rem рівно для
+    // текстового контенту, незалежно від padding/border картки. Іконка —
+    // absolute, НЕ в flex-колонці: інакше вона забирає власну колонку й
+    // зсуває весь контент (заголовки/списки/параграфи) праворуч, роблячи
+    // лівий відступ більшим за правий. absolute left/top тут влізає в
+    // саму padding-smugu (12px < 18/32px лівого padding) — текст не
+    // зсувається і не перекривається іконкою по горизонталі.
+    // callout-box — хук для scoped-override плаваючої картинки
+    // (globals.css), щоб не чіпати ту саму .rich-text--article картинку
+    // в статті Матеріалу/редакторі.
+    <div className={`callout-box relative rounded-md border-2 p-[16px_18px] sm:p-[24px_32px] ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
+      <span aria-hidden className="absolute left-3 top-[14px] text-[20px] leading-none">
+        {STYLE_ICONS[config.style] ?? STYLE_ICONS.none}
+      </span>
+      <div className="rich-text rich-text--article" dangerouslySetInnerHTML={{ __html: frenchNbspHtml(safeHtml) }} />
     </div>
   );
 }
