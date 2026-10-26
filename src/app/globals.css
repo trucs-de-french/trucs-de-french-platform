@@ -6364,7 +6364,6 @@ button.scene-bar:active .scene-bar-toggle {
    літеральний запис тут, щоб не залежати від --glass-* токенів теми. */
 .cg-card {
   width: 100%;
-  min-width: 0;
   overflow: hidden;
   border-radius: 14px;
   border: 1.5px solid transparent;
@@ -6386,21 +6385,25 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 /* Один рядок таблиці (заголовок і кожне твердження) — РІВНО та сітка, що
-   задача просила: перша колонка гнучка (твердження), далі N колонок
-   фіксованої довжини. grid-template-columns ТУТ НЕ задається — рядок
-   (header і кожне твердження) отримує ОДНАКОВИЙ рядок inline style
-   (gridTemplateColumns, checkbox-grid.tsx) з компонента; тут лишається
-   лише display:grid. */
+   задача просила: перша колонка гнучка (твердження), далі N колонок по
+   84-110px (--cg-cols — інлайн-стиль на обгортці, довільна кількість
+   опцій без зміни CSS). */
 .cg-grid-row {
   display: grid;
+  /* Колонки-опції — ФІКСОВАНА довжина (var(--cg-col-w), не minmax-діапазон):
+     minmax(84px,110px) раніше теж технічно "обмежувався" 110px, але це
+     ДІАПАЗОН, не тверде значення — на етапі розподілу вільного простору
+     grid росте нефлексибельні (не-fr) треки до їхнього max РІВНОЧАСНО з
+     тим, як fr-трек претендує на залишок, і на практиці (контент клітинки
+     — центрований 32px чекбокс, без власного тиску на ширину) усі 6 треків
+     ділили простір майже рівними частками замість "твердих 110px". Фіксоване
+     значення (не minmax) прибирає цю конкуренцію: statement-трек (1fr)
+     отримує РІВНО все, що лишилось після N точних var(--cg-col-w). */
+  grid-template-columns: minmax(320px, 1fr) repeat(var(--cg-cols), var(--cg-col-w, 96px));
   align-items: stretch;
-  /* min-width:0 на самому grid-контейнері — обгортка (.cg-card/.cg-desktop)
-     не повинна розтягуватись по max-content через цей рядок. */
-  min-width: 0;
 }
 
 .cg-header-empty {
-  min-width: 0;
   background: #fff;
 }
 .dark .cg-header-empty {
@@ -6411,15 +6414,8 @@ button.scene-bar:active .scene-bar-toggle {
     background: transparent;
   }
 }
-/* min-width:0 — КЛЮЧОВА причина переповнення (звіт задачі): за
-   замовчуванням grid-елемент має min-width:auto (= min-content його
-   вмісту), і ця авто-мінімальна ширина ПЕРЕВАЖАЄ фіксований розмір треку
-   (var/inline 96px), розтягуючи трек під вміст клітинки (підпис колонки,
-   чекбокс+падінги) — САМЕ тому колонки опцій виходили ~190px замість
-   заданих 96px, хоч грід-темплейт був правильний. */
 .cg-header-cell {
   display: flex;
-  min-width: 0;
   align-items: center;
   justify-content: center;
   padding: 14px 4px;
@@ -6429,7 +6425,7 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 600;
   line-height: 1.25;
   color: #fff;
-  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .cg-header-cell--a {
   background: linear-gradient(180deg, #5a55e6, #3b36c4);
@@ -6440,7 +6436,6 @@ button.scene-bar:active .scene-bar-toggle {
 
 .cg-stmt-cell {
   display: flex;
-  min-width: 0;
   align-items: flex-start;
   gap: 10px;
   padding: 20px 14px 18px 18px;
@@ -6547,7 +6542,6 @@ button.scene-bar:active .scene-bar-toggle {
 
 .cg-option-cell {
   display: flex;
-  min-width: 0;
   align-items: center;
   justify-content: center;
   border-top: 1px solid #f0e8cf;
