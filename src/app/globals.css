@@ -23,6 +23,16 @@
   --foreground: #1b1b2e;
 }
 
+/* Спільний "gold pill" токен світлої теми — кремова пілюля з золотою
+   рамкою й чорнильним текстом, уже визначена через .word-choice-pill--
+   default (Choix du mot). Лише світла тема: темна й Choix-du-mot, і
+   karaoke мають власні, відмінні темні кольори (не цей токен). */
+:root {
+  --gold-pill-bg: #f6efd9;
+  --gold-pill-border: rgba(217, 183, 101, 0.85);
+  --gold-pill-ink: #1a1640;
+}
+
 /* Без JS (чи до першого виконання theme-script.ts) клас .dark/.light ніколи
    не з'явиться на <html> — без цього блоку сторінка була б завжди світлою
    незалежно від системної теми. :not(.light) — щоб явний вибір "світла"
@@ -6631,9 +6641,9 @@ button.scene-bar:active .scene-bar-toggle {
   border: 1.5px solid transparent;
 }
 .word-choice-pill--default {
-  background: #f6efd9;
-  border-color: rgba(217, 183, 101, 0.85);
-  color: #1a1640;
+  background: var(--gold-pill-bg);
+  border-color: var(--gold-pill-border);
+  color: var(--gold-pill-ink);
 }
 .dark .word-choice-pill--default {
   background: rgba(217, 183, 101, 0.14);
@@ -7222,7 +7232,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .karaoke-gap--upcoming-empty {
   background: #fff;
-  border: 2px solid #d9b765;
+  border: 2px solid var(--gold-pill-border);
   color: #a88a3d;
 }
 .karaoke-gap--upcoming-empty::placeholder {
@@ -7256,9 +7266,9 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .karaoke-gap--filled {
-  background: linear-gradient(180deg, #fff6d8 0%, #f1d98f 100%);
-  border-color: #c9a24a;
-  color: #4a3410;
+  background: var(--gold-pill-bg);
+  border-color: var(--gold-pill-border);
+  color: var(--gold-pill-ink);
   font-weight: 700;
 }
 .dark .karaoke-gap--filled {
@@ -7320,9 +7330,9 @@ button.scene-bar:active .scene-bar-toggle {
   box-sizing: border-box;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1.5px solid #c9cdf5;
-  background: #e0e4fb;
-  color: #3b36c4;
+  border: none;
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #fff;
   font-family: var(--font-heading);
   font-size: 12px;
   font-weight: 800;
@@ -7353,20 +7363,13 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   padding: 10px 22px;
   border-radius: 12px;
-  border: 1.5px solid #c9a24a;
-  background: linear-gradient(180deg, #fff6d8 0%, #f1d98f 100%);
-  box-shadow: 0 1px 3px rgba(150, 110, 20, 0.25);
+  border: 1.5px solid var(--gold-pill-border);
+  background: var(--gold-pill-bg);
   font-size: 16px;
   font-weight: 700;
-  color: #4a3410;
+  color: var(--gold-pill-ink);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-@media (hover: hover) {
-  .karaoke-option-chip:hover:not(:disabled) {
-    background: linear-gradient(180deg, #fff0c2 0%, #ebd07a 100%);
-    border-color: #b8902f;
-  }
 }
 .karaoke-option-chip:active:not(:disabled) {
   background: rgba(217, 183, 101, 0.22);
