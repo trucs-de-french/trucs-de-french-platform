@@ -2887,7 +2887,25 @@ button.scene-bar:active .scene-bar-toggle {
    (панель скрипту) — зміна теми нижче нічого іншого не торкається.
    .vocab-chip--interactive — лише на клікабельній кнопці (VocabWord):
    hover/focus-visible додаються ТІЛЬКИ тут, не на статичному
-   TranslatedText-span (там hover у світлій темі раніше й не було). */
+   TranslatedText-span (там hover у світлій темі раніше й не було).
+
+   Шрифт — ОКРЕМЕ правило, незалежне від теми: VocabWord (французька
+   колонка) — це <button>, а глобальне `button, input, ... { font-family:
+   var(--font-heading) }` (тегова специфічність) перемагало успадкований
+   Lora від тексту репліки — звідси французькі підсвітки виглядали
+   "іншим шрифтом" (Nunito), хоча TranslatedText (переклад) — звичайний
+   <span>, тим правилом не зачеплений, і коректно успадковував шрифт.
+   Класова специфічність .vocab-chip перебиває тегове правило й повертає
+   успадкування явно для всіх властивостей шрифту — однакова поведінка
+   для кнопки й span, в обох колонках, в обох темах. */
+.vocab-chip {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  font-style: inherit;
+  font-weight: 700;
+}
 .light .vocab-chip {
   background-color: #e9e4fb;
   color: #3d2fa0;
