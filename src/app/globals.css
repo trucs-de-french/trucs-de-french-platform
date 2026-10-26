@@ -2447,27 +2447,38 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-.vocab-category-heading {
+/* padding, не margin: кожна група вокабуляру (VocabGroupTable, vocab-
+   section.tsx) — ОКРЕМИЙ div-обгортка (там живе --cat-rgb), тож .vocab-
+   category-heading є :first-child у КОЖНІЙ з них, не лише в першій групі
+   на сторінці — ":first-child margin-top:0" раніше помилково збігався з
+   усіма заголовками (вища специфічність) і гасив великий margin-top
+   узагалі скрізь. padding на самому заголовку не залежить від DOM-
+   позиції і не підлягає margin-колапсу — надійно за конструкцією.
+   .vocab-list на обгортці групи+списку (vocab-section.tsx) — вужчий,
+   специфічніший селектор на прохання: тут немає іншого правила, що
+   конкурує з ним, тож !important не потрібен. */
+.vocab-list .vocab-category-heading {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 40px;
+  margin: 0;
+  padding-top: 40px;
   /* .vocab-row (нижче) уже має padding-top: 6px — лишається додати 4px
      (мобільний: 2px, бо той самий padding-top 6px не змінюється на
      ≤640px — лише горизонтальний), щоб візуальний відступ до першого
      слова був рівно 10px / 8px. */
-  margin-bottom: 4px;
+  padding-bottom: 4px;
 }
-.vocab-category-heading:first-child {
-  margin-top: 0;
+.vocab-list .vocab-category-heading--first {
+  padding-top: 0;
 }
 @media (max-width: 640px) {
-  .vocab-category-heading {
-    margin-top: 32px;
-    margin-bottom: 2px;
+  .vocab-list .vocab-category-heading {
+    padding-top: 32px;
+    padding-bottom: 2px;
   }
-  .vocab-category-heading:first-child {
-    margin-top: 0;
+  .vocab-list .vocab-category-heading--first {
+    padding-top: 0;
   }
 }
 .vocab-category-pill {

@@ -70,9 +70,11 @@ function Legend() {
 function VocabGroupTable({
   partOfSpeech,
   items,
+  isFirst,
 }: {
   partOfSpeech: PartOfSpeech | null;
   items: VocabItem[];
+  isFirst: boolean;
 }) {
   const label = partOfSpeech ? PART_OF_SPEECH_LABELS_FR[partOfSpeech] : "Інше";
   // "Інше" (легасі-група без категорії) не входить у PART_OF_SPEECH_COLORS —
@@ -82,7 +84,12 @@ function VocabGroupTable({
 
   return (
     <div style={{ "--cat-rgb": palette.rgbTriplet } as CSSProperties}>
-      <div className="vocab-category-heading">
+      {/* --first — явний прапорець від РЕАЛЬНОЇ позиції в списку груп
+          (isFirst, переданий зверху), не CSS :first-child: кожна група —
+          окрема div-обгортка, тож :first-child збігається в КОЖНІЙ з них
+          (сам заголовок — буквально перша дитина своєї обгортки), а не
+          лише в першій групі сторінки — звідси й був зламаний margin-top. */}
+      <div className={`vocab-category-heading${isFirst ? " vocab-category-heading--first" : ""}`}>
         <h3
           className="vocab-category-pill"
           style={{ backgroundColor: palette.pillHex, boxShadow: `0 3px 10px rgba(${palette.rgbTriplet}, 0.35)` }}
@@ -180,10 +187,15 @@ export function VocabSection({
   // вирівняним по лівому краю) — на мобільній ширині колонка природно
   // займає всю ширину.
   const legendAndGroups = (
-    <div className="mx-auto w-full max-w-[640px]">
+    <div className="vocab-list mx-auto w-full max-w-[640px]">
       <Legend />
-      {groups.map((g) => (
-        <VocabGroupTable key={g.partOfSpeech ?? "other"} partOfSpeech={g.partOfSpeech} items={g.items} />
+      {groups.map((g, i) => (
+        <VocabGroupTable
+          key={g.partOfSpeech ?? "other"}
+          partOfSpeech={g.partOfSpeech}
+          items={g.items}
+          isFirst={i === 0}
+        />
       ))}
     </div>
   );
