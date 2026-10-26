@@ -279,7 +279,7 @@ export function CheckboxGridExercise({
               key={c.id}
               id={`${uid}col-${c.id}`}
               role="columnheader"
-              className={`sticky top-0 z-10 border-b border-[#e6e6f0] bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 md:static md:text-sm ${headerTextSize}`}
+              className={`sticky top-0 z-10 border-b border-[#e6e6f0] bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-[#3b36c4] dark:border-neutral-700 dark:bg-neutral-800 dark:text-[#a9a6f5] md:static md:text-sm ${headerTextSize}`}
             >
               {c.label}
             </div>
