@@ -6336,21 +6336,27 @@ button.scene-bar:active .scene-bar-toggle {
    елемента (саме це зламало попередню версію: "hidden md:block" і "grid"
    на одному className мають однакову специфічність, порядок у згенерованому
    stylesheet — не порядок у рядку класів — вирішував, яка властивість
-   display виграє).
-
-   Перемикач таблиця/картки більше НЕ медіа-запит за шириною ВІКНА — фіксована
-   межа (768px/900px) ламалась усередині вузьких карток сцени на широких
-   екранах (таблиця вважала, що є 900px, хоча картка мала лише 700px).
-   Тепер checkbox-grid.tsx сам вимірює ширину ОБГОРТКИ (ResizeObserver) і
-   рендерить РІВНО ОДНЕ з двох дерев (tableFits) — .cg-desktop/.cg-mobile
-   тут лише базовий display кожного дерева, без видимість-перемикання. */
+   display виграє). Один @media-перемикач керує видимістю ОБОХ розкладок
+   одразу — рендериться завжди обидві, видима лише одна. Межа 900px (не
+   768px) — мінімальна ширина, на якій таблиця реально вміщується:
+   statement-колонка (мінімум 320px) + до 6 колонок-опцій по 96px
+   (320+576=896) — на вужчому екрані (планшет-портрет, 768-899px) таблиця
+   стискалась би знову, тож там лишаються мобільні картки. */
 .cg-desktop {
-  display: block;
+  display: none;
 }
 .cg-mobile {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+@media (min-width: 900px) {
+  .cg-desktop {
+    display: block;
+  }
+  .cg-mobile {
+    display: none;
+  }
 }
 
 /* Картка-обгортка десктоп-таблиці — gold-градієнтна рамка (той самий
@@ -6416,10 +6422,10 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
   align-items: center;
   justify-content: center;
-  padding: 12px 3px;
+  padding: 14px 4px;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.25;
   color: #fff;
@@ -6437,7 +6443,7 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
   align-items: flex-start;
   gap: 10px;
-  padding: 16px 12px 14px 16px;
+  padding: 20px 14px 18px 18px;
   background: #fff;
   border-top: 1px solid #f0e8cf;
 }
@@ -6462,7 +6468,7 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
   font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: #1a1640;
   word-break: normal;
   overflow-wrap: break-word;
@@ -6577,18 +6583,16 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Квадрат-чекбокс таблиці (28×28, компактніша десктоп-таблиця) — сусідній
-   <span> поруч зі sr-only <input>, стан визначає JS (answers-set), не CSS
-   :checked. Клікабельна область (<label>) лишається на всю клітинку/рядок
-   (мін. 44px, checkbox-grid.tsx) — зменшено лише ВИДИМИЙ квадрат. */
+/* Квадрат-чекбокс таблиці (32×32) — сусідній <span> поруч зі sr-only
+   <input>, стан визначає JS (answers-set), не CSS :checked. */
 .cg-checkbox {
   display: flex;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 9px;
   border: 2px solid #e0cf9a;
   background: #fff;
   transition: background-color 150ms, border-color 150ms;
