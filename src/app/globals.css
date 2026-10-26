@@ -7198,9 +7198,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .karaoke-gap--active-empty {
   background: #fff;
-  border-color: #4b46da;
+  border-color: #3b36c4;
   color: #8a88b5;
-  box-shadow: 0 0 0 4px rgba(75, 70, 218, 0.15);
+  box-shadow: 0 0 0 4px rgba(90, 85, 230, 0.25);
 }
 /* Активний (можна клікнути зараз) слот караоке — та сама яскравіша
    periwinkle-рамка #7f9cf0, що hover/dragover у image-match/drag-drop
@@ -7221,9 +7221,12 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .karaoke-gap--upcoming-empty {
-  background: #faf5e4;
-  border: 2px dashed #d9b765;
-  color: #b3a77a;
+  background: #fff;
+  border: 2px solid #9a98f0;
+  color: #9a98f0;
+}
+.karaoke-gap--upcoming-empty::placeholder {
+  color: #9a98f0;
 }
 /* Токени поля (--card-field-bg/--card-field-border), ті самі, що пропуск
    letter_gaps, замість --field-bg/--field-border (не-картковий фон); "…"
@@ -7254,8 +7257,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .karaoke-gap--filled {
   background: #e0e4fb;
-  border-color: #c9cdf5;
+  border-color: #5a55e6;
   color: #3b36c4;
+  font-weight: 700;
 }
 .dark .karaoke-gap--filled {
   background: rgba(127, 156, 240, 0.22);
@@ -7347,21 +7351,20 @@ button.scene-bar:active .scene-bar-toggle {
 .karaoke-option-chip {
   display: inline-flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 10px 22px;
   border-radius: 12px;
-  border: 1.5px solid #ead9a6;
-  background: #fff;
-  box-shadow: 0 2px 5px -2px rgba(120, 90, 20, 0.3);
+  border: 1.5px solid #5a55e6;
+  background: #e0e4fb;
   font-size: 16px;
   font-weight: 700;
-  color: #1a1640;
+  color: #3b36c4;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 @media (hover: hover) {
   .karaoke-option-chip:hover:not(:disabled) {
-    background: rgba(217, 183, 101, 0.12);
-    border-color: #d9b765;
+    background: #d3d8fa;
+    border-color: #3b36c4;
   }
 }
 .karaoke-option-chip:active:not(:disabled) {
