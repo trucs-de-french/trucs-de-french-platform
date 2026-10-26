@@ -5272,13 +5272,13 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .table-fill-chip-uk {
   background: rgba(8, 10, 40, 0.28);
   border: 1px solid rgba(130, 160, 240, 0.25);
-  color: #b3bfe0;
+  color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .table-fill-chip-uk {
     background: rgba(8, 10, 40, 0.28);
     border: 1px solid rgba(130, 160, 240, 0.25);
-    color: #b3bfe0;
+    color: #f5ecd0;
   }
 }
 @media (max-width: 767px) {
@@ -6217,7 +6217,7 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .matching-card--uk {
   background: var(--card-bg);
   border-color: var(--card-border);
-  color: var(--card-ink-2);
+  color: #f5ecd0;
 }
 .dark .matching-card--uk:not(:disabled):hover {
   background: var(--card-hover-bg);
@@ -6227,7 +6227,7 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.light) .matching-card--uk {
     background: var(--card-bg);
     border-color: var(--card-border);
-    color: var(--card-ink-2);
+    color: #f5ecd0;
   }
   :root:not(.light) .matching-card--uk:not(:disabled):hover {
     background: var(--card-hover-bg);
