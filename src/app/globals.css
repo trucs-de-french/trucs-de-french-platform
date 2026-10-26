@@ -5258,23 +5258,27 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .dark .table-fill-chip-fr {
-  background: rgba(246, 220, 142, 0.12);
+  background: rgba(8, 10, 40, 0.28);
+  border: 1px solid rgba(130, 160, 240, 0.25);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .table-fill-chip-fr {
-    background: rgba(246, 220, 142, 0.12);
+    background: rgba(8, 10, 40, 0.28);
+    border: 1px solid rgba(130, 160, 240, 0.25);
     color: #f6dc8e;
   }
 }
 .dark .table-fill-chip-uk {
-  background: rgba(220, 219, 243, 0.1);
-  color: #dcdbf3;
+  background: rgba(8, 10, 40, 0.28);
+  border: 1px solid rgba(130, 160, 240, 0.25);
+  color: #b3bfe0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .table-fill-chip-uk {
-    background: rgba(220, 219, 243, 0.1);
-    color: #dcdbf3;
+    background: rgba(8, 10, 40, 0.28);
+    border: 1px solid rgba(130, 160, 240, 0.25);
+    color: #b3bfe0;
   }
 }
 @media (max-width: 767px) {
