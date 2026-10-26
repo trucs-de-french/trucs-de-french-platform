@@ -6211,15 +6211,23 @@ button.scene-bar:active .scene-bar-toggle {
   font-family: var(--font-body);
 }
 .dark .matching-card--uk {
-  background: rgba(150, 125, 240, 0.2);
-  border-color: rgba(150, 125, 240, 0.4);
-  color: #dcdbf3;
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--card-ink-2);
+}
+.dark .matching-card--uk:not(:disabled):hover {
+  background: var(--card-hover-bg);
+  border-color: var(--card-hover-border);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .matching-card--uk {
-    background: rgba(150, 125, 240, 0.2);
-    border-color: rgba(150, 125, 240, 0.4);
-    color: #dcdbf3;
+    background: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--card-ink-2);
+  }
+  :root:not(.light) .matching-card--uk:not(:disabled):hover {
+    background: var(--card-hover-bg);
+    border-color: var(--card-hover-border);
   }
 }
 /* selected — лише ліва картка (праву нема коли виділити окремо, клік по
