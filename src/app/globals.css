@@ -7478,3 +7478,94 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(127, 156, 240, 0.12);
   }
 }
+
+/* Періwinkle поле "Оберіть" (multiple_choice, режим dropdown) — замінює
+   сіро-чорне dark:bg-neutral-800/dark:border-neutral-600, що раніше було
+   на порожньому полі (і індиго-підсвітку на вибраному), на один
+   однаковий вигляд поля для обох станів ДО перевірки; лише текст
+   (--chosen/--placeholder) і chevron різні. Світла тема не торкається —
+   лише .dark/медіа нижче. */
+.dark .select-field-pill {
+  background: rgba(127, 156, 240, 0.18);
+  border-color: rgba(127, 156, 240, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-pill {
+    background: rgba(127, 156, 240, 0.18);
+    border-color: rgba(127, 156, 240, 0.6);
+  }
+}
+@media (hover: hover) {
+  .dark .select-field-pill:hover {
+    background: rgba(127, 156, 240, 0.26);
+    border-color: #7f9cf0;
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .select-field-pill:hover {
+    background: rgba(127, 156, 240, 0.26);
+    border-color: #7f9cf0;
+  }
+}
+/* Фокус/відкритий список — фокус насправді на прозорому <select>,
+   сиблінгу цього div під тим самим .group, тож :focus-within на СОБІ не
+   спрацює: той самий принцип group-focus-within, що вже на className
+   плитки (ring), лише тут власний border+glow замість бренд-кільця
+   (яке в темній темі гаситься dark:group-focus-within:ring-0 поруч). */
+.dark .group:focus-within .select-field-pill {
+  border-color: #a9bcff;
+  box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .group:focus-within .select-field-pill {
+    border-color: #a9bcff;
+    box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+  }
+}
+.dark .select-field-pill--chosen {
+  color: #f5ecd0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-pill--chosen {
+    color: #f5ecd0;
+  }
+}
+.dark .select-field-pill--placeholder {
+  color: #b3bfe0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-pill--placeholder {
+    color: #b3bfe0;
+  }
+}
+.dark .select-field-chevron {
+  color: #b3bfe0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-chevron {
+    color: #b3bfe0;
+  }
+}
+/* Нативний випадаючий список <select> — color-scheme: dark, щоб ОС
+   малювала список темним там, де керує сама (більшість десктопних
+   браузерів); option { background/color } — де браузер дозволяє
+   стилізувати напряму (Firefox/Chromium частково), щоб список був
+   темно-наvy, не чорно-сірий. */
+.dark .select-field-native {
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-native {
+    color-scheme: dark;
+  }
+}
+.dark .select-field-native option {
+  background: #12165a;
+  color: #f5ecd0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .select-field-native option {
+    background: #12165a;
+    color: #f5ecd0;
+  }
+}

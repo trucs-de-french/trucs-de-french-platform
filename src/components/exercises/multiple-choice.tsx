@@ -599,14 +599,19 @@ export function MultipleChoiceExercise({
     const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
     const pillState: "correct" | "incorrect" | "selected" | "empty" =
       isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : selectedOptions.length > 0 ? "selected" : "empty";
+    // Темна — обидва стани ДО перевірки (вибрано/порожньо) тепер на одному
+    // періwinkle полі (select-field-pill, globals.css) замість сіро-чорного
+    // (dark:bg-neutral-800) чи індиго-підсвітки: лише колір тексту різний
+    // (--chosen кремовий / --placeholder блідо-лавандовий). Світла тема —
+    // ті самі класи, що раніше, без змін.
     const pillClass =
       pillState === "correct"
         ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300"
         : pillState === "incorrect"
           ? "border-red-500 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-950/30 dark:text-red-300"
           : pillState === "selected"
-            ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-            : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+            ? "border-indigo-500 bg-indigo-100 text-indigo-700 select-field-pill select-field-pill--chosen"
+            : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-500 select-field-pill select-field-pill--placeholder";
     const label =
       selectedOptions.length === 0
         ? "Оберіть"
@@ -668,7 +673,7 @@ export function MultipleChoiceExercise({
         </div>
         <div className="group relative w-full flex-none md:w-56">
           <div
-            className={`flex h-10 w-full items-center justify-between gap-2 rounded-full border px-3 text-sm transition-colors md:h-9 group-focus-within:ring-2 group-focus-within:ring-brand ${pillClass}`}
+            className={`flex h-10 w-full items-center justify-between gap-2 rounded-full border px-3 text-sm transition-colors md:h-9 group-focus-within:ring-2 group-focus-within:ring-brand dark:group-focus-within:ring-0 ${pillClass}`}
           >
             <span
               className="truncate"
@@ -676,7 +681,7 @@ export function MultipleChoiceExercise({
             >
               {label}
             </span>
-            <ChevronDown size={14} className="shrink-0 opacity-60" aria-hidden />
+            <ChevronDown size={14} className="shrink-0 opacity-60 select-field-chevron" aria-hidden />
           </div>
           <select
             multiple={item.multiple}
@@ -689,7 +694,7 @@ export function MultipleChoiceExercise({
             }}
             disabled={!!itemDetail}
             aria-label={`Відповідь на питання ${index + 1}`}
-            className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed"
+            className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed select-field-native"
           >
             {!item.multiple && <option value="">— Оберіть —</option>}
             {item.options.map((o, idx) => (
