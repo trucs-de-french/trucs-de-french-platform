@@ -177,7 +177,7 @@ export function ScriptSection({
                 onWordClick={openWord}
                 showSpeaker={showSpeakerFlags[i]}
               />
-              <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-neutral-400 sm:dark:border-neutral-700">
+              <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-[var(--glass-text)] sm:dark:border-neutral-700">
                 {line.translationUk ? (
                   <TranslationCell text={line.translationUk} vocab={line.vocab ?? []} />
                 ) : (

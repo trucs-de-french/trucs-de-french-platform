@@ -96,7 +96,7 @@ function TimecodeBadge({ start, videoLink }: { start: number | null | undefined;
       </a>
     );
   }
-  return <span className="mr-1.5 text-xs font-normal text-neutral-400 dark:text-neutral-500">{label}</span>;
+  return <span className="mr-1.5 text-xs font-normal text-neutral-400 dark:text-[#5d5b78]">{label}</span>;
 }
 
 // Для порівняння "той самий спікер, що на попередній репліці" — регістр і
