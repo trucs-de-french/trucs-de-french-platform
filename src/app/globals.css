@@ -6338,7 +6338,7 @@ button.scene-bar:active .scene-bar-toggle {
     linear-gradient(#fff, #fff) padding-box,
     linear-gradient(180deg, rgba(217, 183, 101, 0.9), rgba(217, 183, 101, 0.15)) border-box;
   box-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
-  padding: 14px 10px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -6368,12 +6368,6 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: none;
   }
 }
-@media (max-width: 767px) {
-  .karaoke-card {
-    padding: 12px 6px;
-  }
-}
-
 .karaoke-line {
   border-radius: 12px;
   padding: 12px 18px;
@@ -6390,15 +6384,17 @@ button.scene-bar:active .scene-bar-toggle {
     color: #e3e2fb;
   }
 }
+/* Оригінальні розміри (до рестайлу): leading-8 (line-height 2rem) для
+   ОБОХ станів, font-size 1rem (text-base) для неактивних рядків, 1.125rem
+   (text-lg) лише для активного — рестайл раніше випадково збільшив ОБИДВА
+   до 20px/18px. Колір/фон (активний/upcoming) лишаються новими. */
 .karaoke-line p {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 2rem;
 }
-@media (max-width: 767px) {
-  .karaoke-line p {
-    font-size: 18px;
-  }
+.karaoke-line--active p {
+  font-size: 18px;
 }
 .karaoke-line--active {
   background: linear-gradient(90deg, #eeeefb, rgba(238, 238, 251, 0.2));
@@ -6426,6 +6422,9 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* font-family не задано навмисно — успадковує Nunito (font-heading) з
+   глобального правила "button, input {...}" у globals.css, той самий
+   шрифт, що й до рестайлу (жодного font-content тут раніше не було). */
 .karaoke-gap {
   display: inline-flex;
   align-items: center;
@@ -6434,10 +6433,11 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 96px;
   height: 38px;
   margin: 0 4px;
+  padding: 0;
   border-radius: 10px;
   border: 2px solid;
-  font-family: var(--font-content);
-  font-size: 18px;
+  font-size: 16px;
+  line-height: normal;
   text-align: center;
   vertical-align: middle;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
@@ -6488,7 +6488,6 @@ button.scene-bar:active .scene-bar-toggle {
   background: #e0e4fb;
   border-color: #c9cdf5;
   color: #3b36c4;
-  font-weight: 700;
 }
 .dark .karaoke-gap--filled {
   background: rgba(75, 70, 218, 0.3);
@@ -6568,14 +6567,16 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* font-family не задано навмисно — успадковує Nunito (font-heading) з
+   глобального правила "button {...}", той самий шрифт, що й до рестайлу
+   (було без font-content; рестайл помилково додав Lora+18px). */
 .karaoke-option-chip {
   padding: 12px 22px;
   border-radius: 12px;
   border: 1.5px solid #ead9a6;
   background: #fff;
   box-shadow: 0 2px 5px -2px rgba(120, 90, 20, 0.3);
-  font-family: var(--font-content);
-  font-size: 18px;
+  font-size: 16px;
   color: #1a1640;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
@@ -6632,8 +6633,8 @@ button.scene-bar:active .scene-bar-toggle {
   background: linear-gradient(180deg, #5a55e6, #3b36c4);
   color: #fff;
   font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 500;
 }
 .karaoke-check-btn:disabled {
   opacity: 0.45;

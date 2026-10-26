@@ -482,6 +482,17 @@ export function KaraokeExercise({
     if (container && lineEl) scrollLineIntoContainer(container, lineEl);
   }, [displayLineIndex, isPlaying, pausedForGapLine]);
 
+  // Підсвітка рядка — лінія, що МІСТИТЬ активний пропуск (ту, чиї варіанти
+  // показані нижче), не "сира" позиція відео (displayLineIndex): вони
+  // можуть розійтись — студент уже обрав відповідь у поточному рядку,
+  // pickOption/findNextEmptyGap уже перевели activeGap на пропуск у
+  // НАСТУПНОМУ рядку, поки відео ще доспівує попередній (displayLineIndex
+  // на нього не встиг перейти) — підсвітка мусить сидіти саме на рядку з
+  // активним пропуском. Лише для режиму "вибір" (єдиний, де activeGap
+  // існує) — typing-режим і скрол (displayLineIndex вище) лишаються як
+  // були.
+  const highlightLineIndex = config.answerMode === "choice" && activeGap ? activeGap.li : displayLineIndex;
+
   const totalGaps = useMemo(
     () => config.lines.reduce((sum, l) => sum + l.tokens.filter((t) => t === null).length, 0),
     [config.lines]
@@ -594,7 +605,7 @@ export function KaraokeExercise({
               key={li}
               line={line}
               lineIndex={li}
-              lineState={li === displayLineIndex ? "active" : li > displayLineIndex ? "upcoming" : "sung"}
+              lineState={li === highlightLineIndex ? "active" : li > highlightLineIndex ? "upcoming" : "sung"}
               answers={answers[li]}
               detail={detail?.lines[li]}
               disabled={!!result}
@@ -626,7 +637,7 @@ export function KaraokeExercise({
               <span className="karaoke-progress-pill">
                 Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
               </span>
-              <p className="font-content text-base text-[#55546b] dark:text-neutral-400">Оберіть слово для пропуску</p>
+              <p className="text-sm text-[#55546b] dark:text-neutral-400">Оберіть слово для пропуску</p>
             </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
