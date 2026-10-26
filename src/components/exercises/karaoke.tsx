@@ -522,6 +522,50 @@ export function KaraokeExercise({
     }
   }, [playingLineIndex, isPlaying, pausedForGapLine]);
 
+  // Активний пропуск (лише режим "вибір") слідує за playingLineIndex, не
+  // за власним станом вибору студента — спрацьовує ЛИШЕ коли playingLineIndex
+  // РЕАЛЬНО змінюється (dep-масив нижче), тож ручний клік по пропуску
+  // (onSetActiveGap) не перебивається цим ефектом, доки відео не перейде на
+  // інший рядок (цим і забезпечується "ручний вибір перемагає" з задачі).
+  // answersRef (вище, уже існує для triggerPauseForLine) — завжди свіжі
+  // answers без перезапуску ефекту на кожне натискання клавіші.
+  useEffect(() => {
+    if (config.answerMode !== "choice") return;
+    if (playingLineIndex < 0) return;
+    const lines = config.lines;
+    const isUnfilled = (li: number, gi: number) => !answersRef.current[li]?.[gi];
+
+    // 1) перший незаповнений пропуск у рядку, що зараз грає.
+    const gapCountInLine = lines[playingLineIndex].tokens.filter((t) => t === null).length;
+    for (let gi = 0; gi < gapCountInLine; gi++) {
+      if (isUnfilled(playingLineIndex, gi)) {
+        setActiveGap({ li: playingLineIndex, gi });
+        return;
+      }
+    }
+    // 2) немає в цьому рядку — наступний незаповнений ПІСЛЯ нього.
+    for (let li = playingLineIndex + 1; li < lines.length; li++) {
+      const gapCount = lines[li].tokens.filter((t) => t === null).length;
+      for (let gi = 0; gi < gapCount; gi++) {
+        if (isUnfilled(li, gi)) {
+          setActiveGap({ li, gi });
+          return;
+        }
+      }
+    }
+    // 3) немає й після — перший незаповнений ПЕРЕД цим рядком.
+    for (let li = 0; li < playingLineIndex; li++) {
+      const gapCount = lines[li].tokens.filter((t) => t === null).length;
+      for (let gi = 0; gi < gapCount; gi++) {
+        if (isUnfilled(li, gi)) {
+          setActiveGap({ li, gi });
+          return;
+        }
+      }
+    }
+    // 4) усі пропуски заповнені — лишаємо активний пропуск як є.
+  }, [playingLineIndex, config.answerMode, config.lines]);
+
   // Підсвітка рядка — ЗАВЖДИ рядок, що зараз грає (playingLineIndex), для
   // обох режимів відповіді. Активний пропуск (activeGap, лише в режимі
   // "вибір") має власну підсвітку самого поля (.karaoke-gap--active-empty)
@@ -544,24 +588,21 @@ export function KaraokeExercise({
   }
 
   // Клік по варіанту — заповнює активний пропуск і сам переходить на
-  // наступний незаповнений (наскрізно через усю пісню, не лише в межах
-  // рядка), щоб студенту не треба було щоразу клікати сам пропуск заново.
+  // наступний незаповнений пропуск у ТОМУ Ж рядку (не через усю пісню, як
+  // було): якщо рядок уже весь заповнений, лишаємось на ньому — стрибок у
+  // інший рядок сам собою робить лише ефект playingLineIndex вище, коли
+  // відео реально туди переходить.
   function pickOption(value: string) {
     if (!activeGap) return;
     const { li, gi } = activeGap;
     updateAnswer(li, gi, value);
-    setActiveGap(findNextEmptyGap(li, gi));
-  }
-
-  function findNextEmptyGap(afterLi: number, afterGi: number): ActiveGap | null {
-    for (let li = afterLi; li < config.lines.length; li++) {
-      const gapCount = config.lines[li].tokens.filter((t) => t === null).length;
-      const startGi = li === afterLi ? afterGi + 1 : 0;
-      for (let gi = startGi; gi < gapCount; gi++) {
-        if (!answers[li][gi]) return { li, gi };
+    const gapCount = config.lines[li].tokens.filter((t) => t === null).length;
+    for (let nextGi = gi + 1; nextGi < gapCount; nextGi++) {
+      if (!answers[li][nextGi]) {
+        setActiveGap({ li, gi: nextGi });
+        return;
       }
     }
-    return null;
   }
 
   // 1-based порядковий номер пропуску {li, gi} серед УСІХ пропусків пісні
