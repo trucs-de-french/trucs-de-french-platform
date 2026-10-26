@@ -2451,16 +2451,20 @@ button.scene-bar:active .scene-bar-toggle {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 28px;
-  margin-bottom: 14px;
+  margin-top: 40px;
+  /* .vocab-row (нижче) уже має padding-top: 6px — лишається додати 4px
+     (мобільний: 2px, бо той самий padding-top 6px не змінюється на
+     ≤640px — лише горизонтальний), щоб візуальний відступ до першого
+     слова був рівно 10px / 8px. */
+  margin-bottom: 4px;
 }
 .vocab-category-heading:first-child {
   margin-top: 0;
 }
 @media (max-width: 640px) {
   .vocab-category-heading {
-    margin-top: 24px;
-    margin-bottom: 12px;
+    margin-top: 32px;
+    margin-bottom: 2px;
   }
   .vocab-category-heading:first-child {
     margin-top: 0;
