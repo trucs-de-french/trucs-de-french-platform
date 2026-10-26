@@ -69,7 +69,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
       />
-      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-[22px] md:grid-cols-2">
         {config.items.map((item, i) => {
           const media = mediaOf(item);
           const translation = item.translation?.trim();
@@ -85,7 +85,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               // лишаючи під медіа ~600px замість заданих ~260-300.
               // min-w-0 на самій картці — щоб довгий текст не розпирав
               // grid-колонку (а з нею і сусідню картку) ширше задуманого.
-              className="@container flex min-w-0 flex-col gap-3 rounded-2xl border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-4 glass-gap-shadow dark:shadow-sm @[480px]:flex-row @[480px]:items-start @[480px]:gap-4 dark:border-neutral-700 dark:bg-neutral-800"
+              className="@container glass-item-card flex min-w-0 flex-col gap-3 px-[18px] pt-[18px] pb-4 @[480px]:flex-row @[480px]:items-start @[480px]:gap-4"
             >
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span className="item-number-badge" aria-label={`Репліка ${i + 1}`}>
