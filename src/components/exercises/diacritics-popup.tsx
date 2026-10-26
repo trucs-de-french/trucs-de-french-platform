@@ -62,12 +62,20 @@ export function DiacriticsPopup({
     offsetLeft + VIEWPORT_MARGIN,
     Math.min(rect.left + rect.width / 2 - POPUP_WIDTH / 2, offsetLeft + viewportWidth - POPUP_WIDTH - VIEWPORT_MARGIN)
   );
+  // Світла тема — стрілочка попапу вказує на поле у фокусі: горизонтально
+  // по центру поля, клемпована в межі самого попапу (той самий принцип
+  // клемпінгу, що вже є для left вище, лише відносно popup, не вьюпорту).
+  const arrowLeft = Math.max(10, Math.min(rect.left + rect.width / 2 - left, POPUP_WIDTH - 10));
 
   return (
     <div
       className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg diacritics-popup`}
       style={{ top, left, width: POPUP_WIDTH }}
     >
+      <div
+        className={`diacritics-popup-arrow ${showBelow ? "diacritics-popup-arrow--up" : "diacritics-popup-arrow--down"}`}
+        style={{ left: arrowLeft }}
+      />
       {onHint && (
         <HintBulb
           state={hintUsed ? "used" : "available"}

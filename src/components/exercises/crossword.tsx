@@ -577,8 +577,8 @@ function CrosswordBlockView({
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
-              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
-              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 crossword-clue-card--hoverable"
+              ? "crossword-clue-card--active"
+              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -658,8 +658,8 @@ function CrosswordBlockView({
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
-              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
-              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 crossword-clue-card--hoverable"
+              ? "crossword-clue-card--active"
+              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -717,7 +717,7 @@ function CrosswordBlockView({
           isCorrect
             ? "glass-chip border-[#dcbd6e] opacity-50"
             : isActive
-              ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
+              ? "crossword-clue-card--active"
               : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
         }`}
       >
@@ -932,9 +932,7 @@ function CrosswordBlockView({
                                     ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                                     : status === "incorrect"
                                       ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                      : isUncheckedActive
-                                        ? "bg-blue-50"
-                                        : ""
+                                      : ""
                               }`}
                             />
                           </div>

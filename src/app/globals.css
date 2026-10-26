@@ -2246,6 +2246,34 @@ button, input, textarea, select, label, nav, aside {
     box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
   }
 }
+/* Світла тема — лавандова підсвітка активного/наведеного слова (та сама
+   роль, що periwinkle у темній темі вище); .light-префікс — та сама
+   специфічність (0,2,0), що й .glass-chip/.glass-chip-hover, щоб надійно
+   бити одноразові Tailwind-утиліти незалежно від порядку в stylesheet. */
+.light .crossword-tile--active,
+.light .crossword-tile--hovered {
+  background: #e0e4fb;
+  border-color: #5a55e6;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .crossword-tile--active,
+  :root:not(.dark) .crossword-tile--hovered {
+    background: #e0e4fb;
+    border-color: #5a55e6;
+  }
+}
+.light .crossword-tile--active:focus-within {
+  background: #fff;
+  border-color: #3b36c4;
+  box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .crossword-tile--active:focus-within {
+    background: #fff;
+    border-color: #3b36c4;
+    box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
+  }
+}
 /* Попап діакритики (DiacriticsPopup, diacritics-popup.tsx) — темна тема:
    той самий колір поля, що "лист" філворду (--ws-sheet-bg, ws-sheet вище),
    замість нейтрального темно-сірого. */
@@ -2281,6 +2309,103 @@ button, input, textarea, select, label, nav, aside {
     background: rgba(127, 156, 240, 0.18);
   }
 }
+/* Світла тема — попап діакритики: пергаментний фон/золота рамка панелі,
+   замість нейтрального білого/сірого. */
+.light .diacritics-popup {
+  background: #fffdf6;
+  border: 1.5px solid #d9b765;
+  border-radius: 14px;
+  padding: 12px;
+  gap: 6px;
+  box-shadow: 0 10px 24px rgba(40, 30, 90, 0.22);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .diacritics-popup {
+    background: #fffdf6;
+    border: 1.5px solid #d9b765;
+    border-radius: 14px;
+    padding: 12px;
+    gap: 6px;
+    box-shadow: 0 10px 24px rgba(40, 30, 90, 0.22);
+  }
+}
+.light .diacritics-key-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1.5px solid #d9b765;
+  font-size: 18px;
+  color: #1a1640;
+  box-shadow: 0 1px 2px rgba(60, 40, 10, 0.12);
+}
+.light .diacritics-key-btn:hover {
+  background: #e0e4fb;
+  border-color: #5a55e6;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .diacritics-key-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: #fff;
+    border: 1.5px solid #d9b765;
+    font-size: 18px;
+    color: #1a1640;
+    box-shadow: 0 1px 2px rgba(60, 40, 10, 0.12);
+  }
+  :root:not(.dark) .diacritics-key-btn:hover {
+    background: #e0e4fb;
+    border-color: #5a55e6;
+  }
+}
+/* Стрілочка попапу діакритики (DiacriticsPopup) — квадрат 45deg з фоном/
+   рамкою панелі лише на двох суміжних сторонах (стандартний tooltip-прийом):
+   --up — попап ПІД полем, стрілка зверху з top/left-рамкою, "дивиться" вгору
+   на поле; --down — попап НАД полем, стрілка знизу з bottom/right-рамкою.
+   У темній темі попап не мав стрілки (CHANGES лише про світлу) — display:
+   none і там, і в системному dark-mirror, щоб не змінювати темну тему. */
+.diacritics-popup-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
+}
+.light .diacritics-popup-arrow--up {
+  top: -7px;
+  background: #fffdf6;
+  border-top: 1.5px solid #d9b765;
+  border-left: 1.5px solid #d9b765;
+}
+.light .diacritics-popup-arrow--down {
+  bottom: -7px;
+  background: #fffdf6;
+  border-bottom: 1.5px solid #d9b765;
+  border-right: 1.5px solid #d9b765;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .diacritics-popup-arrow--up {
+    top: -7px;
+    background: #fffdf6;
+    border-top: 1.5px solid #d9b765;
+    border-left: 1.5px solid #d9b765;
+  }
+  :root:not(.dark) .diacritics-popup-arrow--down {
+    bottom: -7px;
+    background: #fffdf6;
+    border-bottom: 1.5px solid #d9b765;
+    border-right: 1.5px solid #d9b765;
+  }
+}
+.dark .diacritics-popup-arrow {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .diacritics-popup-arrow {
+    display: none;
+  }
+}
 /* Наведена (не активна) картка-підказка — periwinkle hover замість старого
    чорного dark:hover:bg-neutral-800/70; @media (hover: hover) — щоб на
    тач-пристроях підсвітка не "липла" після тапу (там немає справжнього
@@ -2310,6 +2435,34 @@ button, input, textarea, select, label, nav, aside {
     box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
   }
 }
+/* Світла тема — та сама роль, що темна вище: лавандовий hover замість
+   попереднього сірого (hover:bg-neutral-50, прибраного з crossword.tsx) та
+   золотого glass-chip-hover (клас прибрано з ImageClueCard/LongClueCard —
+   інакше .light .glass-chip-hover:hover мав би ту саму специфічність
+   (0,2,0) і міг перебити рамку залежно від порядку в stylesheet). .light-
+   префікс тут — та сама специфічність (0,2,0), що й .glass-chip-hover. */
+.light .crossword-clue-card--hoverable {
+  transition: box-shadow 150ms;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .crossword-clue-card--hoverable {
+    transition: box-shadow 150ms;
+  }
+}
+@media (hover: hover) {
+  .light .crossword-clue-card--hoverable:hover {
+    background: #f4f5fe;
+    border-color: #9a98f0;
+    box-shadow: 0 2px 8px rgba(60, 50, 140, 0.12);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: light) {
+  :root:not(.dark) .crossword-clue-card--hoverable:hover {
+    background: #f4f5fe;
+    border-color: #9a98f0;
+    box-shadow: 0 2px 8px rgba(60, 50, 140, 0.12);
+  }
+}
 /* Активна картка-підказка (ImageClueCard/LongClueCard/CluePill) — та сама
    периwinkle-підсвітка, що активне слово в сітці (crossword-tile--active
    вище), лише для картки підказки під сіткою. */
@@ -2323,6 +2476,21 @@ button, input, textarea, select, label, nav, aside {
     background: rgba(127, 156, 240, 0.22);
     border-color: #7f9cf0;
     box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
+  }
+}
+/* Світла тема — та сама роль, що темна вище (border-blue-400/bg-blue-50
+   прибрано з JSX, щоб не змагатися з border-width 1.5px/box-shadow-кільцем
+   тут). */
+.light .crossword-clue-card--active {
+  background: #eceffd;
+  border: 1.5px solid #5a55e6;
+  box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .crossword-clue-card--active {
+    background: #eceffd;
+    border: 1.5px solid #5a55e6;
+    box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
   }
 }
 .crossword-tile-number {
