@@ -10,7 +10,9 @@
 // висоті в обох картках рядка, а не "спливати" до центру короткої картки;
 // на горизонтальне вирівнювання (зліва) не впливає — це вісь flex-col.
 export const WORD_CARD =
-  "flex min-w-0 flex-col justify-start gap-2 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-3.5 glass-gap-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800";
+  // word-card — маркер для globals.css (поле-на-картці .word-card .exercise-field),
+  // та сама роль, що .glass-item-card для інших типів вправ.
+  "word-card flex min-w-0 flex-col justify-start gap-2 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border glass-chip border-[#dcbd6e] bg-white p-3.5 glass-gap-shadow dark:shadow-sm dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Розбиває фразу на "одиниці переносу" за пробілом — сам пробіл ВІДКИДАЄТЬСЯ
 // (він стає gap-2 у розкладці, не окремим елементом). Спільна для

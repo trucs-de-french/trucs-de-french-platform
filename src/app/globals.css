@@ -160,7 +160,8 @@
    (0,6,0) гарантовано вища за :disabled/--correct/--wrong (0,3,0) нижче,
    тож стани перевірки завжди лишаються їхніми власними кольорами незалежно
    від порядку правил у файлі. */
-.dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+.dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+.dark .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
   background: var(--card-field-bg);
   border-color: var(--card-field-border);
 }
@@ -210,7 +211,8 @@
     color: var(--field-placeholder);
     opacity: 1;
   }
-  :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
+  :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
+  :root:not(.light) .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
     background: var(--card-field-bg);
     border-color: var(--card-field-border);
   }

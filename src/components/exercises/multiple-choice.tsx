@@ -288,12 +288,12 @@ export function MultipleChoiceExercise({
       const sel = selections[itemId] ?? [];
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-500"
-        : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800";
+        : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (opt?.correct) return "border-green-500 bg-green-500";
     if (opt?.selected) return "border-red-500 bg-red-500";
-    return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-neutral-600 dark:bg-neutral-800";
+    return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
   }
 
   // Колір рамки+фону всієї картки-відповіді в сітці картинок (режими
@@ -331,7 +331,7 @@ export function MultipleChoiceExercise({
         selected,
         className: selected
           ? "border-brand bg-brand text-white"
-          : "border-neutral-400 bg-white/90 dark:border-neutral-300 dark:bg-neutral-900/80",
+          : "border-neutral-400 bg-white/90 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]",
       };
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
@@ -344,7 +344,7 @@ export function MultipleChoiceExercise({
     return {
       mark: "",
       selected: false,
-      className: "border-neutral-300 bg-white/70 opacity-70 dark:border-neutral-600 dark:bg-neutral-900/50",
+      className: "border-neutral-300 bg-white/70 opacity-70 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]",
     };
   }
 
@@ -493,7 +493,7 @@ export function MultipleChoiceExercise({
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
-          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-900/50"
+          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] dark:bg-neutral-900/50"
         >
           <div
             className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}

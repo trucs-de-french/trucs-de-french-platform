@@ -15,7 +15,6 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
@@ -516,7 +515,7 @@ export function LetterGapsExercise({
           <div className="flex min-w-0 flex-1 flex-col gap-2"
           >
             <p
-              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-neutral-400 [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
+              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}
@@ -574,9 +573,9 @@ export function LetterGapsExercise({
                               hintedGaps.has(`${wi},${gIdx}`)
                                 ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
                                 : status === "correct"
-                                  ? LIVE_CORRECT_CLASS
+                                  ? "border-green-500 bg-green-50 dark:border-[var(--field-correct-border)] dark:bg-[var(--field-correct-bg)] dark:text-[var(--field-correct-ink)]"
                                   : status === "incorrect"
-                                    ? LIVE_INCORRECT_CLASS
+                                    ? "border-red-500 bg-red-50 dark:border-[var(--field-wrong-border)] dark:bg-[var(--field-wrong-bg)] dark:text-[var(--field-wrong-ink)]"
                                     : "exercise-field glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50"
                             }`}
                           />

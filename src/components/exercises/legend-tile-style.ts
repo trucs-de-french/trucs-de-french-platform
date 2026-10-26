@@ -43,7 +43,7 @@ export const LEGEND_PILL =
 // Та сама форма без кольору рамки, для крос-ворду — та сама причина, що
 // LEGEND_TILE_SHAPE вище.
 export const LEGEND_PILL_SHAPE =
-  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-neutral-700 dark:bg-neutral-800";
+  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
 
 // ЕТАП F, варіант C — картка довгої підказки-речення word_search (clueMode
 // "long", LongCard): на всю ширину батьківського flex-col, rounded-xl

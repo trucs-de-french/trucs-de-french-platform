@@ -136,7 +136,7 @@ function ErrorReviewCard({
   const remaining = entry.remainingItemIds.length;
 
   return (
-    <div className="rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+    <div className="rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]">
       <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span className="item-number-badge" aria-hidden>
           {index + 1}
@@ -148,10 +148,10 @@ function ErrorReviewCard({
             {ordinal !== null && ` · ${ordinal}`}
           </p>
           {!isInteractive && entry.summary && (
-            <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{entry.summary}</p>
+            <p className="truncate text-sm text-neutral-500 dark:text-[var(--card-ink-2)]">{entry.summary}</p>
           )}
           {isInteractive && (
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="text-sm text-neutral-500 dark:text-[var(--card-ink-2)]">
               {entry.status === "partial"
                 ? `Лишилось ${remaining} з ${entry.total}`
                 : isDone
@@ -175,7 +175,7 @@ function ErrorReviewCard({
       )}
 
       {isInteractive && !isDone && (
-        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-neutral-700">
+        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-[var(--card-border)]">
           <button
             type="button"
             onClick={onToggleExpanded}
@@ -187,14 +187,14 @@ function ErrorReviewCard({
       )}
 
       {isDone && (
-        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-neutral-700 dark:text-green-400">
+        <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-[var(--card-border)] dark:text-green-400">
           <Check size={16} aria-hidden />
           Усі помилки цього завдання виправлено
         </div>
       )}
 
       {expanded && isInteractive && !isDone && entry.config && (
-        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50">
+        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50">
           {entry.taskType === "multiple_choice" && (
             <MultipleChoiceExercise
               taskId={entry.taskId}
