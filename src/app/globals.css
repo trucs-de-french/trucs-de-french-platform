@@ -2222,12 +2222,14 @@ button, input, textarea, select, label, nav, aside {
     box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
   }
 }
-.dark .crossword-tile--active {
+.dark .crossword-tile--active,
+.dark .crossword-tile--hovered {
   background: rgba(127, 156, 240, 0.28);
   border-color: #7f9cf0;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .crossword-tile--active {
+  :root:not(.light) .crossword-tile--active,
+  :root:not(.light) .crossword-tile--hovered {
     background: rgba(127, 156, 240, 0.28);
     border-color: #7f9cf0;
   }
@@ -2277,6 +2279,35 @@ button, input, textarea, select, label, nav, aside {
   :root:not(.light) .diacritics-key-btn:hover {
     border-color: #7f9cf0;
     background: rgba(127, 156, 240, 0.18);
+  }
+}
+/* Наведена (не активна) картка-підказка — periwinkle hover замість старого
+   чорного dark:hover:bg-neutral-800/70; @media (hover: hover) — щоб на
+   тач-пристроях підсвітка не "липла" після тапу (там немає справжнього
+   hover, isUncheckedHovered/clueHoverHandlers у crossword.tsx й так
+   прибирають hoveredClue на touchend/pointerleave, це лише про CSS
+   :hover). transition тут (не на світлій картці) — 150ms на box-shadow,
+   що transition-colors (клас на самій картці) не покриває. */
+.dark .crossword-clue-card--hoverable {
+  transition: box-shadow 150ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-clue-card--hoverable {
+    transition: box-shadow 150ms;
+  }
+}
+@media (hover: hover) {
+  .dark .crossword-clue-card--hoverable:hover {
+    background: rgba(127, 156, 240, 0.22);
+    border-color: #7f9cf0;
+    box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .crossword-clue-card--hoverable:hover {
+    background: rgba(127, 156, 240, 0.22);
+    border-color: #7f9cf0;
+    box-shadow: 0 0 10px rgba(127, 156, 240, 0.35);
   }
 }
 /* Активна картка-підказка (ImageClueCard/LongClueCard/CluePill) — та сама

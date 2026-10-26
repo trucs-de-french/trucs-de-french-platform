@@ -219,6 +219,13 @@ function CrosswordBlockView({
 }) {
   const [grid, setGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
+  // Підказка, над якою зараз курсор/фокус клавіатури (НЕ активне слово —
+  // не викликає setActiveClue) — лише дає сітці знати, яке слово
+  // підсвітити periwinkle-кольором синхронно з карткою підказки, доки
+  // курсор над нею (hover для миші, focus для клавіатури); clear на
+  // mouseleave/blur/touchend/pointerleave, щоб підсвітка не "липла" на
+  // тач-пристроях після тапу.
+  const [hoveredClue, setHoveredClue] = useState<{ direction: Direction; number: number } | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollHint = useScrollOverflowHint(scrollRef, active);
@@ -422,6 +429,30 @@ function CrosswordBlockView({
     return cells.some((c) => c.row === row && c.col === col);
   }
 
+  function isHoveredCell(row: number, col: number): boolean {
+    if (!hoveredClue) return false;
+    const cells = clueCells.get(`${hoveredClue.direction}-${hoveredClue.number}`) ?? [];
+    return cells.some((c) => c.row === row && c.col === col);
+  }
+
+  // Події для зв'язку картки підказки з сіткою (hoveredClue) — спільні для
+  // 3 вигляду карток (ImageClueCard/LongClueCard/CluePill): мишача наведена
+  // картка/клавіатурний фокус підсвічує слово в сітці periwinkle-кольором,
+  // БЕЗ зміни activeClue. touchend/pointerleave прибирають підсвітку, щоб
+  // вона не "липла" на тач-пристроях після тапу (там немає справжнього
+  // hover, лише клік одразу вибирає activeClue).
+  function clueHoverHandlers(direction: Direction, number: number) {
+    const clue = { direction, number };
+    return {
+      onMouseEnter: () => setHoveredClue(clue),
+      onMouseLeave: () => setHoveredClue(null),
+      onFocus: () => setHoveredClue(clue),
+      onBlur: () => setHoveredClue(null),
+      onTouchEnd: () => setHoveredClue(null),
+      onPointerLeave: () => setHoveredClue(null),
+    };
+  }
+
   // Слово ПОВНІСТЮ заповнене (кожна клітинка непорожня) — спільна передумова
   // і для liveWordStatus (підказка в списку), і для cellLiveStatus (сама
   // клітинка): без неї кожна ще не дописана літера вже підсвічувалась би,
@@ -541,12 +572,13 @@ function CrosswordBlockView({
             setActiveClue(isActive ? null : { direction, number: clue.number });
           }
         }}
+        {...clueHoverHandlers(direction, clue.number)}
         className={`${LEGEND_TILE_SHAPE} flex w-full cursor-pointer flex-col p-2 text-left transition-colors ${
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
-              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -620,13 +652,14 @@ function CrosswordBlockView({
         // (той самий урок, що в legend-tile-style.ts), тож inline style —
         // єдиний надійний спосіб. Єдиний зазор між заголовком і вмістом —
         // margin-bottom самого ClueCardHeader (globals.css).
+        {...clueHoverHandlers(direction, clue.number)}
         style={{ gap: 0 }}
         className={`${LEGEND_LONG_CARD_SHAPE} flex-col cursor-pointer ${
           isCorrect
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
-              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 dark:hover:bg-neutral-800/70"
+              : "glass-chip glass-chip-hover border-[#dcbd6e] hover:bg-neutral-50 crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -679,12 +712,13 @@ function CrosswordBlockView({
     return (
       <div
         key={clue.number}
-        className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-3 pr-1.5" : ""} ${
+        {...(isCorrect ? {} : clueHoverHandlers(direction, clue.number))}
+        className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-3 pr-1.5" : ""} transition-colors ${
           isCorrect
             ? "glass-chip border-[#dcbd6e] opacity-50"
             : isActive
               ? "border-blue-400 bg-blue-50 crossword-clue-card--active"
-              : "glass-chip border-[#dcbd6e]"
+              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
         }`}
       >
         <span
@@ -837,11 +871,12 @@ function CrosswordBlockView({
                       }
                       const number = block.cellNumbers[ri][ci];
                       const status = cellLiveStatus(ri, ci);
-                      const isUncheckedActive =
+                      const isUnchecked =
                         !effectiveHintedCells.has(cellKey(ri, ci)) &&
                         status !== "correct" &&
-                        status !== "incorrect" &&
-                        isActiveCell(ri, ci);
+                        status !== "incorrect";
+                      const isUncheckedActive = isUnchecked && isActiveCell(ri, ci);
+                      const isUncheckedHovered = isUnchecked && isHoveredCell(ri, ci);
                       return (
                         <td
                           key={ci}
@@ -861,7 +896,11 @@ function CrosswordBlockView({
                               ширина таблиці НЕ змінюється (table-клітинки
                               ігнорують margin, тому зазор не можна покласти
                               прямо на <td>). */}
-                          <div className={`crossword-tile ${isUncheckedActive ? "crossword-tile--active" : ""}`}>
+                          <div
+                            className={`crossword-tile ${isUncheckedActive ? "crossword-tile--active" : ""} ${
+                              isUncheckedHovered ? "crossword-tile--hovered" : ""
+                            }`}
+                          >
                             {number !== null && (
                               <span
                                 className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 leading-none"
