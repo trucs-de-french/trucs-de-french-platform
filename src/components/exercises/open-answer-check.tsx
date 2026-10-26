@@ -148,12 +148,12 @@ export function OpenAnswerCheckExercise({
               onFocus={() => diacritics.onFocus(q.id)}
               onBlur={diacritics.onBlur}
               disabled={locked}
-              className={`w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
+              className={`exercise-field w-full rounded-md border px-4 py-2.5 text-base ${q.hint ? "pr-12" : ""} ${
                 qDetail
                   ? qDetail.isCorrect
-                    ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                    : "border-red-500 bg-red-50 dark:bg-red-950/30"
-                  : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-neutral-600 dark:bg-neutral-800"
+                    ? "exercise-field--correct border-green-500 bg-green-50"
+                    : "exercise-field--wrong border-red-500 bg-red-50"
+                  : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white"
               }`}
               placeholder="Ваша відповідь..."
             />

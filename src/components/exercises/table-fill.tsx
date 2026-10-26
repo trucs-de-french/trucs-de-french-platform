@@ -269,10 +269,10 @@ export function TableFillExercise({
     const revealedAnswer = practiceCheck.revealed[row.id];
 
     function practiceInputClass() {
-      if (!locked) return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600";
+      if (!locked) return "exercise-field glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white";
       return isCorrect
-        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-        : "border-red-500 bg-red-50 dark:bg-red-950/30";
+        ? "exercise-field exercise-field--correct border-green-500 bg-green-50"
+        : "exercise-field exercise-field--wrong border-red-500 bg-red-50";
     }
 
     function cellField(side: "left" | "right", value: string | null) {
@@ -332,7 +332,7 @@ export function TableFillExercise({
   }
 
   function inputClass(rowId: string, side: "left" | "right", detail: TableFillDetail | undefined) {
-    const idle = "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-transparent dark:border-neutral-600";
+    const idle = "exercise-field glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white";
     if (!detail)
       return hintedCells.has(cellKey(rowId, side))
         ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
@@ -340,8 +340,8 @@ export function TableFillExercise({
     const blank = detail.blanks.find((b) => b.rowId === rowId && b.side === side);
     if (!blank) return idle;
     return blank.isCorrect
-      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-      : "border-red-500 bg-red-50 dark:bg-red-950/30";
+      ? "exercise-field exercise-field--correct border-green-500 bg-green-50"
+      : "exercise-field exercise-field--wrong border-red-500 bg-red-50";
   }
 
   // Рядки без жодної прихованої клітинки нема чого оцінювати — бали для них

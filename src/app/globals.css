@@ -42,6 +42,170 @@
   --foreground: #ededed;
 }
 
+/* Пілюлі балів і текстові поля вправ — лише темна тема (світлий дефолт не
+   визначений: ці токени читаються лише dark:-утилітами/.dark-правилами
+   нижче, світла тема на них не посилається взагалі). --points-* —
+   непрозорий індиго (замінює напівпрозорий rgba(...,opacity), що раніше
+   зливався з темним фоном сторінки); --field-* — темно-лавандове поле
+   замість нейтрального сірого/чорного (bg-neutral-800 і подібні), що не
+   відрізнялось від звичайного тексту панелі. */
+:root.dark {
+  --points-bg: linear-gradient(135deg, #5a55e6, #3b36c4);
+  --points-border: #8a88f5;
+  --points-ink: #fff;
+  --points-ok-bg: #1f7a3d;
+  --points-ok-border: #4cc47e;
+  --points-ok-ink: #fff;
+  --points-partial-bg: #b8862b;
+  --points-partial-border: #f0c968;
+  --points-partial-ink: #fff;
+  --points-bad-bg: #b42318;
+  --points-bad-border: #e5484d;
+  --points-bad-ink: #fff;
+
+  --field-bg: #1a1d6a;
+  --field-border: rgba(138, 136, 245, 0.55);
+  --field-ink: #f5ecd0;
+  --field-placeholder: #a4a2dc;
+  --field-caret: #f6dc8e;
+  --field-focus-border: #8a88f5;
+  --field-focus-shadow: rgba(138, 136, 245, 0.25);
+  --field-disabled-bg: #15184f;
+  --field-disabled-ink: rgba(245, 236, 208, 0.7);
+  --field-disabled-border: rgba(138, 136, 245, 0.3);
+  --field-correct-bg: #14442a;
+  --field-correct-border: #4cc47e;
+  --field-correct-ink: #bff0d0;
+  --field-wrong-bg: #4a1a1d;
+  --field-wrong-border: #e5484d;
+  --field-wrong-ink: #ffd0d0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --points-bg: linear-gradient(135deg, #5a55e6, #3b36c4);
+    --points-border: #8a88f5;
+    --points-ink: #fff;
+    --points-ok-bg: #1f7a3d;
+    --points-ok-border: #4cc47e;
+    --points-ok-ink: #fff;
+    --points-partial-bg: #b8862b;
+    --points-partial-border: #f0c968;
+    --points-partial-ink: #fff;
+    --points-bad-bg: #b42318;
+    --points-bad-border: #e5484d;
+    --points-bad-ink: #fff;
+
+    --field-bg: #1a1d6a;
+    --field-border: rgba(138, 136, 245, 0.55);
+    --field-ink: #f5ecd0;
+    --field-placeholder: #a4a2dc;
+    --field-caret: #f6dc8e;
+    --field-focus-border: #8a88f5;
+    --field-focus-shadow: rgba(138, 136, 245, 0.25);
+    --field-disabled-bg: #15184f;
+    --field-disabled-ink: rgba(245, 236, 208, 0.7);
+    --field-disabled-border: rgba(138, 136, 245, 0.3);
+    --field-correct-bg: #14442a;
+    --field-correct-border: #4cc47e;
+    --field-correct-ink: #bff0d0;
+    --field-wrong-bg: #4a1a1d;
+    --field-wrong-border: #e5484d;
+    --field-wrong-ink: #ffd0d0;
+  }
+}
+
+/* Спільний клас для текстових полів вправ (input/textarea) — одна точка
+   правди для дизайну поля в темній темі, щоб кожна вправа не дублювала свій
+   набір dark:-утиліт (bg-neutral-800 і подібні). Клас додається ДО класів
+   вправи (layout/light-кольори лишаються своїми), світла тема його взагалі
+   не читає. */
+.dark .exercise-field {
+  background: var(--field-bg);
+  border-color: var(--field-border);
+  color: var(--field-ink);
+  caret-color: var(--field-caret);
+  outline: none;
+}
+.dark .exercise-field::placeholder {
+  color: var(--field-placeholder);
+  opacity: 1;
+}
+@media (hover: hover) {
+  .dark .exercise-field:hover:not(:disabled):not(:focus) {
+    background: #20247a;
+  }
+}
+.dark .exercise-field:focus-visible,
+.dark .exercise-field:focus {
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 3px var(--field-focus-shadow);
+}
+.dark .exercise-field:disabled {
+  background: var(--field-disabled-bg);
+  color: var(--field-disabled-ink);
+  border-color: var(--field-disabled-border);
+}
+.dark .exercise-field.exercise-field--correct {
+  background: var(--field-correct-bg);
+  border-color: var(--field-correct-border);
+  color: var(--field-correct-ink);
+}
+.dark .exercise-field.exercise-field--wrong {
+  background: var(--field-wrong-bg);
+  border-color: var(--field-wrong-border);
+  color: var(--field-wrong-ink);
+}
+.dark .exercise-field:-webkit-autofill {
+  box-shadow: 0 0 0 1000px var(--field-bg) inset;
+  -webkit-text-fill-color: var(--field-ink);
+  caret-color: var(--field-caret);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-field {
+    background: var(--field-bg);
+    border-color: var(--field-border);
+    color: var(--field-ink);
+    caret-color: var(--field-caret);
+    outline: none;
+  }
+  :root:not(.light) .exercise-field::placeholder {
+    color: var(--field-placeholder);
+    opacity: 1;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-field:hover:not(:disabled):not(:focus) {
+    background: #20247a;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .exercise-field:focus-visible,
+  :root:not(.light) .exercise-field:focus {
+    border-color: var(--field-focus-border);
+    box-shadow: 0 0 0 3px var(--field-focus-shadow);
+  }
+  :root:not(.light) .exercise-field:disabled {
+    background: var(--field-disabled-bg);
+    color: var(--field-disabled-ink);
+    border-color: var(--field-disabled-border);
+  }
+  :root:not(.light) .exercise-field.exercise-field--correct {
+    background: var(--field-correct-bg);
+    border-color: var(--field-correct-border);
+    color: var(--field-correct-ink);
+  }
+  :root:not(.light) .exercise-field.exercise-field--wrong {
+    background: var(--field-wrong-bg);
+    border-color: var(--field-wrong-border);
+    color: var(--field-wrong-ink);
+  }
+  :root:not(.light) .exercise-field:-webkit-autofill {
+    box-shadow: 0 0 0 1000px var(--field-bg) inset;
+    -webkit-text-fill-color: var(--field-ink);
+    caret-color: var(--field-caret);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -3162,10 +3326,16 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
 }
 .dark .points-pill-gradient {
+  background: var(--points-bg);
+  border: 1.5px solid var(--points-border);
+  color: var(--points-ink);
   box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .points-pill-gradient {
+    background: var(--points-bg);
+    border: 1.5px solid var(--points-border);
+    color: var(--points-ink);
     box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
   }
 }
@@ -3200,10 +3370,16 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
 }
 .dark .task-result-points-pill {
+  background: var(--points-bg);
+  border: 1.5px solid var(--points-border);
+  color: var(--points-ink);
   box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-points-pill {
+    background: var(--points-bg);
+    border: 1.5px solid var(--points-border);
+    color: var(--points-ink);
     box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
   }
 }
@@ -3463,25 +3639,25 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1f7a3d;
 }
 .dark .task-result-row-pill--wrong {
-  background: rgba(255, 120, 120, 0.12);
-  border-color: rgba(255, 140, 140, 0.4);
-  color: #ffb4ae;
+  background: var(--points-bad-bg);
+  border-color: var(--points-bad-border);
+  color: var(--points-bad-ink);
 }
 .dark .task-result-row-pill--correct {
-  background: rgba(120, 220, 150, 0.12);
-  border-color: rgba(130, 220, 160, 0.4);
-  color: #9fe3b4;
+  background: var(--points-ok-bg);
+  border-color: var(--points-ok-border);
+  color: var(--points-ok-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-row-pill--wrong {
-    background: rgba(255, 120, 120, 0.12);
-    border-color: rgba(255, 140, 140, 0.4);
-    color: #ffb4ae;
+    background: var(--points-bad-bg);
+    border-color: var(--points-bad-border);
+    color: var(--points-bad-ink);
   }
   :root:not(.light) .task-result-row-pill--correct {
-    background: rgba(120, 220, 150, 0.12);
-    border-color: rgba(130, 220, 160, 0.4);
-    color: #9fe3b4;
+    background: var(--points-ok-bg);
+    border-color: var(--points-ok-border);
+    color: var(--points-ok-ink);
   }
 }
 
@@ -3531,45 +3707,45 @@ button.scene-bar:active .scene-bar-toggle {
   color: #b42318;
 }
 .dark .row-points-tab {
-  background: rgba(150, 150, 255, 0.18);
-  border-color: rgba(150, 150, 255, 0.4);
-  color: #dcdbf3;
+  background: var(--points-bg);
+  border-color: var(--points-border);
+  color: var(--points-ink);
 }
 .dark .row-points-tab--correct {
-  background: rgba(120, 220, 150, 0.16);
-  border-color: rgba(130, 220, 160, 0.45);
-  color: #bff0d0;
+  background: var(--points-ok-bg);
+  border-color: var(--points-ok-border);
+  color: var(--points-ok-ink);
 }
 .dark .row-points-tab--partial {
-  background: rgba(246, 220, 139, 0.16);
-  border-color: rgba(246, 220, 139, 0.45);
-  color: #f6dc8e;
+  background: var(--points-partial-bg);
+  border-color: var(--points-partial-border);
+  color: var(--points-partial-ink);
 }
 .dark .row-points-tab--wrong {
-  background: rgba(255, 120, 120, 0.16);
-  border-color: rgba(255, 140, 140, 0.45);
-  color: #ffb4ae;
+  background: var(--points-bad-bg);
+  border-color: var(--points-bad-border);
+  color: var(--points-bad-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .row-points-tab {
-    background: rgba(150, 150, 255, 0.18);
-    border-color: rgba(150, 150, 255, 0.4);
-    color: #dcdbf3;
+    background: var(--points-bg);
+    border-color: var(--points-border);
+    color: var(--points-ink);
   }
   :root:not(.light) .row-points-tab--correct {
-    background: rgba(120, 220, 150, 0.16);
-    border-color: rgba(130, 220, 160, 0.45);
-    color: #bff0d0;
+    background: var(--points-ok-bg);
+    border-color: var(--points-ok-border);
+    color: var(--points-ok-ink);
   }
   :root:not(.light) .row-points-tab--partial {
-    background: rgba(246, 220, 139, 0.16);
-    border-color: rgba(246, 220, 139, 0.45);
-    color: #f6dc8e;
+    background: var(--points-partial-bg);
+    border-color: var(--points-partial-border);
+    color: var(--points-partial-ink);
   }
   :root:not(.light) .row-points-tab--wrong {
-    background: rgba(255, 120, 120, 0.16);
-    border-color: rgba(255, 140, 140, 0.45);
-    color: #ffb4ae;
+    background: var(--points-bad-bg);
+    border-color: var(--points-bad-border);
+    color: var(--points-bad-ink);
   }
 }
 
@@ -6614,15 +6790,15 @@ button.scene-bar:active .scene-bar-toggle {
   color: #b3a77a;
 }
 .dark .karaoke-gap--upcoming-empty {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(217, 183, 101, 0.6);
-  color: rgba(255, 255, 255, 0.4);
+  background: var(--field-bg);
+  border-color: var(--field-border);
+  color: var(--field-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--upcoming-empty {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(217, 183, 101, 0.6);
-    color: rgba(255, 255, 255, 0.4);
+    background: var(--field-bg);
+    border-color: var(--field-border);
+    color: var(--field-ink);
   }
 }
 .karaoke-gap--filled {
@@ -6648,15 +6824,15 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1f7a3d;
 }
 .dark .karaoke-gap--correct {
-  background: rgba(120, 220, 150, 0.16);
-  border-color: rgba(130, 220, 160, 0.45);
-  color: #bff0d0;
+  background: var(--field-correct-bg);
+  border-color: var(--field-correct-border);
+  color: var(--field-correct-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--correct {
-    background: rgba(120, 220, 150, 0.16);
-    border-color: rgba(130, 220, 160, 0.45);
-    color: #bff0d0;
+    background: var(--field-correct-bg);
+    border-color: var(--field-correct-border);
+    color: var(--field-correct-ink);
   }
 }
 .karaoke-gap--wrong {
@@ -6665,15 +6841,15 @@ button.scene-bar:active .scene-bar-toggle {
   color: #b42318;
 }
 .dark .karaoke-gap--wrong {
-  background: rgba(255, 120, 120, 0.16);
-  border-color: rgba(255, 140, 140, 0.45);
-  color: #ffb4ae;
+  background: var(--field-wrong-bg);
+  border-color: var(--field-wrong-border);
+  color: var(--field-wrong-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--wrong {
-    background: rgba(255, 120, 120, 0.16);
-    border-color: rgba(255, 140, 140, 0.45);
-    color: #ffb4ae;
+    background: var(--field-wrong-bg);
+    border-color: var(--field-wrong-border);
+    color: var(--field-wrong-ink);
   }
 }
 .karaoke-gap:disabled {

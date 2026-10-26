@@ -358,22 +358,22 @@ export function FillBlankExercise({
                             : undefined
                     }
                     title={hints[i] ?? undefined}
-                    className={`fill-blank-field h-[28px] w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic dark:placeholder:text-[rgba(220,219,243,0.6)] ${
+                    className={`fill-blank-field h-[28px] w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic ${
                       !result && !isDelf && !isPractice && hints[i] && !answers[i] ? "pl-[12px] pr-[30px]" : "px-[12px]"
                     } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
                       isPractice
                         ? practiceResults[String(i)] === true
-                          ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                          ? "exercise-field exercise-field--correct border-green-500 bg-green-50"
                           : practiceResults[String(i)] === false
-                            ? "border-red-500 bg-red-50 dark:bg-red-950/30"
-                            : "border-[rgba(217,183,101,0.7)] bg-white dark:border-[rgba(243,217,139,0.35)] dark:bg-white/[0.04]"
+                            ? "exercise-field exercise-field--wrong border-red-500 bg-red-50"
+                            : "exercise-field border-[rgba(217,183,101,0.7)] bg-white"
                         : detail
                           ? detail.blanks[i]?.isCorrect
-                            ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-                            : "border-red-500 bg-red-50 dark:bg-red-950/30"
+                            ? "exercise-field exercise-field--correct border-green-500 bg-green-50"
+                            : "exercise-field exercise-field--wrong border-red-500 bg-red-50"
                           : hintedBlanks.has(i)
                             ? "border-sky-400 bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                            : "border-[rgba(217,183,101,0.7)] bg-white dark:border-[rgba(243,217,139,0.35)] dark:bg-white/[0.04]"
+                            : "exercise-field border-[rgba(217,183,101,0.7)] bg-white"
                     }`}
                   />
                   {!result && !isDelf && !isPractice && hints[i] && !answers[i] && (

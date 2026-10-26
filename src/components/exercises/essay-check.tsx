@@ -267,7 +267,7 @@ export function EssayCheckExercise({
                 onFocus={() => diacritics.onFocus(f.id)}
                 onBlur={diacritics.onBlur}
                 disabled={submitted}
-                className="rounded-md border glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-4 py-2.5 text-sm dark:border-neutral-600 dark:bg-neutral-800"
+                className="exercise-field rounded-md border glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-4 py-2.5 text-sm"
               />
             </div>
           ))}
@@ -281,7 +281,7 @@ export function EssayCheckExercise({
           onBlur={diacritics.onBlur}
           disabled={submitted}
           rows={8}
-          className="w-full rounded-md border glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-1.5 text-sm dark:border-neutral-600"
+          className="exercise-field w-full rounded-md border glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-1.5 text-sm"
           placeholder="Ваша відповідь..."
         />
       )}
