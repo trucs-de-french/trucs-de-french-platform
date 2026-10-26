@@ -6341,7 +6341,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #d9b765 transparent;
@@ -6380,7 +6380,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .karaoke-line {
   border-radius: 12px;
-  padding: 8px 16px;
+  padding: 6px 16px;
   border-left: 4px solid transparent;
   cursor: pointer;
   color: #1a1640;
