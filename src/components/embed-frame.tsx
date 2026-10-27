@@ -39,7 +39,7 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
           </button>
         )}
       </div>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">
         Якщо вміст не відкривається,{" "}
         <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
           перейдіть за посиланням

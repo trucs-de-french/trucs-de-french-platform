@@ -68,7 +68,7 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
         href={media.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="self-start truncate text-[12px] text-neutral-500 underline hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+        className="self-start truncate text-[12px] text-neutral-500 underline hover:text-neutral-700 dark:text-[var(--text-muted-caption)] dark:hover:text-neutral-200"
       >
         {openLabel}
       </a>

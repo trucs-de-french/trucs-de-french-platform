@@ -491,7 +491,7 @@ export function ChronologicalOrderExercise({
                   </p>
                 )}
                 <div className="mt-1.5 flex items-center justify-center gap-1.5">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">n°</span>
+                  <span className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">n°</span>
                   {numberInput(item.id, "compact", label, item.points)}
                 </div>
               </div>

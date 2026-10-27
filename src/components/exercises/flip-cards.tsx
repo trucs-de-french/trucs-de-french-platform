@@ -90,7 +90,7 @@ function FlipCardTile({
         {frenchNbsp(shown)}
       </span>
       {clickable && (
-        <span className="flex items-center gap-1 text-xs text-neutral-400 dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[rgba(245,236,208,0.55)]">
+        <span className="flex items-center gap-1 text-xs text-neutral-400 dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[var(--text-muted-caption)]">
           <RotateCw
             aria-hidden="true"
             className="hidden h-3.5 w-3.5 shrink-0 dark:inline-block dark:text-[rgba(217,183,101,0.8)]"

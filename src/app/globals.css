@@ -105,6 +105,13 @@
   --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
   --btn-disabled-text: #dfe4ff;
 
+  /* Приглушений підпис-"помічник" (плейсхолдери drag-slot/gap, "клік —
+     перевернути", "Відкрити на YouTube", n° тощо) — темна тема лише:
+     одна лавандово-сіра точка правди замість різних per-компонентних
+     literal (neutral-500 сіре, rgba(245,236,208,.55) кремове,
+     rgba(179,191,224,.8) лавандове) — усі читались надто тьмяно. */
+  --text-muted-caption: rgba(201, 212, 255, 0.85);
+
   /* "Індиго-скло" — спільна непрозора підкладка карток-елементів вправ
      (темна тема): ці токени тепер керують .glass-item-card (через
      --glass-item-bg/--glass-item-border нижче, .dark .glass-block/
@@ -166,6 +173,8 @@
     --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
     --btn-disabled-text: #dfe4ff;
 
+    --text-muted-caption: rgba(201, 212, 255, 0.85);
+
     --card-bg: rgba(120, 150, 235, 0.15);
     --card-border: rgba(130, 160, 240, 0.42);
     --card-border-width: 1.5px;
@@ -209,6 +218,15 @@
   color: var(--field-placeholder);
   opacity: 1;
 }
+/* "впишіть слово" (fill-blank.tsx) — власний приглушений-підпис токен
+   замість --field-placeholder: той лишається спільним для звичайних
+   полів-уведення, цей — саме для caption-ролі (однакова лавандово-сіра
+   точка правди з іншими targets тут же). Та сама специфічність, що
+   правило вище — виграє порядком оголошення (нижче в файлі). */
+.dark .fill-blank-field::placeholder {
+  color: var(--text-muted-caption);
+  opacity: 1;
+}
 @media (hover: hover) {
   .dark .exercise-field:hover:not(:disabled):not(:focus) {
     background: #20247a;
@@ -249,6 +267,10 @@
   }
   :root:not(.light) .exercise-field::placeholder {
     color: var(--field-placeholder);
+    opacity: 1;
+  }
+  :root:not(.light) .fill-blank-field::placeholder {
+    color: var(--text-muted-caption);
     opacity: 1;
   }
   :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
@@ -6403,11 +6425,11 @@ button.scene-bar:active .scene-bar-toggle {
 /* Приглушений лавандовий, той самий, що --card-ink-2 (b3bfe0) при .8
    opacity, замість старого сіро-лавандового rgba(220,219,243,.6). */
 .dark .image-match-slot-placeholder {
-  color: rgba(179, 191, 224, 0.8);
+  color: var(--text-muted-caption);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot-placeholder {
-    color: rgba(179, 191, 224, 0.8);
+    color: var(--text-muted-caption);
   }
 }
 .image-match-slot--dragover {
