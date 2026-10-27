@@ -6541,6 +6541,17 @@ button.scene-bar:active .scene-bar-toggle {
     border-width: 1px;
   }
 }
+/* Світла тема — та сама роль, що темна вище (border-2 важкий на
+   26-36px квадраті); одна декларація для ВСІХ станів, box-sizing:
+   border-box — зовнішній розмір квадрата не змінюється. */
+.light .cg-checkbox-box {
+  border-width: var(--border-hairline);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .cg-checkbox-box {
+    border-width: var(--border-hairline);
+  }
+}
 .word-pool-chip-grip {
   flex-shrink: 0;
   width: 10px;
@@ -7045,6 +7056,17 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 16px;
   font-weight: 700;
   border: 1.5px solid transparent;
+}
+/* Світла тема — тонша рамка (1px замість 1.5px) на всіх станах пілюлі
+   (default/hover/selected/correct/wrong/revealed), бо ширина живе на
+   спільній базі вище; колір кожного стану лишається незмінним. */
+.light .word-choice-pill {
+  border-width: var(--border-hairline);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .word-choice-pill {
+    border-width: var(--border-hairline);
+  }
 }
 .word-choice-pill--default {
   background: var(--gold-pill-bg);
@@ -7612,11 +7634,31 @@ button.scene-bar:active .scene-bar-toggle {
     min-width: 80px;
   }
 }
+/* Світла тема — тонша рамка (1px замість 2px) на всіх станах пропуску
+   КРІМ активного (нижче, лишається 2px — лавандовий halo-ефект
+   розрахований саме на цю ширину). box-sizing: border-box на базовому
+   .karaoke-gap — зовнішній розмір пропуску не змінюється. */
+.light .karaoke-gap {
+  border-width: var(--border-hairline);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .karaoke-gap {
+    border-width: var(--border-hairline);
+  }
+}
 .karaoke-gap--active-empty {
   background: #fff;
   border-color: #3b36c4;
   color: #8a88b5;
   box-shadow: 0 0 0 4px rgba(90, 85, 230, 0.25);
+}
+.light .karaoke-gap--active-empty {
+  border-width: 2px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .karaoke-gap--active-empty {
+    border-width: 2px;
+  }
 }
 /* Активний (можна клікнути зараз) слот караоке — та сама яскравіша
    periwinkle-рамка #7f9cf0, що hover/dragover у image-match/drag-drop
@@ -7792,6 +7834,14 @@ button.scene-bar:active .scene-bar-toggle {
 .karaoke-option-chip:disabled {
   opacity: 0.55;
   cursor: default;
+}
+.light .karaoke-option-chip {
+  border-width: var(--border-hairline);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .karaoke-option-chip {
+    border-width: var(--border-hairline);
+  }
 }
 .dark .karaoke-option-chip {
   padding: 10px 22px;
