@@ -73,7 +73,7 @@ export const COMPACT_IMAGE_GRID = "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid
 // замість тексту на всю картку. Колір стану (ANSWER_CARD_DEFAULT і т.п.)
 // додається викликачем, як і в ANSWER_CARD_BASE.
 export const COMPACT_IMAGE_CARD =
-  "flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center glass-gap-shadow dark:shadow-sm transition-colors";
+  "chrono-image-card flex flex-col items-center gap-1 rounded-[14px] dark:rounded-lg border-[1.5px] dark:border p-1.5 text-center glass-gap-shadow dark:shadow-sm transition-colors";
 
 // Квадратна рамка під картинку: max-w-[6.5rem] — те саме обмеження, що і в
 // chronological_order, щоб картка не розтягувалась на всю ширину колонки

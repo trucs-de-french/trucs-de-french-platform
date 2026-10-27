@@ -1999,14 +1999,16 @@ button, input, textarea, select, label, nav, aside {
    shadow, тож border-color/background/box-shadow перекриваються лише тому,
    що це правило нижче в каскаді. */
 .light .word-card,
-.light .vocab-quiz-answer-chip {
+.light .vocab-quiz-answer-chip,
+.light .chrono-image-card {
   border-color: transparent;
   background: var(--glass-card-bg-gradient);
   box-shadow: var(--glass-item-shadow);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .word-card,
-  :root:not(.dark) .vocab-quiz-answer-chip {
+  :root:not(.dark) .vocab-quiz-answer-chip,
+  :root:not(.dark) .chrono-image-card {
     border-color: transparent;
     background: var(--glass-card-bg-gradient);
     box-shadow: var(--glass-item-shadow);
