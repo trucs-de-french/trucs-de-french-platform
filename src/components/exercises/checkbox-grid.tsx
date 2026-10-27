@@ -33,7 +33,7 @@ export type CheckboxGridPracticeProps = { whole: true; failedAttempts: Record<st
 // прилипання шапки до сторінки; overflow-clip все одно зрізає кути картки
 // під rounded-xl, просто не створює новий скрол-контейнер.
 const GRID_TABLE_CARD =
-  "w-full max-w-[60rem] overflow-clip rounded-[14px] border-[1.5px] dark:border-[1.5px] glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-none dark:border-[var(--card-border)] dark:bg-[rgba(120,150,235,0.12)]";
+  "w-full max-w-[60rem] overflow-clip rounded-[14px] border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow dark:shadow-none dark:border-[var(--card-border)] dark:bg-[rgba(120,150,235,0.12)]";
 
 // Вертикальна риска після першої колонки (твердження) — лише на md+, де
 // твердження справді стоїть окремою колонкою зліва від чекбоксів; на

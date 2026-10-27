@@ -578,7 +578,7 @@ function CrosswordBlockView({
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "crossword-clue-card--active"
-              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
+              : "glass-chip crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -659,7 +659,7 @@ function CrosswordBlockView({
             ? "border-green-500 bg-green-50 dark:bg-green-950/30"
             : isActive
               ? "crossword-clue-card--active"
-              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
+              : "glass-chip crossword-clue-card--hoverable"
         }`}
       >
         <ClueCardHeader
@@ -715,10 +715,10 @@ function CrosswordBlockView({
         {...(isCorrect ? {} : clueHoverHandlers(direction, clue.number))}
         className={`${LEGEND_PILL_SHAPE} ${showBadge ? "pl-3 pr-1.5" : ""} transition-colors ${
           isCorrect
-            ? "glass-chip border-[#dcbd6e] opacity-50"
+            ? "glass-chip opacity-50"
             : isActive
               ? "crossword-clue-card--active"
-              : "glass-chip border-[#dcbd6e] crossword-clue-card--hoverable"
+              : "glass-chip crossword-clue-card--hoverable"
         }`}
       >
         <span

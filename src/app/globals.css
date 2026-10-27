@@ -39,7 +39,7 @@
    karaoke мають власні, відмінні темні кольори (не цей токен). */
 :root {
   --gold-pill-bg: #f6efd9;
-  --gold-pill-border: rgba(217, 183, 101, 0.85);
+  --gold-pill-border: var(--gold-border-85);
   --gold-pill-ink: #1a1640;
 }
 
@@ -120,12 +120,12 @@
      одна точка правди замість rgba(255,255,255,.06-.09) напівпрозорого
      фону й bg-neutral-800 сірого, які раніше дублювались по файлах. */
   --card-bg: rgba(120, 150, 235, 0.15);
-  --card-border: rgba(130, 160, 240, 0.42);
+  --card-border: var(--lavender-card);
   --card-border-width: 1.5px;
   --card-ink: #f5ecd0;
   --card-ink-2: #ffffff;
   --card-hover-bg: rgba(120, 150, 235, 0.22);
-  --card-hover-border: rgba(130, 160, 240, 0.65);
+  --card-hover-border: var(--lavender-hover);
   --card-field-bg: rgba(8, 10, 40, 0.45);
   --card-field-border: rgba(130, 160, 240, 0.6);
   /* Той самий суцільний темно-синій фон — ОДНА точка правди лише для двох
@@ -201,18 +201,59 @@
     --text-muted-caption: rgba(201, 212, 255, 0.85);
 
     --card-bg: rgba(120, 150, 235, 0.15);
-    --card-border: rgba(130, 160, 240, 0.42);
+    --card-border: var(--lavender-card);
     --card-border-width: 1.5px;
     --card-ink: #f5ecd0;
     --card-ink-2: #ffffff;
     --card-hover-bg: rgba(120, 150, 235, 0.22);
-    --card-hover-border: rgba(130, 160, 240, 0.65);
+    --card-hover-border: var(--lavender-hover);
     --card-field-bg: rgba(8, 10, 40, 0.45);
     --card-field-border: rgba(130, 160, 240, 0.6);
     --dark-blue-fill: #0a1030;
     --dark-surface-fill: #141944;
     --error-review-card-bg: var(--dark-blue-fill);
   }
+}
+
+/* Спільні токени рамок (border-audit.md): ширина за роллю (хайрлайн/поле/
+   картка/акцент) і ОБИДВА золота (світле #d9b765, темне #f3d98b, кожне
+   своїми alpha-кроками — лише ті, що реально зустрічаються на border/
+   outline/box-shadow-кільце в файлі) + одна лавандова родина
+   (130,160,240) для картки/поля/ховера замість двох різних відтінків.
+   Самі значення НЕ змінені цим блоком — лише названі; хто куди посилається
+   змінюється по одному літералу нижче. */
+:root {
+  --border-hairline: 1px;
+  --border-field: 1px;
+  --border-card: 1.5px;
+  --border-strong: 2px;
+
+  --gold-border: #d9b765;
+  --gold-border-35: rgba(217, 183, 101, 0.35);
+  --gold-border-45: rgba(217, 183, 101, 0.45);
+  --gold-border-50: rgba(217, 183, 101, 0.5);
+  --gold-border-55: rgba(217, 183, 101, 0.55);
+  --gold-border-60: rgba(217, 183, 101, 0.6);
+  --gold-border-70: rgba(217, 183, 101, 0.7);
+  --gold-border-75: rgba(217, 183, 101, 0.75);
+  --gold-border-80: rgba(217, 183, 101, 0.8);
+  --gold-border-85: rgba(217, 183, 101, 0.85);
+  --gold-border-90: rgba(217, 183, 101, 0.9);
+  --gold-border-95: rgba(217, 183, 101, 0.95);
+
+  --gold-border-dark: #f3d98b;
+  --gold-border-dark-20: rgba(243, 217, 139, 0.2);
+  --gold-border-dark-25: rgba(243, 217, 139, 0.25);
+  --gold-border-dark-28: rgba(243, 217, 139, 0.28);
+  --gold-border-dark-30: rgba(243, 217, 139, 0.3);
+  --gold-border-dark-35: rgba(243, 217, 139, 0.35);
+  --gold-border-dark-40: rgba(243, 217, 139, 0.4);
+  --gold-border-dark-45: rgba(243, 217, 139, 0.45);
+  --gold-border-dark-50: rgba(243, 217, 139, 0.5);
+
+  --lavender-card: rgba(130, 160, 240, 0.42);
+  --lavender-field: rgba(130, 160, 240, 0.55);
+  --lavender-hover: rgba(130, 160, 240, 0.65);
 }
 
 /* Спільний клас для текстових полів вправ (input/textarea) — одна точка
@@ -910,7 +951,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .dark {
   --ws-sheet-bg: #11183f;
-  --ws-sheet-border: 1px solid rgba(243, 217, 139, 0.45);
+  --ws-sheet-border: 1px solid var(--gold-border-dark-45);
   --ws-sheet-shadow: 0 0 0 4px rgba(243, 217, 139, 0.07), 0 18px 40px -14px rgba(0, 0, 0, 0.65);
   --ws-cell-color: #f6efd6;
   --ws-letter-found-color: #e9e3ff;
@@ -931,7 +972,7 @@ button, input, textarea, select, label, nav, aside {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     --ws-sheet-bg: #11183f;
-    --ws-sheet-border: 1px solid rgba(243, 217, 139, 0.45);
+    --ws-sheet-border: 1px solid var(--gold-border-dark-45);
     --ws-sheet-shadow: 0 0 0 4px rgba(243, 217, 139, 0.07), 0 18px 40px -14px rgba(0, 0, 0, 0.65);
     --ws-cell-color: #f6efd6;
     --ws-letter-found-color: #e9e3ff;
@@ -1654,10 +1695,10 @@ button, input, textarea, select, label, nav, aside {
 .dark .glass-block,
 .dark .scene-bar {
   --glass-panel-bg: rgba(10, 16, 48, 0.82);
-  --glass-panel-border: rgba(243, 217, 139, 0.5);
+  --glass-panel-border: var(--gold-border-dark-50);
   --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   --glass-bar-bg: rgba(10, 16, 48, 0.92);
-  --glass-bar-border: rgba(243, 217, 139, 0.5);
+  --glass-bar-border: var(--gold-border-dark-50);
   --glass-bar-text: #f6dc8e;
   --glass-bar-shadow: none;
   --glass-toggle-bg: transparent;
@@ -1671,7 +1712,7 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-border-width: var(--card-border-width);
   --glass-item-shadow: none;
   --glass-answer-bg: var(--dark-surface-fill);
-  --glass-answer-border: rgba(217, 183, 101, 0.7);
+  --glass-answer-border: var(--gold-border-70);
   --glass-answer-text: var(--card-ink);
   --glass-answer-border-hover: #f6dc8e;
   --glass-answer-text-hover: #fff0b8;
@@ -1684,10 +1725,10 @@ button, input, textarea, select, label, nav, aside {
   :root:not(.light) .glass-block,
   :root:not(.light) .scene-bar {
     --glass-panel-bg: rgba(10, 16, 48, 0.82);
-    --glass-panel-border: rgba(243, 217, 139, 0.5);
+    --glass-panel-border: var(--gold-border-dark-50);
     --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
     --glass-bar-bg: rgba(10, 16, 48, 0.92);
-    --glass-bar-border: rgba(243, 217, 139, 0.5);
+    --glass-bar-border: var(--gold-border-dark-50);
     --glass-bar-text: #f6dc8e;
     --glass-bar-shadow: none;
     --glass-toggle-bg: transparent;
@@ -1701,7 +1742,7 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-border-width: var(--card-border-width);
     --glass-item-shadow: none;
     --glass-answer-bg: var(--dark-surface-fill);
-    --glass-answer-border: rgba(217, 183, 101, 0.7);
+    --glass-answer-border: var(--gold-border-70);
     --glass-answer-text: var(--card-ink);
     --glass-answer-border-hover: #f6dc8e;
     --glass-answer-text-hover: #fff0b8;
@@ -1745,7 +1786,6 @@ button, input, textarea, select, label, nav, aside {
   --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   --glass-text-meta: #55546b;
   --glass-item-bg: #ffffff;
-  --glass-item-border: #dcbd6e;
   /* "Variant 4" — м'яка рамка картки, що згасає зверху вниз: справжній
      колір рамки більше не малює border (border-color стає transparent у
      .glass-gold-edge/.glass-item-card нижче), а --glass-card-bg-gradient
@@ -1759,13 +1799,13 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
   --glass-item-radius: 14px;
   --glass-answer-bg: #ffffff;
-  --glass-answer-border: rgba(217, 183, 101, 0.55);
+  --glass-answer-border: var(--gold-border-55);
   --glass-answer-border-width: 1px;
   --glass-divider: #e6e6f0;
-  --glass-accent-bar: #d9b765;
+  --glass-accent-bar: var(--gold-border);
   --glass-reading-border: var(--glass-item-border-width) solid transparent;
   --glass-input-bg: #ffffff;
-  --glass-input-border: rgba(217, 183, 101, 0.55);
+  --glass-input-border: var(--gold-border-55);
   --glass-input-border-width: 1px;
   --glass-input-text: #1f1d3a;
   --glass-input-radius: 8px;
@@ -1784,19 +1824,18 @@ button, input, textarea, select, label, nav, aside {
     --glass-bar-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     --glass-text-meta: #55546b;
     --glass-item-bg: #ffffff;
-    --glass-item-border: #dcbd6e;
-    --glass-item-border-width: 1px;
+      --glass-item-border-width: 1px;
     --glass-item-border-color: transparent;
     --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
     --glass-item-radius: 14px;
     --glass-answer-bg: #ffffff;
-    --glass-answer-border: rgba(217, 183, 101, 0.55);
+    --glass-answer-border: var(--gold-border-55);
     --glass-answer-border-width: 1px;
     --glass-divider: #e6e6f0;
-    --glass-accent-bar: #d9b765;
+    --glass-accent-bar: var(--gold-border);
     --glass-reading-border: var(--glass-item-border-width) solid transparent;
     --glass-input-bg: #ffffff;
-    --glass-input-border: rgba(217, 183, 101, 0.55);
+    --glass-input-border: var(--gold-border-55);
     --glass-input-border-width: 1px;
     --glass-input-text: #1f1d3a;
     --glass-input-radius: 8px;
@@ -1907,12 +1946,12 @@ button, input, textarea, select, label, nav, aside {
    значення. */
 .light .glass-chip {
   border-width: 1px;
-  border-color: rgba(217, 183, 101, 0.55);
+  border-color: var(--gold-border-55);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .glass-chip {
     border-width: 1px;
-    border-color: rgba(217, 183, 101, 0.55);
+    border-color: var(--gold-border-55);
   }
 }
 /* Hover лише для клікабельних/драгабельних чипів/плиток (.glass-chip-
@@ -1921,12 +1960,12 @@ button, input, textarea, select, label, nav, aside {
    transform. */
 @media (hover: hover) {
   .light .glass-chip-hover:hover {
-    border-color: rgba(217, 183, 101, 0.85);
+    border-color: var(--gold-border-85);
   }
 }
 @media (hover: hover) and (prefers-color-scheme: light) {
   :root:not(.dark) .glass-chip-hover:hover {
-    border-color: rgba(217, 183, 101, 0.85);
+    border-color: var(--gold-border-85);
   }
 }
 /* Контейнери-"вставки" всередині панелі (пул слів під питанням/карткою,
@@ -2204,7 +2243,7 @@ button, input, textarea, select, label, nav, aside {
   height: 32px;
   box-sizing: border-box;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  border: 1px solid var(--gold-border-55);
   border-radius: 999px;
   padding: 0 14px;
   font-family: var(--font-heading);
@@ -2222,7 +2261,7 @@ button, input, textarea, select, label, nav, aside {
 }
 .dark .counter-pill {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(243, 217, 139, 0.28);
+  border-color: var(--gold-border-dark-28);
 }
 .dark .counter-pill-current {
   color: #f6dc8e;
@@ -2233,7 +2272,7 @@ button, input, textarea, select, label, nav, aside {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .counter-pill {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(243, 217, 139, 0.28);
+    border-color: var(--gold-border-dark-28);
   }
   :root:not(.light) .counter-pill-current {
     color: #f6dc8e;
@@ -2312,13 +2351,13 @@ button, input, textarea, select, label, nav, aside {
 }
 .dark .crossword-tile {
   background: var(--dark-surface-fill);
-  border-color: rgba(243, 217, 139, 0.45);
+  border-color: var(--gold-border-dark-45);
   box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .crossword-tile {
     background: var(--dark-surface-fill);
-    border-color: rgba(243, 217, 139, 0.45);
+    border-color: var(--gold-border-dark-45);
     box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
   }
 }
@@ -3164,7 +3203,7 @@ button.scene-bar:active .scene-bar-toggle {
    раніше, лише перемкнуті на .dark замість [data-scene-bg]. */
 .dark .fullscreen-btn {
   background: rgba(10, 16, 48, 0.82);
-  border-color: rgba(243, 217, 139, 0.5);
+  border-color: var(--gold-border-dark-50);
   color: #f6dc8e;
   font-family: inherit;
   font-weight: 700;
@@ -3194,7 +3233,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .fullscreen-btn {
     background: rgba(10, 16, 48, 0.82);
-    border-color: rgba(243, 217, 139, 0.5);
+    border-color: var(--gold-border-dark-50);
     color: #f6dc8e;
     font-family: inherit;
     font-weight: 700;
@@ -3643,7 +3682,7 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .task-plaque {
   background: linear-gradient(135deg, #1a1640, #4b46da);
   background-clip: padding-box;
-  border: var(--glass-panel-border-width, 1px) solid rgba(217, 183, 101, 0.9);
+  border: var(--glass-panel-border-width, 1px) solid var(--gold-border-90);
   color: #f6dc8e;
   box-shadow: 0 2px 10px rgba(217, 183, 101, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
@@ -3651,7 +3690,7 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.light) .task-plaque {
     background: linear-gradient(135deg, #1a1640, #4b46da);
     background-clip: padding-box;
-    border: var(--glass-panel-border-width, 1px) solid rgba(217, 183, 101, 0.9);
+    border: var(--glass-panel-border-width, 1px) solid var(--gold-border-90);
     color: #f6dc8e;
     box-shadow: 0 2px 10px rgba(217, 183, 101, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
@@ -3837,7 +3876,7 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 8px;
 }
 .dark .check-confirm-bar {
-  border-color: rgba(243, 217, 139, 0.35);
+  border-color: var(--gold-border-dark-35);
   background: rgba(10, 16, 48, 0.82);
 }
 .dark .check-confirm-text {
@@ -3848,7 +3887,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .check-confirm-bar {
-    border-color: rgba(243, 217, 139, 0.35);
+    border-color: var(--gold-border-dark-35);
     background: rgba(10, 16, 48, 0.82);
   }
   :root:not(.light) .check-confirm-text {
@@ -4142,13 +4181,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-result-card {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(243, 217, 139, 0.25);
+  border: 1px solid var(--gold-border-dark-25);
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-card {
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(243, 217, 139, 0.25);
+    border: 1px solid var(--gold-border-dark-25);
     box-shadow: none;
   }
 }
@@ -4238,11 +4277,11 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 12px 14px 14px;
 }
 .dark .task-result-toggle-panel {
-  border-top: 1px solid rgba(243, 217, 139, 0.2);
+  border-top: 1px solid var(--gold-border-dark-20);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-toggle-panel {
-    border-top: 1px solid rgba(243, 217, 139, 0.2);
+    border-top: 1px solid var(--gold-border-dark-20);
   }
 }
 
@@ -4254,16 +4293,16 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 9px 14px;
   border-radius: 14px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.5);
+  border: 1px solid var(--gold-border-50);
 }
 .dark .task-result-pair-row {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-pair-row {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
   }
 }
 .task-result-pair-rows {
@@ -4344,7 +4383,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 10px;
   border-radius: 14px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.5);
+  border: 1px solid var(--gold-border-50);
   min-width: 0;
   flex: 1 1 min(100%, 340px);
   max-width: 560px;
@@ -4373,12 +4412,12 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-result-answer-row {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-answer-row {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
   }
 }
 .task-result-answer-num {
@@ -4458,19 +4497,19 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 10px;
   border-radius: 14px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.5);
+  border: 1px solid var(--gold-border-50);
   min-width: 0;
   flex: 1 1 min(100%, 480px);
   max-width: 720px;
 }
 .dark .task-result-gap-row {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-gap-row {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
   }
 }
 .task-result-gap-text {
@@ -4537,17 +4576,17 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 8px 10px;
   border-radius: 14px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.5);
+  border: 1px solid var(--gold-border-50);
   min-width: 0;
 }
 .dark .task-result-image-row {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-image-row {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
   }
 }
 .task-result-image-word {
@@ -4721,7 +4760,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 0 14px;
   border-radius: 999px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  border: 1px solid var(--gold-border-55);
   font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 800;
@@ -4730,13 +4769,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-summary-total-pill {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-summary-total-pill {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
     color: #f6dc8e;
   }
 }
@@ -4784,7 +4823,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .task-summary-tile--pending {
   background: #fff;
-  border-color: rgba(217, 183, 101, 0.45);
+  border-color: var(--gold-border-45);
   color: #8a7a52;
 }
 @media (hover: hover) {
@@ -4810,7 +4849,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-summary-tile--pending {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
   color: rgba(246, 220, 139, 0.6);
 }
 .dark .task-summary-tile--active {
@@ -4841,7 +4880,7 @@ button.scene-bar:active .scene-bar-toggle {
   }
   :root:not(.light) .task-summary-tile--pending {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
     color: rgba(246, 220, 139, 0.6);
   }
   :root:not(.light) .task-summary-tile--active {
@@ -4866,7 +4905,7 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1a1640;
   opacity: 1;
   font-weight: 600;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  border: 1px solid var(--gold-border-55);
   box-shadow:
     0 8px 20px -6px rgba(120, 90, 20, 0.35),
     0 2px 6px rgba(0, 0, 0, 0.12);
@@ -4933,7 +4972,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 5px 12px;
   border-radius: 10px 10px 0 0;
   background: #efe5c4;
-  border: 1px solid rgba(217, 183, 101, 0.6);
+  border: 1px solid var(--gold-border-60);
   border-bottom: none;
   font-size: 13px;
   font-weight: 700;
@@ -4975,7 +5014,7 @@ button.scene-bar:active .scene-bar-toggle {
      мусить збігатись з РЕАЛЬНОЮ рамкою панелі, інакше на стику з'являється
      прямокутний "сходинка"-нотч. */
   border-width: 1px;
-  border-color: rgba(243, 217, 139, 0.5);
+  border-color: var(--gold-border-dark-50);
   color: #f6dc8e;
 }
 .dark .block-tab--inactive {
@@ -4994,7 +5033,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) {
   .dark .block-tab--inactive:hover {
     background: rgba(130, 160, 240, 0.3);
-    border-color: rgba(217, 183, 101, 0.55);
+    border-color: var(--gold-border-55);
     color: #f3d98b;
   }
 }
@@ -5004,7 +5043,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--active {
     border-width: 1px;
-    border-color: rgba(243, 217, 139, 0.5);
+    border-color: var(--gold-border-dark-50);
     color: #f6dc8e;
   }
   :root:not(.light) .block-tab--inactive {
@@ -5029,7 +5068,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--inactive:hover {
     background: rgba(130, 160, 240, 0.3);
-    border-color: rgba(217, 183, 101, 0.55);
+    border-color: var(--gold-border-55);
     color: #f3d98b;
   }
 }
@@ -5052,7 +5091,7 @@ button.scene-bar:active .scene-bar-toggle {
   justify-content: center;
   padding: 0;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  border: 1px solid var(--gold-border-55);
   box-shadow: 0 4px 10px -3px rgba(120, 90, 20, 0.35);
   color: #3b36c4;
   cursor: pointer;
@@ -5070,14 +5109,14 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .tabs-scroll-arrow {
   background: rgba(10, 16, 48, 0.92);
-  border-color: rgba(243, 217, 139, 0.4);
+  border-color: var(--gold-border-dark-40);
   color: #f6dc8e;
   box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .tabs-scroll-arrow {
     background: rgba(10, 16, 48, 0.92);
-    border-color: rgba(243, 217, 139, 0.4);
+    border-color: var(--gold-border-dark-40);
     color: #f6dc8e;
     box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.5);
   }
@@ -5173,12 +5212,12 @@ button.scene-bar:active .scene-bar-toggle {
    без жодного контуру. */
 .dark .exercise-block-prev-btn,
 .dark .exercise-block-next-btn {
-  box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+  box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 6px 18px rgba(59, 54, 196, 0.3);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn,
   :root:not(.light) .exercise-block-next-btn {
-    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 6px 18px rgba(59, 54, 196, 0.3);
+    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 6px 18px rgba(59, 54, 196, 0.3);
   }
 }
 .dark .exercise-block-prev-btn:disabled,
@@ -5194,13 +5233,13 @@ button.scene-bar:active .scene-bar-toggle {
 @media (hover: hover) {
   .dark .exercise-block-prev-btn:not(:disabled):hover,
   .dark .exercise-block-next-btn:not(:disabled):hover {
-    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 8px 22px rgba(59, 54, 196, 0.45);
+    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .exercise-block-prev-btn:not(:disabled):hover,
   :root:not(.light) .exercise-block-next-btn:not(:disabled):hover {
-    box-shadow: 0 0 0 1px rgba(243, 217, 139, 0.28), 0 8px 22px rgba(59, 54, 196, 0.45);
+    box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
 /* Мобільний рядок (ЕТАП M, п.3): "Перевірити блок" розтягується на решту
@@ -5329,7 +5368,7 @@ button.scene-bar:active .scene-bar-toggle {
   min-height: 76px;
   padding: 14px 16px;
   background: rgba(10, 16, 48, 0.82);
-  border: 1px solid rgba(243, 217, 139, 0.5);
+  border: 1px solid var(--gold-border-dark-50);
   border-radius: 14px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   text-decoration: none;
@@ -6088,7 +6127,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .drag-drop-slot--empty {
   background: #fff;
-  border: 1.5px dashed rgba(217, 183, 101, 0.9);
+  border: 1.5px dashed var(--gold-border-90);
 }
 /* Та сама причина, що .image-match-slot--empty вище — спільні токени поля
    замість старого хардкоду. */
@@ -6133,17 +6172,17 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .drag-drop-slot--filled {
   background: #f6efd9;
-  border: 1.5px solid rgba(217, 183, 101, 0.8);
+  border: 1.5px solid var(--gold-border-80);
   padding: 6px 10px;
 }
 .dark .drag-drop-slot--filled {
   background: rgba(246, 220, 142, 0.12);
-  border-color: rgba(243, 217, 139, 0.4);
+  border-color: var(--gold-border-dark-40);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .drag-drop-slot--filled {
     background: rgba(246, 220, 142, 0.12);
-    border-color: rgba(243, 217, 139, 0.4);
+    border-color: var(--gold-border-dark-40);
   }
 }
 .drag-drop-slot-word {
@@ -6194,7 +6233,7 @@ button.scene-bar:active .scene-bar-toggle {
   flex-direction: column;
   gap: 8px;
   background: #f6efd9;
-  border: 1.5px dashed rgba(217, 183, 101, 0.75);
+  border: 1.5px dashed var(--gold-border-75);
   border-radius: 16px;
   padding: 10px 14px 12px;
   box-sizing: border-box;
@@ -6236,7 +6275,7 @@ button.scene-bar:active .scene-bar-toggle {
      принцип "непрозорий темний еквівалент"), аби десктопний і мобільний
      трей виглядали однаково "суцільними". */
   background: rgba(10, 16, 48, 0.96);
-  border-color: rgba(243, 217, 139, 0.3);
+  border-color: var(--gold-border-dark-30);
   scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
 }
 .dark .word-pool::-webkit-scrollbar-thumb {
@@ -6245,7 +6284,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool {
     background: rgba(10, 16, 48, 0.96);
-    border-color: rgba(243, 217, 139, 0.3);
+    border-color: var(--gold-border-dark-30);
     scrollbar-color: rgba(243, 217, 139, 0.45) transparent;
   }
   :root:not(.light) .word-pool::-webkit-scrollbar-thumb {
@@ -6283,7 +6322,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 0 10px;
   border-radius: 999px;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.55);
+  border: 1px solid var(--gold-border-55);
   font-family: var(--font-heading);
   font-size: 12px;
   font-weight: 800;
@@ -6293,13 +6332,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .word-pool-count {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(243, 217, 139, 0.25);
+  border-color: var(--gold-border-dark-25);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-count {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(243, 217, 139, 0.25);
+    border-color: var(--gold-border-dark-25);
     color: #f6dc8e;
   }
 }
@@ -6337,7 +6376,7 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 0 14px;
   border-radius: 10px;
   background: #fff;
-  border: 1.5px solid rgba(217, 183, 101, 0.7);
+  border: 1.5px solid var(--gold-border-70);
   box-shadow: 0 3px 6px -2px rgba(120, 90, 20, 0.3);
   font-family: var(--font-heading);
   font-size: 16px;
@@ -6358,13 +6397,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .word-pool-chip {
   background: var(--dark-surface-fill);
-  border-color: rgba(243, 217, 139, 0.35);
+  border-color: var(--gold-border-dark-35);
   color: #f4f3ff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-chip {
     background: var(--dark-surface-fill);
-    border-color: rgba(243, 217, 139, 0.35);
+    border-color: var(--gold-border-dark-35);
     color: #f4f3ff;
   }
 }
@@ -6487,7 +6526,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .image-match-slot--empty {
   background: #fff;
-  border: 1.5px dashed rgba(217, 183, 101, 0.9);
+  border: 1.5px dashed var(--gold-border-90);
 }
 /* Темна тема — ті самі токени поля, що пропуск letter_gaps
    (--card-field-bg/--card-field-border, .exercise-field), замість старого
@@ -6537,16 +6576,16 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .image-match-slot--filled {
   background: #f6efd9;
-  border: 1.5px solid rgba(217, 183, 101, 0.8);
+  border: 1.5px solid var(--gold-border-80);
 }
 .dark .image-match-slot--filled {
   background: rgba(246, 220, 142, 0.12);
-  border-color: rgba(243, 217, 139, 0.4);
+  border-color: var(--gold-border-dark-40);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot--filled {
     background: rgba(246, 220, 142, 0.12);
-    border-color: rgba(243, 217, 139, 0.4);
+    border-color: var(--gold-border-dark-40);
   }
 }
 .image-match-slot-word {
@@ -6598,8 +6637,8 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .dark .word-pool {
     background: rgba(10, 16, 48, 0.96);
-    border-top-color: rgba(243, 217, 139, 0.3);
-    border-bottom-color: rgba(243, 217, 139, 0.3);
+    border-top-color: var(--gold-border-dark-30);
+    border-bottom-color: var(--gold-border-dark-30);
   }
   .word-pool-chips {
     position: relative;
@@ -6724,20 +6763,20 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .matching-card--fr {
   background: #f6efd9;
-  border-color: rgba(217, 183, 101, 0.8);
+  border-color: var(--gold-border-80);
   color: #1a1640;
   font-family: var(--font-heading);
   font-weight: 800;
 }
 .dark .matching-card--fr {
   background: rgba(243, 217, 139, 0.12);
-  border-color: rgba(243, 217, 139, 0.35);
+  border-color: var(--gold-border-dark-35);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .matching-card--fr {
     background: rgba(243, 217, 139, 0.12);
-    border-color: rgba(243, 217, 139, 0.35);
+    border-color: var(--gold-border-dark-35);
     color: #f6dc8e;
   }
 }
@@ -6826,7 +6865,7 @@ button.scene-bar:active .scene-bar-toggle {
 .matching-dot--default,
 .matching-dot--paired-empty {
   background: #fff;
-  border-color: rgba(217, 183, 101, 0.9);
+  border-color: var(--gold-border-90);
 }
 .dark .matching-dot--default,
 .dark .matching-dot--paired-empty {
@@ -6877,8 +6916,8 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 767px) and (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool {
     background: rgba(10, 16, 48, 0.96);
-    border-top-color: rgba(243, 217, 139, 0.3);
-    border-bottom-color: rgba(243, 217, 139, 0.3);
+    border-top-color: var(--gold-border-dark-30);
+    border-bottom-color: var(--gold-border-dark-30);
   }
 }
 
@@ -6909,26 +6948,26 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .word-choice-pill--default {
   background: var(--dark-surface-fill);
-  border-color: rgba(217, 183, 101, 0.75);
+  border-color: var(--gold-border-75);
   color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--default {
     background: var(--dark-surface-fill);
-    border-color: rgba(217, 183, 101, 0.75);
+    border-color: var(--gold-border-75);
     color: #f5ecd0;
   }
 }
 @media (hover: hover) {
   .dark .word-choice-pill--default:hover {
     background: rgba(217, 183, 101, 0.24);
-    border-color: rgba(217, 183, 101, 0.95);
+    border-color: var(--gold-border-95);
   }
 }
 @media (prefers-color-scheme: dark) and (hover: hover) {
   :root:not(.light) .word-choice-pill--default:hover {
     background: rgba(217, 183, 101, 0.24);
-    border-color: rgba(217, 183, 101, 0.95);
+    border-color: var(--gold-border-95);
   }
 }
 /* Вибраний (до перевірки) — світла: той самий індиго-градієнт, що раніше.
@@ -7100,11 +7139,11 @@ button.scene-bar:active .scene-bar-toggle {
   border-bottom: 1px solid #e6e0c8;
 }
 .dark .chrono-progress-row {
-  border-bottom-color: rgba(243, 217, 139, 0.2);
+  border-bottom-color: var(--gold-border-dark-20);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-progress-row {
-    border-bottom-color: rgba(243, 217, 139, 0.2);
+    border-bottom-color: var(--gold-border-dark-20);
   }
 }
 @media (max-width: 767px) {
@@ -7121,7 +7160,7 @@ button.scene-bar:active .scene-bar-toggle {
   height: 28px;
   box-sizing: border-box;
   background: #fff;
-  border: 1px solid rgba(217, 183, 101, 0.6);
+  border: 1px solid var(--gold-border-60);
   border-radius: 999px;
   padding: 0 12px;
   font-family: var(--font-heading);
@@ -7133,13 +7172,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .chrono-progress-pill {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(243, 217, 139, 0.35);
+  border-color: var(--gold-border-dark-35);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-progress-pill {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(243, 217, 139, 0.35);
+    border-color: var(--gold-border-dark-35);
     color: #f6dc8e;
   }
 }
@@ -8020,14 +8059,14 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .audio-player-compact {
   --audio-pill-outline-width: 1px;
   box-sizing: border-box;
-  border: var(--audio-pill-outline-width) solid rgba(217, 183, 101, 0.75);
+  border: var(--audio-pill-outline-width) solid var(--gold-border-75);
   box-shadow: 0 0 10px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .audio-player-compact {
     --audio-pill-outline-width: 1px;
     box-sizing: border-box;
-    border: var(--audio-pill-outline-width) solid rgba(217, 183, 101, 0.75);
+    border: var(--audio-pill-outline-width) solid var(--gold-border-75);
     box-shadow: 0 0 10px rgba(217, 183, 101, 0.22);
   }
 }

@@ -94,7 +94,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-md border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white p-3 text-sm leading-relaxed whitespace-pre-wrap glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+      <div className="rounded-md border-[1.5px] dark:border glass-gold-edge bg-white p-3 text-sm leading-relaxed whitespace-pre-wrap glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {segments.map((seg, i) =>
           seg.errorIndex !== undefined ? (
             <mark
@@ -122,7 +122,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5 rounded-md border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white p-3 text-sm glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+      <div className="flex flex-col gap-1.5 rounded-md border-[1.5px] dark:border glass-gold-edge bg-white p-3 text-sm glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         {CRITERIA.map((key) => (
           <div key={key} className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{CRITERION_LABELS[key]}</span>
@@ -155,7 +155,7 @@ function FormulaireResultView({ result }: { result: FormulaireResult }) {
   return (
     <div className="flex flex-col gap-2">
       {result.fields.map((f) => (
-        <div key={f.id} className="flex flex-col gap-0.5 rounded-md border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white p-2 text-sm glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+        <div key={f.id} className="flex flex-col gap-0.5 rounded-md border-[1.5px] dark:border glass-gold-edge bg-white p-2 text-sm glass-card-shadow dark:shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{f.label}</span>
             <span className={f.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>

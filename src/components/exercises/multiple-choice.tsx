@@ -272,7 +272,7 @@ export function MultipleChoiceExercise({
       // мають цієї ж "рамка+смужка пулу" розкладки).
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
+        : "glass-chip glass-chip-hover bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
@@ -315,13 +315,13 @@ export function MultipleChoiceExercise({
       const defaultDarkBg = hasImage ? "pool-tile-dark" : "dark:bg-[var(--card-bg)]";
       return sel.includes(optionId)
         ? "border-indigo-500 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/30"
-        : `glass-gold-edge border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] ${defaultDarkBg} ${hasImage ? "" : "dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]"}`;
+        : `glass-gold-edge bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] ${defaultDarkBg} ${hasImage ? "" : "dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]"}`;
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (!opt) return "";
     if (opt.correct) return "border-green-500 bg-green-50 dark:bg-green-950/30";
     if (opt.selected) return "border-red-500 bg-red-50 dark:bg-red-950/30";
-    return "glass-gold-edge border-[#dcbd6e] bg-white opacity-60 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
+    return "glass-gold-edge bg-white opacity-60 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
   }
 
   // Для варіантів із картинкою підсвічення переноситься з усієї кнопки

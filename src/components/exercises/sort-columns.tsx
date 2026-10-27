@@ -234,7 +234,7 @@ export function SortColumnsExercise({
     if (selected === id) {
       return `sort-columns-placed-chip glass-gap-shadow dark:shadow-sm ${SELECTED_OPTION_CLASS}`;
     }
-    return "sort-columns-placed-chip glass-chip glass-chip-hover glass-gap-shadow dark:shadow-sm border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
+    return "sort-columns-placed-chip glass-chip glass-chip-hover glass-gap-shadow dark:shadow-sm bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
   }
 
   function bulbState(itemId: string): HintBulbState {

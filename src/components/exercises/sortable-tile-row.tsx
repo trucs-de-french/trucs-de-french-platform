@@ -107,13 +107,13 @@ export function SortableTileRow({
     // й реальний hover-колір полів-пропусків на картці; рамка на hover —
     // --card-hover-border (трохи яскравіша за --card-field-border).
     if (letterTile)
-      return `${shadow} glass-chip glass-chip-hover glass-gap-shadow border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:hover:bg-[#20247a] dark:hover:border-[var(--card-hover-border)]`;
+      return `${shadow} glass-chip glass-chip-hover glass-gap-shadow bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:hover:bg-[#20247a] dark:hover:border-[var(--card-hover-border)]`;
     // reorder (Mise en ordre) — плитки-слова темної теми тепер на окремому
     // темно-наvy класі (.reorder-word-tile, globals.css), тихішому за
     // letter_rearrangement вище (--card-field-bg): власний фон/рамка/тінь,
     // а не --card-bg/--card-border картки. Світла тема — ті самі класи, що
     // раніше, без змін.
-    return `${shadow} glass-chip glass-chip-hover glass-gap-shadow border-[#dcbd6e] bg-white hover:bg-neutral-50 reorder-word-tile ${draggingIndex === i ? "reorder-word-tile--dragging" : ""}`;
+    return `${shadow} glass-chip glass-chip-hover glass-gap-shadow bg-white hover:bg-neutral-50 reorder-word-tile ${draggingIndex === i ? "reorder-word-tile--dragging" : ""}`;
   }
 
   return (

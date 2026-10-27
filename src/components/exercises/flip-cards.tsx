@@ -436,7 +436,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     // #191d36 — те саме значення, що дає rgba(255,255,255,.06) по
     // --glass-panel-bg теми (rgba(10,16,48,.82) по --background #0a0a0a),
     // тож колір картки на вигляд не змінюється.
-    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:shadow-none";
+    "flip-face rounded-[14px] border-[1.5px] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:shadow-none";
   const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
   const canGoBack = history.length > 0 && flyDir === null && !dragging;

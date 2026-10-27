@@ -73,7 +73,7 @@ export function ListeningExercise({
       // ChoiceQuestionCard виглядав однаково в обох вправах.
       return answers[questionId] === optionId
         ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300"
-        : "glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
+        : "glass-chip glass-chip-hover bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] pool-tile-dark";
     }
     const od = qDetail.options.find((o) => o.id === optionId);
     if (!od) return "";
