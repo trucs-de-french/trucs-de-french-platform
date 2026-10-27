@@ -436,7 +436,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     // #191d36 — те саме значення, що дає rgba(255,255,255,.06) по
     // --glass-panel-bg теми (rgba(10,16,48,.82) по --background #0a0a0a),
     // тож колір картки на вигляд не змінюється.
-    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(130,160,240,0.42)] dark:bg-[linear-gradient(rgba(120,150,235,.15),rgba(120,150,235,.15)),#12164f] dark:shadow-none";
+    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[#191d36] dark:shadow-none";
   const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
   const canGoBack = history.length > 0 && flyDir === null && !dragging;
@@ -483,7 +483,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <div
                 key={`peek2-${roundKey}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-0 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(130,160,240,0.2)] dark:bg-[linear-gradient(rgba(120,150,235,.09),rgba(120,150,235,.09)),#12164f]"
+                className="pointer-events-none absolute inset-0 z-0 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[#191d36]"
                 style={{
                   transform: layer2Transform,
                   transformOrigin: "bottom center",
@@ -495,7 +495,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <div
                 key={`peek1-${roundKey}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-white p-5 dark:border-[rgba(130,160,240,0.3)] dark:bg-[linear-gradient(rgba(120,150,235,.12),rgba(120,150,235,.12)),#12164f] sm:p-7"
+                className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-white p-5 dark:border-[rgba(217,183,101,0.6)] dark:bg-[#191d36] sm:p-7"
                 style={{
                   transform: layer1Transform,
                   transformOrigin: "bottom center",
