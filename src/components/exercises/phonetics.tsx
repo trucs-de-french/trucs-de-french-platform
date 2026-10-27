@@ -99,7 +99,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                     {item.transcription}
                   </span>
                   {translation && (
-                    <span className="break-words text-[18px] italic text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
+                    <span className="break-words text-[16px] italic leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
                       {translation}
                     </span>
                   )}
