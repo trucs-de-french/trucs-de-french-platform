@@ -1811,9 +1811,13 @@ button, input, textarea, select, label, nav, aside {
   --glass-answer-bg: #f1f2fd;
   --glass-answer-border: #c9cdf5;
   --glass-answer-border-width: 1px;
-  --glass-answer-bg-hover: #e4e7fb;
-  --glass-answer-border-hover: #aeb4ee;
-  --glass-answer-text-hover: #3b36c4;
+  /* Hover (variant 3 "semi-indigo") — лише unselected/enabled-кнопка:
+     застосовується через .glass-answer-btn:hover (not :disabled, not
+     --selected — той клас на hover не чіпає). */
+  --glass-answer-bg-hover: linear-gradient(180deg, #d6d9fa, #bfc4f5);
+  --glass-answer-border-hover: #7d79ea;
+  --glass-answer-text-hover: #2f2ab0;
+  --glass-answer-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 3px 8px rgba(59, 54, 196, 0.2);
   --glass-divider: #e6e6f0;
   --glass-accent-bar: var(--gold-border);
   --glass-reading-border: var(--glass-item-border-width) solid transparent;
@@ -1844,9 +1848,10 @@ button, input, textarea, select, label, nav, aside {
     --glass-answer-bg: #f1f2fd;
     --glass-answer-border: #c9cdf5;
     --glass-answer-border-width: 1px;
-    --glass-answer-bg-hover: #e4e7fb;
-    --glass-answer-border-hover: #aeb4ee;
-    --glass-answer-text-hover: #3b36c4;
+    --glass-answer-bg-hover: linear-gradient(180deg, #d6d9fa, #bfc4f5);
+    --glass-answer-border-hover: #7d79ea;
+    --glass-answer-text-hover: #2f2ab0;
+    --glass-answer-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 3px 8px rgba(59, 54, 196, 0.2);
     --glass-divider: #e6e6f0;
     --glass-accent-bar: var(--gold-border);
     --glass-reading-border: var(--glass-item-border-width) solid transparent;
@@ -2742,16 +2747,18 @@ button, input, textarea, select, label, nav, aside {
   border: var(--glass-answer-border-width, 1.5px) solid var(--glass-answer-border);
   color: var(--glass-answer-text);
   min-height: 44px;
-  transition: border-color 0.15s, color 0.15s;
+  box-shadow: none;
+  transition: border-color 0.15s, color 0.15s, background 0.12s, box-shadow 0.12s;
 }
 @media (hover: hover) {
   .glass-answer-btn:hover {
-    /* --glass-answer-bg-hover визначений лише у світлій variant-3 блоці
-       вище — у темній темі (не визначений) падає на --glass-answer-bg,
-       тож темний hover лишається без зміни фону, як і раніше. */
+    /* --glass-answer-bg-hover/--glass-answer-shadow-hover визначені лише у
+       світлій variant-3 блоці вище — у темній темі (не визначені) падають
+       на --glass-answer-bg/none, тож темний hover лишається без зміни. */
     background: var(--glass-answer-bg-hover, var(--glass-answer-bg));
     border-color: var(--glass-answer-border-hover);
     color: var(--glass-answer-text-hover);
+    box-shadow: var(--glass-answer-shadow-hover, none);
   }
 }
 .glass-answer-btn:focus-visible {
