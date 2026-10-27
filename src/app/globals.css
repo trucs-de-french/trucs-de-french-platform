@@ -8140,6 +8140,22 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(127, 156, 240, 0.08);
   }
 }
+/* Grille à cocher — світла тема, ненатиснутий квадрат-чекбокс: легка
+   золотава тінь "піднятості" замість плоскої .glass-gap-shadow (якої
+   вистачало полям-пропускам, але не вистачає тут за задачею) — та сама
+   rgba(217,183,101,*) родина, що рамка .cg-cb-unchecked. Пізніше в файлі
+   за .glass-gap-shadow (рядок ~1952), тож перекриває її при однаковій
+   специфічності. Лише unchecked-стан: checked/correct/wrong/missed
+   лишаються без власної тіні, як і зараз. У світлій темі немає hover-стану
+   для цього квадрата (на відміну від темної вище) — новий не додається. */
+.light .cg-cb-unchecked {
+  box-shadow: 0 2px 4px rgba(217, 183, 101, 0.28);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .cg-cb-unchecked {
+    box-shadow: 0 2px 4px rgba(217, 183, 101, 0.28);
+  }
+}
 
 /* Phonetics card — IPA transcription pill. See src/components/exercises/
    phonetics.tsx. Scoped to this one card (not a shared answer-chip/pill
