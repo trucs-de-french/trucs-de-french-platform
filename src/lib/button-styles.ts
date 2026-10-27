@@ -58,7 +58,7 @@ export const BUTTON_PREVIEW =
 // BUTTON_PRIMARY/_LG вище: студентська CTA сприймається як самостійна дія
 // під карткою вправи, не рядок компактних адмін-дій.
 export const STUDENT_BUTTON_PRIMARY =
-  "font-heading rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand/90 disabled:opacity-50";
+  "font-heading rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand/90 disabled:bg-[image:var(--btn-disabled-bg)] disabled:text-[var(--btn-disabled-text)] disabled:shadow-none disabled:cursor-not-allowed";
 
 // Другорядна кнопка-перемикач студентської сторінки (швидкість відтворення
 // аудіо тощо) — ДВА стани, не один: неактивний — нейтральна картка

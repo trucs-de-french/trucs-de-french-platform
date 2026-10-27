@@ -23,6 +23,16 @@
   --foreground: #1b1b2e;
 }
 
+/* Вимкнений стан первинних CTA вправ ("Перевірити"/"Перевірити блок"/
+   karaoke-check-btn) — одна точка правди замість opacity на всьому
+   елементі (яка приглушувала й підпис): окрема заливка + підпис на
+   повній прозорості, контраст підпису на заливці не нижче 3.5:1
+   (світла)/4.5:1 (темна). */
+:root {
+  --btn-disabled-bg: linear-gradient(135deg, #7d79e0, #645fc9);
+  --btn-disabled-text: #ffffff;
+}
+
 /* Спільний "gold pill" токен світлої теми — кремова пілюля з золотою
    рамкою й чорнильним текстом, уже визначена через .word-choice-pill--
    default (Choix du mot). Лише світла тема: темна й Choix-du-mot, і
@@ -92,6 +102,9 @@
   --field-wrong-border: #e5484d;
   --field-wrong-ink: #ffd0d0;
 
+  --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
+  --btn-disabled-text: #dfe4ff;
+
   /* "Індиго-скло" — спільна непрозора підкладка карток-елементів вправ
      (темна тема): ці токени тепер керують .glass-item-card (через
      --glass-item-bg/--glass-item-border нижче, .dark .glass-block/
@@ -149,6 +162,9 @@
     --field-wrong-bg: #4a1a1d;
     --field-wrong-border: #e5484d;
     --field-wrong-ink: #ffd0d0;
+
+    --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
+    --btn-disabled-text: #dfe4ff;
 
     --card-bg: rgba(120, 150, 235, 0.15);
     --card-border: rgba(130, 160, 240, 0.42);
@@ -5182,7 +5198,8 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow: 0 4px 14px rgba(59, 54, 196, 0.4);
 }
 .exercise-block-check-btn:disabled {
-  opacity: 0.5;
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -7578,7 +7595,8 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 500;
 }
 .karaoke-check-btn:disabled {
-  opacity: 0.45;
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
   cursor: not-allowed;
 }
 @media (max-width: 767px) {
