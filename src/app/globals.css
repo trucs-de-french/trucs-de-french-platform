@@ -84,7 +84,11 @@
   --points-bad-ink: #fff;
 
   --field-bg: #1a1d6a;
-  --field-border: rgba(138, 136, 245, 0.55);
+  /* Аліас на --lavender-field (border-audit.md, другий follow-up коміт) —
+     був окремим відтінком (138,136,245), тепер та сама лавандова родина
+     (130,160,240), що --card-field-border/--lavender-card/--lavender-hover.
+     Назву лишено — консюмери (.exercise-field тощо) не змінені. */
+  --field-border: var(--lavender-field);
   --field-ink: #f5ecd0;
   --field-placeholder: #a4a2dc;
   --field-caret: #f6dc8e;
@@ -127,7 +131,7 @@
   --card-hover-bg: rgba(120, 150, 235, 0.22);
   --card-hover-border: var(--lavender-hover);
   --card-field-bg: rgba(8, 10, 40, 0.45);
-  --card-field-border: rgba(130, 160, 240, 0.6);
+  --card-field-border: var(--lavender-field);
   /* Той самий суцільний темно-синій фон — ОДНА точка правди лише для двох
      елементів, що мусять лишатись цим конкретним темно-синім "склом":
      .pool-dark-bg (смужка-підкладка пулу multiple_choice/listening, НЕ самі
@@ -179,7 +183,7 @@
     --points-bad-ink: #fff;
 
     --field-bg: #1a1d6a;
-    --field-border: rgba(138, 136, 245, 0.55);
+    --field-border: var(--lavender-field);
     --field-ink: #f5ecd0;
     --field-placeholder: #a4a2dc;
     --field-caret: #f6dc8e;
@@ -208,7 +212,7 @@
     --card-hover-bg: rgba(120, 150, 235, 0.22);
     --card-hover-border: var(--lavender-hover);
     --card-field-bg: rgba(8, 10, 40, 0.45);
-    --card-field-border: rgba(130, 160, 240, 0.6);
+    --card-field-border: var(--lavender-field);
     --dark-blue-fill: #0a1030;
     --dark-surface-fill: #141944;
     --error-review-card-bg: var(--dark-blue-fill);
