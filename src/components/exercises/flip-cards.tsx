@@ -407,10 +407,14 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
           не padding, бо peek1/peek2 нижче позиціонуються (bottom: -8px/
           -16px) відносно НИЖНЬОГО КРАЮ САМОЇ КАРТКИ — padding-bottom тут
           зсунув би їхню точку відліку вниз і знову затягнув би їх усередину
-          картки (проблема 1 з завдання). isolate — власний стекінг-контекст,
-          щоб z-index:-1 нижче рахувався лише проти .flip-card (z-20), не
-          просочувався в решту сторінки. */}
-      <div className="relative isolate mx-auto w-full max-w-[640px] mb-5">
+          картки (проблема 1 з завдання). БЕЗ isolate: isolation:isolate тут
+          ламав 3D-флип картки нижче (.flip-card rotateY + perspective на
+          прямому предку) — isolation на предку всередині perspective-
+          ієрархії форсує браузер сплощити preserve-3d, тож грані зникали
+          під час/після перевороту, лишаючи видимими лише шари-"стопку".
+          Порядок пошарування тепер — звичайний z-index без ізоляції (той
+          самий підхід, що був до тієй регресії): шари z-0, картка z-20. */}
+      <div className="relative mx-auto w-full max-w-[640px] mb-5">
         {finished ? (
           <div
             className={`flex w-full min-h-[250px] flex-col items-center justify-center gap-3 sm:min-h-[270px] ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
@@ -425,13 +429,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             {peek2 && (
               <div
                 aria-hidden
-                className="absolute inset-x-4 -bottom-4 z-[-1] h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:h-[60px]"
+                className="absolute inset-x-4 -bottom-4 z-0 h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:h-[60px]"
               />
             )}
             {peek1 && (
               <div
                 aria-hidden
-                className="absolute inset-x-2 -bottom-2 z-[-1] h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.6)] dark:bg-[rgba(255,255,255,0.04)] sm:h-[60px]"
+                className="absolute inset-x-2 -bottom-2 z-0 h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.6)] dark:bg-[rgba(255,255,255,0.04)] sm:h-[60px]"
               />
             )}
             <div
