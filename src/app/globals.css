@@ -1805,9 +1805,15 @@ button, input, textarea, select, label, nav, aside {
      боках. */
   --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
   --glass-item-radius: 14px;
-  --glass-answer-bg: #ffffff;
-  --glass-answer-border: var(--gold-border-55);
+  /* Vrai/Faux (Vrai ou faux, variant 1 "lavender") — лише ці два токени
+     змінені під лавандовий стиль; --gold-border-55 (блідо-золота) тут
+     більше не читається жодним елементом. */
+  --glass-answer-bg: #f1f2fd;
+  --glass-answer-border: #c9cdf5;
   --glass-answer-border-width: 1px;
+  --glass-answer-bg-hover: #e4e7fb;
+  --glass-answer-border-hover: #aeb4ee;
+  --glass-answer-text-hover: #3b36c4;
   --glass-divider: #e6e6f0;
   --glass-accent-bar: var(--gold-border);
   --glass-reading-border: var(--glass-item-border-width) solid transparent;
@@ -1835,9 +1841,12 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-border-color: transparent;
     --glass-item-shadow: 0 1px 2px rgba(184, 144, 47, 0.12), 0 8px 16px -6px rgba(120, 90, 20, 0.28);
     --glass-item-radius: 14px;
-    --glass-answer-bg: #ffffff;
-    --glass-answer-border: var(--gold-border-55);
+    --glass-answer-bg: #f1f2fd;
+    --glass-answer-border: #c9cdf5;
     --glass-answer-border-width: 1px;
+    --glass-answer-bg-hover: #e4e7fb;
+    --glass-answer-border-hover: #aeb4ee;
+    --glass-answer-text-hover: #3b36c4;
     --glass-divider: #e6e6f0;
     --glass-accent-bar: var(--gold-border);
     --glass-reading-border: var(--glass-item-border-width) solid transparent;
@@ -2737,6 +2746,10 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (hover: hover) {
   .glass-answer-btn:hover {
+    /* --glass-answer-bg-hover визначений лише у світлій variant-3 блоці
+       вище — у темній темі (не визначений) падає на --glass-answer-bg,
+       тож темний hover лишається без зміни фону, як і раніше. */
+    background: var(--glass-answer-bg-hover, var(--glass-answer-bg));
     border-color: var(--glass-answer-border-hover);
     color: var(--glass-answer-text-hover);
   }
@@ -2747,7 +2760,9 @@ button, input, textarea, select, label, nav, aside {
 }
 /* Обране (до перевірки) — суцільний indigo, той самий градієнт, що й
    кнопка "Перевірити" (exercise-block-check-btn) — не токен-залежний,
-   однаковий в обох темах за задумом. */
+   однаковий в обох темах за задумом. Світла тема нижче отримує власний
+   варіант (Vrai ou faux variant 1 "lavender") — темна лишається цим
+   правилом без змін. */
 .glass-answer-btn--selected {
   background: linear-gradient(180deg, #5a55e6, #3b36c4);
   border: 1.5px solid #8c88f5;
@@ -2757,6 +2772,26 @@ button, input, textarea, select, label, nav, aside {
 .glass-answer-btn--selected:focus-visible {
   outline: 2px solid var(--glass-focus-ring);
   outline-offset: 2px;
+}
+.light .glass-answer-btn--selected {
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+  border: 1px solid transparent;
+  box-shadow: 0 3px 8px rgba(59, 54, 196, 0.28);
+}
+.light .glass-answer-btn:focus-visible,
+.light .glass-answer-btn--selected:focus-visible {
+  outline-color: #3b36c4;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .glass-answer-btn--selected {
+    background: linear-gradient(135deg, #5a55e6, #3b36c4);
+    border: 1px solid transparent;
+    box-shadow: 0 3px 8px rgba(59, 54, 196, 0.28);
+  }
+  :root:not(.dark) .glass-answer-btn:focus-visible,
+  :root:not(.dark) .glass-answer-btn--selected:focus-visible {
+    outline-color: #3b36c4;
+  }
 }
 
 /* Поле вводу/проріху (letter_gaps/fill_blank/essay_check/open_answer тощо)
