@@ -5504,7 +5504,6 @@ button.scene-bar:active .scene-bar-toggle {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  min-height: calc(1.2em * 2);
   font-weight: 800;
   font-size: 17px;
   line-height: 1.2;
