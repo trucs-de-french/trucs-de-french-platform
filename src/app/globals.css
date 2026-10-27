@@ -1989,6 +1989,29 @@ button, input, textarea, select, label, nav, aside {
     border-color: var(--gold-border-85);
   }
 }
+/* Картка слова (letter_gaps/letter_rearrangement, .word-card з WORD_CARD,
+   word-list-layout.ts) і чип відповіді vocab_quiz (.vocab-quiz-answer-chip,
+   vocab-quiz.tsx) — ПІДНІМАЄМО з чипового вигляду (.glass-chip/.glass-gap-
+   shadow вище) до того самого градієнтного золото-білого бордюру й тіні,
+   що й інші великі картки (variant 4, --glass-card-bg-gradient/--glass-
+   item-shadow) — ОКРЕМИМ правилом, не .glass-gold-edge/.glass-card-shadow
+   напряму: та сама специфічність (0,2,0), що й .glass-chip/.glass-gap-
+   shadow, тож border-color/background/box-shadow перекриваються лише тому,
+   що це правило нижче в каскаді. */
+.light .word-card,
+.light .vocab-quiz-answer-chip {
+  border-color: transparent;
+  background: var(--glass-card-bg-gradient);
+  box-shadow: var(--glass-item-shadow);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .word-card,
+  :root:not(.dark) .vocab-quiz-answer-chip {
+    border-color: transparent;
+    background: var(--glass-card-bg-gradient);
+    box-shadow: var(--glass-item-shadow);
+  }
+}
 /* Контейнери-"вставки" всередині панелі (пул слів під питанням/карткою,
    повідомлення-бокси без власної картки) — трохи темніший за панель
    суцільний тон (--glass-surface-inset), замість колишнього сірого
@@ -2616,10 +2639,16 @@ button, input, textarea, select, label, nav, aside {
    префікс тут — та сама специфічність (0,2,0), що й .glass-chip-hover. */
 .light .crossword-clue-card--hoverable {
   transition: box-shadow 150ms;
+  border-color: transparent;
+  background: var(--glass-card-bg-gradient);
+  box-shadow: var(--glass-item-shadow);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .crossword-clue-card--hoverable {
     transition: box-shadow 150ms;
+    border-color: transparent;
+    background: var(--glass-card-bg-gradient);
+    box-shadow: var(--glass-item-shadow);
   }
 }
 @media (hover: hover) {

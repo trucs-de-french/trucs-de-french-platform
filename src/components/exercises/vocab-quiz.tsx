@@ -138,7 +138,7 @@ export function VocabQuizExercise({
           const isCorrect = option === question.correctTranslation;
           const isSelected = option === selected;
           const cls = !selected
-            ? ANSWER_CHIP_DEFAULT
+            ? `${ANSWER_CHIP_DEFAULT} vocab-quiz-answer-chip`
             : isCorrect
               ? "border-green-500 bg-green-50 dark:bg-green-950/30"
               : isSelected
