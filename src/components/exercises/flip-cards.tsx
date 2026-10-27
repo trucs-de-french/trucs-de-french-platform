@@ -384,6 +384,19 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     : `translateX(${dragX}px) rotate(${dragX / 18}deg)`;
   const topTransition = dragging || reducedMotion ? "none" : `transform ${DECK_FLY_OUT_MS}ms ease-out`;
   const topCursor = dragging ? "grabbing" : canFlip ? "pointer" : "grab";
+  // Поки верхня картка летить геть (flyDir не null), стопка "підсувається
+  // вперед": шар 1 їде до позиції верхньої картки (стане нею), шар 2 — до
+  // позиції відпочинку шару 1. transition:transform і так лишається
+  // активним у момент removeTop() (flyDir -> null), але це НЕ анімує назад
+  // у видиму "стрибок" позицію: шари нижче мають key={roundKey}, тож у
+  // той самий рендер, де flyDir скидається й remaining зсувається,
+  // React їх перемонтовує — новий елемент одразу малюється в кінцевому
+  // стані відпочинку, без інтерполяції з попереднього кадру.
+  const stackAdvancing = flyDir !== null;
+  const layer1RestTransform = "translateY(8px) scale(0.97)";
+  const layer2RestTransform = "translateY(16px) scale(0.94)";
+  const layer1Transform = stackAdvancing ? "translateY(0px) scale(1)" : layer1RestTransform;
+  const layer2Transform = stackAdvancing ? layer1RestTransform : layer2RestTransform;
   // Візуальні токени грані (рамка/фон/тінь/radius) — лейаут/padding/розмір
   // тепер у .flip-face/.flip-card (globals.css): грані лежать в ОДНІЙ
   // grid-клітинці (grid-area:1/1), а не position:absolute+inset:0 —
@@ -426,17 +439,50 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
           </div>
         ) : (
           <>
+            {/* Шари стопки — ПОВНОРОЗМІРНІ копії коробки верхньої картки
+                (absolute inset-0, той самий box, не фіксована тонка
+                смужка знизу): "виглядає тонкою смужкою" раніше означало
+                лише ЦЕ й було видно, бо layer мав фіксовану h-10/[60px] —
+                під час свайпу під відльотаючою карткою відкривалась
+                порожня дірка з цими смужками замість картки. Пік знизу
+                (approved look) тепер робить ЛИШЕ transform
+                (translateY+scale із transform-origin:bottom center), не
+                розмір — нижній край картки лишається на місці точки
+                трансформації, зменшена картка просто трохи виступає
+                з-під переднього краю. key={roundKey} — перемонтовує шар
+                на кожен "далі", щоб скидання transform після
+                removeTop() не анімувалось (без спалаху). */}
             {peek2 && (
               <div
+                key={`peek2-${roundKey}`}
                 aria-hidden
-                className="absolute inset-x-4 -bottom-4 z-0 h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:h-[60px]"
+                className="pointer-events-none absolute inset-0 z-0 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[#191d36]"
+                style={{
+                  transform: layer2Transform,
+                  transformOrigin: "bottom center",
+                  transition: "transform 350ms ease",
+                }}
               />
             )}
             {peek1 && (
               <div
+                key={`peek1-${roundKey}`}
                 aria-hidden
-                className="absolute inset-x-2 -bottom-2 z-0 h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.6)] dark:bg-[rgba(255,255,255,0.04)] sm:h-[60px]"
-              />
+                className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-white p-5 dark:border-[rgba(217,183,101,0.6)] dark:bg-[#191d36] sm:p-7"
+                style={{
+                  transform: layer1Transform,
+                  transformOrigin: "bottom center",
+                  transition: "transform 350ms ease",
+                }}
+              >
+                {/* Та сама типографіка, що FR-текст переднього боку
+                    (DeckCardFront нижче), приглушена opacity, щоб під
+                    верхньою карткою впізнавалась наступна — лише
+                    текст, без картинки/аудіо/чипа (умова задачі). */}
+                <p className="max-w-full break-words text-[18px] font-semibold leading-[1.4] font-content text-[#1a1640] opacity-[.55] [overflow-wrap:anywhere] dark:text-neutral-100 sm:text-[24px]">
+                  {frenchNbsp(peek1.front)}
+                </p>
+              </div>
             )}
             <div
               key={roundKey}
