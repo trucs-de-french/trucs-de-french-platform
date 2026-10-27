@@ -551,6 +551,13 @@ export default async function ScenePage({
     return {
       taskId: m.task_id,
       title: taskTitleById.get(m.task_id) ?? "",
+      // Та сама назва, що на плашці типу над вправою (GlassBlock) — з
+      // НЕсанітизованого config (cardTitle вчительки не проходить
+      // sanitizeConfigForStudent), не з taskVariantLabel/displayTaskTitle.
+      displayTitle: getTaskBarText({
+        type: taskType,
+        config: (taskConfigById.get(m.task_id) ?? null) as Record<string, unknown> | null,
+      }),
       taskType,
       mode: review.mode,
       status: review.status,
