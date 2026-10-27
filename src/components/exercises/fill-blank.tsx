@@ -454,7 +454,7 @@ export function FillBlankExercise({
               <button
                 type="button"
                 onClick={() => checkConfirm.attemptCheck(blankCount - filledCount, submitFillBlank)}
-                disabled={pending || filledCount === 0}
+                disabled={pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
                 {pending ? "Перевіряю..." : "Перевірити"}

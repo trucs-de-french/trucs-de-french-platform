@@ -585,7 +585,7 @@ export function WordChoiceExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockSentences?.length ?? 0)}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -638,7 +638,7 @@ export function WordChoiceExercise({
                   onClick={() =>
                     singleCheckConfirm.attemptCheck(config.sentences.length - answeredCount, handleSubmit)
                   }
-                  disabled={single.pending || answeredCount === 0}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

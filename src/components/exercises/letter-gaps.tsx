@@ -744,7 +744,7 @@ export function LetterGapsExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === activeBlockWordIndicesForCheck.length}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -803,7 +803,7 @@ export function LetterGapsExercise({
                 <button
                   type="button"
                   onClick={() => singleCheckConfirm.attemptCheck(singleUnanswered, submitSingle)}
-                  disabled={single.pending || singleUnanswered === config.words.length}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

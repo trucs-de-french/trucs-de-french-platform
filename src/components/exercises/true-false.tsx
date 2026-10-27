@@ -327,7 +327,7 @@ export function TrueFalseExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockStatements?.length ?? 0)}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -371,7 +371,7 @@ export function TrueFalseExercise({
                       submitSingle
                     )
                   }
-                  disabled={single.pending || singleAnsweredCount === 0}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

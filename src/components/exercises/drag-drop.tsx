@@ -509,7 +509,7 @@ export function DragDropExercise({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(unfilledSlots, submitDragDrop)}
-              disabled={pending || placed.length - unfilledSlots === 0}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}

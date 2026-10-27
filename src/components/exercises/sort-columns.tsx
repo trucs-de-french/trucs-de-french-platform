@@ -443,7 +443,7 @@ export function SortColumnsExercise({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(pool.length, submitSort)}
-              disabled={pending || config.items.length - pool.length === 0}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}

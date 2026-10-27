@@ -928,7 +928,7 @@ export function MultipleChoiceExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockItems?.length ?? 0)}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -973,7 +973,7 @@ export function MultipleChoiceExercise({
                   onClick={() =>
                     singleCheckConfirm.attemptCheck(config.items.length - answeredCount, submitSingle)
                   }
-                  disabled={single.pending || answeredCount === 0}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

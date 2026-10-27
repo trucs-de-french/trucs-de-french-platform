@@ -358,7 +358,7 @@ export function ImageMatchExercise({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(unplacedCount, submitImageMatch)}
-              disabled={pending || config.items.length - unplacedCount === 0}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}

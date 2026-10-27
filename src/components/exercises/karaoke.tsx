@@ -767,7 +767,7 @@ export function KaraokeExercise({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers))}
-              disabled={pending || filledGaps === 0}
+              disabled={pending}
               className="karaoke-check-btn btn-check self-start"
             >
               {pending ? "Перевіряю..." : "Перевірити"}

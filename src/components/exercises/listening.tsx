@@ -293,7 +293,7 @@ export function ListeningExercise({
               onClick={() =>
                 checkConfirm.attemptCheck(config.questions.length - answeredCount, submitAnswers)
               }
-              disabled={pending || answeredCount === 0}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}

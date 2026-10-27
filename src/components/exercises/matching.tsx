@@ -503,7 +503,7 @@ export function MatchingExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === activeBlockLeft.length}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -558,7 +558,7 @@ export function MatchingExercise({
                   onClick={() =>
                     singleCheckConfirm.attemptCheck(config.left.length - Object.keys(pairs).length, submitSingle)
                   }
-                  disabled={single.pending || Object.keys(pairs).length === 0}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

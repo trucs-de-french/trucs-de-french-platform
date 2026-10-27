@@ -999,7 +999,7 @@ function CrosswordBlockView({
                     <button
                       type="button"
                       onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
-                      disabled={pending || unfilledWords === totalWords}
+                      disabled={pending}
                       className="exercise-block-check-btn btn-check"
                     >
                       {pending ? "Перевіряю..." : "Перевірити блок"}
@@ -1021,7 +1021,7 @@ function CrosswordBlockView({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
-              disabled={pending || unfilledWords === totalWords}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}

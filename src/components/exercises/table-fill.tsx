@@ -678,7 +678,7 @@ export function TableFillExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === hiddenCellsOf(activeBlockRows).length}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -765,10 +765,7 @@ export function TableFillExercise({
                   onClick={() =>
                     singleCheckConfirm.attemptCheck(unfilledCellCount(config.rows), handleSubmit)
                   }
-                  disabled={
-                    single.pending ||
-                    unfilledCellCount(config.rows) === hiddenCellsOf(config.rows).length
-                  }
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

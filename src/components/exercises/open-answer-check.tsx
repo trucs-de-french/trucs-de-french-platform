@@ -297,7 +297,7 @@ export function OpenAnswerCheckExercise({
     <button
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
-      disabled={activeBlockPending || activeBlockUnanswered === (activeBlockQuestions?.length ?? 0)}
+      disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
@@ -341,7 +341,7 @@ export function OpenAnswerCheckExercise({
                       submitSingle
                     )
                   }
-                  disabled={single.pending || singleAnsweredCount === 0}
+                  disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}

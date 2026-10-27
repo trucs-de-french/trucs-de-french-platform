@@ -590,7 +590,7 @@ export function ChronologicalOrderExercise({
                 onClick={() =>
                   checkConfirm.attemptCheck(config.items.length - answeredCount, handleSubmit)
                 }
-                disabled={pending || answeredCount === 0}
+                disabled={pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
                 {pending ? "Перевіряю..." : "Перевірити"}

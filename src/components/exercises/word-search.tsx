@@ -1039,7 +1039,7 @@ function WordSearchBlockView({
                     <button
                       type="button"
                       onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
-                      disabled={pending || foundCount === 0}
+                      disabled={pending}
                       className="exercise-block-check-btn btn-check"
                     >
                       {pending ? "Перевіряю..." : "Перевірити блок"}
@@ -1061,7 +1061,7 @@ function WordSearchBlockView({
             <button
               type="button"
               onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
-              disabled={pending || foundCount === 0}
+              disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
