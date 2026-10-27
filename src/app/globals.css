@@ -6255,6 +6255,22 @@ button.scene-bar:active .scene-bar-toggle {
     background: var(--dark-blue-fill);
   }
 }
+/* Grille à cocher — рамка квадрата-чекбокса (border-2, checkbox-grid.tsx)
+   тоншає в темній темі до 1px, того самого значення, що інші lavender-blue
+   рамки полів у темній темі (--card-field-border: Réponse libre/table_fill
+   exercise-field, dark:border в ANSWER_CHIP_BASE). Світла тема й сам
+   border-2 (розмір/зовнішні 26-36px лишаються — box-sizing: border-box)
+   не чіпаються: лише ширина рамки в .dark, одна декларація для ВСІХ станів
+   (unchecked/checked/correct/wrong/missed), бо border-2 — спільна база для
+   них усіх. */
+.dark .cg-checkbox-box {
+  border-width: 1px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .cg-checkbox-box {
+    border-width: 1px;
+  }
+}
 .word-pool-chip-grip {
   flex-shrink: 0;
   width: 10px;

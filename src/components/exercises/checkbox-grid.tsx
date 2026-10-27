@@ -53,7 +53,7 @@ const GRID_CELL_LABEL = "flex min-h-14 w-full items-center justify-center md:min
 // явним токеном кольору (Tailwind v4: bare "border" резолвиться в
 // currentColor).
 const GRID_CHECKBOX_BOX =
-  "flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border-2 transition-colors md:h-[30px] md:w-[30px] dark:h-[34px] dark:w-[34px] dark:rounded-[9px] dark:md:h-[36px] dark:md:w-[36px] peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 peer-disabled:opacity-60";
+  "cg-checkbox-box flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border-2 transition-colors md:h-[30px] md:w-[30px] dark:h-[34px] dark:w-[34px] dark:rounded-[9px] dark:md:h-[36px] dark:md:w-[36px] peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 peer-disabled:opacity-60";
 const GRID_CHECKBOX_UNCHECKED = "cg-cb-unchecked glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
 const GRID_CHECKBOX_CHECKED =
   "border-brand bg-brand dark:border-[#8a88f5] dark:bg-[linear-gradient(135deg,#2f2c6b,#4b46da)] dark:shadow-[0_0_8px_rgba(138,136,245,0.45)]";
