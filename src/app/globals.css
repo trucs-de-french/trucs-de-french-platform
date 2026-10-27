@@ -7898,23 +7898,29 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Phonetics card audio player — gold outline/glow, DARK ONLY. Scoped via
-   className on this one AudioPill usage: AudioPill (audio-pill.tsx) is
-   shared with flip_cards/crossword, so the shared component itself stays
-   untouched and those other callers are unaffected. Background gradient
-   is left as-is (AudioPill's own inline style); border-box already comes
-   from Tailwind's global preflight, so adding the border doesn't change
-   the pill's outer size. */
-.dark .phonetics-audio-pill {
+/* Compact audio player (AudioPill, audio-pill.tsx) — thin gold outline +
+   soft glow, DARK ONLY, shared by EVERY compact usage (phonetics card,
+   flip_cards front/back, crossword clue), applied via className on each
+   call site — the shared component itself stays untouched, so this is
+   additive, not a behaviour change. The big listening-exercise player
+   (components/audio-player.tsx, AudioPlayer/GdriveAudioPlayer) never uses
+   AudioPill and is untouched by this rule. --audio-pill-outline-width is a
+   variable (not a literal) so a future width tweak has one place to change.
+   Background gradient is left as-is (AudioPill's own inline style);
+   border-box already comes from Tailwind's global preflight, so adding the
+   border doesn't change the pill's outer size. */
+.dark .audio-player-compact {
+  --audio-pill-outline-width: 1px;
   box-sizing: border-box;
-  border: 1.5px solid rgba(217, 183, 101, 0.85);
-  box-shadow: 0 0 14px rgba(217, 183, 101, 0.3);
+  border: var(--audio-pill-outline-width) solid rgba(217, 183, 101, 0.75);
+  box-shadow: 0 0 10px rgba(217, 183, 101, 0.22);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .phonetics-audio-pill {
+  :root:not(.light) .audio-player-compact {
+    --audio-pill-outline-width: 1px;
     box-sizing: border-box;
-    border: 1.5px solid rgba(217, 183, 101, 0.85);
-    box-shadow: 0 0 14px rgba(217, 183, 101, 0.3);
+    border: var(--audio-pill-outline-width) solid rgba(217, 183, 101, 0.75);
+    box-shadow: 0 0 10px rgba(217, 183, 101, 0.22);
   }
 }
 

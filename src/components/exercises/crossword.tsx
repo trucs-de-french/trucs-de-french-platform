@@ -688,7 +688,7 @@ function CrosswordBlockView({
             </span>
             {clue.audioUrl && (
               <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-                <AudioPill src={clue.audioUrl} compact />
+                <AudioPill src={clue.audioUrl} compact className="audio-player-compact" />
               </div>
             )}
           </div>

@@ -145,7 +145,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                   ) : media.source === "drive" ? (
                     <DriveAudioBlock url={media.url} />
                   ) : (
-                    <AudioPill src={media.url} className="phonetics-audio-pill" />
+                    <AudioPill src={media.url} className="audio-player-compact" />
                   )}
                 </div>
               )}

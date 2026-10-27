@@ -79,7 +79,7 @@ function FlipCardTile({
       {zoomOpen && card.image_url && (
         <ImageLightbox src={card.image_url} onClose={() => setZoomOpen(false)} />
       )}
-      {card.audio_url && <AudioPill src={card.audio_url} compact />}
+      {card.audio_url && <AudioPill src={card.audio_url} compact className="audio-player-compact" />}
       <span
         className={`min-w-0 max-w-full break-words [overflow-wrap:anywhere] dark:mt-3.5 dark:tracking-[0.01em] dark:leading-[1.25] ${
           flipped
@@ -699,7 +699,7 @@ function DeckCardFront({
         <p className="max-w-full break-words text-[18px] font-semibold leading-[1.4] font-content text-[#1a1640] [overflow-wrap:anywhere] dark:text-neutral-100 sm:text-[24px]">
           {frenchNbsp(card.front)}
         </p>
-        {card.audio_url && <AudioPill src={card.audio_url} compact />}
+        {card.audio_url && <AudioPill src={card.audio_url} compact className="audio-player-compact" />}
       </div>
       {canFlip ? (
         <span className="flex items-center gap-1.5 text-[12px] font-content text-[#8a7a4a] dark:text-neutral-400 sm:text-[14px]">
