@@ -111,7 +111,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                     <span className="phonetics-ipa-pill-text">{item.transcription}</span>
                   </span>
                   {translation && (
-                    <span className="break-words text-[14px] italic leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
+                    <span className="break-words text-[14px] leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
                       {translation}
                     </span>
                   )}
