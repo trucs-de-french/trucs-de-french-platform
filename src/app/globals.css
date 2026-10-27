@@ -5687,6 +5687,54 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
   }
 }
+/* "Correction des erreurs" (error-review-block.tsx) — ЛИШЕ кнопка
+   "Виправити N"/"Спробувати ще раз"/"Згорнути" і заповнення прогрес-бару
+   цього блоку: той самий індиго-градієнт + золоте сяйво, що
+   .item-number-badge вище, через ОКРЕМІ класи (.error-review-fix-button/
+   .error-review-progress-fill), щоб не чіпати спільний STUDENT_BUTTON_PRIMARY
+   (bg-brand) й інші вправи, які його використовують. */
+.dark .error-review-fix-button {
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-fix-button {
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+  }
+}
+.dark .error-review-fix-button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 0 2px #a9bcff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-fix-button:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 0 2px #a9bcff;
+  }
+}
+@media (hover: hover) {
+  .dark .error-review-fix-button:hover {
+    background: linear-gradient(135deg, #3a36a0, #5a55e6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 3px 12px rgba(217, 183, 101, 0.38);
+  }
+}
+@media (prefers-color-scheme: dark) and (hover: hover) {
+  :root:not(.light) .error-review-fix-button:hover {
+    background: linear-gradient(135deg, #3a36a0, #5a55e6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 3px 12px rgba(217, 183, 101, 0.38);
+  }
+}
+.dark .error-review-progress-fill {
+  background: linear-gradient(90deg, #3a36a0, #4b46da);
+  box-shadow: 0 0 8px rgba(217, 183, 101, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-progress-fill {
+    background: linear-gradient(90deg, #3a36a0, #4b46da);
+    box-shadow: 0 0 8px rgba(217, 183, 101, 0.28);
+  }
+}
 .drag-drop-row-number {
   margin-top: 7px;
 }

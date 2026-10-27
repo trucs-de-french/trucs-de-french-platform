@@ -170,7 +170,7 @@ function ErrorReviewCard({
         <div className="px-3 pb-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-[var(--card-field-bg)] dark:shadow-[inset_0_0_0_1px_rgba(130,160,240,.28)]">
             <div
-              className="h-full rounded-full bg-brand"
+              className="h-full rounded-full bg-brand error-review-progress-fill"
               style={{ width: `${Math.round(((entry.total - remaining) / entry.total) * 100)}%` }}
             />
           </div>
@@ -182,7 +182,7 @@ function ErrorReviewCard({
           <button
             type="button"
             onClick={onToggleExpanded}
-            className={`${STUDENT_BUTTON_PRIMARY} min-h-11`}
+            className={`${STUDENT_BUTTON_PRIMARY} min-h-11 error-review-fix-button`}
           >
             {expanded ? "Згорнути" : isWhole ? "Спробувати ще раз" : `Виправити ${remaining}`}
           </button>
