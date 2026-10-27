@@ -55,7 +55,9 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
             <span className="absolute inset-0 bg-black/20 transition group-hover:bg-black/30" />
             <span className="absolute inset-0 flex items-center justify-center">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md">
-                <Play size={16} className="text-brand" fill="currentColor" />
+                <span className="play-icon-offset">
+                  <Play size={16} className="text-[var(--play-icon)]" fill="currentColor" />
+                </span>
               </span>
             </span>
             <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] text-white">

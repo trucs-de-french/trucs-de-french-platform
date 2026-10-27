@@ -8324,6 +8324,26 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Спільний індиго-токен кольору трикутника Play на білому крузі —
+   audio-pill.tsx (.audio-pill-play нижче), audio-player.tsx, video-
+   player.tsx, phonetics-video-block.tsx. Те саме значення в обох темах
+   (круг завжди білий), тож без .dark-дубля. */
+:root {
+  --play-icon: #3b36c4;
+}
+
+/* Оптичне центрування трикутника Play (не Pause — той симетричний):
+   bounding box символу центрований, але візуальна маса зсунута вліво
+   (вертикаль трикутника зліва, вершина праворуч) — зсуваємо праворуч на
+   ~6-8% ширини. Те саме значення для розмірів 14-18px, що й несуть усі
+   плеєри нижче (ширша/вужча іконка в цьому діапазоні не дає помітно
+   іншого оптичного зсуву, тож один спільний клас, а не підбір окремо на
+   кожному файлі). */
+.play-icon-offset {
+  display: inline-flex;
+  transform: translateX(1.5px);
+}
+
 /* Audio pill — Play button, white circle with an indigo triangle. Same
    look in both themes. This is the shared AudioPill component
    (audio-pill.tsx: phonetics, flip_cards, crossword all use it), so the
@@ -8333,7 +8353,7 @@ button.scene-bar:active .scene-bar-toggle {
 .audio-pill-play {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 20, 0.35);
-  color: #4b46da;
+  color: var(--play-icon);
   transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 @media (hover: hover) {

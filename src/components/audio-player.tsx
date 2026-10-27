@@ -198,9 +198,15 @@ export function AudioPlayer({
             onClick={togglePlay}
             aria-label={playing ? "Пауза" : "Відтворити"}
             aria-pressed={playing}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--play-icon)] ${FOCUS_RING}`}
           >
-            {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            {playing ? (
+              <Pause size={18} fill="currentColor" />
+            ) : (
+              <span className="play-icon-offset">
+                <Play size={18} fill="currentColor" />
+              </span>
+            )}
           </button>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate font-heading text-[16px] font-semibold text-white">{title ?? "Аудіо"}</span>

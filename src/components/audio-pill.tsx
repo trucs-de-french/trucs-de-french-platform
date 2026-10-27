@@ -170,8 +170,8 @@ export function AudioPill({
       />
 
       {/* кільце-play: клік будь-де в межах 44px (не лише по білому кругу) перемикає відтворення.
-          disabled:opacity-60 раніше сірило ВЕСЬ круг (фон + трикутник) поки метадані не завантажились
-          — круг лишається білим завжди, тьмяніє лише трикутник усередині. */}
+          Круг і трикутник лишаються білим/індиго на повну непрозорість завжди — поки метадані не
+          завантажились, єдина ознака — disabled:cursor-wait (курсор), без тьмяніння іконки. */}
       <button
         type="button"
         onClick={togglePlay}
@@ -183,7 +183,7 @@ export function AudioPill({
         {playing ? (
           <Pause size={14} fill="currentColor" />
         ) : (
-          <span className={`flex translate-x-[2px] items-center justify-center ${metadataLoaded ? "" : "opacity-40"}`}>
+          <span className="play-icon-offset">
             <Play size={14} fill="currentColor" />
           </span>
         )}

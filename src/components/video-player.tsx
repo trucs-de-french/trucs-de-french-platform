@@ -860,9 +860,15 @@ export function VideoPlayer({
                     }}
                     aria-label={playing ? "Пауза" : "Відтворити"}
                     aria-pressed={playing}
-                    className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white text-[#4f46e5] ${FOCUS_RING}`}
+                    className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white text-[var(--play-icon)] ${FOCUS_RING}`}
                   >
-                    {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                    {playing ? (
+                      <Pause size={18} fill="currentColor" />
+                    ) : (
+                      <span className="play-icon-offset">
+                        <Play size={18} fill="currentColor" />
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
