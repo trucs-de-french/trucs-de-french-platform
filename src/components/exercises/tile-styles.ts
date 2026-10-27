@@ -47,7 +47,7 @@ export function bankTileClass({ selected, used }: { selected: boolean; used: boo
     "max-w-full cursor-grab select-none break-words rounded-md border-[1.5px] dark:border px-3 py-1.5 text-base glass-gap-shadow dark:shadow-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 [overflow-wrap:anywhere]";
   if (used) return `${base} bg-white opacity-40 dark:bg-transparent`;
   if (selected) return `${base} ${SELECTED_OPTION_CLASS}`;
-  return `${base} glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--dark-blue-fill)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]`;
+  return `${base} glass-chip glass-chip-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--dark-surface-fill)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]`;
 }
 
 export type SlotState = "empty" | "hover" | "filled" | "correct" | "incorrect";
@@ -89,6 +89,6 @@ export function slotClass(
       // поля, що пропуск letter_gaps (--card-field-bg/--card-field-border,
       // .exercise-field у globals.css), замість старого
       // dark:border-neutral-400/dark:bg-neutral-900 (чи transparent).
-      return `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:hover:bg-[#20247a]`;
+      return `${base} border-dashed glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white hover:bg-neutral-50 dark:border-[var(--card-field-border)] dark:bg-[var(--dark-surface-fill)] dark:hover:bg-[#20247a]`;
   }
 }

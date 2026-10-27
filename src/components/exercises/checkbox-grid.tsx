@@ -54,7 +54,7 @@ const GRID_CELL_LABEL = "flex min-h-14 w-full items-center justify-center md:min
 // currentColor).
 const GRID_CHECKBOX_BOX =
   "cg-checkbox-box flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md border-2 transition-colors md:h-[30px] md:w-[30px] dark:h-[34px] dark:w-[34px] dark:rounded-[9px] dark:md:h-[36px] dark:md:w-[36px] peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 peer-disabled:opacity-60";
-const GRID_CHECKBOX_UNCHECKED = "cg-cb-unchecked glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
+const GRID_CHECKBOX_UNCHECKED = "cg-cb-unchecked glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--dark-surface-fill)]";
 const GRID_CHECKBOX_CHECKED =
   "border-brand bg-brand dark:border-[#8a88f5] dark:bg-[linear-gradient(135deg,#2f2c6b,#4b46da)] dark:shadow-[0_0_8px_rgba(138,136,245,0.45)]";
 // Білий чекмарк — лише для ДО-перевірочного "позначено" стану (квадрат
@@ -273,14 +273,14 @@ export function CheckboxGridExercise({
               не колонка, заповнювач там не потрібен і схований. */}
           <div
             aria-hidden="true"
-            className={`hidden border-b border-[#e6e6f0] bg-white dark:border-[rgba(217,183,101,0.5)] dark:border-b-[1.5px] dark:bg-[rgba(8,10,40,0.35)] md:block ${GRID_FIRST_COL_DIVIDER}`}
+            className={`hidden border-b border-[#e6e6f0] bg-white dark:border-[rgba(130,160,240,0.2)] dark:bg-[rgba(8,10,40,0.35)] md:block ${GRID_FIRST_COL_DIVIDER}`}
           />
           {columns.map((c) => (
             <div
               key={c.id}
               id={`${uid}col-${c.id}`}
               role="columnheader"
-              className={`sticky top-0 z-10 border-b border-[#e6e6f0] bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-[#3b36c4] dark:border-[rgba(217,183,101,0.5)] dark:border-b-[1.5px] dark:bg-[rgba(8,10,40,0.35)] dark:text-[#f3d98b] md:static md:text-sm ${headerTextSize}`}
+              className={`sticky top-0 z-10 border-b border-[#e6e6f0] bg-white px-1.5 py-2 text-center font-medium leading-tight break-words text-[#3b36c4] dark:border-[rgba(130,160,240,0.2)] dark:bg-[rgba(8,10,40,0.35)] dark:text-[#f3d98b] md:static md:text-sm ${headerTextSize}`}
             >
               {c.label}
             </div>
@@ -291,7 +291,7 @@ export function CheckboxGridExercise({
               нема взагалі. */}
           <div
             aria-hidden="true"
-            className="hidden border-b border-[#e6e6f0] bg-white dark:border-[rgba(217,183,101,0.5)] dark:border-b-[1.5px] dark:bg-[rgba(8,10,40,0.35)] md:block"
+            className="hidden border-b border-[#e6e6f0] bg-white dark:border-[rgba(130,160,240,0.2)] dark:bg-[rgba(8,10,40,0.35)] md:block"
           />
         </div>
 

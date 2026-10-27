@@ -128,14 +128,39 @@
   --card-hover-border: rgba(130, 160, 240, 0.65);
   --card-field-bg: rgba(8, 10, 40, 0.45);
   --card-field-border: rgba(130, 160, 240, 0.6);
-  /* Той самий суцільний темно-синій фон, що картки/шари flip-cards.tsx
-     (dark:bg-[#0a1030]) й плитки .pool-tile-dark (rgba(10,16,48,.96),
-     візуально той самий колір) — ОДНА точка правди для будь-якого
-     елемента, що має виглядати темно-синім "склом" Retournez les
-     cartes/Compréhension orale: error-review-block.tsx, word-choice-
-     pill--default, glass-answer-btn (Vrai ou faux), sort-columns-
-     dropzone, word-pool-chip, karaoke-option-chip. */
+  /* Той самий суцільний темно-синій фон — ОДНА точка правди лише для двох
+     елементів, що мусять лишатись цим конкретним темно-синім "склом":
+     .pool-dark-bg (смужка-підкладка пулу multiple_choice/listening, НЕ самі
+     плитки — ті на --dark-surface-fill нижче) і error-review-card-bg
+     (аліас нижче). word-choice-pill--default/glass-answer-btn (Vrai ou
+     faux)/sort-columns-dropzone РАНІШЕ ділили цей токен, тепер на
+     --dark-surface-fill нижче (answer-fields/cells/slots/chips/choice-
+     buttons round, dark-only). НЕ чіпати це значення під інші елементи. */
   --dark-blue-fill: #0a1030;
+  /* Спільна opaque-поверхня "картка на панелі" для елементів, що мають
+     лишатись ЦИМ конкретним темно-індиго "склом", не --dark-blue-fill:
+     flip-cards.tsx (грані + шари стопки деки, ANSWER_CARD_DEFAULT сітки
+     Cartes d'apprentissage, кнопки Перемішати/Показати переклад і круглі
+     стрілки деки), crossword .crossword-tile (ідле-клітинка) й
+     .crossword-clue-card--hoverable (ідле-картка підказки, LEGEND_*_SHAPE
+     у legend-tile-style.ts), фіксовані пул-чипи (.word-pool-chip,
+     bankTileClass ідле-гілка в tile-styles.ts, .karaoke-option-chip),
+     select-пілюля multiple_choice (.select-field-pill), .pool-tile-dark
+     (плитки-варіанти multiple_choice/listening), word-choice-pill--default
+     (Choix du mot/Barrez l'intrus), glass-answer-btn (Vrai ou faux),
+     sortable-tile-row.tsx letterTile (Lettres en désordre), .exercise-field
+     усередині .glass-item-card/.word-card/.glass-reading-passage
+     (table_fill cell/open_answer/fill_blank gap), chronological-order.tsx
+     inputClass+.chrono-number-slot--empty (Nº), .image-match-slot--empty і
+     tile-styles.ts slotClass порожній стан (image_match/drag_drop слоти),
+     checkbox-grid.tsx GRID_CHECKBOX_UNCHECKED, .reorder-word-tile,
+     .sort-columns-dropzone (Classement), .karaoke-gap--upcoming-empty.
+     .pool-dark-bg — смужка-підкладка пулу, не самі плитки — лишається на
+     --dark-blue-fill вище, як і сама картка-обгортка питання.
+     error-review-block.tsx НЕ на цьому токені — свій окремий
+     --error-review-card-bg (аліас на --dark-blue-fill, як і до цього
+     токена) нижче. */
+  --dark-surface-fill: #141944;
   --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
@@ -185,6 +210,7 @@
     --card-field-bg: rgba(8, 10, 40, 0.45);
     --card-field-border: rgba(130, 160, 240, 0.6);
     --dark-blue-fill: #0a1030;
+    --dark-surface-fill: #141944;
     --error-review-card-bg: var(--dark-blue-fill);
   }
 }
@@ -211,7 +237,7 @@
 .dark .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
 .dark .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
 .dark .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
-  background: var(--card-field-bg);
+  background: var(--dark-surface-fill);
   border-color: var(--card-field-border);
 }
 .dark .exercise-field::placeholder {
@@ -276,7 +302,7 @@
   :root:not(.light) .glass-item-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
   :root:not(.light) .word-card .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong),
   :root:not(.light) .glass-reading-passage .exercise-field:not(:disabled):not(.exercise-field--correct):not(.exercise-field--wrong) {
-    background: var(--card-field-bg);
+    background: var(--dark-surface-fill);
     border-color: var(--card-field-border);
   }
 }
@@ -1644,7 +1670,7 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-border: var(--card-border);
   --glass-item-border-width: var(--card-border-width);
   --glass-item-shadow: none;
-  --glass-answer-bg: var(--dark-blue-fill);
+  --glass-answer-bg: var(--dark-surface-fill);
   --glass-answer-border: rgba(217, 183, 101, 0.7);
   --glass-answer-text: var(--card-ink);
   --glass-answer-border-hover: #f6dc8e;
@@ -1674,7 +1700,7 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-border: var(--card-border);
     --glass-item-border-width: var(--card-border-width);
     --glass-item-shadow: none;
-    --glass-answer-bg: var(--dark-blue-fill);
+    --glass-answer-bg: var(--dark-surface-fill);
     --glass-answer-border: rgba(217, 183, 101, 0.7);
     --glass-answer-text: var(--card-ink);
     --glass-answer-border-hover: #f6dc8e;
@@ -2285,13 +2311,13 @@ button, input, textarea, select, label, nav, aside {
   box-shadow: 0 4px 8px -3px rgba(120, 90, 20, 0.3);
 }
 .dark .crossword-tile {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dark-surface-fill);
   border-color: rgba(243, 217, 139, 0.45);
   box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .crossword-tile {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--dark-surface-fill);
     border-color: rgba(243, 217, 139, 0.45);
     box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
   }
@@ -6331,13 +6357,13 @@ button.scene-bar:active .scene-bar-toggle {
   opacity: 0.4;
 }
 .dark .word-pool-chip {
-  background: var(--dark-blue-fill);
+  background: var(--dark-surface-fill);
   border-color: rgba(243, 217, 139, 0.35);
   color: #f4f3ff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-chip {
-    background: var(--dark-blue-fill);
+    background: var(--dark-surface-fill);
     border-color: rgba(243, 217, 139, 0.35);
     color: #f4f3ff;
   }
@@ -6348,11 +6374,11 @@ button.scene-bar:active .scene-bar-toggle {
    var(--card-bg) ЛИШЕ для цього елемента (вищою специфічністю), не для
    інших типів, що теж використовують ANSWER_CHIP_DEFAULT. */
 .dark .sort-columns-dropzone {
-  background: var(--dark-blue-fill);
+  background: var(--dark-surface-fill);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .sort-columns-dropzone {
-    background: var(--dark-blue-fill);
+    background: var(--dark-surface-fill);
   }
 }
 /* Grille à cocher — рамка квадрата-чекбокса (border-2, checkbox-grid.tsx)
@@ -6467,12 +6493,12 @@ button.scene-bar:active .scene-bar-toggle {
    (--card-field-bg/--card-field-border, .exercise-field), замість старого
    хардкоду rgba(255,255,255,.04)/rgba(243,217,139,.45). */
 .dark .image-match-slot--empty {
-  background: var(--card-field-bg);
+  background: var(--dark-surface-fill);
   border-color: var(--card-field-border);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot--empty {
-    background: var(--card-field-bg);
+    background: var(--dark-surface-fill);
     border-color: var(--card-field-border);
   }
 }
@@ -6882,13 +6908,13 @@ button.scene-bar:active .scene-bar-toggle {
   color: var(--gold-pill-ink);
 }
 .dark .word-choice-pill--default {
-  background: var(--dark-blue-fill);
+  background: var(--dark-surface-fill);
   border-color: rgba(217, 183, 101, 0.75);
   color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--default {
-    background: var(--dark-blue-fill);
+    background: var(--dark-surface-fill);
     border-color: rgba(217, 183, 101, 0.75);
     color: #f5ecd0;
   }
@@ -7266,7 +7292,7 @@ button.scene-bar:active .scene-bar-toggle {
    image-match-slot/drag-drop-slot вище), а не сірий. */
 .dark .chrono-number-slot--empty {
   border-color: var(--card-field-border);
-  background: var(--card-field-bg);
+  background: var(--dark-surface-fill);
   color: rgba(179, 191, 224, 0.8);
 }
 .dark .chrono-number-slot--empty::placeholder {
@@ -7275,7 +7301,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-number-slot--empty {
     border-color: var(--card-field-border);
-    background: var(--card-field-bg);
+    background: var(--dark-surface-fill);
     color: rgba(179, 191, 224, 0.8);
   }
   :root:not(.light) .chrono-number-slot--empty::placeholder {
@@ -7480,7 +7506,7 @@ button.scene-bar:active .scene-bar-toggle {
    letter_gaps, замість --field-bg/--field-border (не-картковий фон); "…"
    плейсхолдер — приглушений лавандовий #b3bfe0 при .8, не --field-ink. */
 .dark .karaoke-gap--upcoming-empty {
-  background: rgba(8, 10, 40, 0.45);
+  background: var(--dark-surface-fill);
   border-style: solid;
   border-width: 1px;
   border-color: rgba(130, 160, 240, 0.6);
@@ -7492,7 +7518,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--upcoming-empty {
-    background: rgba(8, 10, 40, 0.45);
+    background: var(--dark-surface-fill);
     border-style: solid;
     border-width: 1px;
     border-color: rgba(130, 160, 240, 0.6);
@@ -7625,7 +7651,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .karaoke-option-chip {
   padding: 10px 22px;
-  background: var(--dark-blue-fill);
+  background: var(--dark-surface-fill);
   border-width: 1px;
   border-color: #7f9cf0;
   color: #f5ecd0;
@@ -7634,7 +7660,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip {
     padding: 10px 22px;
-    background: var(--dark-blue-fill);
+    background: var(--dark-surface-fill);
     border-width: 1px;
     border-color: #7f9cf0;
     color: #f5ecd0;
@@ -7726,14 +7752,16 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Той самий фон, що .pool-dark-bg, + hover лише під (hover: hover) —
-   для самих плиток-варіантів (кнопки), не смужки-контейнера. */
+/* Плитки-варіанти (кнопки) самі — не смужка-контейнера (та лишається на
+   --dark-blue-fill, .pool-dark-bg вище): opaque-поверхня --dark-surface-
+   fill, та сама, що flip-cards/crossword/pool-чипів/select. Лише фон; hover
+   лишається своїм (hover: hover) нижче. */
 .dark .pool-tile-dark {
-  background: var(--dark-blue-fill);
+  background: var(--dark-surface-fill);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .pool-tile-dark {
-    background: var(--dark-blue-fill);
+    background: var(--dark-surface-fill);
   }
 }
 @media (hover: hover) {
@@ -7756,12 +7784,12 @@ button.scene-bar:active .scene-bar-toggle {
    (--chosen/--placeholder) і chevron різні. Світла тема не торкається —
    лише .dark/медіа нижче. */
 .dark .select-field-pill {
-  background: rgba(127, 156, 240, 0.18);
+  background: var(--dark-surface-fill);
   border-color: rgba(127, 156, 240, 0.6);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .select-field-pill {
-    background: rgba(127, 156, 240, 0.18);
+    background: var(--dark-surface-fill);
     border-color: rgba(127, 156, 240, 0.6);
   }
 }
@@ -7847,7 +7875,7 @@ button.scene-bar:active .scene-bar-toggle {
    для світлої теми (вони самі скоуплені на .light/:root:not(.dark)) —
    тут перекриваю фон/рамку/тінь для .dark напряму. */
 .dark .reorder-word-tile {
-  background: rgba(8, 10, 40, 0.55);
+  background: var(--dark-surface-fill);
   border-width: 1.5px;
   border-color: var(--card-field-border);
   box-shadow: 0 2px 4px rgba(0, 0, 10, 0.45);
@@ -7855,7 +7883,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .reorder-word-tile {
-    background: rgba(8, 10, 40, 0.55);
+    background: var(--dark-surface-fill);
     border-width: 1.5px;
     border-color: var(--card-field-border);
     box-shadow: 0 2px 4px rgba(0, 0, 10, 0.45);
@@ -7930,7 +7958,7 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 8px;
   width: fit-content;
   max-width: 100%;
-  padding: 5px 14px;
+  padding: 7px 14px;
   border-radius: 999px;
   font-family: var(--font-body);
   font-size: 17px;
@@ -7947,6 +7975,7 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
   overflow: hidden;
   max-width: 100%;
+  line-height: 1.5;
 }
 /* Якщо текст IPA ширший за картку — замість обрізання крапками (заборонено
    вимогою) дозволяємо перенос рядка; пілюля стає менш округлою (14px),
@@ -7962,14 +7991,18 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .phonetics-ipa-pill {
   color: #c9d4ff;
-  background: rgba(127, 156, 240, 0.18);
+  background: rgba(20, 25, 68, 0.78);
   border-color: rgba(130, 160, 240, 0.5);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  backdrop-filter: blur(8px) saturate(1.1);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .phonetics-ipa-pill {
     color: #c9d4ff;
-    background: rgba(127, 156, 240, 0.18);
+    background: rgba(20, 25, 68, 0.78);
     border-color: rgba(130, 160, 240, 0.5);
+    -webkit-backdrop-filter: blur(8px) saturate(1.1);
+    backdrop-filter: blur(8px) saturate(1.1);
   }
 }
 

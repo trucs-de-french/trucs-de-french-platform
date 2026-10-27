@@ -22,7 +22,7 @@ export const LEGEND_TILE_BASE =
 // crossword.tsx (word-search.tsx бере LEGEND_TILE_BASE вище, не цю
 // константу), тож зміна тут не чіпає філворд.
 export const LEGEND_TILE_SHAPE =
-  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
+  "relative rounded-[14px] dark:rounded-lg border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none dark:border-[rgba(243,217,139,0.25)] dark:bg-[var(--dark-surface-fill)]";
 
 // Дрібніші колонки під квадратні картинкові плитки word-search ImageTile
 // (ЕТАП D: картинки більші — менше колонок на вузьких/середніх екранах).
@@ -43,7 +43,7 @@ export const LEGEND_PILL =
 // Та сама форма без кольору рамки, для крос-ворду — та сама причина, що
 // LEGEND_TILE_SHAPE вище.
 export const LEGEND_PILL_SHAPE =
-  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
+  "relative inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none px-3 py-2 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-[var(--dark-surface-fill)]";
 
 // ЕТАП F, варіант C — картка довгої підказки-речення word_search (clueMode
 // "long", LongCard): на всю ширину батьківського flex-col, rounded-xl
@@ -57,7 +57,7 @@ export const LEGEND_LONG_CARD =
 // LEGEND_LONG_CARD_SHAPE лишається виключним для crossword.tsx (word-
 // search.tsx бере LEGEND_LONG_CARD вище, не цю константу).
 export const LEGEND_LONG_CARD_SHAPE =
-  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-white/[0.06]";
+  "relative flex items-start gap-2.5 rounded-[14px] dark:rounded-xl border-[1.5px] dark:border bg-white glass-gap-shadow dark:shadow-none p-3 text-left transition-opacity dark:border-[rgba(243,217,139,0.25)] dark:bg-[var(--dark-surface-fill)]";
 
 // ОДНА лампочка-підказка в усій студентській частині (раніше кожен тип
 // вправи мав свій розмір/варіант — LEGEND_BULB_BADGE_MD/SM (26/22px, плоский
