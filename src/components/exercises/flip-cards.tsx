@@ -272,6 +272,14 @@ function getTouchOnlyServerSnapshot() {
 // (не remaining) відновлюється "Почати знову".
 function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   const [remaining, setRemaining] = useState<FlipCardType[]>(cards);
+  // Історія "назад" — стек прибраних карток (сам deck без id-поля,
+  // FlipCard = {front,back,image_url?,audio_url?}, тож зберігаємо сам
+  // об'єкт картки, не id). deck не має жодного серверного/localStorage
+  // прогресу (ні бали, ні completion) — "прибрати картку" й "позначити
+  // відповідь" це ОДНА й та сама локальна дія (removeTop), тож "назад"
+  // просто повертає картку в голову remaining — нічого не скасовує й не
+  // засилає повторно, бо нема що скасовувати.
+  const [history, setHistory] = useState<FlipCardType[]>([]);
   // Зростає на кожне "прибирання" картки (кнопкою чи свайпом) і на
   // "Почати знову" — ремонтує обгортку верхньої картки, щоб внутрішній
   // drag-стан (dragX/flyDir) не "протік" у наступну картку, яка займе
@@ -301,7 +309,23 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   const canFlip = !finished && top.back.trim().length > 0;
 
   function removeTop() {
+    setHistory((h) => [...h, top]);
     setRemaining((prev) => prev.slice(1));
+    setRoundKey((k) => k + 1);
+    setDragX(0);
+    setFlyDir(null);
+    setFlipped(false);
+  }
+
+  // Повертає останню прибрану картку на початок remaining — без анімації
+  // (проста заміна вмісту, той самий підхід, що reducedMotion-гілка
+  // флipу): завжди відкриває лицьовий бік (flipped=false), roundKey++
+  // перемонтовує верхню картку так само, як при removeTop.
+  function goBack() {
+    if (history.length === 0 || flyDir !== null || dragging) return;
+    const previous = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    setRemaining((prev) => [previous, ...prev]);
     setRoundKey((k) => k + 1);
     setDragX(0);
     setFlyDir(null);
@@ -365,6 +389,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   function handleShuffle() {
     setRemaining((prev) => shuffleArray(prev));
     setFlipped(false);
+    setHistory([]);
   }
 
   function toggleFlip() {
@@ -377,6 +402,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     setDragX(0);
     setFlyDir(null);
     setFlipped(false);
+    setHistory([]);
   }
 
   const topTransform = flyDir
@@ -413,6 +439,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
     "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[#191d36] dark:shadow-none";
   const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
+  const canGoBack = history.length > 0 && flyDir === null && !dragging;
 
   return (
     <div className="flex flex-col gap-5">
@@ -558,16 +585,19 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
 
       {!finished && (
         <div className="flex items-center justify-center gap-4">
-          {/* Ліва стрілка — лише візуальна підказка напрямку свайпу: у
-              компоненті немає механіки "повернутись до попередньої
-              картки" (remaining лише зменшується), тож додавати нову дію
-              тут не можна (умова задачі) — кнопка задизейблена навмисно. */}
+          {/* Ліва стрілка — тепер справжня дія "назад": goBack повертає
+              останню прибрану картку з history на початок remaining.
+              Задизейблена, лише коли нема куди повертатись (history
+              порожня) чи під час польоту/драгу верхньої картки — той
+              самий canGoNext-паттерн, що права стрілка нижче. Вигляд
+              ідентичний правій стрілці (та сама рамка/колір/hover/
+              disabled:opacity-40 в обох темах). */}
           <button
             type="button"
-            disabled
-            aria-hidden
-            tabIndex={-1}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white opacity-40 shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] sm:h-[46px] sm:w-[46px]"
+            onClick={goBack}
+            disabled={!canGoBack}
+            aria-label="Попередня картка"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[#ead9a6] dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] sm:h-[46px] sm:w-[46px]"
           >
             <ChevronLeft size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#8a88f5]" />
           </button>
