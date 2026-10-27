@@ -109,9 +109,14 @@
   --card-field-bg: rgba(8, 10, 40, 0.45);
   --card-field-border: rgba(130, 160, 240, 0.6);
   /* Той самий суцільний темно-синій фон, що картки/шари flip-cards.tsx
-     (dark:bg-[#0a1030]) — для error-review-block.tsx, щоб рядки
-     "Correction des erreurs" лишались синхронні з кольором карток. */
-  --error-review-card-bg: #0a1030;
+     (dark:bg-[#0a1030]) й плитки .pool-tile-dark (rgba(10,16,48,.96),
+     візуально той самий колір) — ОДНА точка правди для будь-якого
+     елемента, що має виглядати темно-синім "склом" Retournez les
+     cartes/Compréhension orale: error-review-block.tsx, word-choice-
+     pill--default, glass-answer-btn (Vrai ou faux), sort-columns-
+     dropzone, word-pool-chip, karaoke-option-chip. */
+  --dark-blue-fill: #0a1030;
+  --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -154,7 +159,8 @@
     --card-hover-border: rgba(130, 160, 240, 0.65);
     --card-field-bg: rgba(8, 10, 40, 0.45);
     --card-field-border: rgba(130, 160, 240, 0.6);
-    --error-review-card-bg: #0a1030;
+    --dark-blue-fill: #0a1030;
+    --error-review-card-bg: var(--dark-blue-fill);
   }
 }
 
@@ -1600,7 +1606,7 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-border: var(--card-border);
   --glass-item-border-width: var(--card-border-width);
   --glass-item-shadow: none;
-  --glass-answer-bg: transparent;
+  --glass-answer-bg: var(--dark-blue-fill);
   --glass-answer-border: rgba(217, 183, 101, 0.7);
   --glass-answer-text: var(--card-ink);
   --glass-answer-border-hover: #f6dc8e;
@@ -1630,7 +1636,7 @@ button, input, textarea, select, label, nav, aside {
     --glass-item-border: var(--card-border);
     --glass-item-border-width: var(--card-border-width);
     --glass-item-shadow: none;
-    --glass-answer-bg: transparent;
+    --glass-answer-bg: var(--dark-blue-fill);
     --glass-answer-border: rgba(217, 183, 101, 0.7);
     --glass-answer-text: var(--card-ink);
     --glass-answer-border-hover: #f6dc8e;
@@ -6177,15 +6183,28 @@ button.scene-bar:active .scene-bar-toggle {
   opacity: 0.4;
 }
 .dark .word-pool-chip {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--dark-blue-fill);
   border-color: rgba(243, 217, 139, 0.35);
   color: #f4f3ff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-chip {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--dark-blue-fill);
     border-color: rgba(243, 217, 139, 0.35);
     color: #f4f3ff;
+  }
+}
+/* Classement — тіло колонки-зони (НЕЙТРАЛЬНИЙ стан лише: drag-over/hint
+   лишаються на власних blue-* утилітах у sort-columns.tsx, не тут) — той
+   самий --dark-blue-fill, що й pool-чипи вище, замінює ANSWER_CHIP_DEFAULT's
+   var(--card-bg) ЛИШЕ для цього елемента (вищою специфічністю), не для
+   інших типів, що теж використовують ANSWER_CHIP_DEFAULT. */
+.dark .sort-columns-dropzone {
+  background: var(--dark-blue-fill);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sort-columns-dropzone {
+    background: var(--dark-blue-fill);
   }
 }
 .word-pool-chip-grip {
@@ -6699,13 +6718,13 @@ button.scene-bar:active .scene-bar-toggle {
   color: var(--gold-pill-ink);
 }
 .dark .word-choice-pill--default {
-  background: rgba(217, 183, 101, 0.14);
+  background: var(--dark-blue-fill);
   border-color: rgba(217, 183, 101, 0.75);
   color: #f5ecd0;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--default {
-    background: rgba(217, 183, 101, 0.14);
+    background: var(--dark-blue-fill);
     border-color: rgba(217, 183, 101, 0.75);
     color: #f5ecd0;
   }
@@ -7442,7 +7461,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .karaoke-option-chip {
   padding: 10px 22px;
-  background: rgba(127, 156, 240, 0.22);
+  background: var(--dark-blue-fill);
   border-width: 1px;
   border-color: #7f9cf0;
   color: #f5ecd0;
@@ -7451,7 +7470,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-option-chip {
     padding: 10px 22px;
-    background: rgba(127, 156, 240, 0.22);
+    background: var(--dark-blue-fill);
     border-width: 1px;
     border-color: #7f9cf0;
     color: #f5ecd0;

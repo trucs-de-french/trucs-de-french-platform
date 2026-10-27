@@ -338,7 +338,7 @@ export function SortColumnsExercise({
               ? "border-blue-400 bg-blue-50 dark:border-[#7f9cf0] dark:bg-blue-950/30"
               : isHinted
                 ? "border-blue-300 bg-blue-50 ring-2 ring-inset ring-blue-500 dark:border-blue-600 dark:bg-blue-950/30"
-                : ANSWER_CHIP_DEFAULT;
+                : `${ANSWER_CHIP_DEFAULT} sort-columns-dropzone`;
           // bg-brand/10 + text-brand (без dark:-варіанту) давали ~2.3:1 у
           // темній темі (той самий --color-brand на майже чорному фоні —
           // замалий контраст) — indigo-100/indigo-700 (світла) і
