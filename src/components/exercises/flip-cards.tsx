@@ -483,7 +483,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <div
                 key={`peek2-${roundKey}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-0 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[var(--dark-surface-fill)]"
+                className="pointer-events-none absolute inset-0 z-0 rounded-[14px] border-[1.5px] border-[var(--gold-border-35)] bg-white dark:border-[var(--gold-border-35)] dark:bg-[var(--dark-surface-fill)]"
                 style={{
                   transform: layer2Transform,
                   transformOrigin: "bottom center",
@@ -495,7 +495,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <div
                 key={`peek1-${roundKey}`}
                 aria-hidden
-                className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-white p-5 dark:border-[rgba(217,183,101,0.6)] dark:bg-[var(--dark-surface-fill)] sm:p-7"
+                className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-[var(--gold-border-60)] bg-white p-5 dark:border-[var(--gold-border-60)] dark:bg-[var(--dark-surface-fill)] sm:p-7"
                 style={{
                   transform: layer1Transform,
                   transformOrigin: "bottom center",
