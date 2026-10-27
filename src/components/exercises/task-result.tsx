@@ -17,14 +17,6 @@ import {
 // балів, що раніше копіювались у 19 файлах вправ. Дані (score/pointsEarned/
 // pointsPossible/correct) лишаються тими самими GradeResult-полями, що й
 // раніше — цей компонент лише інакше їх показує.
-function StarIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#f6dc8e" aria-hidden="true">
-      <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
-    </svg>
-  );
-}
-
 export function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
@@ -126,8 +118,17 @@ export function TaskResult({
     <div className={`flex w-full flex-col gap-3 ${className ?? ""}`.trim()}>
       <div className="task-result-row">
         {pointsPossible !== undefined && (
-          <span className="task-result-points-pill">
-            <StarIcon />
+          <span className="points-pill-gradient">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="#f6dc8e"
+              aria-hidden="true"
+              className="points-pill-star"
+            >
+              <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+            </svg>
             {formatPoints(pointsEarned ?? 0, pointsPossible)}
           </span>
         )}

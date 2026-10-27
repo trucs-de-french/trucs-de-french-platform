@@ -3738,39 +3738,6 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 12px;
   flex-wrap: wrap;
 }
-.task-result-points-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  box-sizing: border-box;
-  padding: 0 18px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #1a1640 0%, #4b46da 100%);
-  color: #f6dc8e;
-  font-family: var(--font-heading);
-  font-size: 16px;
-  font-weight: 800;
-  white-space: nowrap;
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3);
-}
-.dark .task-result-points-pill {
-  background: var(--points-bg);
-  border: none;
-  color: var(--points-ink);
-  box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .task-result-points-pill {
-    background: var(--points-bg);
-    border: none;
-    color: var(--points-ink);
-    box-shadow: 0 6px 18px rgba(59, 54, 196, 0.3), 0 1px 5px rgba(217, 183, 101, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  }
-}
-.task-result-points-pill svg {
-  flex-shrink: 0;
-}
 /* Пілюля "З підказкою: N відповідей, половина балів" (мокап 3,
    HintUsageSummary, task-result.tsx) — під рядком балів/статусу, перед
    toggle-карткою "Правильні відповіді". Висота/лампочка — як HintPill
@@ -4986,13 +4953,23 @@ button.scene-bar:active .scene-bar-toggle {
   color: #f6dc8e;
 }
 .dark .block-tab--inactive {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(243, 217, 139, 0.25);
-  color: rgba(246, 239, 214, 0.7);
+  background: rgba(130, 160, 240, 0.2);
+  border: 1px solid rgba(130, 160, 240, 0.38);
+  backdrop-filter: blur(8px) saturate(1.15);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
+  color: #c9d4ff;
+  font-weight: 600;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .dark .block-tab--inactive {
+    background: rgba(40, 46, 90, 0.55);
+  }
 }
 @media (hover: hover) {
   .dark .block-tab--inactive:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(130, 160, 240, 0.3);
+    border-color: rgba(217, 183, 101, 0.55);
+    color: #f3d98b;
   }
 }
 .dark .block-tab-check {
@@ -5005,17 +4982,29 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f6dc8e;
   }
   :root:not(.light) .block-tab--inactive {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(243, 217, 139, 0.25);
-    color: rgba(246, 239, 214, 0.7);
+    background: rgba(130, 160, 240, 0.2);
+    border: 1px solid rgba(130, 160, 240, 0.38);
+    backdrop-filter: blur(8px) saturate(1.15);
+    -webkit-backdrop-filter: blur(8px) saturate(1.15);
+    color: #c9d4ff;
+    font-weight: 600;
   }
   :root:not(.light) .block-tab-check {
     color: #f6dc8e;
   }
 }
+@supports not (backdrop-filter: blur(1px)) {
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .block-tab--inactive {
+      background: rgba(40, 46, 90, 0.55);
+    }
+  }
+}
 @media (hover: hover) and (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--inactive:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(130, 160, 240, 0.3);
+    border-color: rgba(217, 183, 101, 0.55);
+    color: #f3d98b;
   }
 }
 
