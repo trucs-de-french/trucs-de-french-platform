@@ -7715,6 +7715,7 @@ button.scene-bar:active .scene-bar-toggle {
 .phonetics-ipa-pill {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: 8px;
   width: fit-content;
   max-width: 100%;
@@ -7758,5 +7759,25 @@ button.scene-bar:active .scene-bar-toggle {
     color: #c9d4ff;
     background: rgba(127, 156, 240, 0.18);
     border-color: rgba(130, 160, 240, 0.5);
+  }
+}
+
+/* Phonetics card audio player — gold outline/glow, DARK ONLY. Scoped via
+   className on this one AudioPill usage: AudioPill (audio-pill.tsx) is
+   shared with flip_cards/crossword, so the shared component itself stays
+   untouched and those other callers are unaffected. Background gradient
+   is left as-is (AudioPill's own inline style); border-box already comes
+   from Tailwind's global preflight, so adding the border doesn't change
+   the pill's outer size. */
+.dark .phonetics-audio-pill {
+  box-sizing: border-box;
+  border: 1.5px solid rgba(217, 183, 101, 0.85);
+  box-shadow: 0 0 14px rgba(217, 183, 101, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .phonetics-audio-pill {
+    box-sizing: border-box;
+    border: 1.5px solid rgba(217, 183, 101, 0.85);
+    box-shadow: 0 0 14px rgba(217, 183, 101, 0.3);
   }
 }

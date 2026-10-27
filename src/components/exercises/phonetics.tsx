@@ -91,7 +91,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                 <span className="item-number-badge" aria-label={`Репліка ${i + 1}`}>
                   {i + 1}
                 </span>
-                <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 flex-col items-start gap-2">
                   <span className="break-words font-content text-[16px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
                     {item.text}
                   </span>
@@ -111,7 +111,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                     <span className="phonetics-ipa-pill-text">{item.transcription}</span>
                   </span>
                   {translation && (
-                    <span className="break-words text-[16px] italic leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
+                    <span className="break-words text-[14px] italic leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
                       {translation}
                     </span>
                   )}
@@ -145,7 +145,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                   ) : media.source === "drive" ? (
                     <DriveAudioBlock url={media.url} />
                   ) : (
-                    <AudioPill src={media.url} />
+                    <AudioPill src={media.url} className="phonetics-audio-pill" />
                   )}
                 </div>
               )}
