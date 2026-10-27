@@ -7464,10 +7464,18 @@ button.scene-bar:active .scene-bar-toggle {
     height: 40px;
   }
 }
+/* Ці два класи тепер і на "compact"-інпуті (image/mixed, numberInput
+   "compact") — раніше той мав власний золотий border-[rgba(217,183,101,.55)]/
+   bg-white/dark:-хардкод (inputClass), що розходився з лавандовим "line"
+   (текстовий режим). font-family явно тут (не лише на базовому
+   .chrono-number-slot), бо compact несе ЛИШЕ --empty/--filled, без базового
+   класу (той задає ще й 44px width/height/radius — image/mixed лишається на
+   своєму h-10 w-12/sm:pointer-fine:h-8, не 44px). */
 .chrono-number-slot--empty {
   border: 1.5px solid #b9b2e8;
   background: #f7f6ff;
   color: #9a96c8;
+  font-family: var(--font-heading);
   /* Менший за заповнений номер (16px) — той самий розмір, що плейсхолдер
      "№" у "square"-варіанті numberInput (chronological-order.tsx, режим
      image/mixed) — text-sm, не новий хардкод. */
@@ -7481,6 +7489,26 @@ button.scene-bar:active .scene-bar-toggle {
   border: 2px solid #4b46da;
   background: #eeeefb;
   color: #2f2c6b;
+  font-family: var(--font-heading);
+}
+/* Фокус-кільце light-only для compact-варіанта (image/mixed): "line" уже
+   має той самий вигляд через .chrono-number-slot:focus-visible (базовий
+   клас, незалежний від теми) — тут лише ДОДАЄМО той самий кільце-стиль
+   compact-інпуту в світлій темі (раніше — дефолтний браузерний контур).
+   .light-скоуп (+ дзеркало на prefers-color-scheme нижче) свідомо: compact
+   у ТЕМНІЙ темі й далі лишається на своєму попередньому (дефолтному)
+   фокусі — темна тема тут не торкається. */
+.light .chrono-number-slot--empty:focus-visible,
+.light .chrono-number-slot--filled:focus-visible {
+  outline: 2px solid var(--glass-focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .chrono-number-slot--empty:focus-visible,
+  :root:not(.dark) .chrono-number-slot--filled:focus-visible {
+    outline: 2px solid var(--glass-focus-ring);
+    outline-offset: 2px;
+  }
 }
 /* Токени поля (--card-field-bg/--card-field-border), ті самі, що пропуск
    letter_gaps, замість старого хардкоду rgba(185,178,232,...); колір —

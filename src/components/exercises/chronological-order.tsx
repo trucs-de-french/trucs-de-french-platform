@@ -190,13 +190,21 @@ export function ChronologicalOrderExercise({
     return detail?.items.find((i) => i.id === itemId);
   }
 
+  // Той самий лавандовий вигляд, що lineSlotClass (режим text) — раніше тут
+  // був окремий золотий border-[rgba(217,183,101,.55)]/bg-white, через що
+  // компактний Nº (image/mixed) виглядав інакше за текстовий. --empty/
+  // --filled (без базового .chrono-number-slot — той задає 44px, compact
+  // лишається на своєму h-10 w-12) несуть ОБИДВІ теми самі (.dark-дзеркало
+  // в globals.css дає ті самі значення, що раніше були тут хардкодом).
   function inputClass(itemId: string) {
     const d = itemDetail(itemId);
-    if (!d)
-      return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:bg-[var(--dark-surface-fill)] dark:border-[var(--card-field-border)] dark:placeholder:text-[rgba(179,191,224,0.8)]";
-    return d.isCorrect
-      ? "border-green-500 bg-green-50 dark:bg-green-950/30"
-      : "border-red-500 bg-red-50 dark:bg-red-950/30";
+    if (d) {
+      return d.isCorrect
+        ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+        : "border-red-500 bg-red-50 dark:bg-red-950/30";
+    }
+    const filled = !!positions[itemId]?.trim();
+    return filled ? "chrono-number-slot--filled" : "chrono-number-slot--empty";
   }
 
   // Рамка+фон КАРТКИ (режим text, окрема картка на кожну фразу) після
@@ -212,10 +220,11 @@ export function ChronologicalOrderExercise({
     return d.isCorrect ? "chrono-phrase-row--correct" : "chrono-phrase-row--incorrect";
   }
 
-  // Зелена/червона рамка поля-номера (inputClass вище) лишається
-  // НЕЗМІННОЮ для режиму image/mixed (compact-варіант нижче) — ця функція
-  // обслуговує ЛИШЕ "line" (текстовий режим, слот праворуч картки),
-  // окремо від inputClass, щоб зміна вигляду тут не торкалась image/mixed.
+  // "line" (текстовий режим, слот праворуч картки) — додає базовий
+  // .chrono-number-slot (44px/радіус/шрифт) поверх тих самих --empty/
+  // --filled/correct/wrong класів, що тепер і inputClass вище (compact,
+  // image/mixed): той не несе базовий клас (лишається на своєму h-10 w-12),
+  // лише кольори/рамку/плейсхолдер тепер спільні з цією функцією.
   function lineSlotClass(itemId: string) {
     const d = itemDetail(itemId);
     if (d) {
