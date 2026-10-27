@@ -7309,7 +7309,7 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 .chrono-number-slot--empty {
-  border: 1.5px dashed #b9b2e8;
+  border: 1.5px solid #b9b2e8;
   background: #f7f6ff;
   color: #9a96c8;
   /* Менший за заповнений номер (16px) — той самий розмір, що плейсхолдер

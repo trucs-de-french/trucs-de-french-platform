@@ -597,7 +597,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             onClick={goBack}
             disabled={!canGoBack}
             aria-label="Попередня картка"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[#ead9a6] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--gold-border-dark)] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[var(--gold-border-dark)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
           >
             <ChevronLeft size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#c9d4ff]" />
           </button>
@@ -612,7 +612,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             onClick={() => flyOut(1)}
             disabled={!canGoNext}
             aria-label="Наступна картка"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#ead9a6] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[#ead9a6] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--gold-border-dark)] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[var(--gold-border-dark)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
           >
             <ChevronRight size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#c9d4ff]" />
           </button>
@@ -626,7 +626,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               type="button"
               onClick={handleShuffle}
               disabled={remaining.length <= 1}
-              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[#ead9a6] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
             >
               <Shuffle size={18} className="text-[#b8902f] dark:text-[#f6dc8e]" /> Перемішати
             </button>
@@ -634,7 +634,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <button
                 type="button"
                 onClick={toggleFlip}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[#ead9a6] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
               >
                 {flipped ? "Показати питання" : "Показати переклад"}
               </button>
