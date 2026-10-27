@@ -391,16 +391,26 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
   // під довгий текст замість колапсу (був колапс через height:100% проти
   // предка з auto-height — класична відсоткова пастка CSS).
   const faceVisualClass =
-    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[rgba(255,255,255,0.06)] dark:shadow-none";
+    // Фон темної теми — суцільний (не rgba-напівпрозорий): грань сидить
+    // ПОВЕРХ шарів-"стопки" нижче (peek1/peek2), півпрозорий фон дозволяв би
+    // їм просвічувати крізь низ картки й перекреслювати підказку-рядок.
+    // #191d36 — те саме значення, що дає rgba(255,255,255,.06) по
+    // --glass-panel-bg теми (rgba(10,16,48,.82) по --background #0a0a0a),
+    // тож колір картки на вигляд не змінюється.
+    "flip-face rounded-[14px] border-[1.5px] border-[#dcbd6e] glass-gold-edge glass-card-shadow bg-white dark:border-[rgba(217,183,101,0.45)] dark:bg-[#191d36] dark:shadow-none";
   const faceClass = `${faceVisualClass} flip-face--back`;
   const canGoNext = !finished && flyDir === null && !dragging;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* pb — місце під декоративні смужки-"картки позаду", щоб вони
-          виглядали стопкою знизу стику, не перекриваючи ряд навігації під
-          стеком (проблема 1 з завдання). */}
-      <div className="relative mx-auto w-full max-w-[640px] pb-[14px] sm:pb-[20px]">
+      {/* mb (не pb!) — місце під декоративні смужки-"картки позаду": margin,
+          не padding, бо peek1/peek2 нижче позиціонуються (bottom: -8px/
+          -16px) відносно НИЖНЬОГО КРАЮ САМОЇ КАРТКИ — padding-bottom тут
+          зсунув би їхню точку відліку вниз і знову затягнув би їх усередину
+          картки (проблема 1 з завдання). isolate — власний стекінг-контекст,
+          щоб z-index:-1 нижче рахувався лише проти .flip-card (z-20), не
+          просочувався в решту сторінки. */}
+      <div className="relative isolate mx-auto w-full max-w-[640px] mb-5">
         {finished ? (
           <div
             className={`flex w-full min-h-[250px] flex-col items-center justify-center gap-3 sm:min-h-[270px] ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
@@ -415,13 +425,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             {peek2 && (
               <div
                 aria-hidden
-                className="absolute inset-x-[26px] bottom-0 z-0 h-10 rounded-[14px] border-[1.5px] border-[#ead9a6] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:inset-x-[36px] sm:h-[60px]"
+                className="absolute inset-x-4 -bottom-4 z-[-1] h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.35)] bg-white dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.03)] sm:h-[60px]"
               />
             )}
             {peek1 && (
               <div
                 aria-hidden
-                className="absolute inset-x-[13px] bottom-[9px] z-10 h-10 rounded-[14px] border-[1.5px] border-[#ead9a6] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.35)] dark:bg-[rgba(255,255,255,0.04)] sm:inset-x-[18px] sm:h-[60px]"
+                className="absolute inset-x-2 -bottom-2 z-[-1] h-10 rounded-[14px] border-[1.5px] border-[rgba(220,189,110,0.6)] bg-[#fffdf6] dark:border-[rgba(217,183,101,0.6)] dark:bg-[rgba(255,255,255,0.04)] sm:h-[60px]"
               />
             )}
             <div

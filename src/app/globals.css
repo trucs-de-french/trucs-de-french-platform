@@ -7490,7 +7490,7 @@ button.scene-bar:active .scene-bar-toggle {
   justify-content: space-between;
   box-sizing: border-box;
   gap: 8px;
-  padding: 18px 16px 14px;
+  padding: 18px 16px 16px;
 }
 @media (min-width: 640px) {
   .flip-face {
