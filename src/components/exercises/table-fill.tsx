@@ -290,7 +290,7 @@ export function TableFillExercise({
     return (
       <div
         key={row.id}
-        className="flex flex-col gap-1.5 rounded border-[1.5px] dark:border glass-chip glass-gap-shadow bg-white dark:bg-[var(--card-bg)] p-2 dark:border-[var(--card-border)]"
+        className="flex flex-col gap-1.5 rounded border-[1.5px] dark:border-[1.5px] glass-chip glass-gap-shadow bg-white dark:bg-[var(--card-bg)] p-2 dark:border-[var(--card-border)]"
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">

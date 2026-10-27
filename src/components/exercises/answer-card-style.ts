@@ -50,7 +50,7 @@ export const ANSWER_CARD_INLINE =
 // CARD_WRAP у multiple-choice.tsx БЕЗ зміни значення — рядок той самий,
 // multiple_choice імпортує звідси під тим самим локальним ім'ям.
 export const ITEM_CARD_WRAP =
-  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border glass-gold-edge glass-card-shadow bg-white dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
+  "overflow-hidden rounded-[14px] dark:rounded-xl border-[1.5px] dark:border-[1.5px] glass-gold-edge glass-card-shadow bg-white dark:border-[var(--card-border)] dark:bg-[var(--card-bg)]";
 
 // Круглий бейдж-номер питання/твердження/рядка (1, 2, 3...) — еталон:
 // колишній QUESTION_NUMBER_BADGE, що жив лише в multiple-choice.tsx

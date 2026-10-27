@@ -1696,6 +1696,7 @@ button, input, textarea, select, label, nav, aside {
 .dark .scene-bar {
   --glass-panel-bg: rgba(10, 16, 48, 0.82);
   --glass-panel-border: var(--gold-border-dark-50);
+  --glass-panel-border-width: var(--border-card);
   --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   --glass-bar-bg: rgba(10, 16, 48, 0.92);
   --glass-bar-border: var(--gold-border-dark-50);
@@ -1713,6 +1714,7 @@ button, input, textarea, select, label, nav, aside {
   --glass-item-shadow: none;
   --glass-answer-bg: var(--dark-surface-fill);
   --glass-answer-border: var(--gold-border-70);
+  --glass-answer-border-width: var(--border-field);
   --glass-answer-text: var(--card-ink);
   --glass-answer-border-hover: #f6dc8e;
   --glass-answer-text-hover: #fff0b8;
@@ -1726,6 +1728,7 @@ button, input, textarea, select, label, nav, aside {
   :root:not(.light) .scene-bar {
     --glass-panel-bg: rgba(10, 16, 48, 0.82);
     --glass-panel-border: var(--gold-border-dark-50);
+    --glass-panel-border-width: var(--border-card);
     --glass-panel-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
     --glass-bar-bg: rgba(10, 16, 48, 0.92);
     --glass-bar-border: var(--gold-border-dark-50);
@@ -5007,19 +5010,17 @@ button.scene-bar:active .scene-bar-toggle {
    на globals.css вище — той самий токен, що читає сама панель, тож
    активна вкладка і панель гарантовано однакового кольору без дублю). */
 .dark .block-tab--active {
-  /* Темна панель не задає --glass-panel-border-width (лише світла
-     "variant 3", рядок вище в файлі) — у темній темі фактична рамка
-     панелі падає на дефолтний fallback 1px (var(--glass-panel-border-width,
-     1px) у .glass-block-panel), не 1.5px, як у світлій. Рамка вкладки
-     мусить збігатись з РЕАЛЬНОЮ рамкою панелі, інакше на стику з'являється
+  /* Темна панель тепер теж задає --glass-panel-border-width: var(--border-
+     card) (контейнерна роль, border-audit.md) — рамка вкладки мусить
+     збігатись з РЕАЛЬНОЮ рамкою панелі, інакше на стику з'являється
      прямокутний "сходинка"-нотч. */
-  border-width: 1px;
+  border-width: var(--border-card);
   border-color: var(--gold-border-dark-50);
   color: #f6dc8e;
 }
 .dark .block-tab--inactive {
   background: rgba(130, 160, 240, 0.2);
-  border: 1px solid rgba(130, 160, 240, 0.38);
+  border: var(--border-card) solid rgba(130, 160, 240, 0.38);
   backdrop-filter: blur(8px) saturate(1.15);
   -webkit-backdrop-filter: blur(8px) saturate(1.15);
   color: #c9d4ff;
@@ -5042,13 +5043,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--active {
-    border-width: 1px;
+    border-width: var(--border-card);
     border-color: var(--gold-border-dark-50);
     color: #f6dc8e;
   }
   :root:not(.light) .block-tab--inactive {
     background: rgba(130, 160, 240, 0.2);
-    border: 1px solid rgba(130, 160, 240, 0.38);
+    border: var(--border-card) solid rgba(130, 160, 240, 0.38);
     backdrop-filter: blur(8px) saturate(1.15);
     -webkit-backdrop-filter: blur(8px) saturate(1.15);
     color: #c9d4ff;
