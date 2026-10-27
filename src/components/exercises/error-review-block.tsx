@@ -139,7 +139,7 @@ function ErrorReviewCard({
   const remaining = entry.remainingItemIds.length;
 
   return (
-    <div className="rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow dark:shadow-sm dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
+    <div className="rounded-lg border-[1.5px] dark:border glass-gold-edge border-[#dcbd6e] bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
       <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span className="item-number-badge" aria-hidden>
           {index + 1}

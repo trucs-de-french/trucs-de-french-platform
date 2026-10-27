@@ -5746,6 +5746,20 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 0 8px rgba(217, 183, 101, 0.28);
   }
 }
+/* "Correction des erreurs" row card (error-review-block.tsx): .glass-card-
+   shadow above is .light-only (no dark rule at all), and the row div used
+   to carry Tailwind's generic dark:shadow-sm (0 1px 2px rgb(0 0 0 / .05)) —
+   near-invisible on the dark-blue card. Soft bottom-weighted depth shadow,
+   same light/dark asymmetry (0,0,20 vs the light theme's gold-tinted
+   rgba(184,144,47,...)) as the rest of this dark theme. */
+.dark .error-review-card-shadow {
+  box-shadow: 0 4px 10px rgba(0, 0, 20, 0.45), 0 1px 3px rgba(0, 0, 20, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-card-shadow {
+    box-shadow: 0 4px 10px rgba(0, 0, 20, 0.45), 0 1px 3px rgba(0, 0, 20, 0.35);
+  }
+}
 .drag-drop-row-number {
   margin-top: 7px;
 }
