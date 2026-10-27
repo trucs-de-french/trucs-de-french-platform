@@ -14,7 +14,7 @@ export const ANSWER_CARD_BASE =
 // ANSWER_CHIP_BASE/ANSWER_CHIP_DEFAULT нижче (суцільна рамка-чип, як у
 // полів-пропусків, без градієнта й без великої тіні).
 export const ANSWER_CARD_DEFAULT =
-  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
+  "glass-gold-edge glass-card-hover border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--dark-blue-fill)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
 
 // Той самий розмір/відступ/радіус, що ANSWER_CARD_BASE/DEFAULT, але
 // маленька рамка-чип (border rgba(217,183,101,.55) 1px, легка тінь

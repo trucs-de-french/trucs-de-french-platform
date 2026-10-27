@@ -7627,22 +7627,22 @@ button.scene-bar:active .scene-bar-toggle {
    розійшлись знову. Лише фон — без рамки/hover (ті в .pool-tile-dark
    нижче, для самих інтерактивних плиток, не для смужки-контейнера). */
 .dark .pool-dark-bg {
-  background: rgba(10, 16, 48, 0.96);
+  background: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .pool-dark-bg {
-    background: rgba(10, 16, 48, 0.96);
+    background: var(--dark-blue-fill);
   }
 }
 
 /* Той самий фон, що .pool-dark-bg, + hover лише під (hover: hover) —
    для самих плиток-варіантів (кнопки), не смужки-контейнера. */
 .dark .pool-tile-dark {
-  background: rgba(10, 16, 48, 0.96);
+  background: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .pool-tile-dark {
-    background: rgba(10, 16, 48, 0.96);
+    background: var(--dark-blue-fill);
   }
 }
 @media (hover: hover) {
