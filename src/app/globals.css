@@ -2082,9 +2082,36 @@ button, input, textarea, select, label, nav, aside {
 /* Та сама панель — свій текст завжди зліва (прибирає data-text-align
    "justify"/center/right, що міг зберегти редактор для старого блоку),
    не чіпаючи той самий .rich-text--article у статті Матеріалу поза цим
-   callout. */
-.callout-panel-info .rich-text [data-text-align] {
+   callout. ЛИШЕ темна тема (регресія-фікс): світла нижче повертає старий
+   синій бокс, що такого примусового вирівнювання не мав. */
+.dark .callout-panel-info .rich-text [data-text-align] {
   text-align: left;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .callout-panel-info .rich-text [data-text-align] {
+    text-align: left;
+  }
+}
+/* Регресія-фікс: інфо-callout (CalloutExercise, style "info") у СВІТЛІЙ
+   темі повертається на старий синій бокс (border-blue-300/bg-blue-50,
+   2px, rounded-md, без тіні) — переїзд на панельні --glass-panel-*
+   токени (8e7bbc7) був ненавмисним для світлої теми; темна лишається на
+   новому вигляді (.dark .glass-block-panel вище), не чіпаємо. Специфічність
+   (0,2,0) та саме, що .light .glass-block-panel — виграє порядком (цей
+   блок нижче у файлі). */
+.light .callout-panel-info {
+  background: #eff6ff;
+  border: 2px solid #93c5fd;
+  border-radius: 6px;
+  box-shadow: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .callout-panel-info {
+    background: #eff6ff;
+    border: 2px solid #93c5fd;
+    border-radius: 6px;
+    box-shadow: none;
+  }
 }
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
