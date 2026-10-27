@@ -7708,3 +7708,55 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(127, 156, 240, 0.08);
   }
 }
+
+/* Phonetics card — IPA transcription pill. See src/components/exercises/
+   phonetics.tsx. Scoped to this one card (not a shared answer-chip/pill
+   style), so no other exercise is affected. */
+.phonetics-ipa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 600;
+  font-style: normal;
+  color: #3b36c4;
+  background: #e8ebfc;
+  border: 1.5px solid #c9cdf5;
+}
+.phonetics-ipa-pill-icon {
+  flex: none;
+}
+.phonetics-ipa-pill-text {
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+}
+/* Якщо текст IPA ширший за картку — замість обрізання крапками (заборонено
+   вимогою) дозволяємо перенос рядка; пілюля стає менш округлою (14px),
+   щоб форма не виглядала дивно на 2+ рядках. */
+@container (max-width: 260px) {
+  .phonetics-ipa-pill {
+    border-radius: 14px;
+  }
+  .phonetics-ipa-pill-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+.dark .phonetics-ipa-pill {
+  color: #c9d4ff;
+  background: rgba(127, 156, 240, 0.18);
+  border-color: rgba(130, 160, 240, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .phonetics-ipa-pill {
+    color: #c9d4ff;
+    background: rgba(127, 156, 240, 0.18);
+    border-color: rgba(130, 160, 240, 0.5);
+  }
+}

@@ -91,12 +91,24 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                 <span className="item-number-badge" aria-label={`Репліка ${i + 1}`}>
                   {i + 1}
                 </span>
-                <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 flex-col gap-2">
                   <span className="break-words font-content text-[16px] font-medium leading-[1.35] [overflow-wrap:anywhere]">
                     {item.text}
                   </span>
-                  <span className="break-words text-sm text-neutral-500 [overflow-wrap:anywhere] dark:text-neutral-400">
-                    {item.transcription}
+                  <span className="phonetics-ipa-pill">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                      className="phonetics-ipa-pill-icon"
+                    >
+                      <path d="M11 5L6 9H3v6h3l5 4V5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M15.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18.5 5.5a9 9 0 0 1 0 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="phonetics-ipa-pill-text">{item.transcription}</span>
                   </span>
                   {translation && (
                     <span className="break-words text-[16px] italic leading-[1.4] text-[#3b36c4] [overflow-wrap:anywhere] dark:text-[#c9d4ff]">
