@@ -7218,16 +7218,18 @@ button.scene-bar:active .scene-bar-toggle {
    активний слот", не порожній стан сам по собі). */
 .dark .karaoke-gap--active-empty {
   background: rgba(127, 156, 240, 0.28);
+  border-width: 1px;
   border-color: #a9bcff;
   color: #f5ecd0;
-  box-shadow: 0 0 10px rgba(127, 156, 240, 0.45);
+  box-shadow: 0 0 12px rgba(127, 156, 240, 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--active-empty {
     background: rgba(127, 156, 240, 0.28);
+    border-width: 1px;
     border-color: #a9bcff;
     color: #f5ecd0;
-    box-shadow: 0 0 10px rgba(127, 156, 240, 0.45);
+    box-shadow: 0 0 12px rgba(127, 156, 240, 0.5);
   }
 }
 .karaoke-gap--upcoming-empty {
@@ -7244,7 +7246,7 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .karaoke-gap--upcoming-empty {
   background: rgba(8, 10, 40, 0.45);
   border-style: solid;
-  border-width: 2px;
+  border-width: 1px;
   border-color: rgba(130, 160, 240, 0.6);
   color: var(--card-ink);
   font-weight: 700;
@@ -7256,7 +7258,7 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.light) .karaoke-gap--upcoming-empty {
     background: rgba(8, 10, 40, 0.45);
     border-style: solid;
-    border-width: 2px;
+    border-width: 1px;
     border-color: rgba(130, 160, 240, 0.6);
     color: var(--card-ink);
     font-weight: 700;
@@ -7273,6 +7275,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .karaoke-gap--filled {
   background: rgba(127, 156, 240, 0.22);
+  border-width: 1px;
   border-color: #7f9cf0;
   color: var(--card-ink);
   font-weight: 700;
@@ -7280,6 +7283,7 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--filled {
     background: rgba(127, 156, 240, 0.22);
+    border-width: 1px;
     border-color: #7f9cf0;
     color: var(--card-ink);
     font-weight: 700;
@@ -7292,12 +7296,14 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .karaoke-gap--correct {
   background: var(--field-correct-bg);
+  border-width: 1px;
   border-color: var(--field-correct-border);
   color: var(--field-correct-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--correct {
     background: var(--field-correct-bg);
+    border-width: 1px;
     border-color: var(--field-correct-border);
     color: var(--field-correct-ink);
   }
@@ -7309,12 +7315,14 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .karaoke-gap--wrong {
   background: var(--field-wrong-bg);
+  border-width: 1px;
   border-color: var(--field-wrong-border);
   color: var(--field-wrong-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .karaoke-gap--wrong {
     background: var(--field-wrong-bg);
+    border-width: 1px;
     border-color: var(--field-wrong-border);
     color: var(--field-wrong-ink);
   }
@@ -7382,6 +7390,7 @@ button.scene-bar:active .scene-bar-toggle {
 .dark .karaoke-option-chip {
   padding: 10px 22px;
   background: rgba(127, 156, 240, 0.22);
+  border-width: 1px;
   border-color: #7f9cf0;
   color: #f5ecd0;
   box-shadow: none;
@@ -7390,6 +7399,7 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.light) .karaoke-option-chip {
     padding: 10px 22px;
     background: rgba(127, 156, 240, 0.22);
+    border-width: 1px;
     border-color: #7f9cf0;
     color: #f5ecd0;
     box-shadow: none;
