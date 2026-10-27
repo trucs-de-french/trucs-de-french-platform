@@ -258,6 +258,13 @@
   --lavender-card: rgba(130, 160, 240, 0.42);
   --lavender-field: rgba(130, 160, 240, 0.55);
   --lavender-hover: rgba(130, 160, 240, 0.65);
+
+  /* Світла тема — легка золотава тінь "піднятості" на ідле-стані дрібних
+     answer-елементів (чекбокс-квадратів, плиток-літер, полів-пропусків,
+     select-пілюлі): сильніша за .glass-gap-shadow, та сама родина, що
+     рамки. Hover-варіант лише там, де вже є власний hover-стан. */
+  --answer-shadow-raised: 0 2px 4px rgba(217, 183, 101, 0.28);
+  --answer-shadow-raised-hover: 0 3px 6px rgba(217, 183, 101, 0.38);
 }
 
 /* Спільний клас для текстових полів вправ (input/textarea) — одна точка
@@ -8149,11 +8156,63 @@ button.scene-bar:active .scene-bar-toggle {
    лишаються без власної тіні, як і зараз. У світлій темі немає hover-стану
    для цього квадрата (на відміну від темної вище) — новий не додається. */
 .light .cg-cb-unchecked {
-  box-shadow: 0 2px 4px rgba(217, 183, 101, 0.28);
+  box-shadow: var(--answer-shadow-raised);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .cg-cb-unchecked {
-    box-shadow: 0 2px 4px rgba(217, 183, 101, 0.28);
+    box-shadow: var(--answer-shadow-raised);
+  }
+}
+/* Та сама тінь на трьох інших ідле-станах "answer"-елементів —
+   комбіновані селектори (клас layout/типу + .glass-gap-shadow), щоб
+   зачепити ЛИШЕ ідле-гілку кожного компонента (вища специфічність за
+   .light .glass-gap-shadow саму, тож перекриває її незалежно від порядку
+   в файлі) і не торкнутись hint/correct/incorrect/selected/focus гілок,
+   де .glass-gap-shadow в className взагалі не додається.
+
+   .letter-tile-cell.glass-gap-shadow — letter_rearrangement ідле-плитка
+   (sortable-tile-row.tsx, letterTile) І letter_gaps ідле/заповнений
+   пропуск (letter-gaps.tsx) — обидва пишуть один і той самий розмір-клас
+   .letter-tile-cell (32×36px).
+
+   .exercise-field.glass-gap-shadow — той самий "типове текстове поле"
+   набір класів у open_answer (open-answer-check.tsx, "Ваша відповідь...",
+   ідле-гілка), letter_gaps (той самий пропуск, другим боком — уже
+   покритий правилом вище, дублюється безпечно), essay_check
+   (essay-check.tsx, і textarea, і коротке поле) і table_fill
+   (table-fill.tsx, ідле-клітинка) — усі чотири пишуть ідентичну пару
+   класів для ідле-стану.
+
+   .select-field-pill--placeholder — multiple_choice dropdown, закритий
+   стан "Оберіть" (multiple-choice.tsx); обраний-але-не-перевірений стан
+   (--chosen) і correct/incorrect лишаються без змін — у них немає
+   .glass-gap-shadow в className. */
+.light .letter-tile-cell.glass-gap-shadow,
+.light .exercise-field.glass-gap-shadow,
+.light .select-field-pill--placeholder {
+  box-shadow: var(--answer-shadow-raised);
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .letter-tile-cell.glass-gap-shadow,
+  :root:not(.dark) .exercise-field.glass-gap-shadow,
+  :root:not(.dark) .select-field-pill--placeholder {
+    box-shadow: var(--answer-shadow-raised);
+  }
+}
+/* Hover-підсилення тіні — лише там, де вже є власний hover (рамка
+   темніє через .glass-chip-hover, фон через hover:bg-neutral-50):
+   letter_rearrangement ідле-плитка й letter_gaps ідле/заповнений пропуск.
+   .exercise-field.glass-gap-shadow (open_answer/essay_check/table_fill)
+   і .select-field-pill--placeholder (multiple_choice) hover-стану в
+   className не мають — нового hover їм за задачею не додаємо. */
+@media (hover: hover) {
+  .light .letter-tile-cell.glass-gap-shadow:hover {
+    box-shadow: var(--answer-shadow-raised-hover);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: light) {
+  :root:not(.dark) .letter-tile-cell.glass-gap-shadow:hover {
+    box-shadow: var(--answer-shadow-raised-hover);
   }
 }
 
