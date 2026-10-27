@@ -13,7 +13,7 @@ import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
@@ -227,7 +227,7 @@ export function ImageMatchExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || placed.some((p) => p === null)}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -359,7 +359,7 @@ export function ImageMatchExercise({
               type="button"
               onClick={() => checkConfirm.attemptCheck(unplacedCount, submitImageMatch)}
               disabled={pending || config.items.length - unplacedCount === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>

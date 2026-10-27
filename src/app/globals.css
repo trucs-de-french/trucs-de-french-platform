@@ -5215,34 +5215,91 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* Кнопка "Перевірити блок" (STUDENT_BUTTON_PRIMARY раніше, тепер окремий
-   клас — STUDENT_BUTTON_PRIMARY лишається спільною роллю для вправ БЕЗ
-   блоків, її не можна було чіпати) — лишається де малювалась і сьогодні
-   (коментар у block-navigation.tsx), лише новий вигляд: та сама indigo-
-   градієнтна "первинна" кнопка, що інші елементи цієї навігації. */
-.exercise-block-check-btn {
+/* Єдина специфікація кнопки-перевірки ("Перевірити" в будь-якій вправі,
+   karaoke-check-btn, .exercise-block-check-btn — "Перевірити блок",
+   error-review-fix-button — "Виправити N"/"Спробувати ще раз") — раніше
+   три різні реалізації (інлайн STUDENT_BUTTON_PRIMARY-похідна кнопка,
+   .exercise-block-check-btn 180deg/16px/800, .karaoke-check-btn, що й
+   перемикав кут градієнта між темами) — тепер ОДНА: .btn-check
+   (BUTTON_CHECK, button-styles.ts). .exercise-block-check-btn/.karaoke-
+   check-btn лишаються як layout-хуки (мобільна ширина/flex нижче) — сам
+   вигляд більше не на них, кнопки в JSX несуть ОБИДВА класи. */
+.btn-check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0 22px;
+  padding-inline: 22px;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #5a55e6, #3b36c4);
+  border-radius: 10px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
   color: #fff;
-  font-weight: 800;
-  font-size: 16px;
-  box-shadow: 0 4px 14px rgba(59, 54, 196, 0.4);
+  box-shadow: 0 3px 8px rgba(59, 54, 196, 0.28);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
-.exercise-block-check-btn:disabled {
-  background: var(--btn-disabled-bg);
-  color: var(--btn-disabled-text);
-  cursor: not-allowed;
-  box-shadow: none;
+.dark .btn-check {
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #eef0ff;
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.25), inset 0 0 0 1px rgba(130, 160, 240, 0.35);
 }
-.exercise-block-check-btn:focus-visible {
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .btn-check {
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    color: #eef0ff;
+    box-shadow: 0 2px 6px rgba(217, 183, 101, 0.25), inset 0 0 0 1px rgba(130, 160, 240, 0.35);
+  }
+}
+@media (hover: hover) {
+  .btn-check:not(:disabled):hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 10px rgba(59, 54, 196, 0.34);
+  }
+  .dark .btn-check:not(:disabled):hover {
+    filter: brightness(1.08);
+    box-shadow: 0 3px 9px rgba(217, 183, 101, 0.32), inset 0 0 0 1px rgba(130, 160, 240, 0.4);
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .btn-check:not(:disabled):hover {
+    filter: brightness(1.08);
+    box-shadow: 0 3px 9px rgba(217, 183, 101, 0.32), inset 0 0 0 1px rgba(130, 160, 240, 0.4);
+  }
+}
+.btn-check:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(59, 54, 196, 0.24);
+}
+.dark .btn-check:not(:disabled):active {
+  box-shadow: 0 1px 3px rgba(217, 183, 101, 0.18), inset 0 0 0 1px rgba(130, 160, 240, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .btn-check:not(:disabled):active {
+    box-shadow: 0 1px 3px rgba(217, 183, 101, 0.18), inset 0 0 0 1px rgba(130, 160, 240, 0.3);
+  }
+}
+.btn-check:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
+}
+.dark .btn-check:focus-visible {
+  outline: 2px solid #f6dc8e;
+  outline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .btn-check:focus-visible {
+    outline: 2px solid #f6dc8e;
+    outline-offset: 2px;
+  }
+}
+.btn-check:disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 /* Спільна темно-скляна картка-посилання (LinkCard, link-card.tsx) —
    "Практика" (scene_links, фіксована й усередині контент-блоку), задачі
@@ -7618,37 +7675,11 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-.karaoke-check-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 28px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #5a55e6, #3b36c4);
-  color: #fff;
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 500;
-}
-.karaoke-check-btn:disabled {
-  background: var(--btn-disabled-bg);
-  color: var(--btn-disabled-text);
-  cursor: not-allowed;
-}
+/* Вигляд тепер лише .btn-check (спільна специфікація вище) — цей клас
+   лишається layout-хуком (мобільна повна ширина). */
 @media (max-width: 767px) {
   .karaoke-check-btn {
     width: 100%;
-  }
-}
-.dark .karaoke-check-btn:not(:disabled) {
-  background: linear-gradient(135deg, #5a55e6, #3b36c4);
-  color: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .karaoke-check-btn:not(:disabled) {
-    background: linear-gradient(135deg, #5a55e6, #3b36c4);
-    color: #fff;
   }
 }
 

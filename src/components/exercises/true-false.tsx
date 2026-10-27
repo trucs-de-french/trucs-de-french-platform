@@ -7,7 +7,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -306,7 +306,7 @@ export function TrueFalseExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || !practiceAllAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -328,7 +328,7 @@ export function TrueFalseExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockStatements?.length ?? 0)}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -372,7 +372,7 @@ export function TrueFalseExercise({
                     )
                   }
                   disabled={single.pending || singleAnsweredCount === 0}
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>

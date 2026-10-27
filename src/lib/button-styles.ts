@@ -60,6 +60,16 @@ export const BUTTON_PREVIEW =
 export const STUDENT_BUTTON_PRIMARY =
   "font-heading rounded-md bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand/90 disabled:bg-[image:var(--btn-disabled-bg)] disabled:text-[var(--btn-disabled-text)] disabled:shadow-none disabled:cursor-not-allowed";
 
+// Єдина візуальна специфікація кнопки-перевірки ("Перевірити" в будь-якій
+// вправі, karaoke, "Перевірити блок", "Виправити N"/"Спробувати ще раз" в
+// error-review-block) — раніше три різні реалізації (ця STUDENT_BUTTON_
+// PRIMARY-похідна інлайн-кнопка, .exercise-block-check-btn, .karaoke-
+// check-btn), кожна з власним градієнтом/кутом/тінню. Сама візуальна
+// специфікація — клас .btn-check (globals.css, фон/тінь/hover/focus/
+// disabled через --btn-check-* токени обох тем); тут лише font-heading
+// (Nunito), той самий принцип, що решта ролей цього файлу.
+export const BUTTON_CHECK = "font-heading btn-check";
+
 // Другорядна кнопка-перемикач студентської сторінки (швидкість відтворення
 // аудіо тощо) — ДВА стани, не один: неактивний — нейтральна картка
 // (bg-white/border-gray-200/shadow-sm, той самий принцип, що

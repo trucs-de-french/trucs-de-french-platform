@@ -12,7 +12,7 @@ import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
 import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
@@ -906,7 +906,7 @@ export function MultipleChoiceExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || !practiceAllAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -929,7 +929,7 @@ export function MultipleChoiceExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockItems?.length ?? 0)}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -974,7 +974,7 @@ export function MultipleChoiceExercise({
                     singleCheckConfirm.attemptCheck(config.items.length - answeredCount, submitSingle)
                   }
                   disabled={single.pending || answeredCount === 0}
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>

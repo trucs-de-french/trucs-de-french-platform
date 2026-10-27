@@ -6,7 +6,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
 import { formatPointsCount } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
@@ -441,7 +441,7 @@ export function FillBlankExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || [...practiceSet].some((id) => !answers[Number(id)])}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -455,7 +455,7 @@ export function FillBlankExercise({
                 type="button"
                 onClick={() => checkConfirm.attemptCheck(blankCount - filledCount, submitFillBlank)}
                 disabled={pending || filledCount === 0}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                className={`self-start ${BUTTON_CHECK}`}
               >
                 {pending ? "Перевіряю..." : "Перевірити"}
               </button>

@@ -18,7 +18,7 @@ import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 
@@ -209,7 +209,7 @@ export function ListeningExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || !practiceAllAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -294,7 +294,7 @@ export function ListeningExercise({
                 checkConfirm.attemptCheck(config.questions.length - answeredCount, submitAnswers)
               }
               disabled={pending || answeredCount === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>

@@ -18,7 +18,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { formatPointsCount } from "@/lib/exercises/format-points";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
@@ -1000,7 +1000,7 @@ function CrosswordBlockView({
                       type="button"
                       onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
                       disabled={pending || unfilledWords === totalWords}
-                      className="exercise-block-check-btn"
+                      className="exercise-block-check-btn btn-check"
                     >
                       {pending ? "Перевіряю..." : "Перевірити блок"}
                     </button>
@@ -1022,7 +1022,7 @@ function CrosswordBlockView({
               type="button"
               onClick={() => checkConfirm.attemptCheck(unfilledWords, handleSubmit)}
               disabled={pending || unfilledWords === totalWords}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>
@@ -1075,7 +1075,7 @@ function CrosswordBlockView({
             <button
               type="button"
               onClick={() => setPracticeChecked(true)}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               Перевірити
             </button>

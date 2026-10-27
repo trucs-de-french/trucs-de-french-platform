@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
@@ -182,7 +182,7 @@ function ErrorReviewCard({
           <button
             type="button"
             onClick={onToggleExpanded}
-            className={`${STUDENT_BUTTON_PRIMARY} min-h-11 error-review-fix-button`}
+            className={`${BUTTON_CHECK} min-h-11 error-review-fix-button`}
           >
             {expanded ? "Згорнути" : isWhole ? "Спробувати ще раз" : `Виправити ${remaining}`}
           </button>

@@ -28,7 +28,7 @@ import {
   COMPACT_IMAGE_FILL,
   ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
@@ -546,7 +546,7 @@ export function ChronologicalOrderExercise({
               type="button"
               onClick={submitPractice}
               disabled={practiceCheck.pending}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
             </button>
@@ -591,7 +591,7 @@ export function ChronologicalOrderExercise({
                   checkConfirm.attemptCheck(config.items.length - answeredCount, handleSubmit)
                 }
                 disabled={pending || answeredCount === 0}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                className={`self-start ${BUTTON_CHECK}`}
               >
                 {pending ? "Перевіряю..." : "Перевірити"}
               </button>

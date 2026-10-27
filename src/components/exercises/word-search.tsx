@@ -21,7 +21,7 @@ import { CompactAudioButton } from "./compact-audio-button";
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { LEGEND_TILE_BASE, LEGEND_IMAGE_GRID, LEGEND_PILL, LEGEND_LONG_CARD } from "./legend-tile-style";
@@ -1040,7 +1040,7 @@ function WordSearchBlockView({
                       type="button"
                       onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
                       disabled={pending || foundCount === 0}
-                      className="exercise-block-check-btn"
+                      className="exercise-block-check-btn btn-check"
                     >
                       {pending ? "Перевіряю..." : "Перевірити блок"}
                     </button>
@@ -1062,7 +1062,7 @@ function WordSearchBlockView({
               type="button"
               onClick={() => checkConfirm.attemptCheck(totalWords - foundCount, handleSubmit)}
               disabled={pending || foundCount === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>

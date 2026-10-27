@@ -10,7 +10,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
@@ -330,7 +330,7 @@ export function DragDropExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || placed.some((p) => p === null)}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -510,7 +510,7 @@ export function DragDropExercise({
               type="button"
               onClick={() => checkConfirm.attemptCheck(unfilledSlots, submitDragDrop)}
               disabled={pending || placed.length - unfilledSlots === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>

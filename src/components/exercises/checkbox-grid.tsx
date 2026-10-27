@@ -16,7 +16,7 @@ import { pluralizePoints } from "@/lib/pluralize-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
@@ -379,7 +379,7 @@ export function CheckboxGridExercise({
               type="button"
               onClick={submitPractice}
               disabled={practiceCheck.pending}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY} dark:bg-[linear-gradient(135deg,#5a55e6,#3b36c4)] dark:text-white dark:hover:bg-[linear-gradient(135deg,#5a55e6,#3b36c4)] dark:shadow-[0_8px_16px_-8px_rgba(59,54,196,0.6)]`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
             </button>
@@ -430,7 +430,7 @@ export function CheckboxGridExercise({
             type="button"
             onClick={handleSubmit}
             disabled={pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {pending ? "Перевіряю..." : "Перевірити"}
           </button>

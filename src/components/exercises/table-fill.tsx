@@ -6,7 +6,7 @@ import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } f
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
@@ -658,7 +658,7 @@ export function TableFillExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -679,7 +679,7 @@ export function TableFillExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === hiddenCellsOf(activeBlockRows).length}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -769,7 +769,7 @@ export function TableFillExercise({
                     single.pending ||
                     unfilledCellCount(config.rows) === hiddenCellsOf(config.rows).length
                   }
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>

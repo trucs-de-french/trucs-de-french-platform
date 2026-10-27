@@ -12,7 +12,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { TaskPanelHeader } from "./task-panel-header";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
@@ -466,7 +466,7 @@ export function ReorderExercise({
               type="button"
               onClick={submitPractice}
               disabled={practiceCheck.pending}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
             </button>
@@ -513,7 +513,7 @@ export function ReorderExercise({
       type="button"
       onClick={() => submitBlock(activeBlock)}
       disabled={activeBlockPending}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -566,7 +566,7 @@ export function ReorderExercise({
                   )
                 }
                 disabled={single.pending}
-                className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                className={`self-start ${BUTTON_CHECK}`}
               >
                 {single.pending ? "Перевіряю..." : "Перевірити"}
               </button>

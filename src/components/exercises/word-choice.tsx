@@ -9,7 +9,7 @@ import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instru
 import { formatPointsCount } from "@/lib/exercises/format-points";
 import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
@@ -563,7 +563,7 @@ export function WordChoiceExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || !practiceAllAnswered}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -586,7 +586,7 @@ export function WordChoiceExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockSentences?.length ?? 0)}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -639,7 +639,7 @@ export function WordChoiceExercise({
                     singleCheckConfirm.attemptCheck(config.sentences.length - answeredCount, handleSubmit)
                   }
                   disabled={single.pending || answeredCount === 0}
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>

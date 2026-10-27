@@ -7,7 +7,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -298,7 +298,7 @@ export function OpenAnswerCheckExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === (activeBlockQuestions?.length ?? 0)}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -342,7 +342,7 @@ export function OpenAnswerCheckExercise({
                     )
                   }
                   disabled={single.pending || singleAnsweredCount === 0}
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>

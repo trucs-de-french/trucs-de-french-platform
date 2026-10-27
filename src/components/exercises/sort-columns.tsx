@@ -13,7 +13,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { formatPointsCount } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
@@ -395,7 +395,7 @@ export function SortColumnsExercise({
               type="button"
               onClick={submitPractice}
               disabled={practiceCheck.pending || !allPlaced}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
             </button>
@@ -444,7 +444,7 @@ export function SortColumnsExercise({
               type="button"
               onClick={() => checkConfirm.attemptCheck(pool.length, submitSort)}
               disabled={pending || config.items.length - pool.length === 0}
-              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+              className={`self-start ${BUTTON_CHECK}`}
             >
               {pending ? "Перевіряю..." : "Перевірити"}
             </button>

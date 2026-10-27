@@ -11,7 +11,7 @@ import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { formatPointsCount } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup } from "./diacritics-popup";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
@@ -711,7 +711,7 @@ export function LetterGapsExercise({
             type="button"
             onClick={submitPractice}
             disabled={practiceCheck.pending || !practiceWordIndices.every(isWordFilled)}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${BUTTON_CHECK}`}
           >
             {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
           </button>
@@ -745,7 +745,7 @@ export function LetterGapsExercise({
       type="button"
       onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending || activeBlockUnanswered === activeBlockWordIndicesForCheck.length}
-      className="exercise-block-check-btn"
+      className="exercise-block-check-btn btn-check"
     >
       {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
     </button>
@@ -804,7 +804,7 @@ export function LetterGapsExercise({
                   type="button"
                   onClick={() => singleCheckConfirm.attemptCheck(singleUnanswered, submitSingle)}
                   disabled={single.pending || singleUnanswered === config.words.length}
-                  className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+                  className={`self-start ${BUTTON_CHECK}`}
                 >
                   {single.pending ? "Перевіряю..." : "Перевірити"}
                 </button>
