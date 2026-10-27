@@ -88,7 +88,7 @@ const STATUS_PILL: Record<ErrorReviewStatus, { label: string; className: string 
   not_started: {
     label: "Не виправлено",
     className:
-      "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-600 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+      "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-600 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:text-neutral-300",
   },
   partial: {
     label: "Частково",
@@ -165,7 +165,7 @@ function ErrorReviewCard({
 
       {isItems && entry.status === "partial" && (
         <div className="px-3 pb-1">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-900">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-[var(--card-field-bg)] dark:shadow-[inset_0_0_0_1px_rgba(130,160,240,.28)]">
             <div
               className="h-full rounded-full bg-brand"
               style={{ width: `${Math.round(((entry.total - remaining) / entry.total) * 100)}%` }}
