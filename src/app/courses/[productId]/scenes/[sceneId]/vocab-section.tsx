@@ -45,9 +45,32 @@ function BottomCollapseButton({ label, onClick }: { label: string; onClick: () =
   );
 }
 
+// Темна тема — насиченіший текст категорії ПОВЕРХ темної заливки чипа
+// (панель --glass-panel-bg rgba(10,16,48,.82) на фоні сторінки #0a0a0a ≈
+// #0a0f29, +34% категорійного кольору зверху), а не той самий textHex, що
+// рахує categoryPalette для світлого (contrast проти білого — на темному
+// композиті він би вже не читався). Підібрано тим самим підходом
+// (світлішання відтінку категорії до ratio ≥4.5:1, тут узято із запасом
+// ≥4.8:1) проти РЕАЛЬНОГО фону чипа в темній темі — лише ЦІ 8 значень,
+// .vocab-category-pill/крапки рядків/PDF далі рахують свій textHex, як і
+// раніше (contrast проти білого — там фон завжди світлий/пігулка-колір).
+const CHIP_TEXT_DARK: Record<PartOfSpeech, string> = {
+  nom: "#fa9047",
+  verbe: "#f47e7e",
+  adjectif: "#45ce78",
+  adverbe: "#b090f9",
+  prepositions_conjonctions: "#9d9995",
+  locutions: "#f27fb8",
+  phrase: "#76a8f9",
+  idiome: "#38c5dd",
+};
+
 // Компактна легенда — тоновані чипи категорій, над списком груп, щоб
 // орієнтуватись, не гортаючи до заголовка потрібної групи. Самі чипи — НЕ
-// посилання, лише лейбли; порядок/вміст той самий, що й раніше.
+// посилання, лише лейбли; порядок/вміст той самий, що й раніше. Колір/фон —
+// через --chip-rgb/--chip-text-light/--chip-text-dark (не прямий inline
+// background/color), щоб .dark .vocab-legend-chip (globals.css) міг
+// перекрити заливку/рамку/текст без !important.
 function Legend() {
   return (
     <div className="vocab-legend">
@@ -57,7 +80,13 @@ function Legend() {
           <span
             key={pos}
             className="vocab-legend-chip"
-            style={{ backgroundColor: `rgba(${palette.rgbTriplet}, 0.13)`, color: palette.textHex }}
+            style={
+              {
+                "--chip-rgb": palette.rgbTriplet,
+                "--chip-text-light": palette.textHex,
+                "--chip-text-dark": CHIP_TEXT_DARK[pos],
+              } as CSSProperties
+            }
           >
             {PART_OF_SPEECH_LABELS_FR[pos]}
           </span>

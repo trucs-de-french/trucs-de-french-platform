@@ -3268,6 +3268,26 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
+  background-color: rgba(var(--chip-rgb), 0.13);
+  color: var(--chip-text-light);
+}
+/* Темна тема — та сама заливка на 0.34 (замість 0.13), рамка в тому самому
+   відтінку (0.6) і насиченіший текст (--chip-text-dark, vocab-section.tsx)
+   замість --chip-text-light (той рахований проти білого, тут фон темний).
+   border-box (Tailwind preflight) — 1px рамка не змінює зовнішній розмір
+   пігулки. Чипи легенди — НЕ посилання/кнопки (лише лейбли), власного
+   active/selected/hover стану в них немає, тож нічого узгоджувати. */
+.dark .vocab-legend-chip {
+  background-color: rgba(var(--chip-rgb), 0.34);
+  border: 1px solid rgba(var(--chip-rgb), 0.6);
+  color: var(--chip-text-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .vocab-legend-chip {
+    background-color: rgba(var(--chip-rgb), 0.34);
+    border: 1px solid rgba(var(--chip-rgb), 0.6);
+    color: var(--chip-text-dark);
+  }
 }
 
 /* Кнопка "На весь екран" під відео/iframe-ембедами (video-player.tsx,
