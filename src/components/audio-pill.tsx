@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Repeat, Turtle } from "lucide-react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-const RADIUS = 20;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const CARD_GRADIENT = { background: "linear-gradient(135deg, #2b2a52, #4f46e5)" };
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2b2a52]";
@@ -140,8 +138,6 @@ export function AudioPill({
   }
 
   const metadataLoaded = duration !== null && Number.isFinite(duration);
-  const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
-  const ringOffset = CIRCUMFERENCE * (1 - progress);
 
   return (
     <div
@@ -180,27 +176,15 @@ export function AudioPill({
         disabled={!metadataLoaded}
         aria-label={playing ? "Пауза" : "Відтворити"}
         aria-pressed={playing}
-        className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait disabled:opacity-60 ${FOCUS_RING}`}
+        className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait disabled:opacity-60 ${FOCUS_RING}`}
       >
-        <svg width={44} height={44} viewBox="0 0 44 44" className="absolute inset-0">
-          <circle cx={22} cy={22} r={RADIUS} strokeWidth={3} fill="none" stroke="rgba(255,255,255,0.3)" />
-          <circle
-            cx={22}
-            cy={22}
-            r={RADIUS}
-            strokeWidth={3}
-            fill="none"
-            stroke="white"
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={ringOffset}
-            transform="rotate(-90 22 22)"
-            className="transition-[stroke-dashoffset] duration-150 ease-linear"
-          />
-        </svg>
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#4f46e5]">
-          {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
-        </span>
+        {playing ? (
+          <Pause size={14} fill="currentColor" />
+        ) : (
+          <span className="flex translate-x-[2px] items-center justify-center">
+            <Play size={14} fill="currentColor" />
+          </span>
+        )}
       </button>
 
       <button

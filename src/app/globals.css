@@ -7781,3 +7781,25 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 0 14px rgba(217, 183, 101, 0.3);
   }
 }
+
+/* Audio pill — Play button, gold circle with a dark indigo triangle. Same
+   look in both themes. This is the shared AudioPill component
+   (audio-pill.tsx: phonetics, flip_cards, crossword all use it), so the
+   restyle is NOT scoped — it changes the Play button everywhere AudioPill
+   appears, by design (replaces the old white-circle + translucent progress
+   ring look uniformly). */
+.audio-pill-play {
+  background: linear-gradient(135deg, #f0cf7a, #d9b765);
+  box-shadow: 0 2px 8px rgba(0, 0, 20, 0.35), 0 0 12px rgba(217, 183, 101, 0.45);
+  color: #2f2c6b;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+@media (hover: hover) {
+  .audio-pill-play:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f6d98a, #e0b85a);
+    box-shadow: 0 2px 8px rgba(0, 0, 20, 0.35), 0 0 16px rgba(217, 183, 101, 0.6);
+  }
+}
+.audio-pill-play:active:not(:disabled) {
+  transform: scale(0.96);
+}
