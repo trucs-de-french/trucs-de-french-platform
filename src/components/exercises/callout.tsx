@@ -50,7 +50,20 @@ export function CalloutExercise({ config }: { config: CalloutConfig }) {
     // callout-box — хук для scoped-override плаваючої картинки
     // (globals.css), щоб не чіпати ту саму .rich-text--article картинку
     // в статті Матеріалу/редакторі.
-    <div className={`callout-box rounded-md border-2 p-[16px_18px] sm:p-[24px_32px] ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`}>
+    <div
+      className={
+        config.style === "info"
+          // "info" — панель вправ (glass-block-panel): фон/рамка/радіус/
+          // тінь/padding беруться звідти (ОДНЕ джерело токенів --glass-
+          // panel-*), замість старої синьої рамки/заливки нижче.
+          // "glass-block" тут же (не окремим предком) — дає цьому самому
+          // елементу темні --glass-panel-* токени від .dark .glass-block,
+          // callout НЕ обгортається в <GlassBlock>, тож без цього класу
+          // в темній темі лишились би світлі дефолти :root.
+          ? "callout-box callout-panel-info glass-block glass-block-panel"
+          : `callout-box rounded-md border-2 p-[16px_18px] sm:p-[24px_32px] ${STYLE_CLASSES[config.style] ?? STYLE_CLASSES.none}`
+      }
+    >
       <div className="mb-[10px] flex" aria-hidden>
         <span className="text-[24px] leading-none">{STYLE_ICONS[config.style] ?? STYLE_ICONS.none}</span>
       </div>

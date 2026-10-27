@@ -1985,6 +1985,21 @@ button, input, textarea, select, label, nav, aside {
   padding: 22px 24px 24px;
   color: var(--glass-text);
 }
+/* Інфо-callout (CalloutExercise, style "info") переїхав на фон/рамку/
+   радіус/тінь/padding панелі вправ вище — ЛИШЕ це: колір тексту в старій
+   синій версії ні з чим не був пов'язаний (border/bg-only), тож тут
+   явно лишається на успадкованому --foreground, не перемикається на
+   --glass-text (.glass-block-panel вище його б інакше нав'язав). */
+.glass-block-panel.callout-panel-info {
+  color: var(--foreground);
+}
+/* Та сама панель — свій текст завжди зліва (прибирає data-text-align
+   "justify"/center/right, що міг зберегти редактор для старого блоку),
+   не чіпаючи той самий .rich-text--article у статті Матеріалу поза цим
+   callout. */
+.callout-panel-info .rich-text [data-text-align] {
+  text-align: left;
+}
 /* Відео-панель — варіант без заливки/падінгу/рамки (той самий вигляд, що
    й ДО уніфікованого скляного блоку: videoNode раніше рендерив голий
    <div> без жодного класу, скло давав лише бар+overflow:hidden/radius/
