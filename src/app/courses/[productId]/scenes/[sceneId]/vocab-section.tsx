@@ -45,37 +45,40 @@ function BottomCollapseButton({ label, onClick }: { label: string; onClick: () =
   );
 }
 
-// Темна тема — насиченіший текст категорії ПОВЕРХ темної заливки чипа
-// (панель --glass-panel-bg rgba(10,16,48,.82) на фоні сторінки #0a0a0a ≈
-// #0a0f29, +34% категорійного кольору зверху), а не той самий textHex, що
-// рахує categoryPalette для світлого (contrast проти білого — на темному
-// композиті він би вже не читався). Підібрано тим самим підходом
-// (світлішання відтінку категорії до ratio ≥4.5:1, тут узято із запасом
-// ≥4.8:1) проти РЕАЛЬНОГО фону чипа в темній темі — лише ЦІ 8 значень,
-// .vocab-category-pill/крапки рядків/PDF далі рахують свій textHex, як і
-// раніше (contrast проти білого — там фон завжди світлий/пігулка-колір).
-const CHIP_TEXT_DARK: Record<PartOfSpeech, string> = {
-  nom: "#fa9047",
-  verbe: "#f47e7e",
-  adjectif: "#45ce78",
-  adverbe: "#b090f9",
-  prepositions_conjonctions: "#9d9995",
-  locutions: "#f27fb8",
-  phrase: "#76a8f9",
-  idiome: "#38c5dd",
+// Темна тема — ОПАЦНІ пастельні чипи (фон/рамка/текст — фіксовані literal,
+// без alpha/композиту з фоном панелі): попередня версія рахувала насичений
+// текст проти напівпрозорої заливки НАД припущеним темним фоном панелі
+// (--glass-panel-bg), але сама панель вокабуляру в темній темі світло-сіра
+// скляна, не темно-індиго — текст виходив світлим на світлуватій плашці,
+// нечитабельним. Опаційна заливка прибирає залежність від фону панелі
+// взагалі: контраст текст/заливка (обчислено, усі ≥4.5:1, нижче з запасом)
+// лишається тим самим незалежно від того, що під пігулкою. .vocab-category-
+// pill/крапки рядків/PDF далі рахують свій textHex, як і раніше (не
+// торкнуто).
+const CHIP_DARK: Record<PartOfSpeech, { fill: string; border: string; text: string }> = {
+  nom: { fill: "#f8d9bf", border: "#e9b48a", text: "#8a3d0c" }, // ratio 5.69
+  verbe: { fill: "#f8cfcf", border: "#e7a3a3", text: "#9a1f1f" }, // ratio 5.72
+  adjectif: { fill: "#cdeed8", border: "#9fd4b2", text: "#14653a" }, // ratio 5.70
+  adverbe: { fill: "#ddd2f7", border: "#b9a8ea", text: "#4c2fa6" }, // ratio 6.46
+  prepositions_conjonctions: { fill: "#e2e0dc", border: "#bdb9b2", text: "#4a4741" }, // ratio 7.02
+  locutions: { fill: "#f8d2e4", border: "#e6a5c5", text: "#a01f5c" }, // ratio 5.39
+  phrase: { fill: "#cfe0fa", border: "#9db9ea", text: "#1d4aa3" }, // ratio 6.13
+  idiome: { fill: "#c9eaf0", border: "#98cbd6", text: "#0e6275" }, // ratio 5.46
 };
 
 // Компактна легенда — тоновані чипи категорій, над списком груп, щоб
 // орієнтуватись, не гортаючи до заголовка потрібної групи. Самі чипи — НЕ
 // посилання, лише лейбли; порядок/вміст той самий, що й раніше. Колір/фон —
-// через --chip-rgb/--chip-text-light/--chip-text-dark (не прямий inline
-// background/color), щоб .dark .vocab-legend-chip (globals.css) міг
-// перекрити заливку/рамку/текст без !important.
+// через --chip-rgb/--chip-text-light (світла) і --chip-fill-dark/--chip-
+// border-dark/--chip-text-dark (темна), не прямий inline background/color,
+// щоб .dark .vocab-legend-chip (globals.css) міг перекрити заливку/рамку/
+// текст без !important.
 function Legend() {
   return (
     <div className="vocab-legend">
       {PART_OF_SPEECH_ORDER.map((pos) => {
         const palette = categoryPalette(PART_OF_SPEECH_COLORS[pos].rgb);
+        const dark = CHIP_DARK[pos];
         return (
           <span
             key={pos}
@@ -84,7 +87,9 @@ function Legend() {
               {
                 "--chip-rgb": palette.rgbTriplet,
                 "--chip-text-light": palette.textHex,
-                "--chip-text-dark": CHIP_TEXT_DARK[pos],
+                "--chip-fill-dark": dark.fill,
+                "--chip-border-dark": dark.border,
+                "--chip-text-dark": dark.text,
               } as CSSProperties
             }
           >

@@ -3271,21 +3271,25 @@ button.scene-bar:active .scene-bar-toggle {
   background-color: rgba(var(--chip-rgb), 0.13);
   color: var(--chip-text-light);
 }
-/* Темна тема — та сама заливка на 0.34 (замість 0.13), рамка в тому самому
-   відтінку (0.6) і насиченіший текст (--chip-text-dark, vocab-section.tsx)
-   замість --chip-text-light (той рахований проти білого, тут фон темний).
-   border-box (Tailwind preflight) — 1px рамка не змінює зовнішній розмір
-   пігулки. Чипи легенди — НЕ посилання/кнопки (лише лейбли), власного
-   active/selected/hover стану в них немає, тож нічого узгоджувати. */
+/* Темна тема — ОПАЦНА пастельна заливка/рамка/текст (--chip-fill-dark/
+   --chip-border-dark/--chip-text-dark, vocab-section.tsx) — літерали на
+   пігулку, без alpha й без --chip-rgb: попередня версія (rgba(var(--chip-
+   rgb), .34) + насичений текст, рахований проти припущеного темного фону
+   панелі) була нечитабельною, бо сама панель вокабуляру в темній темі
+   світло-сіра скляна, не темна. Опацна заливка контрастна з текстом сама
+   по собі, незалежно від фону під пігулкою. border-box (Tailwind preflight)
+   — 1px рамка не змінює зовнішній розмір пігулки. Чипи легенди — НЕ
+   посилання/кнопки (лише лейбли), власного active/selected/hover стану в
+   них немає, тож нічого узгоджувати. */
 .dark .vocab-legend-chip {
-  background-color: rgba(var(--chip-rgb), 0.34);
-  border: 1px solid rgba(var(--chip-rgb), 0.6);
+  background-color: var(--chip-fill-dark);
+  border: 1px solid var(--chip-border-dark);
   color: var(--chip-text-dark);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .vocab-legend-chip {
-    background-color: rgba(var(--chip-rgb), 0.34);
-    border: 1px solid rgba(var(--chip-rgb), 0.6);
+    background-color: var(--chip-fill-dark);
+    border: 1px solid var(--chip-border-dark);
     color: var(--chip-text-dark);
   }
 }
