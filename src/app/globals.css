@@ -4524,7 +4524,9 @@ button.scene-bar:active .scene-bar-toggle {
    ті самі числа, що --ws-capsule-correct-* (globals.css, легенда філворду),
    "wrong" — та сама темна пара, що .matching-card--incorrect/.word-choice-
    pill--wrong (rgba(69,10,10,.3)/#ef4444), з власним текстовим кольором
-   #f87171 (дзеркально word-choice-pill--wrong). */
+   #f87171 (дзеркально word-choice-pill--wrong). Разом із .sort-columns-
+   placed-chip (метрики, нижче) — просто клас кольору/стану, без власної
+   специфічності проти чогось. */
 .sort-columns-chip--correct {
   background: #eafaf0;
   border-color: #4cc47e;
@@ -4559,6 +4561,38 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .sort-columns-chip-icon {
   flex-shrink: 0;
+}
+/* Метрики чипа-в-колонці sort_columns (Classement) — РІВНО ті самі box-/
+   typography-значення, що .word-pool-chip (висота/padding/radius/шрифт/
+   border-width/gap між грипом-текстом-лампою), щоб слово виглядало
+   однаково і в пулі, і вже покладеним у колонку (адаптивне перенесення
+   рядків лишається на контейнері колонки — тут лише сам чип). Без
+   background/border-color/color — ті дає колір-стан клас поруч
+   (gold/lavender рамка bankTileClass-кольорів, SELECTED_OPTION_CLASS,
+   .sort-columns-chip--correct/--wrong) — лише розмір спільний, кольори
+   НЕ торкались. */
+.sort-columns-placed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 1.5px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 26px;
+  cursor: grab;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sort-columns-placed-chip:active {
+  cursor: grabbing;
 }
 
 /* Toggle "Правильні відповіді" sort_columns (TaskResult children) — картка

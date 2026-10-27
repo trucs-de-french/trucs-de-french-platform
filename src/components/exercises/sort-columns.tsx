@@ -6,8 +6,8 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
-import { bankTileClass } from "./tile-styles";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
+import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { formatPointsCount } from "@/lib/exercises/format-points";
@@ -218,12 +218,23 @@ export function SortColumnsExercise({
   // не повинен її закрити.
   const scrollMtClass = pool.length > 0 ? "scroll-mt-16 sm:scroll-mt-[27vh]" : "";
 
+  // .sort-columns-placed-chip (globals.css) — ЛИШЕ метрики/шрифт/радіус/
+  // висота, РІВНО ті самі значення, що .word-pool-chip (одна точка правди
+  // для розміру), без власних кольорів — колір/рамку/фон додає кожен стан
+  // своїми класами тут: та сама gold/lavender рамка bankTileClass, що й
+  // раніше (нейтральний), SELECTED_OPTION_CLASS (вибраний, та сама синя
+  // підсвітка, що завжди була тут — НЕ ring пулу), sort-columns-chip--
+  // correct/--wrong (після перевірки). Кольори/фон НЕ торкались — лише
+  // розмір тепер спільний із пулом.
   function itemClass(id: string) {
     const d = detail?.items.find((x) => x.id === id);
     if (d) {
-      return d.isCorrect ? "sort-columns-chip--correct" : "sort-columns-chip--wrong";
+      return `sort-columns-placed-chip ${d.isCorrect ? "sort-columns-chip--correct" : "sort-columns-chip--wrong"}`;
     }
-    return bankTileClass({ selected: selected === id, used: false });
+    if (selected === id) {
+      return `sort-columns-placed-chip glass-gap-shadow dark:shadow-sm ${SELECTED_OPTION_CLASS}`;
+    }
+    return "sort-columns-placed-chip glass-chip glass-chip-hover glass-gap-shadow dark:shadow-sm border-[#dcbd6e] bg-white hover:bg-neutral-50 dark:border-[var(--card-border)] dark:bg-[var(--card-bg)] dark:hover:bg-[var(--card-hover-bg)] dark:hover:border-[var(--card-hover-border)]";
   }
 
   function bulbState(itemId: string): HintBulbState {
@@ -250,8 +261,9 @@ export function SortColumnsExercise({
             clickItem(item.id);
           }
         }}
-        className={`relative flex max-w-full items-center gap-1.5 ${itemClass(item.id)}`}
+        className={itemClass(item.id)}
       >
+        <ChipGripIcon />
         {d && (d.isCorrect ? <CorrectIcon /> : <WrongIcon />)}
         <span className="min-w-0 break-words [overflow-wrap:anywhere]">{item.text}</span>
         {locked && d?.hintUsed && <HintUsedBadge />}
@@ -268,13 +280,11 @@ export function SortColumnsExercise({
     );
   }
 
-  // Чип ЛИШЕ для пулу (.word-pool-chip, той самий вигляд, що в drag-drop.tsx/
-  // image-match.tsx) — картки в колонках лишаються на старому chip() без
-  // змін (п. "Do NOT touch the image variant" / цілі колонки задачі тут не
-  // стосується). Рідкий кейс: елемент лишився непоставленим і вже
-  // перевірений (часткова здача дозволена) — тоді лишаємо старий
-  // статус-вигляд (зелена/червона рамка) замість нового дизайну пулу
-  // (що станів узагалі не має), тож просто делегуємо в chip(item).
+  // Чип пулу БЕЗ статусу перевірки — chip() тепер теж на .sort-columns-
+  // placed-chip (ті самі метрики, що .word-pool-chip нижче), тож для вже
+  // перевіреного, але ще непоставленого елемента (часткова здача) просто
+  // делегуємо в chip(item): та сама зелена/червона рамка (.sort-columns-
+  // chip--correct/--wrong), той самий розмір/шрифт, що й тут.
   function poolChip(item: SortColumnsPublic["items"][number]) {
     if (detail?.items.find((x) => x.id === item.id)) return chip(item);
     return (
@@ -361,7 +371,7 @@ export function SortColumnsExercise({
                 {col.label}
               </p>
               <div
-                className={`flex min-h-[6.5rem] flex-wrap gap-1.5 p-2.5 ${
+                className={`flex min-h-[6.5rem] flex-wrap gap-2 p-2.5 ${
                   columnItems.length === 0 ? "items-center justify-center text-center" : ""
                 }`}
               >
