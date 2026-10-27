@@ -169,19 +169,21 @@ export function AudioPill({
         className="hidden"
       />
 
-      {/* кільце-play: клік будь-де в межах 44px (не лише по білому кругу) перемикає відтворення */}
+      {/* кільце-play: клік будь-де в межах 44px (не лише по білому кругу) перемикає відтворення.
+          disabled:opacity-60 раніше сірило ВЕСЬ круг (фон + трикутник) поки метадані не завантажились
+          — круг лишається білим завжди, тьмяніє лише трикутник усередині. */}
       <button
         type="button"
         onClick={togglePlay}
         disabled={!metadataLoaded}
         aria-label={playing ? "Пауза" : "Відтворити"}
         aria-pressed={playing}
-        className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait disabled:opacity-60 ${FOCUS_RING}`}
+        className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait ${FOCUS_RING}`}
       >
         {playing ? (
           <Pause size={14} fill="currentColor" />
         ) : (
-          <span className="flex translate-x-[2px] items-center justify-center">
+          <span className={`flex translate-x-[2px] items-center justify-center ${metadataLoaded ? "" : "opacity-40"}`}>
             <Play size={14} fill="currentColor" />
           </span>
         )}
