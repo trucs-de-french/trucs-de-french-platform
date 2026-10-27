@@ -163,7 +163,17 @@ export function ScriptSection({
         // ширше — колонки пліч-о-пліч; на вузькому екрані (grid-cols-1)
         // те саме розмічення автоматично складає все послідовно в один
         // стовпець, без окремої мобільної гілки логіки.
-        <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+        <div className="relative grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+          {/* Одна суцільна лінія від першого до останнього рядка замість
+              border-l на кожній клітинці перекладу (той давав розрив між
+              рядками через gap-y-2 грида) — колонки рівні (grid-cols-2),
+              тож межа між ними завжди точно по центру gap-x-6, незалежно
+              від вмісту рядків. Лише sm+ (на вузькому екрані колонки
+              складаються в одну — як і раніше, border-l теж був sm:). */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-[1.5px] -translate-x-1/2 bg-[#c9cdf5] sm:block dark:w-px dark:bg-neutral-700"
+          />
           {dialogue.map((line, i) => (
             <Fragment key={i}>
               <DialogueLine
@@ -177,7 +187,7 @@ export function ScriptSection({
                 onWordClick={openWord}
                 showSpeaker={showSpeakerFlags[i]}
               />
-              <div className="text-neutral-600 sm:border-l sm:border-gray-100 sm:pl-6 dark:text-[var(--glass-text)] sm:dark:border-neutral-700">
+              <div className="text-neutral-600 sm:pl-6 dark:text-[var(--glass-text)]">
                 {line.translationUk ? (
                   <TranslationCell text={line.translationUk} vocab={line.vocab ?? []} />
                 ) : (
