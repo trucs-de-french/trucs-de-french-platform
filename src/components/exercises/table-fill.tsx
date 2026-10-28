@@ -294,11 +294,11 @@ export function TableFillExercise({
       >
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">{columnLabels[0]}</p>
+            <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{columnLabels[0]}</p>
             {cellField("left", row.left)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">{columnLabels[1]}</p>
+            <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{columnLabels[1]}</p>
             {cellField("right", row.right)}
           </div>
         </div>

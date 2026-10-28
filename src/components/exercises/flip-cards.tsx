@@ -90,7 +90,7 @@ function FlipCardTile({
         {frenchNbsp(shown)}
       </span>
       {clickable && (
-        <span className="flex items-center gap-1 text-xs text-neutral-400 dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[var(--text-muted-caption)]">
+        <span className="flex items-center gap-1 text-xs text-[var(--text-muted-caption)] dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[var(--text-muted-caption)]">
           <RotateCw
             aria-hidden="true"
             className="hidden h-3.5 w-3.5 shrink-0 dark:inline-block dark:text-[rgba(217,183,101,0.8)]"
@@ -702,7 +702,7 @@ function DeckCardFront({
         {card.audio_url && <AudioPill src={card.audio_url} compact className="audio-player-compact" />}
       </div>
       {canFlip ? (
-        <span className="flex items-center gap-1.5 text-[12px] font-content text-[#8a7a4a] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
+        <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
           <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
           Торкніться картки, щоб побачити переклад
         </span>
@@ -727,7 +727,7 @@ function DeckCardBack({ translation }: { translation: string }) {
           {translation}
         </p>
       </div>
-      <span className="flex items-center gap-1.5 text-[12px] font-content text-[#8a7a4a] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
+      <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
         <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
         Торкніться картки, щоб сховати переклад
       </span>
@@ -771,7 +771,7 @@ export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsCon
 
   if (cards.length === 0) {
     return (
-      <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
+      <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
         У цій вправі ще немає карток.
       </p>
     );

@@ -69,7 +69,7 @@ export function GdriveAudioPlayer({ url, className }: { url: string; className?:
       {/* Завжди видимий резервний варіант — останній рубіж, якщо ні прямий
           плеєр, ні iframe-резерв не спрацюють (той самий принцип, що
           video/embed-гілки в task-group-block.tsx). */}
-      <p className="mt-1 text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">
+      <p className="mt-1 text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
         Якщо аудіо не відкривається,{" "}
         <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
           перейдіть за посиланням

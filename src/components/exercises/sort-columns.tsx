@@ -376,7 +376,7 @@ export function SortColumnsExercise({
                 }`}
               >
                 {columnItems.length === 0 ? (
-                  <span className="text-xs text-neutral-400 dark:text-[var(--text-muted-caption)]">
+                  <span className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
                     Перетягніть слово сюди
                   </span>
                 ) : (

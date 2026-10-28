@@ -286,7 +286,7 @@ export function WordChoiceExercise({
   function multiHint(s: PublicSentence) {
     if (config.mode !== "select" || !s.multiple) return null;
     return (
-      <span className="ml-1 text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]">
+      <span className="ml-1 text-xs italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
         (оберіть {s.correctCount} {s.correctCount >= 5 ? "варіантів" : "варіанти"})
       </span>
     );

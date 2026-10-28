@@ -353,7 +353,7 @@ export function LetterRearrangementExercise({
           )}
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p
-              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
+              className={`word-card-number-row break-words text-sm text-[var(--text-muted-hint)] dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}
@@ -372,8 +372,11 @@ export function LetterRearrangementExercise({
           </div>
         </div>
         {wordDetail && !wordDetail.isCorrect && (
-          <p className="text-sm text-neutral-600 dark:text-[var(--text-muted-caption)]">
-            Правильне слово: {wordDetail.letters.map((l) => l.text).join("")}
+          <p className="text-sm dark:text-[var(--text-muted-caption)]">
+            <span className="text-[#4b4766] dark:text-inherit">Правильне слово: </span>
+            <span className="text-[#1a1640] dark:text-inherit">
+              {wordDetail.letters.map((l) => l.text).join("")}
+            </span>
           </p>
         )}
       </div>

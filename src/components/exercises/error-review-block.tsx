@@ -151,10 +151,10 @@ function ErrorReviewCard({
             {ordinal !== null && ` · ${ordinal}`}
           </p>
           {!isInteractive && entry.summary && (
-            <p className="truncate text-sm text-neutral-500 dark:text-[var(--card-ink-2)]">{entry.summary}</p>
+            <p className="truncate text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">{entry.summary}</p>
           )}
           {isInteractive && (
-            <p className="text-sm text-neutral-500 dark:text-[var(--card-ink-2)]">
+            <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">
               {entry.status === "partial"
                 ? `Лишилось ${remaining} з ${entry.total}`
                 : isDone
@@ -360,13 +360,13 @@ export function ErrorReviewBlock({
     <div className="flex flex-col gap-3">
       <div>
         <h3 className="font-heading text-lg font-semibold">{frenchNbsp("Corrigez vos erreurs.")}</h3>
-        <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
+        <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           Перегляньте свої помилки й натисніть «Виправити», щоб спробувати ще раз — без втрати балів.
         </p>
       </div>
 
       {entries.length === 0 ? (
-        <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
+        <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {frenchNbsp(EMPTY_STATE_TEXT[emptyState])}
         </p>
       ) : (

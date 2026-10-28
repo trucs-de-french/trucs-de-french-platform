@@ -114,7 +114,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         <div className="rounded-md glass-inset-bg bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
           <p className="font-medium text-amber-700 dark:text-amber-400">{activeError.category}</p>
           <p className="mt-1">
-            <span className="text-neutral-500 dark:text-neutral-400">Виправлення: </span>
+            <span className="text-[var(--text-muted-caption)] dark:text-neutral-400">Виправлення: </span>
             {activeError.fix}
           </p>
           <p className="mt-1 text-neutral-600 dark:text-neutral-400">{activeError.rule}</p>
@@ -163,7 +163,7 @@ function FormulaireResultView({ result }: { result: FormulaireResult }) {
             </span>
           </div>
           {!f.correct && f.comment && (
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">{f.comment}</p>
+            <p className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">{f.comment}</p>
           )}
         </div>
       ))}
@@ -243,7 +243,7 @@ export function EssayCheckExercise({
         subInstructionText={DEFAULT_INSTRUCTIONS.essay_check.subInstruction}
       />
       {grid && (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">
           Рівень {level}
           {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {formatScore(grid.maxScore)} балів
           {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
@@ -254,7 +254,7 @@ export function EssayCheckExercise({
         <div className="flex flex-col gap-2">
           {fields.map((f) => (
             <div key={f.id} className="flex flex-col gap-1">
-              <label className="text-xs text-neutral-500 dark:text-neutral-400">{f.label}</label>
+              <label className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">{f.label}</label>
               {/* px-4 py-2.5 — та сама компактність, що картка твердження
                   true_false / поле open_answer_check; bg-white — як у карток
                   відповідей. Textarea есе нижче НЕ чіпаю — рядкова висота там

@@ -62,7 +62,7 @@ export function VocabQuizExercise({
 
   if (vocab.length < MIN_VOCAB_FOR_QUIZ) {
     return (
-      <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
+      <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
         Замало лексики в обраних сценах для вікторини (мінімум {MIN_VOCAB_FOR_QUIZ} слова).
       </p>
     );

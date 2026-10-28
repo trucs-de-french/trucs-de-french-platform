@@ -614,7 +614,7 @@ export function KaraokeExercise({
             налаштування вправи, далі власний вибір студента (localStorage,
             через togglePauseEnabled вище). */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">Пауза після рядка з пропуском</span>
+          <span className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Пауза після рядка з пропуском</span>
           <button
             type="button"
             role="switch"

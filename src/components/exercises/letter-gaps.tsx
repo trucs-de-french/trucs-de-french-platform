@@ -515,7 +515,7 @@ export function LetterGapsExercise({
           <div className="flex min-w-0 flex-1 flex-col gap-2"
           >
             <p
-              className={`word-card-number-row break-words text-sm text-neutral-500 dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
+              className={`word-card-number-row break-words text-sm text-[var(--text-muted-hint)] dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
               <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
                 {opts.cardNumber}

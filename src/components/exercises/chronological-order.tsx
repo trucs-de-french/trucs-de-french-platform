@@ -500,7 +500,7 @@ export function ChronologicalOrderExercise({
                   </p>
                 )}
                 <div className="mt-1.5 flex items-center justify-center gap-1.5">
-                  <span className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">n°</span>
+                  <span className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">n°</span>
                   {numberInput(item.id, "compact", label, item.points)}
                 </div>
               </div>
@@ -662,7 +662,7 @@ export function ChronologicalOrderExercise({
                             {it.correctPosition}
                           </span>
                         </div>
-                        <span className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">{label}</span>
+                        <span className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{label}</span>
                       </div>
                     );
                   })}

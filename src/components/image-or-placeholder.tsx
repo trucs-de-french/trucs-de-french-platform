@@ -38,7 +38,7 @@ export function ImageOrPlaceholder({
   if (status === "failed") {
     return (
       <div
-        className={`flex items-center justify-center bg-neutral-100 text-center text-xs text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500 ${className}`}
+        className={`flex items-center justify-center bg-neutral-100 text-center text-xs text-[var(--text-muted-caption)] dark:bg-neutral-800 dark:text-neutral-500 ${className}`}
       >
         Зображення недоступне
       </div>

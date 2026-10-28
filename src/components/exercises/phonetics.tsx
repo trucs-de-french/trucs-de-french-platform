@@ -57,7 +57,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
 
   if (config.items.length === 0) {
     return (
-      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+      <p className="text-sm text-[var(--text-muted-caption)] dark:text-neutral-400">
         У цій вправі ще немає реплік.
       </p>
     );
