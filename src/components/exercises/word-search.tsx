@@ -119,7 +119,7 @@ function ImageTile({
             дефісом як у конфігу), не переклад: студент і так шукав саме це
             слово в сітці. */}
         {found && (
-          <span className="absolute inset-x-0 bottom-0 truncate bg-white/85 px-1 py-0.5 text-center font-heading text-xs font-semibold dark:bg-neutral-900/80">
+          <span className="absolute inset-x-0 bottom-0 truncate bg-white/85 px-1 py-0.5 text-center font-heading text-xs font-semibold dark:bg-[var(--dark-surface-fill-translucent)]">
             {word.word}
           </span>
         )}

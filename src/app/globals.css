@@ -179,6 +179,11 @@
      --error-review-card-bg (аліас на --dark-blue-fill, як і до цього
      токена) нижче. */
   --dark-surface-fill: #141944;
+  /* --dark-surface-fill у rgba — для напівпрозорих підкладок НАД
+     зображенням (підпис-смужка знайденого слова на картці-картинці,
+     word-search.tsx ImageTile), де суцільний --dark-surface-fill
+     перекрив би саме фото. */
+  --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
   --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
@@ -229,6 +234,7 @@
     --card-field-border: var(--lavender-field);
     --dark-blue-fill: #0a1030;
     --dark-surface-fill: #141944;
+    --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
     --error-review-card-bg: var(--dark-blue-fill);
   }
 }
