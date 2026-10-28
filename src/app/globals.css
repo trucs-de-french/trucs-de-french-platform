@@ -71,16 +71,22 @@
    fill-blank/drag-drop) — трохи світліше за основний текст, як і
    задумано ієрархією. Лише світла тема: темні значення лишаються на
    :root.dark/media нижче, не чіпати.
-   --prompt-text-light (#3b3760, ~10:1) — ОКРЕМИЙ токен лише для
-   української підказки-перекладу над буквами (letter_rearrangement/
-   letter_gaps word-card-number-row), раніше теж на --text-muted-hint:
-   той самий клас-рядок ділили з непов'язаним hint-текстом вище, тож
-   підкрутити контраст лише для рядка-перекладу без --text-muted-hint
-   не вийшло б — звідси окремий токен, застосований лише до цього рядка. */
+   --uk-clue-text-light (#3b3760, ~10:1, раніше --prompt-text-light) —
+   ОКРЕМИЙ токен лише для української підказки-перекладу над буквами
+   (letter_rearrangement/letter_gaps word-card-number-row), раніше теж на
+   --text-muted-hint: той самий клас-рядок ділили з непов'язаним
+   hint-текстом вище, тож підкрутити контраст лише для рядка-перекладу без
+   --text-muted-hint не вийшло б — звідси окремий токен, застосований лише
+   до цього рядка.
+   --uk-title-text-light (#4b4766, ~8:1) — українська інструкція/переклад
+   поруч із французьким заголовком задачі (TaskInstructionLine,
+   .task-panel-instruction-uk у task-panel-header.tsx) — спільний для
+   УСІХ типів вправ (єдиний компонент заголовка панелі), раніше #55546b. */
 :root {
   --text-muted-caption: #4b4766;
   --text-muted-hint: #5b5870;
-  --prompt-text-light: #3b3760;
+  --uk-clue-text-light: #3b3760;
+  --uk-title-text-light: #4b4766;
 }
 
 /* Пілюлі балів і текстові поля вправ — лише темна тема (світлий дефолт не
@@ -2316,7 +2322,7 @@ button, input, textarea, select, label, nav, aside {
   overflow-wrap: anywhere;
   font-family: var(--font-body);
   font-size: 15px;
-  color: #55546b;
+  color: var(--uk-title-text-light);
 }
 .dark .task-panel-instruction-uk {
   color: rgba(246, 239, 214, 0.72);
