@@ -4577,6 +4577,37 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Association exercise (matching.tsx) only — "Правильні пари цього блоку"
+   panel. .task-result-pair-rows is rendered exclusively by TaskResultPairRows,
+   so scoping dark overrides under it does not reach table-fill.tsx's
+   .task-result-answer-row, which reuses the same base chip/arrow classes. */
+.dark .task-result-pair-rows .task-result-pair-chip--fr,
+.dark .task-result-pair-rows .task-result-pair-chip--uk {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+.dark .task-result-pair-rows .task-result-pair-chip--uk {
+  color: #eef0ff;
+  font-weight: 500;
+}
+.dark .task-result-pair-rows .task-result-pair-arrow {
+  stroke: #d9b765;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-pair-rows .task-result-pair-chip--fr,
+  :root:not(.light) .task-result-pair-rows .task-result-pair-chip--uk {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+  }
+  :root:not(.light) .task-result-pair-rows .task-result-pair-chip--uk {
+    color: #eef0ff;
+    font-weight: 500;
+  }
+  :root:not(.light) .task-result-pair-rows .task-result-pair-arrow {
+    stroke: #d9b765;
+  }
+}
+
 /* Плитки "Правильні відповіді" (TaskResultAnswerRows, task-result.tsx,
    table-fill.tsx) — та сама плитка/чипи, що .task-result-pair-row вище,
    плюс номер рядка зліва і підсвітка клітинки-відповіді. flex-wrap замість
