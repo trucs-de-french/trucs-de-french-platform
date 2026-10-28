@@ -171,12 +171,14 @@ function ReorderSequenceTiles({
             )}
 
             {detail && (
-              <p className="break-words text-sm text-neutral-600 dark:text-[var(--text-muted-caption)] [overflow-wrap:anywhere]">
-                Правильний порядок:{" "}
-                {[...detail.items]
-                  .sort((a, b) => a.correctIndex - b.correctIndex)
-                  .map((i) => i.text)
-                  .join(" → ")}
+              <p className="break-words text-sm [overflow-wrap:anywhere]">
+                <span className="text-neutral-600 dark:text-[var(--text-muted-caption)]">Правильний порядок: </span>
+                <span className="correct-answer-word text-neutral-600">
+                  {[...detail.items]
+                    .sort((a, b) => a.correctIndex - b.correctIndex)
+                    .map((i) => i.text)
+                    .join(" → ")}
+                </span>
               </p>
             )}
           </div>
