@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 
 // Видаляє ВЕСЬ DELF-тест — усі задачі й блоки з цим product_id+
 // delf_test_number, безповоротно. Немає окремого рядка "тест" для
@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 // task_group_id) — окремий, неперетинний набір рядків, той самий принцип
 // взаємовиключності контексту.
 export async function deleteTest(productId: string, testNumber: number) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { error: groupsError } = await supabase
     .from("task_groups")
@@ -46,7 +46,7 @@ export async function deleteTest(productId: string, testNumber: number) {
 // сторінки ОКРЕМОГО тесту, тож без revalidatePath курс-сторінка (де й видно
 // сітку) лишалась би зі старим кольором плитки до наступного повного заходу.
 export async function toggleTestPublish(productId: string, testNumber: number, next: boolean) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { error } = await supabase
     .from("delf_tests")

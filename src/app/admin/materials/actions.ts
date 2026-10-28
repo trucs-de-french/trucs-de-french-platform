@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import { sanitizeCalloutHtml } from "@/lib/sanitize-callout-html";
 import type { ActionState } from "@/lib/action-state";
 import type { CalloutStyle } from "@/lib/exercises/types";
@@ -21,7 +21,7 @@ function normalizeStyle(value: FormDataEntryValue | null): CalloutStyle {
 // file_url і, отже, file_type — nullable: матеріал може бути лише статтею
 // (content), лише PDF-посиланням, чи обома одразу.
 export async function createMaterial(productId: string, formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const fileUrl = (formData.get("file_url") as string) || null;
   const content = (formData.get("content") as string) || null;
@@ -50,12 +50,14 @@ export async function updateMaterial(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const fileUrl = (formData.get("file_url") as string) || null;
   const content = (formData.get("content") as string) || null;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("materials")
     .update({
       title: (formData.get("title") as string) || null,
@@ -65,14 +67,16 @@ export async function updateMaterial(
       content: content ? sanitizeCalloutHtml(content) : null,
       style: normalizeStyle(formData.get("style")),
     })
-    .eq("id", materialId);
+    .eq("id", materialId)
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Не вдалося зберегти матеріал" };
   return { ok: true };
 }
 
 export async function deleteMaterial(materialId: string, productId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   await supabase.from("materials").delete().eq("id", materialId);
   redirect(`/admin/courses/${productId}`);
 }
@@ -81,7 +85,7 @@ export async function deleteMaterial(materialId: string, productId: string) {
 // інший продукт призначення — один атомарний RPC (copy_material,
 // 0026_copy_material.sql), той самий патерн, що copyTask/duplicateScene.
 export async function copyMaterial(materialId: string, formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: material } = await supabase
     .from("materials")

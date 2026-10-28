@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor } from "@/app/admin/task-order";
 import { blockDomId } from "@/lib/block-dom-id";
@@ -156,7 +157,7 @@ async function resolveTaskParentPath(
 }
 
 export async function createTask(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const productId = formData.get("product_id") as string;
   const sceneId = (formData.get("scene_id") as string) || null;
@@ -270,7 +271,7 @@ type BulkTypeSelection = {
 // createClient()/RLS (is_teacher() на tasks_write) — той самий рівень, що
 // createTask вище, доступ до самої сторінки вже гейтить admin/layout.tsx.
 export async function bulkCreateTasksFromVocab(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const productId = formData.get("product_id") as string;
   const sceneId = formData.get("scene_id") as string;
@@ -420,7 +421,9 @@ export async function updateTask(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const type = formData.get("type") as string;
   const config = buildTaskConfig(type, formData);
@@ -484,7 +487,7 @@ export async function updateTask(
 }
 
 export async function deleteTask(taskId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: task } = await supabase
     .from("tasks")
     .select("product_id, scene_id, material_id, task_group_id, delf_test_number")
@@ -558,20 +561,9 @@ async function resolveStudentTaskPath(
 export async function resetMyTaskProgress(
   taskId: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Потрібна авторизація" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "teacher") {
-    return { ok: false, error: "Доступ лише для викладача" };
-  }
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase, user } = session;
 
   const { data: task } = await supabase
     .from("tasks")
@@ -612,7 +604,7 @@ export async function resetMyTaskProgress(
 }
 
 export async function moveTask(taskId: string, direction: "up" | "down") {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: task } = await supabase
     .from("tasks")
@@ -683,7 +675,9 @@ export async function reorderSceneRows(
   sceneId: string,
   orderedRows: { id: string; kind: "task" | "task_group" }[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     orderedRows.map(async (row, index) => {
@@ -730,7 +724,9 @@ export async function reorderTestRows(
   testNumber: number,
   orderedRows: { id: string; kind: "task" | "task_group" }[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     orderedRows.map(async (row, index) => {
@@ -771,7 +767,7 @@ export async function reorderTestRows(
 // звичайного дублювання, оригінал лишається незмінним. Один атомарний RPC
 // (copy_task, 0025_copy_task.sql), той самий патерн, що duplicate_scene.
 export async function copyTask(taskId: string, formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: task } = await supabase
     .from("tasks")

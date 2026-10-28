@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import { PREVIEW_COOKIE, previewCookieOptions } from "@/lib/course-preview";
 import type { ActionState } from "@/lib/action-state";
 import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
@@ -28,7 +28,7 @@ function resolveCoverImageUrl(formData: FormData): string | null {
 }
 
 export async function createProduct(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const type = formData.get("type") as string;
 
@@ -62,7 +62,9 @@ export async function updateProduct(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const { error } = await supabase
     .from("products")
@@ -97,7 +99,9 @@ export async function updateProductBackground(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const desktopRaw = (formData.get("background_desktop_url") as string) || "";
   const mobileRaw = (formData.get("background_mobile_url") as string) || "";
@@ -135,7 +139,7 @@ export async function updateProductBackground(
 }
 
 export async function togglePublish(productId: string, next: boolean) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { error } = await supabase
     .from("products")
     .update({ is_published: next })
@@ -147,7 +151,7 @@ export async function togglePublish(productId: string, next: boolean) {
 }
 
 export async function toggleArchive(productId: string, next: boolean) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { error } = await supabase
     .from("products")
     .update({ archived_at: next ? new Date().toISOString() : null })
@@ -166,6 +170,7 @@ export async function toggleArchive(productId: string, next: boolean) {
 // дописує FormData ще одним аргументом при виклику; якби path лишався
 // неприв'язаним, FormData потрапила б саме туди.
 export async function startStudentPreview(productId: string, path?: string) {
+  await requireTeacherOrThrow();
   const cookieStore = await cookies();
   cookieStore.set(PREVIEW_COOKIE, productId, previewCookieOptions);
   redirect(path ?? `/courses/${productId}`);
@@ -175,11 +180,13 @@ export async function startStudentPreview(productId: string, path?: string) {
 // <form action>), коли навігацію (напр. відкриття нової вкладки без втрати
 // поточної сторінки) веде сам клієнт, а не сервер-екшн.
 export async function setStudentPreviewCookie(productId: string) {
+  await requireTeacherOrThrow();
   const cookieStore = await cookies();
   cookieStore.set(PREVIEW_COOKIE, productId, previewCookieOptions);
 }
 
 export async function endStudentPreview(productId: string) {
+  await requireTeacherOrThrow();
   const cookieStore = await cookies();
   cookieStore.delete(PREVIEW_COOKIE);
   redirect(`/admin/courses/${productId}`);
@@ -191,7 +198,7 @@ export async function endStudentPreview(productId: string) {
 // обов'язковим проміжним кроком: сервер сам перевіряє archived_at, а не
 // довіряє тому, що кнопка прихована на клієнті.
 export async function deleteProductPermanently(productId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: product } = await supabase
     .from("products")

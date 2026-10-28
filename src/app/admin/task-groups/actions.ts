@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import type { ActionState } from "@/lib/action-state";
 import { nextOrderIndex, findNeighbor, type ParentScope } from "@/app/admin/task-order";
@@ -131,7 +132,7 @@ function buildPointsFields(formData: FormData) {
 }
 
 export async function createTaskGroup(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const productId = formData.get("product_id") as string;
   const sceneId = (formData.get("scene_id") as string) || null;
@@ -188,7 +189,7 @@ export async function attachTaskGroupToContentBlock(
   sceneId: string,
   sceneContentBlockId: string
 ) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { error } = await supabase.from("task_groups").insert({
     product_id: productId,
@@ -217,7 +218,9 @@ export async function updateTaskGroup(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const title = (formData.get("title") as string) || null;
 
@@ -288,7 +291,7 @@ async function detachTaskFromGroup(supabase: Supa, taskId: string): Promise<void
 // повертається туди, де живе сам блок (не видаляється, на відміну від
 // deleteTask).
 export async function detachTask(taskId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: task } = await supabase
     .from("tasks")
     .select("product_id, scene_id, material_id, task_group_id")
@@ -386,7 +389,7 @@ async function attachTaskCore(
 // саму сторінку блоку після додавання, той самий сценарій 2 з чекліста
 // ../scenes/actions.ts (redirect на ту саму сторінку — досить).
 export async function attachTaskToGroup(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const taskId = formData.get("task_id") as string;
   const taskGroupId = formData.get("task_group_id") as string;
 
@@ -412,7 +415,9 @@ export async function attachTaskInline(
   taskId: string,
   taskGroupId: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
   const result = await attachTaskCore(supabase, taskId, taskGroupId);
   return { ok: result.ok, error: result.error };
 }
@@ -429,7 +434,9 @@ export async function copyTaskInGroup(
   taskId: string,
   taskGroupId: string
 ): Promise<{ ok: boolean; error?: string; task?: { id: string; type: string; title: string } }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const { data: newTaskId, error } = await supabase.rpc("copy_task", {
     p_task_id: taskId,
@@ -482,7 +489,7 @@ export async function deleteTaskGroupCore(
 // повертає кожну з них у батьківський контекст блоку, той самий шлях, що
 // detachTask.
 export async function deleteTaskGroup(groupId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: group } = await supabase
     .from("task_groups")
     .select("product_id, scene_id, material_id, delf_test_number, scene_content_block_id")
@@ -509,7 +516,7 @@ export async function deleteTaskGroup(groupId: string) {
 }
 
 export async function moveTaskGroup(groupId: string, direction: "up" | "down") {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: group } = await supabase
     .from("task_groups")
@@ -568,7 +575,9 @@ export async function reorderGroupMembers(
   groupId: string,
   orderedTaskIds: string[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     orderedTaskIds.map(async (taskId, index) => {

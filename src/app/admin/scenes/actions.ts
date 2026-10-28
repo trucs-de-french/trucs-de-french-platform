@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import type { ActionState } from "@/lib/action-state";
 import { DEFAULT_SCENE_BLOCK_ORDER } from "@/lib/scene-block-order";
 import { blockDomId } from "@/lib/block-dom-id";
@@ -35,7 +35,7 @@ import { computeSceneTaskPoints, applyDistributedPoints } from "@/lib/exercises/
 // .update()/.insert()/.delete() — RLS мовчки блокує запис (0 рядків, без
 // помилки), а не кидає виняток.
 export async function createScene(productId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const { data: last } = await supabase
     .from("scenes")
@@ -98,14 +98,18 @@ export async function updateSceneTitle(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("scenes")
     .update({ title: formData.get("title") as string })
-    .eq("id", sceneId);
+    .eq("id", sceneId)
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Не вдалося зберегти назву сцени" };
   return { ok: true };
 }
 
@@ -128,7 +132,9 @@ export async function updateSceneVideo(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const videoProvider = (formData.get("video_provider") as string) || null;
   // video_file_url — завантажений напряму в R2 mp4-файл (SceneVideoFields,
@@ -192,7 +198,9 @@ export async function updateSceneDialogue(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   let dialogue: unknown = [];
   try {
@@ -201,9 +209,14 @@ export async function updateSceneDialogue(
     dialogue = [];
   }
 
-  const { error } = await supabase.from("scenes").update({ dialogue }).eq("id", sceneId);
+  const { data, error } = await supabase
+    .from("scenes")
+    .update({ dialogue })
+    .eq("id", sceneId)
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Не вдалося зберегти скрипт" };
   return { ok: true };
 }
 
@@ -226,7 +239,9 @@ export async function reorderSceneBlocks(
   sceneId: string,
   items: { type: string; refId: string | null }[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     items.map(async ({ type, refId }, index) => {
@@ -270,7 +285,7 @@ export async function reorderSceneBlocks(
 }
 
 export async function deleteScene(sceneId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: scene } = await supabase
     .from("scenes")
     .select("product_id")
@@ -299,7 +314,7 @@ export async function deleteScene(sceneId: string) {
 // транзакція, без ризику "сирітської" напівскопійованої сцени при збої
 // посередині). Деталі: supabase/migrations/0012_duplicate_scene.sql.
 export async function duplicateScene(sceneId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: scene } = await supabase
     .from("scenes")
     .select("product_id")
@@ -335,7 +350,9 @@ export async function reorderScenes(
   productId: string,
   orderedSceneIds: string[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     orderedSceneIds.map(async (id, index) => {
@@ -380,7 +397,9 @@ export async function addLink(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const lastQuery = supabase
     .from("scene_links")
@@ -400,16 +419,20 @@ export async function addLink(
     .eq("id", sceneId)
     .single();
 
-  const { error } = await supabase.from("scene_links").insert({
-    scene_id: sceneId,
-    content_block_id: contentBlockId,
-    platform: formData.get("platform") as string,
-    url: formData.get("url") as string,
-    label: (formData.get("label") as string) || null,
-    order_index: (last?.order_index ?? 0) + 1,
-  });
+  const { data: inserted, error } = await supabase
+    .from("scene_links")
+    .insert({
+      scene_id: sceneId,
+      content_block_id: contentBlockId,
+      platform: formData.get("platform") as string,
+      url: formData.get("url") as string,
+      label: (formData.get("label") as string) || null,
+      order_index: (last?.order_index ?? 0) + 1,
+    })
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!inserted?.length) return { ok: false, error: "Не вдалося додати посилання" };
 
   // addLink лишається на тій самій сторінці (useActionState/SaveForm, без
   // навігації) — на відміну від moveTask/moveScene/deleteLink, тут не
@@ -443,7 +466,9 @@ export async function updateLink(
   linkId: string,
   patch: { label?: string; url?: string }
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const { data: link } = await supabase
     .from("scene_links")
@@ -471,8 +496,13 @@ export async function updateLink(
 
   if (Object.keys(updates).length === 0) return { ok: true };
 
-  const { error } = await supabase.from("scene_links").update(updates).eq("id", linkId);
+  const { data: updated, error } = await supabase
+    .from("scene_links")
+    .update(updates)
+    .eq("id", linkId)
+    .select("id");
   if (error) return { ok: false, error: error.message };
+  if (!updated?.length) return { ok: false, error: "Не вдалося зберегти посилання" };
 
   // Той самий принцип, що addLink — викликається без навігації (рядок сам
   // лишається на місці), revalidatePath оновлює серверні дані сторінки
@@ -484,7 +514,7 @@ export async function updateLink(
 }
 
 export async function deleteLink(linkId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const { data: link } = await supabase
     .from("scene_links")
     .select("scene_id, scenes(product_id)")
@@ -517,7 +547,9 @@ export async function reorderLinks(
   sceneId: string,
   orderedLinkIds: string[]
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const results = await Promise.all(
     orderedLinkIds.map(async (linkId, index) => {
@@ -564,7 +596,7 @@ export async function reorderLinks(
 // scene_content_blocks цієї сцени (0040_task_groups_scene_content_block.sql
 // — tasks.scene_id у них null, контекст лише через task_group_id).
 export async function distributeSceneTaskPoints(productId: string, sceneId: string) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
   const anchor = `#${blockDomId("task")}`;
 

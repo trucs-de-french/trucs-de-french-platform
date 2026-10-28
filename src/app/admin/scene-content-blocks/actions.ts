@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher, requireTeacherOrThrow } from "@/lib/auth/require-teacher";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { deleteTaskGroupCore } from "@/app/admin/task-groups/actions";
 import type { ActionState } from "@/lib/action-state";
@@ -58,7 +58,7 @@ function buildContentFields(formData: FormData) {
 }
 
 export async function createSceneContentBlock(formData: FormData) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
 
   const productId = formData.get("product_id") as string;
   const sceneId = formData.get("scene_id") as string;
@@ -110,7 +110,9 @@ export async function updateSceneContentBlock(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   const title = (formData.get("title") as string) || null;
 
@@ -143,7 +145,9 @@ export async function updateScriptContentBlock(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const session = await requireTeacher();
+  if (!session) return { ok: false, error: "Немає доступу" };
+  const { supabase } = session;
 
   let dialogue: unknown = [];
   try {
@@ -169,7 +173,7 @@ export async function deleteSceneContentBlock(
   sceneId: string,
   blockId: string
 ) {
-  const supabase = await createClient();
+  const { supabase } = await requireTeacherOrThrow();
   const backPath = `/admin/courses/${productId}/scenes/${sceneId}`;
 
   // Прикріплена група вправ (0040) — спершу відкріпити її задачі тим самим
