@@ -13,7 +13,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
 import { TaskInstructionLine, PointsPill } from "./task-panel-header";
@@ -373,11 +373,13 @@ export function ChronologicalOrderExercise({
               fr={frenchNbspHtml(
                 sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction)
               )}
-              uk={frenchNbspHtml(
-                sanitizeInstructionsHtml(
-                  config.subInstructions ?? DEFAULT_INSTRUCTIONS.chronological_order.subInstruction
-                )
-              )}
+              uk={(() => {
+                const translation = taskTranslationLine(config.subInstructions, lang, {
+                  uk: DEFAULT_INSTRUCTIONS.chronological_order.subInstruction,
+                  en: DEFAULT_TRANSLATION_EN.chronological_order,
+                });
+                return translation ? frenchNbspHtml(sanitizeInstructionsHtml(translation)) : undefined;
+              })()}
             />
           </div>
           {!isPractice && config.hint && (

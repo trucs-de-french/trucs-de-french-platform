@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { TrueFalsePublic, TrueFalseDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
@@ -49,7 +49,7 @@ export function TrueFalseExercise({
   hidePoints?: boolean;
   practice?: TrueFalsePracticeProps;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
 
   // Картки (твердження) — поріг блоку CARD_BLOCK_MAX=5, той самий принцип,
@@ -351,7 +351,10 @@ export function TrueFalseExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.true_false.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.true_false.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.true_false,
+        })}
       />
 
       {!useBlocks ? (

@@ -11,7 +11,7 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatScoreLocalized, formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -339,7 +339,10 @@ export function CheckboxGridExercise({
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.checkbox_grid,
+        })}
       />
 
       {renderGrid()}

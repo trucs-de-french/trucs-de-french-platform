@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronDown, X } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
@@ -956,7 +956,10 @@ export function MultipleChoiceExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.multiple_choice,
+        })}
         hintText={
           config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice", lang) : null
         }

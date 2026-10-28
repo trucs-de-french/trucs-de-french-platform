@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { TableFillPublic, TableFillDetail, TableFillAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
@@ -716,7 +716,10 @@ export function TableFillExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.table_fill.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.table_fill.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.table_fill,
+        })}
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null

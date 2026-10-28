@@ -7,7 +7,7 @@ import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
@@ -51,7 +51,7 @@ export function ListeningExercise({
   hidePoints?: boolean;
   practice?: ListeningPracticeProps;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ListeningDetail | undefined;
@@ -226,7 +226,10 @@ export function ListeningExercise({
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.listening.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.listening.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.listening,
+        })}
       />
 
       {isYouTubeUrl(config.audioUrl) ? (

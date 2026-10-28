@@ -16,6 +16,9 @@
 // "завдання" для консинги); error_correction — не редагована вправа, показує
 // фіксований пояснювальний текст напряму в JSX (сторінка сцени), не через
 // цю мапу; ai_examiner — ще не має власної форми.
+import type { UiLang } from "@/lib/ui/product-lang";
+import type { TaskTypeKey } from "./default-task-labels";
+
 export type InstructionDefault = { instruction: string; subInstruction: string };
 
 // fill_blank з банком слів (config.wordBank) — окремий підзаголовок, лише
@@ -28,6 +31,8 @@ export type InstructionDefault = { instruction: string; subInstruction: string }
 // обидва ДО того, як відомо, чи буде банк слів у конкретній задачі.
 export const FILL_BLANK_WORD_BANK_SUBINSTRUCTION =
   "Впишіть слова в пропуски самостійно. Використані викреслюйте зі списку.";
+export const FILL_BLANK_WORD_BANK_TRANSLATION_EN =
+  "Type the words into the blanks yourself. Cross out the ones you've used.";
 
 // Текст оновлено під заголовок панелі "варіант 3" (task-panel-header.tsx,
 // 2026) — дефолти на кожен тип тепер і джерело для НАЗВИ типу (короткої,
@@ -89,3 +94,72 @@ export const WORD_CHOICE_DEFAULT_INSTRUCTIONS: Record<"select" | "cross_out", In
 // немає, sceneMistakes обчислюються з даних сцени).
 export const ERROR_CORRECTION_INSTRUCTION =
   "Натисніть на помилку, щоб перейти до завдання і виправити відповідь";
+
+// Заголовок (instruction) — ЗАВЖДИ французькою, в усіх трьох мовах
+// інтерфейсу, тож ніколи не проходить через t()/плюральні форми — тип не
+// потребує lang. Рядок-переклад під заголовком (той самий текст, що
+// DEFAULT_INSTRUCTIONS[type].subInstruction, українською) — ЗАЛЕЖИТЬ від
+// ui_lang: uk — показується, fr — НЕ показується (й "/" теж), en —
+// показується власний англійський варіант нижче, а якщо його нема — також
+// не показується (без фолбеку на українську). EN-варіанти зберігаються
+// окремим Record, а не ключами в src/lib/i18n/messages/*.ts: ключ там мав
+// би бути per-type (taskInstruction.<type>.translation) з динамічним
+// доступом через t(), що зламало б типізацію MessageKey — Record з тим
+// самим TaskTypeKey, що й DEFAULT_INSTRUCTIONS, залишається type-safe без
+// додаткового рядка в uk.ts/fr.ts (яким для fr однаково ніколи нема що
+// показати).
+export const DEFAULT_TRANSLATION_EN: Partial<Record<TaskTypeKey, string>> = {
+  fill_blank: "Fill in the blanks.",
+  drag_drop: "Drag the words into place.",
+  multiple_choice: "Choose the correct answer.",
+  true_false: "Choose true or false.",
+  matching: "Match the pairs.",
+  table_fill: "Fill in the table.",
+  sort_columns: "Sort into the right columns.",
+  checkbox_grid: "Check the correct boxes.",
+  reorder: "Put them in the right order.",
+  chronological_order: "Put the events in chronological order.",
+  image_match: "Match each image to the right word.",
+  listening: "Listen and answer.",
+  open_answer: "Answer in writing.",
+  essay_check: "Write a text.",
+  flip_cards: "Flip the cards.",
+  vocab_quiz: "Test your vocabulary.",
+  phonetics: "Listen and repeat.",
+  letter_gaps: "Fill in the missing letters.",
+  letter_rearrangement: "Put the letters in the right order.",
+  word_search: "Find the hidden words.",
+  crossword: "Fill in the grid.",
+  karaoke: "Sing along with the song.",
+};
+
+// word_choice — дефолт залежить від режиму, окремо від DEFAULT_TRANSLATION_EN
+// вище (той самий принцип, що WORD_CHOICE_DEFAULT_INSTRUCTIONS).
+export const WORD_CHOICE_TRANSLATION_EN: Record<"select" | "cross_out", string> = {
+  select: "Choose the correct word form.",
+  cross_out: "Cross out the extra word.",
+};
+
+// flip_cards у режимі "випадкова картка" — окремо від DEFAULT_TRANSLATION_EN,
+// той самий принцип, що FLIP_CARDS_RANDOM_INSTRUCTIONS.
+export const FLIP_CARDS_RANDOM_TRANSLATION_EN = "Draw a card.";
+
+// Єдина точка, де "stored" (вчителькою введений subInstructions/null) і
+// "fallback" (дефолт типу) з'єднуються в те, що РЕАЛЬНО показати під
+// заголовком — для будь-якої мови інтерфейсу. ПРАВИЛО (не лише дефолти, а й
+// вчителькою збережений текст): stored-переклад трактується як УКРАЇНСЬКИЙ
+// (і тому ховається в fr/en — ми не маємо його англійського варіанту),
+// дефолтний — показує uk завжди, en лише якщо для типу є запис у
+// DEFAULT_TRANSLATION_EN/аналогічних мапах вище, fr — ніколи (null/undefined
+// тут природно прибирає й сам рядок, і "/" у TaskInstructionLine, яка вже
+// ховає обидва, коли uk-пропс порожній).
+export function taskTranslationLine(
+  stored: string | null | undefined,
+  lang: UiLang,
+  fallback: { uk: string; en?: string }
+): string | undefined {
+  if (stored) return lang === "uk" ? stored : undefined;
+  if (lang === "uk") return fallback.uk;
+  if (lang === "en") return fallback.en;
+  return undefined;
+}

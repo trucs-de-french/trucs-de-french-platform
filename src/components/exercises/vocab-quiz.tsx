@@ -13,7 +13,7 @@ import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { useT } from "@/lib/i18n/context";
 
 const LETTERS = ["A", "B", "C", "D"];
@@ -56,7 +56,7 @@ export function VocabQuizExercise({
   // на сервері й клієнті. Повторний виклик buildQuizQuestions() лишається
   // тільки в restart() — це відбувається вже після монтування, в обробнику
   // кліку, і на гідратацію не впливає.
-  const { t } = useT();
+  const { t, lang } = useT();
   const [questions, setQuestions] = useState(initialQuestions);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -82,7 +82,10 @@ export function VocabQuizExercise({
       <div className={EXERCISE_STACK}>
         <TaskPanelHeader
           instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
-          subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+          subInstructionText={taskTranslationLine(null, lang, {
+            uk: DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction,
+            en: DEFAULT_TRANSLATION_EN.vocab_quiz,
+          })}
         />
         <div className="flex w-full flex-col gap-2">
           <span className="counter-pill" role="status">
@@ -122,7 +125,10 @@ export function VocabQuizExercise({
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
-        subInstructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction}
+        subInstructionText={taskTranslationLine(null, lang, {
+          uk: DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.vocab_quiz,
+        })}
         counter={questions.length > 1 ? { current: index + 1, total: questions.length } : null}
       />
       <div className="min-w-0">

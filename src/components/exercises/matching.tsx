@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
@@ -528,7 +528,10 @@ export function MatchingExercise({
         isBlockChecked={(i) => i in blockResults}
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.matching.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.matching.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.matching,
+        })}
       />
 
       {!useBlocks ? (

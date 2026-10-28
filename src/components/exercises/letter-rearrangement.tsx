@@ -12,7 +12,7 @@ import type {
   GradeResult,
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -520,7 +520,10 @@ export function LetterRearrangementExercise({
         isBlockChecked={(i) => i in blockResults}
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.letter_rearrangement,
+        })}
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null

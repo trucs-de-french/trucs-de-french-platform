@@ -12,7 +12,7 @@ import type {
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -1261,7 +1261,10 @@ export function WordSearchExercise({
         labels={blocks.map((b) => b.title)}
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.word_search.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.word_search.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.word_search,
+        })}
         hintText={hintText}
         rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import {
   CRITERIA,
   CRITERION_LABELS,
@@ -244,7 +244,10 @@ export function EssayCheckExercise({
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction}
-        subInstructionText={DEFAULT_INSTRUCTIONS.essay_check.subInstruction}
+        subInstructionText={taskTranslationLine(null, lang, {
+          uk: DEFAULT_INSTRUCTIONS.essay_check.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.essay_check,
+        })}
       />
       {grid && (
         <p className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">

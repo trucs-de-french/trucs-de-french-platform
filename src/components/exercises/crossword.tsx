@@ -16,7 +16,7 @@ import type {
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -1209,7 +1209,10 @@ export function CrosswordExercise({
         labels={blocks.map((b) => b.title)}
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.crossword.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.crossword,
+        })}
         hintText={hintExplanationHidden ? null : hintExplanationText("crossword", lang)}
         rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />

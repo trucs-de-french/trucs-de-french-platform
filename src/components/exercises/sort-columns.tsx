@@ -9,7 +9,7 @@ import { useColumnSort } from "./use-column-sort";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
@@ -326,7 +326,10 @@ export function SortColumnsExercise({
       <TaskPanelHeader
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.sort_columns.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.sort_columns.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.sort_columns,
+        })}
       />
 
       <div className="word-pool" {...poolDropProps()} onClick={clickPool}>

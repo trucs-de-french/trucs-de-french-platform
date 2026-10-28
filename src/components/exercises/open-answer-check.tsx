@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
@@ -60,7 +60,7 @@ export function OpenAnswerCheckExercise({
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -320,7 +320,10 @@ export function OpenAnswerCheckExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.open_answer.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.open_answer.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.open_answer,
+        })}
       />
 
       {!useBlocks ? (

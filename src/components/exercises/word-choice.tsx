@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -615,7 +615,10 @@ export function WordChoiceExercise({
         isBlockChecked={(i) => i in blockResults}
         pointsText={pointsPillText}
         instructionText={config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction}
-        subInstructionText={config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction,
+          en: WORD_CHOICE_TRANSLATION_EN[config.mode],
+        })}
         hintText={
           config.sentences.some((s) => s.hint)
             ? hintExplanationText("word_choice", lang)

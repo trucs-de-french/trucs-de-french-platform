@@ -8,7 +8,7 @@ import { AudioPill } from "@/components/audio-pill";
 import { PhoneticsVideoBlock } from "./phonetics-video-block";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { useT } from "@/lib/i18n/context";
@@ -55,7 +55,7 @@ function DriveAudioBlock({ url }: { url: string }) {
 }
 
 export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
-  const { t: t2 } = useT();
+  const { t: t2, lang } = useT();
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   if (config.items.length === 0) {
@@ -70,7 +70,10 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.phonetics.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.phonetics.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.phonetics,
+        })}
       />
       <div className="grid grid-cols-1 items-stretch gap-[22px] md:grid-cols-2">
         {config.items.map((item, i) => {

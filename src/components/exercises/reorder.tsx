@@ -6,7 +6,7 @@ import type { ReorderPublic, ReorderDetail, ReorderAnswer, GradeResult } from "@
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { SortableTileRow } from "./sortable-tile-row";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
@@ -539,7 +539,10 @@ export function ReorderExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.reorder.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.reorder,
+        })}
         hintText={config.sequences.some((s) => s.hint) ? hintExplanationText("reorder", lang) : null}
       />
 

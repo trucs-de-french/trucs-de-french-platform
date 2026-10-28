@@ -7,7 +7,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -346,7 +346,10 @@ export function DragDropExercise({
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.drag_drop.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.drag_drop.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.drag_drop,
+        })}
       />
 
       {(() => {

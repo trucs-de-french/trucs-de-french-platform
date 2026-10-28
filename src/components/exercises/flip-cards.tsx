@@ -6,7 +6,13 @@ import type { FlipCard as FlipCardType, FlipCardsConfig } from "@/lib/exercises/
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageZoomBadge } from "./image-zoom-badge";
 import { ImageLightbox } from "./image-lightbox";
-import { DEFAULT_INSTRUCTIONS, FLIP_CARDS_RANDOM_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import {
+  DEFAULT_INSTRUCTIONS,
+  DEFAULT_TRANSLATION_EN,
+  FLIP_CARDS_RANDOM_INSTRUCTIONS,
+  FLIP_CARDS_RANDOM_TRANSLATION_EN,
+  taskTranslationLine,
+} from "@/lib/exercises/default-instructions";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { TaskPanelHeader } from "./task-panel-header";
 import { ANSWER_CARD_BASE, ANSWER_CARD_DEFAULT } from "./answer-card-style";
@@ -742,7 +748,7 @@ function DeckCardBack({ translation }: { translation: string }) {
 }
 
 export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsConfig; plaqueText?: string }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   // flip_cards не має sanitize-межі (самостійний тип без правильної
   // відповіді — повна конфігурація йде студенту як є, types.ts), тож
   // фільтрація неповної картки (без лицьової чи зворотної сторони) — тут,
@@ -809,12 +815,13 @@ export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsCon
             ? FLIP_CARDS_RANDOM_INSTRUCTIONS.instruction
             : DEFAULT_INSTRUCTIONS.flip_cards.instruction)
         }
-        subInstructionText={
-          config.subInstructions ??
-          (config.mode === "random_reveal"
-            ? FLIP_CARDS_RANDOM_INSTRUCTIONS.subInstruction
-            : DEFAULT_INSTRUCTIONS.flip_cards.subInstruction)
-        }
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk:
+            config.mode === "random_reveal"
+              ? FLIP_CARDS_RANDOM_INSTRUCTIONS.subInstruction
+              : DEFAULT_INSTRUCTIONS.flip_cards.subInstruction,
+          en: config.mode === "random_reveal" ? FLIP_CARDS_RANDOM_TRANSLATION_EN : DEFAULT_TRANSLATION_EN.flip_cards,
+        })}
       />
       {config.mode === "deck" ? (
         <DeckFlipCards cards={cards} />

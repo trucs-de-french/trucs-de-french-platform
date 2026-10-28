@@ -8,7 +8,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
@@ -246,7 +246,10 @@ export function ImageMatchExercise({
       <TaskPanelHeader
         pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(totalPoints, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.image_match.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.image_match,
+        })}
       />
 
       {remaining > 0 ? (

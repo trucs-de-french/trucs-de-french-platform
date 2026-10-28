@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from "react";
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -605,7 +605,10 @@ export function KaraokeExercise({
       <TaskPanelHeader
         pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(pointsPossibleTotal, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.karaoke.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.karaoke,
+        })}
       />
 
       {/* Один вертикальний стовпчик на БУДЬ-ЯКій ширині (не md:flex-row, як

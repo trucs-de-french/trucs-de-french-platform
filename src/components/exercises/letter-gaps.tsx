@@ -7,7 +7,7 @@ import { TaskPanelHeader } from "./task-panel-header";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -769,7 +769,10 @@ export function LetterGapsExercise({
         isBlockChecked={(i) => i in blockResults}
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction}
-        subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction,
+          en: DEFAULT_TRANSLATION_EN.letter_gaps,
+        })}
         hintText={hintText}
       />
 

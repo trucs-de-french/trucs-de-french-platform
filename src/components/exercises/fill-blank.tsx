@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
-import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
+import {
+  DEFAULT_INSTRUCTIONS,
+  DEFAULT_TRANSLATION_EN,
+  FILL_BLANK_WORD_BANK_SUBINSTRUCTION,
+  FILL_BLANK_WORD_BANK_TRANSLATION_EN,
+  taskTranslationLine,
+} from "@/lib/exercises/default-instructions";
 import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -175,6 +181,7 @@ export function FillBlankExercise({
   const defaultSubInstruction = hasWordBank
     ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION
     : DEFAULT_INSTRUCTIONS.fill_blank.subInstruction;
+  const defaultSubInstructionEn = hasWordBank ? FILL_BLANK_WORD_BANK_TRANSLATION_EN : DEFAULT_TRANSLATION_EN.fill_blank;
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -268,7 +275,10 @@ export function FillBlankExercise({
       <TaskPanelHeader
         pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(config.points, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
-        subInstructionText={config.subInstructions ?? defaultSubInstruction}
+        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+          uk: defaultSubInstruction,
+          en: defaultSubInstructionEn,
+        })}
         hintText={
           isDelf || hasWordBank || !!result || isPractice
             ? null
