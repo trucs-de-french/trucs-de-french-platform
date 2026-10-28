@@ -373,7 +373,7 @@ export function LetterRearrangementExercise({
         </div>
         {wordDetail && !wordDetail.isCorrect && (
           <p className="text-sm dark:text-[var(--text-muted-caption)]">
-            <span className="text-[#4b4766] dark:text-inherit">Правильне слово: </span>
+            <span className="correct-answer-label">Правильне слово: </span>
             <span className="correct-answer-word text-[#3b36c4]">
               {wordDetail.letters.map((l) => l.text).join("")}
             </span>

@@ -6156,6 +6156,41 @@ button.scene-bar:active .scene-bar-toggle {
     color: var(--gold-border);
   }
 }
+/* Лейбл "Правильне слово:" — лише СВІТЛА тема: раніше успадковував Lora/
+   text-sm з батьківського <p>, той самий тон/шрифт, що український рядок
+   підказки над ним (word-card-number-row, --uk-clue-text-light) — обидва
+   зливались. Тепер sans (--font-heading, як UI-лейбли/чипи), менший,
+   напівжирний, з трекінгом — явно відмінний регістр від Lora-слова
+   відповіді (.correct-answer-word, лишається як є) і від рядка підказки.
+   Темна тема: explicit reset на успадковані значення — вигляд лейблу в
+   темній темі НЕ змінюється (той самий inherited color/font, що й раніше
+   через dark:text-inherit). */
+:root {
+  --answer-label-light: #6f6a8c;
+}
+.correct-answer-label {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--answer-label-light);
+}
+.dark .correct-answer-label {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: normal;
+  color: inherit;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .correct-answer-label {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: normal;
+    color: inherit;
+  }
+}
 /* "Correction des erreurs" (error-review-block.tsx) — ЛИШЕ кнопка
    "Виправити N"/"Спробувати ще раз"/"Згорнути" і заповнення прогрес-бару
    цього блоку: той самий індиго-градієнт + золоте сяйво, що
