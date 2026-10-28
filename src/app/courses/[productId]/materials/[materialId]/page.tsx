@@ -13,6 +13,8 @@ import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, TEXT_TO_EXERCISES, EXE
 import { STUDENT_PAGE_TITLE, STUDENT_SECTION_HEADING } from "@/lib/typography-styles";
 import { taskHasRenderableContent } from "@/lib/exercises/task-visibility";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
+import { normalizeUiLang } from "@/lib/ui/product-lang";
+import { LangProvider } from "@/lib/i18n/context";
 
 export default async function MaterialPage({
   params,
@@ -31,6 +33,13 @@ export default async function MaterialPage({
   if (!material || material.product_id !== productId) {
     notFound();
   }
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("ui_lang")
+    .eq("id", productId)
+    .single();
+  const lang = normalizeUiLang(product?.ui_lang);
 
   const previewCourseId = await getPreviewCourseId();
   const isPreviewing = previewCourseId === productId;
@@ -135,6 +144,7 @@ export default async function MaterialPage({
   const hasArticleContent = !!safeHtml || hasPdf;
 
   return (
+    <LangProvider lang={lang}>
     <main className="mx-auto w-full max-w-2xl p-6">
       <Link href={`/courses/${productId}?tab=materials`} className="text-sm underline">
         ← До матеріалів
@@ -222,5 +232,6 @@ export default async function MaterialPage({
         </section>
       )}
     </main>
+    </LangProvider>
   );
 }
