@@ -1139,7 +1139,7 @@ function WordSearchBlockView({
             </button>
             {answersOpen && (
               <div id={answersPanelId} className="task-result-toggle-panel flex flex-col gap-2">
-                <p className={HINT_TEXT}>Слова, які не знайдено, позначені в сітці зеленим.</p>
+                <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Слова, які не знайдено, позначені в сітці зеленим.</p>
                 <div className="task-result-gap-grid task-result-gap-grid--two-col">
                   {block.words.map((w) => (
                     <div key={w.word} className="task-result-gap-row">
