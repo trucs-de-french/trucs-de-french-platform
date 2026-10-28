@@ -5556,18 +5556,6 @@ button.scene-bar:active .scene-bar-toggle {
   transition: transform 0.15s ease;
 }
 
-/* Featured (власна гра, напр. Fake News) — та сама картка, золота рамка й
-   заповнене градієнтом коло іконки замість контурного. */
-.link-card--featured {
-  border-color: #f6dc8e;
-  box-shadow: 0 0 0 1px rgba(246, 220, 142, 0.25), 0 6px 22px rgba(232, 196, 106, 0.28);
-}
-.link-card--featured .link-card-icon {
-  border: none;
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-  color: #1a1640;
-}
-
 /* Було: hover висвітлював фон (той самий баг, що вже виправляли для
    .scene-fullscreen-btn вище) — фон лишається темним, яскравішають лише
    рамка/заголовок/стрілка, плюс м'який золотий glow. */
@@ -5675,21 +5663,6 @@ button.scene-bar:active .scene-bar-toggle {
   }
   :root:not(.dark) .link-card-arrow {
     color: #8a6414;
-  }
-}
-
-/* "Own game" (variant="featured") — warm highlighted card, star stays
-   part of the label text (link-task-icon.ts), no markup change. */
-.light .link-card--featured {
-  background: linear-gradient(180deg, #fff3c8, #fdf8ea);
-  border: 1.5px solid #d9a93d;
-  box-shadow: 0 8px 22px rgba(224, 170, 62, 0.35);
-}
-@media (prefers-color-scheme: light) {
-  :root:not(.dark) .link-card--featured {
-    background: linear-gradient(180deg, #fff3c8, #fdf8ea);
-    border: 1.5px solid #d9a93d;
-    box-shadow: 0 8px 22px rgba(224, 170, 62, 0.35);
   }
 }
 
