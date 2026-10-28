@@ -1,13 +1,18 @@
 import { pluralizePoints } from "@/lib/pluralize-points";
 
+// Округлення для показу (не для обчислень) — найближчі 0.5.
+function roundToHalf(value: number): number {
+  return Math.round(value * 2) / 2;
+}
+
 // Родовий відмінок після "з" ("N з M балів") — відрізняється від
 // pluralizePoints (називний/рахунковий: "1 бал", "2 бали", "5 балів"):
 // родовий однини завжди "бала" (не "бал"), родовий множини завжди "балів"
-// (ніколи "бали" — те слово лише в рахунковій формі). Дробові possible
-// (крок 0.5 у системі балів) — родовий однини "бала", той самий принцип,
-// що pluralizePoints.
+// (ніколи "бали" — те слово лише в рахунковій формі). Рішення — з
+// округленого до 0.5 значення (те, що реально показано), не з сирого
+// possible: половинне значення — завжди родовий однини "бала".
 function genitivePointsWord(possible: number): "бала" | "балів" {
-  const abs = Math.abs(possible);
+  const abs = Math.abs(roundToHalf(possible));
   if (!Number.isInteger(abs)) return "бала";
   const mod10 = abs % 10;
   const mod100 = abs % 100;
@@ -16,13 +21,14 @@ function genitivePointsWord(possible: number): "бала" | "балів" {
 }
 
 // Форматування ЛИШЕ для показу (не впливає на обчислення/порівняння/БД):
-// округлення до 1 знака після коми, крапка (не кома — решта сайту на
-// крапках), "хвіст" ".0" відкидається. Джерело довгих хвостів — сума
+// округлення до найближчих 0.5 (Math.round(v*2)/2), ціле — без десяткових,
+// половинне — одна цифра після КОМИ (інтерфейс українською, крапка
+// лишилась тільки в сирих значеннях/БД). Джерело довгих хвостів — сума
 // дробових pointsEarned/pointsPossible по задачах блоку (float-арифметика),
 // не округлена до цього моменту навмисно.
 export function formatScore(value: number): string {
-  const rounded = Math.round(value * 10) / 10;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  const rounded = roundToHalf(value);
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
 }
 
 export function formatPoints(earned: number, possible: number): string {

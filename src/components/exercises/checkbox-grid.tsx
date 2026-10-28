@@ -13,6 +13,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatScore } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -76,12 +77,6 @@ const RESULT_ICON_WRONG = "h-3.5 w-3.5 text-red-700 dark:text-red-400 md:h-4 md:
 const LEGEND_SQUARE = "flex h-4 w-4 shrink-0 items-center justify-center rounded-md border-2";
 const LEGEND_ICON_CORRECT = "h-2.5 w-2.5 text-green-700 dark:text-green-400";
 const LEGEND_ICON_WRONG = "h-2.5 w-2.5 text-red-700 dark:text-red-400";
-
-// Український дробовий запис балів (крок 0.5 і дробові частки часткового
-// заліку) — через кому, однією десятковою: "0,5", не "0.5".
-function formatPointsValue(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
-}
 
 export function CheckboxGridExercise({
   taskId,
@@ -160,8 +155,8 @@ export function CheckboxGridExercise({
   // сусід картки — тут немає картки, лише grid-клітинка), тож рендериться
   // окремо, а не через сам компонент RowPointsTab. Завжди видима (на
   // відміну від колишнього RowScorePill, схованого для рядків ≤1 бал) —
-  // рядок із 1 балом однаково показує вкладку. formatPointsValue —
-  // той самий дробовий запис (кома), що решта цього файлу.
+  // рядок із 1 балом однаково показує вкладку. formatScore (shared
+  // format-points.ts) — округлення до 0.5 і дробовий запис через кому.
   function rowPointsTab(row: CheckboxGridPublic["rows"][number]) {
     if (hidePoints) return null;
     const rowCell = detail?.cells.find((c) => c.rowId === row.id);
@@ -169,7 +164,7 @@ export function CheckboxGridExercise({
     if (!rowCell) {
       return (
         <span className="row-points-tab" style={{ position: "static" }}>
-          {formatPointsValue(row.points)} {pluralizePoints(row.points)}
+          {formatScore(row.points)} {pluralizePoints(row.points)}
         </span>
       );
     }
@@ -178,7 +173,7 @@ export function CheckboxGridExercise({
       <span className={`row-points-tab row-points-tab--${status}`} style={{ position: "static" }}>
         {status === "correct" && <Check strokeWidth={3} className="h-3 w-3" />}
         {status === "wrong" && <X strokeWidth={3} className="h-3 w-3" />}
-        {formatPointsValue(rowCell.earnedPoints)} з {formatPointsValue(row.points)}
+        {formatScore(rowCell.earnedPoints)} з {formatScore(row.points)}
       </span>
     );
   }

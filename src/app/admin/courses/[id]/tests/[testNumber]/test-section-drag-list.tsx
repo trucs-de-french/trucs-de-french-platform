@@ -13,6 +13,7 @@ import {
 } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatScore } from "@/lib/exercises/format-points";
 import { arrayMove, computeInsertIndex, resolveDropSide, type DropSide } from "@/lib/sortable-list";
 import { validateTaskConfig } from "@/lib/exercises/task-validation";
 
@@ -234,7 +235,7 @@ export function TestSectionDragList({
                     <div>
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs uppercase text-neutral-500 dark:text-neutral-400">
                         Блок · {row.content_type}
-                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
+                        {row.maxPoints > 0 && ` · ${formatScore(row.maxPoints)} ${pluralizePoints(row.maxPoints)}`}
                       </span>
                       <Link
                         href={`/admin/courses/${productId}/task-groups/${row.id}`}

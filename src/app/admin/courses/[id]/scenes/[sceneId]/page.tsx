@@ -39,6 +39,7 @@ import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { ADMIN_PAGE_TITLE, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatScore } from "@/lib/exercises/format-points";
 import { pluralizeExercisesAccusative } from "@/lib/pluralize-exercises";
 import { DEFAULT_SCENE_BLOCK_ORDER, type SceneBlockType } from "@/lib/scene-block-order";
 import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
@@ -467,7 +468,7 @@ export default async function AdminScenePage({
                 attachedGroup,
                 membersByAttachedGroupId.get(attachedGroup.id) ?? []
               );
-              return maxPoints > 0 ? ` · ${maxPoints} ${pluralizePoints(maxPoints)}` : "";
+              return maxPoints > 0 ? ` · ${formatScore(maxPoints)} ${pluralizePoints(maxPoints)}` : "";
             })()}
           </span>
           <div className="flex items-center gap-2">

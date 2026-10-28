@@ -14,7 +14,7 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { formatPoints } from "@/lib/exercises/format-points";
+import { formatPoints, formatScore } from "@/lib/exercises/format-points";
 
 // Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
 // одночасно (isFormulaire — взаємовиключна гілка нижче), тож один спільний
@@ -126,13 +126,13 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         {CRITERIA.map((key) => (
           <div key={key} className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{CRITERION_LABELS[key]}</span>
-            <span className="font-medium">{result.criteria[key]}</span>
+            <span className="font-medium">{formatScore(result.criteria[key])}</span>
           </div>
         ))}
         <div className="mt-1 flex items-center justify-between gap-2 border-t border-[#e6e6f0] pt-1.5 font-semibold dark:border-neutral-700">
           <span>Разом</span>
           <span>
-            {result.totalScore} / {result.maxScore}
+            {formatScore(result.totalScore)} / {formatScore(result.maxScore)}
           </span>
         </div>
       </div>
@@ -245,7 +245,7 @@ export function EssayCheckExercise({
       {grid && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           Рівень {level}
-          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {grid.maxScore} балів
+          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {formatScore(grid.maxScore)} балів
           {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
         </p>
       )}

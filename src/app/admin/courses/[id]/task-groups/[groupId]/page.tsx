@@ -12,6 +12,7 @@ import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatScore } from "@/lib/exercises/format-points";
 import { TaskGroupFields, type TaskGroupInitial } from "../task-group-fields";
 import { GroupMemberDragList } from "../group-member-drag-list";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
@@ -151,7 +152,7 @@ export default async function EditTaskGroupPage({
         <h1 className={ADMIN_PAGE_TITLE}>Редагування блоку</h1>
         {maxPoints > 0 && (
           <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-            Максимум: {maxPoints} {pluralizePoints(maxPoints)}
+            Максимум: {formatScore(maxPoints)} {pluralizePoints(maxPoints)}
           </span>
         )}
       </div>

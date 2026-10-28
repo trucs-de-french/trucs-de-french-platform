@@ -9,6 +9,7 @@ import { fetchGroupMemberTasks, resolveGroupMaxPoints } from "@/app/admin/block-
 import { SaveForm } from "@/components/save-form";
 import { SubmitButton } from "@/components/submit-button";
 import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatScore } from "@/lib/exercises/format-points";
 import { MaterialArticleFields } from "../material-article-fields";
 import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -185,7 +186,7 @@ export default async function EditMaterialPage({
                     <div>
                       <span className={`uppercase ${HINT_TEXT}`}>
                         Блок · {row.content_type}
-                        {row.maxPoints > 0 && ` · ${row.maxPoints} ${pluralizePoints(row.maxPoints)}`}
+                        {row.maxPoints > 0 && ` · ${formatScore(row.maxPoints)} ${pluralizePoints(row.maxPoints)}`}
                       </span>
                       <Link
                         href={`/admin/courses/${productId}/task-groups/${row.id}`}
