@@ -189,6 +189,8 @@ export const en: Record<MessageKey, string> = {
   "chrono.numberingNoteCompact": "Write the order number (from 1 to {n}) in the n° field.",
   "chrono.cardPositionAlt": "Card {label}, position {position}",
   "crossword.clueAria": "Hint {n}",
+  "crossword.directionHorizontalTranslation": "across",
+  "crossword.directionVerticalTranslation": "down",
   "tablefill.columnFrench": "French",
   "tablefill.columnTranslation": "Translation",
 

@@ -154,22 +154,38 @@ function ClueCardHeader({
 
 // Мокап "варіант 2" — заголовок секції напрямку ("Horizontalement"/
 // "Verticalement"): стрілка (право для горизонталі, вниз для вертикалі) +
-// той самий вигляд FR/UK, що й TaskInstructionLine (task-panel-header.tsx,
-// task-panel-instruction-fr-group/-fr/-slash/-uk), але без вкладеного
-// <div> — цей заголовок лишається <p> (попередній тип елемента тут), а
-// <div> усередині <p> браузер розірвав би, зламавши рядок. + золота лінія
-// праворуч (crossword-direction-rule, globals.css).
+// той самий вигляд FR/переклад, що й TaskInstructionLine (task-panel-
+// header.tsx, task-panel-instruction-fr-group/-fr/-slash/-uk), але без
+// вкладеного <div> — цей заголовок лишається <p> (попередній тип елемента
+// тут), а <div> усередині <p> браузер розірвав би, зламавши рядок. + золота
+// лінія праворуч (crossword-direction-rule, globals.css).
+//
+// FR-заголовок НІКОЛИ не перекладається (як і інструкція вправи) — завжди
+// DEFAULT_CROSSWORD_DIRECTION_LABELS[...].fr, той самий текст у uk/fr/en.
+// Рядок-переклад — crossword.directionHorizontalTranslation/...Vertical
+// (uk.ts джерело правди, fr.ts порожній — не перекладається, en.ts
+// "across"/"down"); t() сам читає lang із LangProvider, тож тут немає
+// stored/fallback-розгалуження, як у taskTranslationLine (default-
+// instructions.ts) — ці підписи НЕ редагуються вчителькою (нема такого
+// поля в конфігурації задачі crossword, на відміну від instructions/
+// subInstructions), лише код+словники. Порожній рядок (fr) — falsy, тож
+// і сам переклад, і "/" перед ним природно ховаються, той самий принцип,
+// що TaskInstructionLine.
 function DirectionHeading({ direction }: { direction: Direction }) {
-  const { fr, uk } = DEFAULT_CROSSWORD_DIRECTION_LABELS[direction === "horizontal" ? "horizontal" : "vertical"];
+  const { t } = useT();
+  const { fr } = DEFAULT_CROSSWORD_DIRECTION_LABELS[direction === "horizontal" ? "horizontal" : "vertical"];
+  const translation = t(
+    direction === "horizontal" ? "crossword.directionHorizontalTranslation" : "crossword.directionVerticalTranslation"
+  );
   const ArrowIcon = direction === "horizontal" ? ArrowRight : ArrowDown;
   return (
     <p className="crossword-direction-heading">
       <ArrowIcon size={18} strokeWidth={2.4} aria-hidden className="crossword-direction-arrow" />
       <span className="task-panel-instruction-fr-group">
         <span className="task-panel-instruction-fr">{fr}</span>
-        <span className="task-panel-instruction-slash">/</span>
+        {translation && <span className="task-panel-instruction-slash">/</span>}
       </span>
-      <span className="task-panel-instruction-uk">{uk}</span>
+      {translation && <span className="task-panel-instruction-uk">{translation}</span>}
       <span className="crossword-direction-rule" aria-hidden />
     </p>
   );

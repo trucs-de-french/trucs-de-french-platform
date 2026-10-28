@@ -145,14 +145,17 @@ export const STATUS_LABEL_NONE_UK = "Є помилки";
 export const STATUS_LABEL_PARTIAL_UK = "Майже";
 export const STATUS_LABEL_FULL_UK = "Усе правильно";
 
-// Дефолтні FR/UK підписи секцій напрямку кросворду ("Horizontalement" /
+// Дефолтні FR підписи секцій напрямку кросворду ("Horizontalement" /
 // "Verticalement", мокап "варіант 2", crossword.tsx) — окремо від
 // DEFAULT_TASK_NAME (назва ТИПУ задачі) і DEFAULT_INSTRUCTIONS (інструкція
 // самої вправи): це підписи ДВОХ секцій підказок усередині однієї вправи.
-export const DEFAULT_CROSSWORD_DIRECTION_LABELS: Record<
-  "horizontal" | "vertical",
-  { fr: string; uk: string }
-> = {
-  horizontal: { fr: "Horizontalement", uk: "по горизонталі" },
-  vertical: { fr: "Verticalement", uk: "по вертикалі" },
+// FR-заголовок — завжди французький, в усіх мовах інтерфейсу (той самий
+// принцип, що заголовок інструкції, default-instructions.ts), тож лишається
+// тут простим рядком; рядок-переклад під ним — залежний від ui_lang
+// (crossword.directionHorizontalTranslation/...Vertical, src/lib/i18n/
+// messages/*.ts), тому вже НЕ тут — DirectionHeading (crossword.tsx) читає
+// переклад через useT().t(), а не з цього Record.
+export const DEFAULT_CROSSWORD_DIRECTION_LABELS: Record<"horizontal" | "vertical", { fr: string }> = {
+  horizontal: { fr: "Horizontalement" },
+  vertical: { fr: "Verticalement" },
 };

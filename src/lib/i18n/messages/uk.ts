@@ -192,6 +192,8 @@ export const uk = {
   "chrono.numberingNoteCompact": "Впишіть у поле n° номер за порядком (від 1 до {n}).",
   "chrono.cardPositionAlt": "Картка {label}, позиція {position}",
   "crossword.clueAria": "Підказка {n}",
+  "crossword.directionHorizontalTranslation": "по горизонталі",
+  "crossword.directionVerticalTranslation": "по вертикалі",
   "tablefill.columnFrench": "Французька",
   "tablefill.columnTranslation": "Переклад",
 
