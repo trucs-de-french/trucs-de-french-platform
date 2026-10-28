@@ -86,7 +86,7 @@ export function TaskGroupBlock({
   // той баг, що виправляє ця задача).
   extraSharedContent?: ReactNode;
 }) {
-  const { lang } = useT();
+  const { lang, t } = useT();
   const [results, setResults] = useState<Record<string, GradeResult>>({});
 
   // Один стабільний onResult-колбек НА КОЖЕН task.id, мемоізований через
@@ -206,14 +206,14 @@ export function TaskGroupBlock({
                   />
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Якщо аудіо не відкривається,{" "}
+                  {t("scene.audioFallbackNote")}{" "}
                   <a
                     href={group.media_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline"
                   >
-                    перейдіть за посиланням
+                    {t("scene.followLink")}
                   </a>
                   .
                 </p>
@@ -231,12 +231,12 @@ export function TaskGroupBlock({
             src={group.media_url}
             subtitles={group.subtitles ?? undefined}
             vocab={collectVideoVocab(sceneDialogue ?? [])}
-            title="Відео"
+            title={t("video.videoLabel")}
           />
         ) : (
           <VideoFrame
             src={toEmbedUrl(group.media_url, group.media_provider as "youtube" | "gdrive" | null)}
-            title="Відео"
+            title={t("video.videoLabel")}
             provider={(group.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
           />
         ))}
@@ -299,7 +299,7 @@ export function TaskGroupBlock({
 
       {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
-          Підсумок блоку:{" "}
+          {t("scene.blockSummary")}{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
             {formatPointsLocalized(pointsEarned, pointsPossible, lang)}
           </span>
@@ -308,7 +308,7 @@ export function TaskGroupBlock({
 
       {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
-          Підсумок блоку:{" "}
+          {t("scene.blockSummary")}{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
             {formatPointsLocalized(flatEarned, flatPoints, lang)}
           </span>

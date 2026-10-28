@@ -28,6 +28,7 @@ import { Z_MODAL } from "@/lib/z-layers";
 import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
 import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech } from "@/lib/vocab-categories";
+import { useT } from "@/lib/i18n/context";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -183,6 +184,7 @@ export function VideoPlayer({
   poster?: string;
   className?: string;
 }) {
+  const { t } = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
@@ -667,7 +669,7 @@ export function VideoPlayer({
 
   const progress = metadataLoaded && duration! > 0 ? currentTime / duration! : 0;
   const hasAnySubtitles = hasFr || hasUk;
-  const subsLabel = mode === "fr_uk" ? "FR+UA" : mode === "fr" ? "FR" : mode === "uk" ? "UA" : "Вимкнено";
+  const subsLabel = mode === "fr_uk" ? "FR+UA" : mode === "fr" ? "FR" : mode === "uk" ? "UA" : t("videoPlayer.subtitlesOff");
   // Скільки вертикального місця меню (розкривається вгору) реально має
   // всередині контейнера плеєра над панеллю — контейнер плеєра (rounded,
   // overflow-hidden) інакше обрізав би довге меню зверху.
@@ -698,7 +700,7 @@ export function VideoPlayer({
           className="flex aspect-video w-full items-center justify-center rounded-[14px] p-4 text-center"
           style={{ background: "linear-gradient(135deg, #14132b, #2b2a52)" }}
         >
-          <p className="text-sm text-[#d6d3ff]">Не вдалося завантажити відео</p>
+          <p className="text-sm text-[#d6d3ff]">{t("videoPlayer.loadError")}</p>
         </div>
       </div>
     );
@@ -754,7 +756,7 @@ export function VideoPlayer({
 
         {subtitlesLoadError && (
           <span className="font-heading absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white/90">
-            Субтитри недоступні
+            {t("videoPlayer.subtitlesUnavailable")}
           </span>
         )}
 
@@ -814,7 +816,7 @@ export function VideoPlayer({
                   ref={trackRef}
                   role="slider"
                   tabIndex={0}
-                  aria-label="Позиція відтворення"
+                  aria-label={t("videoPlayer.seekSlider")}
                   aria-valuemin={0}
                   aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
                   aria-valuenow={Math.round(currentTime)}
@@ -858,7 +860,7 @@ export function VideoPlayer({
                       togglePlay();
                       wakeOverlay();
                     }}
-                    aria-label={playing ? "Пауза" : "Відтворити"}
+                    aria-label={playing ? t("videoPlayer.pause") : t("videoPlayer.play")}
                     aria-pressed={playing}
                     className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-white text-[var(--play-icon)] ${FOCUS_RING}`}
                   >
@@ -876,7 +878,7 @@ export function VideoPlayer({
                       skip(-10);
                       wakeOverlay();
                     }}
-                    aria-label="Назад на 10 секунд"
+                    aria-label={t("videoPlayer.back10")}
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
@@ -888,7 +890,7 @@ export function VideoPlayer({
                       skip(10);
                       wakeOverlay();
                     }}
-                    aria-label="Вперед на 10 секунд"
+                    aria-label={t("videoPlayer.forward10")}
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
@@ -901,7 +903,7 @@ export function VideoPlayer({
                         toggleLoopLine();
                         wakeOverlay();
                       }}
-                      aria-label="Повтор репліки"
+                      aria-label={t("videoPlayer.repeatLine")}
                       aria-pressed={loopLine}
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING} ${
                         loopLine ? "bg-white text-[#4f46e5]" : "text-white"
@@ -920,14 +922,14 @@ export function VideoPlayer({
                       toggleSlow();
                       wakeOverlay();
                     }}
-                    aria-label="Повільно"
+                    aria-label={t("videoPlayer.slow")}
                     aria-pressed={speed === 0.75}
                     className={`flex h-8 shrink-0 items-center gap-1 rounded-full border border-white/40 px-2.5 text-xs font-semibold min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING} ${
                       speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"
                     }`}
                   >
                     <Turtle size={14} />
-                    <span className="hidden min-[560px]:inline">Повільно</span>
+                    <span className="hidden min-[560px]:inline">{t("videoPlayer.slow")}</span>
                   </button>
 
                   <div ref={speedWrapRef} className="relative shrink-0">
@@ -939,7 +941,7 @@ export function VideoPlayer({
                         setSubsOpen(false);
                         wakeOverlay();
                       }}
-                      aria-label={`Швидкість відтворення ${speed}×`}
+                      aria-label={t("videoPlayer.playbackSpeed", { speed })}
                       aria-haspopup="menu"
                       aria-expanded={speedOpen}
                       className={`flex h-8 items-center rounded-full border border-white/35 bg-white/10 px-2.5 text-xs font-semibold text-white min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING}`}
@@ -980,7 +982,7 @@ export function VideoPlayer({
                           setSpeedOpen(false);
                           wakeOverlay();
                         }}
-                        aria-label={`Субтитри: ${subsLabel}`}
+                        aria-label={t("videoPlayer.subtitlesAria", { label: subsLabel })}
                         aria-haspopup="menu"
                         aria-expanded={subsOpen}
                         className={`flex h-8 items-center gap-1 rounded-full border border-white/35 bg-white/10 px-2.5 text-xs font-semibold text-white min-[560px]:h-auto min-[560px]:py-1 ${FOCUS_RING}`}
@@ -999,7 +1001,7 @@ export function VideoPlayer({
                           )}
                           {hasFr && <SubsMenuItem label="FR" active={mode === "fr"} onClick={() => changeMode("fr")} />}
                           {hasUk && <SubsMenuItem label="UA" active={mode === "uk"} onClick={() => changeMode("uk")} />}
-                          <SubsMenuItem label="Вимкнено" active={mode === "off"} onClick={() => changeMode("off")} />
+                          <SubsMenuItem label={t("videoPlayer.subtitlesOff")} active={mode === "off"} onClick={() => changeMode("off")} />
                           <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
                           <button
                             type="button"
@@ -1008,7 +1010,7 @@ export function VideoPlayer({
                             onClick={togglePauseOnWordOpen}
                             className="flex min-h-10 items-center justify-between gap-3 whitespace-nowrap px-3 text-left text-xs text-neutral-600 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700"
                           >
-                            <span>Пауза при відкритті слова</span>
+                            <span>{t("videoPlayer.pauseOnWordOpen")}</span>
                             <span
                               aria-hidden
                               className={`inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
@@ -1037,7 +1039,7 @@ export function VideoPlayer({
                       setMuted((v) => !v);
                       wakeOverlay();
                     }}
-                    aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
+                    aria-label={muted ? t("videoPlayer.unmute") : t("videoPlayer.mute")}
                     aria-pressed={muted}
                     className={`video-mute-btn flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
@@ -1051,7 +1053,7 @@ export function VideoPlayer({
                       void handleFullscreenToggle();
                       wakeOverlay();
                     }}
-                    aria-label={isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+                    aria-label={isFullscreen || isPseudoFullscreen ? t("videoPlayer.exitFullscreen") : t("videoPlayer.fullscreen")}
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                     style={{ background: "rgba(255,255,255,0.16)" }}
                   >
@@ -1094,7 +1096,7 @@ export function VideoPlayer({
             <span className="glass-bar-badge" aria-hidden="true">
               <Maximize size={16} strokeWidth={2.4} />
             </span>
-            На весь екран
+            {t("videoPlayer.fullscreen")}
           </button>
         </div>
       )}
@@ -1122,6 +1124,7 @@ function VideoWordCard({
   onClose: () => void;
   cardRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const { t } = useT();
   const pos = normalizePartOfSpeech(item.partOfSpeech);
   const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
   const posDotClass = pos ? PART_OF_SPEECH_COLORS[pos].dot : null;
@@ -1140,7 +1143,7 @@ function VideoWordCard({
     <div
       ref={cardRef}
       role="dialog"
-      aria-label={`Слово: ${firstVocabVariant(item.word)}`}
+      aria-label={t("videoPlayer.wordCardAria", { word: firstVocabVariant(item.word) })}
       onKeyDown={handleKeyDown}
       className="video-word-card"
       style={{
@@ -1154,7 +1157,7 @@ function VideoWordCard({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрити"
+          aria-label={t("button.closeAria")}
           className={`-m-1 shrink-0 rounded p-1 text-white/70 hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
         >
           <X size={16} />
@@ -1180,7 +1183,7 @@ function VideoWordCard({
 
       {item.example && (
         <div className="mt-3 border-t border-white/15 pt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">З репліки</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">{t("videoPlayer.fromLine")}</p>
           <p className="mt-1 text-sm text-white/90">{renderHighlightedExample(item.example.text, item)}</p>
           {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
         </div>

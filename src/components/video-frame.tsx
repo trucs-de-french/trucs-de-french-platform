@@ -11,6 +11,7 @@ import {
 } from "@/lib/video";
 import { Z_MODAL } from "@/lib/z-layers";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
+import { useT } from "@/lib/i18n/context";
 
 // "Телефон" — не будь-який touch (планшети лишаються на вбудованому
 // плеєрі й fullscreen-кнопці, як комп'ютер): дотиковий екран ТА (вузька
@@ -42,10 +43,11 @@ function getIsPhoneServerSnapshot(): "unknown" {
 // лише посилання, що відкривають відео В САМОМУ Google Drive (нова
 // вкладка/застосунок), жодного iframe.
 function GdrivePoster({ fileId }: { fileId: string }) {
+  const { t } = useT();
   const [thumbLoaded, setThumbLoaded] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
   const openUrl = toGdriveOpenUrl(fileId);
-  const openLabel = "Дивитися відео в Google Drive (відкриється в новій вкладці)";
+  const openLabel = t("videoPlayer.openInGdrive");
 
   return (
     <div className="flex flex-col gap-2">
@@ -78,7 +80,7 @@ function GdrivePoster({ fileId }: { fileId: string }) {
           <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white shadow-lg">
             <Play size={32} className="ml-0.5 fill-neutral-900 text-neutral-900" />
           </span>
-          <span className="text-xs text-white/90">Відео відкриється в Google Drive</span>
+          <span className="text-xs text-white/90">{t("videoPlayer.opensInGdrive")}</span>
         </a>
       </div>
       <div className="scene-fullscreen-btn-row">
@@ -86,7 +88,7 @@ function GdrivePoster({ fileId }: { fileId: string }) {
           <span className="glass-bar-badge" aria-hidden="true">
             <ExternalLink size={16} strokeWidth={2.4} />
           </span>
-          На весь екран
+          {t("videoPlayer.fullscreen")}
         </a>
       </div>
     </div>
@@ -106,6 +108,7 @@ export function VideoFrame({
   title: string;
   provider: "youtube" | "gdrive";
 }) {
+  const { t } = useT();
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: handleToggle, exitPseudoFullscreen } =
     useFullscreenWrapper();
   // "unknown" на сервері й на першому клієнтському рендері (гідратація без
@@ -155,7 +158,7 @@ export function VideoFrame({
           <button
             type="button"
             onClick={exitPseudoFullscreen}
-            aria-label="Закрити повний екран"
+            aria-label={t("videoPlayer.closeFullscreen")}
             className="absolute right-2 flex h-11 w-11 items-center justify-center text-white before:absolute before:-inset-1"
             style={{ top: "max(0.5rem, env(safe-area-inset-top))" }}
           >
@@ -173,7 +176,7 @@ export function VideoFrame({
             <span className="glass-bar-badge" aria-hidden="true">
               <Maximize size={16} strokeWidth={2.4} />
             </span>
-            {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+            {isFullscreen || isPseudoFullscreen ? t("videoPlayer.exitFullscreen") : t("videoPlayer.fullscreen")}
           </button>
         </div>
       )}

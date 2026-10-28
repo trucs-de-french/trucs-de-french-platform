@@ -4,6 +4,7 @@ import { Maximize, X } from "lucide-react";
 import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
 import type { CSSProperties } from "react";
+import { useT } from "@/lib/i18n/context";
 
 // Спільна обгортка embed-iframe (Wordwall, власні HTML-ігри з R2 тощо) для
 // студентської частини — content-блок сцени, група задач, тип завдання
@@ -14,6 +15,7 @@ import type { CSSProperties } from "react";
 // Планшет/комп'ютер лишаються на тій самій фіксованій висоті, що й
 // раніше, через --embed-desktop-height нижче.
 export function EmbedFrame({ url, height = 480 }: { url: string; height?: number }) {
+  const { t } = useT();
   const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle, exitPseudoFullscreen } =
     useFullscreenWrapper();
 
@@ -31,7 +33,7 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
           <button
             type="button"
             onClick={exitPseudoFullscreen}
-            aria-label="Закрити повний екран"
+            aria-label={t("videoPlayer.closeFullscreen")}
             className="absolute right-2 flex h-11 w-11 items-center justify-center text-white before:absolute before:-inset-1"
             style={{ top: "max(0.5rem, env(safe-area-inset-top))" }}
           >
@@ -40,14 +42,14 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
         )}
       </div>
       <p className="text-xs text-[#4b4766] dark:text-[var(--text-muted-caption)]">
-        Якщо вміст не відкривається,{" "}
+        {t("scene.embedFallbackNote")}{" "}
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           className="underline text-[#3b36c4] hover:text-[#2f2ab0] dark:text-inherit dark:hover:text-inherit"
         >
-          перейдіть за посиланням
+          {t("scene.followLink")}
         </a>
         .
       </p>
@@ -55,7 +57,7 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
         <span className="glass-bar-badge" aria-hidden="true">
           <Maximize size={16} strokeWidth={2.4} />
         </span>
-        {isFullscreen || isPseudoFullscreen ? "Вийти з повного екрану" : "На весь екран"}
+        {isFullscreen || isPseudoFullscreen ? t("videoPlayer.exitFullscreen") : t("videoPlayer.fullscreen")}
       </button>
     </div>
   );

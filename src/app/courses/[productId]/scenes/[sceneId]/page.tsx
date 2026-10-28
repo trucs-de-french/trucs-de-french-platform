@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { LangProvider } from "@/lib/i18n/context";
+import { t } from "@/lib/i18n/t";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { resolveLinkTaskIcon, linkTaskDefaultSubtitle, resolveSceneLinkMeta } from "@/lib/link-task-icon";
 import {
@@ -175,7 +176,7 @@ export default async function ScenePage({
     return (
       <main className="mx-auto w-full max-w-3xl p-6">
         <Link href={`/courses/${productId}`} className="text-sm underline">
-          ← До курсу
+          {t(lang, "scene.backToCourse")}
         </Link>
         <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
         <PreviewBlocked productId={productId} />
@@ -666,7 +667,7 @@ export default async function ScenePage({
           iOS pseudo-fullscreen/Fullscreen API wrapper усередині
           VideoPlayer/VideoFrame. */}
       <div className="flex flex-col gap-[14px]">
-        <SectionHeaderBar title="Відео" icon={resolveBlockIcon("video")} />
+        <SectionHeaderBar title={t(lang, "video.videoLabel")} icon={resolveBlockIcon("video")} />
         <div className="glass-block-panel glass-panel--video">{videoBody}</div>
       </div>
     </section>
@@ -674,7 +675,7 @@ export default async function ScenePage({
 
   const scriptNode = (
     <section>
-      <ScriptSection dialogue={dialogue} title="Скрипт" />
+      <ScriptSection dialogue={dialogue} title={t(lang, "sceneSection.script")} />
     </section>
   );
 
@@ -686,9 +687,9 @@ export default async function ScenePage({
   const linksNode = hasLinks && (
     <section>
       {onBackground ? (
-        <SectionHeaderBar title="Практика" icon={resolveBlockIcon("practice")} />
+        <SectionHeaderBar title={t(lang, "sceneSection.practice")} icon={resolveBlockIcon("practice")} />
       ) : (
-        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Практика</h2>
+        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>{t(lang, "sceneSection.practice")}</h2>
       )}
       {/* link-card-grid — 3/2/1 колонки (desktop/tablet/phone), globals.css.
           mt-3 (не H2_TO_CONTENT/mt-4) під баром — STANDALONE-варіант
@@ -732,14 +733,14 @@ export default async function ScenePage({
   const tasksNode = sceneRows.length > 0 && (
     <section>
       {onBackground ? (
-        <SectionHeaderBar title="Завдання" icon={resolveBlockIcon("tasks")} />
+        <SectionHeaderBar title={t(lang, "sceneSection.tasks")} icon={resolveBlockIcon("tasks")} />
       ) : (
-        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>Завдання</h2>
+        <h2 className={`student-on-bg ${STUDENT_SECTION_HEADING}`}>{t(lang, "sceneSection.tasks")}</h2>
       )}
       {sceneHasHintPenalty && (
         <div role="status" className="hint-points-notice">
           <HintBulb state="available" as="span" />
-          <span>Відповідь з підказкою (лампочка) дає половину балів.</span>
+          <span>{t(lang, "scene.hintPointsNotice")}</span>
         </div>
       )}
       <ul className={`${onBackground ? "mt-3" : H2_TO_CONTENT} flex flex-col ${EXERCISE_LIST_GAP}`}>
@@ -781,7 +782,7 @@ export default async function ScenePage({
                       <LinkCard
                         href={task.games.embed_url}
                         icon={Gamepad2}
-                        title="Відкрити гру"
+                        title={t(lang, "scene.openGame")}
                         subtitle={task.games.provider}
                       />
                     </div>
@@ -935,7 +936,7 @@ export default async function ScenePage({
       <SceneBackground desktopUrl={bgDesktopUrl} mobileUrl={bgMobileUrl} fillColor={bgFillColor} />
       <main className="student-bg-content mx-auto w-full max-w-3xl p-6">
         <Link href={`/courses/${productId}`} className="student-on-bg text-sm underline">
-          ← До курсу
+          {t(lang, "scene.backToCourse")}
         </Link>
         {isPreviewing && <PreviewBanner productId={productId} />}
         <h1 className={`student-on-bg mt-2 ${STUDENT_PAGE_TITLE}`}>{scene.title}</h1>
@@ -982,7 +983,7 @@ export default async function ScenePage({
                       sceneDialogue={dialogue}
                       extraSharedContent={
                         blockHasOwnContent ? (
-                          <SceneContentBlockContent block={block} panelForText sceneDialogue={dialogue} />
+                          <SceneContentBlockContent block={block} panelForText sceneDialogue={dialogue} lang={lang} />
                         ) : null
                       }
                     />
@@ -995,7 +996,7 @@ export default async function ScenePage({
               // матеріалом є вправи).
               return (
                 <section key={`content-${row.ref_id}`}>
-                  <SceneContentBlock block={block} sceneDialogue={dialogue} />
+                  <SceneContentBlock block={block} sceneDialogue={dialogue} lang={lang} />
                 </section>
               );
             }

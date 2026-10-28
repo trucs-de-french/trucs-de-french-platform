@@ -215,6 +215,55 @@ export const uk = {
   "wc.chooseOptionsCount": "(оберіть {n} {word})",
 
   "badge.answerWithHint": "Відповідь з підказкою",
+
+  "sceneSection.script": "Скрипт",
+  "sceneSection.practice": "Практика",
+  "sceneSection.tasks": "Завдання",
+  "sceneSection.vocabulary": "Вокабуляр",
+
+  "scene.backToCourse": "← До курсу",
+  "scene.openGame": "Відкрити гру",
+  "scene.hintPointsNotice": "Відповідь з підказкою (лампочка) дає половину балів.",
+  "scene.audioFallbackNote": "Якщо аудіо не відкривається,",
+  "scene.embedFallbackNote": "Якщо вміст не відкривається,",
+  "scene.followLink": "перейдіть за посиланням",
+  "scene.blockSummary": "Підсумок блоку:",
+
+  "script.hideTranslation": "Сховати переклад",
+  "script.showTranslation": "Показати переклад",
+  "script.collapseScript": "Згорнути скрипт",
+
+  "vocabSection.collapseVocab": "Згорнути вокабуляр",
+  "vocabSection.downloadPdf": "Завантажити PDF",
+  "vocabSection.otherCategory": "Інше",
+
+  "videoPlayer.loadError": "Не вдалося завантажити відео",
+  "videoPlayer.subtitlesUnavailable": "Субтитри недоступні",
+  "videoPlayer.play": "Відтворити",
+  "videoPlayer.pause": "Пауза",
+  "videoPlayer.back10": "Назад на 10 секунд",
+  "videoPlayer.forward10": "Вперед на 10 секунд",
+  "videoPlayer.repeatLine": "Повтор репліки",
+  "videoPlayer.slow": "Повільно",
+  "videoPlayer.playbackSpeed": "Швидкість відтворення {speed}×",
+  "videoPlayer.subtitlesAria": "Субтитри: {label}",
+  "videoPlayer.subtitlesOff": "Вимкнено",
+  "videoPlayer.pauseOnWordOpen": "Пауза при відкритті слова",
+  "videoPlayer.unmute": "Увімкнути звук",
+  "videoPlayer.mute": "Вимкнути звук",
+  "videoPlayer.exitFullscreen": "Вийти з повного екрану",
+  "videoPlayer.fullscreen": "На весь екран",
+  "videoPlayer.closeFullscreen": "Закрити повний екран",
+  "videoPlayer.seekSlider": "Позиція відтворення",
+  "videoPlayer.wordCardAria": "Слово: {word}",
+  "videoPlayer.fromLine": "З репліки",
+  "videoPlayer.openInGdrive": "Дивитися відео в Google Drive (відкриється в новій вкладці)",
+  "videoPlayer.opensInGdrive": "Відео відкриється в Google Drive",
+
+  "audioPlayer.loadError": "Не вдалося завантажити аудіо",
+  "audioPlayer.defaultTitle": "Аудіо",
+  "audioPlayer.repeat": "Повторити",
+  "audioPlayer.playbackSpeed": "Швидкість {speed}×",
 } as const;
 
 export type MessageKey = keyof typeof uk;

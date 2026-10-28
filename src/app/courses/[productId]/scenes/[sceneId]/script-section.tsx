@@ -5,6 +5,7 @@ import type { VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
 import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 import { resolveBlockIcon } from "@/lib/block-icons";
+import { useT } from "@/lib/i18n/context";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
 // section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
@@ -85,6 +86,7 @@ export function ScriptSection({
   dialogue: DialogueEntry[];
   title?: string;
 }) {
+  const { t } = useT();
   const [openId, setOpenId] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
@@ -152,7 +154,7 @@ export function ScriptSection({
           onClick={() => setShowTranslation((v) => !v)}
           className="scene-translation-toggle mb-1 self-start"
         >
-          {showTranslation ? "Сховати переклад" : "Показати переклад"}
+          {showTranslation ? t("script.hideTranslation") : t("script.showTranslation")}
         </button>
       )}
 
@@ -218,7 +220,7 @@ export function ScriptSection({
           script-блоки без заголовка (їх і згортати нема чим). Видима лише
           поки секція розгорнута — body сам під isOpen &&, тож додаткова
           умова тут не потрібна. */}
-      {title && <BottomCollapseButton label="Згорнути скрипт" onClick={collapseFromBottomButton} />}
+      {title && <BottomCollapseButton label={t("script.collapseScript")} onClick={collapseFromBottomButton} />}
     </div>
   );
 

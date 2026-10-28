@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Play, Pause, Repeat, Rewind, FastForward, Volume2, VolumeX, Headphones } from "lucide-react";
+import { useT } from "@/lib/i18n/context";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#352f66]";
@@ -44,6 +45,7 @@ export function AudioPlayer({
   onStalled?: () => void;
   onLoadedMetadata?: () => void;
 }) {
+  const { t } = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
@@ -151,7 +153,7 @@ export function AudioPlayer({
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-white">
             <Headphones size={20} />
           </span>
-          <p className="text-sm text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
+          <p className="text-sm text-[#d6d3ff]">{t("audioPlayer.loadError")}</p>
         </div>
       </div>
     );
@@ -196,7 +198,7 @@ export function AudioPlayer({
           <button
             type="button"
             onClick={togglePlay}
-            aria-label={playing ? "Пауза" : "Відтворити"}
+            aria-label={playing ? t("videoPlayer.pause") : t("videoPlayer.play")}
             aria-pressed={playing}
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--play-icon)] ${FOCUS_RING}`}
           >
@@ -209,7 +211,7 @@ export function AudioPlayer({
             )}
           </button>
           <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-heading text-[16px] font-semibold text-white">{title ?? "Аудіо"}</span>
+            <span className="truncate font-heading text-[16px] font-semibold text-white">{title ?? t("audioPlayer.defaultTitle")}</span>
             {subtitle && <span className="truncate text-[13px] text-[#d6d3ff]">{subtitle}</span>}
           </div>
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.18] text-white">
@@ -226,7 +228,7 @@ export function AudioPlayer({
             ref={trackRef}
             role="slider"
             tabIndex={0}
-            aria-label="Позиція відтворення"
+            aria-label={t("videoPlayer.seekSlider")}
             aria-valuemin={0}
             aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
             aria-valuenow={Math.round(currentTime)}
@@ -255,7 +257,7 @@ export function AudioPlayer({
             <button
               type="button"
               onClick={() => skip(-10)}
-              aria-label="Назад на 10 секунд"
+              aria-label={t("videoPlayer.back10")}
               className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
             >
               <Rewind size={16} />
@@ -263,7 +265,7 @@ export function AudioPlayer({
             <button
               type="button"
               onClick={() => skip(10)}
-              aria-label="Вперед на 10 секунд"
+              aria-label={t("videoPlayer.forward10")}
               className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
             >
               <FastForward size={16} />
@@ -271,7 +273,7 @@ export function AudioPlayer({
             <button
               type="button"
               onClick={() => setLoop((v) => !v)}
-              aria-label="Повторити"
+              aria-label={t("audioPlayer.repeat")}
               aria-pressed={loop}
               className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
                 loop ? "bg-white text-[#4f46e5]" : "bg-white/[0.16] text-white"
@@ -287,7 +289,7 @@ export function AudioPlayer({
                 ref={speedButtonRef}
                 type="button"
                 onClick={() => setSpeedOpen((v) => !v)}
-                aria-label={`Швидкість ${speed}×`}
+                aria-label={t("audioPlayer.playbackSpeed", { speed })}
                 aria-haspopup="menu"
                 aria-expanded={speedOpen}
                 className={`rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white ${FOCUS_RING}`}
@@ -320,7 +322,7 @@ export function AudioPlayer({
             <button
               type="button"
               onClick={() => setMuted((v) => !v)}
-              aria-label={muted ? "Увімкнути звук" : "Вимкнути звук"}
+              aria-label={muted ? t("videoPlayer.unmute") : t("videoPlayer.mute")}
               aria-pressed={muted}
               className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.16] text-white ${FOCUS_RING}`}
             >

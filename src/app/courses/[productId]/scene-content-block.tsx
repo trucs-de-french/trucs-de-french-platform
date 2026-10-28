@@ -15,6 +15,8 @@ import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { contentBlockHasRenderableContent } from "@/lib/exercises/task-visibility";
 import { isBlankHtml } from "@/lib/html-text";
+import { t } from "@/lib/i18n/t";
+import type { UiLang } from "@/lib/ui/product-lang";
 
 // Той самий локальний тип, що DialogueEntry в script-section.tsx (не
 // експортований звідти) — структурно сумісний, ScriptSection не переймається
@@ -60,6 +62,7 @@ export type SceneContentBlockData = {
 export function SceneContentBlock({
   block,
   sceneDialogue,
+  lang,
 }: {
   block: SceneContentBlockData;
   // Dialogue сцени — фолбек для глосарію відео-блоку (Крок 2), якщо У
@@ -68,6 +71,7 @@ export function SceneContentBlock({
   // "script", не "video"). Опційний — блоки поза сторінкою сцени (їх тут
   // немає, але контракт лишається сумісним) просто не підсвічують слова.
   sceneDialogue?: ScriptDialogueLine[];
+  lang: UiLang;
 }) {
   // Обгортка (EXERCISE_BLOCK_CLASS) не має з'являтись, якщо для цього
   // content_type немає жодного заповненого поля — інакше студент бачить
@@ -76,7 +80,7 @@ export function SceneContentBlock({
 
   return (
     <GlassBlock>
-      <SceneContentBlockContent block={block} sceneDialogue={sceneDialogue} />
+      <SceneContentBlockContent block={block} sceneDialogue={sceneDialogue} lang={lang} />
     </GlassBlock>
   );
 }
@@ -90,6 +94,7 @@ export function SceneContentBlockContent({
   block,
   panelForText = false,
   sceneDialogue,
+  lang,
 }: {
   block: SceneContentBlockData;
   // Підкладка (SHARED_CONTENT_PANEL, лише навколо тексту) — вмикається
@@ -99,6 +104,7 @@ export function SceneContentBlockContent({
   // вище, без жодної групи) лишається без підкладки навіть для тексту.
   panelForText?: boolean;
   sceneDialogue?: ScriptDialogueLine[];
+  lang: UiLang;
 }) {
   // Власний dialogue блоку (якщо колись заповнять і для "video") виграє над
   // сценою; інакше — dialogue сцени, якщо є.
@@ -164,14 +170,14 @@ export function SceneContentBlockContent({
                   />
                 </div>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Якщо аудіо не відкривається,{" "}
+                  {t(lang, "scene.audioFallbackNote")}{" "}
                   <a
                     href={block.media_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline"
                   >
-                    перейдіть за посиланням
+                    {t(lang, "scene.followLink")}
                   </a>
                   .
                 </p>
@@ -189,12 +195,12 @@ export function SceneContentBlockContent({
             src={block.media_url}
             subtitles={block.subtitles ?? undefined}
             vocab={videoVocab}
-            title="Відео"
+            title={t(lang, "video.videoLabel")}
           />
         ) : (
           <VideoFrame
             src={toEmbedUrl(block.media_url, block.media_provider as "youtube" | "gdrive" | null)}
-            title="Відео"
+            title={t(lang, "video.videoLabel")}
             provider={(block.media_provider as "youtube" | "gdrive" | null) ?? "youtube"}
           />
         ))}

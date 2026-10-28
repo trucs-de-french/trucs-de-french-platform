@@ -12,6 +12,17 @@ import { pluralizeWords } from "@/lib/pluralize-words";
 import { categoryPalette, rgbToHex } from "@/lib/vocab-palette";
 import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 import { resolveBlockIcon } from "@/lib/block-icons";
+import { useT } from "@/lib/i18n/context";
+import { plural } from "@/lib/i18n/plural";
+import type { UiLang } from "@/lib/ui/product-lang";
+
+// uk: три форми mod10/mod100 (та сама логіка, що pluralizeWords); fr/en —
+// one/other через Intl.PluralRules, plural() helper (той самий принцип, що
+// pluralizeAnswers у task-result.tsx).
+function pluralizeVocabWords(lang: UiLang, n: number): string {
+  if (lang === "uk") return pluralizeWords(n);
+  return plural(lang, n, lang === "fr" ? { one: "mot", other: "mots" } : { one: "word", other: "words" });
+}
 
 // Той самий шеврон/кнопка, що script-section.tsx (BottomCollapseButton) —
 // дрібний дублікат тут навмисно: ярлик і сама умова onBackground різні, а
@@ -110,11 +121,12 @@ function VocabGroupTable({
   items: VocabItem[];
   isFirst: boolean;
 }) {
-  const label = partOfSpeech ? PART_OF_SPEECH_LABELS_FR[partOfSpeech] : "Інше";
+  const { lang, t } = useT();
+  const label = partOfSpeech ? PART_OF_SPEECH_LABELS_FR[partOfSpeech] : t("vocabSection.otherCategory");
   // "Інше" (легасі-група без категорії) не входить у PART_OF_SPEECH_COLORS —
   // нейтральний сірий, не колір жодної реальної категорії.
   const palette = categoryPalette(partOfSpeech ? PART_OF_SPEECH_COLORS[partOfSpeech].rgb : [0.42, 0.447, 0.502]);
-  const word = pluralizeWords(items.length);
+  const word = pluralizeVocabWords(lang, items.length);
 
   return (
     <div style={{ "--cat-rgb": palette.rgbTriplet } as CSSProperties}>
@@ -180,6 +192,7 @@ export function VocabSection({
   vocab: VocabItem[];
   pdfHref: string;
 }) {
+  const { t } = useT();
   const [collapsed, setCollapsed] = useState(true);
   const groups = groupVocabByPartOfSpeech(vocab);
 
@@ -218,7 +231,7 @@ export function VocabSection({
         <path d="M7 11l5 5 5-5" />
         <path d="M5 20h14" />
       </svg>
-      Завантажити PDF
+      {t("vocabSection.downloadPdf")}
     </a>
   );
 
@@ -243,7 +256,7 @@ export function VocabSection({
   // Видима лише поки секція розгорнута — обидва місця виклику нижче вже
   // самі під умовою "розгорнуто" (expanded ? (...) : ... і !collapsed &&).
   const bottomCollapseButton = (
-    <BottomCollapseButton label="Згорнути вокабуляр" onClick={collapseFromBottomButton} />
+    <BottomCollapseButton label={t("vocabSection.collapseVocab")} onClick={collapseFromBottomButton} />
   );
 
   // Завжди скляний бар+панель, окремими сиблінгами з 14px відступом
@@ -254,7 +267,7 @@ export function VocabSection({
   return (
     <div className="flex flex-col gap-[14px]">
       <SectionHeaderBar
-        title="Вокабуляр"
+        title={t("sceneSection.vocabulary")}
         icon={resolveBlockIcon("vocabulary")}
         collapsible
         expanded={expanded}

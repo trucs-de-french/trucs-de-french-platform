@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/audio-player";
 import { toDirectDownloadUrl, toEmbedUrl } from "@/lib/video";
+import { useT } from "@/lib/i18n/context";
 
 const STALL_TIMEOUT_MS = 8000;
 
@@ -34,6 +35,7 @@ const STALL_TIMEOUT_MS = 8000;
 // рідкісний зламаний seek, і посилання "перейти за посиланням" нижче
 // лишається робочим резервом для студента в цьому випадку.
 export function GdriveAudioPlayer({ url, className }: { url: string; className?: string }) {
+  const { t } = useT();
   const [failed, setFailed] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -70,9 +72,9 @@ export function GdriveAudioPlayer({ url, className }: { url: string; className?:
           плеєр, ні iframe-резерв не спрацюють (той самий принцип, що
           video/embed-гілки в task-group-block.tsx). */}
       <p className="mt-1 text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-        Якщо аудіо не відкривається,{" "}
+        {t("scene.audioFallbackNote")}{" "}
         <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
-          перейдіть за посиланням
+          {t("scene.followLink")}
         </a>
         .
       </p>
