@@ -159,7 +159,7 @@ export function ExerciseBlock({
         <div className="link-card-grid">
           <LinkCard
             href={task.games.embed_url}
-            icon={Gamepad2}
+            icon={<Gamepad2 size={22} strokeWidth={2} />}
             title={t(lang, "scene.openGame")}
             subtitle={task.games.provider}
           />
@@ -170,13 +170,14 @@ export function ExerciseBlock({
         config.url &&
         (() => {
           const meta = resolveLinkTaskIcon(config);
+          const Icon = meta.icon;
           const description = config.description?.trim();
           return (
             <div className="link-card-grid">
               <LinkCard
                 href={config.url!}
                 download={config.download}
-                icon={meta.icon}
+                icon={<Icon size={22} strokeWidth={2} />}
                 title={task.title}
                 subtitle={description || linkTaskDefaultSubtitle(config, lang)}
               />

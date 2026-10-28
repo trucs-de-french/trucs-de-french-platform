@@ -134,11 +134,12 @@ export function SceneContentBlockContent({
         <div className="link-card-grid">
           {(block.links ?? []).map((link) => {
             const meta = resolveSceneLinkMeta(link.platform, lang);
+            const Icon = meta.icon;
             return (
               <LinkCard
                 key={link.id}
                 href={link.url}
-                icon={meta.icon}
+                icon={<Icon size={22} strokeWidth={2} />}
                 title={link.label ?? meta.label}
                 subtitle={meta.label}
                 variant={meta.featured ? "featured" : "default"}

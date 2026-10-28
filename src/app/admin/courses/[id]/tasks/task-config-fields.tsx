@@ -1133,13 +1133,14 @@ export function TaskConfigFields({
               <label className={LABEL_TEXT}>Попередній перегляд картки</label>
               {(() => {
                 const meta = resolveLinkTaskIcon(linkPreview.config);
+                const Icon = meta.icon;
                 const description = linkPreview.config.description?.trim();
                 return (
                   <div className="link-card-grid">
                     <LinkCard
                       href={linkPreview.config.url || "#"}
                       download={linkPreview.config.download}
-                      icon={meta.icon}
+                      icon={<Icon size={22} strokeWidth={2} />}
                       title={linkPreview.title || "Без назви"}
                       subtitle={description || linkTaskDefaultSubtitle(linkPreview.config)}
                       className="pointer-events-none"

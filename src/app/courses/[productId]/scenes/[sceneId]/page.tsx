@@ -698,11 +698,12 @@ export default async function ScenePage({
       <div className={`${onBackground ? "mt-3" : H2_TO_CONTENT} link-card-grid`}>
         {linkList.map((link) => {
           const meta = resolveSceneLinkMeta(link.platform, lang);
+          const Icon = meta.icon;
           return (
             <LinkCard
               key={link.id}
               href={link.url}
-              icon={meta.icon}
+              icon={<Icon size={22} strokeWidth={2} />}
               title={link.label ?? meta.label}
               subtitle={meta.label}
               variant={meta.featured ? "featured" : "default"}
@@ -781,7 +782,7 @@ export default async function ScenePage({
                     <div className="link-card-grid">
                       <LinkCard
                         href={task.games.embed_url}
-                        icon={Gamepad2}
+                        icon={<Gamepad2 size={22} strokeWidth={2} />}
                         title={t(lang, "scene.openGame")}
                         subtitle={task.games.provider}
                       />
@@ -792,13 +793,14 @@ export default async function ScenePage({
                     config.url &&
                     (() => {
                       const meta = resolveLinkTaskIcon(config);
+                      const Icon = meta.icon;
                       const description = config.description?.trim();
                       return (
                         <div className="link-card-grid">
                           <LinkCard
                             href={config.url!}
                             download={config.download}
-                            icon={meta.icon}
+                            icon={<Icon size={22} strokeWidth={2} />}
                             title={task.title}
                             subtitle={description || linkTaskDefaultSubtitle(config, lang)}
                           />
