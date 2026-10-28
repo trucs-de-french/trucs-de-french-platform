@@ -69,7 +69,7 @@ export const en: Record<MessageKey, string> = {
   "placeholder.dragWordShort": "drag",
   "placeholder.typeWord": "type the word",
 
-  "summary.title": "Task summary",
+  "summary.title": "Exercise summary",
   "summary.total": "Total: {value}",
   "summary.block": "Block {n}",
   "summary.blockWord": "Block",
@@ -109,7 +109,7 @@ export const en: Record<MessageKey, string> = {
   "errReview.fixed": "Fixed",
   "errReview.remainingOfTotal": "{n} of {total} left",
   "errReview.allFixed": "All errors fixed",
-  "errReview.allFixedBanner": "All errors in this task are fixed",
+  "errReview.allFixedBanner": "All errors in this exercise are fixed",
   "errReview.reviewHint": "Review your mistakes and click \"Fix\" to try again without losing points.",
 
   "essay.corrections": "Corrections:",
@@ -215,7 +215,7 @@ export const en: Record<MessageKey, string> = {
 
   "sceneSection.script": "Script",
   "sceneSection.practice": "Practice",
-  "sceneSection.tasks": "Tasks",
+  "sceneSection.tasks": "Exercises",
   "sceneSection.vocabulary": "Vocabulary",
 
   "scene.backToCourse": "← Back to course",

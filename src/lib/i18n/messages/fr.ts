@@ -217,7 +217,7 @@ export const fr: Record<MessageKey, string> = {
 
   "sceneSection.script": "Script",
   "sceneSection.practice": "Pratique",
-  "sceneSection.tasks": "Tâches",
+  "sceneSection.tasks": "Exercices",
   "sceneSection.vocabulary": "Vocabulaire",
 
   "scene.backToCourse": "← Retour au cours",
