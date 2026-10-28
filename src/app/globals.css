@@ -113,12 +113,12 @@
   --field-disabled-bg: #15184f;
   --field-disabled-ink: rgba(245, 236, 208, 0.7);
   --field-disabled-border: rgba(138, 136, 245, 0.3);
-  --field-correct-bg: #14442a;
-  --field-correct-border: #4cc47e;
-  --field-correct-ink: #bff0d0;
-  --field-wrong-bg: #4a1a1d;
-  --field-wrong-border: #e5484d;
-  --field-wrong-ink: #ffd0d0;
+  --field-correct-bg: var(--dark-surface-fill);
+  --field-correct-border: var(--correct-border-dark);
+  --field-correct-ink: var(--field-ink);
+  --field-wrong-bg: var(--dark-surface-fill);
+  --field-wrong-border: var(--wrong-border-dark);
+  --field-wrong-ink: var(--field-ink);
 
   --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
   --btn-disabled-text: #dfe4ff;
@@ -190,13 +190,17 @@
      прозорість потрібна нижча, ніж у підпису-смужки над картинкою
      (--dark-surface-fill-translucent, .82). */
   --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
-  /* Рамка "правильної" відповіді-плитки/чипа на var(--dark-surface-fill)
-     (той самий зелений, що рамка вердикт-пілюлі "Parfait", #4fbf86, ~.75
-     альфа) — одна точка правди для родини муддy teal-grey чипів відповідей
-     (.task-result-gap-word, .task-result-answer-chip--emphasis), а не
-     живого стану вправи (.exercise-field--correct/.matching-card--correct/
-     тощо — своя зелена родина Tailwind green-950/30, не торкнута). */
-  --correct-border-dark: rgba(79, 191, 134, 0.75);
+  /* Рамка "правильної" відповіді-плитки/чипа/тайла на var(--dark-surface-
+     fill) — той самий зелений, що рамка вердикт-пілюлі "Parfait" (#4fbf86),
+     повна альфа (раніше .75 лише для дрібних чипів списку відповідей —
+     піднято до повної сили одним спільним токеном для чипів
+     .task-result-gap-word/.task-result-answer-chip--emphasis ТА тайлів
+     SortableTileRow/word-choice-pill/.exercise-field/.karaoke-gap нижче).
+     --wrong-border-dark — дзеркальна червона пара (той самий коралово-
+     червоний, що рамка пілюлі "À revoir", #e8788a), для тих самих тайлів у
+     неправильному стані. */
+  --correct-border-dark: #4fbf86;
+  --wrong-border-dark: #e8788a;
   --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
@@ -224,12 +228,12 @@
     --field-disabled-bg: #15184f;
     --field-disabled-ink: rgba(245, 236, 208, 0.7);
     --field-disabled-border: rgba(138, 136, 245, 0.3);
-    --field-correct-bg: #14442a;
-    --field-correct-border: #4cc47e;
-    --field-correct-ink: #bff0d0;
-    --field-wrong-bg: #4a1a1d;
-    --field-wrong-border: #e5484d;
-    --field-wrong-ink: #ffd0d0;
+    --field-correct-bg: var(--dark-surface-fill);
+    --field-correct-border: var(--correct-border-dark);
+    --field-correct-ink: var(--field-ink);
+    --field-wrong-bg: var(--dark-surface-fill);
+    --field-wrong-border: var(--wrong-border-dark);
+    --field-wrong-ink: var(--field-ink);
 
     --btn-disabled-bg: linear-gradient(135deg, #34308a, #4540c4);
     --btn-disabled-text: #dfe4ff;
@@ -249,7 +253,8 @@
     --dark-surface-fill: #141944;
     --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
     --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
-    --correct-border-dark: rgba(79, 191, 134, 0.75);
+    --correct-border-dark: #4fbf86;
+    --wrong-border-dark: #e8788a;
     --error-review-card-bg: var(--dark-blue-fill);
   }
 }
@@ -7230,15 +7235,15 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 800;
 }
 .dark .word-choice-pill--correct {
-  background: rgba(5, 46, 22, 0.3);
-  border-color: #22c55e;
-  color: #4ade80;
+  background: var(--dark-surface-fill);
+  border-color: var(--correct-border-dark);
+  color: var(--field-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--correct {
-    background: rgba(5, 46, 22, 0.3);
-    border-color: #22c55e;
-    color: #4ade80;
+    background: var(--dark-surface-fill);
+    border-color: var(--correct-border-dark);
+    color: var(--field-ink);
   }
 }
 /* Обраний студентом варіант виявився неправильним — дзеркально .matching-
@@ -7250,15 +7255,15 @@ button.scene-bar:active .scene-bar-toggle {
   font-weight: 800;
 }
 .dark .word-choice-pill--wrong {
-  background: rgba(69, 10, 10, 0.3);
-  border-color: #ef4444;
-  color: #f87171;
+  background: var(--dark-surface-fill);
+  border-color: var(--wrong-border-dark);
+  color: var(--field-ink);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-choice-pill--wrong {
-    background: rgba(69, 10, 10, 0.3);
-    border-color: #ef4444;
-    color: #f87171;
+    background: var(--dark-surface-fill);
+    border-color: var(--wrong-border-dark);
+    color: var(--field-ink);
   }
 }
 /* Правильний варіант, показаний поруч (студент його не обирав) — тихіший
@@ -7478,11 +7483,13 @@ button.scene-bar:active .scene-bar-toggle {
   background: #f0fdf4;
 }
 .dark .chrono-phrase-row--correct {
-  background: rgba(5, 46, 22, 0.3);
+  background: var(--dark-surface-fill);
+  border-color: var(--correct-border-dark);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-phrase-row--correct {
-    background: rgba(5, 46, 22, 0.3);
+    background: var(--dark-surface-fill);
+    border-color: var(--correct-border-dark);
   }
 }
 .chrono-phrase-row--incorrect {
@@ -7490,11 +7497,13 @@ button.scene-bar:active .scene-bar-toggle {
   background: #fef2f2;
 }
 .dark .chrono-phrase-row--incorrect {
-  background: rgba(69, 10, 10, 0.3);
+  background: var(--dark-surface-fill);
+  border-color: var(--wrong-border-dark);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .chrono-phrase-row--incorrect {
-    background: rgba(69, 10, 10, 0.3);
+    background: var(--dark-surface-fill);
+    border-color: var(--wrong-border-dark);
   }
 }
 

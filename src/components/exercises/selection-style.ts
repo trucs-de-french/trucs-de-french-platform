@@ -12,5 +12,13 @@ export const SELECTED_OPTION_CLASS =
 // клітинці таблиці без власної рамки, підсвічування через bg+text-колір
 // клітинки, не border+bg плитки/поля), тож інший, вже усталений набір
 // класів свій для тієї форми.
-export const LIVE_CORRECT_CLASS = "border-green-500 bg-green-50 dark:bg-green-950/30";
-export const LIVE_INCORRECT_CLASS = "border-red-500 bg-red-50 dark:bg-red-950/30";
+// Темна тема — var(--dark-surface-fill) + повносилова рамка (--correct-
+// border-dark/--wrong-border-dark, та самі токени, що .exercise-field--
+// correct/--wrong) замість тьмяної зелено/червоної заливки й успадкованого
+// приглушеного кольору букви; disabled:opacity-100 перекриває базовий
+// disabled:opacity-70 кнопки для заблокованої (після перевірки) плитки —
+// саме він "гасив" літеру до сірого.
+export const LIVE_CORRECT_CLASS =
+  "border-green-500 bg-green-50 dark:border-[var(--correct-border-dark)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:disabled:opacity-100";
+export const LIVE_INCORRECT_CLASS =
+  "border-red-500 bg-red-50 dark:border-[var(--wrong-border-dark)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:disabled:opacity-100";

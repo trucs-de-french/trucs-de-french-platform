@@ -299,9 +299,9 @@ export function ImageMatchExercise({
                 : "empty";
           const slotStateClass =
             slotState === "correct"
-              ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/30"
+              ? "border-2 border-green-500 bg-green-50 dark:border-[var(--correct-border-dark)] dark:bg-[var(--dark-surface-fill)]"
               : slotState === "incorrect"
-                ? "border-2 border-red-500 bg-red-50 dark:bg-red-950/30"
+                ? "border-2 border-red-500 bg-red-50 dark:border-[var(--wrong-border-dark)] dark:bg-[var(--dark-surface-fill)]"
                 : slotState === "dragover"
                   ? "image-match-slot--dragover"
                   : slotState === "filled"
