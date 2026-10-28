@@ -91,9 +91,9 @@ export function getDefaultTaskName(type: string, config?: Record<string, unknown
 // UK, той самий принцип, що решта чисто-інтерфейсних (не навчальних)
 // підписів платформи (кнопки "Перевірити"/"Показати відповідь" і т.п.) —
 // без FR-пари, на відміну від DEFAULT_INSTRUCTIONS.
-export const IMAGE_MATCH_POOL_LABEL = "Слова";
+export const IMAGE_MATCH_POOL_LABEL = "Mots à glisser";
 export function imageMatchRemainingLabel(count: number): string {
-  return `залишилось ${count}`;
+  return count === 1 ? "1 restant" : `${count} restants`;
 }
 
 // Той самий липкий трей слів (.word-pool*, globals.css), тепер спільний
@@ -104,18 +104,19 @@ export function imageMatchRemainingLabel(count: number): string {
 // на відміну від image_match/drag_drop), пілюля "зайвих" слів банку
 // drag_drop (рахується з даних — bank.length - кількість пропусків, без
 // окремого поля в DragDropPublic) і плейсхолдери полів/слотів.
+export const FILL_BLANK_POOL_LABEL = "Mots à barrer";
 export function fillBlankWordPoolUsedLabel(used: number, total: number): string {
-  return `використано ${used} з ${total}`;
+  return `${used} sur ${total} utilisés`;
 }
 export function dragDropIntruderLabel(count: number): string {
-  return `${count} зайві`;
+  return `${count} intrus`;
 }
 // sort_columns — той самий .word-pool, що fill_blank/drag_drop/image_match,
 // але пул (на відміну від них) не зникає з розмітки, коли спорожнів (часткова
 // здача дозволена — елемент може лишитись непоставленим і після перевірки),
 // тож пілюля-лічильник сама показує "все розкладено" замість "залишилось 0".
 export function sortColumnsPoolCountLabel(remaining: number): string {
-  return remaining === 0 ? "всі слова розміщено" : imageMatchRemainingLabel(remaining);
+  return remaining === 0 ? "tous les mots placés" : imageMatchRemainingLabel(remaining);
 }
 export const FILL_BLANK_FIELD_PLACEHOLDER = "впишіть слово";
 export const DRAG_DROP_SLOT_PLACEHOLDER = "перетягніть слово";

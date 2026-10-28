@@ -17,7 +17,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
-  IMAGE_MATCH_POOL_LABEL,
+  FILL_BLANK_POOL_LABEL,
   fillBlankWordPoolUsedLabel,
   FILL_BLANK_FIELD_PLACEHOLDER,
   TABLE_FILL_ANSWERS_TOGGLE_LABEL,
@@ -289,7 +289,7 @@ export function FillBlankExercise({
           // логіка незмінна) — слово лишається в банку, не зникає.
           <div className="word-pool">
             <div className="word-pool-label-row">
-              <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+              <span className="word-pool-label">{FILL_BLANK_POOL_LABEL}</span>
               <span className="word-pool-count">
                 {fillBlankWordPoolUsedLabel(crossedOut.size, config.wordBank.length)}
               </span>
