@@ -100,7 +100,7 @@ export function LevelUiLangFields({ type, initialLevels, initialUiLang, initialD
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Мова інтерфейсу</label>
         <div className="flex gap-2">
-          {(["uk", "fr"] as const).map((lang) => (
+          {(["uk", "fr", "en"] as const).map((lang) => (
             <button
               key={lang}
               type="button"
@@ -108,7 +108,7 @@ export function LevelUiLangFields({ type, initialLevels, initialUiLang, initialD
               aria-pressed={uiLang === lang}
               className={uiLang === lang ? BUTTON_PRIMARY_SM : BUTTON_SECONDARY_SM}
             >
-              {lang === "uk" ? "Українська" : "Français"}
+              {lang === "uk" ? "Українська" : lang === "fr" ? "Français" : "English"}
             </button>
           ))}
         </div>

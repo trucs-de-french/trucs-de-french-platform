@@ -4,6 +4,8 @@ import { Gamepad2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreviewCourseId, isVisibleToEnrolledStudent } from "@/lib/course-preview";
+import { normalizeUiLang } from "@/lib/ui/product-lang";
+import { LangProvider } from "@/lib/i18n/context";
 import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { resolveLinkTaskIcon, linkTaskDefaultSubtitle, resolveSceneLinkMeta } from "@/lib/link-task-icon";
 import {
@@ -135,7 +137,7 @@ export default async function ScenePage({
     // — окремий запит від scene вище (різні таблиці), той самий productId.
     supabase
       .from("products")
-      .select("background_desktop_url, background_mobile_url, background_fill_color")
+      .select("background_desktop_url, background_mobile_url, background_fill_color, ui_lang")
       .eq("id", productId)
       .single(),
   ]);
@@ -155,6 +157,7 @@ export default async function ScenePage({
   const bgFillColor = validateHexColor(product?.background_fill_color ?? null);
   const bgMode = sceneBackgroundMode(bgFillColor, Boolean(bgDesktopUrl || bgMobileUrl));
   const onBackground = bgMode !== null;
+  const lang = normalizeUiLang(product?.ui_lang);
 
   const previewCourseId = await getPreviewCourseId();
   const isPreviewing = previewCourseId === productId;
@@ -927,6 +930,7 @@ export default async function ScenePage({
   };
 
   return (
+    <LangProvider lang={lang}>
     <div className="student-bg-wrapper" data-scene-bg={bgMode ?? undefined}>
       <SceneBackground desktopUrl={bgDesktopUrl} mobileUrl={bgMobileUrl} fillColor={bgFillColor} />
       <main className="student-bg-content mx-auto w-full max-w-3xl p-6">
@@ -1000,5 +1004,6 @@ export default async function ScenePage({
         </div>
       </main>
     </div>
+    </LangProvider>
   );
 }

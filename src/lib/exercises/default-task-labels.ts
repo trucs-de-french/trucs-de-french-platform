@@ -85,41 +85,48 @@ export function getDefaultTaskName(type: string, config?: Record<string, unknown
   return DEFAULT_TASK_NAME[type as TaskTypeKey] ?? type;
 }
 
-// Підписи липкого пула слів image_match (мокап "варіант 1"/"варіант 5",
-// image-match.tsx) — заголовок "Слова" над чипами й пілюля-лічильник
-// "залишилось N", що оновлюється по мірі розкладання слів у картки. Лише
-// UK, той самий принцип, що решта чисто-інтерфейсних (не навчальних)
-// підписів платформи (кнопки "Перевірити"/"Показати відповідь" і т.п.) —
-// без FR-пари, на відміну від DEFAULT_INSTRUCTIONS.
-export const IMAGE_MATCH_POOL_LABEL = "Mots à glisser";
-export function imageMatchRemainingLabel(count: number): string {
-  return count === 1 ? "1 restant" : `${count} restants`;
-}
+// Підписи липкого пула слів image_match/drag_drop/sort_columns/fill_blank
+// (.word-pool*, globals.css) — залежать від мови інтерфейсу продукту
+// (ui_lang), АЛЕ за явною вимогою задачі uk і fr студенти бачать ОДНАКОВИЙ
+// французький текст (lang==="en" — єдина мова з власним перекладом); самі
+// ключі (pool.*) — в src/lib/i18n/messages/*.ts, тут лише лейбл-хелпери,
+// щоб 4 компоненти (fill-blank/image-match/drag-drop/sort-columns) не
+// імпортували i18n напряму для цього єдиного прикладу "uk===fr".
+import { t } from "@/lib/i18n/t";
+import { plural } from "@/lib/i18n/plural";
+import type { UiLang } from "@/lib/ui/product-lang";
 
-// Той самий липкий трей слів (.word-pool*, globals.css), тепер спільний
-// для fill_blank і drag_drop — заголовок перевикористовує
-// IMAGE_MATCH_POOL_LABEL, "залишилось N" (drag_drop) перевикористовує
-// imageMatchRemainingLabel вище; тут лише НОВІ підписи, яких раніше не
-// було: лічильник викреслених слів fill_blank (слова лишаються в банку,
-// на відміну від image_match/drag_drop), пілюля "зайвих" слів банку
-// drag_drop (рахується з даних — bank.length - кількість пропусків, без
-// окремого поля в DragDropPublic) і плейсхолдери полів/слотів.
-export const FILL_BLANK_POOL_LABEL = "Mots à barrer";
-export function fillBlankWordPoolUsedLabel(used: number, total: number): string {
-  return `${used} sur ${total} utilisés`;
+export function dragPoolLabel(lang: UiLang): string {
+  return t(lang, "pool.drag");
 }
-export function dragDropIntruderLabel(count: number): string {
-  return `${count} intrus`;
+export function crossOutPoolLabel(lang: UiLang): string {
+  return t(lang, "pool.crossOut");
+}
+export function poolRemainingLabel(lang: UiLang, count: number): string {
+  return plural(lang, count, {
+    one: lang === "en" ? `${count} left` : `${count} restant`,
+    other: lang === "en" ? `${count} left` : `${count} restants`,
+  });
+}
+export function fillBlankWordPoolUsedLabel(lang: UiLang, used: number, total: number): string {
+  return t(lang, "pool.usedOfTotal", { used, total });
+}
+export function dragDropIntruderLabel(lang: UiLang, count: number): string {
+  return lang === "en" ? `${count} extra` : `${count} intrus`;
 }
 // sort_columns — той самий .word-pool, що fill_blank/drag_drop/image_match,
 // але пул (на відміну від них) не зникає з розмітки, коли спорожнів (часткова
 // здача дозволена — елемент може лишитись непоставленим і після перевірки),
 // тож пілюля-лічильник сама показує "все розкладено" замість "залишилось 0".
-export function sortColumnsPoolCountLabel(remaining: number): string {
-  return remaining === 0 ? "tous les mots placés" : imageMatchRemainingLabel(remaining);
+export function sortColumnsPoolCountLabel(lang: UiLang, remaining: number): string {
+  return remaining === 0 ? t(lang, "pool.allPlaced") : poolRemainingLabel(lang, remaining);
 }
-export const FILL_BLANK_FIELD_PLACEHOLDER = "впишіть слово";
-export const DRAG_DROP_SLOT_PLACEHOLDER = "перетягніть слово";
+export function fillBlankFieldPlaceholder(lang: UiLang): string {
+  return t(lang, "placeholder.typeWord");
+}
+export function dragDropSlotPlaceholder(lang: UiLang): string {
+  return t(lang, "placeholder.dragWordFull");
+}
 
 // Заголовок toggle-картки "Правильні відповіді" (TaskResult.toggleTitle,
 // task-result.tsx) — спільний для ВСІХ типів із toggle (раніше лише

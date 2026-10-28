@@ -6,6 +6,8 @@ import { PreviewBanner, PreviewBlocked } from "@/components/preview-banner";
 import { DelfModeTabs } from "../../delf-mode-tabs";
 import { DelfTestTasks } from "../../delf-test-tasks";
 import { STUDENT_PAGE_TITLE } from "@/lib/typography-styles";
+import { normalizeUiLang } from "@/lib/ui/product-lang";
+import { LangProvider } from "@/lib/i18n/context";
 
 export default async function DelfTestPage({
   params,
@@ -22,7 +24,7 @@ export default async function DelfTestPage({
   const supabase = await createClient();
   const { data: product } = await supabase
     .from("products")
-    .select("id, title, level, type, is_published, archived_at")
+    .select("id, title, level, type, is_published, archived_at, ui_lang")
     .eq("id", productId)
     .single();
 
@@ -49,19 +51,21 @@ export default async function DelfTestPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-6">
-      <Link href={`/courses/${productId}`} className="text-sm underline">
-        ← До тестів
-      </Link>
-      {isPreviewing && <PreviewBanner productId={productId} />}
-      <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>
-        {product.title} — Тест {testNumber}
-      </h1>
+    <LangProvider lang={normalizeUiLang(product.ui_lang)}>
+      <main className="mx-auto w-full max-w-2xl p-6">
+        <Link href={`/courses/${productId}`} className="text-sm underline">
+          ← До тестів
+        </Link>
+        {isPreviewing && <PreviewBanner productId={productId} />}
+        <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>
+          {product.title} — Тест {testNumber}
+        </h1>
 
-      <DelfModeTabs
-        level={product.level}
-        entrainementContent={<DelfTestTasks productId={productId} testNumber={testNumber} />}
-      />
-    </main>
+        <DelfModeTabs
+          level={product.level}
+          entrainementContent={<DelfTestTasks productId={productId} testNumber={testNumber} />}
+        />
+      </main>
+    </LangProvider>
   );
 }
