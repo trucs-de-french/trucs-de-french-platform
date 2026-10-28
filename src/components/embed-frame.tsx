@@ -39,9 +39,14 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
           </button>
         )}
       </div>
-      <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">
+      <p className="text-xs text-[#4b4766] dark:text-[var(--text-muted-caption)]">
         Якщо вміст не відкривається,{" "}
-        <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-[#3b36c4] hover:text-[#2f2ab0] dark:text-inherit dark:hover:text-inherit"
+        >
           перейдіть за посиланням
         </a>
         .
