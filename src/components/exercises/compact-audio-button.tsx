@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
+import { useT } from "@/lib/i18n/context";
 
 // Компактна кнопка-іконка відтворення (44×44, той самий розмір, що й
 // картинка-підказка поруч) — заміна повного нативного <audio controls> там,
@@ -10,6 +11,7 @@ import { Pause, Play } from "lucide-react";
 // (жодної кастомної логіки відтворення) — кнопка лише викликає його
 // play()/pause(), поведінка відтворення не змінюється.
 export function CompactAudioButton({ src }: { src: string }) {
+  const { t } = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -25,7 +27,7 @@ export function CompactAudioButton({ src }: { src: string }) {
       <button
         type="button"
         onClick={() => (playing ? audioRef.current?.pause() : audioRef.current?.play())}
-        aria-label={playing ? "Зупинити вимову" : "Прослухати вимову"}
+        aria-label={playing ? t("button.stopPlay") : t("button.listenPlay")}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-transparent dark:text-neutral-300 dark:hover:bg-neutral-800/70"
       >
         {playing ? <Pause size={18} /> : <Play size={18} />}

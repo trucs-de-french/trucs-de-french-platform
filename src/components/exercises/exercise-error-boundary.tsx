@@ -1,6 +1,19 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { useT } from "@/lib/i18n/context";
+
+// Клас-boundary не може самостійно викликати hooks (useT) — функціональна
+// дитина нижче отримує lang із контексту так само, як і решта студентських
+// компонентів.
+function ErrorBoundaryFallback() {
+  const { t } = useT();
+  return (
+    <p className="text-sm italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+      {t("boundary.unavailable")}
+    </p>
+  );
+}
 
 // Одна зламана вправа (напр. збережений конфіг без обов'язкового поля,
 // як table_fill без columnLabels) не повинна валити всю студентську
@@ -22,11 +35,7 @@ export class ExerciseErrorBoundary extends Component<{ children: ReactNode }, { 
 
   render() {
     if (this.state.hasError) {
-      return (
-        <p className="text-sm italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-          Вправа тимчасово недоступна.
-        </p>
-      );
+      return <ErrorBoundaryFallback />;
     }
     return this.props.children;
   }

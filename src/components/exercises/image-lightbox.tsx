@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { parseImageFocus } from "@/lib/image-focus";
 import { Z_MODAL } from "@/lib/z-layers";
+import { useT } from "@/lib/i18n/context";
 
 // Повноекранний перегляд картинки-підказки (клік по мініатюрі) — object-
 // contain: тут показуємо ВСЮ картинку цілком, кадрування (фокус) свідомо
@@ -26,6 +27,7 @@ export function ImageLightbox({
   // кнопка-лупа) ще ДО монтування цього компонента — той самий елемент
   // повертає собі фокус при закритті (Escape/фон/✕), щоб клавіатурна
   // навігація не губилась посеред сторінки.
+  const { t } = useT();
   const previouslyFocused = useRef<HTMLElement | null>(null);
   useEffect(() => {
     previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -52,7 +54,7 @@ export function ImageLightbox({
       <button
         type="button"
         onClick={onClose}
-        aria-label="Закрити"
+        aria-label={t("button.closeAria")}
         className="absolute right-4 top-4 text-white/80 before:absolute before:-inset-2 transition-colors hover:text-white"
       >
         <X size={28} />

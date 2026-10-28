@@ -1,8 +1,11 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { formatPoints, formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsLocalized, formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
+import { useT } from "@/lib/i18n/context";
+import { plural } from "@/lib/i18n/plural";
+import type { UiLang } from "@/lib/ui/product-lang";
 import {
   STATUS_LABEL_NONE,
   STATUS_LABEL_PARTIAL,
@@ -47,16 +50,19 @@ function statusTone(correct: boolean, pointsEarned?: number, pointsPossible?: nu
     : { tone: "error" as const, label: STATUS_LABEL_NONE, title: STATUS_LABEL_NONE_UK };
 }
 
-// Українська плюралізація "відповідь/відповіді/відповідей" — те саме
-// правило mod10/mod100, що pluralizeMistakes (error-review-block.tsx) і
-// pluralizePoints (lib/pluralize-points.ts), інше слово.
-function pluralizeAnswers(n: number): string {
-  const abs = Math.abs(n);
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-  if (mod10 === 1 && mod100 !== 11) return "відповідь";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "відповіді";
-  return "відповідей";
+// Плюралізація слова "відповідь" для panel.withHintCount (uk: three-way
+// mod10/mod100 — та сама форма, що pluralizeMistakes/pluralizePoints; fr/en
+// — one/other через Intl.PluralRules, plural() helper).
+function pluralizeAnswers(lang: "uk" | "fr" | "en", n: number): string {
+  if (lang === "uk") {
+    const abs = Math.abs(n);
+    const mod10 = abs % 10;
+    const mod100 = abs % 100;
+    if (mod10 === 1 && mod100 !== 11) return "відповідь";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "відповіді";
+    return "відповідей";
+  }
+  return plural(lang, n, lang === "fr" ? { one: "réponse", other: "réponses" } : { one: "answer", other: "answers" });
 }
 
 // Підсумковий рядок "З підказкою: N відповідей, половина балів" (мокап 3)
@@ -73,12 +79,13 @@ export function HintUsageSummary({
   hintCount: number | "task";
   reducesPoints: boolean;
 }) {
+  const { t, lang } = useT();
   if (hintCount !== "task" && hintCount <= 0) return null;
-  const suffix = reducesPoints ? ", половина балів" : "";
+  const suffix = reducesPoints ? t("panel.halfPointsSuffix") : "";
   const text =
     hintCount === "task"
-      ? `З підказкою${suffix}`
-      : `З підказкою: ${hintCount} ${pluralizeAnswers(hintCount)}${suffix}`;
+      ? `${t("panel.withHint")}${suffix}`
+      : `${t("panel.withHintCount", { n: hintCount, word: pluralizeAnswers(lang, hintCount) })}${suffix}`;
   return (
     <span className="task-result-hint-summary">
       <HintBulb state="available" as="span" />
@@ -111,6 +118,7 @@ export function TaskResult({
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const { t, lang } = useT();
   const { tone, label, title } = statusTone(correct, pointsEarned, pointsPossible);
   const showToggle = !!children && !correct;
 
@@ -129,7 +137,7 @@ export function TaskResult({
             >
               <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
             </svg>
-            {formatPoints(pointsEarned ?? 0, pointsPossible)}
+            {formatPointsLocalized(pointsEarned ?? 0, pointsPossible, lang)}
           </span>
         )}
         <span
@@ -156,11 +164,11 @@ export function TaskResult({
             <span className="task-result-toggle-title">
               <span className="task-result-toggle-title-main">{toggleTitle}</span>
               {toggleCount !== undefined && (
-                <span className="task-result-toggle-title-sub">цього блоку · {toggleCount}</span>
+                <span className="task-result-toggle-title-sub">{t("panel.correctAnswersSub", { n: toggleCount })}</span>
               )}
             </span>
             <span className="task-result-toggle-action">
-              {open ? "Сховати" : "Показати"}
+              {open ? t("button.hide") : t("button.show")}
               <ChevronIcon open={open} />
             </span>
           </button>
@@ -372,8 +380,9 @@ export function shouldShowRowScorePill(possible: string | number): boolean {
 // схована (shouldShowRowScorePill === false) — той самий принцип, що
 // matching-board.tsx (ariaLabelForState): видимого тексту немає, але
 // правильність рядка має лишатись доступною для читалки.
-export function rowResultAriaLabel(full: boolean): string {
-  return full ? "Правильно" : "Неправильно";
+export function rowResultAriaLabel(full: boolean, lang: UiLang = "uk"): string {
+  if (lang === "uk") return full ? "Правильно" : "Неправильно";
+  return full ? "Correct" : "Incorrect";
 }
 
 // Пілюля-рядок "0/1" замість колишнього тексту "0/1 бал" (п.6 задачі) —
@@ -456,15 +465,16 @@ export function RowPointsTab({
   earned?: string | number;
   possible: string | number;
 }) {
+  const { t, lang } = useT();
   if (earned === undefined) {
     const n = toRowPointsNum(possible);
-    return <span className="row-points-tab">{formatPointsCount(n)}</span>;
+    return <span className="row-points-tab">{formatPointsCountLocalized(n, lang)}</span>;
   }
   const status = rowPointsTabStatus(earned, possible);
   return (
     <span className={`row-points-tab row-points-tab--${status}`}>
       <RowPointsTabIcon status={status} />
-      {earned} з {possible}
+      {t("common.outOf", { a: earned, b: possible })}
     </span>
   );
 }

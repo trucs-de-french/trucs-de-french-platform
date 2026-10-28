@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { Check, Lightbulb } from "lucide-react";
 import { GOLD_CIRCLE_SIZE, GOLD_CIRCLE_HIT_AREA_PADDING, GOLD_CIRCLE_AVAILABLE, GOLD_CIRCLE_DONE, GOLD_CIRCLE_ON_IMAGE } from "./legend-tile-style";
+import { useT } from "@/lib/i18n/context";
 
 export type HintBulbState = "available" | "used" | "done";
 
@@ -20,7 +21,7 @@ export function HintBulb({
   onClick,
   onMouseDown,
   disabled,
-  label = "Підказка",
+  label,
   overImage,
   stopPropagation,
   className = "",
@@ -44,6 +45,8 @@ export function HintBulb({
   // змінюється.
   ariaExpanded?: boolean;
 }) {
+  const { t } = useT();
+  const resolvedLabel = label ?? t("button.hint");
   const colorClass = state === "done" ? GOLD_CIRCLE_DONE : GOLD_CIRCLE_AVAILABLE;
   const usedClass = state === "used" ? "opacity-60" : "";
   const ringClass = overImage ? GOLD_CIRCLE_ON_IMAGE : "";
@@ -65,9 +68,9 @@ export function HintBulb({
   return (
     <button
       type="button"
-      aria-label={label}
+      aria-label={resolvedLabel}
       aria-expanded={ariaExpanded}
-      title={label}
+      title={resolvedLabel}
       disabled={disabled}
       onMouseDown={onMouseDown}
       onClick={(e) => {
@@ -89,13 +92,10 @@ export function HintBulb({
 // до перевірки), позиціонування (.hint-used-badge, globals.css) — на
 // викликачі лежить лише relative-обгортка без overflow:hidden.
 export function HintUsedBadge({ halfPoints }: { halfPoints?: boolean }) {
+  const { t } = useT();
+  const label = `${t("badge.answerWithHint")}${halfPoints ? t("panel.halfPointsSuffix") : ""}`;
   return (
-    <span
-      className="hint-used-badge"
-      role="img"
-      aria-label={halfPoints ? "Відповідь з підказкою, половина балів" : "Відповідь з підказкою"}
-      title="Відповідь з підказкою"
-    >
+    <span className="hint-used-badge" role="img" aria-label={label} title={t("badge.answerWithHint")}>
       <Lightbulb size={12} strokeWidth={2.5} aria-hidden />
     </span>
   );

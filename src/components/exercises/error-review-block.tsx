@@ -5,6 +5,8 @@ import { Check } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
+import { useT } from "@/lib/i18n/context";
+import { plural } from "@/lib/i18n/plural";
 import { isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
 import { MultipleChoiceExercise } from "./multiple-choice";
@@ -76,42 +78,39 @@ export type ErrorReviewEntryData = {
   config: Record<string, unknown> | null;
 };
 
-// Українська плюралізація "помилка/помилки/помилок" — те саме правило
-// mod10/mod100, що pluralizePoints (lib/pluralize-points.ts), інше слово.
-function pluralizeMistakes(n: number): string {
-  const abs = Math.abs(n);
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-  if (mod10 === 1 && mod100 !== 11) return "помилка";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "помилки";
-  return "помилок";
+// uk: three-way mod10/mod100 (pluralizePoints-подібне правило); fr/en —
+// one/other через Intl.PluralRules (plural() helper).
+function pluralizeMistakes(lang: "uk" | "fr" | "en", n: number): string {
+  if (lang === "uk") {
+    const abs = Math.abs(n);
+    const mod10 = abs % 10;
+    const mod100 = abs % 100;
+    if (mod10 === 1 && mod100 !== 11) return "помилка";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "помилки";
+    return "помилок";
+  }
+  return plural(lang, n, lang === "fr" ? { one: "erreur", other: "erreurs" } : { one: "error", other: "errors" });
 }
 
-const STATUS_PILL: Record<ErrorReviewStatus, { label: string; className: string }> = {
-  not_started: {
-    label: "Не виправлено",
-    className:
-      "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-600 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:text-neutral-300",
-  },
-  partial: {
-    label: "Частково",
-    className:
-      "border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  },
-  done: {
-    label: "Виправлено",
-    className:
-      "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300",
-  },
+const STATUS_PILL_CLASS: Record<ErrorReviewStatus, string> = {
+  not_started:
+    "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-600 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)] dark:text-neutral-300",
+  partial: "border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  done: "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300",
+};
+const STATUS_PILL_KEY: Record<ErrorReviewStatus, "errReview.notFixed" | "errReview.partiallyFixed" | "errReview.fixed"> = {
+  not_started: "errReview.notFixed",
+  partial: "errReview.partiallyFixed",
+  done: "errReview.fixed",
 };
 
 function StatusPill({ status }: { status: ErrorReviewStatus }) {
-  const pill = STATUS_PILL[status];
+  const { t } = useT();
   return (
     <span
-      className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${pill.className}`}
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_PILL_CLASS[status]}`}
     >
-      {pill.label}
+      {t(STATUS_PILL_KEY[status])}
     </span>
   );
 }
@@ -132,6 +131,7 @@ function ErrorReviewCard({
   expanded: boolean;
   onToggleExpanded: () => void;
 }) {
+  const { t, lang } = useT();
   const isItems = entry.mode === "items";
   const isWhole = entry.mode === "whole" && isWholePracticeTaskType(entry.taskType);
   const isInteractive = isItems || isWhole;
@@ -156,10 +156,10 @@ function ErrorReviewCard({
           {isInteractive && (
             <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">
               {entry.status === "partial"
-                ? `Лишилось ${remaining} з ${entry.total}`
+                ? t("errReview.remainingOfTotal", { n: remaining, total: entry.total })
                 : isDone
-                  ? "Усі помилки виправлено"
-                  : `${entry.total} ${pluralizeMistakes(entry.total)}`}
+                  ? t("errReview.allFixed")
+                  : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`}
             </p>
           )}
         </div>
@@ -184,7 +184,7 @@ function ErrorReviewCard({
             onClick={onToggleExpanded}
             className={`${BUTTON_CHECK} min-h-11 error-review-fix-button`}
           >
-            {expanded ? "Згорнути" : isWhole ? "Спробувати ще раз" : `Виправити ${remaining}`}
+            {expanded ? t("button.collapse") : isWhole ? t("button.retry") : t("button.fixCount", { n: remaining })}
           </button>
         </div>
       )}
@@ -192,7 +192,7 @@ function ErrorReviewCard({
       {isDone && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-[var(--card-border)] dark:text-green-400">
           <Check size={16} aria-hidden />
-          Усі помилки цього завдання виправлено
+          {t("errReview.allFixedBanner")}
         </div>
       )}
 
@@ -354,6 +354,7 @@ export function ErrorReviewBlock({
   entries: ErrorReviewEntryData[];
   emptyState: ErrorReviewEmptyState;
 }) {
+  const { t } = useT();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   return (
@@ -361,7 +362,7 @@ export function ErrorReviewBlock({
       <div>
         <h3 className="font-heading text-lg font-semibold">{frenchNbsp("Corrigez vos erreurs.")}</h3>
         <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-          Перегляньте свої помилки й натисніть «Виправити», щоб спробувати ще раз — без втрати балів.
+          {t("errReview.reviewHint")}
         </p>
       </div>
 

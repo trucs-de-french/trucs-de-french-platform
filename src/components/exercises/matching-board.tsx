@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useT } from "@/lib/i18n/context";
 
 // Дошка "ліва/права колонка + сполучні крапки/лінії" для matching.tsx —
 // три місця використання (≤10 елементів, блок >10, практика) ділять цей
@@ -34,6 +35,7 @@ export function MatchingBoard({
   usedRights: Set<string>;
   renderLeftExtra?: (left: string) => ReactNode;
 }) {
+  const { t } = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const leftRefs = useRef(new Map<string, HTMLButtonElement>());
   const rightRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -87,8 +89,8 @@ export function MatchingBoard({
   // (перекриває звичайне ім'я кнопки з текстового вмісту) для скрінрідерів,
   // текст картки лишається видимим лише як "{слово}" (без зайвого напису).
   function ariaLabelForState(word: string, state: PairDotState): string | undefined {
-    if (state === "correct") return `${word}: Правильно`;
-    if (state === "incorrect") return `${word}: Неправильно`;
+    if (state === "correct") return t("matchingBoard.stateCorrect", { word });
+    if (state === "incorrect") return t("matchingBoard.stateIncorrect", { word });
     return undefined;
   }
 

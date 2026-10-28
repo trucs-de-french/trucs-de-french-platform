@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { formatPoints, formatScore } from "@/lib/exercises/format-points";
+import { formatPointsLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 
 function ChevronIcon({
   direction,
@@ -86,7 +87,7 @@ export function BlockTabs({
   isBlockChecked,
   isBlockDisabled,
   labels,
-  blockLabel = "Блок",
+  blockLabel,
 }: {
   // Відсутній — у групі з кількома задачами немає єдиної "головної" назви
   // (task-group-block.tsx) — компонент тоді не рендерить нічого.
@@ -107,6 +108,8 @@ export function BlockTabs({
   // TaskPanelHeader) не вимагали правок.
   pointsText?: string;
 }) {
+  const { t } = useT();
+  const resolvedBlockLabel = blockLabel ?? t("summary.blockWord");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [fade, setFade] = useState<{ left: boolean; right: boolean }>({ left: false, right: false });
@@ -227,7 +230,7 @@ export function BlockTabs({
                 <button
                   type="button"
                   tabIndex={-1}
-                  aria-label="Прокрутити вкладки блоків ліворуч"
+                  aria-label={t("aria.scrollTabsLeft")}
                   className="tabs-scroll-arrow tabs-scroll-arrow--left"
                   onClick={() => scrollByDirection("left")}
                 >
@@ -235,14 +238,14 @@ export function BlockTabs({
                 </button>
               )}
               <div ref={scrollRef} className={`task-tabs-scroll ${fadeClass}`.trim()} onScroll={updateFade}>
-                <div className="task-tabs-track" role="tablist" aria-label="Навігація по блоках">
+                <div className="task-tabs-track" role="tablist" aria-label={t("aria.blockNav")}>
                   {Array.from({ length: blockCount! }, (_, i) => {
                     const isActive = i === activeBlock;
                     const checked = isBlockChecked?.(i);
                     const disabled = isBlockDisabled?.(i) ?? false;
                     const customLabel = labels?.[i];
-                    const text = `${blockLabel} ${i + 1}`;
-                    const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? ", виконано" : ""}`;
+                    const text = `${resolvedBlockLabel} ${i + 1}`;
+                    const a11yLabel = `${customLabel ? `${text}: ${customLabel}` : text}${checked ? t("aria.doneSuffix") : ""}`;
                     return (
                       <button
                         key={i}
@@ -270,7 +273,7 @@ export function BlockTabs({
                 <button
                   type="button"
                   tabIndex={-1}
-                  aria-label="Прокрутити вкладки блоків праворуч"
+                  aria-label={t("aria.scrollTabsRight")}
                   className="tabs-scroll-arrow tabs-scroll-arrow--right"
                   onClick={() => scrollByDirection("right")}
                 >
@@ -303,6 +306,7 @@ export function BlockNavFooter({
   onChangeBlock: (index: number) => void;
   checkButton?: ReactNode;
 }) {
+  const { t } = useT();
   if (blockCount <= 1) return null;
 
   const isFirst = activeBlock === 0;
@@ -316,7 +320,7 @@ export function BlockNavFooter({
         type="button"
         onClick={() => onChangeBlock(activeBlock - 1)}
         disabled={isFirst}
-        aria-label="Попередній блок"
+        aria-label={t("button.previousAria")}
         className="exercise-block-prev-btn"
       >
         <ChevronIcon direction="left" size={18} />
@@ -325,10 +329,10 @@ export function BlockNavFooter({
         type="button"
         onClick={() => onChangeBlock(activeBlock + 1)}
         disabled={isLast}
-        aria-label="Далі"
+        aria-label={t("button.next")}
         className="exercise-block-next-btn"
       >
-        <span className="exercise-block-next-btn-label">Далі</span>
+        <span className="exercise-block-next-btn-label">{t("button.next")}</span>
         {/* Кругла золота "плашка" під шеврон (градієнтний індиго-дизайн,
             та сама родина, що аудіоплеєр) — замінює голу іконку, яка
             раніше сиділа прямо в рядку кнопки. */}
@@ -489,6 +493,7 @@ function TaskSummaryCard({
   activeBlock: number;
   onChangeBlock: (index: number) => void;
 }) {
+  const { t, lang } = useT();
   const checked = Object.values(blockResults);
   const sumEarned = checked.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
   const sumPossible = checked.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0);
@@ -496,13 +501,13 @@ function TaskSummaryCard({
   return (
     <div className="task-result-card task-summary-card">
       <div className="task-summary-top">
-        <span className="task-summary-title">Підсумок завдання</span>
+        <span className="task-summary-title">{t("summary.title")}</span>
         {sumPossible > 0 && (
           <span className="task-summary-total-pill">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#b8902f" aria-hidden="true">
               <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
             </svg>
-            Загалом: {formatPoints(sumEarned, sumPossible)}
+            {t("summary.total", { value: formatPointsLocalized(sumEarned, sumPossible, lang) })}
           </span>
         )}
       </div>
@@ -521,7 +526,7 @@ function TaskSummaryCard({
                   isActive ? "task-summary-tile--active" : ""
                 }`}
               >
-                Блок {i + 1} — —
+                {t("summary.block", { n: i + 1 })} — —
               </button>
             );
           }
@@ -538,7 +543,10 @@ function TaskSummaryCard({
                 isActive ? "task-summary-tile--active" : ""
               }`}
             >
-              Блок {i + 1} <span className="task-summary-tile-value">{formatScore(earned)}/{formatScore(possible)}</span>
+              {t("summary.block", { n: i + 1 })}{" "}
+              <span className="task-summary-tile-value">
+                {formatScoreLocalized(earned, lang)}/{formatScoreLocalized(possible, lang)}
+              </span>
               {full ? " ✓" : ""}
             </button>
           );

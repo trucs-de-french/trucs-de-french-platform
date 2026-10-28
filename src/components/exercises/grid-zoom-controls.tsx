@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { DEFAULT_ZOOM, ZOOM_STEPS } from "./use-grid-zoom";
+import { useT } from "@/lib/i18n/context";
 
 // Панель масштабу сітки (−/відсоток/+), спільна для word_search і
 // crossword. onMouseDown preventDefault на кожній кнопці — клік не забирає
@@ -15,6 +16,7 @@ import { DEFAULT_ZOOM, ZOOM_STEPS } from "./use-grid-zoom";
 // оверрайді лише для word_search (.ws-zoom button, видалений із
 // globals.css), тож crossword отримує той самий вигляд безкоштовно.
 export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (zoom: number) => void }) {
+  const { t } = useT();
   const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number]);
   const buttonClass =
     "flex h-8 w-8 items-center justify-center rounded-md border border-[rgba(217,183,101,0.55)] bg-white text-[#1f1d3a] shadow-[0_1px_2px_rgba(184,144,47,0.12)] hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] dark:hover:bg-[#1e234e]";
@@ -22,7 +24,7 @@ export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (
     <div className="flex items-center gap-1.5">
       <button
         type="button"
-        aria-label="Зменшити сітку"
+        aria-label={t("button.zoomOutAria")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onChange(ZOOM_STEPS[Math.max(0, zoomIndex - 1)])}
         disabled={zoomIndex <= 0}
@@ -32,7 +34,7 @@ export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (
       </button>
       <button
         type="button"
-        aria-label="Скинути масштаб"
+        aria-label={t("button.zoomResetAria")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onChange(DEFAULT_ZOOM)}
         className={`${buttonClass} w-auto min-w-[3.25rem] px-2 font-heading text-sm font-medium`}
@@ -41,7 +43,7 @@ export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (
       </button>
       <button
         type="button"
-        aria-label="Збільшити сітку"
+        aria-label={t("button.zoomInAria")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onChange(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1)])}
         disabled={zoomIndex >= ZOOM_STEPS.length - 1}

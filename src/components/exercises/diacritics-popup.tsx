@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
 import { Z_MODAL } from "@/lib/z-layers";
 import { HintBulb } from "./hint-bulb";
+import { useT } from "@/lib/i18n/context";
 
 // Спільна панель символів з діакритикою — раніше жила лише в crossword.tsx,
 // тепер спільна для будь-якого текстового поля студентської сторінки
@@ -44,6 +45,7 @@ export function DiacriticsPopup({
   // position:fixed рахується від layout-вьюпорту, а видима область при
   // скролі/клавіатурі може бути зсунута відносно нього. На десктопі
   // visualViewport збігається з window — поведінка не змінюється.
+  const { t } = useT();
   const vv = window.visualViewport;
   const viewportHeight = vv?.height ?? window.innerHeight;
   const viewportWidth = vv?.width ?? window.innerWidth;
@@ -79,7 +81,7 @@ export function DiacriticsPopup({
       {onHint && (
         <HintBulb
           state={hintUsed ? "used" : "available"}
-          label="Підказка: відкрити першу літеру"
+          label={t("crossword.hintOpenFirstLetter")}
           disabled={hintDisabled}
           // preventDefault — той самий прийом, що діакритик-кнопки нижче:
           // клік не забирає фокус з поля (онBlur не встигає спрацювати

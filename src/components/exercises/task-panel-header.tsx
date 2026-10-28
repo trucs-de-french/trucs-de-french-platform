@@ -1,7 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { HintBulb } from "./hint-bulb";
+import { useT } from "@/lib/i18n/context";
 
 // Єдина "зона заголовка" панелі задачі (дизайн-варіант 3) — перший елемент
 // усередині .glass-block-panel, одразу над картками вправи: інструкція
@@ -144,8 +147,14 @@ export function PointsPill({ text }: { text: string }) {
 // aria-live="polite" на самій пілюлі — зміна current/total (новий
 // aria-label) оголошується скрінридером без окремого live-region-елемента.
 export function CounterPill({ current, total }: { current: number; total: number }) {
+  const { t } = useT();
   return (
-    <span className="counter-pill" role="status" aria-live="polite" aria-label={`Питання ${current} з ${total}`}>
+    <span
+      className="counter-pill"
+      role="status"
+      aria-live="polite"
+      aria-label={t("aria.questionOfTotal", { current, total })}
+    >
       <span className="counter-pill-current">{current}</span>
       <span className="counter-pill-total">{` / ${total}`}</span>
     </span>
@@ -160,11 +169,12 @@ export function CounterPill({ current, total }: { current: number; total: number
 // піднята під лампочку (раніше 24px, тепер 28px), щоб та не впиралась у
 // верх/низ пілюлі.
 function HintPill({ text }: { text: string }) {
+  const { t } = useT();
   return (
     <span className="inline-flex h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
       <HintBulb state="available" as="span" />
       <span className="min-w-0">
-        <span className="font-bold">Підказка:</span> {text}
+        <span className="font-bold">{t("panel.hintPrefix")}</span> {text}
       </span>
     </span>
   );

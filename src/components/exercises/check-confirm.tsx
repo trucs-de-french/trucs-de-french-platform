@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n/context";
 
 // Спільний хук "перевірити не все заповнено — підтвердити" для всіх
 // авто-перевірюваних типів (ai_examiner/essay_check НЕ торкаються, бо
@@ -54,6 +55,7 @@ export function CheckConfirmBar({
   onCancel: () => void;
 }) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const { t, lang } = useT();
 
   // Фокус на "Перевірити" одразу при відкритті (панель з'являється під
   // кнопкою, яку щойно клікнули, — фокус має йти на ПЕРШУ дію всередині
@@ -72,7 +74,13 @@ export function CheckConfirmBar({
   return (
     <div className="check-confirm-bar" role="alertdialog" aria-live="polite">
       <p className="check-confirm-text">
-        Незаповнено: <strong className="check-confirm-count">{unansweredCount}</strong>. Перевірити все одно?
+        {lang === "uk" ? (
+          <>
+            Незаповнено: <strong className="check-confirm-count">{unansweredCount}</strong>. Перевірити все одно?
+          </>
+        ) : (
+          t("checkConfirm.unansweredCount", { n: unansweredCount })
+        )}
       </p>
       <div className="check-confirm-actions">
         <button
@@ -81,10 +89,10 @@ export function CheckConfirmBar({
           onClick={onConfirm}
           className="check-confirm-btn check-confirm-btn--primary"
         >
-          Перевірити
+          {t("button.check")}
         </button>
         <button type="button" onClick={onCancel} className="check-confirm-btn check-confirm-btn--secondary">
-          Повернутися
+          {t("button.goBack")}
         </button>
       </div>
     </div>
