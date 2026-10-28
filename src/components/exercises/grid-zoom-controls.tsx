@@ -17,7 +17,7 @@ import { DEFAULT_ZOOM, ZOOM_STEPS } from "./use-grid-zoom";
 export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (zoom: number) => void }) {
   const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number]);
   const buttonClass =
-    "flex h-8 w-8 items-center justify-center rounded-md border border-[rgba(217,183,101,0.55)] bg-white text-[#1f1d3a] shadow-[0_1px_2px_rgba(184,144,47,0.12)] hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e] dark:hover:bg-white/[0.1]";
+    "flex h-8 w-8 items-center justify-center rounded-md border border-[rgba(217,183,101,0.55)] bg-white text-[#1f1d3a] shadow-[0_1px_2px_rgba(184,144,47,0.12)] hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] dark:hover:bg-[#1e234e]";
   return (
     <div className="flex items-center gap-1.5">
       <button

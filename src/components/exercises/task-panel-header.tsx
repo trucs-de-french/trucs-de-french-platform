@@ -161,7 +161,7 @@ export function CounterPill({ current, total }: { current: number; total: number
 // верх/низ пілюлі.
 function HintPill({ text }: { text: string }) {
   return (
-    <span className="inline-flex h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-white/[0.06] dark:text-[#f6dc8e]">
+    <span className="inline-flex h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
       <HintBulb state="available" as="span" />
       <span className="min-w-0">
         <span className="font-bold">Підказка:</span> {text}
