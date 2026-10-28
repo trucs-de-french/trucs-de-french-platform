@@ -20,6 +20,7 @@ import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
+import { useT } from "@/lib/i18n/context";
 
 type SequenceDetail = ReorderDetail["sequences"][number];
 type ReorderResult = Extract<GradeResult, { detail: ReorderDetail }>;
@@ -97,6 +98,7 @@ function ReorderSequenceTiles({
   // liveFeedback увімкнено, порівнюємо ПОЗИЦІЙНО з correctOrder (той самий
   // принцип, що gradeReorder: studentOrder[i] === correctOrder[i]), наживо,
   // на кожен рендер (order — пропс, змінюється з кожним drag/click-move).
+  const { t } = useT();
   function tileState(i: number): "correct" | "incorrect" | undefined {
     if (detail) return detail.items[i]?.isCorrect ? "correct" : "incorrect";
     if (correctOrder && activated) return order[i] === correctOrder[i] ? "correct" : "incorrect";
@@ -128,7 +130,7 @@ function ReorderSequenceTiles({
       <div className="glass-item-card flex items-center gap-3.5 px-3.5 pt-4 pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 max-md:pt-[18px] max-md:pb-3">
         <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
           <div className="flex shrink-0 items-center gap-2">
-            <span className="item-number-badge shrink-0" aria-label={`Речення ${number}`}>
+            <span className="item-number-badge shrink-0" aria-label={t("aria.sentence", { n: number })}>
               {number}
             </span>
             {(imageUrl || audioUrl) && (
@@ -137,7 +139,7 @@ function ReorderSequenceTiles({
                   <button
                     type="button"
                     onClick={() => onOpenImage(imageUrl)}
-                    aria-label="Показати картинку повністю"
+                    aria-label={t("button.showFullImageAria")}
                     className="shrink-0 cursor-zoom-in"
                   >
                     <ImageOrPlaceholder
@@ -172,7 +174,7 @@ function ReorderSequenceTiles({
 
             {detail && (
               <p className="break-words text-sm [overflow-wrap:anywhere]">
-                <span className="text-neutral-600 dark:text-[var(--text-muted-caption)]">Правильний порядок: </span>
+                <span className="text-neutral-600 dark:text-[var(--text-muted-caption)]">{t("answer.correctOrderLabel")} </span>
                 <span className="correct-answer-word text-[#3b36c4]">
                   {[...detail.items]
                     .sort((a, b) => a.correctIndex - b.correctIndex)
@@ -187,7 +189,7 @@ function ReorderSequenceTiles({
           <HintBulb
             state={hintShown ? "used" : "available"}
             onClick={onToggleHint}
-            label={hintVisible ? "Згорнути підказку" : "Показати підказку"}
+            label={hintVisible ? t("button.collapseHint") : t("button.showHint")}
             className="shrink-0 max-md:min-h-11 max-md:min-w-11"
           />
         )}
@@ -213,6 +215,7 @@ export function ReorderExercise({
   hidePoints?: boolean;
   practice?: ReorderPracticeProps;
 }) {
+  const { t: tt } = useT();
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
@@ -374,7 +377,7 @@ export function ReorderExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? tt("error.checkFailed"));
       }
       const result = (await res.json()) as ReorderResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -382,7 +385,7 @@ export function ReorderExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : tt("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -430,7 +433,7 @@ export function ReorderExercise({
       <div className={EXERCISE_STACK}>
         {!practiceCorrect && (
           <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-            Торкніться двох слів, щоб поміняти їх місцями
+            {tt("reorder.tapToSwap")}
           </p>
         )}
 
@@ -470,16 +473,16 @@ export function ReorderExercise({
               disabled={practiceCheck.pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+              {practiceCheck.pending ? tt("button.checking") : tt("button.check")}
             </button>
           )}
           {practiceCorrect && (
-            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{tt("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-red-600 dark:text-red-400">
-                Неправильно, спробуйте ще раз (спроб: {attempts})
+                {tt("status.incorrectRetryCount", { n: attempts })}
               </span>
               {!revealedAnswer && (
                 <button
@@ -488,14 +491,14 @@ export function ReorderExercise({
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
                   className={STUDENT_BUTTON_SECONDARY_TOUCH}
                 >
-                  Показати відповідь
+                  {tt("button.showAnswer")}
                 </button>
               )}
             </div>
           )}
           {revealedAnswer && (
             <p className="text-sm italic text-amber-700 dark:text-amber-400">
-              Правильний порядок: {revealedAnswer.join("; ")}
+              {tt("answer.correctOrderLabel")} {revealedAnswer.join("; ")}
             </p>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
@@ -517,7 +520,7 @@ export function ReorderExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? tt("button.checking") : tt("button.checkBlock")}
     </button>
   ) : null;
 
@@ -544,7 +547,7 @@ export function ReorderExercise({
         <>
           {!singleLocked && (
             <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-              Торкніться двох слів, щоб поміняти їх місцями
+              {tt("reorder.tapToSwap")}
             </p>
           )}
 
@@ -570,7 +573,7 @@ export function ReorderExercise({
                 disabled={single.pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
+                {single.pending ? tt("button.checking") : tt("button.check")}
               </button>
             ) : (
               <TaskResult
@@ -590,7 +593,7 @@ export function ReorderExercise({
         <>
           {!blockResults[activeBlock] && (
             <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-              Торкніться двох слів, щоб поміняти їх місцями
+              {tt("reorder.tapToSwap")}
             </p>
           )}
           <BlockNavigation

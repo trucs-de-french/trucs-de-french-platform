@@ -16,12 +16,12 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
-  IMAGE_MATCH_POOL_LABEL,
-  imageMatchRemainingLabel,
+  dragPoolLabel,
+  poolRemainingLabel,
   dragDropIntruderLabel,
-  DRAG_DROP_SLOT_PLACEHOLDER,
-  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
+  dragDropSlotPlaceholder,
 } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на РЕЧЕННЯ
 // (config.sentences вже цю одиницю й дає, на відміну від fill_blank), з
@@ -93,6 +93,7 @@ export function DragDropExercise({
   // банку лише в межах свого речення, і те саме слово можна було б
   // поставити одразу в двох реченнях). sentenceSegments/offsets — мапінг
   // глобальний-індекс-пропуску ↔ (речення, локальна позиція).
+  const { t, lang } = useT();
   const sentenceSegments = config.sentences.map((s) => s.template.split("{{}}"));
   const blankCounts = sentenceSegments.map((segs) => segs.length - 1);
   const totalBlanks = blankCounts.reduce((a, b) => a + b, 0);
@@ -227,7 +228,7 @@ export function DragDropExercise({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
+          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
         )}
 
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
@@ -281,7 +282,7 @@ export function DragDropExercise({
                         {i < blankCount && hint && (
                           <HintBulb
                             state={translationHints.has(gi) ? "used" : "available"}
-                            label="Підказка: показати переклад слова"
+                            label={t("dragdrop.hintTranslation")}
                             onClick={() => toggleTranslationHint(gi)}
                             className="!inline-flex align-middle"
                           />
@@ -296,12 +297,12 @@ export function DragDropExercise({
                   })}
                 </p>
                 {isCorrect === true && (
-                  <p className="text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -310,14 +311,14 @@ export function DragDropExercise({
                         disabled={!!practiceCheck.revealPending[s.id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильна відповідь: {itemRevealed.join(", ")}
+                    {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -332,7 +333,7 @@ export function DragDropExercise({
             disabled={practiceCheck.pending || placed.some((p) => p === null)}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -362,16 +363,16 @@ export function DragDropExercise({
           // прибирається з пулу (filter за usedBankIndices), як у image_match.
           <div className="word-pool" {...bankDropProps()}>
             <div className="word-pool-label-row">
-              <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
+              <span className="word-pool-label">{dragPoolLabel(lang)}</span>
               {/* Пілюлі згруповані своїм flex-рядком (gap 8px) — третій
                   елемент (зайві слова) не має ламати .word-pool-label-row
                   (space-between, розраховане на РІВНО два елементи,
                   image_match/fill_blank). */}
               <span className="flex items-center gap-2">
-                <span className="word-pool-count">{imageMatchRemainingLabel(remaining)}</span>
+                <span className="word-pool-count">{poolRemainingLabel(lang, remaining)}</span>
                 {intruderCount > 0 && (
                   <span className="word-pool-count word-pool-count--intruder">
-                    {dragDropIntruderLabel(intruderCount)}
+                    {dragDropIntruderLabel(lang, intruderCount)}
                   </span>
                 )}
               </span>
@@ -396,7 +397,7 @@ export function DragDropExercise({
             </div>
           </div>
         ) : (
-          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
+          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
         );
       })()}
 
@@ -421,7 +422,7 @@ export function DragDropExercise({
                 />
               )}
               <div className="drag-drop-row glass-item-card">
-              <span className="item-number-badge drag-drop-row-number" aria-label={`Речення ${si + 1}`}>
+              <span className="item-number-badge drag-drop-row-number" aria-label={t("aria.sentence", { n: si + 1 })}>
                 {si + 1}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -467,7 +468,7 @@ export function DragDropExercise({
                               ) : visibleHints.has(gi) && hint ? (
                                 <span className="truncate text-[var(--text-muted-hint)] dark:text-[var(--text-muted-caption)]">{hint}</span>
                               ) : (
-                                <span className="drag-drop-slot-placeholder">{DRAG_DROP_SLOT_PLACEHOLDER}</span>
+                                <span className="drag-drop-slot-placeholder">{dragDropSlotPlaceholder(lang)}</span>
                               )}
                             </button>
                             {/* Лампочка ВСЕРЕДИНІ слота (мокап "варіант 1") —
@@ -479,7 +480,7 @@ export function DragDropExercise({
                             {hasLamp && (
                               <HintBulb
                                 state={translationHints.has(gi) ? "used" : "available"}
-                                label="Підказка: показати переклад слова"
+                                label={t("dragdrop.hintTranslation")}
                                 onClick={() => toggleTranslationHint(gi)}
                                 className="drag-drop-slot-lamp"
                               />
@@ -512,7 +513,7 @@ export function DragDropExercise({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
@@ -527,7 +528,7 @@ export function DragDropExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? config.sentences.length : undefined}
             hintSummary={{
               hintCount: detail?.sentences.reduce((n, s) => n + s.blanks.filter((b) => b.hintUsed).length, 0) ?? 0,

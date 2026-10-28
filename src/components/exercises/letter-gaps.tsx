@@ -8,7 +8,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { BUTTON_CHECK } from "@/lib/button-styles";
@@ -19,7 +19,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -118,6 +118,7 @@ export function LetterGapsExercise({
   // matching.tsx: блок лише фільтрує, які слова видно й до яких прив'язана
   // поточна дія, answers/hintedGaps/hintedWordIndices — одна мапа на всі
   // блоки.
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<string[][]>(() =>
     config.words.map((w) => Array(w.chars.filter((c) => c === null).length).fill(""))
   );
@@ -419,7 +420,7 @@ export function LetterGapsExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as LetterGapsResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -431,7 +432,7 @@ export function LetterGapsExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -489,7 +490,7 @@ export function LetterGapsExercise({
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
-            label="Підказка: відкрити наступну літеру"
+            label={t("lettergaps.hintOpenNextLetter")}
             disabled={nextHintGap(wi) === null}
             onClick={() => applyHint(wi)}
             className="absolute right-1.5 top-1.5"
@@ -503,7 +504,7 @@ export function LetterGapsExercise({
                 <button
                   type="button"
                   onClick={() => setLightboxSrc(word.imageUrl!)}
-                  aria-label="Показати картинку повністю"
+                  aria-label={t("button.showFullImageAria")}
                   className="shrink-0 cursor-zoom-in"
                 >
                   <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
@@ -517,7 +518,7 @@ export function LetterGapsExercise({
             <p
               className={`word-card-number-row break-words text-sm text-[var(--uk-clue-text-light)] dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
-              <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
+              <span className="item-number-badge" aria-label={t("aria.word", { n: opts.cardNumber })}>
                 {opts.cardNumber}
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
@@ -621,7 +622,7 @@ export function LetterGapsExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleTitle={t("panel.correctAnswers")}
               toggleCount={blockDetail ? blockDisplayOrder.length : undefined}
               hintSummary={{
                 hintCount: blockDetail?.words.filter((w) => w.hintUsed).length ?? 0,
@@ -665,12 +666,12 @@ export function LetterGapsExercise({
                   cardNumber: pos + 1,
                 })}
                 {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -679,14 +680,14 @@ export function LetterGapsExercise({
                         disabled={!!practiceCheck.revealPending[key]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильне слово: {itemRevealed.join(", ")}
+                    {t("answer.correctWordLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -713,7 +714,7 @@ export function LetterGapsExercise({
             disabled={practiceCheck.pending || !practiceWordIndices.every(isWordFilled)}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -723,7 +724,7 @@ export function LetterGapsExercise({
 
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
-      ? formatPointsCount(config.points)
+      ? formatPointsCountLocalized(config.points, lang)
       : undefined;
   const hintText = isDelf
     ? null
@@ -747,7 +748,7 @@ export function LetterGapsExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -806,7 +807,7 @@ export function LetterGapsExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -821,7 +822,7 @@ export function LetterGapsExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={singleDetail ? displayOrder.length : undefined}
                 hintSummary={{
                   hintCount: singleDetail?.words.filter((w) => w.hintUsed).length ?? 0,

@@ -15,6 +15,7 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { BlockNavFooter, BlockTabs } from "./block-navigation";
 import { AudioPill } from "@/components/audio-pill";
+import { useT } from "@/lib/i18n/context";
 
 const PAGE_SIZE = 6;
 
@@ -33,6 +34,7 @@ function FlipCardTile({
   variant?: "normal" | "highlighted" | "selected" | "dimmed";
   initialSide?: "front" | "back";
 }) {
+  const { t } = useT();
   const [flipped, setFlipped] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const clickable = variant === "normal" || variant === "selected";
@@ -95,7 +97,7 @@ function FlipCardTile({
             aria-hidden="true"
             className="hidden h-3.5 w-3.5 shrink-0 dark:inline-block dark:text-[rgba(217,183,101,0.8)]"
           />
-          {flipped ? "клік — назад" : "клік — перевернути"}
+          {flipped ? t("button.flipBack") : t("button.flipFront")}
         </span>
       )}
     </div>
@@ -130,6 +132,7 @@ function RandomRevealFlipCards({
   // margin-top самого футера.
   footer: ReactNode;
 }) {
+  const { t: t2 } = useT();
   const [spinning, setSpinning] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
   const [revealedIndex, setRevealedIndex] = useState<number | null>(null);
@@ -188,7 +191,7 @@ function RandomRevealFlipCards({
         disabled={spinning}
         className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
       >
-        {spinning ? "Крутимо..." : "Випадковий вибір"}
+        {spinning ? t2("flip.shufflingEllipsis") : t2("flip.randomPick")}
       </button>
 
       <div>
@@ -271,6 +274,7 @@ function getTouchOnlyServerSnapshot() {
 // (FlipCardsExercise), у автентичному порядку вчительки: саме цей порядок
 // (не remaining) відновлюється "Почати знову".
 function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
+  const { t: t3 } = useT();
   const [remaining, setRemaining] = useState<FlipCardType[]>(cards);
   // Історія "назад" — стек прибраних карток (сам deck без id-поля,
   // FlipCard = {front,back,image_url?,audio_url?}, тож зберігаємо сам
@@ -459,9 +463,9 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
           <div
             className={`flex w-full min-h-[250px] flex-col items-center justify-center gap-3 sm:min-h-[270px] ${ANSWER_CARD_BASE} ${ANSWER_CARD_DEFAULT}`}
           >
-            <p className="text-base text-neutral-600 dark:text-neutral-300">Усі питання пройдено</p>
+            <p className="text-base text-neutral-600 dark:text-neutral-300">{t3("flip.allQuestionsDone")}</p>
             <button type="button" onClick={handleRestart} className={STUDENT_BUTTON_PRIMARY}>
-              Почати знову
+              {t3("button.restart")}
             </button>
           </div>
         ) : (
@@ -596,13 +600,13 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             type="button"
             onClick={goBack}
             disabled={!canGoBack}
-            aria-label="Попередня картка"
+            aria-label={t3("button.previousCardAria")}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--gold-border-dark)] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[var(--gold-border-dark)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
           >
             <ChevronLeft size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#c9d4ff]" />
           </button>
           <span className="inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-full border-[1.5px] border-[#c9cdf5] bg-[#e0e4fb] px-4 text-[14px] font-extrabold text-[#3b36c4] dark:border-[#8a88f5] dark:bg-[rgba(75,70,218,0.3)] dark:text-[#dcdbf3]">
-            Залишилось {remaining.length} з {total}
+            {t3("flip.remainingOfTotal", { n: remaining.length, total })}
           </span>
           {/* Права стрілка — та сама дія, що свайп/"Відповів(ла), далі"
               (flyOut(1) → removeTop): дія вже існує в коді, кнопка лише
@@ -611,7 +615,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             type="button"
             onClick={() => flyOut(1)}
             disabled={!canGoNext}
-            aria-label="Наступна картка"
+            aria-label={t3("button.nextCardAria")}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--gold-border-dark)] bg-white shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] transition-colors hover:border-[#d9b765] disabled:opacity-40 disabled:hover:border-[var(--gold-border-dark)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:disabled:opacity-[.45] dark:disabled:hover:border-[rgba(217,183,101,0.45)] dark:disabled:hover:bg-[var(--dark-surface-fill)] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:w-[46px]"
           >
             <ChevronRight size={20} strokeWidth={2.6} className="text-[#3b36c4] dark:text-[#c9d4ff]" />
@@ -628,7 +632,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               disabled={remaining.length <= 1}
               className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
             >
-              <Shuffle size={18} className="text-[#b8902f] dark:text-[#f6dc8e]" /> Перемішати
+              <Shuffle size={18} className="text-[#b8902f] dark:text-[#f6dc8e]" /> {t3("button.shuffle")}
             </button>
             {canFlip && (
               <button
@@ -636,7 +640,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
                 onClick={toggleFlip}
                 className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
               >
-                {flipped ? "Показати питання" : "Показати переклад"}
+                {flipped ? t3("button.showQuestion") : t3("button.showTranslation")}
               </button>
             )}
           </div>
@@ -645,7 +649,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
             onClick={removeTop}
             className="order-1 flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-[linear-gradient(135deg,#5a55e6,#3b36c4)] px-[22px] text-[15px] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(59,54,196,0.6)] sm:order-2 sm:h-[46px] sm:w-auto"
           >
-            Відповів(ла), далі <ArrowRight size={18} />
+            {t3("button.answeredNext")} <ArrowRight size={18} />
           </button>
         </div>
       )}
@@ -683,6 +687,7 @@ function DeckCardFront({
   onZoomOpen: () => void;
   onZoomClose: () => void;
 }) {
+  const { t } = useT();
   return (
     <>
       <span className="self-start">
@@ -704,7 +709,7 @@ function DeckCardFront({
       {canFlip ? (
         <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
           <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
-          Торкніться картки, щоб побачити переклад
+          {t("flip.touchToSeeTranslation")}
         </span>
       ) : (
         <span />
@@ -717,6 +722,7 @@ function DeckCardFront({
 // замінює колишній текстовий лейбл "Переклад" — та сама роль, уже видно з
 // контрасту "FR"/"UK" між двома гранями.
 function DeckCardBack({ translation }: { translation: string }) {
+  const { t } = useT();
   return (
     <>
       <span className="self-start">
@@ -729,13 +735,14 @@ function DeckCardBack({ translation }: { translation: string }) {
       </div>
       <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
         <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
-        Торкніться картки, щоб сховати переклад
+        {t("flip.touchToHideTranslation")}
       </span>
     </>
   );
 }
 
 export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsConfig; plaqueText?: string }) {
+  const { t } = useT();
   // flip_cards не має sanitize-межі (самостійний тип без правильної
   // відповіді — повна конфігурація йде студенту як є, types.ts), тож
   // фільтрація неповної картки (без лицьової чи зворотної сторони) — тут,
@@ -772,7 +779,7 @@ export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsCon
   if (cards.length === 0) {
     return (
       <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-        У цій вправі ще немає карток.
+        {t("flip.noCardsYet")}
       </p>
     );
   }

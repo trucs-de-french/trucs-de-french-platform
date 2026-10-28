@@ -6,13 +6,14 @@ import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
+import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -84,6 +85,11 @@ export function WordChoiceExercise({
 }) {
   // mode === "select": обрані optionId на речення — множина (toggle),
   // не одне значення, бо речення може дозволяти кілька правильних.
+  const { t, lang } = useT();
+  function optionsCountWord(n: number): string {
+    if (lang === "uk") return n >= 5 ? "варіантів" : "варіанти";
+    return plural(lang, n, { one: "option", other: "options" });
+  }
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   // mode === "cross_out": Set закреслених (НЕправильних, на думку студента)
   // optionId на речення — "відповідь" виводиться з того, що лишилось.
@@ -276,7 +282,7 @@ export function WordChoiceExercise({
   // "ще не рахувати" (детальніше в aggregateResult нижче).
   function pointsText(detailPresent: boolean): string | undefined {
     if (hidePoints || detailPresent || !pointsVisible) return undefined;
-    return formatPointsCount(config.points);
+    return formatPointsCountLocalized(config.points, lang);
   }
 
   // Лише mode "select" — той самий принцип, що multiple-choice.tsx
@@ -287,7 +293,7 @@ export function WordChoiceExercise({
     if (config.mode !== "select" || !s.multiple) return null;
     return (
       <span className="ml-1 text-xs italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-        (оберіть {s.correctCount} {s.correctCount >= 5 ? "варіантів" : "варіанти"})
+        {t("wc.chooseOptionsCount", { n: s.correctCount, word: optionsCountWord(s.correctCount) })}
       </span>
     );
   }
@@ -322,7 +328,7 @@ export function WordChoiceExercise({
       <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
       <div className="flex items-start gap-2.5">
         {config.sentences.length > 1 && (
-          <span className="item-number-badge mt-1.5" aria-label={`Речення ${globalIndex + 1}`}>
+          <span className="item-number-badge mt-1.5" aria-label={t("aria.sentence", { n: globalIndex + 1 })}>
             {globalIndex + 1}
           </span>
         )}
@@ -379,7 +385,7 @@ export function WordChoiceExercise({
           <HintBulb
             state={hintShown.has(s.id) ? "used" : "available"}
             onClick={() => toggleHintVisible(s.id)}
-            label={hintVisible.has(s.id) ? "Згорнути підказку" : "Показати підказку"}
+            label={hintVisible.has(s.id) ? t("button.collapseHint") : t("button.showHint")}
             ariaExpanded={hintVisible.has(s.id)}
             className="mt-0.5 shrink-0"
           />
@@ -453,7 +459,7 @@ export function WordChoiceExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as WordChoiceResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -461,7 +467,7 @@ export function WordChoiceExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -491,7 +497,7 @@ export function WordChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockDetail ? blockSentences.length : undefined}
                 hintSummary={{
                   hintCount: blockDetail?.sentences.filter((s) => s.hintUsed).length ?? 0,
@@ -530,12 +536,12 @@ export function WordChoiceExercise({
               <div key={s.id} className="flex flex-col gap-1.5">
                 {renderSentenceCard(s, idx, undefined, false)}
                 {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -544,14 +550,14 @@ export function WordChoiceExercise({
                         disabled={!!practiceCheck.revealPending[s.id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильна відповідь: {itemRevealed.join(", ")}
+                    {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -565,7 +571,7 @@ export function WordChoiceExercise({
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -588,7 +594,7 @@ export function WordChoiceExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -641,7 +647,7 @@ export function WordChoiceExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -656,7 +662,7 @@ export function WordChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={detail ? config.sentences.length : undefined}
                 hintSummary={{
                   hintCount: detail?.sentences.filter((s) => s.hintUsed).length ?? 0,

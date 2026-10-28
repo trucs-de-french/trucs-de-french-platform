@@ -14,7 +14,7 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
 import { TaskInstructionLine, PointsPill } from "./task-panel-header";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
@@ -33,7 +33,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 import { frenchNbsp } from "@/lib/text/french-typography";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
@@ -87,6 +87,7 @@ export function ChronologicalOrderExercise({
   hidePoints?: boolean;
   practice?: ChronologicalOrderPracticeProps;
 }) {
+  const { t, lang } = useT();
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -261,7 +262,7 @@ export function ChronologicalOrderExercise({
   function numberInputAriaLabel(itemId: string, points: number, base: string) {
     const d = itemDetail(itemId);
     if (!d || shouldShowRowScorePill(points)) return base;
-    return `${base}: ${rowResultAriaLabel(d.isCorrect)}`;
+    return `${base}: ${rowResultAriaLabel(d.isCorrect, lang)}`;
   }
 
   function handleSubmit() {
@@ -295,7 +296,7 @@ export function ChronologicalOrderExercise({
           onChange={(e) => updatePosition(itemId, e.target.value)}
           disabled={locked}
           placeholder="№"
-          aria-label={numberInputAriaLabel(itemId, points, label ? `Номер події ${label}` : "Номер події")}
+          aria-label={numberInputAriaLabel(itemId, points, label ? t("aria.eventNumberLabeled", { label }) : t("aria.eventNumber"))}
           className={lineSlotClass(itemId)}
         />
       );
@@ -317,7 +318,7 @@ export function ChronologicalOrderExercise({
           onChange={(e) => updatePosition(itemId, e.target.value)}
           disabled={locked}
           placeholder="№"
-          aria-label={numberInputAriaLabel(itemId, points, label ? `Номер події ${label}` : "Номер події")}
+          aria-label={numberInputAriaLabel(itemId, points, label ? t("aria.eventNumberLabeled", { label }) : t("aria.eventNumber"))}
           className={`h-10 w-12 rounded border text-center text-base sm:pointer-fine:h-8 ${inputClass(itemId)}`}
         />
       );
@@ -342,8 +343,8 @@ export function ChronologicalOrderExercise({
   // нема (audit: лише буква-бейдж + текст + поле), тож формулювання інше.
   const numberingNoteText =
     config.mode === "text"
-      ? `Впишіть номер за порядком (від 1 до ${config.items.length}) біля кожного пункту.`
-      : `Впишіть у поле n° номер за порядком (від 1 до ${config.items.length}).`;
+      ? t("chrono.numberingNoteText", { n: config.items.length })
+      : t("chrono.numberingNoteCompact", { n: config.items.length });
 
   // Пілюля "N балів" у заголовку панелі — лише image/mixed (режим text уже
   // показує бали на рядку кожної картки через RowPointsTab, той самий
@@ -352,7 +353,7 @@ export function ChronologicalOrderExercise({
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
   const pointsText =
     config.mode !== "text" && !hidePoints && !isPractice && !detail && pointsVisible
-      ? formatPointsCount(totalPoints)
+      ? formatPointsCountLocalized(totalPoints, lang)
       : undefined;
 
   return (
@@ -383,7 +384,7 @@ export function ChronologicalOrderExercise({
             <HintBulb
               state={hintShown ? "used" : "available"}
               onClick={toggleHintVisible}
-              label="Підказка до всього завдання"
+              label={t("chrono.hintWholeTask")}
               ariaExpanded={hintVisible}
               className="mt-0.5 shrink-0"
             />
@@ -411,7 +412,7 @@ export function ChronologicalOrderExercise({
           // below" — рівно під цим рядком, не над ним вдруге).
           <div className="chrono-progress-row">
             <span className="chrono-progress-pill">
-              Заповнено {answeredCount} з {config.items.length}
+              {t("chrono.filledOfTotal", { n: answeredCount, m: config.items.length })}
             </span>
             <div
               className="chrono-progress-track"
@@ -419,7 +420,7 @@ export function ChronologicalOrderExercise({
               aria-valuemin={0}
               aria-valuemax={config.items.length}
               aria-valuenow={answeredCount}
-              aria-label="Заповнено пунктів"
+              aria-label={t("aria.filledFields")}
             >
               <div
                 className="chrono-progress-fill"
@@ -476,7 +477,7 @@ export function ChronologicalOrderExercise({
                   />
                   <span
                     className="item-number-badge image-match-card-badge z-10"
-                    aria-label={`Картка ${label}`}
+                    aria-label={t("aria.card", { n: label })}
                   >
                     {label}
                   </span>
@@ -534,7 +535,7 @@ export function ChronologicalOrderExercise({
                   <RowPointsTab earned={d ? (d.isCorrect ? item.points : 0) : undefined} possible={item.points} />
                 )}
                 <div className={`chrono-phrase-row glass-item-card transition-colors ${rowStateClass(item.id)}`}>
-                  <span className="item-number-badge" aria-label={`Картка ${label}`}>
+                  <span className="item-number-badge" aria-label={t("aria.card", { n: label })}>
                     {label}
                   </span>
                   <span className="min-w-0 flex-1 break-words text-left text-base leading-snug [overflow-wrap:anywhere]">
@@ -557,16 +558,16 @@ export function ChronologicalOrderExercise({
               disabled={practiceCheck.pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
             </button>
           )}
           {practiceCorrect && (
-            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-red-600 dark:text-red-400">
-                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
+                {t("status.incorrectRetryCount", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
               </span>
               {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
                 <button
@@ -575,14 +576,14 @@ export function ChronologicalOrderExercise({
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
                   className={STUDENT_BUTTON_SECONDARY_TOUCH}
                 >
-                  Показати відповідь
+                  {t("button.showAnswer")}
                 </button>
               )}
             </div>
           )}
           {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
             <p className="text-sm italic text-amber-700 dark:text-amber-400">
-              Правильний порядок:{" "}
+              {t("answer.correctOrderLabel")}{" "}
               {practiceCheck.revealed[WHOLE_TASK_ITEM_ID]
                 .map((id) => labelById.get(id) ?? id)
                 .join(" → ")}
@@ -602,7 +603,7 @@ export function ChronologicalOrderExercise({
                 disabled={pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
-                {pending ? "Перевіряю..." : "Перевірити"}
+                {pending ? t("button.checking") : t("button.check")}
               </button>
               {checkConfirm.confirming && (
                 <CheckConfirmBar
@@ -617,7 +618,7 @@ export function ChronologicalOrderExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleTitle={t("panel.correctAnswers")}
               toggleCount={detail ? 1 : undefined}
               hintSummary={
                 detail?.hintUsed ? { hintCount: "task", reducesPoints: config.hintsReducePoints } : undefined
@@ -653,7 +654,7 @@ export function ChronologicalOrderExercise({
                     const caption = initialTextById.get(it.id);
                     const alt = caption
                       ? frenchNbsp(caption)
-                      : `Картка ${label}, позиція ${it.correctPosition}`;
+                      : t("chrono.cardPositionAlt", { label, position: it.correctPosition });
                     return (
                       <div key={it.id} className={`${COMPACT_IMAGE_CARD} ${ANSWER_CHIP_DEFAULT}`}>
                         <div className={COMPACT_IMAGE_FRAME}>

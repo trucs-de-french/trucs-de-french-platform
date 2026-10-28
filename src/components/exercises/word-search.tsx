@@ -13,7 +13,7 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
@@ -31,6 +31,7 @@ import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { TaskResult, ChevronIcon } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
+import { useT } from "@/lib/i18n/context";
 import { hintHighlightCells } from "./word-search-hint-highlight";
 
 type Cell = { row: number; col: number };
@@ -93,6 +94,7 @@ function ImageTile({
   onZoom: () => void;
   onHint: () => void;
 }) {
+  const { t } = useT();
   return (
     <div
       onClick={onHint}
@@ -106,7 +108,7 @@ function ImageTile({
           e.stopPropagation();
           onZoom();
         }}
-        aria-label="Показати картинку повністю"
+        aria-label={t("button.showFullImageAria")}
         className="relative aspect-square cursor-zoom-in"
       >
         <ImageOrPlaceholder
@@ -213,6 +215,7 @@ function LongCard({
   onZoom: () => void;
   onHint: () => void;
 }) {
+  const { t } = useT();
   const hasImage = !!word.imageUrl;
   const showBadge = found || !!word.hintStart;
   const badge = showBadge ? (
@@ -245,7 +248,7 @@ function LongCard({
             e.stopPropagation();
             onZoom();
           }}
-          aria-label="Показати картинку повністю"
+          aria-label={t("button.showFullImageAria")}
           className="relative shrink-0 cursor-zoom-in"
         >
           <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-16 w-16 rounded object-cover" useFocus />
@@ -366,6 +369,7 @@ function WordSearchBlockView({
   activeBlock?: number;
   onChangeBlock?: (index: number) => void;
 }) {
+  const { t } = useT();
   // Клієнтський збіг за ЛІТЕРАМИ (не координатами — публічна конфігурація
   // взагалі не містить placements) — лише для миттєвого відгуку "знайдено!"
   // під час гри. Авторитетна перевірка все одно на сервері (gradeWordSearch,
@@ -703,7 +707,7 @@ function WordSearchBlockView({
       {practiceMode && (
         <div role="status" className="hint-points-notice">
           <HintBulb state="available" as="span" />
-          <span>Режим практики: бали не змінюються.</span>
+          <span>{t("crossword.practiceModeNote")}</span>
         </div>
       )}
       {/* Вертикальна розкладка на всіх ширинах (не flex-wrap "поруч/під") —
@@ -877,8 +881,8 @@ function WordSearchBlockView({
 
         {scrollHint && (
           <p className={HINT_TEXT}>
-            <span className="scroll-hint-fine">Сітка ширша за екран — прокрутіть убік</span>
-            <span className="scroll-hint-coarse">Сітка ширша за екран — прокрутіть убік двома пальцями</span>
+            <span className="scroll-hint-fine">{t("ws.gridWiderHint")}</span>
+            <span className="scroll-hint-coarse">{t("ws.gridWiderHintTouch")}</span>
           </p>
         )}
 
@@ -890,20 +894,20 @@ function WordSearchBlockView({
         <div className="ws-legend">
           <span className="ws-legend-item">
             <span className="ws-legend-dot ws-legend-dot-found" />
-            Знайдено
+            {t("ws.legendFound")}
           </span>
           <span className="ws-legend-item">
             <span className="ws-legend-dot ws-legend-dot-selecting" />
-            Виділяю
+            {t("ws.legendSelecting")}
           </span>
           <span className="ws-legend-item">
             <span className="ws-legend-dot" style={{ background: "#e0aa3e" }} />
-            Підказка: перша літера
+            {t("ws.legendHint")}
           </span>
           {locked && !practiceMode && (
             <span className="ws-legend-item">
               <span className="ws-legend-dot ws-legend-dot-correct" />
-              Не знайдено (правильна відповідь)
+              {t("ws.legendNotFound")}
             </span>
           )}
         </div>
@@ -916,13 +920,13 @@ function WordSearchBlockView({
             тож більше колонок влазить). */}
         <div className="w-full">
           <div className="flex items-baseline justify-between">
-            <span className="font-heading text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Знайдіть слова</span>
+            <span className="font-heading text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("ws.findWords")}</span>
             <span
               className={`font-heading text-sm font-semibold tabular-nums ${
                 allFound ? "text-green-600 dark:text-green-400" : ""
               }`}
             >
-              {foundCount} з {totalWords}
+              {t("ws.foundOfTotal", { found: foundCount, total: totalWords })}
             </span>
           </div>
           <div className="mt-1 h-1 w-full rounded-full bg-neutral-200 dark:bg-neutral-700">
@@ -1042,7 +1046,7 @@ function WordSearchBlockView({
                       disabled={pending}
                       className="exercise-block-check-btn btn-check"
                     >
-                      {pending ? "Перевіряю..." : "Перевірити блок"}
+                      {pending ? t("button.checking") : t("button.checkBlock")}
                     </button>
                   ) : null
                 }
@@ -1064,7 +1068,7 @@ function WordSearchBlockView({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
@@ -1094,13 +1098,13 @@ function WordSearchBlockView({
             }}
             className="check-confirm-btn check-confirm-btn--secondary self-start"
           >
-            Повторити без балів
+            {t("button.practiceReset")}
           </button>
         )}
         {result && practiceMode && (
           <div className="flex flex-col items-start gap-2">
             <span className="font-heading text-sm font-semibold tabular-nums">
-              Знайдено {practiceFoundWords.size} з {totalWords} слів
+              {t("ws.foundOfTotalWords", { n: practiceFoundWords.size, total: totalWords })}
             </span>
             <button
               type="button"
@@ -1129,17 +1133,17 @@ function WordSearchBlockView({
               className="task-result-toggle-header"
             >
               <span className="task-result-toggle-title">
-                <span className="task-result-toggle-title-main">Правильні відповіді</span>
-                <span className="task-result-toggle-title-sub">цього блоку · {totalWords}</span>
+                <span className="task-result-toggle-title-main">{t("panel.correctAnswers")}</span>
+                <span className="task-result-toggle-title-sub">{t("panel.correctAnswersSub", { n: totalWords })}</span>
               </span>
               <span className="task-result-toggle-action">
-                {answersOpen ? "Сховати" : "Показати"}
+                {answersOpen ? t("button.hide") : t("button.show")}
                 <ChevronIcon open={answersOpen} />
               </span>
             </button>
             {answersOpen && (
               <div id={answersPanelId} className="task-result-toggle-panel flex flex-col gap-2">
-                <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Слова, які не знайдено, позначені в сітці зеленим.</p>
+                <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">{t("ws.notFoundNote")}</p>
                 <div className="task-result-gap-grid task-result-gap-grid--two-col">
                   {block.words.map((w) => (
                     <div key={w.word} className="task-result-gap-row">
@@ -1179,6 +1183,7 @@ export function WordSearchExercise({
   // першу літеру (triggerHint у WordSearchBlockView).
   isDelf?: boolean;
 }) {
+  const { lang } = useT();
   // Фолбек на п.5 ЕТАПУ 3/4 — blocks відсутній/порожній (помилка даних,
   // нормалізатор на сервері мав би це виключити, але тут про всяк випадок,
   // без падіння): показуємо вправу як один блок із LEGACY-полів верхнього
@@ -1234,7 +1239,7 @@ export function WordSearchExercise({
 
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible
-      ? formatPointsCount(config.points)
+      ? formatPointsCountLocalized(config.points, lang)
       : undefined;
 
   return (

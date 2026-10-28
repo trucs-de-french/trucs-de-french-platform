@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
@@ -242,6 +243,7 @@ export function KaraokeExercise({
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
 }) {
+  const { t, lang } = useT();
   const videoId = extractYoutubeId(config.videoUrl);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const linesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -601,7 +603,7 @@ export function KaraokeExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(pointsPossibleTotal) : undefined}
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(pointsPossibleTotal, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.karaoke.subInstruction}
       />
@@ -614,7 +616,7 @@ export function KaraokeExercise({
             налаштування вправи, далі власний вибір студента (localStorage,
             через togglePauseEnabled вище). */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Пауза після рядка з пропуском</span>
+          <span className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("karaoke.pauseAfterGapLine")}</span>
           <button
             type="button"
             role="switch"
@@ -637,7 +639,7 @@ export function KaraokeExercise({
             <div ref={containerRef} className="h-full w-full" />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-neutral-400">
-              Відео недоступне
+              {t("karaoke.videoUnavailable")}
             </div>
           )}
         </div>
@@ -655,7 +657,7 @@ export function KaraokeExercise({
             }}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >
-            ▶ Продовжити
+            {t("karaoke.continueBtn")}
           </button>
         )}
 
@@ -700,9 +702,9 @@ export function KaraokeExercise({
           <div className="mt-0.5 flex flex-col gap-2.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="karaoke-progress-pill">
-                Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
+                {t("karaoke.gapOfTotal", { n: globalGapNumber(activeGap.li, activeGap.gi), total: totalGaps })}
               </span>
-              <p className="text-sm text-[#55546b] dark:text-[var(--text-muted-caption)]">Клікніть на правильне слово</p>
+              <p className="text-sm text-[#55546b] dark:text-[var(--text-muted-caption)]">{t("karaoke.clickCorrectWord")}</p>
             </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
@@ -744,7 +746,7 @@ export function KaraokeExercise({
             if (wrongAnswers.length === 0) return null;
             return (
               <li key={li} className="text-red-600 dark:text-red-400">
-                Рядок {li + 1}: правильно — {wrongAnswers.join(", ")}
+                {t("karaoke.lineCorrectWrong", { n: li + 1, wrong: wrongAnswers.join(", ") })}
               </li>
             );
           })}
@@ -770,7 +772,7 @@ export function KaraokeExercise({
               disabled={pending}
               className="karaoke-check-btn btn-check self-start"
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar

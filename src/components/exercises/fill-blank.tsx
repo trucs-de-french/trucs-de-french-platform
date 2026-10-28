@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, FILL_BLANK_WORD_BANK_SUBINSTRUCTION } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
@@ -17,11 +17,11 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
-  FILL_BLANK_POOL_LABEL,
+  crossOutPoolLabel,
   fillBlankWordPoolUsedLabel,
-  FILL_BLANK_FIELD_PLACEHOLDER,
-  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
+  fillBlankFieldPlaceholder,
 } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 
 // Плитки toggle-картки "Правильні відповіді" для fill_blank — одна плитка
 // на РЕЧЕННЯ (не на пропуск): template тут один суцільний текст без
@@ -112,6 +112,7 @@ export function FillBlankExercise({
   isDelf?: boolean;
   practice?: FillBlankPracticeProps;
 }) {
+  const { t, lang } = useT();
   const segments = config.template.split("{{}}");
   const blankCount = segments.length - 1;
   const [answers, setAnswers] = useState<string[]>(() => Array(blankCount).fill(""));
@@ -265,7 +266,7 @@ export function FillBlankExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(config.points) : undefined}
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(config.points, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
         subInstructionText={config.subInstructions ?? defaultSubInstruction}
         hintText={
@@ -289,9 +290,9 @@ export function FillBlankExercise({
           // логіка незмінна) — слово лишається в банку, не зникає.
           <div className="word-pool">
             <div className="word-pool-label-row">
-              <span className="word-pool-label">{FILL_BLANK_POOL_LABEL}</span>
+              <span className="word-pool-label">{crossOutPoolLabel(lang)}</span>
               <span className="word-pool-count">
-                {fillBlankWordPoolUsedLabel(crossedOut.size, config.wordBank.length)}
+                {fillBlankWordPoolUsedLabel(lang, crossedOut.size, config.wordBank.length)}
               </span>
             </div>
             <div className="word-pool-chips">
@@ -354,7 +355,7 @@ export function FillBlankExercise({
                         : visibleTranslations.has(i) && !answers[i] && hints[i]
                           ? hints[i]
                           : !answers[i]
-                            ? FILL_BLANK_FIELD_PLACEHOLDER
+                            ? fillBlankFieldPlaceholder(lang)
                             : undefined
                     }
                     title={hints[i] ?? undefined}
@@ -379,7 +380,7 @@ export function FillBlankExercise({
                   {!result && !isDelf && !isPractice && hints[i] && !answers[i] && (
                     <HintBulb
                       state={translationHints.has(i) ? "used" : "available"}
-                      label="Підказка: показати переклад слова"
+                      label={t("dragdrop.hintTranslation")}
                       onClick={() => toggleTranslationHint(i)}
                       className="fill-blank-field-lamp"
                     />
@@ -389,12 +390,12 @@ export function FillBlankExercise({
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceResults[String(i)] === false && (
                 <span className="ml-1 text-xs text-red-600 dark:text-red-400">
-                  (спроб: {practiceFailedAttempts[String(i)] ?? 0})
+                  {t("status.attemptsCountParen", { n: practiceFailedAttempts[String(i)] ?? 0 })}
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && practiceCheck.revealed[String(i)] && (
                 <span className="ml-1 text-xs italic text-amber-700 dark:text-amber-400">
-                  (правильно: {practiceCheck.revealed[String(i)].join(" / ")})
+                  {t("answer.correctInlineParen", { value: practiceCheck.revealed[String(i)].join(" / ") })}
                 </span>
               )}
               {i < blankCount && isPractice && practiceSet.has(String(i)) && !practiceCheck.revealed[String(i)] && (
@@ -404,7 +405,7 @@ export function FillBlankExercise({
                   disabled={!!practiceCheck.revealPending[String(i)]}
                   className={`ml-1 ${STUDENT_BUTTON_SECONDARY_TOUCH}`}
                 >
-                  Показати відповідь
+                  {t("button.showAnswer")}
                 </button>
               )}
               {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (
@@ -443,7 +444,7 @@ export function FillBlankExercise({
             disabled={practiceCheck.pending || [...practiceSet].some((id) => !answers[Number(id)])}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -457,7 +458,7 @@ export function FillBlankExercise({
                 disabled={pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
-                {pending ? "Перевіряю..." : "Перевірити"}
+                {pending ? t("button.checking") : t("button.check")}
               </button>
               {checkConfirm.confirming && (
                 <CheckConfirmBar
@@ -472,7 +473,7 @@ export function FillBlankExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleTitle={t("panel.correctAnswers")}
               toggleCount={gapRows?.length}
               hintSummary={{ hintCount: hintUsedCount, reducesPoints: config.hintsReducePoints }}
             >

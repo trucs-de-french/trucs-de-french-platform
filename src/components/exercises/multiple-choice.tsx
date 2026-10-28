@@ -15,7 +15,8 @@ import { ChoiceQuestionCard } from "./choice-question-card";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
+import { plural } from "@/lib/i18n/plural";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -99,6 +100,11 @@ export function MultipleChoiceExercise({
   hidePoints?: boolean;
   practice?: MultipleChoicePracticeProps;
 }) {
+  const { t, lang } = useT();
+  function optionsCountWord(n: number): string {
+    if (lang === "uk") return n >= 5 ? "варіантів" : "варіанти";
+    return plural(lang, n, { one: lang === "fr" ? "option" : "option", other: lang === "fr" ? "options" : "options" });
+  }
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   // Клік по картинці варіанта — вже дія вправи (вибір), тому збільшення
   // винесене в окрему іконку-лупу в кутку (ImageZoomBadge), а не на весь
@@ -203,12 +209,12 @@ export function MultipleChoiceExercise({
                 ? renderDropdownRow(item, idx, undefined, false)
                 : renderItem(item, idx, undefined, false)}
               {isCorrect === true && (
-                <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
               )}
               {isCorrect === false && (
                 <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                   <span className="text-red-600 dark:text-red-400">
-                    Неправильно, спробуйте ще раз (спроб: {attempts})
+                    {t("status.incorrectRetryCount", { n: attempts })}
                   </span>
                   {!itemRevealed && (
                     <button
@@ -217,14 +223,14 @@ export function MultipleChoiceExercise({
                       disabled={!!practiceCheck.revealPending[item.id]}
                       className={STUDENT_BUTTON_SECONDARY_TOUCH}
                     >
-                      Показати відповідь
+                      {t("button.showAnswer")}
                     </button>
                   )}
                 </div>
               )}
               {itemRevealed && (
                 <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                  Правильна відповідь: {itemRevealed.join(", ")}
+                  {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
                 </p>
               )}
             </div>
@@ -389,7 +395,7 @@ export function MultipleChoiceExercise({
     return (
       <div className={`flex items-start gap-2.5 pt-[18px] px-3 pb-3 ${extraClassName}`}>
         {config.items.length > 1 && (
-          <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
+          <span className="item-number-badge" aria-label={t("aria.question", { n: index + 1 })}>
             {index + 1}
           </span>
         )}
@@ -402,14 +408,14 @@ export function MultipleChoiceExercise({
               <HintBulb
                 state={hintShown.has(item.id) ? "used" : "available"}
                 onClick={() => toggleHintVisible(item.id)}
-                label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
+                label={hintVisible.has(item.id) ? t("button.collapseHint") : t("button.showHint")}
                 className="mt-0.5 shrink-0"
               />
             )}
           </div>
           {item.multiple && (
             <p className="text-xs italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-              {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
+              {item.correctCount} {optionsCountWord(item.correctCount)}
             </p>
           )}
           {hasHintBulb && hintVisible.has(item.id) && (
@@ -614,7 +620,7 @@ export function MultipleChoiceExercise({
             : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-500 select-field-pill select-field-pill--placeholder";
     const label =
       selectedOptions.length === 0
-        ? "Оберіть"
+        ? t("status.chooseOption")
         : item.multiple
           ? selectedOptions.map((o) => stripOptionLetterPrefix(o.text)).join(", ")
           : optionDisplayText(
@@ -641,7 +647,7 @@ export function MultipleChoiceExercise({
         >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.items.length > 1 && (
-            <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
+            <span className="item-number-badge" aria-label={t("aria.question", { n: index + 1 })}>
               {index + 1}
             </span>
           )}
@@ -654,14 +660,14 @@ export function MultipleChoiceExercise({
                 <HintBulb
                   state={hintShown.has(item.id) ? "used" : "available"}
                   onClick={() => toggleHintVisible(item.id)}
-                  label={hintVisible.has(item.id) ? "Згорнути підказку" : "Показати підказку"}
+                  label={hintVisible.has(item.id) ? t("button.collapseHint") : t("button.showHint")}
                   className="mt-0.5 shrink-0"
                 />
               )}
             </div>
             {item.multiple && (
               <p className="mt-0.5 text-xs italic text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-                {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
+                {item.correctCount} {optionsCountWord(item.correctCount)}
               </p>
             )}
             {hasHintBulb && hintVisible.has(item.id) && (
@@ -693,10 +699,10 @@ export function MultipleChoiceExercise({
               setSelections((prev) => ({ ...prev, [item.id]: next }));
             }}
             disabled={!!itemDetail}
-            aria-label={`Відповідь на питання ${index + 1}`}
+            aria-label={t("aria.answerToQuestion", { n: index + 1 })}
             className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed select-field-native"
           >
-            {!item.multiple && <option value="">— Оберіть —</option>}
+            {!item.multiple && <option value="">{t("status.chooseOptionDash")}</option>}
             {item.options.map((o, idx) => (
               <option key={o.id} value={o.id}>
                 {optionDisplayText(o.text, idx)}
@@ -753,7 +759,7 @@ export function MultipleChoiceExercise({
           );
           return (
             <div key={item.id} className="glass-item-card flex items-start gap-2.5 px-3 py-2.5">
-              <span className="item-number-badge shrink-0" aria-label={`Питання ${startIndex + i + 1}`}>
+              <span className="item-number-badge shrink-0" aria-label={t("aria.question", { n: startIndex + i + 1 })}>
                 {startIndex + i + 1}
               </span>
               <div className="min-w-0 flex-1">
@@ -765,7 +771,7 @@ export function MultipleChoiceExercise({
                       className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
                       style={{ fontFamily: "var(--font-heading)" }}
                     >
-                      Правильна відповідь:
+                      {t("answer.correctAnswerLabel")}
                     </span>
                     {correctOpt ? stripOptionLetterPrefix(correctOpt.text) : ""}
                   </span>
@@ -778,9 +784,9 @@ export function MultipleChoiceExercise({
                         className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
                         style={{ fontFamily: "var(--font-heading)" }}
                       >
-                        Ваша відповідь:
+                        {t("answer.yourAnswerLabel")}
                       </span>
-                      {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : "не обрано"}
+                      {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : t("status.notChosen")}
                     </span>
                   </p>
                 )}
@@ -840,7 +846,7 @@ export function MultipleChoiceExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as MultipleChoiceResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -848,7 +854,7 @@ export function MultipleChoiceExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -873,7 +879,7 @@ export function MultipleChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockItems.length}
                 hintSummary={{
                   hintCount: blockDetail?.items.filter((it) => it.hintUsed).length ?? 0,
@@ -908,7 +914,7 @@ export function MultipleChoiceExercise({
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -931,7 +937,7 @@ export function MultipleChoiceExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -976,7 +982,7 @@ export function MultipleChoiceExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -991,7 +997,7 @@ export function MultipleChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={config.items.length}
                 hintSummary={{
                   hintCount: detail?.items.filter((it) => it.hintUsed).length ?? 0,

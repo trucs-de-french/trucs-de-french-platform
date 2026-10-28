@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react"
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
-import { DEFAULT_CROSSWORD_DIRECTION_LABELS, TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { DEFAULT_CROSSWORD_DIRECTION_LABELS } from "@/lib/exercises/default-task-labels";
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
 import type {
@@ -17,7 +17,7 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -33,6 +33,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultCrosswordRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
+import { useT } from "@/lib/i18n/context";
 
 type Direction = "horizontal" | "vertical";
 type ClueKey = `${Direction}-${number}`;
@@ -129,11 +130,12 @@ function ClueCardHeader({
   hinted: boolean;
   onHint: () => void;
 }) {
+  const { t } = useT();
   return (
     <div className="crossword-clue-card-header">
       <span
         className={`item-number-badge crossword-clue-card-number ${number >= 10 ? "item-number-badge--wide" : ""}`}
-        aria-label={`Підказка ${number}`}
+        aria-label={t("crossword.clueAria", { n: number })}
       >
         {number}
       </span>
@@ -141,7 +143,7 @@ function ClueCardHeader({
         <HintBulb
           as={isCorrect ? "span" : "button"}
           state={isCorrect ? "done" : hinted ? "used" : "available"}
-          label="Підказка: відкрити наступну літеру"
+          label={t("crossword.hintOpenNextLetter")}
           stopPropagation
           onClick={onHint}
         />
@@ -217,6 +219,7 @@ function CrosswordBlockView({
   activeBlock?: number;
   onChangeBlock?: (index: number) => void;
 }) {
+  const { t } = useT();
   const [grid, setGrid] = useState<string[][]>(() => emptyGrid(block.gridWidth, block.gridHeight));
   const [activeClue, setActiveClue] = useState<{ direction: Direction; number: number } | null>(null);
   // Підказка, над якою зараз курсор/фокус клавіатури (НЕ активне слово —
@@ -723,7 +726,7 @@ function CrosswordBlockView({
       >
         <span
           className={`item-number-badge ${clue.number >= 10 ? "item-number-badge--wide" : ""}`}
-          aria-label={`Підказка ${clue.number}`}
+          aria-label={t("crossword.clueAria", { n: clue.number })}
         >
           {clue.number}
         </span>
@@ -741,7 +744,7 @@ function CrosswordBlockView({
           canHint && (
             <HintBulb
               state={effectiveHintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
-              label="Підказка: відкрити наступну літеру"
+              label={t("crossword.hintOpenNextLetter")}
               onClick={() => applyHint(direction, clue.number)}
               className="ml-1.5"
             />
@@ -797,7 +800,7 @@ function CrosswordBlockView({
       {practiceMode && (
         <div role="status" className="hint-points-notice">
           <HintBulb state="available" as="span" />
-          <span>Режим практики: бали не змінюються.</span>
+          <span>{t("crossword.practiceModeNote")}</span>
         </div>
       )}
       {/* Внутрішній відступ вправи (не входить у систему відступів сторінки,
@@ -947,7 +950,7 @@ function CrosswordBlockView({
           </div>
         </div>
 
-        {scrollHint && <p className={HINT_TEXT}>Сітка ширша за екран — прокрутіть убік</p>}
+        {scrollHint && <p className={HINT_TEXT}>{t("ws.gridWiderHint")}</p>}
 
         {/* Контекстний попап біля активної клітинки — спільний компонент/хук
             (diacritics-popup.tsx), той самий onMouseDown-preventDefault
@@ -979,7 +982,7 @@ function CrosswordBlockView({
                 correct={result.correct}
                 pointsEarned={result.pointsEarned}
                 pointsPossible={result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={block.across.length + block.down.length}
                 hintSummary={{
                   hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
@@ -1002,7 +1005,7 @@ function CrosswordBlockView({
                       disabled={pending}
                       className="exercise-block-check-btn btn-check"
                     >
-                      {pending ? "Перевіряю..." : "Перевірити блок"}
+                      {pending ? t("button.checking") : t("button.checkBlock")}
                     </button>
                   ) : null
                 }
@@ -1024,7 +1027,7 @@ function CrosswordBlockView({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
@@ -1040,7 +1043,7 @@ function CrosswordBlockView({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleTitle={t("panel.correctAnswers")}
               toggleCount={block.across.length + block.down.length}
               hintSummary={{
                 hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
@@ -1067,7 +1070,7 @@ function CrosswordBlockView({
             }}
             className="check-confirm-btn check-confirm-btn--secondary self-start"
           >
-            Повторити без балів
+            {t("button.practiceReset")}
           </button>
         )}
         {result && practiceMode && (
@@ -1077,11 +1080,11 @@ function CrosswordBlockView({
               onClick={() => setPracticeChecked(true)}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              Перевірити
+              {t("button.check")}
             </button>
             {practiceChecked && (
               <span className="font-heading text-sm font-semibold tabular-nums">
-                Правильно: {practiceCorrectCount} з {totalWords} слів
+                {t("ws.foundOfTotalWords", { n: practiceCorrectCount, total: totalWords })}
               </span>
             )}
             <button
@@ -1089,7 +1092,7 @@ function CrosswordBlockView({
               onClick={() => setPracticeMode(false)}
               className="check-confirm-btn check-confirm-btn--secondary self-start"
             >
-              Завершити практику
+              {t("button.finishPractice")}
             </button>
           </div>
         )}
@@ -1180,10 +1183,11 @@ export function CrosswordExercise({
     if (aggregateResult) onResult?.(aggregateResult);
   }, [aggregateResult, onResult]);
 
+  const { lang } = useT();
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible
-      ? formatPointsCount(config.points)
+      ? formatPointsCountLocalized(config.points, lang)
       : undefined;
 
   return (

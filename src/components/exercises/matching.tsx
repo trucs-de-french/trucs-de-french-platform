@@ -6,7 +6,7 @@ import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -15,6 +15,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
+import { useT } from "@/lib/i18n/context";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -46,6 +47,7 @@ export function MatchingExercise({
   hidePoints?: boolean;
   practice?: MatchingPracticeProps;
 }) {
+  const { t, lang } = useT();
   const router = useRouter();
 
   // pairs/selectedLeft — СПІЛЬНІ на всю вправу (не по блоку): блок лише
@@ -278,7 +280,7 @@ export function MatchingExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as MatchingResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -290,7 +292,7 @@ export function MatchingExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -379,7 +381,7 @@ export function MatchingExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                toggleTitle="Правильні пари"
+                toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={blockDetail?.correctPairs.length}
               >
                 {blockDetail && <TaskResultPairRows pairs={blockDetail.correctPairs} />}
@@ -429,13 +431,13 @@ export function MatchingExercise({
               <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                 {isCorrect === true && (
                   <span className="font-medium text-green-600 dark:text-green-400">
-                    {left}: правильно ✓
+                    {t("matching.leftCorrect", { left })}
                   </span>
                 )}
                 {isCorrect === false && (
                   <>
                     <span className="text-red-600 dark:text-red-400">
-                      {left}: неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("matching.leftIncorrectRetry", { left, n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -444,14 +446,14 @@ export function MatchingExercise({
                         disabled={!!practiceCheck.revealPending[id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </>
                 )}
                 {itemRevealed && (
                   <span className="italic text-amber-700 dark:text-amber-400">
-                    Правильна пара: {left} → {itemRevealed.join(", ")}
+                    {t("matching.correctPairLine", { left, right: itemRevealed.join(", ") })}
                   </span>
                 )}
               </div>
@@ -466,7 +468,7 @@ export function MatchingExercise({
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -496,7 +498,7 @@ export function MatchingExercise({
   );
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : single.result) && pointsVisible
-      ? formatPointsCount(currentMaxPoints)
+      ? formatPointsCountLocalized(currentMaxPoints, lang)
       : undefined;
 
   const checkButtonEl = useBlocks && !activeBlockResult ? (
@@ -506,7 +508,7 @@ export function MatchingExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -561,7 +563,7 @@ export function MatchingExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -576,7 +578,7 @@ export function MatchingExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle="Правильні пари"
+                toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={singleDetail?.correctPairs.length}
               >
                 {singleDetail && <TaskResultPairRows pairs={singleDetail.correctPairs} />}

@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Play } from "lucide-react";
 import type { PhoneticsMedia } from "@/lib/phonetics-media";
 import { extractYoutubeId, extractDriveId, youtubeEmbedUrl, driveEmbedUrl, youtubeThumbnailUrl } from "@/lib/phonetics-media";
+import { useT } from "@/lib/i18n/context";
 
 // YouTube/Диск: легке превʼю (без запиту до чужого сервісу, доки студент
 // не натиснув play) — iframe рендериться лише після кліку. upload/url —
 // файл наш (чи прямий https-лінк), довантаження нема чого уникати, звичний
 // <video controls>.
 export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
+  const { t } = useT();
   const [activated, setActivated] = useState(false);
 
   if (media.source === "upload" || media.source === "url") {
@@ -25,8 +27,8 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
   if (!id) return null;
 
   const embedUrl = isYoutube ? youtubeEmbedUrl(id) : driveEmbedUrl(id);
-  const label = isYoutube ? "YouTube" : "Google Диск";
-  const openLabel = isYoutube ? "Відкрити на YouTube ↗" : "Відкрити на Google Диску ↗";
+  const label = isYoutube ? "YouTube" : t("phonetics.googleDrive");
+  const openLabel = isYoutube ? t("button.openOnYoutube") : t("button.openOnDrive");
   const thumbnail = isYoutube ? youtubeThumbnailUrl(id) : null;
 
   return (
@@ -44,7 +46,7 @@ export function PhoneticsVideoBlock({ media }: { media: PhoneticsMedia }) {
           <button
             type="button"
             onClick={() => setActivated(true)}
-            aria-label="Дивитись відео"
+            aria-label={t("button.watchVideoAria")}
             className="group relative h-full w-full"
             style={
               thumbnail

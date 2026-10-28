@@ -9,7 +9,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
@@ -17,11 +17,8 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import {
-  IMAGE_MATCH_POOL_LABEL,
-  imageMatchRemainingLabel,
-  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
-} from "@/lib/exercises/default-task-labels";
+import { dragPoolLabel, poolRemainingLabel } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 
 // Плитки toggle-картки "Правильні відповіді" — мініатюра + номер +
 // правильне слово (п.5 задачі "варіант 1").
@@ -71,6 +68,7 @@ export function ImageMatchExercise({
   hidePoints?: boolean;
   practice?: ImageMatchPracticeProps;
 }) {
+  const { t, lang } = useT();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ImageMatchDetail | undefined;
   const locked = !!result;
@@ -162,7 +160,7 @@ export function ImageMatchExercise({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
+          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
         )}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -178,7 +176,7 @@ export function ImageMatchExercise({
                 <button
                   type="button"
                   onClick={() => setLightboxSrc(item.imageUrl)}
-                  aria-label="Показати картинку повністю"
+                  aria-label={t("button.showFullImageAria")}
                   className="w-full cursor-zoom-in"
                 >
                   <ImageOrPlaceholder src={item.imageUrl} alt="" className="h-24 w-full rounded-md object-cover" useFocus />
@@ -197,11 +195,11 @@ export function ImageMatchExercise({
                   {placed[i] !== null ? config.bank[placed[i] as number] : ""}
                 </button>
                 {isCorrect === true && (
-                  <p className="text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                    <span className="text-red-600 dark:text-red-400">Спроб: {attempts}</span>
+                    <span className="text-red-600 dark:text-red-400">{t("status.attemptsCountLabel", { n: attempts })}</span>
                     {!itemRevealed && (
                       <button
                         type="button"
@@ -209,7 +207,7 @@ export function ImageMatchExercise({
                         disabled={!!practiceCheck.revealPending[item.id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
@@ -229,7 +227,7 @@ export function ImageMatchExercise({
             disabled={practiceCheck.pending || placed.some((p) => p === null)}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -246,7 +244,7 @@ export function ImageMatchExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCount(totalPoints) : undefined}
+        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(totalPoints, lang) : undefined}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.image_match.subInstruction}
       />
@@ -259,8 +257,8 @@ export function ImageMatchExercise({
         // (filter за usedBankIndices), не лишаються притемненими.
         <div className="word-pool" {...bankDropProps()}>
           <div className="word-pool-label-row">
-            <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
-            <span className="word-pool-count">{imageMatchRemainingLabel(remaining)}</span>
+            <span className="word-pool-label">{dragPoolLabel(lang)}</span>
+            <span className="word-pool-count">{poolRemainingLabel(lang, remaining)}</span>
           </div>
           <div className="word-pool-chips">
             {config.bank.map((name, bi) =>
@@ -282,7 +280,7 @@ export function ImageMatchExercise({
           </div>
         </div>
       ) : (
-        <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
+        <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
       )}
 
       <div className="image-match-cards">
@@ -313,7 +311,7 @@ export function ImageMatchExercise({
                 <button
                   type="button"
                   onClick={() => setLightboxSrc(item.imageUrl)}
-                  aria-label="Показати картинку повністю"
+                  aria-label={t("button.showFullImageAria")}
                   className="block w-full cursor-zoom-in"
                 >
                   <ImageOrPlaceholder
@@ -323,7 +321,7 @@ export function ImageMatchExercise({
                     useFocus
                   />
                 </button>
-                <span className="item-number-badge image-match-card-badge" aria-label={`Картка ${i + 1}`}>
+                <span className="item-number-badge image-match-card-badge" aria-label={t("aria.card", { n: i + 1 })}>
                   {i + 1}
                 </span>
               </div>
@@ -342,8 +340,8 @@ export function ImageMatchExercise({
                   <span className="image-match-slot-word">{config.bank[placed[i] as number]}</span>
                 ) : (
                   <span className="image-match-slot-placeholder">
-                    <span className="image-match-slot-placeholder-full">перетягніть слово</span>
-                    <span className="image-match-slot-placeholder-short">перетягніть</span>
+                    <span className="image-match-slot-placeholder-full">{t("placeholder.dragWordFull")}</span>
+                    <span className="image-match-slot-placeholder-short">{t("placeholder.dragWordShort")}</span>
                   </span>
                 )}
               </button>
@@ -361,7 +359,7 @@ export function ImageMatchExercise({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
@@ -376,7 +374,7 @@ export function ImageMatchExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? detail.items.length : undefined}
           >
             {detail && <TaskResultImageWordRows rows={buildImageMatchRows(detail)} />}

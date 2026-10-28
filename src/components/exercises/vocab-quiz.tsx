@@ -14,6 +14,7 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskPanelHeader } from "./task-panel-header";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { useT } from "@/lib/i18n/context";
 
 const LETTERS = ["A", "B", "C", "D"];
 
@@ -55,6 +56,7 @@ export function VocabQuizExercise({
   // на сервері й клієнті. Повторний виклик buildQuizQuestions() лишається
   // тільки в restart() — це відбувається вже після монтування, в обробнику
   // кліку, і на гідратацію не впливає.
+  const { t } = useT();
   const [questions, setQuestions] = useState(initialQuestions);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function VocabQuizExercise({
   if (vocab.length < MIN_VOCAB_FOR_QUIZ) {
     return (
       <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-        Замало лексики в обраних сценах для вікторини (мінімум {MIN_VOCAB_FOR_QUIZ} слова).
+        {t("vocab.notEnoughVocab", { n: MIN_VOCAB_FOR_QUIZ })}
       </p>
     );
   }
@@ -84,10 +86,10 @@ export function VocabQuizExercise({
         />
         <div className="flex w-full flex-col gap-2">
           <span className="counter-pill" role="status">
-            Правильних відповідей: {correctCount} з {questions.length}
+            {t("vocab.correctCountOfTotal", { correct: correctCount, total: questions.length })}
           </span>
           <p className="font-body text-sm text-[#55546b] dark:text-[#c9c8e6]">
-            Тренування: бали не нараховуються
+            {t("vocab.trainingNoPoints")}
           </p>
         </div>
         <button
@@ -95,7 +97,7 @@ export function VocabQuizExercise({
           onClick={restart}
           className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
         >
-          Пройти ще раз
+          {t("button.playAgain")}
         </button>
       </div>
     );
@@ -159,7 +161,7 @@ export function VocabQuizExercise({
               disabled={!!selected}
               className={`${ANSWER_CHIP_BASE} ${cls} flex h-full min-h-12 min-w-0 items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 sm:py-3`}
             >
-              <span className={badgeCls} aria-label={`Варіант ${LETTERS[i]}`}>
+              <span className={badgeCls} aria-label={t("aria.variant", { letter: LETTERS[i] })}>
                 {LETTERS[i]}
               </span>
               <span className="min-w-0 flex-1 break-words text-left leading-snug [overflow-wrap:anywhere] hyphens-auto">
@@ -176,7 +178,7 @@ export function VocabQuizExercise({
           onClick={next}
           className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
         >
-          Далі
+          {t("button.next")}
         </button>
       )}
     </div>

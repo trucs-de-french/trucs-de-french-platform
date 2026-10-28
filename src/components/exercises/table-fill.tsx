@@ -13,7 +13,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultAnswerRows, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -65,6 +65,7 @@ function TableFillColumn({
   numberOffset: number;
   secondaryHeader?: boolean;
 }) {
+  const { t } = useT();
   return (
     <div className="flex flex-col gap-2.5">
       <div className={`table-fill-col-header ${secondaryHeader ? "table-fill-col-header--secondary" : ""}`}>
@@ -78,7 +79,7 @@ function TableFillColumn({
             <div key={row.id} className="row-points-tab-wrap">
               {tab}
               <div className="table-fill-row glass-item-card">
-                <span className="item-number-badge table-fill-row-num" aria-label={`Рядок ${numberOffset + i + 1}`}>
+                <span className="item-number-badge table-fill-row-num" aria-label={t("aria.row", { n: numberOffset + i + 1 })}>
                   {numberOffset + i + 1}
                 </span>
                 <div className="table-fill-row-cell">{renderCell(row.id, "left", row.left, row.points)}</div>
@@ -135,6 +136,7 @@ export function TableFillExercise({
   isDelf?: boolean;
   practice?: TableFillPracticeProps;
 }) {
+  const { t: tt, lang } = useT();
   const router = useRouter();
 
   // answers/hintedCells — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
@@ -303,12 +305,12 @@ export function TableFillExercise({
           </div>
         </div>
         {isCorrect === true && (
-          <p className="text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+          <p className="text-xs font-medium text-green-600 dark:text-green-400">{tt("status.correct")}</p>
         )}
         {isCorrect === false && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-red-600 dark:text-red-400">
-              Неправильно, спробуйте ще раз (спроб: {attempts})
+              {tt("status.incorrectRetryCount", { n: attempts })}
             </span>
             {!revealedAnswer && (
               <button
@@ -317,14 +319,14 @@ export function TableFillExercise({
                 disabled={!!practiceCheck.revealPending[row.id]}
                 className={STUDENT_BUTTON_SECONDARY_TOUCH}
               >
-                Показати відповідь
+                {tt("button.showAnswer")}
               </button>
             )}
           </div>
         )}
         {revealedAnswer && (
           <p className="text-xs italic text-amber-700 dark:text-amber-400">
-            Правильна відповідь: {revealedAnswer.join(" / ")}
+            {tt("answer.correctAnswerLabel")} {revealedAnswer.join(" / ")}
           </p>
         )}
       </div>
@@ -407,7 +409,7 @@ export function TableFillExercise({
     // aria-label "Правильно"/"Неправильно" (той самий принцип, що
     // matching-board.tsx), щоб колір рамки не був єдиним сигналом для
     // читалки.
-    const ariaResultLabel = blank && !shouldShowRowScorePill(points) ? rowResultAriaLabel(blank.isCorrect) : undefined;
+    const ariaResultLabel = blank && !shouldShowRowScorePill(points) ? rowResultAriaLabel(blank.isCorrect, lang) : undefined;
     return (
       <div className="flex flex-col gap-1">
         <div className="relative table-fill-cell-wrap">
@@ -433,7 +435,7 @@ export function TableFillExercise({
           {!locked && !isDelf && !hasValue && (
             <HintBulb
               state={hintedCells.has(key) ? "used" : "available"}
-              label="Підказка: відкрити першу літеру"
+              label={tt("tablefill.hintOpenFirstLetter")}
               disabled={hintedCells.has(key) || hintPending}
               onClick={() => applyHint(rowId, side)}
               className="table-fill-input-lamp"
@@ -558,7 +560,7 @@ export function TableFillExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? tt("error.checkFailed"));
       }
       const result = (await res.json()) as TableFillResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -570,7 +572,7 @@ export function TableFillExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : tt("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -626,7 +628,7 @@ export function TableFillExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-              toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+              toggleTitle={tt("panel.correctAnswers")}
               toggleCount={blockRows.length}
               hintSummary={{
                 hintCount: blockDetail?.blanks.filter((b) => b.hintUsed).length ?? 0,
@@ -660,7 +662,7 @@ export function TableFillExercise({
             disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? tt("button.checking") : tt("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -681,7 +683,7 @@ export function TableFillExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? tt("button.checking") : tt("button.checkBlock")}
     </button>
   ) : null;
 
@@ -749,8 +751,8 @@ export function TableFillExercise({
               {singleDetail.blanks.map((b, i) =>
                 b.isCorrect ? null : (
                   <li key={i} className="text-red-600 dark:text-red-400">
-                    Рядок {config.rows.findIndex((r) => r.id === b.rowId) + 1},{" "}
-                    {columnLabels[b.side === "left" ? 0 : 1]}: правильно — {b.correctAnswers.join(" / ")}
+                    {tt("aria.row", { n: config.rows.findIndex((r) => r.id === b.rowId) + 1 })},{" "}
+                    {columnLabels[b.side === "left" ? 0 : 1]}: {tt("tablefill.correctLine", { value: b.correctAnswers.join(" / ") })}
                   </li>
                 )
               )}
@@ -768,7 +770,7 @@ export function TableFillExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? tt("button.checking") : tt("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -783,7 +785,7 @@ export function TableFillExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={tt("panel.correctAnswers")}
                 toggleCount={config.rows.length}
                 hintSummary={{
                   hintCount: singleDetail?.blanks.filter((b) => b.hintUsed).length ?? 0,

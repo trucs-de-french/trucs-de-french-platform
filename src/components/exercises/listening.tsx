@@ -21,6 +21,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { useT } from "@/lib/i18n/context";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
 // принцип, що TableFillPracticeProps: елемент тут question.id (стабільний,
@@ -50,6 +51,7 @@ export function ListeningExercise({
   hidePoints?: boolean;
   practice?: ListeningPracticeProps;
 }) {
+  const { t } = useT();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ListeningDetail | undefined;
@@ -145,7 +147,7 @@ export function ListeningExercise({
     return (
       <div className={EXERCISE_STACK}>
         {isYouTubeUrl(config.audioUrl) ? (
-          <VideoFrame src={toEmbedUrl(config.audioUrl, "youtube")} title="Відео" provider="youtube" />
+          <VideoFrame src={toEmbedUrl(config.audioUrl, "youtube")} title={t("video.videoLabel")} provider="youtube" />
         ) : isGdriveUrl(config.audioUrl) ? (
           <GdriveAudioPlayer url={config.audioUrl} />
         ) : (
@@ -175,12 +177,12 @@ export function ListeningExercise({
                   ))}
                 </div>
                 {isCorrect === true && (
-                  <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -189,14 +191,14 @@ export function ListeningExercise({
                         disabled={!!practiceCheck.revealPending[q.id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="mt-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильна відповідь: {itemRevealed.join(", ")}
+                    {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -211,7 +213,7 @@ export function ListeningExercise({
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -228,7 +230,7 @@ export function ListeningExercise({
       />
 
       {isYouTubeUrl(config.audioUrl) ? (
-        <VideoFrame src={toEmbedUrl(config.audioUrl, "youtube")} title="Відео" provider="youtube" />
+        <VideoFrame src={toEmbedUrl(config.audioUrl, "youtube")} title={t("video.videoLabel")} provider="youtube" />
       ) : isGdriveUrl(config.audioUrl) ? (
         <GdriveAudioPlayer url={config.audioUrl} />
       ) : (
@@ -244,7 +246,7 @@ export function ListeningExercise({
           const header = (
             <div className="flex items-start gap-2.5 pt-[18px] px-3 pb-3">
               {config.questions.length > 1 && (
-                <span className="item-number-badge" aria-label={`Питання ${index + 1}`}>
+                <span className="item-number-badge" aria-label={t("aria.question", { n: index + 1 })}>
                   {index + 1}
                 </span>
               )}
@@ -296,7 +298,7 @@ export function ListeningExercise({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar

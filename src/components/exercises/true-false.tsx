@@ -15,6 +15,7 @@ import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
 import { STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
+import { useT } from "@/lib/i18n/context";
 
 type TrueFalseResult = Extract<GradeResult, { detail: TrueFalseDetail }>;
 type PublicStatement = TrueFalsePublic["statements"][number];
@@ -48,6 +49,7 @@ export function TrueFalseExercise({
   hidePoints?: boolean;
   practice?: TrueFalsePracticeProps;
 }) {
+  const { t } = useT();
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
 
   // Картки (твердження) — поріг блоку CARD_BLOCK_MAX=5, той самий принцип,
@@ -127,7 +129,7 @@ export function TrueFalseExercise({
         <div className="glass-item-card flex flex-col gap-2.5 px-4 pt-4 pb-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:pt-[18px] md:pb-3">
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
-            <span className="item-number-badge" aria-label={`Твердження ${globalIndex + 1}`}>
+            <span className="item-number-badge" aria-label={t("aria.statement", { n: globalIndex + 1 })}>
               {globalIndex + 1}
             </span>
           )}
@@ -207,7 +209,7 @@ export function TrueFalseExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as TrueFalseResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -215,7 +217,7 @@ export function TrueFalseExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -273,12 +275,12 @@ export function TrueFalseExercise({
               <div key={s.id} className="flex flex-col gap-1.5">
                 {renderStatement(s, idx, undefined, false)}
                 {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -287,14 +289,14 @@ export function TrueFalseExercise({
                         disabled={!!practiceCheck.revealPending[s.id]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильна відповідь: {itemRevealed.join(", ")}
+                    {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -308,7 +310,7 @@ export function TrueFalseExercise({
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -330,7 +332,7 @@ export function TrueFalseExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -374,7 +376,7 @@ export function TrueFalseExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar

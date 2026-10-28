@@ -12,8 +12,8 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { pluralizePoints } from "@/lib/pluralize-points";
-import { formatScore } from "@/lib/exercises/format-points";
+import { formatScoreLocalized, formatPointsCountLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -95,6 +95,7 @@ export function CheckboxGridExercise({
   hidePoints?: boolean;
   practice?: CheckboxGridPracticeProps;
 }) {
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, Set<string>>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as CheckboxGridDetail | undefined;
@@ -164,7 +165,7 @@ export function CheckboxGridExercise({
     if (!rowCell) {
       return (
         <span className="row-points-tab" style={{ position: "static" }}>
-          {formatScore(row.points)} {pluralizePoints(row.points)}
+          {formatPointsCountLocalized(row.points, lang)}
         </span>
       );
     }
@@ -173,7 +174,7 @@ export function CheckboxGridExercise({
       <span className={`row-points-tab row-points-tab--${status}`} style={{ position: "static" }}>
         {status === "correct" && <Check strokeWidth={3} className="h-3 w-3" />}
         {status === "wrong" && <X strokeWidth={3} className="h-3 w-3" />}
-        {formatScore(rowCell.earnedPoints)} з {formatScore(row.points)}
+        {t("common.outOf", { a: formatScoreLocalized(rowCell.earnedPoints, lang), b: formatScoreLocalized(row.points, lang) })}
       </span>
     );
   }
@@ -196,15 +197,15 @@ export function CheckboxGridExercise({
       if (cell.studentChecked && cell.correctChecked) {
         boxClass = GRID_MARK_CORRECT;
         icon = <Check strokeWidth={3} className={RESULT_ICON_CORRECT} />;
-        stateText = "правильно";
+        stateText = t("cbg.stateCorrectAria");
       } else if (cell.studentChecked && !cell.correctChecked) {
         boxClass = GRID_MARK_WRONG;
         icon = <X strokeWidth={3} className={RESULT_ICON_WRONG} />;
-        stateText = "помилково";
+        stateText = t("cbg.stateWrongAria");
       } else if (!cell.studentChecked && cell.correctChecked) {
         boxClass = GRID_MARK_MISSED;
         icon = <Check strokeWidth={3} className={RESULT_ICON_CORRECT} />;
-        stateText = "правильна відповідь, не позначена";
+        stateText = t("cbg.stateMissedAria");
       } else {
         boxClass = GRID_CHECKBOX_UNCHECKED;
         icon = null;
@@ -301,7 +302,7 @@ export function CheckboxGridExercise({
                 id={stmtId}
                 className={`col-span-full flex items-start gap-2.5 px-2.5 py-2 md:col-span-1 md:min-h-16 md:items-center ${rowDivider} ${rowStripe} ${GRID_FIRST_COL_DIVIDER}`}
               >
-                <span className="item-number-badge" aria-label={`Рядок ${index + 1}`}>
+                <span className="item-number-badge" aria-label={t("aria.row", { n: index + 1 })}>
                   {index + 1}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -350,19 +351,19 @@ export function CheckboxGridExercise({
             <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_CORRECT}`}>
               <Check strokeWidth={3} className={LEGEND_ICON_CORRECT} />
             </span>
-            правильно
+            {t("cbg.legendCorrect")}
           </span>
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_WRONG}`}>
               <X strokeWidth={3} className={LEGEND_ICON_WRONG} />
             </span>
-            позначено помилково
+            {t("cbg.legendWrong")}
           </span>
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_MISSED}`}>
               <Check strokeWidth={3} className={LEGEND_ICON_CORRECT} />
             </span>
-            правильна відповідь, яку ви пропустили
+            {t("cbg.legendMissed")}
           </span>
         </div>
       )}
@@ -376,16 +377,16 @@ export function CheckboxGridExercise({
               disabled={practiceCheck.pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
             </button>
           )}
           {practiceCorrect && (
-            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-red-600 dark:text-red-400">
-                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
+                {t("status.incorrectRetryCount", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
               </span>
               {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
                 <button
@@ -394,7 +395,7 @@ export function CheckboxGridExercise({
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
                   className={STUDENT_BUTTON_SECONDARY_TOUCH}
                 >
-                  Показати відповідь
+                  {t("button.showAnswer")}
                 </button>
               )}
             </div>
@@ -427,7 +428,7 @@ export function CheckboxGridExercise({
             disabled={pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {pending ? "Перевіряю..." : "Перевірити"}
+            {pending ? t("button.checking") : t("button.check")}
           </button>
         ) : (
           <TaskResult

@@ -15,7 +15,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
-import { TABLE_FILL_ANSWERS_TOGGLE_LABEL } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на питання:
@@ -60,6 +60,7 @@ export function OpenAnswerCheckExercise({
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
 }) {
+  const { t } = useT();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -112,7 +113,7 @@ export function OpenAnswerCheckExercise({
         <div className="glass-item-card flex flex-col gap-2 px-3 pt-4 pb-[14px]">
           <div className="flex items-start gap-3">
             {number !== null && (
-              <span className="item-number-badge" aria-label={`Питання ${number}`}>
+              <span className="item-number-badge" aria-label={t("aria.question", { n: number })}>
                 {number}
               </span>
             )}
@@ -122,7 +123,7 @@ export function OpenAnswerCheckExercise({
                   <button
                     type="button"
                     onClick={() => setLightboxSrc(q.imageUrl!)}
-                    aria-label="Показати картинку повністю"
+                    aria-label={t("button.showFullImageAria")}
                     className="shrink-0 cursor-zoom-in"
                   >
                     <ImageOrPlaceholder
@@ -155,14 +156,14 @@ export function OpenAnswerCheckExercise({
                     : "exercise-field--wrong border-red-500 bg-red-50"
                   : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white"
               }`}
-              placeholder="Ваша відповідь..."
+              placeholder={t("placeholder.yourAnswer")}
             />
             {q.hint && !locked && (
               <HintBulb
                 state={hintVisible ? "used" : "available"}
                 onClick={() => showHint(q.id)}
                 onMouseDown={(e) => e.preventDefault()}
-                label={hintVisible ? q.hint : "Показати підказку"}
+                label={hintVisible ? q.hint : t("button.showHint")}
                 className="absolute top-1/2 right-2 -translate-y-1/2"
               />
             )}
@@ -173,7 +174,7 @@ export function OpenAnswerCheckExercise({
           )}
           {qDetail && !qDetail.isCorrect && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              Правильно: {qDetail.correctAnswers.join(" / ")}
+              {t("answer.correctCountLabel", { value: qDetail.correctAnswers.join(" / ") })}
             </p>
           )}
         </div>
@@ -229,7 +230,7 @@ export function OpenAnswerCheckExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as OpenAnswerResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -237,7 +238,7 @@ export function OpenAnswerCheckExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -265,7 +266,7 @@ export function OpenAnswerCheckExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockDetail ? blockQuestions.length : undefined}
                 hintSummary={{ hintCount: blockDetail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
               >
@@ -300,7 +301,7 @@ export function OpenAnswerCheckExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -344,7 +345,7 @@ export function OpenAnswerCheckExercise({
                   disabled={single.pending}
                   className={`self-start ${BUTTON_CHECK}`}
                 >
-                  {single.pending ? "Перевіряю..." : "Перевірити"}
+                  {single.pending ? t("button.checking") : t("button.check")}
                 </button>
                 {singleCheckConfirm.confirming && (
                   <CheckConfirmBar
@@ -359,7 +360,7 @@ export function OpenAnswerCheckExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+                toggleTitle={t("panel.correctAnswers")}
                 toggleCount={detail ? config.questions.length : undefined}
                 hintSummary={{ hintCount: detail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
               >

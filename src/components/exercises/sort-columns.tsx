@@ -10,7 +10,7 @@ import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
@@ -18,11 +18,8 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
-import {
-  IMAGE_MATCH_POOL_LABEL,
-  sortColumnsPoolCountLabel,
-  TABLE_FILL_ANSWERS_TOGGLE_LABEL,
-} from "@/lib/exercises/default-task-labels";
+import { dragPoolLabel, sortColumnsPoolCountLabel } from "@/lib/exercises/default-task-labels";
+import { useT } from "@/lib/i18n/context";
 
 // Статус-іконки чипів колонок після перевірки (.sort-columns-chip--correct/
 // --wrong, globals.css) — колір сам по собі недостатній (п. "icons must not
@@ -82,6 +79,7 @@ export function SortColumnsExercise({
   isDelf?: boolean;
   practice?: SortColumnsPracticeProps;
 }) {
+  const { t, lang } = useT();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as SortColumnsDetail | undefined;
   const checkConfirm = useCheckConfirm();
@@ -211,7 +209,7 @@ export function SortColumnsExercise({
   // практиці (та сама умова, що й решта балів у цьому файлі).
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
   const pointsText =
-    !hidePoints && !isPractice && !result && pointsVisible ? formatPointsCount(totalPoints) : undefined;
+    !hidePoints && !isPractice && !result && pointsVisible ? formatPointsCountLocalized(totalPoints, lang) : undefined;
   // scroll-mt (той самий принцип і літеральні значення, що drag-drop.tsx/
   // fill-blank.tsx): клік-вибір не викликає сам по собі scroll, але якщо
   // браузер (напр. фокус/якір) підведе колонку до самого верху, липкий пул
@@ -273,7 +271,7 @@ export function SortColumnsExercise({
             stopPropagation
             disabled={hintLoading.has(item.id)}
             onClick={() => toggleHint(item.id)}
-            label={`Підказка: колонка для «${item.text}»`}
+            label={t("sortcolumns.hintColumnFor", { word: item.text })}
           />
         )}
       </div>
@@ -315,7 +313,7 @@ export function SortColumnsExercise({
             stopPropagation
             disabled={hintLoading.has(item.id)}
             onClick={() => toggleHint(item.id)}
-            label={`Підказка: колонка для «${item.text}»`}
+            label={t("sortcolumns.hintColumnFor", { word: item.text })}
           />
         )}
       </div>
@@ -333,8 +331,8 @@ export function SortColumnsExercise({
 
       <div className="word-pool" {...poolDropProps()} onClick={clickPool}>
         <div className="word-pool-label-row">
-          <span className="word-pool-label">{IMAGE_MATCH_POOL_LABEL}</span>
-          <span className="word-pool-count">{sortColumnsPoolCountLabel(pool.length)}</span>
+          <span className="word-pool-label">{dragPoolLabel(lang)}</span>
+          <span className="word-pool-count">{sortColumnsPoolCountLabel(lang, pool.length)}</span>
         </div>
         <div className="word-pool-chips">{pool.map((item) => poolChip(item))}</div>
       </div>
@@ -377,7 +375,7 @@ export function SortColumnsExercise({
               >
                 {columnItems.length === 0 ? (
                   <span className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-                    Перетягніть слово сюди
+                    {t("placeholder.dragWordHere")}
                   </span>
                 ) : (
                   columnItems.map((item) => chip(item))
@@ -397,16 +395,16 @@ export function SortColumnsExercise({
               disabled={practiceCheck.pending || !allPlaced}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+              {practiceCheck.pending ? t("button.checking") : t("button.check")}
             </button>
           )}
           {practiceCorrect && (
-            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>Правильно! ✓</p>
+            <p className={`${RESULT_MESSAGE_CLASS} text-green-600 dark:text-green-400`}>{t("status.correctExclaim")}</p>
           )}
           {practiceDetail && !practiceCorrect && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-red-600 dark:text-red-400">
-                Неправильно, спробуйте ще раз (спроб: {practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0})
+                {t("status.incorrectRetryCount", { n: practiceFailedAttempts[WHOLE_TASK_ITEM_ID] ?? 0 })}
               </span>
               {!practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
                 <button
@@ -415,7 +413,7 @@ export function SortColumnsExercise({
                   disabled={!!practiceCheck.revealPending[WHOLE_TASK_ITEM_ID]}
                   className={STUDENT_BUTTON_SECONDARY_TOUCH}
                 >
-                  Показати відповідь
+                  {t("button.showAnswer")}
                 </button>
               )}
             </div>
@@ -446,7 +444,7 @@ export function SortColumnsExercise({
               disabled={pending}
               className={`self-start ${BUTTON_CHECK}`}
             >
-              {pending ? "Перевіряю..." : "Перевірити"}
+              {pending ? t("button.checking") : t("button.check")}
             </button>
             {checkConfirm.confirming && (
               <CheckConfirmBar
@@ -461,7 +459,7 @@ export function SortColumnsExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            toggleTitle={TABLE_FILL_ANSWERS_TOGGLE_LABEL}
+            toggleTitle={t("panel.correctAnswers")}
             toggleCount={singleDetail ? config.items.length : undefined}
             hintSummary={{
               hintCount: singleDetail?.items.filter((it) => it.hintUsed).length ?? 0,

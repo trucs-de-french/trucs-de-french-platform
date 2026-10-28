@@ -11,6 +11,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
+import { useT } from "@/lib/i18n/context";
 
 // "use client" — плеєри/лайтбокс нижче самі "use client", довідковий блок
 // і далі без взаємодії, що оцінюється (phonetics не gradable).
@@ -24,6 +25,7 @@ function mediaOf(item: PhoneticsItem): PhoneticsMedia | null {
 // плеєр Диска (iframe /preview) лише по кліку — як і відео, без зайвого
 // запиту до Диска, доки студент не захотів слухати.
 function DriveAudioBlock({ url }: { url: string }) {
+  const { t } = useT();
   const [activated, setActivated] = useState(false);
   const id = extractDriveId(url);
   if (!id) return null;
@@ -31,7 +33,7 @@ function DriveAudioBlock({ url }: { url: string }) {
     return (
       <iframe
         src={driveEmbedUrl(id)}
-        title="Google Диск"
+        title={t("phonetics.googleDrive")}
         className="h-16 w-full max-w-full rounded-xl"
         allow="autoplay"
       />
@@ -41,24 +43,25 @@ function DriveAudioBlock({ url }: { url: string }) {
     <button
       type="button"
       onClick={() => setActivated(true)}
-      aria-label="Відтворити аудіо з Google Диска"
+      aria-label={t("button.playAudioFromDriveAria")}
       className="flex w-full min-w-0 max-w-full items-center gap-1.5 rounded-xl bg-[#f3f2fb] px-2.5 py-1.5 dark:bg-neutral-700/40"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
         <Play size={14} fill="currentColor" />
       </span>
-      <span className="truncate text-xs text-neutral-600 dark:text-neutral-300">Google Диск</span>
+      <span className="truncate text-xs text-neutral-600 dark:text-neutral-300">{t("phonetics.googleDrive")}</span>
     </button>
   );
 }
 
 export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
+  const { t: t2 } = useT();
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   if (config.items.length === 0) {
     return (
       <p className="text-sm text-[var(--text-muted-caption)] dark:text-neutral-400">
-        У цій вправі ще немає реплік.
+        {t2("phonetics.noLinesYet")}
       </p>
     );
   }
@@ -88,7 +91,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
               className="@container glass-item-card flex min-w-0 flex-col gap-3 px-[18px] pt-[18px] pb-4 @[480px]:flex-row @[480px]:items-start @[480px]:gap-4"
             >
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
-                <span className="item-number-badge" aria-label={`Репліка ${i + 1}`}>
+                <span className="item-number-badge" aria-label={t2("aria.replica", { n: i + 1 })}>
                   {i + 1}
                 </span>
                 <div className="flex min-w-0 flex-col items-start gap-2">
@@ -120,7 +123,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
                   <button
                     type="button"
                     onClick={() => setLightboxSrc(item.imageUrl!)}
-                    aria-label="Показати картинку повністю"
+                    aria-label={t2("button.showFullImageAria")}
                     className="ml-auto shrink-0 cursor-zoom-in"
                   >
                     <ImageOrPlaceholder

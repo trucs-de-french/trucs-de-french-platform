@@ -14,7 +14,8 @@ import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { TaskPanelHeader } from "./task-panel-header";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { formatPoints, formatScore } from "@/lib/exercises/format-points";
+import { formatPointsLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 
 // Формуляр (input на f.id) і есе (textarea) НІКОЛИ не рендеряться
 // одночасно (isFormulaire — взаємовиключна гілка нижче), тож один спільний
@@ -88,6 +89,7 @@ function buildSegments(text: string, errors: EssayError[]): Segment[] {
 }
 
 function EssayResultView({ studentAnswer, result }: { studentAnswer: string; result: EssayResult }) {
+  const { t, lang } = useT();
   const [activeErrorIndex, setActiveErrorIndex] = useState<number | null>(null);
   const segments = buildSegments(studentAnswer, result.errors);
   const activeError = activeErrorIndex !== null ? result.errors[activeErrorIndex] : null;
@@ -114,7 +116,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         <div className="rounded-md glass-inset-bg bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
           <p className="font-medium text-amber-700 dark:text-amber-400">{activeError.category}</p>
           <p className="mt-1">
-            <span className="text-[var(--text-muted-caption)] dark:text-neutral-400">Виправлення: </span>
+            <span className="text-[var(--text-muted-caption)] dark:text-neutral-400">{t("essay.corrections")} </span>
             {activeError.fix}
           </p>
           <p className="mt-1 text-neutral-600 dark:text-neutral-400">{activeError.rule}</p>
@@ -126,13 +128,13 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
         {CRITERIA.map((key) => (
           <div key={key} className="flex items-center justify-between gap-2">
             <span className="text-neutral-600 dark:text-neutral-400">{CRITERION_LABELS[key]}</span>
-            <span className="font-medium">{formatScore(result.criteria[key])}</span>
+            <span className="font-medium">{formatScoreLocalized(result.criteria[key], lang)}</span>
           </div>
         ))}
         <div className="mt-1 flex items-center justify-between gap-2 border-t border-[#e6e6f0] pt-1.5 font-semibold dark:border-neutral-700">
-          <span>Разом</span>
+          <span>{t("essay.total")}</span>
           <span>
-            {formatScore(result.totalScore)} / {formatScore(result.maxScore)}
+            {formatScoreLocalized(result.totalScore, lang)} / {formatScoreLocalized(result.maxScore, lang)}
           </span>
         </div>
       </div>
@@ -152,6 +154,7 @@ function EssayResultView({ studentAnswer, result }: { studentAnswer: string; res
 }
 
 function FormulaireResultView({ result }: { result: FormulaireResult }) {
+  const { lang } = useT();
   return (
     <div className="flex flex-col gap-2">
       {result.fields.map((f) => (
@@ -172,7 +175,7 @@ function FormulaireResultView({ result }: { result: FormulaireResult }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#f6dc8e" aria-hidden="true">
             <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
           </svg>
-          {formatPoints(result.totalScore, result.maxScore)}
+          {formatPointsLocalized(result.totalScore, result.maxScore, lang)}
         </span>
       </p>
     </div>
@@ -188,6 +191,7 @@ export function EssayCheckExercise({
   prompt?: string;
   config?: Record<string, unknown>;
 }) {
+  const { t, lang } = useT();
   const level = ((config?.level as DelfLevel) ?? "B1") as DelfLevel;
   const exerciseNumber = config?.exerciseNumber as 1 | 2 | undefined;
   const isFormulaire = level === "A1" && exerciseNumber === 1;
@@ -215,7 +219,7 @@ export function EssayCheckExercise({
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("essay.checkError"));
       }
 
       const data = await res.json();
@@ -225,7 +229,7 @@ export function EssayCheckExercise({
         setEssayResult(data as EssayResult);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Помилка перевірки");
+      setError(e instanceof Error ? e.message : t("essay.checkError"));
     } finally {
       setPending(false);
     }
@@ -244,9 +248,9 @@ export function EssayCheckExercise({
       />
       {grid && (
         <p className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">
-          Рівень {level}
-          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · максимум {formatScore(grid.maxScore)} балів
-          {grid.minWords ? ` · мінімум ${grid.minWords} слів` : ""}
+          {t("essay.levelLabel", { level })}
+          {exerciseNumber ? ` · Ex.${exerciseNumber}` : ""} · {t("essay.maxPoints", { n: formatScoreLocalized(grid.maxScore, lang) })}
+          {grid.minWords ? ` · ${t("essay.minWords", { n: grid.minWords })}` : ""}
         </p>
       )}
 
@@ -282,7 +286,7 @@ export function EssayCheckExercise({
           disabled={submitted}
           rows={8}
           className="exercise-field w-full rounded-md border glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white px-2 py-1.5 text-sm"
-          placeholder="Ваша відповідь..."
+          placeholder={t("essay.placeholderAnswer")}
         />
       )}
 
@@ -313,7 +317,7 @@ export function EssayCheckExercise({
             disabled={pending || !canSubmit}
             className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
           >
-            {pending ? "Перевіряю..." : "Надіслати"}
+            {pending ? t("button.checking") : t("button.submit")}
           </button>
         )}
 

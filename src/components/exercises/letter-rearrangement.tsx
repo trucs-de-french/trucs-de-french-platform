@@ -13,7 +13,8 @@ import type {
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
-import { formatPointsCount } from "@/lib/exercises/format-points";
+import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { SortableTileRow } from "./sortable-tile-row";
@@ -64,6 +65,7 @@ export function LetterRearrangementExercise({
 }) {
   // Усі стани — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
   // matching.tsx.
+  const { t, lang } = useT();
   const [orders, setOrders] = useState<string[][]>(() => config.words.map((w) => w.shuffledLetters));
   const [lockedCounts, setLockedCounts] = useState<number[]>(() => config.words.map(() => 0));
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
@@ -266,7 +268,7 @@ export function LetterRearrangementExercise({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Помилка перевірки");
+        throw new Error(body.error ?? t("error.checkFailed"));
       }
       const result = (await res.json()) as LetterRearrangementResult;
       setBlockResults((prev) => ({ ...prev, [blockIndex]: result }));
@@ -278,7 +280,7 @@ export function LetterRearrangementExercise({
     } catch (e) {
       setBlockError((prev) => ({
         ...prev,
-        [blockIndex]: e instanceof Error ? e.message : "Помилка перевірки",
+        [blockIndex]: e instanceof Error ? e.message : t("error.checkFailed"),
       }));
     } finally {
       setBlockPending((prev) => ({ ...prev, [blockIndex]: false }));
@@ -328,7 +330,7 @@ export function LetterRearrangementExercise({
         {hasLamp && (
           <HintBulb
             state={hintUsed ? "used" : "available"}
-            label="Підказка: поставити наступну літеру на місце"
+            label={t("letterrearr.hintPlaceNextLetter")}
             disabled={lockedCounts[wi] >= orders[wi].length || hintLoading.has(wi)}
             onClick={() => applyHint(wi)}
             className="absolute right-1.5 top-1.5"
@@ -342,7 +344,7 @@ export function LetterRearrangementExercise({
                 <button
                   type="button"
                   onClick={() => setLightboxSrc(word.imageUrl!)}
-                  aria-label="Показати картинку повністю"
+                  aria-label={t("button.showFullImageAria")}
                   className="shrink-0 cursor-zoom-in"
                 >
                   <ImageOrPlaceholder src={word.imageUrl} alt="" className="h-11 w-11 rounded-lg object-cover" useFocus />
@@ -355,7 +357,7 @@ export function LetterRearrangementExercise({
             <p
               className={`word-card-number-row break-words text-sm text-[var(--uk-clue-text-light)] dark:text-[var(--card-ink-2)] [overflow-wrap:anywhere] ${hasLamp ? "pr-[52px]" : ""}`}
             >
-              <span className="item-number-badge" aria-label={`Слово ${opts.cardNumber}`}>
+              <span className="item-number-badge" aria-label={t("aria.word", { n: opts.cardNumber })}>
                 {opts.cardNumber}
               </span>
               {word.hintText.trim() && <span>{frenchNbsp(word.hintText)}</span>}
@@ -373,7 +375,7 @@ export function LetterRearrangementExercise({
         </div>
         {wordDetail && !wordDetail.isCorrect && (
           <p className="text-sm dark:text-[var(--text-muted-caption)]">
-            <span className="correct-answer-label">Правильне слово: </span>
+            <span className="correct-answer-label">{t("answer.correctWordLabel")} </span>
             <span className="correct-answer-word text-[#3b36c4]">
               {wordDetail.letters.map((l) => l.text).join("")}
             </span>
@@ -436,12 +438,12 @@ export function LetterRearrangementExercise({
                   cardNumber: pos + 1,
                 })}
                 {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">Правильно ✓</p>
+                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
                 )}
                 {isCorrect === false && (
                   <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
                     <span className="text-red-600 dark:text-red-400">
-                      Неправильно, спробуйте ще раз (спроб: {attempts})
+                      {t("status.incorrectRetryCount", { n: attempts })}
                     </span>
                     {!itemRevealed && (
                       <button
@@ -450,14 +452,14 @@ export function LetterRearrangementExercise({
                         disabled={!!practiceCheck.revealPending[key]}
                         className={STUDENT_BUTTON_SECONDARY_TOUCH}
                       >
-                        Показати відповідь
+                        {t("button.showAnswer")}
                       </button>
                     )}
                   </div>
                 )}
                 {itemRevealed && (
                   <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    Правильне слово: {itemRevealed.join(", ")}
+                    {t("answer.correctWordLabel")} {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
@@ -474,7 +476,7 @@ export function LetterRearrangementExercise({
             disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
-            {practiceCheck.pending ? "Перевіряю..." : "Перевірити"}
+            {practiceCheck.pending ? t("button.checking") : t("button.check")}
           </button>
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}
         </div>
@@ -484,7 +486,7 @@ export function LetterRearrangementExercise({
 
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
-      ? formatPointsCount(config.points)
+      ? formatPointsCountLocalized(config.points, lang)
       : undefined;
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
@@ -497,7 +499,7 @@ export function LetterRearrangementExercise({
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
-      {activeBlockPending ? "Перевіряю..." : "Перевірити блок"}
+      {activeBlockPending ? t("button.checking") : t("button.checkBlock")}
     </button>
   ) : null;
 
@@ -554,7 +556,7 @@ export function LetterRearrangementExercise({
                 disabled={single.pending}
                 className={`self-start ${BUTTON_CHECK}`}
               >
-                {single.pending ? "Перевіряю..." : "Перевірити"}
+                {single.pending ? t("button.checking") : t("button.check")}
               </button>
             ) : (
               <TaskResult
