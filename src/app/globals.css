@@ -4729,14 +4729,14 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
 }
 .dark .task-result-gap-word {
-  background: rgba(31, 122, 61, 0.18);
-  border-color: rgba(110, 200, 140, 0.5);
+  background: var(--dark-surface-fill);
+  border-color: rgba(79, 191, 134, 0.75);
   color: #eaf6ec;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-gap-word {
-    background: rgba(31, 122, 61, 0.18);
-    border-color: rgba(110, 200, 140, 0.5);
+    background: var(--dark-surface-fill);
+    border-color: rgba(79, 191, 134, 0.75);
     color: #eaf6ec;
   }
 }
