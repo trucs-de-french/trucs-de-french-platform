@@ -184,6 +184,12 @@
      word-search.tsx ImageTile), де суцільний --dark-surface-fill
      перекрив би саме фото. */
   --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
+  /* --dark-surface-fill у rgba, трохи прозоріше (.8) — для "скляних"
+     елементів із backdrop-filter (неактивні вкладки блоків,
+     .block-tab--inactive), де власний blur уже дає ефект скла, тож
+     прозорість потрібна нижча, ніж у підпису-смужки над картинкою
+     (--dark-surface-fill-translucent, .82). */
+  --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
   --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
@@ -235,6 +241,7 @@
     --dark-blue-fill: #0a1030;
     --dark-surface-fill: #141944;
     --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
+    --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
     --error-review-card-bg: var(--dark-blue-fill);
   }
 }
@@ -5214,7 +5221,7 @@ button.scene-bar:active .scene-bar-toggle {
   color: #f6dc8e;
 }
 .dark .block-tab--inactive {
-  background: rgba(130, 160, 240, 0.2);
+  background: var(--dark-surface-fill-glass);
   border: var(--border-card) solid rgba(130, 160, 240, 0.38);
   backdrop-filter: blur(8px) saturate(1.15);
   -webkit-backdrop-filter: blur(8px) saturate(1.15);
@@ -5243,7 +5250,7 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f6dc8e;
   }
   :root:not(.light) .block-tab--inactive {
-    background: rgba(130, 160, 240, 0.2);
+    background: var(--dark-surface-fill-glass);
     border: var(--border-card) solid rgba(130, 160, 240, 0.38);
     backdrop-filter: blur(8px) saturate(1.15);
     -webkit-backdrop-filter: blur(8px) saturate(1.15);
