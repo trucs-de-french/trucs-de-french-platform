@@ -6957,13 +6957,23 @@ button.scene-bar:active .scene-bar-toggle {
   border: 1.5px solid var(--gold-border-80);
 }
 .dark .image-match-slot--filled {
-  background: rgba(246, 220, 142, 0.12);
-  border-color: var(--gold-border-dark-40);
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  border: 1px solid #d9b765;
+  box-sizing: border-box;
+}
+.dark .image-match-slot--filled:hover,
+.dark .image-match-slot--filled:focus-visible {
+  border-color: #f3d98b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .image-match-slot--filled {
-    background: rgba(246, 220, 142, 0.12);
-    border-color: var(--gold-border-dark-40);
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    border: 1px solid #d9b765;
+    box-sizing: border-box;
+  }
+  :root:not(.light) .image-match-slot--filled:hover,
+  :root:not(.light) .image-match-slot--filled:focus-visible {
+    border-color: #f3d98b;
   }
 }
 .image-match-slot-word {
