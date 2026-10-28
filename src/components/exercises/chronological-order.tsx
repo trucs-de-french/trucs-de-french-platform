@@ -360,15 +360,23 @@ export function ChronologicalOrderExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <div className="task-panel-header">
-        {/* flex items-start — лампочка притиснута до верху, не по центру
-            (можливо багаторядкового) блоку інструкції, той самий принцип
-            flex-sibling, що word-choice.tsx (27fd820) — лампочка ніколи не
-            бере участі в перенесенні тексту інструкції, не збільшує висоту
-            першого рядка. Практика (isPractice) лампочку не показує взагалі
-            (п.6 задачі) — умова `!isPractice && config.hint` нижче явно
-            враховує це. */}
-        <div className="flex items-start gap-1.5">
-          <div className="min-w-0 flex-1">
+        {/* position:relative + лампочка absolute (той самий патерн, що
+            word-card-number-row/pr-[52px] у letter-gaps.tsx) — РАНІШЕ
+            лампочка була flex-sibling з items-start (принцип word-choice.tsx,
+            27fd820): items-start вирівнює лампочку по верху, але НЕ рятує
+            від того, що flex-рядок все одно розтягується на висоту
+            найвищої дитини — 40px-кнопка (GOLD_CIRCLE_HIT_AREA_PADDING,
+            hint-bulb.tsx) вища за один рядок тексту (~25px), тож ряд ставав
+            ~42px замість висоти самого тексту, і це "зайве" опускало
+            .chrono-order-note нижче (видимий збільшений відступ під
+            заголовком лише коли є підказка). Absolute прибирає лампочку з
+            потоку висоти геть — текстовий блок сам займає рівно свою
+            висоту, pr-[52px] (40px кнопка + 12px відступ, як у
+            letter-gaps.tsx) лишає місце, щоб текст переносився ДО лампочки,
+            не під неї. Практика (isPractice) лампочку не показує взагалі
+            (п.6 задачі) — той самий `!isPractice && config.hint`. */}
+        <div className="relative">
+          <div className={!isPractice && config.hint ? "pr-[52px]" : ""}>
             <TaskInstructionLine
               fr={frenchNbspHtml(
                 sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction)
@@ -388,7 +396,7 @@ export function ChronologicalOrderExercise({
               onClick={toggleHintVisible}
               label={t("chrono.hintWholeTask")}
               ariaExpanded={hintVisible}
-              className="mt-0.5 shrink-0"
+              className="absolute right-0 top-0.5 shrink-0"
             />
           )}
         </div>
