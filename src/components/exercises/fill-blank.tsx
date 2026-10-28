@@ -408,7 +408,7 @@ export function FillBlankExercise({
                 </button>
               )}
               {i < blankCount && !result && !isPractice && visibleTranslations.has(i) && hints[i] && answers[i] && (
-                <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hints[i] ?? undefined}>
+                <span className="text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]" title={hints[i] ?? undefined}>
                   ({hints[i]})
                 </span>
               )}

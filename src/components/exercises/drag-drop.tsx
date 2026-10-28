@@ -227,7 +227,7 @@ export function DragDropExercise({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+          <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
         )}
 
         <div className={`flex flex-col ${EXERCISE_BODY_ITEMS_GAP}`}>
@@ -272,7 +272,7 @@ export function DragDropExercise({
                             {slotFilled ? (
                               config.bank[placed[gi] as number]
                             ) : visibleHints.has(gi) && hint ? (
-                              <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
+                              <span className="truncate text-neutral-400 dark:text-[var(--text-muted-caption)]">{hint}</span>
                             ) : (
                               ""
                             )}
@@ -287,7 +287,7 @@ export function DragDropExercise({
                           />
                         )}
                         {i < blankCount && visibleHints.has(gi) && hint && slotFilled && (
-                          <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
+                          <span className="text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]" title={hint}>
                             ({hint})
                           </span>
                         )}
@@ -396,7 +396,7 @@ export function DragDropExercise({
             </div>
           </div>
         ) : (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+          <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
         );
       })()}
 
@@ -465,7 +465,7 @@ export function DragDropExercise({
                               {slotFilled ? (
                                 <span className="drag-drop-slot-word">{config.bank[placed[gi] as number]}</span>
                               ) : visibleHints.has(gi) && hint ? (
-                                <span className="truncate text-neutral-400 dark:text-neutral-500">{hint}</span>
+                                <span className="truncate text-neutral-400 dark:text-[var(--text-muted-caption)]">{hint}</span>
                               ) : (
                                 <span className="drag-drop-slot-placeholder">{DRAG_DROP_SLOT_PLACEHOLDER}</span>
                               )}
@@ -488,7 +488,7 @@ export function DragDropExercise({
                           </span>
                         )}
                         {i < blankCount && !locked && visibleHints.has(gi) && hint && slotFilled && (
-                          <span className="text-xs italic text-neutral-500 dark:text-neutral-400" title={hint}>
+                          <span className="text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]" title={hint}>
                             ({hint})
                           </span>
                         )}

@@ -916,7 +916,7 @@ function WordSearchBlockView({
             тож більше колонок влазить). */}
         <div className="w-full">
           <div className="flex items-baseline justify-between">
-            <span className="font-heading text-sm text-neutral-500 dark:text-neutral-400">Знайдіть слова</span>
+            <span className="font-heading text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">Знайдіть слова</span>
             <span
               className={`font-heading text-sm font-semibold tabular-nums ${
                 allFound ? "text-green-600 dark:text-green-400" : ""

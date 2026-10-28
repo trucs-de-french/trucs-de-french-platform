@@ -662,7 +662,7 @@ export function ChronologicalOrderExercise({
                             {it.correctPosition}
                           </span>
                         </div>
-                        <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+                        <span className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">{label}</span>
                       </div>
                     );
                   })}

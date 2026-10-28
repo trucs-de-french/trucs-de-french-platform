@@ -162,7 +162,7 @@ export function ImageMatchExercise({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+          <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
         )}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -282,7 +282,7 @@ export function ImageMatchExercise({
           </div>
         </div>
       ) : (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">Усі слова розставлено</p>
+        <p className="text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">Усі слова розставлено</p>
       )}
 
       <div className="image-match-cards">

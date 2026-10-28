@@ -345,7 +345,7 @@ export function CheckboxGridExercise({
 
       {/* Легенда позначок — лише після "Перевірити", один раз під таблицею. */}
       {detail && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-[var(--text-muted-caption)]">
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className={`${LEGEND_SQUARE} ${GRID_MARK_CORRECT}`}>
               <Check strokeWidth={3} className={LEGEND_ICON_CORRECT} />

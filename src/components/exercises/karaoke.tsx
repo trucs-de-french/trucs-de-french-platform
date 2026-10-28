@@ -614,7 +614,7 @@ export function KaraokeExercise({
             налаштування вправи, далі власний вибір студента (localStorage,
             через togglePauseEnabled вище). */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-neutral-500 dark:text-neutral-400">Пауза після рядка з пропуском</span>
+          <span className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">Пауза після рядка з пропуском</span>
           <button
             type="button"
             role="switch"
@@ -702,7 +702,7 @@ export function KaraokeExercise({
               <span className="karaoke-progress-pill">
                 Пропуск {globalGapNumber(activeGap.li, activeGap.gi)} з {totalGaps}
               </span>
-              <p className="text-sm text-[#55546b] dark:text-neutral-400">Клікніть на правильне слово</p>
+              <p className="text-sm text-[#55546b] dark:text-[var(--text-muted-caption)]">Клікніть на правильне слово</p>
             </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає

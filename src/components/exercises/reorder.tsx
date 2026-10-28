@@ -171,7 +171,7 @@ function ReorderSequenceTiles({
             )}
 
             {detail && (
-              <p className="break-words text-sm text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
+              <p className="break-words text-sm text-neutral-600 dark:text-[var(--text-muted-caption)] [overflow-wrap:anywhere]">
                 Правильний порядок:{" "}
                 {[...detail.items]
                   .sort((a, b) => a.correctIndex - b.correctIndex)
@@ -427,7 +427,7 @@ export function ReorderExercise({
     return (
       <div className={EXERCISE_STACK}>
         {!practiceCorrect && (
-          <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="tap-swap-hint text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
             Торкніться двох слів, щоб поміняти їх місцями
           </p>
         )}
@@ -541,7 +541,7 @@ export function ReorderExercise({
       {!useBlocks ? (
         <>
           {!singleLocked && (
-            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
               Торкніться двох слів, щоб поміняти їх місцями
             </p>
           )}
@@ -587,7 +587,7 @@ export function ReorderExercise({
       ) : (
         <>
           {!blockResults[activeBlock] && (
-            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="tap-swap-hint text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
               Торкніться двох слів, щоб поміняти їх місцями
             </p>
           )}

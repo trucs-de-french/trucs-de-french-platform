@@ -360,13 +360,13 @@ export function ErrorReviewBlock({
     <div className="flex flex-col gap-3">
       <div>
         <h3 className="font-heading text-lg font-semibold">{frenchNbsp("Corrigez vos erreurs.")}</h3>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
           Перегляньте свої помилки й натисніть «Виправити», щоб спробувати ще раз — без втрати балів.
         </p>
       </div>
 
       {entries.length === 0 ? (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm text-neutral-500 dark:text-[var(--text-muted-caption)]">
           {frenchNbsp(EMPTY_STATE_TEXT[emptyState])}
         </p>
       ) : (

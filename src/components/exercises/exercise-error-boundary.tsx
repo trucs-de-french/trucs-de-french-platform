@@ -23,7 +23,7 @@ export class ExerciseErrorBoundary extends Component<{ children: ReactNode }, { 
   render() {
     if (this.state.hasError) {
       return (
-        <p className="text-sm italic text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm italic text-neutral-500 dark:text-[var(--text-muted-caption)]">
           Вправа тимчасово недоступна.
         </p>
       );

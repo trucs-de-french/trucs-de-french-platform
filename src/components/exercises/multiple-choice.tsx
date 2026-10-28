@@ -408,7 +408,7 @@ export function MultipleChoiceExercise({
             )}
           </div>
           {item.multiple && (
-            <p className="text-xs italic text-neutral-500 dark:text-neutral-400">
+            <p className="text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]">
               {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
             </p>
           )}
@@ -660,7 +660,7 @@ export function MultipleChoiceExercise({
               )}
             </div>
             {item.multiple && (
-              <p className="mt-0.5 text-xs italic text-neutral-500 dark:text-neutral-400">
+              <p className="mt-0.5 text-xs italic text-neutral-500 dark:text-[var(--text-muted-caption)]">
                 {item.correctCount} {item.correctCount >= 5 ? "варіантів" : "варіанти"}
               </p>
             )}
