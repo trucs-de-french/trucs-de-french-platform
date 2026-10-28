@@ -4159,6 +4159,31 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(220, 219, 243, 0.08);
   }
 }
+/* Вердикт-пілюлі (Parfait/Presque/À revoir, .task-result-chip--success/
+   --warn/--error) — градієнтні бейджі (мокап "3 · Градієнтний бейдж"),
+   ОДНА палітра для обох тем (замість колишньої світлої пастельної +
+   окремої темної dark-surface-fill-з-кольоровою-рамкою): токени нижче
+   читаються однаково в .light і .dark, тему відрізняє лише м'яка
+   кольорова тінь під пілюлею (світла — є; темна — нема, щоб не світилось
+   поверх темного фону). --verdict-success-from підкручено темніше за
+   вихідний #278a5b (контраст білого тексту на ньому був ~4.31:1, нижче
+   вимоги 4.5:1) — на #27825b контраст ~4.74:1. */
+:root {
+  --verdict-success-from: #27825b;
+  --verdict-success-to: #1a6b47;
+  --verdict-success-ink: #ffffff;
+  --verdict-success-shadow: rgba(31, 122, 82, 0.35);
+
+  --verdict-warn-from: #f3d98b;
+  --verdict-warn-to: #d9b765;
+  --verdict-warn-ink: #2a1f05;
+  --verdict-warn-shadow: rgba(217, 183, 101, 0.45);
+
+  --verdict-error-from: #c8465e;
+  --verdict-error-to: #a02c46;
+  --verdict-error-ink: #ffffff;
+  --verdict-error-shadow: rgba(160, 44, 70, 0.35);
+}
 .task-result-chip {
   display: inline-flex;
   align-items: center;
@@ -4166,7 +4191,7 @@ button.scene-bar:active .scene-bar-toggle {
   box-sizing: border-box;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid;
+  border: 1px solid transparent;
   font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 800;
@@ -4174,50 +4199,30 @@ button.scene-bar:active .scene-bar-toggle {
   cursor: default;
 }
 .task-result-chip--error {
-  background: #fdf1f0;
-  border-color: #efc3bf;
-  color: #c62f2f;
+  background: linear-gradient(135deg, var(--verdict-error-from), var(--verdict-error-to));
+  color: var(--verdict-error-ink);
+  box-shadow: 0 3px 8px var(--verdict-error-shadow);
 }
 .task-result-chip--warn {
-  background: #fff5df;
-  border-color: #efd08a;
-  color: #8a5a00;
+  background: linear-gradient(135deg, var(--verdict-warn-from), var(--verdict-warn-to));
+  color: var(--verdict-warn-ink);
+  box-shadow: 0 3px 8px var(--verdict-warn-shadow);
 }
 .task-result-chip--success {
-  background: #eef8f0;
-  border-color: #a9d8b6;
-  color: #1f7a3d;
+  background: linear-gradient(135deg, var(--verdict-success-from), var(--verdict-success-to));
+  color: var(--verdict-success-ink);
+  box-shadow: 0 3px 8px var(--verdict-success-shadow);
 }
-.dark .task-result-chip--error {
-  background: var(--dark-surface-fill);
-  border-color: #e8788a;
-  color: #ffa3b1;
-}
-.dark .task-result-chip--warn {
-  background: var(--dark-surface-fill);
-  border-color: #d9b765;
-  color: #f3d98b;
-}
+.dark .task-result-chip--error,
+.dark .task-result-chip--warn,
 .dark .task-result-chip--success {
-  background: var(--dark-surface-fill);
-  border-color: #4fbf86;
-  color: #8ee3b4;
+  box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .task-result-chip--error {
-    background: var(--dark-surface-fill);
-    border-color: #e8788a;
-    color: #ffa3b1;
-  }
-  :root:not(.light) .task-result-chip--warn {
-    background: var(--dark-surface-fill);
-    border-color: #d9b765;
-    color: #f3d98b;
-  }
+  :root:not(.light) .task-result-chip--error,
+  :root:not(.light) .task-result-chip--warn,
   :root:not(.light) .task-result-chip--success {
-    background: var(--dark-surface-fill);
-    border-color: #4fbf86;
-    color: #8ee3b4;
+    box-shadow: none;
   }
 }
 
