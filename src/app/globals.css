@@ -190,6 +190,13 @@
      прозорість потрібна нижча, ніж у підпису-смужки над картинкою
      (--dark-surface-fill-translucent, .82). */
   --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
+  /* Рамка "правильної" відповіді-плитки/чипа на var(--dark-surface-fill)
+     (той самий зелений, що рамка вердикт-пілюлі "Parfait", #4fbf86, ~.75
+     альфа) — одна точка правди для родини муддy teal-grey чипів відповідей
+     (.task-result-gap-word, .task-result-answer-chip--emphasis), а не
+     живого стану вправи (.exercise-field--correct/.matching-card--correct/
+     тощо — своя зелена родина Tailwind green-950/30, не торкнута). */
+  --correct-border-dark: rgba(79, 191, 134, 0.75);
   --error-review-card-bg: var(--dark-blue-fill);
 }
 @media (prefers-color-scheme: dark) {
@@ -242,6 +249,7 @@
     --dark-surface-fill: #141944;
     --dark-surface-fill-translucent: rgba(20, 25, 68, 0.82);
     --dark-surface-fill-glass: rgba(20, 25, 68, 0.8);
+    --correct-border-dark: rgba(79, 191, 134, 0.75);
     --error-review-card-bg: var(--dark-blue-fill);
   }
 }
@@ -4631,14 +4639,14 @@ button.scene-bar:active .scene-bar-toggle {
   background: #eef8f0;
 }
 .dark .task-result-answer-chip--emphasis {
-  background: rgba(31, 122, 61, 0.18);
-  border-color: rgba(110, 200, 140, 0.5);
+  background: var(--dark-surface-fill);
+  border-color: var(--correct-border-dark);
   color: #eaf6ec;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-answer-chip--emphasis {
-    background: rgba(31, 122, 61, 0.18);
-    border-color: rgba(110, 200, 140, 0.5);
+    background: var(--dark-surface-fill);
+    border-color: var(--correct-border-dark);
     color: #eaf6ec;
   }
 }
@@ -4730,13 +4738,13 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .task-result-gap-word {
   background: var(--dark-surface-fill);
-  border-color: rgba(79, 191, 134, 0.75);
+  border-color: var(--correct-border-dark);
   color: #eaf6ec;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-gap-word {
     background: var(--dark-surface-fill);
-    border-color: rgba(79, 191, 134, 0.75);
+    border-color: var(--correct-border-dark);
     color: #eaf6ec;
   }
 }
