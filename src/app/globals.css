@@ -5040,38 +5040,47 @@ button.scene-bar:active .scene-bar-toggle {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+/* Світла тема: усі неактивні плитки (pending/warn/success) — одна приглушена
+   cream-колірна схема (активний блок виділяється лише цим, не "правильністю"
+   блоку) — активний блок переважає будь-який варіант через подвійний селектор
+   (.task-summary-tile--success.task-summary-tile--active тощо), що завжди
+   має вищу специфічність за одиночний `.task-summary-tile--pending`,
+   незалежно від порядку правил у файлі. Темна тема (нижче, .dark/media) не
+   змінюється. */
 .task-summary-tile--active {
-  border-color: #5a55e6;
-  box-shadow: 0 0 0 1.5px #5a55e6;
+  border-width: 2px;
 }
 .task-summary-tile-value {
   font-weight: 600;
 }
-.task-summary-tile--success {
-  background: #eef8f0;
-  border-color: #a9d8b6;
-  color: #1f7a3d;
-}
-.task-summary-tile--warn {
-  background: #fff5df;
-  border-color: #efd08a;
-  color: #8a5a00;
-}
+.task-summary-tile--success,
+.task-summary-tile--warn,
 .task-summary-tile--pending {
+  border-width: 2px;
+  background: #f1ead6;
+  border-color: #e2d8bb;
+  color: #6a5d40;
+}
+.task-summary-tile--success.task-summary-tile--active,
+.task-summary-tile--warn.task-summary-tile--active,
+.task-summary-tile--pending.task-summary-tile--active {
   background: #fff;
-  border-color: var(--gold-border-45);
-  color: #8a7a52;
+  border-color: #5a55e6;
+  color: #1a1640;
+  box-shadow: 0 4px 10px rgba(90, 85, 230, 0.28);
 }
 @media (hover: hover) {
-  .task-summary-tile--success:hover {
-    background: #e2f3e5;
-  }
-  .task-summary-tile--warn:hover {
-    background: #ffefc7;
-  }
+  .task-summary-tile--success:hover,
+  .task-summary-tile--warn:hover,
   .task-summary-tile--pending:hover {
-    background: #f6efd9;
+    background: #ece3c8;
+    border-color: #d9cca6;
   }
+}
+.dark .task-summary-tile--success,
+.dark .task-summary-tile--warn,
+.dark .task-summary-tile--pending {
+  border-width: 1.5px;
 }
 .dark .task-summary-tile--success {
   background: rgba(120, 220, 150, 0.12);
@@ -5089,6 +5098,15 @@ button.scene-bar:active .scene-bar-toggle {
   color: rgba(246, 220, 139, 0.6);
 }
 .dark .task-summary-tile--active {
+  border-width: 1.5px;
+  background: var(--dark-surface-fill);
+  border-color: #f3d98b;
+  box-shadow: none;
+}
+.dark .task-summary-tile--success.task-summary-tile--active,
+.dark .task-summary-tile--warn.task-summary-tile--active,
+.dark .task-summary-tile--pending.task-summary-tile--active {
+  border-width: 1.5px;
   background: var(--dark-surface-fill);
   border-color: #f3d98b;
   box-shadow: none;
@@ -5105,6 +5123,11 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 @media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-summary-tile--success,
+  :root:not(.light) .task-summary-tile--warn,
+  :root:not(.light) .task-summary-tile--pending {
+    border-width: 1.5px;
+  }
   :root:not(.light) .task-summary-tile--success {
     background: rgba(120, 220, 150, 0.12);
     border-color: rgba(130, 220, 160, 0.4);
@@ -5121,6 +5144,15 @@ button.scene-bar:active .scene-bar-toggle {
     color: rgba(246, 220, 139, 0.6);
   }
   :root:not(.light) .task-summary-tile--active {
+    border-width: 1.5px;
+    background: var(--dark-surface-fill);
+    border-color: #f3d98b;
+    box-shadow: none;
+  }
+  :root:not(.light) .task-summary-tile--success.task-summary-tile--active,
+  :root:not(.light) .task-summary-tile--warn.task-summary-tile--active,
+  :root:not(.light) .task-summary-tile--pending.task-summary-tile--active {
+    border-width: 1.5px;
     background: var(--dark-surface-fill);
     border-color: #f3d98b;
     box-shadow: none;
