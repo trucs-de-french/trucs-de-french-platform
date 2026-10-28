@@ -220,6 +220,10 @@ export const en: Record<MessageKey, string> = {
 
   "scene.backToCourse": "← Back to course",
   "scene.openGame": "Open the game",
+  "linkCard.opensInNewTabAria": "(opens in a new tab)",
+  "linkCard.ownGame": "Our game ★",
+  "linkCard.genericLink": "Link",
+  "linkCard.downloadFile": "Download the file",
   "scene.hintPointsNotice": "An answer with the hint (the lightbulb) earns half the points.",
   "scene.audioFallbackNote": "If the audio doesn't open,",
   "scene.embedFallbackNote": "If the content doesn't open,",

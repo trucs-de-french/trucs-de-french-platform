@@ -50,8 +50,10 @@ export default async function DelfTestPage({
     );
   }
 
+  const lang = normalizeUiLang(product.ui_lang);
+
   return (
-    <LangProvider lang={normalizeUiLang(product.ui_lang)}>
+    <LangProvider lang={lang}>
       <main className="mx-auto w-full max-w-2xl p-6">
         <Link href={`/courses/${productId}`} className="text-sm underline">
           ← До тестів
@@ -63,7 +65,7 @@ export default async function DelfTestPage({
 
         <DelfModeTabs
           level={product.level}
-          entrainementContent={<DelfTestTasks productId={productId} testNumber={testNumber} />}
+          entrainementContent={<DelfTestTasks productId={productId} testNumber={testNumber} lang={lang} />}
         />
       </main>
     </LangProvider>

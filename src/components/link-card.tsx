@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowUpRight, type LucideIcon } from "lucide-react";
+import { useT } from "@/lib/i18n/context";
 
 // Спільна темно-скляна картка-посилання — один вигляд для "Практики"
 // (scene_links, і фіксованої, і всередині контент-блоку), задач типу
@@ -31,6 +34,7 @@ export function LinkCard({
   // поділ, що був і до уніфікації. Стрілка ↗ і прихований текст "(відкриється
   // в новій вкладці)" показуються лише для другого випадку.
   const opensInNewTab = !download;
+  const { t } = useT();
 
   return (
     <a
@@ -49,7 +53,7 @@ export function LinkCard({
       {opensInNewTab && (
         <>
           <ArrowUpRight className="link-card-arrow" aria-hidden="true" size={18} strokeWidth={2.4} />
-          <span className="sr-only">(відкриється в новій вкладці)</span>
+          <span className="sr-only">{t("linkCard.opensInNewTabAria")}</span>
         </>
       )}
     </a>

@@ -217,11 +217,11 @@ export default async function MaterialPage({
               ) : !taskHasRenderableContent(row.task) ? null : (
                 <li key={row.task.id} className="scroll-mt-4">
                   {row.task.type === "callout" || row.task.type === "link" || row.task.type === "game" ? (
-                    <ExerciseBlock task={row.task} />
+                    <ExerciseBlock task={row.task} lang={lang} />
                   ) : (
                     <GlassBlock>
                       <div className={EXERCISE_STACK}>
-                        <ExerciseBlock task={row.task} suppressTitle />
+                        <ExerciseBlock task={row.task} suppressTitle lang={lang} />
                       </div>
                     </GlassBlock>
                   )}

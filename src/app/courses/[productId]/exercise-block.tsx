@@ -12,6 +12,8 @@ import { sanitizeConfigForStudent } from "@/lib/exercises/sanitize";
 import type { CalloutConfig, GradeResult } from "@/lib/exercises/types";
 import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import { getTaskBarText } from "@/lib/exercises/task-bar-text";
+import { t } from "@/lib/i18n/t";
+import type { UiLang } from "@/lib/ui/product-lang";
 
 export type ExerciseTask = {
   id: string;
@@ -57,6 +59,11 @@ export function ExerciseBlock({
   isDelf = false,
   suppressTitle = false,
   showPlaque = true,
+  // Сервер-компонент (без useT()) — викликачі, що вже знають ui_lang
+  // продукту (materials/[materialId]/page.tsx, delf-test-tasks.tsx) чи
+  // мають його з useT() (task-group-block.tsx), передають явно; типово
+  // "uk" для старих виклик-сайтів, яких ще не торкнулись.
+  lang = "uk",
 }: {
   task: ExerciseTask;
   // Опційний — для блоків (TaskGroupBlock), щоб рахувати живий підсумок
@@ -85,6 +92,7 @@ export function ExerciseBlock({
   // лишаються НЕзалежно від цього пропса (BlockTabs рендерить їх навіть
   // без plaqueText) — лише сама плашка типу гаситься.
   showPlaque?: boolean;
+  lang?: UiLang;
 }) {
   const config = (task.config ?? {}) as LinkEmbedConfig;
   // Плашка типу (мокап "варіант 4") — рахується з СИРОГО task.config
@@ -152,7 +160,7 @@ export function ExerciseBlock({
           <LinkCard
             href={task.games.embed_url}
             icon={Gamepad2}
-            title="Відкрити гру"
+            title={t(lang, "scene.openGame")}
             subtitle={task.games.provider}
           />
         </div>
@@ -170,7 +178,7 @@ export function ExerciseBlock({
                 download={config.download}
                 icon={meta.icon}
                 title={task.title}
-                subtitle={description || linkTaskDefaultSubtitle(config)}
+                subtitle={description || linkTaskDefaultSubtitle(config, lang)}
               />
             </div>
           );

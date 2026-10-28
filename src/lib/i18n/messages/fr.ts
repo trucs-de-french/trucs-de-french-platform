@@ -222,6 +222,10 @@ export const fr: Record<MessageKey, string> = {
 
   "scene.backToCourse": "← Retour au cours",
   "scene.openGame": "Ouvrir le jeu",
+  "linkCard.opensInNewTabAria": "(s'ouvre dans un nouvel onglet)",
+  "linkCard.ownGame": "Notre jeu ★",
+  "linkCard.genericLink": "Lien",
+  "linkCard.downloadFile": "Télécharger le fichier",
   "scene.hintPointsNotice": "Une réponse avec l'indice (l'ampoule) donne la moitié des points.",
   "scene.audioFallbackNote": "Si l'audio ne s'ouvre pas,",
   "scene.embedFallbackNote": "Si le contenu ne s'ouvre pas,",

@@ -223,6 +223,10 @@ export const uk = {
 
   "scene.backToCourse": "← До курсу",
   "scene.openGame": "Відкрити гру",
+  "linkCard.opensInNewTabAria": "(відкриється в новій вкладці)",
+  "linkCard.ownGame": "Власна гра ★",
+  "linkCard.genericLink": "Посилання",
+  "linkCard.downloadFile": "Завантажити файл",
   "scene.hintPointsNotice": "Відповідь з підказкою (лампочка) дає половину балів.",
   "scene.audioFallbackNote": "Якщо аудіо не відкривається,",
   "scene.embedFallbackNote": "Якщо вміст не відкривається,",

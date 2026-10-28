@@ -697,7 +697,7 @@ export default async function ScenePage({
           не 16px. */}
       <div className={`${onBackground ? "mt-3" : H2_TO_CONTENT} link-card-grid`}>
         {linkList.map((link) => {
-          const meta = resolveSceneLinkMeta(link.platform);
+          const meta = resolveSceneLinkMeta(link.platform, lang);
           return (
             <LinkCard
               key={link.id}
@@ -800,7 +800,7 @@ export default async function ScenePage({
                             download={config.download}
                             icon={meta.icon}
                             title={task.title}
-                            subtitle={description || linkTaskDefaultSubtitle(config)}
+                            subtitle={description || linkTaskDefaultSubtitle(config, lang)}
                           />
                         </div>
                       );

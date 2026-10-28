@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
+import type { UiLang } from "@/lib/ui/product-lang";
 import { TaskGroupBlock, type TaskGroupData } from "./task-group-block";
 import { GlassBlock } from "@/components/glass-block";
 import { H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
@@ -29,9 +30,11 @@ type Row =
 export async function DelfTestTasks({
   productId,
   testNumber,
+  lang = "uk",
 }: {
   productId: string;
   testNumber: number;
+  lang?: UiLang;
 }) {
   const supabase = await createClient();
   const [{ data: tasks }, { data: taskGroups }] = await Promise.all([
@@ -141,11 +144,11 @@ export async function DelfTestTasks({
     return (
       <li key={task.id} className="scroll-mt-4">
         {skipGlass ? (
-          <ExerciseBlock task={task} isDelf />
+          <ExerciseBlock task={task} isDelf lang={lang} />
         ) : (
           <GlassBlock>
             <div className={EXERCISE_STACK}>
-              <ExerciseBlock task={task} isDelf suppressTitle />
+              <ExerciseBlock task={task} isDelf suppressTitle lang={lang} />
             </div>
           </GlassBlock>
         )}

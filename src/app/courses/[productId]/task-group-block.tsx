@@ -275,6 +275,7 @@ export function TaskGroupBlock({
             <div key={task.id} id={`task-${task.id}`} className={`scroll-mt-4 ${EXERCISE_STACK}`}>
               <ExerciseBlock
                 task={task}
+                lang={lang}
                 onResult={onResultCallbacks[task.id]}
                 // Режим "фіксовано" — індивідуальний бал на кожній задачі
                 // безумовно ховається, бо сума окремих балів природно НЕ

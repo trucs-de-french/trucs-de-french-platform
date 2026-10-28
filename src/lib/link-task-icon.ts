@@ -13,6 +13,8 @@ import {
   ExternalLink,
   type LucideIcon,
 } from "lucide-react";
+import { t } from "@/lib/i18n/t";
+import type { UiLang } from "@/lib/ui/product-lang";
 
 // Набір нейтральних лінійних іконок для картки завдання типу "link"
 // (LinkCard) — без логотипів брендів, бо посилання може вести куди завгодно
@@ -149,25 +151,41 @@ export function resolveLinkTaskIcon(
 // усередині контент-блоку (scene-content-block.tsx), щоб LinkCard виглядала
 // однаково в обох місцях. featured — власна HTML-гра ("custom") отримує
 // золотий variant="featured" на LinkCard.
+// wordwall/quizlet — назви сторонніх платформ, НЕ перекладаються в жодній
+// мові інтерфейсу (той самий принцип, що KNOWN_SERVICES нижче). "custom"
+// (власна HTML-гра вчительки) — наш власний текст, не назва платформи,
+// тож перекладається через linkCard.ownGame (uk/fr/en, src/lib/i18n/
+// messages/*.ts); lang за замовчуванням "uk" — викликачі поза студентською
+// сторінкою (адмінський прев'ю, task-config-fields.tsx) не передають lang
+// і лишаються українською, як і раніше.
 const SCENE_LINK_PLATFORM_META: Record<string, { icon: LucideIcon; label: string; featured?: boolean }> = {
   wordwall: { icon: Puzzle, label: "Wordwall" },
   quizlet: { icon: Layers, label: "Quizlet" },
-  custom: { icon: Gamepad2, label: "Власна гра ★", featured: true },
 };
-const DEFAULT_SCENE_LINK_META = { icon: ExternalLink, label: "Посилання" };
+const CUSTOM_PLATFORM_META = { icon: Gamepad2, featured: true };
+const DEFAULT_SCENE_LINK_META = { icon: ExternalLink };
 
-export function resolveSceneLinkMeta(platform: string): { icon: LucideIcon; label: string; featured: boolean } {
-  const meta = SCENE_LINK_PLATFORM_META[platform] ?? DEFAULT_SCENE_LINK_META;
-  return { icon: meta.icon, label: meta.label, featured: Boolean((meta as { featured?: boolean }).featured) };
+export function resolveSceneLinkMeta(
+  platform: string,
+  lang: UiLang = "uk"
+): { icon: LucideIcon; label: string; featured: boolean } {
+  if (platform === "custom") {
+    return { icon: CUSTOM_PLATFORM_META.icon, label: t(lang, "linkCard.ownGame"), featured: true };
+  }
+  const meta = SCENE_LINK_PLATFORM_META[platform];
+  if (meta) return { icon: meta.icon, label: meta.label, featured: false };
+  return { icon: DEFAULT_SCENE_LINK_META.icon, label: t(lang, "linkCard.genericLink"), featured: false };
 }
 
 // Підпис картки, коли немає description: людська назва відомого сервісу
-// (Wordwall/Quizlet/Genially/YouTube), інакше домен посилання
-// (drive.google.com тощо), для download — "Завантажити файл".
-export function linkTaskDefaultSubtitle(params: LinkTaskIconParams): string {
-  if (params.download) return "Завантажити файл";
+// (Wordwall/Quizlet/Genially/YouTube — НЕ перекладається, назви платформ),
+// інакше домен посилання (drive.google.com тощо), для download —
+// перекладений "Завантажити файл"/"Télécharger le fichier"/"Download the
+// file". lang за замовчуванням "uk" — той самий принцип, що вище.
+export function linkTaskDefaultSubtitle(params: LinkTaskIconParams, lang: UiLang = "uk"): string {
+  if (params.download) return t(lang, "linkCard.downloadFile");
   const hostname = hostnameOf(params.url ?? "");
   const known = KNOWN_SERVICES.find((s) => hostname.includes(s.host));
   if (known) return known.label;
-  return hostname || "Посилання";
+  return hostname || t(lang, "linkCard.genericLink");
 }

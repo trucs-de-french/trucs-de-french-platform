@@ -133,7 +133,7 @@ export function SceneContentBlockContent({
       {block.content_type === "links" && (block.links ?? []).length > 0 && (
         <div className="link-card-grid">
           {(block.links ?? []).map((link) => {
-            const meta = resolveSceneLinkMeta(link.platform);
+            const meta = resolveSceneLinkMeta(link.platform, lang);
             return (
               <LinkCard
                 key={link.id}
