@@ -6841,11 +6841,23 @@ button.scene-bar:active .scene-bar-toggle {
   cursor: pointer;
 }
 .dark .word-pool-chip--used {
-  text-decoration-color: rgba(243, 217, 139, 0.6);
+  opacity: 1;
+  color: #a9b2e0;
+  background: rgba(20, 25, 68, 0.6);
+  border: 1px solid rgba(130, 160, 240, 0.3);
+  box-sizing: border-box;
+  text-decoration-color: #d9b765;
+  text-decoration-thickness: 2px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-chip--used {
-    text-decoration-color: rgba(243, 217, 139, 0.6);
+    opacity: 1;
+    color: #a9b2e0;
+    background: rgba(20, 25, 68, 0.6);
+    border: 1px solid rgba(130, 160, 240, 0.3);
+    box-sizing: border-box;
+    text-decoration-color: #d9b765;
+    text-decoration-thickness: 2px;
   }
 }
 
