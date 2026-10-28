@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT } from "@/lib/typography-styles";
-
-const DELF_LEVELS = ["A1", "A2", "B1", "B2"];
+import { LevelUiLangFields } from "../level-ui-lang-fields";
 
 export function CourseTypeFields() {
   const [type, setType] = useState("film");
@@ -25,18 +24,7 @@ export function CourseTypeFields() {
         </select>
       </div>
 
-      {type === "delf" && (
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Рівень DELF</label>
-          <select name="level" required defaultValue="A1" className={`${INPUT_BORDER} px-3 py-2`}>
-            {DELF_LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <LevelUiLangFields type={type} initialLevels={[]} initialUiLang="uk" initialDelfLevel={null} />
     </>
   );
 }

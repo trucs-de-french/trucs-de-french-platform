@@ -20,6 +20,7 @@ import { FileOrLinkField } from "@/components/file-or-link-field";
 import { ConfirmForm } from "@/components/confirm-form";
 import { GoToTestForm } from "./go-to-test-form";
 import { SceneDragList } from "./scene-drag-list";
+import { LevelUiLangFields } from "../level-ui-lang-fields";
 import { ADMIN_PAGE_TITLE, H2_TEXT, BREADCRUMB_LINK, LABEL_TEXT, HINT_TEXT, CARD_GROUP_LABEL } from "@/lib/typography-styles";
 import {
   BUTTON_PRIMARY,
@@ -240,24 +241,12 @@ export default async function AdminCoursePage({
           </div>
         </div>
 
-        {product.type === "delf" && (
-          <div className="flex flex-col gap-1 rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <p className="mb-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
-              Рівень DELF
-            </p>
-            <select
-              name="level"
-              required
-              defaultValue={product.level ?? "A1"}
-              className={`${INPUT_BORDER} px-3 py-2`}
-            >
-              <option value="A1">A1</option>
-              <option value="A2">A2</option>
-              <option value="B1">B1</option>
-              <option value="B2">B2</option>
-            </select>
-          </div>
-        )}
+        <LevelUiLangFields
+          type={product.type}
+          initialLevels={product.levels ?? []}
+          initialUiLang={product.ui_lang ?? "uk"}
+          initialDelfLevel={product.level ?? null}
+        />
       </SaveForm>
 
       {/* Фон сцен курсу — лише для фільмів (сцени, і отже студентська

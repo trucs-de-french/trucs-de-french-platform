@@ -7,6 +7,17 @@ import { createClient } from "@/lib/supabase/server";
 import { PREVIEW_COOKIE, previewCookieOptions } from "@/lib/course-preview";
 import type { ActionState } from "@/lib/action-state";
 import { validateR2ImageUrl, validateHexColor } from "@/lib/validate-r2-url";
+import { CEFR_LEVELS, normalizeUiLang } from "@/lib/ui/product-lang";
+
+// Чіпи рівнів шлють лише значення з CEFR_LEVELS, але formData завжди
+// довільний текст з мережі — фільтруємо, а не довіряємо клієнту (той самий
+// принцип, що вже є для level/type нижче).
+function extractLevels(formData: FormData): string[] {
+  const allowed = new Set<string>(CEFR_LEVELS);
+  return formData
+    .getAll("levels")
+    .filter((v): v is string => typeof v === "string" && allowed.has(v));
+}
 
 // Той самий принцип, що resolveAudioUrl/resolveImageUrl у
 // admin/tasks/actions.ts — cover_image_file_url (FileUpload kind="image")
@@ -29,6 +40,8 @@ export async function createProduct(formData: FormData) {
       // formData) лише коли обрано type="delf" (CourseTypeFields), але
       // перевіряємо ще й тут, а не лише довіряємо клієнту.
       level: type === "delf" ? (formData.get("level") as string) || null : null,
+      levels: extractLevels(formData),
+      ui_lang: normalizeUiLang(formData.get("ui_lang")),
       title: formData.get("title") as string,
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price") || 0),
@@ -62,6 +75,8 @@ export async function updateProduct(
       // level рендериться лише для вже-DELF продуктів — для film-продуктів
       // його просто нема у formData, і сюди пише null (коректно й так).
       level: (formData.get("level") as string) || null,
+      levels: extractLevels(formData),
+      ui_lang: normalizeUiLang(formData.get("ui_lang")),
     })
     .eq("id", productId);
 
