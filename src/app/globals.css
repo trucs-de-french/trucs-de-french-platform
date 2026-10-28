@@ -4904,6 +4904,24 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 12px;
   padding: 14px 18px;
 }
+/* Темна тема: панель "Підсумок завдання" ділить .task-result-card з
+   тоглом "Правильні відповіді" (task-result.tsx) — той лишається на
+   rgba(255,255,255,.06), тут окремо переводимо саме цю картку на
+   --card-bg/--card-border (ту саму лавандово-синю "скляну" картку, що й
+   звичайні картки вправи), щоб панель не виглядала нейтрально-сірою
+   поруч із рештою поверхонь. */
+.dark .task-result-card.task-summary-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .task-result-card.task-summary-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    box-shadow: none;
+  }
+}
 .task-summary-top {
   display: flex;
   align-items: center;
@@ -4942,13 +4960,13 @@ button.scene-bar:active .scene-bar-toggle {
   white-space: nowrap;
 }
 .dark .task-summary-total-pill {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-summary-total-pill {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
     color: #f6dc8e;
   }
@@ -5022,7 +5040,7 @@ button.scene-bar:active .scene-bar-toggle {
   color: #f6dc8e;
 }
 .dark .task-summary-tile--pending {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
   color: rgba(246, 220, 139, 0.6);
 }
@@ -5053,7 +5071,7 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f6dc8e;
   }
   :root:not(.light) .task-summary-tile--pending {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
     color: rgba(246, 220, 139, 0.6);
   }
