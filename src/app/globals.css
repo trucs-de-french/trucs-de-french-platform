@@ -4705,6 +4705,48 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Tableau à compléter only, dark theme — the given/prefilled cell (the one
+   WITHOUT .task-result-answer-chip--emphasis) in each row. Scoped to
+   .task-result-answer-row, which only table-fill.tsx renders, so this does
+   not reach matching.tsx's .task-result-pair-rows chips. box-sizing:
+   border-box keeps the new 1px border from growing the cell beyond what
+   .task-result-answer-chip--emphasis's existing 1px border already sizes
+   the row to. */
+.dark .task-result-answer-row .task-result-pair-chip--fr:not(.task-result-answer-chip--emphasis),
+.dark .task-result-answer-row .task-result-pair-chip--uk:not(.task-result-answer-chip--emphasis) {
+  box-sizing: border-box;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+.dark .task-result-answer-row .task-result-pair-chip--uk:not(.task-result-answer-chip--emphasis) {
+  color: #eef0ff;
+  font-weight: 500;
+}
+.dark .task-result-answer-row .task-result-pair-arrow {
+  stroke: #d9b765;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light)
+    .task-result-answer-row
+    .task-result-pair-chip--fr:not(.task-result-answer-chip--emphasis),
+  :root:not(.light)
+    .task-result-answer-row
+    .task-result-pair-chip--uk:not(.task-result-answer-chip--emphasis) {
+    box-sizing: border-box;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+  }
+  :root:not(.light)
+    .task-result-answer-row
+    .task-result-pair-chip--uk:not(.task-result-answer-chip--emphasis) {
+    color: #eef0ff;
+    font-weight: 500;
+  }
+  :root:not(.light) .task-result-answer-row .task-result-pair-arrow {
+    stroke: #d9b765;
+  }
+}
+
 /* Плитки "Правильні відповіді" для gap-типів (TaskResultGapRows,
    task-result.tsx: fill_blank/letter_gaps/drag_drop) — та сама родина
    плиток, що .task-result-answer-row (номер + плитка, 14px), але ОДНА
