@@ -4450,6 +4450,15 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Темна тема — усі 4 родини рядків "Правильні відповіді" (pair/answer/
+   gap/image) раніше мали власний напів-прозорий rgba(255,255,255,.04) фон,
+   темніший за решту відповідь-поверхонь застосунку; тепер той самий
+   --dark-surface-fill (#141944), що .exercise-field/.chrono-number-slot--
+   filled/image-match-slot--empty тощо — одна точка правди для "поверхні
+   відповіді". Рамка/радіус/паддінг/текст/підсвітка вставленого слова
+   (.task-result-gap-word) НЕ торкнуті. error-review-block.tsx (Correction
+   des erreurs) на окремому --error-review-card-bg, цих класів не
+   використовує — не торкнуто. */
 .task-result-pair-row {
   display: grid;
   grid-template-columns: 1fr 22px 1fr;
@@ -4461,12 +4470,12 @@ button.scene-bar:active .scene-bar-toggle {
   border: 1px solid var(--gold-border-50);
 }
 .dark .task-result-pair-row {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-pair-row {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
   }
 }
@@ -4576,12 +4585,12 @@ button.scene-bar:active .scene-bar-toggle {
   height: 14px;
 }
 .dark .task-result-answer-row {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-answer-row {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
   }
 }
@@ -4668,12 +4677,12 @@ button.scene-bar:active .scene-bar-toggle {
   max-width: 720px;
 }
 .dark .task-result-gap-row {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-gap-row {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
   }
 }
@@ -4745,12 +4754,12 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
 }
 .dark .task-result-image-row {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-25);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-image-row {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-25);
   }
 }
