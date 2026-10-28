@@ -2424,6 +2424,19 @@ button, input, textarea, select, label, nav, aside {
   font-size: 10px;
   font-weight: 700;
 }
+/* Темна тема — та сама тонка золота рамка (1px, var(--gold-border)), що
+   .item-number-badge, узгоджена "кругла" стилістика бейджів-номерів;
+   box-sizing: border-box — щоб рамка не збільшувала висоту/ширину (22px). */
+.dark .chrono-order-note-badge {
+  box-sizing: border-box;
+  border: 1px solid var(--gold-border);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-order-note-badge {
+    box-sizing: border-box;
+    border: 1px solid var(--gold-border);
+  }
+}
 
 /* Мокап "варіант 2" — золота плитка клітинки кросворду (crossword.tsx):
    видима форма — ОКРЕМИЙ абсолютно позиційований шар (top/right/bottom/
@@ -6005,18 +6018,22 @@ button.scene-bar:active .scene-bar-toggle {
 .item-number-badge--incorrect {
   background: #dc2626;
 }
-/* Темна тема — крихкий світлий внутрішній контур (inset) + вузьке м'яке
-   золоте сяйво на індиго-градієнтному бейджі-номері, щоб кружок
-   відривався від темної панелі. Без border — прозора рамка над градієнтом
-   давала легкий муарний/розмитий край; inset box-shadow дає чіткий
-   контур без зміни розміру кружка (box-sizing не потрібен). Виключено зі
-   станів --correct/--incorrect (зелений/червоний після перевірки). */
+/* Темна тема — тонка суцільна золота рамка (1px, var(--gold-border) =
+   #d9b765) замість колишнього золотого сяйва (box-shadow), яке прибрано;
+   світлий внутрішній контур (inset, не золотий) лишається. box-sizing:
+   border-box — щоб нова рамка не збільшувала зовнішній діаметр кружка
+   (26px лишається 26px). Виключено зі станів --correct/--incorrect
+   (зелений/червоний після перевірки). */
 .dark .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+  box-sizing: border-box;
+  border: 1px solid var(--gold-border);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .item-number-badge:not(.item-number-badge--correct):not(.item-number-badge--incorrect) {
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 5px rgba(217, 183, 101, 0.22);
+    box-sizing: border-box;
+    border: 1px solid var(--gold-border);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
 }
 /* "Correction des erreurs" (error-review-block.tsx) — ЛИШЕ кнопка
