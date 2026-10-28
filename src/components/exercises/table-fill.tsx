@@ -27,7 +27,16 @@ function cellKey(rowId: string, side: "left" | "right") {
 // його нема в конфізі — тут другий шар захисту саме на випадок конфіга, що
 // оминув sanitize (напр. застарілий кеш/бандл), щоб рендер рядка заголовка
 // таблиці не падав на columnLabels[0] з undefined.
-const DEFAULT_COLUMN_LABELS: [string, string] = ["Французька", "Переклад"];
+// Той самий сентінел, що resolveTableFillColumnLabels (sanitize.ts) заповнює
+// на сервері, коли вчителька НЕ вказала columnLabels (обов'язкове поле типу,
+// але старі/масово-імпортовані вправи могли зберегтись без нього) — сервер
+// віддає завжди ЦЕ конкретне uk-значення як дефолт, незалежно від ui_lang
+// продукту (сам sanitize.ts лишається без lang: lang — суто рендер-поняття,
+// відоме лише тут, клієнту). Тому лише ТУТ, при точному збігу з цим
+// сентінелом, підписи колонок стають lang-aware (pool.*-подібний принцип, що
+// й word-pool labels) — реальні вчительські підписи (що завжди відрізняються
+// від цього рядка хоч одним словом) завжди лишаються як є, без перекладу.
+const DEFAULT_COLUMN_LABELS_UK: [string, string] = ["Французька", "Переклад"];
 
 // Рядків довше 10 — розбиваємо навпіл на дві колонки, кожна зі своїм
 // рядком підписів колонок (лише щоб довга таблиця не розтягувалась на всю
@@ -161,7 +170,12 @@ export function TableFillExercise({
     return hiddenCellsOf(rows).filter((c) => !answers[cellKey(c.rowId, c.side)]?.trim()).length;
   }
   const diacritics = useDiacriticsPopup<string>();
-  const columnLabels = config.columnLabels ?? DEFAULT_COLUMN_LABELS;
+  const isDefaultColumnLabels =
+    !config.columnLabels ||
+    (config.columnLabels[0] === DEFAULT_COLUMN_LABELS_UK[0] && config.columnLabels[1] === DEFAULT_COLUMN_LABELS_UK[1]);
+  const columnLabels: [string, string] = isDefaultColumnLabels
+    ? [tt("tablefill.columnFrench"), tt("tablefill.columnTranslation")]
+    : config.columnLabels;
 
   // ≤EXERCISE_BLOCK_SIZE рядків (≤10) — той самий принцип, що matching/
   // letter-gaps: одна гілка, окрема від блоків.
@@ -706,7 +720,7 @@ export function TableFillExercise({
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null
-            : hintExplanationText("table_fill")
+            : hintExplanationText("table_fill", lang)
         }
       />
 

@@ -215,7 +215,7 @@ export function ReorderExercise({
   hidePoints?: boolean;
   practice?: ReorderPracticeProps;
 }) {
-  const { t: tt } = useT();
+  const { t: tt, lang } = useT();
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
@@ -540,7 +540,7 @@ export function ReorderExercise({
         isBlockChecked={(i) => i in blockResults}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.reorder.subInstruction}
-        hintText={config.sequences.some((s) => s.hint) ? hintExplanationText("reorder") : null}
+        hintText={config.sequences.some((s) => s.hint) ? hintExplanationText("reorder", lang) : null}
       />
 
       {!useBlocks ? (

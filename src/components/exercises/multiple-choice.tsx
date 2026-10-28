@@ -958,7 +958,7 @@ export function MultipleChoiceExercise({
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction}
         hintText={
-          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice") : null
+          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice", lang) : null
         }
       />
 

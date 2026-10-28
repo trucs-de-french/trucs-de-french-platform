@@ -1235,7 +1235,7 @@ export function WordSearchExercise({
   }, [aggregateResult, onResult]);
 
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
-  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search");
+  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", lang);
 
   const pointsText =
     !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible

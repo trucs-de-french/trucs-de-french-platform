@@ -1210,7 +1210,7 @@ export function CrosswordExercise({
         pointsText={pointsText}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
         subInstructionText={config.subInstructions ?? DEFAULT_INSTRUCTIONS.crossword.subInstruction}
-        hintText={hintExplanationHidden ? null : hintExplanationText("crossword")}
+        hintText={hintExplanationHidden ? null : hintExplanationText("crossword", lang)}
         rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
       />
 

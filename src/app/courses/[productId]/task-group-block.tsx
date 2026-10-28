@@ -7,7 +7,8 @@ import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player"
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { isExerciseType } from "@/components/exercises/exercise-card";
-import { formatPoints } from "@/lib/exercises/format-points";
+import { formatPointsLocalized } from "@/lib/exercises/format-points";
+import { useT } from "@/lib/i18n/context";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
@@ -85,6 +86,7 @@ export function TaskGroupBlock({
   // той баг, що виправляє ця задача).
   extraSharedContent?: ReactNode;
 }) {
+  const { lang } = useT();
   const [results, setResults] = useState<Record<string, GradeResult>>({});
 
   // Один стабільний onResult-колбек НА КОЖЕН task.id, мемоізований через
@@ -299,7 +301,7 @@ export function TaskGroupBlock({
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {formatPoints(pointsEarned, pointsPossible)}
+            {formatPointsLocalized(pointsEarned, pointsPossible, lang)}
           </span>
         </p>
       )}
@@ -308,7 +310,7 @@ export function TaskGroupBlock({
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {formatPoints(flatEarned, flatPoints)}
+            {formatPointsLocalized(flatEarned, flatPoints, lang)}
           </span>
         </p>
       )}

@@ -1,19 +1,22 @@
+import type { MessageKey } from "@/lib/i18n/messages/uk";
+
 // Тексти пілюлі-підказки (hint-explanation.tsx, рендериться у короткій
 // пілюлі TaskPanelHeader/HintPill, мокап "варіант 1") — одне місце для всіх
 // типів із підказками, щоб текст не розходився між компонентами. Ключ —
-// тип задачі. Короткі (без "Лампочка..." — сама пілюля вже показує
-// лампочку й жирний лейбл "Підказка:" перед цим текстом), під ~45 символів.
-export const HINT_EXPLANATIONS: Partial<Record<string, string>> = {
-  word_search: "підсвітиться перша літера слова",
-  crossword: "відкриється наступна літера слова",
-  letter_gaps: "відкриється наступна літера",
-  letter_rearrangement: "літера стане на своє місце",
-  fill_blank: "відкриється перша літера поля",
-  table_fill: "відкриється перша літера поля",
-  word_choice: "відповідь українською",
-  chronological_order: "підказка до всього завдання",
-  multiple_choice: "підказка до запитання",
-  reorder: "переклад речення українською",
+// тип задачі, значення — ключ словника i18n (src/lib/i18n/messages/*.ts,
+// префікс "hintExplanation."), не сам текст: переклад тепер лежить у
+// словниках (uk — джерело правди, та сама формулювання, що тут були раніше).
+export const HINT_EXPLANATION_KEYS: Partial<Record<string, MessageKey>> = {
+  word_search: "hintExplanation.word_search",
+  crossword: "hintExplanation.crossword",
+  letter_gaps: "hintExplanation.letter_gaps",
+  letter_rearrangement: "hintExplanation.letter_rearrangement",
+  fill_blank: "hintExplanation.fill_blank",
+  table_fill: "hintExplanation.table_fill",
+  word_choice: "hintExplanation.word_choice",
+  chronological_order: "hintExplanation.chronological_order",
+  multiple_choice: "hintExplanation.multiple_choice",
+  reorder: "hintExplanation.reorder",
 };
 
 // Пояснення "підказка дає половину балів" тепер одна спільна смужка під

@@ -272,7 +272,7 @@ export function FillBlankExercise({
         hintText={
           isDelf || hasWordBank || !!result || isPractice
             ? null
-            : hintExplanationText("fill_blank")
+            : hintExplanationText("fill_blank", lang)
         }
       />
 

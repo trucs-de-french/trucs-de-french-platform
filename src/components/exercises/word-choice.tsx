@@ -618,7 +618,7 @@ export function WordChoiceExercise({
         subInstructionText={config.subInstructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction}
         hintText={
           config.sentences.some((s) => s.hint)
-            ? hintExplanationText("word_choice")
+            ? hintExplanationText("word_choice", lang)
             : null
         }
       />

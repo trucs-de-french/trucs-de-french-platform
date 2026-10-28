@@ -730,7 +730,7 @@ export function LetterGapsExercise({
     ? null
     : (useBlocks ? allBlocksChecked : !!single.result)
       ? null
-      : hintExplanationText("letter_gaps");
+      : hintExplanationText("letter_gaps", lang);
 
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище

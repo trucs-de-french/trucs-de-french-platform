@@ -524,7 +524,7 @@ export function LetterRearrangementExercise({
         hintText={
           isDelf || (useBlocks ? allBlocksChecked : !!single.result)
             ? null
-            : hintExplanationText("letter_rearrangement")
+            : hintExplanationText("letter_rearrangement", lang)
         }
       />
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { formatPointsLocalized, formatPointsCountLocalized } from "@/lib/exercises/format-points";
+import { formatPointsLocalized, formatPointsCountLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
@@ -402,10 +402,13 @@ export function RowScorePill({
   possible: string | number;
   full: boolean;
 }) {
+  const { lang } = useT();
   if (!shouldShowRowScorePill(possible)) return null;
+  const a = typeof earned === "number" ? formatScoreLocalized(earned, lang) : earned;
+  const b = typeof possible === "number" ? formatScoreLocalized(possible, lang) : possible;
   return (
     <span className={`task-result-row-pill ${full ? "task-result-row-pill--correct" : "task-result-row-pill--wrong"}`}>
-      {earned}/{possible}
+      {a}/{b}
     </span>
   );
 }
@@ -471,10 +474,12 @@ export function RowPointsTab({
     return <span className="row-points-tab">{formatPointsCountLocalized(n, lang)}</span>;
   }
   const status = rowPointsTabStatus(earned, possible);
+  const a = typeof earned === "number" ? formatScoreLocalized(earned, lang) : earned;
+  const b = typeof possible === "number" ? formatScoreLocalized(possible, lang) : possible;
   return (
     <span className={`row-points-tab row-points-tab--${status}`}>
       <RowPointsTabIcon status={status} />
-      {t("common.outOf", { a: earned, b: possible })}
+      {t("common.outOf", { a, b })}
     </span>
   );
 }
