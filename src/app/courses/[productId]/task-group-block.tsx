@@ -7,7 +7,7 @@ import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player"
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
 import { isExerciseType } from "@/components/exercises/exercise-card";
-import { pluralizePoints } from "@/lib/pluralize-points";
+import { formatPoints } from "@/lib/exercises/format-points";
 import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
@@ -299,7 +299,7 @@ export function TaskGroupBlock({
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {pointsEarned} з {pointsPossible} {pluralizePoints(pointsPossible)}
+            {formatPoints(pointsEarned, pointsPossible)}
           </span>
         </p>
       )}
@@ -308,7 +308,7 @@ export function TaskGroupBlock({
         <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
           Підсумок блоку:{" "}
           <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {flatEarned} з {flatPoints} {pluralizePoints(flatPoints)}
+            {formatPoints(flatEarned, flatPoints)}
           </span>
         </p>
       )}

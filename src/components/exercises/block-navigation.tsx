@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { formatPoints } from "@/lib/exercises/format-points";
+import { formatPoints, formatScore } from "@/lib/exercises/format-points";
 
 function ChevronIcon({
   direction,
@@ -538,7 +538,7 @@ function TaskSummaryCard({
                 isActive ? "task-summary-tile--active" : ""
               }`}
             >
-              Блок {i + 1} <span className="task-summary-tile-value">{earned}/{possible}</span>
+              Блок {i + 1} <span className="task-summary-tile-value">{formatScore(earned)}/{formatScore(possible)}</span>
               {full ? " ✓" : ""}
             </button>
           );

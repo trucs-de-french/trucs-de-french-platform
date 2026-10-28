@@ -15,13 +15,23 @@ function genitivePointsWord(possible: number): "бала" | "балів" {
   return "балів";
 }
 
+// Форматування ЛИШЕ для показу (не впливає на обчислення/порівняння/БД):
+// округлення до 1 знака після коми, крапка (не кома — решта сайту на
+// крапках), "хвіст" ".0" відкидається. Джерело довгих хвостів — сума
+// дробових pointsEarned/pointsPossible по задачах блоку (float-арифметика),
+// не округлена до цього моменту навмисно.
+export function formatScore(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 export function formatPoints(earned: number, possible: number): string {
-  return `${earned} з ${possible} ${genitivePointsWord(possible)}`;
+  return `${formatScore(earned)} з ${formatScore(possible)} ${genitivePointsWord(possible)}`;
 }
 
 // Рахункова форма без "з" (standalone count) — та сама форма, що вже й досі
 // складають виклик-сайти вручну через pluralizePoints (`${n} ${pluralizePoints(n)}`);
 // тут лише для єдиної точки виклику в новому TaskResult/RowScorePill.
 export function formatPointsCount(n: number): string {
-  return `${n} ${pluralizePoints(n)}`;
+  return `${formatScore(n)} ${pluralizePoints(n)}`;
 }
