@@ -3996,14 +3996,14 @@ button.scene-bar:active .scene-bar-toggle {
   overflow-wrap: anywhere;
 }
 .dark .task-result-hint-summary {
-  border-color: rgba(246, 220, 142, 0.45);
-  background: rgba(246, 220, 142, 0.12);
+  border-color: var(--gold-border-dark-45);
+  background: var(--card-bg);
   color: #f6dc8e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-hint-summary {
-    border-color: rgba(246, 220, 142, 0.45);
-    background: rgba(246, 220, 142, 0.12);
+    border-color: var(--gold-border-dark-45);
+    background: var(--card-bg);
     color: #f6dc8e;
   }
 }
@@ -4168,8 +4168,8 @@ button.scene-bar:active .scene-bar-toggle {
   color: #ffb4ae;
 }
 .dark .task-result-chip--warn {
-  background: rgba(246, 220, 139, 0.12);
-  border-color: rgba(246, 220, 139, 0.4);
+  background: var(--dark-surface-fill);
+  border-color: var(--gold-border-dark);
   color: #f6dc8e;
 }
 .dark .task-result-chip--success {
@@ -4184,8 +4184,8 @@ button.scene-bar:active .scene-bar-toggle {
     color: #ffb4ae;
   }
   :root:not(.light) .task-result-chip--warn {
-    background: rgba(246, 220, 139, 0.12);
-    border-color: rgba(246, 220, 139, 0.4);
+    background: var(--dark-surface-fill);
+    border-color: var(--gold-border-dark);
     color: #f6dc8e;
   }
   :root:not(.light) .task-result-chip--success {
