@@ -422,6 +422,67 @@ export async function addLink(
   return { ok: true };
 }
 
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// Редагування вже збереженого посилання (LinkDragList, link-drag-list.tsx)
+// — раніше для scene_links існували лише addLink/deleteLink/reorderLinks,
+// тож мітку/URL можна було задати лише ОДИН РАЗ, при створенні. Викликається
+// НАПРЯМУ з клієнта (не через <form>, той самий принцип, що reorderLinks
+// вище) — рядок сам керує своїм станом (редагується/збережено/помилка),
+// жодної навігації. Торкається лише label/url — platform, order_index,
+// scene_id, content_block_id лишаються незмінними: тип посилання й позицію
+// міняють видаленням/додаванням нового, не цією дією.
+export async function updateLink(
+  linkId: string,
+  patch: { label?: string; url?: string }
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  const { data: link } = await supabase
+    .from("scene_links")
+    .select("scene_id, platform, scenes(product_id)")
+    .eq("id", linkId)
+    .single<{ scene_id: string; platform: string; scenes: { product_id: string } | null }>();
+  if (!link) return { ok: false, error: "Посилання не знайдено" };
+
+  const updates: { label?: string | null; url?: string } = {};
+
+  if (patch.label !== undefined) {
+    const trimmed = patch.label.trim().slice(0, 120);
+    updates.label = trimmed || null;
+  }
+
+  // "custom" — власна HTML-гра (R2-файл) — URL сюди завантажується через
+  // FileUpload при створенні (add-link-form.tsx), не рядком, що вчителька
+  // друкує сама; тут свідомо не редагується, навіть якщо formData його
+  // приносить (переданий url просто ігнорується для цієї платформи).
+  if (patch.url !== undefined && link.platform !== "custom") {
+    const url = patch.url.trim();
+    if (!isHttpUrl(url)) return { ok: false, error: "URL має бути дійсним http(s) посиланням" };
+    updates.url = url;
+  }
+
+  if (Object.keys(updates).length === 0) return { ok: true };
+
+  const { error } = await supabase.from("scene_links").update(updates).eq("id", linkId);
+  if (error) return { ok: false, error: error.message };
+
+  // Той самий принцип, що addLink — викликається без навігації (рядок сам
+  // лишається на місці), revalidatePath оновлює серверні дані сторінки
+  // (напр. якщо десь інде теж читається scene_links) без redirect().
+  if (link.scenes?.product_id) {
+    revalidatePath(`/admin/courses/${link.scenes.product_id}/scenes/${link.scene_id}`);
+  }
+  return { ok: true };
+}
+
 export async function deleteLink(linkId: string) {
   const supabase = await createClient();
   const { data: link } = await supabase
