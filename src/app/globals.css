@@ -4163,35 +4163,35 @@ button.scene-bar:active .scene-bar-toggle {
   color: #1f7a3d;
 }
 .dark .task-result-chip--error {
-  background: rgba(255, 120, 120, 0.12);
-  border-color: rgba(255, 140, 140, 0.4);
-  color: #ffb4ae;
+  background: var(--dark-surface-fill);
+  border-color: #e8788a;
+  color: #ffa3b1;
 }
 .dark .task-result-chip--warn {
   background: var(--dark-surface-fill);
-  border-color: var(--gold-border-dark);
-  color: #f6dc8e;
+  border-color: #d9b765;
+  color: #f3d98b;
 }
 .dark .task-result-chip--success {
-  background: rgba(120, 220, 150, 0.12);
-  border-color: rgba(130, 220, 160, 0.4);
-  color: #9fe3b4;
+  background: var(--dark-surface-fill);
+  border-color: #4fbf86;
+  color: #8ee3b4;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .task-result-chip--error {
-    background: rgba(255, 120, 120, 0.12);
-    border-color: rgba(255, 140, 140, 0.4);
-    color: #ffb4ae;
+    background: var(--dark-surface-fill);
+    border-color: #e8788a;
+    color: #ffa3b1;
   }
   :root:not(.light) .task-result-chip--warn {
     background: var(--dark-surface-fill);
-    border-color: var(--gold-border-dark);
-    color: #f6dc8e;
+    border-color: #d9b765;
+    color: #f3d98b;
   }
   :root:not(.light) .task-result-chip--success {
-    background: rgba(120, 220, 150, 0.12);
-    border-color: rgba(130, 220, 160, 0.4);
-    color: #9fe3b4;
+    background: var(--dark-surface-fill);
+    border-color: #4fbf86;
+    color: #8ee3b4;
   }
 }
 
