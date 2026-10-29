@@ -54,6 +54,7 @@ export function TaskInstructionLine({ fr, uk }: { fr?: string | null; uk?: strin
 
 export function TaskPanelHeader({
   pointsText,
+  verdict,
   instructionText,
   subInstructionText,
   hintText,
@@ -76,6 +77,13 @@ export function TaskPanelHeader({
   // перевірки), той самий принцип, що й раніше. Відсутній — пілюля не
   // рендериться.
   pointsText?: string;
+  // Статус-чіп ("À revoir"/"Presque"/"Bravo !" — ті самі STATUS_LABEL_*/
+  // statusTone, що TaskResult, task-result.tsx) — рендериться одразу
+  // після пілюлі балів, лише коли вправу (чи поточний блок) уже
+  // перевірено (викликач передає undefined до перевірки). "Єдина пілюля
+  // балів усюди" (ця задача): до перевірки pointsText — завжди
+  // загальний бал; після перевірки — "earned sur possible" + цей чіп.
+  verdict?: { label: string; title: string; tone: "success" | "warn" | "error" };
   // Санітизується тут же (як і раніше в InstructionsText) — сире HTML з
   // БД, не довіряти без санітизації навіть повторно.
   instructionText?: string;
@@ -96,7 +104,7 @@ export function TaskPanelHeader({
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
-  const showPillsRow = !!pointsText || !!hintText || !!counter || !!rightContent;
+  const showPillsRow = !!pointsText || !!verdict || !!hintText || !!counter || !!rightContent;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -107,6 +115,16 @@ export function TaskPanelHeader({
         <div className="task-panel-pills-row">
           <div className="task-panel-pills-left">
             {pointsText && <PointsPill text={pointsText} />}
+            {verdict && (
+              <span
+                className={`task-result-chip task-result-chip--${verdict.tone}`}
+                role="status"
+                title={verdict.title}
+                aria-label={verdict.title}
+              >
+                {verdict.label}
+              </span>
+            )}
             {counter && <CounterPill current={counter.current} total={counter.total} />}
             {hintText && <HintPill text={hintText} />}
           </div>
