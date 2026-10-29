@@ -13,7 +13,6 @@ import type {
 } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -24,6 +23,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD } from "@/lib/exercises/word-list-layout";
 import { TaskResult } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -45,7 +45,6 @@ export function LetterRearrangementExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -408,6 +407,7 @@ export function LetterRearrangementExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
+              hideSummaryRow={!hidePoints}
               hintSummary={{
                 hintCount: blockDetail?.words.filter((w) => w.hintUsed).length ?? 0,
                 reducesPoints: config.hintsReducePoints,
@@ -484,10 +484,18 @@ export function LetterRearrangementExercise({
     );
   }
 
-  const pointsText =
-    !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
-      ? formatPointsCountLocalized(config.points, lang)
-      : undefined;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // загальний бал вправи; після перевірки активного блоку/вправи — earned
+  // sur possible ЦЬОГО блоку (ті самі дані, що показує TaskResult під
+  // блоком) + статус-чіп.
+  const activeBlockOrSingleResult = useBlocks ? blockResults[activeBlock] : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? config.points,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockResult = blockResults[activeBlock];
@@ -511,14 +519,14 @@ export function LetterRearrangementExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsText}
+        pointsText={headerPoints?.pointsText}
       />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction,
@@ -566,6 +574,7 @@ export function LetterRearrangementExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: singleDetail?.words.filter((w) => w.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,

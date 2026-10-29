@@ -22,6 +22,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
@@ -239,6 +240,13 @@ export function ListeningExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
+        {...(hidePoints
+          ? {}
+          : headerPointsState(
+              result?.pointsPossible ?? config.questions.reduce((sum, q) => sum + q.points, 0),
+              result?.pointsEarned,
+              lang
+            ))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.listening.subInstruction,
@@ -326,7 +334,12 @@ export function ListeningExercise({
             )}
           </div>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
+          />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

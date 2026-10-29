@@ -16,6 +16,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -897,6 +898,7 @@ export function MultipleChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockItems.length}
                 hintSummary={{
@@ -948,6 +950,21 @@ export function MultipleChoiceExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockItems?.filter((it) => (selections[it.id] ?? []).length === 0).length ?? 0;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку/вправи (сума items[].points); після перевірки
+  // активного блоку/вправи — earned sur possible + статус-чіп.
+  const currentBlockPoints = (useBlocks ? activeBlockItems ?? [] : config.items).reduce(
+    (sum, it) => sum + it.points,
+    0
+  );
+  const activeBlockOrSingleResult = useBlocks ? activeBlockResult : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentBlockPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -973,6 +990,7 @@ export function MultipleChoiceExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.multiple_choice.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.multiple_choice.subInstruction,
@@ -1018,6 +1036,7 @@ export function MultipleChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={config.items.length}
                 hintSummary={{

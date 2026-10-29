@@ -9,13 +9,13 @@ import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { ANSWER_CHIP_BASE, ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultImageWordRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { dragPoolLabel, poolRemainingLabel } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
@@ -55,7 +55,6 @@ export function ImageMatchExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   practice,
@@ -244,7 +243,7 @@ export function ImageMatchExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(totalPoints, lang) : undefined}
+        {...(hidePoints ? {} : headerPointsState(totalPoints, result ? result.pointsEarned : undefined, lang))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.image_match.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.image_match.subInstruction,
@@ -377,6 +376,7 @@ export function ImageMatchExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? detail.items.length : undefined}
           >

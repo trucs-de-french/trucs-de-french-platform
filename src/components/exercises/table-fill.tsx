@@ -13,6 +13,7 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultAnswerRows, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -661,6 +662,7 @@ export function TableFillExercise({
           {blockResult && (
             <TaskResult
               correct={blockResult.correct}
+              hideSummaryRow={!hidePoints}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
               toggleTitle={tt("panel.correctAnswers")}
@@ -711,6 +713,22 @@ export function TableFillExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockRows = rowBlocks[activeBlock] ?? [];
   const activeBlockUnanswered = unfilledCellCount(activeBlockRows);
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку/вправи (сума points рядків із прихованою
+  // клітинкою — лише вони зараховуються, той самий фільтр, що
+  // hiddenRows вище); після перевірки активного блоку/вправи — earned
+  // sur possible + статус-чіп.
+  const currentBlockPoints = (useBlocks ? activeBlockRows : config.rows)
+    .filter((r) => r.left === null || r.right === null)
+    .reduce((sum, r) => sum + r.points, 0);
+  const activeBlockOrSingleResult = useBlocks ? activeBlockResult : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentBlockPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -736,6 +754,7 @@ export function TableFillExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.table_fill.subInstruction,
@@ -824,6 +843,7 @@ export function TableFillExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={tt("panel.correctAnswers")}
                 toggleCount={config.rows.length}
                 hintSummary={{

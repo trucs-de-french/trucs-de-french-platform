@@ -10,7 +10,6 @@ import {
   FILL_BLANK_WORD_BANK_TRANSLATION_EN,
   taskTranslationLine,
 } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { usePracticeCheck } from "./use-practice-check";
@@ -21,6 +20,7 @@ import { BlockTabs } from "./block-navigation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   crossOutPoolLabel,
@@ -95,7 +95,6 @@ export function FillBlankExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -273,7 +272,9 @@ export function FillBlankExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(config.points, lang) : undefined}
+        {...(hidePoints
+          ? {}
+          : headerPointsState(config.points, result ? result.pointsEarned : undefined, lang))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: defaultSubInstruction,
@@ -483,6 +484,7 @@ export function FillBlankExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
+              hideSummaryRow={!hidePoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={gapRows?.length}
               hintSummary={{ hintCount: hintUsedCount, reducesPoints: config.hintsReducePoints }}

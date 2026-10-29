@@ -13,7 +13,6 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
@@ -29,6 +28,7 @@ import { HintBulb, type HintBulbState } from "./hint-bulb";
 import { resolveClueView } from "./resolve-clue-view";
 import { sortByTextLength } from "@/lib/exercises/clue-text-groups";
 import { TaskResult, ChevronIcon } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { useT } from "@/lib/i18n/context";
@@ -347,6 +347,7 @@ function WordSearchBlockView({
   blockCount,
   activeBlock,
   onChangeBlock,
+  hideSummaryRow,
 }: {
   taskId: string;
   block: WordSearchPublicBlock;
@@ -354,6 +355,9 @@ function WordSearchBlockView({
   active: boolean;
   isDelf?: boolean;
   hintsReducePoints: boolean;
+  // Пілюля балів+статус-чіп тепер у заголовку (TaskPanelHeader,
+  // WordSearchExercise) — той самий `!hidePoints`, що решта типів.
+  hideSummaryRow?: boolean;
   // ЕТАП J — спільні для ВСІХ блоків вправи (рахує/тримає WordSearchExercise):
   // cols — max(gridSize) по всіх блоках (однакова клітинка незалежно від
   // того, який блок менший), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -1031,7 +1035,7 @@ function WordSearchBlockView({
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
             {result && !practiceMode && (
-              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hideSummaryRow={hideSummaryRow} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
               <BlockNavFooter
@@ -1080,7 +1084,7 @@ function WordSearchBlockView({
           </div>
         ) : (
           !practiceMode && (
-            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hideSummaryRow={hideSummaryRow} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
           )
         )}
         {/* Практика "Повторити без балів" — лише коли блок уже фінальний
@@ -1168,7 +1172,6 @@ export function WordSearchExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -1237,10 +1240,18 @@ export function WordSearchExercise({
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
   const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", lang);
 
-  const pointsText =
-    !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible
-      ? formatPointsCountLocalized(config.points, lang)
-      : undefined;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // загальний бал вправи; після перевірки активного блоку/вправи — earned
+  // sur possible ЦЬОГО блоку (ті самі дані, що показує TaskResult під
+  // блоком) + статус-чіп.
+  const activeBlockOrSingleResult = useBlocks ? blockResults[activeBlock] : singleResult;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? config.points,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
 
   return (
     <div className={EXERCISE_STACK}>
@@ -1251,7 +1262,7 @@ export function WordSearchExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={pointsText}
+        pointsText={headerPoints?.pointsText}
       />
       <TaskPanelHeader
         blockCount={blockCount}
@@ -1259,7 +1270,7 @@ export function WordSearchExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.word_search.subInstruction,
@@ -1279,6 +1290,7 @@ export function WordSearchExercise({
           cols={cols}
           zoom={zoom}
           onResult={setSingleResult}
+          hideSummaryRow={!hidePoints}
         />
       ) : (
         <BlockNavigation
@@ -1314,6 +1326,7 @@ export function WordSearchExercise({
                 blockCount={blockCount}
                 activeBlock={activeBlock}
                 onChangeBlock={setActiveBlock}
+                hideSummaryRow={!hidePoints}
               />
             </div>
           ))}

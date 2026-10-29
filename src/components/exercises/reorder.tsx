@@ -17,6 +17,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
@@ -433,6 +434,7 @@ export function ReorderExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: blockDetail?.sequences.filter((s) => s.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,
@@ -534,6 +536,21 @@ export function ReorderExercise({
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockResult = blockResults[activeBlock];
   const activeBlockPending = !!blockPending[activeBlock];
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку/вправи (сума sequences[].points); після перевірки
+  // активного блоку/вправи — earned sur possible + статус-чіп.
+  const currentBlockPoints = (useBlocks ? sequenceBlocks[activeBlock] ?? [] : config.sequences).reduce(
+    (sum, s) => sum + s.points,
+    0
+  );
+  const activeBlockOrSingleResult = useBlocks ? activeBlockResult : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentBlockPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -559,6 +576,7 @@ export function ReorderExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.reorder.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.reorder.subInstruction,
@@ -604,6 +622,7 @@ export function ReorderExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: detail?.sequences.filter((s) => s.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,

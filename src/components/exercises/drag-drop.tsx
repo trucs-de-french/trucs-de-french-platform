@@ -15,6 +15,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   dragPoolLabel,
@@ -359,6 +360,13 @@ export function DragDropExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
+        {...(hidePoints
+          ? {}
+          : headerPointsState(
+              result?.pointsPossible ?? config.sentences.reduce((sum, s) => sum + s.points, 0),
+              result?.pointsEarned,
+              lang
+            ))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.drag_drop.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.drag_drop.subInstruction,
@@ -545,6 +553,7 @@ export function DragDropExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? config.sentences.length : undefined}
             hintSummary={{

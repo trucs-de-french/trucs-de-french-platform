@@ -16,6 +16,7 @@ import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 
@@ -280,6 +281,7 @@ export function OpenAnswerCheckExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockDetail ? blockQuestions.length : undefined}
                 hintSummary={{ hintCount: blockDetail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
@@ -308,6 +310,21 @@ export function OpenAnswerCheckExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockQuestions?.filter((q) => !answers[q.id]?.trim()).length ?? 0;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку/вправи (сума questions[].points); після перевірки
+  // активного блоку/вправи — earned sur possible + статус-чіп.
+  const currentBlockPoints = (useBlocks ? activeBlockQuestions ?? [] : config.questions).reduce(
+    (sum, q) => sum + q.points,
+    0
+  );
+  const activeBlockOrSingleResult = useBlocks ? activeBlockResult : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentBlockPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -333,6 +350,7 @@ export function OpenAnswerCheckExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.open_answer.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.open_answer.subInstruction,
@@ -377,6 +395,7 @@ export function OpenAnswerCheckExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={detail ? config.questions.length : undefined}
                 hintSummary={{ hintCount: detail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}

@@ -10,13 +10,13 @@ import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { dragPoolLabel, sortColumnsPoolCountLabel } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
@@ -61,7 +61,6 @@ export function SortColumnsExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -208,8 +207,8 @@ export function SortColumnsExercise({
   // score вправи з одним блоком (fill-blank.tsx тощо): без балів/пілюлі в
   // практиці (та сама умова, що й решта балів у цьому файлі).
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
-  const pointsText =
-    !hidePoints && !isPractice && !result && pointsVisible ? formatPointsCountLocalized(totalPoints, lang) : undefined;
+  const headerPoints =
+    hidePoints || isPractice ? undefined : headerPointsState(totalPoints, result ? result.pointsEarned : undefined, lang);
   // scroll-mt (той самий принцип і літеральні значення, що drag-drop.tsx/
   // fill-blank.tsx): клік-вибір не викликає сам по собі scroll, але якщо
   // браузер (напр. фокус/якір) підведе колонку до самого верху, липкий пул
@@ -324,7 +323,7 @@ export function SortColumnsExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.sort_columns.subInstruction,
@@ -462,6 +461,7 @@ export function SortColumnsExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={singleDetail ? config.items.length : undefined}
             hintSummary={{

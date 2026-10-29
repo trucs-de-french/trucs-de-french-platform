@@ -6,12 +6,12 @@ import { X } from "lucide-react";
 import type { WordChoicePublic, WordChoiceDetail, WordChoiceAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { ITEM_CARD_WRAP } from "./answer-card-style";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
@@ -70,7 +70,6 @@ export function WordChoiceExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   practice,
@@ -280,9 +279,12 @@ export function WordChoiceExercise({
   // aggregateCorrect — лише для гілки блоків (нижче), коли ВСІ блоки
   // перевірені хоч раз: чи вправа повністю правильна загалом. undefined —
   // "ще не рахувати" (детальніше в aggregateResult нижче).
-  function pointsText(detailPresent: boolean): string | undefined {
-    if (hidePoints || detailPresent || !pointsVisible) return undefined;
-    return formatPointsCountLocalized(config.points, lang);
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // загальний бал вправи; після перевірки активного блоку/вправи — earned
+  // sur possible ЦЬОГО блоку + статус-чіп.
+  function headerPoints(activeResult: { pointsEarned?: number; pointsPossible?: number } | null | undefined) {
+    if (hidePoints) return undefined;
+    return headerPointsState(activeResult?.pointsPossible ?? config.points, activeResult?.pointsEarned, lang);
   }
 
   // Лише mode "select" — той самий принцип, що multiple-choice.tsx
@@ -497,6 +499,7 @@ export function WordChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockDetail ? blockSentences.length : undefined}
                 hintSummary={{
@@ -579,7 +582,7 @@ export function WordChoiceExercise({
     );
   }
 
-  const pointsPillText = pointsText(useBlocks ? !!aggregateResult : !!detail);
+  const headerPointsResult = headerPoints(useBlocks ? blockResults[activeBlock] : single.result);
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище.
   const activeBlockSentences = sentenceBlocks[activeBlock];
@@ -606,14 +609,14 @@ export function WordChoiceExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsPillText}
+        pointsText={headerPointsResult?.pointsText}
       />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsPillText}
+        {...(headerPointsResult ?? {})}
         instructionText={config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction,
@@ -665,6 +668,7 @@ export function WordChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={detail ? config.sentences.length : undefined}
                 hintSummary={{

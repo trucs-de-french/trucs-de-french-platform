@@ -14,7 +14,6 @@ import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
 import { TaskInstructionLine, PointsPill } from "./task-panel-header";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
@@ -32,6 +31,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
@@ -365,9 +365,13 @@ export function ChronologicalOrderExercise({
   // принцип, що pooled-score вправи з одним блоком). Без балів/пілюлі в
   // практиці.
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
-  const pointsText =
-    config.mode !== "text" && !hidePoints && !isPractice && !detail && pointsVisible
-      ? formatPointsCountLocalized(totalPoints, lang)
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди") — лише image/
+  // mixed (режим text має власний прогрес-рядок "Заповнено X з N", свідоме
+  // рішення, не чіпається); до перевірки — загальний бал вправи; після —
+  // earned sur possible + статус-чіп.
+  const headerPoints =
+    config.mode !== "text" && !hidePoints && !isPractice
+      ? headerPointsState(result?.pointsPossible ?? totalPoints, result?.pointsEarned, lang)
       : undefined;
 
   return (
@@ -454,10 +458,20 @@ export function ChronologicalOrderExercise({
           </div>
         ) : (
           <>
-            {pointsText && (
+            {headerPoints && (
               <div className="task-panel-pills-row">
                 <div className="task-panel-pills-left">
-                  <PointsPill text={pointsText} />
+                  <PointsPill text={headerPoints.pointsText} />
+                  {headerPoints.verdict && (
+                    <span
+                      className={`task-result-chip task-result-chip--${headerPoints.verdict.tone}`}
+                      role="status"
+                      title={headerPoints.verdict.title}
+                      aria-label={headerPoints.verdict.title}
+                    >
+                      {headerPoints.verdict.label}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -642,6 +656,7 @@ export function ChronologicalOrderExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
+              hideSummaryRow={!!headerPoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={detail ? 1 : undefined}
               hintSummary={

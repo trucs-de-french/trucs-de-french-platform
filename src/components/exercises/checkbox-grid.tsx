@@ -22,6 +22,7 @@ import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps тощо.
@@ -351,6 +352,13 @@ export function CheckboxGridExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
+        {...(hidePoints
+          ? {}
+          : headerPointsState(
+              result?.pointsPossible ?? config.rows.reduce((sum, r) => sum + r.points, 0),
+              result?.pointsEarned,
+              lang
+            ))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction,
@@ -451,6 +459,7 @@ export function CheckboxGridExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
           />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

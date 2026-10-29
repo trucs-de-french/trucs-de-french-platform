@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
@@ -14,6 +13,7 @@ import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
 const POLL_INTERVAL_MS = 200;
@@ -232,7 +232,6 @@ export function KaraokeExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
 }: {
@@ -603,7 +602,9 @@ export function KaraokeExercise({
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
       <TaskPanelHeader
-        pointsText={!hidePoints && !detail && pointsVisible ? formatPointsCountLocalized(pointsPossibleTotal, lang) : undefined}
+        {...(hidePoints
+          ? {}
+          : headerPointsState(pointsPossibleTotal, result ? result.pointsEarned : undefined, lang))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.karaoke.subInstruction,
@@ -786,7 +787,12 @@ export function KaraokeExercise({
             )}
           </div>
         ) : (
-          <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} />
+          <TaskResult
+            correct={result.correct}
+            pointsEarned={result.pointsEarned}
+            pointsPossible={result.pointsPossible}
+            hideSummaryRow={!hidePoints}
+          />
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

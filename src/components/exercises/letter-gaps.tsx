@@ -8,7 +8,6 @@ import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import type { LetterGapsPublic, LetterGapsDetail, GradeResult, LetterGapsAnswer } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { BUTTON_CHECK } from "@/lib/button-styles";
@@ -18,6 +17,7 @@ import { ImageLightbox } from "./image-lightbox";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { WORD_CARD, splitPhraseUnits } from "@/lib/exercises/word-list-layout";
 import { TaskResult, TaskResultGapRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -98,7 +98,6 @@ export function LetterGapsExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -622,6 +621,7 @@ export function LetterGapsExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
+              hideSummaryRow={!hidePoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={blockDetail ? blockDisplayOrder.length : undefined}
               hintSummary={{
@@ -722,10 +722,20 @@ export function LetterGapsExercise({
     );
   }
 
-  const pointsText =
-    !hidePoints && !(useBlocks ? aggregateResult : singleDetail) && pointsVisible
-      ? formatPointsCountLocalized(config.points, lang)
-      : undefined;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // завжди загальний бал вправи (per-блоковий поділ для Group A типів —
+  // letter_gaps/letter_rearrangement/word_search/crossword — відомий лише
+  // серверу, не клієнту); після перевірки АКТИВНОГО блоку/вправи — earned
+  // sur possible ЦЬОГО блоку (ті самі дані, що вже показує TaskResult під
+  // блоком) + статус-чіп.
+  const activeBlockOrSingleResult = useBlocks ? blockResults[activeBlock] : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? config.points,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const hintText = isDelf
     ? null
     : (useBlocks ? allBlocksChecked : !!single.result)
@@ -760,14 +770,14 @@ export function LetterGapsExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsText}
+        pointsText={headerPoints?.pointsText}
       />
       <TaskPanelHeader
         blockCount={blockCount}
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_gaps.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.letter_gaps.subInstruction,
@@ -825,6 +835,7 @@ export function LetterGapsExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={singleDetail ? displayOrder.length : undefined}
                 hintSummary={{

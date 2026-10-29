@@ -17,7 +17,6 @@ import type {
 import { useExerciseCheck } from "./use-exercise-check";
 import { useScrollOverflowHint } from "./use-scroll-overflow-hint";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -31,6 +30,7 @@ import { resolveClueView } from "./resolve-clue-view";
 import { CLUE_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, TaskResultCrosswordRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { BlockNavigation, BlockNavFooter, BlockTabs } from "./block-navigation";
 import { useT } from "@/lib/i18n/context";
@@ -213,6 +213,7 @@ function CrosswordBlockView({
   blockCount,
   activeBlock,
   onChangeBlock,
+  hideSummaryRow,
 }: {
   taskId: string;
   block: CrosswordPublicBlock;
@@ -220,6 +221,9 @@ function CrosswordBlockView({
   active: boolean;
   isDelf?: boolean;
   hintsReducePoints: boolean;
+  // Пілюля балів+статус-чіп тепер у заголовку (TaskPanelHeader,
+  // CrosswordExercise) — той самий `!hidePoints`, що решта типів.
+  hideSummaryRow?: boolean;
   // ЕТАП I — спільні для ВСІХ блоків вправи (рахує/тримає CrosswordExercise):
   // cols — max(gridWidth) по всіх блоках (однакова клітинка незалежно від
   // того, який блок вужчий), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -998,6 +1002,7 @@ function CrosswordBlockView({
                 correct={result.correct}
                 pointsEarned={result.pointsEarned}
                 pointsPossible={result.pointsPossible}
+                hideSummaryRow={hideSummaryRow}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={block.across.length + block.down.length}
                 hintSummary={{
@@ -1059,6 +1064,7 @@ function CrosswordBlockView({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
+              hideSummaryRow={hideSummaryRow}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={block.across.length + block.down.length}
               hintSummary={{
@@ -1124,7 +1130,6 @@ export function CrosswordExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   isDelf,
@@ -1201,10 +1206,17 @@ export function CrosswordExercise({
 
   const { lang } = useT();
   const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
-  const pointsText =
-    !hidePoints && !(useBlocks ? aggregateResult : singleResult) && pointsVisible
-      ? formatPointsCountLocalized(config.points, lang)
-      : undefined;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // загальний бал вправи; після перевірки активного блоку/вправи — earned
+  // sur possible ЦЬОГО блоку + статус-чіп.
+  const activeBlockOrSingleResult = useBlocks ? blockResults[activeBlock] : singleResult;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? config.points,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
 
   return (
     <div className={EXERCISE_STACK}>
@@ -1215,7 +1227,7 @@ export function CrosswordExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={pointsText}
+        pointsText={headerPoints?.pointsText}
       />
       <TaskPanelHeader
         blockCount={blockCount}
@@ -1223,7 +1235,7 @@ export function CrosswordExercise({
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
         labels={blocks.map((b) => b.title)}
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.crossword.subInstruction,
@@ -1243,6 +1255,7 @@ export function CrosswordExercise({
           cols={maxCols}
           zoom={zoom}
           onResult={setSingleResult}
+          hideSummaryRow={!hidePoints}
         />
       ) : (
         <BlockNavigation
@@ -1272,6 +1285,7 @@ export function CrosswordExercise({
                 blockCount={blockCount}
                 activeBlock={activeBlock}
                 onChangeBlock={setActiveBlock}
+                hideSummaryRow={!hidePoints}
               />
             </div>
           ))}

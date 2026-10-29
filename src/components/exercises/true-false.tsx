@@ -11,6 +11,7 @@ import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
@@ -269,6 +270,7 @@ export function TrueFalseExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
               />
             )}
           </div>
@@ -348,6 +350,21 @@ export function TrueFalseExercise({
   const activeBlockPending = !!blockPending[activeBlock];
   const activeBlockUnanswered =
     activeBlockStatements?.filter((s) => answers[s.id] === undefined).length ?? 0;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку/вправи (сума statements[].points); після
+  // перевірки активного блоку/вправи — earned sur possible + статус-чіп.
+  const currentBlockPoints = (useBlocks ? activeBlockStatements ?? [] : config.statements).reduce(
+    (sum, s) => sum + s.points,
+    0
+  );
+  const activeBlockOrSingleResult = useBlocks ? activeBlockResult : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentBlockPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
@@ -373,6 +390,7 @@ export function TrueFalseExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.true_false.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.true_false.subInstruction,
@@ -417,6 +435,7 @@ export function TrueFalseExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
               />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}

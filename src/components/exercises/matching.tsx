@@ -6,13 +6,13 @@ import type { MatchingPublic, MatchingDetail, MatchingAnswer, GradeResult } from
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
-import { formatPointsCountLocalized } from "@/lib/exercises/format-points";
 import { TaskPanelHeader } from "./task-panel-header";
 import { MatchingBoard } from "./matching-board";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { TaskResult, TaskResultPairRows } from "./task-result";
+import { headerPointsState } from "@/lib/exercises/header-points";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
@@ -34,7 +34,6 @@ export function MatchingExercise({
   taskId,
   config,
   plaqueText,
-  pointsVisible,
   onResult,
   hidePoints,
   practice,
@@ -381,6 +380,7 @@ export function MatchingExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={blockDetail?.correctPairs.length}
               >
@@ -496,10 +496,17 @@ export function MatchingExercise({
     (sum, left) => sum + (config.pairs.find((p) => p.left === left)?.points ?? 0),
     0
   );
-  const pointsText =
-    !hidePoints && !(useBlocks ? aggregateResult : single.result) && pointsVisible
-      ? formatPointsCountLocalized(currentMaxPoints, lang)
-      : undefined;
+  // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
+  // бали ПОТОЧНОГО блоку (currentMaxPoints, вище); після перевірки
+  // активного блоку/вправи — earned sur possible ЦЬОГО блоку + статус-чіп.
+  const activeBlockOrSingleResult = useBlocks ? blockResults[activeBlock] : single.result;
+  const headerPoints = hidePoints
+    ? undefined
+    : headerPointsState(
+        activeBlockOrSingleResult?.pointsPossible ?? currentMaxPoints,
+        activeBlockOrSingleResult?.pointsEarned,
+        lang
+      );
 
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
@@ -526,7 +533,7 @@ export function MatchingExercise({
         activeBlock={activeBlock}
         onChangeBlock={setActiveBlock}
         isBlockChecked={(i) => i in blockResults}
-        pointsText={pointsText}
+        {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
         subInstructionText={taskTranslationLine(config.subInstructions, lang, {
           uk: DEFAULT_INSTRUCTIONS.matching.subInstruction,
@@ -581,6 +588,7 @@ export function MatchingExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
+                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={singleDetail?.correctPairs.length}
               >
