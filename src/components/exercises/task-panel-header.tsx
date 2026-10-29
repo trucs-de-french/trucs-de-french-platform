@@ -183,13 +183,15 @@ export function CounterPill({ current, total }: { current: number; total: number
 // HintBulb (28px, той самий вигляд, що всюди інде), текст короткий, з
 // жирним напівжирним лейблом "Підказка:" перед ним (решта тексту —
 // weight 600 через font-semibold на самому контейнері, лейбл локально
-// переважає його font-bold'ом). Висота пілюлі — h-9 (36px, було h-8/32px):
-// піднята під лампочку (раніше 24px, тепер 28px), щоб та не впиралась у
-// верх/низ пілюлі.
+// переважає його font-bold'ом). Висота пілюлі — h-8 (32px), РІВНО як
+// .points-pill-gradient/.task-result-chip (задача "стабільна висота рядка
+// пілюль" — усі пілюлі одного рядка мають бути однієї висоти, інакше
+// .task-panel-pills-row росте/стискається залежно від того, яка саме
+// пілюля зараз показана).
 function HintPill({ text }: { text: string }) {
   const { t } = useT();
   return (
-    <span className="inline-flex h-9 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
+    <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
       <HintBulb state="available" as="span" />
       <span className="min-w-0">
         <span className="font-bold">{t("panel.hintPrefix")}</span> {text}

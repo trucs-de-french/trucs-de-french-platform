@@ -4218,16 +4218,22 @@ button.scene-bar:active .scene-bar-toggle {
   --verdict-error-ink: #ffffff;
   --verdict-error-shadow: rgba(160, 44, 70, 0.35);
 }
+/* Висота/padding/font-size/border — РІВНО ті самі, що .points-pill-gradient
+   (32px, box-sizing: border-box): задача "стабільна висота рядка пілюль"
+   — було 38px/16px/15px/1px-рамка, через що ряд .task-panel-pills-row
+   росте й усе нижче "стрибає" щойно з'являється ця пілюля після
+   перевірки (verdict був на 6px вищий за пілюлю балів). Колір/градієнт —
+   без змін. */
 .task-result-chip {
   display: inline-flex;
   align-items: center;
-  height: 38px;
+  height: 32px;
   box-sizing: border-box;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: none;
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
   cursor: default;
