@@ -66,10 +66,12 @@ const GRID_CHECKBOX_ICON_ON_BRAND = "h-3.5 w-3.5 text-white md:h-4 md:w-4";
 
 // Позначки результату після "Перевірити" (замість колишнього фону комірки
 // bg-green-50/bg-red-50): 4 стани, розрізнені і кольором, і значком, і
-// типом лінії рамки (суцільна/пунктирна) — не лише кольором.
-const GRID_MARK_CORRECT = "border-green-600 bg-green-50 dark:border-green-500 dark:bg-green-950/30";
-const GRID_MARK_WRONG = "border-red-600 bg-red-50 dark:border-red-500 dark:bg-red-950/30";
-const GRID_MARK_MISSED = "border-dashed border-green-600 bg-white dark:border-green-500 dark:bg-[var(--card-bg)]";
+// типом лінії рамки (суцільна/пунктирна) — не лише кольором. result-
+// border-width-sm — тонша рамка результату для дрібної клітинки (26-36px),
+// перекриває border-2 базового GRID_CHECKBOX_BOX (globals.css).
+const GRID_MARK_CORRECT = "result-border-width-sm border-green-600 bg-green-50 dark:border-green-500 dark:bg-green-950/30";
+const GRID_MARK_WRONG = "result-border-width-sm border-red-600 bg-red-50 dark:border-red-500 dark:bg-red-950/30";
+const GRID_MARK_MISSED = "result-border-width-sm border-dashed border-green-600 bg-white dark:border-green-500 dark:bg-[var(--card-bg)]";
 const RESULT_ICON_CORRECT = "h-3.5 w-3.5 text-green-700 dark:text-green-400 md:h-4 md:w-4";
 const RESULT_ICON_WRONG = "h-3.5 w-3.5 text-red-700 dark:text-red-400 md:h-4 md:w-4";
 

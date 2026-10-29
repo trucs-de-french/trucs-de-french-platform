@@ -284,6 +284,13 @@
   --border-field: 1px;
   --border-card: 1.5px;
   --border-strong: 2px;
+  /* Рамка РЕЗУЛЬТАТ-стану (зелена "правильно"/коралова "неправильно",
+     золота "показано правильну") ПІСЛЯ перевірки — одна ширина для
+     звичайних елементів (слоти, пілюлі, тайли), тонша для дрібних
+     клітинок (чекбокс-квадрат ~26-36px, легенда-зразок 16px), щоб ті не
+     виглядали важче за сам елемент. .result-border-width(-sm) нижче. */
+  --result-border-width: 2px;
+  --result-border-width-small: 1.5px;
 
   --gold-border: #d9b765;
   --gold-border-35: rgba(217, 183, 101, 0.35);
@@ -318,6 +325,20 @@
      рамки. Hover-варіант лише там, де вже є власний hover-стан. */
   --answer-shadow-raised: 0 2px 4px rgba(217, 183, 101, 0.28);
   --answer-shadow-raised-hover: 0 3px 6px rgba(217, 183, 101, 0.38);
+}
+
+/* Клас додається РАЗОМ із Tailwind-утилітою ширини рамки того самого
+   елемента (border-2 на базовому/ідле-стані) — має завжди перемагати її,
+   незалежно від порядку правил у згенерованому CSS (дві утиліти однакової
+   специфічності інакше залежали б від порядку збірки Tailwind), тож
+   !important тут навмисний, а не випадковий. Лише border-width — колір/
+   стиль рамки лишаються своїми Tailwind-утилітами (border-green-500 тощо),
+   жодна з них тут не перевизначається. */
+.result-border-width {
+  border-width: var(--result-border-width) !important;
+}
+.result-border-width-sm {
+  border-width: var(--result-border-width-small) !important;
 }
 
 /* Спільний клас для текстових полів вправ (input/textarea) — одна точка

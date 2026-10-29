@@ -458,8 +458,8 @@ export function DragDropExercise({
                     const slotFilled = placed[gi] !== null;
                     const slotStateClass = sentDetail
                       ? sentDetail.blanks[i]?.isCorrect
-                        ? "border-2 border-green-500 bg-green-50 dark:border-[var(--correct-border-dark)] dark:bg-[var(--dark-surface-fill)]"
-                        : "border-2 border-red-500 bg-red-50 dark:border-[var(--wrong-border-dark)] dark:bg-[var(--dark-surface-fill)]"
+                        ? "result-border-width border-green-500 bg-green-50 dark:border-[var(--correct-border-dark)] dark:bg-[var(--dark-surface-fill)]"
+                        : "result-border-width border-red-500 bg-red-50 dark:border-[var(--wrong-border-dark)] dark:bg-[var(--dark-surface-fill)]"
                       : hoveredSlot === gi
                         ? "drag-drop-slot--dragover"
                         : slotFilled
