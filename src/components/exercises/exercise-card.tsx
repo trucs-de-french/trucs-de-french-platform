@@ -75,9 +75,14 @@ export function ExerciseCard({
   hidePoints?: boolean;
   // Задача належить DELF-тесту (визначається один раз — delf-test-tasks.tsx
   // — і прокидається сюди, а не перевіряється в кожному компоненті окремо):
-  // вимикає підказки в 6 типів, де вони є (word_search, crossword,
-  // letter_gaps, letter_rearrangement, fill_blank, table_fill); ігнорується
-  // рештою типів.
+  // (1) вимикає підказки в 6 типів, де вони є (word_search, crossword,
+  // letter_gaps, letter_rearrangement, fill_blank, table_fill); (2) у 9
+  // типів із пілюлею балів на елементі (RowPointsTab/rowPointsTab —
+  // true_false, multiple_choice, listening, reorder, drag_drop, open_answer,
+  // table_fill, checkbox_grid, chronological_order) дозволяє показувати цю
+  // пілюлю — поза DELF вона лишається видимою лише на елементах із
+  // нетиповими балами (unevenPointsFlags, uneven-points.ts), а загальний бал
+  // задачі (PointsPill/TaskResult) показується завжди, незалежно від isDelf.
   isDelf?: boolean;
 }) {
   return (
@@ -152,6 +157,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "word_choice":
@@ -198,6 +204,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "matching":
@@ -220,6 +227,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "reorder":
@@ -231,6 +239,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "drag_drop":
@@ -242,6 +251,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "sort_columns":
@@ -265,6 +275,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "table_fill":
@@ -299,6 +310,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "chronological_order":
@@ -310,6 +322,7 @@ function renderExerciseByType({
           pointsVisible={pointsVisible ?? false}
           onResult={onResult}
           hidePoints={hidePoints}
+          isDelf={isDelf}
         />
       );
     case "karaoke":

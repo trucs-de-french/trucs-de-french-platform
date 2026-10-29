@@ -10,6 +10,8 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
+import { EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
@@ -34,6 +36,7 @@ export function TrueFalseExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -47,6 +50,11 @@ export function TrueFalseExercise({
   // Опційний — для блоків у режимі "фіксовано", щоб ховати індивідуальний
   // бал задачі безумовно (і до, і після перевірки).
   hidePoints?: boolean;
+  // Пілюля балів твердження (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на твердженнях, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче) — задача "показувати
+  // лише загальний бал поза DELF".
+  isDelf?: boolean;
   practice?: TrueFalsePracticeProps;
 }) {
   const { t, lang } = useT();
@@ -60,6 +68,21 @@ export function TrueFalseExercise({
   const statementBlocks = useMemo(() => splitEvenly(config.statements, CARD_BLOCK_MAX), [config.statements]);
   const blockCount = statementBlocks.length;
   const useBlocks = blockCount > 1;
+
+  // Поза DELF пілюля балів ховається, КРІМ твердженнь із нетиповими балами
+  // (п.4 задачі) — рахується по всій вправі (не лише видимому блоку), щоб
+  // "типовий" бал не залежав від того, який блок активний.
+  const unevenFlags = useMemo(
+    () => unevenPointsFlags(config.statements.map((s) => s.points)),
+    [config.statements]
+  );
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.statements.forEach((s, i) => m.set(s.id, unevenFlags[i]));
+    return m;
+  }, [config.statements, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
 
   // ==== Гілка ≤5 твердженнь (незмінна поведінка) ====
   const router = useRouter();
@@ -122,7 +145,7 @@ export function TrueFalseExercise({
 
   // globalIndex — нумерація (.item-number-badge) наскрізна по всій вправі.
   function renderStatement(s: PublicStatement, globalIndex: number, d: TrueFalseDetail["statements"][number] | undefined, locked: boolean) {
-    const showTab = !hidePoints && (pointsVisible || !!d);
+    const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!d);
     return (
       <div key={s.id} className="row-points-tab-wrap">
         {showTab && <RowPointsTab earned={d ? (d.isCorrect ? d.points : 0) : undefined} possible={s.points} />}
@@ -233,7 +256,7 @@ export function TrueFalseExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-[22px] pt-3">
+        <div className={`flex flex-col ${itemsGapClass} pt-3`}>
           {blockStatements.map((s, i) =>
             renderStatement(s, startIndex + i, blockDetail?.statements.find((x) => x.id === s.id), !!blockResult)
           )}
@@ -265,7 +288,7 @@ export function TrueFalseExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
-        <div className="flex flex-col gap-[22px] pt-3">
+        <div className={`flex flex-col ${itemsGapClass} pt-3`}>
           {practiceStatements.map((s) => {
             const idx = originalIndexOf.get(s.id)!;
             const isCorrect = practiceResults[s.id];
@@ -359,7 +382,7 @@ export function TrueFalseExercise({
 
       {!useBlocks ? (
         <>
-          <div className="flex flex-col gap-[22px] pt-3">
+          <div className={`flex flex-col ${itemsGapClass} pt-3`}>
             {config.statements.map((s, index) =>
               renderStatement(s, index, detail?.statements.find((x) => x.id === s.id), !!single.result)
             )}

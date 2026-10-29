@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useMemo } from "react";
 import { Check, X } from "lucide-react";
 import type {
   CheckboxGridPublic,
@@ -21,6 +21,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 
 // Режим практики "Робота над помилками" (пілот, частина 7, хвиля 3) — той
 // самий принцип whole, що ReorderPracticeProps тощо.
@@ -85,6 +86,7 @@ export function CheckboxGridExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -93,9 +95,19 @@ export function CheckboxGridExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів рядка (rowPointsTab нижче) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на рядках, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: CheckboxGridPracticeProps;
 }) {
   const { t, lang } = useT();
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.rows.map((r) => r.points)), [config.rows]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.rows.forEach((r, i) => m.set(r.id, unevenFlags[i]));
+    return m;
+  }, [config.rows, unevenFlags]);
   const [answers, setAnswers] = useState<Record<string, Set<string>>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as CheckboxGridDetail | undefined;
@@ -160,6 +172,7 @@ export function CheckboxGridExercise({
   // format-points.ts) — округлення до 0.5 і дробовий запис через кому.
   function rowPointsTab(row: CheckboxGridPublic["rows"][number]) {
     if (hidePoints) return null;
+    if (!isDelf && !unevenById.get(row.id)) return null;
     const rowCell = detail?.cells.find((c) => c.rowId === row.id);
     if (!pointsVisible && !rowCell) return null;
     if (!rowCell) {

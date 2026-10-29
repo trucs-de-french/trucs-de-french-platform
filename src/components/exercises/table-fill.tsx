@@ -10,8 +10,9 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { hintExplanationText } from "./hint-explanation";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, TaskResultAnswerRows, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
@@ -66,6 +67,7 @@ function TableFillColumn({
   rowPointsLabel,
   numberOffset,
   secondaryHeader,
+  itemsGapClass,
 }: {
   rows: Row[];
   columnLabels: [string, string];
@@ -73,6 +75,11 @@ function TableFillColumn({
   rowPointsLabel: (row: Row) => ReactNode;
   numberOffset: number;
   secondaryHeader?: boolean;
+  // Чи ХОЧ ОДИН рядок цієї вправи взагалі може показати пілюлю балів
+  // (isDelf чи нетиповий бал серед рядків — рахує батько, TableFillExercise):
+  // звужує відступ gap-[22px]→EXERCISE_BODY_ITEMS_GAP, коли жодна пілюля
+  // ніколи не з'явиться, щоб не лишати порожній простір під неї.
+  itemsGapClass: string;
 }) {
   const { t } = useT();
   return (
@@ -81,7 +88,7 @@ function TableFillColumn({
         <span className="table-fill-col-header-cell">{columnLabels[0]}</span>
         <span className="table-fill-col-header-cell">{columnLabels[1]}</span>
       </div>
-      <div className="flex flex-col gap-[22px] pt-3">
+      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {rows.map((row, i) => {
           const tab = rowPointsLabel(row);
           return (
@@ -147,6 +154,18 @@ export function TableFillExercise({
 }) {
   const { t: tt, lang } = useT();
   const router = useRouter();
+  // Поза DELF пілюля балів ховається, КРІМ рядків із нетиповими балами
+  // (п.4 задачі) — рахується лише серед рядків із прихованою клітинкою
+  // (інші й так ніколи не показують пілюлю, rowPointsLabel нижче).
+  const hiddenRows = useMemo(() => config.rows.filter((r) => r.left === null || r.right === null), [config.rows]);
+  const unevenFlags = useMemo(() => unevenPointsFlags(hiddenRows.map((r) => r.points)), [hiddenRows]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    hiddenRows.forEach((r, i) => m.set(r.id, unevenFlags[i]));
+    return m;
+  }, [hiddenRows, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
 
   // answers/hintedCells — СПІЛЬНІ на всю вправу (не по блоку), як pairs у
   // matching.tsx.
@@ -369,6 +388,7 @@ export function TableFillExercise({
     const hasHidden = row.left === null || row.right === null;
     if (!hasHidden) return null;
 
+    if (!isDelf && !unevenById.get(row.id)) return null;
     const rowBlanks = detail?.blanks.filter((b) => b.rowId === row.id);
     if (!pointsVisible && !rowBlanks?.length) return null;
 
@@ -632,6 +652,7 @@ export function TableFillExercise({
               secondaryHeader={i > 0}
               renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, blockDetail, !!blockResult)}
               rowPointsLabel={(row) => rowPointsLabel(row, blockDetail)}
+              itemsGapClass={itemsGapClass}
             />
           ))}
         </TableFillColumnsGrid>
@@ -739,6 +760,7 @@ export function TableFillExercise({
                 secondaryHeader={i > 0}
                 renderCell={(rowId, side, value, points) => renderCell(rowId, side, value, points, singleDetail, !!single.result)}
                 rowPointsLabel={(row) => rowPointsLabel(row, singleDetail)}
+                itemsGapClass={itemsGapClass}
               />
             ))}
           </TableFillColumnsGrid>

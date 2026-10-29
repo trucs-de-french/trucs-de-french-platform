@@ -29,9 +29,10 @@ import {
   ITEM_NUMBER_BADGE,
 } from "./answer-card-style";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab, shouldShowRowScorePill, rowResultAriaLabel } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -77,6 +78,7 @@ export function ChronologicalOrderExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -85,9 +87,21 @@ export function ChronologicalOrderExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів картки (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на картках, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: ChronologicalOrderPracticeProps;
 }) {
   const { t, lang } = useT();
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.items.map((it) => it.points)), [config.items]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.items.forEach((it, i) => m.set(it.id, unevenFlags[i]));
+    return m;
+  }, [config.items, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { submit, pending, result, error } = useExerciseCheck(taskId);
@@ -527,7 +541,7 @@ export function ChronologicalOrderExercise({
         // вмістом (py-2 px-2.5, без фіксованої min-height), тож довге
         // (дворядкове) речення просто займає трохи більше місця, а не
         // обрізається.
-        <div className="flex flex-col gap-[22px] pt-3">
+        <div className={`flex flex-col ${itemsGapClass} pt-3`}>
           {/* initialItems, НЕ orderedItems — п.1 задачі: після перевірки
               картки лишаються у тому самому порядку/позиціях, що студент
               бачив під час роботи (той самий порядок і при "Corrigez vos
@@ -538,7 +552,7 @@ export function ChronologicalOrderExercise({
           {initialItems.map((item) => {
             const label = initialLabelById.get(item.id) ?? "";
             const d = itemDetail(item.id);
-            const showTab = !hidePoints && (pointsVisible || !!d);
+            const showTab = !hidePoints && (isDelf || unevenById.get(item.id)) && (pointsVisible || !!d);
             return (
               <div key={item.id} className="row-points-tab-wrap">
                 {showTab && (

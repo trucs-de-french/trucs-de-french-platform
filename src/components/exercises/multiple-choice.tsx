@@ -13,8 +13,9 @@ import { ImageLightbox } from "./image-lightbox";
 import { COMPACT_IMAGE_FILL, ITEM_CARD_WRAP as CARD_WRAP } from "./answer-card-style";
 import { ChoiceQuestionCard } from "./choice-question-card";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -90,6 +91,7 @@ export function MultipleChoiceExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -98,6 +100,10 @@ export function MultipleChoiceExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів питання (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на питаннях, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: MultipleChoicePracticeProps;
 }) {
   const { t, lang } = useT();
@@ -105,6 +111,17 @@ export function MultipleChoiceExercise({
     if (lang === "uk") return n >= 5 ? "варіантів" : "варіанти";
     return plural(lang, n, { one: lang === "fr" ? "option" : "option", other: lang === "fr" ? "options" : "options" });
   }
+  // Поза DELF пілюля балів ховається, КРІМ питань із нетиповими балами
+  // (п.4 задачі) — рахується по всій вправі, не лише видимому блоку.
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.items.map((it) => it.points)), [config.items]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.items.forEach((it, i) => m.set(it.id, unevenFlags[i]));
+    return m;
+  }, [config.items, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
+
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   // Клік по картинці варіанта — вже дія вправи (вибір), тому збільшення
   // винесене в окрему іконку-лупу в кутку (ImageZoomBadge), а не на весь
@@ -368,6 +385,7 @@ export function MultipleChoiceExercise({
   // -wrap на викликачі), не тут — pointsTab лише вирішує, чи й яку.
   function pointsTab(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
     if (hidePoints) return null;
+    if (!isDelf && !unevenById.get(item.id)) return null;
     if (!pointsVisible && !itemDetail) return null;
     if (itemDetail) {
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
@@ -721,13 +739,13 @@ export function MultipleChoiceExercise({
   // нумерація .item-number-badge, не локальна в межах блоку).
   function renderItems(items: MultipleChoicePublicItem[], startIndex: number, scopedDetail: MultipleChoiceDetail | undefined) {
     return config.display === "dropdown" ? (
-      <div className="flex flex-col gap-[22px] pt-3">
+      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {items.map((item, i) =>
           renderDropdownRow(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id))
         )}
       </div>
     ) : (
-      <div className="flex flex-col gap-[22px] pt-3">
+      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {items.map((item, i) => renderItem(item, startIndex + i, scopedDetail?.items.find((d) => d.id === item.id)))}
       </div>
     );

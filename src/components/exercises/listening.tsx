@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Check } from "lucide-react";
 import type { ListeningPublic, ListeningDetail, ListeningAnswer, GradeResult } from "@/lib/exercises/types";
 import { isYouTubeUrl, isGdriveUrl, toEmbedUrl } from "@/lib/video";
@@ -21,6 +21,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useT } from "@/lib/i18n/context";
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
@@ -41,6 +42,7 @@ export function ListeningExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -49,12 +51,24 @@ export function ListeningExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів питання (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на питаннях, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: ListeningPracticeProps;
 }) {
   const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const detail = result?.detail as ListeningDetail | undefined;
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.questions.map((q) => q.points)), [config.questions]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.questions.forEach((q, i) => m.set(q.id, unevenFlags[i]));
+    return m;
+  }, [config.questions, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const checkConfirm = useCheckConfirm();
 
@@ -240,12 +254,12 @@ export function ListeningExercise({
         <AudioPlayer src={config.audioUrl} />
       )}
 
-      <div className="flex flex-col gap-[22px] pt-3">
+      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {config.questions.map((q, index) => {
           const qDetail = detail?.questions.find((d) => d.id === q.id);
           const questionId = `listening-q-${q.id}`;
           const qCorrect = qDetail?.options.every((o) => o.correct === o.selected) ?? false;
-          const showTab = !hidePoints && (pointsVisible || !!qDetail);
+          const showTab = !hidePoints && (isDelf || unevenById.get(q.id)) && (pointsVisible || !!qDetail);
           const header = (
             <div className="flex items-start gap-2.5 pt-[18px] px-3 pb-3">
               {config.questions.length > 1 && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DragDropPublic, DragDropDetail, DragDropAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
@@ -14,6 +14,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import {
   dragPoolLabel,
@@ -77,6 +78,7 @@ export function DragDropExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -85,6 +87,10 @@ export function DragDropExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів речення (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на реченнях, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: DragDropPracticeProps;
 }) {
   // Банк СПІЛЬНИЙ на всю вправу (не по реченню) — тож пропуски всіх речень
@@ -94,6 +100,14 @@ export function DragDropExercise({
   // поставити одразу в двох реченнях). sentenceSegments/offsets — мапінг
   // глобальний-індекс-пропуску ↔ (речення, локальна позиція).
   const { t, lang } = useT();
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.sentences.map((s) => s.points)), [config.sentences]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.sentences.forEach((s, i) => m.set(s.id, unevenFlags[i]));
+    return m;
+  }, [config.sentences, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const sentenceSegments = config.sentences.map((s) => s.template.split("{{}}"));
   const blankCounts = sentenceSegments.map((segs) => segs.length - 1);
   const totalBlanks = blankCounts.reduce((a, b) => a + b, 0);
@@ -404,7 +418,7 @@ export function DragDropExercise({
         );
       })()}
 
-      <div className="flex flex-col gap-[22px] pt-3">
+      <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {config.sentences.map((s, si) => {
           const segments = sentenceSegments[si];
           const blankCount = blankCounts[si];
@@ -415,7 +429,7 @@ export function DragDropExercise({
           // (не по окремому пропуску, як score) — 0/points, а не часткове.
           const sentenceCorrect = sentDetail?.blanks.every((b) => b.isCorrect) ?? false;
 
-          const showTab = !hidePoints && (pointsVisible || !!sentDetail);
+          const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!sentDetail);
           return (
             <div key={s.id} className="row-points-tab-wrap">
               {showTab && (

@@ -13,9 +13,10 @@ import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, RowPointsTab } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { HintBulb } from "./hint-bulb";
@@ -50,6 +51,7 @@ function ReorderSequenceTiles({
   points,
   pointsVisible,
   hidePoints,
+  showPointsTab,
   imageUrl,
   audioUrl,
   onOpenImage,
@@ -79,6 +81,10 @@ function ReorderSequenceTiles({
   points: number;
   pointsVisible: boolean;
   hidePoints?: boolean;
+  // Чи ця послідовність узагалі показує пілюлю балів (isDelf чи нетиповий
+  // бал серед послідовностей вправи, рахує батько — ReorderExercise); сам
+  // ReorderSequenceTiles про DELF/рівність балів не знає.
+  showPointsTab: boolean;
   imageUrl?: string;
   audioUrl?: string;
   onOpenImage: (src: string) => void;
@@ -109,7 +115,7 @@ function ReorderSequenceTiles({
   // послідовності зараховуються, лише якщо ВСЯ вона правильна (не по
   // окремій плитці, як score) — 0/points, а не часткове.
   const sequenceCorrect = detail?.items.every((i) => i.isCorrect) ?? false;
-  const showTab = !hidePoints && (pointsVisible || !!detail);
+  const showTab = !hidePoints && showPointsTab && (pointsVisible || !!detail);
 
   const hasHintBulb = !!hint && !!onToggleHint;
 
@@ -205,6 +211,7 @@ export function ReorderExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
   practice,
 }: {
   taskId: string;
@@ -213,12 +220,24 @@ export function ReorderExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів послідовності (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на послідовностях, чиї бали
+  // відрізняються від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
   practice?: ReorderPracticeProps;
 }) {
   const { t: tt, lang } = useT();
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.sequences.map((s) => s.points)), [config.sequences]);
+  const showPointsTabById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.sequences.forEach((s, i) => m.set(s.id, !!isDelf || unevenFlags[i]));
+    return m;
+  }, [config.sequences, unevenFlags, isDelf]);
+  const anyItemPointsShown = !!isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   // Живе підсвічування (liveFeedback, correctOrder) активується ПОЗА блоками
@@ -322,6 +341,7 @@ export function ReorderExercise({
         points={seq.points}
         pointsVisible={pointsVisible}
         hidePoints={hidePoints}
+        showPointsTab={showPointsTabById.get(seq.id) ?? false}
         imageUrl={seq.imageUrl}
         audioUrl={seq.audioUrl}
         onOpenImage={setLightboxSrc}
@@ -400,7 +420,7 @@ export function ReorderExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-[22px] pt-3">
+        <div className={`flex flex-col ${itemsGapClass} pt-3`}>
           {blockSequences.map((seq) =>
             renderSequence(seq, blockDetail?.sequences.find((d) => d.id === seq.id), !!blockResult)
           )}
@@ -458,6 +478,7 @@ export function ReorderExercise({
               points={seq.points}
               pointsVisible={false}
               hidePoints
+              showPointsTab={false}
               imageUrl={seq.imageUrl}
               audioUrl={seq.audioUrl}
               onOpenImage={setLightboxSrc}
@@ -554,7 +575,7 @@ export function ReorderExercise({
             </p>
           )}
 
-          <div className="flex flex-col gap-[22px] pt-3">
+          <div className={`flex flex-col ${itemsGapClass} pt-3`}>
             {config.sequences.map((seq) =>
               renderSequence(seq, detail?.sequences.find((d) => d.id === seq.id), singleLocked)
             )}

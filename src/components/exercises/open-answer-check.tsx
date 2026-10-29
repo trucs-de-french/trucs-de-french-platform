@@ -12,9 +12,10 @@ import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor 
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { CompactAudioButton } from "./compact-audio-button";
 import { ImageLightbox } from "./image-lightbox";
-import { EXERCISE_STACK } from "@/lib/spacing";
+import { EXERCISE_STACK, EXERCISE_BODY_ITEMS_GAP } from "@/lib/spacing";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { TaskResult, RowPointsTab, TaskResultGapRows } from "./task-result";
+import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { useT } from "@/lib/i18n/context";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 
@@ -52,6 +53,7 @@ export function OpenAnswerCheckExercise({
   pointsVisible,
   onResult,
   hidePoints,
+  isDelf,
 }: {
   taskId: string;
   config: OpenAnswerPublic;
@@ -59,8 +61,20 @@ export function OpenAnswerCheckExercise({
   pointsVisible: boolean;
   onResult?: (result: GradeResult) => void;
   hidePoints?: boolean;
+  // Пілюля балів питання (RowPointsTab) — лише в DELF (showItemPoints);
+  // поза DELF лишається видимою лише на питаннях, чиї бали відрізняються
+  // від типових у цій вправі (unevenPointsFlags нижче).
+  isDelf?: boolean;
 }) {
   const { t, lang } = useT();
+  const unevenFlags = useMemo(() => unevenPointsFlags(config.questions.map((q) => q.points)), [config.questions]);
+  const unevenById = useMemo(() => {
+    const m = new Map<string, boolean>();
+    config.questions.forEach((q, i) => m.set(q.id, unevenFlags[i]));
+    return m;
+  }, [config.questions, unevenFlags]);
+  const anyItemPointsShown = isDelf || unevenFlags.some(Boolean);
+  const itemsGapClass = anyItemPointsShown ? "gap-[22px]" : EXERCISE_BODY_ITEMS_GAP;
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [hintShown, setHintShown] = useState<Set<string>>(new Set());
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -101,7 +115,7 @@ export function OpenAnswerCheckExercise({
 
   function renderQuestion(q: PublicQuestion, qDetail: OpenAnswerDetail["questions"][number] | undefined, locked: boolean) {
     const hintVisible = hintShown.has(q.id);
-    const showTab = !hidePoints && (pointsVisible || !!qDetail);
+    const showTab = !hidePoints && (isDelf || unevenById.get(q.id)) && (pointsVisible || !!qDetail);
     // Єдине питання у вправі — номер не показуємо (нема що рахувати):
     // той самий принцип, що приховані номери в вправах з одним елементом.
     const number = config.questions.length > 1 ? config.questions.findIndex((cq) => cq.id === q.id) + 1 : null;
@@ -253,7 +267,7 @@ export function OpenAnswerCheckExercise({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-[22px]">
+        <div className={`flex flex-col ${itemsGapClass}`}>
           {blockQuestions.map((q) =>
             renderQuestion(q, blockDetail?.questions.find((d) => d.id === q.id), !!blockResult)
           )}
@@ -328,7 +342,7 @@ export function OpenAnswerCheckExercise({
 
       {!useBlocks ? (
         <>
-          <div className="flex flex-col gap-[22px]">
+          <div className={`flex flex-col ${itemsGapClass}`}>
             {config.questions.map((q) =>
               renderQuestion(q, detail?.questions.find((d) => d.id === q.id), !!single.result)
             )}
