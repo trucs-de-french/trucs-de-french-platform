@@ -62,7 +62,11 @@ function pointsWord(lang: UiLang, n: number): string {
 }
 
 export function formatScoreLocalized(value: number, lang: UiLang): string {
-  if (lang === "uk") return formatScore(value);
+  // formatScore сам по собі мовно-нейтральний (округлення до 0.5 + кома
+  // замість крапки лише в десятковій частині) — не "український" текст,
+  // тож придатний для fr напряму (задача "0 sur 9.5 points" — French-UI
+  // мав кому, "9,5", а не крапку; en лишається на крапці нижче).
+  if (lang === "uk" || lang === "fr") return formatScore(value);
   const rounded = roundToHalf(value);
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
 }
