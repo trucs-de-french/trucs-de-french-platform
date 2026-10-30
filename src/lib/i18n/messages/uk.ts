@@ -150,6 +150,7 @@ export const uk = {
   "aria.blockNav": "Навігація по блоках",
 
   "chrono.filledOfTotal": "Заповнено {n} з {m}",
+  "chrono.duplicateNumbers": "Номер {numbers} використано кілька разів.",
 
   "ws.gridWiderHint": "Сітка ширша за екран — прокрутіть убік",
   "ws.gridWiderHintTouch": "Сітка ширша за екран — прокрутіть убік двома пальцями",

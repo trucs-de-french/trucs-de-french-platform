@@ -7652,6 +7652,28 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 200ms ease-out;
 }
 
+/* Попередження "Номер X використано кілька разів" (задача "дублікати
+   номерів") — під рядком прогресу, лише доки є дублікат і вправу ще не
+   перевірено (chronological-order.tsx: duplicateNumbers.size > 0 &&
+   !locked). Той самий текстовий wrong-токен, що .chrono-phrase-row--
+   incorrect/.chrono-number-slot--duplicate нижче (#ef4444 світла /
+   var(--wrong-border-dark) темна) — не новий колір. */
+.chrono-duplicate-warning {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #c62f2f;
+}
+.dark .chrono-duplicate-warning {
+  color: var(--wrong-border-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-duplicate-warning {
+    color: var(--wrong-border-dark);
+  }
+}
+
 /* Буква-бейдж (A, B, C...) — РІВНО .item-number-badge (26px), без власного
    модифікатора розміру: той самий бейдж, що drag-drop-row-number (гейдж-
    рядки "Glissez les mots..."), жодного окремого мобільного розміру там
@@ -7780,6 +7802,20 @@ button.scene-bar:active .scene-bar-toggle {
   color: #2f2c6b;
   font-family: var(--font-heading);
 }
+/* Дублікат номера (задача "дублікати номерів") — той самий border-width
+   (2px), що --filled вище: дублікат за визначенням непорожній, тож
+   перебиває --filled, а не --empty, і нічого не зсуває (вимога задачі).
+   Колір рамки/тексту — існуючий wrong-токен (#ef4444, той самий, що
+   .chrono-phrase-row--incorrect світла тема вище), не новий хардкод; фон —
+   БЛІДИЙ тінт того самого кольору (8%, не суцільний #fef2f2/bg-red-50
+   пост-перевірки), щоб попередження ДО перевірки читалось інакше за
+   результат ПІСЛЯ (той самий wrong-колір, різна інтенсивність). */
+.chrono-number-slot--duplicate {
+  border: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  color: #c62f2f;
+  font-family: var(--font-heading);
+}
 /* Фокус-кільце light-only для compact-варіанта (image/mixed): "line" уже
    має той самий вигляд через .chrono-number-slot:focus-visible (базовий
    клас, незалежний від теми) — тут лише ДОДАЄМО той самий кільце-стиль
@@ -7788,13 +7824,15 @@ button.scene-bar:active .scene-bar-toggle {
    у ТЕМНІЙ темі й далі лишається на своєму попередньому (дефолтному)
    фокусі — темна тема тут не торкається. */
 .light .chrono-number-slot--empty:focus-visible,
-.light .chrono-number-slot--filled:focus-visible {
+.light .chrono-number-slot--filled:focus-visible,
+.light .chrono-number-slot--duplicate:focus-visible {
   outline: 2px solid var(--glass-focus-ring);
   outline-offset: 2px;
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .chrono-number-slot--empty:focus-visible,
-  :root:not(.dark) .chrono-number-slot--filled:focus-visible {
+  :root:not(.dark) .chrono-number-slot--filled:focus-visible,
+  :root:not(.dark) .chrono-number-slot--duplicate:focus-visible {
     outline: 2px solid var(--glass-focus-ring);
     outline-offset: 2px;
   }
@@ -7831,6 +7869,22 @@ button.scene-bar:active .scene-bar-toggle {
     border-color: #a8a4f5;
     background: rgba(75, 70, 218, 0.28);
     color: #e3e2fb;
+  }
+}
+/* Темна тема дубліката — той самий --wrong-border-dark (#e8788a), що
+   .chrono-phrase-row--incorrect темна вище, не новий колір; фон — той
+   самий принцип "блідий тінт" (14%), що .dark .word-choice-hint-chip
+   вище, лише інший базовий колір. */
+.dark .chrono-number-slot--duplicate {
+  border-color: var(--wrong-border-dark);
+  background: rgba(232, 120, 138, 0.14);
+  color: var(--wrong-border-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .chrono-number-slot--duplicate {
+    border-color: var(--wrong-border-dark);
+    background: rgba(232, 120, 138, 0.14);
+    color: var(--wrong-border-dark);
   }
 }
 

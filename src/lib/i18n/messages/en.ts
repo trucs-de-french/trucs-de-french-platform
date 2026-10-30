@@ -147,6 +147,7 @@ export const en: Record<MessageKey, string> = {
   "aria.blockNav": "Block navigation",
 
   "chrono.filledOfTotal": "Filled: {n} of {m}",
+  "chrono.duplicateNumbers": "Number {numbers} is used more than once.",
 
   "ws.gridWiderHint": "The grid is wider than the screen — scroll sideways",
   "ws.gridWiderHintTouch": "The grid is wider than the screen — scroll sideways with two fingers",

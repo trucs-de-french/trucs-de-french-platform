@@ -149,6 +149,7 @@ export const fr: Record<MessageKey, string> = {
   "aria.blockNav": "Navigation entre les blocs",
 
   "chrono.filledOfTotal": "Rempli : {n} sur {m}",
+  "chrono.duplicateNumbers": "Le numéro {numbers} est utilisé plusieurs fois.",
 
   "ws.gridWiderHint": "La grille est plus large que l'écran — faites défiler",
   "ws.gridWiderHintTouch": "La grille est plus large que l'écran — faites défiler avec deux doigts",

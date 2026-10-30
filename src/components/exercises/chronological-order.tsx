@@ -109,6 +109,41 @@ export function ChronologicalOrderExercise({
   const answeredCount = config.items.filter((item) => positions[item.id]?.trim()).length;
   const singleDetail = result?.detail as ChronologicalOrderDetail | undefined;
 
+  // Дублікати введених номерів (п.1 задачі) — порожні поля ігноруються, "4"
+  // і "04" рахуються тим самим числом (Number(...) прибирає ведучі нулі/
+  // пробіли). isDuplicateItem нижче додатково перевіряє !d (ще не
+  // перевірено) у inputClass/lineSlotClass — після перевірки дублікат-стиль
+  // не застосовується (п.5 задачі), навіть якщо positions і далі містить
+  // дублікат. canonicalNumber — текст для показу в попередженні/класі,
+  // завжди без ведучих нулів ("04" -> "4").
+  function canonicalNumber(raw: string): string | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n)) return null;
+    return String(n);
+  }
+  const duplicateNumbers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of config.items) {
+      const canonical = canonicalNumber(positions[item.id] ?? "");
+      if (canonical === null) continue;
+      counts.set(canonical, (counts.get(canonical) ?? 0) + 1);
+    }
+    return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([n]) => n));
+  }, [positions, config.items]);
+  // Текст попередження (п.3) — числа за зростанням, не за порядком введення
+  // (стабільніше для студента, не "стрибає" залежно від того, яке поле
+  // виправили останнім).
+  const duplicateNumbersText = useMemo(
+    () => [...duplicateNumbers].sort((a, b) => Number(a) - Number(b)).join(", "),
+    [duplicateNumbers]
+  );
+  function isDuplicateItem(itemId: string): boolean {
+    const canonical = canonicalNumber(positions[itemId] ?? "");
+    return canonical !== null && duplicateNumbers.has(canonical);
+  }
+
   // config.items приходить із sanitizeChronologicalOrder, де shuffle()
   // недетермінований (Math.random, без seed) — кожен серверний рендер
   // сторінки (зокрема router.refresh() у use-exercise-check.ts після
@@ -218,6 +253,10 @@ export function ChronologicalOrderExercise({
         ? "border-green-500 bg-green-50 dark:bg-green-950/30"
         : "border-red-500 bg-red-50 dark:bg-red-950/30";
     }
+    // Дублікат (п.1-2 задачі) — лише ДО перевірки (d вище вже перехопив
+    // after-check вітку), перебиває --filled (та сама пріоритетність, що й
+    // звичайне "заповнено", бо дублікат за визначенням не порожній).
+    if (isDuplicateItem(itemId)) return "chrono-number-slot--duplicate";
     const filled = !!positions[itemId]?.trim();
     return filled ? "chrono-number-slot--filled" : "chrono-number-slot--empty";
   }
@@ -247,6 +286,7 @@ export function ChronologicalOrderExercise({
         ? "chrono-number-slot border border-green-500 bg-green-50 dark:bg-green-950/30"
         : "chrono-number-slot border border-red-500 bg-red-50 dark:bg-red-950/30";
     }
+    if (isDuplicateItem(itemId)) return "chrono-number-slot chrono-number-slot--duplicate";
     const filled = !!positions[itemId]?.trim();
     return `chrono-number-slot ${filled ? "chrono-number-slot--filled" : "chrono-number-slot--empty"}`;
   }
@@ -311,6 +351,7 @@ export function ChronologicalOrderExercise({
           disabled={locked}
           placeholder="№"
           aria-label={numberInputAriaLabel(itemId, points, label ? t("aria.eventNumberLabeled", { label }) : t("aria.eventNumber"))}
+          aria-invalid={isDuplicateItem(itemId) || undefined}
           className={lineSlotClass(itemId)}
         />
       );
@@ -333,11 +374,12 @@ export function ChronologicalOrderExercise({
           disabled={locked}
           placeholder="№"
           aria-label={numberInputAriaLabel(itemId, points, label ? t("aria.eventNumberLabeled", { label }) : t("aria.eventNumber"))}
+          aria-invalid={isDuplicateItem(itemId) || undefined}
           className={`h-10 w-12 rounded border text-center text-base sm:pointer-fine:h-8 ${inputClass(itemId)}`}
         />
       );
     }
-    const sizeClass = variant === "square" ? "h-11 w-11 px-1 text-center" : "w-16 px-2";
+    const sizeClass = variant === "square" ? "h-11 w-11 px-1 text-center" : "w-16 px-2 text-center";
     return (
       <input
         type="number"
@@ -347,6 +389,7 @@ export function ChronologicalOrderExercise({
         onChange={(e) => updatePosition(itemId, e.target.value)}
         disabled={locked}
         placeholder="№"
+        aria-invalid={isDuplicateItem(itemId) || undefined}
         className={`${sizeClass} rounded border py-1 text-sm ${inputClass(itemId)}`}
       />
     );
@@ -420,7 +463,7 @@ export function ChronologicalOrderExercise({
         </div>
         {!isPractice && config.hint && hintVisible && (
           <div role="status" aria-live="polite" className="word-choice-hint-chip">
-            <HintBulb state="available" as="span" />
+            <HintBulb state="available" as="span" className="word-choice-hint-chip-bulb" />
             <span className="word-choice-hint-chip-text">{config.hint}</span>
           </div>
         )}
@@ -455,6 +498,20 @@ export function ChronologicalOrderExercise({
                 style={{ width: `${config.items.length > 0 ? (answeredCount / config.items.length) * 100 : 0}%` }}
               />
             </div>
+            {/* Попередження про дублікати (п.3 задачі) — лише ДО перевірки
+                (locked — те саме !!result/practiceCorrect, що ховає й сам
+                дублікат-стиль полів вище, п.5): зникає разом із самим
+                дублікатом, коли студент виправляє поле, а не лишається
+                "застарілим" повідомленням. Рядок з'являється/зникає в
+                звичайному потоці (не зарезервоване місце) — сам рядок
+                напряму прив'язаний до дії студента (ввести/виправити
+                дублікат), тож зсув контенту під ним очікуваний, той самий
+                принцип, що звичайне повідомлення валідації форми. */}
+            {duplicateNumbers.size > 0 && !locked && (
+              <p className="chrono-duplicate-warning" role="status" aria-live="polite">
+                {t("chrono.duplicateNumbers", { numbers: duplicateNumbersText })}
+              </p>
+            )}
           </div>
         ) : (
           <>
