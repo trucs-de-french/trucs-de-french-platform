@@ -317,8 +317,8 @@ export function MultipleChoiceExercise({
         : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
-    if (opt?.correct) return "border-green-500 bg-green-500";
-    if (opt?.selected) return "border-red-500 bg-red-500";
+    if (opt?.correct) return "result-border-width-sm border-green-500 bg-green-500";
+    if (opt?.selected) return "result-border-width-sm border-red-500 bg-red-500";
     return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
   }
 
@@ -368,10 +368,10 @@ export function MultipleChoiceExercise({
     }
     const opt = itemDetail.options.find((o) => o.id === optionId);
     if (opt?.correct) {
-      return { mark: "✓", selected: true, className: "border-green-600 bg-green-600 text-white" };
+      return { mark: "✓", selected: true, className: "result-border-width-sm border-green-600 bg-green-600 text-white" };
     }
     if (opt?.selected) {
-      return { mark: "✕", selected: true, className: "border-red-600 bg-red-600 text-white" };
+      return { mark: "✕", selected: true, className: "result-border-width-sm border-red-600 bg-red-600 text-white" };
     }
     return {
       mark: "",

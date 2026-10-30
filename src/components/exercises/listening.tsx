@@ -110,8 +110,8 @@ export function ListeningExercise({
         : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
     }
     const od = qDetail.options.find((o) => o.id === optionId);
-    if (od?.correct) return "border-green-500 bg-green-500";
-    if (od?.selected) return "border-red-500 bg-red-500";
+    if (od?.correct) return "result-border-width-sm border-green-500 bg-green-500";
+    if (od?.selected) return "result-border-width-sm border-red-500 bg-red-500";
     return "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white opacity-60 dark:border-[var(--card-field-border)] dark:bg-[var(--card-field-bg)]";
   }
 
