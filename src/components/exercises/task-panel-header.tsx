@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { HintBulb } from "./hint-bulb";
@@ -104,7 +104,27 @@ export function TaskPanelHeader({
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
-  const showPillsRow = !!pointsText || !!verdict || !!hintText || !!counter || !!rightContent;
+  // Пілюля підказки зникає (hintText → null/undefined), щойно викликач
+  // показує результат (lampочка вже не потрібна) — водночас пілюля
+  // балів розширюється ("N points" → "X sur N points") і з'являється
+  // вердикт-чіп. Текст підказки зазвичай ЗНАЧНО довший за коротке слово
+  // вердикту, тож на вузьких екранах рядок пілюль (.task-panel-pills-
+  // left, flex-wrap) міг переноситись на 2 рядки ДО перевірки й стискатись
+  // назад до 1 рядка ПІСЛЯ — усе нижче "стрибало вгору" саме через це
+  // (висота самих пілюль уже однакова, d2f355c, — зникала не висота
+  // пілюлі, а ЦІЛА пілюля). Фікс: пам'ятаємо останній НЕпорожній hintText
+  // у стані (react-hooks/refs забороняє читати ref.current під час
+  // рендеру — умовний setState під час рендеру лишається офіційним
+  // React-паттерном "remember info from previous render") і далі
+  // рендеримо ту саму пілюлю invisible (visibility:hidden — займає місце
+  // в розкладці, не фарбується, не в acc-дереві), а не знімаємо її з DOM
+  // — рядок більше не змінює кількість рядків/висоту між "до" і "після"
+  // перевірки.
+  const [lastHintText, setLastHintText] = useState<string | null>(hintText ?? null);
+  if (hintText && hintText !== lastHintText) setLastHintText(hintText);
+  const reservedHintText = !hintText ? lastHintText : null;
+  const showPillsRow =
+    !!pointsText || !!verdict || !!hintText || !!reservedHintText || !!counter || !!rightContent;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -126,7 +146,11 @@ export function TaskPanelHeader({
               </span>
             )}
             {counter && <CounterPill current={counter.current} total={counter.total} />}
-            {hintText && <HintPill text={hintText} />}
+            {hintText ? (
+              <HintPill text={hintText} />
+            ) : (
+              reservedHintText && <HintPill text={reservedHintText} hidden />
+            )}
           </div>
           {rightContent && <div className="task-panel-controls-right">{rightContent}</div>}
         </div>
@@ -188,10 +212,20 @@ export function CounterPill({ current, total }: { current: number; total: number
 // пілюль" — усі пілюлі одного рядка мають бути однієї висоти, інакше
 // .task-panel-pills-row росте/стискається залежно від того, яка саме
 // пілюля зараз показана).
-function HintPill({ text }: { text: string }) {
+// hidden — рендерить ту саму пілюлю (той самий текст, той самий бокс)
+// з visibility:hidden замість знімання з DOM: зберігає точно те саме
+// місце в рядку .task-panel-pills-left (ширина/висота), коли викликач
+// більше не передає реальний hintText (щойно показано результат), щоб
+// рядок не змінював кількість рядків/висоту переходячи "до"/"після"
+// перевірки (TaskPanelHeader вище, reservedHintText). aria-hidden —
+// екранний читач теж її не бачить, pointer-events-none — не клікається.
+function HintPill({ text, hidden = false }: { text: string; hidden?: boolean }) {
   const { t } = useT();
   return (
-    <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
+    <span
+      aria-hidden={hidden || undefined}
+      className={`inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
+    >
       <HintBulb state="available" as="span" />
       <span className="min-w-0">
         <span className="font-bold">{t("panel.hintPrefix")}</span> {text}
