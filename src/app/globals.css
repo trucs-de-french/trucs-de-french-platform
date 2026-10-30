@@ -8239,6 +8239,186 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Панель "Правильні відповіді" караоке (задача "редизайн караоке") —
+   рендериться всередині .task-result-card/.task-result-toggle-panel
+   (TaskResult, task-result.tsx, уже 1.5px-рамка, той самий спільний
+   toggle, що й інші 18 типів вправ) — лише вміст ПАНЕЛІ свій тут: повний
+   текст пісні, рядок за рядком, замість колишнього плоского списку
+   "Ligne N : correct — слово" (увесь завжди червоний незалежно від
+   isCorrect, той самий баг, задача п.3 — ця верстка рахує колір виключно
+   з gaps[].isCorrect, тож коректний рядок ніколи не отримує --wrong). */
+/* --karaoke-result-font-size — ОДНЕ значення (задача "компактна панель"),
+   звідси й .karaoke-result-line-text, і .karaoke-result-word (успадковує
+   font-size від рядка-предка, власного font-size не задає) підлаштовуються
+   разом однією зміною. */
+.karaoke-result-lines {
+  --karaoke-result-font-size: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.karaoke-result-line-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  /* ~5px зверху/знизу (задача) — ЄДИНЕ джерело вертикального проміжку між
+     рядками (замінює колишній gap:10px на .karaoke-result-lines — padding
+     сусідніх рядків і так підсумовується в 10px між текстом, подвійний
+     відступ разом із gap дав би вдвічі більше за ціль "вдвічі нижчий
+     список"). */
+  padding: 5px 0;
+}
+/* Жолобок статусу — 18px (задача), завжди присутній (навіть для рядків без
+   пропусків, "empty status gutter"), щоб текст усіх рядків починався з
+   того самого відступу незалежно від того, чи рядок має позначку. */
+.karaoke-result-gutter {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.karaoke-result-line-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: var(--karaoke-result-font-size);
+  line-height: 1.45;
+  color: #1a1640;
+  overflow-wrap: anywhere;
+}
+.dark .karaoke-result-line-text {
+  color: #f1ecd9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .karaoke-result-line-text {
+    color: #f1ecd9;
+  }
+}
+/* Кругла 18px позначка (задача, було 22px) — суцільна заливка (не тінт, на
+   відміну від слів-чипів нижче): статус РЯДКА мусить читатись одним
+   погляд, той самий correct/wrong-токен (#4fbf86/#e8788a родина темної
+   теми), що й усюди інде, світла — ті самі #22c55e/#ef4444, що
+   chrono-order/matching correct/wrong (border-audit.md), не новий колір.
+   align-items:flex-start на рядку-предку (.karaoke-result-line-row) —
+   позначка лишається вирівняною по ПЕРШОМУ рядку тексту, навіть якщо
+   довгий рядок переноситься (задача п.3). */
+.karaoke-result-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.karaoke-result-badge--correct {
+  background: #22c55e;
+}
+.karaoke-result-badge--wrong {
+  background: #ef4444;
+}
+.dark .karaoke-result-badge--correct {
+  background: var(--correct-border-dark);
+}
+.dark .karaoke-result-badge--wrong {
+  background: var(--wrong-border-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .karaoke-result-badge--correct {
+    background: var(--correct-border-dark);
+  }
+  :root:not(.light) .karaoke-result-badge--wrong {
+    background: var(--wrong-border-dark);
+  }
+}
+/* Пара "слово студента → правильне слово" — inline-flex ОДНИМ блоком
+   (задача п.4: "must not wrap unnecessarily"), щоб переносилась ЦІЛОЮ
+   групою, не розриваючи стрілку від сусіднього чипа; gap:6px замість
+   колишнього текстового " → " — точний контроль відступу, що просить
+   задача, замість залежності від пробілів символу. */
+.karaoke-result-gap-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+.karaoke-result-arrow {
+  font-size: 14px;
+  color: var(--text-muted-caption);
+}
+/* Слово-чип усередині рядка (правильне слово/слово студента) — той самий
+   принцип "тінт фону + кольоровий текст", що .task-result-gap-word (fill_
+   blank/letter_gaps), лише свій радіус (5px, за задачею) і padding.
+   font-size НЕ задається — успадковує --karaoke-result-font-size від
+   .karaoke-result-line-text (задача п.4: "inherit from the line"). Кольори
+   — ті самі reused-значення, що .task-result-row-pill--correct/--wrong
+   (світла) і --correct-border-dark/--wrong-border-dark (темна), не нові
+   хардкоди. */
+.karaoke-result-word {
+  display: inline;
+  border-radius: 5px;
+  padding: 0 6px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.karaoke-result-word--correct {
+  background: #eef8f0;
+  color: #1f7a3d;
+}
+.karaoke-result-word--wrong {
+  background: #fdf1f0;
+  color: #c62f2f;
+  text-decoration: line-through;
+}
+/* Студент лишив пропуск порожнім — курсивний плейсхолдер замість
+   перекресленого слова, той самий фон "wrong", що й звичайне неправильне
+   слово, але без text-decoration (нічого реального не перекреслюємо). */
+.karaoke-result-word--empty {
+  font-style: italic;
+  text-decoration: none;
+}
+.dark .karaoke-result-word--correct {
+  background: var(--dark-surface-fill);
+  color: var(--correct-border-dark);
+}
+.dark .karaoke-result-word--wrong {
+  background: rgba(232, 120, 138, 0.14);
+  color: var(--wrong-border-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .karaoke-result-word--correct {
+    background: var(--dark-surface-fill);
+    color: var(--correct-border-dark);
+  }
+  :root:not(.light) .karaoke-result-word--wrong {
+    background: rgba(232, 120, 138, 0.14);
+    color: var(--wrong-border-dark);
+  }
+}
+/* Легенда під списком рядків — приглушений підпис, той самий
+   --text-muted-caption, що решта caption-текстів панелі (вже теми-залежний
+   токен, обидва значення визначені в :root/:root.dark вище у файлі). */
+.karaoke-result-legend {
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted-caption);
+}
+/* Компактна панель караоке (задача "компактна панель") — .karaoke-result-
+   panel — лише МАРКЕР (karaoke.tsx), що більше ніде не зустрічається, щоб
+   звузити padding/заголовок-рамки ЛИШЕ в картці караоке через :has(), без
+   редагування самих спільних класів .task-result-toggle-panel/
+   .task-result-toggle-title-main (TaskResult, task-result.tsx — 18 інших
+   типів вправ рендерять той самий компонент і не повинні змінитись). */
+.task-result-toggle-panel:has(.karaoke-result-panel) {
+  padding: 14px 18px;
+}
+.task-result-card:has(.karaoke-result-panel) .task-result-toggle-title-main {
+  font-size: 15px;
+}
+
 /* flip_cards (deck) — DeckFlipCards, flip-cards.tsx. Обидві грані
    (.flip-face) в ОДНІЙ grid-клітинці grid-area:1/1 замість колишнього
    position:absolute + inset:0: той підхід вимагав height:100% на предку,

@@ -12,7 +12,8 @@ import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor 
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { EXERCISE_STACK } from "@/lib/spacing";
-import { TaskResult } from "./task-result";
+import { TaskResult, rowResultAriaLabel } from "./task-result";
+import type { UiLang } from "@/lib/ui/product-lang";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 
@@ -224,6 +225,95 @@ function KaraokeLineRow({
           );
         })}
       </p>
+    </div>
+  );
+}
+
+// Кругла 22px позначка статусу рядка в лівому "жолобку" панелі "Правильні
+// відповіді" (задача "редизайн караоке") — correct/incorrect, та сама
+// aria-label-функція, що rowResultAriaLabel (task-result.tsx), уже
+// використана для подібних статус-позначок в інших типах вправ (той самий
+// принцип, не новий текст).
+function KaraokeResultBadge({ correct, lang }: { correct: boolean; lang: UiLang }) {
+  return (
+    <span
+      className={`karaoke-result-badge ${correct ? "karaoke-result-badge--correct" : "karaoke-result-badge--wrong"}`}
+      role="img"
+      aria-label={rowResultAriaLabel(correct, lang)}
+    >
+      {correct ? (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      ) : (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+// Один рядок пісні в панелі "Правильні відповіді" — ПОВНИЙ текст рядка
+// (tokens публічного конфігу, null на місці пропуску), не лише "___" як у
+// KaraokeDetail.text (той формат лишається для "Роботи над помилками", не
+// чіпається). gi (лічильник пропуску в межах рядка) синхронізується з
+// l.gaps за позицією — той самий порядок, що gapTokenIndices при побудові
+// detail (grade.ts: gradeKaraoke), тож i-й null у tokens завжди відповідає
+// gaps[i]. Токенізація (karaoke.tsx/types.ts: tokens — слова Й
+// розділові знаки окремими елементами) вже ізолює слово пропуску від
+// прилеглої пунктуації/апострофа (п.5 задачі) — рендер нижче просто
+// показує кожен токен як є, нічого додатково не парсить.
+function KaraokeResultLine({
+  tokens,
+  gaps,
+  t,
+  lang,
+}: {
+  tokens: (string | null)[];
+  gaps: KaraokeDetail["lines"][number]["gaps"];
+  t: ReturnType<typeof useT>["t"];
+  lang: UiLang;
+}) {
+  let gi = 0;
+  // Рядок без пропусків — null (жолобок лишається порожнім); з пропусками —
+  // "неправильний", якщо БОДАЙ ОДИН пропуск неправильний (той самий критерій,
+  // що колишній список wrongAnswers.length>0, п.3 задачі — "виправлення
+  // помилки: раніше кожен рядок був червоним незалежно від isCorrect").
+  const lineCorrect = gaps.length === 0 ? null : gaps.every((g) => g.isCorrect);
+  const parts = tokens.map((token, i) => {
+    if (token !== null) return <span key={i}>{token}</span>;
+    const gap = gaps[gi++];
+    if (!gap) return null;
+    if (gap.isCorrect) {
+      return (
+        <span key={i} className="karaoke-result-word karaoke-result-word--correct">
+          {gap.correctAnswer}
+        </span>
+      );
+    }
+    const studentEmpty = !gap.studentAnswer.trim();
+    return (
+      <span key={i} className="karaoke-result-gap-inline">
+        {studentEmpty ? (
+          <span className="karaoke-result-word karaoke-result-word--wrong karaoke-result-word--empty">
+            {t("karaoke.emptyAnswerPlaceholder")}
+          </span>
+        ) : (
+          <span className="karaoke-result-word karaoke-result-word--wrong">{gap.studentAnswer}</span>
+        )}
+        <span className="karaoke-result-arrow">→</span>
+        <span className="karaoke-result-word karaoke-result-word--correct">{gap.correctAnswer}</span>
+      </span>
+    );
+  });
+
+  return (
+    <div className="karaoke-result-line-row">
+      <span className="karaoke-result-gutter">
+        {lineCorrect !== null && <KaraokeResultBadge correct={lineCorrect} lang={lang} />}
+      </span>
+      <span className="karaoke-result-line-text">{parts}</span>
     </div>
   );
 }
@@ -739,24 +829,6 @@ export function KaraokeExercise({
         />
       )}
 
-      {detail && (
-        <ul className="flex flex-col gap-1 text-sm">
-          {detail.lines.map((l, li) => {
-            // Один рядок повідомлення на весь рядок пісні (не на кожен
-            // пропуск окремо) — правильні слова через кому, у порядку
-            // появи (той самий порядок, що й l.gaps, бо gapTokenIndices
-            // сортуються за зростанням при позначенні пропуску).
-            const wrongAnswers = l.gaps.filter((g) => !g.isCorrect).map((g) => g.correctAnswer);
-            if (wrongAnswers.length === 0) return null;
-            return (
-              <li key={li} className="text-red-600 dark:text-red-400">
-                {t("karaoke.lineCorrectWrong", { n: li + 1, wrong: wrongAnswers.join(", ") })}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
       {/* md:-mt-2 — лише коли щойно над цим блоком рендерились чипи
           (режим "вибір", !result): EXERCISE_STACK (gap-4 md:gap-6) дає тут
           16px моб./24px десктоп, задача просить рівно 16px на обох, тож
@@ -791,7 +863,27 @@ export function KaraokeExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-          />
+            toggleTitle={t("panel.correctAnswers")}
+            toggleCount={totalGaps}
+          >
+            {detail && (
+              // Маркер-обгортка лише для СКОУПОВАНОГО :has()-перевизначення
+              // padding/заголовка (globals.css) — .task-result-toggle-panel/
+              // .task-result-toggle-title-main спільні з 18 іншими типами
+              // вправ, тож самі класи тут не чіпаються, лише цей селектор-
+              // маркер, що більше ніде не зустрічається.
+              <div className="karaoke-result-panel">
+                <div className="karaoke-result-lines">
+                  {detail.lines.map((l, li) => (
+                    <KaraokeResultLine key={li} tokens={config.lines[li].tokens} gaps={l.gaps} t={t} lang={lang} />
+                  ))}
+                </div>
+                <p className="karaoke-result-legend">
+                  {t("karaoke.legendCorrect")} · {t("karaoke.legendWrong")}
+                </p>
+              </div>
+            )}
+          </TaskResult>
         )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>

@@ -167,7 +167,9 @@ export const uk = {
   "karaoke.continueBtn": "▶ Продовжити",
   "karaoke.gapOfTotal": "Пропуск {n} з {total}",
   "karaoke.clickCorrectWord": "Клікніть на правильне слово",
-  "karaoke.lineCorrectWrong": "Рядок {n}: правильно — {wrong}",
+  "karaoke.emptyAnswerPlaceholder": "(порожньо)",
+  "karaoke.legendCorrect": "✓ правильно",
+  "karaoke.legendWrong": "✗ неправильно: ваша відповідь → правильне слово",
 
   "cbg.stateCorrectAria": "правильно",
   "cbg.stateWrongAria": "помилково",

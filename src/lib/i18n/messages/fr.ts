@@ -166,7 +166,9 @@ export const fr: Record<MessageKey, string> = {
   "karaoke.continueBtn": "▶ Continuer",
   "karaoke.gapOfTotal": "Trou {n} sur {total}",
   "karaoke.clickCorrectWord": "Cliquez sur le mot correct",
-  "karaoke.lineCorrectWrong": "Ligne {n} : correct — {wrong}",
+  "karaoke.emptyAnswerPlaceholder": "(vide)",
+  "karaoke.legendCorrect": "✓ correct",
+  "karaoke.legendWrong": "✗ incorrect : votre réponse → le mot correct",
 
   "cbg.stateCorrectAria": "correct",
   "cbg.stateWrongAria": "incorrect",
