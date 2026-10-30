@@ -898,7 +898,6 @@ export function MultipleChoiceExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockItems.length}
                 hintSummary={{
@@ -1036,7 +1035,6 @@ export function MultipleChoiceExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={config.items.length}
                 hintSummary={{

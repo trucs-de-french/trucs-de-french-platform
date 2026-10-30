@@ -662,7 +662,6 @@ export function TableFillExercise({
           {blockResult && (
             <TaskResult
               correct={blockResult.correct}
-              hideSummaryRow={!hidePoints}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
               toggleTitle={tt("panel.correctAnswers")}
@@ -843,7 +842,6 @@ export function TableFillExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={tt("panel.correctAnswers")}
                 toggleCount={config.rows.length}
                 hintSummary={{

@@ -484,7 +484,6 @@ export function FillBlankExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              hideSummaryRow={!hidePoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={gapRows?.length}
               hintSummary={{ hintCount: hintUsedCount, reducesPoints: config.hintsReducePoints }}

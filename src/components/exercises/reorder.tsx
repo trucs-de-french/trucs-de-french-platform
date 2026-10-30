@@ -434,7 +434,6 @@ export function ReorderExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: blockDetail?.sequences.filter((s) => s.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,
@@ -622,7 +621,6 @@ export function ReorderExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: detail?.sequences.filter((s) => s.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,

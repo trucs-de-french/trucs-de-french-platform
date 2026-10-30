@@ -213,7 +213,6 @@ function CrosswordBlockView({
   blockCount,
   activeBlock,
   onChangeBlock,
-  hideSummaryRow,
 }: {
   taskId: string;
   block: CrosswordPublicBlock;
@@ -221,9 +220,6 @@ function CrosswordBlockView({
   active: boolean;
   isDelf?: boolean;
   hintsReducePoints: boolean;
-  // Пілюля балів+статус-чіп тепер у заголовку (TaskPanelHeader,
-  // CrosswordExercise) — той самий `!hidePoints`, що решта типів.
-  hideSummaryRow?: boolean;
   // ЕТАП I — спільні для ВСІХ блоків вправи (рахує/тримає CrosswordExercise):
   // cols — max(gridWidth) по всіх блоках (однакова клітинка незалежно від
   // того, який блок вужчий), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -1002,7 +998,6 @@ function CrosswordBlockView({
                 correct={result.correct}
                 pointsEarned={result.pointsEarned}
                 pointsPossible={result.pointsPossible}
-                hideSummaryRow={hideSummaryRow}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={block.across.length + block.down.length}
                 hintSummary={{
@@ -1064,7 +1059,6 @@ function CrosswordBlockView({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              hideSummaryRow={hideSummaryRow}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={block.across.length + block.down.length}
               hintSummary={{
@@ -1255,7 +1249,6 @@ export function CrosswordExercise({
           cols={maxCols}
           zoom={zoom}
           onResult={setSingleResult}
-          hideSummaryRow={!hidePoints}
         />
       ) : (
         <BlockNavigation
@@ -1285,7 +1278,6 @@ export function CrosswordExercise({
                 blockCount={blockCount}
                 activeBlock={activeBlock}
                 onChangeBlock={setActiveBlock}
-                hideSummaryRow={!hidePoints}
               />
             </div>
           ))}

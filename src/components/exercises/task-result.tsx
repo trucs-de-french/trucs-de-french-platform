@@ -38,7 +38,7 @@ export function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-export function statusTone(correct: boolean, pointsEarned?: number, pointsPossible?: number) {
+function statusTone(correct: boolean, pointsEarned?: number, pointsPossible?: number) {
   if (pointsEarned !== undefined && pointsPossible !== undefined && pointsPossible > 0) {
     if (pointsEarned <= 0) return { tone: "error" as const, label: STATUS_LABEL_NONE, title: STATUS_LABEL_NONE_UK };
     if (pointsEarned < pointsPossible)
@@ -103,7 +103,6 @@ export function TaskResult({
   toggleCount,
   className,
   hintSummary,
-  hideSummaryRow,
 }: {
   correct: boolean;
   pointsEarned?: number;
@@ -116,12 +115,6 @@ export function TaskResult({
   // hintUsed своєї детейл-структури сам, тут лише рендер однакового
   // рядка-пілюлі, HintUsageSummary вище); undefined/0 — пілюля не рендериться.
   hintSummary?: { hintCount: number | "task"; reducesPoints: boolean };
-  // Пілюля балів + статус-чіп тепер рендериться в заголовку панелі
-  // (TaskPanelHeader, pointsText+verdict — задача "єдина пілюля балів
-  // усюди") — викликач, що вже показує їх там, передає true, щоб
-  // TaskResult не дублював той самий рядок тут вдруге; hintSummary/toggle
-  // (кнопка "Показати"/correct-answer картки) лишаються як є.
-  hideSummaryRow?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -131,33 +124,31 @@ export function TaskResult({
 
   return (
     <div className={`flex w-full flex-col gap-3 ${className ?? ""}`.trim()}>
-      {!hideSummaryRow && (
-        <div className="task-result-row">
-          {pointsPossible !== undefined && (
-            <span className="points-pill-gradient">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="#f6dc8e"
-                aria-hidden="true"
-                className="points-pill-star"
-              >
-                <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
-              </svg>
-              {formatPointsLocalized(pointsEarned ?? 0, pointsPossible, lang)}
-            </span>
-          )}
-          <span
-            className={`task-result-chip task-result-chip--${tone}`}
-            role="status"
-            title={title}
-            aria-label={title}
-          >
-            {label}
+      <div className="task-result-row">
+        {pointsPossible !== undefined && (
+          <span className="points-pill-gradient">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="#f6dc8e"
+              aria-hidden="true"
+              className="points-pill-star"
+            >
+              <path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" />
+            </svg>
+            {formatPointsLocalized(pointsEarned ?? 0, pointsPossible, lang)}
           </span>
-        </div>
-      )}
+        )}
+        <span
+          className={`task-result-chip task-result-chip--${tone}`}
+          role="status"
+          title={title}
+          aria-label={title}
+        >
+          {label}
+        </span>
+      </div>
 
       {hintSummary && <HintUsageSummary hintCount={hintSummary.hintCount} reducesPoints={hintSummary.reducesPoints} />}
 

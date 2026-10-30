@@ -270,7 +270,6 @@ export function TrueFalseExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                hideSummaryRow={!hidePoints}
               />
             )}
           </div>
@@ -435,7 +434,6 @@ export function TrueFalseExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
               />
             )}
             {single.error && <p className="text-sm text-red-600 dark:text-red-400">{single.error}</p>}

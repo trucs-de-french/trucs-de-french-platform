@@ -621,7 +621,6 @@ export function LetterGapsExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-              hideSummaryRow={!hidePoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={blockDetail ? blockDisplayOrder.length : undefined}
               hintSummary={{
@@ -835,7 +834,6 @@ export function LetterGapsExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={singleDetail ? displayOrder.length : undefined}
                 hintSummary={{

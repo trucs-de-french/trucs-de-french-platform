@@ -553,7 +553,6 @@ export function DragDropExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? config.sentences.length : undefined}
             hintSummary={{

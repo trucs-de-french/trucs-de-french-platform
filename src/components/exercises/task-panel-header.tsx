@@ -54,7 +54,6 @@ export function TaskInstructionLine({ fr, uk }: { fr?: string | null; uk?: strin
 
 export function TaskPanelHeader({
   pointsText,
-  verdict,
   instructionText,
   subInstructionText,
   hintText,
@@ -77,13 +76,6 @@ export function TaskPanelHeader({
   // перевірки), той самий принцип, що й раніше. Відсутній — пілюля не
   // рендериться.
   pointsText?: string;
-  // Статус-чіп ("À revoir"/"Presque"/"Bravo !" — ті самі STATUS_LABEL_*/
-  // statusTone, що TaskResult, task-result.tsx) — рендериться одразу
-  // після пілюлі балів, лише коли вправу (чи поточний блок) уже
-  // перевірено (викликач передає undefined до перевірки). "Єдина пілюля
-  // балів усюди" (ця задача): до перевірки pointsText — завжди
-  // загальний бал; після перевірки — "earned sur possible" + цей чіп.
-  verdict?: { label: string; title: string; tone: "success" | "warn" | "error" };
   // Санітизується тут же (як і раніше в InstructionsText) — сире HTML з
   // БД, не довіряти без санітизації навіть повторно.
   instructionText?: string;
@@ -105,14 +97,15 @@ export function TaskPanelHeader({
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
   // Пілюля підказки зникає (hintText → null/undefined), щойно викликач
-  // показує результат (lampочка вже не потрібна) — водночас пілюля
-  // балів розширюється ("N points" → "X sur N points") і з'являється
-  // вердикт-чіп. Текст підказки зазвичай ЗНАЧНО довший за коротке слово
-  // вердикту, тож на вузьких екранах рядок пілюль (.task-panel-pills-
-  // left, flex-wrap) міг переноситись на 2 рядки ДО перевірки й стискатись
-  // назад до 1 рядка ПІСЛЯ — усе нижче "стрибало вгору" саме через це
-  // (висота самих пілюль уже однакова, d2f355c, — зникала не висота
-  // пілюлі, а ЦІЛА пілюля). Фікс: пам'ятаємо останній НЕпорожній hintText
+  // показує результат (lampочка вже не потрібна) — пілюля балів сама
+  // (pointsText) лишається загальним балом і НЕ змінюється (ревізія
+  // f057578/fd04fac: earned+вердикт-чіп повернулись у TaskResult,
+  // task-result.tsx, замість заміни пілюлі в заголовку). Текст підказки
+  // зазвичай довгий (повне речення), тож на вузьких екранах рядок пілюль
+  // (.task-panel-pills-left, flex-wrap) міг переноситись на 2 рядки ДО
+  // перевірки й стискатись назад до 1 рядка ПІСЛЯ, щойно пілюля підказки
+  // просто зникала — усе нижче "стрибало вгору" саме через це. Фікс:
+  // пам'ятаємо останній НЕпорожній hintText
   // у стані (react-hooks/refs забороняє читати ref.current під час
   // рендеру — умовний setState під час рендеру лишається офіційним
   // React-паттерном "remember info from previous render") і далі
@@ -123,8 +116,7 @@ export function TaskPanelHeader({
   const [lastHintText, setLastHintText] = useState<string | null>(hintText ?? null);
   if (hintText && hintText !== lastHintText) setLastHintText(hintText);
   const reservedHintText = !hintText ? lastHintText : null;
-  const showPillsRow =
-    !!pointsText || !!verdict || !!hintText || !!reservedHintText || !!counter || !!rightContent;
+  const showPillsRow = !!pointsText || !!hintText || !!reservedHintText || !!counter || !!rightContent;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -135,16 +127,6 @@ export function TaskPanelHeader({
         <div className="task-panel-pills-row">
           <div className="task-panel-pills-left">
             {pointsText && <PointsPill text={pointsText} />}
-            {verdict && (
-              <span
-                className={`task-result-chip task-result-chip--${verdict.tone}`}
-                role="status"
-                title={verdict.title}
-                aria-label={verdict.title}
-              >
-                {verdict.label}
-              </span>
-            )}
             {counter && <CounterPill current={counter.current} total={counter.total} />}
             {hintText ? (
               <HintPill text={hintText} />

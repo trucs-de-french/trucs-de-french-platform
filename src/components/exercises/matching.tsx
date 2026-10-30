@@ -380,7 +380,6 @@ export function MatchingExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={blockDetail?.correctPairs.length}
               >
@@ -588,7 +587,6 @@ export function MatchingExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctPairsTitle")}
                 toggleCount={singleDetail?.correctPairs.length}
               >

@@ -281,7 +281,6 @@ export function OpenAnswerCheckExercise({
                 correct={blockResult.correct}
                 pointsEarned={blockResult.pointsEarned}
                 pointsPossible={blockResult.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={blockDetail ? blockQuestions.length : undefined}
                 hintSummary={{ hintCount: blockDetail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}
@@ -395,7 +394,6 @@ export function OpenAnswerCheckExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 toggleTitle={t("panel.correctAnswers")}
                 toggleCount={detail ? config.questions.length : undefined}
                 hintSummary={{ hintCount: detail?.questions.filter((q) => q.hintUsed).length ?? 0, reducesPoints: false }}

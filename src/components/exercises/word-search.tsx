@@ -347,7 +347,6 @@ function WordSearchBlockView({
   blockCount,
   activeBlock,
   onChangeBlock,
-  hideSummaryRow,
 }: {
   taskId: string;
   block: WordSearchPublicBlock;
@@ -355,9 +354,6 @@ function WordSearchBlockView({
   active: boolean;
   isDelf?: boolean;
   hintsReducePoints: boolean;
-  // Пілюля балів+статус-чіп тепер у заголовку (TaskPanelHeader,
-  // WordSearchExercise) — той самий `!hidePoints`, що решта типів.
-  hideSummaryRow?: boolean;
   // ЕТАП J — спільні для ВСІХ блоків вправи (рахує/тримає WordSearchExercise):
   // cols — max(gridSize) по всіх блоках (однакова клітинка незалежно від
   // того, який блок менший), zoom — студентський масштаб 1/1.25/1.5/2.
@@ -1035,7 +1031,7 @@ function WordSearchBlockView({
         {allowRecheck ? (
           <div className="flex flex-col gap-2">
             {result && !practiceMode && (
-              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hideSummaryRow={hideSummaryRow} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+              <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
             )}
             {blockCount !== undefined && activeBlock !== undefined && onChangeBlock && (
               <BlockNavFooter
@@ -1084,7 +1080,7 @@ function WordSearchBlockView({
           </div>
         ) : (
           !practiceMode && (
-            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hideSummaryRow={hideSummaryRow} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
+            <TaskResult correct={result.correct} pointsEarned={result.pointsEarned} pointsPossible={result.pointsPossible} hintSummary={{ hintCount: detail?.words.filter((w) => w.hintUsed).length ?? 0, reducesPoints: hintsReducePoints }} />
           )
         )}
         {/* Практика "Повторити без балів" — лише коли блок уже фінальний
@@ -1290,7 +1286,6 @@ export function WordSearchExercise({
           cols={cols}
           zoom={zoom}
           onResult={setSingleResult}
-          hideSummaryRow={!hidePoints}
         />
       ) : (
         <BlockNavigation
@@ -1326,7 +1321,6 @@ export function WordSearchExercise({
                 blockCount={blockCount}
                 activeBlock={activeBlock}
                 onChangeBlock={setActiveBlock}
-                hideSummaryRow={!hidePoints}
               />
             </div>
           ))}

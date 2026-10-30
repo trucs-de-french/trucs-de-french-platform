@@ -407,7 +407,6 @@ export function LetterRearrangementExercise({
               correct={blockResult.correct}
               pointsEarned={blockResult.pointsEarned}
               pointsPossible={blockResult.pointsPossible}
-              hideSummaryRow={!hidePoints}
               hintSummary={{
                 hintCount: blockDetail?.words.filter((w) => w.hintUsed).length ?? 0,
                 reducesPoints: config.hintsReducePoints,
@@ -574,7 +573,6 @@ export function LetterRearrangementExercise({
                 correct={single.result.correct}
                 pointsEarned={single.result.pointsEarned}
                 pointsPossible={single.result.pointsPossible}
-                hideSummaryRow={!hidePoints}
                 hintSummary={{
                   hintCount: singleDetail?.words.filter((w) => w.hintUsed).length ?? 0,
                   reducesPoints: config.hintsReducePoints,

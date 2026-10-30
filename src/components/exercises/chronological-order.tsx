@@ -365,10 +365,10 @@ export function ChronologicalOrderExercise({
   // принцип, що pooled-score вправи з одним блоком). Без балів/пілюлі в
   // практиці.
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
-  // Єдина пілюля балів (задача "єдина пілюля балів усюди") — лише image/
-  // mixed (режим text має власний прогрес-рядок "Заповнено X з N", свідоме
-  // рішення, не чіпається); до перевірки — загальний бал вправи; після —
-  // earned sur possible + статус-чіп.
+  // Пілюля балів — лише image/mixed (режим text має власний прогрес-рядок
+  // "Заповнено X з N", свідоме рішення, не чіпається); завжди загальний
+  // бал вправи, не змінюється після перевірки (earned sur possible +
+  // статус-чіп — у підсумковому рядку TaskResult нижче, не тут).
   const headerPoints =
     config.mode !== "text" && !hidePoints && !isPractice
       ? headerPointsState(result?.pointsPossible ?? totalPoints, result?.pointsEarned, lang)
@@ -462,16 +462,6 @@ export function ChronologicalOrderExercise({
               <div className="task-panel-pills-row">
                 <div className="task-panel-pills-left">
                   <PointsPill text={headerPoints.pointsText} />
-                  {headerPoints.verdict && (
-                    <span
-                      className={`task-result-chip task-result-chip--${headerPoints.verdict.tone}`}
-                      role="status"
-                      title={headerPoints.verdict.title}
-                      aria-label={headerPoints.verdict.title}
-                    >
-                      {headerPoints.verdict.label}
-                    </span>
-                  )}
                 </div>
               </div>
             )}
@@ -656,7 +646,6 @@ export function ChronologicalOrderExercise({
               correct={result.correct}
               pointsEarned={result.pointsEarned}
               pointsPossible={result.pointsPossible}
-              hideSummaryRow={!!headerPoints}
               toggleTitle={t("panel.correctAnswers")}
               toggleCount={detail ? 1 : undefined}
               hintSummary={

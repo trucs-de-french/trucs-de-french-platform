@@ -461,7 +461,6 @@ export function SortColumnsExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={singleDetail ? config.items.length : undefined}
             hintSummary={{

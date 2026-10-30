@@ -376,7 +376,6 @@ export function ImageMatchExercise({
             correct={result.correct}
             pointsEarned={result.pointsEarned}
             pointsPossible={result.pointsPossible}
-            hideSummaryRow={!hidePoints}
             toggleTitle={t("panel.correctAnswers")}
             toggleCount={detail ? detail.items.length : undefined}
           >

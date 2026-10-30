@@ -1,27 +1,19 @@
-import { formatPointsCountLocalized, formatPointsLocalized } from "./format-points";
-import { statusTone } from "@/components/exercises/task-result";
+import { formatPointsCountLocalized } from "./format-points";
 import type { UiLang } from "@/lib/ui/product-lang";
 
-// Єдина пілюля балів у заголовку панелі (TaskPanelHeader.pointsText +
-// verdict) — одне місце для правила "до перевірки показуємо максимум,
-// після — earned sur possible + статус-чіп", замінює розрізнені копії
-// цієї умови в кожному типі вправи. earned===undefined — ще не
-// перевірено (чи, для блокових вправ, активний блок іще не перевірено);
-// pointsVisible тут навмисно НЕ приймається — загальна пілюля балів
-// показується ЗАВЖДИ до перевірки (задача "єдина пілюля балів усюди"),
-// на відміну від per-item бульбашок (RowPointsTab), де pointsVisible
-// і далі має сенс.
+// Пілюля балів у заголовку панелі (TaskPanelHeader.pointsText) — ЗАВЖДИ
+// показує ЗАГАЛЬНИЙ бал вправи/блоку і НЕ змінюється після перевірки
+// (ревізія f057578/fd04fac: earned+вердикт-чіп повернулись у підсумковий
+// рядок TaskResult, task-result.tsx, замість заміни цієї пілюлі в
+// заголовку). earned лишається параметром заради сумісності всіх 19
+// викликів (кожен передає `result?.pointsEarned` другим аргументом) —
+// навмисно ігнорується. pointsVisible тут і раніше НЕ приймався —
+// загальна пілюля балів показується ЗАВЖДИ, на відміну від per-item
+// бульбашок (RowPointsTab), де pointsVisible і далі має сенс.
 export function headerPointsState(
   possible: number,
-  earned: number | undefined,
+  _earned: number | undefined,
   lang: UiLang
-): {
-  pointsText: string;
-  verdict?: { label: string; title: string; tone: "success" | "warn" | "error" };
-} {
-  if (earned === undefined) {
-    return { pointsText: formatPointsCountLocalized(possible, lang) };
-  }
-  const { tone, label, title } = statusTone(earned >= possible, earned, possible);
-  return { pointsText: formatPointsLocalized(earned, possible, lang), verdict: { label, title, tone } };
+): { pointsText: string } {
+  return { pointsText: formatPointsCountLocalized(possible, lang) };
 }
