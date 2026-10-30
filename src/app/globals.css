@@ -2276,6 +2276,21 @@ button, input, textarea, select, label, nav, aside {
     margin-bottom: 0;
   }
 }
+/* Локальний override стандартного 28px HintBulb (hint-bulb.tsx,
+   GOLD_CIRCLE_SIZE=h-7/w-7) лише в пілюлі "Підказка: ..." заголовка
+   панелі (HintPill, task-panel-header.tsx) — задача "менші пілюлі
+   підказок": 22px гурток, щоб вміститись у h-8 (32px) пілюлю разом із
+   текстом без тісноти. !important — той самий принцип, що
+   .result-border-width/.word-choice-hint-chip-bulb вище: мусить перебити
+   Tailwind-утиліту h-7/w-7 незалежно від порядку генерації CSS. */
+.task-panel-hint-bulb {
+  height: 22px !important;
+  width: 22px !important;
+}
+.task-panel-hint-bulb svg {
+  width: 12px !important;
+  height: 12px !important;
+}
 .task-panel-instruction-line {
   display: flex;
   align-items: baseline;
@@ -7524,21 +7539,39 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 6px;
   margin-top: 6px;
   max-width: 100%;
-  /* Вертикальний padding 5px (не 3px) — лампочка тепер ОДИН стандартний
-     розмір 28px (hint-bulb.tsx, раніше тут був декоративний 18px варіант):
-     5+28+5=38px висота чипа замість колишніх ~24px, контейнер підлаштований
-     під лампочку, а не навпаки. */
-  padding: 5px 12px 5px 5px;
+  /* Компактний розмір (задача "менші пілюлі підказок") — 28px висота
+     ЦІЛОГО чипа (раніше 38px, коли контейнер підлаштовувався під
+     стандартний 28px HintBulb): бульбашка тут зменшена локально до 20px
+     (.word-choice-hint-chip-bulb нижче), тож height замінює колишній
+     padding-за-змістом-лампочки. margin-top над чипом (6px) НЕ змінюється
+     — вертикальний відступ від речення до чипа лишається тим самим, лише
+     сам чип тепер нижчий (вимога "лейаут не стрибає"). */
+  height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
   background: #fff6d6;
   border: 1.5px solid #f0d98a;
+}
+/* Локальний override стандартного 28px HintBulb (hint-bulb.tsx,
+   GOLD_CIRCLE_SIZE=h-7/w-7) лише в цьому чипі — та сама кнопка-лампочка
+   праворуч (яка розгортає/згортає чип) лишається стандартного розміру,
+   тут зменшується лише ДЕКОРАТИВНИЙ span усередині вже розкритого чипа.
+   !important — той самий принцип, що .result-border-width вище: мусить
+   перебити Tailwind-утиліту h-7/w-7 незалежно від порядку генерації CSS. */
+.word-choice-hint-chip-bulb {
+  height: 20px !important;
+  width: 20px !important;
+}
+.word-choice-hint-chip-bulb svg {
+  width: 12px !important;
+  height: 12px !important;
 }
 .word-choice-hint-chip-text {
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 15px;
+  font-size: 14px;
   color: #6b4a14;
 }
 /* Темна тема — існуючий золотий акцент теми (#f6dc8e, CLAUDE.md "dark gold

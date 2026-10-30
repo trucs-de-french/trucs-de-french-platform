@@ -185,15 +185,17 @@ export function CounterPill({ current, total }: { current: number; total: number
   );
 }
 
-// Мокап "варіант 1" — коротка пілюля-підказка: лампочка — стандартний
-// HintBulb (28px, той самий вигляд, що всюди інде), текст короткий, з
-// жирним напівжирним лейблом "Підказка:" перед ним (решта тексту —
-// weight 600 через font-semibold на самому контейнері, лейбл локально
-// переважає його font-bold'ом). Висота пілюлі — h-8 (32px), РІВНО як
-// .points-pill-gradient/.task-result-chip (задача "стабільна висота рядка
-// пілюль" — усі пілюлі одного рядка мають бути однієї висоти, інакше
-// .task-panel-pills-row росте/стискається залежно від того, яка саме
-// пілюля зараз показана).
+// Мокап "варіант 1" — коротка пілюля-підказка: лампочка — компактний
+// 22px гурток (.task-panel-hint-bulb, globals.css — локальний override
+// над стандартним 28px HintBulb, лише тут, бульбашка-кнопка підказки під
+// реченням word_choice/chronological_order лишається стандартного
+// розміру), текст короткий, з жирним напівжирним лейблом "Підказка:"
+// перед ним (решта тексту — weight 600 через font-semibold на самому
+// контейнері, лейбл локально переважає його font-bold'ом). Висота
+// пілюлі — h-8 (32px), РІВНО як .points-pill-gradient/.task-result-chip
+// (задача "стабільна висота рядка пілюль" — усі пілюлі одного рядка мають
+// бути однієї висоти, інакше .task-panel-pills-row росте/стискається
+// залежно від того, яка саме пілюля зараз показана).
 // hidden — рендерить ту саму пілюлю (той самий текст, той самий бокс)
 // з visibility:hidden замість знімання з DOM: зберігає точно те саме
 // місце в рядку .task-panel-pills-left (ширина/висота), коли викликач
@@ -206,9 +208,9 @@ function HintPill({ text, hidden = false }: { text: string; hidden?: boolean }) 
   return (
     <span
       aria-hidden={hidden || undefined}
-      className={`inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white pl-1 pr-[14px] font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
+      className={`inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
     >
-      <HintBulb state="available" as="span" />
+      <HintBulb state="available" as="span" className="task-panel-hint-bulb" />
       <span className="min-w-0">
         <span className="font-bold">{t("panel.hintPrefix")}</span> {text}
       </span>

@@ -401,7 +401,7 @@ export function WordChoiceExercise({
             існує, тож дублювання озвучення неможливе. */}
         {hintOpen && (
           <div role="status" aria-live="polite" className="word-choice-hint-chip">
-            <HintBulb state="available" as="span" />
+            <HintBulb state="available" as="span" className="word-choice-hint-chip-bulb" />
             <span className="word-choice-hint-chip-text">{s.hint}</span>
           </div>
         )}
