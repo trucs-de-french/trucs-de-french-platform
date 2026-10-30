@@ -124,11 +124,20 @@ function RandomRevealFlipCards({
   cards,
   revealSide,
   pageIndices,
+  page,
   footer,
 }: {
   cards: FlipCardType[];
   revealSide: "front" | "back";
   pageIndices: number[];
+  // Поточна сторінка (FlipCardsExercise.page) — лише щоб скинути
+  // рулетку нижче при зміні блоку (highlightIndex/revealedIndex раніше
+  // лишались глобальними для всієї вправи, бо картки всіх сторінок
+  // змонтовані РАЗОМ в одному екземплярі цього компонента; "приземлена"
+  // картка з попереднього блоку робила revealedIndex!==null назавжди,
+  // тож variantFor нижче притлумлював (dimmed, opacity-30) УСІ картки
+  // нового блоку, де жодного розіграшу ще не було).
+  page: number;
   // Нижній рядок ←/→ (BlockNavFooter, block-navigation.tsx) — рендериться
   // тут, не в FlipCardsExercise, бо має сидіти ПІД сіткою САМЕ цього
   // режиму (плашка/вкладки блоків тепер над усією вправою, не тут —
@@ -154,6 +163,28 @@ function RandomRevealFlipCards({
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  // Зупиняє активний інтервал рулетки при зміні сторінки (ефект — лише
+  // зовнішній таймер, не setState, тож не підпадає під
+  // react-hooks/set-state-in-effect); сам стан рулетки (spinning/
+  // highlightIndex/revealedIndex) скидається нижче офіційним React-
+  // паттерном "remember info from previous render" (умовний setState під
+  // час рендеру), тим самим, що lastHintText у TaskPanelHeader,
+  // task-panel-header.tsx.
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, [page]);
+
+  const [lastPage, setLastPage] = useState(page);
+  if (page !== lastPage) {
+    setLastPage(page);
+    setSpinning(false);
+    setHighlightIndex(null);
+    setRevealedIndex(null);
+  }
 
   function spin() {
     if (spinning || pageIndices.length === 0) return;
@@ -830,6 +861,7 @@ export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsCon
           cards={cards}
           revealSide={config.revealSide ?? "front"}
           pageIndices={pageIndices}
+          page={page}
           footer={pagerFooter}
         />
       ) : (
