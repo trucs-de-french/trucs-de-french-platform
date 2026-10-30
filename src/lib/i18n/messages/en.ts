@@ -230,7 +230,6 @@ export const en: Record<MessageKey, string> = {
   "scene.audioFallbackNote": "If the audio doesn't open,",
   "scene.embedFallbackNote": "If the content doesn't open,",
   "scene.followLink": "follow the link",
-  "scene.blockSummary": "Block summary:",
 
   "script.hideTranslation": "Hide translation",
   "script.showTranslation": "Show translation",

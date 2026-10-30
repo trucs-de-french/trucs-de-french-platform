@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { toEmbedUrl, isGdriveUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
 import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { AudioPlayer } from "@/components/audio-player";
 import { GdriveAudioPlayer } from "@/components/gdrive-audio-player";
-import { isExerciseType } from "@/components/exercises/exercise-card";
-import { formatPointsLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
-import type { GradeResult } from "@/lib/exercises/types";
 import { ExerciseBlock, type ExerciseTask } from "./exercise-block";
 import { SHARED_CONTENT_PANEL } from "@/components/task-card-style";
 import { GlassBlock } from "@/components/glass-block";
@@ -39,11 +35,10 @@ export type TaskGroupData = {
   flat_points: number | null;
 };
 
-// "use client" — потрібен локальний стан для живого підсумку балів
-// (results, знизу): кожна задача-член звітує свій GradeResult через
-// onResult, TaskGroupBlock підсумовує. group/tasks — прості серіалізовані
-// пропи від сервера (жодних функцій), тож перехід у клієнтський компонент
-// не порушує RSC-межу.
+// "use client" — потрібен для useT() (контекст) і інтерактивних
+// медіа-плеєрів нижче. group/tasks — прості серіалізовані пропи від
+// сервера (жодних функцій), тож перехід у клієнтський компонент не
+// порушує RSC-межу.
 //
 // Рендер одного блоку — спільний контент (текст/аудіо/відео/embed) зверху,
 // потім усі задачі-члени як ОДНЕ ціле, БЕЗ окремих рамок навколо кожної
@@ -87,36 +82,6 @@ export function TaskGroupBlock({
   extraSharedContent?: ReactNode;
 }) {
   const { lang, t } = useT();
-  const [results, setResults] = useState<Record<string, GradeResult>>({});
-
-  // Один стабільний onResult-колбек НА КОЖЕН task.id, мемоізований через
-  // useMemo (не нова inline-стрілка в .map() нижче на кожен рендер, і не
-  // мутація ref під час рендеру — react-hooks/refs забороняє це саме тому,
-  // що рендер, відкинутий React без коміту, лишив би застарілий кеш).
-  // Без стабільного колбеку useEffect([result, onResult]) у кожній
-  // gradable-вправі (fill-blank.tsx тощо) перезапускався б на кожен рендер
-  // TaskGroupBlock (реф onResult змінювався б), кожен виклик onResult робив
-  // би НОВИЙ об'єкт results (spread завжди створює новий референс, навіть
-  // коли значення під task.id не змінилось) → React не бейлаутиться за
-  // референсом → ре-рендер TaskGroupBlock → НОВІ inline-стрілки для ВСІХ
-  // задач блоку → їхні ефекти знову спрацьовують → знову setResults →
-  // самопідтримний цикл. Найпомітніше на drag_drop (useTilePlacement
-  // перемальовує розкладку плиток на кожен рендер), хоча цикл однаково
-  // зачіпав би будь-який гейдований тип у блоці.
-  //
-  // Залежність — лише tasks (стабільний пропс від сервера для одного
-  // монтування компонента, не міняється через внутрішні setResults) —
-  // setResults навмисно не в масиві залежностей: сеттер useState
-  // гарантовано стабільний між рендерами.
-  const onResultCallbacks = useMemo(() => {
-    const map: Record<string, (result: GradeResult) => void> = {};
-    for (const task of tasks) {
-      map[task.id] = (result: GradeResult) => {
-        setResults((prev) => ({ ...prev, [task.id]: result }));
-      };
-    }
-    return map;
-  }, [tasks]);
 
   // Та сама перевірка, що й для порожніх обгорток-задач/content-блоків
   // (task-visibility.ts) — вирішує, чи є взагалі що показати (guard нижче).
@@ -128,32 +93,8 @@ export function TaskGroupBlock({
   // задачі, що реально щось покаже — показувати голу рамку немає сенсу.
   // Коли групу прикріплено до content-блоку, викликач (сторінка сцени) і
   // так уже перевірив те саме перед викликом — цей guard тут безпечно
-  // повторний. Хуки (useState/useMemo) вище вже викликані безумовно — це
-  // не порушує Rules of Hooks.
+  // повторний.
   if (!hasSharedContent && visibleTasks.length === 0) return null;
-
-  // Підсумок рахуємо лише коли ВІДПОВІЛИ на всі задачі блоку, що взагалі
-  // мають бали (essay_check/callout/embed/link/game серед tasks ніколи не
-  // покличуть onResult — не чекаємо на них) — інакше "з Y балів" зростав
-  // би поступово в міру відповідей, і студент бачив би рухому ціль замість
-  // фіксованого підсумку.
-  const gradableIds = tasks.filter((t) => isExerciseType(t.type)).map((t) => t.id);
-  const allAnswered = gradableIds.length > 0 && gradableIds.every((id) => id in results);
-
-  const resultValues = Object.values(results);
-  const pointsEarned = resultValues.reduce((sum, r) => sum + (r.pointsEarned ?? 0), 0);
-  const pointsPossible = resultValues.reduce((sum, r) => sum + (r.pointsPossible ?? 0), 0);
-
-  // Режим "фіксовано": score є в КОЖНОМУ GradeResult завжди (на відміну від
-  // pointsEarned/pointsPossible, які лише для types із підтримкою балів),
-  // тож середнє score% рахується однаково для будь-якого gradable-типу
-  // всередині блоку, незалежно від того, чи він узагалі підтримує бали.
-  const averageScore =
-    resultValues.length > 0
-      ? resultValues.reduce((sum, r) => sum + r.score, 0) / resultValues.length
-      : 0;
-  const flatPoints = group.flat_points ?? 0;
-  const flatEarned = Math.round(((flatPoints * averageScore) / 100) * 100) / 100;
 
   // Підкладка (SHARED_CONTENT_PANEL) — лише навколо ТЕКСТОВОГО контенту:
   // аудіо/відео/embed мають власний вигляд (плеєр/iframe із власним фоном),
@@ -276,12 +217,10 @@ export function TaskGroupBlock({
               <ExerciseBlock
                 task={task}
                 lang={lang}
-                onResult={onResultCallbacks[task.id]}
                 // Режим "фіксовано" — індивідуальний бал на кожній задачі
                 // безумовно ховається, бо сума окремих балів природно НЕ
                 // дорівнює flat_points (формула тут — flat_points × середній %,
                 // не сума) і виглядала б для вчителя як нестикування чисел.
-                // Лишається видимим лише один загальний підсумок блоку нижче.
                 hidePoints={group.points_mode === "flat"}
                 isDelf={isDelf}
                 // Кілька задач в ОДНІЙ спільній панелі — плашка типу не
@@ -296,24 +235,6 @@ export function TaskGroupBlock({
             </div>
           ))}
         </div>
-      )}
-
-      {group.points_mode === "sum" && allAnswered && pointsPossible > 0 && (
-        <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
-          {t("scene.blockSummary")}{" "}
-          <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {formatPointsLocalized(pointsEarned, pointsPossible, lang)}
-          </span>
-        </p>
-      )}
-
-      {group.points_mode === "flat" && allAnswered && flatPoints > 0 && (
-        <p className="pt-4 text-sm font-medium md:pt-6" style={{ borderTop: `1px solid var(--glass-divider)` }}>
-          {t("scene.blockSummary")}{" "}
-          <span className="font-normal" style={{ color: "var(--glass-text-meta)" }}>
-            {formatPointsLocalized(flatEarned, flatPoints, lang)}
-          </span>
-        </p>
       )}
     </>
   );

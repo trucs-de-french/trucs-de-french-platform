@@ -233,7 +233,6 @@ export const uk = {
   "scene.audioFallbackNote": "Якщо аудіо не відкривається,",
   "scene.embedFallbackNote": "Якщо вміст не відкривається,",
   "scene.followLink": "перейдіть за посиланням",
-  "scene.blockSummary": "Підсумок блоку:",
 
   "script.hideTranslation": "Сховати переклад",
   "script.showTranslation": "Показати переклад",
