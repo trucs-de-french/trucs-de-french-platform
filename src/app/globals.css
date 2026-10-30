@@ -7761,6 +7761,13 @@ button.scene-bar:active .scene-bar-toggle {
   /* Той самий розмір, що текст фрази вище (16px, text-base) — не більший. */
   font-size: 16px;
   font-weight: 800;
+  /* Центрування цифри (задача "центрувати введений номер") — line-height:1 +
+     padding:0 прибирає будь-яку залежність від успадкованого line-height
+     (інакше текст іноді зсувається вгору/вниз залежно від ambient
+     line-height сторінки), symmetric vertical space навколо цифри лишає
+     сама height:44px поля. */
+  line-height: 1;
+  padding: 0;
 }
 .chrono-number-slot:focus-visible {
   outline: 2px solid var(--glass-focus-ring);
@@ -7782,6 +7789,34 @@ button.scene-bar:active .scene-bar-toggle {
    .chrono-number-slot), бо compact несе ЛИШЕ --empty/--filled, без базового
    класу (той задає ще й 44px width/height/radius — image/mixed лишається на
    своєму h-10 w-12/sm:pointer-fine:h-8, не 44px). */
+/* Центрування цифри/плейсхолдера "№" (задача "центрувати введений номер") —
+   одна спільна правка на всі три модифікатори, бо "compact"-варіант
+   (image/mixed, numberInput) несе ЛИШЕ --empty/--filled/--duplicate, без
+   базового .chrono-number-slot (там уже є line-height/padding вище) —
+   тут та сама пара дублюється, щоб compact центрувався так само, як
+   "line". appearance:textfield + ::-webkit-*-spin-button приховує
+   стрілки-спінер number-інпута (Chrome/Safari резервують під них місце
+   праворуч, що й зсуває видимий текст вліво від реального центру
+   контент-боксу) — клавіатурний ввід і Tab/стрілки-навігація полями не
+   зачіпаються, це лише візуальний UA-контрол, не функціонал. */
+.chrono-number-slot--empty,
+.chrono-number-slot--filled,
+.chrono-number-slot--duplicate {
+  text-align: center;
+  line-height: 1;
+  padding: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.chrono-number-slot--empty::-webkit-inner-spin-button,
+.chrono-number-slot--empty::-webkit-outer-spin-button,
+.chrono-number-slot--filled::-webkit-inner-spin-button,
+.chrono-number-slot--filled::-webkit-outer-spin-button,
+.chrono-number-slot--duplicate::-webkit-inner-spin-button,
+.chrono-number-slot--duplicate::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 .chrono-number-slot--empty {
   border: 1.5px solid #b9b2e8;
   background: #f7f6ff;
