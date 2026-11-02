@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Repeat, Turtle } from "lucide-react";
 import { stopOthersAndRegister, clearIfCurrent } from "@/lib/single-active-audio";
+import { useT } from "@/lib/i18n/context";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const CARD_GRADIENT = { background: "linear-gradient(135deg, #2b2a52, #4f46e5)" };
@@ -33,6 +34,7 @@ export function AudioPill({
   compact?: boolean;
   className?: string;
 }) {
+  const { t } = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
   const speedButtonRef = useRef<HTMLButtonElement>(null);
@@ -114,13 +116,13 @@ export function AudioPill({
       <div
         {...guardProps}
         draggable={false}
-        title="Не вдалося завантажити аудіо"
+        title={t("audio.loadError")}
         className={`flex w-full min-w-0 max-w-full items-center rounded-full opacity-60 ${
           compact ? "px-3 py-2" : "px-3.5 py-2.5"
         } ${className}`}
         style={CARD_GRADIENT}
       >
-        <p className="truncate text-xs text-[#d6d3ff]">Не вдалося завантажити аудіо</p>
+        <p className="truncate text-xs text-[#d6d3ff]">{t("audio.loadError")}</p>
       </div>
     );
   }
@@ -166,7 +168,7 @@ export function AudioPill({
       <button
         type="button"
         onClick={togglePlay}
-        aria-label={playing ? "Пауза" : "Відтворити"}
+        aria-label={playing ? t("audio.pause") : t("audio.play")}
         aria-pressed={playing}
         className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${FOCUS_RING}`}
       >
@@ -183,13 +185,13 @@ export function AudioPill({
         type="button"
         onClick={toggleSlow}
         aria-pressed={speed === 0.75}
-        aria-label="Повільно"
+        aria-label={t("audio.slow")}
         className={`flex shrink-0 items-center gap-1 rounded-full border border-white/35 font-heading text-[13px] font-bold ${FOCUS_RING} ${
           compact ? "h-8 w-8 justify-center" : "px-3 py-[5px]"
         } ${speed === 0.75 ? "bg-white text-[#4f46e5]" : "bg-transparent text-white"}`}
       >
         <Turtle size={14} />
-        {!compact && <span className="@max-[340px]:hidden">Повільно</span>}
+        {!compact && <span className="@max-[340px]:hidden">{t("audio.slow")}</span>}
       </button>
 
       {!compact && (
@@ -202,7 +204,7 @@ export function AudioPill({
         <button
           type="button"
           onClick={() => setLoop((v) => !v)}
-          aria-label="Повторити"
+          aria-label={t("audio.repeat")}
           aria-pressed={loop}
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${FOCUS_RING} ${
             loop ? "bg-white text-[#4f46e5]" : "bg-white/[0.16] text-white"
@@ -216,7 +218,7 @@ export function AudioPill({
             ref={speedButtonRef}
             type="button"
             onClick={() => setSpeedOpen((v) => !v)}
-            aria-label={`Швидкість ${speed}×`}
+            aria-label={t("audio.speed", { speed })}
             aria-haspopup="menu"
             aria-expanded={speedOpen}
             className={`rounded-full border border-white/35 bg-transparent text-[13px] font-semibold text-white ${FOCUS_RING} ${

@@ -1,5 +1,7 @@
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { frenchNbsp } from "@/lib/text/french-typography";
+import { t } from "@/lib/i18n/t";
+import type { UiLang } from "@/lib/ui/product-lang";
 
 // mode ("image" | "text") НЕ зберігається в самому detail (ChronologicalOrderDetail
 // містить лише content: string, агностичний до режиму) — тож розрізняємо
@@ -14,10 +16,13 @@ function looksLikeImageUrl(value: string): boolean {
 // ({correct, feedback}) показує її текст; інакше — узагальнено. Повертає
 // React.ReactNode (не string) — chronological_order у image-режимі показує
 // мініатюри замість сирого URL-тексту, решта гілок і далі повертають
-// звичайний рядок (валідний ReactNode).
-export function summarizeMistake(feedback: unknown): React.ReactNode {
+// звичайний рядок (валідний ReactNode). lang — мова інтерфейсу студента
+// (ScenePage, server-компонент, передає product.ui_lang); увесь текст тут
+// проходить через t() замість хардкоду — функція поза React-деревом, тож
+// без useT(), лише плоский t(lang, key, params) (src/lib/i18n/t.ts).
+export function summarizeMistake(feedback: unknown, lang: UiLang): React.ReactNode {
   if (!feedback || typeof feedback !== "object") {
-    return "Спробуйте ще раз.";
+    return t(lang, "mistakeSummary.tryAgain");
   }
 
   const f = feedback as Record<string, unknown>;
@@ -27,8 +32,10 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       (b) => !b.isCorrect
     );
     return wrong.length
-      ? `Правильно: ${wrong.map((b) => b.correctAnswers.join(" / ")).join("; ")}`
-      : "Всі пропуски правильні.";
+      ? t(lang, "mistakeSummary.correctAnswers", {
+          list: wrong.map((b) => b.correctAnswers.join(" / ")).join("; "),
+        })
+      : t(lang, "mistakeSummary.allBlanksCorrect");
   }
 
   // drag_drop (багатореченнєва форма): { sentences: [{ blanks: [...] }] } —
@@ -55,7 +62,9 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
         options: { correct: boolean; selected: boolean; text: string }[];
       }[];
       const wrong = sentences.filter((s) => s.options.some((o) => o.correct !== o.selected));
-      return wrong.length ? `Неправильних речень: ${wrong.length}` : "Усі речення правильні.";
+      return wrong.length
+        ? t(lang, "mistakeSummary.wrongSentencesCount", { n: wrong.length })
+        : t(lang, "mistakeSummary.allSentencesCorrect");
     }
 
     const sentences = f.sentences as {
@@ -63,30 +72,39 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
     }[];
     const wrong = sentences.flatMap((s) => s.blanks.filter((b) => !b.isCorrect));
     return wrong.length
-      ? `Правильно: ${wrong.map((b) => b.correctAnswers.join(" / ")).join("; ")}`
-      : "Усі пропуски правильні.";
+      ? t(lang, "mistakeSummary.correctAnswers", {
+          list: wrong.map((b) => b.correctAnswers.join(" / ")).join("; "),
+        })
+      : t(lang, "mistakeSummary.allBlanksCorrect");
   }
 
   if (Array.isArray(f.options)) {
     const missed = (
       f.options as { correct: boolean; selected: boolean; text: string }[]
     ).filter((o) => o.correct !== o.selected);
-    return missed.length ? `Правильний варіант: ${missed.map((o) => o.text).join(", ")}` : "";
+    return missed.length
+      ? t(lang, "mistakeSummary.correctOption", { list: missed.map((o) => o.text).join(", ") })
+      : "";
   }
 
   if (Array.isArray(f.statements)) {
     const wrong = (
       f.statements as { isCorrect: boolean; text: string; correctAnswer: boolean }[]
     ).filter((s) => !s.isCorrect);
+    // "Vrai"/"Faux" — фіксовані французькі лейбли самого типу true_false
+    // (студент бачить їх французькою незалежно від ui_lang, той самий
+    // принцип, що назва типу "Vrai ou faux"), не перекладаються.
     return wrong.length
       ? wrong.map((s) => `«${frenchNbsp(s.text)}» — ${s.correctAnswer ? "Vrai" : "Faux"}`).join("; ")
-      : "Всі твердження правильні.";
+      : t(lang, "mistakeSummary.allStatementsCorrect");
   }
 
   if (Array.isArray(f.correctPairs)) {
-    return `Правильні пари: ${(f.correctPairs as { left: string; right: string }[])
-      .map((p) => `${p.left} → ${p.right}`)
-      .join(", ")}`;
+    return t(lang, "mistakeSummary.correctPairs", {
+      list: (f.correctPairs as { left: string; right: string }[])
+        .map((p) => `${p.left} → ${p.right}`)
+        .join(", "),
+    });
   }
 
   // checkbox_grid: { cells: [{ rowId, columnId, studentChecked, correctChecked, isCorrect, points }] } —
@@ -95,8 +113,8 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
   if (Array.isArray(f.cells)) {
     const wrong = (f.cells as { isCorrect: boolean }[]).filter((c) => !c.isCorrect);
     return wrong.length
-      ? `Неправильних клітинок: ${wrong.length}`
-      : "Усі клітинки позначено правильно.";
+      ? t(lang, "mistakeSummary.wrongCellsCount", { n: wrong.length })
+      : t(lang, "mistakeSummary.allCellsCorrect");
   }
 
   if (Array.isArray(f.items) && f.items.length > 0) {
@@ -115,7 +133,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       if (sorted.length > 0 && looksLikeImageUrl(sorted[0].content)) {
         return (
           <span className="inline-flex flex-wrap items-center gap-1 align-middle">
-            Правильний порядок:
+            {t(lang, "mistakeSummary.correctOrderPrefix")}
             {sorted.map((item, i) => (
               <span key={i} className="inline-flex items-center gap-1">
                 {i > 0 && <span aria-hidden>→</span>}
@@ -131,7 +149,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
         );
       }
 
-      return `Правильний порядок: ${sorted.map((i) => i.content).join(" → ")}`;
+      return t(lang, "mistakeSummary.correctOrder", { list: sorted.map((i) => i.content).join(" → ") });
     }
 
     // sort_columns: { text, correctColumnLabel, isCorrect, ... }
@@ -141,7 +159,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       ).filter((i) => !i.isCorrect);
       return wrong.length
         ? wrong.map((i) => `«${i.text}» → ${i.correctColumnLabel}`).join("; ")
-        : "Всі елементи розкладено правильно.";
+        : t(lang, "mistakeSummary.allItemsSorted");
     }
 
     // reorder (стара однопослідовна форма): { text, correctIndex, studentIndex, isCorrect } —
@@ -152,7 +170,7 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       const sorted = [...(items as { text: string; correctIndex: number }[])].sort(
         (a, b) => a.correctIndex - b.correctIndex
       );
-      return `Правильний порядок: ${sorted.map((i) => i.text).join(" → ")}`;
+      return t(lang, "mistakeSummary.correctOrder", { list: sorted.map((i) => i.text).join(" → ") });
     }
 
     // multiple_choice (багатореченнєва форма): { options: [{correct, selected, text}] }
@@ -160,7 +178,9 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
       const wrong = (
         items as { options: { correct: boolean; selected: boolean; text: string }[] }[]
       ).filter((it) => it.options.some((o) => o.correct !== o.selected));
-      return wrong.length ? `Неправильних відповідей: ${wrong.length}` : "Всі відповіді правильні.";
+      return wrong.length
+        ? t(lang, "mistakeSummary.wrongAnswersCount", { n: wrong.length })
+        : t(lang, "mistakeSummary.allAnswersCorrect");
     }
   }
 
@@ -181,8 +201,8 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
           .join(" → ")
       );
     return parts.length
-      ? `Правильний порядок: ${parts.join("; ")}`
-      : "Усі елементи розкладено у правильному порядку.";
+      ? t(lang, "mistakeSummary.correctOrder", { list: parts.join("; ") })
+      : t(lang, "mistakeSummary.allItemsOrdered");
   }
 
   if (Array.isArray(f.questions) && f.questions.length > 0) {
@@ -195,8 +215,8 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
         questions as { options: { correct: boolean; selected: boolean; text: string }[] }[]
       ).filter((q) => q.options.some((o) => o.correct !== o.selected));
       return wrong.length
-        ? `Неправильних відповідей: ${wrong.length}`
-        : "Всі відповіді правильні.";
+        ? t(lang, "mistakeSummary.wrongAnswersCount", { n: wrong.length })
+        : t(lang, "mistakeSummary.allAnswersCorrect");
     }
 
     // open_answer: { question, correctAnswers, isCorrect }
@@ -205,8 +225,10 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
         questions as { correctAnswers: string[]; isCorrect: boolean }[]
       ).filter((q) => !q.isCorrect);
       return wrong.length
-        ? `Правильно: ${wrong.map((q) => q.correctAnswers.join(" / ")).join("; ")}`
-        : "Усі питання правильні.";
+        ? t(lang, "mistakeSummary.correctAnswers", {
+            list: wrong.map((q) => q.correctAnswers.join(" / ")).join("; "),
+          })
+        : t(lang, "mistakeSummary.allQuestionsCorrect");
     }
   }
 
@@ -214,5 +236,5 @@ export function summarizeMistake(feedback: unknown): React.ReactNode {
     return f.feedback;
   }
 
-  return "Перегляньте вправу ще раз.";
+  return t(lang, "mistakeSummary.reviewAgain");
 }

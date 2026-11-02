@@ -1111,7 +1111,7 @@ function WordSearchBlockView({
               onClick={() => setPracticeMode(false)}
               className="check-confirm-btn check-confirm-btn--secondary self-start"
             >
-              Завершити практику
+              {t("button.finishPractice")}
             </button>
           </div>
         )}

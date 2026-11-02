@@ -568,7 +568,7 @@ export default async function ScenePage({
       total: review.total,
       remainingItemIds: review.remainingItemIds,
       failedAttempts: review.failedAttempts,
-      summary: review.mode === "items" || isWholePractice ? null : summarizeMistake(m.ai_feedback),
+      summary: review.mode === "items" || isWholePractice ? null : summarizeMistake(m.ai_feedback, lang),
       // matching — окремий шлях (sanitizeMatchingForPractice): на відміну
       // від інших items-типів, де increment-компонент сам фільтрує повний
       // публічний config за onlyItemIds (елементи самодостатні, без
