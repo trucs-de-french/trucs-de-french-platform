@@ -130,7 +130,7 @@ export const DEFAULT_TRANSLATION_EN: Partial<Record<TaskTypeKey, string>> = {
   letter_rearrangement: "Put the letters in the right order.",
   word_search: "Find the hidden words.",
   crossword: "Fill in the grid.",
-  karaoke: "Sing along with the song.",
+  karaoke: "Complete with the missing words.",
 };
 
 // word_choice — дефолт залежить від режиму, окремо від DEFAULT_TRANSLATION_EN
