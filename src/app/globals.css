@@ -1168,9 +1168,45 @@ button, input, textarea, select, label, nav, aside {
 }
 .ws-scroll {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   width: calc(100% + 80px);
   padding: 8px 40px 56px;
   margin: -8px -40px -40px;
+}
+/* Мобільний скрол-бар (сірий трек нативного/overlay скрол-індикатора на
+   дотикових браузерах) малюється В МЕЖАХ padding-bottom вище (56px,
+   запас лише для тіні "листа") — від'ємний margin-bottom (-40px) з'їдає
+   ЦІЛИХ 40 із цих 56px назад у розмітку (саме так і задумано для тіні,
+   яка не має власної висоти), тож трек скролбару (кілька px) фактично
+   малюється в зоні, яку сусідній текст-підказка/легенда вважає вже
+   вільною — звідси "сірий бар над підказкою". Фікс (лише мобільний
+   @media (max-width: 640px) нижче, type) — (1) тонкий стилізований
+   скролбар із ВІДОМОЮ висотою (6px) замість непередбачуваного нативного/
+   overlay вигляду, (2) менша за замовчуванням компенсація (-24px замість
+   -40px), яка лишає +12px РЕАЛЬНОГО місця в розмітці під трек замість
+   від'ємного "з'їдання" — тінь (вертикальний розмах ~30px) і далі влазить
+   у padding-bottom:36px, що лишився. */
+@media (max-width: 640px) {
+  .ws-scroll {
+    padding: 8px 40px 36px;
+    margin: -8px -40px -24px;
+    scrollbar-width: thin;
+  }
+  .ws-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .ws-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .ws-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+  }
+  .dark .ws-scroll::-webkit-scrollbar-thumb,
+  :root:not(.light) .ws-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
 
 /* "Плаваючий лист" — САМЕ на .grid-zoom-inner (вже w-max mx-auto, тобто
@@ -1195,6 +1231,19 @@ button, input, textarea, select, label, nav, aside {
 @media (max-width: 640px) {
   .ws-sheet {
     padding: 12px;
+    /* Нижня межа clamp (1.75rem/28px у базовому правилі вище) — ПІДЛОГА
+       розміру клітинки, яка виграє навіть коли природний розрахунок
+       "влізти в контейнер" вимагає меншого: на 360px екрані з 11
+       колонками (328-32)/11 ≈ 27px — менше за підлогу 28px, тож браузер
+       бере 28px, і 11×28px+32px padding (340px) переповнює 328px-контейнер
+       ще ДО будь-якого зуму. Це й була причина "сітка ширша за екран"
+       завжди, не лише при зумі. Підлога тут нижча (22px, мінімум задачі)
+       і віднімання padding відповідає реальному мобільному padding (12px
+       з кожного боку = 24px, не 32px базового правила) — тепер клітинка
+       справді стискається, щоб влізти, і скрол/підпис "ширша за екран"
+       з'являються лише коли --zoom реально збільшує --cw понад контейнер. */
+    --cw: calc(clamp(1.375rem, (100cqw - 24px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
+    max-width: 100%;
   }
 }
 
