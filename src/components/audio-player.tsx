@@ -3,19 +3,10 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Play, Pause, Repeat, Rewind, FastForward, Volume2, VolumeX, Headphones } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
+import { stopOthersAndRegister, clearIfCurrent } from "@/lib/single-active-audio";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#352f66]";
-
-// Один плеєр на сторінці: коли стартує новий — попередній ставиться на
-// паузу. Модульний рівень, не React-стан — просто "хто зараз грає", без
-// підписки/ререндерів чужих плеєрів.
-let currentlyPlaying: HTMLAudioElement | null = null;
-
-function stopOthersAndRegister(el: HTMLAudioElement) {
-  if (currentlyPlaying && currentlyPlaying !== el) currentlyPlaying.pause();
-  currentlyPlaying = el;
-}
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -63,7 +54,7 @@ export function AudioPlayer({
   useEffect(() => {
     const audio = audioRef.current;
     return () => {
-      if (audio && currentlyPlaying === audio) currentlyPlaying = null;
+      if (audio) clearIfCurrent(audio);
     };
   }, []);
 

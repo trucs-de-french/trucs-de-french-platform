@@ -2,24 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Repeat, Turtle } from "lucide-react";
+import { stopOthersAndRegister, clearIfCurrent } from "@/lib/single-active-audio";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const CARD_GRADIENT = { background: "linear-gradient(135deg, #2b2a52, #4f46e5)" };
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2b2a52]";
-
-// Один елемент грає за раз: коли стартує новий — попередній ставиться на
-// паузу. Модульний рівень, не React-стан — свідомо просто "хто зараз грає",
-// без підписки/ререндерів чужих плеєрів. Спільний для ВСІХ AudioPill на
-// сторінці (phonetics і будь-яка картка завдання, що використовує цей
-// плеєр) — великий AudioPlayer (components/audio-player.tsx, "listening" і
-// task-media) має власний окремий трекер, свідомо не об'єднаний із цим.
-let currentlyPlaying: HTMLAudioElement | null = null;
-
-function stopOthersAndRegister(el: HTMLAudioElement) {
-  if (currentlyPlaying && currentlyPlaying !== el) currentlyPlaying.pause();
-  currentlyPlaying = el;
-}
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -60,7 +48,7 @@ export function AudioPill({
   useEffect(() => {
     const audio = audioRef.current;
     return () => {
-      if (audio && currentlyPlaying === audio) currentlyPlaying = null;
+      if (audio) clearIfCurrent(audio);
     };
   }, []);
 
@@ -170,15 +158,17 @@ export function AudioPill({
       />
 
       {/* кільце-play: клік будь-де в межах 44px (не лише по білому кругу) перемикає відтворення.
-          Круг і трикутник лишаються білим/індиго на повну непрозорість завжди — поки метадані не
-          завантажились, єдина ознака — disabled:cursor-wait (курсор), без тьмяніння іконки. */}
+          НЕ disabled до завантаження метаданих (на відміну від попередньої версії) — на iOS/
+          Safari <audio preload="metadata"> не починає вантажити метадані без жесту користувача,
+          тож disabled={!metadataLoaded} створював дедлок: кнопка чекає метадані, а метадані
+          чекають кліку по кнопці. audio.play() сам ініціює завантаження при першому кліку (та
+          самому принцип, що великий AudioPlayer, де такого disabled нема і нема). */}
       <button
         type="button"
         onClick={togglePlay}
-        disabled={!metadataLoaded}
         aria-label={playing ? "Пауза" : "Відтворити"}
         aria-pressed={playing}
-        className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full disabled:cursor-wait ${FOCUS_RING}`}
+        className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${FOCUS_RING}`}
       >
         {playing ? (
           <Pause size={14} fill="currentColor" />
