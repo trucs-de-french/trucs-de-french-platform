@@ -2279,6 +2279,26 @@ button, input, textarea, select, label, nav, aside {
 .glass-block:has(.task-header-strip-anchor) {
   margin-top: 44px;
 }
+/* Мобільний (<640px) — та сама резервна margin-top вище лишається
+   44px (висота ОДНОРЯДКОВОЇ смужки на десктопі), але на мобільному
+   .task-header-strip став ДВОРЯДКОВИМ (плашка окремим рядком над
+   вкладками, flex-direction:column вище) — 44px вже не вистачає, і
+   смужка (position:absolute, bottom:0 якоря) наповзає вгору на те, що
+   стоїть ПЕРЕД вправою (напр. .hint-points-notice). Резерв тут
+   розрахований як "висота смужки на мобільному" + 16px видимого
+   зазору над плашкою (вимога: не менше 16px від банера до плашки).
+   Два випадки через :has() (не один магічний номер "на всяк випадок"):
+   лише плашка (без вкладок, 1 блок) — нижче, і плашка+вкладки (2+
+   блоки, .task-tabs-wrap теж у DOM) — перекриває попередній через
+   порядок у файлі (та сама специфічність, останнє правило виграє). */
+@media (max-width: 640px) {
+  .glass-block:has(.task-header-strip-anchor) {
+    margin-top: 76px;
+  }
+  .glass-block:has(.task-tabs-wrap) {
+    margin-top: 122px;
+  }
+}
 .glass-block-panel {
   background: var(--glass-panel-bg);
   border: var(--glass-panel-border-width, 1px) solid var(--glass-panel-border);
