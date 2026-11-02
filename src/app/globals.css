@@ -2389,14 +2389,18 @@ button, input, textarea, select, label, nav, aside {
   .glass-block-panel {
     padding: 16px;
   }
-  /* Folder-tab вигляд (ЕТАП N+1) — коли активна вкладка перша
-     (.task-tabs-track > .block-tab--active:first-child), її лівий
-     border має йти прямо вниз у ліву рамку панелі без розриву: верхній-
-     лівий радіус 16px панелі тут лише заважав би (рамка панелі згинулась
-     би ПІД вкладкою). :has() на самій .glass-block-panel — трек вкладок
-     УСЕРЕДИНІ панелі (GlassBlock рендерить {children}, включно зі
-     смужкою вкладок, прямо в .glass-block-panel). */
-  .glass-block-panel:has(.task-tabs-track > .block-tab--active:first-child) {
+  /* Folder-tab вигляд (ЕТАП N+1, 3f6ca3d) — ПЕРША вкладка завжди
+     флуш з лівою межею панелі (.task-tabs-wrap без margin-left), тож
+     верхній-лівий радіус 16px панелі заважає завжди, коли є рядок
+     вкладок — не лише коли перша вкладка активна: коли активна ІНША
+     вкладка, перша (неактивна) й так сідає лівим бортом точно на x=0,
+     а закруглений кут лишає клиноподібний розрив між її низом і
+     вигнутою рамкою (ЕТАП N+2, 201ca0a follow-up). :has() на самій
+     .glass-block-panel — трек вкладок УСЕРЕДИНІ панелі (GlassBlock
+     рендерить {children}, включно зі смужкою вкладок, прямо в
+     .glass-block-panel); умова — просто НАЯВНІСТЬ рядка вкладок (він
+     рендериться лише коли 2+ блоки), байдуже, яка вкладка активна. */
+  .glass-block-panel:has(.task-tabs-track) {
     border-top-left-radius: 0;
   }
   .glass-bar-badge {
