@@ -184,6 +184,7 @@ export const en: Record<MessageKey, string> = {
   "sortcolumns.hintColumnFor": "Hint: column for \"{word}\"",
   "crossword.hintOpenNextLetter": "Hint: reveal the next letter",
   "crossword.hintOpenFirstLetter": "Hint: reveal the first letter",
+  "crossword.hintRevealCell": "Reveal this letter",
   "lettergaps.hintOpenNextLetter": "Hint: reveal the next letter",
   "letterrearr.hintPlaceNextLetter": "Hint: place the next letter",
   "tablefill.hintOpenFirstLetter": "Hint: reveal the first letter",

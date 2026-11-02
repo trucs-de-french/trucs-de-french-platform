@@ -186,6 +186,7 @@ export const fr: Record<MessageKey, string> = {
   "sortcolumns.hintColumnFor": "Indice : colonne pour « {word} »",
   "crossword.hintOpenNextLetter": "Indice : révéler la lettre suivante",
   "crossword.hintOpenFirstLetter": "Indice : révéler la première lettre",
+  "crossword.hintRevealCell": "Révéler cette lettre",
   "lettergaps.hintOpenNextLetter": "Indice : révéler la lettre suivante",
   "letterrearr.hintPlaceNextLetter": "Indice : placer la lettre suivante",
   "tablefill.hintOpenFirstLetter": "Indice : révéler la première lettre",

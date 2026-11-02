@@ -2656,6 +2656,37 @@ button, input, textarea, select, label, nav, aside {
     background: rgba(127, 156, 240, 0.18);
   }
 }
+/* Лампочка-підказка всередині попапу діакритики (diacritics-hint-btn,
+   DiacriticsPopup) — той самий відбиток (розмір/радіус/рамка), що
+   diacritics-key-btn поруч (сітка grid-cols-7 вирівнює ширину, h-7/rounded/
+   border — спільні Tailwind-класи на самій кнопці), лише фон — золотий
+   градієнт підказки замість карткового фону клавіш. disabled — та сама
+   півтонова "лампочка вже відкрила клітинку" подача, що в інших місцях
+   застосунку (opacity, без зміни рамки/розміру, щоб колонка не "стрибала").
+*/
+.diacritics-hint-btn {
+  background: linear-gradient(to bottom, #f6dc8e, #e0aa3e);
+  color: #6b4a14;
+}
+.diacritics-hint-btn:disabled {
+  opacity: 0.45;
+}
+.dark .diacritics-hint-btn {
+  border-color: var(--card-field-border);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .diacritics-hint-btn {
+    border-color: var(--card-field-border);
+  }
+}
+.light .diacritics-hint-btn {
+  border-color: #d9b765;
+}
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) .diacritics-hint-btn {
+    border-color: #d9b765;
+  }
+}
 /* Світла тема — попап діакритики: пергаментний фон/золота рамка панелі,
    замість нейтрального білого/сірого. */
 .light .diacritics-popup {

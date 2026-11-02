@@ -547,6 +547,31 @@ function CrosswordBlockView({
     setEffectiveHintedWords((prev) => new Set(prev).add(`${direction}-${number}`));
   }
 
+  // Лампочка в попапі діакритики — на відміну від applyHint (ціль обирає
+  // nextHintCell за словом), ціль тут завжди САМЕ активна клітинка (студент
+  // уже в ній). Той самий набір сеттерів/стейту, що й applyHint вище
+  // (grid/hintedCells/hintedWords, practiceMode-альтернативи) — спільний
+  // облік підказок, не окрема "вартість". Клітинка-перетин належить двом
+  // словам одразу — обидва отримують запис у hintedWords (рахунок підказки
+  // для лампочки кожної картки), сама клітинка грід/hintedCells — один раз.
+  function applyHintToCell(row: number, col: number) {
+    const words = wordsAtCell.get(`${row},${col}`) ?? [];
+    if (words.length === 0) return;
+    const letter = block.solution[row][col];
+    const setEffectiveGrid = practiceMode ? setPracticeGrid : setGrid;
+    const setEffectiveHintedCells = practiceMode ? setPracticeHintedCells : setHintedCells;
+    const setEffectiveHintedWords = practiceMode ? setPracticeHintedWords : setHintedWords;
+    setEffectiveGrid((prev) =>
+      prev.map((r, ri) => (ri === row ? r.map((v, ci) => (ci === col ? letter : v)) : r))
+    );
+    setEffectiveHintedCells((prev) => new Set(prev).add(cellKey(row, col)));
+    setEffectiveHintedWords((prev) => {
+      const next = new Set(prev);
+      for (const w of words) next.add(`${w.direction}-${w.number}`);
+      return next;
+    });
+  }
+
   // Посимвольно — на відміну від liveWordStatus, тут перевіряється ЛИШЕ ЦЯ
   // клітинка (не все слово): якщо слово, що через неї проходить, ПОВНІСТЮ
   // заповнене, а сама клітинка не збігається з розв'язком — червона лише
@@ -999,13 +1024,23 @@ function CrosswordBlockView({
             ньому). updateLetter той самий, що й для вводу з клавіатури —
             автоперехід і автопропуск працюють "з коробки". */}
         {diacritics.rect && !effectiveResult && diacritics.activeKey && (
-          <DiacriticsPopup
-            rect={diacritics.rect}
-            onPick={(ch) => {
-              const [rowStr, colStr] = diacritics.activeKey!.split(",");
-              updateLetter(Number(rowStr), Number(colStr), ch);
-            }}
-          />
+          (() => {
+            const [rowStr, colStr] = diacritics.activeKey.split(",");
+            const activeRow = Number(rowStr);
+            const activeCol = Number(colStr);
+            const cellAlreadyCorrect = effectiveGrid[activeRow][activeCol] === block.solution[activeRow][activeCol];
+            return (
+              <DiacriticsPopup
+                rect={diacritics.rect}
+                onPick={(ch) => updateLetter(activeRow, activeCol, ch)}
+                onHint={isDelf ? undefined : () => applyHintToCell(activeRow, activeCol)}
+                hintDisabled={cellAlreadyCorrect}
+                hintUsed={cellAlreadyCorrect}
+                hintLabel={t("crossword.hintRevealCell")}
+                hintPosition="after"
+              />
+            );
+          })()
         )}
 
         <div className="flex w-full flex-col gap-5">

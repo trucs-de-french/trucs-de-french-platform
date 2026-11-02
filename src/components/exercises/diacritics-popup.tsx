@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Lightbulb } from "lucide-react";
 import { STUDENT_BUTTON_SECONDARY_IDLE } from "@/lib/button-styles";
 import { Z_MODAL } from "@/lib/z-layers";
-import { HintBulb } from "./hint-bulb";
 import { useT } from "@/lib/i18n/context";
 
 // Спільна панель символів з діакритикою — раніше жила лише в crossword.tsx,
@@ -27,17 +27,25 @@ export function DiacriticsPopup({
   onHint,
   hintDisabled,
   hintUsed,
+  hintLabel,
+  hintPosition = "before",
 }: {
   rect: DOMRect;
   onPick: (ch: string) => void;
-  // Опційно — лише fill_blank (єдине місце, де підказка "перша літера"
-  // живе саме тут, а не окремою кнопкою біля поля, як в інших 5 типах):
-  // якщо передано, лампочка рендериться ПЕРЕД символами діакритики.
-  // Відсутній пропс — жодних змін для решти викликів
-  // (letter_gaps/crossword/open_answer/essay_check/table_fill тощо).
+  // Опційно — fill_blank (підказка "перша літера") і crossword (підказка
+  // "відкрити цю клітинку"): якщо передано, лампочка рендериться поруч із
+  // символами діакритики. Відсутній пропс — жодних змін для решти
+  // викликів (letter_gaps/open_answer/essay_check/table_fill тощо).
   onHint?: () => void;
   hintDisabled?: boolean;
   hintUsed?: boolean;
+  // Власний текст лампочки замість дефолтного "crossword.hintOpenFirstLetter"
+  // (той лишається дефолтом для fill_blank, що не передає цей пропс).
+  hintLabel?: string;
+  // "before" (дефолт, fill_blank) — лампочка ПЕРШИМ елементом сітки;
+  // "after" (crossword) — у ПРАВІЙ колонці останнього рядка (під "â",
+  // колонка 7 з 7 — DIACRITICS.length===10 дає рівно рядки 7+3).
+  hintPosition?: "before" | "after";
 }) {
   // visualViewport — на мобільному відкрита клавіатура зменшує саме ЙОГО
   // (window.innerHeight/innerWidth лишаються розміром шару layout-вьюпорту,
@@ -69,38 +77,54 @@ export function DiacriticsPopup({
   // клемпінгу, що вже є для left вище, лише відносно popup, не вьюпорту).
   const arrowLeft = Math.max(10, Math.min(rect.left + rect.width / 2 - left, POPUP_WIDTH - 10));
 
+  const resolvedHintLabel = hintLabel ?? t("crossword.hintOpenFirstLetter");
+  // Той самий розмір/радіус/рамка, що diacritics-key-btn (сітка растягує
+  // обидва на однакову ширину колонки, h-7 — та сама висота рядка) — лише
+  // фон/колір інші (diacritics-hint-btn, globals.css: золотий градієнт
+  // замість карткового фону ключів). col-start-7 — лише "after" (кросворд):
+  // при DIACRITICS.length===10 перший рядок забирає рівно 7 колонок, тож
+  // автопотік сітки сам ставить лампочку у РЯДОК 2 (колонка 7 рядка 1 уже
+  // зайнята "â") без потреби явно вказувати рядок.
+  const hintButton = onHint && (
+    <button
+      type="button"
+      aria-label={resolvedHintLabel}
+      title={resolvedHintLabel}
+      disabled={hintDisabled}
+      // preventDefault — той самий прийом, що діакритик-кнопки нижче: клік
+      // не забирає фокус з поля (онBlur не встигає спрацювати раніше onClick).
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onHint}
+      className={`diacritics-hint-btn flex h-7 items-center justify-center rounded border disabled:cursor-not-allowed ${
+        hintUsed && !hintDisabled ? "opacity-60" : ""
+      } ${hintPosition === "after" ? "col-start-7" : ""}`}
+    >
+      <Lightbulb size={16} strokeWidth={2} aria-hidden />
+    </button>
+  );
+
   return (
     <div
-      className={`fixed ${Z_MODAL} flex flex-wrap gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg diacritics-popup`}
+      className={`fixed ${Z_MODAL} grid grid-cols-7 gap-1 rounded-md border border-gray-200 bg-white p-1.5 shadow-lg diacritics-popup`}
       style={{ top, left, width: POPUP_WIDTH }}
     >
       <div
         className={`diacritics-popup-arrow ${showBelow ? "diacritics-popup-arrow--up" : "diacritics-popup-arrow--down"}`}
         style={{ left: arrowLeft }}
       />
-      {onHint && (
-        <HintBulb
-          state={hintUsed ? "used" : "available"}
-          label={t("crossword.hintOpenFirstLetter")}
-          disabled={hintDisabled}
-          // preventDefault — той самий прийом, що діакритик-кнопки нижче:
-          // клік не забирає фокус з поля (онBlur не встигає спрацювати
-          // раніше onClick).
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={onHint}
-        />
-      )}
+      {hintPosition === "before" && hintButton}
       {DIACRITICS.map((ch) => (
         <button
           key={ch}
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onPick(ch)}
-          className={`${STUDENT_BUTTON_SECONDARY_IDLE} diacritics-key-btn`}
+          className={`${STUDENT_BUTTON_SECONDARY_IDLE} diacritics-key-btn flex h-7 items-center justify-center`}
         >
           {ch}
         </button>
       ))}
+      {hintPosition === "after" && hintButton}
     </div>
   );
 }

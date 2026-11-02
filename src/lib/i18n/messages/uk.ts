@@ -187,6 +187,7 @@ export const uk = {
   "sortcolumns.hintColumnFor": "Підказка: колонка для «{word}»",
   "crossword.hintOpenNextLetter": "Підказка: відкрити наступну літеру",
   "crossword.hintOpenFirstLetter": "Підказка: відкрити першу літеру",
+  "crossword.hintRevealCell": "Відкрити цю літеру",
   "lettergaps.hintOpenNextLetter": "Підказка: відкрити наступну літеру",
   "letterrearr.hintPlaceNextLetter": "Підказка: поставити наступну літеру на місце",
   "tablefill.hintOpenFirstLetter": "Підказка: відкрити першу літеру",
