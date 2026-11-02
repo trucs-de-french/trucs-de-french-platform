@@ -196,19 +196,6 @@ export function ChronologicalOrderExercise({
   // "C → A → B", ніж сирі id) — те саме захоплене initialLabelById, щоб
   // літера лишалась тією, що студент бачив на екрані.
   const labelById = initialLabelById;
-  // Режим image/mixed (компактна сітка нижче) й надалі перебудовується у
-  // ПРАВИЛЬНИЙ хронологічний порядок після перевірки (той самий вигляд, що
-  // й раніше, — цей варіант свідомо НЕ торкаємося). Літера (A, B, C...)
-  // лишається прив'язаною до свого елемента (initialLabelById за id, не за
-  // новою позицією). До перевірки (!detail) — показуємо initialItems як є.
-  const orderedItems = useMemo(() => {
-    if (!detail) return initialItems;
-    const correctPositionById = new Map(detail.items.map((d) => [d.id, d.correctPosition]));
-    return [...initialItems].sort(
-      (a, b) => (correctPositionById.get(a.id) ?? 0) - (correctPositionById.get(b.id) ?? 0)
-    );
-  }, [initialItems, detail]);
-
   useEffect(() => {
     if (!isPractice && result) onResult?.(result);
   }, [isPractice, result, onResult]);
@@ -533,7 +520,7 @@ export function ChronologicalOrderExercise({
         // версія — 2/3 колонки з великим квадратом (до 12rem) — і 10
         // елементів розтягувались на кілька екранів прокрутки).
         <div className={COMPACT_IMAGE_GRID}>
-          {orderedItems.map((item) => {
+          {initialItems.map((item) => {
             const label = initialLabelById.get(item.id) ?? "";
             return (
               <div
