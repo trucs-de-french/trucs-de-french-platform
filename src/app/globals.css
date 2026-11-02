@@ -4095,7 +4095,19 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (max-width: 640px) {
   .task-header-strip-anchor {
-    margin: -16px -16px 0 -16px;
+    /* Ліва margin (-16px) гасить лише padding-left панелі (16px на
+       мобільному, .glass-block-panel нижче) — межа рамки (border-left-
+       width) лишається нескомпенсованою: якір сідає не на зовнішню межу
+       рамки панелі, а на 1 border-width правіше (між рамкою і padding).
+       Через це перша вкладка/пілюля (що мають влягти врівень з лівою
+       рамкою панелі, ЕТАП N+1/N+2) насправді сидять на
+       --glass-panel-border-width правіше за реальний лівий край панелі.
+       Верх (margin-top) той самий ефект має, але там не шкодить: активна
+       вкладка й так заходить під рамку з запасом (margin-bottom:-1.5px
+       вкладки), тож зайвий border-width запасу просто ховається у
+       padding-box, непомітно. Зліва такого запасу нема — тож тут віднімаємо
+       border-width явно. */
+    margin: -16px -16px 0 calc(-16px - var(--glass-panel-border-width, 1px));
   }
 }
 .task-header-strip {
@@ -5774,6 +5786,21 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 640px) and (prefers-color-scheme: dark) {
   :root:not(.light) .block-tab--inactive {
     margin-bottom: calc(var(--border-card) * -1);
+  }
+}
+/* Мобільний — активна вкладка вже заходить під верхню рамку панелі
+   точно на товщину рамки (margin-bottom:-1.5px вище = border-width в
+   обох темах), і фон вкладки/панелі — той самий --glass-panel-bg токен
+   (колір тут нічим не відрізняється), тож волосяна лінія на стику —
+   не колір і не брак перекриття, а субпіксельне округлення рамки
+   (1.5 CSS px не завжди лягає на ціле пристрійне піксельне число на
+   реальному DPR). +0.5px запасу усуває цей залишок, не змінюючи
+   десктоп (там own margin-bottom:-1.5px лишається, це правило лише
+   тут, у мобільному медіа-запиті, перекриває його за порядком
+   джерела). */
+@media (max-width: 640px) {
+  .block-tab--active {
+    margin-bottom: -2px;
   }
 }
 
