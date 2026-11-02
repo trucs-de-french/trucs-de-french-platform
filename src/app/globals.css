@@ -5747,6 +5747,31 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f3d98b;
   }
 }
+/* Мобільний (<640px, folder-tab ЕТАП N+1, 3f6ca3d) — неактивні вкладки
+   не мали власного margin-bottom, лише збігалися з висотою рядка
+   (align-items:flex-end у .task-tabs-track) за підрахунком: на папері
+   їхній нижній край мав точно впертись у верхню рамку панелі, без
+   margin-bottom:-1.5px активної вкладки (той навмисно "вирізає" рамку,
+   щоб сховати її під собою). На реальному телефоні ця рівність не
+   тримається (різні padding/border/font-size у двох версій вкладки
+   дають різні дробові px, і рендерер округлює їх по-різному) — лишає
+   видимий зазор 1.5-2px між неактивною вкладкою й рамкою. Той самий
+   прийом, що в активної: власний border-width у -margin-bottom, щоб
+   нижній край вкладки гарантовано впирався в рамку (не ховаючи її —
+   border-bottom уже none, лише дотик). */
+@media (max-width: 640px) {
+  .block-tab--inactive {
+    margin-bottom: -1px;
+  }
+  .dark .block-tab--inactive {
+    margin-bottom: calc(var(--border-card) * -1);
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .block-tab--inactive {
+    margin-bottom: calc(var(--border-card) * -1);
+  }
+}
 
 /* Круглі стрілки на краях смужки вкладок — лише коли є сховані вкладки
    з того боку (fade.left/right, block-navigation.tsx). ::before нижче —
