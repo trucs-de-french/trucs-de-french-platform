@@ -29,10 +29,20 @@ export function AudioPill({
   src,
   compact = false,
   className = "",
+  mobileBridge = false,
+  bridgeClassName = "",
 }: {
   src: string;
   compact?: boolean;
   className?: string;
+  // Мобільний "місток" (<640px) — одна кругла play/pause-кнопка замість
+  // повної пілюлі, що наповзає на нижній край картинки (flip_cards.tsx).
+  // Опційне: лише картки, що явно просять його, решта AudioPill-викликів
+  // (phonetics, crossword) лишаються на повній пілюлі на всіх ширинах.
+  mobileBridge?: boolean;
+  // margin-top/-bottom для half-overlap/4px-зазору — рахує викликач (лише
+  // він знає gap свого флекс-контейнера), додається до .audio-bridge-slot.
+  bridgeClassName?: string;
 }) {
   const { t } = useT();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -128,14 +138,17 @@ export function AudioPill({
   }
 
   const metadataLoaded = duration !== null && Number.isFinite(duration);
+  const progressPct =
+    metadataLoaded && duration! > 0 ? Math.min(100, Math.max(0, (currentTime / duration!) * 100)) : 0;
 
   return (
+    <>
     <div
       {...guardProps}
       draggable={false}
       className={`@container flex w-full min-w-0 max-w-full items-center rounded-full ${
         compact ? "gap-1 p-[4px_8px_4px_4px]" : "gap-2.5 p-[6px_14px_6px_6px]"
-      } ${className}`}
+      } ${mobileBridge ? "max-[639px]:hidden" : ""} ${className}`}
       style={CARD_GRADIENT}
     >
       <audio
@@ -251,5 +264,31 @@ export function AudioPill({
         </div>
       </div>
     </div>
+    {mobileBridge && (
+      <div className={`audio-bridge-slot ${playing ? "audio-bridge-slot--playing" : ""} ${bridgeClassName}`}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlay();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          aria-label={playing ? t("audio.pause") : t("audio.play")}
+          aria-pressed={playing}
+          style={{ "--audio-bridge-progress": progressPct } as React.CSSProperties}
+          className={`audio-bridge-btn ${FOCUS_RING}`}
+        >
+          {playing ? (
+            <Pause size={15} fill="currentColor" />
+          ) : (
+            <span className="play-icon-offset">
+              <Play size={15} fill="currentColor" />
+            </span>
+          )}
+        </button>
+      </div>
+    )}
+    </>
   );
 }

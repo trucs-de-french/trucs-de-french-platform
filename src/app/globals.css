@@ -9218,3 +9218,77 @@ button.scene-bar:active .scene-bar-toggle {
 .audio-pill-play:active:not(:disabled) {
   transform: scale(0.96);
 }
+
+/* Мобільний "місток" (audio-pill.tsx, mobileBridge=true) — ОПЦІЙНИЙ
+   варіант для карток flip_cards (плитка-рулетка + "питання" деки), де на
+   <640px повна пілюля (швидкість/повтор/час/хвиля) переповнювала картку.
+   Рендериться ЗАВЖДИ в DOM поряд зі звичайною пілюлею (щоб не вмикати
+   JS-визначення в'юпорту) — САМЕ лише кругла play/pause-кнопка, half-
+   overlap на нижній край картинки (margin-top від'ємний, рахує викликач
+   через className, бо лише він знає gap контейнера-колонки). --audio-
+   bridge-card-bg/--audio-bridge-track — токени нижче (світла/темна тема)
+   замість хардкоду білого, щоб рамка кнопки збігалась із поверхнею
+   картки в ОБОХ темах. */
+:root {
+  --audio-bridge-card-bg: #ffffff;
+  --audio-bridge-track: #efe6c8;
+}
+.dark {
+  --audio-bridge-card-bg: var(--dark-surface-fill);
+  --audio-bridge-track: var(--gold-border-dark-20);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --audio-bridge-card-bg: var(--dark-surface-fill);
+    --audio-bridge-track: var(--gold-border-dark-20);
+  }
+}
+/* Слот 46x46 — фіксований розмір НЕЗАЛЕЖНО від idle/playing (кнопка
+   40px idle, кільце 46px playing), щоб центр кнопки не "стрибав" при
+   старті відтворення; саме цей розмір задає margin-top: -half на
+   викликачі (FlipCardTile/DeckCardFront, flip-cards.tsx). Прихований
+   >=640px за замовчуванням (desktop/tablet лишаються на повній
+   пілюлі); клас на самому елементі ставить кожен викликач. */
+.audio-bridge-slot {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+}
+@media (max-width: 639px) {
+  .audio-bridge-slot {
+    display: flex;
+  }
+}
+.audio-bridge-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 3px solid var(--audio-bridge-card-bg);
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #f3d98b;
+  box-shadow: 0 4px 10px rgba(26, 22, 64, 0.35);
+}
+/* Playing — кільце прогресу: conic-gradient, золота частка = пройдена
+   частка (--audio-bridge-progress, у відсотках, прокидає компонент
+   інлайн-стилем з currentTime/duration), решта — бляклий трек. padding:
+   4px лишає видимою 4px смужку кільця навколо кнопки (46px слот - 2*4px
+   padding - 38px кнопка = збігається). */
+.audio-bridge-slot--playing {
+  padding: 4px;
+  border-radius: 999px;
+  background: conic-gradient(
+    #d9b765 calc(var(--audio-bridge-progress, 0) * 1%),
+    var(--audio-bridge-track) 0
+  );
+}
+.audio-bridge-slot--playing .audio-bridge-btn {
+  width: 38px;
+  height: 38px;
+}

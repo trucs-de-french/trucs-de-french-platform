@@ -87,7 +87,18 @@ function FlipCardTile({
       {zoomOpen && card.image_url && (
         <ImageLightbox src={card.image_url} onClose={() => setZoomOpen(false)} />
       )}
-      {card.audio_url && <AudioPill src={card.audio_url} compact className="audio-player-compact" />}
+      {card.audio_url && (
+        // gap-2 контейнера (8px) + margin-top тут = -23px (half 46px слоту) →
+        // чисте half-overlap на фото знизу; margin-bottom тут = -4px →
+        // gap-2(8) + (-4) = 4px видимого зазору перед словом нижче.
+        <AudioPill
+          src={card.audio_url}
+          compact
+          className="audio-player-compact"
+          mobileBridge
+          bridgeClassName="max-[639px]:-mt-[31px] max-[639px]:-mb-1"
+        />
+      )}
       <span
         className={`min-w-0 max-w-full break-words [overflow-wrap:anywhere] dark:mt-3.5 dark:tracking-[0.01em] dark:leading-[1.25] ${
           flipped
@@ -738,10 +749,25 @@ function DeckCardFront({
           </span>
         )}
         {zoomOpen && card.image_url && <ImageLightbox src={card.image_url} onClose={onZoomClose} />}
-        <p className="max-w-full break-words text-[18px] font-semibold leading-[1.4] font-content text-[#1a1640] [overflow-wrap:anywhere] dark:text-neutral-100 sm:text-[24px]">
+        <p className="order-1 max-[639px]:order-2 max-w-full break-words text-[18px] font-semibold leading-[1.4] font-content text-[#1a1640] [overflow-wrap:anywhere] dark:text-neutral-100 sm:text-[24px]">
           {frenchNbsp(card.front)}
         </p>
-        {card.audio_url && <AudioPill src={card.audio_url} compact className="audio-player-compact" />}
+        {card.audio_url && (
+          // DOM-порядок лишається "текст, тоді аудіо" (як було, й як читає
+          // скрінрідер) — на <640px лише ВІЗУАЛЬНО міняється місцями через
+          // order (CSS flex, не JS-визначення в'юпорту): order-2 (десктоп,
+          // після тексту, як раніше) / order-1 на мобільному (між фото й
+          // словом, щоб "місток" наповзав на фото). gap-3 контейнера (12px)
+          // + margin-top тут = -35px (half 46px слоту) → чисте half-overlap;
+          // margin-bottom тут = -8px → gap-3(12) + (-8) = 4px зазору до слова.
+          <AudioPill
+            src={card.audio_url}
+            compact
+            className="audio-player-compact"
+            mobileBridge
+            bridgeClassName="order-2 max-[639px]:order-1 max-[639px]:-mt-[35px] max-[639px]:-mb-2"
+          />
+        )}
       </div>
       {canFlip ? (
         <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
