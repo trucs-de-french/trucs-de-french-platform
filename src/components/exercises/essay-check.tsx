@@ -244,10 +244,20 @@ export function EssayCheckExercise({
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={prompt ?? DEFAULT_INSTRUCTIONS.essay_check.instruction}
-        subInstructionText={taskTranslationLine(null, lang, {
-          uk: DEFAULT_INSTRUCTIONS.essay_check.subInstruction,
-          en: DEFAULT_TRANSLATION_EN.essay_check,
-        })}
+        subInstructionText={
+          // prompt — завжди власний текст вчительки (essay-питання), без
+          // власного перекладу в config: дефолтний переклад ("Write a
+          // text.") стосується лише дефолтного fallback-тексту нижче, тож
+          // показуємо його ЛИШЕ коли prompt відсутній (fallback і справді
+          // активний) — інакше під кастомним French-текстом був би
+          // невідповідний/застарілий переклад (правило 4 задачі).
+          prompt
+            ? undefined
+            : taskTranslationLine(null, lang, {
+                uk: DEFAULT_INSTRUCTIONS.essay_check.subInstruction,
+                en: DEFAULT_TRANSLATION_EN.essay_check,
+              })
+        }
       />
       {grid && (
         <p className="text-xs text-[var(--text-muted-caption)] dark:text-neutral-400">
