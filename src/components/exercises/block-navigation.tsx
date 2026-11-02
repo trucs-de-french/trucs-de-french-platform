@@ -315,31 +315,42 @@ export function BlockNavFooter({
   return (
     <div className="exercise-bottom-row">
       {checkButton}
-      <div className="exercise-bottom-row-spacer" />
-      <button
-        type="button"
-        onClick={() => onChangeBlock(activeBlock - 1)}
-        disabled={isFirst}
-        aria-label={t("button.previousAria")}
-        className="exercise-block-prev-btn"
-      >
-        <ChevronIcon direction="left" size={18} />
-      </button>
-      <button
-        type="button"
-        onClick={() => onChangeBlock(activeBlock + 1)}
-        disabled={isLast}
-        aria-label={t("button.next")}
-        className="exercise-block-next-btn"
-      >
-        <span className="exercise-block-next-btn-label">{t("button.next")}</span>
-        {/* Кругла золота "плашка" під шеврон (градієнтний індиго-дизайн,
-            та сама родина, що аудіоплеєр) — замінює голу іконку, яка
-            раніше сиділа прямо в рядку кнопки. */}
-        <span className="exercise-block-next-btn-badge">
-          <ChevronIcon direction="right" size={16} />
-        </span>
-      </button>
+      {/* Групуємо ←/→ в один flex-елемент (замість колишнього окремого
+         flex:1 spacer-діва поруч із check-кнопкою, теж flex:1): на
+         вузьких екранах, де check-кнопка з довгим текстом (fr/en,
+         довші за uk) та ←/→ разом не влазять в один рядок,
+         .exercise-bottom-row переноситься (flex-wrap, мобільний CSS
+         нижче) — check-кнопка лишається ОДНА на своєму рядку (без
+         spacer-сусіда, що раніше міг потрапити на той самий рядок і
+         відібрати половину flex-grow), а ЦЯ група (margin-left:auto)
+         переносилась би на свій рядок і там самим margin-left:auto й
+         далі притискається праворуч — той самий вигляд, що й раніше. */}
+      <div className="exercise-bottom-row-nav">
+        <button
+          type="button"
+          onClick={() => onChangeBlock(activeBlock - 1)}
+          disabled={isFirst}
+          aria-label={t("button.previousAria")}
+          className="exercise-block-prev-btn"
+        >
+          <ChevronIcon direction="left" size={18} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onChangeBlock(activeBlock + 1)}
+          disabled={isLast}
+          aria-label={t("button.next")}
+          className="exercise-block-next-btn"
+        >
+          <span className="exercise-block-next-btn-label">{t("button.next")}</span>
+          {/* Кругла золота "плашка" під шеврон (градієнтний індиго-дизайн,
+              та сама родина, що аудіоплеєр) — замінює голу іконку, яка
+              раніше сиділа прямо в рядку кнопки. */}
+          <span className="exercise-block-next-btn-badge">
+            <ChevronIcon direction="right" size={16} />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

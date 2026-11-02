@@ -5888,9 +5888,16 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 12px;
   margin-top: 22px;
 }
-.exercise-bottom-row-spacer {
-  flex: 1;
-  min-width: 0;
+/* Заміна колишнього .exercise-bottom-row-spacer (окремий flex:1 div
+   поруч із check-кнопкою): ←/→ тепер власна flex-група з margin-left:
+   auto — той самий візуальний притиск праворуч, але без другого flex:1
+   сусіда check-кнопки (звідки й ріс мобільний баг clipping-у нижче). */
+.exercise-bottom-row-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 /* ЕТАП N — градієнтний індиго-дизайн "Далі"/prev (та сама родина, що
    аудіоплеєр): РІВНО той самий градієнт в обох темах (contrast-перевірка,
@@ -5996,17 +6003,30 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 0 0 1px var(--gold-border-dark-28), 0 8px 22px rgba(59, 54, 196, 0.45);
   }
 }
-/* Мобільний рядок (ЕТАП M, п.3): "Перевірити блок" розтягується на решту
-   ширини (flex:1), ←/→ лишаються своїм розміром — рядок не переноситься.
-   <360px — prev звужується до 40px, next показує лише шеврон (підпис
-   приховано, aria-label "Далі" лишається на самій кнопці завжди). */
+/* Мобільний рядок (ЕТАП M, п.3, фікс: label clipping) — "Перевірити
+   блок"/"Vérifier le bloc"/"Check block" (та "Спробувати ще раз" тощо —
+   та сама кнопка, інший текст, button-styles.ts BUTTON_CHECK) НЕ має
+   стискатись нижче довжини свого тексту: flex:1 1 auto (росте, щоб
+   заповнити рядок, коли вільно) + min-width:max-content (ніколи не
+   стискається під власний текст — колишній min-width:0 + overflow:
+   hidden + text-overflow:ellipsis якраз і різали напис). Коли власний
+   текст (fr/en — довші за uk) разом з .exercise-bottom-row-nav (←/→) не
+   влазять в один рядок навіть на всю ширину — .exercise-bottom-row
+   нижче переноситься (flex-wrap): ця кнопка лишається сама на своєму
+   рядку (без spacer-сусіда, що раніше забирав половину flex-grow),
+   .exercise-bottom-row-nav переносится на свій рядок і там і далі
+   притиснута праворуч (margin-left:auto всередині себе, вище). <360px —
+   prev звужується до 40px, next показує лише шеврон (підпис приховано,
+   aria-label "Далі" лишається на самій кнопці завжди). */
 @media (max-width: 480px) {
+  .exercise-bottom-row {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
   .exercise-bottom-row .exercise-block-check-btn {
-    flex: 1;
-    min-width: 0;
-    padding: 0 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: 1 1 auto;
+    min-width: max-content;
+    padding: 0 18px;
     white-space: nowrap;
   }
 }
