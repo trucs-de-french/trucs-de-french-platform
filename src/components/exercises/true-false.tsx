@@ -174,7 +174,7 @@ export function TrueFalseExercise({
                     ? "border-green-500 bg-green-50 text-green-900 dark:bg-green-950/30 dark:text-green-100"
                     : val === d.studentAnswer
                       ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-100"
-                      : "glass-answer-btn"
+                      : "glass-answer-btn glass-answer-btn--neutral"
                   : answers[s.id] === val
                     ? "glass-answer-btn--selected"
                     : "glass-answer-btn"

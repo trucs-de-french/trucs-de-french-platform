@@ -89,6 +89,18 @@
   --uk-title-text-light: #4b4766;
 }
 
+/* Нейтральний "вимкнений" стан результату (задача "сірі неактивні кнопки
+   Vrai/Faux") — кнопка, що ні правильна, ні обрана студентом, після
+   перевірки: теплий сірий на кремовій панелі (НЕ синьо-лавандовий, як
+   звичайний невибраний стан до перевірки) — світла тема. Темна — нижче,
+   поруч із --correct-border-dark/--wrong-border-dark (той самий принцип
+   "result-токени поруч"). */
+:root {
+  --neutral-result-bg: #f3f1ea;
+  --neutral-result-border: #ddd6c0;
+  --neutral-result-text: #8f8870;
+}
+
 /* Пілюлі балів і текстові поля вправ — лише темна тема (світлий дефолт не
    визначений: ці токени читаються лише dark:-утилітами/.dark-правилами
    нижче, світла тема на них не посилається взагалі). --points-* —
@@ -215,6 +227,13 @@
   --correct-border-dark: #4fbf86;
   --wrong-border-dark: #e8788a;
   --error-review-card-bg: var(--dark-blue-fill);
+  /* Нейтральний "вимкнений" результат (задача "сірі неактивні кнопки
+     Vrai/Faux") — приглушений desaturated slate, НЕ --dark-surface-fill
+     (індиго-тінт): свідомо інший відтінок, щоб вимкнена кнопка не
+     читалась як звичайний активний лавандовий стан. */
+  --neutral-result-bg: #2b2d33;
+  --neutral-result-border: #3f4147;
+  --neutral-result-text: rgba(229, 229, 229, 0.6);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -269,6 +288,9 @@
     --correct-border-dark: #4fbf86;
     --wrong-border-dark: #e8788a;
     --error-review-card-bg: var(--dark-blue-fill);
+    --neutral-result-bg: #2b2d33;
+    --neutral-result-border: #3f4147;
+    --neutral-result-text: rgba(229, 229, 229, 0.6);
   }
 }
 
@@ -2969,6 +2991,28 @@ button, input, textarea, select, label, nav, aside {
   :root:not(.dark) .glass-answer-btn:focus-visible,
   :root:not(.dark) .glass-answer-btn--selected:focus-visible {
     outline-color: #3b36c4;
+  }
+}
+
+/* Нейтральний "вимкнений" результат (Vrai/Faux, true-false.tsx) — варіант
+   кнопки, що після перевірки НЕ правильна відповідь і НЕ вибір студента:
+   раніше тут лишався звичайний .glass-answer-btn (синьо-лавандовий
+   невибраний стан) незмінним, тож кнопка виглядала так, ніби й досі
+   активна/вибрана до перевірки. Комбінується З .glass-answer-btn у
+   className (та сама розмір/border-width/radius — нічого із базового
+   класу тут не перевизначається), лише колір+відсутність hover/курсор. */
+.glass-answer-btn--neutral {
+  background: var(--neutral-result-bg);
+  border-color: var(--neutral-result-border);
+  color: var(--neutral-result-text);
+  cursor: default;
+}
+@media (hover: hover) {
+  .glass-answer-btn--neutral:hover {
+    background: var(--neutral-result-bg);
+    border-color: var(--neutral-result-border);
+    color: var(--neutral-result-text);
+    box-shadow: none;
   }
 }
 
