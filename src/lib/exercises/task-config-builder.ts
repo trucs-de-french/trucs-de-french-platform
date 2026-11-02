@@ -66,10 +66,25 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("open_answer_sub_instructions") as string) || ""
       );
+      // Порожні рядки "Варіант відповіді" (незаповнений слот з кнопки
+      // "+ варіант" у конструкторі) відсікаються ТУТ, при збереженні —
+      // щоб у БД не накопичувався порожній варіант, через який панель
+      // "Bonnes réponses" показувала зайвий "/" (join(" / ") з порожнім
+      // елементом). getOpenAnswerQuestions (sanitize.ts) лишається
+      // tolerant-читачем для вже збережених старих задач з таким варіантом.
+      const questions = parseJsonField(formData.get("open_answer_questions")) as Array<{
+        answers?: unknown;
+      }>;
+      const cleanedQuestions = questions.map((q) => ({
+        ...q,
+        answers: Array.isArray(q.answers)
+          ? q.answers.filter((a) => typeof a === "string" && a.trim().length > 0)
+          : q.answers,
+      }));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
-        questions: parseJsonField(formData.get("open_answer_questions")),
+        questions: cleanedQuestions,
         hintsReducePoints: formData.get("open_answer_hints_reduce_points") === "true",
       };
     }

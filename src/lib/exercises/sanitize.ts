@@ -69,9 +69,20 @@ const BLANK_HINT_MAX_LENGTH = 80;
 // кожному з місць, що раніше викликали raw.split("|") напряму.
 export function parseBlankMarker(raw: string): { answers: string[]; hint?: string } {
   const sep = raw.indexOf("::");
-  if (sep === -1) return { answers: raw.split("|") };
+  const answersPart = sep === -1 ? raw : raw.slice(0, sep);
+  // Випадковий зайвий "|" ("chien|" замість "chien") інакше дає порожній
+  // варіант відповіді — той самий join(" / ") у "Bonnes réponses" (fill_blank,
+  // task-config-fields.tsx) показує зайву "/", а grade.ts зараховував би
+  // порожню студентську відповідь як правильну (той самий корінь, що
+  // getOpenAnswerQuestions вище). Фолбек на нефільтрований список лишається
+  // для теоретично зовсім порожнього маркера "{{}}" (жодного варіанта) — щоб
+  // answers[0] (drag_drop bank-слово, reveal-ендпойнт) не став undefined.
+  const splitAnswers = answersPart.split("|");
+  const nonEmpty = splitAnswers.filter((a) => a.trim().length > 0);
+  const answers = nonEmpty.length ? nonEmpty : splitAnswers;
+  if (sep === -1) return { answers };
   const hint = raw.slice(sep + 2).trim().slice(0, BLANK_HINT_MAX_LENGTH);
-  return { answers: raw.slice(0, sep).split("|"), hint: hint || undefined };
+  return { answers, hint: hint || undefined };
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -638,11 +649,23 @@ export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPubli
 // виродковий випадок нової: одне питання без явного id. Нормалізується тут
 // (не в БД), і grade.ts, і sanitize.ts викликають цю саму функцію — той самий
 // принцип спільного імпорту з sanitize.ts, що вже є для BLANK_RE.
+// Порожній варіант відповіді (незаповнений рядок "Варіант відповіді" у
+// конструкторі) не повинен ні зараховуватись у isCorrect (grade.ts), ні
+// з'являтись у склеєному через " / " списку (table-fill.tsx тип "Bonnes
+// réponses" тощо) — toleranntний читач і для вже збережених старих даних з
+// такою порожньою варіацією (точкова причина, не потребує редагування
+// вчителькою).
+function nonEmptyAnswers(answers: string[]): string[] {
+  return answers.filter((a) => a.trim().length > 0);
+}
+
 export function getOpenAnswerQuestions(config: OpenAnswerConfig): OpenAnswerQuestion[] {
-  if (config.questions?.length) return config.questions;
+  if (config.questions?.length) {
+    return config.questions.map((q) => ({ ...q, answers: nonEmptyAnswers(q.answers) }));
+  }
   const legacy = config as unknown as { question?: string; answers?: string[] };
   if (legacy.question !== undefined) {
-    return [{ id: "legacy", question: legacy.question, answers: legacy.answers ?? [] }];
+    return [{ id: "legacy", question: legacy.question, answers: nonEmptyAnswers(legacy.answers ?? []) }];
   }
   return [];
 }

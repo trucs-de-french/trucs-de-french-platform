@@ -963,7 +963,13 @@ function gradeTableFill(config: TableFillConfig, answer: TableFillAnswer): Grade
       // кожен pipe-сегмент і по комі, щоб студент міг набрати один варіант
       // ("дозвіл" замість повного "дозвіл, шкільний бланк") — toggle і
       // "правильно — X" однаково показують повний оригінальний рядок.
-      const accepted = rawValue.split("|").map((s) => normalize(s));
+      // .filter тут — лише для показу (correctAnswers нижче, join(" / ") у
+      // table-fill.tsx); acceptedVariants (isCorrect) і без цього вже
+      // ігнорує порожні сегменти (if (full)/if (variant) нижче).
+      const accepted = rawValue
+        .split("|")
+        .map((s) => normalize(s))
+        .filter((s) => s.length > 0);
       const acceptedVariants = new Set<string>();
       for (const segment of rawValue.split("|")) {
         const full = normalize(segment);
