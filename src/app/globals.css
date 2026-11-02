@@ -9299,6 +9299,20 @@ button.scene-bar:active .scene-bar-toggle {
   justify-content: center;
   width: 46px;
   height: 46px;
+  /* position:relative + z-index — без цього слот лишається "статичним"
+     (position:static), а сусідня картинка (span.relative навколо
+     ImageOrPlaceholder/ImageZoomBadge, FlipCardTile/DeckCardFront,
+     flip-cards.tsx) — ПОЗИЦІОНОВАНА (position:relative). За правилами
+     CSS paint order позиціоновані елементи малюються ПІСЛЯ статичних
+     НЕЗАЛЕЖНО від порядку в DOM (і від flex order, що впливає лише на
+     розкладку, не на малювання) — тож картинка перекривала half-overlap
+     верхню половину кнопки, хоч та й сидить ПІЗНІШЕ в DOM. z-index:1
+     робить слот теж "позиціонованим" і вищим у стеку за той (auto=0)
+     картинки — кнопка тепер малюється над фото. Не чіпає overflow:
+     жоден з предків слоту/картинки не має overflow:hidden, тож half-
+     overlap нічим не обрізається. */
+  position: relative;
+  z-index: 1;
 }
 @media (max-width: 639px) {
   .audio-bridge-slot {
