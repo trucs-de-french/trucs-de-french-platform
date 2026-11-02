@@ -69,6 +69,34 @@ function WsAnswerCheck() {
   );
 }
 
+// Бейдж "перша літера" (ws-hint-letter-badge, globals.css) — спільний для
+// всіх трьох форм картки (ImageTile/TextPill/LongCard), показується лише
+// коли слову взяли підказку і воно ще не знайдене (hinted, рахується
+// кожною карткою локально з її ж found/hintUsed-пропсів). Фіксована "…"
+// (не по літері на решту слова) — щоб довжина слова НЕ розкривалась через
+// кількість крапок. role="img" + aria-label (не на самому interactive-
+// елементі картки, бо бейдж — суто інформаційний довідок, не керування).
+function HintFirstLetterBadge({ letter }: { letter: string }) {
+  const { t } = useT();
+  return (
+    <span
+      role="img"
+      aria-label={t("ws.hintFirstLetterAria", { letter: letter.toUpperCase() })}
+      className="ws-hint-letter-badge inline-flex h-8 shrink-0 items-center gap-1 rounded-full border-[1.5px] pl-1 pr-2.5"
+    >
+      <span
+        aria-hidden="true"
+        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#f6dc8e] to-[#e0aa3e] text-xs font-bold text-[#6b4a14]"
+      >
+        {letter.toUpperCase()}
+      </span>
+      <span aria-hidden="true" className="ws-hint-letter-badge-dots text-xs font-bold">
+        …
+      </span>
+    </span>
+  );
+}
+
 // Картка-картинка — квадратна (aspect-square), картинка займає ВСЮ плитку
 // (object-cover з точкою фокусу), клік — лайтбокс, як і раніше. Аудіо (якщо
 // є) — окремим рядком під картинкою В ТІЙ САМІЙ плитці (не чіпаємо саму
@@ -87,18 +115,27 @@ function ImageTile({
   hintUsed,
   onZoom,
   onHint,
+  firstLetter,
+  cardRef,
 }: {
   word: WordSearchPublicBlock["words"][number];
   found: boolean;
   hintUsed: boolean;
   onZoom: () => void;
   onHint: () => void;
+  // firstLetter — лише для бейджа HintFirstLetterBadge (сам синій маркер
+  // на клітинці сітки — hintCells, не ця плитка). cardRef — DOM-вузол
+  // ЦІЄЇ картки для scrollCardIntoView (word-search.tsx, triggerHint).
+  firstLetter?: string;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }) {
   const { t } = useT();
+  const hinted = hintUsed && !found;
   return (
     <div
+      ref={cardRef}
       onClick={onHint}
-      className={`flex flex-col overflow-hidden ${LEGEND_TILE_BASE} ${
+      className={`flex flex-col overflow-hidden ${LEGEND_TILE_BASE} ${hinted ? "ws-clue-hinted" : ""} ${
         found ? "cursor-default" : "cursor-pointer"
       }`}
     >
@@ -123,6 +160,13 @@ function ImageTile({
         {found && (
           <span className="absolute inset-x-0 bottom-0 truncate bg-white/85 px-1 py-0.5 text-center font-heading text-xs font-semibold dark:bg-[var(--dark-surface-fill-translucent)]">
             {word.word}
+          </span>
+        )}
+        {/* Бейдж "перша літера" — лівий низ, подалі від лампочки (правий
+            верх, нижче в цьому ж компоненті). */}
+        {hinted && firstLetter && (
+          <span className="absolute bottom-1.5 left-1.5">
+            <HintFirstLetterBadge letter={firstLetter} />
           </span>
         )}
       </button>
@@ -164,6 +208,8 @@ function TextPill({
   found,
   hintUsed,
   onHint,
+  firstLetter,
+  cardRef,
 }: {
   text: string;
   audioUrl?: string;
@@ -171,10 +217,14 @@ function TextPill({
   found: boolean;
   hintUsed: boolean;
   onHint: () => void;
+  firstLetter?: string;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }) {
   const showIcon = found || !!hintStart;
+  const hinted = hintUsed && !found;
   return (
     <div
+      ref={cardRef}
       role="button"
       tabIndex={0}
       onClick={onHint}
@@ -184,15 +234,20 @@ function TextPill({
           onHint();
         }
       }}
-      className={`${LEGEND_PILL} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
+      className={`${LEGEND_PILL} ${hinted ? "ws-clue-hinted ws-pill-hinted-stack" : ""} ${showIcon ? "pl-1.5 pr-3" : ""} ${found ? "cursor-default opacity-50" : "cursor-pointer"}`}
     >
-      {showIcon && <HintBulb state={bulbState(found, hintUsed)} as="span" />}
-      <span className={`min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
-      {audioUrl && (
-        <span onClick={(e) => e.stopPropagation()}>
-          <CompactAudioButton src={audioUrl} />
-        </span>
-      )}
+      <span className="flex min-w-0 items-center gap-1.5">
+        {showIcon && <HintBulb state={bulbState(found, hintUsed)} as="span" />}
+        <span className={`min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] ${CLUE_TEXT} ${found ? "line-through" : ""}`}>{text}</span>
+        {audioUrl && (
+          <span onClick={(e) => e.stopPropagation()}>
+            <CompactAudioButton src={audioUrl} />
+          </span>
+        )}
+      </span>
+      {/* Бейдж "перша літера" — ДРУГИЙ рядок пілюлі, лише в hinted-стані
+          (ws-pill-hinted-stack вище перемикає пілюлю на flex-col). */}
+      {hinted && firstLetter && <HintFirstLetterBadge letter={firstLetter} />}
     </div>
   );
 }
@@ -208,16 +263,21 @@ function LongCard({
   hintUsed,
   onZoom,
   onHint,
+  firstLetter,
+  cardRef,
 }: {
   word: WordSearchPublicBlock["words"][number];
   found: boolean;
   hintUsed: boolean;
   onZoom: () => void;
   onHint: () => void;
+  firstLetter?: string;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }) {
   const { t } = useT();
   const hasImage = !!word.imageUrl;
   const showBadge = found || !!word.hintStart;
+  const hinted = hintUsed && !found;
   const badge = showBadge ? (
     <HintBulb
       state={bulbState(found, hintUsed)}
@@ -227,6 +287,7 @@ function LongCard({
   ) : null;
   return (
     <div
+      ref={cardRef}
       role="button"
       tabIndex={0}
       onClick={onHint}
@@ -236,7 +297,7 @@ function LongCard({
           onHint();
         }
       }}
-      className={`${LEGEND_LONG_CARD} ${hasImage ? "pr-9" : ""} ${
+      className={`${LEGEND_LONG_CARD} ${hinted ? "ws-clue-hinted" : ""} ${hasImage ? "pr-9" : ""} ${
         found ? "cursor-default opacity-50" : "cursor-pointer"
       }`}
     >
@@ -259,6 +320,13 @@ function LongCard({
         {word.audioUrl && (
           <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <CompactAudioButton src={word.audioUrl} />
+          </div>
+        )}
+        {/* Бейдж "перша літера" — під текстом підказки, той самий принцип,
+            що в TextPill. */}
+        {hinted && firstLetter && (
+          <div className="mt-1.5">
+            <HintFirstLetterBadge letter={firstLetter} />
           </div>
         )}
       </div>
@@ -610,7 +678,15 @@ function WordSearchBlockView({
 
   function wordHintUsed(word: string): boolean {
     if (practiceMode) return practiceHintedWords.has(word);
-    return detail?.words.find((d) => d.word === word)?.hintUsed ?? false;
+    // ФІКС — під час гри (до перевірки блоку) detail ще немає взагалі:
+    // раніше функція тут одразу падала на ?? false, тож лампочка/картка
+    // ЦІЛУ гру лишались у стані "доступно", хоч підказку й узято (hintedWords
+    // уже містить слово, і сама сітка підсвічується коректно — hintCells
+    // рахується НАПРЯМУ з hintedWords, не через цю функцію). Той самий
+    // порядок гілок, що isFound() вище: practiceMode → серверний detail
+    // (після Перевірити) → локальний hintedWords (під час гри).
+    if (detail) return detail.words.find((d) => d.word === word)?.hintUsed ?? false;
+    return hintedWords.has(word);
   }
 
   // Похідний набір клітинок для синього маркера підказки (hintHighlightCells,
@@ -654,6 +730,37 @@ function WordSearchBlockView({
   // раз при санітизації (sanitize.ts), не весь шлях розміщення: усі літери
   // сітки й так видимі студенту, тож розкриття лише СТАРТОВОЇ клітинки —
   // менший компроміс, ніж уже наявне повне розкриття в crossword/letter_gaps.
+  // Картки з золотим "дихаючим" ореолом (ws-clue-hinted) — DOM-вузли за
+  // словом, лише для scrollCardIntoView нижче (жодного стилю/стану тут не
+  // тримаємо — Map, не useState, оновлюється на кожен рендер картки).
+  const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
+  function registerCardRef(word: string, el: HTMLElement | null) {
+    if (el) cardRefs.current.set(word, el);
+    else cardRefs.current.delete(word);
+  }
+
+  // Перша літера слова (для HintFirstLetterBadge) — та сама клітинка, що
+  // hintStart, прочитана із самої сітки блоку: координату вже рахує сервер
+  // (sanitize.ts), тут лише беремо букву з block.grid за нею.
+  function firstLetterOf(w: WordSearchPublicBlock["words"][number]): string | undefined {
+    if (!w.hintStart) return undefined;
+    return block.grid[w.hintStart.row]?.[w.hintStart.col];
+  }
+
+  // п.5 задачі — картка щойно підказаного слова м'яко прокручується у
+  // видиму область (block:"nearest" сам не рухає, якщо картка вже видима,
+  // і рухає МІНІМАЛЬНО, якщо ні — тож сітка лишається на місці, доки обидві
+  // (сітка+картка) влазять в екран одночасно). rAF — чекаємо рендер нового
+  // ws-clue-hinted класу (і, відповідно, появу бейджа), перш ніж міряти.
+  function scrollCardIntoView(word: string) {
+    requestAnimationFrame(() => {
+      const el = cardRefs.current.get(word);
+      if (!el) return;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+    });
+  }
+
   function triggerHint(w: WordSearchPublicBlock["words"][number]) {
     // Повторний тап по вже підказаному (і ще не знайденому) слову — нічого
     // не робить: без повторного списання балів (hintedWords — Set, і так
@@ -663,10 +770,12 @@ function WordSearchBlockView({
     if (practiceMode) {
       if (isDelf || isFound(w.word) || !w.hintStart || practiceHintedWords.has(w.word)) return;
       setPracticeHintedWords((prev) => new Set(prev).add(w.word));
+      scrollCardIntoView(w.word);
       return;
     }
     if (locked || isDelf || isFound(w.word) || !w.hintStart || hintedWords.has(w.word)) return;
     setHintedWords((prev) => new Set(prev).add(w.word));
+    scrollCardIntoView(w.word);
   }
 
   // Картинка ПРІОРИТЕТНІША за переклад (як і в hintKind до попередніх
@@ -952,6 +1061,8 @@ function WordSearchBlockView({
                         hintUsed={wordHintUsed(w.word)}
                         onZoom={() => setLightboxSrc(w.imageUrl!)}
                         onHint={() => triggerHint(w)}
+                        firstLetter={firstLetterOf(w)}
+                        cardRef={(el) => registerCardRef(w.word, el)}
                       />
                     ))}
                   </div>
@@ -967,6 +1078,8 @@ function WordSearchBlockView({
                         found={isFound(w.word)}
                         hintUsed={wordHintUsed(w.word)}
                         onHint={() => triggerHint(w)}
+                        firstLetter={firstLetterOf(w)}
+                        cardRef={(el) => registerCardRef(w.word, el)}
                       />
                     ))}
                   </div>
@@ -988,6 +1101,8 @@ function WordSearchBlockView({
                         hintUsed={wordHintUsed(w.word)}
                         onZoom={() => setLightboxSrc(w.imageUrl!)}
                         onHint={() => triggerHint(w)}
+                        firstLetter={firstLetterOf(w)}
+                        cardRef={(el) => registerCardRef(w.word, el)}
                       />
                     ))}
                   </div>
@@ -1002,6 +1117,8 @@ function WordSearchBlockView({
                         hintUsed={wordHintUsed(w.word)}
                         onZoom={() => setLightboxSrc(w.imageUrl!)}
                         onHint={() => triggerHint(w)}
+                        firstLetter={firstLetterOf(w)}
+                        cardRef={(el) => registerCardRef(w.word, el)}
                       />
                     ))}
                   </div>
@@ -1017,6 +1134,8 @@ function WordSearchBlockView({
                         found={isFound(w.word)}
                         hintUsed={wordHintUsed(w.word)}
                         onHint={() => triggerHint(w)}
+                        firstLetter={firstLetterOf(w)}
+                        cardRef={(el) => registerCardRef(w.word, el)}
                       />
                     ))}
                   </div>

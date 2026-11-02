@@ -186,6 +186,7 @@ export const uk = {
   "ws.foundOfTotal": "{found} з {total}",
   "ws.foundOfTotalWords": "Знайдено {n} з {total} слів",
   "ws.notFoundNote": "Слова, які не знайдено, позначені в сітці зеленим.",
+  "ws.hintFirstLetterAria": "Перша літера: {letter}",
 
   "karaoke.pauseAfterGapLine": "Пауза після рядка з пропуском",
   "karaoke.videoUnavailable": "Відео недоступне",

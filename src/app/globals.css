@@ -1059,6 +1059,18 @@ button, input, textarea, select, label, nav, aside {
   --ws-capsule-correct-border: 1px solid #7fd69a;
   --ws-letter-correct-color: #1f7a3d;
   --ws-legend-dot-correct: #7fd69a;
+
+  /* Легенда/картка-підказка "слово підказано, ще не знайдено" (hint-
+     letter-badge/.ws-clue-hinted нижче) — та сама золота пара, що золотий
+     бордюр панелі (--gold-border), лише блідіша заливка/світіший glow для
+     самої картки, щоб не зливатись із основним "lamp"-градієнтом бейджа. */
+  --ws-hint-card-border: #d9b765;
+  --ws-hint-card-bg: #fffaf0;
+  --ws-hint-glow-soft: rgba(217, 183, 101, 0.4);
+  --ws-hint-glow-peak: rgba(217, 183, 101, 0.75);
+  --ws-hint-badge-bg: #ffffff;
+  --ws-hint-badge-border: var(--gold-border-85);
+  --ws-hint-badge-text: #55546b;
 }
 .dark {
   --ws-sheet-bg: #11183f;
@@ -1079,6 +1091,14 @@ button, input, textarea, select, label, nav, aside {
   --ws-capsule-correct-border: 1px solid #4cc47e;
   --ws-letter-correct-color: #bff0d0;
   --ws-legend-dot-correct: #4cc47e;
+
+  --ws-hint-card-border: var(--gold-border-dark-45);
+  --ws-hint-card-bg: rgba(243, 217, 139, 0.08);
+  --ws-hint-glow-soft: rgba(243, 217, 139, 0.3);
+  --ws-hint-glow-peak: rgba(243, 217, 139, 0.6);
+  --ws-hint-badge-bg: var(--dark-surface-fill-translucent);
+  --ws-hint-badge-border: var(--gold-border-dark-45);
+  --ws-hint-badge-text: var(--card-ink-2);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -1100,6 +1120,14 @@ button, input, textarea, select, label, nav, aside {
     --ws-capsule-correct-border: 1px solid #4cc47e;
     --ws-letter-correct-color: #bff0d0;
     --ws-legend-dot-correct: #4cc47e;
+
+    --ws-hint-card-border: var(--gold-border-dark-45);
+    --ws-hint-card-bg: rgba(243, 217, 139, 0.08);
+    --ws-hint-glow-soft: rgba(243, 217, 139, 0.3);
+    --ws-hint-glow-peak: rgba(243, 217, 139, 0.6);
+    --ws-hint-badge-bg: var(--dark-surface-fill-translucent);
+    --ws-hint-badge-border: var(--gold-border-dark-45);
+    --ws-hint-badge-text: var(--card-ink-2);
   }
 }
 
@@ -1300,6 +1328,62 @@ button, input, textarea, select, label, nav, aside {
   .ws-capsule {
     transition: opacity 150ms;
   }
+}
+
+/* Клue-картка слова, якому взяли підказку (лампочка), і яке ще не
+   знайдене — word-search.tsx позначає ЦІЄЮ ОДНІЄЮ класом усі три форми
+   картки (ImageTile/TextPill/LongCard): золота рамка 2px (box-sizing:
+   border-box з Tailwind preflight — заміна border-width НЕ зсуває
+   зовнішній розмір плитки, окремої компенсації padding не потрібно) +
+   теплий тон фону + м'яке золоте гало. !important — та сама причина, що
+   .ws-cell-hinted вище: перебиває bg-white/border-[1.5px] з
+   LEGEND_TILE_BASE/LEGEND_PILL/LEGEND_LONG_CARD (Tailwind-утиліти, той
+   самий рядок класів). box-shadow тут — "стійке" (steady) значення:
+   анімація нижче (prefers-reduced-motion: no-preference) лише тимчасово
+   відхиляється від нього і сама повертається сюди ж, коли 3 цикли
+   завершено (ітерацій без infinite) — без жодного JS-таймера/
+   animationend. */
+.ws-clue-hinted {
+  border-color: var(--ws-hint-card-border) !important;
+  border-width: 2px !important;
+  background: var(--ws-hint-card-bg) !important;
+  box-shadow: 0 0 10px 2px var(--ws-hint-glow-soft);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ws-clue-hinted {
+    animation: ws-hint-breathe 2.4s ease-in-out 3;
+  }
+}
+@keyframes ws-hint-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 10px 2px var(--ws-hint-glow-soft);
+  }
+  50% {
+    box-shadow: 0 0 20px 6px var(--ws-hint-glow-peak);
+  }
+}
+/* TextPill у стані "підказано" — єдиний рядок (inline-flex items-center,
+   LEGEND_PILL) стає двома: текст підказки лишається зверху, бейдж першої
+   літери (HintFirstLetterBadge) — під ним, без зміни самого LEGEND_PILL
+   (інші виклики того токена цей модифікатор не бачать). */
+.ws-pill-hinted-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+}
+
+/* Пілюля "перша літера" (HintFirstLetterBadge) — та сама форма у всіх
+   трьох варіантах картки (картинка/текст-пілюля/довга картка), колір
+   кружка — той самий градієнт, що GOLD_CIRCLE_AVAILABLE (hint-bulb.tsx,
+   лампочка підказки), щоб бейдж виглядав продовженням того самого
+   золотого "я вже підказав" сигналу, а не новим елементом стилю. */
+.ws-hint-letter-badge {
+  background: var(--ws-hint-badge-bg);
+  border-color: var(--ws-hint-badge-border);
+}
+.ws-hint-letter-badge-dots {
+  color: var(--ws-hint-badge-text);
 }
 
 /* Легенда кольорів під сіткою — ЕТАП L: завжди flex (було лише .light,

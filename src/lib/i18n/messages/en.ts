@@ -183,6 +183,7 @@ export const en: Record<MessageKey, string> = {
   "ws.foundOfTotal": "{found} of {total}",
   "ws.foundOfTotalWords": "Found {n} of {total} words",
   "ws.notFoundNote": "Words that weren't found are highlighted green in the grid.",
+  "ws.hintFirstLetterAria": "First letter: {letter}",
 
   "karaoke.pauseAfterGapLine": "Pause after the gap line",
   "karaoke.videoUnavailable": "Video unavailable",
