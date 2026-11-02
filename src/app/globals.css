@@ -2389,6 +2389,16 @@ button, input, textarea, select, label, nav, aside {
   .glass-block-panel {
     padding: 16px;
   }
+  /* Folder-tab вигляд (ЕТАП N+1) — коли активна вкладка перша
+     (.task-tabs-track > .block-tab--active:first-child), її лівий
+     border має йти прямо вниз у ліву рамку панелі без розриву: верхній-
+     лівий радіус 16px панелі тут лише заважав би (рамка панелі згинулась
+     би ПІД вкладкою). :has() на самій .glass-block-panel — трек вкладок
+     УСЕРЕДИНІ панелі (GlassBlock рендерить {children}, включно зі
+     смужкою вкладок, прямо в .glass-block-panel). */
+  .glass-block-panel:has(.task-tabs-track > .block-tab--active:first-child) {
+    border-top-left-radius: 0;
+  }
   .glass-bar-badge {
     height: 26px;
     width: 26px;
@@ -4241,11 +4251,10 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 640px) {
   .task-tabs-wrap {
     align-self: stretch;
-    /* Той самий 6px, що раніше йшов через padding-left на батьківському
-       .task-header-strip (знято вище) — лишає вкладки на тому самому
-       місці, бо .task-header-strip-anchor вище більше не стискає
-       доступну ширину зліва на 6px для ВСІХ дітей одразу. */
-    margin-left: 6px;
+    /* Без margin-left: перша вкладка має сідати врівень з лівою межею
+       панелі (folder-tab вигляд, ЕТАП N+1) — той самий 6px, що раніше
+       тут компенсував padding-left на .task-header-strip, прибрано, бо
+       сам .task-header-strip тепер має padding-left:0 (вище). */
   }
 }
 .task-tabs-scroll {
@@ -5633,6 +5642,11 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 14px;
   font-weight: 800;
   color: #1a1640;
+  /* Для мобільних folder-tab "вирізок" нижче (::after) — той самий
+     колір/ширина рамки, що й border: вище, лише доступні через var()
+     для radial-gradient. */
+  --tab-fillet-color: #d9b765;
+  --tab-fillet-width: 1.5px;
 }
 .block-tab--inactive {
   min-width: 44px;
@@ -5682,6 +5696,8 @@ button.scene-bar:active .scene-bar-toggle {
   border-width: var(--border-card);
   border-color: var(--gold-border-dark-50);
   color: #f6dc8e;
+  --tab-fillet-color: var(--gold-border-dark-50);
+  --tab-fillet-width: var(--border-card);
 }
 .dark .block-tab--inactive {
   background: var(--dark-surface-fill-glass);
@@ -5711,6 +5727,8 @@ button.scene-bar:active .scene-bar-toggle {
     border-width: var(--border-card);
     border-color: var(--gold-border-dark-50);
     color: #f6dc8e;
+    --tab-fillet-color: var(--gold-border-dark-50);
+    --tab-fillet-width: var(--border-card);
   }
   :root:not(.light) .block-tab--inactive {
     background: var(--dark-surface-fill-glass);
@@ -5736,6 +5754,67 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(130, 160, 240, 0.3);
     border-color: var(--gold-border-55);
     color: #f3d98b;
+  }
+}
+
+/* Мобільний (<640px, folder-tab вигляд, ЕТАП N+1) — конкавні "вирізки"
+   (fillets) у нижніх кутах активної вкладки, де її бокові рамки плавно
+   переходять у горизонтальну рамку панелі, замість прямого T-стику.
+   Один ::after (не ::before — те лишається зайнятим 40px дотик-зоною,
+   .block-tab::before вище) з ДВОМА шарами radial-gradient: правий
+   (завжди) і лівий (лише не-перша вкладка — перша йде прямо в
+   квадратний кут панелі, .glass-block-panel:has(...) вище, лівої
+   вирізки не треба). Кожен шар — чверть-коло розміром 10px: усередині
+   (10px - ширина рамки) — колір панелі (--glass-panel-bg, той самий,
+   що й фон вкладки), кільце товщини рамки — колір рамки
+   (--tab-fillet-color), за межею 10px — прозоро (сторінка/проміжок між
+   вкладками лишається видимим). z-index — вирізка "заходить" у простір
+   сусідньої вкладки (gap:6px менший за радіус 10px), тож активна
+   вкладка мусить малюватись НАД сусідами незалежно від порядку в DOM
+   (інакше пізніша сусідня вкладка перекриє праву вирізку). Жодних
+   додаткових відступів у .task-tabs-scroll/.task-tabs-track не треба:
+   вирізка лежить у межах [tabBottom-10, tabBottom] по вертикалі (не
+   нижче рамки панелі, overflow-y:hidden не чіпає) і завжди бленди в бік
+   сусідньої вкладки чи вже зарезервованого padding-right:12px (не в
+   порожнечу за межами скрол-контенту), тож нема що обрізати. */
+@media (max-width: 640px) {
+  .block-tab--active {
+    z-index: 1;
+  }
+  .block-tab--active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    right: -10px;
+    height: 10px;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        circle at bottom right,
+        var(--glass-panel-bg) calc(10px - var(--tab-fillet-width)),
+        var(--tab-fillet-color) calc(10px - var(--tab-fillet-width)) 10px,
+        transparent 10px
+      )
+      left bottom / 10px 10px no-repeat,
+      radial-gradient(
+        circle at bottom left,
+        var(--glass-panel-bg) calc(10px - var(--tab-fillet-width)),
+        var(--tab-fillet-color) calc(10px - var(--tab-fillet-width)) 10px,
+        transparent 10px
+      )
+      right bottom / 10px 10px no-repeat;
+  }
+  .block-tab--active:first-child::after {
+    left: 0;
+    background:
+      radial-gradient(
+        circle at bottom left,
+        var(--glass-panel-bg) calc(10px - var(--tab-fillet-width)),
+        var(--tab-fillet-color) calc(10px - var(--tab-fillet-width)) 10px,
+        transparent 10px
+      )
+      right bottom / 10px 10px no-repeat;
   }
 }
 
