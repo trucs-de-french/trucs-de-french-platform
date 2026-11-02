@@ -117,7 +117,7 @@ export const DEFAULT_TRANSLATION_EN: Partial<Record<TaskTypeKey, string>> = {
   table_fill: "Fill in the table.",
   sort_columns: "Sort into the right columns.",
   checkbox_grid: "Check the correct boxes.",
-  reorder: "Put them in the right order.",
+  reorder: "Put the elements in the right order.",
   chronological_order: "Put the events in chronological order.",
   image_match: "Match each image to the right word.",
   listening: "Listen and answer.",
