@@ -229,6 +229,7 @@ export const LetterGapsFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       words: words.map(stripId),
       points: initialConfig?.points,
       hintsReducePoints: initialConfig?.hintsReducePoints,
@@ -315,6 +316,13 @@ export const LetterGapsFields = forwardRef<
         name="letter_gaps_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="letter_gaps_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

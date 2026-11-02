@@ -152,6 +152,7 @@ export const LetterRearrangementFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       words: words.map(stripId),
       points: initialConfig?.points,
       hintsReducePoints: initialConfig?.hintsReducePoints,
@@ -205,6 +206,13 @@ export const LetterRearrangementFields = forwardRef<
         name="letter_rearrangement_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="letter_rearrangement_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

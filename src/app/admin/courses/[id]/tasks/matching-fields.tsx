@@ -48,6 +48,7 @@ export const MatchingFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       pairs,
     }),
   }));
@@ -82,6 +83,13 @@ export const MatchingFields = forwardRef<
         name="matching_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="matching_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

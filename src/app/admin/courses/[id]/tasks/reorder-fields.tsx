@@ -228,6 +228,7 @@ export const ReorderFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       sequences,
       liveFeedback,
       hintsReducePoints,
@@ -317,6 +318,13 @@ export const ReorderFields = forwardRef<
         name="reorder_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="reorder_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

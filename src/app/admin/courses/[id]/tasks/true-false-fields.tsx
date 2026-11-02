@@ -55,6 +55,13 @@ export function TrueFalseFields({
         compact
       />
 
+      <InstructionsRichTextField
+        name="tf_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
+        compact
+      />
+
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Твердження</label>
         {statements.map((s) => (

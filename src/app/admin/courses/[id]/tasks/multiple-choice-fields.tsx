@@ -114,6 +114,7 @@ export const MultipleChoiceFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       display,
       items,
       hintsReducePoints,
@@ -211,6 +212,13 @@ export const MultipleChoiceFields = forwardRef<
         name="mc_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="mc_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

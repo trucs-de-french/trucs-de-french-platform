@@ -268,6 +268,7 @@ export const CrosswordFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       words: editor.words.map(({ editorId, blockId, ...w }) => {
         void editorId;
         void blockId;
@@ -337,6 +338,13 @@ export const CrosswordFields = forwardRef<
         name="crossword_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="crossword_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

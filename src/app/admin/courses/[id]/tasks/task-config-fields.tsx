@@ -72,7 +72,9 @@ import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
 import { validateTaskConfig, type ConfigProblem } from "@/lib/exercises/task-validation";
 import {
   DEFAULT_INSTRUCTIONS,
+  DEFAULT_TRANSLATION_EN,
   WORD_CHOICE_DEFAULT_INSTRUCTIONS,
+  WORD_CHOICE_TRANSLATION_EN,
   FILL_BLANK_WORD_BANK_SUBINSTRUCTION,
   type InstructionDefault,
 } from "@/lib/exercises/default-instructions";
@@ -82,7 +84,7 @@ import { FileOrLinkField } from "@/components/file-or-link-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
-import { getDefaultTaskName } from "@/lib/exercises/default-task-labels";
+import { getDefaultTaskName, type TaskTypeKey } from "@/lib/exercises/default-task-labels";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -160,10 +162,16 @@ const INSTRUCTION_FIELD_PREFIX: Partial<Record<string, string>> = {
 function defaultInstructionsFor(
   targetType: string,
   wordChoiceMode: "select" | "cross_out"
-): InstructionDefault | null {
+): (InstructionDefault & { subInstructionEn?: string }) | null {
   if (!INSTRUCTION_FIELD_PREFIX[targetType]) return null;
-  if (targetType === "word_choice") return WORD_CHOICE_DEFAULT_INSTRUCTIONS[wordChoiceMode];
-  return DEFAULT_INSTRUCTIONS[targetType] ?? null;
+  if (targetType === "word_choice") {
+    return {
+      ...WORD_CHOICE_DEFAULT_INSTRUCTIONS[wordChoiceMode],
+      subInstructionEn: WORD_CHOICE_TRANSLATION_EN[wordChoiceMode],
+    };
+  }
+  const def = DEFAULT_INSTRUCTIONS[targetType];
+  return def ? { ...def, subInstructionEn: DEFAULT_TRANSLATION_EN[targetType as TaskTypeKey] } : null;
 }
 
 // fill_blank subInstruction має ДВА дефолти залежно від того, чи вправа
@@ -301,10 +309,18 @@ export function TaskConfigFields({
     forType: string;
     instruction: string;
     subInstruction: string;
+    subInstructionEn: string;
   } | null>(() => {
     if (initialConfig || initialType) return null;
     const def = defaultInstructionsFor(DEFAULT_TASK_TYPE, "select");
-    return def ? { forType: DEFAULT_TASK_TYPE, instruction: def.instruction, subInstruction: def.subInstruction } : null;
+    return def
+      ? {
+          forType: DEFAULT_TASK_TYPE,
+          instruction: def.instruction,
+          subInstruction: def.subInstruction,
+          subInstructionEn: def.subInstructionEn ?? "",
+        }
+      : null;
   });
 
   // Конфіг для конкретного XFields — pendingSeed (structural-перенос при
@@ -319,7 +335,12 @@ export function TaskConfigFields({
     >;
     const withInstructionsSeed =
       instructionsSeed?.forType === targetType
-        ? { ...base, instructions: instructionsSeed.instruction, subInstructions: instructionsSeed.subInstruction }
+        ? {
+            ...base,
+            instructions: instructionsSeed.instruction,
+            subInstructions: instructionsSeed.subInstruction,
+            subInstructionsEn: instructionsSeed.subInstructionEn,
+          }
         : base;
     // Override — ЗАВЖДИ останній (вище за instructionsSeed), бо
     // відображає подію, що сталась ПІЗНІШЕ за будь-яке перемикання типу:
@@ -603,14 +624,21 @@ export function TaskConfigFields({
   // пише через onUpdate), бо React-стан цих полів живе ВСЕРЕДИНІ дочірнього
   // *Fields-компонента, недоступний тут напряму. null — тип без цих полів
   // узагалі (INSTRUCTION_FIELD_PREFIX).
-  function readLiveInstructionsFor(t: string): { instruction: string; subInstruction: string } | null {
+  function readLiveInstructionsFor(
+    t: string
+  ): { instruction: string; subInstruction: string; subInstructionEn: string } | null {
     const prefix = INSTRUCTION_FIELD_PREFIX[t];
     if (!prefix) return null;
     const form = rootRef.current?.closest("form");
     if (!form) return null;
     const instrEl = form.elements.namedItem(`${prefix}_instructions`) as HTMLInputElement | null;
     const subEl = form.elements.namedItem(`${prefix}_sub_instructions`) as HTMLInputElement | null;
-    return { instruction: instrEl?.value ?? "", subInstruction: subEl?.value ?? "" };
+    const subEnEl = form.elements.namedItem(`${prefix}_sub_instructions_en`) as HTMLInputElement | null;
+    return {
+      instruction: instrEl?.value ?? "",
+      subInstruction: subEl?.value ?? "",
+      subInstructionEn: subEnEl?.value ?? "",
+    };
   }
 
   // word_choice_mode — звичайний <select>, не прихований input, але той
@@ -682,7 +710,11 @@ export function TaskConfigFields({
         live && live.subInstruction !== "" && live.subInstruction !== oldDefault?.subInstruction
           ? live.subInstruction
           : newDefault.subInstruction;
-      setInstructionsSeed({ forType: newType, instruction, subInstruction });
+      const subInstructionEn =
+        live && live.subInstructionEn !== "" && live.subInstructionEn !== (oldDefault?.subInstructionEn ?? "")
+          ? live.subInstructionEn
+          : newDefault.subInstructionEn ?? "";
+      setInstructionsSeed({ forType: newType, instruction, subInstruction, subInstructionEn });
     } else {
       setInstructionsSeed(null);
     }
@@ -1170,6 +1202,13 @@ export function TaskConfigFields({
             name="fill_blank_sub_instructions"
             label="Додаткові інструкції (опційно)"
             initialValue={(configForType("fill_blank").subInstructions as string) ?? ""}
+            compact
+          />
+
+          <InstructionsRichTextField
+            name="fill_blank_sub_instructions_en"
+            label="Переклад завдання англійською (для англомовного інтерфейсу)"
+            initialValue={(configForType("fill_blank").subInstructionsEn as string) ?? ""}
             compact
           />
 

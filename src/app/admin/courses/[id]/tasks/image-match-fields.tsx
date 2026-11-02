@@ -139,6 +139,13 @@ export const ImageMatchFields = forwardRef<
         compact
       />
 
+      <InstructionsRichTextField
+        name="image_match_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
+        compact
+      />
+
       {items.map((item) => (
         <ImageMatchItemRow
           key={item.id}

@@ -222,6 +222,13 @@ export function OpenAnswerFields({
         compact
       />
 
+      <InstructionsRichTextField
+        name="open_answer_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
+        compact
+      />
+
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"

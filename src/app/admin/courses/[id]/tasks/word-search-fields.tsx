@@ -215,6 +215,7 @@ export const WordSearchFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       words: editor.words.map(({ editorId, blockId, ...w }) => {
         void editorId;
         void blockId;
@@ -280,6 +281,13 @@ export const WordSearchFields = forwardRef<
         name="word_search_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        name="word_search_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 

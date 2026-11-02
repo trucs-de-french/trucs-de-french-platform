@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import type { WordChoiceConfig, WordChoiceSentence, WordChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
-import { WORD_CHOICE_DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
+import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN } from "@/lib/exercises/default-instructions";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -85,23 +85,28 @@ export const WordChoiceFields = forwardRef<
   // initialValue лише один раз при монтуванні, іншого API "переписати
   // вміст" зовні немає (той самий прийом, що повне перемонтування *Fields-
   // компонента при зміні типу в батьківському файлі).
-  const [instructionsSeed, setInstructionsSeed] = useState<{ instruction: string; subInstruction: string } | null>(
-    null
-  );
+  const [instructionsSeed, setInstructionsSeed] = useState<
+    { instruction: string; subInstruction: string; subInstructionEn: string } | null
+  >(null);
   const [seedKey, setSeedKey] = useState(0);
 
   function handleModeChange(newMode: "select" | "cross_out") {
     const form = rootRef.current?.closest("form");
     const instrEl = form?.elements.namedItem("word_choice_instructions") as HTMLInputElement | null;
     const subEl = form?.elements.namedItem("word_choice_sub_instructions") as HTMLInputElement | null;
+    const subEnEl = form?.elements.namedItem("word_choice_sub_instructions_en") as HTMLInputElement | null;
     const liveInstruction = instrEl?.value ?? "";
     const liveSub = subEl?.value ?? "";
+    const liveSubEn = subEnEl?.value ?? "";
     const oldDefault = WORD_CHOICE_DEFAULT_INSTRUCTIONS[mode];
     const newDefault = WORD_CHOICE_DEFAULT_INSTRUCTIONS[newMode];
+    const oldDefaultEn = WORD_CHOICE_TRANSLATION_EN[mode];
+    const newDefaultEn = WORD_CHOICE_TRANSLATION_EN[newMode];
     setInstructionsSeed({
       instruction: liveInstruction !== "" && liveInstruction !== oldDefault.instruction ? liveInstruction : newDefault.instruction,
       subInstruction:
         liveSub !== "" && liveSub !== oldDefault.subInstruction ? liveSub : newDefault.subInstruction,
+      subInstructionEn: liveSubEn !== "" && liveSubEn !== oldDefaultEn ? liveSubEn : newDefaultEn,
     });
     setSeedKey((k) => k + 1);
     setMode(newMode);
@@ -111,6 +116,7 @@ export const WordChoiceFields = forwardRef<
     getValue: () => ({
       instructions: initialConfig?.instructions,
       subInstructions: initialConfig?.subInstructions,
+      subInstructionsEn: initialConfig?.subInstructionsEn,
       mode,
       sentences,
       points: initialConfig?.points,
@@ -202,6 +208,14 @@ export const WordChoiceFields = forwardRef<
         name="word_choice_sub_instructions"
         label="Додаткові інструкції (опційно)"
         initialValue={instructionsSeed?.subInstruction ?? initialConfig?.subInstructions ?? ""}
+        compact
+      />
+
+      <InstructionsRichTextField
+        key={`sub-instructions-en-${seedKey}`}
+        name="word_choice_sub_instructions_en"
+        label="Переклад завдання англійською (для англомовного інтерфейсу)"
+        initialValue={instructionsSeed?.subInstructionEn ?? initialConfig?.subInstructionsEn ?? ""}
         compact
       />
 
