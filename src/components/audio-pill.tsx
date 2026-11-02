@@ -22,12 +22,24 @@ function formatTime(seconds: number): string {
 // центрований символ лучайда вправо, щоб компенсувати візуально-зсунутий
 // вліво центроїд трикутника — але в двох місцях AudioPill це давало
 // ПЕРЕкомпенсацію (трикутник сідав правіше центру кнопки). Цей шлях —
-// вершини підібрані так, щоб центроїд (не bounding box) збігався з
-// центром viewBox 24×24 (x=12): жодного CSS-зсуву не треба.
+// вершини (7.33,3)/(7.33,21)/(21.33,12) підібрані так, щоб центроїд (не
+// bounding box) збігався з центром viewBox 24×24 (x=12,y=12) — той самий
+// видимий розмір (14×18) і fill+stroke (округлі кути), що в lucide Play,
+// лише без CSS-зсуву.
 function PlayIcon({ size }: { size: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8.33 5 V19 L19.33 12 Z" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M7.33 3 V21 L21.33 12 Z" />
     </svg>
   );
 }
