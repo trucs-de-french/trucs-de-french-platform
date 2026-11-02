@@ -2449,6 +2449,29 @@ button, input, textarea, select, label, nav, aside {
   width: 12px !important;
   height: 12px !important;
 }
+/* Мобільний — HintPill (task-panel-header.tsx) тримала фіксовану h-8
+   (32px) і rounded-full, розраховані на ОДНОРЯДКОВИЙ текст (десктоп,
+   ширша панель): на вузькому екрані довгий hintText (ціле речення)
+   переноситься на 2 рядки, а фіксована висота вкладки їх не вміщує —
+   текст виходить за верхню/нижню рамку пілюлі. !important — як і вище
+   (.task-panel-hint-bulb), перебиває Tailwind-утиліти h-8/rounded-full/
+   gap-2/px-3 незалежно від порядку генерації CSS. */
+@media (max-width: 640px) {
+  .task-panel-hint-pill {
+    height: auto !important;
+    min-height: 32px !important;
+    border-radius: 22px !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 14px 10px 10px !important;
+    white-space: normal !important;
+  }
+  .task-panel-hint-pill-text {
+    display: inline-block;
+    white-space: normal;
+    line-height: 1.35;
+  }
+}
 .task-panel-instruction-line {
   display: flex;
   align-items: baseline;

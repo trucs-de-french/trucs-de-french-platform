@@ -208,10 +208,10 @@ function HintPill({ text, hidden = false }: { text: string; hidden?: boolean }) 
   return (
     <span
       aria-hidden={hidden || undefined}
-      className={`inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
+      className={`task-panel-hint-pill inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
     >
       <HintBulb state="available" as="span" className="task-panel-hint-bulb" />
-      <span className="min-w-0">
+      <span className="task-panel-hint-pill-text min-w-0">
         <span className="font-bold">{t("panel.hintPrefix")}</span> {text}
       </span>
     </span>
