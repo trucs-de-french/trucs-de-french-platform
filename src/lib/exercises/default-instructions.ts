@@ -113,7 +113,7 @@ export const DEFAULT_TRANSLATION_EN: Partial<Record<TaskTypeKey, string>> = {
   drag_drop: "Drag the words into place.",
   multiple_choice: "Choose the correct answer.",
   true_false: "Choose true or false.",
-  matching: "Match the pairs.",
+  matching: "Match the elements.",
   table_fill: "Fill in the table.",
   sort_columns: "Sort into the right columns.",
   checkbox_grid: "Check the correct boxes.",
