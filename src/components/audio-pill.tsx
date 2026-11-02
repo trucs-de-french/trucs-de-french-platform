@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Repeat, Turtle } from "lucide-react";
+import { Pause, Repeat, Turtle } from "lucide-react";
 import { stopOthersAndRegister, clearIfCurrent } from "@/lib/single-active-audio";
 import { useT } from "@/lib/i18n/context";
 
@@ -15,6 +15,21 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// Власний трикутник Play замість lucide Play + .play-icon-offset
+// (transform: translateX, globals.css): той CSS-хак зсував bbox-
+// центрований символ лучайда вправо, щоб компенсувати візуально-зсунутий
+// вліво центроїд трикутника — але в двох місцях AudioPill це давало
+// ПЕРЕкомпенсацію (трикутник сідав правіше центру кнопки). Цей шлях —
+// вершини підібрані так, щоб центроїд (не bounding box) збігався з
+// центром viewBox 24×24 (x=12): жодного CSS-зсуву не треба.
+function PlayIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8.33 5 V19 L19.33 12 Z" />
+    </svg>
+  );
 }
 
 // Спільний плеєр-пілюля (індиго-градієнт, кругла play-кнопка з кільцем
@@ -185,13 +200,7 @@ export function AudioPill({
         aria-pressed={playing}
         className={`audio-pill-play flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${FOCUS_RING}`}
       >
-        {playing ? (
-          <Pause size={14} fill="currentColor" />
-        ) : (
-          <span className="play-icon-offset">
-            <Play size={14} fill="currentColor" />
-          </span>
-        )}
+        {playing ? <Pause size={14} fill="currentColor" /> : <PlayIcon size={14} />}
       </button>
 
       <button
@@ -279,13 +288,7 @@ export function AudioPill({
           style={{ "--audio-bridge-progress": progressPct } as React.CSSProperties}
           className={`audio-bridge-btn ${FOCUS_RING}`}
         >
-          {playing ? (
-            <Pause size={15} fill="currentColor" />
-          ) : (
-            <span className="play-icon-offset">
-              <Play size={15} fill="currentColor" />
-            </span>
-          )}
+          {playing ? <Pause size={15} fill="currentColor" /> : <PlayIcon size={15} />}
         </button>
       </div>
     )}
