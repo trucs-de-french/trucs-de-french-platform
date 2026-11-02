@@ -109,7 +109,7 @@ export const ERROR_CORRECTION_INSTRUCTION =
 // додаткового рядка в uk.ts/fr.ts (яким для fr однаково ніколи нема що
 // показати).
 export const DEFAULT_TRANSLATION_EN: Partial<Record<TaskTypeKey, string>> = {
-  fill_blank: "Fill in the blanks.",
+  fill_blank: "Complete the sentences.",
   drag_drop: "Drag the words into place.",
   multiple_choice: "Choose the correct answer.",
   true_false: "Choose true or false.",
