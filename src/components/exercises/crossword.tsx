@@ -250,6 +250,15 @@ function CrosswordBlockView({
   // mouseleave/blur/touchend/pointerleave, щоб підсвітка не "липла" на
   // тач-пристроях після тапу.
   const [hoveredClue, setHoveredClue] = useState<{ direction: Direction; number: number } | null>(null);
+  // Клітинка, де був останній фокус курсора/клавіатури в сітці — НЕ "активне
+  // слово" (activeClue), а конкретна клітинка, щоб лампочка-підказка знала,
+  // яку саме відкрити (applyHint нижче). Оновлюється лише onFocus клітинки
+  // (ніколи не очищується onBlur) — клік по самій кнопці-лампочці забирає
+  // фокус із input, але це НЕ має "забути" клітинку: кнопка ніде не ставить
+  // lastFocusedCell, тож останнє значення просто лишається. Клітинка на
+  // перетині двох слів належить обом — nextHintCell перевіряє належність
+  // через clueCells.get(...), а не прив'язку до конкретного слова тут.
+  const [lastFocusedCell, setLastFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollHint = useScrollOverflowHint(scrollRef, active);
@@ -505,6 +514,17 @@ function CrosswordBlockView({
   // неактивна, "Якщо всі літери слова вже правильні").
   function nextHintCell(direction: Direction, number: number): { row: number; col: number } | null {
     const cells = clueCells.get(`${direction}-${number}`) ?? [];
+    // Якщо курсор зараз (чи востаннє) стояв у клітинці цього слова (в т.ч.
+    // клітинці-перетині, що належить і цьому слову) — і ця клітинка ще не
+    // правильна — підказка відкриває САМЕ її, а не першу незаповнену по
+    // порядку. Якщо та клітинка вже правильна (сама чи через інше слово на
+    // перетині) — нижче природно впадаємо на звичний порядок.
+    if (lastFocusedCell) {
+      const focused = cells.find((c) => c.row === lastFocusedCell.row && c.col === lastFocusedCell.col);
+      if (focused && effectiveGrid[focused.row][focused.col] !== block.solution[focused.row][focused.col]) {
+        return focused;
+      }
+    }
     return cells.find((c) => effectiveGrid[c.row][c.col] !== block.solution[c.row][c.col]) ?? null;
   }
 
@@ -941,6 +961,7 @@ function CrosswordBlockView({
                               }}
                               onFocus={() => {
                                 diacritics.onFocus(cellKey(ri, ci));
+                                setLastFocusedCell({ row: ri, col: ci });
                                 const words = wordsAtCell.get(`${ri},${ci}`) ?? [];
                                 if (words.length > 0 && !isActiveCell(ri, ci)) setActiveClue(words[0]);
                               }}
