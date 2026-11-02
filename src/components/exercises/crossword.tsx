@@ -117,17 +117,22 @@ function buildCrosswordGroups(
 // "галочка" (as="span", та сама логіка, що була раніше інлайн у кожній
 // картці); canHint=false (DELF чи вже перевірено) і !isCorrect — лампочка
 // не рендериться взагалі (слово ще не повне, але перевірка вже відбулась).
+// Задача "лампочка активна, доки слово не повне": раніше тут був ще
+// третій стан "used" (притлумлений, opacity-60) після першого натискання —
+// прибрано, бо натискання й далі відкриває наступну літеру, тож лампочка
+// не мала виглядати неактивною. Єдиний "вимкнений" вигляд лишається
+// isCorrect="done" (слово вже повністю правильне) — hinted-прапорець тут
+// більше не потрібен (і сам факт "чи використано підказку" лишається у
+// effectiveHintedWords для HintUsedBadge, окремо, нижче по файлу).
 function ClueCardHeader({
   number,
   isCorrect,
   canHint,
-  hinted,
   onHint,
 }: {
   number: number;
   isCorrect: boolean;
   canHint: boolean;
-  hinted: boolean;
   onHint: () => void;
 }) {
   const { t } = useT();
@@ -142,7 +147,7 @@ function ClueCardHeader({
       {(isCorrect || canHint) && (
         <HintBulb
           as={isCorrect ? "span" : "button"}
-          state={isCorrect ? "done" : hinted ? "used" : "available"}
+          state={isCorrect ? "done" : "available"}
           label={t("crossword.hintOpenNextLetter")}
           stopPropagation
           onClick={onHint}
@@ -604,7 +609,6 @@ function CrosswordBlockView({
           number={clue.number}
           isCorrect={isCorrect}
           canHint={!effectiveResult && !isDelf}
-          hinted={effectiveHintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
         {!!effectiveResult && effectiveHintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
@@ -685,7 +689,6 @@ function CrosswordBlockView({
           number={clue.number}
           isCorrect={isCorrect}
           canHint={canHint}
-          hinted={effectiveHintedWords.has(`${direction}-${clue.number}`)}
           onHint={() => applyHint(direction, clue.number)}
         />
         {!!effectiveResult && effectiveHintedWords.has(`${direction}-${clue.number}`) && <HintUsedBadge />}
@@ -759,7 +762,7 @@ function CrosswordBlockView({
         ) : (
           canHint && (
             <HintBulb
-              state={effectiveHintedWords.has(`${direction}-${clue.number}`) ? "used" : "available"}
+              state="available"
               label={t("crossword.hintOpenNextLetter")}
               onClick={() => applyHint(direction, clue.number)}
               className="ml-1.5"
