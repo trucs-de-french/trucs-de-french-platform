@@ -70,7 +70,7 @@ export function PhoneticsExercise({ config }: { config: PhoneticsConfig }) {
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.phonetics.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.phonetics.subInstruction,
           en: DEFAULT_TRANSLATION_EN.phonetics,
         })}

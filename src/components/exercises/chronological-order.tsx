@@ -430,7 +430,7 @@ export function ChronologicalOrderExercise({
                 sanitizeInstructionsHtml(config.instructions ?? DEFAULT_INSTRUCTIONS.chronological_order.instruction)
               )}
               uk={(() => {
-                const translation = taskTranslationLine(config.subInstructions, lang, {
+                const translation = taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
                   uk: DEFAULT_INSTRUCTIONS.chronological_order.subInstruction,
                   en: DEFAULT_TRANSLATION_EN.chronological_order,
                 });

@@ -276,7 +276,7 @@ export function FillBlankExercise({
           ? {}
           : headerPointsState(config.points, result ? result.pointsEarned : undefined, lang))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: defaultSubInstruction,
           en: defaultSubInstructionEn,
         })}

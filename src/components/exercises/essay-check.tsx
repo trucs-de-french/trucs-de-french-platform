@@ -253,7 +253,7 @@ export function EssayCheckExercise({
           // невідповідний/застарілий переклад (правило 4 задачі).
           prompt
             ? undefined
-            : taskTranslationLine(null, lang, {
+            : taskTranslationLine({}, lang, {
                 uk: DEFAULT_INSTRUCTIONS.essay_check.subInstruction,
                 en: DEFAULT_TRANSLATION_EN.essay_check,
               })

@@ -527,7 +527,7 @@ export function LetterRearrangementExercise({
         isBlockChecked={(i) => i in blockResults}
         {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction,
           en: DEFAULT_TRANSLATION_EN.letter_rearrangement,
         })}

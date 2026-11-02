@@ -13,6 +13,7 @@ import type { PartOfSpeech } from "@/lib/vocab-categories";
 export type FillBlankConfig = {
   instructions?: string; // текст-інструкція над вправою, напр. "Заповніть пропуски"
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   template: string; // "Je {{vais|vais bien}} au cinéma."
   points?: number;
   // Опційний банк слів-підказок (бульбашки) поруч зі вправою — суто
@@ -48,6 +49,7 @@ export type LetterGapsWord = {
 export type LetterGapsConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: LetterGapsWord[];
   points?: number;
   // За замовчуванням false (наявні вправи поводяться як і раніше — бали не
@@ -71,6 +73,7 @@ export type LetterRearrangementWord = {
 export type LetterRearrangementConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: LetterRearrangementWord[];
   points?: number;
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
@@ -105,6 +108,7 @@ export type OpenAnswerQuestion = {
 export type OpenAnswerConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   questions: OpenAnswerQuestion[];
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints — питання, де
   // студент хоч раз показав підказку, дає 50% своїх балів замість повної
@@ -170,6 +174,7 @@ export type MultipleChoiceItem = {
 export type MultipleChoiceConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   display: "buttons" | "dropdown";
   items: MultipleChoiceItem[];
   // Той самий принцип, що WordChoiceConfig.hintsReducePoints — на рівні
@@ -195,6 +200,7 @@ export type WordChoiceSentence = { id: string; sentence: string; options: WordCh
 export type WordChoiceConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   mode: "select" | "cross_out";
   sentences: WordChoiceSentence[];
   points?: number;
@@ -272,6 +278,7 @@ export type WordSearchBlock = {
 export type WordSearchConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: WordSearchWord[];
   // LEGACY — поле повної (нерозбитої на блоки) сітки. Нові вправи (і старі,
   // пропущені крізь normalizeWordSearchConfig, grid-blocks.ts) тримають той
@@ -368,6 +375,7 @@ export type CrosswordBlock = {
 export type CrosswordConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: CrosswordWord[];
   // LEGACY — те саме, що WordSearchConfig.grid: зміст живе в blocks[0]
   // після normalizeCrosswordConfig (grid-blocks.ts), поле лишається лише
@@ -406,6 +414,7 @@ export type TrueFalseConfig = {
   // курсив/підсвітка) — санітизується і при збереженні, і при рендері
   // (sanitizeInstructionsHtml), той самий double-sanitize принцип, що callout.
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   statements: TrueFalseStatement[];
 };
 
@@ -419,6 +428,7 @@ export type MatchingPair = { id?: string; left: string; right: string; points?: 
 export type MatchingConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   pairs: MatchingPair[];
 };
 
@@ -435,6 +445,7 @@ export type ListeningQuestion = {
 export type ListeningConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   audioUrl: string;
   questions: ListeningQuestion[];
 };
@@ -470,6 +481,7 @@ export type ReorderSequence = {
 export type ReorderConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   // liveFeedback — undefined теж "true" (старі завдання без цього поля
   // отримують живе підсвічування без міграції БД): коли true,
   // sanitizeReorder додає ReorderPublicSequence.correctOrder — той самий
@@ -501,6 +513,7 @@ export type DragDropSentence = { id: string; template: string; points?: number }
 export type DragDropConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   sentences: DragDropSentence[];
   bank: string[]; // слова для банку (правильні +, за бажанням, дистрактори)
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints — "елемент"
@@ -515,6 +528,7 @@ export type SortColumnsItem = { id: string; text: string; columnId: string; poin
 export type SortColumnsConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columns: SortColumn[];
   items: SortColumnsItem[];
   // На відміну від LetterGapsConfig.hintsReducePoints (там лампочка й так
@@ -551,6 +565,7 @@ export type TableFillRow = {
 export type TableFillConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columnLabels: [string, string];
   rows: TableFillRow[];
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints — тут
@@ -583,6 +598,7 @@ export type CheckboxGridRow = {
 export type CheckboxGridConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columns: CheckboxGridColumn[];
   rows: CheckboxGridRow[];
 };
@@ -597,6 +613,7 @@ export type ImageMatchItem = { id: string; imageUrl: string; name: string; point
 export type ImageMatchConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   items: ImageMatchItem[];
 };
 
@@ -622,6 +639,7 @@ export type ChronologicalOrderItem = { id: string; content: string; text?: strin
 export type ChronologicalOrderConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   mode: "image" | "text" | "mixed";
   items: ChronologicalOrderItem[];
   hint?: string;
@@ -650,6 +668,7 @@ export type KaraokeLine = {
 export type KaraokeConfig = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   videoUrl: string;
   answerMode: "choice" | "typing";
   pauseOnGap: boolean;
@@ -675,6 +694,7 @@ export type FlipCard = { front: string; back: string; image_url?: string; audio_
 export type FlipCardsConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   cards: FlipCard[];
   mode?: "manual" | "random_reveal" | "deck";
   revealSide?: "front" | "back";
@@ -711,6 +731,7 @@ export type PhoneticsItem = {
 export type PhoneticsConfig = {
   instructions?: string;
   subInstructions?: string; // опційні додаткові інструкції (див. TrueFalseConfig)
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   items: PhoneticsItem[];
 };
 
@@ -727,6 +748,7 @@ export type VocabQuizConfig = {
 export type FillBlankPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   template: string; // з {{}} замість {{вар1|вар2}}
   points: number; // на всю вправу, не на пропуск
   wordBank?: string[]; // довідкові бульбашки, не тасується
@@ -762,6 +784,7 @@ export type LetterGapsPublicWord = {
 export type LetterGapsPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: LetterGapsPublicWord[];
   points: number;
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
@@ -786,6 +809,7 @@ export type LetterRearrangementPublicWord = {
 export type LetterRearrangementPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   words: LetterRearrangementPublicWord[];
   points: number;
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
@@ -796,6 +820,7 @@ export type LetterRearrangementPublic = {
 export type MultipleChoicePublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   display: "buttons" | "dropdown";
   items: {
     id: string;
@@ -821,6 +846,7 @@ export type MultipleChoicePublic = {
 export type WordChoicePublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   mode: "select" | "cross_out";
   sentences: {
     id: string;
@@ -862,6 +888,7 @@ export type WordSearchPublicBlock = {
 export type WordSearchPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   // LEGACY — рівно те саме, що blocks[0] (words/grid), заповнюється
   // sanitizeWordSearch. Етап 3/4: word-search.tsx перейшов на blocks як
   // основне джерело — ці поля читаються лише В ОДНОМУ місці: власний
@@ -909,6 +936,7 @@ export type CrosswordPublicBlock = {
 export type CrosswordPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   // LEGACY — рівно те саме, що blocks[0], заповнюється sanitizeCrossword.
   // Етап 3/4: crossword.tsx перейшов на blocks як основне джерело — ці
   // поля читаються лише В ОДНОМУ місці: власний фолбек crossword.tsx на
@@ -940,12 +968,14 @@ export type CrosswordPublic = {
 export type TrueFalsePublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   statements: { id: string; text: string; points: number }[]; // points завжди присутні — не секрет, як answer
 };
 
 export type MatchingPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   left: string[];
   right: string[]; // перемішано, без зв'язку з left
   // ДОДАТКОВЕ поле лише для показу балів (не замінює left/right вище і не
@@ -958,6 +988,7 @@ export type MatchingPublic = {
 export type ListeningPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   audioUrl: string;
   questions: {
     id: string;
@@ -970,6 +1001,7 @@ export type ListeningPublic = {
 export type ReorderPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   // liveFeedback — не секрет сам по собі (лише прапорець режиму
   // відображення); визначає, чи sequences[].correctOrder присутній нижче.
   liveFeedback: boolean;
@@ -996,6 +1028,7 @@ export type ReorderPublic = {
 export type DragDropPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   // hints — той самий принцип, що FillBlankPublic.hints, тут за ЛОКАЛЬНИМ
   // (у межах цього речення) індексом пропуску.
   sentences: { id: string; template: string; points: number; hints?: (string | null)[] }[]; // з {{}} замість {{слово}}
@@ -1007,6 +1040,7 @@ export type DragDropPublic = {
 export type SortColumnsPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columns: SortColumn[];
   items: { id: string; text: string; points: number }[]; // без columnId, перемішано
   hintsEnabled: boolean;
@@ -1015,6 +1049,7 @@ export type SortColumnsPublic = {
 export type OpenAnswerPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   questions: {
     id: string;
     question: string;
@@ -1028,6 +1063,7 @@ export type OpenAnswerPublic = {
 export type TableFillPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columnLabels: [string, string];
   // partOfSpeech — не відповідь (як gapOptions у karaoke), передається як є
   // для групування на студентській сторінці.
@@ -1040,6 +1076,7 @@ export type TableFillPublic = {
 export type CheckboxGridPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   columns: CheckboxGridColumn[];
   rows: { id: string; label: string; points: number }[]; // correctColumnIds прихований
 };
@@ -1047,6 +1084,7 @@ export type CheckboxGridPublic = {
 export type ImageMatchPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   items: { id: string; imageUrl: string; points: number }[];
   bank: string[]; // перемішані name з усіх items
 };
@@ -1054,6 +1092,7 @@ export type ImageMatchPublic = {
 export type ChronologicalOrderPublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   mode: "image" | "text" | "mixed";
   // Перемішано (shuffle) — буква-мітка (A, B, C...) рахується на боці
   // студента з індексу в цьому вже перемішаному масиві, не зберігається тут.
@@ -1082,6 +1121,7 @@ export type KaraokePublicLine = {
 export type KaraokePublic = {
   instructions?: string;
   subInstructions?: string;
+  subInstructionsEn?: string; // опційний переклад instructions англійською (ui_lang en, замість DEFAULT_TRANSLATION_EN) — те саме, що subInstructions, лише для EN, а не UK
   videoUrl: string;
   answerMode: "choice" | "typing";
   pauseOnGap: boolean;

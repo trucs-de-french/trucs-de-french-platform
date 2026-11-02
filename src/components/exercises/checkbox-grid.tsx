@@ -362,7 +362,7 @@ export function CheckboxGridExercise({
               lang
             ))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.checkbox_grid.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.checkbox_grid.subInstruction,
           en: DEFAULT_TRANSLATION_EN.checkbox_grid,
         })}

@@ -846,7 +846,7 @@ export function FlipCardsExercise({ config, plaqueText }: { config: FlipCardsCon
             ? FLIP_CARDS_RANDOM_INSTRUCTIONS.instruction
             : DEFAULT_INSTRUCTIONS.flip_cards.instruction)
         }
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk:
             config.mode === "random_reveal"
               ? FLIP_CARDS_RANDOM_INSTRUCTIONS.subInstruction

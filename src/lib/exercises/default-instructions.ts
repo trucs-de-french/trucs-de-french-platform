@@ -144,22 +144,21 @@ export const WORD_CHOICE_TRANSLATION_EN: Record<"select" | "cross_out", string> 
 // той самий принцип, що FLIP_CARDS_RANDOM_INSTRUCTIONS.
 export const FLIP_CARDS_RANDOM_TRANSLATION_EN = "Draw a card.";
 
-// Єдина точка, де "stored" (вчителькою введений subInstructions/null) і
+// Єдина точка, де "stored" (вчителькою введені subInstructions/
+// subInstructionsEn, кожен — свого мовою, незалежно один від одного) і
 // "fallback" (дефолт типу) з'єднуються в те, що РЕАЛЬНО показати під
-// заголовком — для будь-якої мови інтерфейсу. ПРАВИЛО (не лише дефолти, а й
-// вчителькою збережений текст): stored-переклад трактується як УКРАЇНСЬКИЙ
-// (і тому ховається в fr/en — ми не маємо його англійського варіанту),
-// дефолтний — показує uk завжди, en лише якщо для типу є запис у
-// DEFAULT_TRANSLATION_EN/аналогічних мапах вище, fr — ніколи (null/undefined
-// тут природно прибирає й сам рядок, і "/" у TaskInstructionLine, яка вже
-// ховає обидва, коли uk-пропс порожній).
+// заголовком — для будь-якої мови інтерфейсу. ПРАВИЛО: uk-поле і en-поле —
+// ДВА незалежні stored-значення (раніше був баг: непорожній uk "гасив" en
+// назавжди, навіть коли для типу є власний DEFAULT_TRANSLATION_EN — кожна
+// мова тепер перевіряє лише своє stored-поле). fr — завжди undefined
+// (null/undefined тут природно прибирає й сам рядок, і "/" у
+// TaskInstructionLine, яка вже ховає обидва, коли uk/en-пропс порожній).
 export function taskTranslationLine(
-  stored: string | null | undefined,
+  stored: { uk?: string | null; en?: string | null },
   lang: UiLang,
   fallback: { uk: string; en?: string }
 ): string | undefined {
-  if (stored) return lang === "uk" ? stored : undefined;
-  if (lang === "uk") return fallback.uk;
-  if (lang === "en") return fallback.en;
+  if (lang === "uk") return stored.uk || fallback.uk;
+  if (lang === "en") return stored.en || fallback.en;
   return undefined;
 }

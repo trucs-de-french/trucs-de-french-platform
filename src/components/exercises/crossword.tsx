@@ -1290,7 +1290,7 @@ export function CrosswordExercise({
         labels={blocks.map((b) => b.title)}
         {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.crossword.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.crossword.subInstruction,
           en: DEFAULT_TRANSLATION_EN.crossword,
         })}

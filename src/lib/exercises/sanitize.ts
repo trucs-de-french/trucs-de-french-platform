@@ -105,6 +105,7 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     template: config.template.replace(BLANK_RE, "{{}}"),
     points: resolveFillBlankPoints(config),
     // Довідкові бульбашки — пропускаємо як є, не тасуємо (той самий
@@ -129,6 +130,7 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     points: resolveLetterGapsPoints(config),
     words: config.words.map((w) => ({
       chars: w.word.split("").map((c, i) => (w.hiddenIndices.includes(i) ? null : c)),
@@ -157,6 +159,7 @@ export function sanitizeLetterRearrangement(config: LetterRearrangementConfig): 
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     points: resolveLetterRearrangementPoints(config),
     words: config.words.map((w) => ({
       shuffledLetters: shuffle(w.word.split("")),
@@ -190,6 +193,7 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     display: config.display,
     hintsReducePoints: !!config.hintsReducePoints,
     items: getMultipleChoiceItems(config).map((item) => {
@@ -223,6 +227,7 @@ export function sanitizeWordChoice(config: WordChoiceConfig): WordChoicePublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     mode: config.mode,
     points: resolveWordChoicePoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
@@ -321,6 +326,7 @@ export function sanitizeWordSearch(rawConfig: WordSearchConfig): WordSearchPubli
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     words: blocks[0]?.words ?? [],
     grid: blocks[0]?.grid ?? [],
     blocks,
@@ -401,6 +407,7 @@ export function sanitizeCrossword(rawConfig: CrosswordConfig): CrosswordPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     gridWidth: legacy.gridWidth,
     gridHeight: legacy.gridHeight,
     openCells: legacy.openCells,
@@ -426,6 +433,7 @@ export function sanitizeTrueFalse(config: TrueFalseConfig): TrueFalsePublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     statements: config.statements.map((s) => ({
       id: s.id,
       text: s.text,
@@ -476,6 +484,7 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     left: pairs.map((p) => p.left),
     right,
     // left тут НЕ перемішаний — той самий порядок, що в left[] вище.
@@ -495,6 +504,7 @@ export function sanitizeMatchingForPractice(config: MatchingConfig, pairIds: str
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     left: pairs.map((p) => p.left),
     right: shuffle(pairs.map((p) => p.right)),
     pairs: pairs.map((p) => ({ id: p.id, left: p.left, points: resolveMatchingPoints(p) })),
@@ -510,6 +520,7 @@ export function sanitizeListening(config: ListeningConfig): ListeningPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     audioUrl: config.audioUrl,
     questions: config.questions.map((q) => ({
       id: q.id,
@@ -542,6 +553,7 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     liveFeedback,
     hintsReducePoints: !!config.hintsReducePoints,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
@@ -586,6 +598,7 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     sentences: getDragDropSentences(config).map((s) => ({
       id: s.id,
       template: s.template.replace(BLANK_RE, "{{}}"),
@@ -617,6 +630,7 @@ export function sanitizeDragDropForPractice(config: DragDropConfig, sentenceIds:
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     sentences: sentences.map((s) => ({
       id: s.id,
       template: s.template.replace(BLANK_RE, "{{}}"),
@@ -637,6 +651,7 @@ export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPubli
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     columns: config.columns,
     items: shuffle(
       config.items.map((i) => ({ id: i.id, text: i.text, points: resolveSortColumnsPoints(i) }))
@@ -679,6 +694,7 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     questions: getOpenAnswerQuestions(config).map((q) => ({
       id: q.id,
       question: q.question,
@@ -715,6 +731,7 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     columnLabels: resolveTableFillColumnLabels(config),
     rows: getTableFillRows(config).map((r) => ({
       id: r.id,
@@ -738,6 +755,7 @@ export function sanitizeImageMatch(config: ImageMatchConfig): ImageMatchPublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     items: config.items.map((i) => ({
       id: i.id,
       imageUrl: i.imageUrl,
@@ -759,6 +777,7 @@ export function sanitizeImageMatchForPractice(config: ImageMatchConfig, itemIds:
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     items: items.map((i) => ({ id: i.id, imageUrl: i.imageUrl, points: resolveImageMatchPoints(i) })),
     bank: shuffle(items.map((i) => i.name)),
   };
@@ -774,6 +793,7 @@ export function sanitizeCheckboxGrid(config: CheckboxGridConfig): CheckboxGridPu
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     columns: config.columns,
     rows: config.rows.map((r) => ({
       id: r.id,
@@ -798,6 +818,7 @@ export function sanitizeChronologicalOrder(
     ...(hint ? { hint } : {}),
     hintsReducePoints: !!config.hintsReducePoints,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     mode: config.mode,
     // Перемішуємо самі елементи (не окремий "банк", як image_match) — тут
     // немає окремого набору відповідей, порядок показу і є тим, що
@@ -831,6 +852,7 @@ export function sanitizeKaraoke(config: KaraokeConfig): KaraokePublic {
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
+    subInstructionsEn: config.subInstructionsEn,
     videoUrl: config.videoUrl,
     answerMode: config.answerMode,
     pauseOnGap: config.pauseOnGap,

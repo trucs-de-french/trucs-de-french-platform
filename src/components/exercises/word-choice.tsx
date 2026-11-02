@@ -617,7 +617,7 @@ export function WordChoiceExercise({
         isBlockChecked={(i) => i in blockResults}
         {...(headerPointsResult ?? {})}
         instructionText={config.instructions ?? WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: WORD_CHOICE_DEFAULT_INSTRUCTIONS[config.mode].subInstruction,
           en: WORD_CHOICE_TRANSLATION_EN[config.mode],
         })}

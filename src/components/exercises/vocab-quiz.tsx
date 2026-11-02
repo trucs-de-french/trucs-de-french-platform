@@ -82,7 +82,7 @@ export function VocabQuizExercise({
       <div className={EXERCISE_STACK}>
         <TaskPanelHeader
           instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
-          subInstructionText={taskTranslationLine(null, lang, {
+          subInstructionText={taskTranslationLine({}, lang, {
             uk: DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction,
             en: DEFAULT_TRANSLATION_EN.vocab_quiz,
           })}
@@ -125,7 +125,7 @@ export function VocabQuizExercise({
     <div className={EXERCISE_STACK}>
       <TaskPanelHeader
         instructionText={DEFAULT_INSTRUCTIONS.vocab_quiz.instruction}
-        subInstructionText={taskTranslationLine(null, lang, {
+        subInstructionText={taskTranslationLine({}, lang, {
           uk: DEFAULT_INSTRUCTIONS.vocab_quiz.subInstruction,
           en: DEFAULT_TRANSLATION_EN.vocab_quiz,
         })}

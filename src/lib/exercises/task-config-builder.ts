@@ -66,6 +66,9 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("open_answer_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("open_answer_sub_instructions_en") as string) || ""
+      );
       // Порожні рядки "Варіант відповіді" (незаповнений слот з кнопки
       // "+ варіант" у конструкторі) відсікаються ТУТ, при збереженні —
       // щоб у БД не накопичувався порожній варіант, через який панель
@@ -84,6 +87,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       return {
         instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         questions: cleanedQuestions,
         hintsReducePoints: formData.get("open_answer_hints_reduce_points") === "true",
       };
@@ -112,9 +116,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("fill_blank_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("fill_blank_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("fill_blank_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         template: (formData.get("fill_blank_template") as string) || "",
         points: Number(formData.get("fill_blank_points")) || 1,
         // Порожній банк -> wordBank взагалі відсутній у config, а не "[]" —
@@ -129,9 +137,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("letter_gaps_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("letter_gaps_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("letter_gaps_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         words: parseJsonField(formData.get("letter_gaps_words")),
         points: Number(formData.get("letter_gaps_points")) || 1,
         hintsReducePoints: formData.get("letter_gaps_hints_reduce_points") === "true",
@@ -141,11 +153,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("letter_rearrangement_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("letter_rearrangement_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("letter_rearrangement_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         words: parseJsonField(formData.get("letter_rearrangement_words")),
         points: Number(formData.get("letter_rearrangement_points")) || 1,
         hintsReducePoints: formData.get("letter_rearrangement_hints_reduce_points") === "true",
@@ -155,9 +171,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("mc_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("mc_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("mc_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         display: (formData.get("mc_display") as string) || "buttons",
         items: parseJsonField(formData.get("mc_items")),
         hintsReducePoints: formData.get("mc_hints_reduce_points") === "true",
@@ -167,11 +187,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("word_choice_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("word_choice_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_choice_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         mode: (formData.get("word_choice_mode") as string) || "select",
         sentences: parseJsonField(formData.get("word_choice_sentences")),
         points: Number(formData.get("word_choice_points")) || 1,
@@ -182,11 +206,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("word_search_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("word_search_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_search_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         // Поділ на блоки й сітки для кожного вже згенерувала й перевірила
         // адмінка (word-search-fields.tsx, split-into-blocks.ts) — сервер
         // лише зберігає готовий результат, не перегенеровує. Старі
@@ -204,11 +232,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("crossword_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("crossword_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("crossword_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         // Той самий принцип, що word_search вище — готовий результат
         // поділу на блоки, без перегенерації на сервері; старі top-level
         // placements/gridWidth/gridHeight/gridSourceWords більше НЕ
@@ -223,9 +255,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("karaoke_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("karaoke_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("karaoke_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         videoUrl: (formData.get("karaoke_video_url") as string) || "",
         answerMode: ((formData.get("karaoke_answer_mode") as string) || "typing") as "choice" | "typing",
         pauseOnGap: formData.get("karaoke_pause_on_gap") === "true",
@@ -240,9 +276,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("tf_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("tf_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("tf_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         statements: parseJsonField(formData.get("tf_statements")),
       };
     }
@@ -250,9 +290,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("matching_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("matching_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("matching_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         pairs: parseJsonField(formData.get("matching_pairs")),
       };
     }
@@ -260,9 +304,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("listening_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("listening_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("listening_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         audioUrl: (formData.get("listening_audio_url") as string) || "",
         questions: parseJsonField(formData.get("listening_questions")),
       };
@@ -271,9 +319,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("reorder_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("reorder_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("reorder_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         sequences: parseJsonField(formData.get("reorder_sequences")),
         liveFeedback: formData.get("reorder_live_feedback") === "true",
         hintsReducePoints: formData.get("reorder_hints_reduce_points") === "true",
@@ -283,9 +335,13 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("drag_drop_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("drag_drop_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml((formData.get("drag_drop_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         sentences: parseJsonField(formData.get("drag_drop_sentences")),
         bank: parseJsonField(formData.get("drag_drop_bank")),
         hintsReducePoints: formData.get("drag_drop_hints_reduce_points") === "true",
@@ -295,11 +351,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("sort_columns_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("sort_columns_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("sort_columns_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         columns: parseJsonField(formData.get("sort_columns_columns")),
         items: parseJsonField(formData.get("sort_columns_items")),
         hintsEnabled: formData.get("sort_columns_hints_enabled") === "true",
@@ -309,11 +369,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("flip_cards_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("flip_cards_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("flip_cards_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         cards: parseJsonField(formData.get("flip_cards_cards")),
         mode: (formData.get("flip_cards_mode") as string) || "manual",
         revealSide: (formData.get("flip_cards_reveal_side") as string) || "front",
@@ -331,6 +395,9 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("phonetics_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("phonetics_sub_instructions_en") as string) || ""
+      );
       const rawItems = parseJsonField(formData.get("phonetics_items")) as Array<{
         text?: unknown;
         transcription?: unknown;
@@ -341,6 +408,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       return {
         instructions: sanitizeInstructionsHtml((formData.get("phonetics_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         items: rawItems.map((it) => {
           const translation = typeof it.translation === "string" ? it.translation.trim() : "";
           const media = it.media ? normalizeMedia(it.media) : null;
@@ -358,11 +426,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("table_fill_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("table_fill_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("table_fill_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
         rows: parseJsonField(formData.get("table_fill_rows")),
         hintsReducePoints: formData.get("table_fill_hints_reduce_points") === "true",
@@ -372,11 +444,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("image_match_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("image_match_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("image_match_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         items: parseJsonField(formData.get("image_match_items")),
       };
     }
@@ -384,11 +460,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("checkbox_grid_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("checkbox_grid_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("checkbox_grid_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         columns: parseJsonField(formData.get("checkbox_grid_columns")),
         rows: parseJsonField(formData.get("checkbox_grid_rows")),
       };
@@ -397,11 +477,15 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("chronological_order_sub_instructions") as string) || ""
       );
+      const subInstructionsEn = sanitizeInstructionsHtml(
+        (formData.get("chronological_order_sub_instructions_en") as string) || ""
+      );
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("chronological_order_instructions") as string) || ""
         ),
         ...(subInstructions ? { subInstructions } : {}),
+        ...(subInstructionsEn ? { subInstructionsEn } : {}),
         mode: (formData.get("chronological_order_mode") as string) || "image",
         items: parseJsonField(formData.get("chronological_order_items")),
         hint: (formData.get("chronological_order_hint") as string) || "",

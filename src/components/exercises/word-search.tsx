@@ -1268,7 +1268,7 @@ export function WordSearchExercise({
         labels={blocks.map((b) => b.title)}
         {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.word_search.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.word_search.subInstruction,
           en: DEFAULT_TRANSLATION_EN.word_search,
         })}

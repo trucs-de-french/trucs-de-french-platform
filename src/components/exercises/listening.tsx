@@ -248,7 +248,7 @@ export function ListeningExercise({
               lang
             ))}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.listening.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.listening.subInstruction,
           en: DEFAULT_TRANSLATION_EN.listening,
         })}

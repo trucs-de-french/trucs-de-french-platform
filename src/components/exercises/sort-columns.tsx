@@ -325,7 +325,7 @@ export function SortColumnsExercise({
       <TaskPanelHeader
         {...(headerPoints ?? {})}
         instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.sort_columns.instruction}
-        subInstructionText={taskTranslationLine(config.subInstructions, lang, {
+        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.sort_columns.subInstruction,
           en: DEFAULT_TRANSLATION_EN.sort_columns,
         })}
