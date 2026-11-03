@@ -1174,18 +1174,40 @@ button, input, textarea, select, label, nav, aside {
   padding: 8px 16px 16px;
   margin: -8px -16px -16px;
 }
-/* ЕТАП P — мобільний: нижній padding (16px) вище повністю "з'їдається"
-   рівною за модулем від'ємною margin (той самий трюк, що в .ws-scroll,
-   лише тут запас менший і заради тіні плитки, не "листа") — порожнього
-   МІСЦЯ в розкладці між скрол-контейнером і підказкою "Сітка ширша..."
-   немає взагалі, тож сірий трек горизонтального скролу (на зумі, коли
-   сітка реально прокручується) малюється впритул до неї. Фікс — лише
-   padding-bottom росте (margin-bottom лишається тим самим -16px, тінь і
-   далі не зрізається); різниця (10px) лишається РЕАЛЬНИМ місцем у
-   потоці, без жодної нової від'ємної margin. */
+/* ЕТАП P (виправлено в ЕТАПІ R) — попередній фікс лише збільшував
+   padding-bottom (16px → 26px), лишаючи margin-bottom тим самим -16px:
+   не допомогло, бо трек горизонтального скролу малюється не "у кінці
+   padding", а ВПРИТУЛ до нижньої межі border-box самого скрол-контейнера
+   (яка росте разом із padding-bottom). Підказка ж позиціонується ВІДНОСНО
+   ТІЄЇ Ж межі через margin-bottom (-16px) — тож коли бокс вищає на 10px,
+   і трек, і підказка зсуваються вниз на ті самі 10px: відстань між ними
+   лишається 0, яким і була. ЕТАП R — реальний фікс: margin-bottom:0
+   (більше ніяке "з'їдання" знизу), padding-bottom лишається лише
+   стільки, скільки треба запасу під тінь плитки (10px, тінь розмахом
+   ~9px вниз) — простір між скрол-контейнером і підказкою тепер дає
+   справжній flex-gap батьківського .flex.flex-col.gap-3 (12px),
+   незалежний від висоти скрол-бару. Тонкий стилізований скролбар (той
+   самий приймом, що .ws-scroll) — передбачувана висота (6px) замість
+   нативного/overlay невідомого розміру. */
 @media (max-width: 640px) {
   .crossword-scroll {
-    padding-bottom: 26px;
+    padding-bottom: 10px;
+    margin-bottom: 0;
+    scrollbar-width: thin;
+  }
+  .crossword-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .crossword-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .crossword-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 3px;
+  }
+  .dark .crossword-scroll::-webkit-scrollbar-thumb,
+  :root:not(.light) .crossword-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
   }
 }
 .ws-scroll {
