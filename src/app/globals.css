@@ -5313,11 +5313,19 @@ button.scene-bar:active .scene-bar-toggle {
    .task-result-answer-row нижче. */
 @media (max-width: 640px) {
   .task-result-pair-row {
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
     gap: 6px;
     padding: 8px 10px;
   }
+  /* minmax(0,1fr) вище вже дає grid-комірці стискатись — сам чип теж
+     потребує min-width:0 (інакше власна ширина впливає на grid-трек) і
+     max-width:100%/box-sizing:border-box, щоб рамка/padding не виходили за
+     межі комірки ("une ingratitude" впритул до зеленої рамки). */
   .task-result-pair-chip {
-    padding: 5px 7px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 5px 10px;
     font-size: 13px;
   }
 }
@@ -5469,11 +5477,17 @@ button.scene-bar:active .scene-bar-toggle {
    замість старого word-break:normal-без-страховки. */
 @media (max-width: 640px) {
   .task-result-answer-row {
-    gap: 6px;
-    padding: 6px 8px;
+    /* Рівні колонки fr/uk (замість 0.85fr/1.15fr) — обидва чипи стискаються
+       однаково; номер 20px (мінімум), стрілка — своя власна ширина. */
+    grid-template-columns: minmax(20px, 20px) minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 10px;
   }
   .task-result-answer-row .task-result-pair-chip {
-    padding: 5px 6px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 5px 10px;
     font-size: 13px;
   }
 }
