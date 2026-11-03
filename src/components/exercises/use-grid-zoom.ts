@@ -49,3 +49,45 @@ export function keepViewAfterZoom(
   const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
   container.scrollTo({ left: Math.max(0, Math.min(newScrollLeft, maxScrollLeft)) });
 }
+
+// ЕТАП — мобільний pinch-to-zoom (crossword.tsx/word-search.tsx,
+// use-pinch-zoom.ts): межі зуму для pinch — ті самі ZOOM_STEPS, що й
+// +/−-кнопки (найменший/найбільший крок), лише БЕЗ прив'язки до самих
+// дискретних кроків — під час жесту zoom лишається плавним числом.
+export const MIN_ZOOM: number = ZOOM_STEPS[0];
+export const MAX_ZOOM: number = ZOOM_STEPS[ZOOM_STEPS.length - 1];
+
+export type PinchFocal = { contentX: number; contentY: number; startZoom: number };
+
+// Контентна точка під серединою двох пальців у МОМЕНТ початку жесту
+// (scrollLeft/Top контейнера + зсув середини пальців від його rect) —
+// фіксується один раз на весь жест; наступні кадри лише масштабують це
+// число (startPinchFocal нижче НЕ викликається повторно), бо ratio
+// nextZoom/startZoom рахується від того самого старту (без накопичення
+// похибки за кадр).
+export function startPinchFocal(container: HTMLElement, midX: number, midY: number, startZoom: number): PinchFocal {
+  const rect = container.getBoundingClientRect();
+  return {
+    contentX: container.scrollLeft + (midX - rect.left),
+    contentY: container.scrollTop + (midY - rect.top),
+    startZoom,
+  };
+}
+
+// Застосовується лише з ЕФЕКТУ, залежного від [zoom] (той самий, що й
+// keepViewAfterZoom вище) — тобто ПІСЛЯ того, як --zoom реально
+// застосувався в DOM і scrollWidth/scrollHeight вже нові; синхронний
+// виклик прямо з pointermove-хендлера рахував би на старому розмірі
+// контенту (newZoom ще не відрендерився).
+export function applyPinchFocal(container: HTMLElement, focal: PinchFocal, nextZoom: number, midX: number, midY: number) {
+  const rect = container.getBoundingClientRect();
+  const ratio = nextZoom / focal.startZoom;
+  const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+  const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+  const newScrollLeft = focal.contentX * ratio - (midX - rect.left);
+  const newScrollTop = focal.contentY * ratio - (midY - rect.top);
+  container.scrollTo({
+    left: Math.max(0, Math.min(newScrollLeft, maxScrollLeft)),
+    top: Math.max(0, Math.min(newScrollTop, maxScrollTop)),
+  });
+}

@@ -6,7 +6,8 @@ import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
 import { DEFAULT_CROSSWORD_DIRECTION_LABELS } from "@/lib/exercises/default-task-labels";
 import { GridZoomControls } from "./grid-zoom-controls";
-import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
+import { useGridZoom, keepViewAfterZoom, applyPinchFocal } from "./use-grid-zoom";
+import { usePinchZoom, useIsMobilePinchViewport } from "./use-pinch-zoom";
 import type {
   CrosswordPublic,
   CrosswordPublicBlock,
@@ -233,6 +234,7 @@ function CrosswordBlockView({
   hintsReducePoints,
   cols,
   zoom,
+  onZoomChange,
   onResult,
   blockCount,
   activeBlock,
@@ -249,6 +251,10 @@ function CrosswordBlockView({
   // того, який блок вужчий), zoom — студентський масштаб 1/1.25/1.5/2.
   cols: number;
   zoom: number;
+  // Пінч двома пальцями (use-pinch-zoom.ts) міняє той самий zoom-стан, що
+  // й кнопки +/− у CrosswordExercise — лише ТАМ є setZoom, тож він
+  // прокидається сюди окремим пропом (сам zoom вище — лише читання).
+  onZoomChange?: (zoom: number) => void;
   onResult: (result: CrosswordBlockResult) => void;
   // ЕТАП M — той самий глобальний activeBlock/onChangeBlock, що й
   // BlockTabs/BlockNavigation на рівні CrosswordExercise: усі блоки
@@ -384,21 +390,45 @@ function CrosswordBlockView({
     }
   });
 
+  // Мобільний pinch-to-zoom (ЕТАП — use-pinch-zoom.ts): той самий zoom-
+  // стан, що й +/−-кнопки (CrosswordExercise.setZoom, сюди — onZoomChange).
+  // isMobile640 вимикає жест на десктопі/планшеті (>640px) — рендер там
+  // лишається піксель-у-піксель незмінним (жест ніколи не слухає події).
+  const isMobile640 = useIsMobilePinchViewport();
+  const pinch = usePinchZoom(scrollRef, zoom, onZoomChange ?? (() => {}), {
+    enabled: isMobile640 && active,
+    onPinchStart: () => {
+      // Другий палець торкнувся сітки під час одно-пальцевого тапу/фокусу
+      // клітинки — прибрати фокус із поля (інпут, що встиг отримати
+      // focus від першого пальця), щоб жест переходив у зум, а не лишав
+      // відкритою клавіатуру/курсор на випадковій клітинці.
+      const focusedEl = document.activeElement;
+      if (focusedEl instanceof HTMLElement && scrollRef.current?.contains(focusedEl)) focusedEl.blur();
+    },
+  });
+
   const prevZoomRef = useRef(zoom);
   useEffect(() => {
     const prevZoom = prevZoomRef.current;
     prevZoomRef.current = zoom;
     if (prevZoom === zoom) return;
     const container = scrollRef.current;
-    const prevMetrics = prevMetricsRef.current;
-    if (!container || !prevMetrics) return;
+    if (!container) return;
 
-    // Активна клітинка (якщо є) — якір: лишається по центру видимої
-    // частини; інакше keepViewAfterZoom утримує той самий відсоток
-    // ширини контенту в центрі (use-grid-zoom.ts, спільне з word-search).
-    const activeCell = activeClue ? (clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [])[0] : null;
-    const activeCellEl = activeCell ? diacritics.getElement(cellKey(activeCell.row, activeCell.col)) : null;
-    keepViewAfterZoom(container, prevMetrics, prevZoom, zoom, activeCellEl);
+    const pinchFocal = pinch.getFocal();
+    if (pinchFocal) {
+      applyPinchFocal(container, pinchFocal, zoom, pinchFocal.midX, pinchFocal.midY);
+      pinch.clearFocal();
+    } else {
+      const prevMetrics = prevMetricsRef.current;
+      if (!prevMetrics) return;
+      // Активна клітинка (якщо є) — якір: лишається по центру видимої
+      // частини; інакше keepViewAfterZoom утримує той самий відсоток
+      // ширини контенту в центрі (use-grid-zoom.ts, спільне з word-search).
+      const activeCell = activeClue ? (clueCells.get(`${activeClue.direction}-${activeClue.number}`) ?? [])[0] : null;
+      const activeCellEl = activeCell ? diacritics.getElement(cellKey(activeCell.row, activeCell.col)) : null;
+      keepViewAfterZoom(container, prevMetrics, prevZoom, zoom, activeCellEl);
+    }
     // Клітинка активного поля (якщо є) змінила позицію/розмір — попап
     // діакритики (прив'язаний до getBoundingClientRect поля) мусить
     // перерахувати координати, інакше лишиться прив'язаним до старого
@@ -908,7 +938,33 @@ function CrosswordBlockView({
                прокручується (auto-margins колапсують у 0, коли вмісту не
                вистачає місця). */}
         <div className="grid-zoom-wrap w-full min-w-0">
-          <div ref={scrollRef} className="crossword-scroll" style={{ touchAction: "pan-x pan-y" }}>
+          <div
+            ref={scrollRef}
+            className="crossword-scroll"
+            style={{ touchAction: "pan-x pan-y" }}
+            onPointerDown={(e) => {
+              if (pinch.feedDown(e)) e.preventDefault();
+            }}
+            onPointerMove={(e) => {
+              if (pinch.feedMove(e)) e.preventDefault();
+            }}
+            onPointerUp={(e) => pinch.feedUp(e)}
+            onPointerCancel={(e) => pinch.feedUp(e)}
+            onClickCapture={(e) => {
+              if (pinch.isSuppressingClick()) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            onFocusCapture={(e) => {
+              // Жест щойно завершився (підняті обидва пальці) — наступні
+              // ~300мс фокус на клітинці трактуємо як залишок тапу другого
+              // пальця (п.4 задачі), не навмисний клік студента.
+              if (pinch.isSuppressingClick() && !pinch.isPinching()) {
+                (e.target as HTMLElement).blur();
+              }
+            }}
+          >
             {/* drop-shadow (filter), НЕ box-shadow — на відміну від word-search
                 (суцільно заповнена сітка, box-shadow там коректно повторює
                 прямокутник), тут частина клітинок ЗАБЛОКОВАНА й невидима
@@ -1409,6 +1465,7 @@ export function CrosswordExercise({
           hintsReducePoints={config.hintsReducePoints}
           cols={maxCols}
           zoom={zoom}
+          onZoomChange={setZoom}
           onResult={setSingleResult}
         />
       ) : (
@@ -1435,6 +1492,7 @@ export function CrosswordExercise({
                 hintsReducePoints={config.hintsReducePoints}
                 cols={maxCols}
                 zoom={zoom}
+                onZoomChange={setZoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
                 blockCount={blockCount}
                 activeBlock={activeBlock}

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useId, type CSSProperties } from "react";
 import { GridZoomControls } from "./grid-zoom-controls";
-import { useGridZoom, keepViewAfterZoom } from "./use-grid-zoom";
+import { useGridZoom, keepViewAfterZoom, applyPinchFocal } from "./use-grid-zoom";
+import { usePinchZoom, useIsMobilePinchViewport } from "./use-pinch-zoom";
 import type {
   WordSearchPublic,
   WordSearchPublicBlock,
@@ -411,6 +412,7 @@ function WordSearchBlockView({
   hintsReducePoints,
   cols,
   zoom,
+  onZoomChange,
   onResult,
   blockCount,
   activeBlock,
@@ -427,6 +429,10 @@ function WordSearchBlockView({
   // того, який блок менший), zoom — студентський масштаб 1/1.25/1.5/2.
   cols: number;
   zoom: number;
+  // Пінч двома пальцями (use-pinch-zoom.ts) міняє той самий zoom-стан, що
+  // й кнопки +/− у WordSearchExercise — лише ТАМ є setZoom, тож він
+  // прокидається сюди окремим пропом.
+  onZoomChange?: (zoom: number) => void;
   onResult: (result: WordSearchBlockResult) => void;
   // ЕТАП M — той самий глобальний activeBlock/onChangeBlock, що й
   // BlockTabs/BlockNavigation на рівні WordSearchExercise: усі блоки
@@ -677,36 +683,44 @@ function WordSearchBlockView({
   // ЕТАП J — прокрутка сітки ДВОМА пальцями: сітка лишається touch-action:
   // none (нативний pinch/scroll вимкнено, замість нього кнопки зуму) —
   // одно-пальцевий дотик і далі виділяє слово (startDrag/moveDrag), другий
-  // палець скасовує поточне виділення (без перевірки слова) і переходить у
-  // режим панорамування: середня точка двох пальців рухає container.scrollLeft
-  // по X і window.scrollBy по Y. Після підняття ОБОХ пальців — кінець
-  // панорамування; палець, що лишився один, НЕ починає нового виділення,
-  // доки не піднято всі (suppressSelectRef — до pointers.size === 0). Усе
+  // палець скасовує поточне виділення (без перевірки слова). Усе
   // відстежується тут-таки (не через React-стан — часта зміна на кожен
   // pointermove, стан був би зайвим ререндером).
+  // ЕТАП — pinch-to-zoom: двопалицеве панорамування вище тепер віддане
+  // usePinchZoom (use-pinch-zoom.ts, спільне з crossword.tsx) — середня
+  // точка пальців одночасно і зумить (відстань між пальцями), і панорамує
+  // (сам рух середньої точки), той самий природний pinch, що в будь-якому
+  // галерейному застосунку; це ЗАМІНЮЄ попередній "лише панорамування" на
+  // 2 пальцях (ratio=1, коли відстань не змінюється, — чистий pan, як і
+  // було). suppressSelectRef — як і раніше, блокує новий одно-пальцевий
+  // drag, доки не піднято ВСІ пальці (+300мс після, через
+  // pinch.isSuppressingClick, щоб останній палець не стартував виділення
+  // одразу після жесту).
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const panningRef = useRef(false);
-  const panLastMidRef = useRef<{ x: number; y: number } | null>(null);
   const suppressSelectRef = useRef(false);
+
+  const isMobile640 = useIsMobilePinchViewport();
+  const pinch = usePinchZoom(scrollRef, zoom, onZoomChange ?? (() => {}), {
+    enabled: isMobile640 && active,
+    onPinchStart: () => {
+      setDragging(false);
+      setDragStart(null);
+      setDragEnd(null);
+      suppressSelectRef.current = true;
+    },
+  });
 
   function handleTouchPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType !== "touch") return;
     const pointers = activePointersRef.current;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     e.currentTarget.setPointerCapture(e.pointerId);
+    pinch.feedDown(e);
     if (pointers.size === 1) {
-      if (suppressSelectRef.current) return;
+      if (suppressSelectRef.current || pinch.isSuppressingClick()) return;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       const cell = cellFromPoint(e.clientX, e.clientY);
       if (cell) startDrag(cell);
-    } else if (pointers.size === 2) {
-      setDragging(false);
-      setDragStart(null);
-      setDragEnd(null);
-      suppressSelectRef.current = true;
-      panningRef.current = true;
-      const pts = [...pointers.values()];
-      panLastMidRef.current = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
     }
   }
 
@@ -715,21 +729,7 @@ function WordSearchBlockView({
     const pointers = activePointersRef.current;
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (panningRef.current) {
-      const pts = [...pointers.values()];
-      if (pts.length < 2) return;
-      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-      const prevMid = panLastMidRef.current;
-      if (prevMid) {
-        const dx = mid.x - prevMid.x;
-        const dy = mid.y - prevMid.y;
-        const container = scrollRef.current;
-        if (container) container.scrollLeft -= dx;
-        window.scrollBy(0, -dy);
-      }
-      panLastMidRef.current = mid;
-      return;
-    }
+    if (pinch.feedMove(e)) return;
     if (pointers.size === 1 && dragging) {
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       const cell = cellFromPoint(e.clientX, e.clientY);
@@ -741,10 +741,7 @@ function WordSearchBlockView({
     if (e.pointerType !== "touch") return;
     const pointers = activePointersRef.current;
     pointers.delete(e.pointerId);
-    if (pointers.size < 2) {
-      panningRef.current = false;
-      panLastMidRef.current = null;
-    }
+    pinch.feedUp(e);
     if (pointers.size === 0) {
       suppressSelectRef.current = false;
     }
@@ -768,9 +765,17 @@ function WordSearchBlockView({
     prevZoomRef.current = zoom;
     if (prevZoom === zoom) return;
     const container = scrollRef.current;
+    if (!container) return;
+    const pinchFocal = pinch.getFocal();
+    if (pinchFocal) {
+      applyPinchFocal(container, pinchFocal, zoom, pinchFocal.midX, pinchFocal.midY);
+      pinch.clearFocal();
+      return;
+    }
     const prevMetrics = prevMetricsRef.current;
-    if (!container || !prevMetrics) return;
+    if (!prevMetrics) return;
     keepViewAfterZoom(container, prevMetrics, prevZoom, zoom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom]);
 
   const gridSize = block.grid.length;
@@ -1538,6 +1543,7 @@ export function WordSearchExercise({
           hintsReducePoints={config.hintsReducePoints}
           cols={cols}
           zoom={zoom}
+          onZoomChange={setZoom}
           onResult={setSingleResult}
         />
       ) : (
@@ -1570,6 +1576,7 @@ export function WordSearchExercise({
                 hintsReducePoints={config.hintsReducePoints}
                 cols={cols}
                 zoom={zoom}
+                onZoomChange={setZoom}
                 onResult={(r) => setBlockResults((prev) => ({ ...prev, [i]: r }))}
                 blockCount={blockCount}
                 activeBlock={activeBlock}
