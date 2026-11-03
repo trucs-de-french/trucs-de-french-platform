@@ -180,6 +180,8 @@ export const fr: Record<MessageKey, string> = {
 
   "ws.gridWiderHint": "La grille est plus large que l'écran — faites défiler",
   "ws.gridWiderHintTouch": "La grille est plus large que l'écran — faites défiler avec deux doigts",
+  "ws.gridWiderHintMobile": "La grille dépasse l'écran : faites glisser le curseur",
+  "ws.gridScrollSliderLabel": "Défilement de la grille",
   "ws.legendFound": "Trouvé",
   "ws.legendSelecting": "Sélection",
   "ws.legendHint": "Indice : première lettre",

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useId, type CSSProperties } from 
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom, applyPinchFocal } from "./use-grid-zoom";
 import { usePinchZoom, useIsMobilePinchViewport } from "./use-pinch-zoom";
+import { GridScrollSlider } from "./grid-scroll-slider";
 import type {
   WordSearchPublic,
   WordSearchPublicBlock,
@@ -459,6 +460,7 @@ function WordSearchBlockView({
   // переповнення (useScrollOverflowHint) і коригується scrollLeft при
   // зміні zoom (keepViewAfterZoom) чи двопальцевій панорамі.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerId = useId();
   const scrollHint = useScrollOverflowHint(scrollRef, active);
   // Слова, для яких клікали підказку — надсилається разом із foundWords
   // (WordSearchAnswer.hintedWords), для 50%-балів при hintsReducePoints.
@@ -959,7 +961,20 @@ function WordSearchBlockView({
         <div className="grid-zoom-wrap w-full min-w-0">
           <div
             ref={scrollRef}
-            className="ws-scroll w-full touch-none select-none overflow-x-auto"
+            id={scrollContainerId}
+            className="ws-scroll w-full select-none overflow-x-auto"
+            // ЕТАП — GridScrollSlider бере на себе горизонтальне
+            // прокручування на мобільному (grid-scroll-slider.tsx):
+            // pan-y лишає вертикальний скрол сторінки одним пальцем,
+            // горизонтальне панорамування прибране (раніше — повне
+            // touch-action:none, тут замінене на pan-y лише ≤640px,
+            // десктоп/планшет і далі touch-action:none, як було —
+            // там керує миша/трекпад, а не палець). Одно-пальцеве
+            // виділення слова (startDrag/moveDrag) і авто-скрол під час
+            // виділення (scrollLeft програмно) не залежать від touch-
+            // action — вони самі ставлять scrollLeft, не чекають на
+            // нативне панорамування.
+            style={{ touchAction: isMobile640 ? "pan-y" : "none" }}
             onPointerDown={handleTouchPointerDown}
             onPointerMove={handleTouchPointerMove}
             onPointerUp={handleTouchPointerUp}
@@ -1125,12 +1140,14 @@ function WordSearchBlockView({
               </div>
             </div>
           </div>
+          <GridScrollSlider scrollRef={scrollRef} controlsId={scrollContainerId} />
         </div>
 
         {scrollHint && (
           <p className={HINT_TEXT}>
-            <span className="scroll-hint-fine">{t("ws.gridWiderHint")}</span>
-            <span className="scroll-hint-coarse">{t("ws.gridWiderHintTouch")}</span>
+            <span className="scroll-hint-fine scroll-hint-desktop">{t("ws.gridWiderHint")}</span>
+            <span className="scroll-hint-coarse scroll-hint-desktop">{t("ws.gridWiderHintTouch")}</span>
+            <span className="scroll-hint-mobile">{t("ws.gridWiderHintMobile")}</span>
           </p>
         )}
 

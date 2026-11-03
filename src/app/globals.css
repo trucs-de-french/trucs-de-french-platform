@@ -1039,6 +1039,28 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* ЕТАП — GridScrollSlider замінив двопальцеву прокрутку на мобільному
+   (grid-scroll-slider.tsx): підказка там більше не каже "прокрутіть
+   убік"/"двома пальцями" (ws.gridWiderHint/Touch, вище), а каже про
+   повзунок (ws.gridWiderHintMobile) — НЕЗАЛЕЖНО від типу вказівника
+   (pointer:coarse/fine), лише від ШИРИНИ екрана. .scroll-hint-desktop —
+   crossword.tsx (однотекстовий, без fine/coarse-розрізнення) і word-
+   search.tsx (додається ДРУГИМ класом до вже існуючих .scroll-hint-fine/
+   -coarse — тут нижче, тож на ≤640px перебиває їх незалежно від
+   pointer). .scroll-hint-mobile — прихований за замовчуванням, видимий
+   лише ≤640px. */
+.scroll-hint-mobile {
+  display: none;
+}
+@media (max-width: 640px) {
+  .scroll-hint-desktop {
+    display: none;
+  }
+  .scroll-hint-mobile {
+    display: inline;
+  }
+}
+
 /* word-search.tsx — "плаваючий лист" (ЕТАП K, мокап "варіант 2"), тепер
    ОБОМА темами (ЕТАП L — темна тема отримує той самий дизайн зі своєю
    палітрою): структурні правила (розмір листа, скрол без клipping тіні,
@@ -1199,25 +1221,22 @@ button, input, textarea, select, label, nav, aside {
    незалежний від висоти скрол-бару. Тонкий стилізований скролбар (той
    самий приймом, що .ws-scroll) — передбачувана висота (6px) замість
    нативного/overlay невідомого розміру. */
+/* ЕТАП — GridScrollSlider (grid-scroll-slider.tsx) замінює цей нативний
+   скролбар на мобільному: горизонтальне панорамування одним пальцем
+   вимкнено (crossword.tsx/word-search.tsx, touch-action:pan-y замість
+   pan-x pan-y, лише на ≤640px), тож сам нативний трек тут уже нічого не
+   прокручує й лише плутав би поряд із новим повзунком. scrollbar-width:
+   none/display:none — overflow-x:auto/scroll НЕ міняється (програмний
+   scrollLeft, яким керують і повзунок, і pinch-фокус, і auto-scroll
+   виділення у word-search.tsx, лишається робочим). */
 @media (max-width: 640px) {
   .crossword-scroll {
     padding-bottom: 10px;
     margin-bottom: 0;
-    scrollbar-width: thin;
+    scrollbar-width: none;
   }
   .crossword-scroll::-webkit-scrollbar {
-    height: 6px;
-  }
-  .crossword-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .crossword-scroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 3px;
-  }
-  .dark .crossword-scroll::-webkit-scrollbar-thumb,
-  :root:not(.light) .crossword-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.25);
+    display: none;
   }
 }
 .ws-scroll {
@@ -1247,26 +1266,77 @@ button, input, textarea, select, label, nav, aside {
    панелі): трюк К2/К3 (запас 40px + компенсуюча margin) мобільному більше
    не потрібен — звичайний overflow-x:auto на повну ширину, з тонким
    стилізованим скролбаром і невеликим запасом (10px) знизу під нього. */
+/* ЕТАП — той самий фікс, що .crossword-scroll вище: нативний трек
+   прибраний, GridScrollSlider під сіткою бере на себе горизонтальне
+   прокручування (touch-action:pan-y у word-search.tsx вимикає одно-
+   пальцеве горизонтальне панорамування, лише ≤640px). */
 @media (max-width: 640px) {
   .ws-scroll {
     width: 100%;
     padding: 0 0 10px;
     margin: 0;
-    scrollbar-width: thin;
+    scrollbar-width: none;
   }
   .ws-scroll::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
-  .ws-scroll::-webkit-scrollbar-track {
-    background: transparent;
+}
+
+/* GridScrollSlider (grid-scroll-slider.tsx) — спільний для crossword.tsx/
+   word-search.tsx, рендериться лише ≤640px і лише коли сітка реально
+   переповнена (scrollWidth>clientWidth+1, сама вирішує в JS). Margin
+   10px зверху/8px знизу (п.4 задачі) — явний, НЕ через негативний
+   margin/flex-gap сусідніх елементів (той баг уже був — flex-gap
+   батьківського .flex.flex-col.gap-3 тягнув підказку-текст над старим
+   нативним скролбаром, ЕТАП P/R вище); той-таки gap-3 (12px) рахується
+   ДОДАТКОВО до цих 10px/8px, тож підказка під слайдером не зіллється
+   з ним — усього між низом слайдера і підказкою ≥ 8+12=20px. */
+@media (max-width: 640px) {
+  .grid-scroll-slider-track {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    margin: 10px 0 8px;
+    border-radius: 10px;
+    background: #e4e0fa;
   }
-  .ws-scroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 3px;
+  .dark .grid-scroll-slider-track {
+    background: rgba(169, 162, 234, 0.22);
   }
-  .dark .ws-scroll::-webkit-scrollbar-thumb,
-  :root:not(.light) .ws-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.25);
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .grid-scroll-slider-track {
+      background: rgba(169, 162, 234, 0.22);
+    }
+  }
+  .grid-scroll-slider-thumb {
+    position: absolute;
+    top: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    border: 1.5px solid #4b46da;
+    box-shadow: 0 2px 6px rgba(47, 44, 107, 0.35);
+    cursor: grab;
+  }
+  .grid-scroll-slider-thumb--active {
+    filter: brightness(1.12);
+    box-shadow: 0 2px 6px rgba(47, 44, 107, 0.35), 0 0 0 4px rgba(75, 70, 218, 0.25);
+    cursor: grabbing;
+  }
+  .grid-scroll-slider-thumb:focus-visible {
+    outline: none;
+    box-shadow: 0 2px 6px rgba(47, 44, 107, 0.35), 0 0 0 3px rgba(75, 70, 218, 0.45);
+  }
+  .grid-scroll-slider-grip {
+    width: 2px;
+    height: 10px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
   }
 }
 

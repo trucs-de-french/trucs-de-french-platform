@@ -66,9 +66,21 @@ export function usePinchZoom(
   });
 
   const pointersRef = useRef<Map<number, Point>>(new Map());
-  const gestureRef = useRef<{ startDistance: number; startZoom: number; contentX: number; contentY: number } | null>(
-    null
-  );
+  // startMidX/Y — ЗАФІКСОВАНА (не поточна) середина пальців у момент
+  // початку жесту: застосування фокус-точки (applyPinchFocal нижче)
+  // завжди повертає contentX/Y САМЕ під цю координату екрана, а не під
+  // поточну середину пальців — інакше чисте горизонтальне розсування
+  // пальців БЕЗ зміни відстані (ratio=1) усе одно зсувало б scrollLeft
+  // (панорамування), а задача вимагає: 2 пальці = ЛИШЕ зум, ніяке
+  // горизонтальне переміщення пальців саме по собі не панорамує.
+  const gestureRef = useRef<{
+    startDistance: number;
+    startZoom: number;
+    contentX: number;
+    contentY: number;
+    startMidX: number;
+    startMidY: number;
+  } | null>(null);
   // liveFocalRef — "одноразовий" слот: scheduleFlush записує його ПЕРЕД
   // кожним onZoomChange, компонентний ефект (reader) забирає значення
   // через getFocal()+clearFocal() одразу після використання — інакше
@@ -78,7 +90,7 @@ export function usePinchZoom(
     null
   );
   const rafRef = useRef(0);
-  const pendingRef = useRef<{ zoom: number; midX: number; midY: number } | null>(null);
+  const pendingRef = useRef<number | null>(null);
   const suppressClickUntilRef = useRef(0);
 
   useEffect(() => {
@@ -94,15 +106,15 @@ export function usePinchZoom(
       const pending = pendingRef.current;
       pendingRef.current = null;
       const gesture = gestureRef.current;
-      if (!pending || !gesture) return;
+      if (pending == null || !gesture) return;
       liveFocalRef.current = {
         contentX: gesture.contentX,
         contentY: gesture.contentY,
         startZoom: gesture.startZoom,
-        midX: pending.midX,
-        midY: pending.midY,
+        midX: gesture.startMidX,
+        midY: gesture.startMidY,
       };
-      onZoomChangeRef.current(pending.zoom);
+      onZoomChangeRef.current(pending);
     });
   }
 
@@ -121,6 +133,8 @@ export function usePinchZoom(
         startZoom: zoomRef.current,
         contentX: container.scrollLeft + (mid.x - rect.left),
         contentY: container.scrollTop + (mid.y - rect.top),
+        startMidX: mid.x,
+        startMidY: mid.y,
       };
       onPinchStartRef.current?.();
     }
@@ -135,14 +149,18 @@ export function usePinchZoom(
     const gesture = gestureRef.current;
     if (!gesture || pointers.size < 2) return pointers.size >= 2;
     const pts = [...pointers.values()];
+    // ЛИШЕ відстань між пальцями рахує зум (п.2 задачі) — поточна середина
+    // (mid) тут НЕ читається взагалі: якщо пальці зсунулись горизонтально,
+    // не змінивши відстані між собою, це взагалі не доходить до жодного
+    // коригування scrollLeft (gestureRef.startMidX/Y у scheduleFlush —
+    // ЗАФІКСОВАНІ на момент feedDown, не ці поточні координати).
     const d = distance(pts[0], pts[1]);
-    const mid = midpoint(pts[0], pts[1]);
     const raw = gesture.startZoom * (d / gesture.startDistance);
     const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, raw));
     // Плавно під час самого жесту — округлення лише до 1% (п.2 задачі),
     // не до дискретних ZOOM_STEPS кнопок.
     const nextZoom = Math.round(clamped * 100) / 100;
-    pendingRef.current = { zoom: nextZoom, midX: mid.x, midY: mid.y };
+    pendingRef.current = nextZoom;
     scheduleFlush();
     return true;
   }

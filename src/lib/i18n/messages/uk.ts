@@ -181,6 +181,8 @@ export const uk = {
 
   "ws.gridWiderHint": "Сітка ширша за екран — прокрутіть убік",
   "ws.gridWiderHintTouch": "Сітка ширша за екран — прокрутіть убік двома пальцями",
+  "ws.gridWiderHintMobile": "Сітка ширша за екран — рухайте повзунок",
+  "ws.gridScrollSliderLabel": "Прокрутка сітки",
   "ws.legendFound": "Знайдено",
   "ws.legendSelecting": "Виділяю",
   "ws.legendHint": "Підказка: перша літера",

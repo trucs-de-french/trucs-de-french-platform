@@ -178,6 +178,8 @@ export const en: Record<MessageKey, string> = {
 
   "ws.gridWiderHint": "The grid is wider than the screen — scroll sideways",
   "ws.gridWiderHintTouch": "The grid is wider than the screen — scroll sideways with two fingers",
+  "ws.gridWiderHintMobile": "The grid is wider than the screen: drag the slider",
+  "ws.gridScrollSliderLabel": "Grid scroll",
   "ws.legendFound": "Found",
   "ws.legendSelecting": "Selecting",
   "ws.legendHint": "Hint: first letter",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useMemo, useRef, useId, type CSSProperties } from "react";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { hintExplanationText } from "./hint-explanation";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -8,6 +8,7 @@ import { DEFAULT_CROSSWORD_DIRECTION_LABELS } from "@/lib/exercises/default-task
 import { GridZoomControls } from "./grid-zoom-controls";
 import { useGridZoom, keepViewAfterZoom, applyPinchFocal } from "./use-grid-zoom";
 import { usePinchZoom, useIsMobilePinchViewport } from "./use-pinch-zoom";
+import { GridScrollSlider } from "./grid-scroll-slider";
 import type {
   CrosswordPublic,
   CrosswordPublicBlock,
@@ -286,6 +287,7 @@ function CrosswordBlockView({
   const [lastFocusedCell, setLastFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerId = useId();
   const scrollHint = useScrollOverflowHint(scrollRef, active);
   // hintedCells — клітинки, що ЗАРАЗ тримають значення, вписане підказкою
   // (синя підсвітка "відкрито підказкою", пріоритетна над зеленою/червоною);
@@ -940,8 +942,14 @@ function CrosswordBlockView({
         <div className="grid-zoom-wrap w-full min-w-0">
           <div
             ref={scrollRef}
+            id={scrollContainerId}
             className="crossword-scroll"
-            style={{ touchAction: "pan-x pan-y" }}
+            // ЕТАП — одним пальцем горизонтальне панорамування мобільної
+            // сітки вимкнено (GridScrollSlider бере цю роль на себе,
+            // grid-scroll-slider.tsx): pan-y лишає вертикальний скрол
+            // сторінки одним пальцем, pan-x прибраний ЛИШЕ на ≤640px —
+            // десктоп/планшет (>640px) і далі pan-x pan-y, як було.
+            style={{ touchAction: isMobile640 ? "pan-y" : "pan-x pan-y" }}
             onPointerDown={(e) => {
               if (pinch.feedDown(e)) e.preventDefault();
             }}
@@ -1171,9 +1179,15 @@ function CrosswordBlockView({
               </table>
             </div>
           </div>
+          <GridScrollSlider scrollRef={scrollRef} controlsId={scrollContainerId} />
         </div>
 
-        {scrollHint && <p className={HINT_TEXT}>{t("ws.gridWiderHint")}</p>}
+        {scrollHint && (
+          <p className={HINT_TEXT}>
+            <span className="scroll-hint-desktop">{t("ws.gridWiderHint")}</span>
+            <span className="scroll-hint-mobile">{t("ws.gridWiderHintMobile")}</span>
+          </p>
+        )}
 
         {/* Контекстний попап біля активної клітинки — спільний компонент/хук
             (diacritics-popup.tsx), той самий onMouseDown-preventDefault
