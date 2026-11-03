@@ -35,7 +35,7 @@ export function MatchingBoard({
   usedRights: Set<string>;
   renderLeftExtra?: (left: string) => ReactNode;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const leftRefs = useRef(new Map<string, HTMLButtonElement>());
   const rightRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -152,7 +152,8 @@ export function MatchingBoard({
                 onClick={() => onClickLeft(left)}
                 disabled={disabled}
                 aria-label={ariaLabelForState(left, state)}
-                className={`matching-card matching-card--fr matching-card--${state} min-w-0 break-words [overflow-wrap:anywhere]`}
+                lang="fr"
+                className={`matching-card matching-card--fr matching-card--${state} min-w-0 chip-text-fit`}
               >
                 {left}
                 {renderLeftExtra?.(left)}
@@ -176,7 +177,8 @@ export function MatchingBoard({
                 onClick={() => onClickRight(right)}
                 disabled={disabled}
                 aria-label={ariaLabelForState(right, state)}
-                className={`matching-card matching-card--uk min-w-0 break-words [overflow-wrap:anywhere] ${
+                lang={lang}
+                className={`matching-card matching-card--uk min-w-0 chip-text-fit ${
                   usedRights.has(right) ? "opacity-50" : ""
                 }`}
               >

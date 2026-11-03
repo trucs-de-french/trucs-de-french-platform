@@ -430,7 +430,10 @@ export function TableFillExercise({
   ) {
     if (value !== null) {
       return (
-        <span className={`table-fill-chip ${side === "left" ? "table-fill-chip-fr" : "table-fill-chip-uk"}`}>
+        <span
+          lang={side === "left" ? "fr" : lang}
+          className={`table-fill-chip chip-text-fit ${side === "left" ? "table-fill-chip-fr" : "table-fill-chip-uk"}`}
+        >
           {frenchNbsp(value)}
         </span>
       );
@@ -456,7 +459,7 @@ export function TableFillExercise({
             onBlur={diacritics.onBlur}
             disabled={locked}
             aria-label={ariaResultLabel}
-            className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] ${hasValue ? "px-[12px]" : "px-[40px]"} ${inputClass(rowId, side, detail)}`}
+            className={`table-fill-cell-input h-10 w-full rounded-[10px] border text-center text-[15px] max-[640px]:text-[14px] ${hasValue ? "px-[12px] max-[640px]:px-[8px]" : "px-[40px] max-[640px]:px-[34px]"} ${inputClass(rowId, side, detail)}`}
           />
           {/* Лампочка-підказка ВСЕРЕДИНІ поля (мокап "варіант 1") — той
               самий золотий гурток, що ClueCardHeader кросворду,

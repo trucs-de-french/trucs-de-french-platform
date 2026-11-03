@@ -5265,6 +5265,23 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* ЕТАП S — "Правильні пари" (matching.tsx): довгі слова ("сентиментальний",
+   "s'approcher") впирались у стрілку/виходили за межі свого чипа — чип не
+   мав явного font-size (успадковував навколишній, завеликий для вузької
+   ширини), а власної hyphens:auto-страховки не було. Менший padding/gap і
+   .chip-text-fit (клас у JSX) — той самий принцип, що в .table-fill-row і
+   .task-result-answer-row нижче. */
+@media (max-width: 640px) {
+  .task-result-pair-row {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .task-result-pair-chip {
+    padding: 5px 7px;
+    font-size: 13px;
+  }
+}
+
 /* Плитки "Правильні відповіді" (TaskResultAnswerRows, task-result.tsx,
    table-fill.tsx) — та сама плитка/чипи, що .task-result-pair-row вище,
    плюс номер рядка зліва і підсвітка клітинки-відповіді. flex-wrap замість
@@ -5401,6 +5418,23 @@ button.scene-bar:active .scene-bar-toggle {
   }
   :root:not(.light) .task-result-answer-row .task-result-pair-arrow {
     stroke: #d9b765;
+  }
+}
+
+/* ЕТАП S — той самий бій за місце, що вище (.task-result-pair-row): fr-
+   колонка .task-result-answer-row (0.85fr) + 14px чистого padding лишали
+   "couramment"/"quelconque" без місця на вузьких телефонах. Менший gap/
+   padding звільняють кілька px, а .chip-text-fit (клас у JSX,
+   AnswerChip/TaskResultPairRows вище) додає контрольований hyphens:auto
+   замість старого word-break:normal-без-страховки. */
+@media (max-width: 640px) {
+  .task-result-answer-row {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .task-result-answer-row .task-result-pair-chip {
+    padding: 5px 6px;
+    font-size: 13px;
   }
 }
 
@@ -6646,6 +6680,31 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* ЕТАП S — спільний "рятівний" набір правил для чипів французького слова/
+   перекладу на мобільному (table-fill-chip, task-result pair/answer chips,
+   matching-картки) — одне джерело, застосовується класом поряд із
+   власними класами кожного місця (General-вимога задачі: той самий
+   принцип скрізь, де є чип слова). overflow-wrap:anywhere/word-break:
+   break-all (попередній підхід у кількох із цих місць) ламають слово
+   ДЕ ПОПАЛО, лишаючи саму літеру на окремому рядку — тут лише звичний
+   перенос по пробілах (overflow-wrap/word-break: normal) + hyphens:auto з
+   лімітом (hyphenate-limit-chars: 6 3 3 — слово мінімум 6 символів,
+   щонайменше 3 до й 3 після дефіса, тож однолітерного "хвоста" ніколи не
+   буде) як контрольований запасний варіант для слів, що не влізуть навіть
+   після звуження/зменшення шрифту (нижче, по кожному місцю окремо).
+   overflow:hidden — лише останній страхувальний рубіж (сам фікс полягає в
+   ширині колонки/padding/font-size по кожному місцю, не в обрізанні). */
+@media (max-width: 640px) {
+  .chip-text-fit {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    hyphenate-limit-chars: 6 3 3;
+    overflow: hidden;
+  }
+}
+
 /* Табличний диктант (table_fill), мокап "варіант 1" — рядкові картки з
    чипами замість <table>. .glass-item-card (вище) уже дає градієнтну
    рамку/фон/тінь (світла й темна теми обидві токенізовані), тут лише
@@ -6803,6 +6862,41 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .table-fill-chip-uk {
     font-size: 14.5px;
+  }
+}
+/* ЕТАП S — "couramment"/"quelconque" не вміщались у французький чип
+   (ламались як "courammen"+"t") на вузьких телефонах: колонка fr/uk
+   рядка була РІВНО 50/50 (grid-template-columns 1fr 1fr вище), а
+   overflow-wrap:anywhere (блок @767px вище) ламало слово де попало,
+   щойно воно не влазило. Фікс — вузький @640px: (1) колонки 45/55
+   (fr/відповідь) замість 50/50 — більше місця саме французькому слову;
+   (2) номер-гурток 26→20px (ширший простір лишається колонкам); (3) чип і
+   поле — менший горизонтальний padding; (4) overflow-wrap/word-break
+   повертаються на normal (переносити ЛИШЕ по пробілах, не всередині
+   слова) — .chip-text-fit вище додає контрольований hyphens:auto як
+   запасний варіант, а не anywhere/break-all. */
+@media (max-width: 640px) {
+  .table-fill-row {
+    grid-template-columns: 20px minmax(0, 0.82fr) minmax(0, 1fr);
+    gap: 6px;
+    padding: 12px 6px 6px;
+  }
+  .item-number-badge.table-fill-row-num {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+  .table-fill-chip {
+    padding: 6px 6px;
+  }
+  .table-fill-chip-fr,
+  .table-fill-chip-uk {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+  .table-fill-chip-fr,
+  .table-fill-chip-uk {
+    font-size: 14px;
   }
 }
 /* Лампочка-підказка ВСЕРЕДИНІ поля (не окремою кнопкою поряд) — те саме
@@ -8027,6 +8121,36 @@ button.scene-bar:active .scene-bar-toggle {
   .matching-card {
     padding: 10px 16px;
     font-size: 16px;
+  }
+}
+
+/* ЕТАП S — "сентиментальний"/"заслуговувати" ширші за свою картку на
+   вузьких телефонах: (1) grid-колонки без minmax(0,...) мали неявний
+   min-width:auto (max-content) — довге нерозривне слово міг розтягнути
+   свою колонку понад справедливу половину; minmax(0,1fr) повертає обом
+   колонкам рівну справедливу частку незалежно від вмісту. (2) ліва
+   картка (fr) отримує запас padding-right, права (uk) — padding-left,
+   що РІВНО вкриває зону сполучної крапки (.matching-dot, 18px, напів-
+   занурена в картку з right:-9px/left:-9px) — текст більше не підходить
+   під кружок. justify-content:center (успадковане від .matching-card)
+   далі центрує текст у ЗАЛИШКУ ширини (після цього запасу), не в усій
+   картці — саме так і задумано. (3) font-size — clamp між мінімумом
+   задачі (14px) і колишнім мобільним розміром (17px), росте з в.
+   */
+@media (max-width: 640px) {
+  .matching-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 16px;
+  }
+  .matching-card {
+    padding: 10px 14px;
+    font-size: clamp(14px, 4.2vw, 17px);
+  }
+  .matching-card--fr {
+    padding-right: 26px;
+  }
+  .matching-card--uk {
+    padding-left: 26px;
   }
 }
 

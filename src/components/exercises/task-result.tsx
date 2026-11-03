@@ -206,13 +206,18 @@ function PairArrowIcon() {
 }
 
 export function TaskResultPairRows({ pairs }: { pairs: { left: string; right: string }[] }) {
+  const { lang } = useT();
   return (
     <div className="task-result-pair-rows">
       {pairs.map((p, i) => (
         <div key={i} className="task-result-pair-row">
-          <span className="task-result-pair-chip task-result-pair-chip--fr">{p.left}</span>
+          <span lang="fr" className="task-result-pair-chip chip-text-fit task-result-pair-chip--fr">
+            {p.left}
+          </span>
           <PairArrowIcon />
-          <span className="task-result-pair-chip task-result-pair-chip--uk">{p.right}</span>
+          <span lang={lang} className="task-result-pair-chip chip-text-fit task-result-pair-chip--uk">
+            {p.right}
+          </span>
         </div>
       ))}
     </div>
@@ -228,14 +233,17 @@ function AnswerChip({
   side,
   value,
   isAnswer,
+  lang,
 }: {
   side: "left" | "right";
   value: string;
   isAnswer: boolean;
+  lang: string;
 }) {
   return (
     <span
-      className={`task-result-pair-chip ${side === "left" ? "task-result-pair-chip--fr" : "task-result-pair-chip--uk"} ${
+      lang={lang}
+      className={`task-result-pair-chip chip-text-fit ${side === "left" ? "task-result-pair-chip--fr" : "task-result-pair-chip--uk"} ${
         isAnswer ? "task-result-answer-chip--emphasis" : ""
       }`}
     >
@@ -249,6 +257,7 @@ export function TaskResultAnswerRows({
 }: {
   rows: { number: number; left: string; leftIsAnswer: boolean; right: string; rightIsAnswer: boolean }[];
 }) {
+  const { lang } = useT();
   return (
     <div className="task-result-answer-grid">
       {rows.map((r) => (
@@ -256,9 +265,9 @@ export function TaskResultAnswerRows({
           <span className="task-result-answer-num" aria-hidden="true">
             {r.number}
           </span>
-          <AnswerChip side="left" value={r.left} isAnswer={r.leftIsAnswer} />
+          <AnswerChip side="left" value={r.left} isAnswer={r.leftIsAnswer} lang="fr" />
           <PairArrowIcon />
-          <AnswerChip side="right" value={r.right} isAnswer={r.rightIsAnswer} />
+          <AnswerChip side="right" value={r.right} isAnswer={r.rightIsAnswer} lang={lang} />
         </div>
       ))}
     </div>
