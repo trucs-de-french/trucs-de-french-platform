@@ -879,6 +879,19 @@ function WordSearchBlockView({
                       // пріоритетніша для кольору літери (без змішування).
                       const isFoundLetter = foundLetterKeys.has(key);
                       const isCorrectLetter = locked && !isFoundLetter && missedLetterKeys.has(key);
+                      // ЕТАП O — та сама причина, що crossword.tsx: підлога 0.75rem
+                      // (12px) рахувалась проти ВЖЕ помноженого на --zoom var(--cw), тож
+                      // на кроці зуму 0.65 (а на мобільному .ws-sheet, де підлога clamp
+                      // сама нижча — 22px замість 28px, — ще легше) cw*0.5 опускається
+                      // нижче 12px і підлога "вмикається": літера більше не стискається
+                      // пропорційно зі сіткою. Клітинка тут і так flex items-center
+                      // justify-center (на відміну від <input> у crossword.tsx, де сам
+                      // браузер центрує рядок тексту) — видимого зсуву це не дає, але
+                      // літера все одно стає відносно завеликою для клітинки. Нова
+                      // підлога (0.4rem/6.4px) — безпечний заглушний мінімум під
+                      // найгірший випадок цього файлу (мобільна підлога cw 22px × zoom
+                      // 0.65 ≈ 14.3px, природний розмір ≈7.15px) — підлога тут теж
+                      // ніколи реально не спрацьовує.
                       return (
                         <div
                           key={`${ri}:${ci}`}
@@ -891,7 +904,7 @@ function WordSearchBlockView({
                               ? "ws-cell-hinted bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
                               : ""
                           } ${isCorrectLetter ? "ws-letter-correct" : isFoundLetter ? "ws-letter-found" : ""}`}
-                          style={{ fontSize: "max(0.75rem, calc(var(--cw) * 0.5))" }}
+                          style={{ fontSize: "max(0.4rem, calc(var(--cw) * 0.5))", lineHeight: 1 }}
                         >
                           {letter}
                         </div>

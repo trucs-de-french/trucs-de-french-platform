@@ -992,7 +992,26 @@ function CrosswordBlockView({
                               }}
                               onBlur={diacritics.onBlur}
                               disabled={!!result && !practiceMode}
-                              style={{ fontSize: "max(0.6875rem, calc(var(--cw) * 0.5))" }}
+                              // ЕТАП O — fontSize РАНІШЕ мав підлогу 0.6875rem (11px):
+                              // при zoom=1 var(--cw) ніколи не нижче 1.75rem (28px, власна
+                              // підлога clamp у .grid-zoom-inner), тож cw*0.5 (14px) завжди
+                              // перевищувала цю підлогу і вона була "мертвою" на 100% —
+                              // але --zoom МНОЖИТЬ вже затиснутий --cw (clamp застосовано
+                              // ДО множення на zoom), тож на кроці 0.65 (28*0.65=18.2px)
+                              // cw*0.5=9.1px вже НИЖЧЕ підлоги 11px — підлога "вмикалась" і
+                              // переставала зменшуватись разом із клітинкою: шрифт лишався
+                              // фіксованим 11px у боксі ~13px (інпут мінус рамка плитки),
+                              // де рядок (line-height "normal" ~1.2× без явного значення)
+                              // уже не мав запасу — звідси зсув літери вниз-ліворуч саме на
+                              // цьому кроці зуму. Нова підлога (0.5rem/8px) — безпечний
+                              // заглушний мінімум: за поточних меж (cw-підлога 28px, zoom
+                              // мінімум 0.65) природний розмір ніколи не опускається нижче
+                              // 9.1px, тож ця підлога ніколи реально не спрацьовує — лише
+                              // захист, якщо межі колись зміняться. lineHeight:1 (замість
+                              // успадкованого "normal") — рядок точно = розміру шрифту, без
+                              // додаткового міжрядкового інтервалу, що раніше й забирав
+                              // останній запас у тісному боксі.
+                              style={{ fontSize: "max(0.5rem, calc(var(--cw) * 0.5))", lineHeight: 1 }}
                               className={`h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none dark:text-neutral-100 ${
                                 effectiveHintedCells.has(cellKey(ri, ci))
                                   ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"

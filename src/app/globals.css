@@ -990,6 +990,14 @@ button, input, textarea, select, label, nav, aside {
    затиснутий розмір. */
 .grid-zoom-wrap {
   container-type: inline-size;
+  /* ЕТАП O — захист від окремого (не кореня проблеми вище, лише
+     додаткового ризику на Android Chrome) автоматичного збільшення
+     занадто дрібного тексту: text-size-adjust:100% каже рендерити шрифт
+     РІВНО як задано, без евристичного "boost" дрібних кегелів — інакше
+     літера в затиснутій клітинці на зумі-вниз могла б раптом стати
+     БІЛЬШОЮ за сам --cw-розрахунок, знову ламаючи центрування. */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 .grid-zoom-inner {
   --cw: calc(clamp(1.75rem, 100cqw / var(--cols, 12), 2.25rem) * var(--zoom, 1));
