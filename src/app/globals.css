@@ -1187,10 +1187,17 @@ button, input, textarea, select, label, nav, aside {
    -40px), яка лишає +12px РЕАЛЬНОГО місця в розмітці під трек замість
    від'ємного "з'їдання" — тінь (вертикальний розмах ~30px) і далі влазить
    у padding-bottom:36px, що лишився. */
+/* ЕТАП M — мобільна сітка більше не "лист" (немає box-shadow, що тре
+   компенсувати запасом padding/від'ємною margin вище, — .ws-sheet нижче
+   на мобільному втрачає фон/рамку/тінь, плитки-літери лежать прямо на фоні
+   панелі): трюк К2/К3 (запас 40px + компенсуюча margin) мобільному більше
+   не потрібен — звичайний overflow-x:auto на повну ширину, з тонким
+   стилізованим скролбаром і невеликим запасом (10px) знизу під нього. */
 @media (max-width: 640px) {
   .ws-scroll {
-    padding: 8px 40px 36px;
-    margin: -8px -40px -24px;
+    width: 100%;
+    padding: 0 0 10px;
+    margin: 0;
     scrollbar-width: thin;
   }
   .ws-scroll::-webkit-scrollbar {
@@ -1230,19 +1237,23 @@ button, input, textarea, select, label, nav, aside {
 }
 @media (max-width: 640px) {
   .ws-sheet {
-    padding: 12px;
-    /* Нижня межа clamp (1.75rem/28px у базовому правилі вище) — ПІДЛОГА
-       розміру клітинки, яка виграє навіть коли природний розрахунок
-       "влізти в контейнер" вимагає меншого: на 360px екрані з 11
-       колонками (328-32)/11 ≈ 27px — менше за підлогу 28px, тож браузер
-       бере 28px, і 11×28px+32px padding (340px) переповнює 328px-контейнер
-       ще ДО будь-якого зуму. Це й була причина "сітка ширша за екран"
-       завжди, не лише при зумі. Підлога тут нижча (22px, мінімум задачі)
-       і віднімання padding відповідає реальному мобільному padding (12px
-       з кожного боку = 24px, не 32px базового правила) — тепер клітинка
-       справді стискається, щоб влізти, і скрол/підпис "ширша за екран"
-       з'являються лише коли --zoom реально збільшує --cw понад контейнер. */
-    --cw: calc(clamp(1.375rem, (100cqw - 24px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
+    /* ЕТАП M — принцип кросворду: нема "листа" навколо сітки на
+       мобільному (фон/рамка/радіус/тінь прибрані), кожна літера сама —
+       плитка (.ws-cell нижче, та сама ідея, що .crossword-tile), плитки
+       лежать прямо на фоні панелі. Падінг лишається мінімальним (не 0) —
+       саме повітря між краєм скрол-контейнера і першою/останньою плиткою,
+       не декоративний відступ "листа". */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 4px;
+    /* Підлога clamp (22px, мінімум задачі) і віднімання padding відповідає
+       реальному мобільному padding (4px з кожного боку = 8px) — клітинка
+       стискається, щоб влізти, і скрол/підпис "ширша за екран" з'являються
+       лише коли --zoom реально збільшує --cw понад контейнер (той самий
+       принцип, що й до ЕТАПУ M, лише з новим значенням padding). */
+    --cw: calc(clamp(1.375rem, (100cqw - 8px) / var(--cols, 12), 2.25rem) * var(--zoom, 1));
     max-width: 100%;
   }
 }
@@ -1473,6 +1484,116 @@ button, input, textarea, select, label, nav, aside {
 }
 .ws-legend-dot-selecting {
   background: var(--ws-legend-dot-selecting);
+}
+
+/* ЕТАП M — мобільна сітка філворду за принципом кросворду
+   (.crossword-tile): кожна літера сама є плиткою замість суцільної
+   "сторінки" (.ws-sheet, вище, уже без фону/рамки/тіні на мобільному) і
+   замальовується НЕ капсулою-оверлеєм (.ws-capsule-layer/.ws-lines-layer,
+   прибрані display:none нижче на мобільному), а власним фоном/рамкою —
+   на відміну від кросворду, тут .ws-cell НЕ табличний <td> (CSS grid,
+   gridTemplateColumns: repeat(cols, var(--cw))), тож margin на самому
+   елементі коректно дає зазор між плитками (на відміну від <table>,
+   margin на grid-елементі не ігнорується) — без додаткового шару-обгортки,
+   що мав кросворд через табличну специфіку. Порядок правил нижче — ПІСЛЯ
+   базових .ws-cell/.ws-letter-*/.ws-cell-hinted (вище в файлі): та сама
+   специфічність (один клас), тож виграє пізніший у джерелі; !important —
+   лише там, де база теж !important (.ws-cell-hinted), щоб перебити її. */
+@media (max-width: 640px) {
+  .ws-capsule-layer,
+  .ws-lines-layer {
+    display: none;
+  }
+  .ws-cell {
+    margin: 1.5px;
+    border-radius: 7px;
+    border: 1px solid #eadfb8;
+    background: #fff;
+    color: #1a1640;
+    font-weight: 800;
+  }
+  .dark .ws-cell {
+    border-color: rgba(243, 217, 139, 0.22);
+    background: rgba(255, 255, 255, 0.07);
+    color: #ecebff;
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .ws-cell {
+    border-color: rgba(243, 217, 139, 0.22);
+    background: rgba(255, 255, 255, 0.07);
+    color: #ecebff;
+  }
+}
+@media (max-width: 640px) {
+  /* "Виділяю" (тягнемо виділення) — та сама пара класів, що й раніше
+     малювала Tailwind bg-blue-200/dark:bg-blue-800 (скасовано
+     .ws-cell-previewing { background: transparent } вище), тепер плитка. */
+  .ws-cell.ws-cell-previewing.ws-letter-selecting {
+    background: #4b46da;
+    border-color: #4b46da;
+    color: #fff;
+  }
+  .dark .ws-cell.ws-cell-previewing.ws-letter-selecting {
+    background: #5a55e6;
+    border-color: #7b77f0;
+    color: #fff;
+  }
+  /* "Знайдено" */
+  .ws-cell.ws-letter-found {
+    background: #cfc9f5;
+    border-color: #a9a2ea;
+    color: #1a1640;
+  }
+  .dark .ws-cell.ws-letter-found {
+    background: rgba(139, 133, 224, 0.5);
+    border-color: rgba(169, 162, 234, 0.8);
+    color: #fff;
+  }
+  /* "Правильно" (пропущене слово, показане після перевірки блоку) — та
+     сама зелена пара, що .ws-capsule-correct/--ws-letter-correct-color
+     вище, лише тепер як фон плитки, не оверлей. */
+  .ws-cell.ws-letter-correct {
+    background: rgba(76, 196, 126, 0.22);
+    border-color: #7fd69a;
+    color: #1f7a3d;
+  }
+  .dark .ws-cell.ws-letter-correct {
+    background: rgba(47, 158, 91, 0.28);
+    border-color: #4cc47e;
+    color: #bff0d0;
+  }
+  /* Підказана перша літера — та сама золота пара, що бейдж "лампочка вже
+     використана" (--ws-hint-card-border), квадратна плитка замість кільця
+     (::before нижче вимкнений): !important перебиває базове правило
+     .ws-cell-hinted (теж !important) однаковою специфічністю — виграє
+     пізніше в джерелі. */
+  .ws-cell.ws-cell-hinted {
+    background: linear-gradient(135deg, #f3dc96, #d9b765) !important;
+    border-color: #d9b765 !important;
+    color: #1a1640 !important;
+    box-shadow: none !important;
+  }
+  .ws-cell.ws-cell-hinted::before {
+    display: none;
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .ws-cell.ws-cell-previewing.ws-letter-selecting {
+    background: #5a55e6;
+    border-color: #7b77f0;
+    color: #fff;
+  }
+  :root:not(.light) .ws-cell.ws-letter-found {
+    background: rgba(139, 133, 224, 0.5);
+    border-color: rgba(169, 162, 234, 0.8);
+    color: #fff;
+  }
+  :root:not(.light) .ws-cell.ws-letter-correct {
+    background: rgba(47, 158, 91, 0.28);
+    border-color: #4cc47e;
+    color: #bff0d0;
+  }
 }
 
 /* reorder.tsx — підказка про спосіб взаємодії (торкнутись двох плиток, щоб
