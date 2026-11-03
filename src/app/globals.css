@@ -1009,6 +1009,16 @@ button, input, textarea, select, label, nav, aside {
     --cw: calc(2rem * var(--zoom, 1));
   }
 }
+/* ЕТАП U — crossword.tsx раніше вішав Tailwind drop-shadow-md (фіксовані
+   4px/3px + 2px/2px) прямо на .grid-zoom-inner; filter:drop-shadow
+   рахується з альфа-контуру всього вмісту (навколо кожної видимої
+   плитки, включно з фокусованою — її фон яскравіший/суцільніший, тож
+   саме навколо неї цей фіксований контур був найзаметнішим "другим
+   кільцем"). Тепер пропорційний --cw, як і box-shadow плитки вище. */
+.crossword-grid-shadow {
+  filter: drop-shadow(0 clamp(1px, calc(var(--cw) * 0.11), 4px) clamp(1px, calc(var(--cw) * 0.083), 3px) rgba(0, 0, 0, 0.07))
+    drop-shadow(0 clamp(1px, calc(var(--cw) * 0.055), 2px) clamp(1px, calc(var(--cw) * 0.055), 2px) rgba(0, 0, 0, 0.06));
+}
 
 /* word-search.tsx — текст підпису "сітка ширша за екран" відрізняється на
    дотикових пристроях (двопальцева прокрутка замінює одно-пальцеве
@@ -2928,18 +2938,21 @@ button, input, textarea, select, label, nav, aside {
   border: 1.5px solid transparent;
   background: linear-gradient(#fff, #fff) padding-box,
     linear-gradient(180deg, rgba(217, 183, 101, 0.95), rgba(217, 183, 101, 0.3)) border-box;
-  box-shadow: 0 4px 8px -3px rgba(120, 90, 20, 0.3);
+  box-shadow: 0 clamp(1px, calc(var(--cw) * 0.11), 4px) clamp(2px, calc(var(--cw) * 0.22), 8px)
+    clamp(-3px, calc(var(--cw) * -0.083), -1px) rgba(120, 90, 20, 0.3);
 }
 .dark .crossword-tile {
   background: var(--dark-surface-fill);
   border-color: var(--gold-border-dark-45);
-  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 clamp(1px, calc(var(--cw) * 0.11), 4px) clamp(2px, calc(var(--cw) * 0.22), 8px)
+    clamp(-3px, calc(var(--cw) * -0.083), -1px) rgba(0, 0, 0, 0.45);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .crossword-tile {
     background: var(--dark-surface-fill);
     border-color: var(--gold-border-dark-45);
-    box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 clamp(1px, calc(var(--cw) * 0.11), 4px) clamp(2px, calc(var(--cw) * 0.22), 8px)
+      clamp(-3px, calc(var(--cw) * -0.083), -1px) rgba(0, 0, 0, 0.45);
   }
 }
 .dark .crossword-tile--active,
@@ -2996,14 +3009,30 @@ button, input, textarea, select, label, nav, aside {
 .light .crossword-tile--active:focus-within {
   background: #fff;
   border-color: #3b36c4;
-  box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(90, 85, 230, 0.25);
+  box-shadow: 0 0 0 clamp(1px, calc(var(--cw) * 0.05), 2px) rgba(90, 85, 230, 0.25);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .crossword-tile--active:focus-within {
     background: #fff;
     border-color: #3b36c4;
-    box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(90, 85, 230, 0.25);
+    box-shadow: 0 0 0 clamp(1px, calc(var(--cw) * 0.05), 2px) rgba(90, 85, 230, 0.25);
   }
+}
+/* ЕТАП U — .light .glass-block-panel input:focus-visible/:focus (нижче,
+   ~ряд 3487) ставить ВЛАСНЕ box-shadow (0 0 0 2px indigo, фіксований
+   px) на БУДЬ-ЯКИЙ <input> усередині .glass-block-panel, включно з
+   клітинкою кросворду — тож фокусована клітинка малювала ДВА кільця
+   одразу: .crossword-tile--active:focus-within вище (на div-обгортці)
+   і це глобальне правило (на самому <input>, вкладеному в ту ж
+   обгортку) — звідси "подвійне гало", що лишалось після ЕТАПУ T,
+   бо той етап торкався лише обгортки. Клітинка вже має власний
+   індикатор фокусу, тож тут індикатор інпута просто вимикається.
+   !important — проста специфічність класу не перебила б правило з
+   двома :not() (вища специфічність за замовчуванням). */
+.crossword-tile input:focus-visible,
+.crossword-tile input:focus {
+  box-shadow: none !important;
+  border-color: transparent !important;
 }
 /* Попап діакритики (DiacriticsPopup, diacritics-popup.tsx) — темна тема:
    той самий колір поля, що "лист" філворду (--ws-sheet-bg, ws-sheet вище),

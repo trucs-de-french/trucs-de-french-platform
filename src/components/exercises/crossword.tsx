@@ -919,7 +919,7 @@ function CrosswordBlockView({
                 РЕАЛЬНО видимою (непрозорою) формою — саме контуром слів, а не
                 контуром контейнера. */}
             <div
-              className="grid-zoom-inner w-max mx-auto drop-shadow-md"
+              className="grid-zoom-inner w-max mx-auto crossword-grid-shadow"
               style={{ "--cols": cols, "--zoom": zoom } as CSSVarStyle}
             >
               {/* font-heading — сітка тепер на тому самому шрифті, що інтерфейс
@@ -987,6 +987,16 @@ function CrosswordBlockView({
                             ? "bg-red-50 dark:bg-red-950/30"
                             : "";
                       const letterFontStyle = { fontSize: "max(0.5rem, calc(var(--cw) * 0.5))" } as const;
+                      // ЕТАП U — номер (дивись .crossword-tile-number нижче) і
+                      // літера мали окрему фіксовану floor-величину (0.5625rem) та
+                      // фіксований inset (left-0.5/top-0, Tailwind), тож на малому
+                      // --cw (zoom 65-80%) обидва впирались у floor одночасно й
+                      // займали майже всю крихітну плитку — звідси накладання.
+                      // Зсув літери лише на дуже малому --cw (<24px): max(0, ...)
+                      // дає рівно 0 на 100% zoom (--cw 28-36px), тож вигляд там не
+                      // змінюється.
+                      const numberedLetterShift =
+                        number !== null ? "max(0px, calc((24px - var(--cw)) * 0.3))" : undefined;
                       return (
                         <td
                           key={ci}
@@ -1013,8 +1023,13 @@ function CrosswordBlockView({
                           >
                             {number !== null && (
                               <span
-                                className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 z-20 leading-none"
-                                style={{ fontSize: "max(0.5625rem, calc(var(--cw) * 0.28))" }}
+                                className="crossword-tile-number pointer-events-none absolute z-20 leading-none"
+                                style={{
+                                  fontSize: "max(7px, calc(var(--cw) * 0.3))",
+                                  left: "calc(var(--cw) * 0.06)",
+                                  top: "calc(var(--cw) * 0.02)",
+                                  lineHeight: 1,
+                                }}
                               >
                                 {number}
                               </span>
@@ -1041,7 +1056,11 @@ function CrosswordBlockView({
                             <span
                               aria-hidden="true"
                               className={`crossword-tile-letter pointer-events-none absolute inset-0 z-0 flex items-center justify-center rounded-[6px] font-heading font-medium uppercase leading-none ${statusColorClass} ${statusBgClass}`}
-                              style={letterFontStyle}
+                              style={{
+                                ...letterFontStyle,
+                                paddingTop: numberedLetterShift,
+                                paddingLeft: numberedLetterShift,
+                              }}
                             >
                               {effectiveGrid[ri][ci]}
                             </span>
