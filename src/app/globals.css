@@ -7982,7 +7982,7 @@ button.scene-bar:active .scene-bar-toggle {
     align-items: center;
     justify-content: center;
     width: 44px;
-    height: 56px;
+    height: 44px;
     flex-shrink: 0;
     border-radius: 10px;
     padding: 0;
@@ -7995,7 +7995,7 @@ button.scene-bar:active .scene-bar-toggle {
     height: 20px;
   }
   .word-pool-arrow--prev {
-    border: 2px solid #e4cf94;
+    border: 1.5px solid #e4cf94;
     background: #f6edd4;
     color: #6b4a14;
     margin-right: 8px;
@@ -8015,7 +8015,7 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (max-width: 640px) {
   .word-pool-arrow--next {
-    border: 2px solid #3b36c4;
+    border: 1.5px solid #3b36c4;
     background: linear-gradient(135deg, #2f2c6b, #4b46da);
     color: #f3d98b;
     margin-left: 8px;
@@ -8039,16 +8039,20 @@ button.scene-bar:active .scene-bar-toggle {
   .word-pool-chips > .word-pool-chip {
     scroll-snap-align: start;
   }
+  /* "Варіант 4" — м'який заокруглений квадрат замість повністю круглої
+     пілюлі: той самий радіус (10px), що .image-match-slot (слот під
+     картинкою, куди слово кладуть) — форма чипа в пулі тепер відповідає
+     формі слота, у який він переноситься. */
   .word-pool-chip {
-    min-height: 56px;
+    min-height: 44px;
     height: auto;
-    padding: 0 18px;
-    font-size: 19px;
+    padding: 0 14px;
+    font-size: 17px;
     font-weight: 800;
-    border: 2px solid #d9b765;
+    border: 1.5px solid #d9b765;
     background: #fffaf0;
-    box-shadow: 0 3px 0 #e4cf94;
-    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(90, 70, 20, 0.18);
+    border-radius: 10px;
   }
   .dark .word-pool-chip {
     background: var(--dark-surface-fill);
