@@ -4583,6 +4583,27 @@ button.scene-bar:active .scene-bar-toggle {
     color: #f6dc8e;
   }
 }
+/* Мобільний — та сама причина, що HintPill (task-panel-header.tsx,
+   комміт a32d26e): фіксована height:36px і rounded-full розраховані на
+   однорядковий текст (десктоп, ширша панель); на вузькому екрані текст
+   "З підказкою: N відповідей, половина балів" переноситься на 2 рядки,
+   а фіксована висота вкладки їх не вміщує — виходить за верхню/нижню
+   рамку. Окремий клас (не Tailwind-утиліти в JSX, як у HintPill), тож
+   без !important — просто перевизначення цих же властивостей нижче в
+   джерелі (та сама специфічність, той самий клас). */
+@media (max-width: 640px) {
+  .task-result-hint-summary {
+    height: auto;
+    min-height: 36px;
+    border-radius: 22px;
+    gap: 10px;
+    padding: 10px 14px 10px 10px;
+  }
+  .task-result-hint-summary > span {
+    white-space: normal;
+    line-height: 1.35;
+  }
+}
 /* Inline-панель "Незаповнено: N. Перевірити все одно?" (check-confirm.tsx,
    CheckConfirmBar) — під кнопкою "Перевірити", не оверлей/модалка. Кремовий
    фон + золота рамка (ті самі токени, що світла панель сцени, --glass-*),
