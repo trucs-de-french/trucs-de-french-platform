@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { formatPointsLocalized, formatPointsCountLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
+import { useFitText } from "./use-fit-text";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -205,19 +206,30 @@ function PairArrowIcon() {
   );
 }
 
+// Один вимірювальний чип (use-fit-text.ts) — спільний для fr/uk сторін
+// TaskResultPairRows і AnswerChip нижче: ref живе лише ТУТ (хук потребує
+// DOM-вузол, щоб зіставити scrollWidth/clientWidth), text/lang-пропи йдуть
+// у залежності useFitText, щоб перерахунок спрацював і на зміну слова, і
+// на зміну мови інтерфейсу (lang=uk/en чипа).
+function FitChip({ lang, className, text }: { lang: string; className: string; text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useFitText(ref, text);
+  return (
+    <span ref={ref} lang={lang} className={className}>
+      {text}
+    </span>
+  );
+}
+
 export function TaskResultPairRows({ pairs }: { pairs: { left: string; right: string }[] }) {
   const { lang } = useT();
   return (
     <div className="task-result-pair-rows">
       {pairs.map((p, i) => (
         <div key={i} className="task-result-pair-row">
-          <span lang="fr" className="task-result-pair-chip chip-text-fit task-result-pair-chip--fr">
-            {p.left}
-          </span>
+          <FitChip lang="fr" className="task-result-pair-chip chip-text-fit task-result-pair-chip--fr" text={p.left} />
           <PairArrowIcon />
-          <span lang={lang} className="task-result-pair-chip chip-text-fit task-result-pair-chip--uk">
-            {p.right}
-          </span>
+          <FitChip lang={lang} className="task-result-pair-chip chip-text-fit task-result-pair-chip--uk" text={p.right} />
         </div>
       ))}
     </div>
@@ -241,14 +253,13 @@ function AnswerChip({
   lang: string;
 }) {
   return (
-    <span
+    <FitChip
       lang={lang}
       className={`task-result-pair-chip chip-text-fit ${side === "left" ? "task-result-pair-chip--fr" : "task-result-pair-chip--uk"} ${
         isAnswer ? "task-result-answer-chip--emphasis" : ""
       }`}
-    >
-      {value}
-    </span>
+      text={value}
+    />
   );
 }
 

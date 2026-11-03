@@ -5310,12 +5310,20 @@ button.scene-bar:active .scene-bar-toggle {
    мав явного font-size (успадковував навколишній, завеликий для вузької
    ширини), а власної hyphens:auto-страховки не було. Менший padding/gap і
    .chip-text-fit (клас у JSX) — той самий принцип, що в .table-fill-row і
-   .task-result-answer-row нижче. */
+   .task-result-answer-row нижче.
+   ЕТАП — слова все одно обрізались (overflow:hidden у .chip-text-fit +
+   hyphens:auto, що не ділить більшість українських/непередбачених слів на
+   Android Chrome): font-size чипа тепер підбирає useFitText (use-fit-
+   text.ts, FitChip у task-result.tsx) по кожному чипу окремо (13px база,
+   крок 0.5px, підлога 10px) — 13px нижче лишається лише верхньою межею на
+   випадок, коли JS ще не встиг застосуватись (перший кадр). Padding
+   6px 8px — гарантований внутрішній відступ (п.2 задачі), колонка
+   стрілки 22→18px звільняє трохи більше місця під чипи. */
 @media (max-width: 640px) {
   .task-result-pair-row {
-    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
     gap: 6px;
-    padding: 8px 10px;
+    padding: 8px 8px;
   }
   /* minmax(0,1fr) вище вже дає grid-комірці стискатись — сам чип теж
      потребує min-width:0 (інакше власна ширина впливає на grid-трек) і
@@ -5325,7 +5333,7 @@ button.scene-bar:active .scene-bar-toggle {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 5px 10px;
+    padding: 6px 8px;
     font-size: 13px;
   }
 }
@@ -5474,20 +5482,23 @@ button.scene-bar:active .scene-bar-toggle {
    "couramment"/"quelconque" без місця на вузьких телефонах. Менший gap/
    padding звільняють кілька px, а .chip-text-fit (клас у JSX,
    AnswerChip/TaskResultPairRows вище) додає контрольований hyphens:auto
-   замість старого word-break:normal-без-страховки. */
+   замість старого word-break:normal-без-страховки.
+   ЕТАП — той самий фікс, що .task-result-pair-row вище: font-size чипа
+   тепер підбирає useFitText (FitChip, замінив AnswerChip's <span>) замість
+   фіксованого 13px, колонки — [18px номер] [1fr fr] [14px стрілка] [1fr
+   uk] (п.3 задачі), gap 6px, padding рядка 6px/8px, padding чипа 6px 8px
+   (гарантований внутрішній відступ, п.2). */
 @media (max-width: 640px) {
   .task-result-answer-row {
-    /* Рівні колонки fr/uk (замість 0.85fr/1.15fr) — обидва чипи стискаються
-       однаково; номер 20px (мінімум), стрілка — своя власна ширина. */
-    grid-template-columns: minmax(20px, 20px) minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 8px;
-    padding: 6px 10px;
+    grid-template-columns: minmax(18px, 18px) minmax(0, 1fr) 14px minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px 8px;
   }
   .task-result-answer-row .task-result-pair-chip {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 5px 10px;
+    padding: 6px 8px;
     font-size: 13px;
   }
 }
@@ -6738,24 +6749,30 @@ button.scene-bar:active .scene-bar-toggle {
    перекладу на мобільному (table-fill-chip, task-result pair/answer chips,
    matching-картки) — одне джерело, застосовується класом поряд із
    власними класами кожного місця (General-вимога задачі: той самий
-   принцип скрізь, де є чип слова). overflow-wrap:anywhere/word-break:
-   break-all (попередній підхід у кількох із цих місць) ламають слово
-   ДЕ ПОПАЛО, лишаючи саму літеру на окремому рядку — тут лише звичний
-   перенос по пробілах (overflow-wrap/word-break: normal) + hyphens:auto з
-   лімітом (hyphenate-limit-chars: 6 3 3 — слово мінімум 6 символів,
-   щонайменше 3 до й 3 після дефіса, тож однолітерного "хвоста" ніколи не
-   буде) як контрольований запасний варіант для слів, що не влізуть навіть
-   після звуження/зменшення шрифту (нижче, по кожному місцю окремо).
-   overflow:hidden — лише останній страхувальний рубіж (сам фікс полягає в
-   ширині колонки/padding/font-size по кожному місцю, не в обрізанні). */
+   принцип скрізь, де є чип слова).
+   ЕТАП — overflow:hidden тут РІЗАЛО слово ("un établisseme|nt",
+   "сентимент|альний"), коли hyphens:auto не ділило слово (більшість
+   українських слів і багато французьких на Android Chrome просто НЕ
+   мають словника дефісації — auto тоді нічого не робить, слово лишається
+   однією нерозривною стрічкою). Сам фікс розміру тепер — useFitText
+   (use-fit-text.ts): JS зменшує font-size чипа, доки слово не влізе;
+   overflow:visible тут — тому, що текст, якого JS ще не встиг (чи не
+   зможе) стиснути, має лишатись ВИДИМИМ (чип росте у висоту/слово
+   переноситься), а не обрізаним. hyphens:manual (не auto) — переносити
+   лише там, де в тексті є м'який дефіс (&shy;/­), не вгадувати
+   довільно. Коли навіть floor-розмір (10px, use-fit-text.ts) не
+   вміщує слово, useFitText додає .chip-text-fit--overflow нижче —
+   overflow-wrap:anywhere ТІЛЬКИ для цього єдиного чипа (ламане слово
+   краще за обрізане, п.1 задачі). */
 @media (max-width: 640px) {
   .chip-text-fit {
-    overflow-wrap: normal;
+    overflow-wrap: break-word;
     word-break: normal;
-    hyphens: auto;
-    -webkit-hyphens: auto;
-    hyphenate-limit-chars: 6 3 3;
-    overflow: hidden;
+    hyphens: manual;
+    overflow: visible;
+  }
+  .chip-text-fit.chip-text-fit--overflow {
+    overflow-wrap: anywhere;
   }
 }
 
@@ -6941,7 +6958,10 @@ button.scene-bar:active .scene-bar-toggle {
     font-size: 11px;
   }
   .table-fill-chip {
-    padding: 6px 6px;
+    /* ЕТАП — 6px було МЕНШЕ гарантованого внутрішнього відступу 8px, що
+       задача вимагає скрізь, де є чип слова (аудит, task-result/
+       matching-картки отримали той самий мінімум). */
+    padding: 8px 8px;
   }
   .table-fill-chip-fr,
   .table-fill-chip-uk {
