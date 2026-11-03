@@ -1065,21 +1065,26 @@ function CrosswordBlockView({
                               // стосувались ВИДИМОГО тексту інпута — тепер він завжди
                               // прозорий (ЕТАП R вище), тож точний збіг line-height із
                               // висотою боксу більше не потрібен для центрування: сам
-                              // гліф невидимий, лишається лише caret і розмір шрифту для
-                              // його висоти. fontSize — той самий вираз, що в
-                              // .crossword-tile-letter (та сама змінна --cw), щоб caret
-                              // мав ту саму висоту, що й видима літера під ним.
-                              // color лишається статусним (statusColorClass) НЕ заради
-                              // видимості гліфа (той — через -webkit-text-fill-color:
-                              // transparent — завжди прозорий), а заради caret-color: за
-                              // умовчанням caret-color: auto resolves to currentColor, тож
-                              // caret автоматично того самого кольору, що й видима літера
-                              // в кожному стані (hinted/correct/incorrect/звичайний).
+                              // гліф невидимий, лишається лише розмір шрифту (щоб висота
+                              // поля для фокусу/виділення лишалась тією самою, що в
+                              // .crossword-tile-letter, та сама змінна --cw).
+                              // ЕТАП T — caret:transparent (а не currentColor/статусний
+                              // колір, як було до цього етапу): кожна клітинка містить
+                              // РІВНО одну літеру, що просто замінюється при наборі
+                              // (не текстовий рядок, де позиція курсору щось означає) —
+                              // текстовий caret виглядав як чужорідна висока вертикальна
+                              // риска поряд із літерою; саму активну клітинку вже
+                              // достатньо показує фокус-гало (.crossword-tile--active:
+                              // focus-within). outline:none — придушує ще й нативний
+                              // focus ring браузера на самому інпуті (той самий ефект, що
+                              // й глобальне правило .glass-block-panel input:focus-visible
+                              // вище, тут продубльовано прямо на класі для надійності),
+                              // щоб малювалось лише ОДНЕ гало — те, що на .crossword-tile.
                               // selection:bg-transparent/selection:text-transparent —
                               // виділення тексту в інпуті (миша/клавіатура) не малює
                               // "другу" підсвічену літеру над .crossword-tile-letter.
-                              style={{ fontSize: "max(0.5rem, calc(var(--cw) * 0.5))" }}
-                              className={`relative z-10 h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none selection:bg-transparent selection:text-transparent [-webkit-text-fill-color:transparent] ${statusColorClass}`}
+                              style={{ fontSize: "max(0.5rem, calc(var(--cw) * 0.5))", caretColor: "transparent" }}
+                              className="relative z-10 h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none selection:bg-transparent selection:text-transparent [-webkit-text-fill-color:transparent]"
                             />
                           </div>
                         </td>

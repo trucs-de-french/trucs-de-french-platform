@@ -2954,16 +2954,27 @@ button, input, textarea, select, label, nav, aside {
     border-color: #7f9cf0;
   }
 }
+/* ЕТАП T — фокус-гало фокусованої клітинки (лавандовий/periwinkle box-
+   shadow) мало фіксований spread (3px світла тема/8px розмиття темна) —
+   на зумі-вниз сама плитка стискається (var(--cw) може опускатись до
+   ~18px), а гало лишається тим самим фіксованим розміром, тож візуально
+   виглядає НЕПРОПОРЦІЙНО товстим/великим відносно плитки (саме цей
+   артефакт і репортнули). Спред тепер — calc() від того самого --cw
+   (0.08×, clamp 1.5-3px): на 100% zoom (--cw 28-36px) дає ~2.2-2.9px,
+   майже як колишні 3px; на 65% (--cw ~18px) дає 1.5px (підлога) замість
+   видимих "зайвих" 3px. Темна тема — той самий spread-підхід замість
+   розмиття (box-shadow blur фіксованого радіуса давав ще помітніший і
+   теж непропорційний ореол), для однакового вигляду в обох темах. */
 .dark .crossword-tile--active:focus-within {
   background: rgba(127, 156, 240, 0.45);
   border-color: #a9bcff;
-  box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+  box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(127, 156, 240, 0.4);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .crossword-tile--active:focus-within {
     background: rgba(127, 156, 240, 0.45);
     border-color: #a9bcff;
-    box-shadow: 0 0 8px rgba(127, 156, 240, 0.4);
+    box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(127, 156, 240, 0.4);
   }
 }
 /* Світла тема — лавандова підсвітка активного/наведеного слова (та сама
@@ -2985,13 +2996,13 @@ button, input, textarea, select, label, nav, aside {
 .light .crossword-tile--active:focus-within {
   background: #fff;
   border-color: #3b36c4;
-  box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
+  box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(90, 85, 230, 0.25);
 }
 @media (prefers-color-scheme: light) {
   :root:not(.dark) .crossword-tile--active:focus-within {
     background: #fff;
     border-color: #3b36c4;
-    box-shadow: 0 0 0 3px rgba(90, 85, 230, 0.25);
+    box-shadow: 0 0 0 clamp(1.5px, calc(var(--cw) * 0.08), 3px) rgba(90, 85, 230, 0.25);
   }
 }
 /* Попап діакритики (DiacriticsPopup, diacritics-popup.tsx) — темна тема:
