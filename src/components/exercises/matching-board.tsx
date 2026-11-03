@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useT } from "@/lib/i18n/context";
 
 // Дошка "ліва/права колонка + сполучні крапки/лінії" для matching.tsx —
@@ -11,6 +11,13 @@ import { useT } from "@/lib/i18n/context";
 export type PairDotState = "default" | "selected" | "paired" | "correct" | "incorrect";
 
 type Rect = { x: number; y: number };
+
+const PAIR_COLOR_COUNT = 5;
+// ЕТАП V — на мобільному (max-width:640px, globals.css) крапка сидить не
+// на краю картки, а в розширеному гутері: 4px зазор від краю колонки +
+// половина 16px крапки = 12px офсет від реального r.right/r.left картки.
+// На десктопі офсет 0 — крапка лишається рівно на краю картки, як було.
+const MOBILE_GUTTER_DOT_OFFSET = 12;
 
 export function MatchingBoard({
   leftItems,
@@ -42,6 +49,31 @@ export function MatchingBoard({
   const [leftDots, setLeftDots] = useState<Map<string, Rect>>(new Map());
   const [rightDots, setRightDots] = useState<Map<string, Rect>>(new Map());
 
+  // ЕТАП V — чи зараз мобільна розкладка (max-width:640px, той самий
+  // breakpoint, що globals.css): визначає лише X-офсет крапки/лінії нижче
+  // (гутер на мобільному ширший і крапка стоїть у ньому, не на краю
+  // картки) — та сама умова, що вже використовує use-working-tile-layout.ts
+  // для своєї розкладки (matchMedia + addEventListener("change", ...)).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Індекс пари за порядком появи в pairs — визначає, який з 5 кольорів
+  // (matching-pair-0..4, globals.css) дістається картці/крапці/лінії ДО
+  // перевірки (мобільний дизайн, ЕТАП V); після "check" колір пари не
+  // використовується — стан переходить у correct/incorrect зі своїм
+  // кольором, який уже існував.
+  const pairColorIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    Object.keys(pairs).forEach((left, i) => map.set(left, i));
+    return map;
+  }, [pairs]);
+
   // Координати крапок рахуються з реальних getBoundingClientRect (не зі
   // стилів/відступів) — єдиний спосіб лишитись приклеєним до картки, коли
   // текст переноситься, висота рядка змінюється чи вікно змінює розмір.
@@ -50,15 +82,16 @@ export function MatchingBoard({
       const container = containerRef.current;
       if (!container) return;
       const cRect = container.getBoundingClientRect();
+      const dotOffset = isMobile ? MOBILE_GUTTER_DOT_OFFSET : 0;
       const nextLeft = new Map<string, Rect>();
       for (const [left, el] of leftRefs.current) {
         const r = el.getBoundingClientRect();
-        nextLeft.set(left, { x: r.right - cRect.left, y: r.top + r.height / 2 - cRect.top });
+        nextLeft.set(left, { x: r.right - cRect.left + dotOffset, y: r.top + r.height / 2 - cRect.top });
       }
       const nextRight = new Map<string, Rect>();
       for (const [right, el] of rightRefs.current) {
         const r = el.getBoundingClientRect();
-        nextRight.set(right, { x: r.left - cRect.left, y: r.top + r.height / 2 - cRect.top });
+        nextRight.set(right, { x: r.left - cRect.left - dotOffset, y: r.top + r.height / 2 - cRect.top });
       }
       setLeftDots(nextLeft);
       setRightDots(nextRight);
@@ -74,7 +107,7 @@ export function MatchingBoard({
       observer.disconnect();
       window.removeEventListener("resize", recompute);
     };
-  }, [leftItems, rightItems, pairs, selectedLeft]);
+  }, [leftItems, rightItems, pairs, selectedLeft, isMobile]);
 
   function dotStateForLeft(left: string): PairDotState {
     const status = statusForLeft(left);
@@ -105,7 +138,7 @@ export function MatchingBoard({
   }
 
   const lines = useMemo(() => {
-    const segments: { key: string; d: string; state: PairDotState }[] = [];
+    const segments: { key: string; d: string; state: PairDotState; pairIdx: number }[] = [];
     for (const [left, right] of Object.entries(pairs)) {
       const start = leftDots.get(left);
       const end = rightDots.get(right);
@@ -115,10 +148,11 @@ export function MatchingBoard({
         key: `${left}__${right}`,
         d: `M ${start.x} ${start.y} C ${start.x + dx} ${start.y}, ${end.x - dx} ${end.y}, ${end.x} ${end.y}`,
         state: statusForLeft(left) ?? "paired",
+        pairIdx: pairColorIndex.get(left) ?? 0,
       });
     }
     return segments;
-  }, [pairs, leftDots, rightDots, statusForLeft]);
+  }, [pairs, leftDots, rightDots, statusForLeft, pairColorIndex]);
 
   const stub = useMemo(() => {
     if (!selectedLeft) return null;
@@ -131,9 +165,13 @@ export function MatchingBoard({
   return (
     <div ref={containerRef} className="matching-board">
       <svg className="matching-lines" aria-hidden="true">
-        {lines.map((l) => (
-          <path key={l.key} d={l.d} className={`matching-line matching-line--${l.state}`} />
-        ))}
+        {lines.map((l) => {
+          const pairColored = isMobile && l.state === "paired";
+          const cls = pairColored
+            ? `matching-line matching-line--pair matching-pair-${l.pairIdx % PAIR_COLOR_COUNT}`
+            : `matching-line matching-line--${l.state}`;
+          return <path key={l.key} d={l.d} className={cls} />;
+        })}
         {stub && <path d={stub} className="matching-line-stub" />}
       </svg>
 
@@ -141,6 +179,12 @@ export function MatchingBoard({
         <div className="matching-column">
           {leftItems.map((left) => {
             const state = dotStateForLeft(left);
+            const pairIdx = pairColorIndex.get(left);
+            const pairColored = isMobile && state === "paired" && pairIdx !== undefined;
+            const pairClass = pairColored ? `matching-pair-${pairIdx % PAIR_COLOR_COUNT} matching-card--pair` : "";
+            const dotPairClass = pairColored
+              ? `matching-pair-${pairIdx % PAIR_COLOR_COUNT} matching-dot--pair`
+              : "";
             return (
               <button
                 key={left}
@@ -153,11 +197,14 @@ export function MatchingBoard({
                 disabled={disabled}
                 aria-label={ariaLabelForState(left, state)}
                 lang="fr"
-                className={`matching-card matching-card--fr matching-card--${state} min-w-0 chip-text-fit`}
+                className={`matching-card matching-card--fr matching-card--${state} ${pairClass} min-w-0 chip-text-fit`}
               >
                 {left}
                 {renderLeftExtra?.(left)}
-                <span className={`matching-dot matching-dot--left matching-dot--${state}`} aria-hidden="true" />
+                <span
+                  className={`matching-dot matching-dot--left matching-dot--${state} ${dotPairClass}`}
+                  aria-hidden="true"
+                />
               </button>
             );
           })}
@@ -166,6 +213,13 @@ export function MatchingBoard({
         <div className="matching-column">
           {rightItems.map((right) => {
             const state = dotStateForRight(right);
+            const pairedLeft = Object.entries(pairs).find(([, r]) => r === right)?.[0];
+            const pairIdx = pairedLeft ? pairColorIndex.get(pairedLeft) : undefined;
+            const pairColored = isMobile && state === "paired" && pairIdx !== undefined;
+            const pairClass = pairColored ? `matching-pair-${pairIdx % PAIR_COLOR_COUNT} matching-card--pair` : "";
+            const dotPairClass = pairColored
+              ? `matching-pair-${pairIdx % PAIR_COLOR_COUNT} matching-dot--pair`
+              : "";
             return (
               <button
                 key={right}
@@ -178,12 +232,15 @@ export function MatchingBoard({
                 disabled={disabled}
                 aria-label={ariaLabelForState(right, state)}
                 lang={lang}
-                className={`matching-card matching-card--uk min-w-0 chip-text-fit ${
+                className={`matching-card matching-card--uk ${pairClass} min-w-0 chip-text-fit ${
                   usedRights.has(right) ? "opacity-50" : ""
                 }`}
               >
                 {right}
-                <span className={`matching-dot matching-dot--right matching-dot--${state}`} aria-hidden="true" />
+                <span
+                  className={`matching-dot matching-dot--right matching-dot--${state} ${dotPairClass}`}
+                  aria-hidden="true"
+                />
               </button>
             );
           })}

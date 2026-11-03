@@ -8180,17 +8180,123 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 640px) {
   .matching-columns {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: 16px;
+    column-gap: 56px;
   }
   .matching-card {
     padding: 10px 14px;
     font-size: clamp(14px, 4.2vw, 17px);
   }
-  .matching-card--fr {
-    padding-right: 26px;
+}
+
+/* ЕТАП V — мобільний Association (max-width:640px): сполучні крапки йдуть
+   З картки в розширений гутер (56px, замінив 16px-гутер/26px-падінг-хак
+   ЕТАПУ S вище — тепер розмір самого гутера дає місце для крапок і лінії,
+   картці більше не треба резервувати місце під кружок зсередини). Крапка
+   16px, 4px від краю колонки через CSS transform (а не JS) — JS
+   (matching-board.tsx) рахує X SVG-лінії як r.right/r.left ± той самий
+   офсет (12px = 4px зазор + половина 16px крапки), тож лінія завжди
+   рівно в центр крапки незалежно від висоти картки/переносу тексту.
+   Кожна пара (ДО перевірки) — свій колір із 5-кольорової палітри за
+   індексом (--pair-color/--pair-tint/--pair-rgb, клас matching-pair-N) —
+   і на картці, і на крапці, і на лінії; .matching-card--pair/--dot--pair/
+   --line--pair читають ці змінні й стоять ПІСЛЯ базових --paired-правил
+   у файлі (та сама специфічність класу — пізніше джерело в каскаді
+   виграє), щоб перекрити гало/колір "усі пари однакові золотом". */
+@media (max-width: 640px) {
+  .matching-dot {
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
   }
-  .matching-card--uk {
-    padding-left: 26px;
+  .matching-dot--left {
+    right: 0;
+    left: auto;
+    transform: translateX(calc(100% + 4px));
+  }
+  .matching-dot--right {
+    left: 0;
+    right: auto;
+    transform: translateX(calc(-100% - 4px));
+  }
+  .matching-dot--left.matching-dot--default,
+  .matching-dot--left.matching-dot--paired-empty {
+    border-color: #d9b765;
+  }
+  .matching-dot--right.matching-dot--default,
+  .matching-dot--right.matching-dot--paired-empty {
+    border-color: #c9cdf5;
+  }
+  .dark .matching-dot--left.matching-dot--default,
+  .dark .matching-dot--left.matching-dot--paired-empty {
+    border-color: var(--gold-border-dark-45);
+  }
+  .dark .matching-dot--right.matching-dot--default,
+  .dark .matching-dot--right.matching-dot--paired-empty {
+    border-color: rgba(127, 156, 240, 0.6);
+  }
+  .matching-dot--selected {
+    background: linear-gradient(135deg, #f3dc96, #d9b765);
+    box-shadow: 0 0 0 4px rgba(217, 183, 101, 0.35);
+    animation: matching-dot-pulse 1.6s ease-in-out infinite;
+  }
+  .matching-pair-0 {
+    --pair-color: #4b46da;
+    --pair-tint: #eeeaff;
+    --pair-rgb: 75, 70, 218;
+  }
+  .matching-pair-1 {
+    --pair-color: #2fa56f;
+    --pair-tint: #e6f6ee;
+    --pair-rgb: 47, 165, 111;
+  }
+  .matching-pair-2 {
+    --pair-color: #d98a2b;
+    --pair-tint: #fbeedd;
+    --pair-rgb: 217, 138, 43;
+  }
+  .matching-pair-3 {
+    --pair-color: #d6458a;
+    --pair-tint: #fbe6f0;
+    --pair-rgb: 214, 69, 138;
+  }
+  .matching-pair-4 {
+    --pair-color: #1f9cae;
+    --pair-tint: #e1f5f7;
+    --pair-rgb: 31, 154, 174;
+  }
+  .matching-card--pair {
+    border-width: 2px;
+    border-color: var(--pair-color);
+    background: var(--pair-tint);
+  }
+  .dark .matching-card--pair {
+    background: rgba(var(--pair-rgb), 0.18);
+    border-color: var(--pair-color);
+  }
+  .matching-dot--pair {
+    background: var(--pair-color);
+    box-shadow: 0 0 0 2px #fff;
+  }
+  .dark .matching-dot--pair {
+    box-shadow: 0 0 0 2px rgba(10, 16, 48, 0.9);
+  }
+  .matching-line--pair {
+    stroke: var(--pair-color);
+  }
+}
+@keyframes matching-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(217, 183, 101, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(217, 183, 101, 0.15);
+  }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .matching-dot--selected {
+    animation: none;
+    box-shadow: 0 0 0 5px rgba(217, 183, 101, 0.25);
   }
 }
 
