@@ -7712,6 +7712,24 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* "Варіант 3" карусель пулу (image-match.tsx, лише ≤640px — ЕТАП W нижче):
+   .word-pool-carousel обгортає [стрілка][.word-pool-chips][стрілка];
+   display:contents тут (а не у @media) — на будь-якій ширині >640px
+   (десктоп І планшет 641-767px лишаються як були) обгортка "прозора" для
+   розкладки, діти стають прямими flex-дітьми .word-pool, як .word-pool-chips
+   був раніше. Самі стрілки/progress-бар — display:none тут же, тож їх
+   DOM-присутність на десктопі/планшеті нічого не рендерить і нічого не
+   зсуває. */
+.word-pool-carousel {
+  display: contents;
+}
+.word-pool-arrow {
+  display: none;
+}
+.word-pool-progress {
+  display: none;
+}
+
 /* Картки-картинки — grid 3 колонки на десктопі, спільна карткова рамка
    (.glass-item-card) перекрита під радіус/падінг/gap мокапу. */
 .image-match-cards {
@@ -7930,6 +7948,131 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 640px) {
   .word-pool {
     margin: 0 -16px;
+    padding: 12px 12px 12px;
+  }
+}
+/* ЕТАП W — "варіант 3" карусель пулу слів (image-match.tsx), СТРОГО
+   ≤640px (не 767px-брейкпоінт вище: планшет 641-767px лишається пікселево
+   тим самим горизонтальним рядом із фейдом праворуч, що й був). Джерело
+   правди для --fits/прогрес/лічильника — хук useWordPoolCarousel у
+   image-match.tsx (ResizeObserver + scroll, rAF-throttled); тут лише
+   вигляд уже готового стану. */
+@media (max-width: 640px) {
+  .word-pool-carousel {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .word-pool-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    padding: 0;
+  }
+  .word-pool-carousel--fits .word-pool-arrow {
+    display: none;
+  }
+  .word-pool-arrow-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .word-pool-arrow--prev {
+    border: 2px solid #e4cf94;
+    background: #f6edd4;
+    color: #6b4a14;
+    margin-right: 8px;
+  }
+  .dark .word-pool-arrow--prev {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--gold-border-dark-35);
+    color: #f6dc8e;
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-arrow--prev {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--gold-border-dark-35);
+    color: #f6dc8e;
+  }
+}
+@media (max-width: 640px) {
+  .word-pool-arrow--next {
+    border: 2px solid #3b36c4;
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    color: #f3d98b;
+    margin-left: 8px;
+  }
+  .word-pool-arrow:disabled,
+  .word-pool-arrow[aria-disabled="true"] {
+    opacity: 0.45;
+  }
+  /* Трей-доріжка — flex:1 замість flex-wrap-рядка (767px-правило вище лишає
+     flex-wrap:nowrap/overflow-x:auto — тут лише ширина й сніп-скрол
+     додаються); маска-фейд праворуч (була схожа на "глітч") прибирається
+     повністю, без заміни на іншу. */
+  .word-pool-chips {
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .word-pool-chips > .word-pool-chip {
+    scroll-snap-align: start;
+  }
+  .word-pool-chip {
+    min-height: 56px;
+    height: auto;
+    padding: 0 18px;
+    font-size: 19px;
+    font-weight: 800;
+    border: 2px solid #d9b765;
+    background: #fffaf0;
+    box-shadow: 0 3px 0 #e4cf94;
+    border-radius: 999px;
+  }
+  .dark .word-pool-chip {
+    background: var(--dark-surface-fill);
+    border-color: var(--gold-border-dark-35);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-chip {
+    background: var(--dark-surface-fill);
+    border-color: var(--gold-border-dark-35);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+  }
+}
+@media (max-width: 640px) {
+  .word-pool-progress {
+    display: block;
+    margin: 8px 16px 0;
+    height: 6px;
+    border-radius: 3px;
+    background: #f0e4c2;
+    position: relative;
+    overflow: hidden;
+  }
+  .word-pool-progress-thumb {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: #d9b765;
+    border-radius: 3px;
+  }
+  .dark .word-pool-progress {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-progress {
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 /* Дошка matching.tsx (MatchingBoard) — дві колонки FR/UK карток, SVG-шар

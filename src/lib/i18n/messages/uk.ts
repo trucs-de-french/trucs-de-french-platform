@@ -92,6 +92,9 @@ export const uk = {
   "pool.allPlaced": "tous les mots placés",
   "pool.usedOfTotal": "{used} sur {total} utilisés",
   "pool.allWordsPlacedBanner": "Усі слова розставлено",
+  "pool.scrollPrevAria": "Прокрутити назад",
+  "pool.scrollNextAria": "Прокрутити вперед",
+  "pool.of": "з",
 
   "common.outOf": "{a} з {b}",
 

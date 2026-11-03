@@ -91,6 +91,9 @@ export const fr: Record<MessageKey, string> = {
   "pool.allPlaced": "tous les mots placés",
   "pool.usedOfTotal": "{used} sur {total} utilisés",
   "pool.allWordsPlacedBanner": "Tous les mots sont placés",
+  "pool.scrollPrevAria": "Faire défiler en arrière",
+  "pool.scrollNextAria": "Faire défiler en avant",
+  "pool.of": "sur",
 
   "common.outOf": "{a} sur {b}",
 

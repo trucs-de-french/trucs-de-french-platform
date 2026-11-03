@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { ImageMatchPublic, ImageMatchDetail, ImageMatchAnswer, GradeResult } from "@/lib/exercises/types";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { ImageLightbox } from "./image-lightbox";
@@ -40,6 +40,102 @@ function ChipGripIcon() {
       )}
     </svg>
   );
+}
+
+function PoolChevronIcon({ direction }: { direction: "prev" | "next" }) {
+  return (
+    <svg
+      className="word-pool-arrow-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {direction === "prev" ? <polyline points="15 6 9 12 15 18" /> : <polyline points="9 6 15 12 9 18" />}
+    </svg>
+  );
+}
+
+// "Варіант 3" карусель (мобільний <=640px, globals.css) — стрілки/лічильник
+// "A–B з N"/progress-бар над .word-pool-chips, лише для цього типу (JSX
+// опт-ін: інші викликачі .word-pool — fill_blank/drag_drop/sort_columns —
+// розмітки стрілок не мають). Поза мобільним брейкпоінтом усе нижче
+// невидиме (display:none, globals.css) — верстка/drag-логіка не змінені.
+function useWordPoolCarousel(trackRef: RefObject<HTMLDivElement | null>, chipCount: number) {
+  const [state, setState] = useState({
+    atStart: true,
+    atEnd: true,
+    fits: true,
+    first: 0,
+    last: 0,
+    progressWidthPct: 100,
+    progressLeftPct: 0,
+  });
+  const rafRef = useRef<number | null>(null);
+
+  function recompute() {
+    const track = trackRef.current;
+    if (!track) return;
+    const { scrollLeft, scrollWidth, clientWidth } = track;
+    const atStart = scrollLeft <= 1;
+    const atEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+    const fits = scrollWidth <= clientWidth + 1;
+    const trackRect = track.getBoundingClientRect();
+    let first = 0;
+    let last = 0;
+    let seen = false;
+    Array.from(track.children).forEach((child, idx) => {
+      const r = (child as HTMLElement).getBoundingClientRect();
+      if (r.width === 0) return;
+      const overlap = Math.min(r.right, trackRect.right) - Math.max(r.left, trackRect.left);
+      if (overlap / r.width > 0.5) {
+        if (!seen) {
+          first = idx;
+          seen = true;
+        }
+        last = idx;
+      }
+    });
+    const progressWidthPct = fits ? 100 : (clientWidth / scrollWidth) * 100;
+    const progressLeftPct = fits ? 0 : (scrollLeft / scrollWidth) * 100;
+    setState({ atStart, atEnd, fits, first, last, progressWidthPct, progressLeftPct });
+  }
+
+  function scheduleRecompute() {
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      recompute();
+    });
+  }
+
+  useLayoutEffect(() => {
+    recompute();
+    const track = trackRef.current;
+    if (!track) return;
+    const observer = new ResizeObserver(scheduleRecompute);
+    observer.observe(track);
+    window.addEventListener("resize", scheduleRecompute);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", scheduleRecompute);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+    // chipCount — переобчислити, коли слово забрали з пулу (кількість дітей змінилась)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chipCount]);
+
+  function scrollBy(direction: 1 | -1) {
+    const track = trackRef.current;
+    if (!track) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    track.scrollBy({ left: direction * track.clientWidth * 0.8, behavior: reduceMotion ? "auto" : "smooth" });
+  }
+
+  return { onScroll: scheduleRecompute, scrollBy, ...state };
 }
 
 // Режим практики "Робота над помилками" (частина 6, хвиля 1) — той самий
@@ -91,6 +187,11 @@ export function ImageMatchExercise({
   } = useTilePlacement(config.items.length, locked);
   const checkConfirm = useCheckConfirm();
   const unplacedCount = placed.filter((p) => p === null).length;
+  const remaining = config.bank.length - usedBankIndices.size;
+  const poolTrackRef = useRef<HTMLDivElement>(null);
+  const carousel = useWordPoolCarousel(poolTrackRef, remaining);
+  const carouselLabel =
+    !carousel.fits ? `${carousel.first + 1}–${carousel.last + 1} ${t("pool.of")} ${remaining}` : null;
   function submitImageMatch() {
     submit(
       config.items.map((item, i) => ({
@@ -237,7 +338,6 @@ export function ImageMatchExercise({
   }
 
   const totalPoints = config.items.reduce((sum, item) => sum + item.points, 0);
-  const remaining = config.bank.length - usedBankIndices.size;
 
   return (
     <div className={EXERCISE_STACK}>
@@ -260,26 +360,61 @@ export function ImageMatchExercise({
         <div className="word-pool" {...bankDropProps()}>
           <div className="word-pool-label-row">
             <span className="word-pool-label">{dragPoolLabel(lang)}</span>
-            <span className="word-pool-count">{poolRemainingLabel(lang, remaining)}</span>
+            <span className="word-pool-count" aria-label={carouselLabel ? poolRemainingLabel(lang, remaining) : undefined}>
+              {carouselLabel ?? poolRemainingLabel(lang, remaining)}
+            </span>
           </div>
-          <div className="word-pool-chips">
-            {config.bank.map((name, bi) =>
-              usedBankIndices.has(bi) ? null : (
-                <button
-                  key={bi}
-                  type="button"
-                  {...bankDragProps(bi)}
-                  onClick={() => clickBank(bi)}
-                  disabled={locked}
-                  aria-pressed={selected === bi}
-                  className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
-                >
-                  <ChipGripIcon />
-                  {name}
-                </button>
-              )
-            )}
+          <div className={`word-pool-carousel ${carousel.fits ? "word-pool-carousel--fits" : ""}`}>
+            <button
+              type="button"
+              className="word-pool-arrow word-pool-arrow--prev"
+              aria-label={t("pool.scrollPrevAria")}
+              aria-disabled={carousel.atStart}
+              disabled={carousel.atStart}
+              onClick={() => carousel.scrollBy(-1)}
+            >
+              <PoolChevronIcon direction="prev" />
+            </button>
+            <div className="word-pool-chips" ref={poolTrackRef} onScroll={carousel.onScroll}>
+              {config.bank.map((name, bi) =>
+                usedBankIndices.has(bi) ? null : (
+                  <button
+                    key={bi}
+                    type="button"
+                    {...bankDragProps(bi)}
+                    onClick={() => clickBank(bi)}
+                    disabled={locked}
+                    aria-pressed={selected === bi}
+                    className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                  >
+                    <ChipGripIcon />
+                    {name}
+                  </button>
+                )
+              )}
+            </div>
+            <button
+              type="button"
+              className="word-pool-arrow word-pool-arrow--next"
+              aria-label={t("pool.scrollNextAria")}
+              aria-disabled={carousel.atEnd}
+              disabled={carousel.atEnd}
+              onClick={() => carousel.scrollBy(1)}
+            >
+              <PoolChevronIcon direction="next" />
+            </button>
           </div>
+          {!carousel.fits && (
+            <div className="word-pool-progress" aria-hidden="true">
+              <div
+                className="word-pool-progress-thumb"
+                style={{
+                  width: `${carousel.progressWidthPct}%`,
+                  left: `${carousel.progressLeftPct}%`,
+                }}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
