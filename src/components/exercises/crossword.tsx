@@ -963,6 +963,30 @@ function CrosswordBlockView({
                         status !== "incorrect";
                       const isUncheckedActive = isUnchecked && isActiveCell(ri, ci);
                       const isUncheckedHovered = isUnchecked && isHoveredCell(ri, ci);
+                      // ЕТАП R — поділ колишніх status-класів (bg+text разом,
+                      // усі на <input>) на дві частини, що тепер живуть на РІЗНИХ
+                      // елементах (bg — на новому .crossword-tile-letter, під
+                      // інпутом; text — і там, і на самому інпуті, щоб
+                      // caret-color (за умовчанням currentColor) збігався з
+                      // кольором видимої літери, навіть коли сам текст інпута
+                      // прозорий). Одне джерело цих класів замість дублювання
+                      // логіки в двох місцях.
+                      const isHintedCell = effectiveHintedCells.has(cellKey(ri, ci));
+                      const statusColorClass = isHintedCell
+                        ? "text-sky-700 dark:text-sky-400"
+                        : status === "correct"
+                          ? "text-green-700 dark:text-green-400"
+                          : status === "incorrect"
+                            ? "text-red-700 dark:text-red-400"
+                            : "dark:text-neutral-100";
+                      const statusBgClass = isHintedCell
+                        ? "bg-sky-100 dark:bg-sky-950/40"
+                        : status === "correct"
+                          ? "bg-green-50 dark:bg-green-950/30"
+                          : status === "incorrect"
+                            ? "bg-red-50 dark:bg-red-950/30"
+                            : "";
+                      const letterFontStyle = { fontSize: "max(0.5rem, calc(var(--cw) * 0.5))" } as const;
                       return (
                         <td
                           key={ci}
@@ -989,12 +1013,38 @@ function CrosswordBlockView({
                           >
                             {number !== null && (
                               <span
-                                className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 leading-none"
+                                className="crossword-tile-number pointer-events-none absolute left-0.5 top-0 z-20 leading-none"
                                 style={{ fontSize: "max(0.5625rem, calc(var(--cw) * 0.28))" }}
                               >
                                 {number}
                               </span>
                             )}
+                            {/* ЕТАП R — браузер центрує текст УСЕРЕДИНІ <input> своїм
+                                внутрішнім "inner editor" боксом, що на дробових
+                                розмірах клітинки (zoom ≠ 100%) не завжди йде за
+                                line-height/font-size автора (ЕТАП Q це підтвердив —
+                                навіть line-height, що точно дорівнює висоті боксу,
+                                не прибрав зсув). Фікс — більше НЕ показувати текст
+                                самого <input> візуально: видима літера тепер —
+                                окремий шар під інпутом (position:absolute inset-0,
+                                flex items-center justify-center — те саме надійне
+                                центрування, що вже використовує .ws-cell у
+                                word-search.tsx, де картка проблеми НІКОЛИ не
+                                виникала), <input> лишається лише для фокусу/
+                                клавіатури/caret/IME й попапу діакритики
+                                (diacritics.fieldRef), з прозорим текстом
+                                (color лишається статусним — лише для caret-color,
+                                що за умовчанням currentColor — а
+                                -webkit-text-fill-color:transparent ховає сам
+                                гліф; ::selection теж прозорий, щоб не було
+                                "другої" підсвіченої літери при виділенні). */}
+                            <span
+                              aria-hidden="true"
+                              className={`crossword-tile-letter pointer-events-none absolute inset-0 z-0 flex items-center justify-center rounded-[6px] font-heading font-medium uppercase leading-none ${statusColorClass} ${statusBgClass}`}
+                              style={letterFontStyle}
+                            >
+                              {effectiveGrid[ri][ci]}
+                            </span>
                             <input
                               ref={diacritics.fieldRef(cellKey(ri, ci))}
                               maxLength={1}
@@ -1011,55 +1061,25 @@ function CrosswordBlockView({
                               }}
                               onBlur={diacritics.onBlur}
                               disabled={!!result && !practiceMode}
-                              // ЕТАП O — fontSize РАНІШЕ мав підлогу 0.6875rem (11px):
-                              // при zoom=1 var(--cw) ніколи не нижче 1.75rem (28px, власна
-                              // підлога clamp у .grid-zoom-inner), тож cw*0.5 (14px) завжди
-                              // перевищувала цю підлогу і вона була "мертвою" на 100% —
-                              // але --zoom МНОЖИТЬ вже затиснутий --cw (clamp застосовано
-                              // ДО множення на zoom), тож на кроці 0.65 (28*0.65=18.2px)
-                              // cw*0.5=9.1px вже НИЖЧЕ підлоги 11px — підлога "вмикалась" і
-                              // переставала зменшуватись разом із клітинкою: шрифт лишався
-                              // фіксованим 11px у боксі ~13px (інпут мінус рамка плитки),
-                              // де рядок (line-height "normal" ~1.2× без явного значення)
-                              // уже не мав запасу — звідси зсув літери вниз-ліворуч саме на
-                              // цьому кроці зуму. Нова підлога (0.5rem/8px) — безпечний
-                              // заглушний мінімум: за поточних меж (cw-підлога 28px, zoom
-                              // мінімум 0.65) природний розмір ніколи не опускається нижче
-                              // 9.1px, тож ця підлога ніколи реально не спрацьовує — лише
-                              // захист, якщо межі колись зміняться.
-                              // ЕТАП Q — зсув ЛИШАВСЯ й після ЕТАПУ O (той фікс стосувався
-                              // лише підлоги font-size, не самого вертикального центрування):
-                              // lineHeight:1 робить рядок РІВНО розміру шрифту (~cw*0.5) —
-                              // набагато НИЖЧИМ за фактичну висоту <input> (h-full, тобто
-                              // висота content-box .crossword-tile: cw − 2px інсет − 2×1.5px
-                              // рамка = cw − 5px). Браузер сам центрує цей куди менший
-                              // рядок усередині значно вищого боксу інпута — алгоритм
-                              // internal text-centering для <input> (на відміну від звичайного
-                              // flex/line-height-центрування в .ws-cell, де ЦЕ сам контейнер
-                              // явно flex items-center) не гарантований специфікацією так
-                              // само суворо, і на дробових розмірах боксу (var(--cw) з cqw-
-                              // одиниць, помножений на --zoom ≠ 1) округлення "з'їдало" байт
-                              // по-різному зверху/зліва — звідси зсув саме на зумі ≠ 100% і
-                              // лише видимий на заповненій клітинці (порожня не має гліфа,
-                              // щоб помітити той самий зсув). Фікс — line-height РІВНО
-                              // висоті боксу (той самий вираз, що й висота інпута), а не "1":
-                              // рядок точно дорівнює content-box, залишку для розподілу
-                              // немає — звичайне (строго специфіковане) центрування тексту
-                              // в межах line-height, а не UA-залежне центрування
-                              // line-height-меншого-за-бокс рядка.
-                              style={{
-                                fontSize: "max(0.5rem, calc(var(--cw) * 0.5))",
-                                lineHeight: "calc(var(--cw) - 5px)",
-                              }}
-                              className={`h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none dark:text-neutral-100 ${
-                                effectiveHintedCells.has(cellKey(ri, ci))
-                                  ? "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400"
-                                  : status === "correct"
-                                    ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
-                                    : status === "incorrect"
-                                      ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                                      : ""
-                              }`}
+                              // ЕТАП O/Q (fontSize-підлога й line-height=висота боксу)
+                              // стосувались ВИДИМОГО тексту інпута — тепер він завжди
+                              // прозорий (ЕТАП R вище), тож точний збіг line-height із
+                              // висотою боксу більше не потрібен для центрування: сам
+                              // гліф невидимий, лишається лише caret і розмір шрифту для
+                              // його висоти. fontSize — той самий вираз, що в
+                              // .crossword-tile-letter (та сама змінна --cw), щоб caret
+                              // мав ту саму висоту, що й видима літера під ним.
+                              // color лишається статусним (statusColorClass) НЕ заради
+                              // видимості гліфа (той — через -webkit-text-fill-color:
+                              // transparent — завжди прозорий), а заради caret-color: за
+                              // умовчанням caret-color: auto resolves to currentColor, тож
+                              // caret автоматично того самого кольору, що й видима літера
+                              // в кожному стані (hinted/correct/incorrect/звичайний).
+                              // selection:bg-transparent/selection:text-transparent —
+                              // виділення тексту в інпуті (миша/клавіатура) не малює
+                              // "другу" підсвічену літеру над .crossword-tile-letter.
+                              style={{ fontSize: "max(0.5rem, calc(var(--cw) * 0.5))" }}
+                              className={`relative z-10 h-full w-full rounded-[6px] bg-transparent text-center font-heading font-medium uppercase outline-none selection:bg-transparent selection:text-transparent [-webkit-text-fill-color:transparent] ${statusColorClass}`}
                             />
                           </div>
                         </td>
