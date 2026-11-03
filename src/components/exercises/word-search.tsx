@@ -561,6 +561,119 @@ function WordSearchBlockView({
     return { row: Number(target.dataset.row), col: Number(target.dataset.col) };
   }
 
+  // ЕТАП N — авто-скрол до краю під час виділення на збільшеному зумі:
+  // коли сітка ширша/вища за scrollRef (ws-scroll) і виділення йде в бік
+  // клітинок, що зараз поза видимою областю, курсор/палець фізично не може
+  // туди дотягнутись (touch-action:none на контейнері вимикає нативний
+  // скрол саме під час жесту) — контейнер мусить прокручуватись САМ, доки
+  // вказівник лишається біля краю.
+  // lastPointerRef — останні відомі екранні координати вказівника, і для
+  // миші (onMouseDown/onMouseEnter клітинок нижче + document "mousemove"
+  // під час dragging), і для дотику (handleTouchPointerDown/Move вище) —
+  // через РЕФ, не стан: курсор рухається щокадрово під час авто-скролу,
+  // окремий React-стан на кожен кадр був би зайвим ререндером.
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  // moveDragRef — завжди свіжий moveDrag (пересоздається щорендеру,
+  // замикає актуальні dragging/dragStart). rAF-цикл нижче монтується лише
+  // ОДИН раз на весь час dragging (ефект залежить тільки від [dragging]),
+  // тож пряме замикання на moveDrag у тому ефекті лишилось би застарілим
+  // (stale closure) після першого ж setDragEnd — викликаємо через реф,
+  // який оновлюється щорендеру, замість цього.
+  const moveDragRef = useRef(moveDrag);
+  useEffect(() => {
+    moveDragRef.current = moveDrag;
+  });
+
+  // Миша не дає природного "pointermove, доки контейнер сам скролиться" —
+  // onMouseEnter клітинки спрацьовує лише коли курсор РЕАЛЬНО рухається
+  // над новою клітинкою, а не коли клітинки проїжджають під нерухомим
+  // курсором через авто-скрол. document "mousemove" під час dragging —
+  // той самий підхід, що вже є для дотику (handleTouchPointer*), лише для
+  // миші додатково (там координати й так приходять у pointer-подіях).
+  useEffect(() => {
+    if (!dragging) return;
+    function onMouseMove(e: MouseEvent) {
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    return () => document.removeEventListener("mousemove", onMouseMove);
+  }, [dragging]);
+
+  // Зона краю (px від межі ВИДИМОГО rect контейнера) і максимальна
+  // швидкість (px/кадр) — підібрані під "приблизно 1 клітинка, 40-56px":
+  // при --cw у типових межах (22-72px залежно від zoom) clamp тримає зону
+  // не меншою за 40px (дрібна клітинка — зона все одно відчутна) і не
+  // більшою за 56px (велика клітинка на сильному зумі — зона не займає
+  // пів-екрана). MAX_SPEED_PX — швидкість САМЕ на межі/за межею контейнера
+  // (де factor нижче природно насичується до 1); REDUCED_SPEED_PX —
+  // фіксована (не прогресивна) швидкість для prefers-reduced-motion —
+  // auto-scroll лишається ДОСТУПНИМ (без нього виділення за межами видимої
+  // частини було б неможливим), лише без прискорення ближче до краю.
+  const EDGE_ZONE_MIN_PX = 40;
+  const EDGE_ZONE_MAX_PX = 56;
+  const MAX_SPEED_PX = 14;
+  const REDUCED_SPEED_PX = 5;
+
+  function getCellSizePx(container: HTMLDivElement): number {
+    const cell = container.querySelector<HTMLElement>("[data-row][data-col]");
+    return cell ? cell.getBoundingClientRect().width : EDGE_ZONE_MIN_PX;
+  }
+
+  // Головний rAF-цикл: монтується рівно на час dragging (ефект лишається
+  // активним незалежно від того, звідки саме почалось виділення — миша чи
+  // дотик), сам читає lastPointerRef щокадрово (а не чекає на нову
+  // pointer-подію, якої під час скролу нерухомого вказівника НЕ буде).
+  useEffect(() => {
+    if (!dragging) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    const reduceMotion =
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let rafId = 0;
+
+    function tick() {
+      const pointer = lastPointerRef.current;
+      if (pointer && container) {
+        const rect = container.getBoundingClientRect();
+        const edgeZone = Math.min(EDGE_ZONE_MAX_PX, Math.max(EDGE_ZONE_MIN_PX, getCellSizePx(container)));
+        let dx = 0;
+        let dy = 0;
+
+        function speedFor(distanceIntoEdge: number): number {
+          if (reduceMotion) return REDUCED_SPEED_PX;
+          const factor = Math.min(1, Math.max(0, (edgeZone - distanceIntoEdge) / edgeZone));
+          return MAX_SPEED_PX * factor;
+        }
+
+        const leftDist = pointer.x - rect.left;
+        const rightDist = rect.right - pointer.x;
+        const topDist = pointer.y - rect.top;
+        const bottomDist = rect.bottom - pointer.y;
+        if (leftDist < edgeZone) dx -= speedFor(leftDist);
+        else if (rightDist < edgeZone) dx += speedFor(rightDist);
+        if (topDist < edgeZone) dy -= speedFor(topDist);
+        else if (bottomDist < edgeZone) dy += speedFor(bottomDist);
+
+        if (dx !== 0) {
+          const maxScrollLeft = container.scrollWidth - container.clientWidth;
+          container.scrollLeft = Math.min(maxScrollLeft, Math.max(0, container.scrollLeft + dx));
+        }
+        if (dy !== 0) {
+          const maxScrollTop = container.scrollHeight - container.clientHeight;
+          container.scrollTop = Math.min(maxScrollTop, Math.max(0, container.scrollTop + dy));
+        }
+        if (dx !== 0 || dy !== 0) {
+          const cell = cellFromPoint(pointer.x, pointer.y);
+          if (cell) moveDragRef.current(cell);
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [dragging]);
+
   // ЕТАП J — прокрутка сітки ДВОМА пальцями: сітка лишається touch-action:
   // none (нативний pinch/scroll вимкнено, замість нього кнопки зуму) —
   // одно-пальцевий дотик і далі виділяє слово (startDrag/moveDrag), другий
@@ -583,6 +696,7 @@ function WordSearchBlockView({
     e.currentTarget.setPointerCapture(e.pointerId);
     if (pointers.size === 1) {
       if (suppressSelectRef.current) return;
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
       const cell = cellFromPoint(e.clientX, e.clientY);
       if (cell) startDrag(cell);
     } else if (pointers.size === 2) {
@@ -617,6 +731,7 @@ function WordSearchBlockView({
       return;
     }
     if (pointers.size === 1 && dragging) {
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
       const cell = cellFromPoint(e.clientX, e.clientY);
       if (cell) moveDrag(cell);
     }
@@ -897,8 +1012,14 @@ function WordSearchBlockView({
                           key={`${ri}:${ci}`}
                           data-row={ri}
                           data-col={ci}
-                          onMouseDown={() => startDrag({ row: ri, col: ci })}
-                          onMouseEnter={() => moveDrag({ row: ri, col: ci })}
+                          onMouseDown={(e) => {
+                            lastPointerRef.current = { x: e.clientX, y: e.clientY };
+                            startDrag({ row: ri, col: ci });
+                          }}
+                          onMouseEnter={(e) => {
+                            lastPointerRef.current = { x: e.clientX, y: e.clientY };
+                            moveDrag({ row: ri, col: ci });
+                          }}
                           className={`ws-cell flex aspect-square cursor-pointer items-center justify-center border-b border-r border-neutral-200 text-center dark:border-neutral-700 ${cellClass({ row: ri, col: ci })} ${
                             isHinted
                               ? "ws-cell-hinted bg-blue-100 font-bold text-blue-700 ring-2 ring-inset ring-blue-500 dark:bg-blue-900/50 dark:text-blue-200"
