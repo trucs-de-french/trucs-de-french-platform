@@ -1174,6 +1174,20 @@ button, input, textarea, select, label, nav, aside {
   padding: 8px 16px 16px;
   margin: -8px -16px -16px;
 }
+/* ЕТАП P — мобільний: нижній padding (16px) вище повністю "з'їдається"
+   рівною за модулем від'ємною margin (той самий трюк, що в .ws-scroll,
+   лише тут запас менший і заради тіні плитки, не "листа") — порожнього
+   МІСЦЯ в розкладці між скрол-контейнером і підказкою "Сітка ширша..."
+   немає взагалі, тож сірий трек горизонтального скролу (на зумі, коли
+   сітка реально прокручується) малюється впритул до неї. Фікс — лише
+   padding-bottom росте (margin-bottom лишається тим самим -16px, тінь і
+   далі не зрізається); різниця (10px) лишається РЕАЛЬНИМ місцем у
+   потоці, без жодної нової від'ємної margin. */
+@media (max-width: 640px) {
+  .crossword-scroll {
+    padding-bottom: 26px;
+  }
+}
 .ws-scroll {
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -3234,6 +3248,36 @@ button, input, textarea, select, label, nav, aside {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .crossword-direction-arrow {
     color: #f6dc8e;
+  }
+}
+/* ЕТАП P — fr-group і переклад (task-panel-instruction-fr-group/-uk, ті
+   самі класи, що TaskInstructionLine) РАНІШЕ були двома окремими flex-
+   дітьми .crossword-direction-heading (display:flex, без wrap): на
+   вузькому екрані вони змагались за місце в ОДНОМУ рядку, а fr-group
+   (min-width:0 — потрібен TaskInstructionLine для ДОВГИХ речень, що
+   мають переноситись усередині себе) стискався першим і переносив "/"
+   усередину нового рядка замість того, щоб ЦІЛИЙ переклад перейшов на
+   новий рядок, як треба для короткого слова-заголовка. Фікс —
+   crossword.tsx тепер кладе fr-group і переклад в ОДИН span
+   (.crossword-direction-text, єдина дитина цього flex-рядка замість
+   двох) — усередині нього звичайний inline-потік сам переносить
+   переклад цілим шматком, коли не влазить, лишаючи рядок зліва (inline-
+   текст за замовчуванням, не центрований). margin-left на перекладі
+   нижче замінює втрачений gap:12px між fr-group/uk (раніше — два
+   окремі flex-елементи цього ряду, тепер — один) — та сама відстань,
+   що й була, на БУДЬ-ЯКІЙ ширині (не лише мобільній). white-space:nowrap
+   на fr-group — лише мобільний override (тут перенесення "/" від слова
+   і було помітним на вузьких екранах; на десктопі панель завжди ширша
+   за "Horizontalement /", тож там жодної різниці). */
+.crossword-direction-text {
+  min-width: 0;
+}
+.crossword-direction-translation {
+  margin-left: 12px;
+}
+@media (max-width: 640px) {
+  .crossword-direction-heading .task-panel-instruction-fr-group {
+    white-space: nowrap;
   }
 }
 .crossword-direction-rule {

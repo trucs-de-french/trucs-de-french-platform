@@ -186,11 +186,30 @@ function DirectionHeading({ direction }: { direction: Direction }) {
   return (
     <p className="crossword-direction-heading">
       <ArrowIcon size={18} strokeWidth={2.4} aria-hidden className="crossword-direction-arrow" />
-      <span className="task-panel-instruction-fr-group">
-        <span className="task-panel-instruction-fr">{fr}</span>
-        {translation && <span className="task-panel-instruction-slash">/</span>}
+      {/* ЕТАП P — fr-group і uk РАНІШЕ були двома ОКРЕМИМИ flex-дітьми цього
+          <p> (display:flex, без wrap): на вузькому екрані вони змагались за
+          місце в ОДНОМУ рядку (flex-wrap тут немає, рядок не переноситься
+          цілими елементами), а .task-panel-instruction-fr-group має свій
+          min-width:0 (потрібний TaskInstructionLine для ДОВГИХ речень, що
+          мають переноситись усередині себе) — тож саме він стискався першим
+          і переносив "/" на новий рядок УСЕРЕДИНІ себе, а не переносив ЦІЛИЙ
+          переклад на новий рядок, як треба для короткого слова-заголовка.
+          Фікс — обидва всередині ОДНОГО span (нема більше двох конкуруючих
+          flex-елементів): звичайний inline-потік сам переносить переклад
+          цілим шматком на новий рядок, коли не влазить, лишаючи "/" приклеєним
+          до слова (white-space:nowrap на fr-group, лише мобільний override
+          нижче, globals.css) і новий рядок — зліва, а не по центру (inline-
+          текст за замовчуванням). margin-left на uk-спані (не mobile-лише)
+          замінює втрачений gap:12px батьківського flex (тепер усередині
+          ОДНОГО flex-елемента, не між двома) — той самий відступ на
+          десктопі, що й раніше. */}
+      <span className="crossword-direction-text">
+        <span className="task-panel-instruction-fr-group">
+          <span className="task-panel-instruction-fr">{fr}</span>
+          {translation && <span className="task-panel-instruction-slash">/</span>}
+        </span>
+        {translation && <span className="task-panel-instruction-uk crossword-direction-translation">{translation}</span>}
       </span>
-      {translation && <span className="task-panel-instruction-uk">{translation}</span>}
       <span className="crossword-direction-rule" aria-hidden />
     </p>
   );
