@@ -7354,6 +7354,17 @@ button.scene-bar:active .scene-bar-toggle {
 .drag-drop-row-number {
   margin-top: 7px;
 }
+@media (min-width: 641px) {
+  /* 7px margin-top вище був підібраний під СТАРИЙ align-items:flex-start
+     рядка (21532af перевів десктоп/планшет на center) — лишений на
+     мобільному (flex-start, 731aa67, не чіпається цією задачею) без
+     змін, але на center-рядку той самий відступ зсуває бейдж нижче
+     справжнього центру, заважаючи п.1 задачі (бейдж/слот/текст на
+     одній горизонтальній осі). */
+  .drag-drop-row-number {
+    margin-top: 0;
+  }
+}
 /* Нумерація картки-слова letter_rearrangement/letter_gaps — inline на
    початку рядка з українською підказкою (не абсолютний, як у image-match
    — там бейдж лежить НАД картинкою, тут немає картинки, якою можна
@@ -7460,6 +7471,19 @@ button.scene-bar:active .scene-bar-toggle {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .drag-drop-row-text {
     color: #f4f3ff;
+  }
+}
+@media (min-width: 641px) {
+  /* 2.3 → 1.5 (той самий принцип, що мобільний @media max-width:640px у
+     731aa67, тепер і на десктопі/планшеті): font-size не чіпаємо (18px
+     лишається), лише leading. 1.5×18=27px — МЕНШЕ за висоту слота
+     (.drag-drop-slot, не змінюється цією задачею — лишається "pool pill"
+     висотою з 9cf9902), тож рядок-рамку (line box) реально визначає сам
+     слот (inline-flex, вищий за текстову "струну"), а не завищений
+     line-height абзацу — звідси й картка тепер висотою ≈ висота слота +
+     2×padding картки (п.3 задачі), а не завищена абзацом. */
+  .drag-drop-row-text {
+    line-height: 1.5;
   }
 }
 @media (max-width: 767px) {
