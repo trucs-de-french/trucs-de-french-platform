@@ -22,3 +22,18 @@ export const LIVE_CORRECT_CLASS =
   "border-green-500 bg-green-50 dark:border-[var(--correct-border-dark)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:disabled:opacity-100";
 export const LIVE_INCORRECT_CLASS =
   "border-red-500 bg-red-50 dark:border-[var(--wrong-border-dark)] dark:bg-[var(--dark-surface-fill)] dark:text-[var(--field-ink)] dark:disabled:opacity-100";
+
+// Задача "Tile rows (reorder, letters): neutral start, blue selected tile,
+// live green/red after manipulation" — плитка, обрана для обміну (click-
+// to-select) чи яку зараз тягнуть (drag), у SortableTileRow. НЕ той самий
+// SELECTED_OPTION_CLASS (загальний блакитний, спільний для multiple_choice/
+// true_false/matching/listening/reorder/drag_drop вибору варіанта) —
+// навмисно окрема константа, щоб зміна вигляду ТІЛЬКИ тут (платформний
+// індиго-акцент #3b36c4/#4b46da, той самий, що item-number-badge/checkbox-
+// grid "checked") не чіпала вигляд вибору деінде. ring+scale (не лише
+// колір рамки/фону) — вимога доступності (п.8 задачі): позначення обраної
+// плитки не лише кольором. Пріоритет над LIVE_CORRECT/INCORRECT_CLASS —
+// рахує викликач (sortable-tile-row.tsx tileClass): ця константа мусить
+// перевірятись ПЕРШОЮ.
+export const SELECTED_TILE_CLASS =
+  "border-[#3b36c4] bg-indigo-50 ring-2 ring-[#3b36c4]/40 scale-[1.02] dark:border-[#8a88f5] dark:bg-[rgba(75,70,218,0.22)] dark:text-white dark:ring-[#8a88f5]/50";

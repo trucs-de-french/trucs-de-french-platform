@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { SELECTED_OPTION_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
+import { SELECTED_TILE_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
 import { arrayMove, computeInsertIndex, resolveDropSide } from "@/lib/sortable-list";
 
 // Спільна DnD-механіка для reorder (плитки-слова) і letter_rearrangement
@@ -90,14 +90,23 @@ export function SortableTileRow({
     }
   }
 
+  // Задача "Tile rows (reorder, letters): neutral start, blue selected
+  // tile, live green/red after manipulation" — пріоритет станів плитки,
+  // найвищий спочатку: обрана (click-to-select) чи зараз тягнута (drag) —
+  // SELECTED_TILE_CLASS (синя) ПОВЕРХ live correct/incorrect, доки триває
+  // вибір/перетягування (п.3 задачі: "blue wins while selected/held"); щойно
+  // обмін відбувся чи скасований (selected/draggingIndex знову null),
+  // tileClass природно падає до correct/incorrect — жодної додаткової
+  // логіки для "повернення" кольору не потрібно.
   function tileClass(i: number) {
     const state = tileState?.(i);
+    const held = selected === i || draggingIndex === i;
     const shadow = draggingIndex === i ? "" : "shadow-sm";
     if (i < lockedCount)
       return `${shadow} border-sky-400 bg-sky-100 text-sky-700 dark:border-sky-600 dark:bg-sky-950/40 dark:text-sky-400`;
+    if (held) return `${shadow} ${SELECTED_TILE_CLASS}`;
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
-    if (selected === i) return `${shadow} ${SELECTED_OPTION_CLASS}`;
     // letterTile (letter_rearrangement) — ті самі токени поля, що й пропуск
     // letter_gaps (--card-field-bg/--card-field-border/--field-ink,
     // .exercise-field у globals.css), а не --card-bg/--card-border картки:
@@ -113,7 +122,10 @@ export function SortableTileRow({
     // letter_rearrangement вище (--card-field-bg): власний фон/рамка/тінь,
     // а не --card-bg/--card-border картки. Світла тема — ті самі класи, що
     // раніше, без змін.
-    return `${shadow} glass-chip glass-chip-hover glass-gap-shadow bg-white hover:bg-neutral-50 reorder-word-tile ${draggingIndex === i ? "reorder-word-tile--dragging" : ""}`;
+    // draggingIndex === i сюди вже не доходить (held вище перехоплює
+    // раніше) — .reorder-word-tile--dragging (globals.css) лишається
+    // недосяжним, не видаляю CSS-правило заради мінімального диффу.
+    return `${shadow} glass-chip glass-chip-hover glass-gap-shadow bg-white hover:bg-neutral-50 reorder-word-tile`;
   }
 
   return (
@@ -164,7 +176,11 @@ export function SortableTileRow({
             }}
             onClick={() => clickTile(i)}
             disabled={locked}
-            className={`select-none border-[1.5px] dark:border text-center transition-shadow disabled:cursor-not-allowed disabled:opacity-70 ${
+            // aria-pressed — лише "обрано для обміну" (click-to-select,
+            // п.9 задачі), не для drag (тягнута плитка не є "pressed"-
+            // перемикачем у сенсі ARIA toggle-button).
+            aria-pressed={selected === i}
+            className={`select-none border-[1.5px] dark:border text-center transition-[box-shadow,transform,background-color,border-color] disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
             } ${
               // letterTile (letter_rearrangement) — фіксована w/h, однакова
