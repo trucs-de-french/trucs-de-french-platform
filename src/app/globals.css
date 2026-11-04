@@ -8099,6 +8099,21 @@ button.scene-bar:active .scene-bar-toggle {
     margin: 0 -16px;
     padding: 12px 12px 12px;
   }
+  /* drag_drop (drag-drop.tsx): заголовок пулу має ТРИ пілюлі (лічильник +
+     "N intrus"), не дві, як image_match/fill_blank — .word-pool-label-row
+     лишається nowrap/space-between на десктопі (пікселево незмінно), але
+     на мобільному переносить групу пілюль ЦІЛИМ рядком під підпис, якщо
+     вона не влазить поряд (а не стискає/виштовхує лічильник-діапазон
+     "A–B з N"); якщо навіть сама група (лічильник+"N intrus") не влазить
+     в один рядок — переноситься вже всередині себе (.word-pool-count-group
+     нижче), той самий gap 8px. */
+  .word-pool-label-row {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .word-pool-count-group {
+    flex-wrap: wrap;
+  }
 }
 /* ЕТАП W — "варіант 3" карусель пулу слів (image-match.tsx), СТРОГО
    ≤640px (не 767px-брейкпоінт вище: планшет 641-767px лишається пікселево

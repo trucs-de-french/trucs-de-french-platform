@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragDropPublic, DragDropDetail, DragDropAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
+import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -143,6 +144,17 @@ export function DragDropExercise({
   } = useTilePlacement(totalBlanks, locked);
   const checkConfirm = useCheckConfirm();
   const unfilledSlots = placed.filter((p) => p === null).length;
+  // Зайві слова банку — ті, що лишаться непотрібними, навіть коли всі
+  // пропуски заповнені: bank.length - totalBlanks, рахується з даних
+  // (DragDropPublic не має окремого поля "intruders"). Піднято на рівень
+  // компонента (раніше жило лише всередині IIFE рендера нижче), бо
+  // useWordPoolCarousel (той самий хук, що image-match.tsx) потребує
+  // remaining ДО рендера, для recompute() на зміну кількості чипів.
+  const intruderCount = config.bank.length - totalBlanks;
+  const remaining = config.bank.length - usedBankIndices.size;
+  const poolTrackRef = useRef<HTMLDivElement>(null);
+  const carousel = useWordPoolCarousel(poolTrackRef, remaining);
+  const carouselLabel = poolCarouselLabel(t, carousel, remaining);
   function submitDragDrop() {
     submit(
       config.sentences.map((s, si) => ({
@@ -374,63 +386,63 @@ export function DragDropExercise({
         })}
       />
 
-      {(() => {
-        // Зайві слова банку — ті, що лишаться непотрібними, навіть коли всі
-        // пропуски заповнені: bank.length - totalBlanks, рахується з даних
-        // (DragDropPublic не має окремого поля "intruders"), той самий
-        // принцип, що totalBlanks вище. Пілюля рендериться лише коли > 0.
-        const intruderCount = config.bank.length - totalBlanks;
-        const remaining = config.bank.length - usedBankIndices.size;
-        return remaining > 0 ? (
-          // Спільний липкий трей (.word-pool*, globals.css) — той самий, що
-          // image_match (image-match.tsx) і fill_blank вище. На відміну від
-          // fill_blank: чипи тут ДРАГОВАНІ (грип зліва), розставлене слово
-          // прибирається з пулу (filter за usedBankIndices), як у image_match.
-          <div className="word-pool" {...bankDropProps()}>
-            <div className="word-pool-label-row">
-              <span className="word-pool-label">{dragPoolLabel(lang)}</span>
-              {/* Пілюлі згруповані своїм flex-рядком (gap 8px) — третій
-                  елемент (зайві слова) не має ламати .word-pool-label-row
-                  (space-between, розраховане на РІВНО два елементи,
-                  image_match/fill_blank). */}
-              <span className="flex items-center gap-2">
-                <span className="word-pool-count">{poolRemainingLabel(lang, remaining)}</span>
-                {intruderCount > 0 && (
-                  <span className="word-pool-count word-pool-count--intruder">
-                    {dragDropIntruderLabel(lang, intruderCount)}
-                  </span>
-                )}
+      {remaining > 0 ? (
+        // Спільний липкий трей (.word-pool*, globals.css) — той самий, що
+        // image_match (image-match.tsx) і fill_blank вище. На відміну від
+        // fill_blank: чипи тут ДРАГОВАНІ (грип зліва), розставлене слово
+        // прибирається з пулу (filter за usedBankIndices), як у image_match.
+        // Карусель (стрілки/лічильник "A–B з N"/progress-бар, <=640px) —
+        // той самий WordPoolCarouselTrack/useWordPoolCarousel, що
+        // image-match.tsx (word-pool-carousel.tsx, спільний файл).
+        <div className="word-pool" {...bankDropProps()}>
+          <div className="word-pool-label-row">
+            <span className="word-pool-label">{dragPoolLabel(lang)}</span>
+            {/* Пілюлі згруповані своїм flex-рядком (gap 8px) — на мобільному
+                (@media max-width:640px, globals.css) ця група переноситься
+                під підпис ЦІЛИМ рядком (flex-wrap на .word-pool-label-row),
+                якщо не влазить поряд із лічильником-діапазоном, а не
+                стискає/виштовхує його — той самий gap 8px лишається і
+                всередині групи для самих пілюль. */}
+            <span className="word-pool-count-group flex items-center gap-2">
+              <span className="word-pool-count" aria-label={carouselLabel ? poolRemainingLabel(lang, remaining) : undefined}>
+                {carouselLabel ?? poolRemainingLabel(lang, remaining)}
               </span>
-            </div>
-            <div className="word-pool-chips">
-              {config.bank.map((word, bi) =>
-                usedBankIndices.has(bi) ? null : (
-                  <button
-                    key={bi}
-                    type="button"
-                    {...bankDragProps(bi)}
-                    onClick={() => clickBank(bi)}
-                    disabled={locked}
-                    aria-pressed={selected === bi}
-                    className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
-                  >
-                    <ChipGripIcon />
-                    {word}
-                  </button>
-                )
+              {intruderCount > 0 && (
+                <span className="word-pool-count word-pool-count--intruder">
+                  {dragDropIntruderLabel(lang, intruderCount)}
+                </span>
               )}
-            </div>
-            {/* Лише мобільний (@media max-width:640px, globals.css) — як
-                перетягувати пулу, поза скролящимся треком, тож не їде разом
-                із чипами. */}
-            <p className="word-pool-hint" aria-hidden="false">
-              {t("pool.dragHint")}
-            </p>
+            </span>
           </div>
-        ) : (
-          <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
-        );
-      })()}
+          <WordPoolCarouselTrack trackRef={poolTrackRef} carousel={carousel}>
+            {config.bank.map((word, bi) =>
+              usedBankIndices.has(bi) ? null : (
+                <button
+                  key={bi}
+                  type="button"
+                  {...bankDragProps(bi)}
+                  onClick={() => clickBank(bi)}
+                  disabled={locked}
+                  aria-pressed={selected === bi}
+                  className={`word-pool-chip ${selected === bi ? "ring-2 ring-black dark:ring-white" : ""}`}
+                >
+                  <ChipGripIcon />
+                  {word}
+                </button>
+              )
+            )}
+          </WordPoolCarouselTrack>
+          <WordPoolProgress carousel={carousel} />
+          {/* Лише мобільний (@media max-width:640px, globals.css) — як
+              перетягувати пулу, поза скролящимся треком, тож не їде разом
+              із чипами. */}
+          <p className="word-pool-hint" aria-hidden="false">
+            {t("pool.dragHintGap")}
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
+      )}
 
       <div className={`flex flex-col ${itemsGapClass} pt-3`}>
         {config.sentences.map((s, si) => {

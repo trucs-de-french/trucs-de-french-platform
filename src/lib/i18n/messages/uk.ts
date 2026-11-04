@@ -96,7 +96,9 @@ export const uk = {
   "pool.scrollPrevAria": "Прокрутити назад",
   "pool.scrollNextAria": "Прокрутити вперед",
   "pool.of": "з",
-  "pool.dragHint": "Затисніть слово пальцем і перетягніть під картинку",
+  "pool.dragHintImage": "Затисніть слово пальцем і перетягніть під картинку",
+  "pool.dragHintGap": "Затисніть слово пальцем і перетягніть у пропуск",
+  "pool.dragHintColumn": "Затисніть слово пальцем і перетягніть у потрібну колонку",
   "pool.openWordList": "Розкрийте список слів",
 
   "common.outOf": "{a} з {b}",

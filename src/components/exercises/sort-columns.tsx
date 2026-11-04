@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SortColumnsPublic, SortColumnsDetail, SortColumnsAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
+import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
@@ -202,6 +203,12 @@ export function SortColumnsExercise({
 
   const pool = config.items.filter((i) => !assignment[i.id]);
   const allPlaced = pool.length === 0;
+  // Карусель (стрілки/лічильник "A–B з N"/progress-бар, <=640px) — той
+  // самий WordPoolCarouselTrack/useWordPoolCarousel, що image-match.tsx/
+  // drag-drop.tsx (word-pool-carousel.tsx, спільний файл).
+  const poolTrackRef = useRef<HTMLDivElement>(null);
+  const carousel = useWordPoolCarousel(poolTrackRef, pool.length);
+  const carouselLabel = poolCarouselLabel(t, carousel, pool.length);
 
   // Пілюля "N балів" у заголовку панелі — той самий принцип, що pooled-
   // score вправи з одним блоком (fill-blank.tsx тощо): без балів/пілюлі в
@@ -334,15 +341,20 @@ export function SortColumnsExercise({
       <div className="word-pool" {...poolDropProps()} onClick={clickPool}>
         <div className="word-pool-label-row">
           <span className="word-pool-label">{dragPoolLabel(lang)}</span>
-          <span className="word-pool-count">{sortColumnsPoolCountLabel(lang, pool.length)}</span>
+          <span className="word-pool-count" aria-label={carouselLabel ? sortColumnsPoolCountLabel(lang, pool.length) : undefined}>
+            {carouselLabel ?? sortColumnsPoolCountLabel(lang, pool.length)}
+          </span>
         </div>
-        <div className="word-pool-chips">{pool.map((item) => poolChip(item))}</div>
+        <WordPoolCarouselTrack trackRef={poolTrackRef} carousel={carousel}>
+          {pool.map((item) => poolChip(item))}
+        </WordPoolCarouselTrack>
+        <WordPoolProgress carousel={carousel} />
         {pool.length > 0 && (
           // Лише мобільний (@media max-width:640px, globals.css) — як
           // перетягувати пулу, поза скролящимся треком, тож не їде разом
           // із чипами.
           <p className="word-pool-hint" aria-hidden="false">
-            {t("pool.dragHint")}
+            {t("pool.dragHintColumn")}
           </p>
         )}
       </div>
