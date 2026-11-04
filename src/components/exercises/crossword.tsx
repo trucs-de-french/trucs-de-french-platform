@@ -1136,6 +1136,18 @@ function CrosswordBlockView({
                               onKeyDown={(e) => {
                                 if (e.key === "Backspace") handleBackspace(ri, ci);
                               }}
+                              // Android інколи не дає keydown із розпізнаним
+                              // e.key ("Unidentified"/keyCode 229 під час IME) —
+                              // той самий Backspace СТРАХУЄМО через beforeinput
+                              // (inputType "deleteContentBackward" стабільний
+                              // навіть тоді). handleBackspace сам no-op, якщо
+                              // клітинка вже не порожня, тож подвійний виклик
+                              // (і звідси, і з onKeyDown на пристроях, де keydown
+                              // спрацьовує коректно) безпечний.
+                              onBeforeInput={(e) => {
+                                const inputType = (e as unknown as InputEvent).inputType;
+                                if (inputType === "deleteContentBackward") handleBackspace(ri, ci);
+                              }}
                               // Мобільний Android — клавіатура з'являється лише
                               // якщо .focus() викликаний СИНХРОННО всередині
                               // user-gesture-хендлера (click/pointerup), не
@@ -1148,6 +1160,26 @@ function CrosswordBlockView({
                               // preventDefault/stopPropagation тут — нічого
                               // не заважає звичному кліку/фокусу.
                               onClick={(e) => e.currentTarget.focus({ preventScroll: true })}
+                              // Задача "Crossword: fix soft keyboard and letter
+                              // input on Android" — тап по ВЖЕ сфокусованому
+                              // інпуту (клавіатура тим часом закрита студентом
+                              // чи системою) не показує клавіатуру заново на
+                              // Android лише через повторний .focus() (no-op,
+                              // елемент і так document.activeElement). Явний
+                              // .blur()+.focus() у тому самому pointerup forces
+                              // Android перевідкрити клавіатуру. Лише pointerType
+                              // "touch" — на миші (десктоп) це був би зайвий,
+                              // видимий блимаючий фокус без жодної користі.
+                              onPointerUp={(e) => {
+                                if (e.pointerType !== "touch") return;
+                                const el = e.currentTarget;
+                                if (document.activeElement === el) {
+                                  el.blur();
+                                  el.focus({ preventScroll: true });
+                                } else {
+                                  el.focus({ preventScroll: true });
+                                }
+                              }}
                               onFocus={() => {
                                 diacritics.onFocus(cellKey(ri, ci));
                                 setLastFocusedCell({ row: ri, col: ci });
@@ -1156,6 +1188,11 @@ function CrosswordBlockView({
                               }}
                               onBlur={diacritics.onBlur}
                               disabled={!!result && !practiceMode}
+                              autoCapitalize="characters"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              spellCheck={false}
+                              enterKeyHint="next"
                               // ЕТАП O/Q (fontSize-підлога й line-height=висота боксу)
                               // стосувались ВИДИМОГО тексту інпута — тепер він завжди
                               // прозорий (ЕТАП R вище), тож точний збіг line-height із

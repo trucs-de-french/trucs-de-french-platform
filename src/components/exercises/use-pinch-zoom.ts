@@ -92,6 +92,20 @@ export function usePinchZoom(
   const rafRef = useRef(0);
   const pendingRef = useRef<number | null>(null);
   const suppressClickUntilRef = useRef(0);
+  // Задача "Crossword: fix soft keyboard and letter input on Android" —
+  // suppressClickUntilRef мусить лише гасити СИНТЕТИЧНИЙ клік/фокус, що
+  // лишається від ДРУГОГО пальця після реального pinch (п.4 коментаря у
+  // feedUp нижче), а не ЗВИЧАЙНИЙ одно-пальцевий тап. Раніше pointers.size
+  // === 0 у feedUp спрацьовувало й для ЗВИЧАЙНОГО тапу (кожен тап рано чи
+  // пізно теж доходить до size===0 при піднятті пальця) — тож click на
+  // щойно відфокусованому <input> (включно з ПЕРШИМ тапом узагалі) завжди
+  // гасився onClickCapture у crossword.tsx, і синхронний .focus() із
+  // onClick (попередній фікс 892f86d) НІКОЛИ не встигав виконатись —
+  // event.stopPropagation() на capture-фазі контейнера не пускав click до
+  // самого input. hadPinchRef — true лише якщо pointers.size РЕАЛЬНО
+  // досягав 2 протягом цього жесту (feedDown нижче); лише тоді feedUp
+  // виставляє suppressClickUntilRef.
+  const hadPinchRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -123,6 +137,7 @@ export function usePinchZoom(
     const pointers = pointersRef.current;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
+      hadPinchRef.current = true;
       const container = containerRef.current;
       if (!container) return false;
       const pts = [...pointers.values()];
@@ -173,7 +188,10 @@ export function usePinchZoom(
       gestureRef.current = null;
     }
     if (pointers.size === 0) {
-      suppressClickUntilRef.current = Date.now() + CLICK_SUPPRESS_MS;
+      if (hadPinchRef.current) {
+        suppressClickUntilRef.current = Date.now() + CLICK_SUPPRESS_MS;
+      }
+      hadPinchRef.current = false;
     }
   }
 
