@@ -9387,16 +9387,16 @@ button.scene-bar:active .scene-bar-toggle {
      вище). Коли вона absolute, вона більше не бере участі в flex-рядку,
      тож <p> (flex-1) сам займає всю ширину колонки — жодної додаткової
      зміни не потрібно, щоб "текстова колонка отримала всю ширину". */
-  /* Задача "Mobile word-choice: bigger lightbulb in corner, smaller option
-     pills" — лампочка ще ближче до кута (right:14→6px) і трохи більша
-     (36→44px): на 44px видима кнопка вже сама дає мінімальну зону дотику
-     (задача явно каже "at 44px it is already enough"), тож колишній
-     ::after-розширювач (36+4px*2=44) більше не потрібен — видалено, не
-     лишаємо мертвий/надлишковий код. */
+  /* Задача "Row-card hint button (mobile): keep lightbulb inside the card"
+     — top:-14px раніше виносив ~half кнопки ЗА верхню рамку картки
+     (border straddling). Тепер top:8px/right:8px — кнопка (44px) ціла
+     ВСЕРЕДИНІ картки, зовнішній край на 8px від рамки з обох боків (запас
+     понад мінімальні 6px із задачі). Розмір (44px кнопка/28px гурток)
+     лишається тим самим, що й раніше. */
   .word-choice-hint-bulb {
     position: absolute;
-    top: -14px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
     margin: 0;
     width: 44px;
     height: 44px;
@@ -9418,18 +9418,21 @@ button.scene-bar:active .scene-bar-toggle {
     width: 15px !important;
     height: 15px !important;
   }
-  /* Лампочка тепер і більша (44px), і ближча до кута (top:-14px) — її
-     нижній край сидить на 44-14=30px нижче верхньої рамки картки, тобто
-     30-12(padding картки)=18px углиб текстової area, а це вже всередині
-     висоти першого рядка речення (line-height:1.5 нижче). padding-top:6px
-     на самому тексті (не на картці — картка й так росте під довший
-     текст) відсуває перший рядок настільки, щоб не чіплятись за кутову
-     лампочку (задача: "first line at least 14px lower than the bulb's
-     lower edge"). padding-right не додається — текст лишається на всю
-     ширину колонки (лампочка вже absolute, поза потоком), як і було. */
+  /* Задача "Row-card hint button (mobile): keep lightbulb inside the
+     card" — лампочка тепер ЦІЛА всередині картки (top:8px, вище), її
+     нижній край сидить на 8+44=52px від верхньої рамки картки, тобто
+     52-12(padding картки, p-3)=40px углиб текстової area (більше, ніж
+     раніше, бо раніше лампочка половиною висіла ЗА рамкою — тут тепер усі
+     44px її висоти лягають усередину). padding-top:44px (40 + запас
+     ~4px) на самому тексті відсуває ПЕРШИЙ рядок настільки, щоб його
+     line-box повністю розпочинався нижче нижнього краю лампочки — решта
+     рядків (якщо речення переноситься) лишаються на всю ширину колонки
+     без жодного додаткового запасу, бо вони вже й так нижче лампочки.
+     padding-right не додається — текст лишається на всю ширину колонки
+     (лампочка вже absolute, поза потоком), як і було. */
   .word-choice-sentence-text {
     line-height: 1.5;
-    padding-top: 6px;
+    padding-top: 44px;
   }
   /* Задача "Word choice (mobile): consistent gaps around option group,
      natural wrapping". display:inline-flex робив ВСЮ групу одним
@@ -10963,19 +10966,29 @@ button.scene-bar:active .scene-bar-toggle {
   .reorder-row-card {
     overflow: visible;
   }
-  /* Той самий кутовий вигляд, що .word-choice-hint-bulb (b112e29/acb56d3)
-     — "for consistency with Choisissez la bonne forme" (п.5 задачі).
-     Розмір (44px кнопка/28px гурток) тут уже дає max-md:min-h-11/min-w-11
-     (JSX, 44px) + стандартний GOLD_CIRCLE_SIZE (28px, hint-bulb.tsx) —
-     нічого зменшувати/збільшувати тут не треба, лише позиція. RowPointsTab
-     (.row-points-tab) у цього рядка сидить у ЛІВОМУ верхньому куті
-     (top:-13px;left:18px, globals.css) — конфлікту з правим кутом немає
-     ЗАВЖДИ, тож запасний варіант "лишити лампочку де є" не застосовний. */
+  /* Задача "Row-card hint button (mobile): keep lightbulb inside the
+     card" — top:-14px раніше виносив ~half кнопки ЗА верхню рамку картки
+     (border straddling), той самий баг, що .word-choice-hint-bulb вище.
+     top:8px/right:8px — кнопка (44px, max-md:min-h-11/min-w-11 з JSX)
+     ціла ВСЕРЕДИНІ картки, зовнішній край на 8px від рамки з обох боків.
+     RowPointsTab (.row-points-tab) сидить у ЛІВОМУ верхньому куті
+     (top:-13px;left:18px) — конфлікту з правим кутом як і раніше немає. */
   .reorder-hint-bulb {
     position: absolute;
-    top: -14px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
     margin: 0;
+  }
+  /* Кнопка тепер сидить ВСЕРЕДИНІ картки (нижній край на 8+44=52px від
+     верхньої рамки) — коли немає картинки/аудіо, перший рядок колонки
+     (лише item-number-badge, 26px) + gap-2.5 (10px) закінчується вже на
+     12(padding)+26+10=48px, тобто на ~4px ВИЩЕ нижнього краю кнопки:
+     рядок плиток міг би почати перекриватись правим краєм кнопки. min-
+     height:36px на цьому першому рядку (замість природних 26px) підіймає
+     порядок плиток до 12+36+10=58px — нижче кнопки з запасом, без жодної
+     зміни, коли картинка Є (вона й так 56px, вище 36px). */
+  .reorder-row-top {
+    min-height: 36px;
   }
 }
 

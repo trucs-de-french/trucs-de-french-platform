@@ -142,7 +142,7 @@ function ReorderSequenceTiles({
         className={`glass-item-card reorder-row-card relative flex items-center gap-3.5 px-3.5 ${showTab ? "pt-4" : "pt-2.5"} pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 ${showTab ? "max-md:pt-[18px]" : "max-md:pt-3"} max-md:pb-3`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 reorder-row-top">
             <span className="item-number-badge shrink-0" aria-label={t("aria.sentence", { n: number })}>
               {number}
             </span>
