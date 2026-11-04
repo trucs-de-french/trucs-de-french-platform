@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import {
@@ -28,6 +28,7 @@ import {
   fillBlankFieldPlaceholder,
 } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
+import { normalize } from "@/lib/exercises/grade";
 
 // Плитки toggle-картки "Правильні відповіді" для fill_blank — одна плитка
 // на РЕЧЕННЯ (не на пропуск): template тут один суцільний текст без
@@ -147,8 +148,14 @@ export function FillBlankExercise({
   // Довідкові бульбашки — суто локальний UI-стан на сесію проходження, не
   // зберігається на сервері й не впливає на перевірку. За ІНДЕКСОМ у
   // wordBank, не за текстом — щоб клік на одне слово не викреслював інше
-  // однакове слово, якщо вчитель вписав його двічі.
-  const [crossedOut, setCrossedOut] = useState<Set<number>>(new Set());
+  // однакове слово, якщо вчитель вписав його двічі. manualCrossedOut —
+  // ручні тапи студента (назавжди, автовикреслення ніколи їх не знімає).
+  // autoCrossedOut — похідний (useMemo) від поточних answers, перераховується
+  // на кожну зміну тексту: слово банку викреслюється, щойно текст у БУДЬ-
+  // ЯКОМУ пропуску збігається з ним (чи знову повертається, коли текст
+  // змінили/стерли), якщо його не викреслено вручну. Видиме/aria-стан —
+  // crossedOut = union обох множин (нижче).
+  const [manualCrossedOut, setManualCrossedOut] = useState<Set<number>>(new Set());
   // Підказка-переклад (лампочка біля пропуску, незалежна від applyHint/
   // hintedBlanks вище — ОКРЕМИЙ стан, щоб не зачепити "перша літера": той
   // стан очищується в updateAnswer на кожній зміні поля, а "використано"
@@ -159,6 +166,43 @@ export function FillBlankExercise({
   const [translationHints, setTranslationHints] = useState<Set<number>>(new Set());
   const [visibleTranslations, setVisibleTranslations] = useState<Set<number>>(new Set());
   const hints = config.hints ?? [];
+  // Автовикреслення: ЛИШЕ з того, що студент УЖЕ ВПИСАВ (answers) — ніколи
+  // не звертається до перевірки/правильних відповідей (п.5 задачі, щоб не
+  // виказувати правильність). Той самий normalize(), що й сервер
+  // (gradeFillBlank, grade.ts) — єдина точка правди для case/trim/апострофа.
+  // Дублікати слова в банку: кожен збіглий пропуск "споживає" щонайбільше
+  // одну копію слова — лічимо, скільки пропусків типово збіглось з
+  // нормалізованим словом, і скільки копій цього слова є в банку, й
+  // викреслюємо min(копій, збігів) штук, у порядку банку (п.4 задачі).
+  const autoCrossedOut = useMemo(() => {
+    const result = new Set<number>();
+    const wordBank = config.wordBank;
+    if (!wordBank || wordBank.length === 0) return result;
+    const matchCounts = new Map<string, number>();
+    for (const a of answers) {
+      const v = a.trim();
+      if (!v) continue;
+      const n = normalize(v);
+      matchCounts.set(n, (matchCounts.get(n) ?? 0) + 1);
+    }
+    if (matchCounts.size === 0) return result;
+    const bankIndicesByWord = new Map<string, number[]>();
+    wordBank.forEach((word, i) => {
+      const n = normalize(word);
+      const indices = bankIndicesByWord.get(n);
+      if (indices) indices.push(i);
+      else bankIndicesByWord.set(n, [i]);
+    });
+    for (const [word, indices] of bankIndicesByWord) {
+      const strikeCount = Math.min(indices.length, matchCounts.get(word) ?? 0);
+      for (let k = 0; k < strikeCount; k++) result.add(indices[k]);
+    }
+    return result;
+  }, [answers, config.wordBank]);
+  const crossedOut = useMemo(
+    () => new Set([...manualCrossedOut, ...autoCrossedOut]),
+    [manualCrossedOut, autoCrossedOut]
+  );
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const checkConfirm = useCheckConfirm();
@@ -259,8 +303,14 @@ export function FillBlankExercise({
     });
   }
 
+  // Тап завжди перемикає лише MANUAL-множину (auto лишається незмінним і
+  // похідним від answers) — саме це й дає "найменш дивну" поведінку з п.2
+  // задачі: тап по авто-викресленому (ще не manual) додає його в manual, тож
+  // воно лишиться викресленим, навіть коли пропуск очистять; тап по
+  // manual-викресленому знімає manual, і воно лишається викресленим ЛИШЕ
+  // якщо й досі авто-збігається.
   function toggleCrossedOut(i: number) {
-    setCrossedOut((prev) => {
+    setManualCrossedOut((prev) => {
       const next = new Set(prev);
       if (next.has(i)) next.delete(i);
       else next.add(i);

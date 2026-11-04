@@ -104,7 +104,7 @@ import { type GradableTaskType, assertNeverGradableType } from "./gradable-types
 // далі) — не може зламати жоден наявний тип.
 const APOSTROPHE_VARIANTS_RE = /[‘’ʼ]/g;
 
-function normalize(value: string): string {
+export function normalize(value: string): string {
   return value
     .trim()
     .toLowerCase()
