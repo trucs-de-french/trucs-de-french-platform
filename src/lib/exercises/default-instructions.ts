@@ -32,7 +32,14 @@ export type InstructionDefault = { instruction: string; subInstruction: string }
 export const FILL_BLANK_WORD_BANK_SUBINSTRUCTION =
   "Впишіть слова в пропуски самостійно. Використані викреслюйте зі списку.";
 export const FILL_BLANK_WORD_BANK_TRANSLATION_EN =
-  "Type the words into the blanks yourself. Cross out the ones you've used.";
+  "Type the words into the gaps yourself. Cross out the words you have used in the list.";
+
+// Французький instruction (не subInstruction) теж має свій окремий варіант
+// для банку слів — та сама причина, що FILL_BLANK_WORD_BANK_SUBINSTRUCTION
+// вище: голе "Complétez les phrases." не пояснює, що слова саме ВПИСУЮТЬ (не
+// перетягують) і що використані зі списку викреслюють.
+export const FILL_BLANK_WORD_BANK_INSTRUCTION_FR =
+  "Complétez les phrases. Écrivez les mots vous-même dans les blancs. Barrez dans la liste les mots que vous avez utilisés.";
 
 // Текст оновлено під заголовок панелі "варіант 3" (task-panel-header.tsx,
 // 2026) — дефолти на кожен тип тепер і джерело для НАЗВИ типу (короткої,

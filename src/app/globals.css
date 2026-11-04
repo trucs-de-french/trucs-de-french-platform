@@ -7628,12 +7628,34 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(243, 217, 139, 0.45);
   }
 }
+.word-pool-fb-open-hint {
+  display: none;
+}
 .word-pool-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   flex-shrink: 0;
+}
+/* fill_blank (fill-blank.tsx) лише — увесь рядок заголовка банку тепер
+   <button> (єдиний інтерактивний елемент, aria-expanded/aria-controls на
+   ньому, не на шевроні), щоб торкнутись/клікнути можна було будь-де в
+   рядку, не лише по маленькій іконці. Подвійний клас (.word-pool-label-row
+   .word-pool-fb-header-toggle) — скидаємо нативний вигляд <button> лише
+   тут, інші споживачі .word-pool-label-row (drag_drop/image_match/
+   sort_columns, звичайний <div>) цього правила не бачать. */
+.word-pool-label-row.word-pool-fb-header-toggle {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 .word-pool-label {
   font-family: var(--font-heading);
@@ -8267,6 +8289,20 @@ button.scene-bar:active .scene-bar-toggle {
   .dark .word-pool-fb-chevron {
     color: #dcdbf3;
   }
+  /* "Розкрийте список слів" — лише поки банк згорнутий (JSX-умова,
+     !bankExpanded), над рядком заголовка, усередині того самого липкого
+     .word-pool--fb (не над ним), щоб лишатись видимою разом із рядком. */
+  .word-pool-fb-open-hint {
+    display: block;
+    margin: 0 0 6px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 1.35;
+    color: #6a5d40;
+  }
+  .dark .word-pool-fb-open-hint {
+    color: var(--text-muted-caption);
+  }
   /* Банк лишається "липким зверху" (top:0 — 767px-правило вище), але
      тепер ВИСОТУ обмежує сам банк (не лише рядок чипів): розгорнутий банк
      скролиться УСЕРЕДИНІ себе (max-height:40vh), замість безлімітного
@@ -8316,6 +8352,9 @@ button.scene-bar:active .scene-bar-toggle {
 @media (max-width: 640px) and (prefers-color-scheme: dark) {
   :root:not(.light) .word-pool-fb-chevron {
     color: #dcdbf3;
+  }
+  :root:not(.light) .word-pool-fb-open-hint {
+    color: var(--text-muted-caption);
   }
 }
 /* Викреслене слово (fill_blank) — НОВІ мобільні кольори (індиго замість

@@ -96,6 +96,7 @@ export const fr: Record<MessageKey, string> = {
   "pool.scrollNextAria": "Faire défiler en avant",
   "pool.of": "sur",
   "pool.dragHint": "Maintenez un mot appuyé, puis glissez-le sous l'image",
+  "pool.openWordList": "Ouvrez la liste des mots",
 
   "common.outOf": "{a} sur {b}",
 

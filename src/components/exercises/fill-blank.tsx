@@ -9,6 +9,7 @@ import {
   DEFAULT_TRANSLATION_EN,
   FILL_BLANK_WORD_BANK_SUBINSTRUCTION,
   FILL_BLANK_WORD_BANK_TRANSLATION_EN,
+  FILL_BLANK_WORD_BANK_INSTRUCTION_FR,
   taskTranslationLine,
 } from "@/lib/exercises/default-instructions";
 import { frenchNbsp } from "@/lib/text/french-typography";
@@ -250,6 +251,14 @@ export function FillBlankExercise({
     ? FILL_BLANK_WORD_BANK_SUBINSTRUCTION
     : DEFAULT_INSTRUCTIONS.fill_blank.subInstruction;
   const defaultSubInstructionEn = hasWordBank ? FILL_BLANK_WORD_BANK_TRANSLATION_EN : DEFAULT_TRANSLATION_EN.fill_blank;
+  // Банк слів — французька instruction теж має окремий дефолт (сама
+  // DEFAULT_INSTRUCTIONS.fill_blank.instruction не пояснює, що слова
+  // ВПИСУЮТЬ, а використані викреслюють зі списку) — застосовується лише,
+  // коли задача не задала власний config.instructions (DB content), той
+  // самий принцип, що defaultSubInstruction вище.
+  const defaultInstruction = hasWordBank
+    ? FILL_BLANK_WORD_BANK_INSTRUCTION_FR
+    : DEFAULT_INSTRUCTIONS.fill_blank.instruction;
 
   useEffect(() => {
     if (result) onResult?.(result);
@@ -350,7 +359,7 @@ export function FillBlankExercise({
         {...(hidePoints
           ? {}
           : headerPointsState(config.points, result ? result.pointsEarned : undefined, lang))}
-        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.fill_blank.instruction}
+        instructionText={config.instructions ?? defaultInstruction}
         subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: defaultSubInstruction,
           en: defaultSubInstructionEn,
@@ -375,7 +384,22 @@ export function FillBlankExercise({
           // рендериться), клік лише перемикає "викреслено" (toggleCrossedOut,
           // логіка незмінна) — слово лишається в банку, не зникає.
           <div className={`word-pool word-pool--fb ${!bankExpanded ? "word-pool--fb-collapsed" : ""}`}>
-            <div className="word-pool-label-row">
+            {/* Лише мобільний (@media max-width:640px, globals.css),
+                і лише поки банк згорнутий — нагадує, що слова ховаються
+                під рядком заголовка, а не показані відразу. */}
+            {!bankExpanded && (
+              <p className="word-pool-fb-open-hint" aria-hidden="false">
+                {t("pool.openWordList")}
+              </p>
+            )}
+            <button
+              type="button"
+              className="word-pool-label-row word-pool-fb-header-toggle"
+              aria-expanded={bankExpanded}
+              aria-controls={bankChipsId}
+              aria-label={bankExpanded ? t("button.collapse") : t("button.expand")}
+              onClick={() => setBankExpanded((v) => !v)}
+            >
               <span className="word-pool-label">{crossOutPoolLabel(lang)}</span>
               <span className="word-pool-count">
                 {/* Десктоп/планшет — незмінний текст "X з Y"; мобільний
@@ -392,17 +416,10 @@ export function FillBlankExercise({
                   {poolRemainingLabel(lang, config.wordBank.length - crossedOut.size)}
                 </span>
               </span>
-              <button
-                type="button"
-                className="word-pool-fb-chevron"
-                aria-expanded={bankExpanded}
-                aria-controls={bankChipsId}
-                aria-label={bankExpanded ? t("button.collapse") : t("button.expand")}
-                onClick={() => setBankExpanded((v) => !v)}
-              >
-                {bankExpanded ? <ChevronUp size={18} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
-              </button>
-            </div>
+              <span className="word-pool-fb-chevron" aria-hidden="true">
+                {bankExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </span>
+            </button>
             <div className="word-pool-chips" id={bankChipsId}>
               {config.wordBank.map((word, i) => (
                 <button

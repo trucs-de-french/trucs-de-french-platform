@@ -94,6 +94,7 @@ export const en: Record<MessageKey, string> = {
   "pool.scrollNextAria": "Scroll forward",
   "pool.of": "of",
   "pool.dragHint": "Press and hold a word, then drag it under the picture",
+  "pool.openWordList": "Open the word list",
 
   "common.outOf": "{a} of {b}",
 
