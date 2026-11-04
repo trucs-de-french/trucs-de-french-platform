@@ -9477,6 +9477,30 @@ button.scene-bar:active .scene-bar-toggle {
     display: inline;
     margin-inline: 0.3em;
   }
+  /* Задача "Word choice (mobile): vertical gap between wrapped option
+     pills" — margin-inline вище дає лише горизонтальний відступ, а
+     .word-choice-pill margin:0 (нижче) прибирає БУДЬ-ЯКИЙ вертикальний
+     запас навколо плитки: коли <p> переносить рядок МІЖ двома обгортками
+     span.inline-block.whitespace-nowrap (JSX, по одній на кожен варіант),
+     плитки (32-44px висоти) виходять за межі текстового line-height і
+     сусідні рядки плиток торкаються (напр. "coca"/"jus", "aboie"/
+     "miaule"). Обгортка — звичайний inline-block, vertical-align лишається
+     default (baseline, не чіпається) — тож margin-top додався б
+     ПОВНІСТЮ до ascent (висоти рядка НАД базовою лінією) і відсунув би
+     ВЕСЬ рядок (разом із текстом) униз, зіпсувавши вирівнювання ПЕРШОГО
+     рядка з гуртком-номером (п.2 задачі) саме для карток, де перша
+     плитка опиняється на першому рядку (непередбачувано — картки з чисто
+     текстовим першим рядком лишились би на старому місці). margin-bottom,
+     навпаки, при vertical-align:baseline додається лише до descent (ПІД
+     базовою лінією) — ніколи не рухає верх ПОТОЧНОГО рядка, лише
+     збільшує відстань до наступного рядка/контенту: 8px (≥ вимоги задачі
+     "at least 8px between two pills") досить самостійно, без
+     margin-top і без потреби компенсувати padding-top
+     .word-choice-sentence-text (6px, 5f71885) — він лишається коректним
+     однаково для УСІХ карток. */
+  .word-choice-options > span {
+    margin-bottom: 8px;
+  }
   /* Плитка: ще нижча й тугіша (задача "bigger lightbulb... smaller option
      pills" — більше варіантів в один рядок). margin:0 (перебиває mx-1/
      ml-1 з JSX-рядка класів) — проміжок між плитками дає ЛИШЕ column-gap
