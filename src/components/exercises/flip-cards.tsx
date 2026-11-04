@@ -109,7 +109,7 @@ function FlipCardTile({
         {frenchNbsp(shown)}
       </span>
       {clickable && (
-        <span className="flex items-center gap-1 text-xs text-[var(--text-muted-caption)] dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[var(--text-muted-caption)]">
+        <span className="flip-card-tile-hint flex items-center gap-1 text-xs text-[var(--text-muted-caption)] dark:-mt-0.5 dark:text-[13px] dark:italic dark:text-[var(--text-muted-caption)]">
           <RotateCw
             aria-hidden="true"
             className="hidden h-3.5 w-3.5 shrink-0 dark:inline-block dark:text-[rgba(217,183,101,0.8)]"
@@ -770,7 +770,7 @@ function DeckCardFront({
         )}
       </div>
       {canFlip ? (
-        <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
+        <span className="flip-card-deck-hint flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
           <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
           {t("flip.touchToSeeTranslation")}
         </span>
@@ -796,7 +796,7 @@ function DeckCardBack({ translation }: { translation: string }) {
           {translation}
         </p>
       </div>
-      <span className="flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
+      <span className="flip-card-deck-hint flex items-center gap-1.5 text-[12px] font-content text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)] sm:text-[14px]">
         <RotateCw size={16} className="hidden text-[#b8902f] dark:text-[#f6dc8e] sm:inline" />
         {t("flip.touchToHideTranslation")}
       </span>
