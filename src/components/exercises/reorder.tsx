@@ -139,7 +139,7 @@ function ReorderSequenceTiles({
           chrono): рядок без вкладки балів не платить за її +6px запас
           зверху. */}
       <div
-        className={`glass-item-card flex items-center gap-3.5 px-3.5 ${showTab ? "pt-4" : "pt-2.5"} pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 ${showTab ? "max-md:pt-[18px]" : "max-md:pt-3"} max-md:pb-3`}
+        className={`glass-item-card reorder-row-card relative flex items-center gap-3.5 px-3.5 ${showTab ? "pt-4" : "pt-2.5"} pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 ${showTab ? "max-md:pt-[18px]" : "max-md:pt-3"} max-md:pb-3`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
           <div className="flex shrink-0 items-center gap-2">
@@ -174,8 +174,8 @@ function ReorderSequenceTiles({
                 onChange={onChange}
                 locked={locked}
                 tileState={tileState}
-                extraContainerClassName="max-md:gap-x-2 max-md:gap-y-1.5"
-                extraTileClassName="max-md:min-h-11 touch-manipulation"
+                extraContainerClassName="max-md:gap-x-2 max-md:gap-y-1.5 reorder-word-pills-row"
+                extraTileClassName="max-md:min-h-11 touch-manipulation reorder-word-pill"
               />
             </div>
 
@@ -203,7 +203,7 @@ function ReorderSequenceTiles({
             state={hintShown ? "used" : "available"}
             onClick={onToggleHint}
             label={hintVisible ? t("button.collapseHint") : t("button.showHint")}
-            className="shrink-0 max-md:min-h-11 max-md:min-w-11"
+            className="shrink-0 max-md:min-h-11 max-md:min-w-11 reorder-hint-bulb"
           />
         )}
       </div>

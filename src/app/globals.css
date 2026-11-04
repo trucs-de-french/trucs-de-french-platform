@@ -10798,6 +10798,72 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Мобільний (≤640px) — reorder (Remettez les éléments dans l'ordre),
+   задача "Mobile reorder: smaller word pills, full-width row, corner
+   lightbulb". Нічого тут не має еквівалента поза цим @media — десктоп/
+   планшет (>640px) лишаються на наявних Tailwind-класах у reorder.tsx
+   (max-md: = 768px-порядок, не зачіпається), без змін. */
+@media (max-width: 640px) {
+  /* Плитка-слово: менша й тугіша, щоб більше влазило в рядок. Кольори/
+     рамка-ширина (border-[1.5px] dark:border, JSX) тут НЕ чіпаються —
+     лише розмір навколо вже наявної рамки/фону (.reorder-word-tile/
+     glass-chip/стан-класи з tileClass() у sortable-tile-row.tsx). На
+     40px висоті жодних іконок немає взагалі (стан правильно/неправильно
+     тут показаний лише кольором рамки/фону, без check/cross-гліфа) —
+     "не обрізає іконку" з задачі тут не застосовне. */
+  .reorder-word-pill {
+    position: relative;
+    min-height: 40px;
+    padding: 0 11px;
+    border-radius: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  /* Зона дотику — 40px видимої висоти замало для комфортного тапу (плитки
+     тут тапаються для обміну місцями): ::before розширює ЛИШЕ
+     вертикально (-4px зверху/знизу → 40+8=48px), горизонтально inset:0
+     (= ширина самої плитки) — сусідні зони дотику не перекриваються,
+     бо плитки й так розділені column-gap нижче. content/position — нові
+     тут (на відміну від word-choice-pill, цей <button> ще не мав
+     ::before взагалі). */
+  .reorder-word-pill::before {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
+  }
+  /* Контейнер плиток (SortableTileRow, extraContainerClassName) — явний
+     column-gap/row-gap перебиває max-md:gap-x-2/gap-y-1.5 (768px-порядок
+     у JSX, лишається чинним між 641-767px, тут лише звужує/розширює на
+     ≤640px). */
+  .reorder-word-pills-row {
+    column-gap: 6px;
+    row-gap: 8px;
+  }
+  /* П.3 задачі — рядок плиток на всю внутрішню ширину картки: досягається
+     НЕ прямою зміною самого контейнера плиток, а тим, що лампочка нижче
+     стає position:absolute (виходить із flex-рядка картки) — єдина
+     дитина, що лишається у зовнішньому flex-рядку (min-w-0 flex-1 —
+     внутрішня обгортка з бейджем+текстовою колонкою), сама займає всю
+     ширину картки без жодного зарезервованого місця під лампочку. */
+  .reorder-row-card {
+    overflow: visible;
+  }
+  /* Той самий кутовий вигляд, що .word-choice-hint-bulb (b112e29/acb56d3)
+     — "for consistency with Choisissez la bonne forme" (п.5 задачі).
+     Розмір (44px кнопка/28px гурток) тут уже дає max-md:min-h-11/min-w-11
+     (JSX, 44px) + стандартний GOLD_CIRCLE_SIZE (28px, hint-bulb.tsx) —
+     нічого зменшувати/збільшувати тут не треба, лише позиція. RowPointsTab
+     (.row-points-tab) у цього рядка сидить у ЛІВОМУ верхньому куті
+     (top:-13px;left:18px, globals.css) — конфлікту з правим кутом немає
+     ЗАВЖДИ, тож запасний варіант "лишити лампочку де є" не застосовний. */
+  .reorder-hint-bulb {
+    position: absolute;
+    top: -14px;
+    right: 6px;
+    margin: 0;
+  }
+}
+
 /* checkbox_grid (Grille à cocher) — тонша striping рядків (кожен другий)
    і наведення на весь рядок, темна тема лише. Рядок грід-таблиці — div
    role="row" class="contents" (без власного боксу, лише CSS grid), тож
