@@ -433,11 +433,13 @@ export function DragDropExercise({
             )}
           </WordPoolCarouselTrack>
           <WordPoolProgress carousel={carousel} />
-          {/* Лише мобільний (@media max-width:640px, globals.css) — як
-              перетягувати пулу, поза скролящимся треком, тож не їде разом
-              із чипами. */}
+          {/* Видима на всіх ширинах (globals.css) — як перетягувати пулу,
+              поза скролящимся треком, тож не їде разом із чипами; текст
+              дотику/миші перемикається лише CSS (.word-pool-hint-touch/
+              -mouse), той самий прийом, що .scroll-hint-desktop/-mobile. */}
           <p className="word-pool-hint" aria-hidden="false">
-            {t("pool.dragHintGap")}
+            <span className="word-pool-hint-touch">{t("pool.dragHintGap")}</span>
+            <span className="word-pool-hint-mouse">{t("pool.dragHintGapMouse")}</span>
           </p>
         </div>
       ) : (

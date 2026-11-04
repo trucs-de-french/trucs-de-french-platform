@@ -96,6 +96,9 @@ export const en: Record<MessageKey, string> = {
   "pool.dragHintImage": "Press and hold a word, then drag it under the picture",
   "pool.dragHintGap": "Press and hold a word, then drag it into the gap",
   "pool.dragHintColumn": "Press and hold a word, then drag it into the right column",
+  "pool.dragHintImageMouse": "Drag a word under the picture",
+  "pool.dragHintGapMouse": "Drag a word into the gap",
+  "pool.dragHintColumnMouse": "Drag a word into the right column",
   "pool.openWordList": "Open the word list",
 
   "common.outOf": "{a} of {b}",

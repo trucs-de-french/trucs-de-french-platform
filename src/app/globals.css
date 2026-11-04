@@ -8243,32 +8243,58 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(255, 255, 255, 0.08);
   }
 }
-/* Підказка "затисніть і перетягніть" під треком/прогрес-баром пулу
+/* Підказка "затисніть/перетягніть" під треком/прогрес-баром пулу
    (image-match.tsx/drag-drop.tsx/sort-columns.tsx — лише там, де слова
    справді ДРАГАЮТЬСЯ; fill_blank пропускаємо, там пул лише натискний).
-   Поза треком .word-pool-chips — не їде зі скролом/каруселлю. Прихована
-   за межами мобільного (десктоп/планшет рендер лишається пікселево
-   незмінним — елемент у DOM є завжди, просто display:none). */
+   Поза треком .word-pool-chips — не їде зі скролом/каруселлю. Видима на
+   ВСІХ ширинах тепер (раніше — лише ≤640px, display:none поза медіа-
+   запитом); порожній пул і далі ховає ВЕСЬ елемент через JSX-умову
+   (remaining/pool.length > 0), не CSS. Базове правило нижче — десктоп/
+   планшетні значення (13px, відступ без мобільного 16px-margin, що
+   компенсував лише мобільний bleed-margin:0 -16px/-24px .word-pool);
+   мобільний @media нижче перевизначає РІВНО ті самі значення, що були
+   ДО цієї задачі (пікселево незмінний мобільний рендер). */
 .word-pool-hint {
-  display: none;
+  display: block;
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  color: #6a5d40;
+}
+.dark .word-pool-hint {
+  color: var(--text-muted-caption);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-hint {
+    color: var(--text-muted-caption);
+  }
 }
 @media (max-width: 640px) {
   .word-pool-hint {
-    display: block;
     margin: 8px 16px 0;
-    font-family: var(--font-body);
     font-size: 12px;
-    line-height: 1.35;
-    text-align: left;
-    color: #6a5d40;
-  }
-  .dark .word-pool-hint {
-    color: var(--text-muted-caption);
   }
 }
-@media (max-width: 640px) and (prefers-color-scheme: dark) {
-  :root:not(.light) .word-pool-hint {
-    color: var(--text-muted-caption);
+/* Два варіанти тексту підказки (дотик/миша) всередині ОДНОГО
+   .word-pool-hint — той самий прийом подвійного <span>, що
+   .scroll-hint-desktop/.scroll-hint-mobile (crossword.tsx/word-search.tsx):
+   текст дотику показаний на ≤640px АБО coarse-вказівнику (планшети з
+   тач-екраном за межами 640px теж бачать варіант дотику), миша — усюди
+   інше (десктоп/планшет із мишею/трекпадом). */
+.word-pool-hint-mouse {
+  display: inline;
+}
+.word-pool-hint-touch {
+  display: none;
+}
+@media (max-width: 640px), (pointer: coarse) {
+  .word-pool-hint-mouse {
+    display: none;
+  }
+  .word-pool-hint-touch {
+    display: inline;
   }
 }
 /* "Texte à trous" (fill_blank) — банк слів на мобільному (<=640px):

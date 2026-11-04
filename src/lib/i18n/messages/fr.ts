@@ -98,6 +98,9 @@ export const fr: Record<MessageKey, string> = {
   "pool.dragHintImage": "Maintenez un mot appuyé, puis glissez-le sous l'image",
   "pool.dragHintGap": "Maintenez un mot appuyé, puis glissez-le dans le blanc",
   "pool.dragHintColumn": "Maintenez un mot appuyé, puis glissez-le dans la bonne colonne",
+  "pool.dragHintImageMouse": "Faites glisser un mot sous l'image",
+  "pool.dragHintGapMouse": "Faites glisser un mot dans le blanc",
+  "pool.dragHintColumnMouse": "Faites glisser un mot dans la bonne colonne",
   "pool.openWordList": "Ouvrez la liste des mots",
 
   "common.outOf": "{a} sur {b}",

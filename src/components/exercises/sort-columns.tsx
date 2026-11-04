@@ -350,11 +350,13 @@ export function SortColumnsExercise({
         </WordPoolCarouselTrack>
         <WordPoolProgress carousel={carousel} />
         {pool.length > 0 && (
-          // Лише мобільний (@media max-width:640px, globals.css) — як
-          // перетягувати пулу, поза скролящимся треком, тож не їде разом
-          // із чипами.
+          // Видима на всіх ширинах (globals.css) — як перетягувати пулу,
+          // поза скролящимся треком, тож не їде разом із чипами; текст
+          // дотику/миші перемикається лише CSS (.word-pool-hint-touch/
+          // -mouse), той самий прийом, що .scroll-hint-desktop/-mobile.
           <p className="word-pool-hint" aria-hidden="false">
-            {t("pool.dragHintColumn")}
+            <span className="word-pool-hint-touch">{t("pool.dragHintColumn")}</span>
+            <span className="word-pool-hint-mouse">{t("pool.dragHintColumnMouse")}</span>
           </p>
         )}
       </div>

@@ -99,6 +99,9 @@ export const uk = {
   "pool.dragHintImage": "Затисніть слово пальцем і перетягніть під картинку",
   "pool.dragHintGap": "Затисніть слово пальцем і перетягніть у пропуск",
   "pool.dragHintColumn": "Затисніть слово пальцем і перетягніть у потрібну колонку",
+  "pool.dragHintImageMouse": "Перетягніть слово мишею під картинку",
+  "pool.dragHintGapMouse": "Перетягніть слово мишею в пропуск",
+  "pool.dragHintColumnMouse": "Перетягніть слово мишею в потрібну колонку",
   "pool.openWordList": "Розкрийте список слів",
 
   "common.outOf": "{a} з {b}",
