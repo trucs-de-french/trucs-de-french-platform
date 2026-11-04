@@ -7386,6 +7386,70 @@ button.scene-bar:active .scene-bar-toggle {
     box-shadow: 0 4px 10px rgba(0, 0, 20, 0.45), 0 1px 3px rgba(0, 0, 20, 0.35);
   }
 }
+/* Мобільний (≤640px) — "Correction des erreurs" (задача "Mobile error-
+   correction list: full exercise titles, status chip under text"):
+   .error-review-row сьогодні — звичайний flex-рядок (номер, іконка,
+   текстова колонка flex-1, статус-пілюля праворуч) — пілюля забирала
+   значну частину ширини, тож назва (truncate, Tailwind-утиліта) різалась
+   в "…".
+   Грід (не flex) — щоб перенести пілюлю ПІД текстову колонку без
+   переміщення самого DOM-вузла (StatusPill лишається сестрою текстової
+   колонки в JSX, "без логічних змін"): колонка 3 (текст) і пілюля сидять
+   в ОДНІЙ grid-колонці, різних рядках грід-треку — візуально пілюля
+   опиняється під підзаголовком, лишаючись окремим елементом у розмітці.
+   justify-self:start на пілюлі — інакше грід за замовчуванням розтягнув
+   би inline-flex-пілюлю на всю ширину 1fr-колонки (stretch — дефолтний
+   justify-items грід-контейнера). */
+@media (max-width: 640px) {
+  .error-review-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    column-gap: 10px;
+    row-gap: 4px;
+    align-items: start;
+  }
+  /* .item-number-badge — спільний клас (бейдж-номер скрізь на сторінці),
+     тож скоуп лише під .error-review-row, не сам клас. TaskTypeIconBadge
+     (task-type-icon-badge.tsx) не приймає className і не має власного
+     класу-гачка — :not() виключає два інші <span>-прямі-дітей рядка
+     (номер, статус-пілюля), лишаючи лише span іконки; надійніше за
+     позиційний :nth-child, що зламався б, якби TaskTypeIconBadge колись
+     повернув null (невідомий taskType) і текстова колонка стала б
+     фактичною 2-ю дитиною. */
+  .error-review-row > .item-number-badge {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .error-review-row > span:not(.item-number-badge):not(.error-review-status-pill) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .error-review-text-col {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .error-review-status-pill {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: start;
+    align-self: start;
+    margin-top: 6px;
+  }
+  /* П.1 задачі — повна назва вправи: труncate/line-clamp (Tailwind-
+     утиліта truncate = overflow:hidden;text-overflow:ellipsis;
+     white-space:nowrap) знято лише тут, overflow-wrap:anywhere — ЛИШЕ
+     крайній засіб (довге слово без пробілів), звичайний перенос по
+     пробілу спрацює раніше в більшості випадків. */
+  .error-review-title,
+  .error-review-subtitle {
+    overflow: visible;
+    text-overflow: unset;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+}
 .drag-drop-row-number {
   margin-top: 7px;
 }

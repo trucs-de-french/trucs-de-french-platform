@@ -121,7 +121,7 @@ export const uk = {
   "errReview.notFixed": "Не виправлено",
   "errReview.partiallyFixed": "Частково",
   "errReview.fixed": "Виправлено",
-  "errReview.remainingOfTotal": "Лишилось {n} з {total}",
+  "errReview.remainingOfTotal": "Лишилось {n} з {total}",
   "errReview.allFixed": "Усі помилки виправлено",
   "errReview.allFixedBanner": "Усі помилки цього завдання виправлено",
   "errReview.reviewHint": "Перегляньте свої помилки й натисніть «Виправити», щоб спробувати ще раз — без втрати балів.",

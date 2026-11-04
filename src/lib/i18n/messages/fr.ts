@@ -120,7 +120,7 @@ export const fr: Record<MessageKey, string> = {
   "errReview.notFixed": "Non corrigé",
   "errReview.partiallyFixed": "Partiellement",
   "errReview.fixed": "Corrigé",
-  "errReview.remainingOfTotal": "Il reste {n} sur {total}",
+  "errReview.remainingOfTotal": "Il reste {n} sur {total}",
   "errReview.allFixed": "Toutes les erreurs sont corrigées",
   "errReview.allFixedBanner": "Toutes les erreurs de cet exercice sont corrigées",
   "errReview.reviewHint": "Consultez vos erreurs et cliquez sur « Corriger » pour réessayer sans perdre de points.",

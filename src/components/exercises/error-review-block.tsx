@@ -108,7 +108,7 @@ function StatusPill({ status }: { status: ErrorReviewStatus }) {
   const { t } = useT();
   return (
     <span
-      className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_PILL_CLASS[status]}`}
+      className={`error-review-status-pill shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_PILL_CLASS[status]}`}
     >
       {t(STATUS_PILL_KEY[status])}
     </span>
@@ -140,26 +140,26 @@ function ErrorReviewCard({
 
   return (
     <div className="rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
-      <div className={`flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
+      <div className={`error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span className="item-number-badge" aria-hidden>
           {index + 1}
         </span>
         <TaskTypeIconBadge type={entry.taskType} size="sm" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-heading font-medium" title={entry.title}>
+        <div className="error-review-text-col min-w-0 flex-1">
+          <p className="error-review-title truncate font-heading font-medium" title={entry.title}>
             {entry.displayTitle}
             {ordinal !== null && ` · ${ordinal}`}
           </p>
           {!isInteractive && entry.summary && (
-            <p className="truncate text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">{entry.summary}</p>
+            <p className="error-review-subtitle truncate text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">{entry.summary}</p>
           )}
           {isInteractive && (
-            <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">
+            <p className="error-review-subtitle text-sm text-[var(--text-muted-caption)] dark:text-[var(--card-ink-2)]">
               {entry.status === "partial"
                 ? t("errReview.remainingOfTotal", { n: remaining, total: entry.total })
                 : isDone
                   ? t("errReview.allFixed")
-                  : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`}
+                  : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`}
             </p>
           )}
         </div>

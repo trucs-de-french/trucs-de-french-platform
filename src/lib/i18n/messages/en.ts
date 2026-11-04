@@ -118,7 +118,7 @@ export const en: Record<MessageKey, string> = {
   "errReview.notFixed": "Not fixed",
   "errReview.partiallyFixed": "Partially",
   "errReview.fixed": "Fixed",
-  "errReview.remainingOfTotal": "{n} of {total} left",
+  "errReview.remainingOfTotal": "{n} of {total} left",
   "errReview.allFixed": "All errors fixed",
   "errReview.allFixedBanner": "All errors in this exercise are fixed",
   "errReview.reviewHint": "Review your mistakes and click \"Fix\" to try again without losing points.",
