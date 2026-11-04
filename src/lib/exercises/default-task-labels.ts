@@ -127,6 +127,14 @@ export function fillBlankFieldPlaceholder(lang: UiLang): string {
 export function dragDropSlotPlaceholder(lang: UiLang): string {
   return t(lang, "placeholder.dragWordFull");
 }
+// Короткий варіант (≤640px, globals.css: .drag-drop-slot-placeholder-full/
+// -short) — той самий ключ placeholder.dragWordShort, що image-match.tsx
+// уже використовує для свого плейсхолдера (той самий прийом подвійного
+// <span>), щоб "перетягніть слово" не переносилось на 2 рядки у вузькому
+// слоті.
+export function dragDropSlotPlaceholderShort(lang: UiLang): string {
+  return t(lang, "placeholder.dragWordShort");
+}
 
 // Заголовок toggle-картки "Правильні відповіді" (TaskResult.toggleTitle,
 // task-result.tsx) — спільний для ВСІХ типів із toggle (раніше лише

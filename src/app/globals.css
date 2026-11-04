@@ -3479,6 +3479,30 @@ button, input, textarea, select, label, nav, aside {
     padding: 16px;
   }
 }
+@media (max-width: 640px) {
+  /* 38px (leading-[38px], fill-blank.tsx) → 1.5: та сама причина/підхід,
+     що .drag-drop-row-text вище — фіксований line-height абзацу існував
+     як місце під inline-поле-пропуск (.fill-blank-field-wrap нижче), а не
+     під сам текст; .light/.dark тут не чіпаємо (лише розмір рядка).
+     Unlayered-правило тут перебиває Tailwind-утиліту leading-[38px]
+     (@layer utilities) незалежно від порядку в файлі — Tailwind v4,
+     cascade layers. */
+  .glass-reading-passage {
+    line-height: 1.5;
+  }
+  /* mx-1 (лише горизонтальний 4px) → 4px 2px: той самий принцип, що
+     .drag-drop-slot margin вище — вертикальний запас дає сам inline-
+     елемент пропуску, не рядок тексту. */
+  .fill-blank-field-wrap {
+    margin: 4px 2px;
+  }
+  /* h-[28px] → 40px (п.2 задачі "inputs 40px"); лампочка-підказка
+     (.fill-blank-field-lamp) лишається абсолютно позиціонованою
+     top:50%/translateY(-50%) — сама пере-центрується з новою висотою. */
+  .fill-blank-field {
+    height: 40px;
+  }
+}
 .glass-answer-btn {
   background: var(--glass-answer-bg);
   border: var(--glass-answer-border-width, 1.5px) solid var(--glass-answer-border);
@@ -7138,6 +7162,20 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 14px 14px 8px;
   box-sizing: border-box;
 }
+@media (max-width: 640px) {
+  /* Симетричний компактний падінг на мобільному — той самий принцип, що
+     table-fill.tsx (commit c883bbc): +6px зверху лише коли РЯДОК реально
+     показує вкладку балів (.row-points-tab-wrap--has-tab, клас додається
+     в drag-drop.tsx лише коли showTab true), а не безумовно для всіх
+     рядків. Десктоп/планшет (>640px) лишаються на старому 14/14/8 —
+     пікселево незмінні (ця задача — лише мобільний брейкпоінт). */
+  .drag-drop-row.glass-item-card {
+    padding: 12px 14px 12px;
+  }
+  .row-points-tab-wrap--has-tab .drag-drop-row.glass-item-card {
+    padding-top: 18px;
+  }
+}
 /* Єдиний бейдж-номер елемента (питання/речення/рядка/слова) — ОДНЕ
    джерело правди для всіх типів вправ, що мають порядковий номер.
    Еталон — колишній .word-card-number-badge (letter_gaps/
@@ -7424,6 +7462,9 @@ button.scene-bar:active .scene-bar-toggle {
     order: 3;
   }
 }
+.drag-drop-slot-placeholder-short {
+  display: none;
+}
 /* Слот перетягування drag_drop — та сама форма/плейсхолдер/лампочка-
    позиція, що .image-match-slot* вище, лише своя геометрія мокапу
    (200x40, radius 10) і завжди inline-flex (слот стоїть посеред прозового
@@ -7554,6 +7595,49 @@ button.scene-bar:active .scene-bar-toggle {
     /* 160px → 130px — та сама -22.5% пропорція, що десктопне звуження
        вище (200→155), тож мобільний слот лишається вужчим за десктопний. */
     width: 130px;
+  }
+}
+@media (max-width: 640px) {
+  /* 2.3 → 1.5: рядок (18px шрифт, не збільшено — п.1 задачі) лишається
+     тим самим шрифтом, лише звичайні рядки речення (без слота) тепер
+     тісні — проміжок під слот дає не весь абзац (line-height), а сам
+     слот (margin: 4px 2px нижче, замість лише горизонтального margin:
+     0 4px у базовому правилі вище). Десктоп/планшет (>640px) лишаються
+     на 2.3 — пікселево незмінні (ця задача — лише мобільний брейкпоінт). */
+  .drag-drop-row-text {
+    line-height: 1.5;
+  }
+  /* 38px → 40px min-height, padding 6px 14px → 0 12px (п.2 задачі,
+     вертикальне центрування й далі через align-items:center самого
+     inline-flex слота, не padding) — застосовується і до --filled/
+     --dragover (жоден не задає власний min-height, лише --filled має
+     свій padding 6px 10px вище, теж перебитий тут же для однакової
+     висоти в усіх станах). */
+  .drag-drop-slot {
+    min-height: 40px;
+    padding: 0 12px;
+    margin: 4px 2px;
+  }
+  /* Останній запобіжник (п.2 задачі) — короткий варіант тексту нижче
+     (.drag-drop-slot-placeholder-short) і так лишається в один рядок;
+     nowrap/ellipsis — лише якщо він усе ж не влізе (напр. дуже вузький
+     екран чи дуже довгий переклад-підказка замінник). */
+  .drag-drop-slot-placeholder {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  /* "перетягніть слово" (2 слова) переносилось на 2 рядки у вузькому
+     слоті — короткий варіант (вже існуючий ключ placeholder.dragWordShort,
+     той самий, що image-match.tsx вже використовує для СВОГО плейсхолдера,
+     .image-match-slot-placeholder-full/-short) замінює повний на мобільному
+     тим самим прийомом подвійного <span>. */
+  .drag-drop-slot-placeholder-full {
+    display: none;
+  }
+  .drag-drop-slot-placeholder-short {
+    display: inline;
   }
 }
 

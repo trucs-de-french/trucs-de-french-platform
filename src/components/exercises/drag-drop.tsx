@@ -23,6 +23,7 @@ import {
   poolRemainingLabel,
   dragDropIntruderLabel,
   dragDropSlotPlaceholder,
+  dragDropSlotPlaceholderShort,
 } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
 
@@ -459,7 +460,7 @@ export function DragDropExercise({
 
           const showTab = !hidePoints && (isDelf || unevenById.get(s.id)) && (pointsVisible || !!sentDetail);
           return (
-            <div key={s.id} className="row-points-tab-wrap">
+            <div key={s.id} className={`row-points-tab-wrap ${showTab ? "row-points-tab-wrap--has-tab" : ""}`}>
               {showTab && (
                 <RowPointsTab
                   earned={sentDetail ? (sentenceCorrect ? s.points : 0) : undefined}
@@ -513,7 +514,10 @@ export function DragDropExercise({
                               ) : visibleHints.has(gi) && hint ? (
                                 <span className="truncate text-[var(--text-muted-hint)] dark:text-[var(--text-muted-caption)]">{hint}</span>
                               ) : (
-                                <span className="drag-drop-slot-placeholder">{dragDropSlotPlaceholder(lang)}</span>
+                                <span className="drag-drop-slot-placeholder">
+                                  <span className="drag-drop-slot-placeholder-full">{dragDropSlotPlaceholder(lang)}</span>
+                                  <span className="drag-drop-slot-placeholder-short">{dragDropSlotPlaceholderShort(lang)}</span>
+                                </span>
                               )}
                             </button>
                             {/* Лампочка ВСЕРЕДИНІ слота (мокап "варіант 1") —
