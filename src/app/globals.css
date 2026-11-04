@@ -5473,15 +5473,31 @@ button.scene-bar:active .scene-bar-toggle {
    6px 8px — гарантований внутрішній відступ (п.2 задачі), колонка
    стрілки 22→18px звільняє трохи більше місця під чипи. */
 @media (max-width: 640px) {
+  /* Задача "Answers toggle (mobile): never break long words mid-word in
+     correct-pair chips" — рівний розподіл minmax(0,1fr)/minmax(0,1fr) тут
+     ділив рядок навпіл НЕЗАЛЕЖНО від слів у ньому: "un établissement"
+     (fr) впирався у ту саму ширину, що й короткий переклад "заклад" (uk),
+     тож навіть floor font-size (10px, use-fit-text.ts) не вміщав слово в
+     половину рядка — useFitText вішав .chip-text-fit--overflow
+     (overflow-wrap:anywhere), і "établissement" ламалось посимвольно.
+     fit-content(62%) — grid-трек росте під фактичний контент fr-чипа (на
+     поточному font-size, тож перераховується й після того, як JS стиснув
+     шрифт) аж до 62% рядка, не більше й не менше, ніж треба: короткі fr-
+     слова лишають uk-колонці стільки ж місця, що й раніше (своїм власним
+     max-content, не фіксованою половиною), а для "établissement" трек сам
+     розшириться настільки, щоб слово влізло одним рядком під "un" —
+     ламання через useFitText fallback узагалі не доходить до спрацювання.
+     uk-колонка лишається minmax(0,1fr): забирає залишок і сама переноситься
+     по словах (звичний word-break:normal/overflow-wrap:normal нижче). */
   .task-result-pair-row {
-    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    grid-template-columns: fit-content(62%) 18px minmax(0, 1fr);
     gap: 6px;
     padding: 8px 8px;
   }
-  /* minmax(0,1fr) вище вже дає grid-комірці стискатись — сам чип теж
-     потребує min-width:0 (інакше власна ширина впливає на grid-трек) і
-     max-width:100%/box-sizing:border-box, щоб рамка/padding не виходили за
-     межі комірки ("une ingratitude" впритул до зеленої рамки). */
+  /* minmax(0,1fr)/fit-content(62%) вище вже дають grid-комірці стискатись —
+     сам чип теж потребує min-width:0 (інакше власна ширина впливає на
+     grid-трек) і max-width:100%/box-sizing:border-box, щоб рамка/padding не
+     виходили за межі комірки ("une ingratitude" впритул до зеленої рамки). */
   .task-result-pair-chip {
     min-width: 0;
     max-width: 100%;
@@ -5642,8 +5658,16 @@ button.scene-bar:active .scene-bar-toggle {
    uk] (п.3 задачі), gap 6px, padding рядка 6px/8px, padding чипа 6px 8px
    (гарантований внутрішній відступ, п.2). */
 @media (max-width: 640px) {
+  /* Той самий фікс/причина, що .task-result-pair-row вище (задача "Answers
+     toggle (mobile): never break long words mid-word in correct-pair
+     chips") — "couramment"/"quelconque" (коментар ЕТАП S вище) впирались у
+     ту саму причину: мобільний minmax(0,1fr) тут скидав навмисну
+     нерівність десктопних колонок (0.85fr/1.15fr вище) до рівних половин.
+     fit-content(62%) на fr-колонці (друга, після 18px номера) — росте під
+     фактичне слово на поточному font-size, uk-колонка (четверта)
+     лишається minmax(0,1fr) і забирає залишок. */
   .task-result-answer-row {
-    grid-template-columns: minmax(18px, 18px) minmax(0, 1fr) 14px minmax(0, 1fr);
+    grid-template-columns: minmax(18px, 18px) fit-content(62%) 14px minmax(0, 1fr);
     gap: 6px;
     padding: 6px 8px;
   }
