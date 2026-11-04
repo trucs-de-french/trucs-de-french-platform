@@ -6,9 +6,16 @@ import { useEffect, useRef, useState } from "react";
 // video-player.tsx, embed-frame.tsx) — "fullscreen-btn" — єдиний клас-гачок
 // для ВСІХ таких кнопок, уся візуальна стилізація (фон/рамка/бейдж/
 // світла-темна тема) живе в globals.css (.fullscreen-btn), перемикається
-// темою сайту (.dark/.light), не залежить від фону курсу. self-end —
-// позиціювання кнопки в flex-col-обгортці викликача.
-export const FULLSCREEN_BUTTON_CLASS = "fullscreen-btn inline-flex self-end";
+// темою сайту (.dark/.light), не залежить від фону курсу. self-start —
+// позиціювання кнопки в flex-col-обгортці викликача (задача "Embedded
+// games: move fullscreen button to the left" — раніше self-end; лише
+// embed-frame.tsx рендерить цю кнопку напряму в flex-col, тож це єдине
+// місце, де self-start/self-end реально зсуває кнопку по горизонталі;
+// karaoke.tsx — єдиний інший викликач — рендерить її в
+// .scene-fullscreen-btn-row (рядковий flex, justify-content керує
+// горизонталлю там, self-start/self-end лише про вертикаль і нічого не
+// змінює).
+export const FULLSCREEN_BUTTON_CLASS = "fullscreen-btn inline-flex self-start";
 
 // Спільна логіка повного екрана для iframe-обгорток студентської частини
 // (video-frame.tsx, embed-frame.tsx) — винесена з video-frame.tsx, щоб не
