@@ -256,6 +256,7 @@ export const uk = {
   "hintExplanation.multiple_choice": "підказка до запитання",
   "hintExplanation.reorder": "переклад речення українською",
   "reorder.tapToSwap": "Торкніться двох слів, щоб поміняти їх місцями",
+  "letterrearr.swapHint": "Торкніться двох літер, щоб поміняти їх місцями",
   "tablefill.correctLine": "правильно — {value}",
   "wc.chooseOptionsCount": "(оберіть {n} {word})",
 

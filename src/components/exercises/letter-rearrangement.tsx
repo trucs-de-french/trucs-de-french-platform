@@ -422,6 +422,19 @@ export function LetterRearrangementExercise({
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
+        {/* Задача "Lettres en désordre: add swap hint (uk/fr/en)" — той
+            самий .tap-swap-hint/reorder.tapToSwap підказка, що reorder.tsx
+            показує у своїй практиці (там — під !practiceCorrect, єдиним
+            прапорцем на всю практику). letter_rearrangement.tsx практика
+            не має такого єдиного "вся практика вирішена" прапорця (кожне
+            слово перевіряється й показує свій результат окремо,
+            practiceResults — за ключем), тож тут підказка лишається
+            видимою завжди в практиці — той самий принцип "reorder показує
+            підказку в практиці", адаптований до відсутності єдиного
+            лок-стану. */}
+        <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+          {t("letterrearr.swapHint")}
+        </p>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -540,6 +553,15 @@ export function LetterRearrangementExercise({
 
       {!useBlocks ? (
         <>
+          {/* Той самий .tap-swap-hint/reorder.tapToSwap принцип, що
+              reorder.tsx (!singleLocked там, !single.result тут — той
+              самий сенс "ще не перевірено"), лише свій i18n-ключ/текст
+              ("літери" замість "слова"). */}
+          {!single.result && (
+            <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("letterrearr.swapHint")}
+            </p>
+          )}
           <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
@@ -583,16 +605,26 @@ export function LetterRearrangementExercise({
           </div>
         </>
       ) : (
-        <BlockNavigation
-          blockCount={blockCount}
-          activeBlock={activeBlock}
-          onChangeBlock={setActiveBlock}
-          blockResults={blockResults}
-          checkButton={checkButtonEl}
-        >
+        <>
+          {/* Той самий принцип, що reorder.tsx (!blockResults[activeBlock]
+              там, activeBlockResult тут — той самий стан, уже рахується
+              вище для checkButtonEl). */}
+          {!activeBlockResult && (
+            <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("letterrearr.swapHint")}
+            </p>
+          )}
+          <BlockNavigation
+            blockCount={blockCount}
+            activeBlock={activeBlock}
+            onChangeBlock={setActiveBlock}
+            blockResults={blockResults}
+            checkButton={checkButtonEl}
+          >
           {renderBlock()}
           {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-        </BlockNavigation>
+          </BlockNavigation>
+        </>
       )}
     </div>
   );

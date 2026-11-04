@@ -253,6 +253,7 @@ export const en: Record<MessageKey, string> = {
   "hintExplanation.multiple_choice": "help for the question",
   "hintExplanation.reorder": "the Ukrainian translation of the sentence",
   "reorder.tapToSwap": "Tap two words to swap them",
+  "letterrearr.swapHint": "Tap two letters to swap them",
   "tablefill.correctLine": "correct — {value}",
   "wc.chooseOptionsCount": "(choose {n} {word})",
 

@@ -255,6 +255,7 @@ export const fr: Record<MessageKey, string> = {
   "hintExplanation.multiple_choice": "une aide pour la question",
   "hintExplanation.reorder": "la traduction ukrainienne de la phrase",
   "reorder.tapToSwap": "Touchez deux mots pour les échanger",
+  "letterrearr.swapHint": "Touchez deux lettres pour les échanger",
   "tablefill.correctLine": "correct — {value}",
   "wc.chooseOptionsCount": "(choisissez {n} {word})",
 
