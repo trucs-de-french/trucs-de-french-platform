@@ -9378,10 +9378,28 @@ button.scene-bar:active .scene-bar-toggle {
 /* Той самий 1.35, що .task-panel-hint-pill-text/.task-result-hint-summary
    > span (обидва вже тут поряд) — підказка-речення в чипі теж переноситься
    на кілька рядків на вузькому екрані, та сама родина "тексту підказки",
-   та сама цифра для однакового вигляду скрізь. */
+   та сама цифра для однакового вигляду скрізь.
+   Задача "Exercise-level hint panel (mobile): normal flow, full height, no
+   overlap with instructions" — базове правило вище (.word-choice-hint-chip)
+   лишає height:28px БЕЗУМОВНО, під один рядок тексту: для короткої
+   підсловникової підказки (word-choice.tsx) цього завжди вистачало, але
+   довгий текст вправи-рівня підказки (chronological-order.tsx,
+   "півень - баранець - ... - півень", переноситься на 3 рядки) вже не
+   вміщується — фіксована висота+overflow:visible (за умовчанням) лишали
+   текст видимим, але він малювався НАД/ПІД 28px-рамкою чипа, перекриваючи
+   сусідній текст інструкції. height:auto/min-height:28px (та сама висота,
+   що раніше — однорядкові чипи виглядають як і раніше) + vertical padding
+   6px (замість 0) — чип тепер росте під фактичну кількість рядків,
+   лампочка (align-items:center, успадковано з базового правила)
+   лишається центрованою відносно всього блоку. */
 @media (max-width: 640px) {
   .word-choice-hint-chip-text {
     line-height: 1.35;
+  }
+  .word-choice-hint-chip {
+    height: auto;
+    min-height: 28px;
+    padding: 6px 10px;
   }
 }
 /* Темна тема — існуючий золотий акцент теми (#f6dc8e, CLAUDE.md "dark gold

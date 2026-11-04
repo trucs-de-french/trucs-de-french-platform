@@ -448,18 +448,25 @@ export function ChronologicalOrderExercise({
             />
           )}
         </div>
-        {!isPractice && config.hint && hintVisible && (
-          <div role="status" aria-live="polite" className="word-choice-hint-chip">
-            <HintBulb state="available" as="span" className="word-choice-hint-chip-bulb" />
-            <span className="word-choice-hint-chip-text">{config.hint}</span>
-          </div>
-        )}
         <p className="chrono-order-note">
           <span className="chrono-order-note-badge" aria-hidden="true">
             n°
           </span>
           {numberingNoteText}
         </p>
+        {/* Задача "Exercise-level hint panel (mobile): normal flow, full
+            height, no overlap with instructions" — DOM-порядок: чип
+            підказки тепер ПІСЛЯ інструкції "n°... Впишіть у поле" (раніше
+            стояв МІЖ основною інструкцією й нею), перед пілюлею балів/
+            рядком прогресу нижче (п.3 задачі). Сам чип і його
+            показ/приховування (hintVisible/toggleHintVisible) не
+            змінюються. */}
+        {!isPractice && config.hint && hintVisible && (
+          <div role="status" aria-live="polite" className="word-choice-hint-chip">
+            <HintBulb state="available" as="span" className="word-choice-hint-chip-bulb" />
+            <span className="word-choice-hint-chip-text">{config.hint}</span>
+          </div>
+        )}
         {config.mode === "text" ? (
           // Рядок прогресу (п.2 задачі) — лише режим text: пілюля
           // "Заповнено X з N" (X = answeredCount, те саме, що й кнопка
