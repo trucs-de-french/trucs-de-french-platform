@@ -8183,6 +8183,125 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(255, 255, 255, 0.08);
   }
 }
+/* "Texte à trous" (fill_blank) — банк слів на мобільному (<=640px):
+   перенесення замість горизонтального скролу/каруселі, липка згортувана
+   смужка з шевроном, без білого фейду праворуч. Лише .word-pool--fb
+   (клас лише в fill-blank.tsx) — інші споживачі .word-pool* (drag_drop/
+   image_match/sort_columns) НЕ зачіпаються жодним правилом нижче.
+   Лічильник — .word-pool-count-desktop/-mobile (той самий прийом, що
+   .scroll-hint-desktop/-mobile, crossword.tsx/word-search.tsx): десктоп/
+   планшет і далі бачать "X з Y" (fillBlankWordPoolUsedLabel, текст не
+   змінено), мобільний — "N restants" (poolRemainingLabel, той самий
+   i18n-ключ, що drag-банк, drag-drop.tsx/image-match.tsx). */
+.word-pool-count-mobile {
+  display: none;
+}
+@media (max-width: 640px) {
+  .word-pool-count-desktop {
+    display: none;
+  }
+  .word-pool-count-mobile {
+    display: inline;
+  }
+  /* Шеврон — завжди в DOM (не лише мобільний), але невидимий поза
+     <=640px (display:none тут нижче не потрапляє — нічого не займає й не
+     зсуває рядок на десктопі/планшеті, що лишаються пікселево
+     незмінними). */
+  .word-pool-fb-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    padding: 0;
+    color: #8a7a52;
+    cursor: pointer;
+  }
+  .dark .word-pool-fb-chevron {
+    color: #dcdbf3;
+  }
+  /* Банк лишається "липким зверху" (top:0 — 767px-правило вище), але
+     тепер ВИСОТУ обмежує сам банк (не лише рядок чипів): розгорнутий банк
+     скролиться УСЕРЕДИНІ себе (max-height:40vh), замість безлімітного
+     розтягування вниз по контенту (767px-правило дає max-height:none —
+     тут перевизначено лише для .word-pool--fb, інші споживачі не зачеплені). */
+  .word-pool--fb {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  /* Перенесення замість горизонтального скролу/снепу — mask/фейд і так
+     уже прибрані спільним 640px-правилом вище (.word-pool-chips), тут
+     лише flex-wrap/overflow-x/scroll-snap скасовані САМЕ для fill_blank:
+     вища специфічність (два класи) перебиває спільні однокласові правила
+     вище природним порядком каскаду, без !important. */
+  .word-pool--fb .word-pool-chips {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+  .word-pool--fb .word-pool-chip {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    min-width: 0;
+  }
+  /* Довге слово в пілюлі — текст уже в .chip-text-fit (JSX,
+     FillBlankBankChipText) — той самий механізм, що відповіді в
+     task-result.tsx (useFitText зменшує font-size; .chip-text-fit вище дає
+     overflow-wrap/hyphens/overflow:visible). Лишилось додати лише
+     min-width:0/max-width:100%/inline-block: .word-pool-chip —
+     inline-flex-контейнер, span усередині й так блокується (flex-item
+     blockification), явний inline-block тут — страховка, щоб
+     clientWidth/scrollWidth у useFitText завжди були визначені. */
+  .word-pool-fb-chip-text {
+    display: inline-block;
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* Згорнутий банк — рядок чипів просто не рендериться візуально, DOM
+     лишається змонтованим (ResizeObserver/useFitText і далі живі) — той
+     самий принцип, що фікс GridScrollSlider (не розмонтовувати те, що
+     саме себе вимірює). */
+  .word-pool--fb-collapsed .word-pool-chips {
+    display: none;
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-fb-chevron {
+    color: #dcdbf3;
+  }
+}
+/* Викреслене слово (fill_blank) — НОВІ мобільні кольори (індиго замість
+   золота): та сама пілюля .word-pool-chip--used (лише fill_blank її
+   використовує — безпечно перевизначити без наслідків для інших типів).
+   Десктоп/планшет лишаються зі старим золотим text-decoration-color
+   (правило поза медіа-запитом вище, непорушене) — мобільний отримує
+   пунктирну рамку й індиго/лавандову риску, опацity .5 в ОБОХ темах (темна
+   раніше мала opacity:1 для контрасту з золотом — тут навмисно
+   перевизначено під нову мобільну кольорову схему, задача явно просить .5
+   в обох темах). */
+@media (max-width: 640px) {
+  .word-pool-chip--used {
+    border-style: dashed;
+    text-decoration-color: #4b46da;
+  }
+  .dark .word-pool-chip--used {
+    opacity: 0.5;
+    border-style: dashed;
+    text-decoration-color: #a9a2ea;
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-chip--used {
+    opacity: 0.5;
+    border-style: dashed;
+    text-decoration-color: #a9a2ea;
+  }
+}
 /* Дошка matching.tsx (MatchingBoard) — дві колонки FR/UK карток, SVG-шар
    ліній у проміжку між ними (нижче карток, z-index:1) і крапки на картках
    (вище карток, z-index:3), крапки/лінії рахуються в JS із реальних

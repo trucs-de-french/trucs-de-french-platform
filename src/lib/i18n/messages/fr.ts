@@ -23,6 +23,7 @@ export const fr: Record<MessageKey, string> = {
   "button.shuffle": "Mélanger",
   "button.close": "Fermer",
   "button.collapse": "Réduire",
+  "button.expand": "Développer",
   "button.fixCount": "Corriger {n}",
   "button.listenPlay": "Écouter la prononciation",
   "button.stopPlay": "Arrêter la lecture",

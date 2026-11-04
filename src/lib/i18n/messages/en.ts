@@ -21,6 +21,7 @@ export const en: Record<MessageKey, string> = {
   "button.shuffle": "Shuffle",
   "button.close": "Close",
   "button.collapse": "Collapse",
+  "button.expand": "Expand",
   "button.fixCount": "Fix {n}",
   "button.listenPlay": "Listen to pronunciation",
   "button.stopPlay": "Stop playback",

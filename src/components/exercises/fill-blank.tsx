@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useId } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { FillBlankPublic, FillBlankDetail, FillBlankAnswer, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import {
@@ -26,9 +27,27 @@ import {
   crossOutPoolLabel,
   fillBlankWordPoolUsedLabel,
   fillBlankFieldPlaceholder,
+  poolRemainingLabel,
 } from "@/lib/exercises/default-task-labels";
 import { useT } from "@/lib/i18n/context";
 import { normalize } from "@/lib/exercises/grade";
+import { useFitText } from "./use-fit-text";
+
+// Мобільний банк (<=640px, texte à trous) — довге слово в пілюлі не
+// обрізається: той самий механізм, що відповіді в task-result.tsx
+// (FitChip/useFitText) — JS зменшує font-size, доки слово не влізе, а
+// .chip-text-fit (глобальний клас, globals.css) дає overflow-wrap/hyphens-
+// фолбек на мобільному. Поза мобільним useFitText сам нічого не робить
+// (скидає fontSize), тож десктопний <span> лишається звичайним текстом.
+function FillBlankBankChipText({ text }: { text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useFitText(ref, text);
+  return (
+    <span ref={ref} className="word-pool-fb-chip-text chip-text-fit">
+      {text}
+    </span>
+  );
+}
 
 // Плитки toggle-картки "Правильні відповіді" для fill_blank — одна плитка
 // на РЕЧЕННЯ (не на пропуск): template тут один суцільний текст без
@@ -203,6 +222,12 @@ export function FillBlankExercise({
     () => new Set([...manualCrossedOut, ...autoCrossedOut]),
     [manualCrossedOut, autoCrossedOut]
   );
+  // Згорнутий/розгорнутий банк (мобільний, <=640px — CSS нижче ігнорує цей
+  // стан поза мобільним) — дефолт залежить лише від кількості слів у банку
+  // (не від ширини екрана зараз), далі студент сам керує, доки компонент не
+  // перемонтується. aria-controls чипів — стабільний id через useId.
+  const [bankExpanded, setBankExpanded] = useState(() => (config.wordBank?.length ?? 0) <= 8);
+  const bankChipsId = useId();
   const diacritics = useDiacriticsPopup<string>();
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const checkConfirm = useCheckConfirm();
@@ -349,14 +374,36 @@ export function FillBlankExercise({
           // На відміну від них: чипи тут НЕ драговані (--static, грип не
           // рендериться), клік лише перемикає "викреслено" (toggleCrossedOut,
           // логіка незмінна) — слово лишається в банку, не зникає.
-          <div className="word-pool">
+          <div className={`word-pool word-pool--fb ${!bankExpanded ? "word-pool--fb-collapsed" : ""}`}>
             <div className="word-pool-label-row">
               <span className="word-pool-label">{crossOutPoolLabel(lang)}</span>
               <span className="word-pool-count">
-                {fillBlankWordPoolUsedLabel(lang, crossedOut.size, config.wordBank.length)}
+                {/* Десктоп/планшет — незмінний текст "X з Y"; мобільний
+                    (<=640px, CSS нижче) — "N restants" того самого вигляду,
+                    що й у drag-банку (poolRemainingLabel, той самий i18n
+                    ключ pool.*, що image-match.tsx/drag-drop.tsx). Два
+                    <span> з display-перемикачем — той самий прийом, що
+                    .scroll-hint-desktop/-mobile (crossword.tsx), не
+                    JS-перевірка ширини. */}
+                <span className="word-pool-count-desktop">
+                  {fillBlankWordPoolUsedLabel(lang, crossedOut.size, config.wordBank.length)}
+                </span>
+                <span className="word-pool-count-mobile">
+                  {poolRemainingLabel(lang, config.wordBank.length - crossedOut.size)}
+                </span>
               </span>
+              <button
+                type="button"
+                className="word-pool-fb-chevron"
+                aria-expanded={bankExpanded}
+                aria-controls={bankChipsId}
+                aria-label={bankExpanded ? t("button.collapse") : t("button.expand")}
+                onClick={() => setBankExpanded((v) => !v)}
+              >
+                {bankExpanded ? <ChevronUp size={18} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
+              </button>
             </div>
-            <div className="word-pool-chips">
+            <div className="word-pool-chips" id={bankChipsId}>
               {config.wordBank.map((word, i) => (
                 <button
                   key={i}
@@ -365,7 +412,7 @@ export function FillBlankExercise({
                   aria-pressed={crossedOut.has(i)}
                   className={`word-pool-chip word-pool-chip--static ${crossedOut.has(i) ? "word-pool-chip--used" : ""}`}
                 >
-                  {word}
+                  <FillBlankBankChipText text={word} />
                 </button>
               ))}
             </div>
@@ -422,7 +469,7 @@ export function FillBlankExercise({
                     title={hints[i] ?? undefined}
                     className={`fill-blank-field h-[28px] w-[170px] truncate rounded-lg border text-center text-base placeholder:text-[13px] placeholder:font-bold placeholder:text-[#b8a67a] placeholder:not-italic ${
                       !result && !isDelf && !isPractice && hints[i] && !answers[i] ? "pl-[12px] pr-[30px]" : "px-[12px]"
-                    } ${hasWordBank ? "scroll-mt-16 sm:scroll-mt-[27vh]" : ""} ${
+                    } ${hasWordBank ? "scroll-mt-[71px] sm:scroll-mt-[27vh]" : ""} ${
                       isPractice
                         ? practiceResults[String(i)] === true
                           ? "exercise-field exercise-field--correct border-green-500 bg-green-50"

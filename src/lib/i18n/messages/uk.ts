@@ -24,6 +24,7 @@ export const uk = {
   "button.shuffle": "Перемішати",
   "button.close": "Закрити",
   "button.collapse": "Згорнути",
+  "button.expand": "Розгорнути",
   "button.fixCount": "Виправити {n}",
   "button.listenPlay": "Прослухати вимову",
   "button.stopPlay": "Зупинити вимову",
