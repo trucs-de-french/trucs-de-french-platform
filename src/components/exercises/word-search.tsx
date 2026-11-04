@@ -1476,7 +1476,7 @@ export function WordSearchExercise({
   // панель +/− незалежно від активного блоку), той самий принцип, що
   // maxCols/zoom у crossword.tsx (ЕТАП I).
   const cols = Math.max(...blocks.map((b) => b.grid.length));
-  const { zoom, setZoom } = useGridZoom();
+  const { zoom, setZoom, maxZoom } = useGridZoom();
 
   // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
   const [singleResult, setSingleResult] = useState<WordSearchBlockResult | null>(null);
@@ -1548,7 +1548,7 @@ export function WordSearchExercise({
           en: DEFAULT_TRANSLATION_EN.word_search,
         })}
         hintText={hintText}
-        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
+        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} maxZoom={maxZoom} />}
       />
 
       {!useBlocks ? (

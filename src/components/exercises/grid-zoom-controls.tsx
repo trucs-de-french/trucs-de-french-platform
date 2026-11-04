@@ -22,13 +22,16 @@ function roundToLabelPrecision(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-// Найменший крок СТРОГО більший за поточний zoom (+epsilon) — якщо нема,
-// MAX_ZOOM. ZOOM_STEPS уже впорядкований зростаюче (use-grid-zoom.ts).
-function nextZoomStepUp(current: number): number {
+// Найменший крок СТРОГО більший за поточний zoom (+epsilon), АЛЕ не вище
+// maxZoom (задача "прибрати режим 200% на десктопі" — на десктопі maxZoom
+// = DESKTOP_MAX_ZOOM=1.5, тож крок 2 зі ZOOM_STEPS тут просто ніколи не
+// повертається) — якщо нема кроку в межах, сам maxZoom. ZOOM_STEPS уже
+// впорядкований зростаюче (use-grid-zoom.ts).
+function nextZoomStepUp(current: number, maxZoom: number): number {
   for (const step of ZOOM_STEPS) {
-    if (step > current + ZOOM_EPSILON) return roundToLabelPrecision(step);
+    if (step > current + ZOOM_EPSILON && step <= maxZoom + ZOOM_EPSILON) return roundToLabelPrecision(step);
   }
-  return roundToLabelPrecision(MAX_ZOOM);
+  return roundToLabelPrecision(maxZoom);
 }
 
 // Найбільший крок СТРОГО менший за поточний zoom (-epsilon) — якщо нема,
@@ -52,15 +55,27 @@ function nextZoomStepDown(current: number): number {
 // 40×40 сірих — стиль живе тут, у спільному компоненті, а не в CSS-
 // оверрайді лише для word_search (.ws-zoom button, видалений із
 // globals.css), тож crossword отримує той самий вигляд безкоштовно.
-export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (zoom: number) => void }) {
+export function GridZoomControls({
+  zoom,
+  onChange,
+  maxZoom = MAX_ZOOM,
+}: {
+  zoom: number;
+  onChange: (zoom: number) => void;
+  // Задача "прибрати режим 200% на десктопі" — useGridZoom передає
+  // DESKTOP_MAX_ZOOM (1.5) на >640px, повний MAX_ZOOM (2, 200%) на
+  // мобільному; дефолт тут лишається MAX_ZOOM для будь-якого майбутнього
+  // викликача, що не передасть пропс явно.
+  maxZoom?: number;
+}) {
   const { t } = useT();
-  // disabled — за САМИМ значенням zoom відносно MIN/MAX_ZOOM (+/-epsilon),
-  // ніколи за тим, чи zoom лежить рівно на кроці: під час pinch (довільні
-  // проміжні значення, use-pinch-zoom.ts) це лишається коректним і живим
-  // на кожен ре-рендер (zoom — пропс, не внутрішній стан), бо тут немає
-  // жодного .indexOf/кешованого індексу.
+  // disabled — за САМИМ значенням zoom відносно MIN_ZOOM/maxZoom
+  // (+/-epsilon), ніколи за тим, чи zoom лежить рівно на кроці: під час
+  // pinch (довільні проміжні значення, use-pinch-zoom.ts) це лишається
+  // коректним і живим на кожен ре-рендер (zoom — пропс, не внутрішній
+  // стан), бо тут немає жодного .indexOf/кешованого індексу.
   const atMin = zoom <= MIN_ZOOM + ZOOM_EPSILON;
-  const atMax = zoom >= MAX_ZOOM - ZOOM_EPSILON;
+  const atMax = zoom >= maxZoom - ZOOM_EPSILON;
   const buttonClass =
     "flex h-8 w-8 items-center justify-center rounded-md border border-[rgba(217,183,101,0.55)] bg-white text-[#1f1d3a] shadow-[0_1px_2px_rgba(184,144,47,0.12)] hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] dark:hover:bg-[#1e234e]";
   return (
@@ -88,7 +103,7 @@ export function GridZoomControls({ zoom, onChange }: { zoom: number; onChange: (
         type="button"
         aria-label={t("button.zoomInAria")}
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onChange(nextZoomStepUp(zoom))}
+        onClick={() => onChange(nextZoomStepUp(zoom, maxZoom))}
         disabled={atMax}
         className={buttonClass}
       >

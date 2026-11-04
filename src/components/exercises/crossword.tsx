@@ -1449,7 +1449,7 @@ export function CrosswordExercise({
   // Math.max по кількох блоках надто дешевий, щоб мемоізація була
   // доцільною.
   const maxCols = Math.max(...blocks.map((b) => b.gridWidth));
-  const { zoom, setZoom } = useGridZoom();
+  const { zoom, setZoom, maxZoom } = useGridZoom();
 
   // ==== Гілка з ОДНИМ блоком (стара поведінка, незмінна) ====
   const [singleResult, setSingleResult] = useState<CrosswordBlockResult | null>(null);
@@ -1516,7 +1516,7 @@ export function CrosswordExercise({
           en: DEFAULT_TRANSLATION_EN.crossword,
         })}
         hintText={hintExplanationHidden ? null : hintExplanationText("crossword", lang)}
-        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} />}
+        rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} maxZoom={maxZoom} />}
       />
 
       {!useBlocks ? (
