@@ -4176,9 +4176,15 @@ button.scene-bar:active .scene-bar-toggle {
    кнопка не торкалась нижнього краю/округленого кута картки (там і
    клипалась раніше: кнопка сиділа впритул, без запасу, і скляна картка
    "зрізала" її нижній правий кут своїм overflow-hidden+border-radius). */
+/* justify-content: flex-start (раніше flex-end) — задача "Karaoke: move
+   fullscreen button to the left": клас спільний для video-frame.tsx,
+   embed-frame.tsx і karaoke.tsx (FULLSCREEN_BUTTON_CLASS, use-fullscreen-
+   wrapper.ts), тож ліве вирівнювання тут застосовується ВСЮДИ, де цей
+   рядок використовується — padding (вертикальний відступ/запас від краю
+   картки) не зачіпається, лише горизонтальна позиція кнопки. */
 .scene-fullscreen-btn-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   padding: 10px 12px 12px 12px;
 }
 
