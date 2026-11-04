@@ -449,6 +449,23 @@ export function KaraokeExercise({
     },
   });
 
+  // Пауза САМЕ на натискання "Перевірити" — щоб студент читав результат
+  // без відео, що продовжує грати. Лише pause(), без seekTo()/reload:
+  // позиція лишається тією, що була, "Продовжити" тут не чіпаємо, грати
+  // можна знову вручну через стандартні контроли плеєра. isReady-перевірка
+  // і try/catch — п.3 задачі ("якщо плеєр не готовий чи API недоступне —
+  // нічого не робити, не кидати виняток"); pause() на вже паузованому
+  // відео — безпечний no-op самого YouTube API, окремої перевірки
+  // isPlaying не треба.
+  const pauseForCheck = useCallback(() => {
+    if (!player.isReady) return;
+    try {
+      player.pause();
+    } catch {
+      // API недоступне — мовчки нічого не робимо.
+    }
+  }, [player]);
+
   // Пауза спрацьовує РІВНО РАЗ за прохід через рядок (pausedLineIndicesRef),
   // лише якщо в ньому є незаповнений пропуск — інакше рядок просто
   // пропускається без жодної паузи. useCallback — стабільна ідентичність
@@ -1103,7 +1120,10 @@ export function KaraokeExercise({
           <div className="flex flex-col items-start gap-2">
             <button
               type="button"
-              onClick={() => checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers))}
+              onClick={() => {
+                pauseForCheck();
+                checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers));
+              }}
               disabled={pending}
               className="karaoke-check-btn btn-check self-start"
             >
@@ -1112,7 +1132,10 @@ export function KaraokeExercise({
             {checkConfirm.confirming && (
               <CheckConfirmBar
                 unansweredCount={totalGaps - filledGaps}
-                onConfirm={() => checkConfirm.confirmCheck(() => submit(answers))}
+                onConfirm={() => {
+                  pauseForCheck();
+                  checkConfirm.confirmCheck(() => submit(answers));
+                }}
                 onCancel={checkConfirm.cancelCheck}
               />
             )}
