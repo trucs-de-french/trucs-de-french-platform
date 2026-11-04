@@ -96,6 +96,7 @@ export const uk = {
   "pool.scrollPrevAria": "Прокрутити назад",
   "pool.scrollNextAria": "Прокрутити вперед",
   "pool.of": "з",
+  "pool.dragHint": "Затисніть слово пальцем і перетягніть під картинку",
 
   "common.outOf": "{a} з {b}",
 

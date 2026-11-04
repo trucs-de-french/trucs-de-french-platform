@@ -337,6 +337,14 @@ export function SortColumnsExercise({
           <span className="word-pool-count">{sortColumnsPoolCountLabel(lang, pool.length)}</span>
         </div>
         <div className="word-pool-chips">{pool.map((item) => poolChip(item))}</div>
+        {pool.length > 0 && (
+          // Лише мобільний (@media max-width:640px, globals.css) — як
+          // перетягувати пулу, поза скролящимся треком, тож не їде разом
+          // із чипами.
+          <p className="word-pool-hint" aria-hidden="false">
+            {t("pool.dragHint")}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2.5">

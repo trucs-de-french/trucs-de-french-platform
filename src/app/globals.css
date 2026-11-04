@@ -8198,6 +8198,34 @@ button.scene-bar:active .scene-bar-toggle {
     background: rgba(255, 255, 255, 0.08);
   }
 }
+/* Підказка "затисніть і перетягніть" під треком/прогрес-баром пулу
+   (image-match.tsx/drag-drop.tsx/sort-columns.tsx — лише там, де слова
+   справді ДРАГАЮТЬСЯ; fill_blank пропускаємо, там пул лише натискний).
+   Поза треком .word-pool-chips — не їде зі скролом/каруселлю. Прихована
+   за межами мобільного (десктоп/планшет рендер лишається пікселево
+   незмінним — елемент у DOM є завжди, просто display:none). */
+.word-pool-hint {
+  display: none;
+}
+@media (max-width: 640px) {
+  .word-pool-hint {
+    display: block;
+    margin: 8px 16px 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: left;
+    color: #6a5d40;
+  }
+  .dark .word-pool-hint {
+    color: var(--text-muted-caption);
+  }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not(.light) .word-pool-hint {
+    color: var(--text-muted-caption);
+  }
+}
 /* "Texte à trous" (fill_blank) — банк слів на мобільному (<=640px):
    перенесення замість горизонтального скролу/каруселі, липка згортувана
    смужка з шевроном, без білого фейду праворуч. Лише .word-pool--fb

@@ -415,6 +415,12 @@ export function ImageMatchExercise({
               />
             </div>
           )}
+          {/* Лише мобільний (@media max-width:640px, globals.css) — як
+              перетягувати пулу, поза скролящимся треком, тож не їде разом
+              із чипами. */}
+          <p className="word-pool-hint" aria-hidden="false">
+            {t("pool.dragHint")}
+          </p>
         </div>
       ) : (
         <p className="text-xs text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("pool.allWordsPlacedBanner")}</p>
