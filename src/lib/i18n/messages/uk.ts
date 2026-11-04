@@ -63,7 +63,6 @@ export const uk = {
   "answer.correctPairLabel": "Правильна пара:",
   "answer.correctOrderLabel": "Правильний порядок:",
   "answer.yourAnswerLabel": "Ваша відповідь:",
-  "answer.correctCountLabel": "Правильно: {value}",
 
   "error.checkFailed": "Помилка перевірки",
 

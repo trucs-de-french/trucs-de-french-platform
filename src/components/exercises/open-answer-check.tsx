@@ -187,11 +187,6 @@ export function OpenAnswerCheckExercise({
           {hintVisible && q.hint && (
             <p className="text-sm break-words text-neutral-600 dark:text-neutral-300">{q.hint}</p>
           )}
-          {qDetail && !qDetail.isCorrect && (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {t("answer.correctCountLabel", { value: qDetail.correctAnswers.join(" / ") })}
-            </p>
-          )}
         </div>
       </div>
     );

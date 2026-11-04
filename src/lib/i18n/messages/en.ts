@@ -60,7 +60,6 @@ export const en: Record<MessageKey, string> = {
   "answer.correctPairLabel": "Correct pair:",
   "answer.correctOrderLabel": "Correct order:",
   "answer.yourAnswerLabel": "Your answer:",
-  "answer.correctCountLabel": "Correct: {value}",
 
   "error.checkFailed": "Check error",
 
