@@ -2043,6 +2043,71 @@ button, input, textarea, select, label, nav, aside {
   height: 100dvh;
 }
 
+/* Кнопка "Вийти з повного екрана" у псевдо-fullscreen video-frame.tsx/
+   embed-frame.tsx (задача "Fullscreen embed/video: always-visible exit
+   button, Esc and Back to exit") — раніше просто білий X БЕЗ фону,
+   position:absolute всередині .video-frame/.embed-frame (обидва мають
+   overflow:hidden): губилась на світлому кадрі гри/відео, а position:
+   absolute прив'язував її видимість до overflow обгортки. Тепер —
+   position:fixed (виходить із потоку обгортки, overflow тут уже не може
+   її обрізати, рахується від вікна, не від обгортки) з z-index далеко над
+   усією спільною шкалою z-layers.ts (найвище там — Z_MODAL, z-50) і
+   karaoke-fs (z-45), і ЗАВЖДИ світла панель+золота рамка+темний текст
+   (design tokens CLAUDE.md) — НЕ перемикається темою сайту (.dark/.light),
+   на відміну від .fullscreen-btn вище: ця кнопка лежить прямо на
+   довільному кадрі гри/відео, а не на скляній панелі сайту, тож колір сайту
+   тут не має значення — важливо лишатись читабельною і на світлому, і на
+   темному кадрі. */
+.pseudo-fullscreen-exit-btn {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px 0 8px;
+  border-radius: 12px;
+  border: 1.5px solid #d9b765;
+  background: #fdf8ea;
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+.pseudo-fullscreen-exit-btn .glass-bar-badge {
+  margin-right: 0;
+}
+@media (hover: hover) {
+  .pseudo-fullscreen-exit-btn:hover {
+    border-color: #b8902f;
+    box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+}
+.pseudo-fullscreen-exit-btn:active {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.pseudo-fullscreen-exit-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+/* Вузький телефон — лишаємо лише іконку (aria-label все одно читає
+   повний підпис голосовим читачам), щоб кнопка не впиралась у край
+   екрана поруч із вирізом/статус-баром. */
+@media (max-width: 420px) {
+  .pseudo-fullscreen-exit-btn {
+    padding: 0;
+    width: 44px;
+  }
+  .pseudo-fullscreen-exit-btn-label {
+    display: none;
+  }
+}
+
 /* ----------------------------------------------------------------------
    Декоративний курсовий фон студентської сторінки сцени (SceneBackground,
    scene-background.tsx) — URL картинок приходять через CSS custom

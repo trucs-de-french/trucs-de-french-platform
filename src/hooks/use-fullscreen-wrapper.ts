@@ -80,16 +80,53 @@ export function useFullscreenWrapper() {
     };
   }, []);
 
-  function enterPseudoFullscreen() {
-    previousBodyOverflowRef.current = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    setIsPseudoFullscreen(true);
-  }
-
-  function exitPseudoFullscreen() {
+  // reallyExitPseudoFullscreen — єдине місце, що РЕАЛЬНО вимикає псевдо-
+  // режим (знімає body overflow, скидає стан); exitPseudoFullscreen нижче
+  // (кнопка/Escape) лише просить браузер про history.back(), а сам вихід
+  // відбувається в popstate-слухачі — той самий принцип, що
+  // closeFullscreen/onPopState у karaoke.tsx (задача "Fullscreen embed/
+  // video: always-visible exit button, Esc and Back to exit"), щоб кнопка
+  // "назад"/жест ОС закривали саме псевдо-режим, а не йшли на попередню
+  // сторінку сайту.
+  function reallyExitPseudoFullscreen() {
     document.body.style.overflow = previousBodyOverflowRef.current;
     setIsPseudoFullscreen(false);
   }
+
+  function enterPseudoFullscreen() {
+    previousBodyOverflowRef.current = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    try {
+      // pushState — щоб системний жест/кнопка "назад" (popstate нижче)
+      // закривала псевдо-режим, а не йшла на попередню сторінку сайту.
+      window.history.pushState({ pseudoFullscreen: true }, "");
+    } catch {
+      // SSR/приватний режим без History API — псевдо-режим і так
+      // відкриється, просто жест "назад" тоді поведеться як завжди.
+    }
+    setIsPseudoFullscreen(true);
+  }
+
+  // Єдиний спосіб ПОПРОСИТИ закрити (кнопка, Escape) — завжди через
+  // history.back(), НЕ напряму reallyExitPseudoFullscreen(): це "споживає"
+  // запис історії, доданий enterPseudoFullscreen вище, інакше він лишався
+  // б зайвим записом "вперед".
+  function exitPseudoFullscreen() {
+    if (!isPseudoFullscreenRef.current) return;
+    try {
+      window.history.back();
+    } catch {
+      reallyExitPseudoFullscreen();
+    }
+  }
+
+  useEffect(() => {
+    function onPopState() {
+      if (isPseudoFullscreenRef.current) reallyExitPseudoFullscreen();
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   async function toggle() {
     if (isFullscreen) {

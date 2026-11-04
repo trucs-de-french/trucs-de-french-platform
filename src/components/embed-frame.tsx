@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize, X } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
 import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 import { Z_MODAL } from "@/lib/z-layers";
 import type { CSSProperties } from "react";
@@ -34,10 +34,12 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
             type="button"
             onClick={exitPseudoFullscreen}
             aria-label={t("videoPlayer.closeFullscreen")}
-            className="absolute right-2 flex h-11 w-11 items-center justify-center text-white before:absolute before:-inset-1"
-            style={{ top: "max(0.5rem, env(safe-area-inset-top))" }}
+            className="pseudo-fullscreen-exit-btn"
           >
-            <X size={24} />
+            <span className="glass-bar-badge" aria-hidden="true">
+              <Minimize size={16} strokeWidth={2.4} />
+            </span>
+            <span className="pseudo-fullscreen-exit-btn-label">{t("videoPlayer.exitFullscreen")}</span>
           </button>
         )}
       </div>
