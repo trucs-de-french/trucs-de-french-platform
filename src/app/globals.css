@@ -10404,9 +10404,12 @@ button.scene-bar:active .scene-bar-toggle {
    лише перемикає її на position:fixed, решта правил нижче — чисте
    CSS-перепозиціювання наявних дітей (order/flex/grid), жоден DOM-вузол
    (зокрема відео containerRef) нікуди не переміщується й не демонтується.
-   .karaoke-fs-toggle-row/.karaoke-fs-topbar у DOM лише коли реально
-   потрібні (karaoke.tsx рендерить їх умовно за fullscreen) — тож тут не
-   потрібен окремий "прихований за замовчуванням" стан для них. */
+   Рядок кнопки "На весь екран" (.scene-fullscreen-btn-row, спільний із
+   video-frame.tsx/embed-frame.tsx — задача "Karaoke fullscreen button:
+   reuse the platform fullscreen button design") і .karaoke-fs-topbar у
+   DOM лише коли реально потрібні (karaoke.tsx рендерить їх умовно за
+   fullscreen) — тож тут не потрібен окремий "прихований за замовчуванням"
+   стан для них. */
 @media (max-width: 640px) {
   .karaoke-fs-root--active {
     position: fixed;

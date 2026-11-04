@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from "react";
-import { Maximize2, X } from "lucide-react";
+import { Maximize, X } from "lucide-react";
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -11,7 +11,8 @@ import { BlockTabs } from "./block-navigation";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { htmlToPlainText } from "@/lib/html-text";
-import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
@@ -882,17 +883,25 @@ export function KaraokeExercise({
         {/* Кнопка "На весь екран" — лише мобільний (sm:hidden, той самий
             640px-порядок, що решта fullscreen CSS), прибирається з DOM-
             потоку (не рендериться взагалі) в самому fullscreen-режимі —
-            нічого перемикати там уже не треба. */}
+            нічого перемикати там уже не треба. Вигляд/розмітка/позиція —
+            ТОЧНО ті самі, що вже встановлена кнопка "На весь екран" відео
+            (video-frame.tsx) і embed/гри (embed-frame.tsx): FULLSCREEN_
+            BUTTON_CLASS ("fullscreen-btn", use-fullscreen-wrapper.ts) +
+            .glass-bar-badge-гурток з іконкою Maximize (16px, strokeWidth
+            2.4) + видимий підпис, у тому самому .scene-fullscreen-btn-row
+            (flex-end, той самий padding) — жодного ad-hoc стилю. */}
         {!fullscreen && (
-          <div className="karaoke-fs-toggle-row flex justify-end sm:hidden">
+          <div className="scene-fullscreen-btn-row sm:hidden">
             <button
               type="button"
               ref={fsToggleBtnRef}
               onClick={enterFullscreen}
               aria-label={t("karaoke.fullscreenEnter")}
-              className={`${STUDENT_BUTTON_SECONDARY_TOUCH} inline-flex items-center gap-1.5`}
+              className={FULLSCREEN_BUTTON_CLASS}
             >
-              <Maximize2 size={14} aria-hidden="true" />
+              <span className="glass-bar-badge" aria-hidden="true">
+                <Maximize size={16} strokeWidth={2.4} />
+              </span>
               {t("karaoke.fullscreenEnter")}
             </button>
           </div>
