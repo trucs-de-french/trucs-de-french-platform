@@ -384,10 +384,21 @@ export function MultipleChoiceExercise({
   // зараховується цілком (atomic unit = item), тому 0/points — не часткове.
   // Вкладка (RowPointsTab) рендериться як сусід картки (у .row-points-tab-
   // -wrap на викликачі), не тут — pointsTab лише вирішує, чи й яку.
+  // Винесено з pointsTab нижче (п.1/4 задачі "Drag-drop/chrono rows:
+  // symmetric padding on all sizes") — той самий булевий критерій, що й
+  // визначає, чи РЯДОК реально показує вкладку, тепер і для умовного
+  // top-padding картки (той самий принцип, що .row-points-tab-wrap--
+  // has-tab у globals.css для table-fill/drag-drop/chrono, лише тут —
+  // інлайн Tailwind-класи замість CSS-класу, бо ці картки свого
+  // спільного CSS-класу не мають, лише по-місцеві Tailwind-рядки).
+  function rowHasTab(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
+    if (hidePoints) return false;
+    if (!isDelf && !unevenById.get(item.id)) return false;
+    if (!pointsVisible && !itemDetail) return false;
+    return true;
+  }
   function pointsTab(item: MultipleChoicePublicItem, itemDetail?: ItemDetail) {
-    if (hidePoints) return null;
-    if (!isDelf && !unevenById.get(item.id)) return null;
-    if (!pointsVisible && !itemDetail) return null;
+    if (!rowHasTab(item, itemDetail)) return null;
     if (itemDetail) {
       const isCorrect = itemDetail.options.every((o) => o.correct === o.selected);
       return <RowPointsTab earned={isCorrect ? item.points : 0} possible={item.points} />;
@@ -397,22 +408,29 @@ export function MultipleChoiceExercise({
 
   // Шапка картки (бейдж номера + текст питання + підпис кількості
   // варіантів) — спільна для ВСІХ режимів buttons (текст/картинка/змішано),
-  // щоб не дублювати цю розмітку в renderItem нижче. extraClassName
-  // (порожній рядок за замовчуванням) — опційна добавка лише для
-  // картинкових режимів (md:p-4); текстовий режим викликає без неї, тож
-  // його шапка лишається байтово тим самим p-3, що й була (задача: "без
-  // зміни вигляду" для текстового режиму).
+  // щоб не дублювати цю розмітку в renderItem нижче. imageMode (false за
+  // замовчуванням) — чи застосовувати md:-добавку картинкових режимів
+  // (раніше extraClassName-рядок "md:pt-[22px] md:px-4 md:pb-4"); текстовий
+  // режим викликає без неї, тож його шапка лишається тим самим вигядом, що
+  // й була (задача: "без зміни вигляду" для текстового режиму). pt тепер
+  // УМОВНИЙ (hasTab) замість безумовного +6px — той самий принцип, що
+  // .row-points-tab-wrap--has-tab у globals.css (рядок, що не показує
+  // вкладку балів, не платить за її запас).
   function renderQuestionHeader(
     item: MultipleChoicePublicItem,
     index: number,
     itemDetail: ItemDetail | undefined,
     questionId: string,
-    extraClassName = "",
+    imageMode = false,
     showHintBulb = true
   ) {
     const hasHintBulb = showHintBulb && !!item.hint;
+    const hasTab = rowHasTab(item, itemDetail);
+    const paddingClass = imageMode
+      ? `${hasTab ? "pt-[18px]" : "pt-3"} px-3 pb-3 ${hasTab ? "md:pt-[22px]" : "md:pt-4"} md:px-4 md:pb-4`
+      : `${hasTab ? "pt-[18px]" : "pt-3"} px-3 pb-3`;
     return (
-      <div className={`flex items-start gap-2.5 pt-[18px] px-3 pb-3 ${extraClassName}`}>
+      <div className={`flex items-start gap-2.5 ${paddingClass}`}>
         {config.items.length > 1 && (
           <span className="item-number-badge" aria-label={t("aria.question", { n: index + 1 })}>
             {index + 1}
@@ -465,7 +483,7 @@ export function MultipleChoiceExercise({
         <div key={item.id} className="row-points-tab-wrap">
           {pointsTab(item, itemDetail)}
           <ChoiceQuestionCard
-          header={renderQuestionHeader(item, index, itemDetail, questionId, "", showHintBulb)}
+          header={renderQuestionHeader(item, index, itemDetail, questionId, false, showHintBulb)}
           role={item.multiple ? "group" : "radiogroup"}
           ariaLabelledBy={questionId}
           options={item.options.map((o, idx) => {
@@ -522,7 +540,7 @@ export function MultipleChoiceExercise({
       <div key={item.id} className="row-points-tab-wrap">
         {pointsTab(item, itemDetail)}
         <div className={CARD_WRAP}>
-        {renderQuestionHeader(item, index, itemDetail, questionId, "md:pt-[22px] md:px-4 md:pb-4", showHintBulb)}
+        {renderQuestionHeader(item, index, itemDetail, questionId, true, showHintBulb)}
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
@@ -657,12 +675,16 @@ export function MultipleChoiceExercise({
 
     const resultStateClass =
       isCorrect === true ? "chrono-phrase-row--correct" : isCorrect === false ? "chrono-phrase-row--incorrect" : "";
+    // Той самий принцип, що renderQuestionHeader вище — pt умовний
+    // (hasTab), а не безумовний +6px (мобільно pt-4 замість pb-2.5,
+    // десктоп md:pt-[18px] замість pb-2.5).
+    const hasTab = rowHasTab(item, itemDetail);
 
     return (
       <div key={item.id} className="row-points-tab-wrap">
         {pointsTab(item, itemDetail)}
         <div
-          className={`glass-item-card flex flex-col gap-2 px-3 pt-4 pb-2.5 transition-colors md:flex-row md:items-center md:gap-3 md:pt-[18px] ${resultStateClass}`}
+          className={`glass-item-card flex flex-col gap-2 px-3 ${hasTab ? "pt-4 md:pt-[18px]" : "pt-2.5"} pb-2.5 transition-colors md:flex-row md:items-center md:gap-3 ${resultStateClass}`}
         >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.items.length > 1 && (

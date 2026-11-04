@@ -150,7 +150,13 @@ export function TrueFalseExercise({
     return (
       <div key={s.id} className="row-points-tab-wrap">
         {showTab && <RowPointsTab earned={d ? (d.isCorrect ? d.points : 0) : undefined} possible={s.points} />}
-        <div className="glass-item-card flex flex-col gap-2.5 px-4 pt-4 pb-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:pt-[18px] md:pb-3">
+        {/* pt умовний (showTab) — той самий принцип, що
+            .row-points-tab-wrap--has-tab у globals.css (table-fill/
+            drag-drop/chrono): рядок без вкладки балів не платить за її
+            +6px запас зверху. */}
+        <div
+          className={`glass-item-card flex flex-col gap-2.5 px-4 ${showTab ? "pt-4 md:pt-[18px]" : "pt-2.5 md:pt-3"} pb-2.5 md:flex-row md:items-center md:justify-between md:gap-3 md:px-5 md:pb-3`}
+        >
         <div className="flex min-w-0 flex-1 items-start gap-2.5">
           {config.statements.length > 1 && (
             <span className="item-number-badge" aria-label={t("aria.statement", { n: globalIndex + 1 })}>

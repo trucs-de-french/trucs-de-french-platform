@@ -269,7 +269,12 @@ export function ListeningExercise({
           const qCorrect = qDetail?.options.every((o) => o.correct === o.selected) ?? false;
           const showTab = !hidePoints && (isDelf || unevenById.get(q.id)) && (pointsVisible || !!qDetail);
           const header = (
-            <div className="flex items-start gap-2.5 pt-[18px] px-3 pb-3">
+            // pt умовний (showTab) — той самий принцип, що
+            // .row-points-tab-wrap--has-tab у globals.css (table-fill/
+            // drag-drop/chrono): рядок без вкладки балів не платить за
+            // її +6px запас зверху (multiple-choice.tsx renderQuestionHeader
+            // має той самий фікс).
+            <div className={`flex items-start gap-2.5 ${showTab ? "pt-[18px]" : "pt-3"} px-3 pb-3`}>
               {config.questions.length > 1 && (
                 <span className="item-number-badge" aria-label={t("aria.question", { n: index + 1 })}>
                   {index + 1}

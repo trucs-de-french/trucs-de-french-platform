@@ -134,7 +134,13 @@ function ReorderSequenceTiles({
       {showTab && (
         <RowPointsTab earned={detail ? (sequenceCorrect ? points : 0) : undefined} possible={points} />
       )}
-      <div className="glass-item-card flex items-center gap-3.5 px-3.5 pt-4 pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 max-md:pt-[18px] max-md:pb-3">
+      {/* pt умовний (showTab) — той самий принцип, що
+          .row-points-tab-wrap--has-tab у globals.css (table-fill/drag-drop/
+          chrono): рядок без вкладки балів не платить за її +6px запас
+          зверху. */}
+      <div
+        className={`glass-item-card flex items-center gap-3.5 px-3.5 ${showTab ? "pt-4" : "pt-2.5"} pb-2.5 max-md:items-start max-md:gap-2.5 max-md:px-3 ${showTab ? "max-md:pt-[18px]" : "max-md:pt-3"} max-md:pb-3`}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-3.5 max-md:flex-col max-md:items-stretch max-md:gap-2.5">
           <div className="flex shrink-0 items-center gap-2">
             <span className="item-number-badge shrink-0" aria-label={t("aria.sentence", { n: number })}>

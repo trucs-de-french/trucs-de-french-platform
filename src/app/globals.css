@@ -7154,22 +7154,31 @@ button.scene-bar:active .scene-bar-toggle {
    лише радіус/падінг/gap перекриті під цей мокап — той самий принцип). */
 .drag-drop-row.glass-item-card {
   display: flex;
-  align-items: flex-start;
+  /* center (не flex-start) — бейдж-номер, слот і текст речення на тій
+     самій горизонтальній осі (п.2 цієї задачі); мобільний @media нижче
+     повертає flex-start явно, щоб мобільний рендер (731aa67) лишився
+     пікселево незмінним. */
+  align-items: center;
   gap: 12px;
   border-radius: 16px;
-  /* +6px зверху (14 замість 8) — місце під вкладку балів (RowPointsTab),
-     що виступає над верхньою рамкою картки (.row-points-tab-wrap). */
-  padding: 14px 14px 8px;
+  /* Симетричний падінг (рівний верх/низ) — той самий принцип, що
+     table-fill.tsx (c883bbc): +6px зверху лише коли РЯДОК реально
+     показує вкладку балів (RowPointsTab), через
+     .row-points-tab-wrap--has-tab нижче (клас додається в drag-drop.tsx
+     лише коли showTab true), не безумовно для всіх рядків. */
+  padding: 8px 14px;
   box-sizing: border-box;
 }
+.row-points-tab-wrap--has-tab .drag-drop-row.glass-item-card {
+  padding-top: 14px;
+}
 @media (max-width: 640px) {
-  /* Симетричний компактний падінг на мобільному — той самий принцип, що
-     table-fill.tsx (commit c883bbc): +6px зверху лише коли РЯДОК реально
-     показує вкладку балів (.row-points-tab-wrap--has-tab, клас додається
-     в drag-drop.tsx лише коли showTab true), а не безумовно для всіх
-     рядків. Десктоп/планшет (>640px) лишаються на старому 14/14/8 —
-     пікселево незмінні (ця задача — лише мобільний брейкпоінт). */
+  /* Мобільний @media з 731aa67 — лишається пікселево незмінним: ті самі
+     значення (align-items:flex-start і 12/14/12-падінг), лише тепер явно
+     перезаписані тут (раніше flex-start був значенням самого БАЗОВОГО
+     правила вище, тепер базове стало center для >640px). */
   .drag-drop-row.glass-item-card {
+    align-items: flex-start;
     padding: 12px 14px 12px;
   }
   .row-points-tab-wrap--has-tab .drag-drop-row.glass-item-card {
@@ -7639,6 +7648,26 @@ button.scene-bar:active .scene-bar-toggle {
   .drag-drop-slot-placeholder-short {
     display: inline;
   }
+}
+@media (min-width: 641px) {
+  /* Десктоп/планшет (п.3 цієї задачі): 38px min-height → 56px (видимий
+     слот був фактично вищим — лампочка підказки лишається абсолютно
+     позиціонованою, top:50%/translateY(-50%), й сама пере-центрується з
+     новою висотою, рядок висоти не додає). */
+  .drag-drop-slot {
+    min-height: 56px;
+  }
+}
+/* "перетягніть слово" — один рядок на ВСІХ ширинах (не лише ≤640px, де
+   вже є короткий варіант-заміна тексту вище): nowrap/ellipsis тут —
+   лише останній запобіжник, якщо повний текст desktop-варіанту все ж не
+   влізе в слот (155/183px). Значення ідентичні мобільному правилу вище —
+   дублюються тут БЕЗУМОВНО (поза media), а не замінюють його. */
+.drag-drop-slot-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Спільний липкий трей слів (мокап "варіант 1" десктоп / "варіант 5"
@@ -9247,11 +9276,17 @@ button.scene-bar:active .scene-bar-toggle {
   display: flex;
   align-items: center;
   gap: 14px;
-  /* +6px зверху (16 замість 10) — місце під вкладку балів (RowPointsTab)
-     у режимі "line" (chronological-order.tsx), що виступає над верхньою
-     рамкою картки; у списку правильних відповідей (без вкладки) трохи
-     зайвого простору зверху не шкодить. */
-  padding: 16px 14px 10px;
+  /* Симетричний падінг (рівний верх/низ) — той самий принцип, що
+     table-fill.tsx (c883bbc) і drag-drop.tsx (731aa67 мобільний, тепер і
+     тут на всіх ширинах): +6px зверху лише коли РЯДОК реально показує
+     вкладку балів (RowPointsTab), через .row-points-tab-wrap--has-tab
+     нижче (клас додається в chronological-order.tsx лише коли showTab
+     true) — не безумовно для всіх рядків, включно з рядками без вкладки
+     (список правильних відповідей узагалі не в .row-points-tab-wrap). */
+  padding: 10px 14px;
+}
+.row-points-tab-wrap--has-tab .chrono-phrase-row.glass-item-card {
+  padding-top: 16px;
 }
 /* Текст фрази — font-size/line-height НЕ тут: аудит (git log -p) показав,
    що ДО рестайлу рядок узагалі не мав власного text-size класу (лише

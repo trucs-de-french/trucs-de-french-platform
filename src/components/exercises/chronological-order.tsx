@@ -602,7 +602,7 @@ export function ChronologicalOrderExercise({
             const d = itemDetail(item.id);
             const showTab = !hidePoints && (isDelf || unevenById.get(item.id)) && (pointsVisible || !!d);
             return (
-              <div key={item.id} className="row-points-tab-wrap">
+              <div key={item.id} className={`row-points-tab-wrap ${showTab ? "row-points-tab-wrap--has-tab" : ""}`}>
                 {showTab && (
                   <RowPointsTab earned={d ? (d.isCorrect ? item.points : 0) : undefined} possible={item.points} />
                 )}
