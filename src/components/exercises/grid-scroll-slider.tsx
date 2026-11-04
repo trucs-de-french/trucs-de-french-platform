@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/context";
 
 const MIN_THUMB_PX = 56;
@@ -9,10 +9,15 @@ const MIN_THUMB_PX = 56;
 // use-working-tile-layout.ts/use-pinch-zoom.ts: власна копія (а не
 // імпорт з use-pinch-zoom.ts) — той хук називається "pinch" заради
 // власного застосування, тут інша річ (видимість слайдера), тож дрібний
-// дубль 8 рядків чистіший за семантично чужу назву імпорту.
+// дубль 8 рядків чистіший за семантично чужу назву імпорту. Ліниве
+// initializer (не useState(false)) — перший рендер уже знає matchMedia,
+// не чекає окремого ефекту+ререндеру, щоб трек устиг змонтуватись раніше.
 function useIsMobileSliderViewport(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false
+  );
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const mq = window.matchMedia("(max-width: 640px)");
     const update = () => setIsMobile(mq.matches);
     update();
@@ -31,21 +36,33 @@ function thumbWidthFor(m: Metrics): number {
   return Math.min(m.trackWidth, Math.max(MIN_THUMB_PX, proportional));
 }
 
-// Замінює тонкий нативний горизонтальний скролбар .crossword-scroll/
-// .ws-scroll на мобільному (≤640px) — сітка там більше не панорамується
-// одним пальцем (touch-action:pan-y, crossword.tsx/word-search.tsx),
-// лише цим повзунком або клавіатурою (ArrowLeft/Right/Home/End). Один
-// компонент, що приймає scrollRef самого скрол-контейнера (той самий
-// ref, що keepViewAfterZoom/usePinchZoom) — crossword.tsx і word-search.tsx
-// рендерять його ОДНАКОВО, одразу під .crossword-scroll/.ws-scroll,
-// усередині .grid-zoom-wrap (щоб повзунок мав РІВНО ширину зони сітки,
-// не розширеної заради тіні/запасу .crossword-scroll/.ws-scroll).
+// ЕТАП (фікс) — КОРІНЬ БАГА "слайдер не з'являється на телефоні": цей
+// компонент раніше рендерив `if (!visible) return null` ДО <div ref=
+// {trackRef}>, тобто сам трек (єдиний спосіб дізнатись trackWidth і,
+// що важливіше, єдиний DOM-вузол, на якому висить вимірювальний ефект
+// нижче) існував лише ТОДІ, коли вже відомо, що сітка переповнена. Але
+// "переповнена" (visible) рахувалось із metrics-стану, який заповнює
+// ТОЙ САМИЙ ефект — а ефект виходив одразу (`if (!track) return`), бо
+// track.current був null (елемент ще не змонтований, бо visible==false
+// на першому рендері). Замкнуте коло: trackRef ніколи не монтується →
+// metrics ніколи не рахується → visible ніколи не стає true → trackRef
+// ніколи не монтується. Фікс — трек монтується ЗАВЖДИ, коли isMobile
+// (незалежно від visible); саме overflow-стан (visible) лише перемикає
+// CSS display треку (приховує, не розмонтовує) — вимірювальний ефект
+// відв'язаний від visible повністю, тож може сам його виявити.
 export function GridScrollSlider({
   scrollRef,
   controlsId,
+  zoom,
 }: {
   scrollRef: React.RefObject<HTMLElement | null>;
   controlsId: string;
+  // Необов'язковий — лише ДОДАТКОВИЙ тригер перевимірювання одразу на
+  // зміну зуму (кнопки +/−/pinch), без очікування ResizeObserver, що й
+  // так спостерігає за firstElementChild (нижче) і теж зловив би цю
+  // зміну розміру, але вже ПІСЛЯ layout, а не одним ефектом разом із
+  // самою зміною пропу.
+  zoom?: number;
 }) {
   const { t } = useT();
   const isMobile = useIsMobileSliderViewport();
@@ -58,32 +75,52 @@ export function GridScrollSlider({
     null
   );
 
-  useEffect(() => {
+  // useLayoutEffect (не useEffect) — перший вимір трапляється ДО фарби
+  // кадру, щоб слайдер не блимнув "немає/є" на мобільному при першому
+  // показі блоку.
+  useLayoutEffect(() => {
     if (!isMobile) return;
     const container = scrollRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
 
+    function measureNow() {
+      const c = scrollRef.current;
+      const tr = trackRef.current;
+      if (!c || !tr) return;
+      const next: Metrics = {
+        trackWidth: tr.clientWidth,
+        clientWidth: c.clientWidth,
+        scrollWidth: c.scrollWidth,
+        scrollLeft: c.scrollLeft,
+      };
+      metricsRef.current = next;
+      setMetrics(next);
+    }
+
     function measure() {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = 0;
-        const c = scrollRef.current;
-        const tr = trackRef.current;
-        if (!c || !tr) return;
-        const next: Metrics = {
-          trackWidth: tr.clientWidth,
-          clientWidth: c.clientWidth,
-          scrollWidth: c.scrollWidth,
-          scrollLeft: c.scrollLeft,
-        };
-        metricsRef.current = next;
-        setMetrics(next);
+        measureNow();
       });
     }
 
-    measure();
+    measureNow();
+    // Два rAF-тики ПІСЛЯ першого синхронного виміру — ширина сітки на
+    // --cw/веб-шрифт (Nunito) не завжди остаточна рівно на mount
+    // (шрифт ще не застосувався, layout ще "осідає" після гідратації);
+    // другий тик ловить те, що перший міг пропустити.
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      measureNow();
+      raf2 = requestAnimationFrame(measureNow);
+    });
+
     container.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
     const ro = new ResizeObserver(measure);
     ro.observe(container);
     ro.observe(track);
@@ -93,16 +130,33 @@ export function GridScrollSlider({
     // разом зі зумом.
     if (container.firstElementChild) ro.observe(container.firstElementChild);
 
+    let cancelled = false;
+    document.fonts?.ready?.then(() => {
+      if (!cancelled) measure();
+    });
+
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       container.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
       ro.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     };
-  }, [scrollRef, isMobile]);
+    // zoom — лише ДОДАТКОВИЙ тригер перевимірювання (коментар вище біля
+    // пропу); сам ref не змінюється між рендерами.
+  }, [scrollRef, isMobile, zoom]);
 
   const maxScroll = Math.max(0, metrics.scrollWidth - metrics.clientWidth);
-  const visible = isMobile && metrics.scrollWidth > metrics.clientWidth + 1;
+  // Переповнення рахується ЛИШЕ з container (scrollWidth/clientWidth) —
+  // НІКОЛИ з trackWidth (п.6 задачі): trackWidth==0 на першому виміру
+  // (чи коли track ще display:none нижче) не повинно й не може "сховати"
+  // слайдер — воно лише впливає на РОЗМІР повзунка (thumbWidthFor має
+  // власний safe-fallback MIN_THUMB_PX), не на сам факт переповнення.
+  const visible = metrics.scrollWidth > metrics.clientWidth + 1;
   const thumbWidth = thumbWidthFor(metrics);
   const freeTrack = Math.max(1, metrics.trackWidth - thumbWidth);
   const thumbLeft = maxScroll > 0 ? (freeTrack * metrics.scrollLeft) / maxScroll : 0;
@@ -174,13 +228,17 @@ export function GridScrollSlider({
     }
   }
 
-  if (!visible) return null;
+  // isMobile — єдина причина не рендерити ВЗАГАЛІ (десктоп/планшет не
+  // потребує ні вузла, ні спостерігачів). visible — лише CSS display
+  // нижче: трек лишається змонтованим (і далі вимірюваним), коли
+  // isMobile==true, навіть якщо зараз немає переповнення.
+  if (!isMobile) return null;
 
   return (
     <div
       ref={trackRef}
       className="grid-scroll-slider-track"
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", display: visible ? "block" : "none" }}
       onPointerDown={onTrackPointerDown}
       onPointerMove={onTrackPointerMove}
       onPointerUp={endDrag}

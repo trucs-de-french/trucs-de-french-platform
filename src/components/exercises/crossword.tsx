@@ -1179,7 +1179,7 @@ function CrosswordBlockView({
               </table>
             </div>
           </div>
-          <GridScrollSlider scrollRef={scrollRef} controlsId={scrollContainerId} />
+          <GridScrollSlider scrollRef={scrollRef} controlsId={scrollContainerId} zoom={zoom} />
         </div>
 
         {scrollHint && (
