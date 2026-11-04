@@ -10538,12 +10538,19 @@ button.scene-bar:active .scene-bar-toggle {
        compact word dock": увесь вивільнений простір забирає ЛИШЕ
        .karaoke-lines-area (flex:1 1 auto вище). */
     flex: none;
-    /* Дефолт знижено з 64px до 40px (п.2 задачі) — запас під нижній
-       Netlify-бейдж (не наш код, ~60px) лишається, але вже не тягне за
-       собою стільки порожнього місця під пілюлями; сама змінна (не
-       хардкод) лишається тим самим механізмом, що й раніше. */
-    --karaoke-fs-bottom-safe: 40px;
-    max-height: 26dvh;
+    /* Задача "Karaoke fullscreen (mobile): lift word pool above host
+       badge" — підняли з 40px до 84px: плаваючий бейдж "Powered by
+       Netlify" (не наш код, верхній край ~60px від низу вьюпорту) на
+       40px перекривав рядок пілюль. 84px = 60px бейджа + ~16px запасу
+       понад його верхній край, лишаючись сумісним з env(safe-area-inset-
+       bottom) (padding-bottom нижче вже додає цей env() окремо). */
+    --karaoke-fs-bottom-safe: 84px;
+    /* max-height box-sizing:border-box (Tailwind preflight) — padding-
+       bottom УЖЕ входить у цей ліміт, тож +44px (84-40) до самого
+       padding-bottom віднімав би ті самі 44px від місця під рядки пілюль.
+       +44px тут компенсує це — видима висота під пілюлі лишається
+       такою ж, що й до цієї задачі, лише НИЖНІЙ запас зріс. */
+    max-height: calc(26dvh + 44px);
     overflow-y: auto;
     margin: 0;
     padding: 10px 12px 0;
