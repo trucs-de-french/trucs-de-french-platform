@@ -7650,12 +7650,43 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 @media (min-width: 641px) {
-  /* Десктоп/планшет (п.3 цієї задачі): 38px min-height → 56px (видимий
-     слот був фактично вищим — лампочка підказки лишається абсолютно
-     позиціонованою, top:50%/translateY(-50%), й сама пере-центрується з
-     новою висотою, рядок висоти не додає). */
+  /* Слот-пропуск = висота пул-пілюлі (--word-pool-chip-height, та сама
+     змінна, що .word-pool-chip вище) — не окреме магічне число (задача
+     "Drag-drop desktop: drop slot same height as pool pills"). height
+     (не лише min-height) — твердий розмір, box-sizing:border-box, тож
+     застосовується однаково й до --filled/--dragover (жоден з них не
+     задає власну height; --filled має свій padding 6px 10px вище —
+     перебитий тут же нижче для padding, той самий принцип, що мобільний
+     @media (max-width:640px) вище вже робить для --filled). Лампочка
+     підказки лишається абсолютно позиціонованою (top:50%, .drag-drop-
+     slot-lamp нижче) — сама пере-центрується з новою висотою, рядок
+     висоти не додає. */
   .drag-drop-slot {
-    min-height: 56px;
+    min-height: var(--word-pool-chip-height);
+    height: var(--word-pool-chip-height);
+    padding: 0 14px;
+  }
+  /* Коло лампочки (стандартно 28px видимих + p-[6px] тач-таргет=40px,
+     hint-bulb.tsx/legend-tile-style.ts, спільне для ВСІХ викликачів) тут
+     зменшене до ~slot-height−16px (п.2 задачі), щоб влізти в компактний
+     слот із видимим відступом; right 7px → 8px (той самий inset, що
+     задача просить). Лише ЦЕЙ один .drag-drop-slot-lamp-екземпляр
+     (className на <button>, hint-bulb.tsx) — не торкається
+     GOLD_CIRCLE_SIZE/-HIT_AREA_PADDING самих, тож інші викликачі
+     HintBulb лишаються тим самим 28px/40px. */
+  .drag-drop-slot-lamp {
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+  }
+  .drag-drop-slot-lamp > span {
+    width: 22px;
+    height: 22px;
+  }
+  .drag-drop-slot-lamp svg {
+    width: 12px;
+    height: 12px;
   }
 }
 /* "перетягніть слово" — один рядок на ВСІХ ширинах (не лише ≤640px, де
@@ -7847,12 +7878,21 @@ button.scene-bar:active .scene-bar-toggle {
   flex-wrap: wrap;
   gap: 8px;
 }
+/* Висота десктопної/планшетної пул-пілюлі (>640px) — винесена в змінну,
+   бо drag-drop.tsx (.drag-drop-slot, нижче) має показувати слот-пропуск
+   РІВНО тієї самої висоти (задача "Drag-drop desktop: drop slot same
+   height as pool pills"), не окреме магічне число. Мобільна пілюля
+   (≤640px) лишається на СВОЄМУ hardcoded 44px (@media max-width:640px
+   нижче) — ця змінна стосується лише десктопного/планшетного значення. */
+:root {
+  --word-pool-chip-height: 38px;
+}
 .word-pool-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  height: 38px;
+  height: var(--word-pool-chip-height);
   padding: 0 14px;
   border-radius: 10px;
   background: #fff;
