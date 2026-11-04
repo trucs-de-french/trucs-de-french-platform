@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, type RefObject } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, type RefObject } from "react";
 
 // Мінімальна підмножина типів YouTube IFrame Player API — саме те, що
 // реально використовується (play/pause/seekTo/getCurrentTime/
@@ -165,5 +165,17 @@ export function useYoutubePlayer({
   // швидкості (karaoke-fields.tsx, режим розмітки пробілом).
   const setPlaybackRate = useCallback((rate: number) => playerRef.current?.setPlaybackRate(rate), []);
 
-  return { isReady, play, pause, seekTo, getCurrentTime, getPlayerState, setPlaybackRate };
+  // useMemo, не голий об'єктний літерал — без цього кожен виклик хука
+  // (тобто кожен рендер karaoke.tsx, і будь-якого іншого викликача)
+  // повертав би НОВИЙ об'єкт `player`, попри те, що всі його методи вже
+  // стабільні (useCallback із []). Нестабільний `player` ламав ідентичність
+  // усього, що залежить від нього в деп-масивах (karaoke.tsx:
+  // triggerPauseForLine, інтервал опитування/паузи-в-кінці-рядка) —
+  // ефекти там перезапускались на КОЖЕН рендер (зокрема на setPending/
+  // setResult під час перевірки відповідей), а не лише коли це дійсно
+  // потрібно (зміна відео чи готовності плеєра).
+  return useMemo(
+    () => ({ isReady, play, pause, seekTo, getCurrentTime, getPlayerState, setPlaybackRate }),
+    [isReady, play, pause, seekTo, getCurrentTime, getPlayerState, setPlaybackRate]
+  );
 }
