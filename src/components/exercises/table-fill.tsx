@@ -93,7 +93,7 @@ function TableFillColumn({
         {rows.map((row, i) => {
           const tab = rowPointsLabel(row);
           return (
-            <div key={row.id} className="row-points-tab-wrap">
+            <div key={row.id} className={`row-points-tab-wrap ${tab ? "row-points-tab-wrap--has-tab" : ""}`}>
               {tab}
               <div className="table-fill-row glass-item-card">
                 <span className="item-number-badge table-fill-row-num" aria-label={t("aria.row", { n: numberOffset + i + 1 })}>
