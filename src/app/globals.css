@@ -5478,52 +5478,74 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* ЕТАП S — "Правильні пари" (matching.tsx): довгі слова ("сентиментальний",
-   "s'approcher") впирались у стрілку/виходили за межі свого чипа — чип не
-   мав явного font-size (успадковував навколишній, завеликий для вузької
-   ширини), а власної hyphens:auto-страховки не було. Менший padding/gap і
-   .chip-text-fit (клас у JSX) — той самий принцип, що в .table-fill-row і
-   .task-result-answer-row нижче.
-   ЕТАП — слова все одно обрізались (overflow:hidden у .chip-text-fit +
-   hyphens:auto, що не ділить більшість українських/непередбачених слів на
-   Android Chrome): font-size чипа тепер підбирає useFitText (use-fit-
-   text.ts, FitChip у task-result.tsx) по кожному чипу окремо (13px база,
-   крок 0.5px, підлога 10px) — 13px нижче лишається лише верхньою межею на
-   випадок, коли JS ще не встиг застосуватись (перший кадр). Padding
-   6px 8px — гарантований внутрішній відступ (п.2 задачі), колонка
-   стрілки 22→18px звільняє трохи більше місця під чипи. */
+/* Задача "Answers toggles (mobile): translation chip wraps to the next line
+   instead of squeezing" — замінює весь попередній підхід до боротьби за
+   ширину в одному рядку (fit-content(62%) grid-трек, ffa0384, і подальші
+   min-content-флоори): замість стиснення шрифту/грід-треків вузький рядок
+   тепер переносить uk-чип на ДРУГИЙ рядок під fr-чипом, коли пара не
+   влазить поруч — чистий CSS flex-wrap, без жодного JS-вимірювання.
+   .task-result-pair-fr-unit — fr-чип+стрілка як одне ціле: на desktop
+   display:contents (їх дітей grid бачить так, ніби обгортки й нема —
+   наявний 3-колонковий grid-рядок нижче лишається піксель-у-піксель
+   незмінним), на mobile — inline-flex "юніт", що завжди лишається на
+   першому рядку (стрілка центрована з fr-чипом, flex:0 1 auto дозволяє
+   юніту стиснутись/перенести fr-слово по словах, якщо воно саме завдовге
+   для рядка). */
+.task-result-pair-fr-unit {
+  display: contents;
+}
+
 @media (max-width: 640px) {
-  /* Задача "Answers toggle (mobile): never break long words mid-word in
-     correct-pair chips" — рівний розподіл minmax(0,1fr)/minmax(0,1fr) тут
-     ділив рядок навпіл НЕЗАЛЕЖНО від слів у ньому: "un établissement"
-     (fr) впирався у ту саму ширину, що й короткий переклад "заклад" (uk),
-     тож навіть floor font-size (10px, use-fit-text.ts) не вміщав слово в
-     половину рядка — useFitText вішав .chip-text-fit--overflow
-     (overflow-wrap:anywhere), і "établissement" ламалось посимвольно.
-     fit-content(62%) — grid-трек росте під фактичний контент fr-чипа (на
-     поточному font-size, тож перераховується й після того, як JS стиснув
-     шрифт) аж до 62% рядка, не більше й не менше, ніж треба: короткі fr-
-     слова лишають uk-колонці стільки ж місця, що й раніше (своїм власним
-     max-content, не фіксованою половиною), а для "établissement" трек сам
-     розшириться настільки, щоб слово влізло одним рядком під "un" —
-     ламання через useFitText fallback узагалі не доходить до спрацювання.
-     uk-колонка лишається minmax(0,1fr): забирає залишок і сама переноситься
-     по словах (звичний word-break:normal/overflow-wrap:normal нижче). */
+  /* Рядок — flex-wrap замість grid: fr-юніт (fr-чип+стрілка, нерозривний
+     як одне ціле) і uk-чип — два прямі flex-елементи. uk-чип (нижче,
+     flex:1 1 auto; min-width:min-content) бере залишок місця на тому ж
+     рядку, доки влазить (не менше найдовшого нерозривного слова), і
+     переноситься на власний рядок на всю ширину, коли ні — замість
+     стиснення шрифту чи грід-треку. */
   .task-result-pair-row {
-    grid-template-columns: fit-content(62%) 18px minmax(0, 1fr);
-    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 8px;
     padding: 8px 8px;
   }
-  /* minmax(0,1fr)/fit-content(62%) вище вже дають grid-комірці стискатись —
-     сам чип теж потребує min-width:0 (інакше власна ширина впливає на
-     grid-трек) і max-width:100%/box-sizing:border-box, щоб рамка/padding не
-     виходили за межі комірки ("une ingratitude" впритул до зеленої рамки). */
+  .task-result-pair-fr-unit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .task-result-pair-row > .task-result-pair-chip--uk,
+  .task-result-answer-pair-wrap > .task-result-pair-chip--uk {
+    flex: 1 1 auto;
+    min-width: min-content;
+  }
+  .task-result-pair-fr-unit > .task-result-pair-chip--fr {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .task-result-pair-fr-unit > .task-result-pair-arrow {
+    flex: 0 0 auto;
+  }
+  /* min-width:0/max-width:100%/box-sizing:border-box — чип не виходить за
+     межі свого flex-елемента ("une ingratitude" впритул до рамки).
+     white-space:normal/word-break:normal — перенос лише по словах/
+     пробілах; overflow-wrap:break-word — лише останній рубіж для ОДНОГО
+     слова, що саме ширше за весь рядок (hyphens:manual нижче, у
+     .chip-text-fit, лишається додатковим запасним варіантом). Фіксований
+     font-size (п.4 задачі) — обидва чипи (fr/uk) завжди 13px, useFitText
+     більше не зменшує шрифт для цієї пари. */
   .task-result-pair-chip {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
     padding: 6px 8px;
     font-size: 13px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 }
 
@@ -5666,30 +5688,39 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* ЕТАП S — той самий бій за місце, що вище (.task-result-pair-row): fr-
-   колонка .task-result-answer-row (0.85fr) + 14px чистого padding лишали
-   "couramment"/"quelconque" без місця на вузьких телефонах. Менший gap/
-   padding звільняють кілька px, а .chip-text-fit (клас у JSX,
-   AnswerChip/TaskResultPairRows вище) додає контрольований hyphens:auto
-   замість старого word-break:normal-без-страховки.
-   ЕТАП — той самий фікс, що .task-result-pair-row вище: font-size чипа
-   тепер підбирає useFitText (FitChip, замінив AnswerChip's <span>) замість
-   фіксованого 13px, колонки — [18px номер] [1fr fr] [14px стрілка] [1fr
-   uk] (п.3 задачі), gap 6px, padding рядка 6px/8px, padding чипа 6px 8px
-   (гарантований внутрішній відступ, п.2). */
+/* Задача "Answers toggles (mobile): translation chip wraps to the next line
+   instead of squeezing" — замінює попередній grid fit-content(62%)-підхід
+   для .task-result-answer-row (Table-fill), той самий принцип, що
+   .task-result-pair-row вище: flex-wrap, без JS. .task-result-answer-
+   pair-wrap — обгортка fr-юніта+uk-чипа (desktop: display:contents,
+   наявний 4-колонковий grid рядка нижче лишається незмінним; mobile: сама
+   стає flex-wrap контейнером поряд із номером рядка) — потрібна лише тут,
+   бо номер зліва (п'ятий елемент, якого нема в .task-result-pair-row) не
+   має входити в flex-wrap пари, інакше перенесений uk-чип ліг би під
+   номер, а не під fr-чип. */
+.task-result-answer-pair-wrap {
+  display: contents;
+}
+
 @media (max-width: 640px) {
-  /* Той самий фікс/причина, що .task-result-pair-row вище (задача "Answers
-     toggle (mobile): never break long words mid-word in correct-pair
-     chips") — "couramment"/"quelconque" (коментар ЕТАП S вище) впирались у
-     ту саму причину: мобільний minmax(0,1fr) тут скидав навмисну
-     нерівність десктопних колонок (0.85fr/1.15fr вище) до рівних половин.
-     fit-content(62%) на fr-колонці (друга, після 18px номера) — росте під
-     фактичне слово на поточному font-size, uk-колонка (четверта)
-     лишається minmax(0,1fr) і забирає залишок. */
+  /* Рядок — простий flex [номер][pair-wrap] (замість grid), pair-wrap
+     (нижче) сам переносить uk-чип на другий рядок, коли пара не влазить —
+     перенесений чип лишається під fr-чипом (той самий лівий край, що й
+     pair-wrap/fr-юніт), не під номером. */
   .task-result-answer-row {
-    grid-template-columns: minmax(18px, 18px) fit-content(62%) 14px minmax(0, 1fr);
-    gap: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     padding: 6px 8px;
+  }
+  .task-result-answer-pair-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .task-result-answer-row .task-result-pair-chip {
     min-width: 0;
@@ -5697,6 +5728,9 @@ button.scene-bar:active .scene-bar-toggle {
     box-sizing: border-box;
     padding: 6px 8px;
     font-size: 13px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 }
 

@@ -1,9 +1,8 @@
 "use client";
 
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { formatPointsLocalized, formatPointsCountLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
 import { HintBulb } from "./hint-bulb";
-import { useFitText } from "./use-fit-text";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -206,30 +205,32 @@ function PairArrowIcon() {
   );
 }
 
-// Один вимірювальний чип (use-fit-text.ts) — спільний для fr/uk сторін
-// TaskResultPairRows і AnswerChip нижче: ref живе лише ТУТ (хук потребує
-// DOM-вузол, щоб зіставити scrollWidth/clientWidth), text/lang-пропи йдуть
-// у залежності useFitText, щоб перерахунок спрацював і на зміну слова, і
-// на зміну мови інтерфейсу (lang=uk/en чипа).
-function FitChip({ lang, className, text }: { lang: string; className: string; text: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  useFitText(ref, text);
-  return (
-    <span ref={ref} lang={lang} className={className}>
-      {text}
-    </span>
-  );
-}
-
+// Задача "Answers toggles (mobile): translation chip wraps to the next line
+// instead of squeezing" — фіксований font-size замінив useFitText/FitChip
+// для цих fr/uk пар (п.4 задачі): жоден чип тут більше не вимірює
+// scrollWidth/clientWidth; замість стиснення шрифту вузький рядок тепер
+// переносить uk-чип на другий рядок (flex-wrap, globals.css). Хук
+// use-fit-text.ts лишається — його й далі використовує FillBlankBankChipText
+// (fill-blank.tsx) для СВОЄЇ (не fr/uk пари) плитки.
+// .task-result-pair-fr-unit — fr-чип+стрілка як одне ціле: desktop
+// (display:contents, globals.css) не змінює вже наявний 3/4-колонковий
+// grid рядка, mobile — inline-flex "юніт", що лишається на першому рядку,
+// доки другий (uk) чип переноситься вниз.
 export function TaskResultPairRows({ pairs }: { pairs: { left: string; right: string }[] }) {
   const { lang } = useT();
   return (
     <div className="task-result-pair-rows">
       {pairs.map((p, i) => (
         <div key={i} className="task-result-pair-row">
-          <FitChip lang="fr" className="task-result-pair-chip chip-text-fit task-result-pair-chip--fr" text={p.left} />
-          <PairArrowIcon />
-          <FitChip lang={lang} className="task-result-pair-chip chip-text-fit task-result-pair-chip--uk" text={p.right} />
+          <span className="task-result-pair-fr-unit">
+            <span lang="fr" className="task-result-pair-chip chip-text-fit task-result-pair-chip--fr">
+              {p.left}
+            </span>
+            <PairArrowIcon />
+          </span>
+          <span lang={lang} className="task-result-pair-chip chip-text-fit task-result-pair-chip--uk">
+            {p.right}
+          </span>
         </div>
       ))}
     </div>
@@ -253,16 +254,23 @@ function AnswerChip({
   lang: string;
 }) {
   return (
-    <FitChip
+    <span
       lang={lang}
       className={`task-result-pair-chip chip-text-fit ${side === "left" ? "task-result-pair-chip--fr" : "task-result-pair-chip--uk"} ${
         isAnswer ? "task-result-answer-chip--emphasis" : ""
       }`}
-      text={value}
-    />
+    >
+      {value}
+    </span>
   );
 }
 
+// .task-result-answer-pair-wrap — обгортка fr-юніта+uk-чипа (desktop:
+// display:contents, не чіпає наявний 4-колонковий grid рядка; mobile: сама
+// стає flex-wrap контейнером, що переносить uk-чип на другий рядок, коли
+// не влазить поруч із fr-юнітом) — потрібна ЛИШЕ тут (номер рядка зліва —
+// п'ятий елемент, якого немає в TaskResultPairRows вище), щоб перенесений
+// uk-чип лишався під fr-чипом (той самий X), а не під номером.
 export function TaskResultAnswerRows({
   rows,
 }: {
@@ -276,9 +284,13 @@ export function TaskResultAnswerRows({
           <span className="task-result-answer-num" aria-hidden="true">
             {r.number}
           </span>
-          <AnswerChip side="left" value={r.left} isAnswer={r.leftIsAnswer} lang="fr" />
-          <PairArrowIcon />
-          <AnswerChip side="right" value={r.right} isAnswer={r.rightIsAnswer} lang={lang} />
+          <span className="task-result-answer-pair-wrap">
+            <span className="task-result-pair-fr-unit">
+              <AnswerChip side="left" value={r.left} isAnswer={r.leftIsAnswer} lang="fr" />
+              <PairArrowIcon />
+            </span>
+            <AnswerChip side="right" value={r.right} isAnswer={r.rightIsAnswer} lang={lang} />
+          </span>
         </div>
       ))}
     </div>
