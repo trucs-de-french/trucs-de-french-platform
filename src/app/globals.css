@@ -7164,10 +7164,28 @@ button.scene-bar:active .scene-bar-toggle {
    слова) — .chip-text-fit вище додає контрольований hyphens:auto як
    запасний варіант, а не anywhere/break-all. */
 @media (max-width: 640px) {
+  /* Задача "Table fill (mobile): symmetric row padding, vertically
+     centred cells" — padding: 12px 6px 6px тут лишався з часу ЕТАП S
+     (горизонтальна 45/55-колонка/font-size фікс вище, коментар не про
+     вертикальний падінг взагалі) ЩЕ ДО десктопного симетричного фіксу
+     (731aa67/21532af/42286c1, .table-fill-row { padding: 8px } +
+     .row-points-tab-wrap--has-tab { padding-top: 14px } лише коли є
+     вкладка): мобільний блок після того фіксу лишився незмінним і тому
+     одним верхнім 12px/нижнім 6px для УСІХ рядків, незалежно від вкладки
+     балів. 10px 6px — той самий принцип, що в .drag-drop-row.glass-item-
+     card нижче (12px 14px 12px, симетрично): вертикальний padding рівний
+     зверху/знизу, горизонтальний 6px (ЕТАП S) не зачіпається. */
   .table-fill-row {
     grid-template-columns: 20px minmax(0, 0.82fr) minmax(0, 1fr);
     gap: 6px;
-    padding: 12px 6px 6px;
+    padding: 10px 6px;
+  }
+  /* +6px зверху лише коли РЯДОК реально показує вкладку балів
+     (RowPointsTab) — той самий принцип і те саме +6px, що десктопне
+     правило (.row-points-tab-wrap--has-tab .table-fill-row вище, 8→14) і
+     мобільний drag-drop (12→18) нижче. */
+  .row-points-tab-wrap--has-tab .table-fill-row {
+    padding-top: 16px;
   }
   .item-number-badge.table-fill-row-num {
     width: 20px;
