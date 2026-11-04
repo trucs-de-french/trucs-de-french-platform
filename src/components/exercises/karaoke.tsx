@@ -298,6 +298,16 @@ function KaraokeResultLine({
       );
     }
     const studentEmpty = !gap.studentAnswer.trim();
+    // Задача "Answers toggle gap rows (mobile): prevent chips overflowing
+    // the card" — "→ correctAnswer" тепер своя вкладена span-група
+    // (karaoke-result-arrow-group): на мобільному (globals.css)
+    // .karaoke-result-gap-inline стає звичайним inline (не inline-flex),
+    // тож браузер може перенести рядок МІЖ wrong-чипом і цією групою (як
+    // між звичайними словами тексту), а сама група лишається
+    // нерозривною парою "стрілка+правильне слово" — десктоп/планшет не
+    // чіпаються (там .karaoke-result-gap-inline лишається inline-flex,
+    // група — просто додатковий span без жодного власного правила поза
+    // мобільним @media, пікселево той самий вигляд).
     return (
       <span key={i} className="karaoke-result-gap-inline">
         {studentEmpty ? (
@@ -307,8 +317,10 @@ function KaraokeResultLine({
         ) : (
           <span className="karaoke-result-word karaoke-result-word--wrong">{gap.studentAnswer}</span>
         )}
-        <span className="karaoke-result-arrow">→</span>
-        <span className="karaoke-result-word karaoke-result-word--correct">{gap.correctAnswer}</span>
+        <span className="karaoke-result-arrow-group">
+          <span className="karaoke-result-arrow">→</span>
+          <span className="karaoke-result-word karaoke-result-word--correct">{gap.correctAnswer}</span>
+        </span>
       </span>
     );
   });

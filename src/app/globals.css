@@ -5797,6 +5797,19 @@ button.scene-bar:active .scene-bar-toggle {
     color: #eaf6ec;
   }
 }
+/* Задача "Answers toggle gap rows (mobile): prevent chips overflowing the
+   card" — той самий фолбек, що .karaoke-result-word нижче: сам
+   .task-result-gap-row/.task-result-gap-text вже дає рядку min-width:0 і
+   overflow-wrap:normal (нижче в цьому файлі) — переноситься звичайно,
+   лише сам чип мав white-space:nowrap без жодного фолбеку, якщо довге
+   слово-відповідь (fill_blank/letter_gaps/drag_drop/word_choice) все одно
+   не влазить навіть одне на рядку. */
+@media (max-width: 640px) {
+  .task-result-gap-word {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
 
 /* Сітка "Правильні відповіді" для image_match (TaskResultImageWordRows) —
    власні класи (не .task-result-gap-grid/.task-result-gap-row), бо ці
@@ -10498,6 +10511,19 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 6px;
   white-space: nowrap;
 }
+/* Задача "Answers toggle gap rows (mobile): prevent chips overflowing the
+   card" — "→ correctAnswer" (karaoke.tsx) тепер своя вкладена група
+   (раніше стрілка й правильний чип були прямими дітьми
+   .karaoke-result-gap-inline поряд із wrong-чипом): той самий gap:6px,
+   що й раніше між усіма трьома, тепер дає ЦЯ група між стрілкою й чипом
+   (друга половина колишнього проміжку) — потрібно на ВСІХ ширинах
+   (JSX-вкладеність змінилась не лише для мобільного), інакше desktop/
+   tablet втратили б відступ між стрілкою й словом. */
+.karaoke-result-arrow-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
 .karaoke-result-arrow {
   font-size: 14px;
   color: var(--text-muted-caption);
@@ -10549,6 +10575,37 @@ button.scene-bar:active .scene-bar-toggle {
   :root:not(.light) .karaoke-result-word--wrong {
     background: rgba(232, 120, 138, 0.14);
     color: var(--wrong-border-dark);
+  }
+}
+/* Задача "Answers toggle gap rows (mobile): prevent chips overflowing the
+   card" — на вузькій картці "wrong-чип → correct-чип" (разом, inline-
+   flex+nowrap) ширший за доступну ширину рядка: довге правильне слово
+   (напр. "t'accompagner") виходило за правий край картки, бо вся група
+   мусила лишатись ОДНИМ нерозривним блоком, а саме слово-чип мало
+   white-space:nowrap без жодного фолбеку. Фікс лише тут (≤640px),
+   десктоп/планшет — пікселево ті самі inline-flex/nowrap-правила вище:
+   .karaoke-result-gap-inline стає звичайним inline — перенос рядка
+   можливий МІЖ wrong-чипом і .karaoke-result-arrow-group (як між
+   звичайними словами тексту), сама ж ця група лишається inline-flex +
+   nowrap (стрілка й correct-чип завжди разом, п.2 задачі). .karaoke-
+   result-word отримує normal/anywhere — останній рубіж, якщо навіть
+   САМ чип один на рядку все ще не влазить (авторитетний
+   --karaoke-result-font-size лишається незмінним, жодного useFitText/
+   FitChip тут немає — font-size навмисно спільний на весь рядок, задача
+   п.4 "inherit from the line", зменшення по чипу зламало б саме цей
+   принцип). */
+@media (max-width: 640px) {
+  .karaoke-result-gap-inline {
+    display: inline;
+    white-space: normal;
+  }
+  .karaoke-result-arrow-group {
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .karaoke-result-word {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 /* Легенда під списком рядків — приглушений підпис, той самий
