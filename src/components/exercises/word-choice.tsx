@@ -180,14 +180,11 @@ export function WordChoiceExercise({
     }
   }
 
-  const practiceAllAnswered = practiceSentences.every((s) =>
-    config.mode === "select"
-      ? (selections[s.id] ?? []).length > 0
-      : remainingOptions(
-          s.id,
-          s.options.map((o) => o.id)
-        ).length > 0
-  );
+  // sentenceIsAnswered — оголошена нижче (function-декларація, підняття
+  // JS, доступна тут) — той самий критерій "студент щось зробив", що й
+  // CheckConfirmBar нижче, замість окремого дубльованого (і для cross_out
+  // так само зламаного) предикату.
+  const practiceAllAnswered = practiceSentences.every(sentenceIsAnswered);
 
   function toggleSelection(sentenceId: string, optionId: string, multiple: boolean) {
     if (locked) return;
@@ -223,13 +220,21 @@ export function WordChoiceExercise({
   // "Відповідь дана" — той самий предикат, що раніше рахував лише allAnswered
   // (.every): тепер ще й рахує, СКІЛЬКИ речень не відповіли (N у
   // CheckConfirmBar), той самий критерій в обидва боки.
+  // ФІКС — cross_out: remainingOptions(...).length > 0 раніше вважалось
+  // "відповідь дана", але це ЗАВЖДИ true, доки студент не закреслив ЖОДНОГО
+  // варіанта (нічого не закреслено -> лишились усі варіанти -> length > 0):
+  // речення, яке студент узагалі не торкнувся, рахувалось "відповіданим",
+  // і підтвердження "Є незаповнені — перевірити все одно?" (CheckConfirmBar)
+  // ніколи не з'являлось у режимі cross_out. "Відповідь дана" тут — студент
+  // РЕАЛЬНО закреслив хоч один варіант (crossedOut[s.id] непорожній), а не
+  // "лишився хоч один незакреслений" — той самий критерій, що select-режим:
+  // "студент узагалі щось зробив", а не похідне значення, що й так true за
+  // замовчуванням. sentenceAnswer() нижче (сама відповідь, що йде на сервер)
+  // НЕ змінюється — там лишається remainingOptions(...), як і раніше.
   function sentenceIsAnswered(s: PublicSentence) {
     return config.mode === "select"
       ? (selections[s.id] ?? []).length > 0
-      : remainingOptions(
-          s.id,
-          s.options.map((o) => o.id)
-        ).length > 0;
+      : (crossedOut[s.id]?.size ?? 0) > 0;
   }
   const answeredCount = config.sentences.filter(sentenceIsAnswered).length;
 
