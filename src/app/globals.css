@@ -9223,6 +9223,111 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Мобільний (≤640px) перелам слів у word_choice: "лампочка в куті
+   картки + компактні плитки-варіанти у flex-wrap замість залежності від
+   звичайного переносу тексту в <p>" — див. задачу "Mobile word-choice:
+   lightbulb in corner, compact inline options, tighter lines". Нічого з
+   цього не зачіпає десктоп/планшет (>640px): жодне правило тут не має
+   еквівалента поза цим @media, усі десктопні класи (ITEM_CARD_WRAP,
+   GOLD_CIRCLE_SIZE, .word-choice-pill база тощо) лишаються як є. */
+@media (max-width: 640px) {
+  /* .word-choice-card додає лише relative (без жодного правила тут —
+     саме слово "relative" у className безпечне самостійно) + сам цей
+     клас: ITEM_CARD_WRAP несе overflow-hidden (Tailwind-утиліта, у шарі
+     @layer utilities), тут знімаємо його НЕшаруючим правилом (що завжди
+     перебиває шарований Tailwind-клас незалежно від порядку), щоб
+     лампочка-вкладка могла виступати за верхню рамку картки, як .row-
+     points-tab-wrap в інших типах. Картка тут не показує RowPointsTab
+     взагалі (word-choice.tsx не рендерить його), тож немає конфлікту
+     кутів і запасного "в нижній правий кут" варіанту не потрібно. */
+  .word-choice-card {
+    overflow: visible;
+  }
+  /* Лампочка виходить із колонки (flex items-start gap-1.5 у JSX) і стає
+     кутовим "язичком" картки — absolute щодо .word-choice-card (relative
+     вище). Коли вона absolute, вона більше не бере участі в flex-рядку,
+     тож <p> (flex-1) сам займає всю ширину колонки — жодної додаткової
+     зміни не потрібно, щоб "текстова колонка отримала всю ширину". */
+  .word-choice-hint-bulb {
+    position: absolute;
+    top: -12px;
+    right: 14px;
+    margin: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+  /* Той самий принцип точкового зменшення ОДНОГО екземпляра HintBulb, що
+     .drag-drop-slot-lamp (9cf9902) — спільні GOLD_CIRCLE_SIZE/
+     GOLD_CIRCLE_HIT_AREA_PADDING (hint-bulb.tsx) лишаються 28px/40px для
+     всіх інших викликів, тут лише видимий гурток усередині ЦІЄЇ кнопки
+     зменшується до 24px, щоб влізти в 36px кнопку з тим самим
+     пропорційним запасом (~6px), що раніше був у стандартній 40px/28px
+     парі. !important — та сама причина, що .word-choice-hint-chip-bulb
+     вище: мусить перебити h-7/w-7 незалежно від порядку генерації CSS. */
+  .word-choice-hint-bulb > span {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .word-choice-hint-bulb > span svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  /* Зона дотику 44px мінімум (вимога задачі), хоч видима кнопка лише
+     36px — прозорий ::after, що розширює клікабельну площу на 4px з
+     кожного боку (36+4*2=44), без жодного візуального елемента (немає
+     background/border, лише розширює hit-test box). */
+  .word-choice-hint-bulb::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+  }
+  /* Текст речення: line-height ~1.5 замість фіксованих 33px (розраховано
+     під колишню ширшу плитку) — font-size <p> не змінюється (сам текст
+     поза плитками не має явного font-size, бере спадковий розмір
+     сторінки), лише line-height. */
+  .word-choice-sentence-text {
+    line-height: 1.5;
+  }
+  /* Група плиток-варіантів: inline-flex+wrap замість залежності від
+     звичайного word-wrap навколишнього <p> — кожна плитка+слеш-обгортка
+     (span.inline-block нижче, з JSX) стає flex-дитиною, переноситься
+     рядком сама, коли не влазить, з явним gap замість потреби влазити
+     "слово за словом" у залишок попереднього рядка. vertical-align:middle
+     + margin 2px 0 — щоб група не перекривала суміжні рядки тексту, коли
+     вона трохи вища за line-height. */
+  .word-choice-options {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 6px;
+    column-gap: 4px;
+    vertical-align: middle;
+    margin: 2px 0;
+  }
+  /* Плитка: нижча й тугіша. margin:0 (перебиває mx-1/ml-1 з JSX-рядка
+     класів — ці Tailwind-утиліти раніше й давали горизонтальний
+     проміжок) — тепер проміжок між плитками дає ЛИШЕ column-gap
+     .word-choice-options вище, без подвоєння. min-height (не height) —
+     контент (іконка X у cross_out-режимі) і так лишається по центру
+     через inline-flex items-center, уже заданий у className кнопки. */
+  .word-choice-pill {
+    margin: 0;
+    min-height: 36px;
+    box-sizing: border-box;
+  }
+  /* Слеш: менший і тихіший, з власним малим відступом з обох боків —
+     лишається частиною ТІЄЇ Ж обгортки (span.inline-block), що й
+     попередня плитка (JSX не змінено), тож ніколи не починає рядок
+     окремо — задача явно дозволяла це як перший варіант ("make it part
+     of the flex flow... attached to the PREVIOUS pill"), і поточна
+     структура вже саме так робить, слеш просто став меншим. */
+  .word-choice-slash {
+    font-size: 18px;
+    margin: 0 2px;
+  }
+}
+
 /* chronological_order — ВАРІАНТ ФРАЗИ (mode:"text") лише, chronological-
    order.tsx: рядок прогресу над картками + сама картка речення + слот
    номера праворуч. Варіант картинки (COMPACT_IMAGE_*) не зачіпається. */

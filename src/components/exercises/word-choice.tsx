@@ -327,7 +327,7 @@ export function WordChoiceExercise({
     // min-height трюків (на відміну від попередньої версії з абсолютною
     // бульбашкою, яка потребувала зарезервованого простору).
     return (
-      <div key={s.id} className={`${ITEM_CARD_WRAP} p-3 md:p-4`}>
+      <div key={s.id} className={`${ITEM_CARD_WRAP} word-choice-card relative p-3 md:p-4`}>
       <div className="flex items-start gap-2.5">
         {config.sentences.length > 1 && (
           <span className="item-number-badge mt-1.5" aria-label={t("aria.sentence", { n: globalIndex + 1 })}>
@@ -349,8 +349,17 @@ export function WordChoiceExercise({
             26px line-height + 1.5px*2 рамка = 29px; +4px проміжок = 33px —
             фіксоване px-значення, не ratio, щоб не залежати від
             невідомого реального font-size <p>. */}
-        <p className="min-w-0 flex-1 break-words leading-[33px] [overflow-wrap:anywhere]">
+        <p className="word-choice-sentence-text min-w-0 flex-1 break-words leading-[33px] [overflow-wrap:anywhere]">
         {frenchNbsp(before.trimEnd())}
+        {/* Обгортка-гачок лише для мобільного flex-wrap (п.2 задачі "Mobile
+            word-choice") — за замовчуванням звичайний inline <span>, що не
+            створює нового блокового контексту й нічого не змінює в потоці
+            <p> на десктопі/планшеті (там немає жодного правила для цього
+            класу). На мобільному (globals.css) стає inline-flex із
+            flex-wrap:wrap, тож плитки-варіанти самі переносяться рядком,
+            коли не влазять, замість залежати від звичайного word-wrap
+            навколишнього тексту. */}
+        <span className="word-choice-options">
         {s.options.map((o, oi) => {
           const isLast = oi === s.options.length - 1;
           const glued = isLast && glueText.length > 0;
@@ -380,6 +389,7 @@ export function WordChoiceExercise({
             </span>
           );
         })}
+        </span>
         {frenchNbsp(restAfter)}
         {multiHint(s)}
         </p>
@@ -389,7 +399,7 @@ export function WordChoiceExercise({
             onClick={() => toggleHintVisible(s.id)}
             label={hintVisible.has(s.id) ? t("button.collapseHint") : t("button.showHint")}
             ariaExpanded={hintVisible.has(s.id)}
-            className="mt-0.5 shrink-0"
+            className="mt-0.5 shrink-0 word-choice-hint-bulb"
           />
         )}
         </div>
