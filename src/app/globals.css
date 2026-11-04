@@ -549,6 +549,24 @@ h1, h2, h3, h4, h5, h6 {
 button, input, textarea, select, label, nav, aside {
   font-family: var(--font-heading);
 }
+/* Мобільний (≤640px) запобіжник — задача "Mobile: tighter line-height for
+   wrapped button labels and short texts". Nunito (--font-heading) через
+   next/font має "normal" line-height, що фактично рендериться ~2× за
+   font-size (спостережена причина: коли підпис кнопки/пілюлі переноситься
+   на 2 рядки на вузькому екрані, рядки виходять далеко один від одного —
+   "Показати переклад" у flip-cards.tsx тощо). Голий тег-селектор (не
+   клас) — найнижча специфічність, тож БУДЬ-яке вже наявне явне
+   line-height на конкретному класі кнопки (.btn-check, .block-tab,
+   .task-plaque тощо — усі перевірені, уже мають власне значення) і далі
+   перебиває це правило звичайною специфічністю CSS, без жодних
+   додаткових виключень. Для однорядкових кнопок із фіксованою
+   height+flex items-center (більшість кнопок на сторінці) зміна
+   непомітна — текст і так центрується по flex, а не по line-height. */
+@media (max-width: 640px) {
+  button {
+    line-height: 1.25;
+  }
+}
 
 /* Виділення (<strong>/<b>) вчительки всередині WYSIWYG-інструкції вправи
    (InstructionsText, клас instruction-text) — вже й так на жирному тлі
@@ -6864,6 +6882,13 @@ button.scene-bar:active .scene-bar-toggle {
     word-break: normal;
     hyphens: manual;
     overflow: visible;
+    /* Задача "Mobile: tighter line-height for wrapped button labels" —
+       слово переноситься на 2 рядки (сам смисл цього класу), жодного
+       явного line-height раніше не було, тож рядки спадкували завеликий
+       line-height шрифту кнопки/пілюлі (--font-heading) — той самий
+       симптом, що й задача описує, тут лише для чипів слова (не кнопок,
+       цей клас — на <span>, button{} вище сюди не дістає). */
+    line-height: 1.25;
   }
   .chip-text-fit.chip-text-fit--overflow {
     overflow-wrap: anywhere;
@@ -9203,6 +9228,15 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 14px;
   color: #6b4a14;
 }
+/* Той самий 1.35, що .task-panel-hint-pill-text/.task-result-hint-summary
+   > span (обидва вже тут поряд) — підказка-речення в чипі теж переноситься
+   на кілька рядків на вузькому екрані, та сама родина "тексту підказки",
+   та сама цифра для однакового вигляду скрізь. */
+@media (max-width: 640px) {
+  .word-choice-hint-chip-text {
+    line-height: 1.35;
+  }
+}
 /* Темна тема — існуючий золотий акцент теми (#f6dc8e, CLAUDE.md "dark gold
    accent"), напівпрозорий фон/рамка з того самого відтінку (не Tailwind
    amber-900/950, щоб лишатись на ЦИХ токенах, не вигадувати нову пару). */
@@ -10437,6 +10471,32 @@ button.scene-bar:active .scene-bar-toggle {
     grid-column: 2;
     grid-row: 3;
     margin: 0;
+  }
+}
+
+/* Мобільний — "Перемішати"/"Показати переклад" (flip-cards.tsx, задача
+   "Mobile: tighter line-height for wrapped button labels") мали лише
+   фіксовану h-11 (44px): коли "Показати переклад" переносилась на 2
+   рядки, завеликий успадкований line-height (--font-heading, Nunito)
+   розтягував видимий текст за межі цих 44px, а сусідня "Перемішати"
+   (один рядок, та сама висота) лишалась компактною — звідси "кнопка
+   вища за сусідку". min-height:52px (не height — довший підпис і далі
+   може зайняти більше місця) + явний padding-block + тугий line-height
+   (той самий принцип, що button{} вище, тут явно — задача просить саме
+   ЦІ числа для цієї пари кнопок) + text-align:center. align-items:stretch
+   на рядку — обидві кнопки тягнуться до висоти найвищої (однорядкова
+   "Перемішати" лишається вертикально центрованою через items-center
+   усередині самої кнопки, що вже є в className). */
+@media (max-width: 640px) {
+  .flip-secondary-row {
+    align-items: stretch;
+  }
+  .flip-secondary-btn {
+    height: auto;
+    min-height: 52px;
+    padding-block: 10px;
+    line-height: 1.25;
+    text-align: center;
   }
 }
 

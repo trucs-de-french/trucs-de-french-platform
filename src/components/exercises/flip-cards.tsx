@@ -673,12 +673,12 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
 
       {!finished && (
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <div className="order-2 flex w-full gap-3 sm:order-1 sm:w-auto">
+          <div className="flip-secondary-row order-2 flex w-full gap-3 sm:order-1 sm:w-auto">
             <button
               type="button"
               onClick={handleShuffle}
               disabled={remaining.length <= 1}
-              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
+              className="flip-secondary-btn flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] disabled:opacity-50 dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
             >
               <Shuffle size={18} className="text-[#b8902f] dark:text-[#f6dc8e]" /> {t3("button.shuffle")}
             </button>
@@ -686,7 +686,7 @@ function DeckFlipCards({ cards }: { cards: FlipCardType[] }) {
               <button
                 type="button"
                 onClick={toggleFlip}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
+                className="flip-secondary-btn flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-[var(--gold-border-dark)] bg-white px-[18px] text-[15px] font-bold text-[#1a1640] shadow-[0_2px_5px_-2px_rgba(120,90,20,0.3)] dark:border-[rgba(217,183,101,0.45)] dark:bg-[var(--dark-surface-fill)] dark:text-white dark:hover:border-[rgba(217,183,101,0.85)] dark:hover:bg-[#1a244b] dark:focus-visible:outline-none dark:focus-visible:ring-2 dark:focus-visible:ring-[#e0b85a] sm:h-[46px] sm:flex-none sm:w-auto"
               >
                 {flipped ? t3("button.showQuestion") : t3("button.showTranslation")}
               </button>

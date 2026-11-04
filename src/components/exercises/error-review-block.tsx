@@ -360,7 +360,7 @@ export function ErrorReviewBlock({
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <h3 className="font-heading text-lg font-semibold">{frenchNbsp("Corrigez vos erreurs.")}</h3>
+        <h3 className="font-heading text-lg font-semibold max-[640px]:leading-[1.3]">{frenchNbsp("Corrigez vos erreurs.")}</h3>
         <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {t("errReview.reviewHint")}
         </p>
