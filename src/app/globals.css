@@ -3475,6 +3475,26 @@ button, input, textarea, select, label, nav, aside {
   color: var(--glass-text);
 }
 
+/* Задача "Answers toggle (mobile): align ✓/✕ result lines to the left
+   card edge" — "Правильні відповіді" (multiple_choice, multiple-
+   choice.tsx renderAnswersToggle). Рядки ✓/✕ (.mc-answer-result-line)
+   тепер прямі діти картки (JSX), сестри .mc-answer-card-top (гурток +
+   питання), не вкладені в ту саму текстову колонку, що й питання — інакше
+   CSS-only не дав би їм вийти з-під відступу питання. margin-left:36px
+   тут (26px гурток .item-number-badge + 10px gap-2.5, той самий відступ,
+   що РАНІШЕ давав сам flex-рядок, коли рядки були частиною текстової
+   колонки) — тримає десктоп/планшет пікселево незмінними; мобільний
+   @media нижче скидає цей відступ до 0, лампочка/✓/✕-іконка (перша
+   дитина рядка) опиняється на тій самій x, що лівий край гуртка-номера. */
+.mc-answer-result-line {
+  margin-left: 36px;
+}
+@media (max-width: 640px) {
+  .mc-answer-result-line {
+    margin-left: 0;
+  }
+}
+
 /* Читацький уривок/спільний текст блоку задач (SHARED_CONTENT_PANEL,
    task-card-style.ts) — та сама картка-елемент, що .glass-item-card
    вище, лише з колірною смугою зліва замість повної рамки й color ЯВНО

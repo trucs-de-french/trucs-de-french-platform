@@ -799,39 +799,49 @@ export function MultipleChoiceExercise({
             item.sentence.replace("{{}}", " ").replace(/\s{2,}/g, " ").trim()
           );
           return (
-            <div key={item.id} className="glass-item-card flex items-start gap-2.5 px-3 py-2.5">
-              <span className="item-number-badge shrink-0" aria-label={t("aria.question", { n: startIndex + i + 1 })}>
-                {startIndex + i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="min-w-0 break-words leading-snug [overflow-wrap:anywhere]">{questionText}</p>
-                <p className="mt-1 flex items-start gap-1 text-base font-semibold text-[#1f7a3d] dark:text-[#bff0d0]">
-                  <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
+            // Задача "Answers toggle (mobile): align ✓/✕ result lines to
+            // the left card edge" — ✓/✕-рядки (mc-answer-result-line)
+            // тепер прямі діти картки (сестри mc-answer-card-top, не
+            // вкладені в ту саму текстову колонку, що й питання), щоб на
+            // мобільному (globals.css) могли починатись від лівого краю
+            // картки, а не від краю ТЕКСТУ питання (правіше за гурток).
+            // Десктоп/планшет лишаються пікселево незмінними —
+            // margin-left:36px (26px гурток + 10px gap-2.5, те саме, що
+            // РАНІШЕ давав сам flex-рядок) відновлює той самий відступ
+            // поза мобільним @media.
+            <div key={item.id} className="glass-item-card mc-answer-card px-3 py-2.5">
+              <div className="mc-answer-card-top flex items-start gap-2.5">
+                <span className="item-number-badge shrink-0" aria-label={t("aria.question", { n: startIndex + i + 1 })}>
+                  {startIndex + i + 1}
+                </span>
+                <p className="min-w-0 flex-1 break-words leading-snug [overflow-wrap:anywhere]">{questionText}</p>
+              </div>
+              <p className="mc-answer-result-line mt-1 flex items-start gap-1 text-base font-semibold text-[#1f7a3d] dark:text-[#bff0d0]">
+                <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
+                <span>
+                  <span
+                    className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {t("answer.correctAnswerLabel")}
+                  </span>
+                  {correctOpt ? stripOptionLetterPrefix(correctOpt.text) : ""}
+                </span>
+              </p>
+              {!itemCorrect && (
+                <p className="mc-answer-result-line mt-1 flex items-start gap-1 text-base font-semibold text-[#b42318] dark:text-[#f87171]">
+                  <X size={14} className="mt-0.5 shrink-0" aria-hidden />
                   <span>
                     <span
                       className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
                       style={{ fontFamily: "var(--font-heading)" }}
                     >
-                      {t("answer.correctAnswerLabel")}
+                      {t("answer.yourAnswerLabel")}
                     </span>
-                    {correctOpt ? stripOptionLetterPrefix(correctOpt.text) : ""}
+                    {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : t("status.notChosen")}
                   </span>
                 </p>
-                {!itemCorrect && (
-                  <p className="mt-1 flex items-start gap-1 text-base font-semibold text-[#b42318] dark:text-[#f87171]">
-                    <X size={14} className="mt-0.5 shrink-0" aria-hidden />
-                    <span>
-                      <span
-                        className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
-                        style={{ fontFamily: "var(--font-heading)" }}
-                      >
-                        {t("answer.yourAnswerLabel")}
-                      </span>
-                      {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : t("status.notChosen")}
-                    </span>
-                  </p>
-                )}
-              </div>
+              )}
             </div>
           );
         })}
