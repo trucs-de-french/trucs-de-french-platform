@@ -9431,21 +9431,29 @@ button.scene-bar:active .scene-bar-toggle {
     line-height: 1.5;
     padding-top: 6px;
   }
-  /* Група плиток-варіантів: inline-flex+wrap замість залежності від
-     звичайного word-wrap навколишнього <p> — кожна плитка+слеш-обгортка
-     (span.inline-block нижче, з JSX) стає flex-дитиною, переноситься
-     рядком сама, коли не влазить, з явним gap замість потреби влазити
-     "слово за словом" у залишок попереднього рядка. vertical-align:middle
-     + margin 2px 0 — щоб група не перекривала суміжні рядки тексту, коли
-     вона трохи вища за line-height. */
+  /* Задача "Word choice (mobile): consistent gaps around option group,
+     natural wrapping". display:inline-flex робив ВСЮ групу одним
+     атомарним inline-рівня блоком у рядку <p>: якщо вона не влазила в
+     залишок поточного рядка, браузер переносив ЦІЛУ групу на новий рядок
+     (її власний flex-wrap розбиває рядки лише ВСЕРЕДИНІ себе, але не
+     рятує від цієї зовнішньої атомарності) — звідси "dans le" самотнім
+     рядком, а вся группа питань — під ним суцільним блоком. display:inline
+     прибирає цю атомарність: група знову звичайний inline-контент <p>,
+     переноситься між одиницями природно, як і решта тексту. Кожна
+     span.inline-block.whitespace-nowrap (плитка+слеш, JSX нижче)
+     лишається нерозривною одиницею незалежно від цього — перенос рядка
+     й так був можливий лише МІЖ такими span, ніколи всередині. row-gap/
+     column-gap/align-items/vertical-align вище були суто flex-властивості
+     (для inline вони не діють) — вертикальний ритм між перенесеними
+     рядками тепер дає сам line-height <p> (leading-[33px] у word-
+     choice.tsx, не змінюється). margin-inline: 0.3em — фіксований запас
+     від сусіднього тексту З ОБОХ боків групи, що НЕ залежить від того, чи
+     є пробіл у даних на межі "{{}}": word-choice.tsx вже обрізає
+     "before"/"after" впритул до групи (trimEnd/trimStart, для всіх
+     ширин), тож тут не може бути подвоєння пробілу. */
   .word-choice-options {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    row-gap: 5px;
-    column-gap: 2px;
-    vertical-align: middle;
-    margin: 2px 0;
+    display: inline;
+    margin-inline: 0.3em;
   }
   /* Плитка: ще нижча й тугіша (задача "bigger lightbulb... smaller option
      pills" — більше варіантів в один рядок). margin:0 (перебиває mx-1/
