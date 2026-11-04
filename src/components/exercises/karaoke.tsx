@@ -6,8 +6,11 @@ import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } fro
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { useT } from "@/lib/i18n/context";
-import { TaskPanelHeader } from "./task-panel-header";
+import { TaskPanelHeader, TaskInstructionLine } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
+import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
+import { frenchNbspHtml } from "@/lib/text/french-typography";
+import { htmlToPlainText } from "@/lib/html-text";
 import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
@@ -690,6 +693,27 @@ export function KaraokeExercise({
   }
 
   const instructionText = config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction;
+  const subInstructionText = taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
+    uk: DEFAULT_INSTRUCTIONS.karaoke.subInstruction,
+    en: DEFAULT_TRANSLATION_EN.karaoke,
+  });
+
+  // Fullscreen-заголовок/aria-label (задача "Mobile karaoke fullscreen:
+  // plain-text title, compact word dock", п.1) — instructionText/
+  // subInstructionText — сире HTML з БД (config.instructions тут завжди
+  // "<p>...</p>", TipTap), не план-текст. Видиме заголовок у топбарі —
+  // ТОЧНО той самий механізм, що TaskPanelHeader/TaskInstructionLine
+  // нижче для звичайного заголовка панелі (sanitizeInstructionsHtml +
+  // frenchNbspHtml, dangerouslySetInnerHTML через TaskInstructionLine) —
+  // жодної другої ad-hoc регулярки. aria-label диалогу — план-текст:
+  // htmlToPlainText (src/lib/html-text.ts), той самий helper, що вже
+  // прибирає теги/&nbsp;/зайві пробіли в task-bar-text.ts й інших місцях
+  // сайту для рівно цієї мети ("план-текст із HTML-поля").
+  const fsTitleFr = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
+  const fsTitleUk = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
+  const fsTitlePlainText = [htmlToPlainText(instructionText), htmlToPlainText(subInstructionText)]
+    .filter(Boolean)
+    .join(" / ");
 
   // ==== "На весь екран" (мобільний режим, задача "Mobile karaoke:
   // fullscreen mode") ====
@@ -838,10 +862,7 @@ export function KaraokeExercise({
           ? {}
           : headerPointsState(pointsPossibleTotal, result ? result.pointsEarned : undefined, lang))}
         instructionText={instructionText}
-        subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
-          uk: DEFAULT_INSTRUCTIONS.karaoke.subInstruction,
-          en: DEFAULT_TRANSLATION_EN.karaoke,
-        })}
+        subInstructionText={subInstructionText}
       />
 
       {/* Один вертикальний стовпчик на БУДЬ-ЯКій ширині (не md:flex-row, як
@@ -856,7 +877,7 @@ export function KaraokeExercise({
         className={`mx-auto flex w-full max-w-3xl flex-col gap-3 karaoke-fs-root ${fullscreen ? "karaoke-fs-root--active" : ""}`}
         role={fullscreen ? "dialog" : undefined}
         aria-modal={fullscreen ? true : undefined}
-        aria-label={fullscreen ? instructionText : undefined}
+        aria-label={fullscreen ? fsTitlePlainText : undefined}
       >
         {/* Кнопка "На весь екран" — лише мобільний (sm:hidden, той самий
             640px-порядок, що решта fullscreen CSS), прибирається з DOM-
@@ -886,7 +907,9 @@ export function KaraokeExercise({
             панель — position:absolute). */}
         {fullscreen && (
           <div className="karaoke-fs-topbar">
-            <span className="karaoke-fs-topbar-title">{instructionText}</span>
+            <div className="karaoke-fs-topbar-title">
+              <TaskInstructionLine fr={fsTitleFr} uk={fsTitleUk} />
+            </div>
             <button
               type="button"
               ref={fsCloseBtnRef}

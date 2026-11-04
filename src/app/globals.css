@@ -10431,20 +10431,26 @@ button.scene-bar:active .scene-bar-toggle {
     gap: 8px;
     order: 1;
     flex: none;
-    height: 52px;
-    padding: 0 10px 0 14px;
+    min-height: 52px;
+    padding: 6px 10px 6px 14px;
     background: var(--glass-bar-bg);
     border-bottom: 1.5px solid var(--glass-panel-border);
   }
+  /* Задача "Mobile karaoke fullscreen: plain-text title..." п.1 — видиме
+     заголовок тепер ТОЙ САМИЙ HTML-рендер, що звичайний заголовок панелі
+     (TaskInstructionLine, karaoke.tsx), не план-текст — тут лише
+     обмежуємо його до 2 рядків. height:52px → min-height:52px вище, щоб
+     2-рядковий заголовок не обрізався під кнопкою X. */
   .karaoke-fs-topbar-title {
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font-heading);
-    font-size: 14px;
-    font-weight: 700;
-    color: inherit;
+  }
+  .karaoke-fs-topbar-title .task-panel-instruction-line {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
   .karaoke-fs-close-btn {
     display: flex;
@@ -10483,23 +10489,48 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .karaoke-fs-root--active .karaoke-dock {
     order: 5;
+    /* flex:none (не grow) + відсутні min-height/height — док росте лише
+       під власний вміст, п.2 задачі "Mobile karaoke fullscreen: ...
+       compact word dock": увесь вивільнений простір забирає ЛИШЕ
+       .karaoke-lines-area (flex:1 1 auto вище). */
     flex: none;
-    /* Дефолт 64px — запас під нижній Netlify-бейдж (не наш код, ~60px),
-       задача явно просить саме цю змінну (не хардкод) для цього запасу. */
-    --karaoke-fs-bottom-safe: 64px;
-    max-height: 34dvh;
+    /* Дефолт знижено з 64px до 40px (п.2 задачі) — запас під нижній
+       Netlify-бейдж (не наш код, ~60px) лишається, але вже не тягне за
+       собою стільки порожнього місця під пілюлями; сама змінна (не
+       хардкод) лишається тим самим механізмом, що й раніше. */
+    --karaoke-fs-bottom-safe: 40px;
+    max-height: 26dvh;
     overflow-y: auto;
     margin: 0;
-    padding: 10px 14px calc(env(safe-area-inset-bottom) + var(--karaoke-fs-bottom-safe));
+    padding: 10px 12px 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--karaoke-fs-bottom-safe));
     background: var(--glass-panel-bg);
     border-top: 1.5px solid var(--glass-panel-border);
     box-shadow: 0 -8px 16px -8px rgba(0, 0, 0, 0.25);
   }
   .karaoke-fs-root--active .karaoke-dock-options-row {
-    gap: 8px;
+    column-gap: 6px;
+    row-gap: 6px;
   }
+  /* Пілюля-варіант: менша (п.2 задачі) — та сама база .karaoke-option-chip
+     (gold-pill-bg/border, font-weight 700), тут лише розмір навколо.
+     font-size тут 16px — та сама база вже дає 16px, перепис лише для
+     однозначності поряд з іншими трьома значеннями. */
   .karaoke-fs-root--active .karaoke-option-chip {
-    min-height: 44px;
+    position: relative;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  /* Зона дотику 48px (40px видимих + 4px зверху/знизу) — ::before новий
+     тут (кнопка раніше його не мала), горизонтально inset:0 (= ширина
+     самої пілюлі), щоб сусідні зони дотику не перекривались (пілюлі й
+     так розділені column-gap 6px вище). */
+  .karaoke-fs-root--active .karaoke-option-chip::before {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
   }
 }
 @media (max-width: 640px) and (orientation: landscape) and (max-height: 520px) {
