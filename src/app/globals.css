@@ -4188,6 +4188,19 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 10px 12px 12px 12px;
 }
 
+/* Лише karaoke.tsx: цей рядок там живе всередині .glass-block-panel
+   (звичайна панель задачі, padding-left 24px, на відміну від
+   .glass-panel--video/embed, де panel padding:0 і власний
+   padding-left:12px рядка вище — єдиний запас від краю). Тож у karaoke
+   виходило 24+12=36px — кнопка глибше за заголовок/пілюлю балів/
+   роздільник/підпис тоглу, які сидять просто в тій самій панелі без
+   додаткового відступу. Нейтралізуємо лише зайві 12px зліва ТУТ
+   (.karaoke-fs-root — обгортка лише в karaoke.tsx), не чіпаючи
+   padding-left самого .scene-fullscreen-btn-row для video-frame.tsx. */
+.karaoke-fs-root .scene-fullscreen-btn-row {
+  padding-left: 0;
+}
+
 /* Типографіка рядків скрипту (script-section.tsx, DialogueLine у
    dialogue-line.tsx) — через нащадкові селектори, НЕ правки dialogue-
    line.tsx (поза дозволеним списком файлів цієї задачі): .script-body —
