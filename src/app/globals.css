@@ -9346,46 +9346,49 @@ button.scene-bar:active .scene-bar-toggle {
      вище). Коли вона absolute, вона більше не бере участі в flex-рядку,
      тож <p> (flex-1) сам займає всю ширину колонки — жодної додаткової
      зміни не потрібно, щоб "текстова колонка отримала всю ширину". */
+  /* Задача "Mobile word-choice: bigger lightbulb in corner, smaller option
+     pills" — лампочка ще ближче до кута (right:14→6px) і трохи більша
+     (36→44px): на 44px видима кнопка вже сама дає мінімальну зону дотику
+     (задача явно каже "at 44px it is already enough"), тож колишній
+     ::after-розширювач (36+4px*2=44) більше не потрібен — видалено, не
+     лишаємо мертвий/надлишковий код. */
   .word-choice-hint-bulb {
     position: absolute;
-    top: -12px;
-    right: 14px;
+    top: -14px;
+    right: 6px;
     margin: 0;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     padding: 0;
   }
   /* Той самий принцип точкового зменшення ОДНОГО екземпляра HintBulb, що
      .drag-drop-slot-lamp (9cf9902) — спільні GOLD_CIRCLE_SIZE/
      GOLD_CIRCLE_HIT_AREA_PADDING (hint-bulb.tsx) лишаються 28px/40px для
      всіх інших викликів, тут лише видимий гурток усередині ЦІЄЇ кнопки
-     зменшується до 24px, щоб влізти в 36px кнопку з тим самим
-     пропорційним запасом (~6px), що раніше був у стандартній 40px/28px
-     парі. !important — та сама причина, що .word-choice-hint-chip-bulb
-     вище: мусить перебити h-7/w-7 незалежно від порядку генерації CSS. */
+     росте до 28px (той самий пропорційний запас ~8px із кожного боку, що
+     раніше був між 36px кнопкою й 24px гуртком). !important — та сама
+     причина, що .word-choice-hint-chip-bulb вище: мусить перебити h-7/w-7
+     незалежно від порядку генерації CSS. */
   .word-choice-hint-bulb > span {
-    width: 24px !important;
-    height: 24px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
   .word-choice-hint-bulb > span svg {
-    width: 13px !important;
-    height: 13px !important;
+    width: 15px !important;
+    height: 15px !important;
   }
-  /* Зона дотику 44px мінімум (вимога задачі), хоч видима кнопка лише
-     36px — прозорий ::after, що розширює клікабельну площу на 4px з
-     кожного боку (36+4*2=44), без жодного візуального елемента (немає
-     background/border, лише розширює hit-test box). */
-  .word-choice-hint-bulb::after {
-    content: "";
-    position: absolute;
-    inset: -4px;
-  }
-  /* Текст речення: line-height ~1.5 замість фіксованих 33px (розраховано
-     під колишню ширшу плитку) — font-size <p> не змінюється (сам текст
-     поза плитками не має явного font-size, бере спадковий розмір
-     сторінки), лише line-height. */
+  /* Лампочка тепер і більша (44px), і ближча до кута (top:-14px) — її
+     нижній край сидить на 44-14=30px нижче верхньої рамки картки, тобто
+     30-12(padding картки)=18px углиб текстової area, а це вже всередині
+     висоти першого рядка речення (line-height:1.5 нижче). padding-top:6px
+     на самому тексті (не на картці — картка й так росте під довший
+     текст) відсуває перший рядок настільки, щоб не чіплятись за кутову
+     лампочку (задача: "first line at least 14px lower than the bulb's
+     lower edge"). padding-right не додається — текст лишається на всю
+     ширину колонки (лампочка вже absolute, поза потоком), як і було. */
   .word-choice-sentence-text {
     line-height: 1.5;
+    padding-top: 6px;
   }
   /* Група плиток-варіантів: inline-flex+wrap замість залежності від
      звичайного word-wrap навколишнього <p> — кожна плитка+слеш-обгортка
@@ -9398,31 +9401,47 @@ button.scene-bar:active .scene-bar-toggle {
     display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
-    row-gap: 6px;
-    column-gap: 4px;
+    row-gap: 5px;
+    column-gap: 2px;
     vertical-align: middle;
     margin: 2px 0;
   }
-  /* Плитка: нижча й тугіша. margin:0 (перебиває mx-1/ml-1 з JSX-рядка
-     класів — ці Tailwind-утиліти раніше й давали горизонтальний
-     проміжок) — тепер проміжок між плитками дає ЛИШЕ column-gap
+  /* Плитка: ще нижча й тугіша (задача "bigger lightbulb... smaller option
+     pills" — більше варіантів в один рядок). margin:0 (перебиває mx-1/
+     ml-1 з JSX-рядка класів) — проміжок між плитками дає ЛИШЕ column-gap
      .word-choice-options вище, без подвоєння. min-height (не height) —
-     контент (іконка X у cross_out-режимі) і так лишається по центру
-     через inline-flex items-center, уже заданий у className кнопки. */
+     контент (іконка X у cross_out-режимі, 12px) і так лишається по
+     центру через inline-flex items-center, уже заданий у className
+     кнопки — на 32px висоті жодного обрізання немає. border-width і
+     кольори кожного стану (--default/--selected/--correct/--wrong/
+     --revealed) тут не чіпаються — border лишається тим самим 1.5px
+     (.light .word-choice-pill перебиває до hairline, як і раніше),
+     лише розмір плитки навколо нього зменшується. */
   .word-choice-pill {
     margin: 0;
-    min-height: 36px;
+    min-height: 32px;
+    padding: 0 9px;
+    border-radius: 9px;
+    font-size: 15px;
     box-sizing: border-box;
   }
-  /* Слеш: менший і тихіший, з власним малим відступом з обох боків —
-     лишається частиною ТІЄЇ Ж обгортки (span.inline-block), що й
+  /* Зона дотику плитки — 32px видимої висоти замало для комфортного тапу
+     (вимога задачі: 44px), тож ::before (уже є в className кнопки,
+     before:absolute, лише vertical inset тут перебивається) розширює
+     ЛИШЕ вертикально (-6px зверху/знизу → 32+12=44px), горизонтально
+     inset:0 (= ширина самої плитки, без заходу в сусідню — сусідні
+     плитки розділені .word-choice-slash, тож зони дотику не
+     перекриваються). */
+  .word-choice-pill::before {
+    inset: -6px 0;
+  }
+  /* Слеш: ще менший і тихіший, з власним ще меншим відступом з обох
+     боків — лишається частиною ТІЄЇ Ж обгортки (span.inline-block), що й
      попередня плитка (JSX не змінено), тож ніколи не починає рядок
-     окремо — задача явно дозволяла це як перший варіант ("make it part
-     of the flex flow... attached to the PREVIOUS pill"), і поточна
-     структура вже саме так робить, слеш просто став меншим. */
+     окремо. */
   .word-choice-slash {
-    font-size: 18px;
-    margin: 0 2px;
+    font-size: 16px;
+    margin: 0 1px;
   }
 }
 
