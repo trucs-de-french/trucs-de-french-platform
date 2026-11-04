@@ -156,8 +156,23 @@ export function useDiacriticsPopup<K extends string>() {
   // activeKey, бо переприсвоюється щоразу, коли ефект нижче перезапускається.
   const updateRectRef = useRef<() => void>(() => {});
 
+  // Задача "Dismiss diacritics popup on outside tap, blur and scroll" —
+  // onBlur (нижче) лишався ЄДИНИМ шляхом закриття: на Android клавіатура,
+  // закрита системним жестом "назад", не завжди викликає blur поля, тож
+  // activeKey/rect лишались застарілими — rect далі "стежив" за скролом
+  // (слухачі нижче й так його перераховують), АЛЕ формули позиції попапу
+  // (DiacriticsPopup, клемпінг top/left у межі вьюпорту) навмисно
+  // тримають його ВСЕРЕДИНІ видимої області, навіть коли клітинка/поле
+  // давно поза екраном — звідси "попап висить над чужою карткою" зі
+  // скріншота. Третій шлях нижче (IntersectionObserver) — реальний фікс
+  // ЦЬОГО симптому: ховає попап, щойно активне поле реально залишає
+  // вьюпорт, незалежно від причини (скрол, display:none, зміна вкладки/
+  // блоку, що не демонтує компонент).
   useEffect(() => {
     if (activeKey === null) return;
+    function close() {
+      setActiveKey(null);
+    }
     function updateRect() {
       const el = elements.current.get(activeKey!);
       setRect(el ? el.getBoundingClientRect() : null);
@@ -177,14 +192,65 @@ export function useDiacriticsPopup<K extends string>() {
     // позиція попапу лишиться розрахованою ще "до клавіатури". getBoundingClientRect()
     // завжди повертає новий об'єкт — навіть однакові координати тригерять
     // перерендер popup-а з уже актуальним visualViewport у його розрахунку.
-    window.visualViewport?.addEventListener("resize", updateRect);
+    function onViewportResize() {
+      updateRect();
+      // Клавіатура закрита (видима висота вьюпорту знову близька до
+      // повної висоти вікна) — закриваємо попап разом із нею; порогу
+      // 60px достатньо, щоб відрізнити "клавіатура зникла" від звичних
+      // адресного/статус-барів (ті дають лише кілька px різниці).
+      const vv = window.visualViewport;
+      if (vv && window.innerHeight - vv.height < 60) close();
+    }
+    window.visualViewport?.addEventListener("resize", onViewportResize);
     window.visualViewport?.addEventListener("scroll", updateRect);
+    // Escape — та сама клавіша, що решта попапів/модалок платформи.
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    // Клік/тап ПОЗА активним полем і поза самим попапом — document-
+    // слухач у capture-фазі (document mousedown не завжди спрацьовує на
+    // тач-скролі/неінтерактивних ділянках, pointerdown — надійніший).
+    // .closest(".diacritics-popup") — попап рендериться лише ОДИН
+    // екземпляр на весь документ одночасно (один activeKey глобально),
+    // тож клас-перевірка тут безпечна без прямого ref на DOM-вузол
+    // попапу (той живе в іншому компоненті/дереві, не тут). Кнопки
+    // попапу й так не доходять сюди як "зовнішні" — вони або всередині
+    // .diacritics-popup (ця перевірка), або onMouseDown/onTouchStart на
+    // них уже preventDefault, тож ніколи не розфокусовують поле раніше.
+    function onPointerDownOutside(e: PointerEvent) {
+      const target = e.target as Node | null;
+      if (!target) return;
+      const activeEl = elements.current.get(activeKey!);
+      if (activeEl && activeEl.contains(target)) return;
+      if (target instanceof Element && target.closest(".diacritics-popup")) return;
+      close();
+    }
+    document.addEventListener("pointerdown", onPointerDownOutside, true);
+    // Скрол/зміна вкладки, що не демонтує компонент (CSS-приховування
+    // неактивного блоку) — IntersectionObserver реагує на ОБИДВА випадки
+    // однаково: активне поле, що реально зникло з вьюпорту (виїхало за
+    // межі скролу або лежить у display:none-предку), завжди дає
+    // isIntersecting:false.
+    const activeEl = elements.current.get(activeKey);
+    const observer = activeEl
+      ? new IntersectionObserver(
+          (entries) => {
+            if (!entries[0]?.isIntersecting) close();
+          },
+          { threshold: 0 }
+        )
+      : null;
+    if (activeEl && observer) observer.observe(activeEl);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
-      window.visualViewport?.removeEventListener("resize", updateRect);
+      window.visualViewport?.removeEventListener("resize", onViewportResize);
       window.visualViewport?.removeEventListener("scroll", updateRect);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDownOutside, true);
+      observer?.disconnect();
     };
   }, [activeKey]);
 
