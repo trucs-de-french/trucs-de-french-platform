@@ -128,6 +128,21 @@ export function useFullscreenWrapper() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // Задача "always-visible top-left X exit button": одна функція виходу
+  // НЕЗАЛЕЖНО від того, який саме режим активний (справжній Fullscreen API
+  // чи псевдо) — кнопка-хрестик у embed-frame.tsx/video-frame.tsx/
+  // video-player.tsx викликає саме її, не toggle() (toggle() і ВХОДИТЬ у
+  // fullscreen, якщо жоден режим не активний — для кнопки виходу це хибна
+  // поведінка).
+  async function exitAnyFullscreen() {
+    if (isFullscreen) {
+      await (document.exitFullscreen?.() ??
+        (document as Document & { webkitExitFullscreen?: () => Promise<void> }).webkitExitFullscreen?.());
+      return;
+    }
+    exitPseudoFullscreen();
+  }
+
   async function toggle() {
     if (isFullscreen) {
       await (document.exitFullscreen?.() ??
@@ -162,5 +177,19 @@ export function useFullscreenWrapper() {
     enterPseudoFullscreen();
   }
 
-  return { wrapperRef, isFullscreen, isPseudoFullscreen, toggle, exitPseudoFullscreen };
+  // isAnyFullscreen — задача "always-visible top-left X exit button": усі
+  // три викликачі (embed-frame.tsx/video-frame.tsx/video-player.tsx)
+  // показують ту саму кнопку виходу в ОБОХ режимах за єдиною умовою,
+  // замість повторювати "isFullscreen || isPseudoFullscreen" у кожному.
+  const isAnyFullscreen = isFullscreen || isPseudoFullscreen;
+
+  return {
+    wrapperRef,
+    isFullscreen,
+    isPseudoFullscreen,
+    isAnyFullscreen,
+    toggle,
+    exitPseudoFullscreen,
+    exitAnyFullscreen,
+  };
 }

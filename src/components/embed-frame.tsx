@@ -1,7 +1,8 @@
 "use client";
 
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize } from "lucide-react";
 import { useFullscreenWrapper, FULLSCREEN_BUTTON_CLASS } from "@/hooks/use-fullscreen-wrapper";
+import { FullscreenExitButton } from "@/components/fullscreen-exit-button";
 import { Z_MODAL } from "@/lib/z-layers";
 import type { CSSProperties } from "react";
 import { useT } from "@/lib/i18n/context";
@@ -16,7 +17,7 @@ import { useT } from "@/lib/i18n/context";
 // раніше, через --embed-desktop-height нижче.
 export function EmbedFrame({ url, height = 480 }: { url: string; height?: number }) {
   const { t } = useT();
-  const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle, exitPseudoFullscreen } =
+  const { wrapperRef, isFullscreen, isPseudoFullscreen, isAnyFullscreen, toggle, exitAnyFullscreen } =
     useFullscreenWrapper();
 
   return (
@@ -29,18 +30,8 @@ export function EmbedFrame({ url, height = 480 }: { url: string; height?: number
         style={{ "--embed-desktop-height": `${height}px` } as CSSProperties}
       >
         <iframe src={url} allow="fullscreen; autoplay" allowFullScreen />
-        {isPseudoFullscreen && (
-          <button
-            type="button"
-            onClick={exitPseudoFullscreen}
-            aria-label={t("videoPlayer.closeFullscreen")}
-            className="pseudo-fullscreen-exit-btn"
-          >
-            <span className="glass-bar-badge" aria-hidden="true">
-              <Minimize size={16} strokeWidth={2.4} />
-            </span>
-            <span className="pseudo-fullscreen-exit-btn-label">{t("videoPlayer.exitFullscreen")}</span>
-          </button>
+        {isAnyFullscreen && (
+          <FullscreenExitButton onClick={() => void exitAnyFullscreen()} label={t("videoPlayer.closeFullscreen")} />
         )}
       </div>
       <p className="text-xs text-[#4b4766] dark:text-[var(--text-muted-caption)]">

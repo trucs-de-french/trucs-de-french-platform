@@ -2043,69 +2043,50 @@ button, input, textarea, select, label, nav, aside {
   height: 100dvh;
 }
 
-/* Кнопка "Вийти з повного екрана" у псевдо-fullscreen video-frame.tsx/
-   embed-frame.tsx (задача "Fullscreen embed/video: always-visible exit
-   button, Esc and Back to exit") — раніше просто білий X БЕЗ фону,
-   position:absolute всередині .video-frame/.embed-frame (обидва мають
-   overflow:hidden): губилась на світлому кадрі гри/відео, а position:
-   absolute прив'язував її видимість до overflow обгортки. Тепер —
-   position:fixed (виходить із потоку обгортки, overflow тут уже не може
-   її обрізати, рахується від вікна, не від обгортки) з z-index далеко над
-   усією спільною шкалою z-layers.ts (найвище там — Z_MODAL, z-50) і
-   karaoke-fs (z-45), і ЗАВЖДИ світла панель+золота рамка+темний текст
-   (design tokens CLAUDE.md) — НЕ перемикається темою сайту (.dark/.light),
+/* Кнопка "Вийти з повного екрана" — ЛІВИЙ ВЕРХНІЙ хрестик, рендериться в
+   ОБОХ режимах fullscreen video-frame.tsx/embed-frame.tsx/video-player.tsx
+   (задача "always-visible top-left X exit button in native and pseudo
+   fullscreen"): реальний Android-телефон показав, що системний toast
+   ("проведіть пальцем від верхнього краю...") не завжди спрацьовує (жест
+   недоступний на конкретному пристрої), а попередня кнопка (a6f5de7,
+   .pseudo-fullscreen-exit-btn, праворуч) рендерилась ЛИШЕ в псевдо-режимі —
+   у справжньому Fullscreen API (desktop і мобільний однаково) її не було
+   зовсім. position:fixed (рахується від вікна, overflow обгортки її не
+   обрізає) з z-index далеко над усією спільною шкалою z-layers.ts
+   (найвище там — Z_MODAL, z-50) і karaoke-fs (z-45); суцільна темна
+   підкладка+білий хрестик — НЕ перемикається темою сайту (.dark/.light),
    на відміну від .fullscreen-btn вище: ця кнопка лежить прямо на
-   довільному кадрі гри/відео, а не на скляній панелі сайту, тож колір сайту
-   тут не має значення — важливо лишатись читабельною і на світлому, і на
-   темному кадрі. */
-.pseudo-fullscreen-exit-btn {
+   довільному кадрі гри/відео (може бути світлим або темним), а не на
+   скляній панелі сайту. */
+.fullscreen-exit-btn {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(8px, env(safe-area-inset-right));
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
   z-index: 100000;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 14px 0 8px;
-  border-radius: 12px;
-  border: 1.5px solid #d9b765;
-  background: #fdf8ea;
-  color: #1a1640;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 14px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: rgba(26, 22, 64, 0.92);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
 }
-.pseudo-fullscreen-exit-btn .glass-bar-badge {
-  margin-right: 0;
-}
 @media (hover: hover) {
-  .pseudo-fullscreen-exit-btn:hover {
-    border-color: #b8902f;
-    box-shadow: 0 0 0 3px rgba(224, 170, 62, 0.35), 0 4px 14px rgba(0, 0, 0, 0.35);
+  .fullscreen-exit-btn:hover {
+    background: rgba(40, 35, 92, 0.95);
+    border-color: #d9b765;
   }
 }
-.pseudo-fullscreen-exit-btn:active {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.fullscreen-exit-btn:active {
+  background: rgba(15, 12, 45, 0.96);
 }
-.pseudo-fullscreen-exit-btn:focus-visible {
-  outline: 2px solid #4b46da;
+.fullscreen-exit-btn:focus-visible {
+  outline: 2px solid #f6dc8e;
   outline-offset: 2px;
-}
-/* Вузький телефон — лишаємо лише іконку (aria-label все одно читає
-   повний підпис голосовим читачам), щоб кнопка не впиралась у край
-   екрана поруч із вирізом/статус-баром. */
-@media (max-width: 420px) {
-  .pseudo-fullscreen-exit-btn {
-    padding: 0;
-    width: 44px;
-  }
-  .pseudo-fullscreen-exit-btn-label {
-    display: none;
-  }
 }
 
 /* ----------------------------------------------------------------------
@@ -10786,6 +10767,14 @@ button.scene-bar:active .scene-bar-toggle {
     line-clamp: 2;
     overflow: hidden;
   }
+  /* Задача "always-visible top-left X exit button" п.7 — той самий
+     суцільний темний вигляд, що .fullscreen-exit-btn вище (ЗАВЖДИ темна
+     підкладка+білий хрестик, не залежить від теми сайту): раніше тут був
+     скляний варіант (var(--glass-bar-bg)/var(--glass-panel-border)) — у
+     світлій темі він губився на світлому фоні панелі так само, як стара
+     кнопка a6f5de7. Розмір/позиція в topbar (44px, не рухається) лишились
+     тими самими — restyle лише кольору, без зміни розкладки верхньої
+     панелі. */
   .karaoke-fs-close-btn {
     display: flex;
     flex-shrink: 0;
@@ -10794,9 +10783,20 @@ button.scene-bar:active .scene-bar-toggle {
     width: 44px;
     height: 44px;
     border-radius: 999px;
-    border: 1.5px solid var(--glass-panel-border);
-    background: var(--glass-bar-bg);
-    color: inherit;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    background: rgba(26, 22, 64, 0.92);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  }
+  @media (hover: hover) {
+    .karaoke-fs-close-btn:hover {
+      background: rgba(40, 35, 92, 0.95);
+      border-color: #d9b765;
+    }
+  }
+  .karaoke-fs-close-btn:focus-visible {
+    outline: 2px solid #f6dc8e;
+    outline-offset: 2px;
   }
   .karaoke-fs-root--active .karaoke-pause-row {
     display: none;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, type CSSProperties } from "react";
-import { Maximize, Minimize, Play, ExternalLink } from "lucide-react";
+import { Maximize, Play, ExternalLink } from "lucide-react";
 import {
   DRIVE_MOBILE_ASPECT,
   SHOW_OWN_FULLSCREEN_BUTTON_FOR_GDRIVE_MOBILE,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/video";
 import { Z_MODAL } from "@/lib/z-layers";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
+import { FullscreenExitButton } from "@/components/fullscreen-exit-button";
 import { useT } from "@/lib/i18n/context";
 
 // "Телефон" — не будь-який touch (планшети лишаються на вбудованому
@@ -109,8 +110,14 @@ export function VideoFrame({
   provider: "youtube" | "gdrive";
 }) {
   const { t } = useT();
-  const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: handleToggle, exitPseudoFullscreen } =
-    useFullscreenWrapper();
+  const {
+    wrapperRef,
+    isFullscreen,
+    isPseudoFullscreen,
+    isAnyFullscreen,
+    toggle: handleToggle,
+    exitAnyFullscreen,
+  } = useFullscreenWrapper();
   // "unknown" на сервері й на першому клієнтському рендері (гідратація без
   // розбіжності) — лише gdrive реально дивиться на це значення нижче;
   // youtube рендериться як завжди, незалежно від нього.
@@ -154,18 +161,8 @@ export function VideoFrame({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture"
           allowFullScreen
         />
-        {isPseudoFullscreen && (
-          <button
-            type="button"
-            onClick={exitPseudoFullscreen}
-            aria-label={t("videoPlayer.closeFullscreen")}
-            className="pseudo-fullscreen-exit-btn"
-          >
-            <span className="glass-bar-badge" aria-hidden="true">
-              <Minimize size={16} strokeWidth={2.4} />
-            </span>
-            <span className="pseudo-fullscreen-exit-btn-label">{t("videoPlayer.exitFullscreen")}</span>
-          </button>
+        {isAnyFullscreen && (
+          <FullscreenExitButton onClick={() => void exitAnyFullscreen()} label={t("videoPlayer.closeFullscreen")} />
         )}
       </div>
       {!hideFullscreenButtonForGdrivePhone && (

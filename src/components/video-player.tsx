@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
+import { FullscreenExitButton } from "@/components/fullscreen-exit-button";
 import { Z_MODAL } from "@/lib/z-layers";
 import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
@@ -198,7 +199,14 @@ export function VideoPlayer({
   // при відкритті слова" увімкнена) — щоб закриття картки відновлювало
   // відтворення ЛИШЕ якщо воно й справді йшло, а не завжди.
   const wasPlayingBeforeCardRef = useRef<boolean | null>(null);
-  const { wrapperRef, isFullscreen, isPseudoFullscreen, toggle: toggleFullscreen } = useFullscreenWrapper();
+  const {
+    wrapperRef,
+    isFullscreen,
+    isPseudoFullscreen,
+    isAnyFullscreen,
+    toggle: toggleFullscreen,
+    exitAnyFullscreen,
+  } = useFullscreenWrapper();
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -1064,6 +1072,17 @@ export function VideoPlayer({
             </div>
           </div>
         </div>
+
+        {/* Завжди видима кнопка-хрестик виходу (задача "always-visible
+            top-left X exit button") — ВСЕРЕДИНІ wrapperRef (той самий
+            елемент, що йде в :fullscreen), а не лише в панелі керування
+            нижче: та панель ховається через scheduleOverlayHide під час
+            відтворення (OVERLAY_HIDE_DELAY_MS), і на Android-телефоні, де
+            жест "смикнути зверху" не працював, студент лишався без способу
+            вийти з fullscreen. */}
+        {isAnyFullscreen && (
+          <FullscreenExitButton onClick={() => void exitAnyFullscreen()} label={t("videoPlayer.closeFullscreen")} />
+        )}
 
         {/* Картка слова — ВСЕРЕДИНІ wrapperRef (не portal у body), щоб
             працювала і в справжньому fullscreen, і в iOS pseudo-fullscreen
