@@ -1136,6 +1136,18 @@ function CrosswordBlockView({
                               onKeyDown={(e) => {
                                 if (e.key === "Backspace") handleBackspace(ri, ci);
                               }}
+                              // Мобільний Android — клавіатура з'являється лише
+                              // якщо .focus() викликаний СИНХРОННО всередині
+                              // user-gesture-хендлера (click/pointerup), не
+                              // лише через нативний тап-на-input (той сам
+                              // лишається як є — тут лише явний виклик
+                              // НАВЕРХ того самого фокусу, idempotent, якщо
+                              // нативний тап і так уже сфокусував інпут;
+                              // на десктопі (миша) теж no-op — елемент уже
+                              // під фокусом від того самого кліку). Не
+                              // preventDefault/stopPropagation тут — нічого
+                              // не заважає звичному кліку/фокусу.
+                              onClick={(e) => e.currentTarget.focus({ preventScroll: true })}
                               onFocus={() => {
                                 diacritics.onFocus(cellKey(ri, ci));
                                 setLastFocusedCell({ row: ri, col: ci });

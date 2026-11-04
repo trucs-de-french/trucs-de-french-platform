@@ -93,7 +93,13 @@ export function DiacriticsPopup({
       disabled={hintDisabled}
       // preventDefault — той самий прийом, що діакритик-кнопки нижче: клік
       // не забирає фокус з поля (онBlur не встигає спрацювати раніше onClick).
+      // onTouchStart поряд з onMouseDown — на мобільному Android саме
+      // touchstart (не синтетичний mousedown) першим запускає нативний
+      // перехід фокусу; без preventDefault тут клавіатура встигає
+      // закритись (інпут розфокусовується), перш ніж onClick підхопить
+      // вибір підказки.
       onMouseDown={(e) => e.preventDefault()}
+      onTouchStart={(e) => e.preventDefault()}
       onClick={onHint}
       className={`diacritics-hint-btn flex h-7 items-center justify-center rounded border disabled:cursor-not-allowed ${
         hintUsed && !hintDisabled ? "opacity-60" : ""
@@ -118,6 +124,7 @@ export function DiacriticsPopup({
           key={ch}
           type="button"
           onMouseDown={(e) => e.preventDefault()}
+          onTouchStart={(e) => e.preventDefault()}
           onClick={() => onPick(ch)}
           className={`${STUDENT_BUTTON_SECONDARY_IDLE} diacritics-key-btn flex h-7 items-center justify-center`}
         >
