@@ -164,6 +164,11 @@ export const fr: Record<MessageKey, string> = {
   "matching.leftCorrect": "{left} : correct ✓",
   "matching.leftIncorrectRetry": "{left} : incorrect, réessayez (essais : {n})",
   "matching.correctPairLine": "Bonne paire : {left} → {right}",
+  "matching.lengthCounterAria": "Longueur : {len} sur {max} caractères",
+  "matching.wordTooLong": "Mot trop long (max {max} caractères) : {word}",
+  "matching.itemTooLong": "Texte de la carte trop long (max {max} caractères)",
+  "matching.limitsBlocked": "Raccourcissez les mots signalés : limite de {wordMax} caractères par mot et {itemMax} par carte",
+  "matching.lengthLimitsHint": "Pour que le texte ne dépasse pas la carte sur mobile : maximum {wordMax} caractères par mot et {itemMax} par carte.",
 
   "aria.row": "Ligne {n}",
   "aria.card": "Carte {n}",

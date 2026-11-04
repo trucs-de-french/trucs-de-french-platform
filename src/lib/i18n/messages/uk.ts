@@ -165,6 +165,11 @@ export const uk = {
   "matching.leftCorrect": "{left}: правильно ✓",
   "matching.leftIncorrectRetry": "{left}: неправильно, спробуйте ще раз (спроб: {n})",
   "matching.correctPairLine": "Правильна пара: {left} → {right}",
+  "matching.lengthCounterAria": "Довжина: {len} з {max} символів",
+  "matching.wordTooLong": "Задовге слово (макс. {max} символів): {word}",
+  "matching.itemTooLong": "Задовгий текст картки (макс. {max} символів)",
+  "matching.limitsBlocked": "Скоротіть виділені слова: ліміт {wordMax} символів на слово і {itemMax} на картку",
+  "matching.lengthLimitsHint": "Щоб текст не вилазив за межі картки на телефоні: максимум {wordMax} символів на слово і {itemMax} на всю картку.",
 
   "aria.row": "Рядок {n}",
   "aria.card": "Картка {n}",

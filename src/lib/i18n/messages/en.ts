@@ -162,6 +162,11 @@ export const en: Record<MessageKey, string> = {
   "matching.leftCorrect": "{left}: correct ✓",
   "matching.leftIncorrectRetry": "{left}: incorrect, try again (attempts: {n})",
   "matching.correctPairLine": "Correct pair: {left} → {right}",
+  "matching.lengthCounterAria": "Length: {len} of {max} characters",
+  "matching.wordTooLong": "Word too long (max {max} characters): {word}",
+  "matching.itemTooLong": "Card text too long (max {max} characters)",
+  "matching.limitsBlocked": "Shorten the flagged words: limit of {wordMax} characters per word and {itemMax} per card",
+  "matching.lengthLimitsHint": "So the text doesn't overflow the card on mobile: maximum {wordMax} characters per word and {itemMax} per card.",
 
   "aria.row": "Row {n}",
   "aria.card": "Card {n}",

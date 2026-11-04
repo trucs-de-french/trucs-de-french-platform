@@ -9,6 +9,7 @@ import { BREADCRUMB_LINK } from "@/lib/typography-styles";
 import { Z_ACTION_BAR } from "@/lib/z-layers";
 import { confirmMessageForTaskConfig } from "@/lib/exercises/task-validation";
 import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
+import { matchingLimitsBlockMessage } from "@/lib/exercises/matching-limits";
 
 // Навмисно onSubmit + прямий виклик дії, а НЕ <form action={formAction}>
 // (useActionState) — React 19 скидає ВСІ поля форми нативним form.reset()
@@ -91,6 +92,16 @@ export function SaveForm({
     e.preventDefault();
     const formEl = e.currentTarget;
     const formData = new FormData(formEl);
+    // Жорсткий блок (без можливості "Зберегти все одно") — задача "limit
+    // word and card length (13/30), block saving of too-long items": не
+    // підв'язано до validateBeforeSubmit (matching_pairs/type є в FormData
+    // лише коли форма реально редагує задачу типу matching, перевірка сама
+    // по собі безпечна для будь-якої іншої SaveForm на сайті).
+    const blockMessage = matchingLimitsBlockMessage(formData);
+    if (blockMessage) {
+      window.alert(blockMessage);
+      return;
+    }
     if (validateBeforeSubmit === "task-config") {
       const message = confirmMessageForTaskConfig(formData, buildTaskConfig);
       if (message && !window.confirm(message)) return;

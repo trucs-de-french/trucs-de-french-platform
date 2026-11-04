@@ -19,7 +19,8 @@ import { TASK_TYPES_WITH_VISIBLE_TITLE } from "@/lib/exercises/task-type-meta";
 import { distributeWords, formatBlockWarnings, type DistributeMode } from "@/lib/exercises/build-blocks-config";
 import { blocksNotReadyError } from "@/lib/exercises/task-validation";
 import type { LetterHideMode } from "@/lib/exercises/letter-hide";
-import type { WordSearchWord, CrosswordWord } from "@/lib/exercises/types";
+import type { WordSearchWord, CrosswordWord, MatchingPair } from "@/lib/exercises/types";
+import { findMatchingLimitViolations } from "@/lib/exercises/matching-limits";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/exercises/default-instructions";
 
 // Перед додаванням нової мутуючої дії сюди — дивись чеклист
@@ -321,6 +322,19 @@ export async function bulkCreateTasksFromVocab(formData: FormData) {
 
     if (sel.type === "letter_gaps" || sel.type === "letter_rearrangement") {
       config = { ...config, points: sel.points ?? 1 };
+    } else if (sel.type === "matching") {
+      // Задача "limit word and card length (13/30)" — та сама межа, що
+      // matching-fields.tsx (конструктор), лише М'ЯКЕ попередження тут:
+      // вправа все одно створюється (той самий принцип, що unplaced-слова
+      // філворду/кросворду вище), вчителька відкриє її в конструкторі й
+      // побачить ЧЕРВОНІ повідомлення на тих самих парах (та сама
+      // findMatchingLimitViolations), збереження там заблоковане, доки не
+      // скоротить.
+      const violations = findMatchingLimitViolations(config.pairs as MatchingPair[]);
+      if (violations.length > 0) {
+        const items = violations.map((v) => `«${v.text}»`).join(", ");
+        warnings.push(`Асоціація: задовгі елементи (${violations.length}) — ${items}`);
+      }
     } else if (sel.type === "word_search") {
       // Один філворд на весь набір, поділений на блоки (менші сітки) — та
       // сама точка входу, що "Розподілити автоматично" в конструкторі

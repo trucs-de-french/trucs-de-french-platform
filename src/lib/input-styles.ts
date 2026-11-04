@@ -29,3 +29,12 @@ export const INPUT_BORDER =
 // НЕ помилка (тому не червоний), лише незаповнене обов'язкове поле.
 export const INPUT_BORDER_WARNING =
   "rounded-md border border-amber-500 bg-amber-50 pl-3 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-amber-700 dark:bg-amber-950/30 dark:text-neutral-100";
+
+// Той самий базовий стиль, лише ЧЕРВОНА рамка — поле порушує жорсткий
+// ліміт (напр. задовге слово/картка в Association, matching-limits.ts),
+// не просто незаповнене: на відміну від INPUT_BORDER_WARNING (амбер,
+// "незаповнено", не блокує збереження), це стан, що РЕАЛЬНО блокує
+// збереження, тож колір — звичний червоний "помилка" (ті самі red-500/
+// red-600, що кнопки видалення по коду), а не амбер "попередження".
+export const INPUT_BORDER_ERROR =
+  "rounded-md border border-red-500 bg-red-50 pl-3 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-red-700 dark:bg-red-950/30 dark:text-neutral-100";

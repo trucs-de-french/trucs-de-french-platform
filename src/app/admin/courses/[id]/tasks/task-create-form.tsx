@@ -2,6 +2,7 @@
 
 import { confirmMessageForTaskConfig } from "@/lib/exercises/task-validation";
 import { buildTaskConfig } from "@/lib/exercises/task-config-builder";
+import { matchingLimitsBlockMessage } from "@/lib/exercises/matching-limits";
 
 // new/page.tsx лишається серверним компонентом (redirect() у createTask,
 // без useActionState) — <form action={createTask}> там не може отримати
@@ -24,6 +25,12 @@ export function TaskCreateForm({
       className={className}
       onSubmit={(e) => {
         const formData = new FormData(e.currentTarget);
+        const blockMessage = matchingLimitsBlockMessage(formData);
+        if (blockMessage) {
+          window.alert(blockMessage);
+          e.preventDefault();
+          return;
+        }
         const message = confirmMessageForTaskConfig(formData, buildTaskConfig);
         if (message && !window.confirm(message)) e.preventDefault();
       }}
