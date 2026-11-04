@@ -10118,14 +10118,34 @@ button.scene-bar:active .scene-bar-toggle {
   scrollbar-width: thin;
   scrollbar-color: #d9b765 transparent;
   /* ~6-7 рядків видно без скролу: мобільна висота менша (менше вертикального
-     простору на екрані), десктопна — більша; внутрішній скрол і
-     центрування активного рядка (scrollLineIntoContainer, karaoke.tsx)
-     лишаються як були. */
+     простору на екрані), десктопна — більша (десктопне значення нижче,
+     @media min-width:768px, перевизначене на ~5 рядків — задача "lyrics
+     box shows about five rows"); внутрішній скрол і центрування активного
+     рядка (scrollLineIntoContainer, karaoke.tsx) лишаються як були. Це
+     мобільне правило НЕ торкнуте. */
   max-height: clamp(280px, 45vh, 420px);
 }
 @media (min-width: 768px) {
   .karaoke-card {
-    max-height: clamp(360px, 52vh, 520px);
+    /* Задача "lyrics box shows about five rows so the word pool is
+       visible" — на ноутбучній висоті (~720px) стара max-height (clamp
+       360-520px) показувала ~8 рядків і виштовхувала словникову панель
+       під складку. --karaoke-row-h — висота РЯДКА З ПРОПУСКОМ (найвищий
+       тип рядка, задача явно просить рахувати саме на нього): .karaoke-
+       gap height:38px (найвищий інлайн-елемент рядка, вищий за line-
+       height:2rem=32px звичайного тексту) + вертикальний padding самого
+       .karaoke-line (6px+6px=12px) = 50px = 3.125rem. 5 рядків + 4 gap
+       (.karaoke-card gap:2px) + padding самої картки (8px+8px=16px):
+       5×3.125rem + (8px+16px)=24px=1.5rem. min(...) зі старим клемпом —
+       запобіжник "ніколи не вищий, ніж раніше" (п.2 задачі): новий
+       розрахунок (~274px) і так завжди менший за старий мінімум (360px),
+       тож на практиці min() завжди вибирає нове значення, але лишається
+       коректним, якщо --karaoke-row-h колись зміниться. Рядки БЕЗ
+       пропуску (чистий текст, line-height 32px) нижчі за --karaoke-row-h
+       — у межах тієї самої висоти їх влізе трохи більше п'яти, як і
+       просить задача ("plain rows just show a bit more"). */
+    --karaoke-row-h: 3.125rem;
+    max-height: min(calc(5 * var(--karaoke-row-h) + 1.5rem), clamp(360px, 52vh, 520px));
   }
 }
 .karaoke-card::-webkit-scrollbar {
