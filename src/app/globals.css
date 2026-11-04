@@ -3998,6 +3998,28 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 8px;
   margin-bottom: 22px;
 }
+/* Мобільний — задача "Mobile vocab page: centre PDF button, more space
+   below category pills".
+   П.1 — .vocab-pdf-row (vocab-section.tsx) — звичайний flex-РЯДОК
+   (justify-start), не колонка: горизонтальну позицію єдиної дитини в
+   ньому керує justify-content, не align-items/align-self/margin-inline —
+   center тут і центрує кнопку, розмір самої .scene-pdf-button не
+   чіпається.
+   П.2 — проміжок МІЖ легендою категорій і першим заголовком секції
+   (.vocab-category-heading--first має padding-top:0 завжди, тож усю
+   відстань дає ЛИШЕ цей margin-bottom) — 22px, що вже БІЛЬШЕ за проміжок
+   НАД пілюлями (18px, marginBottom кнопки PDF, .vocab-pdf-row вище,
+   vocab-section.tsx inline-style) — задача явно каже: якщо "below" вже
+   >= "above", ставити РІВНО "above", ніколи більше, тож тут 22px→18px
+   (не +6..8px). */
+@media (max-width: 640px) {
+  .vocab-pdf-row {
+    justify-content: center;
+  }
+  .vocab-legend {
+    margin-bottom: 18px;
+  }
+}
 .vocab-legend-chip {
   padding: 4px 11px;
   border-radius: 999px;

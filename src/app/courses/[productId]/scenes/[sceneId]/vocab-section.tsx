@@ -276,7 +276,7 @@ export function VocabSection({
       />
       {expanded && (
         <div className="glass-block-panel">
-          <div className="flex justify-start" style={{ marginBottom: "18px" }}>
+          <div className="vocab-pdf-row flex justify-start" style={{ marginBottom: "18px" }}>
             {pdfLink}
           </div>
           {legendAndGroups}
