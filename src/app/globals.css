@@ -4267,6 +4267,25 @@ button.scene-bar:active .scene-bar-toggle {
   padding-left: 0;
 }
 
+/* Задача "Karaoke: fullscreen button only on mobile" — кнопка "На весь
+   екран" карaоке існує лише для мобільного повноекранного режиму (увесь
+   .karaoke-fs-root--active живе лише в @media max-width:640px, нижче в
+   цьому файлі); на десктопі/планшеті немає куди входити, тож рядок кнопки
+   приховується тут CSS-ом (display:none, не умовний рендер у TSX — SSR/
+   гідратація бачать той самий DOM незалежно від viewport). 641px, не 640 —
+   та сама межа, що й matchMedia("max-width:640px") у resize-ефекті
+   karaoke.tsx (640px лишається "мобільним" включно для ОБОХ механізмів,
+   без 1px розбіжності, яку раніше давав Tailwind sm: (min-width:640px)).
+   display:none повністю виймає рядок із flex-потоку .karaoke-fs-root —
+   gap:12px (TaskPanelHeader...тогл) навколо нього теж зникає, рядок
+   тоглу "Пауза після рядка з пропуском" сідає точно на місце, де був би
+   без цього рядка взагалі. */
+@media (min-width: 641px) {
+  .karaoke-fs-root .scene-fullscreen-btn-row {
+    display: none;
+  }
+}
+
 /* Типографіка рядків скрипту (script-section.tsx, DialogueLine у
    dialogue-line.tsx) — через нащадкові селектори, НЕ правки dialogue-
    line.tsx (поза дозволеним списком файлів цієї задачі): .script-body —

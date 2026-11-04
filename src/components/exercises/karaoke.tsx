@@ -786,13 +786,21 @@ export function KaraokeExercise({
 
   // Запобіжник: якщо екран стає ширшим за мобільний поріг, поки
   // fullscreen активний (поворот/зміна розміру вікна), — вимикаємо режим
-  // напряму (без history.back(), щоб не смикати навігацію сторінки).
-  // Той самий matchMedia-підхід, що use-working-tile-layout.ts.
+  // через closeFullscreen() (ТУ Ж гілку, що кнопка X/Escape), а не
+  // напряму setFullscreen(false): інакше запис історії, доданий
+  // enterFullscreen() (pushState), лишався б непоглинутим — наступний
+  // Back студента просто "проковтнувся" б (popstate на вже false
+  // fullscreenRef), замість повернення на попередню сторінку сайту, як
+  // студент очікує. history.back() тут безпечний для навігації: pushState
+  // не змінював URL (лише стан), тож назад лишається на ТІЙ САМІЙ сторінці
+  // — fullscreenRef.current ще true в момент виклику, closeFullscreen() не
+  // виходить рано. Той самий matchMedia-підхід, що use-working-tile-
+  // layout.ts.
   useEffect(() => {
     if (!fullscreen) return;
     const mq = window.matchMedia("(max-width: 640px)");
     function update() {
-      if (!mq.matches) setFullscreen(false);
+      if (!mq.matches) closeFullscreen();
     }
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
@@ -892,18 +900,25 @@ export function KaraokeExercise({
         aria-modal={fullscreen ? true : undefined}
         aria-label={fullscreen ? fsTitlePlainText : undefined}
       >
-        {/* Кнопка "На весь екран" — лише мобільний (sm:hidden, той самий
-            640px-порядок, що решта fullscreen CSS), прибирається з DOM-
-            потоку (не рендериться взагалі) в самому fullscreen-режимі —
-            нічого перемикати там уже не треба. Вигляд/розмітка/позиція —
+        {/* Кнопка "На весь екран" — лише мобільний. Приховування на
+            десктопі/планшеті — ЧИСТО CSS (@media min-width:641px у
+            globals.css, та сама межа, що й matchMedia("max-width:640px")
+            у resize-ефекті нижче — 640px лишається мобільним включно, без
+            1px розбіжності з Tailwind sm: (min-width:640px), яка раніше
+            ховала кнопку вже рівно на 640px). CSS, не умовний рендер за
+            шириною — щоб SSR/гідратація не залежали від viewport. Рядок
+            не займає місця на десктопі (display:none знімає і його з
+            flex-потоку .karaoke-fs-root, і gap навколо нього). У самому
+            fullscreen-режимі (мобільний) рядок узагалі не рендериться —
+            нічого перемикати там не треба. Вигляд/розмітка/позиція —
             ТОЧНО ті самі, що вже встановлена кнопка "На весь екран" відео
             (video-frame.tsx) і embed/гри (embed-frame.tsx): FULLSCREEN_
             BUTTON_CLASS ("fullscreen-btn", use-fullscreen-wrapper.ts) +
             .glass-bar-badge-гурток з іконкою Maximize (16px, strokeWidth
             2.4) + видимий підпис, у тому самому .scene-fullscreen-btn-row
-            (flex-end, той самий padding) — жодного ad-hoc стилю. */}
+            (flex-start, той самий padding) — жодного ad-hoc стилю. */}
         {!fullscreen && (
-          <div className="scene-fullscreen-btn-row sm:hidden">
+          <div className="scene-fullscreen-btn-row">
             <button
               type="button"
               ref={fsToggleBtnRef}
