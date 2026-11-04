@@ -6933,6 +6933,21 @@ button.scene-bar:active .scene-bar-toggle {
   .table-fill-col-header--secondary {
     display: none;
   }
+  /* Половини складаються в один стовпець (grid-template-columns:1fr вище) —
+     gap-y-6 (24px) між двома .table-fill-columns-grid-дітьми раптом стає
+     вертикальним проміжком МІЖ останнім рядком першої половини й першим
+     рядком другої, зверху ще pt-3 (12px) другої половини (запас під її
+     заголовок колонок, який щойно сховали рядком вище) — разом це давало
+     набагато більший розрив, ніж між звичайними рядками (itemsGapClass).
+     Обидва прибираємо лише тут: нуль-гап замінює порожній заголовок, а
+     pt-3 другої половини більше не потрібен, бо немає заголовка, під який
+     резервувати місце. */
+  .table-fill-columns-grid {
+    row-gap: 0;
+  }
+  .table-fill-col-header--secondary + div {
+    padding-top: 0;
+  }
 }
 .table-fill-chip {
   display: flex;
