@@ -10281,6 +10281,165 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 15px;
 }
 
+/* Karaoke — мобільний fullscreen-режим (задача "Mobile karaoke: fullscreen
+   mode"), лише ≤640px. .karaoke-fs-root — та сама обгортка ("mx-auto flex
+   w-full max-w-3xl flex-col gap-3" у karaoke.tsx), що й завжди; --active
+   лише перемикає її на position:fixed, решта правил нижче — чисте
+   CSS-перепозиціювання наявних дітей (order/flex/grid), жоден DOM-вузол
+   (зокрема відео containerRef) нікуди не переміщується й не демонтується.
+   .karaoke-fs-toggle-row/.karaoke-fs-topbar у DOM лише коли реально
+   потрібні (karaoke.tsx рендерить їх умовно за fullscreen) — тож тут не
+   потрібен окремий "прихований за замовчуванням" стан для них. */
+@media (max-width: 640px) {
+  .karaoke-fs-root--active {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    max-width: none;
+    margin: 0;
+    gap: 0;
+    /* Між Z_DROPDOWN (40) і Z_MODAL (50) у спільній шкалі z-layers.ts —
+       над звичайним вмістом сторінки, під діалогами/тостами/спливним
+       вікном діакритики (ті лишаються видимими над fullscreen-режимом). */
+    z-index: 45;
+    background: var(--glass-panel-bg);
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .karaoke-fs-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    order: 1;
+    flex: none;
+    height: 52px;
+    padding: 0 10px 0 14px;
+    background: var(--glass-bar-bg);
+    border-bottom: 1.5px solid var(--glass-panel-border);
+  }
+  .karaoke-fs-topbar-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    color: inherit;
+  }
+  .karaoke-fs-close-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1.5px solid var(--glass-panel-border);
+    background: var(--glass-bar-bg);
+    color: inherit;
+  }
+  .karaoke-fs-root--active .karaoke-pause-row {
+    display: none;
+  }
+  .karaoke-fs-root--active .karaoke-video-wrap {
+    order: 2;
+    flex: none;
+    width: 100%;
+    max-height: 28dvh;
+    border-radius: 0;
+  }
+  .karaoke-fs-root--active .karaoke-continue-row {
+    order: 3;
+    flex: none;
+    margin: 8px 14px 0;
+  }
+  .karaoke-fs-root--active .karaoke-lines-area {
+    order: 4;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    margin: 0 10px;
+  }
+  .karaoke-fs-root--active .karaoke-dock {
+    order: 5;
+    flex: none;
+    /* Дефолт 64px — запас під нижній Netlify-бейдж (не наш код, ~60px),
+       задача явно просить саме цю змінну (не хардкод) для цього запасу. */
+    --karaoke-fs-bottom-safe: 64px;
+    max-height: 34dvh;
+    overflow-y: auto;
+    margin: 0;
+    padding: 10px 14px calc(env(safe-area-inset-bottom) + var(--karaoke-fs-bottom-safe));
+    background: var(--glass-panel-bg);
+    border-top: 1.5px solid var(--glass-panel-border);
+    box-shadow: 0 -8px 16px -8px rgba(0, 0, 0, 0.25);
+  }
+  .karaoke-fs-root--active .karaoke-dock-options-row {
+    gap: 8px;
+  }
+  .karaoke-fs-root--active .karaoke-option-chip {
+    min-height: 44px;
+  }
+}
+@media (max-width: 640px) and (orientation: landscape) and (max-height: 520px) {
+  /* Дві колонки: ліворуч відео (45%, по вертикальному центру), праворуч —
+     рядки/док одне під одним. Grid (не flex-row) — лише grid дає "одна
+     колонка — один високий елемент (відео), друга колонка — кілька рядків
+     одне під одним" без обгортки-вузла навколо lines/dock/continue
+     (яку додавати в DOM тут не можна — задача дозволяє лише перемикати
+     класи наявних вузлів). */
+  .karaoke-fs-root--active {
+    display: grid;
+    grid-template-columns: 45% 1fr;
+    grid-template-rows: auto 1fr auto;
+    align-items: stretch;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* "Верхня панель стає плаваючою кнопкою-хрестиком" (п.4 задачі) — сама
+     панель, не новий елемент: заголовок ховається, панель виходить із
+     grid-потоку (position:absolute) і лишається лише кнопкою X. */
+  .karaoke-fs-topbar {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 8px);
+    right: calc(env(safe-area-inset-right) + 8px);
+    height: auto;
+    background: transparent;
+    border: none;
+    padding: 0;
+    z-index: 1;
+  }
+  .karaoke-fs-topbar-title {
+    display: none;
+  }
+  .karaoke-fs-root--active .karaoke-video-wrap {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: center;
+    width: 100%;
+    max-height: calc(100% - 16px);
+  }
+  .karaoke-fs-root--active .karaoke-continue-row {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 8px 10px 0;
+  }
+  .karaoke-fs-root--active .karaoke-lines-area {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 8px 10px;
+  }
+  .karaoke-fs-root--active .karaoke-dock {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+  }
+}
+
 /* flip_cards (deck) — DeckFlipCards, flip-cards.tsx. Обидві грані
    (.flip-face) в ОДНІЙ grid-клітинці grid-area:1/1 замість колишнього
    position:absolute + inset:0: той підхід вимагав height:100% на предку,

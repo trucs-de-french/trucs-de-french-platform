@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from "react";
+import { Maximize2, X } from "lucide-react";
 import type { KaraokePublic, KaraokePublicLine, KaraokeDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { useT } from "@/lib/i18n/context";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
-import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
+import { STUDENT_BUTTON_PRIMARY, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { useYoutubePlayer, YT_PLAYER_STATE } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
@@ -688,6 +689,147 @@ export function KaraokeExercise({
     return count + gi + 1;
   }
 
+  const instructionText = config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction;
+
+  // ==== "На весь екран" (мобільний режим, задача "Mobile karaoke:
+  // fullscreen mode") ====
+  // ЄДИНА обгортка (fsRootRef — той самий DOM-вузол, що й раніше, "mx-auto
+  // flex..." нижче) лише перемикає CSS-класи (karaoke-fs-root--active,
+  // globals.css, усе всередині @media max-width:640px) — ніякого порталу,
+  // ніякого умовного (пере)монтування відео (containerRef лишається тим
+  // самим вузлом у тому самому батьку в обох режимах), тож YouTube IFrame
+  // API-інстанс (useYoutubePlayer) не перестворюється і відтворення не
+  // перерветься. Увесь стан вправи (answers/activeGap/selections тощо) —
+  // той самий React-компонент, нічого не демонтується.
+  const [fullscreen, setFullscreen] = useState(false);
+  const fsRootRef = useRef<HTMLDivElement | null>(null);
+  const fsCloseBtnRef = useRef<HTMLButtonElement | null>(null);
+  const fsToggleBtnRef = useRef<HTMLButtonElement | null>(null);
+  // fullscreenRef — свіже значення всередині popstate-слухача нижче
+  // (підписаного ОДИН раз, без фактичних fullscreen у його залежностях).
+  const fullscreenRef = useRef(fullscreen);
+  useEffect(() => {
+    fullscreenRef.current = fullscreen;
+  }, [fullscreen]);
+
+  function enterFullscreen() {
+    // pushState — щоб системний жест "назад" (popstate нижче) закривав
+    // саме повноекранний режим, а не йшов на попередню сторінку сайту.
+    try {
+      window.history.pushState({ karaokeFullscreen: true }, "");
+    } catch {
+      // SSR/приватний режим без History API — повноекранний режим і так
+      // відкриється, просто жест "назад" тоді поведеться як завжди.
+    }
+    setFullscreen(true);
+  }
+
+  // Єдиний спосіб ЗАКРИТИ (кнопка X, Escape) — завжди через history.back(),
+  // НЕ через прямий setFullscreen(false): це "споживає" запис історії,
+  // доданий enterFullscreen вище, інакше він лишався б зайвим записом
+  // "вперед". popstate-слухач нижче — єдине місце, що реально вимикає
+  // fullscreen, тож системний жест "назад" і кнопка X проходять через ТУ Ж
+  // саму гілку коду.
+  function closeFullscreen() {
+    if (!fullscreenRef.current) return;
+    try {
+      window.history.back();
+    } catch {
+      setFullscreen(false);
+    }
+  }
+
+  useEffect(() => {
+    function onPopState() {
+      if (fullscreenRef.current) setFullscreen(false);
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Запобіжник: якщо екран стає ширшим за мобільний поріг, поки
+  // fullscreen активний (поворот/зміна розміру вікна), — вимикаємо режим
+  // напряму (без history.back(), щоб не смикати навігацію сторінки).
+  // Той самий matchMedia-підхід, що use-working-tile-layout.ts.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    function update() {
+      if (!mq.matches) setFullscreen(false);
+    }
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [fullscreen]);
+
+  // Блокування скролу сторінки позаду fullscreen-оверлею — відновлюється
+  // при виході (cleanup ефекту) незалежно від причини виходу.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [fullscreen]);
+
+  // Escape + простий focus-trap (Tab/Shift+Tab не випускає фокус за межі
+  // fsRootRef), лише поки fullscreen активний.
+  useEffect(() => {
+    if (!fullscreen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeFullscreen();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = fsRootRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [fullscreen]);
+
+  // Фокус на кнопку-закриття при вході, назад на кнопку "На весь екран"
+  // при виході — mountedRef-бар'єр (той самий принцип, що вище в цьому
+  // файлі), щоб НЕ красти фокус на першому рендері (fullscreen тут
+  // стартово false).
+  const fsMountedRef = useRef(false);
+  useEffect(() => {
+    if (!fsMountedRef.current) {
+      fsMountedRef.current = true;
+      return;
+    }
+    if (fullscreen) fsCloseBtnRef.current?.focus();
+    else fsToggleBtnRef.current?.focus();
+  }, [fullscreen]);
+
+  // П.3в задачі: вибраний пропуск теж скролиться у видиму область —
+  // повторне використання ІСНУЮЧОЇ scrollLineIntoContainer (вище в файлі),
+  // той самий linesContainerRef/lineRefs, що й автоскрол поточного рядка
+  // відео (ефект через mountedRef вище) — жодної нової логіки скролу,
+  // лише новий викличок, і лише поки fullscreen активний (щоб не чіпати
+  // звичайний мобільний/десктопний режим).
+  useEffect(() => {
+    if (!fullscreen || !activeGap) return;
+    const container = linesContainerRef.current;
+    const lineEl = lineRefs.current[activeGap.li];
+    if (container && lineEl) scrollLineIntoContainer(container, lineEl);
+  }, [fullscreen, activeGap]);
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
@@ -695,7 +837,7 @@ export function KaraokeExercise({
         {...(hidePoints
           ? {}
           : headerPointsState(pointsPossibleTotal, result ? result.pointsEarned : undefined, lang))}
-        instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.karaoke.instruction}
+        instructionText={instructionText}
         subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
           uk: DEFAULT_INSTRUCTIONS.karaoke.subInstruction,
           en: DEFAULT_TRANSLATION_EN.karaoke,
@@ -704,12 +846,65 @@ export function KaraokeExercise({
 
       {/* Один вертикальний стовпчик на БУДЬ-ЯКій ширині (не md:flex-row, як
           раніше) — відео зверху по центру, обмежене max-w-3xl, під ним —
-          вікно тексту тієї самої ширини, під ним — варіанти вибору. */}
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
+          вікно тексту тієї самої ширини, під ним — варіанти вибору.
+          Ця ж сама обгортка стає fullscreen-контейнером на мобільному
+          (karaoke-fs-root/--active, globals.css) — лише перемикаються
+          класи/aria, жоден нащадок (зокрема відео containerRef нижче) не
+          переміщується в інший DOM-вузол і не демонтується. */}
+      <div
+        ref={fsRootRef}
+        className={`mx-auto flex w-full max-w-3xl flex-col gap-3 karaoke-fs-root ${fullscreen ? "karaoke-fs-root--active" : ""}`}
+        role={fullscreen ? "dialog" : undefined}
+        aria-modal={fullscreen ? true : undefined}
+        aria-label={fullscreen ? instructionText : undefined}
+      >
+        {/* Кнопка "На весь екран" — лише мобільний (sm:hidden, той самий
+            640px-порядок, що решта fullscreen CSS), прибирається з DOM-
+            потоку (не рендериться взагалі) в самому fullscreen-режимі —
+            нічого перемикати там уже не треба. */}
+        {!fullscreen && (
+          <div className="karaoke-fs-toggle-row flex justify-end sm:hidden">
+            <button
+              type="button"
+              ref={fsToggleBtnRef}
+              onClick={enterFullscreen}
+              aria-label={t("karaoke.fullscreenEnter")}
+              className={`${STUDENT_BUTTON_SECONDARY_TOUCH} inline-flex items-center gap-1.5`}
+            >
+              <Maximize2 size={14} aria-hidden="true" />
+              {t("karaoke.fullscreenEnter")}
+            </button>
+          </div>
+        )}
+
+        {/* Верхня панель fullscreen-режиму — у звичайному режимі не
+            рендериться взагалі (той самий принцип, що кнопка вище): немає
+            сенсу тримати прихований DOM-вузол лише для CSS-перемикання,
+            коли й сам fullscreen ще не React-стан нічого не монтує поза
+            цим. У ландшафтній орієнтації (globals.css) ця сама панель
+            стає плаваючою кнопкою-хрестиком (title ховається, сама
+            панель — position:absolute). */}
+        {fullscreen && (
+          <div className="karaoke-fs-topbar">
+            <span className="karaoke-fs-topbar-title">{instructionText}</span>
+            <button
+              type="button"
+              ref={fsCloseBtnRef}
+              onClick={closeFullscreen}
+              aria-label={t("button.close")}
+              className="karaoke-fs-close-btn"
+            >
+              <X size={20} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
         {/* Перемикач студента — праворуч над відео. Початковий стан із
             налаштування вправи, далі власний вибір студента (localStorage,
-            через togglePauseEnabled вище). */}
-        <div className="flex items-center justify-between">
+            через togglePauseEnabled вище). Прихований у fullscreen (п.3
+            задачі не описує цей рядок у fullscreen-розкладці) — лишається
+            доступним звичним шляхом після виходу. */}
+        <div className="karaoke-pause-row flex items-center justify-between">
           <span className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">{t("karaoke.pauseAfterGapLine")}</span>
           <button
             type="button"
@@ -728,7 +923,7 @@ export function KaraokeExercise({
           </button>
         </div>
 
-        <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="karaoke-video-wrap aspect-video w-full overflow-hidden rounded-md bg-black">
           {videoId ? (
             <div ref={containerRef} className="h-full w-full" />
           ) : (
@@ -749,15 +944,18 @@ export function KaraokeExercise({
               cancelScheduledPause();
               setPausedForGapLine(null);
             }}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            className={`self-start ${STUDENT_BUTTON_PRIMARY} karaoke-continue-row`}
           >
             {t("karaoke.continueBtn")}
           </button>
         )}
 
         {/* ~6-7 рядків висотою (clamp у .karaoke-card, globals.css) —
-            власний скрол-контейнер, не сторінка. */}
-        <div ref={linesContainerRef} className="karaoke-card" onScroll={handleLinesContainerScroll}>
+            власний скрол-контейнер, не сторінка. У fullscreen (globals.css)
+            цей самий контейнер стає flex:1 1 auto — заповнює весь залишок
+            екрана між відео і нижнім доком, той самий linesContainerRef/
+            scrollLineIntoContainer, що й завжди. */}
+        <div ref={linesContainerRef} className="karaoke-card karaoke-lines-area" onScroll={handleLinesContainerScroll}>
           {config.lines.map((line, li) => (
             <KaraokeLineRow
               key={li}
@@ -792,9 +990,11 @@ export function KaraokeExercise({
         {config.answerMode === "choice" && activeGap && !result && (
           // mt-0.5 — додає 2px до спадкованого gap-3 (12px) батьківського
           // flex-col, разом 14px до картки з текстом, як просить задача
-          // (не чіпаючи сам gap-3, спільний і для інших сусідів вище).
-          <div className="mt-0.5 flex flex-col gap-2.5">
-            <div className="flex flex-wrap items-center gap-2">
+          // (не чіпаючи сам gap-3, спільний і для інших сусідів вище). У
+          // fullscreen (globals.css) цей блок стає нижнім доком (flex:none,
+          // власний скрол, запас під Netlify-бейдж знизу).
+          <div className="mt-0.5 flex flex-col gap-2.5 karaoke-dock">
+            <div className="karaoke-dock-meta-row flex flex-wrap items-center gap-2">
               <span className="karaoke-progress-pill">
                 {t("karaoke.gapOfTotal", { n: globalGapNumber(activeGap.li, activeGap.gi), total: totalGaps })}
               </span>
@@ -803,7 +1003,7 @@ export function KaraokeExercise({
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
                 "один рядок, коли влазить" без жодних додаткових умов. */}
-            <div className="flex flex-wrap gap-2">
+            <div className="karaoke-dock-options-row flex flex-wrap gap-2">
               {(config.lines[activeGap.li].gapOptions?.[activeGap.gi] ?? []).map((opt, i) => (
                 <button key={i} type="button" onClick={() => pickOption(opt)} className="karaoke-option-chip">
                   {opt}

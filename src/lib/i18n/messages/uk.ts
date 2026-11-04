@@ -202,6 +202,7 @@ export const uk = {
   "ws.hintFirstLetterAria": "Перша літера: {letter}",
 
   "karaoke.pauseAfterGapLine": "Пауза після рядка з пропуском",
+  "karaoke.fullscreenEnter": "На весь екран",
   "karaoke.videoUnavailable": "Відео недоступне",
   "karaoke.continueBtn": "▶ Продовжити",
   "karaoke.gapOfTotal": "Пропуск {n} з {total}",

@@ -201,6 +201,7 @@ export const fr: Record<MessageKey, string> = {
   "ws.hintFirstLetterAria": "Première lettre : {letter}",
 
   "karaoke.pauseAfterGapLine": "Pause après la ligne à trou",
+  "karaoke.fullscreenEnter": "Plein écran",
   "karaoke.videoUnavailable": "Vidéo indisponible",
   "karaoke.continueBtn": "▶ Continuer",
   "karaoke.gapOfTotal": "Trou {n} sur {total}",
