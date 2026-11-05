@@ -6,6 +6,7 @@ import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types"
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock } from "./constructor-block";
 
 export function TrueFalseFields({
   initialConfig,
@@ -39,76 +40,90 @@ export function TrueFalseFields({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="tf_statements" value={JSON.stringify(statements)} readOnly />
 
-      <InstructionsRichTextField
-        name="tf_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="tf_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="tf_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="tf_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="tf_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="tf_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>Твердження</label>
-        {statements.map((s) => (
-          <div key={s.id} className="flex items-center gap-2">
-            <input
-              value={s.text}
-              onChange={(e) => updateText(s.id, e.target.value)}
-              placeholder="Текст твердження"
-              className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
-            />
-            <select
-              value={String(s.answer)}
-              onChange={(e) => updateAnswer(s.id, e.target.value === "true")}
-              className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-            >
-              <option value="true">Vrai</option>
-              <option value="false">Faux</option>
-            </select>
-            <span className={HINT_TEXT}>Бали</span>
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              value={s.points ?? 1}
-              onChange={(e) => updatePoints(s.id, Number(e.target.value))}
-              title="Бали за це твердження"
-              className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
-            />
-            <button
-              type="button"
-              onClick={() => removeStatement(s.id)}
-              aria-label="Видалити твердження"
-              title="Видалити"
-              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addStatement}
-          className="mt-1 self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
-        >
-          + твердження
-        </button>
-      </div>
-    </div>
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Твердження Vrai / Faux"
+        tone="content"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Твердження</label>
+          {statements.map((s) => (
+            <div key={s.id} className="flex items-center gap-2">
+              <input
+                value={s.text}
+                onChange={(e) => updateText(s.id, e.target.value)}
+                placeholder="Текст твердження"
+                className={`${INPUT_BORDER} flex-1 px-2 py-2 text-base font-medium font-content`}
+              />
+              <select
+                value={String(s.answer)}
+                onChange={(e) => updateAnswer(s.id, e.target.value === "true")}
+                className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+              >
+                <option value="true">Vrai</option>
+                <option value="false">Faux</option>
+              </select>
+              <span className={HINT_TEXT}>Бали</span>
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={s.points ?? 1}
+                onChange={(e) => updatePoints(s.id, Number(e.target.value))}
+                title="Бали за це твердження"
+                className={`${INPUT_BORDER} w-16 px-2 py-2 text-sm`}
+              />
+              <button
+                type="button"
+                onClick={() => removeStatement(s.id)}
+                aria-label="Видалити твердження"
+                title="Видалити"
+                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addStatement}
+            className="mt-1 self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+          >
+            + твердження
+          </button>
+        </div>
+      </ConstructorBlock>
+    </>
   );
 }

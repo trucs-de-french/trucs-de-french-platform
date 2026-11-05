@@ -9,6 +9,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 // Окремий компонент (не інлайн у .map()) — useFileOrLink це хук, викликати
 // його всередині callback .map() було б порушенням правил хуків.
@@ -183,29 +184,42 @@ export const ListeningFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="listening_questions" value={JSON.stringify(questions)} readOnly />
 
-      <InstructionsRichTextField
-        name="listening_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="listening_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="listening_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="listening_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="listening_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="listening_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Аудіозапис і питання з варіантами відповідей"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Аудіо/відео запису</label>
         <input type="hidden" name="listening_audio_url" value={audioUrl} readOnly />
@@ -218,7 +232,7 @@ export const ListeningFields = forwardRef<
           Питання (одна правильна відповідь на питання)
         </label>
         {questions.map((q) => (
-          <div key={q.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+          <div key={q.id} className={`${CONSTRUCTOR_ITEM_CARD} p-2`}>
             <div className="flex items-center gap-2">
               <input
                 value={q.question}
@@ -276,6 +290,7 @@ export const ListeningFields = forwardRef<
           + питання
         </button>
       </div>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

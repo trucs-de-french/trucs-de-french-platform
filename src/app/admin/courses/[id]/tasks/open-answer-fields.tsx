@@ -8,6 +8,7 @@ import { HintLegendField } from "./hint-legend-field";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptyQuestion(): OpenAnswerQuestion {
   return { id: crypto.randomUUID(), question: "", answers: [""] };
@@ -50,7 +51,7 @@ function OpenAnswerQuestionRow({
   });
 
   return (
-    <div className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`${CONSTRUCTOR_ITEM_CARD} p-2`}>
       <div className="flex items-center gap-2">
         <input
           value={q.question}
@@ -196,7 +197,7 @@ export function OpenAnswerFields({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input
         type="hidden"
         name="open_answer_questions"
@@ -210,62 +211,85 @@ export function OpenAnswerFields({
         readOnly
       />
 
-      <InstructionsRichTextField
-        name="open_answer_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
-
-      <InstructionsRichTextField
-        name="open_answer_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
-
-      <InstructionsRichTextField
-        name="open_answer_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
-
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={hintsReducePoints}
-          onChange={(e) => setHintsReducePoints(e.target.checked)}
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="open_answer_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
         />
-        Підказка зменшує бали (питання, де показали підказку, дає 50% балів)
-      </label>
 
-      <HintLegendField
-        taskType="open_answer"
-        fieldNamePrefix="open_answer"
-        initialValue={initialConfig?.hintLegend}
-      />
+        <InstructionsRichTextField
+          name="open_answer_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <div className="flex flex-col gap-3">
-        {questions.map((q) => (
-          <OpenAnswerQuestionRow
-            key={q.id}
-            q={q}
-            onUpdateField={(field, value) => updateQuestionField(q.id, field, value)}
-            onRemove={() => removeQuestion(q.id)}
-            onAddAnswer={() => addAnswer(q.id)}
-            onRemoveAnswer={(i) => removeAnswer(q.id, i)}
-            onUpdateAnswer={(i, value) => updateAnswer(q.id, i, value)}
-            onUpdatePoints={(points) => updatePoints(q.id, points)}
+        <InstructionsRichTextField
+          name="open_answer_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={hintsReducePoints}
+            onChange={(e) => setHintsReducePoints(e.target.checked)}
           />
-        ))}
-        <button
-          type="button"
-          onClick={addQuestion}
-          className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
-        >
-          + питання
-        </button>
-      </div>
-    </div>
+          Підказка зменшує бали (питання, де показали підказку, дає 50% балів)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="open_answer"
+            fieldNamePrefix="open_answer"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Питання та прийнятні відповіді"
+        tone="content"
+      >
+        <div className="flex flex-col gap-3">
+          {questions.map((q) => (
+            <OpenAnswerQuestionRow
+              key={q.id}
+              q={q}
+              onUpdateField={(field, value) => updateQuestionField(q.id, field, value)}
+              onRemove={() => removeQuestion(q.id)}
+              onAddAnswer={() => addAnswer(q.id)}
+              onRemoveAnswer={(i) => removeAnswer(q.id, i)}
+              onUpdateAnswer={(i, value) => updateAnswer(q.id, i, value)}
+              onUpdatePoints={(points) => updatePoints(q.id, points)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={addQuestion}
+            className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+          >
+            + питання
+          </button>
+        </div>
+      </ConstructorBlock>
+    </>
   );
 }

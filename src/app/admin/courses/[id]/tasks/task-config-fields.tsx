@@ -86,6 +86,7 @@ import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { getDefaultTaskName, type TaskTypeKey } from "@/lib/exercises/default-task-labels";
+import { ConstructorBlock } from "./constructor-block";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -738,6 +739,13 @@ export function TaskConfigFields({
       onChange={() => scheduleTitlePreviewUpdate(type)}
       onInput={() => scheduleTitlePreviewUpdate(type)}
     >
+      <div className="flex flex-col gap-[22px]">
+      <ConstructorBlock
+        n={1}
+        title="Основне"
+        description="Назва, тип і короткий напис над завданням"
+        tone="basic"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Назва</label>
         <input
@@ -898,6 +906,7 @@ export function TaskConfigFields({
           />
         </div>
       </div>
+      </ConstructorBlock>
 
       {type === "game" && (
         <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
@@ -1520,9 +1529,13 @@ export function TaskConfigFields({
         />
       )}
 
+      </div>
+
       {/* Пілот системи балів — один спільний чекбокс для всіх типів, що вже
           рахують pointsEarned/pointsPossible (POINTS_SUPPORTED_TASK_TYPES),
-          а не окремий блок на кожен тип. */}
+          поза чотирма блоками (generic-поле без явного місця серед них,
+          рендериться для багатьох типів відразу — не всередині конкретного
+          *-fields.tsx). */}
       {isPointsSupportedTaskType(type) && (
         <div className="flex items-center gap-2">
           <input
