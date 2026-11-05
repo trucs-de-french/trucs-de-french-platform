@@ -585,11 +585,14 @@ export function LetterRearrangementExercise({
           uk: DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction,
           en: DEFAULT_TRANSLATION_EN.letter_rearrangement,
         })}
-        hintText={
-          isDelf || (useBlocks ? allBlocksChecked : !!single.result)
-            ? null
-            : hintExplanationText("letter_rearrangement", lang)
-        }
+        // Задача "Hint legend: keep the hint bubble always visible above
+        // the task" — лише isDelf лишається причиною не показувати
+        // бульбашку взагалі; раніше тут ще гасило й після перевірки
+        // (allBlocksChecked/single.result), що TaskPanelHeader
+        // (task-panel-header.tsx) перетворював на зарезервоване invisible-
+        // місце того самого розміру — на мобільному, де текст переносився
+        // на 2 рядки, це давало порожню білу "дірку" саме тієї висоти.
+        hintText={isDelf ? null : hintExplanationText("letter_rearrangement", lang)}
       />
 
       {!useBlocks ? (

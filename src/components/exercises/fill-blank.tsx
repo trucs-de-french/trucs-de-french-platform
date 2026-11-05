@@ -364,8 +364,14 @@ export function FillBlankExercise({
           uk: defaultSubInstruction,
           en: defaultSubInstructionEn,
         })}
+        // Задача "Hint legend: keep the hint bubble always visible above
+        // the task" — гасіння після перевірки (!!result) прибрано: воно
+        // давало порожню invisible-дірку в TaskPanelHeader на мобільному,
+        // коли текст переносився на 2 рядки. isDelf/hasWordBank/isPractice
+        // лишаються — це сталі (на весь mount) причини не показувати
+        // бульбашку взагалі, не "гасіння після перевірки".
         hintText={
-          isDelf || hasWordBank || !!result || isPractice
+          isDelf || hasWordBank || isPractice
             ? null
             : hintExplanationText("fill_blank", lang)
         }

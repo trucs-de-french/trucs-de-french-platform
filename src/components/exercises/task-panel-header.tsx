@@ -96,27 +96,23 @@ export function TaskPanelHeader({
   const safeText = instructionText ? frenchNbspHtml(sanitizeInstructionsHtml(instructionText)) : null;
   const safeSub = subInstructionText ? frenchNbspHtml(sanitizeInstructionsHtml(subInstructionText)) : null;
   const showInstructionLine = !!safeText || !!safeSub;
-  // Пілюля підказки зникає (hintText → null/undefined), щойно викликач
-  // показує результат (lampочка вже не потрібна) — пілюля балів сама
-  // (pointsText) лишається загальним балом і НЕ змінюється (ревізія
-  // f057578/fd04fac: earned+вердикт-чіп повернулись у TaskResult,
-  // task-result.tsx, замість заміни пілюлі в заголовку). Текст підказки
-  // зазвичай довгий (повне речення), тож на вузьких екранах рядок пілюль
-  // (.task-panel-pills-left, flex-wrap) міг переноситись на 2 рядки ДО
-  // перевірки й стискатись назад до 1 рядка ПІСЛЯ, щойно пілюля підказки
-  // просто зникала — усе нижче "стрибало вгору" саме через це. Фікс:
-  // пам'ятаємо останній НЕпорожній hintText
-  // у стані (react-hooks/refs забороняє читати ref.current під час
-  // рендеру — умовний setState під час рендеру лишається офіційним
-  // React-паттерном "remember info from previous render") і далі
-  // рендеримо ту саму пілюлю invisible (visibility:hidden — займає місце
-  // в розкладці, не фарбується, не в acc-дереві), а не знімаємо її з DOM
-  // — рядок більше не змінює кількість рядків/висоту між "до" і "після"
-  // перевірки.
+  // Задача "Hint legend: keep the hint bubble always visible above the
+  // task" — бульбашка-підказка тепер СТАТИЧНА: власники (crossword.tsx/
+  // fill-blank.tsx/letter-gaps.tsx/letter-rearrangement.tsx/table-fill.tsx/
+  // word-search.tsx) більше не гасять hintText після перевірки, тож тут
+  // достатньо пам'ятати останній НЕпорожній текст (react-hooks/refs
+  // забороняє читати ref.current під час рендеру — умовний setState під
+  // час рендеру лишається офіційним React-паттерном "remember info from
+  // previous render") і завжди показувати саме його — захист на випадок,
+  // якщо якийсь виклик-сайт хвилинно пришле null під час перемикання
+  // стану (block tabs, async результат), не ховаючи бульбашку в цю
+  // мить. Типи, де підказок узагалі нема (isDelf чи конфіг без жодної
+  // підказки), hintText лишається null із самого початку — lastHintText
+  // тут теж null, пілюля не рендериться і місце під неї НЕ резервується.
   const [lastHintText, setLastHintText] = useState<string | null>(hintText ?? null);
   if (hintText && hintText !== lastHintText) setLastHintText(hintText);
-  const reservedHintText = !hintText ? lastHintText : null;
-  const showPillsRow = !!pointsText || !!hintText || !!reservedHintText || !!counter || !!rightContent;
+  const effectiveHintText = hintText ?? lastHintText;
+  const showPillsRow = !!pointsText || !!effectiveHintText || !!counter || !!rightContent;
 
   if (!showInstructionLine && !showPillsRow) return null;
 
@@ -128,11 +124,7 @@ export function TaskPanelHeader({
           <div className="task-panel-pills-left">
             {pointsText && <PointsPill text={pointsText} />}
             {counter && <CounterPill current={counter.current} total={counter.total} />}
-            {hintText ? (
-              <HintPill text={hintText} />
-            ) : (
-              reservedHintText && <HintPill text={reservedHintText} hidden />
-            )}
+            {effectiveHintText && <HintPill text={effectiveHintText} />}
           </div>
           {rightContent && <div className="task-panel-controls-right">{rightContent}</div>}
         </div>
@@ -196,20 +188,10 @@ export function CounterPill({ current, total }: { current: number; total: number
 // (задача "стабільна висота рядка пілюль" — усі пілюлі одного рядка мають
 // бути однієї висоти, інакше .task-panel-pills-row росте/стискається
 // залежно від того, яка саме пілюля зараз показана).
-// hidden — рендерить ту саму пілюлю (той самий текст, той самий бокс)
-// з visibility:hidden замість знімання з DOM: зберігає точно те саме
-// місце в рядку .task-panel-pills-left (ширина/висота), коли викликач
-// більше не передає реальний hintText (щойно показано результат), щоб
-// рядок не змінював кількість рядків/висоту переходячи "до"/"після"
-// перевірки (TaskPanelHeader вище, reservedHintText). aria-hidden —
-// екранний читач теж її не бачить, pointer-events-none — не клікається.
-function HintPill({ text, hidden = false }: { text: string; hidden?: boolean }) {
+function HintPill({ text }: { text: string }) {
   const { t } = useT();
   return (
-    <span
-      aria-hidden={hidden || undefined}
-      className={`task-panel-hint-pill inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e] ${hidden ? "invisible pointer-events-none" : ""}`}
-    >
+    <span className="task-panel-hint-pill inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">
       <HintBulb state="available" as="span" className="task-panel-hint-bulb" />
       <span className="task-panel-hint-pill-text min-w-0">
         <span className="font-bold">{t("panel.hintPrefix")}</span> {text}

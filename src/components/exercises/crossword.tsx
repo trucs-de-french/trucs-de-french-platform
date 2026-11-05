@@ -1504,7 +1504,17 @@ export function CrosswordExercise({
   }, [aggregateResult, onResult]);
 
   const { lang } = useT();
-  const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+  // Задача "Hint legend: keep the hint bubble always visible above the
+  // task" — ЛИШЕ isDelf лишається причиною не показувати бульбашку взагалі
+  // (DELF-тест не має лампочок-підказок як функції). Раніше цей прапорець
+  // лишався true ще й після перевірки (allBlocksChecked/singleResult) —
+  // TaskPanelHeader (task-panel-header.tsx) ховав видимий текст, лишаючи
+  // зарезервоване invisible-місце того самого розміру: на мобільному, де
+  // текст підказки переносився на 2 рядки, це давало порожню білу
+  // "дірку" саме такої висоти між пілюлею балів і таблицею/полями —
+  // власне скаргу задачі. Бульбашка-лампочка ВСЕРЕДИНІ клітинок (що
+  // ховається після перевірки) цим не торкається — це окремий механізм.
+  const hintExplanationHidden = !!isDelf;
   // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
   // загальний бал вправи; після перевірки активного блоку/вправи — earned
   // sur possible ЦЬОГО блоку + статус-чіп.

@@ -1508,7 +1508,12 @@ export function WordSearchExercise({
     if (aggregateResult) onResult?.(aggregateResult);
   }, [aggregateResult, onResult]);
 
-  const hintExplanationHidden = !!isDelf || (useBlocks ? allBlocksChecked : !!singleResult);
+  // Задача "Hint legend: keep the hint bubble always visible above the
+  // task" — гасіння після перевірки (allBlocksChecked/singleResult)
+  // прибрано, той самий принцип, що в інших типах із цією бульбашкою:
+  // воно давало порожню invisible-дірку в TaskPanelHeader на мобільному.
+  // isDelf лишається — сталий на весь mount.
+  const hintExplanationHidden = !!isDelf;
   const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", lang);
 
   // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —

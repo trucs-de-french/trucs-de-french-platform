@@ -762,11 +762,12 @@ export function TableFillExercise({
           uk: DEFAULT_INSTRUCTIONS.table_fill.subInstruction,
           en: DEFAULT_TRANSLATION_EN.table_fill,
         })}
-        hintText={
-          isDelf || (useBlocks ? allBlocksChecked : !!single.result)
-            ? null
-            : hintExplanationText("table_fill", lang)
-        }
+        // Задача "Hint legend: keep the hint bubble always visible above
+        // the task" — див. letter-rearrangement.tsx: лише isDelf лишається
+        // причиною не показувати бульбашку взагалі, гасіння після
+        // перевірки прибрано (воно давало порожню invisible-дірку в
+        // TaskPanelHeader на мобільному).
+        hintText={isDelf ? null : hintExplanationText("table_fill", lang)}
       />
 
       {!useBlocks ? (

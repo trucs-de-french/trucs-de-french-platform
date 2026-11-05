@@ -735,11 +735,13 @@ export function LetterGapsExercise({
         activeBlockOrSingleResult?.pointsEarned,
         lang
       );
-  const hintText = isDelf
-    ? null
-    : (useBlocks ? allBlocksChecked : !!single.result)
-      ? null
-      : hintExplanationText("letter_gaps", lang);
+  // Задача "Hint legend: keep the hint bubble always visible above the
+  // task" — гасіння після перевірки (allBlocksChecked/single.result)
+  // прибрано, той самий принцип, що letter-rearrangement.tsx/
+  // table-fill.tsx: воно давало порожню invisible-дірку в
+  // TaskPanelHeader на мобільному. isDelf лишається — сталий на весь
+  // mount.
+  const hintText = isDelf ? null : hintExplanationText("letter_gaps", lang);
 
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище
