@@ -10888,13 +10888,15 @@ button.scene-bar:active .scene-bar-toggle {
        bottom УЖЕ входить у цей ліміт, тож +44px (84-40) до самого
        padding-bottom віднімав би ті самі 44px від місця під рядки пілюль.
        +44px тут компенсує це — видима висота під пілюлі лишається
-       такою ж, що й до цієї задачі, лише НИЖНІЙ запас зріс. +20px додано
-       задачею "Karaoke fullscreen (mobile): add Check button in the
-       dock" — кнопка "Перевірити" (42px) вища за саму пілюлю (26px), і
-       на вузьких телефонах підказка може перенестись у власний другий
-       рядок (п.5 задачі); overflow-y:auto нижче й так не ламає розмітку
-       навіть якщо цього запасу не вистачить, просто скролить сам док. */
-    max-height: calc(26dvh + 64px);
+       такою ж, що й до цієї задачі, лише НИЖНІЙ запас зріс. +40px додано
+       задачею "Karaoke fullscreen (mobile): keep Check button on the same
+       line as the gap counter, hint on a second line" — кнопка "Перевірити"
+       (42px) вища за саму пілюлю (26px) на першому рядку meta-row, і
+       підказка тепер ЗАВЖДИ лежить на власному другому рядку (flex: 0 0
+       100%), а не лише іноді; overflow-y:auto нижче й так не ламає
+       розмітку навіть якщо цього запасу не вистачить, просто скролить сам
+       док. */
+    max-height: calc(26dvh + 84px);
     overflow-y: auto;
     margin: 0;
     padding: 10px 12px 0;
@@ -10903,29 +10905,34 @@ button.scene-bar:active .scene-bar-toggle {
     border-top: 1.5px solid var(--glass-panel-border);
     box-shadow: 0 -8px 16px -8px rgba(0, 0, 0, 0.25);
   }
-  /* Задача "Karaoke fullscreen (mobile): add Check button in the dock" —
-     кнопка сідає в ту саму верхню смугу доку, що пілюля "Пропуск N з M" і
-     підказка "Клікніть на правильне слово". flex-wrap:wrap на самому рядку
-     + ellipsis на тексті підказки (п.1/п.5 задачі) — на вузьких телефонах
-     (320-412px) підказка стискається до "…" і лишається в один рядок із
-     пілюлею й кнопкою; якщо навіть так не влазить — flex-shrink:0 на
-     пілюлі/кнопці й гнучкий flex-basis підказки самі переносять ЛИШЕ
-     підказку на другий рядок (кнопка й пілюля ніколи не стискаються нижче
-     власної ширини тексту). margin-left:auto на кнопці — завжди праворуч.
-     +44px до max-height доку вище (10892) вже лишає запас на цей можливий
-     другий рядок. */
+  /* Задача "Karaoke fullscreen (mobile): keep Check button on the same line
+     as the gap counter, hint on a second line" — раніше кнопка й пілюля
+     ділили вільний простір рядка з підказкою (flex: 1 1 120px на підказці),
+     і на вузьких телефонах підказка забирала весь простір, а кнопка
+     переносилась у ВЛАСНИЙ рядок між підказкою й пілюлями-варіантами
+     (виглядало відірвано). Тепер структура не залежить від доступної
+     ширини: пілюля (order:1) і кнопка (order:2, margin-left:auto) завжди в
+     одному рядку — обидві flex-shrink:0, flex-basis:auto, тож ніколи не
+     стискаються нижче ширини власного тексту; підказка (order:3) завжди на
+     ВЛАСНОМУ другому рядку (flex: 0 0 100%), звичайне перенесення тексту
+     замість ellipsis. */
   .karaoke-fs-root--active .karaoke-dock-meta-row {
     flex-wrap: wrap;
   }
   .karaoke-fs-root--active .karaoke-dock-meta-row p {
-    flex: 1 1 120px;
+    order: 3;
+    flex: 0 0 100%;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
   .karaoke-fs-root--active .karaoke-progress-pill {
+    order: 1;
     flex-shrink: 0;
+  }
+  .karaoke-fs-root--active .karaoke-dock-meta-row .karaoke-fs-check-btn {
+    order: 2;
   }
   .karaoke-fs-check-btn {
     flex-shrink: 0;
@@ -10973,6 +10980,17 @@ button.scene-bar:active .scene-bar-toggle {
     content: "";
     position: absolute;
     inset: -4px 0;
+  }
+}
+/* 320px-клас телефонів: пілюля "Пропуск N з M" + кнопка "Перевірити" мусять
+   лишитись в один рядок (nowrap) навіть тут — трохи вужчий горизонтальний
+   padding кнопки (14px замість 16px) звільняє ~4px без зміни touch target
+   (min-height 44px не чіпаємо). Скоуп лише на кнопку в meta-row доку —
+   кнопка окремої смуги typing-режиму (.karaoke-fs-check-row) лишається
+   некраяною (п.5 задачі). */
+@media (max-width: 360px) {
+  .karaoke-fs-root--active .karaoke-dock-meta-row .karaoke-fs-check-btn {
+    padding: 0 14px;
   }
 }
 @media (max-width: 640px) and (orientation: landscape) and (max-height: 520px) {
