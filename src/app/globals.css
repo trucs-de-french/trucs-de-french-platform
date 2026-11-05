@@ -2043,7 +2043,7 @@ button, input, textarea, select, label, nav, aside {
   height: 100dvh;
 }
 
-/* Кнопка "Вийти з повного екрана" — ЛІВИЙ ВЕРХНІЙ хрестик, рендериться в
+/* Кнопка "Вийти з повного екрана" — ПРАВИЙ ВЕРХНІЙ хрестик, рендериться в
    ОБОХ режимах fullscreen video-frame.tsx/embed-frame.tsx/video-player.tsx
    (задача "always-visible top-left X exit button in native and pseudo
    fullscreen"): реальний Android-телефон показав, що системний toast
@@ -2051,17 +2051,21 @@ button, input, textarea, select, label, nav, aside {
    недоступний на конкретному пристрої), а попередня кнопка (a6f5de7,
    .pseudo-fullscreen-exit-btn, праворуч) рендерилась ЛИШЕ в псевдо-режимі —
    у справжньому Fullscreen API (desktop і мобільний однаково) її не було
-   зовсім. position:fixed (рахується від вікна, overflow обгортки її не
-   обрізає) з z-index далеко над усією спільною шкалою z-layers.ts
-   (найвище там — Z_MODAL, z-50) і karaoke-fs (z-45); суцільна темна
-   підкладка+білий хрестик — НЕ перемикається темою сайту (.dark/.light),
-   на відміну від .fullscreen-btn вище: ця кнопка лежить прямо на
-   довільному кадрі гри/відео (може бути світлим або темним), а не на
-   скляній панелі сайту. */
+   зовсім. Задача "Fullscreen exit button: move to the top-right" перенесла
+   її з лівого верхнього кута (де вона сиділа від початкового впровадження)
+   у правий — стандартне місце для хрестика закриття; позиція — єдине, що
+   змінилось, решта стилю нижче та сама. position:fixed (рахується від
+   вікна, overflow обгортки її не обрізає) з z-index далеко над усією
+   спільною шкалою z-layers.ts (найвище там — Z_MODAL, z-50) і karaoke-fs
+   (z-45); суцільна темна підкладка+білий хрестик — НЕ перемикається темою
+   сайту (.dark/.light), на відміну від .fullscreen-btn вище: ця кнопка
+   лежить прямо на довільному кадрі гри/відео (може бути світлим або
+   темним), а не на скляній панелі сайту. */
 .fullscreen-exit-btn {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
-  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  left: auto;
   z-index: 100000;
   display: flex;
   align-items: center;
