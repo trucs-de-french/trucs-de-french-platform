@@ -8,6 +8,7 @@ import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptyRow(): CheckboxGridRow {
   return { id: crypto.randomUUID(), label: "", correctColumnIds: [] };
@@ -106,30 +107,43 @@ export const CheckboxGridFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="checkbox_grid_columns" value={JSON.stringify(columns)} readOnly />
       <input type="hidden" name="checkbox_grid_rows" value={JSON.stringify(rows)} readOnly />
 
-      <InstructionsRichTextField
-        name="checkbox_grid_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="checkbox_grid_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="checkbox_grid_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="checkbox_grid_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="checkbox_grid_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="checkbox_grid_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Колонки, рядки та правильні клітинки"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Колонки</label>
         <p className={HINT_TEXT}>
@@ -189,7 +203,7 @@ export const CheckboxGridFields = forwardRef<
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Рядки</label>
         {rows.map((row) => (
-          <div key={row.id} className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+          <div key={row.id} className={`flex flex-col gap-2 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
             <div className="flex items-center gap-2">
               <input
                 value={row.label}
@@ -247,6 +261,7 @@ export const CheckboxGridFields = forwardRef<
           + рядок
         </button>
       </div>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

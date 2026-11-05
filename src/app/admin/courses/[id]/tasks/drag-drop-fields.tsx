@@ -9,6 +9,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { HintLegendField } from "./hint-legend-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel } from "./constructor-block";
 
 function emptySentence(): DragDropSentence {
   return { id: crypto.randomUUID(), template: "" };
@@ -72,30 +73,72 @@ export const DragDropFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="drag_drop_sentences" value={JSON.stringify(sentences)} readOnly />
       <input type="hidden" name="drag_drop_bank" value={JSON.stringify(bank)} readOnly />
 
-      <InstructionsRichTextField
-        name="drag_drop_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="drag_drop_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="drag_drop_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="drag_drop_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="drag_drop_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="drag_drop_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            name="drag_drop_hints_reduce_points"
+            value="true"
+            defaultChecked={
+              initialConfig?.hintsReducePoints !== undefined
+                ? Boolean(initialConfig.hintsReducePoints)
+                : !!isNewTask
+            }
+          />
+          Підказки зменшують бали (50% за елемент, де використана підказка)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="drag_drop"
+            fieldNamePrefix="drag_drop"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Речення з пропусками та банк слів"
+        tone="content"
+      >
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>
           Речення з пропусками — правильне слово пишіть прямо у {"{{ }}"}, напр. Je{" "}
@@ -143,26 +186,6 @@ export const DragDropFields = forwardRef<
         </button>
       </div>
 
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          name="drag_drop_hints_reduce_points"
-          value="true"
-          defaultChecked={
-            initialConfig?.hintsReducePoints !== undefined
-              ? Boolean(initialConfig.hintsReducePoints)
-              : !!isNewTask
-          }
-        />
-        Підказки зменшують бали (50% за елемент, де використана підказка)
-      </label>
-
-      <HintLegendField
-        taskType="drag_drop"
-        fieldNamePrefix="drag_drop"
-        initialValue={initialConfig?.hintLegend}
-      />
-
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>
           Банк слів (спільний на всі речення вище — додайте всі правильні +, за бажанням,
@@ -195,6 +218,7 @@ export const DragDropFields = forwardRef<
           + слово
         </button>
       </div>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

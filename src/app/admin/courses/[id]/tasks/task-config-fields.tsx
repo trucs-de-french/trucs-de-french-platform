@@ -86,7 +86,7 @@ import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { getDefaultTaskName, type TaskTypeKey } from "@/lib/exercises/default-task-labels";
-import { ConstructorBlock } from "./constructor-block";
+import { ConstructorBlock, ConstructorInnerPanel } from "./constructor-block";
 
 // vocab_quiz виключений навмисно — має власний, архітектурно правильніший
 // механізм вибору цілих сцен-джерел (VocabQuizFields), а не окремих слів.
@@ -1196,7 +1196,13 @@ export function TaskConfigFields({
       )}
 
       {type === "fill_blank" && (
-        <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+        <div className="flex flex-col gap-[22px]">
+        <ConstructorBlock
+          n={2}
+          title="Інструкція для студента"
+          description="Французькою, українською та англійською"
+          tone="instruction"
+        >
           <InstructionsRichTextField
             name="fill_blank_instructions"
             label="Інструкція для студента"
@@ -1221,25 +1227,14 @@ export function TaskConfigFields({
             initialValue={(configForType("fill_blank").subInstructionsEn as string) ?? ""}
             compact
           />
+        </ConstructorBlock>
 
-          <div className="flex flex-col gap-1">
-            <label className={LABEL_TEXT}>
-              Текст із пропусками — правильні варіанти пишіть прямо у {"{{ }}"} через
-              &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma. Підказка-переклад
-              (опційно): {"{{chien|chiot::собака}}"}.
-            </label>
-            <textarea
-              ref={fillBlankTemplateRef}
-              name="fill_blank_template"
-              rows={3}
-              defaultValue={
-                (pendingSeed?.forType === "fill_blank"
-                  ? (pendingSeed.config as { template?: string }).template
-                  : (initialConfig?.template as string)) ?? ""
-              }
-              className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
-            />
-          </div>
+        <ConstructorBlock
+          n={3}
+          title="Бали та підказки"
+          description="Оцінювання і пояснення до лампочки"
+          tone="points"
+        >
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>
               Бали за всю вправу (зараховуються, лише якщо всі пропуски правильні)
@@ -1270,12 +1265,40 @@ export function TaskConfigFields({
             </label>
           )}
           {!isDelfTask && (
-            <HintLegendField
-              taskType="fill_blank"
-              fieldNamePrefix="fill_blank"
-              initialValue={configForType("fill_blank").hintLegend as { uk?: string; fr?: string; en?: string } | undefined}
-            />
+            <ConstructorInnerPanel>
+              <HintLegendField
+                taskType="fill_blank"
+                fieldNamePrefix="fill_blank"
+                initialValue={configForType("fill_blank").hintLegend as { uk?: string; fr?: string; en?: string } | undefined}
+              />
+            </ConstructorInnerPanel>
           )}
+        </ConstructorBlock>
+
+        <ConstructorBlock
+          n={4}
+          title="Варіанти вправи"
+          description="Текст із пропусками та банк слів-підказок"
+          tone="content"
+        >
+          <div className="flex flex-col gap-1">
+            <label className={LABEL_TEXT}>
+              Текст із пропусками — правильні варіанти пишіть прямо у {"{{ }}"} через
+              &quot;|&quot;, напр. Je {"{{vais|vais bien}}"} au cinéma. Підказка-переклад
+              (опційно): {"{{chien|chiot::собака}}"}.
+            </label>
+            <textarea
+              ref={fillBlankTemplateRef}
+              name="fill_blank_template"
+              rows={3}
+              defaultValue={
+                (pendingSeed?.forType === "fill_blank"
+                  ? (pendingSeed.config as { template?: string }).template
+                  : (initialConfig?.template as string)) ?? ""
+              }
+              className={`${INPUT_BORDER} px-2 py-1.5 text-base font-medium`}
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <input
               type="hidden"
@@ -1316,6 +1339,7 @@ export function TaskConfigFields({
               вписати слово в шаблон, тож просто показуємо список для
               копіювання вручну. */}
           <ImportVocabPanel sceneVocab={sceneVocab ?? []} />
+        </ConstructorBlock>
         </div>
       )}
 

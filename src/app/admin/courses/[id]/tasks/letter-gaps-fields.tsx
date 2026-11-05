@@ -13,6 +13,7 @@ import { computeAutoHiddenIndices, type LetterHideMode } from "@/lib/exercises/l
 import { protectedPrefixLength } from "@/lib/exercises/article";
 import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 const AUTO_HIDE_OPTIONS: { mode: LetterHideMode; label: string }[] = [
   { mode: "default", label: "~40%" },
@@ -86,7 +87,7 @@ function LetterGapsWordRow({
   });
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`flex flex-col gap-2 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
       <div className="flex items-center gap-2">
         <input
           value={wordItem.word}
@@ -299,7 +300,7 @@ export const LetterGapsFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input
         type="hidden"
         name="letter_gaps_words"
@@ -307,80 +308,103 @@ export const LetterGapsFields = forwardRef<
         readOnly
       />
 
-      <InstructionsRichTextField
-        name="letter_gaps_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
-
-      <InstructionsRichTextField
-        name="letter_gaps_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
-
-      <InstructionsRichTextField
-        name="letter_gaps_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
-
-      {words.map((w) => (
-        <LetterGapsWordRow
-          key={w.id}
-          wordItem={w}
-          onUpdateWord={(value) => updateWord(w.id, value)}
-          onToggleIndex={(index) => toggleIndex(w.id, index)}
-          onAutoHide={(mode) => applyAutoHide(w.id, mode)}
-          onUpdateHintType={(value) => updateHintType(w.id, value)}
-          onUpdateHintText={(value) => updateHintText(w.id, value)}
-          onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}
-          onUpdateAudioUrl={(value) => updateAudioUrl(w.id, value)}
-          onRemove={() => removeWord(w.id)}
-        />
-      ))}
-
-      <button
-        type="button"
-        onClick={addWord}
-        className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
       >
-        + слово
-      </button>
-
-      <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>Бали за завдання</label>
-        <input
-          type="number"
-          min={0}
-          step={0.5}
-          name="letter_gaps_points"
-          defaultValue={initialConfig?.points ?? 1}
-          className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
+        <InstructionsRichTextField
+          name="letter_gaps_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
         />
-      </div>
 
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          name="letter_gaps_hints_reduce_points"
-          value="true"
-          defaultChecked={
-            initialConfig?.hintsReducePoints !== undefined
-              ? Boolean(initialConfig.hintsReducePoints)
-              : !!isNewTask
-          }
+        <InstructionsRichTextField
+          name="letter_gaps_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
         />
-        Підказки зменшують бали (50% за елемент, де використана підказка)
-      </label>
 
-      <HintLegendField
-        taskType="letter_gaps"
-        fieldNamePrefix="letter_gaps"
-        initialValue={initialConfig?.hintLegend}
-      />
-    </div>
+        <InstructionsRichTextField
+          name="letter_gaps_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Бали за завдання</label>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            name="letter_gaps_points"
+            defaultValue={initialConfig?.points ?? 1}
+            className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
+          />
+        </div>
+
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            name="letter_gaps_hints_reduce_points"
+            value="true"
+            defaultChecked={
+              initialConfig?.hintsReducePoints !== undefined
+                ? Boolean(initialConfig.hintsReducePoints)
+                : !!isNewTask
+            }
+          />
+          Підказки зменшують бали (50% за елемент, де використана підказка)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="letter_gaps"
+            fieldNamePrefix="letter_gaps"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Слова, приховані літери та підказки до кожного слова"
+        tone="content"
+      >
+        {words.map((w) => (
+          <LetterGapsWordRow
+            key={w.id}
+            wordItem={w}
+            onUpdateWord={(value) => updateWord(w.id, value)}
+            onToggleIndex={(index) => toggleIndex(w.id, index)}
+            onAutoHide={(mode) => applyAutoHide(w.id, mode)}
+            onUpdateHintType={(value) => updateHintType(w.id, value)}
+            onUpdateHintText={(value) => updateHintText(w.id, value)}
+            onUpdateImageUrl={(value) => updateImageUrl(w.id, value)}
+            onUpdateAudioUrl={(value) => updateAudioUrl(w.id, value)}
+            onRemove={() => removeWord(w.id)}
+          />
+        ))}
+
+        <button
+          type="button"
+          onClick={addWord}
+          className="self-start text-xs text-blue-700 hover:underline dark:text-blue-400"
+        >
+          + слово
+        </button>
+      </ConstructorBlock>
+    </>
   );
 });

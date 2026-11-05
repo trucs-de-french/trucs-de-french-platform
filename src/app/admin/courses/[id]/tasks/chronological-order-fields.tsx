@@ -11,6 +11,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptyItem(): ChronologicalOrderItem {
   return { id: crypto.randomUUID(), content: "" };
@@ -51,7 +52,7 @@ function ChronologicalOrderItemRow({
   });
 
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`flex flex-col gap-1 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
       <div className="flex items-center gap-2">
         <div className="flex flex-col">
           <button
@@ -197,7 +198,7 @@ export const ChronologicalOrderFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="chronological_order_mode" value={mode} readOnly />
       <input
         type="hidden"
@@ -212,53 +213,75 @@ export const ChronologicalOrderFields = forwardRef<
         readOnly
       />
 
-      <InstructionsRichTextField
-        name="chronological_order_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="chronological_order_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="chronological_order_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="chronological_order_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="chronological_order_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="chronological_order_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
-      <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>
-          Підказка до завдання (необов&apos;язково) — лампочка покаже цей текст студенту біля інструкції
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>
+            Підказка до завдання (необов&apos;язково) — лампочка покаже цей текст студенту біля інструкції
+          </label>
+          <input
+            name="chronological_order_hint"
+            defaultValue={initialConfig?.hint ?? ""}
+            placeholder="Текст підказки"
+            className={`${INPUT_BORDER} px-2 py-2 text-sm`}
+          />
+        </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={hintsReducePoints}
+            onChange={(e) => setHintsReducePoints(e.target.checked)}
+          />
+          Підказка зменшує бали (завдання з показаною підказкою дає 50% балів)
         </label>
-        <input
-          name="chronological_order_hint"
-          defaultValue={initialConfig?.hint ?? ""}
-          placeholder="Текст підказки"
-          className={`${INPUT_BORDER} px-2 py-2 text-sm`}
-        />
-      </div>
 
-      <HintLegendField
-        taskType="chronological_order"
-        fieldNamePrefix="chronological_order"
-        initialValue={initialConfig?.hintLegend}
-      />
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="chronological_order"
+            fieldNamePrefix="chronological_order"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={hintsReducePoints}
-          onChange={(e) => setHintsReducePoints(e.target.checked)}
-        />
-        Підказка зменшує бали (завдання з показаною підказкою дає 50% балів)
-      </label>
-
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Елементи у правильному хронологічному порядку"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Тип елементів</label>
         <select
@@ -299,6 +322,7 @@ export const ChronologicalOrderFields = forwardRef<
       >
         + елемент
       </button>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

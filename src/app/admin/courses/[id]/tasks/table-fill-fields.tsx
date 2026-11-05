@@ -11,6 +11,7 @@ import { HintLegendField } from "./hint-legend-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptyRow(): TableFillRow {
   return {
@@ -73,30 +74,74 @@ export const TableFillFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="table_fill_column_labels" value={JSON.stringify(columnLabels)} readOnly />
       <input type="hidden" name="table_fill_rows" value={JSON.stringify(rows)} readOnly />
 
-      <InstructionsRichTextField
-        name="table_fill_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="table_fill_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="table_fill_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="table_fill_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="table_fill_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="table_fill_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      {!isDelf && (
+        <ConstructorBlock
+          n={3}
+          title="Бали та підказки"
+          description="Оцінювання і пояснення до лампочки"
+          tone="points"
+        >
+          <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+            <input
+              type="checkbox"
+              name="table_fill_hints_reduce_points"
+              value="true"
+              defaultChecked={
+                initialConfig?.hintsReducePoints !== undefined
+                  ? Boolean(initialConfig.hintsReducePoints)
+                  : !!isNewTask
+              }
+            />
+            Підказки зменшують бали (50% за елемент, де використана підказка)
+          </label>
+
+          <ConstructorInnerPanel>
+            <HintLegendField
+              taskType="table_fill"
+              fieldNamePrefix="table_fill"
+              initialValue={initialConfig?.hintLegend}
+            />
+          </ConstructorInnerPanel>
+        </ConstructorBlock>
+      )}
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Рядки таблиці з прихованими клітинками"
+        tone="content"
+      >
       <div className="flex items-end gap-2">
         <div className="flex flex-1 flex-col gap-1">
           <label className={LABEL_TEXT}>Назва лівої колонки</label>
@@ -125,7 +170,7 @@ export const TableFillFields = forwardRef<
       <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
 
       {rows.map((row) => (
-        <div key={row.id} className="flex items-center gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+        <div key={row.id} className={`flex items-center gap-2 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
           <div className="flex flex-1 flex-col gap-1">
             <input
               value={row.left}
@@ -186,29 +231,7 @@ export const TableFillFields = forwardRef<
       >
         + рядок
       </button>
-
-      {!isDelf && (
-        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-          <input
-            type="checkbox"
-            name="table_fill_hints_reduce_points"
-            value="true"
-            defaultChecked={
-              initialConfig?.hintsReducePoints !== undefined
-                ? Boolean(initialConfig.hintsReducePoints)
-                : !!isNewTask
-            }
-          />
-          Підказки зменшують бали (50% за елемент, де використана підказка)
-        </label>
-      )}
-      {!isDelf && (
-        <HintLegendField
-          taskType="table_fill"
-          fieldNamePrefix="table_fill"
-          initialValue={initialConfig?.hintLegend}
-        />
-      )}
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

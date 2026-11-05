@@ -10,6 +10,7 @@ import { HintLegendField } from "./hint-legend-field";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT, LABEL_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptySequence(): ReorderSequence {
   return { id: crypto.randomUUID(), items: ["", ""] };
@@ -81,7 +82,7 @@ function ReorderSequenceBlock({
   }
 
   return (
-    <div className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`${CONSTRUCTOR_ITEM_CARD} p-2`}>
       <div className="flex items-center justify-between">
         <span className={HINT_TEXT}>Послідовність {index + 1}</span>
         <div className="flex items-center gap-2">
@@ -300,7 +301,7 @@ export const ReorderFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="reorder_sequences" value={JSON.stringify(sequences)} readOnly />
       <input
         type="hidden"
@@ -309,26 +310,63 @@ export const ReorderFields = forwardRef<
         readOnly
       />
 
-      <InstructionsRichTextField
-        name="reorder_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="reorder_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="reorder_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="reorder_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="reorder_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="reorder_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            checked={hintsReducePoints}
+            onChange={(e) => setHintsReducePoints(e.target.checked)}
+          />
+          Підказка зменшує бали (послідовність із показаною підказкою дає 50% балів)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="reorder"
+            fieldNamePrefix="reorder"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Речення для переставляння слів"
+        tone="content"
+      >
       <p className={HINT_TEXT}>
         Переставлення слів у РЕЧЕННІ — порядок слів, визначений нижче, і є правильною відповіддю,
         студенту вони покажуться перемішаними. (Не плутати з хронологічним порядком — там про
@@ -351,15 +389,6 @@ export const ReorderFields = forwardRef<
         студенту разом із завданням (видимий у запитах браузера) — зручно для навчальних вправ,
         вимикайте для контрольних робіт.
       </p>
-
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          checked={hintsReducePoints}
-          onChange={(e) => setHintsReducePoints(e.target.checked)}
-        />
-        Підказка зменшує бали (послідовність із показаною підказкою дає 50% балів)
-      </label>
 
       <div className="flex flex-col gap-3">
         {sequences.map((seq, si) => (
@@ -387,12 +416,7 @@ export const ReorderFields = forwardRef<
           + послідовність
         </button>
       </div>
-
-      <HintLegendField
-        taskType="reorder"
-        fieldNamePrefix="reorder"
-        initialValue={initialConfig?.hintLegend}
-      />
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

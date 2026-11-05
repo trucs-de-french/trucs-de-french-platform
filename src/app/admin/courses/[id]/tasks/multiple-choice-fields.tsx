@@ -10,6 +10,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 // Окремий компонент (не інлайн у .map()) — useFileOrLink це хук, викликати
 // його всередині callback .map() було б порушенням правил хуків.
@@ -194,7 +195,7 @@ export const MultipleChoiceFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="mc_items" value={JSON.stringify(items)} readOnly />
       <input
         type="hidden"
@@ -203,26 +204,59 @@ export const MultipleChoiceFields = forwardRef<
         readOnly
       />
 
-      <InstructionsRichTextField
-        name="mc_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="mc_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="mc_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="mc_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="mc_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="mc_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={hintsReducePoints}
+            onChange={(e) => setHintsReducePoints(e.target.checked)}
+          />
+          Підказка зменшує бали (питання з показаною підказкою дає 50% балів)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField taskType="multiple_choice" fieldNamePrefix="mc" initialValue={initialConfig?.hintLegend} />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Речення з варіантами відповідей"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Подання</label>
         <select
@@ -236,18 +270,9 @@ export const MultipleChoiceFields = forwardRef<
         </select>
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={hintsReducePoints}
-          onChange={(e) => setHintsReducePoints(e.target.checked)}
-        />
-        Підказка зменшує бали (питання з показаною підказкою дає 50% балів)
-      </label>
-
       <div className="flex flex-col gap-3">
         {items.map((item, ii) => (
-          <div key={item.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+          <div key={item.id} className={`${CONSTRUCTOR_ITEM_CARD} p-2`}>
             <div className="flex items-center justify-between">
               <span className={HINT_TEXT}>
                 Речення {ii + 1}
@@ -328,8 +353,7 @@ export const MultipleChoiceFields = forwardRef<
           + речення
         </button>
       </div>
-
-      <HintLegendField taskType="multiple_choice" fieldNamePrefix="mc" initialValue={initialConfig?.hintLegend} />
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

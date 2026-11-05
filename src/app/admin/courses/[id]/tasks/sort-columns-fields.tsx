@@ -9,6 +9,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { HintLegendField } from "./hint-legend-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel } from "./constructor-block";
 
 export const SortColumnsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<SortColumnsConfig>,
@@ -89,30 +90,70 @@ export const SortColumnsFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="sort_columns_columns" value={JSON.stringify(columns)} readOnly />
       <input type="hidden" name="sort_columns_items" value={JSON.stringify(items)} readOnly />
 
-      <InstructionsRichTextField
-        name="sort_columns_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="sort_columns_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="sort_columns_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="sort_columns_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="sort_columns_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="sort_columns_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            name="sort_columns_hints_enabled"
+            value="true"
+            defaultChecked={
+              initialConfig?.hintsEnabled !== undefined ? Boolean(initialConfig.hintsEnabled) : !!defaultHintsEnabled
+            }
+          />
+          Дозволити підказки (лампочка підсвічує колонку, слово з підказкою дає 50% балів)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="sort_columns"
+            fieldNamePrefix="sort_columns"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Колонки та елементи для розкладання"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Колонки</label>
         {columns.map((c) => (
@@ -196,24 +237,7 @@ export const SortColumnsFields = forwardRef<
           + елемент
         </button>
       </div>
-
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          name="sort_columns_hints_enabled"
-          value="true"
-          defaultChecked={
-            initialConfig?.hintsEnabled !== undefined ? Boolean(initialConfig.hintsEnabled) : !!defaultHintsEnabled
-          }
-        />
-        Дозволити підказки (лампочка підсвічує колонку, слово з підказкою дає 50% балів)
-      </label>
-
-      <HintLegendField
-        taskType="sort_columns"
-        fieldNamePrefix="sort_columns"
-        initialValue={initialConfig?.hintLegend}
-      />
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

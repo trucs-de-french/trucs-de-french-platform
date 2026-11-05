@@ -9,6 +9,7 @@ import type { TypeSwitchHandle } from "./type-switch-handle";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN } from "@/lib/exercises/default-instructions";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 // Чекбокс, як MultipleChoiceOptionRow — кількість правильних на речення не
 // фіксована окремим полем, а лише тим, скільки options позначено correct
@@ -183,7 +184,7 @@ export const WordChoiceFields = forwardRef<
   }
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <div ref={rootRef} className="contents">
       <input
         type="hidden"
         name="word_choice_sentences"
@@ -197,29 +198,78 @@ export const WordChoiceFields = forwardRef<
         readOnly
       />
 
-      <InstructionsRichTextField
-        key={`instructions-${seedKey}`}
-        name="word_choice_instructions"
-        label="Інструкція для студента"
-        initialValue={instructionsSeed?.instruction ?? initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          key={`instructions-${seedKey}`}
+          name="word_choice_instructions"
+          label="Інструкція для студента"
+          initialValue={instructionsSeed?.instruction ?? initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        key={`sub-instructions-${seedKey}`}
-        name="word_choice_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={instructionsSeed?.subInstruction ?? initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          key={`sub-instructions-${seedKey}`}
+          name="word_choice_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={instructionsSeed?.subInstruction ?? initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        key={`sub-instructions-en-${seedKey}`}
-        name="word_choice_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={instructionsSeed?.subInstructionEn ?? initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          key={`sub-instructions-en-${seedKey}`}
+          name="word_choice_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={instructionsSeed?.subInstructionEn ?? initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Бали за завдання</label>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            name="word_choice_points"
+            defaultValue={initialConfig?.points ?? 1}
+            className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
+          />
+        </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={hintsReducePoints}
+            onChange={(e) => setHintsReducePoints(e.target.checked)}
+          />
+          Підказка зменшує бали (речення, де показали підказку, дає 50% своєї частки балів)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="word_choice"
+            fieldNamePrefix="word_choice"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Речення з варіантами відповідей"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Спосіб взаємодії</label>
         <select
@@ -233,18 +283,9 @@ export const WordChoiceFields = forwardRef<
         </select>
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={hintsReducePoints}
-          onChange={(e) => setHintsReducePoints(e.target.checked)}
-        />
-        Підказка зменшує бали (речення, де показали підказку, дає 50% своєї частки балів)
-      </label>
-
       <div className="flex flex-col gap-3">
         {sentences.map((s, si) => (
-          <div key={s.id} className="rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+          <div key={s.id} className={`${CONSTRUCTOR_ITEM_CARD} p-2`}>
             <div className="flex items-center justify-between">
               <span className={HINT_TEXT}>Речення {si + 1}</span>
               <button
@@ -308,24 +349,7 @@ export const WordChoiceFields = forwardRef<
           + речення
         </button>
       </div>
-
-      <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>Бали за завдання</label>
-        <input
-          type="number"
-          min={0}
-          step={0.5}
-          name="word_choice_points"
-          defaultValue={initialConfig?.points ?? 1}
-          className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
-        />
-      </div>
-
-      <HintLegendField
-        taskType="word_choice"
-        fieldNamePrefix="word_choice"
-        initialValue={initialConfig?.hintLegend}
-      />
+      </ConstructorBlock>
     </div>
   );
 });
