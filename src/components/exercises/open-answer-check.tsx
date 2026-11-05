@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { OpenAnswerPublic, OpenAnswerDetail, GradeResult } from "@/lib/exercises/types";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
+import { hintExplanationText } from "./hint-explanation";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
@@ -350,6 +351,16 @@ export function OpenAnswerCheckExercise({
           uk: DEFAULT_INSTRUCTIONS.open_answer.subInstruction,
           en: DEFAULT_TRANSLATION_EN.open_answer,
         })}
+        // Задача "Hint legend: restore and keep the bulb explanation
+        // visible above the task in all hint exercises" — лампочка
+        // (showHint, розкриває q.hint — підказку, яку вчитель написав до
+        // питання) існувала в коді й раніше, але TaskPanelHeader тут
+        // НІКОЛИ не отримував hintText взагалі.
+        hintText={
+          isDelf || !config.questions.some((q) => q.hint)
+            ? null
+            : hintExplanationText("open_answer", lang)
+        }
       />
 
       {!useBlocks ? (

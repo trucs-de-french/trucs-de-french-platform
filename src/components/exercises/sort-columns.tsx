@@ -8,6 +8,7 @@ import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { useColumnSort } from "./use-column-sort";
 import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { HintBulb, HintUsedBadge, type HintBulbState } from "./hint-bulb";
+import { hintExplanationText } from "./hint-explanation";
 import { SELECTED_OPTION_CLASS } from "./selection-style";
 import { ANSWER_CHIP_DEFAULT } from "./answer-card-style";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -336,6 +337,13 @@ export function SortColumnsExercise({
           uk: DEFAULT_INSTRUCTIONS.sort_columns.subInstruction,
           en: DEFAULT_TRANSLATION_EN.sort_columns,
         })}
+        // Задача "Hint legend: restore and keep the bulb explanation
+        // visible above the task in all hint exercises" — лампочка
+        // (toggleHint, підсвічує правильну колонку елемента) існувала в
+        // коді й раніше, але TaskPanelHeader тут НІКОЛИ не отримував
+        // hintText взагалі — легенда не рендерилась ні разу. hintsEnabled
+        // (вище) уже враховує isDelf/isPractice.
+        hintText={hintsEnabled ? hintExplanationText("sort_columns", lang) : null}
       />
 
       <div className="word-pool" {...poolDropProps()} onClick={clickPool}>

@@ -8,6 +8,7 @@ import { useTilePlacement } from "./use-tile-placement";
 import { bankTileClass, slotClass, stickyPoolClass } from "./tile-styles";
 import { useWordPoolCarousel, poolCarouselLabel, WordPoolCarouselTrack, WordPoolProgress } from "./word-pool-carousel";
 import { HintBulb, HintUsedBadge } from "./hint-bulb";
+import { hintExplanationText } from "./hint-explanation";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { TaskPanelHeader } from "./task-panel-header";
 import { BlockTabs } from "./block-navigation";
@@ -385,6 +386,20 @@ export function DragDropExercise({
           uk: DEFAULT_INSTRUCTIONS.drag_drop.subInstruction,
           en: DEFAULT_TRANSLATION_EN.drag_drop,
         })}
+        // Задача "Hint legend: restore and keep the bulb explanation
+        // visible above the task in all hint exercises" — лампочка-
+        // переклад усередині слота (toggleTranslationHint) існувала в коді
+        // й раніше, але TaskPanelHeader тут НІКОЛИ не отримував hintText —
+        // легенда була відсутня взагалі, не "гасла після перевірки".
+        // isPractice-гілка завжди завершується раніше (early return вище),
+        // тож тут лишається лише isDelf і реальна наявність хоч одного
+        // налаштованого hints[i] у реченнях (як і hintsReducePoints для
+        // цього типу, hints.ts).
+        hintText={
+          isDelf || !config.sentences.some((s) => s.hints?.some((h) => !!h))
+            ? null
+            : hintExplanationText("drag_drop", lang)
+        }
       />
 
       {remaining > 0 ? (

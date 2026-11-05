@@ -364,17 +364,19 @@ export function FillBlankExercise({
           uk: defaultSubInstruction,
           en: defaultSubInstructionEn,
         })}
-        // Задача "Hint legend: keep the hint bubble always visible above
-        // the task" — гасіння після перевірки (!!result) прибрано: воно
-        // давало порожню invisible-дірку в TaskPanelHeader на мобільному,
-        // коли текст переносився на 2 рядки. isDelf/hasWordBank/isPractice
-        // лишаються — це сталі (на весь mount) причини не показувати
-        // бульбашку взагалі, не "гасіння після перевірки".
-        hintText={
-          isDelf || hasWordBank || isPractice
-            ? null
-            : hintExplanationText("fill_blank", lang)
-        }
+        // Задача "Hint legend: restore and keep the bulb explanation
+        // visible above the task in all hint exercises" — hasWordBank
+        // прибрано з умови: лампочка-переклад усередині поля
+        // (.fill-blank-field-lamp, toggleTranslationHint) доступна В ОБОХ
+        // режимах (type-in і word-bank/пул) однаково — лише ПОПАП
+        // діакритики (applyHint, перша літера) недоступний у word-bank, а
+        // легенда тут описує саме лампочку, не попап. Гасіння після
+        // перевірки (!!result) прибрано ще задачею "Hint legend: keep the
+        // hint bubble always visible above the task" — воно давало
+        // порожню invisible-дірку в TaskPanelHeader на мобільному. isDelf/
+        // isPractice лишаються — сталі (на весь mount) причини не
+        // показувати бульбашку взагалі.
+        hintText={isDelf || isPractice ? null : hintExplanationText("fill_blank", lang)}
       />
 
       {/* Банк слів (опційний) і саме речення — разом ОДНЕ тіло вправи, тож

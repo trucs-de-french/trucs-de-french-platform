@@ -17,6 +17,14 @@ export const HINT_EXPLANATION_KEYS: Partial<Record<string, MessageKey>> = {
   chronological_order: "hintExplanation.chronological_order",
   multiple_choice: "hintExplanation.multiple_choice",
   reorder: "hintExplanation.reorder",
+  // Задача "Hint legend: restore and keep the bulb explanation visible
+  // above the task in all hint exercises" — ці три типи мали лампочку в
+  // коді (drag_drop/sort_columns/open_answer), але жодного ключа тут і
+  // жодного hintText у своєму TaskPanelHeader — легенда була відсутня
+  // взагалі, не "гасла після перевірки".
+  drag_drop: "hintExplanation.drag_drop",
+  sort_columns: "hintExplanation.sort_columns",
+  open_answer: "hintExplanation.open_answer",
 };
 
 // Пояснення "підказка дає половину балів" тепер одна спільна смужка під
