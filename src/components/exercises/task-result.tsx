@@ -103,6 +103,7 @@ export function TaskResult({
   toggleCount,
   className,
   hintSummary,
+  onOpenChange,
 }: {
   correct: boolean;
   pointsEarned?: number;
@@ -115,6 +116,14 @@ export function TaskResult({
   // hintUsed своєї детейл-структури сам, тут лише рендер однакового
   // рядка-пілюлі, HintUsageSummary вище); undefined/0 — пілюля не рендериться.
   hintSummary?: { hintCount: number | "task"; reducesPoints: boolean };
+  // Задача "Crossword: show correct letters in the grid when the
+  // correct-answers toggle is on" — опціональний колбек стану тоглу
+  // (відкрито/закрито) для викликачів, яким самому потрібно знати це
+  // (crossword.tsx — відображення правильних літер у клітинках сітки
+  // синхронізоване із цим самим тоглом, не окремий власний UI). Усі інші
+  // викликачі TaskResult не передають цей проп — поведінка для них
+  // незмінна (open лишається внутрішнім useState нижче).
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -158,7 +167,13 @@ export function TaskResult({
             type="button"
             aria-expanded={open}
             aria-controls={panelId}
-            onClick={() => setOpen((o) => !o)}
+            onClick={() =>
+              setOpen((o) => {
+                const next = !o;
+                onOpenChange?.(next);
+                return next;
+              })
+            }
             className="task-result-toggle-header"
           >
             <span className="task-result-toggle-title">

@@ -313,6 +313,12 @@ function CrosswordBlockView({
   // по клітинках/словах і так триває без неї, незалежно від режиму —
   // checked лише розкриває підсумковий рядок "Правильно: N з M слів").
   const [practiceChecked, setPracticeChecked] = useState(false);
+  // Задача "Crossword: show correct letters in the grid when the
+  // correct-answers toggle is on" — синхронізовано з тоглом "Правильні
+  // відповіді" у TaskResult (onOpenChange нижче, обидва місця рендеру
+  // TaskResult). Лише ВІДОБРАЖЕННЯ — effectiveGrid/grid самі не
+  // чіпаються, студентська відповідь нічим тут не перезаписується.
+  const [showCorrectLetters, setShowCorrectLetters] = useState(false);
   // Спільний хук (diacritics-popup.tsx) — ключ "row,col" на кожну клітинку.
   // Той самий інстанс дає й реф для програмного .focus() (автоперехід
   // вперед/назад — не пов'язано з попапом самим по собі, але той самий
@@ -1036,20 +1042,36 @@ function CrosswordBlockView({
                       // прозорий). Одне джерело цих класів замість дублювання
                       // логіки в двох місцях.
                       const isHintedCell = effectiveHintedCells.has(cellKey(ri, ci));
-                      const statusColorClass = isHintedCell
-                        ? "text-sky-700 dark:text-sky-400"
-                        : status === "correct"
-                          ? "text-green-700 dark:text-green-400"
-                          : status === "incorrect"
-                            ? "text-red-700 dark:text-red-400"
-                            : "dark:text-neutral-100";
-                      const statusBgClass = isHintedCell
-                        ? "bg-sky-100 dark:bg-sky-950/40"
-                        : status === "correct"
-                          ? "bg-green-50 dark:bg-green-950/30"
-                          : status === "incorrect"
-                            ? "bg-red-50 dark:bg-red-950/30"
-                            : "";
+                      // Задача "Crossword: show correct letters in the grid
+                      // when the correct-answers toggle is on" — тогл
+                      // "Правильні відповіді" (TaskResult, onOpenChange
+                      // вище) увімкнений і вправу вже перевірено (не
+                      // практика — effectiveResult там завжди null):
+                      // клітинка, що НЕ збігається з розв'язком (хибна ЧИ
+                      // порожня), показує правильну літеру натомість
+                      // студентської — лише у ВІДОБРАЖЕННІ (effectiveGrid/
+                      // grid нижче й так лишаються недоторканими).
+                      const solutionLetter = block.solution[ri][ci];
+                      const isRevealed =
+                        showCorrectLetters && !!effectiveResult && effectiveGrid[ri][ci] !== solutionLetter;
+                      const statusColorClass = isRevealed
+                        ? "text-[#7a5a10] dark:text-[#f3d98b]"
+                        : isHintedCell
+                          ? "text-sky-700 dark:text-sky-400"
+                          : status === "correct"
+                            ? "text-green-700 dark:text-green-400"
+                            : status === "incorrect"
+                              ? "text-red-700 dark:text-red-400"
+                              : "dark:text-neutral-100";
+                      const statusBgClass = isRevealed
+                        ? "bg-[#fdf1d6] dark:bg-[rgba(246,220,142,0.16)]"
+                        : isHintedCell
+                          ? "bg-sky-100 dark:bg-sky-950/40"
+                          : status === "correct"
+                            ? "bg-green-50 dark:bg-green-950/30"
+                            : status === "incorrect"
+                              ? "bg-red-50 dark:bg-red-950/30"
+                              : "";
                       const letterFontStyle = { fontSize: "max(0.5rem, calc(var(--cw) * 0.5))" } as const;
                       // ЕТАП U — номер (дивись .crossword-tile-number нижче) і
                       // літера мали окрему фіксовану floor-величину (0.5625rem) та
@@ -1126,7 +1148,7 @@ function CrosswordBlockView({
                                 paddingLeft: numberedLetterShift,
                               }}
                             >
-                              {effectiveGrid[ri][ci]}
+                              {isRevealed ? solutionLetter : effectiveGrid[ri][ci]}
                             </span>
                             <input
                               ref={diacritics.fieldRef(cellKey(ri, ci))}
@@ -1284,6 +1306,7 @@ function CrosswordBlockView({
                   hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
                   reducesPoints: hintsReducePoints,
                 }}
+                onOpenChange={setShowCorrectLetters}
               >
                 <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
               </TaskResult>
@@ -1345,6 +1368,7 @@ function CrosswordBlockView({
                 hintCount: (result.detail as CrosswordDetail).words.filter((w) => w.hintUsed).length,
                 reducesPoints: hintsReducePoints,
               }}
+              onOpenChange={setShowCorrectLetters}
             >
               <TaskResultCrosswordRows groups={buildCrosswordGroups(block, clueCells)} />
             </TaskResult>
@@ -1363,6 +1387,7 @@ function CrosswordBlockView({
               setPracticeHintedWords(new Set());
               setPracticeChecked(false);
               setPracticeMode(true);
+              setShowCorrectLetters(false);
             }}
             className="check-confirm-btn check-confirm-btn--secondary self-start"
           >
