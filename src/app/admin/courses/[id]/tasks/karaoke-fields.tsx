@@ -12,6 +12,7 @@ import { extractYoutubeId } from "@/lib/video";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
+import { ConstructorBlock, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 type EditableLine = KaraokeLine & { id: string; timeText: string; endTimeText: string };
 
@@ -498,32 +499,64 @@ export const KaraokeFields = forwardRef<
   }, [markingActive, captureLineStart, captureLineEnd, stopMarking]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="karaoke_video_url" value={videoUrl} readOnly />
       <input type="hidden" name="karaoke_answer_mode" value={answerMode} readOnly />
       <input type="hidden" name="karaoke_pause_on_gap" value={pauseOnGap ? "true" : "false"} readOnly />
       <input type="hidden" name="karaoke_points_per_gap" value={pointsPerGap} readOnly />
       <input type="hidden" name="karaoke_lines" value={JSON.stringify(lines.map(stripLine))} readOnly />
 
-      <InstructionsRichTextField
-        name="karaoke_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
-      <InstructionsRichTextField
-        name="karaoke_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="karaoke_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
+        <InstructionsRichTextField
+          name="karaoke_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="karaoke_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="karaoke_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання кожного пропуску"
+        tone="points"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Бали за пропуск</label>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={pointsPerGap}
+            onChange={(e) => setPointsPerGap(Number(e.target.value) || 0)}
+            className={`${INPUT_BORDER} w-20 px-2 py-1 text-sm`}
+          />
+        </div>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Відео, текст пісні та розмітка пропусків"
+        tone="content"
+      >
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>Посилання на відео (YouTube)</label>
         <input
@@ -707,7 +740,7 @@ export const KaraokeFields = forwardRef<
         )}
 
         {lines.map((line, index) => (
-          <div key={line.id} className="flex flex-col gap-1.5 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+          <div key={line.id} className={`flex flex-col gap-1.5 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1">
                 <span className="text-xs text-neutral-400 dark:text-neutral-500">початок</span>
@@ -859,19 +892,8 @@ export const KaraokeFields = forwardRef<
           <input type="checkbox" checked={pauseOnGap} onChange={(e) => setPauseOnGap(e.target.checked)} />
           Паузи після рядків з пропусками — увімкнено за замовчуванням
         </label>
-
-        <div className="flex flex-col gap-1">
-          <label className={LABEL_TEXT}>Бали за пропуск</label>
-          <input
-            type="number"
-            min={0}
-            step={0.5}
-            value={pointsPerGap}
-            onChange={(e) => setPointsPerGap(Number(e.target.value) || 0)}
-            className={`${INPUT_BORDER} w-20 px-2 py-1 text-sm`}
-          />
-        </div>
       </div>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

@@ -16,6 +16,7 @@ import { InstructionsRichTextField } from "./instructions-rich-text-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER, INPUT_BORDER_WARNING, INPUT_BORDER_ERROR } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock } from "./constructor-block";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/t";
 
@@ -87,29 +88,42 @@ export const MatchingFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="matching_pairs" value={JSON.stringify(pairs)} readOnly />
 
-      <InstructionsRichTextField
-        name="matching_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="matching_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="matching_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="matching_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="matching_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="matching_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Пари елементів для з'єднання"
+        tone="content"
+      >
       <p className={HINT_TEXT}>
         Уникайте однакового тексту зліва і справа в різних парах — це заважає перевірці.
       </p>
@@ -176,7 +190,8 @@ export const MatchingFields = forwardRef<
           {t("matching.limitsBlocked", { wordMax: MATCHING_MAX_WORD_LEN, itemMax: MATCHING_MAX_ITEM_LEN })}
         </p>
       )}
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });
 

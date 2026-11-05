@@ -22,6 +22,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock, ConstructorInnerPanel, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 type EditableWord = WordSearchWord & { id: string };
 
@@ -81,7 +82,7 @@ function WordSearchWordRow({
   const isLong = sanitizedLength > BLOCK_MAX_COLS;
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`flex flex-col gap-2 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
       <div className="flex flex-wrap items-start gap-2">
         <div className="relative basis-36 grow min-w-[7rem]">
           <input
@@ -259,7 +260,7 @@ export const WordSearchFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input
         type="hidden"
         name="word_search_words"
@@ -272,26 +273,80 @@ export const WordSearchFields = forwardRef<
       />
       <input type="hidden" name="word_search_blocks" value={JSON.stringify(serializeBlocks(editor, "word_search"))} readOnly />
 
-      <InstructionsRichTextField
-        name="word_search_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="word_search_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="word_search_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="word_search_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="word_search_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="word_search_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={3}
+        title="Бали та підказки"
+        description="Оцінювання і пояснення до лампочки"
+        tone="points"
+      >
+        <div className="flex flex-col gap-1">
+          <label className={LABEL_TEXT}>Бали за завдання</label>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            name="word_search_points"
+            defaultValue={initialConfig?.points ?? 1}
+            className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
+          />
+        </div>
+
+        <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
+          <input
+            type="checkbox"
+            name="word_search_hints_reduce_points"
+            value="true"
+            defaultChecked={
+              initialConfig?.hintsReducePoints !== undefined
+                ? Boolean(initialConfig.hintsReducePoints)
+                : !!isNewTask
+            }
+          />
+          Підказки зменшують бали (50% за елемент, де використана підказка)
+        </label>
+
+        <ConstructorInnerPanel>
+          <HintLegendField
+            taskType="word_search"
+            fieldNamePrefix="word_search"
+            initialValue={initialConfig?.hintLegend}
+          />
+        </ConstructorInnerPanel>
+      </ConstructorBlock>
+
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Слова для філворду, переклад і розбивка на блоки"
+        tone="content"
+      >
       <div className="flex flex-col gap-2">
         <label className={LABEL_TEXT}>Слова для пошуку</label>
         <StripArticlesToggle checked={stripArticles} onChange={setStripArticles} />
@@ -333,38 +388,7 @@ export const WordSearchFields = forwardRef<
         renderPreview={(grid: WordSearchEditorGrid) => <GridPreview grid={grid.grid} />}
         gridLabel={(grid: WordSearchEditorGrid) => `${grid.grid.length}×${grid.grid.length}`}
       />
-
-      <div className="flex flex-col gap-1">
-        <label className={LABEL_TEXT}>Бали за завдання</label>
-        <input
-          type="number"
-          min={0}
-          step={0.5}
-          name="word_search_points"
-          defaultValue={initialConfig?.points ?? 1}
-          className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
-        />
-      </div>
-
-      <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
-        <input
-          type="checkbox"
-          name="word_search_hints_reduce_points"
-          value="true"
-          defaultChecked={
-            initialConfig?.hintsReducePoints !== undefined
-              ? Boolean(initialConfig.hintsReducePoints)
-              : !!isNewTask
-          }
-        />
-        Підказки зменшують бали (50% за елемент, де використана підказка)
-      </label>
-
-      <HintLegendField
-        taskType="word_search"
-        fieldNamePrefix="word_search"
-        initialValue={initialConfig?.hintLegend}
-      />
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });
