@@ -55,7 +55,13 @@ export function HintLegendField({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-gray-100 p-3 dark:border-neutral-700">
+    // Задача "Constructor: ... single hint-legend panel" — без власної
+    // рамки/фону/padding: єдина видима панель навколо цього поля тепер —
+    // ConstructorInnerPanel (constructor-block.tsx) на кожному виклик-сайті
+    // всередині блоку 3. Виклик-сайти ПОЗА конструктором задачі (якщо
+    // колись з'являться) лишаться без видимої рамки — наразі всі виклики
+    // HintLegendField живуть саме в блоці 3 *-fields.tsx-компонентів.
+    <div className="flex flex-col gap-2">
       <input
         type="hidden"
         name={`${fieldNamePrefix}_hint_legend`}

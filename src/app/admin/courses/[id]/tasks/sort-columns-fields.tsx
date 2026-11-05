@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -21,8 +21,9 @@ export const SortColumnsFields = forwardRef<
     // УВІМКНЕНО; наявні вправи без поля (включно з тими, що просто
     // редагуються, а не створюються) лишаються вимкненими.
     defaultHintsEnabled?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
   }
->(function SortColumnsFields({ initialConfig, defaultHintsEnabled }, ref) {
+>(function SortColumnsFields({ initialConfig, defaultHintsEnabled, pointsVisibilityCheckbox }, ref) {
   const [columns, setColumns] = useState<SortColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -127,6 +128,7 @@ export const SortColumnsFields = forwardRef<
         description="Оцінювання і пояснення до лампочки"
         tone="points"
       >
+        {pointsVisibilityCheckbox}
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input
             type="checkbox"

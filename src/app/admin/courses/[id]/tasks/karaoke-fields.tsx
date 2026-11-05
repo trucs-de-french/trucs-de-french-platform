@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useCallback, useImperativeHandle, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useEffect, useRef, useState, type ReactNode } from "react";
 import { Trash2, Play } from "lucide-react";
 import type { KaraokeConfig, KaraokeLine } from "@/lib/exercises/types";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -89,8 +89,8 @@ function LineTokens({
 
 export const KaraokeFields = forwardRef<
   TypeSwitchHandle<KaraokeConfig>,
-  { initialConfig?: Partial<KaraokeConfig> }
->(function KaraokeFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<KaraokeConfig>; pointsVisibilityCheckbox?: ReactNode }
+>(function KaraokeFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
   const [videoUrl, setVideoUrl] = useState(initialConfig?.videoUrl ?? "");
   const [pasteText, setPasteText] = useState("");
   const [lines, setLines] = useState<EditableLine[]>(
@@ -549,6 +549,7 @@ export const KaraokeFields = forwardRef<
             className={`${INPUT_BORDER} w-20 px-2 py-1 text-sm`}
           />
         </div>
+        {pointsVisibilityCheckbox}
       </ConstructorBlock>
 
       <ConstructorBlock

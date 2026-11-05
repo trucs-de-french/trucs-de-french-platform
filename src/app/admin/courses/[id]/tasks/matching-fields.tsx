@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { MatchingConfig, MatchingPair } from "@/lib/exercises/types";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
@@ -26,8 +26,8 @@ function emptyPair(): MatchingPair {
 
 export const MatchingFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>,
-  { initialConfig?: Partial<MatchingConfig> }
->(function MatchingFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<MatchingConfig>; pointsVisibilityCheckbox?: ReactNode }
+>(function MatchingFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
   const { t } = useT();
   // Старі пари (до пілоту балів) не мали id — тут, на відміну від
   // sanitize.ts (getMatchingPairs, стабільний `pair-${index}`), можна
@@ -117,6 +117,12 @@ export const MatchingFields = forwardRef<
           compact
         />
       </ConstructorBlock>
+
+      {pointsVisibilityCheckbox && (
+        <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+          {pointsVisibilityCheckbox}
+        </ConstructorBlock>
+      )}
 
       <ConstructorBlock
         n={4}

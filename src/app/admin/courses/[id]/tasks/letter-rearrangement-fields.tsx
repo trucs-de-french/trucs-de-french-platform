@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { LetterRearrangementConfig, LetterRearrangementWord } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -127,8 +127,8 @@ function LetterRearrangementWordRow({
 
 export const LetterRearrangementFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<LetterRearrangementConfig>,
-  { initialConfig?: Partial<LetterRearrangementConfig>; isNewTask?: boolean }
->(function LetterRearrangementFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<LetterRearrangementConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function LetterRearrangementFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
@@ -242,6 +242,8 @@ export const LetterRearrangementFields = forwardRef<
             className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
           />
         </div>
+
+        {pointsVisibilityCheckbox}
 
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input

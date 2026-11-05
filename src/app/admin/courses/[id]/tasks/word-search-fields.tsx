@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { WordSearchConfig, WordSearchWord } from "@/lib/exercises/types";
 import { BLOCK_MAX_COLS } from "@/lib/exercises/grid-blocks";
@@ -167,8 +167,8 @@ function GridPreview({ grid }: { grid: string[][] }) {
 
 export const WordSearchFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>,
-  { initialConfig?: Partial<WordSearchConfig>; isNewTask?: boolean }
->(function WordSearchFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<WordSearchConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function WordSearchFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   // Джерело правди — EditorState (block-editing.ts): editor.words несе
   // blockId (null = "Нерозподілені") поряд з текстом/перекладом/картинкою/
   // аудіо слова; editor.blocks — назва/режим підказок/сітка кожного блоку.
@@ -317,6 +317,8 @@ export const WordSearchFields = forwardRef<
             className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
           />
         </div>
+
+        {pointsVisibilityCheckbox}
 
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input

@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -17,8 +17,8 @@ function emptySentence(): DragDropSentence {
 
 export const DragDropFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>,
-  { initialConfig?: Partial<DragDropConfig>; isNewTask?: boolean }
->(function DragDropFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<DragDropConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function DragDropFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [sentences, setSentences] = useState<DragDropSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
@@ -110,6 +110,7 @@ export const DragDropFields = forwardRef<
         description="Оцінювання і пояснення до лампочки"
         tone="points"
       >
+        {pointsVisibilityCheckbox}
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input
             type="checkbox"

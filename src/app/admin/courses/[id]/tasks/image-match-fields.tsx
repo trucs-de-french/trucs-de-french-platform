@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { ImageMatchConfig, ImageMatchItem } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -82,8 +82,8 @@ function ImageMatchItemRow({
 
 export const ImageMatchFields = forwardRef<
   ImportableFieldsHandle,
-  { initialConfig?: Partial<ImageMatchConfig> }
->(function ImageMatchFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<ImageMatchConfig>; pointsVisibilityCheckbox?: ReactNode }
+>(function ImageMatchFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
   const [items, setItems] = useState<ImageMatchItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
@@ -153,6 +153,12 @@ export const ImageMatchFields = forwardRef<
           compact
         />
       </ConstructorBlock>
+
+      {pointsVisibilityCheckbox && (
+        <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+          {pointsVisibilityCheckbox}
+        </ConstructorBlock>
+      )}
 
       <ConstructorBlock
         n={4}

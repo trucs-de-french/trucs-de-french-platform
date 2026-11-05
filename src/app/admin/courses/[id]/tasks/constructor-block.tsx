@@ -72,7 +72,7 @@ export function ConstructorBlock({
 export function ConstructorInnerPanel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`flex flex-col gap-3 rounded-2xl border border-[#ecdcab] bg-[#fffaf0] p-4 dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] ${className}`}
+      className={`flex flex-col gap-3 rounded-2xl border border-[#ecdcab] bg-[#fffaf0] py-[18px] px-5 dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] ${className}`}
     >
       {children}
     </div>

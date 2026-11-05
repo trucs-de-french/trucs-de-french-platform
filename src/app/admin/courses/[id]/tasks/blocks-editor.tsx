@@ -28,6 +28,7 @@ import {
 import { type DistributeMode } from "@/lib/exercises/build-blocks-config";
 import { hasAnyCategory, countCategories } from "@/lib/exercises/optimize-split";
 import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -261,7 +262,7 @@ export function BlocksEditor<TWord extends { word: string; category?: string }, 
         const warnings = wordsInBlock.length > 0 ? computeBlockWarnings(kind, wordKeys, block.grid as unknown as WordSearchEditorGrid | CrosswordEditorGrid | null) : [];
 
         return (
-          <div key={blockId} className="rounded-md border border-gray-200 p-2 dark:border-neutral-700">
+          <div key={blockId} className={`p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className={HINT_TEXT}>
                 Блок {i + 1} · {wordsInBlock.length} {wordsInBlock.length === 1 ? "слово" : "слів"}

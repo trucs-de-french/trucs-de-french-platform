@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { MultipleChoiceConfig, MultipleChoiceItem, MultipleChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -92,8 +92,8 @@ function emptyItem(): MultipleChoiceItem {
 
 export const MultipleChoiceFields = forwardRef<
   TypeSwitchHandle<MultipleChoiceConfig>,
-  { initialConfig?: Partial<MultipleChoiceConfig>; isNewTask?: boolean }
->(function MultipleChoiceFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<MultipleChoiceConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function MultipleChoiceFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [display, setDisplay] = useState<"buttons" | "dropdown">(
     initialConfig?.display ?? "buttons"
   );
@@ -237,6 +237,7 @@ export const MultipleChoiceFields = forwardRef<
         description="Оцінювання і пояснення до лампочки"
         tone="points"
       >
+        {pointsVisibilityCheckbox}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

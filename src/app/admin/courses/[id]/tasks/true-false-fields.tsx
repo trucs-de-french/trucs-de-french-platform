@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -10,8 +10,10 @@ import { ConstructorBlock } from "./constructor-block";
 
 export function TrueFalseFields({
   initialConfig,
+  pointsVisibilityCheckbox,
 }: {
   initialConfig?: Partial<TrueFalseConfig>;
+  pointsVisibilityCheckbox?: ReactNode;
 }) {
   const [statements, setStatements] = useState<TrueFalseStatement[]>(
     initialConfig?.statements?.length
@@ -69,6 +71,12 @@ export function TrueFalseFields({
           compact
         />
       </ConstructorBlock>
+
+      {pointsVisibilityCheckbox && (
+        <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+          {pointsVisibilityCheckbox}
+        </ConstructorBlock>
+      )}
 
       <ConstructorBlock
         n={4}

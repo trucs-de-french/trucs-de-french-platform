@@ -20,8 +20,14 @@
 // надійно переможе будь-який локальний px-2/px-3 лише на лівому боці, не
 // займаючи правий, — на відміну від py-* (та сама "родина", що місцевий
 // py-*, переможець непередбачуваний).
+// Задача "Constructor: ... white input fields in all blocks" — bg-white
+// додано тут явно (раніше поле просто прозоро показувало колір сторінки/
+// батьківського контейнера — на звичайному білому фоні сторінки це
+// виглядало ідентично, та на кольорових блоках конструктора (ConstructorBlock,
+// constructor-block.tsx) прозоре поле зливалося б із тонованим фоном
+// блоку): суцільний білий фон НЕЗАЛЕЖНО від фону, на якому це поле лежить.
 export const INPUT_BORDER =
-  "rounded-md border border-gray-200 pl-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
+  "rounded-md border border-gray-200 bg-white pl-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 
 // Той самий базовий стиль, лише жовта рамка — поле, яке task-validation.ts
 // вважає незаповненим (перевірка повноти вправи в конструкторі). Той самий

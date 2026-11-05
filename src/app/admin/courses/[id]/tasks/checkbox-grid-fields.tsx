@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2, AlertTriangle } from "lucide-react";
 import type { CheckboxGridConfig, CheckboxGridColumn, CheckboxGridRow } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -30,8 +30,8 @@ function columnNameWarning(label: string): string | null {
 
 export const CheckboxGridFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CheckboxGridConfig>,
-  { initialConfig?: Partial<CheckboxGridConfig> }
->(function CheckboxGridFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<CheckboxGridConfig>; pointsVisibilityCheckbox?: ReactNode }
+>(function CheckboxGridFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
   const [columns, setColumns] = useState<CheckboxGridColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -137,6 +137,12 @@ export const CheckboxGridFields = forwardRef<
           compact
         />
       </ConstructorBlock>
+
+      {pointsVisibilityCheckbox && (
+        <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+          {pointsVisibilityCheckbox}
+        </ConstructorBlock>
+      )}
 
       <ConstructorBlock
         n={4}

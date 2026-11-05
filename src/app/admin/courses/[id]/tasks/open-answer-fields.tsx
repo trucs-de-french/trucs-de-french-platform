@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -141,9 +141,11 @@ function OpenAnswerQuestionRow({
 export function OpenAnswerFields({
   initialConfig,
   isNewTask,
+  pointsVisibilityCheckbox,
 }: {
   initialConfig?: Partial<OpenAnswerConfig>;
   isNewTask?: boolean;
+  pointsVisibilityCheckbox?: ReactNode;
 }) {
   const [questions, setQuestions] = useState<OpenAnswerQuestion[]>(
     initialConfig?.questions?.length ? initialConfig.questions : [emptyQuestion()]
@@ -244,6 +246,7 @@ export function OpenAnswerFields({
         description="Оцінювання і пояснення до лампочки"
         tone="points"
       >
+        {pointsVisibilityCheckbox}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

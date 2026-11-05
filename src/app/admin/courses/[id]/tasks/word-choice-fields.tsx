@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { WordChoiceConfig, WordChoiceSentence, WordChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -69,8 +69,8 @@ function emptySentence(): WordChoiceSentence {
 
 export const WordChoiceFields = forwardRef<
   TypeSwitchHandle<WordChoiceConfig>,
-  { initialConfig?: Partial<WordChoiceConfig>; isNewTask?: boolean }
->(function WordChoiceFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<WordChoiceConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function WordChoiceFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [mode, setMode] = useState<"select" | "cross_out">(initialConfig?.mode ?? "select");
   const [sentences, setSentences] = useState<WordChoiceSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
@@ -245,6 +245,8 @@ export const WordChoiceFields = forwardRef<
             className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
           />
         </div>
+
+        {pointsVisibilityCheckbox}
 
         <label className="flex items-center gap-2 text-sm">
           <input

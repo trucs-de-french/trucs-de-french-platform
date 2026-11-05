@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { TableFillConfig, TableFillRow } from "@/lib/exercises/types";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
@@ -26,8 +26,13 @@ function emptyRow(): TableFillRow {
 
 export const TableFillFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<TableFillConfig>,
-  { initialConfig?: Partial<TableFillConfig>; isDelf?: boolean; isNewTask?: boolean }
->(function TableFillFields({ initialConfig, isDelf, isNewTask }, ref) {
+  {
+    initialConfig?: Partial<TableFillConfig>;
+    isDelf?: boolean;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+  }
+>(function TableFillFields({ initialConfig, isDelf, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [columnLabels, setColumnLabels] = useState<[string, string]>(
     initialConfig?.columnLabels ?? ["Французька", "Переклад"]
   );
@@ -105,13 +110,14 @@ export const TableFillFields = forwardRef<
         />
       </ConstructorBlock>
 
-      {!isDelf && (
+      {!isDelf ? (
         <ConstructorBlock
           n={3}
           title="Бали та підказки"
           description="Оцінювання і пояснення до лампочки"
           tone="points"
         >
+          {pointsVisibilityCheckbox}
           <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
             <input
               type="checkbox"
@@ -134,6 +140,17 @@ export const TableFillFields = forwardRef<
             />
           </ConstructorInnerPanel>
         </ConstructorBlock>
+      ) : (
+        // DELF-завдання не мають підказок узагалі (isDelf приховує чекбокс/
+        // легенду вище), але пілот "показувати бали заздалегідь" лишається
+        // чинним і для них — блок 3 тут існує РІВНО заради цього чекбокса,
+        // щоб він не лишався поза чотирма блоками (задача "Constructor:
+        // points-visibility checkbox inside block 3").
+        pointsVisibilityCheckbox && (
+          <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+            {pointsVisibilityCheckbox}
+          </ConstructorBlock>
+        )
       )}
 
       <ConstructorBlock

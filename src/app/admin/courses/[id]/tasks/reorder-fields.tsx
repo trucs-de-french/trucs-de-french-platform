@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
@@ -201,8 +201,8 @@ function ReorderSequenceBlock({
 // а не два окремі ref-и.
 export const ReorderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>,
-  { initialConfig?: Partial<ReorderConfig>; isNewTask?: boolean }
->(function ReorderFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<ReorderConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function ReorderFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [sequences, setSequences] = useState<ReorderSequence[]>(
     initialConfig?.sequences?.length ? initialConfig.sequences : [emptySequence()]
   );
@@ -343,6 +343,7 @@ export const ReorderFields = forwardRef<
         description="Оцінювання і пояснення до лампочки"
         tone="points"
       >
+        {pointsVisibilityCheckbox}
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input
             type="checkbox"

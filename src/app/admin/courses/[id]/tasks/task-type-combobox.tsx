@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TASK_TYPE_COLORS, TASK_TYPE_GROUPS, TASK_TYPE_DESCRIPTIONS } from "@/lib/exercises/task-type-meta";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
 import { Z_DROPDOWN } from "@/lib/z-layers";
+import { INPUT_BORDER } from "@/lib/input-styles";
 
 type Option = { value: string; label: string };
 type Item = Option & { description: string };
@@ -150,7 +151,7 @@ export function TaskTypeCombobox({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+        className={`${INPUT_BORDER} flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm`}
       >
         <span className="flex items-center gap-2">
           {selected && <TaskTypeIconBadge type={selected.value} size="sm" />}

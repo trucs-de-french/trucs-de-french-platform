@@ -732,6 +732,31 @@ export function TaskConfigFields({
   const errorProblems = problems.filter((p) => p.severity === "error");
   const hintProblems = problems.filter((p) => p.severity === "hint");
 
+  // Задача "Constructor: points-visibility checkbox inside block 3" —
+  // чекбокс тепер рендериться ВСЕРЕДИНІ блоку 3 ("Бали та підказки")
+  // кожного *-fields.tsx (одразу після поля "Бали за завдання", перед
+  // "Підказки зменшують бали"), а не окремо після всіх чотирьох блоків —
+  // сам JSX-вузол будується тут ОДИН раз (checked/onChange — той самий
+  // pointsVisible/setPointsVisible стан, що й раніше) і передається вниз
+  // пропом pointsVisibilityCheckbox у кожен компонент типу з
+  // POINTS_SUPPORTED_TASK_TYPES. null — тип без пілоту балів узагалі,
+  // прийнятий компонентами як "нічого не рендерити".
+  const pointsVisibilityCheckbox = isPointsSupportedTaskType(type) ? (
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        name="points_visible"
+        value="true"
+        id="points_visible"
+        checked={pointsVisible}
+        onChange={(e) => setPointsVisible(e.target.checked)}
+      />
+      <label htmlFor="points_visible" className={LABEL_TEXT}>
+        Показувати бали студенту заздалегідь (до виконання)
+      </label>
+    </div>
+  ) : null;
+
   return (
     <div
       ref={rootRef}
@@ -1045,6 +1070,7 @@ export function TaskConfigFields({
         <OpenAnswerFields
           initialConfig={configForType("open_answer") as Partial<OpenAnswerConfig>}
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1253,6 +1279,7 @@ export function TaskConfigFields({
               className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
             />
           </div>
+          {pointsVisibilityCheckbox}
           {!isDelfTask && (
             <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
               <input
@@ -1350,6 +1377,7 @@ export function TaskConfigFields({
             configForType("letter_gaps") as Partial<LetterGapsConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1362,6 +1390,7 @@ export function TaskConfigFields({
           }
           initialConfig={configForType("letter_rearrangement") as Partial<LetterRearrangementConfig>}
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1372,6 +1401,7 @@ export function TaskConfigFields({
             configForType("multiple_choice") as Partial<MultipleChoiceConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1382,6 +1412,7 @@ export function TaskConfigFields({
             configForType("word_choice") as Partial<WordChoiceConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1394,6 +1425,7 @@ export function TaskConfigFields({
             configForType("word_search") as Partial<WordSearchConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1406,6 +1438,7 @@ export function TaskConfigFields({
             configForType("crossword") as Partial<CrosswordConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1413,11 +1446,15 @@ export function TaskConfigFields({
         <KaraokeFields
           ref={typeSwitchRef as RefObject<TypeSwitchHandle<KaraokeConfig> | null>}
           initialConfig={configForType("karaoke") as Partial<KaraokeConfig>}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
       {type === "true_false" && (
-        <TrueFalseFields initialConfig={configForType("true_false") as Partial<TrueFalseConfig>} />
+        <TrueFalseFields
+          initialConfig={configForType("true_false") as Partial<TrueFalseConfig>}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+        />
       )}
 
       {IMPORT_ENABLED_TYPES.includes(type) && (
@@ -1443,6 +1480,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("matching") as Partial<MatchingConfig>
           }
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1452,6 +1490,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("listening") as Partial<ListeningConfig>
           }
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1476,6 +1515,7 @@ export function TaskConfigFields({
             configForType("reorder") as Partial<ReorderConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1486,6 +1526,7 @@ export function TaskConfigFields({
             configForType("drag_drop") as Partial<DragDropConfig>
           }
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1496,6 +1537,7 @@ export function TaskConfigFields({
             configForType("sort_columns") as Partial<SortColumnsConfig>
           }
           defaultHintsEnabled={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1529,11 +1571,16 @@ export function TaskConfigFields({
           }
           isDelf={isDelfTask}
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
       {type === "image_match" && (
-        <ImageMatchFields ref={importRef} initialConfig={configForType("image_match") as Partial<ImageMatchConfig>} />
+        <ImageMatchFields
+          ref={importRef}
+          initialConfig={configForType("image_match") as Partial<ImageMatchConfig>}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+        />
       )}
 
       {type === "checkbox_grid" && (
@@ -1542,6 +1589,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("checkbox_grid") as Partial<CheckboxGridConfig>
           }
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
@@ -1550,31 +1598,11 @@ export function TaskConfigFields({
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>) | null>}
           initialConfig={configForType("chronological_order") as Partial<ChronologicalOrderConfig>}
           isNewTask={isNewTask}
+          pointsVisibilityCheckbox={pointsVisibilityCheckbox}
         />
       )}
 
       </div>
-
-      {/* Пілот системи балів — один спільний чекбокс для всіх типів, що вже
-          рахують pointsEarned/pointsPossible (POINTS_SUPPORTED_TASK_TYPES),
-          поза чотирма блоками (generic-поле без явного місця серед них,
-          рендериться для багатьох типів відразу — не всередині конкретного
-          *-fields.tsx). */}
-      {isPointsSupportedTaskType(type) && (
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="points_visible"
-            value="true"
-            id="points_visible"
-            checked={pointsVisible}
-            onChange={(e) => setPointsVisible(e.target.checked)}
-          />
-          <label htmlFor="points_visible" className={LABEL_TEXT}>
-            Показувати бали студенту заздалегідь (до виконання)
-          </label>
-        </div>
-      )}
     </div>
   );
 }

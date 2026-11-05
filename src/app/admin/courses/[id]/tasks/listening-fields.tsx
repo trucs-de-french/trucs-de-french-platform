@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { ListeningConfig, ListeningQuestion, ListeningOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -94,8 +94,8 @@ function emptyQuestion(): ListeningQuestion {
 
 export const ListeningFields = forwardRef<
   TypeSwitchHandle<ListeningConfig>,
-  { initialConfig?: Partial<ListeningConfig> }
->(function ListeningFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<ListeningConfig>; pointsVisibilityCheckbox?: ReactNode }
+>(function ListeningFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
   const [questions, setQuestions] = useState<ListeningQuestion[]>(
     initialConfig?.questions?.length ? initialConfig.questions : [emptyQuestion()]
   );
@@ -213,6 +213,12 @@ export const ListeningFields = forwardRef<
           compact
         />
       </ConstructorBlock>
+
+      {pointsVisibilityCheckbox && (
+        <ConstructorBlock n={3} title="Бали та підказки" description="Оцінювання" tone="points">
+          {pointsVisibilityCheckbox}
+        </ConstructorBlock>
+      )}
 
       <ConstructorBlock
         n={4}

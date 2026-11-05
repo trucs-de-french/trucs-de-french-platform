@@ -71,7 +71,7 @@ export function InstructionsRichTextField({
     },
     editorProps: {
       attributes: {
-        class: `rich-text rounded-md border px-2 py-1.5 focus:outline-none ${
+        class: `rich-text rounded-md border bg-white px-2 py-1.5 focus:outline-none dark:bg-neutral-900 ${
           compact ? "min-h-12 text-xs" : "min-h-16 text-sm"
         }`,
       },

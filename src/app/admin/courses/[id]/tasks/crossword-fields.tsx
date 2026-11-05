@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord } from "@/lib/exercises/types";
 import { buildCrosswordSolution } from "@/lib/exercises/crossword-grid";
@@ -228,8 +228,8 @@ function CrosswordPreview({
 
 export const CrosswordFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>,
-  { initialConfig?: Partial<CrosswordConfig>; isNewTask?: boolean }
->(function CrosswordFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<CrosswordConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function CrosswordFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   // Той самий принцип, що word-search-fields.tsx (ЕТАП B/3) — EditorState
   // (block-editing.ts) — джерело правди, blockId на кожному слові.
   const [editor, setEditor] = useState<CrosswordEditorState>(() =>
@@ -374,6 +374,8 @@ export const CrosswordFields = forwardRef<
             className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
           />
         </div>
+
+        {pointsVisibilityCheckbox}
 
         <label className={`flex items-center gap-2 ${LABEL_TEXT}`}>
           <input

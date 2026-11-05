@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
@@ -133,8 +133,8 @@ function ChronologicalOrderItemRow({
 
 export const ChronologicalOrderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>,
-  { initialConfig?: Partial<ChronologicalOrderConfig>; isNewTask?: boolean }
->(function ChronologicalOrderFields({ initialConfig, isNewTask }, ref) {
+  { initialConfig?: Partial<ChronologicalOrderConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
+>(function ChronologicalOrderFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
   const [mode, setMode] = useState<"image" | "text" | "mixed">(initialConfig?.mode ?? "image");
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
@@ -257,6 +257,8 @@ export const ChronologicalOrderFields = forwardRef<
             className={`${INPUT_BORDER} px-2 py-2 text-sm`}
           />
         </div>
+
+        {pointsVisibilityCheckbox}
 
         <label className="flex items-center gap-2 text-sm">
           <input

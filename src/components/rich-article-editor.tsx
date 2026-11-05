@@ -846,7 +846,7 @@ export function RichArticleEditor({
           box-sizing:content-box у .rich-text--article (globals.css) рахував
           46rem рівно для текстового контенту, без додавання px-3/border
           поверх. */}
-      <div className="rounded-b-md border px-3 py-2">
+      <div className="rounded-b-md border bg-white px-3 py-2 dark:bg-neutral-900">
         <EditorContent editor={editor} />
       </div>
 
