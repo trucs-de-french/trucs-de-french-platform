@@ -238,6 +238,25 @@ export function ReorderExercise({
   const [orders, setOrders] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
   );
+  // Задача "Lettres en désordre / Mise en ordre: fix the unanswered-items
+  // confirmation not appearing" — той самий корінь, що letter-
+  // rearrangement.tsx: isSequenceUntouched нижче раніше звіряв orders[id]
+  // (застиглий при монтуванні) проти seq.items, прочитаного НАЖИВО з
+  // пропу config на кожен викlik. config не стабільний на весь час життя
+  // компонента — submitBlock нижче викликає router.refresh() після
+  // кожної перевірки блоку (і будь-яка ІНША задача на тій самій сторінці
+  // теж може його викликати), Next.js перевиконує серверний компонент,
+  // sanitizeReorder (sanitize.ts) генерує НОВИЙ shuffle() для ВСІХ
+  // послідовностей вправи. orders переживає такий ре-рендер незмінним, а
+  // жива seq.items — ні: справді недоторкані речення починають
+  // порівнюватись проти нового випадкового порядку й помилково
+  // визначаються як "торкнуті" — singleUnanswered/activeBlockUnanswered
+  // падають до 0, бар підтвердження не з'являється. Фікс — той самий:
+  // заморожуємо початковий порядок окремим lazy useState (той самий
+  // життєвий цикл, що orders), звіряємо лише проти нього.
+  const [initialOrders] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(config.sequences.map((s) => [s.id, s.items]))
+  );
   const unevenFlags = useMemo(() => unevenPointsFlags(config.sequences.map((s) => s.points)), [config.sequences]);
   const showPointsTabById = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -325,16 +344,24 @@ export function ReorderExercise({
   const detail = single.result?.detail as ReorderDetail | undefined;
   const singleLocked = !!single.result;
 
-  // Задача "Exercises: show the unanswered-items confirmation before
-  // checking in every task type" — reorder не має "порожнього" елемента
-  // (кожне речення завжди тримає ВСІ свої слова, лише перемішані), тож
   // "незаповнено" тут означає "студент ще не торкався порядку цього
-  // речення" — orders[id] і досі буквально збігається з початковим
-  // seq.items (той самий принцип, що isWordUntouched у
-  // letter-rearrangement.tsx).
+  // речення" — orders[id] і досі буквально збігається з ЗАМОРОЖЕНИМ
+  // initialOrders[id] (не живим seq.items — див. коментар над
+  // initialOrders), той самий принцип, що isWordUntouched у
+  // letter-rearrangement.tsx.
+  function isSequenceChangeable(seq: PublicSequence): boolean {
+    const baseline = initialOrders[seq.id] ?? seq.items;
+    return baseline.length > 1 && baseline.some((v) => v !== baseline[0]);
+  }
   function isSequenceUntouched(seq: PublicSequence): boolean {
-    const current = orders[seq.id] ?? seq.items;
-    return current.length === seq.items.length && current.every((v, i) => v === seq.items[i]);
+    // Речення з ОДНИМ словом чи з усіма однаковими словами — студент
+    // фізично не може зробити його "торкнутим" жодним драгом/кліком
+    // (перестановка виглядає ідентично), тож не рахуємо його взагалі —
+    // той самий принцип, що isWordChangeable у letter-rearrangement.tsx.
+    if (!isSequenceChangeable(seq)) return false;
+    const baseline = initialOrders[seq.id] ?? seq.items;
+    const current = orders[seq.id] ?? baseline;
+    return current.length === baseline.length && current.every((v, i) => v === baseline[i]);
   }
   const singleCheckConfirm = useCheckConfirm();
   const singleUnanswered = useMemo(

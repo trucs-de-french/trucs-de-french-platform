@@ -67,6 +67,27 @@ export function LetterRearrangementExercise({
   // matching.tsx.
   const { t, lang } = useT();
   const [orders, setOrders] = useState<string[][]>(() => config.words.map((w) => w.shuffledLetters));
+  // Задача "Lettres en désordre / Mise en ordre: fix the unanswered-items
+  // confirmation not appearing" — КОРІНЬ ПРОБЛЕМИ: isWordUntouched нижче
+  // раніше звіряв orders[wi] (застиглий у useState-ініціалізаторі, читається
+  // РІВНО ОДИН раз при монтуванні) з config.words[wi].shuffledLetters,
+  // прочитаним НАЖИВО з пропу config на кожен викlik. Пропс config не
+  // гарантовано стабільний на весь час життя компонента: submitBlock нижче
+  // викликає router.refresh() після кожної перевірки блоку — Next.js
+  // перевиконує серверний компонент сторінки, sanitizeConfigForStudent
+  // (sanitize.ts) генерує НОВИЙ shuffle() для ВСІХ слів вправи (не лише
+  // перевіреного блоку), і ця сторінка може містити кілька задач — router.
+  // refresh() БУДЬ-ЯКОЇ сусідньої задачі на тій самій сторінці теж змінює
+  // config ЦІЄЇ вправи. orders (студентський стан) переживає такий
+  // ре-рендер незмінним, а жива shuffledLetters — ні: усі СПРАВДІ недоторкані
+  // слова починають порівнюватись проти НОВОГО випадкового shuffle і
+  // помилково визначатись як "торкнуті" (щойно config.words[wi].
+  // shuffledLetters більше не дорівнює orders[wi]) — unansweredCount падає
+  // до 0, і бар підтвердження просто не з'являється. Фікс: заморожуємо
+  // ПОЧАТКОВИЙ shuffle в тому самому lazy useState (той самий життєвий
+  // цикл, що orders — ОДИН раз при монтуванні, ІГНОРУЄ подальші зміни
+  // config), і звіряємо orders лише проти ЦЬОГО замороженого знімка.
+  const [initialShuffle] = useState<string[][]>(() => config.words.map((w) => w.shuffledLetters));
   const [lockedCounts, setLockedCounts] = useState<number[]>(() => config.words.map(() => 0));
   const [hintedWordIndices, setHintedWordIndices] = useState<Set<number>>(new Set());
   const [hintLoading, setHintLoading] = useState<Set<number>>(new Set());
@@ -86,18 +107,28 @@ export function LetterRearrangementExercise({
     setOrders((prev) => prev.map((o, wi) => (wi === wordIndex ? next : o)));
   }
 
-  // Задача "Exercises: show the unanswered-items confirmation before
-  // checking in every task type" — letter_rearrangement не має "порожньої"
-  // клітинки (кожна картка завжди тримає ВСІ літери слова, лише
-  // перемішані), тож "незаповнене" тут означає "студент ще не торкався
-  // порядку": масив orders[wi] і досі буквально той самий, що початковий
-  // shuffledLetters (елемент-у-елемент). Один torkh, що випадково повернув
-  // той самий порядок, теоретично лишився б "untouched" — прийнятний
+  // "незаповнене" тут означає "студент ще не торкався порядку": orders[wi]
+  // і досі буквально той самий, що ЗАМОРОЖЕНИЙ початковий shuffle
+  // (initialShuffle вище, не живий config.words[wi].shuffledLetters — див.
+  // коментар над initialShuffle). Один torkh, що випадково повернув той
+  // самий порядок, теоретично лишився б "untouched" — прийнятний
   // компроміс, той самий принцип, що задача явно задає.
   function isWordUntouched(wi: number): boolean {
-    const shuffled = config.words[wi].shuffledLetters;
+    // Слово, де ЖОДНА перестановка візуально відрізняється від початкової
+    // (одна літера, чи всі літери однакові — "AAAA") — студент фізично не
+    // може зробити його "торкнутим" жодним драгом/кліком, тож не рахуємо
+    // його в unansweredCount взагалі (ані недоторканим, ані торкнутим):
+    // інакше воно або вічно накручувало б лічильник, або студент не мав би
+    // способу "закрити" попередження про нього.
+    if (!isWordChangeable(wi)) return false;
+    const baseline = initialShuffle[wi];
     const current = orders[wi];
-    return current.length === shuffled.length && current.every((v, i) => v === shuffled[i]);
+    return current.length === baseline.length && current.every((v, i) => v === baseline[i]);
+  }
+
+  function isWordChangeable(wi: number): boolean {
+    const letters = initialShuffle[wi];
+    return letters.length > 1 && letters.some((l) => l !== letters[0]);
   }
 
   async function applyHint(wi: number) {
