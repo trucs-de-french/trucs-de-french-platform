@@ -6,6 +6,7 @@ import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
 import { parseImageFocus, withImageFocus } from "@/lib/image-focus";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { Z_MODAL } from "@/lib/z-layers";
+import { ICON_BUTTON, ICON_BUTTON_ACTIVE } from "@/lib/button-styles";
 
 const PREVIEW_MAX = 240;
 const EXAMPLE_SIZE = 64;
@@ -48,13 +49,9 @@ export function ImageFocusButton({ value, onChange }: { value: string; onChange:
         onClick={() => setOpen((v) => !v)}
         aria-label="Точка фокусу картинки"
         title="Точка фокусу картинки"
-        className={`inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 ${
-          hasFocus
-            ? "text-brand"
-            : "text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-        }`}
+        className={`${ICON_BUTTON} ${ICON_BUTTON_ACTIVE}`}
       >
-        <Crosshair size={16} />
+        <Crosshair size={20} />
       </button>
 
       {open && (
@@ -72,9 +69,10 @@ export function ImageFocusButton({ value, onChange }: { value: string; onChange:
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Закрити"
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                title="Закрити"
+                className={ICON_BUTTON}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 

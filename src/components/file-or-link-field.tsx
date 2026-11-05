@@ -5,6 +5,7 @@ import { Link2 } from "lucide-react";
 import { FileUpload } from "./file-upload";
 import { ImageFocusButton } from "./image-focus-button";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { ICON_BUTTON, ICON_BUTTON_ACTIVE } from "@/lib/button-styles";
 
 type FileOrLinkFieldProps =
   | {
@@ -48,6 +49,11 @@ type FileOrLinkFieldProps =
 export function useFileOrLink(props: FileOrLinkFieldProps): { icons: ReactNode; input: ReactNode } {
   const initialValue = props.mode === "controlled" ? props.value : (props.defaultValue ?? "");
   const [showUrl, setShowUrl] = useState(() => Boolean(initialValue));
+  // "Значення вже прикріплене" — для controlled живе з реактивного
+  // props.value (посилання/картинка/аудіо, уже записане в стан батька), для
+  // mode="name" (неконтрольоване поле) лишається початковим значенням при
+  // монтуванні — той самий компроміс, що вже showUrl вище.
+  const hasValue = props.mode === "controlled" ? Boolean(props.value) : Boolean(initialValue);
 
   const icons = (
     <div className="flex items-center gap-1">
@@ -56,13 +62,9 @@ export function useFileOrLink(props: FileOrLinkFieldProps): { icons: ReactNode; 
         onClick={() => setShowUrl((v) => !v)}
         aria-label={showUrl ? "Сховати поле посилання" : "Вставити посилання"}
         title={showUrl ? "Сховати посилання" : "Вставити посилання"}
-        className={`inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 ${
-          showUrl
-            ? "text-brand"
-            : "text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-        }`}
+        className={`${ICON_BUTTON} ${hasValue ? ICON_BUTTON_ACTIVE : ""}`}
       >
-        <Link2 size={16} />
+        <Link2 size={20} />
       </button>
       {props.mode === "controlled" ? (
         <FileUpload kind={props.kind} variant="icon" onUploaded={props.onChange} />

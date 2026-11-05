@@ -11,7 +11,7 @@ import { useYoutubePlayer } from "@/lib/youtube-player";
 import { extractYoutubeId } from "@/lib/video";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
-import { BUTTON_SECONDARY_SM } from "@/lib/button-styles";
+import { BUTTON_SECONDARY_SM, ICON_BUTTON, ICON_BUTTON_DANGER } from "@/lib/button-styles";
 import { ConstructorBlock, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 type EditableLine = KaraokeLine & { id: string; timeText: string; endTimeText: string };
@@ -829,9 +829,9 @@ export const KaraokeFields = forwardRef<
                 disabled={!videoId || !player.isReady}
                 aria-label="Відтворити цей рядок від початку до кінця"
                 title="Відтворити цей рядок від початку до кінця"
-                className="rounded p-1.5 text-neutral-500 hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-400 dark:hover:bg-neutral-800"
+                className={ICON_BUTTON}
               >
-                <Play size={16} />
+                <Play size={20} />
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -847,9 +847,9 @@ export const KaraokeFields = forwardRef<
                 onClick={() => removeLine(line.id)}
                 aria-label="Видалити рядок"
                 title="Видалити"
-                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                className={ICON_BUTTON_DANGER}
               >
-                <Trash2 size={16} />
+                <Trash2 size={20} />
               </button>
             </div>
           </div>

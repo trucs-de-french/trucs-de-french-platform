@@ -112,6 +112,36 @@ export const STUDENT_LINK_BUTTON =
 export const STUDENT_TOGGLE_HEADER_BUTTON =
   "font-heading flex cursor-pointer items-center gap-2 rounded text-left transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:hover:text-brand";
 
+// Задача "Constructor: make action icons clearly visible" — спільний стиль
+// для ДРІБНИХ icon-only кнопок конструктора завдання (посилання/картинка/
+// аудіо-іконки file-or-link-field.tsx, фокус-кнопка картинки, видалити/
+// перемістити/додати елемент картки слова/питання, шеврони згортання блоку
+// в blocks-editor.tsx, кнопки панелі InstructionsRichTextField/
+// RichArticleEditor) — раніше кожна малювалась окремим блідо-сірим
+// text-neutral-400, губилась на тонованому фоні кольорових блоків
+// конструктора (ConstructorBlock, constructor-block.tsx). min-h-9/min-w-9
+// (36px) — мінімальна зона дотику з задачі; max-md:min-h-11/min-w-11 (44px)
+// — більша зона на мобільних/тач (той самий прийом, що вже
+// STUDENT_BUTTON_SECONDARY_TOUCH вище). rounded-[10px] — радіус саме з
+// задачі (не rounded-md=6px і не rounded-lg=8px).
+export const ICON_BUTTON =
+  "inline-flex shrink-0 items-center justify-center rounded-[10px] min-h-9 min-w-9 max-md:min-h-11 max-md:min-w-11 bg-transparent text-[#3b36c4] transition-colors hover:bg-[#e8eafc] hover:text-[#2f2c6b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4b46da] disabled:opacity-35 disabled:pointer-events-none dark:text-[#a8a4ff] dark:hover:bg-[rgba(168,164,255,0.16)] dark:hover:text-[#c7c4ff]";
+
+// Той самий розмір/зона дотику, що ICON_BUTTON — лише для кнопок
+// видалення: indigo за замовчуванням (як і решта іконок), червоний
+// (#c62828 на #fdecec) лише на hover/focus, щоб "видалити" впізнавалось як
+// небезпечна дія саме в момент наведення/фокусу, а не постійно впадало в
+// очі червоним серед решти indigo-іконок рядка.
+export const ICON_BUTTON_DANGER =
+  "inline-flex shrink-0 items-center justify-center rounded-[10px] min-h-9 min-w-9 max-md:min-h-11 max-md:min-w-11 bg-transparent text-[#3b36c4] transition-colors hover:bg-[#fdecec] hover:text-[#c62828] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c62828] disabled:opacity-35 disabled:pointer-events-none dark:text-[#a8a4ff] dark:hover:bg-[rgba(198,40,40,0.2)] dark:hover:text-[#ff8a80]";
+
+// Домальовується ПОВЕРХ ICON_BUTTON (не замість) для стану "значення вже
+// задане" (посилання/картинка/аудіо вже прикріплені) — залита indigo-
+// підсвітка з рамкою, щоб учителька одразу бачила, яке медіа вже
+// прикріплене, без наведення миші.
+export const ICON_BUTTON_ACTIVE =
+  "bg-[#e8eafc] border-[1.5px] border-[#4b46da] text-[#2f2c6b] dark:bg-[rgba(168,164,255,0.16)] dark:border-[#a8a4ff] dark:text-[#c7c4ff]";
+
 // Незворотна дія (видалити назавжди).
 export const BUTTON_DANGER =
   "font-heading rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50 disabled:opacity-50";

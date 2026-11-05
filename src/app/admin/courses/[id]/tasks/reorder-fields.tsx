@@ -1,5 +1,6 @@
 "use client";
 
+import { ICON_BUTTON_DANGER } from "@/lib/button-styles";
 import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
@@ -101,9 +102,9 @@ function ReorderSequenceBlock({
             onClick={onRemoveSequence}
             aria-label="Видалити послідовність"
             title="Видалити послідовність"
-            className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+            className={ICON_BUTTON_DANGER}
           >
-            <Trash2 size={16} />
+            <Trash2 size={20} />
           </button>
         </div>
       </div>
@@ -178,9 +179,9 @@ function ReorderSequenceBlock({
               onClick={() => onRemoveItem(i)}
               aria-label="Видалити елемент"
               title="Видалити"
-              className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+              className={ICON_BUTTON_DANGER}
             >
-              <Trash2 size={16} />
+              <Trash2 size={20} />
             </button>
           </div>
         ))}

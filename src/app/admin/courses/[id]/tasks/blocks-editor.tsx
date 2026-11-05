@@ -27,7 +27,7 @@ import {
 } from "@/lib/exercises/block-editing";
 import { type DistributeMode } from "@/lib/exercises/build-blocks-config";
 import { hasAnyCategory, countCategories } from "@/lib/exercises/optimize-split";
-import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM } from "@/lib/button-styles";
+import { BUTTON_SECONDARY_SM, BUTTON_DANGER_SM, ICON_BUTTON } from "@/lib/button-styles";
 import { CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -274,18 +274,20 @@ export function BlocksEditor<TWord extends { word: string; category?: string }, 
                   onClick={() => onChange(moveBlock(state, blockId, "up"))}
                   disabled={i === 0}
                   aria-label="Перемістити блок вище"
-                  className="rounded p-1 text-neutral-500 hover:text-blue-700 disabled:opacity-30 dark:text-neutral-400"
+                  title="Перемістити блок вище"
+                  className={ICON_BUTTON}
                 >
-                  <ChevronUp size={14} />
+                  <ChevronUp size={20} />
                 </button>
                 <button
                   type="button"
                   onClick={() => onChange(moveBlock(state, blockId, "down"))}
                   disabled={i === state.blockOrder.length - 1}
                   aria-label="Перемістити блок нижче"
-                  className="rounded p-1 text-neutral-500 hover:text-blue-700 disabled:opacity-30 dark:text-neutral-400"
+                  title="Перемістити блок нижче"
+                  className={ICON_BUTTON}
                 >
-                  <ChevronDown size={14} />
+                  <ChevronDown size={20} />
                 </button>
               </div>
             </div>

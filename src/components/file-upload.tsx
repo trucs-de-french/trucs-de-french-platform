@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Paperclip, Image as ImageIcon, Volume2 } from "lucide-react";
+import { ICON_BUTTON } from "@/lib/button-styles";
 
 type UploadKind = "audio" | "image" | "html" | "media" | "subtitle";
 
@@ -255,15 +256,15 @@ export function FileUpload({
         aria-label={variant === "icon" ? LABEL_BY_KIND[kind] : undefined}
         className={
           variant === "icon"
-            ? `inline-flex w-fit shrink-0 items-center justify-center rounded p-1.5 text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 ${
-                status === "uploading" || status === "hashing" ? "pointer-events-none opacity-50" : "cursor-pointer"
+            ? `${ICON_BUTTON} ${
+                status === "uploading" || status === "hashing" ? "pointer-events-none opacity-35" : "cursor-pointer"
               }`
             : `w-fit rounded-md bg-neutral-100 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 ${
                 status === "uploading" || status === "hashing" ? "pointer-events-none opacity-50" : "cursor-pointer"
               }`
         }
       >
-        {variant === "icon" ? <UploadIcon size={16} /> : LABEL_BY_KIND[kind]}
+        {variant === "icon" ? <UploadIcon size={20} /> : LABEL_BY_KIND[kind]}
       </label>
       {status === "hashing" && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">

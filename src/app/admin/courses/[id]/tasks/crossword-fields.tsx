@@ -1,5 +1,6 @@
 "use client";
 
+import { ICON_BUTTON_DANGER } from "@/lib/button-styles";
 import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { CrosswordConfig, CrosswordWord } from "@/lib/exercises/types";
@@ -156,9 +157,9 @@ function CrosswordWordRow({
           onClick={onRemove}
           aria-label="Видалити слово"
           title="Видалити"
-          className="shrink-0 rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+          className={`shrink-0 ${ICON_BUTTON_DANGER}`}
         >
-          <Trash2 size={16} />
+          <Trash2 size={20} />
         </button>
       </div>
 

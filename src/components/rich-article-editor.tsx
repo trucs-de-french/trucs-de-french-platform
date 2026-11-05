@@ -31,6 +31,7 @@ import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
 import { Z_MODAL, Z_DROPDOWN } from "@/lib/z-layers";
+import { ICON_BUTTON, ICON_BUTTON_ACTIVE, ICON_BUTTON_DANGER } from "@/lib/button-styles";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -612,9 +613,9 @@ export function RichArticleEditor({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`rounded px-2 py-1 text-xs font-bold ${
-              editor.isActive("bold") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Жирний"
+            title="Жирний"
+            className={`${ICON_BUTTON} text-sm font-bold ${editor.isActive("bold") ? ICON_BUTTON_ACTIVE : ""}`}
           >
             B
           </button>
@@ -622,9 +623,9 @@ export function RichArticleEditor({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`rounded px-2 py-1 text-xs italic ${
-              editor.isActive("italic") ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Курсив"
+            title="Курсив"
+            className={`${ICON_BUTTON} text-sm italic ${editor.isActive("italic") ? ICON_BUTTON_ACTIVE : ""}`}
           >
             I
           </button>
@@ -634,23 +635,30 @@ export function RichArticleEditor({
             <button
               key={c.value}
               type="button"
+              aria-label={c.label}
               title={c.label}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => editor.chain().focus().setHighlight({ color: c.value }).run()}
-              style={{ backgroundColor: c.value }}
-              className={`h-5 w-5 rounded border-2 ${
-                editor.isActive("highlight", { color: c.value })
-                  ? "border-black dark:border-white"
-                  : "border-transparent"
-              }`}
-            />
+              className={ICON_BUTTON}
+            >
+              <span
+                aria-hidden
+                style={{ backgroundColor: c.value }}
+                className={`h-5 w-5 rounded border-2 ${
+                  editor.isActive("highlight", { color: c.value })
+                    ? "border-black dark:border-white"
+                    : "border-transparent"
+                }`}
+              />
+            </button>
           ))}
           <button
             type="button"
+            aria-label="Прибрати підсвітку"
             title="Прибрати підсвітку"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().unsetHighlight().run()}
-            className="rounded px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            className={`${ICON_BUTTON} text-sm`}
           >
             ✕
           </button>
@@ -659,9 +667,9 @@ export function RichArticleEditor({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`rounded px-2 py-1 text-xs ${
-              editor.isActive("heading", { level: 2 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Заголовок 2"
+            title="Заголовок 2"
+            className={`${ICON_BUTTON} text-sm ${editor.isActive("heading", { level: 2 }) ? ICON_BUTTON_ACTIVE : ""}`}
           >
             H2
           </button>
@@ -669,9 +677,9 @@ export function RichArticleEditor({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`rounded px-2 py-1 text-xs ${
-              editor.isActive("heading", { level: 3 }) ? "bg-neutral-200 dark:bg-neutral-700" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Заголовок 3"
+            title="Заголовок 3"
+            className={`${ICON_BUTTON} text-sm ${editor.isActive("heading", { level: 3 }) ? ICON_BUTTON_ACTIVE : ""}`}
           >
             H3
           </button>
@@ -732,13 +740,11 @@ export function RichArticleEditor({
               aria-label={label}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setTextAlign(value)}
-              className={`rounded px-2 py-1 ${
-                (paragraphSelection?.textAlign ?? "left") === value
-                  ? "bg-neutral-200 dark:bg-neutral-700"
-                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className={`${ICON_BUTTON} ${
+                (paragraphSelection?.textAlign ?? "left") === value ? ICON_BUTTON_ACTIVE : ""
               }`}
             >
-              <Icon size={14} />
+              <Icon size={20} />
             </button>
           ))}
           <button
@@ -829,12 +835,13 @@ export function RichArticleEditor({
               </button>
               <button
                 type="button"
+                aria-label="Видалити картинку"
                 title="Видалити картинку"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => editor.chain().focus().deleteSelection().run()}
-                className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                className={ICON_BUTTON_DANGER}
               >
-                <Trash2 size={14} />
+                <Trash2 size={20} />
               </button>
             </>
           )}
@@ -865,9 +872,9 @@ export function RichArticleEditor({
                 type="button"
                 onClick={() => setImagePopoverOpen(false)}
                 aria-label="Закрити"
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                className={ICON_BUTTON}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
             {imagePickerIcons}
@@ -924,9 +931,9 @@ export function RichArticleEditor({
                   onClick={closeFocusPopover}
                   aria-label="Готово"
                   title="Готово"
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                  className={ICON_BUTTON}
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 
@@ -1013,9 +1020,9 @@ export function RichArticleEditor({
                   onClick={closeFormatPopover}
                   aria-label="Готово"
                   title="Готово"
-                  className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                  className={ICON_BUTTON}
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 

@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { LABEL_TEXT } from "@/lib/typography-styles";
+import { ICON_BUTTON, ICON_BUTTON_ACTIVE } from "@/lib/button-styles";
 
 const HIGHLIGHT_COLORS: { value: string; label: string }[] = [
   { value: "#fef08a", label: "Жовтий" },
@@ -88,22 +89,18 @@ export function InstructionsRichTextField({
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`rounded px-2 py-0.5 text-xs font-bold ${
-              editor.isActive("bold")
-                ? "bg-neutral-200 dark:bg-neutral-700"
-                : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Жирний"
+            title="Жирний"
+            className={`${ICON_BUTTON} text-sm font-bold ${editor.isActive("bold") ? ICON_BUTTON_ACTIVE : ""}`}
           >
             B
           </button>
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`rounded px-2 py-0.5 text-xs italic ${
-              editor.isActive("italic")
-                ? "bg-neutral-200 dark:bg-neutral-700"
-                : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            }`}
+            aria-label="Курсив"
+            title="Курсив"
+            className={`${ICON_BUTTON} text-sm italic ${editor.isActive("italic") ? ICON_BUTTON_ACTIVE : ""}`}
           >
             I
           </button>
@@ -112,21 +109,28 @@ export function InstructionsRichTextField({
             <button
               key={c.value}
               type="button"
+              aria-label={c.label}
               title={c.label}
               onClick={() => editor.chain().focus().setHighlight({ color: c.value }).run()}
-              style={{ backgroundColor: c.value }}
-              className={`h-4 w-4 rounded border-2 ${
-                editor.isActive("highlight", { color: c.value })
-                  ? "border-black dark:border-white"
-                  : "border-transparent"
-              }`}
-            />
+              className={`${ICON_BUTTON}`}
+            >
+              <span
+                aria-hidden
+                style={{ backgroundColor: c.value }}
+                className={`h-4 w-4 rounded border-2 ${
+                  editor.isActive("highlight", { color: c.value })
+                    ? "border-black dark:border-white"
+                    : "border-transparent"
+                }`}
+              />
+            </button>
           ))}
           <button
             type="button"
+            aria-label="Прибрати підсвітку"
             title="Прибрати підсвітку"
+            className={`${ICON_BUTTON} text-sm`}
             onClick={() => editor.chain().focus().unsetHighlight().run()}
-            className="rounded px-2 py-0.5 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             ✕
           </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ICON_BUTTON_DANGER } from "@/lib/button-styles";
 import { useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { TrueFalseConfig, TrueFalseStatement } from "@/lib/exercises/types";
@@ -117,9 +118,9 @@ export function TrueFalseFields({
                 onClick={() => removeStatement(s.id)}
                 aria-label="Видалити твердження"
                 title="Видалити"
-                className="rounded p-1.5 text-neutral-400 hover:text-red-600 dark:text-neutral-500 dark:hover:text-red-400"
+                className={ICON_BUTTON_DANGER}
               >
-                <Trash2 size={16} />
+                <Trash2 size={20} />
               </button>
             </div>
           ))}
