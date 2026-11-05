@@ -909,7 +909,7 @@ export function TaskConfigFields({
       </ConstructorBlock>
 
       {type === "game" && (
-        <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+        <ConstructorBlock n={4} title="Варіанти вправи" description="Зміст і налаштування вправи" tone="content">
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>Платформа гри</label>
             <select
@@ -938,11 +938,11 @@ export function TaskConfigFields({
               className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
-        </div>
+        </ConstructorBlock>
       )}
 
       {type === "essay_check" && (
-        <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+        <ConstructorBlock n={4} title="Варіанти вправи" description="Рівень DELF, завдання та критерії перевірки" tone="content">
           <div className="flex gap-4">
             <div className="flex flex-1 flex-col gap-1">
               <label className={LABEL_TEXT}>
@@ -1038,7 +1038,7 @@ export function TaskConfigFields({
               </div>
             </>
           )}
-        </div>
+        </ConstructorBlock>
       )}
 
       {type === "open_answer" && (
@@ -1049,7 +1049,7 @@ export function TaskConfigFields({
       )}
 
       {type === "embed" && (
-        <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+        <ConstructorBlock n={4} title="Варіанти вправи" description="Посилання на вбудований контент" tone="content">
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>
               Посилання на гру або контент (Wordwall, Quizlet, YouTube…) або завантажте HTML-файл
@@ -1084,11 +1084,11 @@ export function TaskConfigFields({
               className={`${INPUT_BORDER} px-2 py-2 text-sm`}
             />
           </div>
-        </div>
+        </ConstructorBlock>
       )}
 
       {type === "link" && (
-        <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+        <ConstructorBlock n={4} title="Варіанти вправи" description="Посилання, кнопка та картка попереднього перегляду" tone="content">
           <div className="flex flex-col gap-1">
             <label className={LABEL_TEXT}>URL</label>
             <input
@@ -1192,7 +1192,7 @@ export function TaskConfigFields({
               })()}
             </div>
           )}
-        </div>
+        </ConstructorBlock>
       )}
 
       {type === "fill_blank" && (

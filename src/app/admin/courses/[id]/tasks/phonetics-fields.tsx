@@ -17,6 +17,7 @@ import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { FileUpload } from "@/components/file-upload";
 import { INPUT_BORDER } from "@/lib/input-styles";
+import { ConstructorBlock, CONSTRUCTOR_ITEM_CARD } from "./constructor-block";
 
 function emptyItem(): PhoneticsItem {
   return { text: "", transcription: "", translation: "", imageUrl: "" };
@@ -134,7 +135,7 @@ function PhoneticsItemRow({
   }
 
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-gray-100 p-2 dark:border-neutral-700">
+    <div className={`flex flex-col gap-1 p-2 ${CONSTRUCTOR_ITEM_CARD}`}>
       <div className="flex items-center gap-2">
         <input
           value={item.text}
@@ -295,29 +296,42 @@ export const PhoneticsFields = forwardRef<
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="phonetics_items" value={JSON.stringify(items)} readOnly />
 
-      <InstructionsRichTextField
-        name="phonetics_instructions"
-        label="Інструкція для студента"
-        initialValue={initialConfig?.instructions ?? ""}
-      />
+      <ConstructorBlock
+        n={2}
+        title="Інструкція для студента"
+        description="Французькою, українською та англійською"
+        tone="instruction"
+      >
+        <InstructionsRichTextField
+          name="phonetics_instructions"
+          label="Інструкція для студента"
+          initialValue={initialConfig?.instructions ?? ""}
+        />
 
-      <InstructionsRichTextField
-        name="phonetics_sub_instructions"
-        label="Додаткові інструкції (опційно)"
-        initialValue={initialConfig?.subInstructions ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="phonetics_sub_instructions"
+          label="Додаткові інструкції (опційно)"
+          initialValue={initialConfig?.subInstructions ?? ""}
+          compact
+        />
 
-      <InstructionsRichTextField
-        name="phonetics_sub_instructions_en"
-        label="Переклад завдання англійською (для англомовного інтерфейсу)"
-        initialValue={initialConfig?.subInstructionsEn ?? ""}
-        compact
-      />
+        <InstructionsRichTextField
+          name="phonetics_sub_instructions_en"
+          label="Переклад завдання англійською (для англомовного інтерфейсу)"
+          initialValue={initialConfig?.subInstructionsEn ?? ""}
+          compact
+        />
+      </ConstructorBlock>
 
+      <ConstructorBlock
+        n={4}
+        title="Варіанти вправи"
+        description="Репліки, транскрипція і медіа"
+        tone="content"
+      >
       {items.map((item, i) => (
         <PhoneticsItemRow
           key={i}
@@ -335,6 +349,7 @@ export const PhoneticsFields = forwardRef<
       >
         + додати репліку
       </button>
-    </div>
+      </ConstructorBlock>
+    </>
   );
 });

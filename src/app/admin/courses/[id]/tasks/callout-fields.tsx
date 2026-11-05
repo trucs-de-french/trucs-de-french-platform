@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RichArticleEditor } from "@/components/rich-article-editor";
 import type { CalloutConfig, CalloutStyle } from "@/lib/exercises/types";
 import { LABEL_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock } from "./constructor-block";
 
 const STYLE_OPTIONS: { value: CalloutStyle; label: string; icon: string; className: string }[] = [
   { value: "none", label: "Без виділення", icon: "▪️", className: "border-neutral-300 dark:border-neutral-700" },
@@ -22,7 +23,12 @@ export function CalloutFields({
   const [style, setStyle] = useState<CalloutStyle>(initialConfig?.style ?? "none");
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <ConstructorBlock
+      n={4}
+      title="Варіанти вправи"
+      description="Стиль і текст інформаційного блоку"
+      tone="content"
+    >
       <input type="hidden" name="callout_style" value={style} readOnly />
 
       <div className="flex flex-col gap-1">
@@ -49,6 +55,6 @@ export function CalloutFields({
         <label className={LABEL_TEXT}>Текст</label>
         <RichArticleEditor name="callout_content" initialContent={initialConfig?.content} minHeightClassName="min-h-32" />
       </div>
-    </div>
+    </ConstructorBlock>
   );
 }

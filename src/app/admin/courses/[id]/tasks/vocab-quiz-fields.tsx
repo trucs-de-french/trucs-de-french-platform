@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { VocabQuizConfig } from "@/lib/exercises/types";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
+import { ConstructorBlock } from "./constructor-block";
 
 export function VocabQuizFields({
   initialConfig,
@@ -18,7 +19,12 @@ export function VocabQuizFields({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <ConstructorBlock
+      n={4}
+      title="Варіанти вправи"
+      description="Сцени-джерела лексики"
+      tone="content"
+    >
       <input type="hidden" name="vocab_quiz_scene_ids" value={JSON.stringify(sceneIds)} readOnly />
 
       <div className="flex flex-col gap-1">
@@ -49,6 +55,6 @@ export function VocabQuizFields({
           варіантів відповіді автоматично зменшиться.
         </p>
       </div>
-    </div>
+    </ConstructorBlock>
   );
 }

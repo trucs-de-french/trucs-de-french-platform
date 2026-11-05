@@ -28,7 +28,7 @@ export function EssayFormulaireFields({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900">
+    <>
       <input type="hidden" name="essay_formulaire_fields" value={JSON.stringify(fields)} readOnly />
 
       <div className="flex flex-col gap-1">
@@ -75,6 +75,6 @@ export function EssayFormulaireFields({
           + пункт
         </button>
       </div>
-    </div>
+    </>
   );
 }
