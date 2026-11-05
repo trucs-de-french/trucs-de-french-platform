@@ -188,7 +188,13 @@ export function CounterPill({ current, total }: { current: number; total: number
 // (задача "стабільна висота рядка пілюль" — усі пілюлі одного рядка мають
 // бути однієї висоти, інакше .task-panel-pills-row росте/стискається
 // залежно від того, яка саме пілюля зараз показана).
-function HintPill({ text }: { text: string }) {
+// Задача "Chronological order: static hint legend with editable text" —
+// chronological-order.tsx малює ВЛАСНИЙ заголовок (TaskInstructionLine +
+// PointsPill напряму, не через TaskPanelHeader), тож не може передати
+// hintText сюди звичайним пропом; export — щоб той файл міг вставити ТУ
+// САМУ пілюлю (однаковий вигляд/клас/лампочка) у свій рядок .task-panel-
+// pills-row/-left без дублювання розмітки.
+export function HintPill({ text }: { text: string }) {
   const { t } = useT();
   return (
     <span className="task-panel-hint-pill inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-full border border-[rgba(217,183,101,0.55)] bg-white px-3 font-body text-[14px] font-semibold text-[#6b4a14] dark:border-[rgba(243,217,139,0.28)] dark:bg-[var(--dark-surface-fill)] dark:text-[#f6dc8e]">

@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { MultipleChoiceConfig, MultipleChoiceItem, MultipleChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { ImageOrPlaceholder } from "@/components/image-or-placeholder";
@@ -327,6 +328,8 @@ export const MultipleChoiceFields = forwardRef<
           + речення
         </button>
       </div>
+
+      <HintLegendField taskType="multiple_choice" fieldNamePrefix="mc" initialValue={initialConfig?.hintLegend} />
     </div>
   );
 });

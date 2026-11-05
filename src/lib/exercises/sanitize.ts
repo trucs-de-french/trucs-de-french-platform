@@ -145,6 +145,7 @@ export function sanitizeLetterGaps(config: LetterGapsConfig): LetterGapsPublic {
       audioUrl: w.audioUrl,
     })),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -170,6 +171,7 @@ export function sanitizeLetterRearrangement(config: LetterRearrangementConfig): 
       audioUrl: w.audioUrl,
     })),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -197,6 +199,7 @@ export function sanitizeMultipleChoice(config: MultipleChoiceConfig): MultipleCh
     subInstructionsEn: config.subInstructionsEn,
     display: config.display,
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
     items: getMultipleChoiceItems(config).map((item) => {
       const correctCount = item.options.filter((o) => o.correct).length;
       // trim — пробільний рядок рахується як "нема підказки" (той самий
@@ -232,6 +235,7 @@ export function sanitizeWordChoice(config: WordChoiceConfig): WordChoicePublic {
     mode: config.mode,
     points: resolveWordChoicePoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
     sentences: config.sentences.map((s) => {
       const correctCount = s.options.filter((o) => o.correct).length;
       // trim — пробільний рядок рахується як "нема підказки" (той самий
@@ -333,6 +337,7 @@ export function sanitizeWordSearch(rawConfig: WordSearchConfig): WordSearchPubli
     blocks,
     points: resolveWordSearchPoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -419,6 +424,7 @@ export function sanitizeCrossword(rawConfig: CrosswordConfig): CrosswordPublic {
     blocks,
     points: resolveCrosswordPoints(config),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -557,6 +563,7 @@ export function sanitizeReorder(config: ReorderConfig): ReorderPublic {
     subInstructionsEn: config.subInstructionsEn,
     liveFeedback,
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
     // shuffle ОКРЕМО на кожну послідовність — інакше плитки з різних речень
     // перемішалися б між собою.
     sequences: getReorderSequences(config).map((s) => {
@@ -823,6 +830,7 @@ export function sanitizeChronologicalOrder(
     instructions: config.instructions,
     ...(hint ? { hint } : {}),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
     subInstructions: config.subInstructions,
     subInstructionsEn: config.subInstructionsEn,
     mode: config.mode,

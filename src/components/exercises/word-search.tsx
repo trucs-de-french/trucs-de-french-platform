@@ -1514,7 +1514,12 @@ export function WordSearchExercise({
   // воно давало порожню invisible-дірку в TaskPanelHeader на мобільному.
   // isDelf лишається — сталий на весь mount.
   const hintExplanationHidden = !!isDelf;
-  const hintText = hintExplanationHidden ? null : hintExplanationText("word_search", lang);
+  // Задача "Constructor: editable hint-legend field for the remaining
+  // hint exercises" — вчителька може перевизначити цей текст на мову
+  // (config.hintLegend); порожнє/відсутнє значення — дефолт.
+  const hintText = hintExplanationHidden
+    ? null
+    : config.hintLegend?.[lang]?.trim() || hintExplanationText("word_search", lang);
 
   // Єдина пілюля балів (задача "єдина пілюля балів усюди"): до перевірки —
   // загальний бал вправи; після перевірки активного блоку/вправи — earned

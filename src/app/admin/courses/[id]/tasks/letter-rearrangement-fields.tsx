@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { LetterRearrangementConfig, LetterRearrangementWord } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
@@ -264,6 +265,12 @@ export const LetterRearrangementFields = forwardRef<
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>
+
+      <HintLegendField
+        taskType="letter_rearrangement"
+        fieldNamePrefix="letter_rearrangement"
+        initialValue={initialConfig?.hintLegend}
+      />
     </div>
   );
 });

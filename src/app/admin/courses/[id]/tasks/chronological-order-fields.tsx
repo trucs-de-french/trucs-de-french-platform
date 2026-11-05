@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { ChronologicalOrderConfig, ChronologicalOrderItem } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { useFileOrLink } from "@/components/file-or-link-field";
@@ -242,6 +243,12 @@ export const ChronologicalOrderFields = forwardRef<
           className={`${INPUT_BORDER} px-2 py-2 text-sm`}
         />
       </div>
+
+      <HintLegendField
+        taskType="chronological_order"
+        fieldNamePrefix="chronological_order"
+        initialValue={initialConfig?.hintLegend}
+      />
 
       <label className="flex items-center gap-2 text-sm">
         <input

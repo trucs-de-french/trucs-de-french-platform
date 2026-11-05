@@ -14,6 +14,7 @@ import { BlocksEditor, BlockSelect, moveWordToBlockChange, createBlockWithWordCh
 import { sanitizeWordForGrid } from "@/lib/exercises/grid-word";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
@@ -358,6 +359,12 @@ export const WordSearchFields = forwardRef<
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>
+
+      <HintLegendField
+        taskType="word_search"
+        fieldNamePrefix="word_search"
+        initialValue={initialConfig?.hintLegend}
+      />
     </div>
   );
 });

@@ -638,7 +638,7 @@ export function WordChoiceExercise({
         })}
         hintText={
           config.sentences.some((s) => s.hint)
-            ? hintExplanationText("word_choice", lang)
+            ? config.hintLegend?.[lang]?.trim() || hintExplanationText("word_choice", lang)
             : null
         }
       />

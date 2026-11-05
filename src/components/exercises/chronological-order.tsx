@@ -15,7 +15,8 @@ import { usePracticeCheck } from "./use-practice-check";
 import { WHOLE_TASK_ITEM_ID } from "@/lib/exercises/error-review";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
 import { HintBulb } from "./hint-bulb";
-import { TaskInstructionLine, PointsPill } from "./task-panel-header";
+import { TaskInstructionLine, PointsPill, HintPill } from "./task-panel-header";
+import { hintExplanationText } from "./hint-explanation";
 import { sanitizeInstructionsHtml } from "@/lib/sanitize-instructions-html";
 import { frenchNbspHtml } from "@/lib/text/french-typography";
 import { BlockTabs } from "./block-navigation";
@@ -403,6 +404,18 @@ export function ChronologicalOrderExercise({
     config.mode !== "text" && !hidePoints && !isPractice
       ? headerPointsState(result?.pointsPossible ?? totalPoints, result?.pointsEarned, lang)
       : undefined;
+  // Задача "Chronological order: static hint legend with editable text" —
+  // ОКРЕМО від наявного чипа-розкриття config.hint (toggleHintVisible,
+  // лампочка справа від інструкції) — та сама СТАТИЧНА пілюля-пояснення,
+  // що в усіх інших типах із лампочкою (TaskPanelHeader/HintPill), просто
+  // вставлена вручну (цей файл малює власний заголовок, не через
+  // TaskPanelHeader). Та сама умова показу лампочки, що вже є вище
+  // (!isPractice && config.hint) — "немає підказки взагалі" лишається
+  // єдиною причиною не показувати її, без окремого резервування місця.
+  const hintLegendText =
+    !isPractice && config.hint
+      ? config.hintLegend?.[lang]?.trim() || hintExplanationText("chronological_order", lang)
+      : null;
 
   return (
     <div className={EXERCISE_STACK}>
@@ -475,7 +488,15 @@ export function ChronologicalOrderExercise({
           // badge вище (не новий колір). Власна нижня лінія замінює
           // task-panel-header-divider для цього режиму (п.2: "Thin hairline
           // below" — рівно під цим рядком, не над ним вдруге).
-          <div className="chrono-progress-row">
+          <>
+            {hintLegendText && (
+              <div className="task-panel-pills-row">
+                <div className="task-panel-pills-left">
+                  <HintPill text={hintLegendText} />
+                </div>
+              </div>
+            )}
+            <div className="chrono-progress-row">
             <span className="chrono-progress-pill">
               {t("chrono.filledOfTotal", { n: answeredCount, m: config.items.length })}
             </span>
@@ -506,13 +527,15 @@ export function ChronologicalOrderExercise({
                 {t("chrono.duplicateNumbers", { numbers: duplicateNumbersText })}
               </p>
             )}
-          </div>
+            </div>
+          </>
         ) : (
           <>
-            {headerPoints && (
+            {(headerPoints || hintLegendText) && (
               <div className="task-panel-pills-row">
                 <div className="task-panel-pills-left">
-                  <PointsPill text={headerPoints.pointsText} />
+                  {headerPoints && <PointsPill text={headerPoints.pointsText} />}
+                  {hintLegendText && <HintPill text={hintLegendText} />}
                 </div>
               </div>
             )}

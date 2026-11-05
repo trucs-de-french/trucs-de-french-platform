@@ -592,7 +592,11 @@ export function LetterRearrangementExercise({
         // (task-panel-header.tsx) перетворював на зарезервоване invisible-
         // місце того самого розміру — на мобільному, де текст переносився
         // на 2 рядки, це давало порожню білу "дірку" саме тієї висоти.
-        hintText={isDelf ? null : hintExplanationText("letter_rearrangement", lang)}
+        hintText={
+          isDelf
+            ? null
+            : config.hintLegend?.[lang]?.trim() || hintExplanationText("letter_rearrangement", lang)
+        }
       />
 
       {!useBlocks ? (

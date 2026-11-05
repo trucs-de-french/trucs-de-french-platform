@@ -144,6 +144,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("letter_gaps_sub_instructions_en") as string) || ""
       );
+      const letterGapsHintLegend = parseHintLegendField(formData.get("letter_gaps_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("letter_gaps_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
@@ -151,6 +152,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         words: parseJsonField(formData.get("letter_gaps_words")),
         points: Number(formData.get("letter_gaps_points")) || 1,
         hintsReducePoints: formData.get("letter_gaps_hints_reduce_points") === "true",
+        ...(letterGapsHintLegend ? { hintLegend: letterGapsHintLegend } : {}),
       };
     }
     case "letter_rearrangement": {
@@ -159,6 +161,9 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       );
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("letter_rearrangement_sub_instructions_en") as string) || ""
+      );
+      const letterRearrangementHintLegend = parseHintLegendField(
+        formData.get("letter_rearrangement_hint_legend")
       );
       return {
         instructions: sanitizeInstructionsHtml(
@@ -169,6 +174,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         words: parseJsonField(formData.get("letter_rearrangement_words")),
         points: Number(formData.get("letter_rearrangement_points")) || 1,
         hintsReducePoints: formData.get("letter_rearrangement_hints_reduce_points") === "true",
+        ...(letterRearrangementHintLegend ? { hintLegend: letterRearrangementHintLegend } : {}),
       };
     }
     case "multiple_choice": {
@@ -178,6 +184,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("mc_sub_instructions_en") as string) || ""
       );
+      const mcHintLegend = parseHintLegendField(formData.get("mc_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("mc_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
@@ -185,6 +192,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         display: (formData.get("mc_display") as string) || "buttons",
         items: parseJsonField(formData.get("mc_items")),
         hintsReducePoints: formData.get("mc_hints_reduce_points") === "true",
+        ...(mcHintLegend ? { hintLegend: mcHintLegend } : {}),
       };
     }
     case "word_choice": {
@@ -194,6 +202,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("word_choice_sub_instructions_en") as string) || ""
       );
+      const wordChoiceHintLegend = parseHintLegendField(formData.get("word_choice_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_choice_instructions") as string) || ""
@@ -204,6 +213,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         sentences: parseJsonField(formData.get("word_choice_sentences")),
         points: Number(formData.get("word_choice_points")) || 1,
         hintsReducePoints: formData.get("word_choice_hints_reduce_points") === "true",
+        ...(wordChoiceHintLegend ? { hintLegend: wordChoiceHintLegend } : {}),
       };
     }
     case "word_search": {
@@ -213,6 +223,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("word_search_sub_instructions_en") as string) || ""
       );
+      const wordSearchHintLegend = parseHintLegendField(formData.get("word_search_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("word_search_instructions") as string) || ""
@@ -230,6 +241,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         blocks: parseJsonField(formData.get("word_search_blocks")),
         points: Number(formData.get("word_search_points")) || 1,
         hintsReducePoints: formData.get("word_search_hints_reduce_points") === "true",
+        ...(wordSearchHintLegend ? { hintLegend: wordSearchHintLegend } : {}),
       };
     }
     case "crossword": {
@@ -239,6 +251,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("crossword_sub_instructions_en") as string) || ""
       );
+      const crosswordHintLegend = parseHintLegendField(formData.get("crossword_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("crossword_instructions") as string) || ""
@@ -253,6 +266,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         blocks: parseJsonField(formData.get("crossword_blocks")),
         points: Number(formData.get("crossword_points")) || 1,
         hintsReducePoints: formData.get("crossword_hints_reduce_points") === "true",
+        ...(crosswordHintLegend ? { hintLegend: crosswordHintLegend } : {}),
       };
     }
     case "karaoke": {
@@ -326,6 +340,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("reorder_sub_instructions_en") as string) || ""
       );
+      const reorderHintLegend = parseHintLegendField(formData.get("reorder_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("reorder_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
@@ -333,6 +348,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         sequences: parseJsonField(formData.get("reorder_sequences")),
         liveFeedback: formData.get("reorder_live_feedback") === "true",
         hintsReducePoints: formData.get("reorder_hints_reduce_points") === "true",
+        ...(reorderHintLegend ? { hintLegend: reorderHintLegend } : {}),
       };
     }
     case "drag_drop": {
@@ -490,6 +506,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("chronological_order_sub_instructions_en") as string) || ""
       );
+      const chronoHintLegend = parseHintLegendField(formData.get("chronological_order_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("chronological_order_instructions") as string) || ""
@@ -500,6 +517,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         items: parseJsonField(formData.get("chronological_order_items")),
         hint: (formData.get("chronological_order_hint") as string) || "",
         hintsReducePoints: formData.get("chronological_order_hints_reduce_points") === "true",
+        ...(chronoHintLegend ? { hintLegend: chronoHintLegend } : {}),
       };
     }
     case "vocab_quiz":

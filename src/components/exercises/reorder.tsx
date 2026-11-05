@@ -620,7 +620,11 @@ export function ReorderExercise({
           uk: DEFAULT_INSTRUCTIONS.reorder.subInstruction,
           en: DEFAULT_TRANSLATION_EN.reorder,
         })}
-        hintText={config.sequences.some((s) => s.hint) ? hintExplanationText("reorder", lang) : null}
+        hintText={
+          config.sequences.some((s) => s.hint)
+            ? config.hintLegend?.[lang]?.trim() || hintExplanationText("reorder", lang)
+            : null
+        }
       />
 
       {!useBlocks ? (

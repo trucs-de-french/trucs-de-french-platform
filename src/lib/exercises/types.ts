@@ -59,6 +59,8 @@ export type LetterGapsConfig = {
   // раз натиснув лампочку-підказку, дає 50% своєї частки балів замість
   // повної (grade.ts), навіть якщо саме слово зрештою правильне.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Переставити ВСЕ слово (не лише приховані позиції, як LetterGaps) —
@@ -80,6 +82,8 @@ export type LetterRearrangementConfig = {
   points?: number;
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Звичайна відкрита відповідь з автоматичною текстовою перевіркою (без AI —
@@ -187,6 +191,8 @@ export type MultipleChoiceConfig = {
   // Той самий принцип, що WordChoiceConfig.hintsReducePoints — на рівні
   // вправи (одна настройка для всіх питань), не на питання.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Той самий "sentence з ОДНИМ {{}}" принцип, що MultipleChoiceConfig
@@ -214,6 +220,8 @@ export type WordChoiceConfig = {
   // Той самий принцип, що OpenAnswerConfig.hintsReducePoints — "елемент" тут
   // РЕЧЕННЯ (gradeWordChoice тепер реюзає pointsWithHints).
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Сітка й розміщення слів генеруються ОДИН РАЗ в адмінці (word-search-
@@ -312,6 +320,8 @@ export type WordSearchConfig = {
   // Порожній масив — вправа ще без згенерованої сітки взагалі (і новий, і
   // старий формат — той самий сенс, що grid.length===0 раніше).
   blocks?: WordSearchBlock[];
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Слово + підказка (означення) — на відміну від WordSearchWord, тут немає
@@ -404,6 +414,8 @@ export type CrosswordConfig = {
   // старий формат, normalizeCrosswordConfig синтезує один блок із legacy
   // полів вище без міграції БД.
   blocks?: CrosswordBlock[];
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // points — необов'язкове, дефолт 1 бал (resolveTrueFalsePoints у
@@ -501,6 +513,8 @@ export type ReorderConfig = {
   // Той самий принцип, що MultipleChoiceConfig.hintsReducePoints —
   // "елемент" тут ПОСЛІДОВНІСТЬ (та сама гранулярність, що points).
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Кілька окремих речень із пропусками під однією спільною instructions —
@@ -657,6 +671,8 @@ export type ChronologicalOrderConfig = {
   items: ChronologicalOrderItem[];
   hint?: string;
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Караоке — відео (поки лише YouTube, своя URL на кожну вправу) + текст
@@ -808,6 +824,8 @@ export type LetterGapsPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // shuffledLetters — word.split("") перемішаний на сервері (sanitize.ts),
@@ -833,6 +851,8 @@ export type LetterRearrangementPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type MultipleChoicePublic = {
@@ -852,6 +872,8 @@ export type MultipleChoicePublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // correct-прапорці схованi (як у MultipleChoicePublic) — options лише
@@ -878,6 +900,8 @@ export type WordChoicePublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // grid — та сама сітка, що в Config, без змін (не секрет, студент і так
@@ -923,6 +947,8 @@ export type WordSearchPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Не "конфіг мінус placements" — синтезована структура (sanitizeCrossword
@@ -981,6 +1007,8 @@ export type CrosswordPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type TrueFalsePublic = {
@@ -1041,6 +1069,8 @@ export type ReorderPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type DragDropPublic = {
@@ -1127,6 +1157,8 @@ export type ChronologicalOrderPublic = {
   // публічний config, той самий принцип, що WordChoicePublic.sentences[].hint.
   hint?: string;
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // tokens — маска (null на позиціях пропуску), той самий принцип, що

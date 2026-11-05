@@ -6,6 +6,7 @@ import type { ReorderConfig, ReorderSequence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT, LABEL_TEXT } from "@/lib/typography-styles";
@@ -386,6 +387,12 @@ export const ReorderFields = forwardRef<
           + послідовність
         </button>
       </div>
+
+      <HintLegendField
+        taskType="reorder"
+        fieldNamePrefix="reorder"
+        initialValue={initialConfig?.hintLegend}
+      />
     </div>
   );
 });

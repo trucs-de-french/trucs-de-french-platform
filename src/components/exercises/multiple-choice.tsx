@@ -1028,7 +1028,9 @@ export function MultipleChoiceExercise({
           en: DEFAULT_TRANSLATION_EN.multiple_choice,
         })}
         hintText={
-          config.items.some((it) => it.hint) ? hintExplanationText("multiple_choice", lang) : null
+          config.items.some((it) => it.hint)
+            ? config.hintLegend?.[lang]?.trim() || hintExplanationText("multiple_choice", lang)
+            : null
         }
       />
 

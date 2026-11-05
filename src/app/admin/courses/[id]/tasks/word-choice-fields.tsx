@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { WordChoiceConfig, WordChoiceSentence, WordChoiceOption } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { WORD_CHOICE_DEFAULT_INSTRUCTIONS, WORD_CHOICE_TRANSLATION_EN } from "@/lib/exercises/default-instructions";
 import { INPUT_BORDER } from "@/lib/input-styles";
@@ -319,6 +320,12 @@ export const WordChoiceFields = forwardRef<
           className={`${INPUT_BORDER} w-24 px-2 py-2 text-sm`}
         />
       </div>
+
+      <HintLegendField
+        taskType="word_choice"
+        fieldNamePrefix="word_choice"
+        initialValue={initialConfig?.hintLegend}
+      />
     </div>
   );
 });

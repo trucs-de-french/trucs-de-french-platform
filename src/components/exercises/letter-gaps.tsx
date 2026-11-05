@@ -741,7 +741,10 @@ export function LetterGapsExercise({
   // table-fill.tsx: воно давало порожню invisible-дірку в
   // TaskPanelHeader на мобільному. isDelf лишається — сталий на весь
   // mount.
-  const hintText = isDelf ? null : hintExplanationText("letter_gaps", lang);
+  // Задача "Constructor: editable hint-legend field for the remaining
+  // hint exercises" — вчителька може перевизначити цей текст на мову
+  // (config.hintLegend); порожнє/відсутнє значення — дефолт.
+  const hintText = isDelf ? null : config.hintLegend?.[lang]?.trim() || hintExplanationText("letter_gaps", lang);
 
   // ЕТАП M — кнопка "Перевірити блок" для спільного рядка check+←/→
   // (BlockNavFooter) — ті самі значення, що читає renderBlock() вище

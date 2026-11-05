@@ -1550,7 +1550,11 @@ export function CrosswordExercise({
           uk: DEFAULT_INSTRUCTIONS.crossword.subInstruction,
           en: DEFAULT_TRANSLATION_EN.crossword,
         })}
-        hintText={hintExplanationHidden ? null : hintExplanationText("crossword", lang)}
+        hintText={
+          hintExplanationHidden
+            ? null
+            : config.hintLegend?.[lang]?.trim() || hintExplanationText("crossword", lang)
+        }
         rightContent={<GridZoomControls zoom={zoom} onChange={setZoom} maxZoom={maxZoom} />}
       />
 
