@@ -167,8 +167,13 @@ function GridPreview({ grid }: { grid: string[][] }) {
 
 export const WordSearchFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<WordSearchConfig>,
-  { initialConfig?: Partial<WordSearchConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function WordSearchFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<WordSearchConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function WordSearchFields({ initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   // Джерело правди — EditorState (block-editing.ts): editor.words несе
   // blockId (null = "Нерозподілені") поряд з текстом/перекладом/картинкою/
   // аудіо слова; editor.blocks — назва/режим підказок/сітка кожного блоку.
@@ -342,6 +347,8 @@ export const WordSearchFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

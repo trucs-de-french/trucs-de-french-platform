@@ -133,8 +133,16 @@ function ChronologicalOrderItemRow({
 
 export const ChronologicalOrderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ChronologicalOrderConfig>,
-  { initialConfig?: Partial<ChronologicalOrderConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function ChronologicalOrderFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<ChronologicalOrderConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function ChronologicalOrderFields(
+  { initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel },
+  ref
+) {
   const [mode, setMode] = useState<"image" | "text" | "mixed">(initialConfig?.mode ?? "image");
   const [items, setItems] = useState<ChronologicalOrderItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem(), emptyItem()]
@@ -277,6 +285,8 @@ export const ChronologicalOrderFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

@@ -228,8 +228,13 @@ function CrosswordPreview({
 
 export const CrosswordFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CrosswordConfig>,
-  { initialConfig?: Partial<CrosswordConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function CrosswordFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<CrosswordConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function CrosswordFields({ initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   // Той самий принцип, що word-search-fields.tsx (ЕТАП B/3) — EditorState
   // (block-editing.ts) — джерело правди, blockId на кожному слові.
   const [editor, setEditor] = useState<CrosswordEditorState>(() =>
@@ -399,6 +404,8 @@ export const CrosswordFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

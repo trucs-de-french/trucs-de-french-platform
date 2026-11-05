@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import type { FlipCardsConfig, FlipCard } from "@/lib/exercises/types";
 import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/task-config-builder";
@@ -100,8 +100,8 @@ function FlipCardRow({
 
 export const FlipCardsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<FlipCardsConfig>,
-  { initialConfig?: Partial<FlipCardsConfig> }
->(function FlipCardsFields({ initialConfig }, ref) {
+  { initialConfig?: Partial<FlipCardsConfig>; importVocabPanel?: ReactNode }
+>(function FlipCardsFields({ initialConfig, importVocabPanel }, ref) {
   const [cards, setCards] = useState<FlipCard[]>(
     initialConfig?.cards?.length ? initialConfig.cards : [emptyCard()]
   );
@@ -175,6 +175,8 @@ export const FlipCardsFields = forwardRef<
           compact
         />
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

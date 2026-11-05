@@ -132,7 +132,16 @@ export function ImportVocabPanel({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-dashed border-gray-100 p-3 dark:border-neutral-700">
+    // Задача "Constructor: move the scene-script vocabulary import panel
+    // above block 4" — панель тепер завжди ПОЗА чотирма блоками (між
+    // блоком 3 і 4, чи між блоком 2 і 4, якщо в типу нема блоку 3): без
+    // номерного гуртка, нейтральна біла картка з пунктирною рамкою
+    // (відрізняється від суцільних рамок самих блоків і від CONSTRUCTOR_ITEM_CARD
+    // карток-елементів усередині блоку 4) на всю ширину — той самий 22px
+    // відступ зверху й знизу, що між самими блоками, дає сам контейнер
+    // gap-[22px] викликача (цей компонент — звичайний flex-сибблінг
+    // ConstructorBlock-ів, нічого спеціального тут задавати не треба).
+    <div className="flex w-full flex-col gap-2 rounded-2xl border-[1.5px] border-dashed border-[#cfd3e4] bg-white px-5 py-[18px] dark:border-[rgba(255,255,255,0.18)] dark:bg-neutral-900">
       <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
         Імпортувати лексику зі скрипту сцени
       </p>

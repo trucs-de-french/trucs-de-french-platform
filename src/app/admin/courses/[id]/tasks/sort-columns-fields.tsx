@@ -22,8 +22,12 @@ export const SortColumnsFields = forwardRef<
     // редагуються, а не створюються) лишаються вимкненими.
     defaultHintsEnabled?: boolean;
     pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
   }
->(function SortColumnsFields({ initialConfig, defaultHintsEnabled, pointsVisibilityCheckbox }, ref) {
+>(function SortColumnsFields(
+  { initialConfig, defaultHintsEnabled, pointsVisibilityCheckbox, importVocabPanel },
+  ref
+) {
   const [columns, setColumns] = useState<SortColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -149,6 +153,8 @@ export const SortColumnsFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

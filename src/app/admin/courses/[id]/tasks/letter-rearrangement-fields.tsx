@@ -127,8 +127,16 @@ function LetterRearrangementWordRow({
 
 export const LetterRearrangementFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<LetterRearrangementConfig>,
-  { initialConfig?: Partial<LetterRearrangementConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function LetterRearrangementFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<LetterRearrangementConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function LetterRearrangementFields(
+  { initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel },
+  ref
+) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
@@ -267,6 +275,8 @@ export const LetterRearrangementFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

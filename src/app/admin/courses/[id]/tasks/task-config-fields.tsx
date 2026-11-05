@@ -757,6 +757,32 @@ export function TaskConfigFields({
     </div>
   ) : null;
 
+  // Задача "Constructor: move the scene-script vocabulary import panel
+  // above block 4" — сама панель (стан обраних слів, "Обрати всі"/"Зняти
+  // всі", кнопка "Імпортувати") і раніше, і тепер будується ОДИН раз тут
+  // (onImport читає importRef.current?.importWords — той самий ref, що
+  // кожен *-fields.tsx нижче віддає через forwardRef) — єдине, що
+  // змінилось: цей JSX-вузол тепер передається ВНИЗ пропом
+  // importVocabPanel у потрібний компонент типу (замість рендеритись тут
+  // одним блоком ПІСЛЯ всього перемикача типів), щоб кожен *-fields.tsx міг
+  // вставити його між власним блоком 3 і блоком 4 — так само, що вже
+  // зроблено для pointsVisibilityCheckbox вище.
+  const importVocabPanel = IMPORT_ENABLED_TYPES.includes(type) ? (
+    <ImportVocabPanel
+      // image_match раніше звужував sceneVocab до слів із уже заповненим
+      // image_url — відфільтровувало ВСЮ позначену лексику, якщо картинки
+      // ще не додані в скрипті (звичний робочий стан: картинку зручніше
+      // додавати тут, в ImageMatchFields, після імпорту, а не заздалегідь у
+      // скрипті). Імпорт тепер підтягує всі позначені слова, як і для решти
+      // типів — image_url кожного елемента лишається порожнім, доки
+      // вчителька не додасть його вручну (ImageMatchFields/FileOrLinkField).
+      sceneVocab={sceneVocab ?? []}
+      onImport={(words) => importRef.current?.importWords(words)}
+      pairMode={PAIR_TYPES.includes(type)}
+      showTranslationColumn={!NO_TRANSLATION_TYPES.includes(type)}
+    />
+  ) : null;
+
   return (
     <div
       ref={rootRef}
@@ -1302,6 +1328,13 @@ export function TaskConfigFields({
           )}
         </ConstructorBlock>
 
+        {/* Довідковий режим (без onImport) — тут не можна автоматично
+            вписати слово в шаблон, тож просто показуємо список для
+            копіювання вручну. Поза чотирма блоками, між блоком 3 і 4 —
+            задача "Constructor: move the scene-script vocabulary import
+            panel above block 4". */}
+        <ImportVocabPanel sceneVocab={sceneVocab ?? []} />
+
         <ConstructorBlock
           n={4}
           title="Варіанти вправи"
@@ -1362,10 +1395,6 @@ export function TaskConfigFields({
               + слово
             </button>
           </div>
-          {/* Довідковий режим (без onImport) — тут не можна автоматично
-              вписати слово в шаблон, тож просто показуємо список для
-              копіювання вручну. */}
-          <ImportVocabPanel sceneVocab={sceneVocab ?? []} />
         </ConstructorBlock>
         </div>
       )}
@@ -1378,6 +1407,7 @@ export function TaskConfigFields({
           }
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1391,6 +1421,7 @@ export function TaskConfigFields({
           initialConfig={configForType("letter_rearrangement") as Partial<LetterRearrangementConfig>}
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1426,6 +1457,7 @@ export function TaskConfigFields({
           }
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1439,6 +1471,7 @@ export function TaskConfigFields({
           }
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1457,23 +1490,6 @@ export function TaskConfigFields({
         />
       )}
 
-      {IMPORT_ENABLED_TYPES.includes(type) && (
-        <ImportVocabPanel
-          // image_match раніше звужував sceneVocab до слів із уже заповненим
-          // image_url — відфільтровувало ВСЮ позначену лексику, якщо
-          // картинки ще не додані в скрипті (звичний робочий стан: картинку
-          // зручніше додавати тут, в ImageMatchFields, після імпорту, а не
-          // заздалегідь у скрипті). Імпорт тепер підтягує всі позначені
-          // слова, як і для решти типів — image_url кожного елемента
-          // лишається порожнім, доки вчителька не додасть його вручну
-          // (ImageMatchFields/FileOrLinkField нижче).
-          sceneVocab={sceneVocab ?? []}
-          onImport={(words) => importRef.current?.importWords(words)}
-          pairMode={PAIR_TYPES.includes(type)}
-          showTranslationColumn={!NO_TRANSLATION_TYPES.includes(type)}
-        />
-      )}
-
       {type === "matching" && (
         <MatchingFields
           ref={importRef as RefObject<(ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>) | null>}
@@ -1481,6 +1497,7 @@ export function TaskConfigFields({
             configForType("matching") as Partial<MatchingConfig>
           }
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1516,6 +1533,7 @@ export function TaskConfigFields({
           }
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1527,6 +1545,7 @@ export function TaskConfigFields({
           }
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1538,6 +1557,7 @@ export function TaskConfigFields({
           }
           defaultHintsEnabled={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1547,6 +1567,7 @@ export function TaskConfigFields({
           initialConfig={
             configForType("flip_cards") as Partial<FlipCardsConfig>
           }
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1572,6 +1593,7 @@ export function TaskConfigFields({
           isDelf={isDelfTask}
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1580,6 +1602,7 @@ export function TaskConfigFields({
           ref={importRef}
           initialConfig={configForType("image_match") as Partial<ImageMatchConfig>}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1590,6 +1613,7 @@ export function TaskConfigFields({
             configForType("checkbox_grid") as Partial<CheckboxGridConfig>
           }
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 
@@ -1599,6 +1623,7 @@ export function TaskConfigFields({
           initialConfig={configForType("chronological_order") as Partial<ChronologicalOrderConfig>}
           isNewTask={isNewTask}
           pointsVisibilityCheckbox={pointsVisibilityCheckbox}
+          importVocabPanel={importVocabPanel}
         />
       )}
 

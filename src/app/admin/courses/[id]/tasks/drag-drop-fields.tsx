@@ -17,8 +17,13 @@ function emptySentence(): DragDropSentence {
 
 export const DragDropFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<DragDropConfig>,
-  { initialConfig?: Partial<DragDropConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function DragDropFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<DragDropConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function DragDropFields({ initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const [sentences, setSentences] = useState<DragDropSentence[]>(
     initialConfig?.sentences?.length ? initialConfig.sentences : [emptySentence()]
   );
@@ -133,6 +138,8 @@ export const DragDropFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

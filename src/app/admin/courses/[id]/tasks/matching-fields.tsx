@@ -26,8 +26,8 @@ function emptyPair(): MatchingPair {
 
 export const MatchingFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<MatchingConfig>,
-  { initialConfig?: Partial<MatchingConfig>; pointsVisibilityCheckbox?: ReactNode }
->(function MatchingFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
+  { initialConfig?: Partial<MatchingConfig>; pointsVisibilityCheckbox?: ReactNode; importVocabPanel?: ReactNode }
+>(function MatchingFields({ initialConfig, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const { t } = useT();
   // Старі пари (до пілоту балів) не мали id — тут, на відміну від
   // sanitize.ts (getMatchingPairs, стабільний `pair-${index}`), можна
@@ -123,6 +123,8 @@ export const MatchingFields = forwardRef<
           {pointsVisibilityCheckbox}
         </ConstructorBlock>
       )}
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

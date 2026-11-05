@@ -82,8 +82,8 @@ function ImageMatchItemRow({
 
 export const ImageMatchFields = forwardRef<
   ImportableFieldsHandle,
-  { initialConfig?: Partial<ImageMatchConfig>; pointsVisibilityCheckbox?: ReactNode }
->(function ImageMatchFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
+  { initialConfig?: Partial<ImageMatchConfig>; pointsVisibilityCheckbox?: ReactNode; importVocabPanel?: ReactNode }
+>(function ImageMatchFields({ initialConfig, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const [items, setItems] = useState<ImageMatchItem[]>(
     initialConfig?.items?.length ? initialConfig.items : [emptyItem()]
   );
@@ -159,6 +159,8 @@ export const ImageMatchFields = forwardRef<
           {pointsVisibilityCheckbox}
         </ConstructorBlock>
       )}
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

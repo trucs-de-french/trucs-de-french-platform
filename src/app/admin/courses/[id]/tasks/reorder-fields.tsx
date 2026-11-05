@@ -201,8 +201,13 @@ function ReorderSequenceBlock({
 // а не два окремі ref-и.
 export const ReorderFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<ReorderConfig>,
-  { initialConfig?: Partial<ReorderConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function ReorderFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<ReorderConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function ReorderFields({ initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const [sequences, setSequences] = useState<ReorderSequence[]>(
     initialConfig?.sequences?.length ? initialConfig.sequences : [emptySequence()]
   );
@@ -361,6 +366,8 @@ export const ReorderFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

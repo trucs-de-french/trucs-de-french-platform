@@ -30,8 +30,8 @@ function columnNameWarning(label: string): string | null {
 
 export const CheckboxGridFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<CheckboxGridConfig>,
-  { initialConfig?: Partial<CheckboxGridConfig>; pointsVisibilityCheckbox?: ReactNode }
->(function CheckboxGridFields({ initialConfig, pointsVisibilityCheckbox }, ref) {
+  { initialConfig?: Partial<CheckboxGridConfig>; pointsVisibilityCheckbox?: ReactNode; importVocabPanel?: ReactNode }
+>(function CheckboxGridFields({ initialConfig, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const [columns, setColumns] = useState<CheckboxGridColumn[]>(
     initialConfig?.columns?.length
       ? initialConfig.columns
@@ -143,6 +143,8 @@ export const CheckboxGridFields = forwardRef<
           {pointsVisibilityCheckbox}
         </ConstructorBlock>
       )}
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

@@ -31,8 +31,12 @@ export const TableFillFields = forwardRef<
     isDelf?: boolean;
     isNewTask?: boolean;
     pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
   }
->(function TableFillFields({ initialConfig, isDelf, isNewTask, pointsVisibilityCheckbox }, ref) {
+>(function TableFillFields(
+  { initialConfig, isDelf, isNewTask, pointsVisibilityCheckbox, importVocabPanel },
+  ref
+) {
   const [columnLabels, setColumnLabels] = useState<[string, string]>(
     initialConfig?.columnLabels ?? ["Французька", "Переклад"]
   );
@@ -152,6 +156,8 @@ export const TableFillFields = forwardRef<
           </ConstructorBlock>
         )
       )}
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}

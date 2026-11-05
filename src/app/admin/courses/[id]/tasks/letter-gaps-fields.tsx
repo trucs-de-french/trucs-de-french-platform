@@ -204,8 +204,13 @@ function LetterGapsWordRow({
 
 export const LetterGapsFields = forwardRef<
   ImportableFieldsHandle & TypeSwitchHandle<LetterGapsConfig>,
-  { initialConfig?: Partial<LetterGapsConfig>; isNewTask?: boolean; pointsVisibilityCheckbox?: ReactNode }
->(function LetterGapsFields({ initialConfig, isNewTask, pointsVisibilityCheckbox }, ref) {
+  {
+    initialConfig?: Partial<LetterGapsConfig>;
+    isNewTask?: boolean;
+    pointsVisibilityCheckbox?: ReactNode;
+    importVocabPanel?: ReactNode;
+  }
+>(function LetterGapsFields({ initialConfig, isNewTask, pointsVisibilityCheckbox, importVocabPanel }, ref) {
   const [words, setWords] = useState<EditableWord[]>(
     initialConfig?.words?.length
       ? initialConfig.words.map((w) => ({ ...w, id: crypto.randomUUID() }))
@@ -377,6 +382,8 @@ export const LetterGapsFields = forwardRef<
           />
         </ConstructorInnerPanel>
       </ConstructorBlock>
+
+      {importVocabPanel}
 
       <ConstructorBlock
         n={4}
