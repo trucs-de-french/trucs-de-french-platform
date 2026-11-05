@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { MultipleChoicePublic, MultipleChoiceDetail, GradeResult } from "@/lib/exercises/types";
 import { useExerciseCheck } from "./use-exercise-check";
 import { DEFAULT_INSTRUCTIONS, DEFAULT_TRANSLATION_EN, taskTranslationLine } from "@/lib/exercises/default-instructions";
@@ -26,6 +26,7 @@ import { usePracticeCheck } from "./use-practice-check";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
+import { CustomSelect, type CustomSelectState } from "@/components/ui/custom-select";
 
 type MultipleChoicePublicItem = MultipleChoicePublic["items"][number];
 type ItemDetail = MultipleChoiceDetail["items"][number];
@@ -649,32 +650,8 @@ export function MultipleChoiceExercise({
   ) {
     const sel = selections[item.id] ?? [];
     const hasHintBulb = showHintBulb && !!item.hint;
-    const selectedOptions = item.options.filter((o) => sel.includes(o.id));
     const isCorrect = itemDetail ? itemDetail.options.every((o) => o.correct === o.selected) : null;
-    const pillState: "correct" | "incorrect" | "selected" | "empty" =
-      isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : selectedOptions.length > 0 ? "selected" : "empty";
-    // Темна — обидва стани ДО перевірки (вибрано/порожньо) тепер на одному
-    // періwinkle полі (select-field-pill, globals.css) замість сіро-чорного
-    // (dark:bg-neutral-800) чи індиго-підсвітки: лише колір тексту різний
-    // (--chosen кремовий / --placeholder блідо-лавандовий). Світла тема —
-    // ті самі класи, що раніше, без змін.
-    const pillClass =
-      pillState === "correct"
-        ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950/30 dark:text-green-300"
-        : pillState === "incorrect"
-          ? "border-red-500 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-950/30 dark:text-red-300"
-          : pillState === "selected"
-            ? "border-indigo-500 bg-indigo-100 text-indigo-700 select-field-pill select-field-pill--chosen"
-            : "glass-gap-shadow border-[rgba(217,183,101,0.55)] bg-white text-neutral-500 select-field-pill select-field-pill--placeholder";
-    const label =
-      selectedOptions.length === 0
-        ? t("status.chooseOption")
-        : item.multiple
-          ? selectedOptions.map((o) => stripOptionLetterPrefix(o.text)).join(", ")
-          : optionDisplayText(
-              selectedOptions[0].text,
-              item.options.findIndex((o) => o.id === selectedOptions[0].id)
-            );
+    const selectState: CustomSelectState = isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : "neutral";
 
     // Речення для dropdown могло містити рівно один маркер "{{}}" (адмінка:
     // "Je {{}} au cinéma.") — раніше він позначав місце вбудованого
@@ -729,38 +706,25 @@ export function MultipleChoiceExercise({
             )}
           </div>
         </div>
-        <div className="group relative w-full flex-none md:w-56">
-          <div
-            className={`flex h-10 w-full items-center justify-between gap-2 rounded-full border px-3 text-sm transition-colors md:h-9 group-focus-within:ring-2 group-focus-within:ring-brand dark:group-focus-within:ring-0 ${pillClass}`}
-          >
-            <span
-              className="truncate"
-              title={selectedOptions.map((o) => stripOptionLetterPrefix(o.text)).join(", ") || undefined}
-            >
-              {label}
-            </span>
-            <ChevronDown size={14} className="shrink-0 opacity-60 select-field-chevron" aria-hidden />
-          </div>
-          <select
-            multiple={item.multiple}
+        <div className="w-full flex-none md:w-56">
+          <CustomSelect
+            options={item.options.map((o, idx) => ({ value: o.id, label: optionDisplayText(o.text, idx) }))}
             value={item.multiple ? sel : (sel[0] ?? "")}
-            onChange={(e) => {
-              const next = item.multiple
-                ? Array.from(e.target.selectedOptions).map((o) => o.value)
-                : [e.target.value];
-              setSelections((prev) => ({ ...prev, [item.id]: next }));
+            onChange={(next) => {
+              setSelections((prev) => ({
+                ...prev,
+                [item.id]: item.multiple ? (next as string[]) : [next as string],
+              }));
             }}
+            placeholder={t("status.chooseOption")}
             disabled={!!itemDetail}
+            multiple={item.multiple}
+            state={selectState}
             aria-label={t("aria.answerToQuestion", { n: index + 1 })}
-            className="absolute inset-0 h-full w-full cursor-pointer text-base opacity-0 disabled:cursor-not-allowed select-field-native"
-          >
-            {!item.multiple && <option value="">{t("status.chooseOptionDash")}</option>}
-            {item.options.map((o, idx) => (
-              <option key={o.id} value={o.id}>
-                {optionDisplayText(o.text, idx)}
-              </option>
-            ))}
-          </select>
+            formatSelectedLabel={
+              item.multiple ? (selected) => selected.map((o) => stripOptionLetterPrefix(o.label)).join(", ") : undefined
+            }
+          />
         </div>
         </div>
       </div>
