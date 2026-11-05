@@ -509,24 +509,34 @@ export function MultipleChoiceExercise({
     // Режими "тільки картинки"/"картинка+текст" — та сама обгортка
     // (CARD_WRAP + шапка), що й текстовий режим вище: бейдж+питання у
     // заголовку, роздільник (border-t нижче), тонована зона відповідей.
-    // Колонок на мобільній (нижче sm) — 3, якщо найдовший підпис у питанні
-    // короткий (≤12 символів після trim), інакше 2 (довгі підписи на 3
-    // колонках ламались би). На sm+ кількість колонок = кількість відповідей
-    // (не більше 4 на sm, не більше 5 на md+; 1-2 відповіді все одно дають 3
-    // колонки, щоб картки не розтягувались на всю ширину) — усі колонки
-    // minmax(0,1fr), тож ширина залежить ЛИШЕ від контейнера й кількості
-    // колонок, а не від довжини підписів (той баг зі скріншота — mx-auto
-    // w-fit робив ширину залежною від вмісту). max-w-[60rem] на самій сітці
-    // — верхня межа на дуже широких екранах, вирівнювання зліва за
-    // замовчуванням (без mx-auto).
+    // Колонок на мобільній (нижче sm) — ЗАВЖДИ 2, незалежно від кількості
+    // варіантів чи довжини підпису (раніше залежало від довжини найдовшого
+    // підпису: 3 вузькі колонки / 2 широкі — сусідні питання в одній вправі
+    // виглядали непослідовно, то дрібні картки, то великі; тепер завжди
+    // великі картки, як у випадку з 4 варіантами). На sm+ кількість колонок
+    // = кількість відповідей (не більше 4 на sm, не більше 5 на md+; 1-2
+    // відповіді все одно дають 3 колонки, щоб картки не розтягувались на всю
+    // ширину) — усі колонки minmax(0,1fr), тож ширина залежить ЛИШЕ від
+    // контейнера й кількості колонок, а не від довжини підписів (той баг зі
+    // скріншота — mx-auto w-fit робив ширину залежною від вмісту).
+    // max-w-[60rem] на самій сітці — верхня межа на дуже широких екранах,
+    // вирівнювання зліва за замовчуванням (без mx-auto).
     // Класи колонок — повні статичні рядки (не шаблонні вставки з числом):
     // Tailwind JIT сканує файл текстовим пошуком класів, тож динамічно
     // зібраний `sm:grid-cols-[repeat(${n},...)]` він НЕ розпізнає — лише
     // готові рядки, присутні в коді буквально.
-    const maxLabelLen = Math.max(0, ...item.options.map((o) => o.text?.trim().length ?? 0));
-    const mobileColsClass = maxLabelLen <= 12 ? "grid-cols-3" : "grid-cols-2";
-    const mobileAspectClass = mobileColsClass === "grid-cols-3" ? "aspect-square" : "aspect-[4/3]";
+    const mobileColsClass = "grid-cols-2";
+    const mobileAspectClass = "aspect-[4/3]";
     const optionsCount = item.options.length;
+    // Непарна кількість варіантів на мобільній (3, 5, ...): остання картка
+    // не розтягується на всю ширину рядка (col-span-2 без width дав би
+    // широку плитку) — вона лишається шириною ОДНІЄЇ колонки
+    // (calc((100% - gap)/2), gap тут 0.5rem = gap-2) і центрується в рядку
+    // (justify-self-center). На sm+ скидається до звичайної колонки сітки.
+    const isOddMobileLast = (idx: number) =>
+      optionsCount > 1 && optionsCount % 2 === 1 && idx === optionsCount - 1;
+    const oddMobileLastClass =
+      "col-span-2 w-[calc((100%-0.5rem)/2)] justify-self-center sm:col-span-1 sm:w-auto sm:justify-self-stretch";
     const smColsClass =
       optionsCount >= 4 ? "sm:grid-cols-[repeat(4,minmax(0,1fr))]" : "sm:grid-cols-[repeat(3,minmax(0,1fr))]";
     const mdColsClass =
@@ -549,7 +559,8 @@ export function MultipleChoiceExercise({
           <div
             className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}
           >
-            {item.options.map((o) => {
+            {item.options.map((o, idx) => {
+              const lastOddClass = isOddMobileLast(idx) ? ` ${oddMobileLastClass}` : "";
               if (!o.imageUrl) {
                 // Текстовий варіант у сітці картинок (частина варіантів без
                 // картинки) — та сама рамка+фон, що й картинкові картки тут
@@ -562,7 +573,7 @@ export function MultipleChoiceExercise({
                     type="button"
                     onClick={() => toggle(item.id, o.id, item.multiple)}
                     disabled={!!itemDetail}
-                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, false)}`}
+                    className={`flex h-full min-w-0 items-center justify-center rounded-lg border p-1.5 text-center text-sm leading-snug break-words [overflow-wrap:anywhere] transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, false)}${lastOddClass}`}
                   >
                     {frenchNbsp(o.text)}
                   </button>
@@ -578,7 +589,7 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, true)}`}
+                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, true)}${lastOddClass}`}
                 >
                   <div className={`${IMAGE_OPTION_FRAME_BASE} ${mobileAspectClass} sm:aspect-[4/3]`}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
