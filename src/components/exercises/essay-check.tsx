@@ -13,6 +13,7 @@ import {
 import { STUDENT_BUTTON_PRIMARY } from "@/lib/button-styles";
 import { DiacriticsPopup, useDiacriticsPopup, insertAtCursor, focusAndSetCursor } from "./diacritics-popup";
 import { TaskPanelHeader } from "./task-panel-header";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { formatPointsLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
 import { useT } from "@/lib/i18n/context";
@@ -239,6 +240,14 @@ export function EssayCheckExercise({
   const canSubmit = isFormulaire
     ? fields.some((f) => (formAnswer[f.id] ?? "").trim())
     : !!answer.trim();
+  // Задача "Exercises: show the unanswered-items confirmation before
+  // checking in every task type" — лише formulaire (A1, exerciseNumber 1)
+  // має декілька окремих полів, тож лише там можливий частково заповнений
+  // стан (canSubmit вище дозволяє сабміт, щойно заповнене ХОЧ ОДНЕ поле).
+  // Звичайне есе (один textarea) лишається винятком "кнопка блокована,
+  // доки поле не заповнене" — canSubmit там уже вимагає непорожній текст.
+  const checkConfirm = useCheckConfirm();
+  const unansweredFields = isFormulaire ? fields.filter((f) => !(formAnswer[f.id] ?? "").trim()).length : 0;
 
   return (
     <div className={EXERCISE_STACK}>
@@ -324,14 +333,23 @@ export function EssayCheckExercise({
 
       <div className="flex flex-col gap-3">
         {!submitted && (
-          <button
-            type="button"
-            onClick={submit}
-            disabled={pending || !canSubmit}
-            className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
-          >
-            {pending ? t("button.checking") : t("button.submit")}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => (isFormulaire ? checkConfirm.attemptCheck(unansweredFields, submit) : submit())}
+              disabled={pending || !canSubmit}
+              className={`self-start ${STUDENT_BUTTON_PRIMARY}`}
+            >
+              {pending ? t("button.checking") : t("button.submit")}
+            </button>
+            {isFormulaire && checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unansweredFields}
+                onConfirm={() => checkConfirm.confirmCheck(submit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         )}
 
         {isFormulaire && formulaireResult && <FormulaireResultView result={formulaireResult} />}

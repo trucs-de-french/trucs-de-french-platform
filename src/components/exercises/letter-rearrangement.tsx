@@ -26,6 +26,7 @@ import { TaskResult } from "./task-result";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { usePracticeCheck } from "./use-practice-check";
 import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-layout";
 import { estimateLetterRearrangementCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
@@ -83,6 +84,20 @@ export function LetterRearrangementExercise({
 
   function updateOrder(wordIndex: number, next: string[]) {
     setOrders((prev) => prev.map((o, wi) => (wi === wordIndex ? next : o)));
+  }
+
+  // Задача "Exercises: show the unanswered-items confirmation before
+  // checking in every task type" — letter_rearrangement не має "порожньої"
+  // клітинки (кожна картка завжди тримає ВСІ літери слова, лише
+  // перемішані), тож "незаповнене" тут означає "студент ще не торкався
+  // порядку": масив orders[wi] і досі буквально той самий, що початковий
+  // shuffledLetters (елемент-у-елемент). Один torkh, що випадково повернув
+  // той самий порядок, теоретично лишився б "untouched" — прийнятний
+  // компроміс, той самий принцип, що задача явно задає.
+  function isWordUntouched(wi: number): boolean {
+    const shuffled = config.words[wi].shuffledLetters;
+    const current = orders[wi];
+    return current.length === shuffled.length && current.every((v, i) => v === shuffled[i]);
   }
 
   async function applyHint(wi: number) {
@@ -145,6 +160,19 @@ export function LetterRearrangementExercise({
   // ==== Гілка ≤10 слів (незмінна поведінка) ====
   const single = useExerciseCheck(taskId);
   const singleDetail = single.result?.detail as LetterRearrangementDetail | undefined;
+  const singleCheckConfirm = useCheckConfirm();
+  const singleUnanswered = useMemo(
+    () => config.words.filter((_, wi) => isWordUntouched(wi)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orders, config.words]
+  );
+  function submitSingle() {
+    const answer: LetterRearrangementAnswer = {
+      words: orders,
+      hintedWordIndices: [...hintedWordIndices],
+    };
+    single.submit(answer);
+  }
 
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
@@ -209,6 +237,12 @@ export function LetterRearrangementExercise({
   const activeBlockWordIndices = useMemo(
     () => (useBlocks ? (wordBlocks[activeBlock] ?? []) : []),
     [useBlocks, wordBlocks, activeBlock]
+  );
+  const blockCheckConfirm = useCheckConfirm();
+  const activeBlockUnanswered = useMemo(
+    () => activeBlockWordIndices.filter((wi) => isWordUntouched(wi)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeBlockWordIndices, orders]
   );
   const blockDisplayOrder = useMemo(() => {
     const rows = activeBlockWordIndices.map((wi) =>
@@ -414,6 +448,13 @@ export function LetterRearrangementExercise({
             />
           )}
         </div>
+        {blockCheckConfirm.confirming && (
+          <CheckConfirmBar
+            unansweredCount={activeBlockUnanswered}
+            onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+            onCancel={blockCheckConfirm.cancelCheck}
+          />
+        )}
         {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
       </div>
     );
@@ -515,7 +556,7 @@ export function LetterRearrangementExercise({
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
@@ -576,20 +617,23 @@ export function LetterRearrangementExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const answer: LetterRearrangementAnswer = {
-                    words: orders,
-                    hintedWordIndices: [...hintedWordIndices],
-                  };
-                  single.submit(answer);
-                }}
-                disabled={single.pending}
-                className={`self-start ${BUTTON_CHECK}`}
-              >
-                {single.pending ? t("button.checking") : t("button.check")}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => singleCheckConfirm.attemptCheck(singleUnanswered, submitSingle)}
+                  disabled={single.pending}
+                  className={`self-start ${BUTTON_CHECK}`}
+                >
+                  {single.pending ? t("button.checking") : t("button.check")}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={singleUnanswered}
+                    onConfirm={() => singleCheckConfirm.confirmCheck(submitSingle)}
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}

@@ -21,6 +21,7 @@ import { BUTTON_CHECK, STUDENT_BUTTON_SECONDARY_TOUCH } from "@/lib/button-style
 import { EXERCISE_STACK } from "@/lib/spacing";
 import { RESULT_MESSAGE_CLASS } from "./score-style";
 import { TaskResult, rowPointsTabStatus } from "./task-result";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 
@@ -115,6 +116,16 @@ export function CheckboxGridExercise({
   const { submit, pending, result, error } = useExerciseCheck(taskId);
   const singleDetail = result?.detail as CheckboxGridDetail | undefined;
   const uid = useId();
+  // Задача "Exercises: show the unanswered-items confirmation before
+  // checking in every task type" — "незаповнений" тут означає рядок, де
+  // студент не позначив ЖОДНОГО чекбокса (answers[row.id] відсутній/
+  // порожній Set) — той самий рівень, що unfilledWords/unansweredPairs в
+  // інших типах (рахуємо РЯДКАМИ, не окремими клітинками).
+  const checkConfirm = useCheckConfirm();
+  const unansweredRows = useMemo(
+    () => config.rows.filter((row) => (answers[row.id]?.size ?? 0) === 0).length,
+    [config.rows, answers]
+  );
 
   // ==== Гілка практики (whole, частина 7, хвиля 3) — ЦІЛЕ завдання як один
   // елемент (WHOLE_TASK_ITEM_ID), той самий принцип, що інші whole-типи.
@@ -448,14 +459,23 @@ export function CheckboxGridExercise({
       ) : (
       <div className="flex flex-col gap-3">
         {!result ? (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={pending}
-            className={`self-start ${BUTTON_CHECK}`}
-          >
-            {pending ? t("button.checking") : t("button.check")}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => checkConfirm.attemptCheck(unansweredRows, handleSubmit)}
+              disabled={pending}
+              className={`self-start ${BUTTON_CHECK}`}
+            >
+              {pending ? t("button.checking") : t("button.check")}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={unansweredRows}
+                onConfirm={() => checkConfirm.confirmCheck(handleSubmit)}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
         ) : (
           <TaskResult
             correct={result.correct}

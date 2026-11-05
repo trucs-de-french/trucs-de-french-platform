@@ -20,6 +20,7 @@ import { unevenPointsFlags } from "@/lib/exercises/uneven-points";
 import { headerPointsState } from "@/lib/exercises/header-points";
 import { CARD_BLOCK_MAX, splitEvenly } from "@/lib/exercises/exercise-blocks";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
+import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { HintBulb } from "./hint-bulb";
 import { hintExplanationText } from "./hint-explanation";
 import { useT } from "@/lib/i18n/context";
@@ -324,6 +325,24 @@ export function ReorderExercise({
   const detail = single.result?.detail as ReorderDetail | undefined;
   const singleLocked = !!single.result;
 
+  // Задача "Exercises: show the unanswered-items confirmation before
+  // checking in every task type" — reorder не має "порожнього" елемента
+  // (кожне речення завжди тримає ВСІ свої слова, лише перемішані), тож
+  // "незаповнено" тут означає "студент ще не торкався порядку цього
+  // речення" — orders[id] і досі буквально збігається з початковим
+  // seq.items (той самий принцип, що isWordUntouched у
+  // letter-rearrangement.tsx).
+  function isSequenceUntouched(seq: PublicSequence): boolean {
+    const current = orders[seq.id] ?? seq.items;
+    return current.length === seq.items.length && current.every((v, i) => v === seq.items[i]);
+  }
+  const singleCheckConfirm = useCheckConfirm();
+  const singleUnanswered = useMemo(
+    () => config.sequences.filter((s) => isSequenceUntouched(s)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orders, config.sequences]
+  );
+
   useEffect(() => {
     if (!useBlocks && single.result) onResult?.(single.result);
   }, [useBlocks, single.result, onResult]);
@@ -365,6 +384,13 @@ export function ReorderExercise({
   const [blockResults, setBlockResults] = useState<Record<number, ReorderResult>>({});
   const [blockPending, setBlockPending] = useState<Record<number, boolean>>({});
   const [blockError, setBlockError] = useState<Record<number, string | null>>({});
+
+  const blockCheckConfirm = useCheckConfirm();
+  const activeBlockUnanswered = useMemo(
+    () => (sequenceBlocks[activeBlock] ?? []).filter((s) => isSequenceUntouched(s)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sequenceBlocks, activeBlock, orders]
+  );
 
   const allBlocksChecked = useBlocks && blockCount > 0 && Object.keys(blockResults).length === blockCount;
 
@@ -447,6 +473,13 @@ export function ReorderExercise({
               />
             )}
           </div>
+          {blockCheckConfirm.confirming && (
+            <CheckConfirmBar
+              unansweredCount={activeBlockUnanswered}
+              onConfirm={() => blockCheckConfirm.confirmCheck(() => submitBlock(activeBlock))}
+              onCancel={blockCheckConfirm.cancelCheck}
+            />
+          )}
           {errMsg && <p className="text-sm text-red-600 dark:text-red-400">{errMsg}</p>}
         </div>
       </div>
@@ -559,7 +592,7 @@ export function ReorderExercise({
   const checkButtonEl = useBlocks && !activeBlockResult ? (
     <button
       type="button"
-      onClick={() => submitBlock(activeBlock)}
+      onClick={() => blockCheckConfirm.attemptCheck(activeBlockUnanswered, () => submitBlock(activeBlock))}
       disabled={activeBlockPending}
       className="exercise-block-check-btn btn-check"
     >
@@ -606,22 +639,43 @@ export function ReorderExercise({
 
           <div className="flex flex-col gap-3">
             {!single.result ? (
-              <button
-                type="button"
-                onClick={() =>
-                  single.submit(
-                    config.sequences.map((s) => ({
-                      sequenceId: s.id,
-                      order: orders[s.id] ?? [],
-                      hintUsed: hintShown.has(s.id),
-                    }))
-                  )
-                }
-                disabled={single.pending}
-                className={`self-start ${BUTTON_CHECK}`}
-              >
-                {single.pending ? tt("button.checking") : tt("button.check")}
-              </button>
+              <div className="flex flex-col items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    singleCheckConfirm.attemptCheck(singleUnanswered, () =>
+                      single.submit(
+                        config.sequences.map((s) => ({
+                          sequenceId: s.id,
+                          order: orders[s.id] ?? [],
+                          hintUsed: hintShown.has(s.id),
+                        }))
+                      )
+                    )
+                  }
+                  disabled={single.pending}
+                  className={`self-start ${BUTTON_CHECK}`}
+                >
+                  {single.pending ? tt("button.checking") : tt("button.check")}
+                </button>
+                {singleCheckConfirm.confirming && (
+                  <CheckConfirmBar
+                    unansweredCount={singleUnanswered}
+                    onConfirm={() =>
+                      singleCheckConfirm.confirmCheck(() =>
+                        single.submit(
+                          config.sequences.map((s) => ({
+                            sequenceId: s.id,
+                            order: orders[s.id] ?? [],
+                            hintUsed: hintShown.has(s.id),
+                          }))
+                        )
+                      )
+                    }
+                    onCancel={singleCheckConfirm.cancelCheck}
+                  />
+                )}
+              </div>
             ) : (
               <TaskResult
                 correct={single.result.correct}
