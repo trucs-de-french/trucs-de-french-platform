@@ -6,6 +6,7 @@ import type { SortColumnsConfig, SortColumn, SortColumnsItem } from "@/lib/exerc
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -207,6 +208,12 @@ export const SortColumnsFields = forwardRef<
         />
         Дозволити підказки (лампочка підсвічує колонку, слово з підказкою дає 50% балів)
       </label>
+
+      <HintLegendField
+        taskType="sort_columns"
+        fieldNamePrefix="sort_columns"
+        initialValue={initialConfig?.hintLegend}
+      />
     </div>
   );
 });

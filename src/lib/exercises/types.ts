@@ -25,6 +25,8 @@ export type FillBlankConfig = {
   // на рівні ПРОПУСКУ (не всієї вправи, як points) — той самий елемент, що
   // hintedBlanks у FillBlankAnswer.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // Пропущені літери — вчителька вручну клікає окремі символи слова (будь-
@@ -114,6 +116,11 @@ export type OpenAnswerConfig = {
   // студент хоч раз показав підказку, дає 50% своїх балів замість повної
   // (gradeOpenAnswer), навіть якщо відповідь зрештою правильна.
   hintsReducePoints?: boolean;
+  // Задача "Constructor: editable hint-legend field (uk/fr/en) with
+  // defaults" — текст пілюлі-пояснення лампочки (TaskPanelHeader/
+  // hint-explanation.tsx) по мові інтерфейсу студента; відсутня мова чи
+  // весь об'єкт — дефолт із hintExplanation.open_answer (uk/fr/en.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // essay_check — AI-перевірка есе за офіційною сіткою DELF (див.
@@ -519,6 +526,8 @@ export type DragDropConfig = {
   // Той самий принцип, що LetterGapsConfig.hintsReducePoints — "елемент"
   // тут РЕЧЕННЯ (та сама гранулярність, що points).
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type SortColumn = { id: string; label: string };
@@ -538,6 +547,8 @@ export type SortColumnsConfig = {
   // "безкоштовної". /api/exercises/sort-columns-hint теж звіряє цей прапор
   // на сервері — без нього не віддає колонку, навіть якщо хтось обійде UI.
   hintsEnabled?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // table_fill — таблиця з 2 колонками (довільні назви); для кожної клітинки
@@ -573,6 +584,8 @@ export type TableFillConfig = {
   // підказку брали хоч для однієї з його прихованих клітинок, дає 50% балів
   // рядка, якщо в підсумку весь рядок правильний.
   hintsReducePoints?: boolean;
+  // Той самий принцип, що OpenAnswerConfig.hintLegend.
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // checkbox_grid — довільна кількість рядків (тверджень/питань) і колонок
@@ -760,6 +773,11 @@ export type FillBlankPublic = {
   // пропуски), з маркера {{відповідь::переклад}} — null, де "::" не було.
   // Відповіді сюди НІКОЛИ не потрапляють (parseBlankMarker, sanitize.ts).
   hints?: (string | null)[];
+  // Задача "Constructor: editable hint-legend field (uk/fr/en) with
+  // defaults" — текст пілюлі-пояснення лампочки (TaskPanelHeader/
+  // hint-explanation.tsx) по мові інтерфейсу студента; відсутня мова чи
+  // весь об'єкт — дефолт із hintExplanation.fill_blank (uk/fr/en.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 // chars — явна маска на рівні символів (null на прихованих позиціях, сам
@@ -1035,6 +1053,8 @@ export type DragDropPublic = {
   bank: string[]; // перемішано, один спільний
   // Лише для тексту-пояснення — сама знижка рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type SortColumnsPublic = {
@@ -1044,6 +1064,8 @@ export type SortColumnsPublic = {
   columns: SortColumn[];
   items: { id: string; text: string; points: number }[]; // без columnId, перемішано
   hintsEnabled: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type OpenAnswerPublic = {
@@ -1058,6 +1080,8 @@ export type OpenAnswerPublic = {
     audioUrl?: string;
     hint?: string;
   }[];
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type TableFillPublic = {
@@ -1071,6 +1095,8 @@ export type TableFillPublic = {
   // Лише для тексту-пояснення (hint-explanation.tsx) — сама знижка
   // рахується на сервері.
   hintsReducePoints: boolean;
+  // Той самий принцип, що FillBlankPublic.hintLegend (sanitize.ts).
+  hintLegend?: { uk?: string; fr?: string; en?: string };
 };
 
 export type CheckboxGridPublic = {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { OpenAnswerConfig, OpenAnswerQuestion } from "@/lib/exercises/types";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { useFileOrLink } from "@/components/file-or-link-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -237,6 +238,12 @@ export function OpenAnswerFields({
         />
         Підказка зменшує бали (питання, де показали підказку, дає 50% балів)
       </label>
+
+      <HintLegendField
+        taskType="open_answer"
+        fieldNamePrefix="open_answer"
+        initialValue={initialConfig?.hintLegend}
+      />
 
       <div className="flex flex-col gap-3">
         {questions.map((q) => (

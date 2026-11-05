@@ -259,6 +259,8 @@ export const en: Record<MessageKey, string> = {
   "hintExplanation.drag_drop": "the Ukrainian translation of the word",
   "hintExplanation.sort_columns": "the correct column lights up",
   "hintExplanation.open_answer": "the teacher's hint for the question",
+  "hintLegendField.label": "Hint bulb explanation",
+  "hintLegendField.reset": "Reset to default",
   "reorder.tapToSwap": "Tap two words to swap them",
   "letterrearr.swapHint": "Tap two letters to swap them",
   "tablefill.correctLine": "correct — {value}",

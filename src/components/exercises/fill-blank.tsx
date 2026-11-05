@@ -376,7 +376,14 @@ export function FillBlankExercise({
         // порожню invisible-дірку в TaskPanelHeader на мобільному. isDelf/
         // isPractice лишаються — сталі (на весь mount) причини не
         // показувати бульбашку взагалі.
-        hintText={isDelf || isPractice ? null : hintExplanationText("fill_blank", lang)}
+        // Задача "Constructor: editable hint-legend field (uk/fr/en) with
+        // defaults" — вчителька може перевизначити цей текст на мову
+        // (config.hintLegend); порожнє/відсутнє значення — дефолт.
+        hintText={
+          isDelf || isPractice
+            ? null
+            : config.hintLegend?.[lang]?.trim() || hintExplanationText("fill_blank", lang)
+        }
       />
 
       {/* Банк слів (опційний) і саме речення — разом ОДНЕ тіло вправи, тож

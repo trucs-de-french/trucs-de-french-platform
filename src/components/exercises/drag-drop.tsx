@@ -398,7 +398,7 @@ export function DragDropExercise({
         hintText={
           isDelf || !config.sentences.some((s) => s.hints?.some((h) => !!h))
             ? null
-            : hintExplanationText("drag_drop", lang)
+            : config.hintLegend?.[lang]?.trim() || hintExplanationText("drag_drop", lang)
         }
       />
 

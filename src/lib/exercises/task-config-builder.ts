@@ -84,12 +84,14 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
           ? q.answers.filter((a) => typeof a === "string" && a.trim().length > 0)
           : q.answers,
       }));
+      const hintLegend = parseHintLegendField(formData.get("open_answer_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("open_answer_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
         ...(subInstructionsEn ? { subInstructionsEn } : {}),
         questions: cleanedQuestions,
         hintsReducePoints: formData.get("open_answer_hints_reduce_points") === "true",
+        ...(hintLegend ? { hintLegend } : {}),
       };
     }
     case "embed":
@@ -113,6 +115,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
     }
     case "fill_blank": {
       const wordBank = parseJsonField(formData.get("fill_blank_word_bank")) as string[];
+      const fillBlankHintLegend = parseHintLegendField(formData.get("fill_blank_hint_legend"));
       const subInstructions = sanitizeInstructionsHtml(
         (formData.get("fill_blank_sub_instructions") as string) || ""
       );
@@ -130,6 +133,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         // (config.wordBank?.length), але так конфіг чистіший для читання.
         ...(wordBank.length > 0 ? { wordBank } : {}),
         hintsReducePoints: formData.get("fill_blank_hints_reduce_points") === "true",
+        ...(fillBlankHintLegend ? { hintLegend: fillBlankHintLegend } : {}),
       };
     }
 
@@ -338,6 +342,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("drag_drop_sub_instructions_en") as string) || ""
       );
+      const dragDropHintLegend = parseHintLegendField(formData.get("drag_drop_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml((formData.get("drag_drop_instructions") as string) || ""),
         ...(subInstructions ? { subInstructions } : {}),
@@ -345,6 +350,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         sentences: parseJsonField(formData.get("drag_drop_sentences")),
         bank: parseJsonField(formData.get("drag_drop_bank")),
         hintsReducePoints: formData.get("drag_drop_hints_reduce_points") === "true",
+        ...(dragDropHintLegend ? { hintLegend: dragDropHintLegend } : {}),
       };
     }
     case "sort_columns": {
@@ -354,6 +360,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("sort_columns_sub_instructions_en") as string) || ""
       );
+      const sortColumnsHintLegend = parseHintLegendField(formData.get("sort_columns_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("sort_columns_instructions") as string) || ""
@@ -363,6 +370,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         columns: parseJsonField(formData.get("sort_columns_columns")),
         items: parseJsonField(formData.get("sort_columns_items")),
         hintsEnabled: formData.get("sort_columns_hints_enabled") === "true",
+        ...(sortColumnsHintLegend ? { hintLegend: sortColumnsHintLegend } : {}),
       };
     }
     case "flip_cards": {
@@ -429,6 +437,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
       const subInstructionsEn = sanitizeInstructionsHtml(
         (formData.get("table_fill_sub_instructions_en") as string) || ""
       );
+      const tableFillHintLegend = parseHintLegendField(formData.get("table_fill_hint_legend"));
       return {
         instructions: sanitizeInstructionsHtml(
           (formData.get("table_fill_instructions") as string) || ""
@@ -438,6 +447,7 @@ function buildTaskConfigForType(type: string, formData: FormData): Record<string
         columnLabels: parseJsonField(formData.get("table_fill_column_labels")),
         rows: parseJsonField(formData.get("table_fill_rows")),
         hintsReducePoints: formData.get("table_fill_hints_reduce_points") === "true",
+        ...(tableFillHintLegend ? { hintLegend: tableFillHintLegend } : {}),
       };
     }
     case "image_match": {
@@ -507,6 +517,31 @@ function parseJsonField(value: FormDataEntryValue | null): unknown[] {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+// Задача "Constructor: editable hint-legend field (uk/fr/en) with
+// defaults" — приховане поле "<type>_hint_legend" (HintLegendField,
+// hint-legend-field.tsx) несе JSON {uk,fr,en}, той самий принцип, що
+// parseJsonField вище, лише об'єкт, не масив. trim() — порожній після
+// обрізання пробілів прибирається з об'єкта повністю (не зберігаємо
+// порожній рядок — студентський рендер трактує і відсутнє поле, і
+// порожній рядок однаково як "узяти дефолт", але чистіший конфіг легше
+// читати). undefined, якщо всі три мови порожні — config.hintLegend
+// узагалі відсутній, як і для вправ, збережених до цієї фічі.
+function parseHintLegendField(
+  value: FormDataEntryValue | null
+): { uk?: string; fr?: string; en?: string } | undefined {
+  try {
+    const parsed = JSON.parse((value as string) || "{}") as Record<string, unknown>;
+    const result: { uk?: string; fr?: string; en?: string } = {};
+    for (const lang of ["uk", "fr", "en"] as const) {
+      const text = typeof parsed[lang] === "string" ? parsed[lang].trim() : "";
+      if (text) result[lang] = text;
+    }
+    return Object.keys(result).length > 0 ? result : undefined;
+  } catch {
+    return undefined;
   }
 }
 

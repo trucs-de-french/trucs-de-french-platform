@@ -262,6 +262,8 @@ export const uk = {
   "hintExplanation.drag_drop": "переклад слова українською",
   "hintExplanation.sort_columns": "підсвітиться правильна колонка",
   "hintExplanation.open_answer": "підказка вчителя до питання",
+  "hintLegendField.label": "Пояснення до лампочки-підказки",
+  "hintLegendField.reset": "Відновити за замовчуванням",
   "reorder.tapToSwap": "Торкніться двох слів, щоб поміняти їх місцями",
   "letterrearr.swapHint": "Торкніться двох літер, щоб поміняти їх місцями",
   "tablefill.correctLine": "правильно — {value}",

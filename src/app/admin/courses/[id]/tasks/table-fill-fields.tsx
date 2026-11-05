@@ -7,6 +7,7 @@ import { buildConfigFromVocab, STRIP_ARTICLES_DEFAULT } from "@/lib/exercises/ta
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { StripArticlesToggle } from "./strip-articles-toggle";
 import { INPUT_BORDER, INPUT_BORDER_WARNING } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
@@ -200,6 +201,13 @@ export const TableFillFields = forwardRef<
           />
           Підказки зменшують бали (50% за елемент, де використана підказка)
         </label>
+      )}
+      {!isDelf && (
+        <HintLegendField
+          taskType="table_fill"
+          fieldNamePrefix="table_fill"
+          initialValue={initialConfig?.hintLegend}
+        />
       )}
     </div>
   );

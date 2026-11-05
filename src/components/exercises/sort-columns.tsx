@@ -343,7 +343,12 @@ export function SortColumnsExercise({
         // коді й раніше, але TaskPanelHeader тут НІКОЛИ не отримував
         // hintText взагалі — легенда не рендерилась ні разу. hintsEnabled
         // (вище) уже враховує isDelf/isPractice.
-        hintText={hintsEnabled ? hintExplanationText("sort_columns", lang) : null}
+        // Задача "Constructor: editable hint-legend field (uk/fr/en) with
+        // defaults" — вчителька може перевизначити цей текст на мову
+        // (config.hintLegend); порожнє/відсутнє значення — дефолт.
+        hintText={
+          hintsEnabled ? config.hintLegend?.[lang]?.trim() || hintExplanationText("sort_columns", lang) : null
+        }
       />
 
       <div className="word-pool" {...poolDropProps()} onClick={clickPool}>

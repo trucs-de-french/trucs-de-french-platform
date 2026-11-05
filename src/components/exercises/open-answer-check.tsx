@@ -359,7 +359,7 @@ export function OpenAnswerCheckExercise({
         hintText={
           isDelf || !config.questions.some((q) => q.hint)
             ? null
-            : hintExplanationText("open_answer", lang)
+            : config.hintLegend?.[lang]?.trim() || hintExplanationText("open_answer", lang)
         }
       />
 

@@ -261,6 +261,8 @@ export const fr: Record<MessageKey, string> = {
   "hintExplanation.drag_drop": "la traduction ukrainienne du mot",
   "hintExplanation.sort_columns": "la bonne colonne s'allume",
   "hintExplanation.open_answer": "l'indice du professeur pour la question",
+  "hintLegendField.label": "Explication de l'ampoule d'indice",
+  "hintLegendField.reset": "Rétablir le texte par défaut",
   "reorder.tapToSwap": "Touchez deux mots pour les échanger",
   "letterrearr.swapHint": "Touchez deux lettres pour les échanger",
   "tablefill.correctLine": "correct — {value}",

@@ -116,6 +116,7 @@ export function sanitizeFillBlank(config: FillBlankConfig): FillBlankPublic {
     // пропуски в template) — лише hint з parseBlankMarker, answers сюди
     // НІКОЛИ не потрапляють.
     hints: [...config.template.matchAll(BLANK_RE)].map((m) => parseBlankMarker(m[1]).hint ?? null),
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -610,6 +611,7 @@ export function sanitizeDragDrop(config: DragDropConfig): DragDropPublic {
     // Один спільний банк на всю вправу (не по реченню) — свідоме рішення.
     bank: shuffle(config.bank),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -639,6 +641,7 @@ export function sanitizeDragDropForPractice(config: DragDropConfig, sentenceIds:
     })),
     bank: shuffle(bank),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -657,6 +660,7 @@ export function sanitizeSortColumns(config: SortColumnsConfig): SortColumnsPubli
       config.items.map((i) => ({ id: i.id, text: i.text, points: resolveSortColumnsPoints(i) }))
     ),
     hintsEnabled: !!config.hintsEnabled,
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -703,6 +707,7 @@ export function sanitizeOpenAnswer(config: OpenAnswerConfig): OpenAnswerPublic {
       audioUrl: q.audioUrl,
       hint: q.hint,
     })),
+    hintLegend: config.hintLegend,
   };
 }
 
@@ -743,6 +748,7 @@ export function sanitizeTableFill(config: TableFillConfig): TableFillPublic {
       partOfSpeech: normalizePartOfSpeech(r.partOfSpeech),
     })),
     hintsReducePoints: !!config.hintsReducePoints,
+    hintLegend: config.hintLegend,
   };
 }
 

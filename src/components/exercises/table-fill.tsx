@@ -767,7 +767,11 @@ export function TableFillExercise({
         // причиною не показувати бульбашку взагалі, гасіння після
         // перевірки прибрано (воно давало порожню invisible-дірку в
         // TaskPanelHeader на мобільному).
-        hintText={isDelf ? null : hintExplanationText("table_fill", lang)}
+        // Задача "Constructor: editable hint-legend field (uk/fr/en) with
+        // defaults" — вчителька може перевизначити цей текст на мову
+        // (config.hintLegend, task-config-builder.ts/hint-legend-field.tsx);
+        // порожнє/відсутнє значення для цієї мови — дефолт із словників.
+        hintText={isDelf ? null : config.hintLegend?.[lang]?.trim() || hintExplanationText("table_fill", lang)}
       />
 
       {!useBlocks ? (

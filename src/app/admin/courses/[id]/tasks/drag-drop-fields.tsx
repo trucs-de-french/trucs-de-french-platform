@@ -6,6 +6,7 @@ import type { DragDropConfig, DragDropSentence } from "@/lib/exercises/types";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { LABEL_TEXT, HINT_TEXT } from "@/lib/typography-styles";
 
@@ -155,6 +156,12 @@ export const DragDropFields = forwardRef<
         />
         Підказки зменшують бали (50% за елемент, де використана підказка)
       </label>
+
+      <HintLegendField
+        taskType="drag_drop"
+        fieldNamePrefix="drag_drop"
+        initialValue={initialConfig?.hintLegend}
+      />
 
       <div className="flex flex-col gap-1">
         <label className={LABEL_TEXT}>

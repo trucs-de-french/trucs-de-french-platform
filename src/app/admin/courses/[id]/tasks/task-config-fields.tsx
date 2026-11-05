@@ -57,6 +57,7 @@ import { KaraokeFields } from "./karaoke-fields";
 import { ImportVocabPanel } from "./import-vocab-panel";
 import { TaskTypeCombobox } from "./task-type-combobox";
 import { InstructionsRichTextField } from "./instructions-rich-text-field";
+import { HintLegendField } from "./hint-legend-field";
 import type { ImportableFieldsHandle } from "./importable-fields";
 import type { TypeSwitchHandle } from "./type-switch-handle";
 import { getTypeTransform, type LinkEmbedFields } from "./type-compatibility";
@@ -1258,6 +1259,13 @@ export function TaskConfigFields({
               />
               Підказки зменшують бали (50% за елемент, де використана підказка)
             </label>
+          )}
+          {!isDelfTask && (
+            <HintLegendField
+              taskType="fill_blank"
+              fieldNamePrefix="fill_blank"
+              initialValue={configForType("fill_blank").hintLegend as { uk?: string; fr?: string; en?: string } | undefined}
+            />
           )}
           <div className="flex flex-col gap-1">
             <input
