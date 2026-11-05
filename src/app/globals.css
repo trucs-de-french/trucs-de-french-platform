@@ -10888,8 +10888,13 @@ button.scene-bar:active .scene-bar-toggle {
        bottom УЖЕ входить у цей ліміт, тож +44px (84-40) до самого
        padding-bottom віднімав би ті самі 44px від місця під рядки пілюль.
        +44px тут компенсує це — видима висота під пілюлі лишається
-       такою ж, що й до цієї задачі, лише НИЖНІЙ запас зріс. */
-    max-height: calc(26dvh + 44px);
+       такою ж, що й до цієї задачі, лише НИЖНІЙ запас зріс. +20px додано
+       задачею "Karaoke fullscreen (mobile): add Check button in the
+       dock" — кнопка "Перевірити" (42px) вища за саму пілюлю (26px), і
+       на вузьких телефонах підказка може перенестись у власний другий
+       рядок (п.5 задачі); overflow-y:auto нижче й так не ламає розмітку
+       навіть якщо цього запасу не вистачить, просто скролить сам док. */
+    max-height: calc(26dvh + 64px);
     overflow-y: auto;
     margin: 0;
     padding: 10px 12px 0;
@@ -10897,6 +10902,53 @@ button.scene-bar:active .scene-bar-toggle {
     background: var(--glass-panel-bg);
     border-top: 1.5px solid var(--glass-panel-border);
     box-shadow: 0 -8px 16px -8px rgba(0, 0, 0, 0.25);
+  }
+  /* Задача "Karaoke fullscreen (mobile): add Check button in the dock" —
+     кнопка сідає в ту саму верхню смугу доку, що пілюля "Пропуск N з M" і
+     підказка "Клікніть на правильне слово". flex-wrap:wrap на самому рядку
+     + ellipsis на тексті підказки (п.1/п.5 задачі) — на вузьких телефонах
+     (320-412px) підказка стискається до "…" і лишається в один рядок із
+     пілюлею й кнопкою; якщо навіть так не влазить — flex-shrink:0 на
+     пілюлі/кнопці й гнучкий flex-basis підказки самі переносять ЛИШЕ
+     підказку на другий рядок (кнопка й пілюля ніколи не стискаються нижче
+     власної ширини тексту). margin-left:auto на кнопці — завжди праворуч.
+     +44px до max-height доку вище (10892) вже лишає запас на цей можливий
+     другий рядок. */
+  .karaoke-fs-root--active .karaoke-dock-meta-row {
+    flex-wrap: wrap;
+  }
+  .karaoke-fs-root--active .karaoke-dock-meta-row p {
+    flex: 1 1 120px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .karaoke-fs-root--active .karaoke-progress-pill {
+    flex-shrink: 0;
+  }
+  .karaoke-fs-check-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    min-height: 44px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 12px;
+  }
+  /* Режим "введення" у fullscreen — власної смуги з пілюлею/підказкою
+     немає (пілюлі-варіанти тут не рендеряться взагалі), тож кнопка
+     "Перевірити" тут лежить у ВЛАСНІЙ компактній смузі, той самий
+     bottom-safe запас під Netlify-бейдж (84px), що й .karaoke-dock. */
+  .karaoke-fs-root--active .karaoke-fs-check-row {
+    order: 5;
+    flex: none;
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 10px 12px 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
+    background: var(--glass-panel-bg);
+    border-top: 1.5px solid var(--glass-panel-border);
   }
   .karaoke-fs-root--active .karaoke-dock-options-row {
     column-gap: 6px;
@@ -10972,6 +11024,11 @@ button.scene-bar:active .scene-bar-toggle {
     margin: 8px 10px;
   }
   .karaoke-fs-root--active .karaoke-dock {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0;
+  }
+  .karaoke-fs-root--active .karaoke-fs-check-row {
     grid-column: 2;
     grid-row: 3;
     margin: 0;

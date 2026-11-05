@@ -892,6 +892,55 @@ export function KaraokeExercise({
     if (container && lineEl) scrollLineIntoContainer(container, lineEl);
   }, [fullscreen, activeGap]);
 
+  const resultSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Задача "Karaoke fullscreen (mobile): add Check button in the dock" п.3 —
+  // результат (чи помилка мережі) під час fullscreen сам виходить із нього
+  // (ТОЮ Ж гілкою, що X/Escape/ресайз — closeFullscreen(), не напряму
+  // setFullscreen(false), щоб не лишити зайвий запис історії) і скролить до
+  // блоку результату/помилки. scrollToResultPendingRef — прапорець "вихід
+  // стався саме через це", бо history.back()→popstate асинхронний: сам
+  // скрол відкладено в ОКРЕМИЙ ефект нижче, що спрацьовує вже ПІСЛЯ
+  // реального fullscreen=false.
+  const scrollToResultPendingRef = useRef(false);
+  useEffect(() => {
+    if (!fullscreenRef.current) return;
+    if (!result && !error) return;
+    scrollToResultPendingRef.current = true;
+    // queueMicrotask — react-hooks/set-state-in-effect забороняє викликати
+    // closeFullscreen() (сетить setFullscreen у своєму catch-шляху) ПРЯМО в
+    // тілі ефекту; та сама причина, що вже й в інших місцях файлу
+    // closeFullscreen() завжди викликається з КОЛБЕКА (addEventListener),
+    // не напряму з тіла ефекту.
+    queueMicrotask(() => closeFullscreen());
+  }, [result, error]);
+
+  useEffect(() => {
+    if (fullscreen || !scrollToResultPendingRef.current) return;
+    scrollToResultPendingRef.current = false;
+    const el = resultSectionRef.current;
+    if (!el) return;
+    const reducedMotion =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => {
+      el.style.scrollMarginTop = "12px";
+      el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    });
+  }, [fullscreen]);
+
+  // Той самий обробник для ЗВИЧАЙНОЇ кнопки "Перевірити" (нижче, поза
+  // fullscreen) і для нової кнопки в fullscreen-доку — пауза відео (п.2а
+  // задачі) ЗАВЖДИ перед checkConfirm.attemptCheck, незалежно звідки клік.
+  function handleCheckClick() {
+    pauseForCheck();
+    checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers));
+  }
+
+  function handleConfirmCheckClick() {
+    pauseForCheck();
+    checkConfirm.confirmCheck(() => submit(answers));
+  }
+
   return (
     <div className={EXERCISE_STACK}>
       <BlockTabs plaqueText={plaqueText} />
@@ -1075,6 +1124,21 @@ export function KaraokeExercise({
                 {t("karaoke.gapOfTotal", { n: globalGapNumber(activeGap.li, activeGap.gi), total: totalGaps })}
               </span>
               <p className="text-sm text-[#55546b] dark:text-[var(--text-muted-caption)]">{t("karaoke.clickCorrectWord")}</p>
+              {/* Кнопка "Перевірити" у fullscreen-доку (задача "Karaoke
+                  fullscreen (mobile): add Check button in the dock") — та
+                  сама верхня частина доку, що й пілюля "Пропуск N з M"; у
+                  звичайному (не fullscreen) режимі перевірка лишається
+                  лише внизу панелі, тут нічого не рендериться. */}
+              {fullscreen && !result && (
+                <button
+                  type="button"
+                  onClick={handleCheckClick}
+                  disabled={pending}
+                  className="btn-check karaoke-fs-check-btn"
+                >
+                  {pending ? t("button.checking") : t("button.check")}
+                </button>
+              )}
             </div>
             {/* flex-wrap лише як запобіжник, коли варіанти фізично не
                 вміщаються в один рядок — сама природа flex-wrap уже дає
@@ -1086,6 +1150,37 @@ export function KaraokeExercise({
                 </button>
               ))}
             </div>
+            {fullscreen && checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={totalGaps - filledGaps}
+                onConfirm={handleConfirmCheckClick}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Режим "введення" у fullscreen не має власного доку (пілюлі-
+            варіанти там не рендеряться взагалі) — окрема компактна смуга
+            лише з кнопкою "Перевірити", той самий принцип/запас знизу під
+            Netlify-бейдж, що й .karaoke-dock вище. */}
+        {fullscreen && config.answerMode === "typing" && !result && (
+          <div className="karaoke-fs-check-row">
+            <button
+              type="button"
+              onClick={handleCheckClick}
+              disabled={pending}
+              className="btn-check karaoke-fs-check-btn"
+            >
+              {pending ? t("button.checking") : t("button.check")}
+            </button>
+            {checkConfirm.confirming && (
+              <CheckConfirmBar
+                unansweredCount={totalGaps - filledGaps}
+                onConfirm={handleConfirmCheckClick}
+                onCancel={checkConfirm.cancelCheck}
+              />
+            )}
           </div>
         )}
       </div>
@@ -1112,34 +1207,34 @@ export function KaraokeExercise({
           чіпаючи сам спільний EXERCISE_STACK чи інші стани (typing-режим,
           після перевірки). */}
       <div
+        ref={resultSectionRef}
         className={`flex flex-col gap-3 ${
           config.answerMode === "choice" && activeGap && !result ? "md:-mt-2" : ""
         }`}
       >
         {!result ? (
-          <div className="flex flex-col items-start gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                pauseForCheck();
-                checkConfirm.attemptCheck(totalGaps - filledGaps, () => submit(answers));
-              }}
-              disabled={pending}
-              className="karaoke-check-btn btn-check self-start"
-            >
-              {pending ? t("button.checking") : t("button.check")}
-            </button>
-            {checkConfirm.confirming && (
-              <CheckConfirmBar
-                unansweredCount={totalGaps - filledGaps}
-                onConfirm={() => {
-                  pauseForCheck();
-                  checkConfirm.confirmCheck(() => submit(answers));
-                }}
-                onCancel={checkConfirm.cancelCheck}
-              />
-            )}
-          </div>
+          // Поки активний fullscreen — та сама кнопка/бар вже рендеряться
+          // в доку вище (одним checkConfirm-стеком, не двома паралельними
+          // інстансами); тут нічого не показуємо, щоб не дублювати.
+          !fullscreen && (
+            <div className="flex flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={handleCheckClick}
+                disabled={pending}
+                className="karaoke-check-btn btn-check self-start"
+              >
+                {pending ? t("button.checking") : t("button.check")}
+              </button>
+              {checkConfirm.confirming && (
+                <CheckConfirmBar
+                  unansweredCount={totalGaps - filledGaps}
+                  onConfirm={handleConfirmCheckClick}
+                  onCancel={checkConfirm.cancelCheck}
+                />
+              )}
+            </div>
+          )
         ) : (
           <TaskResult
             correct={result.correct}
