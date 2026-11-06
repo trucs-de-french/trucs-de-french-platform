@@ -6,6 +6,7 @@ import { frenchNbsp } from "@/lib/text/french-typography";
 import { formatPointsLocalized, formatScoreLocalized } from "@/lib/exercises/format-points";
 import { getTaskBarText } from "@/lib/exercises/task-bar-text";
 import { bilanVerdict, type SceneSummary } from "@/lib/exercises/scene-summary";
+import { SectionHeaderBar } from "@/components/scene-header-bar";
 
 // Новий сценовий підсумок (BILAN) — НЕ замінює "Підсумок завдання"
 // (TaskSummaryCard, block-navigation.tsx): цей блок рахує ЦІЛУ сцену, той —
@@ -46,51 +47,18 @@ export function BilanCard({
   const percentText = lang === "fr" ? `${summary.percent} %` : `${summary.percent}%`;
 
   return (
-    <section aria-labelledby="bilan-heading">
-      {/* Зовнішня плашка з трофеєм — суто декоративна (aria-hidden на самій
-          іконці), "BILAN" як підпис секції, не h2 (STUDENT_SECTION_HEADING
-          зайнятий "Відео"/"Скрипт"/.../"Завдання" вище по сторінці, цей
-          підпис — частина картки, не ще одна секція того самого рівня). */}
-      <div className="mb-3 inline-flex items-center gap-2 rounded-2xl border-[1.5px] border-[#d9b765] bg-[#fdf8ea] px-3 py-1.5 dark:border-[#f3d98b] dark:bg-[rgba(10,16,48,0.82)]">
-        <span
-          aria-hidden="true"
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f6dc8e,#e0aa3e)]"
-        >
-          <Trophy size={16} className="text-[#1a1640]" />
-        </span>
-        <span className="font-heading text-sm font-bold tracking-[0.18em] text-[#1a1640] dark:text-[#f6dc8e]">
-          BILAN
-        </span>
-      </div>
+    <section aria-labelledby="bilan-heading" className="flex flex-col gap-[14px]">
+      {/* Той самий бар, що "Скрипт"/"Вокабуляр"/"Практика" (SectionHeaderBar,
+          scene-header-bar.tsx) — не collapsible (BILAN не згортається), тож
+          рендериться як звичайний div.scene-bar, пікселево той самий
+          бейдж/паддинг/радіус/рамка/фон/тінь, що й решта секцій сторінки. */}
+      <SectionHeaderBar title="BILAN" icon={Trophy} />
 
       <div className="overflow-hidden rounded-[20px] border-[1.5px] border-[#d9b765] dark:border-[#f3d98b]">
         {/* Хедер — індиго-градієнт, завжди білий текст (не залежить від
             теми: і світла, і темна тема мають той самий градієнт тут, лише
             решта картки (тайли/фон) перемикається). */}
         <div className="relative flex items-center justify-between gap-4 bg-[linear-gradient(135deg,#2f2c6b,#4b46da)] px-5 py-6 sm:px-7">
-          {/* Декоративні зірки/крапки — aria-hidden, той самий принцип, що
-              задача просить ("subtle, 55% opacity"). */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-6 top-4 text-[#f3d98b] opacity-55"
-          >
-            ✦
-          </span>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-16 top-9 h-1 w-1 rounded-full bg-white opacity-55"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute right-28 top-6 text-white opacity-55"
-          >
-            ✦
-          </span>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-5 left-28 h-1 w-1 rounded-full bg-[#f3d98b] opacity-55"
-          />
-
           <div className="relative z-10 min-w-0">
             <p className="font-heading text-xs font-semibold uppercase tracking-[0.14em] text-[#f3d98b]">
               {statusLabel}
@@ -122,7 +90,7 @@ export function BilanCard({
               label={t(lang, "bilan.pointsLabel")}
               value={`${formatScoreLocalized(summary.pointsEarned, lang)} / ${formatScoreLocalized(summary.pointsPossible, lang)}`}
             />
-            <BilanTile label={`% ${t(lang, "bilan.successRate")}`} value={percentText} />
+            <BilanTile label={t(lang, "bilan.successRate")} value={percentText} />
             {newWordsCount > 0 && (
               <BilanTile label={t(lang, "bilan.newWords")} value={String(newWordsCount)} />
             )}
