@@ -590,7 +590,7 @@ export function MultipleChoiceExercise({
                   role={item.multiple ? "checkbox" : "radio"}
                   aria-checked={indicator.selected}
                   aria-label={o.text || undefined}
-                  className={`flex h-full min-w-0 flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, true)}${lastOddClass}`}
+                  className={`flex h-full min-w-0 max-w-full flex-col items-center gap-1 rounded-lg border p-1.5 text-center transition-colors sm:p-2 ${imageCardClass(item.id, o.id, itemDetail, true)}${lastOddClass}`}
                 >
                   <div className={`${IMAGE_OPTION_FRAME_BASE} ${mobileAspectClass} sm:aspect-[4/3]`}>
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
@@ -615,9 +615,10 @@ export function MultipleChoiceExercise({
                     // центрованим); line-clamp-2 — на внутрішньому <p>
                     // (не на flex-контейнері: line-clamp вимагає
                     // display:-webkit-box, що конфліктує з display:flex).
-                    <div className="flex w-full min-w-0 flex-1 items-center justify-center">
+                    <div className="flex w-full min-w-0 max-w-full flex-1 items-center justify-center">
                       <p
-                        className="line-clamp-2 text-center text-sm leading-snug break-words [overflow-wrap:anywhere]"
+                        lang="fr"
+                        className="line-clamp-2 min-w-0 max-w-full text-center text-sm leading-snug break-words [overflow-wrap:anywhere] hyphens-auto sm:hyphens-manual"
                         title={o.text}
                       >
                         {frenchNbsp(o.text)}
