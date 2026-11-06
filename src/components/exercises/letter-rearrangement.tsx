@@ -507,6 +507,9 @@ export function LetterRearrangementExercise({
         <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {t("letterrearr.swapHint")}
         </p>
+        <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+          {t("letterrearr.swapHintDesktop")}
+        </p>
         <div className="flex flex-col gap-3">
           {practiceWordIndices.map((wi, pos) => {
             const key = String(wi);
@@ -641,6 +644,11 @@ export function LetterRearrangementExercise({
               {t("letterrearr.swapHint")}
             </p>
           )}
+          {!single.result && (
+            <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("letterrearr.swapHintDesktop")}
+            </p>
+          )}
           <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
             {displayOrder.map((wi, pos) =>
               renderWordCard(wi, {
@@ -694,6 +702,11 @@ export function LetterRearrangementExercise({
           {!activeBlockResult && (
             <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
               {t("letterrearr.swapHint")}
+            </p>
+          )}
+          {!activeBlockResult && (
+            <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {t("letterrearr.swapHintDesktop")}
             </p>
           )}
           <BlockNavigation

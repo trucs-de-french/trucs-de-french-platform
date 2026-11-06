@@ -264,7 +264,9 @@ export const fr: Record<MessageKey, string> = {
   "hintLegendField.label": "Explication de l'ampoule d'indice",
   "hintLegendField.reset": "Rétablir le texte par défaut",
   "reorder.tapToSwap": "Touchez deux mots pour les échanger, ou maintenez un mot appuyé et faites-le glisser à la bonne place.",
+  "reorder.tapToSwapDesktop": "Cliquez sur deux mots pour les échanger, ou faites glisser un mot à la bonne place.",
   "letterrearr.swapHint": "Touchez deux lettres pour les échanger, ou maintenez une lettre appuyée et faites-la glisser à la bonne place.",
+  "letterrearr.swapHintDesktop": "Cliquez sur deux lettres pour les échanger, ou faites glisser une lettre à la bonne place.",
   "tablefill.correctLine": "correct — {value}",
   "wc.chooseOptionsCount": "(choisissez {n} {word})",
 

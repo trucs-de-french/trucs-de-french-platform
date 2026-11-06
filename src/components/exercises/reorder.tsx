@@ -523,6 +523,11 @@ export function ReorderExercise({
             {tt("reorder.tapToSwap")}
           </p>
         )}
+        {!practiceCorrect && (
+          <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+            {tt("reorder.tapToSwapDesktop")}
+          </p>
+        )}
 
         <div className="flex flex-col gap-2.5">
           {config.sequences.map((seq, i) => (
@@ -661,6 +666,11 @@ export function ReorderExercise({
               {tt("reorder.tapToSwap")}
             </p>
           )}
+          {!singleLocked && (
+            <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {tt("reorder.tapToSwapDesktop")}
+            </p>
+          )}
 
           <div className={`flex flex-col ${itemsGapClass} pt-3`}>
             {config.sequences.map((seq) =>
@@ -726,6 +736,11 @@ export function ReorderExercise({
           {!blockResults[activeBlock] && (
             <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
               {tt("reorder.tapToSwap")}
+            </p>
+          )}
+          {!blockResults[activeBlock] && (
+            <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+              {tt("reorder.tapToSwapDesktop")}
             </p>
           )}
           <BlockNavigation

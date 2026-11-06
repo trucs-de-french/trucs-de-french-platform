@@ -262,7 +262,9 @@ export const en: Record<MessageKey, string> = {
   "hintLegendField.label": "Hint bulb explanation",
   "hintLegendField.reset": "Reset to default",
   "reorder.tapToSwap": "Tap two words to swap them, or press and hold a word and drag it to the right place.",
+  "reorder.tapToSwapDesktop": "Click two words to swap them, or drag a word to the right place.",
   "letterrearr.swapHint": "Tap two letters to swap them, or press and hold a letter and drag it to the right place.",
+  "letterrearr.swapHintDesktop": "Click two letters to swap them, or drag a letter to the right place.",
   "tablefill.correctLine": "correct — {value}",
   "wc.chooseOptionsCount": "(choose {n} {word})",
 

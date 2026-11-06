@@ -1754,6 +1754,20 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* desktop (миша/трекпад) версія того самого рядка-підказки, інший текст
+   (клік замість дотику), той самий .tap-swap-hint вигляд завдяки
+   однаковим inline-класам на обох p. hover: hover і pointer: fine разом,
+   не лише hover: hover, щоб стилус/гібридні пристрої з грубим вказівником
+   не підпадали під жодну з двох підказок одночасно. */
+.tap-swap-hint-desktop {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tap-swap-hint-desktop {
+    display: block;
+  }
+}
+
 /* video-frame.tsx — спільна обгортка відео-iframe для студентської
    частини. Пропорція НЕ через Tailwind-arbitrary на льоту (клас, зібраний
    з динамічного значення, Tailwind відсікає на збірці — лишається лише
