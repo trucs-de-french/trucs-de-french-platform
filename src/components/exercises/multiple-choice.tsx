@@ -526,26 +526,16 @@ export function MultipleChoiceExercise({
     // Tailwind JIT сканує файл текстовим пошуком класів, тож динамічно
     // зібраний `sm:grid-cols-[repeat(${n},...)]` він НЕ розпізнає — лише
     // готові рядки, присутні в коді буквально.
+    const mobileColsClass = "grid-cols-2";
+    const mobileAspectClass = "aspect-[4/3]";
     const optionsCount = item.options.length;
-    // Рівно 3 варіанти з картинками на мобільній — окреме рішення
-    // власника: 3 колонки в один рядок (замість 2+центрована остання),
-    // максимально широкі картки (менші відступи контейнера/gap нижче),
-    // портретний aspect (3/4) замість 4:3, щоб картинка виглядала великою.
-    // На sm+ (isThreeMobile нижче не впливає на smColsClass/mdColsClass)
-    // лишається той самий рядок колонок, що й раніше.
-    const isThreeMobile = optionsCount === 3;
-    const mobileColsClass = isThreeMobile ? "grid-cols-3" : "grid-cols-2";
-    const mobileAspectClass = isThreeMobile ? "aspect-[3/4]" : "aspect-[4/3]";
-    const mobileGapClass = isThreeMobile ? "gap-1.5" : "gap-2";
     // Непарна кількість варіантів на мобільній (3, 5, ...): остання картка
     // не розтягується на всю ширину рядка (col-span-2 без width дав би
     // широку плитку) — вона лишається шириною ОДНІЄЇ колонки
     // (calc((100% - gap)/2), gap тут 0.5rem = gap-2) і центрується в рядку
     // (justify-self-center). На sm+ скидається до звичайної колонки сітки.
-    // Рівно 3 варіанти тепер заповнюють рядок повністю (isThreeMobile вище)
-    // — центрування останньої картки тут більше не потрібне.
     const isOddMobileLast = (idx: number) =>
-      !isThreeMobile && optionsCount > 1 && optionsCount % 2 === 1 && idx === optionsCount - 1;
+      optionsCount > 1 && optionsCount % 2 === 1 && idx === optionsCount - 1;
     const oddMobileLastClass =
       "col-span-2 w-[calc((100%-0.5rem)/2)] justify-self-center sm:col-span-1 sm:w-auto sm:justify-self-stretch";
     const smColsClass =
@@ -565,14 +555,10 @@ export function MultipleChoiceExercise({
         <div
           role={item.multiple ? "group" : "radiogroup"}
           aria-labelledby={questionId}
-          className={
-            isThreeMobile
-              ? "border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 px-2 py-2.5 sm:p-2.5 dark:border-[var(--card-border)] pool-dark-bg"
-              : "border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] pool-dark-bg"
-          }
+          className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-2.5 dark:border-[var(--card-border)] pool-dark-bg"
         >
           <div
-            className={`grid ${mobileColsClass} max-w-[60rem] items-stretch ${mobileGapClass} ${smColsClass} sm:gap-3 ${mdColsClass}`}
+            className={`grid ${mobileColsClass} max-w-[60rem] items-stretch gap-2 ${smColsClass} sm:gap-3 ${mdColsClass}`}
           >
             {item.options.map((o, idx) => {
               const lastOddClass = isOddMobileLast(idx) ? ` ${oddMobileLastClass}` : "";
@@ -610,21 +596,13 @@ export function MultipleChoiceExercise({
                     <ImageOrPlaceholder src={o.imageUrl} alt="" className={COMPACT_IMAGE_FILL} useFocus />
                     <span
                       aria-hidden
-                      className={
-                        isThreeMobile
-                          ? `absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold leading-none before:absolute before:-inset-1 before:content-[''] sm:h-[22px] sm:w-[22px] sm:text-xs sm:before:content-none ${indicator.className}`
-                          : `absolute left-1 top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none sm:h-[22px] sm:w-[22px] sm:text-xs ${indicator.className}`
-                      }
+                      className={`absolute left-1 top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[10px] font-bold leading-none sm:h-[22px] sm:w-[22px] sm:text-xs ${indicator.className}`}
                     >
                       {indicator.mark}
                     </span>
                     <ImageZoomBadge
                       onOpen={() => setLightboxSrc(o.imageUrl!)}
-                      boxClass={
-                        isThreeMobile
-                          ? "h-6 w-6 before:absolute before:-inset-1 before:content-[''] sm:h-[26px] sm:w-[26px] sm:before:-inset-[9px]"
-                          : "h-[22px] w-[22px] before:absolute before:-inset-[11px] before:content-[''] sm:h-[26px] sm:w-[26px] sm:before:-inset-[9px]"
-                      }
+                      boxClass="h-[22px] w-[22px] before:absolute before:-inset-[11px] before:content-[''] sm:h-[26px] sm:w-[26px] sm:before:-inset-[9px]"
                       iconSize={12}
                     />
                   </div>
@@ -637,18 +615,9 @@ export function MultipleChoiceExercise({
                     // центрованим); line-clamp-2 — на внутрішньому <p>
                     // (не на flex-контейнері: line-clamp вимагає
                     // display:-webkit-box, що конфліктує з display:flex).
-                    // isThreeMobile: без line-clamp на мобільній (підпис
-                    // може зайняти 2-3 рядки, без обрізання), leading 1.25
-                    // й hyphens-auto для довгих слів типу "L'éléphant"; на
-                    // sm+ повертається колишній вигляд (line-clamp-2,
-                    // leading-snug, без hyphens).
                     <div className="flex w-full min-w-0 flex-1 items-center justify-center">
                       <p
-                        className={
-                          isThreeMobile
-                            ? "text-center text-sm leading-[1.25] break-words [overflow-wrap:anywhere] hyphens-auto sm:line-clamp-2 sm:leading-snug sm:hyphens-manual"
-                            : "line-clamp-2 text-center text-sm leading-snug break-words [overflow-wrap:anywhere]"
-                        }
+                        className="line-clamp-2 text-center text-sm leading-snug break-words [overflow-wrap:anywhere]"
                         title={o.text}
                       >
                         {frenchNbsp(o.text)}
