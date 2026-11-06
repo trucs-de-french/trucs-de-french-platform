@@ -11574,6 +11574,25 @@ button.scene-bar:active .scene-bar-toggle {
     backdrop-filter: blur(8px) saturate(1.1);
   }
 }
+/* Задача "Phonetics (mobile): transcription pill spans the full card width
+   like the video" — на мобільній (≤640px) пілюля виходить з текстової
+   колонки (phonetics.tsx: .flex.flex-col, дитина рядка бейдж+текст) і
+   займає повну внутрішню ширину картки, ті самі ліву/праву межі, що й
+   відеоблок нижче (обидва — прямі діти .glass-item-card з px-[18px]).
+   36px = 26px (--item-number-badge width) + 10px (gap-2.5 між бейджем і
+   текстовою колонкою) — єдине джерело лівого відступу пілюлі в розмітці;
+   негативний margin-left повертає ліву межу до краю картки, відповідне
+   розширення width — до правої (max-width:100% вище інакше обрізав би
+   це розширення назад до ширини батьківської текстової колонки).
+   Десктоп/планшет (>640px) не чіпаються — правило лише в цьому @media. */
+@media (max-width: 640px) {
+  .phonetics-ipa-pill {
+    box-sizing: border-box;
+    width: calc(100% + 36px);
+    max-width: none;
+    margin-left: -36px;
+  }
+}
 
 /* Compact audio player (AudioPill, audio-pill.tsx) — thin gold outline +
    soft glow, DARK ONLY, shared by EVERY compact usage (phonetics card,
