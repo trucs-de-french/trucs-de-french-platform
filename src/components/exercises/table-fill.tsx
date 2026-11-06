@@ -360,7 +360,7 @@ export function TableFillExercise({
         )}
         {revealedAnswer && (
           <p className="text-xs italic text-amber-700 dark:text-amber-400">
-            {tt("answer.correctAnswerLabel")} {revealedAnswer.join(" / ")}
+            <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
           </p>
         )}
       </div>

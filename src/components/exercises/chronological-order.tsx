@@ -685,7 +685,7 @@ export function ChronologicalOrderExercise({
           )}
           {practiceCheck.revealed[WHOLE_TASK_ITEM_ID] && (
             <p className="text-sm italic text-amber-700 dark:text-amber-400">
-              {t("answer.correctOrderLabel")}{" "}
+              <span className="exercise-answer-label">{t("answer.correctOrderLabel")}</span>{" "}
               {practiceCheck.revealed[WHOLE_TASK_ITEM_ID]
                 .map((id) => labelById.get(id) ?? id)
                 .join(" → ")}

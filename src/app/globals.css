@@ -7528,7 +7528,7 @@ button.scene-bar:active .scene-bar-toggle {
   color: var(--answer-label-light);
 }
 .dark .correct-answer-label {
-  font-family: inherit;
+  font-family: var(--font-heading);
   font-size: inherit;
   font-weight: inherit;
   letter-spacing: normal;
@@ -7536,12 +7536,23 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .correct-answer-label {
-    font-family: inherit;
+    font-family: var(--font-heading);
     font-size: inherit;
     font-weight: inherit;
     letter-spacing: normal;
     color: inherit;
   }
+}
+/* Задача "Result lines: labels in Nunito, answer values in Lora everywhere"
+   — спільний клас для ЛЕЙБЛУ ("Правильна відповідь:"/"Ваша відповідь:"/
+   "Правильне слово:"/"Правильний порядок:" тощо) у рядках "label: value" по
+   всіх типах вправ, де раніше лейбл і значення були ОДНИМ текстовим вузлом
+   без розділення на span — обидва успадковували Lora від батьківського
+   <p>. Єдина властивість (font-family) — колір/розмір/курсив цього самого
+   рядка (напр. italic text-amber-700 на <p>) лишаються як є, клас лише
+   додається поруч, нічого не замінює. */
+.exercise-answer-label {
+  font-family: var(--font-heading);
 }
 /* "Correction des erreurs" (error-review-block.tsx) — ЛИШЕ кнопка
    "Виправити N"/"Спробувати ще раз"/"Згорнути" і заповнення прогрес-бару

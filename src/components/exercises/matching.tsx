@@ -452,7 +452,8 @@ export function MatchingExercise({
                 )}
                 {itemRevealed && (
                   <span className="italic text-amber-700 dark:text-amber-400">
-                    {t("matching.correctPairLine", { left, right: itemRevealed.join(", ") })}
+                    <span className="exercise-answer-label">{t("answer.correctPairLabel")}</span> {left} →{" "}
+                    {itemRevealed.join(", ")}
                   </span>
                 )}
               </div>

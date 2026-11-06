@@ -249,7 +249,7 @@ export function MultipleChoiceExercise({
               )}
               {itemRevealed && (
                 <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                  {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
+                  <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
                 </p>
               )}
             </div>
@@ -794,10 +794,7 @@ export function MultipleChoiceExercise({
               <p className="mc-answer-result-line mt-1 flex items-start gap-1 text-base font-semibold text-[#1f7a3d] dark:text-[#bff0d0]">
                 <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
                 <span>
-                  <span
-                    className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
+                  <span className="exercise-answer-label mr-1 text-[13px] font-bold text-[#55546b] dark:text-white">
                     {t("answer.correctAnswerLabel")}
                   </span>
                   {correctOpt ? stripOptionLetterPrefix(correctOpt.text) : ""}
@@ -807,10 +804,7 @@ export function MultipleChoiceExercise({
                 <p className="mc-answer-result-line mt-1 flex items-start gap-1 text-base font-semibold text-[#b42318] dark:text-[#f87171]">
                   <X size={14} className="mt-0.5 shrink-0" aria-hidden />
                   <span>
-                    <span
-                      className="mr-1 text-[13px] font-bold text-[#55546b] dark:text-white"
-                      style={{ fontFamily: "var(--font-heading)" }}
-                    >
+                    <span className="exercise-answer-label mr-1 text-[13px] font-bold text-[#55546b] dark:text-white">
                       {t("answer.yourAnswerLabel")}
                     </span>
                     {selectedOpt ? stripOptionLetterPrefix(selectedOpt.text) : t("status.notChosen")}

@@ -188,7 +188,7 @@ function ReorderSequenceTiles({
 
             {detail && (
               <p className="break-words text-sm [overflow-wrap:anywhere]">
-                <span className="text-neutral-600 dark:text-[var(--text-muted-caption)]">{t("answer.correctOrderLabel")} </span>
+                <span className="exercise-answer-label text-neutral-600 dark:text-[var(--text-muted-caption)]">{t("answer.correctOrderLabel")} </span>
                 <span className="correct-answer-word text-[#3b36c4]">
                   {[...detail.items]
                     .sort((a, b) => a.correctIndex - b.correctIndex)
@@ -586,7 +586,7 @@ export function ReorderExercise({
           )}
           {revealedAnswer && (
             <p className="text-sm italic text-amber-700 dark:text-amber-400">
-              {tt("answer.correctOrderLabel")} {revealedAnswer.join("; ")}
+              <span className="exercise-answer-label">{tt("answer.correctOrderLabel")}</span> {revealedAnswer.join("; ")}
             </p>
           )}
           {practiceCheck.error && <p className="text-sm text-red-600 dark:text-red-400">{practiceCheck.error}</p>}

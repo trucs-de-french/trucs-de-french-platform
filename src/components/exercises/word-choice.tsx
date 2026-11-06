@@ -574,7 +574,7 @@ export function WordChoiceExercise({
                 )}
                 {itemRevealed && (
                   <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    {t("answer.correctAnswerLabel")} {itemRevealed.join(", ")}
+                    <span className="exercise-answer-label">{t("answer.correctAnswerLabel")}</span> {itemRevealed.join(", ")}
                   </p>
                 )}
               </div>
