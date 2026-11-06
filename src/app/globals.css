@@ -10561,9 +10561,15 @@ button.scene-bar:active .scene-bar-toggle {
 /* --karaoke-result-font-size — ОДНЕ значення (задача "компактна панель"),
    звідси й .karaoke-result-line-text, і .karaoke-result-word (успадковує
    font-size від рядка-предка, власного font-size не задає) підлаштовуються
-   разом однією зміною. */
+   разом однією зміною. Задача "Karaoke correct-answers toggle: use the same
+   font size as the other exercises' toggles" — 14px/1.5 нижче (.karaoke-
+   result-line-text) — ті самі значення, що .task-result-gap-text
+   (fill_blank/letter_gaps/table_fill, task-result.tsx), найближчий
+   еквівалент: повний текст рядка + вбудоване підсвічене слово, та сама
+   структура, що тут. Раніше 16px/1.45 — видимо більший шрифт за решту 18
+   типів вправ. */
 .karaoke-result-lines {
-  --karaoke-result-font-size: 16px;
+  --karaoke-result-font-size: 14px;
   display: flex;
   flex-direction: column;
 }
@@ -10594,7 +10600,7 @@ button.scene-bar:active .scene-bar-toggle {
   min-width: 0;
   font-family: var(--font-body);
   font-size: var(--karaoke-result-font-size);
-  line-height: 1.45;
+  line-height: 1.5;
   color: #1a1640;
   overflow-wrap: anywhere;
 }
