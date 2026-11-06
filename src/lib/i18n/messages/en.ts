@@ -261,8 +261,8 @@ export const en: Record<MessageKey, string> = {
   "hintExplanation.open_answer": "the teacher's hint for the question",
   "hintLegendField.label": "Hint bulb explanation",
   "hintLegendField.reset": "Reset to default",
-  "reorder.tapToSwap": "Tap two words to swap them",
-  "letterrearr.swapHint": "Tap two letters to swap them",
+  "reorder.tapToSwap": "Tap two words to swap them, or press and hold a word and drag it to the right place.",
+  "letterrearr.swapHint": "Tap two letters to swap them, or press and hold a letter and drag it to the right place.",
   "tablefill.correctLine": "correct — {value}",
   "wc.chooseOptionsCount": "(choose {n} {word})",
 

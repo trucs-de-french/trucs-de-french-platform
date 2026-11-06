@@ -264,8 +264,8 @@ export const uk = {
   "hintExplanation.open_answer": "підказка вчителя до питання",
   "hintLegendField.label": "Пояснення до лампочки-підказки",
   "hintLegendField.reset": "Відновити за замовчуванням",
-  "reorder.tapToSwap": "Торкніться двох слів, щоб поміняти їх місцями",
-  "letterrearr.swapHint": "Торкніться двох літер, щоб поміняти їх місцями",
+  "reorder.tapToSwap": "Торкніться двох слів, щоб поміняти їх місцями, або затисніть слово й перетягніть його на правильне місце.",
+  "letterrearr.swapHint": "Торкніться двох літер, щоб поміняти їх місцями, або затисніть літеру й перетягніть її на правильне місце.",
   "tablefill.correctLine": "правильно — {value}",
   "wc.chooseOptionsCount": "(оберіть {n} {word})",
 
