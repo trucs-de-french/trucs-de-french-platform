@@ -23,6 +23,8 @@ import {
   isWholePracticeTaskType,
 } from "@/lib/exercises/error-review";
 import { isGradableTaskType, type GradableTaskType } from "@/lib/exercises/gradable-types";
+import { buildSceneSummary, type SceneTaskProgressRow } from "@/lib/exercises/scene-summary";
+import { BilanCard } from "./bilan-card";
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseCard, isExerciseType } from "@/components/exercises/exercise-card";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
@@ -130,7 +132,7 @@ export default async function ScenePage({
   const [{ data: scene }, { data: product }] = await Promise.all([
     supabase
       .from("scenes")
-      .select("id, title, video_url, video_provider, subtitles, dialogue")
+      .select("id, title, video_url, video_provider, subtitles, dialogue, order_index")
       .eq("id", sceneId)
       .eq("product_id", productId)
       .single(),
@@ -446,17 +448,62 @@ export default async function ScenePage({
             .returns<MistakeRow[]>(),
           supabase
             .from("progress")
-            .select("task_id, score")
+            .select("task_id, score, best_score, block_progress")
             .eq("user_id", user.id)
             .in("task_id", taskIds)
-            .returns<{ task_id: string; score: number | null }[]>(),
+            .returns<
+              {
+                task_id: string;
+                score: number | null;
+                best_score: number | null;
+                block_progress: Record<string, { pointsEarned?: number; bestPointsEarned?: number }> | null;
+              }[]
+            >(),
         ])
       : [{ data: null }, { data: null }];
 
   const latestScoreByTask = new Map<string, number | null>();
+  // Сценовий BILAN (scene-summary.ts) читає ТІ Ж рядки progress, що вже
+  // завантажені вище для latestScoreByTask/ErrorReviewBlock — один запит,
+  // не два паралельні.
+  const progressByTaskForBilan = new Map<string, SceneTaskProgressRow>();
   for (const p of latestProgress ?? []) {
     latestScoreByTask.set(p.task_id, p.score);
+    progressByTaskForBilan.set(p.task_id, {
+      score: p.score,
+      bestScore: p.best_score,
+      blockProgress: p.block_progress,
+    });
   }
+
+  // Сценовий BILAN — allSceneTaskEntries уже покриває top-level задачі й
+  // УСІ групи (сценові й прикріплені до content-блоків, той самий список,
+  // що й taskIds/taskConfigById/taskTypeById вище); buildSceneSummary сам
+  // відфільтрує негардовані типи (vocab_quiz/flip_cards/essay_check/...).
+  // null — немає сенсу рендерити картку (possible<=0 або студент іще нічого
+  // не здавав), BilanCard нижче просто не монтується.
+  const sceneSummary = buildSceneSummary(
+    allSceneTaskEntries.map((entry) => ({
+      taskId: entry.id,
+      taskType: entry.type,
+      config: taskConfigById.get(entry.id) ?? null,
+      progress: progressByTaskForBilan.get(entry.id),
+    }))
+  );
+
+  // Наступна сцена того самого продукту — лише коли картку й так
+  // рендеримо (sceneSummary не null): без цього запит бив би по БД на
+  // КОЖНОМУ відвідуванні сцени, включно з тими, де BILAN не показується.
+  const { data: nextScene } = sceneSummary
+    ? await supabase
+        .from("scenes")
+        .select("id")
+        .eq("product_id", productId)
+        .gt("order_index", scene.order_index)
+        .order("order_index", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
 
   // одна найсвіжіша помилка на завдання — не показуємо всю історію спроб
   const latestMistakeByTask = new Map<string, MistakeRow>();
@@ -1004,6 +1051,16 @@ export default async function ScenePage({
             }
             return <Fragment key={`${row.block_type}-${i}`}>{nodeByBlockType[row.block_type]}</Fragment>;
           })}
+
+          {sceneSummary && (
+            <BilanCard
+              lang={lang}
+              productId={productId}
+              summary={sceneSummary}
+              newWordsCount={sceneVocab.length}
+              nextSceneHref={nextScene ? `/courses/${productId}/scenes/${nextScene.id}` : null}
+            />
+          )}
         </div>
       </main>
     </div>

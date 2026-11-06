@@ -323,4 +323,16 @@ export const fr: Record<MessageKey, string> = {
   "audioPlayer.defaultTitle": "Audio",
   "audioPlayer.repeat": "Répéter",
   "audioPlayer.playbackSpeed": "Vitesse {speed}×",
+
+  "bilan.pointsLabel": "Points",
+  "bilan.successRate": "de réussite",
+  "bilan.newWords": "Nouveaux mots",
+  "bilan.sceneCompleted": "Scène terminée",
+  "bilan.sceneInProgress": "Scène en cours",
+  "bilan.redoTitle": "Exercices à refaire",
+  "bilan.redoLink": "Refaire",
+  "bilan.notDoneYet": "Pas encore fait",
+  "bilan.allMastered": "Tout est maîtrisé !",
+  "bilan.nextScene": "Scène suivante",
+  "bilan.backToCourse": "Retour au cours",
 };

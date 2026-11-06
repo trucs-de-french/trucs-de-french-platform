@@ -324,6 +324,18 @@ export const uk = {
   "audioPlayer.defaultTitle": "Аудіо",
   "audioPlayer.repeat": "Повторити",
   "audioPlayer.playbackSpeed": "Швидкість {speed}×",
+
+  "bilan.pointsLabel": "Бали",
+  "bilan.successRate": "успішність",
+  "bilan.newWords": "Нові слова",
+  "bilan.sceneCompleted": "Сцену завершено",
+  "bilan.sceneInProgress": "Сцена в процесі",
+  "bilan.redoTitle": "Варто повторити",
+  "bilan.redoLink": "Повторити",
+  "bilan.notDoneYet": "Ще не виконано",
+  "bilan.allMastered": "Усе засвоєно!",
+  "bilan.nextScene": "Наступна сцена",
+  "bilan.backToCourse": "Назад до курсу",
 } as const;
 
 export type MessageKey = keyof typeof uk;
