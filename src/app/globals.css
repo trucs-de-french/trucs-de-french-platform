@@ -11945,10 +11945,18 @@ button.scene-bar:active .scene-bar-toggle {
 .cabinet-nav-item--active:hover {
   background: var(--cabinet-panel-bg);
 }
+/* Пункт: x=12..88 (border-box, margin-left:12px + width:calc(100%-12px)
+   — незмінно, тож правий край і плашка активного пункту лишаються на
+   краю рейки). padding-right:12px НЕ чіпає цей border-box — він лише
+   звужує content-область (де центрується іконка через justify-content)
+   до x=12..76, тож центр іконки = 44px — та ж вісь, що й T-мітка/пілюля
+   UK (центровані на всю 88px рейку, align-items:center + symmetric
+   padding:0 у .cabinet-sidebar--collapsed). Тултіп прив'язаний до
+   border-box пункту (100% = 76px), на це не впливає. */
 .cabinet-sidebar--collapsed .cabinet-nav-item {
   width: calc(100% - 12px);
   min-width: 0;
-  padding: 0;
+  padding: 0 12px 0 0;
   margin: 0 0 0 12px;
   justify-content: center;
   position: relative;
