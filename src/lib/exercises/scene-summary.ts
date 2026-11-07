@@ -175,7 +175,7 @@ export type SceneTaskBest = {
 
 // Бали НАЙКРАЩОЇ спроби завдання — для блокових типів (word_search/
 // crossword/matching/table_fill/letter_gaps/letter_rearrangement) напряму
-// з block_progress[*].bestPointsEarned (0062_best_attempt.sql; fallback
+// з block_progress[*].bestPointsEarned (0063_best_attempt.sql; fallback
 // pointsEarned для рядків, де найкращу спробу ще не рахували); для решти —
 // з best_score (fallback score, якщо рядок створений до 0062) у відсотку
 // від pointsPossible, тим самим перетворенням, що RPC record_task_attempt
