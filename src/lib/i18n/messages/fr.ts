@@ -355,4 +355,9 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.progress.subtitle": "Points, scènes terminées et évolution dans le temps",
   "cabinet.mistakes.subtitle": "Revoyez et corrigez vos erreurs des exercices précédents",
   "cabinet.settings.subtitle": "Profil, langue de l'interface et autres réglages",
+  "cabinet.theme.label": "Thème",
+  "cabinet.theme.light": "Claire",
+  "cabinet.theme.dark": "Sombre",
+  "cabinet.theme.toLight": "Passer au thème clair",
+  "cabinet.theme.toDark": "Passer au thème sombre",
 };

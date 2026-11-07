@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Nunito, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
 import { THEME_SCRIPT } from "./theme-script";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggleGate } from "@/components/theme-toggle-gate";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
 import "./globals.css";
 
@@ -77,7 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           >=640px не впливає — там ThemeToggle лишається fixed, як і раніше. */}
       <body className="min-h-full flex flex-col max-[639px]:pt-16">
         {children}
-        <ThemeToggle />
+        <ThemeToggleGate />
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { getCabinetProfile } from "@/lib/supabase/profile";
 import { signOut } from "@/app/login/actions";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { LanguagePills } from "@/components/cabinet/language-pills";
+import { ThemePills } from "@/components/cabinet/theme-switch";
 
 // Мобільна "Ще" — пункти, що не влізли в нижній tab bar (5 вкладок):
 // Mistakes review, Settings, мова, Admin (лише вчитель), Sign out — великі
@@ -32,6 +33,13 @@ export default async function CabinetMorePage() {
             {t(lang, "cabinet.nav.language")}
           </p>
           <LanguagePills current={lang} />
+        </div>
+
+        <div className="rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 py-4">
+          <p className="mb-2 text-xs font-semibold text-[var(--cabinet-muted)]">
+            {t(lang, "cabinet.theme.label")}
+          </p>
+          <ThemePills lang={lang} />
         </div>
 
         <form action={signOut}>

@@ -1,24 +1,20 @@
 "use client";
 
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { setThemeCookie } from "@/lib/theme-cookie";
+import { useTheme } from "@/lib/use-theme";
 
 const POSITION_STORAGE_KEY = "theme-toggle-position";
 const BUTTON_SIZE = 40; // h-10 w-10
 const DRAG_THRESHOLD = 5; // px — менше цього вважається кліком, не перетягуванням
-
-function getInitialIsDark() {
-  return typeof document !== "undefined" && document.documentElement.classList.contains("dark");
-}
 
 function clamp(value: number, max: number) {
   return Math.min(Math.max(value, 0), Math.max(max, 0));
 }
 
 // Читається СИНХРОННО в lazy useState-ініціалізаторі (не в useEffect) — той
-// самий підхід, що вже є в getInitialIsDark() вище: eslint-правило проєкту
-// react-hooks/set-state-in-effect забороняє прямий setState() у тілі
-// ефекту, тож на сервері (де немає window/localStorage) повертається null
+// самий підхід, що useTheme() (lib/use-theme.ts) для isDark: eslint-правило
+// проєкту react-hooks/set-state-in-effect забороняє прямий setState() у
+// тілі ефекту, тож на сервері (де немає window/localStorage) повертається null
 // (кнопка на дефолтній top-4 right-4 позиції), а на клієнті — при гідратації
 // та ж функція одразу підхоплює збережену позицію. Можливий один кадр
 // розбіжності сервер/клієнт зафіксовано suppressHydrationWarning на
@@ -42,7 +38,7 @@ function getInitialPosition(): { x: number; y: number } | null {
 }
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(getInitialIsDark);
+  const { isDark, setTheme } = useTheme();
   const [position, setPosition] = useState(getInitialPosition);
   const dragState = useRef<{
     startX: number;
@@ -53,19 +49,7 @@ export function ThemeToggle() {
   } | null>(null);
 
   function toggle() {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    document.documentElement.classList.toggle("light", !next);
-    try {
-      localStorage.setItem("theme", next ? "dark" : "light");
-    } catch {
-      // localStorage недоступний (приватний режим тощо) — тема просто не збережеться
-    }
-    // Кука — щоб СЕРВЕР бачив вибір теми на наступному рендері (layout.tsx)
-    // і одразу вставляв правильний клас у <html>, без клієнтського
-    // мутування, яке гідратація потім скидає.
-    setThemeCookie(next ? "dark" : "light");
+    setTheme(!isDark);
   }
 
   function handlePointerDown(e: ReactPointerEvent<HTMLButtonElement>) {

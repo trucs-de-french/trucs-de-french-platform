@@ -11769,6 +11769,18 @@ button.scene-bar:active .scene-bar-toggle {
    main panel/мобільного bottom bar. Світла/темна тема через .dark на
    html (той самий механізм, що й решта проєкту), не :root.dark.
    ============================================================================ */
+/* body має max-[639px]:pt-16 (layout.tsx) — резервує місце під плаваючу
+   ThemeToggle, якої на /cabinet більше немає (ThemeToggleGate ховає її
+   там; theme-toggle-gate.tsx). Без цієї компенсації кабінет на мобільному
+   мав би зайву порожню смугу згори, суперечачи "заповнює в'юпорт від краю
+   до краю" (п.1 задачі) — скасовуємо лише тут, body лишається незмінним
+   для решти сайту, де ThemeToggle далі рендериться. */
+@media (max-width: 639px) {
+  .cabinet {
+    margin-top: -4rem;
+  }
+}
+
 .cabinet {
   --cabinet-frame-from: #2f2c6b;
   --cabinet-frame-to: #4b46da;
@@ -11799,6 +11811,12 @@ button.scene-bar:active .scene-bar-toggle {
    у файлі (той самий факт, що вже задокументований вище для
    .glass-reading-passage/.word-choice-card), тож будь-яка Tailwind
    hidden/md:-утиліта на цих класах була б тихо проігнорована. */
+/* Жодного зовнішнього "кадру" (раніше .cabinet-frame сам малював
+   indigo-градієнт + padding + border-radius навколо sidebar+panel разом,
+   що й давало блакитну рамку/відступ від в'юпорта) — .cabinet-frame
+   лишається лише flex-контейнером рядка sidebar+panel на всю висоту
+   в'юпорта, без власного фону/радіуса/паддінга. Градієнт тепер належить
+   ВИКЛЮЧНО .cabinet-sidebar; .cabinet-panel — пласкі краї, без margin. */
 .cabinet-frame {
   display: flex;
   flex-direction: column;
@@ -11807,9 +11825,6 @@ button.scene-bar:active .scene-bar-toggle {
 @media (min-width: 768px) {
   .cabinet-frame {
     flex-direction: row;
-    padding: 24px;
-    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
-    border-radius: 30px;
   }
 }
 
@@ -11824,8 +11839,6 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (min-width: 768px) {
   .cabinet-panel {
-    margin: 14px 14px 14px 0;
-    border-radius: 26px;
     padding: 26px 28px;
   }
 }
@@ -11842,6 +11855,8 @@ button.scene-bar:active .scene-bar-toggle {
 @media (min-width: 768px) {
   .cabinet-sidebar {
     display: flex;
+    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+    min-height: 100vh;
   }
 }
 .cabinet-sidebar--collapsed {
@@ -11855,18 +11870,42 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* padding-right:0 + margin-right:-12px (-8px у collapsed, нижче): пункт
+   навігації "протікає" через власний правий inset sidebar (12px/8px) до
+   справжнього правого краю — щоб активний пункт (панельний фон +
+   border-radius 18px 0 0 18px) стикався з головною панеллю БЕЗ жодного
+   зазору чи бордера між ними, в обох темах (той самий --cabinet-panel-bg,
+   що й сама .cabinet-panel). */
 .cabinet-nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 48px;
-  padding: 0 14px;
+  padding: 0 0 0 14px;
+  margin-right: -12px;
   border-radius: 14px;
   font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 800;
   color: #fff;
   white-space: nowrap;
+}
+/* flex-shrink:0 на іконці — без цього найдовший лейбл сайдбару
+   ("Робота над помилками") переповнював рядок (white-space:nowrap +
+   відсутній явний overflow), і Tailwind preflight-правило
+   svg{max-width:100%} стискало ІКОНКУ разом із рядком до майже нульової
+   ширини замість того, щоб переповнення забрав сам текст — іконка
+   "зникала", текст виглядав зсунутим. Лейбл тепер і сам труncate-иться
+   (min-width:0 дозволяє flex-дитині стиснутись нижче за її
+   min-content, інакше ellipsis ніколи не спрацював би в flex-рядку). */
+.cabinet-nav-item svg {
+  flex-shrink: 0;
+}
+.cabinet-nav-item > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cabinet-nav-item:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -11880,14 +11919,15 @@ button.scene-bar:active .scene-bar-toggle {
   background: var(--cabinet-panel-bg);
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item {
-  width: 44px;
-  min-width: 44px;
+  width: 100%;
+  min-width: 0;
   padding: 0;
+  margin-right: -8px;
   justify-content: center;
   position: relative;
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item--active {
-  border-radius: 14px;
+  border-radius: 18px 0 0 18px;
 }
 
 .cabinet-tooltip {

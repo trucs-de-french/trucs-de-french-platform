@@ -9,6 +9,7 @@ import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
 import { LanguagePills, CabinetLangCycle } from "./language-pills";
+import { ThemePills, ThemeRailButton } from "./theme-switch";
 
 const NAV_COOKIE = "tdf_cabinet_nav";
 const NAV_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 рік
@@ -45,7 +46,7 @@ export function CabinetSidebar({
         </Link>
       </div>
 
-      <nav aria-label={t(lang, "cabinet.nav.home")} className="flex flex-1 flex-col gap-1">
+      <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-1 flex-col gap-1">
         {CABINET_PRIMARY_NAV.map((item) => (
           <NavLink
             key={item.href}
@@ -110,14 +111,25 @@ export function CabinetSidebar({
         </button>
 
         {collapsed ? (
-          <CabinetLangCycle current={lang} />
+          <>
+            <ThemeRailButton lang={lang} />
+            <CabinetLangCycle current={lang} />
+          </>
         ) : (
-          <div className="px-1">
-            <p className="mb-1.5 text-xs font-semibold text-white/70">
-              {t(lang, "cabinet.nav.language")}
-            </p>
-            <LanguagePills current={lang} />
-          </div>
+          <>
+            <div className="px-1">
+              <p className="mb-1.5 text-xs font-semibold text-white/70">
+                {t(lang, "cabinet.nav.language")}
+              </p>
+              <LanguagePills current={lang} />
+            </div>
+            <div className="px-1">
+              <p className="mb-1.5 text-xs font-semibold text-white/70">
+                {t(lang, "cabinet.theme.label")}
+              </p>
+              <ThemePills lang={lang} />
+            </div>
+          </>
         )}
       </div>
     </aside>

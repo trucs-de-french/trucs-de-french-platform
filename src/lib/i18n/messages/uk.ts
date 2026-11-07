@@ -356,6 +356,11 @@ export const uk = {
   "cabinet.progress.subtitle": "Бали, завершені сцени й динаміка по курсах",
   "cabinet.mistakes.subtitle": "Повторіть і виправте помилки з попередніх завдань",
   "cabinet.settings.subtitle": "Профіль, мова інтерфейсу та інші налаштування",
+  "cabinet.theme.label": "Тема",
+  "cabinet.theme.light": "Світла",
+  "cabinet.theme.dark": "Темна",
+  "cabinet.theme.toLight": "Увімкнути світлу тему",
+  "cabinet.theme.toDark": "Увімкнути темну тему",
 } as const;
 
 export type MessageKey = keyof typeof uk;
