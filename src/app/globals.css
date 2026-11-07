@@ -11952,6 +11952,7 @@ button.scene-bar:active .scene-bar-toggle {
 .cabinet-nav-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 12px;
   min-height: 44px;
   padding: 0 16px 0 var(--cabinet-item-pl);
@@ -11961,7 +11962,22 @@ button.scene-bar:active .scene-bar-toggle {
   font-size: 14.5px;
   font-weight: 800;
   color: #fff;
+  text-align: left;
   white-space: nowrap;
+}
+/* Sign out/Collapse menu — <button>, не <a>: UA-стиль браузера дає
+   button text-align:center (на відміну від лінків, де воно left за
+   замовчуванням), і це успадковувалось у лейбл-span нижче (flex:1 1 auto,
+   розтягнутий на всю вільну ширину) — звідси лейбл по центру замість
+   біля іконки, як у всіх інших пунктів. text-align:left вище вже
+   перебиває це успадкування; тут лише решта button-скидань, які не
+   конфліктують із font-family/size/weight/color (вже явно задані вище
+   з тією ж специфічністю, тож не перебиваються type-селектором нижче). */
+button.cabinet-nav-item {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 /* flex-shrink:0 на іконці — без цього найдовший лейбл сайдбару
    ("Робота над помилками") переповнював рядок (white-space:nowrap +
@@ -11978,6 +11994,7 @@ button.scene-bar:active .scene-bar-toggle {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  text-align: left;
   text-overflow: ellipsis;
 }
 .cabinet-nav-item:hover {
@@ -12086,6 +12103,7 @@ button.scene-bar:active .scene-bar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   min-height: 32px;
   padding: 0 10px;
   border-radius: 999px;
