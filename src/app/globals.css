@@ -11797,7 +11797,13 @@ button.scene-bar:active .scene-bar-toggle {
      незалежно від теми (на відміну від --cabinet-ink, кремового в dark). */
   --cabinet-on-gold: #1a1640;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
+     (CSS2.1 §11.1.1, якщо лише одна з осей не visible) — саме це робило
+     .cabinet найближчим scroll-контейнером для position:sticky рейки
+     нижче замість справжнього вьюпорта, і sticky з height:100dvh більше
+     не тримав рейку при скролі документа (рейка "закінчувалась" посеред
+     сторінки). clip не створює scroll-контейнер. */
+  overflow-x: clip;
 }
 .dark .cabinet {
   --cabinet-frame-from: #0e1142;
@@ -11843,8 +11849,14 @@ button.scene-bar:active .scene-bar-toggle {
   min-height: 100vh;
 }
 @media (min-width: 768px) {
+  /* Desktop: кадр — фіксована висота вьюпорта, а не частина документа, що
+     скролиться. Скролить лише .cabinet-panel (нижче); документ на
+     десктопі більше не скролиться взагалі, тож рейка (height:100% кадру)
+     завжди на всю висоту без sticky. */
   .cabinet-frame {
     flex-direction: row;
+    height: 100dvh;
+    overflow: hidden;
   }
 }
 
@@ -11859,7 +11871,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 @media (min-width: 768px) {
   .cabinet-panel {
+    min-height: 0;
     padding: 26px 28px;
+    overscroll-behavior: contain;
   }
 }
 
@@ -11877,19 +11891,19 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 200ms ease;
 }
 @media (min-width: 768px) {
-  /* overflow-y:auto обчислює overflow-x у "auto" (CSS2.1 §11.1.1, якщо
-     лише одна з осей не visible) — без overflow-x:hidden тут горизонтальна
-     скрол-доріжка з'являлась щоразу, коли тултіп колапс-рейки (нижче,
-     left: calc(100% + 10px)) виступав праворуч за межі .cabinet-sidebar.
-     scrollbar-width/::-webkit-scrollbar — візуально ховають саму
-     вертикальну доріжку (safety net лишається функціональним, просто без
-     видимого треку). */
+  /* height:100% замість sticky+100dvh — .cabinet-frame вище тепер сам
+     height:100dvh/overflow:hidden, тож рейка просто заповнює його висоту
+     фактичним layout-ом, без жодної залежності від того, який елемент
+     скролиться. overflow-y:auto — safety net, якщо вміст рейки колись не
+     влізе в дуже низький вьюпорт; overflow-x:hidden лишається, бо
+     overflow-y:auto інакше обчислив би його в auto (CSS2.1 §11.1.1) і
+     дав зайву горизонтальну скрол-доріжку. scrollbar-width/
+     ::-webkit-scrollbar — візуально ховають саму вертикальну доріжку
+     (safety net лишається функціональним, просто без видимого треку). */
   .cabinet-sidebar {
     display: flex;
     background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
-    height: 100dvh;
-    position: sticky;
-    top: 0;
+    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
