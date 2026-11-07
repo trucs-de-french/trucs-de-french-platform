@@ -36,7 +36,7 @@ export function CabinetSidebar({
 
   return (
     <aside className={`cabinet-sidebar ${collapsed ? "cabinet-sidebar--collapsed" : ""}`}>
-      <div className={collapsed ? "flex justify-center pb-6" : "pb-6"}>
+      <div className={collapsed ? "flex justify-center pb-[18px]" : "pb-[18px]"}>
         <Link href="/cabinet" aria-label="Trucs d'French">
           {collapsed ? (
             <PlatformMark size={44} />
@@ -46,7 +46,7 @@ export function CabinetSidebar({
         </Link>
       </div>
 
-      <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-1 flex-col gap-1">
+      <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-col gap-[2px]">
         {CABINET_PRIMARY_NAV.map((item) => (
           <NavLink
             key={item.href}
@@ -92,13 +92,19 @@ export function CabinetSidebar({
         </form>
       </nav>
 
-      <div className={collapsed ? "mt-4 flex flex-col items-center gap-3" : "mt-4 flex flex-col gap-3"}>
+      <div
+        className={
+          collapsed
+            ? "mt-auto flex flex-col items-center gap-[10px]"
+            : "mt-auto flex flex-col gap-[10px]"
+        }
+      >
         <button
           type="button"
           onClick={toggle}
           aria-expanded={!collapsed}
           aria-label={t(lang, collapsed ? "cabinet.nav.expand" : "cabinet.nav.collapse")}
-          className="cabinet-nav-item w-full justify-center"
+          className={collapsed ? "cabinet-nav-item w-full justify-center" : "cabinet-nav-item w-full"}
         >
           {collapsed ? (
             <ChevronRight size={22} aria-hidden="true" />

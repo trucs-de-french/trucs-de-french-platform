@@ -11847,8 +11847,8 @@ button.scene-bar:active .scene-bar-toggle {
   display: none;
   flex-direction: column;
   flex-shrink: 0;
-  width: 236px;
-  padding: 24px 12px;
+  width: 256px;
+  padding: 18px 12px;
   color: #fff;
   transition: width 200ms ease;
 }
@@ -11856,12 +11856,15 @@ button.scene-bar:active .scene-bar-toggle {
   .cabinet-sidebar {
     display: flex;
     background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
-    min-height: 100vh;
+    height: 100dvh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
   }
 }
 .cabinet-sidebar--collapsed {
   width: 88px;
-  padding: 24px 8px;
+  padding: 18px 0;
   align-items: center;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -11870,22 +11873,26 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
-/* padding-right:0 + margin-right:-12px (-8px у collapsed, нижче): пункт
-   навігації "протікає" через власний правий inset sidebar (12px/8px) до
-   справжнього правого краю — щоб активний пункт (панельний фон +
-   border-radius 18px 0 0 18px) стикався з головною панеллю БЕЗ жодного
-   зазору чи бордера між ними, в обох темах (той самий --cabinet-panel-bg,
-   що й сама .cabinet-panel). */
+/* Expanded: padding-right:16px дає лейблу clearance від правого краю,
+   margin-right:-12px (= правий inset sidebar) "протікає" через нього до
+   справжнього правого краю — пункт (background/border-radius) стикається
+   з головною панеллю без зазору, clearance лейбла не впливає на це
+   (padding всередині боксу, bleed — поза ним). Collapsed: sidebar більше
+   не має власного горизонтального padding — зліва інсет дає margin-left:
+   12px на самому пункті, width:calc(100% - 12px) компенсує цей margin,
+   тож правий край пункту завжди точно на правому краю рейки (= стик із
+   панеллю), без потреби скасовувати padding sidebar. Той самий
+   --cabinet-panel-bg, що й сама .cabinet-panel, в обох темах. */
 .cabinet-nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 48px;
-  padding: 0 0 0 14px;
+  min-height: 44px;
+  padding: 0 16px 0 14px;
   margin-right: -12px;
   border-radius: 14px;
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 800;
   color: #fff;
   white-space: nowrap;
@@ -11919,10 +11926,10 @@ button.scene-bar:active .scene-bar-toggle {
   background: var(--cabinet-panel-bg);
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item {
-  width: 100%;
+  width: calc(100% - 12px);
   min-width: 0;
   padding: 0;
-  margin-right: -8px;
+  margin: 0 0 0 12px;
   justify-content: center;
   position: relative;
 }
