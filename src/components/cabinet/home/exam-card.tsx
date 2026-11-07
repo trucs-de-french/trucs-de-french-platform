@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
-import { saveExam, EXAM_TYPE_OPTIONS } from "@/app/cabinet/actions";
+import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
+import { saveExam } from "@/app/cabinet/actions";
 
 const RING_SIZE = 104;
 const STROKE = 8;

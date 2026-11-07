@@ -3,20 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
-
-// Варіанти exam_type — власні назви іспитів, не перекладаються жодною
-// мовою інтерфейсу (той самий рядок в uk/fr/en), тож тут і лише тут, а не
-// в i18n-словниках.
-export const EXAM_TYPE_OPTIONS = [
-  "DELF A1",
-  "DELF A2",
-  "DELF B1",
-  "DELF B2",
-  "DALF C1",
-  "DALF C2",
-  "TCF",
-  "TEF",
-] as const;
+import { isExamType } from "@/lib/cabinet/exam-types";
 
 // profiles.exam_type/exam_date (0065_cabinet_profile_and_activity.sql) —
 // власник рядка (RLS profiles_update_own) може оновити їх напряму; тут
@@ -32,7 +19,7 @@ export async function saveExam(formData: FormData): Promise<{ ok: boolean; error
   const examType = String(formData.get("examType") ?? "");
   const examDate = String(formData.get("examDate") ?? "");
 
-  if (!(EXAM_TYPE_OPTIONS as readonly string[]).includes(examType)) {
+  if (!isExamType(examType)) {
     return { ok: false, error: "type" };
   }
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(new Date());
