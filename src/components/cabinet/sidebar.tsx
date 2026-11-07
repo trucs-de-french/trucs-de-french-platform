@@ -36,7 +36,7 @@ export function CabinetSidebar({
 
   return (
     <aside className={`cabinet-sidebar ${collapsed ? "cabinet-sidebar--collapsed" : ""}`}>
-      <div className={collapsed ? "flex justify-center pb-[18px]" : "pb-[18px]"}>
+      <div className={collapsed ? "flex justify-center pb-[18px]" : "cabinet-sidebar-logo pb-[18px]"}>
         <Link href="/cabinet" aria-label="Trucs d'French">
           {collapsed ? (
             <PlatformMark size={44} />

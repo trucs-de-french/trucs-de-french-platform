@@ -11845,6 +11845,10 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 .cabinet-sidebar {
+  /* Той самий відступ, що .cabinet-nav-item використовує як власний
+     padding-left — .cabinet-sidebar-logo (вордмарк) читає цю саму
+     змінну, тож їхні ліві краї не можуть розійтись. */
+  --cabinet-item-pl: 14px;
   display: none;
   flex-direction: column;
   flex-shrink: 0;
@@ -11887,6 +11891,15 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   overflow: visible;
 }
+
+/* Лівий край вордмарку = лівий край іконок пунктів нижче: той самий
+   --cabinet-item-pl (14px), що padding-left у .cabinet-nav-item, замість
+   окремого магічного числа, яке могло б розійтися з ним. Лише в
+   розгорнутому сайдбарі — collapsed-логотип (.flex.justify-center на
+   самому div у sidebar.tsx) цей клас не отримує. */
+.cabinet-sidebar-logo {
+  padding-left: var(--cabinet-item-pl);
+}
 @media (prefers-reduced-motion: reduce) {
   .cabinet-sidebar {
     transition: none;
@@ -11908,7 +11921,7 @@ button.scene-bar:active .scene-bar-toggle {
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  padding: 0 16px 0 14px;
+  padding: 0 16px 0 var(--cabinet-item-pl);
   margin-right: -12px;
   border-radius: 14px;
   font-family: var(--font-heading);
