@@ -11964,6 +11964,44 @@ button.scene-bar:active .scene-bar-toggle {
 .cabinet-sidebar--collapsed .cabinet-nav-item--active {
   border-radius: 18px 0 0 18px;
 }
+/* Квадратна плитка замість підсвічування всього (широкого) боксу пункту:
+   неактивні пункти/кнопки рейки втрачають власний hover/focus-фон і
+   прямокутне фокус-кільце браузера, натомість з'являється 44x44
+   ::before позаду іконки. z-index:0 на самому пункті (вже position:
+   relative) робить його власним стековим контекстом, тож z-index:-1 на
+   ::before ховає плитку лише ЗА іконкою цього пункту, а не десь позаду
+   всього сайдбару. left:10px у 76px border-box пункту (width: calc(100%
+   - 12px)) центрує плитку на x=44 рейки — та ж вісь, що й сама іконка
+   (попередній коміт). Активний пункт виключено :not() — форма й
+   hover/focus не змінюються. */
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active) {
+  z-index: 0;
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover,
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible {
+  background: transparent;
+  outline: none;
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 10px;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+  border-radius: 14px;
+  pointer-events: none;
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover::before,
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible::before {
+  background: rgba(255, 255, 255, 0.08);
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible::before {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
 
 .cabinet-tooltip {
   position: absolute;
