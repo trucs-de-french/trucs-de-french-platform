@@ -11791,6 +11791,7 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-gold: #d9b765;
   --cabinet-primary: #3b36c4;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 .dark .cabinet {
   --cabinet-frame-from: #0e1142;
@@ -11853,6 +11854,13 @@ button.scene-bar:active .scene-bar-toggle {
   transition: width 200ms ease;
 }
 @media (min-width: 768px) {
+  /* overflow-y:auto обчислює overflow-x у "auto" (CSS2.1 §11.1.1, якщо
+     лише одна з осей не visible) — без overflow-x:hidden тут горизонтальна
+     скрол-доріжка з'являлась щоразу, коли тултіп колапс-рейки (нижче,
+     left: calc(100% + 10px)) виступав праворуч за межі .cabinet-sidebar.
+     scrollbar-width/::-webkit-scrollbar — візуально ховають саму
+     вертикальну доріжку (safety net лишається функціональним, просто без
+     видимого треку). */
   .cabinet-sidebar {
     display: flex;
     background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
@@ -11860,12 +11868,24 @@ button.scene-bar:active .scene-bar-toggle {
     position: sticky;
     top: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .cabinet-sidebar::-webkit-scrollbar {
+    display: none;
   }
 }
+/* Колапс-рейка: overflow:visible в обох напрямках — жодного скролу,
+   жодної скрол-доріжки. Тултіпи (left: calc(100% + 10px)) мусять вилазити
+   праворуч за межі самої .cabinet-sidebar над панель, а safety-net
+   overflow-y:auto з .cabinet-sidebar вище саме через це й ламав рейку
+   (auto-обчислення overflow-x). Контент рейки короткий — замість скролу
+   рейка просто не обрізає й не скролить нічого. */
 .cabinet-sidebar--collapsed {
   width: 88px;
   padding: 18px 0;
   align-items: center;
+  overflow: visible;
 }
 @media (prefers-reduced-motion: reduce) {
   .cabinet-sidebar {
