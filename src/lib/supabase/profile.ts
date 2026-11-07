@@ -5,11 +5,15 @@ import { normalizeUiLang } from "@/lib/ui/product-lang";
 // раніше запити до profiles типувались ad-hoc в кожному місці окремо.
 // ui_lang — 0064_profiles_ui_lang.sql, персональна мова кабінету студента
 // (не плутати з products.ui_lang — мовою завдань конкретного продукту).
+// exam_type/exam_date/weekly_goal_scenes — 0065_cabinet_profile_and_activity.sql.
 export type Profile = {
   id: string;
   role: "student" | "teacher";
   full_name: string | null;
   ui_lang: "uk" | "fr" | "en";
+  exam_type: string | null;
+  exam_date: string | null;
+  weekly_goal_scenes: number;
   created_at: string;
 };
 
