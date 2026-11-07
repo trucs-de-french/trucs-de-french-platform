@@ -81,7 +81,13 @@ export function CabinetSidebar({
             className="cabinet-nav-item w-full"
             aria-label={t(lang, "cabinet.nav.signOut")}
           >
-            <LogOut size={22} aria-hidden="true" />
+            {collapsed ? (
+              <span className="cabinet-rail-icon">
+                <LogOut size={22} aria-hidden="true" />
+              </span>
+            ) : (
+              <LogOut size={22} aria-hidden="true" />
+            )}
             {!collapsed && <span>{t(lang, "cabinet.nav.signOut")}</span>}
             {collapsed && (
               <span className="cabinet-tooltip" role="tooltip">
@@ -107,7 +113,9 @@ export function CabinetSidebar({
           className={collapsed ? "cabinet-nav-item w-full justify-center" : "cabinet-nav-item w-full"}
         >
           {collapsed ? (
-            <ChevronRight size={22} aria-hidden="true" />
+            <span className="cabinet-rail-icon">
+              <ChevronRight size={22} aria-hidden="true" />
+            </span>
           ) : (
             <>
               <ChevronLeft size={22} aria-hidden="true" />
@@ -163,7 +171,13 @@ function NavLink({
       aria-label={label}
       className={`cabinet-nav-item ${active ? "cabinet-nav-item--active" : ""}`}
     >
-      <Icon size={22} aria-hidden="true" />
+      {collapsed ? (
+        <span className="cabinet-rail-icon">
+          <Icon size={22} aria-hidden="true" />
+        </span>
+      ) : (
+        <Icon size={22} aria-hidden="true" />
+      )}
       {!collapsed && <span>{label}</span>}
       {collapsed && (
         <span className="cabinet-tooltip" role="tooltip">

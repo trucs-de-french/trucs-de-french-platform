@@ -11960,58 +11960,41 @@ button.scene-bar:active .scene-bar-toggle {
 }
 /* Пункт: x=12..88 (border-box, margin-left:12px + width:calc(100%-12px)
    — незмінно, тож правий край і плашка активного пункту лишаються на
-   краю рейки). padding-right:12px НЕ чіпає цей border-box — він лише
-   звужує content-область (де центрується іконка через justify-content)
-   до x=12..76, тож центр іконки = 44px — та ж вісь, що й T-мітка/пілюля
-   UK (центровані на всю 88px рейку, align-items:center + symmetric
-   padding:0 у .cabinet-sidebar--collapsed). Тултіп прив'язаний до
-   border-box пункту (100% = 76px), на це не впливає. */
+   краю рейки). Без padding-right-трюку: вирівнювання іконки на вісь
+   x=44 тепер робить сам .cabinet-rail-icon (margin-left:10px) нижче,
+   а не justify-content пункту. Тултіп прив'язаний до border-box пункту
+   (position: relative лишається потрібним саме для нього). */
 .cabinet-sidebar--collapsed .cabinet-nav-item {
   width: calc(100% - 12px);
   min-width: 0;
-  padding: 0 12px 0 0;
+  padding: 0;
   margin: 0 0 0 12px;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item--active {
   border-radius: 18px 0 0 18px;
-}
-/* Квадратна плитка замість підсвічування всього (широкого) боксу пункту:
-   неактивні пункти/кнопки рейки втрачають власний hover/focus-фон і
-   прямокутне фокус-кільце браузера, натомість з'являється 44x44
-   ::before позаду іконки. z-index:0 на самому пункті (вже position:
-   relative) робить його власним стековим контекстом, тож z-index:-1 на
-   ::before ховає плитку лише ЗА іконкою цього пункту, а не десь позаду
-   всього сайдбару. left:10px у 76px border-box пункту (width: calc(100%
-   - 12px)) центрує плитку на x=44 рейки — та ж вісь, що й сама іконка
-   (попередній коміт). Активний пункт виключено :not() — форма й
-   hover/focus не змінюються. */
-.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active) {
-  z-index: 0;
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover,
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible {
   background: transparent;
   outline: none;
 }
-.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active)::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 10px;
-  top: 50%;
+
+.cabinet-rail-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
   width: 44px;
   height: 44px;
-  transform: translateY(-50%);
+  margin-left: 10px;
   border-radius: 14px;
-  pointer-events: none;
 }
-.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover::before,
-.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible::before {
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover .cabinet-rail-icon,
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible .cabinet-rail-icon {
   background: rgba(255, 255, 255, 0.08);
 }
-.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible::before {
+.cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible .cabinet-rail-icon {
   outline: 2px solid rgba(255, 255, 255, 0.6);
   outline-offset: 2px;
 }

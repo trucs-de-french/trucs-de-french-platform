@@ -49,7 +49,9 @@ export function ThemeRailButton({ lang }: { lang: UiLang }) {
       aria-label={label}
       className="cabinet-nav-item w-full justify-center"
     >
-      {isDark ? <Sun size={22} aria-hidden="true" /> : <Moon size={22} aria-hidden="true" />}
+      <span className="cabinet-rail-icon">
+        {isDark ? <Sun size={22} aria-hidden="true" /> : <Moon size={22} aria-hidden="true" />}
+      </span>
       <span className="cabinet-tooltip" role="tooltip">
         {label}
       </span>
