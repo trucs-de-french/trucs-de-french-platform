@@ -16,7 +16,7 @@ export function ProfileCard({
   return (
     <div className="cabinet-card flex items-center gap-3 p-5">
       <span
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-heading text-lg font-extrabold text-[#1a1640]"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-heading text-lg font-extrabold text-[var(--cabinet-on-gold)]"
         style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
         aria-hidden="true"
       >

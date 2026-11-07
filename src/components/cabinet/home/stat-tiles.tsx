@@ -14,7 +14,7 @@ function StatTile({
   return (
     <div className="cabinet-card flex items-center gap-3 p-4">
       <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[var(--cabinet-ink)]"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[var(--cabinet-on-gold)]"
         style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
       >
         <Icon size={20} aria-hidden="true" />
@@ -23,7 +23,7 @@ function StatTile({
         <div className="font-heading text-2xl font-extrabold leading-tight text-[var(--cabinet-ink)]">
           {value}
         </div>
-        <div className="truncate text-xs text-[var(--cabinet-muted)]">{label}</div>
+        <div className="line-clamp-2 text-xs leading-[1.2] text-[var(--cabinet-muted)]">{label}</div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export function RedoList({ lang, items }: { lang: UiLang; items: RedoItem[] }) {
           {items.map((item) => (
             <li key={item.taskId} className="flex items-center gap-3">
               <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--cabinet-ink)]"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--cabinet-on-gold)]"
                 style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
               >
                 <RotateCcw size={16} aria-hidden="true" />

@@ -108,7 +108,7 @@ function ExamForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 min-h-11 rounded-full px-4 text-sm font-bold text-[#1a1640] disabled:opacity-60"
+        className="mt-1 min-h-11 rounded-full px-4 text-sm font-bold text-[var(--cabinet-on-gold)] disabled:opacity-60"
         style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
       >
         {t(lang, "home.exam.save")}

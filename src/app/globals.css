@@ -11793,6 +11793,9 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-primary: #3b36c4;
   --cabinet-continue-from: #2f2c6b;
   --cabinet-continue-to: #4b46da;
+  /* Текст/іконки, що лежать прямо на золотому градієнті, завжди темний —
+     незалежно від теми (на відміну від --cabinet-ink, кремового в dark). */
+  --cabinet-on-gold: #1a1640;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -12079,7 +12082,7 @@ button.scene-bar:active .scene-bar-toggle {
   background: rgba(255, 255, 255, 0.08);
 }
 .cabinet-lang-pill--active {
-  color: #1a1640;
+  color: var(--cabinet-on-gold);
   background: linear-gradient(135deg, #f6dc8e, #d9b765);
 }
 

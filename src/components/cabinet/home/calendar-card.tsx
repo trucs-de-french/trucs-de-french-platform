@@ -53,7 +53,7 @@ export function CalendarCard({ lang, activeDays }: { lang: UiLang; activeDays: s
             <div key={i} className="flex flex-col items-center gap-0.5 py-1">
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                  isToday ? "text-[#1a1640]" : "text-[var(--cabinet-ink)]"
+                  isToday ? "text-[var(--cabinet-on-gold)]" : "text-[var(--cabinet-ink)]"
                 }`}
                 style={isToday ? { background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" } : undefined}
               >

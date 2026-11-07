@@ -11,7 +11,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
         <p className="font-body text-base text-[var(--cabinet-ink)]">{t(lang, "home.continue.empty")}</p>
         <Link
           href="/cabinet/library"
-          className="inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-[var(--cabinet-ink)]"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-[var(--cabinet-on-gold)]"
           style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
         >
           {t(lang, "home.continue.emptyButton")}
@@ -43,7 +43,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
             className="flex h-full w-full items-center justify-center"
             style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
           >
-            <Film size={28} className="text-[#1a1640]" aria-hidden="true" />
+            <Film size={28} className="text-[var(--cabinet-on-gold)]" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -82,7 +82,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
 
         <Link
           href={target.href}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-[#1a1640]"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-[var(--cabinet-on-gold)]"
           style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
         >
           {t(lang, target.kind === "start" ? "home.continue.start" : "home.continue.label")}
