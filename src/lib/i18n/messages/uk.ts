@@ -336,6 +336,26 @@ export const uk = {
   "bilan.allMastered": "Усе засвоєно!",
   "bilan.nextScene": "Наступна сцена",
   "bilan.backToCourse": "Назад до курсу",
+
+  "cabinet.nav.home": "Головна",
+  "cabinet.nav.library": "Моя бібліотека",
+  "cabinet.nav.dictionary": "Мій словник",
+  "cabinet.nav.progress": "Мій прогрес",
+  "cabinet.nav.mistakes": "Робота над помилками",
+  "cabinet.nav.settings": "Налаштування",
+  "cabinet.nav.more": "Ще",
+  "cabinet.nav.admin": "Адмінка",
+  "cabinet.nav.signOut": "Вийти",
+  "cabinet.nav.collapse": "Згорнути меню",
+  "cabinet.nav.expand": "Розгорнути меню",
+  "cabinet.nav.language": "Мова інтерфейсу",
+  "cabinet.soon": "Скоро",
+  "cabinet.home.greeting": "Bonjour, {name}",
+  "cabinet.library.subtitle": "Усі курси, до яких у вас є доступ",
+  "cabinet.dictionary.subtitle": "Слова, які ви зберегли під час навчання",
+  "cabinet.progress.subtitle": "Бали, завершені сцени й динаміка по курсах",
+  "cabinet.mistakes.subtitle": "Повторіть і виправте помилки з попередніх завдань",
+  "cabinet.settings.subtitle": "Профіль, мова інтерфейсу та інші налаштування",
 } as const;
 
 export type MessageKey = keyof typeof uk;

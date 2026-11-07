@@ -24,25 +24,50 @@ const SIZES = {
   xl: { trucs: "text-[42px]", french: "text-[51px]" },
 } as const;
 
-export function PlatformWordmark({ size = "lg" }: { size?: keyof typeof SIZES }) {
+// tone="onDark" — варіант для розміщення на насиченому індиго-фоні, що не
+// залежить від теми (кабінет: бокова панель/мобільна шапка завжди на
+// indigo-градієнті, не на звичайному панельному фоні) — TRUCS білий,
+// d'French кремовий (#fdf8ea), апостроф лишається тим самим teal-акцентом.
+// Дефолтний tone і всі наявні використання (дашборд, адмінка, лендінг) не
+// змінюються.
+export function PlatformWordmark({
+  size = "lg",
+  tone = "default",
+}: {
+  size?: keyof typeof SIZES;
+  tone?: "default" | "onDark";
+}) {
   const { trucs, french } = SIZES[size];
+  const trucsColor = tone === "onDark" ? "text-white" : "text-indigo-900 dark:text-indigo-200";
+  const frenchColor = tone === "onDark" ? "text-[#fdf8ea]" : "text-indigo-900 dark:text-indigo-200";
 
   return (
     <span className="group inline-flex items-baseline gap-1">
-      <span
-        className={`font-brand-sans font-extrabold uppercase tracking-[0.08em] ${trucs} text-indigo-900 dark:text-indigo-200`}
-      >
+      <span className={`font-brand-sans font-extrabold uppercase tracking-[0.08em] ${trucs} ${trucsColor}`}>
         Trucs
       </span>
-      <span
-        className={`font-brand-serif font-medium italic ${french} text-indigo-900 dark:text-indigo-200`}
-      >
+      <span className={`font-brand-serif font-medium italic ${french} ${frenchColor}`}>
         d
         <span className="mx-[1px] font-bold text-cyan-500 transition-all duration-300 ease-out group-hover:text-cyan-400 group-hover:scale-125 group-hover:-translate-y-0.5 group-hover:drop-shadow-[0_0_10px_rgba(6,182,212,0.6)] dark:text-cyan-400">
           &rsquo;
         </span>
         French
       </span>
+    </span>
+  );
+}
+
+// Компактна марка для вузьких місць, де повний вордмарк не влазить
+// (collapsed-рейка кабінету, 88px) — золоте коло з літерою T тим самим
+// брендовим шрифтом, що TRUCS вище (font-brand-sans).
+export function PlatformMark({ size = 44 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f3d98b,#d9b765)] font-brand-sans font-extrabold text-[#1a1640]"
+      style={{ width: size, height: size, fontSize: size * 0.45 }}
+    >
+      T
     </span>
   );
 }

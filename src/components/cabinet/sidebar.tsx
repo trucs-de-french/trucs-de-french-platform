@@ -1,0 +1,157 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronLeft, ChevronRight, LogOut, type LucideIcon } from "lucide-react";
+import { PlatformWordmark, PlatformMark } from "@/components/platform-wordmark";
+import { t, type MessageKey } from "@/lib/i18n/t";
+import type { UiLang } from "@/lib/ui/product-lang";
+import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
+import { LanguagePills, CabinetLangCycle } from "./language-pills";
+
+const NAV_COOKIE = "tdf_cabinet_nav";
+const NAV_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 рік
+
+export function CabinetSidebar({
+  lang,
+  isTeacher,
+  initialCollapsed,
+  onSignOut,
+}: {
+  lang: UiLang;
+  isTeacher: boolean;
+  initialCollapsed: boolean;
+  onSignOut: () => Promise<void>;
+}) {
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const pathname = usePathname();
+
+  function toggle() {
+    const next = !collapsed;
+    setCollapsed(next);
+    document.cookie = `${NAV_COOKIE}=${next ? "collapsed" : "expanded"}; path=/; max-age=${NAV_COOKIE_MAX_AGE}`;
+  }
+
+  return (
+    <aside className={`cabinet-sidebar ${collapsed ? "cabinet-sidebar--collapsed" : ""}`}>
+      <div className={collapsed ? "flex justify-center pb-6" : "pb-6"}>
+        <Link href="/cabinet" aria-label="Trucs d'French">
+          {collapsed ? (
+            <PlatformMark size={44} />
+          ) : (
+            <PlatformWordmark size="sm" tone="onDark" />
+          )}
+        </Link>
+      </div>
+
+      <nav aria-label={t(lang, "cabinet.nav.home")} className="flex flex-1 flex-col gap-1">
+        {CABINET_PRIMARY_NAV.map((item) => (
+          <NavLink
+            key={item.href}
+            item={item}
+            lang={lang}
+            collapsed={collapsed}
+            active={pathname === item.href}
+          />
+        ))}
+
+        <div className="my-2 border-t border-white/15" />
+
+        <NavLink
+          item={CABINET_SETTINGS_NAV}
+          lang={lang}
+          collapsed={collapsed}
+          active={pathname === CABINET_SETTINGS_NAV.href}
+        />
+
+        {isTeacher && (
+          <NavLink
+            item={CABINET_ADMIN_NAV}
+            lang={lang}
+            collapsed={collapsed}
+            active={pathname.startsWith("/admin")}
+          />
+        )}
+
+        <form action={onSignOut}>
+          <button
+            type="submit"
+            className="cabinet-nav-item w-full"
+            aria-label={t(lang, "cabinet.nav.signOut")}
+          >
+            <LogOut size={22} aria-hidden="true" />
+            {!collapsed && <span>{t(lang, "cabinet.nav.signOut")}</span>}
+            {collapsed && (
+              <span className="cabinet-tooltip" role="tooltip">
+                {t(lang, "cabinet.nav.signOut")}
+              </span>
+            )}
+          </button>
+        </form>
+      </nav>
+
+      <div className={collapsed ? "mt-4 flex flex-col items-center gap-3" : "mt-4 flex flex-col gap-3"}>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={!collapsed}
+          aria-label={t(lang, collapsed ? "cabinet.nav.expand" : "cabinet.nav.collapse")}
+          className="cabinet-nav-item w-full justify-center"
+        >
+          {collapsed ? (
+            <ChevronRight size={22} aria-hidden="true" />
+          ) : (
+            <>
+              <ChevronLeft size={22} aria-hidden="true" />
+              <span>{t(lang, "cabinet.nav.collapse")}</span>
+            </>
+          )}
+        </button>
+
+        {collapsed ? (
+          <CabinetLangCycle current={lang} />
+        ) : (
+          <div className="px-1">
+            <p className="mb-1.5 text-xs font-semibold text-white/70">
+              {t(lang, "cabinet.nav.language")}
+            </p>
+            <LanguagePills current={lang} />
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function NavLink({
+  item,
+  lang,
+  collapsed,
+  active,
+}: {
+  item: { href: string; icon: LucideIcon; labelKey: MessageKey };
+  lang: UiLang;
+  collapsed: boolean;
+  active: boolean;
+}) {
+  const Icon = item.icon;
+  const label = t(lang, item.labelKey);
+
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      aria-label={label}
+      className={`cabinet-nav-item ${active ? "cabinet-nav-item--active" : ""}`}
+    >
+      <Icon size={22} aria-hidden="true" />
+      {!collapsed && <span>{label}</span>}
+      {collapsed && (
+        <span className="cabinet-tooltip" role="tooltip">
+          {label}
+        </span>
+      )}
+    </Link>
+  );
+}

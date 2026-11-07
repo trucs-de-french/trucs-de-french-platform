@@ -11763,3 +11763,220 @@ button.scene-bar:active .scene-bar-toggle {
   width: 38px;
   height: 38px;
 }
+
+/* ============================================================================
+   Кабінет студента (src/app/cabinet) — токени й структурний каркас sidebar/
+   main panel/мобільного bottom bar. Світла/темна тема через .dark на
+   html (той самий механізм, що й решта проєкту), не :root.dark.
+   ============================================================================ */
+.cabinet {
+  --cabinet-frame-from: #2f2c6b;
+  --cabinet-frame-to: #4b46da;
+  --cabinet-panel-bg: #f8f3e4;
+  --cabinet-line: #e4cf94;
+  --cabinet-ink: #1a1640;
+  --cabinet-muted: #6a5d40;
+  --cabinet-gold: #d9b765;
+  --cabinet-primary: #3b36c4;
+  min-height: 100vh;
+}
+.dark .cabinet {
+  --cabinet-frame-from: #0e1142;
+  --cabinet-frame-to: #1c2080;
+  --cabinet-panel-bg: #0b0e38;
+  --cabinet-line: rgba(217, 183, 101, 0.38);
+  --cabinet-ink: #f6f1e3;
+  --cabinet-muted: #b4b1dd;
+  --cabinet-gold: #d9b765;
+  --cabinet-primary: #a5a1ff;
+}
+
+/* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний
+   вигляд, @media (min-width:768px) додає/перемикає десктопний. Навмисно
+   НЕ Tailwind-утиліти hidden/md:flex/md:hidden для display тут — ці класи
+   нешаровані (unlayered), CSS cascade layers (Tailwind v4, @layer
+   utilities) завжди програють нешарованим правилам незалежно від порядку
+   у файлі (той самий факт, що вже задокументований вище для
+   .glass-reading-passage/.word-choice-card), тож будь-яка Tailwind
+   hidden/md:-утиліта на цих класах була б тихо проігнорована. */
+.cabinet-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+@media (min-width: 768px) {
+  .cabinet-frame {
+    flex-direction: row;
+    padding: 24px;
+    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+    border-radius: 30px;
+  }
+}
+
+.cabinet-panel {
+  flex: 1;
+  min-width: 0;
+  background: var(--cabinet-panel-bg);
+  padding: 16px;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
+  overflow-y: auto;
+  color: var(--cabinet-ink);
+}
+@media (min-width: 768px) {
+  .cabinet-panel {
+    margin: 14px 14px 14px 0;
+    border-radius: 26px;
+    padding: 26px 28px;
+  }
+}
+
+.cabinet-sidebar {
+  display: none;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 236px;
+  padding: 24px 12px;
+  color: #fff;
+  transition: width 200ms ease;
+}
+@media (min-width: 768px) {
+  .cabinet-sidebar {
+    display: flex;
+  }
+}
+.cabinet-sidebar--collapsed {
+  width: 88px;
+  padding: 24px 8px;
+  align-items: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cabinet-sidebar {
+    transition: none;
+  }
+}
+
+.cabinet-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+}
+.cabinet-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.cabinet-nav-item--active {
+  background: var(--cabinet-panel-bg);
+  color: var(--cabinet-ink);
+  border-radius: 18px 0 0 18px;
+}
+.cabinet-nav-item--active:hover {
+  background: var(--cabinet-panel-bg);
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  justify-content: center;
+  position: relative;
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item--active {
+  border-radius: 14px;
+}
+
+.cabinet-tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  background: #1a1640;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 20;
+}
+.cabinet-nav-item:hover .cabinet-tooltip,
+.cabinet-nav-item:focus-visible .cabinet-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.cabinet-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+}
+.cabinet-lang-pill--active {
+  color: #1a1640;
+  background: linear-gradient(135deg, #f6dc8e, #d9b765);
+}
+
+.cabinet-mobile-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+}
+@media (min-width: 768px) {
+  .cabinet-mobile-tabbar {
+    display: none;
+  }
+}
+
+.cabinet-mobile-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+}
+.cabinet-mobile-tab--active {
+  color: #f6dc8e;
+}
+
+.cabinet-stub-card {
+  margin-top: 20px;
+  border-radius: 20px;
+  border: 1.5px solid var(--cabinet-line);
+  background: rgba(255, 255, 255, 0.5);
+  padding: 32px 24px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--cabinet-muted);
+}
+.dark .cabinet-stub-card {
+  background: rgba(255, 255, 255, 0.04);
+}
