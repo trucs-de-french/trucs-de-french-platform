@@ -11886,6 +11886,13 @@ button.scene-bar:active .scene-bar-toggle {
    (auto-обчислення overflow-x). Контент рейки короткий — замість скролу
    рейка просто не обрізає й не скролить нічого. */
 .cabinet-sidebar--collapsed {
+  /* --cabinet-item-pl (14px) лишається потрібним для вирівнювання вордмарку
+     в РОЗГОРНУТОМУ сайдбарі (.cabinet-sidebar-logo) — тут, у колапс-рейці,
+     перевизначаємо її в 0: .cabinet-nav-item читає цю саму змінну як
+     padding-left (base rule), тож успадкований 14px інакше зсував би
+     .cabinet-rail-icon праворуч від осі x=44 (T-мітка/UK-пілюля), навіть
+     попри явний padding:0 нижче. */
+  --cabinet-item-pl: 0px;
   width: 88px;
   padding: 18px 0;
   align-items: center;
