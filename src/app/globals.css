@@ -11886,13 +11886,6 @@ button.scene-bar:active .scene-bar-toggle {
    (auto-обчислення overflow-x). Контент рейки короткий — замість скролу
    рейка просто не обрізає й не скролить нічого. */
 .cabinet-sidebar--collapsed {
-  /* --cabinet-item-pl (14px) лишається потрібним для вирівнювання вордмарку
-     в РОЗГОРНУТОМУ сайдбарі (.cabinet-sidebar-logo) — тут, у колапс-рейці,
-     перевизначаємо її в 0: .cabinet-nav-item читає цю саму змінну як
-     padding-left (base rule), тож успадкований 14px інакше зсував би
-     .cabinet-rail-icon праворуч від осі x=44 (T-мітка/UK-пілюля), навіть
-     попри явний padding:0 нижче. */
-  --cabinet-item-pl: 0px;
   width: 88px;
   padding: 18px 0;
   align-items: center;
@@ -11965,22 +11958,38 @@ button.scene-bar:active .scene-bar-toggle {
 .cabinet-nav-item--active:hover {
   background: var(--cabinet-panel-bg);
 }
-/* Пункт: x=12..88 (border-box, margin-left:12px + width:calc(100%-12px)
-   — незмінно, тож правий край і плашка активного пункту лишаються на
-   краю рейки). Без padding-right-трюку: вирівнювання іконки на вісь
-   x=44 тепер робить сам .cabinet-rail-icon (margin-left:10px) нижче,
-   а не justify-content пункту. Тултіп прив'язаний до border-box пункту
-   (position: relative лишається потрібним саме для нього). */
+/* Пункт на всю ширину рейки (88px, margin/padding 0) — центр іконки
+   = центр пункту = центр рейки за побудовою, без арифметики offset-ів.
+   position+z-index:0 робить пункт власним стековим контекстом для
+   ::before плашки активного пункту (нижче) і для тултіпа. */
 .cabinet-sidebar--collapsed .cabinet-nav-item {
-  width: calc(100% - 12px);
+  width: 100%;
   min-width: 0;
+  margin: 0;
   padding: 0;
-  margin: 0 0 0 12px;
-  justify-content: flex-start;
+  justify-content: center;
   position: relative;
+  z-index: 0;
 }
-.cabinet-sidebar--collapsed .cabinet-nav-item--active {
+/* Плашка активного пункту — вже не фон самого пункту (той завжди
+   transparent у колапс-рейці), а окремий ::before: x=12..88, та сама
+   форма й колір (--cabinet-panel-bg), що й раніше, але більше не ділить
+   бокс з іконкою, тож іконка лишається точно на x=44 незалежно від неї.
+   z-index:-1 ховає її за іконкою (в стековому контексті пункту вище). */
+.cabinet-sidebar--collapsed .cabinet-nav-item--active,
+.cabinet-sidebar--collapsed .cabinet-nav-item--active:hover {
+  background: transparent;
+}
+.cabinet-sidebar--collapsed .cabinet-nav-item--active::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 12px;
+  right: 0;
+  top: 0;
+  bottom: 0;
   border-radius: 18px 0 0 18px;
+  background: var(--cabinet-panel-bg);
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover,
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible {
@@ -11988,13 +11997,23 @@ button.scene-bar:active .scene-bar-toggle {
   outline: none;
 }
 
+/* .cabinet-nav-item > span (вище, для лейбла в розгорнутому сайдбарі)
+   має ТУ Ж специфічність + ще й тег-селектор — за специфічністю це
+   .cabinet-nav-item(1 клас)+span(1 тег) проти просто .cabinet-rail-icon
+   (1 клас), тож flex:1 1 auto звідти перебивав flex:none тут і розтягував
+   обгортку іконки на всю вільну ширину пункту (саме це й зсувало іконку
+   вправо — центр розтягнутого бокса, не x=44). .cabinet-nav-item >
+   .cabinet-rail-icon (2 класи) перебиває той рядок напевно. */
+.cabinet-nav-item > .cabinet-rail-icon {
+  flex: none;
+  min-width: 44px;
+  overflow: visible;
+}
 .cabinet-rail-icon {
   display: grid;
   place-items: center;
-  flex: none;
   width: 44px;
   height: 44px;
-  margin-left: 10px;
   border-radius: 14px;
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover .cabinet-rail-icon,
