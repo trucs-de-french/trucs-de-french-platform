@@ -11785,11 +11785,14 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-frame-from: #2f2c6b;
   --cabinet-frame-to: #4b46da;
   --cabinet-panel-bg: #f8f3e4;
+  --cabinet-card-bg: #ffffff;
   --cabinet-line: #e4cf94;
   --cabinet-ink: #1a1640;
   --cabinet-muted: #6a5d40;
   --cabinet-gold: #d9b765;
   --cabinet-primary: #3b36c4;
+  --cabinet-continue-from: #2f2c6b;
+  --cabinet-continue-to: #4b46da;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -11797,11 +11800,24 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-frame-from: #0e1142;
   --cabinet-frame-to: #1c2080;
   --cabinet-panel-bg: #0b0e38;
+  --cabinet-card-bg: rgba(255, 255, 255, 0.06);
   --cabinet-line: rgba(217, 183, 101, 0.38);
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
   --cabinet-primary: #a5a1ff;
+  --cabinet-continue-from: #2a2ea0;
+  --cabinet-continue-to: #4b46da;
+}
+
+/* Базова картка Home-віджетів (statTile/continue/chart/redo/profile/exam/
+   calendar/goal) — лише фон+border+radius+тінь, решта (grid/spacing/flex)
+   навмисно через Tailwind-утиліти прямо в розмітці (мінімум нового CSS). */
+.cabinet-card {
+  background: var(--cabinet-card-bg);
+  border: 1.5px solid var(--cabinet-line);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
 
 /* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний
