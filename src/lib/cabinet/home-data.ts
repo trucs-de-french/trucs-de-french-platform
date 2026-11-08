@@ -120,7 +120,7 @@ const EMPTY_HOME_DATA: CabinetHomeData = {
   exam: null,
 };
 
-type TaskRow = {
+export type TaskRow = {
   id: string;
   type: string;
   config: Record<string, unknown> | null;
@@ -128,9 +128,9 @@ type TaskRow = {
   product_id: string;
 };
 
-type SceneRow = { id: string; product_id: string; title: string; order_index: number };
+export type SceneRow = { id: string; product_id: string; title: string; order_index: number };
 
-type ProgressRow = {
+export type ProgressRow = {
   task_id: string;
   score: number | null;
   best_score: number | null;
@@ -149,19 +149,22 @@ type ActivityRow = {
   created_at: string;
 };
 
+// Чи має завдання хоч одну спробу — та сама умова, що BILAN-лейбл
+// "Scène terminée" (buildSceneSummary.allAttempted) перевіряє по кожному
+// завданню сцени; винесено, бо library-data.ts (кабінет "Моя бібліотека")
+// рахує той самий предикат і для завдань DELF-продуктів без сцен.
+export function hasTaskAttempt(p: ProgressRow | undefined): boolean {
+  return !!p && (p.attempts > 0 || p.score !== null || p.best_score !== null);
+}
+
 // Чи "здана" сцена для рахунку scenesCompleted: кожне гардоване завдання
-// сцени має хоч одну спробу (attempts>=1 чи наявний score) — та сама умова,
-// що BILAN-лейбл "Scène terminée" (buildSceneSummary.allAttempted), але тут
-// рахується лише ознака "здано", без балів.
-function isSceneCompleted(
+// сцени має хоч одну спробу — рахується лише ознака "здано", без балів.
+export function isSceneCompleted(
   sceneTasks: TaskRow[],
   progressByTaskId: Map<string, ProgressRow>
 ): boolean {
   if (sceneTasks.length === 0) return false;
-  return sceneTasks.every((task) => {
-    const p = progressByTaskId.get(task.id);
-    return !!p && (p.attempts > 0 || p.score !== null || p.best_score !== null);
-  });
+  return sceneTasks.every((task) => hasTaskAttempt(progressByTaskId.get(task.id)));
 }
 
 export async function getCabinetHomeData(
