@@ -206,7 +206,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               type="button"
               aria-pressed={levelFilter === level}
               onClick={() => setLevelFilter((cur) => (cur === level ? null : level))}
-              className={`min-h-11 rounded-full px-3 text-xs font-bold ${
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-sm font-extrabold ${
                 levelFilter === level
                   ? "bg-[var(--cabinet-primary)] text-white"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
