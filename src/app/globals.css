@@ -12166,3 +12166,30 @@ button.cabinet-nav-item {
 .dark .cabinet-stub-card {
   background: rgba(255, 255, 255, 0.04);
 }
+
+/* Моя бібліотека — колонки картки залежать від ширини ПАНЕЛІ кабінету
+   (не вьюпорта: на десктопі панель вужча за вьюпорт на ширину sidebar),
+   тож рахуємо по container query, а не @media. */
+.cabinet-library-grid {
+  container-type: inline-size;
+}
+.cabinet-library-cols {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+@container (min-width: 520px) {
+  .cabinet-library-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 900px) {
+  .cabinet-library-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (min-width: 1280px) {
+  .cabinet-library-cols {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

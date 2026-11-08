@@ -390,6 +390,26 @@ export const uk = {
   "home.goal.of": "{done} з {goal} сцен",
   "home.role.student": "Студентка",
   "home.role.teacher": "Викладачка",
+
+  "library.subtitle": "Усі курси, на які ти записана, з твоїм прогресом",
+  "library.tab.all": "Усе",
+  "library.tab.film": "Фільми",
+  "library.tab.delf": "Підготовка до іспитів",
+  "library.type.film": "Фільм",
+  "library.type.delf": "DELF",
+  "library.search": "Пошук за назвою",
+  "library.level.label": "Рівень",
+  "library.progress.scenes": "{done} з {total} сцен",
+  "library.progress.tasks": "{done} з {total} завдань",
+  "library.action.start": "Почати",
+  "library.action.continue": "Продовжити",
+  "library.action.view": "Переглянути",
+  "library.completed": "Завершено",
+  "library.find.title": "Знайти нові матеріали",
+  "library.find.link": "Відкрити каталог",
+  "library.empty.title": "У тебе ще немає матеріалів",
+  "library.empty.nothing": "Нічого не знайдено",
+  "library.empty.reset": "Скинути фільтри",
 } as const;
 
 export type MessageKey = keyof typeof uk;
