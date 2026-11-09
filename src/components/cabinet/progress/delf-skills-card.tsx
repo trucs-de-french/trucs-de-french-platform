@@ -15,16 +15,11 @@ function DelfSegments({ percent, label }: { percent: number; label: string }) {
   const filled = percent <= 0 ? 0 : Math.min(SEGMENT_COUNT, Math.ceil(percent / 10));
 
   return (
-    <div
-      className="grid min-w-0 max-w-[167px] flex-1 grid-cols-10 gap-[3px]"
-      role="img"
-      aria-label={`${label}: ${percent}%`}
-    >
+    <div className="cabinet-delf-segments" role="img" aria-label={`${label}: ${percent}%`}>
       {Array.from({ length: SEGMENT_COUNT }, (_, i) => (
         <span
           key={i}
-          className="h-[10px] w-full rounded-[3px]"
-          style={{ background: i < filled ? "var(--cabinet-gold)" : "var(--cabinet-track)" }}
+          className={`cabinet-delf-segment ${i < filled ? "" : "cabinet-delf-segment--empty"}`}
           aria-hidden="true"
         />
       ))}
@@ -44,11 +39,8 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
         {skills.rows.map((row) => {
           const sectionLabel = `${row.section} ${t(lang, SECTION_NAME_KEY[row.section])}`;
           return (
-            <li
-              key={row.section}
-              className="flex items-center gap-3 max-[420px]:flex-col max-[420px]:items-stretch max-[420px]:gap-1.5"
-            >
-              <div className="flex min-w-0 flex-1 items-baseline gap-2 max-[420px]:w-full">
+            <li key={row.section} className="cabinet-delf-row flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 items-baseline gap-2">
                 <span className="w-7 shrink-0 font-heading text-sm font-extrabold text-[var(--cabinet-ink)]">
                   {row.section}
                 </span>
@@ -56,7 +48,7 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
                   {t(lang, SECTION_NAME_KEY[row.section])}
                 </span>
               </div>
-              <div className="flex items-center gap-2 max-[420px]:w-full">
+              <div className="flex items-center gap-2">
                 <DelfSegments percent={row.percent} label={sectionLabel} />
                 <span className="w-10 shrink-0 text-right text-xs font-bold text-[var(--cabinet-ink)]">
                   {row.percent}%
