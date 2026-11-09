@@ -25,14 +25,47 @@ export default async function CabinetLayout({ children }: { children: React.Reac
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  // Core-запит (role/full_name/ui_lang) — від нього залежать "Адмінка",
+  // решта role-based видимості й ім'я/ініціал, тож він ОКРЕМО від
+  // avatar_url/avatar_mascot (0066_cabinet_settings.sql, ще не
+  // застосована міграція валила б увесь спільний рядок, а не лише
+  // аватар — "Адмінка" зникала б і вчительці, хоча роль насправді відома).
+  const { data: coreProfile, error: coreError } = await supabase
     .from("profiles")
-    .select("role, full_name, ui_lang, avatar_url, avatar_mascot")
+    .select("role, full_name, ui_lang")
     .eq("id", user.id)
-    .single<Pick<Profile, "role" | "full_name" | "ui_lang" | "avatar_url" | "avatar_mascot">>();
+    .single<Pick<Profile, "role" | "full_name" | "ui_lang">>();
 
-  const isTeacher = profile?.role === "teacher";
-  const lang = normalizeUiLang(profile?.ui_lang);
+  if (coreError) {
+    console.error("[cabinet/layout] core profile query failed:", coreError.message);
+  }
+
+  // email до "@" — фолбек ТІЛЬКИ для відображення (нікнейм/ініціал), не
+  // пишеться назад у profiles.full_name. Застосовується і коли
+  // full_name дійсно порожнє, і коли сам core-запит впав (coreProfile
+  // null) — у цьому рідкому випадку роль теж невідома, тож isTeacher
+  // свідомо false (тихо показати "Адмінку" тому, хто насправді вчитель,
+  // гірше, ніж тимчасово не показати її тому, хто дійсно вчитель).
+  const emailLocalPart = user.email?.split("@")[0] ?? "";
+  const displayName = coreProfile?.full_name?.trim() || emailLocalPart || null;
+
+  const isTeacher = coreProfile?.role === "teacher";
+  const lang = normalizeUiLang(coreProfile?.ui_lang);
+
+  let avatarUrl: string | null = null;
+  let avatarMascot: string | null = null;
+  try {
+    const { data: extra } = await supabase
+      .from("profiles")
+      .select("avatar_url, avatar_mascot")
+      .eq("id", user.id)
+      .single<Pick<Profile, "avatar_url" | "avatar_mascot">>();
+    avatarUrl = extra?.avatar_url ?? null;
+    avatarMascot = extra?.avatar_mascot ?? null;
+  } catch {
+    // міграція 0066 ще не застосована — аватар/маскот лишаються null,
+    // ім'я/роль з core-запиту вище це не зачіпає
+  }
 
   const cookieStore = await cookies();
   const initialCollapsed = cookieStore.get(NAV_COOKIE)?.value === "collapsed";
@@ -47,9 +80,9 @@ export default async function CabinetLayout({ children }: { children: React.Reac
       <CabinetSidebar
         lang={lang}
         isTeacher={isTeacher}
-        fullName={profile?.full_name ?? null}
-        avatarUrl={profile?.avatar_url ?? null}
-        avatarMascot={profile?.avatar_mascot ?? null}
+        fullName={displayName}
+        avatarUrl={avatarUrl}
+        avatarMascot={avatarMascot}
         initialCollapsed={initialCollapsed}
         initialIsDark={initialIsDark}
         onSignOut={signOut}

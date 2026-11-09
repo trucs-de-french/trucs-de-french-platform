@@ -229,26 +229,25 @@ export async function getCabinetHomeData(
   const last7Days: string[] = Array.from({ length: 7 }, (_, i) => addDays(todayStr, i - 6));
 
   let fullName: string | null = null;
-  let avatarUrl: string | null = null;
-  let avatarMascot: string | null = null;
   let weeklyGoalSetting = 3;
   let exam: ExamInfo | null = null;
   try {
+    // full_name/exam_*/weekly_goal_scenes — усі з давніх міграцій
+    // (0001/0065), завжди присутні; НЕ в одному запиті з avatar_url/
+    // avatar_mascot (0066) нижче — інакше непридатна до міграції колонка
+    // валила б і це, й ProfileCard на Home показував би геть порожній
+    // профіль замість лише відсутнього аватара.
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, avatar_url, avatar_mascot, exam_type, exam_date, weekly_goal_scenes")
+      .select("full_name, exam_type, exam_date, weekly_goal_scenes")
       .eq("id", userId)
       .single<{
         full_name: string | null;
-        avatar_url: string | null;
-        avatar_mascot: string | null;
         exam_type: string | null;
         exam_date: string | null;
         weekly_goal_scenes: number;
       }>();
     fullName = profile?.full_name ?? null;
-    avatarUrl = profile?.avatar_url ?? null;
-    avatarMascot = profile?.avatar_mascot ?? null;
     weeklyGoalSetting = profile?.weekly_goal_scenes ?? 3;
     if (profile?.exam_type && profile?.exam_date) {
       const daysLeft = Math.round(
@@ -259,6 +258,20 @@ export async function getCabinetHomeData(
     }
   } catch {
     // лишається null/дефолт — профільна картка просто не покаже іспит
+  }
+
+  let avatarUrl: string | null = null;
+  let avatarMascot: string | null = null;
+  try {
+    const { data: extra } = await supabase
+      .from("profiles")
+      .select("avatar_url, avatar_mascot")
+      .eq("id", userId)
+      .single<{ avatar_url: string | null; avatar_mascot: string | null }>();
+    avatarUrl = extra?.avatar_url ?? null;
+    avatarMascot = extra?.avatar_mascot ?? null;
+  } catch {
+    // міграція 0066 ще не застосована — аватар/маскот лишаються null
   }
 
   const enrolledProducts = await getEnrolledProducts(supabase, userId);
