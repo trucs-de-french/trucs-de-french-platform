@@ -1,6 +1,6 @@
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { SOCIAL_LINKS } from "@/lib/site-links";
+import { SOCIAL_LINKS, SHOP_URL } from "@/lib/site-links";
 
 // Прості stroke-гліфи — у lucide-react немає брендових іконок (Facebook/
 // Instagram/Youtube/Telegram прибрали ще в ранніх версіях), тож мінімальні
@@ -75,7 +75,18 @@ export function CabinetFooter({ lang }: { lang: UiLang }) {
             })}
           </div>
         )}
-        <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "footer.copyright", { year })}</p>
+        <p className="text-xs text-[var(--cabinet-muted)]">
+          {t(lang, "footer.copyright", { year })}
+          {" · "}
+          <a
+            href={SHOP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--cabinet-muted)] hover:underline"
+          >
+            {t(lang, "footer.shop")}
+          </a>
+        </p>
       </div>
     </footer>
   );
