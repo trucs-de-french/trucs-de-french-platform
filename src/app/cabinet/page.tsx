@@ -76,7 +76,7 @@ export default async function CabinetHomePage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
           <CalendarCard lang={lang} activeDays={home.activeDays} />
           <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
