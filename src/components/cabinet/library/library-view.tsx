@@ -94,8 +94,8 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
         href={item.href}
         className={
           isGhost
-            ? "flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] text-sm font-bold text-[var(--cabinet-ink)]"
-            : "flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--cabinet-primary)] text-sm font-bold text-white"
+            ? "flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+            : "flex min-h-11 w-full items-center justify-center rounded-full border-[1.5px] border-[var(--cabinet-btn-border)] bg-[var(--cabinet-btn-bg)] text-sm font-bold text-[var(--cabinet-btn-fg)] hover:bg-[var(--cabinet-btn-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
         }
       >
         {t(lang, actionKey)}
@@ -152,9 +152,9 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               type="button"
               aria-pressed={typeFilter === "all"}
               onClick={() => setTypeFilter("all")}
-              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold ${
+              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 typeFilter === "all"
-                  ? "bg-[var(--cabinet-primary)] text-white"
+                  ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
               }`}
             >
@@ -166,9 +166,9 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
                 type="button"
                 aria-pressed={typeFilter === type}
                 onClick={() => setTypeFilter(type)}
-                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold ${
+                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                   typeFilter === type
-                    ? "bg-[var(--cabinet-primary)] text-white"
+                    ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
                     : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
                 }`}
               >
@@ -190,7 +190,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t(lang, "library.search")}
-            className="min-h-11 w-full rounded-full border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] py-2 pl-9 pr-3 text-sm text-[var(--cabinet-ink)] placeholder:text-[var(--cabinet-muted)]"
+            className="min-h-11 w-full rounded-full border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] py-2 pl-9 pr-3 text-sm text-[var(--cabinet-ink)] placeholder:text-[var(--cabinet-muted)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
           />
         </label>
       </div>
@@ -206,9 +206,9 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               type="button"
               aria-pressed={levelFilter === level}
               onClick={() => setLevelFilter((cur) => (cur === level ? null : level))}
-              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-sm font-extrabold ${
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-sm font-extrabold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 levelFilter === level
-                  ? "bg-[var(--cabinet-primary)] text-white"
+                  ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
               }`}
             >
@@ -224,7 +224,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
           <button
             type="button"
             onClick={resetFilters}
-            className="min-h-11 rounded-full border border-[var(--cabinet-line)] px-4 text-sm font-bold text-[var(--cabinet-ink)]"
+            className="min-h-11 rounded-full border border-[var(--cabinet-line)] px-4 text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
           >
             {t(lang, "library.empty.reset")}
           </button>

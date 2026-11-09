@@ -33,7 +33,7 @@ export function RedoList({ lang, items }: { lang: UiLang; items: RedoItem[] }) {
               </span>
               <Link
                 href={item.href}
-                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-bold text-[var(--cabinet-primary)]"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-bold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
               >
                 {t(lang, "home.redo.action")}
                 <ArrowRight size={14} aria-hidden="true" />

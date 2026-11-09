@@ -85,7 +85,7 @@ function ExamForm({
         <select
           name="examType"
           defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]}
-          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] px-3 text-sm text-[var(--cabinet-ink)]"
+          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] px-3 text-sm text-[var(--cabinet-ink)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
         >
           {EXAM_TYPE_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>
@@ -101,7 +101,7 @@ function ExamForm({
           name="examDate"
           min={todayStr}
           defaultValue={exam?.date ?? ""}
-          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] px-3 text-sm text-[var(--cabinet-ink)]"
+          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] px-3 text-sm text-[var(--cabinet-ink)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
         />
       </label>
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -131,7 +131,7 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="min-h-11 text-xs font-semibold text-[var(--cabinet-primary)]"
+            className="min-h-11 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
           >
             {t(lang, "home.exam.edit")}
           </button>

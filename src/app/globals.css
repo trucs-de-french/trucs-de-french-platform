@@ -11796,6 +11796,22 @@ button.scene-bar:active .scene-bar-toggle {
   /* Текст/іконки, що лежать прямо на золотому градієнті, завжди темний —
      незалежно від теми (на відміну від --cabinet-ink, кремового в dark). */
   --cabinet-on-gold: #1a1640;
+  /* Primary/ghost-кнопки, вибрані таби/пігулки, лінки, фокус-кільце —
+     світлі значення тут рівні тому, що вже рендериться (суцільна indigo-
+     заливка/білий текст), тому перехід на ці змінні нічого не змінює у
+     світлій темі. Темні значення (.dark .cabinet нижче) замінюють
+     яскраво-лавандовий --cabinet-primary (#a5a1ff) на "золотий контур". */
+  --cabinet-btn-bg: var(--cabinet-primary);
+  --cabinet-btn-fg: #ffffff;
+  --cabinet-btn-border: transparent;
+  --cabinet-btn-bg-hover: var(--cabinet-primary);
+  --cabinet-ghost-fg: var(--cabinet-ink);
+  --cabinet-ghost-bg-hover: transparent;
+  --cabinet-pill-selected-bg: var(--cabinet-primary);
+  --cabinet-pill-selected-fg: #ffffff;
+  --cabinet-pill-selected-border: transparent;
+  --cabinet-link: var(--cabinet-primary);
+  --cabinet-focus-ring: transparent;
   min-height: 100vh;
   /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
      (CSS2.1 §11.1.1, якщо лише одна з осей не visible) — саме це робило
@@ -11815,6 +11831,20 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
   --cabinet-primary: #a5a1ff;
+  /* "Золотий контур" замінює лавандову заливку (--cabinet-primary) на
+     primary/ghost-кнопках, вибраних табах/пігулках і лінках лише в dark —
+     світлі значення вище лишаються indigo-заливкою/білим текстом. */
+  --cabinet-btn-bg: transparent;
+  --cabinet-btn-fg: #f3d98b;
+  --cabinet-btn-border: #d9b765;
+  --cabinet-btn-bg-hover: rgba(217, 183, 101, 0.14);
+  --cabinet-ghost-fg: #f3d98b;
+  --cabinet-ghost-bg-hover: rgba(217, 183, 101, 0.1);
+  --cabinet-pill-selected-bg: rgba(217, 183, 101, 0.18);
+  --cabinet-pill-selected-fg: #f3d98b;
+  --cabinet-pill-selected-border: #d9b765;
+  --cabinet-link: #f3d98b;
+  --cabinet-focus-ring: rgba(217, 183, 101, 0.35);
   --cabinet-continue-from: #2a2ea0;
   --cabinet-continue-to: #4b46da;
 }
