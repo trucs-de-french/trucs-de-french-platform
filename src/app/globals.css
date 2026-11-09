@@ -11778,6 +11778,19 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Safety net: якщо з якоїсь причини (напр. округлення 100dvh/100vh)
+   кореневий документ все ж стає скролером на кабінеті замість
+   .cabinet-panel — ховаємо й цю доріжку так само, без overflow:hidden
+   (сам скрол, якщо він існує, лишається робочим). :has() обмежує це
+   ВИКЛЮЧНО сторінками з .cabinet-frame — адмінка/публічні сторінки не
+   зачеплені. */
+html:has(.cabinet-frame) {
+  scrollbar-width: none;
+}
+html:has(.cabinet-frame)::-webkit-scrollbar {
+  display: none;
+}
+
 .cabinet {
   --cabinet-frame-from: #2f2c6b;
   --cabinet-frame-to: #4b46da;
@@ -11967,6 +11980,16 @@ button.scene-bar:active .scene-bar-toggle {
   padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
   overflow-y: auto;
   color: var(--cabinet-ink);
+  /* Ховає сам скрол-бар (не скрол) — панель лишається фактичним
+     скролером контенту кабінету (mouse wheel/trackpad/клавіатура/touch
+     працюють як і раніше, лише без видимої native-доріжки праворуч). */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cabinet-panel::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 @media (min-width: 768px) {
   .cabinet-panel {
