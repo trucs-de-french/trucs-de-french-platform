@@ -1,6 +1,7 @@
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { PointsByDay } from "@/lib/cabinet/home-data";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
 
@@ -16,9 +17,7 @@ export function ProgressChart({ lang, data }: { lang: UiLang; data: PointsByDay[
   if (data.length === 0 || max <= 0) {
     return (
       <div className="cabinet-card flex h-full flex-col gap-3 p-5">
-        <h3 className="font-body text-xl font-semibold text-[var(--cabinet-ink)]">
-          {t(lang, "home.chart.title")}
-        </h3>
+        <CardTitle>{t(lang, "home.chart.title")}</CardTitle>
         <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.chart.empty")}</p>
       </div>
     );

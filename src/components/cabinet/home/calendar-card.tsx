@@ -1,4 +1,5 @@
 import type { UiLang } from "@/lib/ui/product-lang";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
 
@@ -40,7 +41,7 @@ export function CalendarCard({ lang, activeDays }: { lang: UiLang; activeDays: s
 
   return (
     <div className="cabinet-card flex flex-col gap-3 px-5 py-4">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">{monthLabel}</h3>
+      <CardTitle>{monthLabel}</CardTitle>
       <div>
         <div className="mb-1 grid grid-cols-7 gap-x-1 text-center">
           {weekdayLabels.map((label, i) => (

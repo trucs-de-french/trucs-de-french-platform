@@ -13,6 +13,7 @@ import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveWeeklyGoal, saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
 import { SettingsPill } from "./settings-pill";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const GOAL_OPTIONS = [2, 3, 5, 7];
 
@@ -120,10 +121,8 @@ export function LearningCard({
   showExamCard: boolean;
 }) {
   return (
-    <div className="cabinet-card flex flex-col gap-4 p-5">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "settings.section.learning")}
-      </h3>
+    <div className="cabinet-card flex flex-col gap-3 p-5">
+      <CardTitle>{t(lang, "settings.section.learning")}</CardTitle>
       <WeeklyGoalPills lang={lang} goal={goal} />
       {showExamCard && <ExamSettingsForm lang={lang} exam={exam} />}
     </div>

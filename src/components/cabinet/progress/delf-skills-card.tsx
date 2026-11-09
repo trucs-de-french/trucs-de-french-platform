@@ -1,6 +1,7 @@
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { DelfSkills } from "@/lib/cabinet/progress-data";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const SECTION_NAME_KEY = {
   CO: "progress.delf.co",
@@ -32,9 +33,9 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
 
   return (
     <div className="cabinet-card flex h-full flex-col gap-3 p-5">
-      <h3 className="font-body text-xl font-semibold text-[var(--cabinet-ink)]">
+      <CardTitle>
         {skills.level ? t(lang, "progress.delf.title", { level: skills.level }) : skills.productTitle}
-      </h3>
+      </CardTitle>
       <ul className="flex flex-col gap-3">
         {skills.rows.map((row) => {
           const fullName = t(lang, SECTION_NAME_KEY[row.section]);

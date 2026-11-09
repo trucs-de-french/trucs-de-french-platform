@@ -11896,6 +11896,43 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   box-shadow: none;
 }
 
+/* Спільний заголовок картки кабінету (card-title.tsx) — коротка gold-
+   риска-акцент під текстом (variant A), одна й та сама в обох темах.
+   padding-bottom:10px лишає місце для ::after, margin:0 (саме про це
+   явно просить задача) — "12px до контенту нижче" дає gap-3 батьківського
+   flex-col (не власний margin: якщо заголовок сидить у ряду поруч із
+   контролом — exam-card.tsx/calendar-card.tsx — margin-bottom на самому
+   h3 не створив би вертикальний відступ до НАСТУПНОГО елемента поза
+   рядком, лише зсунув би h3 у своєму ряду). Картки з gap-4 звужені до
+   gap-3 у відповідних файлах, щоб цей самий gap збігався зі специфікацією. */
+.cabinet-card-title {
+  position: relative;
+  margin: 0;
+  padding-bottom: 10px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--cabinet-ink);
+}
+.cabinet-card-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d9b765, #f3d98b);
+}
+@media (min-width: 768px) {
+  .cabinet-card-title {
+    font-size: 21px;
+  }
+  .cabinet-card-title::after {
+    width: 44px;
+  }
+}
+
 /* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
    Рядок тепер лише [код][сегменти][відсоток] (повна назва прибрана з
    видимого UI — задача "DELF skills show codes only"), тож сегменти

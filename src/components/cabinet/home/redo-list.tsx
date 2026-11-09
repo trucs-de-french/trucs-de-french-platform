@@ -3,13 +3,12 @@ import { RotateCcw, ArrowRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { RedoItem } from "@/lib/cabinet/home-data";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 export function RedoList({ lang, items }: { lang: UiLang; items: RedoItem[] }) {
   return (
     <div className="cabinet-card flex h-full flex-col gap-3 p-5">
-      <h3 className="font-body text-xl font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "home.redo.title")}
-      </h3>
+      <CardTitle>{t(lang, "home.redo.title")}</CardTitle>
       {items.length === 0 ? (
         <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.redo.empty")}</p>
       ) : (

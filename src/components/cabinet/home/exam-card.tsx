@@ -7,6 +7,7 @@ import type { ExamInfo } from "@/lib/cabinet/home-data";
 import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const RING_SIZE = 104;
 const STROKE = 8;
@@ -119,9 +120,7 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
   return (
     <div className="cabinet-card flex flex-col items-center gap-3 p-5">
       <div className="flex w-full items-center justify-between">
-        <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-          {t(lang, "home.exam.title")}
-        </h3>
+        <CardTitle>{t(lang, "home.exam.title")}</CardTitle>
         {exam && exam.daysLeft >= 0 && !editing && (
           <button
             type="button"

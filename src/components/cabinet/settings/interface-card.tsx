@@ -13,6 +13,7 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { useTheme } from "@/lib/use-theme";
 import { setCabinetUiLang } from "@/app/cabinet/actions";
 import { SettingsPill } from "./settings-pill";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const LANGS: UiLang[] = ["uk", "fr", "en"];
 
@@ -27,10 +28,8 @@ export function InterfaceCard({
   const { isDark, setTheme } = useTheme(initialIsDark);
 
   return (
-    <div className="cabinet-card flex flex-col gap-4 p-5">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "settings.section.interface")}
-      </h3>
+    <div className="cabinet-card flex flex-col gap-3 p-5">
+      <CardTitle>{t(lang, "settings.section.interface")}</CardTitle>
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold text-[var(--cabinet-muted)]">
           {t(lang, "cabinet.nav.language")}

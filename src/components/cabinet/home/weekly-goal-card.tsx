@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { saveWeeklyGoal } from "@/app/cabinet/actions";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const GOAL_OPTIONS = Array.from({ length: 14 }, (_, i) => i + 1);
 
@@ -30,9 +31,7 @@ export function WeeklyGoalCard({
   return (
     <div className="cabinet-card flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-          {t(lang, "home.goal.title")}
-        </h3>
+        <CardTitle>{t(lang, "home.goal.title")}</CardTitle>
         <select
           defaultValue={goal}
           disabled={pending}

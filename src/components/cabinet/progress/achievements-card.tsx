@@ -2,6 +2,7 @@ import { CheckCircle2, Zap, Star, type LucideIcon } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { Achievement } from "@/lib/cabinet/progress-data";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 // Та сама іконна мова, що StatTiles (CheckCircle2/Zap/Star) — свідомо, не
 // нові іконки: ці ж три метрики (сцени/streak/бали) тут лише в ролі
@@ -51,10 +52,8 @@ function AchievementTile({ lang, achievement }: { lang: UiLang; achievement: Ach
 
 export function AchievementsCard({ lang, items }: { lang: UiLang; items: Achievement[] }) {
   return (
-    <div className="cabinet-card flex h-full flex-col gap-4 p-5">
-      <h3 className="font-body text-xl font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "progress.achievements.title")}
-      </h3>
+    <div className="cabinet-card flex h-full flex-col gap-3 p-5">
+      <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
       <div className="grid grid-cols-3 gap-3">
         {items.map((achievement) => (
           <AchievementTile key={achievement.key} lang={lang} achievement={achievement} />

@@ -12,6 +12,7 @@ import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 import { MascotPicker } from "./mascot-picker";
 import { createClient } from "@/lib/supabase/client";
 import { validatePhotoFile, cropToSquareWebp } from "@/lib/cabinet/avatar-upload";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 export function SettingsProfileCard({
   lang,
@@ -75,10 +76,8 @@ export function SettingsProfileCard({
   }
 
   return (
-    <div className="cabinet-card flex flex-col gap-4 p-5 md:col-span-2">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "settings.section.profile")}
-      </h3>
+    <div className="cabinet-card flex flex-col gap-3 p-5 md:col-span-2">
+      <CardTitle>{t(lang, "settings.section.profile")}</CardTitle>
 
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
         <ProfileAvatar name={name} size={92} imageUrl={avatarUrl} mascotId={mascot} />

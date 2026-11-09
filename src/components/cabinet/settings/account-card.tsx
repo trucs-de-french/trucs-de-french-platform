@@ -11,6 +11,7 @@ import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { requestPasswordReset, deleteAccount } from "@/app/cabinet/settings/actions";
 import { DeleteAccountDialog } from "./delete-account-dialog";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 export function AccountCard({
   lang,
@@ -65,10 +66,8 @@ export function AccountCard({
   }
 
   return (
-    <div className="cabinet-card flex flex-col gap-4 p-5">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "settings.section.account")}
-      </h3>
+    <div className="cabinet-card flex flex-col gap-3 p-5">
+      <CardTitle>{t(lang, "settings.section.account")}</CardTitle>
 
       {/* Variant C: три рівноважні кнопки в один ряд (ширина по вмісту,
           не на всю ширину картки), wrap на вузьких екранах — "Видалити

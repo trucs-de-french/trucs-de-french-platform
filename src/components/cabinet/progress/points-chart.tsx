@@ -4,6 +4,7 @@ import { useState } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { PointsByDay } from "@/lib/cabinet/progress-data";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
 
@@ -39,9 +40,7 @@ export function PointsChart({
   return (
     <div className="cabinet-card flex h-full flex-col gap-3 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-body text-xl font-semibold text-[var(--cabinet-ink)]">
-          {t(lang, "progress.chart.title")}
-        </h3>
+        <CardTitle>{t(lang, "progress.chart.title")}</CardTitle>
         <div className="flex gap-1.5" role="group" aria-label={t(lang, "progress.chart.rangeLabel")}>
           {(["week", "month"] as const).map((r) => (
             <button

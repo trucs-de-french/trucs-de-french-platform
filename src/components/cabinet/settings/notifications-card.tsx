@@ -3,6 +3,7 @@
 // prefs, листи ще не надсилаються — explicit per task, muted-рядок нижче).
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
+import { CardTitle } from "@/components/cabinet/card-title";
 
 function Toggle({
   checked,
@@ -45,10 +46,8 @@ export function NotificationsCard({
   onNewsChange: (value: boolean) => void;
 }) {
   return (
-    <div className="cabinet-card flex flex-col gap-4 p-5">
-      <h3 className="font-body text-lg font-semibold text-[var(--cabinet-ink)]">
-        {t(lang, "settings.section.notifications")}
-      </h3>
+    <div className="cabinet-card flex flex-col gap-3 p-5">
+      <CardTitle>{t(lang, "settings.section.notifications")}</CardTitle>
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.review")}</span>
