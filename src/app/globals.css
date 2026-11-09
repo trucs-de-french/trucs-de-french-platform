@@ -12290,26 +12290,29 @@ button.cabinet-nav-item {
   left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%) scale(0.95);
-  background: #1a1640;
-  color: #fff;
+  background: #2f2c6b;
+  color: #f6f1e3;
   font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
   transition: opacity 150ms ease, transform 150ms ease;
   z-index: 50;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
-/* Темна бульбашка лишається темною в обох темах (база вище) — у dark
-   лише підмінюємо хардкод #1a1640/#fff на нові токени (--cabinet-ink
-   у dark — кремовий, не білий), світлу тему це правило не чіпає. */
+/* Світла тема — суцільний indigo (попередній #1a1640 на практиці читався
+   як бляклий сірий на деяких пунктах — суцільний #2f2c6b з кремовим
+   текстом вище прибирає цю невизначеність). Темна — темно-синя бульбашка
+   з gold-рамкою замість indigo-фону (краще тримає контур на темному тлі
+   сайдбару). */
 .dark .cabinet-tooltip {
-  background: var(--cabinet-panel-bg);
-  color: var(--cabinet-ink);
-  border: 1px solid var(--cabinet-line);
+  background: #141a52;
+  border: 1.5px solid #d9b765;
+  color: #f6f1e3;
 }
 .cabinet-nav-item:hover .cabinet-tooltip,
 .cabinet-nav-item:focus-visible .cabinet-tooltip {
@@ -13007,39 +13010,133 @@ button.cabinet-nav-item {
 
 /* Перемикач сповіщень (settings/notifications-card.tsx) — ON у світлій
    темі indigo (та сама пара кольорів/напрямок, що .settings-pill--active
-   вище, "та сама сімʼя кольору, що все вибране у світлій темі"), у
-   темній лишається gold (значення не змінені, лише перенесені з inline
-   style у CSS-клас). */
+   вище), у темній лишається gold. OFF тепер МАЄ власний контур/заливку/
+   колір повзунка в обох темах (раніше лише порожній --cabinet-track без
+   рамки — ледь видима "вимкнена" пілюля). border завжди 1.5px (на ON
+   лише колір стає transparent, саму рамку не прибираємо) + box-sizing:
+   border-box — зовнішній розмір треку не змінюється при перемиканні,
+   тож повзунок не "стрибає". Повзунок рахує зсув через transform:
+   translateY(-50%) [translateX(N)] — вертикальне центрування окремо від
+   горизонтального руху, не залежить від товщини рамки. */
 .settings-toggle {
   position: relative;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  width: 44px;
-  height: 24px;
+  box-sizing: border-box;
+  width: 46px;
+  height: 26px;
   border-radius: 999px;
-  border: none;
-  background: var(--cabinet-track);
+  border: 1.5px solid #4b46da;
+  background: #efedfa;
   cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
 }
 .settings-toggle-thumb {
   position: absolute;
+  top: 50%;
   left: 4px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #4b46da;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform 150ms ease;
-}
-.settings-toggle--on .settings-toggle-thumb {
-  transform: translateX(20px);
+  transform: translateY(-50%);
+  transition: transform 150ms ease, background 150ms ease;
 }
 .settings-toggle--on {
+  border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
 }
+.settings-toggle--on .settings-toggle-thumb {
+  background: #ffffff;
+  transform: translateY(-50%) translateX(17px);
+}
+.dark .settings-toggle {
+  border-color: #6f78d8;
+  background: var(--cabinet-surface-2);
+}
+.dark .settings-toggle-thumb {
+  background: #6f78d8;
+}
 .dark .settings-toggle--on {
+  border-color: transparent;
   background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+}
+.dark .settings-toggle--on .settings-toggle-thumb {
+  background: #ffffff;
+}
+
+/* Акаунт: три рівноважні кнопки в ряд (settings/account-card.tsx,
+   variant C) — ширина по вмісту (НЕ 100%), gold-контур як інші gold-
+   outline кнопки кабінету, іконка через currentColor (lucide вже
+   stroke-linecap/linejoin round за замовчуванням). --danger — той самий
+   розмір/форма, лише притлумлений dusty-rose/brick замість ink/gold, що
+   ніколи не плутається з насиченим червоним. */
+.settings-account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  min-width: 150px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1.5px solid #d9b765;
+  background: transparent;
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+.settings-account-btn:hover:not(:disabled) {
+  border-color: #4b46da;
+  background: rgba(75, 70, 218, 0.08);
+}
+.settings-account-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.settings-account-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dark .settings-account-btn {
+  color: #f6f1e3;
+}
+.dark .settings-account-btn:hover:not(:disabled) {
+  border-color: #f3d98b;
+  background: rgba(243, 217, 139, 0.1);
+}
+.dark .settings-account-btn:focus-visible {
+  outline-color: #f3d98b;
+}
+.settings-account-btn--danger {
+  border-color: rgba(155, 74, 68, 0.45);
+  color: #9b4a44;
+  font-weight: 700;
+}
+.settings-account-btn--danger:hover:not(:disabled) {
+  border-color: #843c37;
+  color: #843c37;
+  background: transparent;
+}
+.settings-account-btn--danger:focus-visible {
+  outline: 2px solid #9b4a44;
+  outline-offset: 2px;
+}
+.dark .settings-account-btn--danger {
+  border-color: rgba(226, 164, 156, 0.45);
+  color: #e2a49c;
+}
+.dark .settings-account-btn--danger:hover:not(:disabled) {
+  border-color: #efb8b0;
+  color: #efb8b0;
+  background: transparent;
+}
+.dark .settings-account-btn--danger:focus-visible {
+  outline-color: #e2a49c;
 }
 
 /* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —

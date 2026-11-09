@@ -6,6 +6,7 @@
 // (service-role, лише на сервері).
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Lock, LogOut, Trash2 } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { requestPasswordReset, deleteAccount } from "@/app/cabinet/settings/actions";
@@ -69,46 +70,47 @@ export function AccountCard({
         {t(lang, "settings.section.account")}
       </h3>
 
-      <div className="flex flex-col gap-2">
+      {/* Variant C: три рівноважні кнопки в один ряд (ширина по вмісту,
+          не на всю ширину картки), wrap на вузьких екранах — "Видалити
+          акаунт" та самого розміру/форми, лише притлумлена (не червона)
+          через settings-account-btn--danger. */}
+      <div className="flex flex-wrap gap-2.5">
         <button
           type="button"
           disabled={resetPending}
           onClick={handleResetPassword}
-          className="flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] disabled:opacity-60 dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] sm:w-auto sm:px-4"
+          className="settings-account-btn"
         >
+          <Lock size={17} strokeWidth={2} aria-hidden="true" />
           {t(lang, "settings.account.changePassword")}
         </button>
-        {resetMessage && (
-          <p
-            className={`text-xs ${
-              resetError ? "text-[#9b4a44] dark:text-[#e2a49c]" : "text-[var(--cabinet-muted)]"
-            }`}
-          >
-            {resetMessage}
-          </p>
-        )}
+
+        <form action={onSignOut}>
+          <button type="submit" className="settings-account-btn">
+            <LogOut size={17} strokeWidth={2} aria-hidden="true" />
+            {t(lang, "cabinet.nav.signOut")}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="settings-account-btn settings-account-btn--danger"
+        >
+          <Trash2 size={17} strokeWidth={2} aria-hidden="true" />
+          {t(lang, "settings.account.delete")}
+        </button>
       </div>
 
-      <form action={onSignOut}>
-        <button
-          type="submit"
-          className="flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] sm:w-auto sm:px-4"
+      {resetMessage && (
+        <p
+          className={`text-xs ${
+            resetError ? "text-[#9b4a44] dark:text-[#e2a49c]" : "text-[var(--cabinet-muted)]"
+          }`}
         >
-          {t(lang, "cabinet.nav.signOut")}
-        </button>
-      </form>
-
-      {/* Квітчаста/насичено-червона дія тут не потрібна — видалення й так
-          захищене типізаним підтвердженням у модалці нижче; притлумлений
-          тон (не #c0392b/#ff8f80) тримає контроль "тихим" поряд зі
-          звичними gold-outline кнопками картки. */}
-      <button
-        type="button"
-        onClick={() => setDialogOpen(true)}
-        className="min-h-11 self-start rounded-full text-sm font-bold text-[#9b4a44] hover:text-[#843c37] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4a44] dark:text-[#e2a49c] dark:hover:text-[#efb8b0] dark:focus-visible:outline-[#e2a49c]"
-      >
-        {t(lang, "settings.account.delete")}
-      </button>
+          {resetMessage}
+        </p>
+      )}
 
       {dialogOpen && (
         <DeleteAccountDialog
