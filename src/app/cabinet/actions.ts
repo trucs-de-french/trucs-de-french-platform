@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { isExamType } from "@/lib/cabinet/exam-types";
+import { isExamProductType } from "@/lib/cabinet/exam-products";
 
 // profiles.exam_type/exam_date (0065_cabinet_profile_and_activity.sql) —
 // власник рядка (RLS profiles_update_own) може оновити їх напряму; тут
@@ -25,6 +26,39 @@ export async function saveExam(formData: FormData): Promise<{ ok: boolean; error
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(new Date());
   if (!/^\d{4}-\d{2}-\d{2}$/.test(examDate) || examDate < todayStr) {
     return { ok: false, error: "date" };
+  }
+
+  // Еліджбл: вже є збережена ціль (редагує існуючу) або активна
+  // enrollment у продукт екзаменаційного типу (delf/...) — та сама умова,
+  // що показує/ховає картку на Home (home-data.ts showExamCard), але тут
+  // перевіряється на сервері окремо: UI-приховування картки не захищає
+  // від прямого POST без eligibility.
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("exam_type, exam_date")
+    .eq("id", user.id)
+    .single<{ exam_type: string | null; exam_date: string | null }>();
+  const hasSavedExamGoal = !!(existingProfile?.exam_type && existingProfile?.exam_date);
+
+  if (!hasSavedExamGoal) {
+    const { data: enrollments } = await supabase
+      .from("enrollments")
+      .select("products!inner(type, archived_at, is_published)")
+      .eq("user_id", user.id)
+      .eq("status", "active");
+    type EnrollmentTypeRow = {
+      products: { type: string; archived_at: string | null; is_published: boolean } | null;
+    };
+    const hasExamProduct = ((enrollments ?? []) as unknown as EnrollmentTypeRow[]).some(
+      (row) =>
+        row.products &&
+        row.products.archived_at === null &&
+        row.products.is_published &&
+        isExamProductType(row.products.type)
+    );
+    if (!hasExamProduct) {
+      return { ok: false, error: "ineligible" };
+    }
   }
 
   const { error } = await supabase

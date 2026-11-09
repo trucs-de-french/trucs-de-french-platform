@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCENT } from "@/lib/exercises/scene-summary";
 import { GRADABLE_TASK_TYPES } from "@/lib/exercises/gradable-types";
 import { getDefaultTaskName } from "@/lib/exercises/default-task-labels";
+import { isExamProductType } from "@/lib/cabinet/exam-products";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -104,6 +105,7 @@ export type CabinetHomeData = {
   redoList: RedoItem[];
   redoCount: number;
   exam: ExamInfo | null;
+  showExamCard: boolean;
 };
 
 const EMPTY_HOME_DATA: CabinetHomeData = {
@@ -118,6 +120,7 @@ const EMPTY_HOME_DATA: CabinetHomeData = {
   redoList: [],
   redoCount: 0,
   exam: null,
+  showExamCard: false,
 };
 
 export type TaskRow = {
@@ -247,6 +250,8 @@ export async function getCabinetHomeData(
 
   const productIds = enrolledProducts.map((p) => p.id);
   const productById = new Map(enrolledProducts.map((p) => [p.id, p]));
+  const hasExamProduct = enrolledProducts.some((p) => isExamProductType(p.type));
+  const showExamCard = hasExamProduct || exam !== null;
 
   let scenes: SceneRow[] = [];
   let tasks: TaskRow[] = [];
@@ -500,6 +505,7 @@ export async function getCabinetHomeData(
     redoList,
     redoCount,
     exam,
+    showExamCard,
   };
 }
 

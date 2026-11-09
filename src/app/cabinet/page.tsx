@@ -70,7 +70,7 @@ export default async function CabinetHomePage() {
 
         <div className="flex flex-col gap-6">
           <ProfileCard lang={lang} fullName={home.fullName} isTeacher={isTeacher} />
-          <ExamCard lang={lang} exam={home.exam} />
+          {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
           <CalendarCard lang={lang} activeDays={home.activeDays} />
           <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
         </div>
