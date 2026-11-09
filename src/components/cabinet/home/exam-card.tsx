@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { t } from "@/lib/i18n/t";
+import { plural, type PluralForms } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
 import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
@@ -9,6 +10,13 @@ import { saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
 import { CardTitle } from "@/components/cabinet/card-title";
 import { CabinetSelect } from "@/components/cabinet/cabinet-select";
+import { formatDateNumeric } from "@/lib/cabinet/format-date";
+
+const DAY_UNIT_FORMS: Record<UiLang, PluralForms> = {
+  uk: { one: "день", few: "дні", many: "днів", other: "днів" },
+  fr: { one: "jour", other: "jours" },
+  en: { one: "day", other: "days" },
+};
 
 function ExamForm({
   lang,
@@ -63,14 +71,6 @@ function ExamForm({
   );
 }
 
-const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
-
-function formatExamDate(dateStr: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(
-    new Date(`${dateStr}T00:00:00Z`)
-  );
-}
-
 export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }) {
   const [editing, setEditing] = useState(false);
   const showForm = editing || !exam;
@@ -104,7 +104,7 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
               <>
                 <div className="font-body text-4xl font-extrabold text-[var(--cabinet-ink)]">{exam.daysLeft}</div>
                 <p className="text-sm font-semibold text-[var(--cabinet-muted)]">
-                  {t(lang, "home.exam.countdown", { n: exam.daysLeft })}
+                  {t(lang, "home.exam.countdown", { n: exam.daysLeft, unit: plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang]) })}
                 </p>
               </>
             ) : exam.daysLeft === 0 ? (
@@ -122,7 +122,7 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
               </>
             )}
             <div className="font-body text-sm font-semibold text-[var(--cabinet-ink)]">
-              {exam.type} · {formatExamDate(exam.date, LOCALE_BY_LANG[lang])}
+              {exam.type} · {formatDateNumeric(exam.date, lang)}
             </div>
           </>
         )

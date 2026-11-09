@@ -28,13 +28,13 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
 
   return (
     <div
-      className="flex flex-col gap-4 rounded-[24px] p-5 text-white sm:flex-row sm:items-center sm:gap-5"
+      className="flex h-full flex-col gap-4 overflow-hidden rounded-[24px] p-5 text-white sm:flex-row sm:items-center sm:gap-5"
       style={{
         background:
           "linear-gradient(135deg, var(--cabinet-continue-from), var(--cabinet-continue-to))",
       }}
     >
-      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-[20px] bg-white/10 sm:aspect-auto sm:h-[210px] sm:w-[300px]">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-[20px] bg-white/10 sm:aspect-auto sm:h-[190px] sm:w-[340px]">
         {target.productCoverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- зовнішній R2-URL, next/image вимагав би remotePatterns у next.config
           <img src={target.productCoverUrl} alt="" className="h-full w-full object-cover" />
@@ -67,7 +67,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
 
         {target.scenesTotalInProduct > 0 && (
           <div
-            className="mt-3 h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-white/15"
+            className="mt-3 h-1.5 w-full max-w-[440px] overflow-hidden rounded-full bg-white/15"
             role="progressbar"
             aria-valuenow={progressPercent}
             aria-valuemin={0}
@@ -82,7 +82,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
 
         <Link
           href={target.href}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-[var(--cabinet-on-gold)]"
+          className="mt-4 inline-flex h-11 w-fit shrink-0 self-start items-center gap-2 rounded-full px-6 text-sm font-bold text-[var(--cabinet-on-gold)]"
           style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
         >
           {t(lang, target.kind === "start" ? "home.continue.start" : "home.continue.label")}

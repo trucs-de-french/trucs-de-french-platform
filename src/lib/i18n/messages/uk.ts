@@ -392,7 +392,7 @@ export const uk = {
   "home.exam.save": "Зберегти",
   "home.exam.edit": "Змінити",
   "home.exam.editDate": "Змінити дату",
-  "home.exam.countdown": "{n} днів до іспиту",
+  "home.exam.countdown": "{n} {unit} до іспиту",
   "home.exam.today": "Іспит сьогодні",
   "home.exam.past": "Іспит минув",
   "home.exam.error": "Не вдалося зберегти. Перевір дату й тип.",
