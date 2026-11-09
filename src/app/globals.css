@@ -12286,6 +12286,78 @@ button.cabinet-nav-item {
   transform: translateY(-50%) scale(1);
 }
 
+/* Профільний блок бічної панелі (sidebar-profile.tsx) — лінк на
+   /cabinet/settings між логотипом і навігацією. Один і той самий
+   вигляд у світлій/темній темі сайту (рейка завжди indigo). */
+.cabinet-sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 2px 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(217, 183, 101, 0.55);
+  text-decoration: none;
+}
+.cabinet-sidebar-profile:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.cabinet-sidebar-profile:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+.cabinet-sidebar-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  border: 2px solid rgba(246, 241, 227, 0.85);
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 19px;
+  color: #1a1640;
+}
+.cabinet-sidebar-profile-name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  color: #f6f1e3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cabinet-sidebar-profile-role {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: #d3cff5;
+}
+/* Колапс-рейка: лише аватар, по центру, без фону/рамки контейнера —
+   той самий тултіп-механізм, що й інші пункти рейки (position:relative
+   + z-index:0 для власного стекового контексту, тултіп сам z-index:50). */
+.cabinet-sidebar-profile--collapsed {
+  justify-content: center;
+  padding: 0;
+  margin: 2px 0 10px;
+  background: transparent;
+  border: none;
+  position: relative;
+  z-index: 0;
+}
+.cabinet-sidebar-profile--collapsed:hover,
+.cabinet-sidebar-profile--collapsed:focus-visible {
+  background: transparent;
+}
+.cabinet-sidebar-profile--collapsed:hover .cabinet-tooltip,
+.cabinet-sidebar-profile--collapsed:focus-visible .cabinet-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
 .cabinet-lang-pill {
   display: inline-flex;
   align-items: center;

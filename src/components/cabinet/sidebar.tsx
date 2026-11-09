@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, LogOut, type LucideIcon } from "lucide-react";
 import { PlatformWordmark } from "@/components/platform-wordmark";
 import { PlatformBadge } from "@/components/platform-badge";
+import { CabinetSidebarProfile } from "@/components/cabinet/sidebar-profile";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
@@ -18,11 +19,13 @@ const NAV_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 рік
 export function CabinetSidebar({
   lang,
   isTeacher,
+  fullName,
   initialCollapsed,
   onSignOut,
 }: {
   lang: UiLang;
   isTeacher: boolean;
+  fullName: string | null;
   initialCollapsed: boolean;
   onSignOut: () => Promise<void>;
 }) {
@@ -46,6 +49,8 @@ export function CabinetSidebar({
           )}
         </Link>
       </div>
+
+      <CabinetSidebarProfile lang={lang} fullName={fullName} isTeacher={isTeacher} collapsed={collapsed} />
 
       <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-col gap-[2px]">
         {CABINET_PRIMARY_NAV.map((item) => (

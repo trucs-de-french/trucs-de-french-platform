@@ -45,6 +45,7 @@ export default async function CabinetLayout({ children }: { children: React.Reac
       <CabinetSidebar
         lang={lang}
         isTeacher={isTeacher}
+        fullName={profile?.full_name ?? null}
         initialCollapsed={initialCollapsed}
         onSignOut={signOut}
       />
