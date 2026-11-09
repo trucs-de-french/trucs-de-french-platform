@@ -11959,6 +11959,16 @@ button.scene-bar:active .scene-bar-toggle {
      (safety net лишається функціональним, просто без видимого треку). */
   .cabinet-sidebar {
     display: flex;
+    /* position+z-index піднімає ВСЮ рейку (і її tooltips) в окремий
+       стековий контекст НАД .cabinet-panel: без цього .cabinet-nav-item
+       (position:relative;z-index:0 нижче) створював стек-контекст, що
+       сам лишався на базовому рівні документа, тож будь-який позиційний
+       елемент у .cabinet-panel пізніше в DOM (наприклад .task-tabs-scroll,
+       position:relative) малювався ПОВЕРХ нього — z-index:20 тултіпа це
+       не рятувало, бо він діє лише всередині власного стек-контексту
+       пункту навігації. */
+    position: relative;
+    z-index: 40;
     background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
     height: 100%;
     overflow-y: auto;
@@ -12154,7 +12164,7 @@ button.cabinet-nav-item {
   opacity: 0;
   pointer-events: none;
   transition: opacity 150ms ease, transform 150ms ease;
-  z-index: 20;
+  z-index: 50;
 }
 /* Темна бульбашка лишається темною в обох темах (база вище) — у dark
    лише підмінюємо хардкод #1a1640/#fff на нові токени (--cabinet-ink
