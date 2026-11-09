@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 
 // Профільний блок у бічній панелі кабінету (desktop) — лінк на /cabinet/settings.
 // Ім'я приходить зверху з cabinet/layout.tsx (той самий запит до profiles,
@@ -12,7 +13,6 @@ export function CabinetSidebarProfile({
   collapsed: boolean;
 }) {
   const name = fullName?.trim() || "";
-  const initial = (name[0] ?? "?").toUpperCase();
   const label = name || "—";
 
   if (collapsed) {
@@ -22,9 +22,7 @@ export function CabinetSidebarProfile({
         aria-label={label}
         className="cabinet-sidebar-profile cabinet-sidebar-profile--collapsed"
       >
-        <span className="cabinet-sidebar-profile-avatar" aria-hidden="true">
-          {initial}
-        </span>
+        <ProfileAvatar name={name} size={36} />
         <span className="cabinet-tooltip" role="tooltip">
           {label}
         </span>
@@ -38,9 +36,7 @@ export function CabinetSidebarProfile({
       aria-label={label}
       className="cabinet-sidebar-profile"
     >
-      <span className="cabinet-sidebar-profile-avatar" aria-hidden="true">
-        {initial}
-      </span>
+      <ProfileAvatar name={label} size={36} />
       <span className="cabinet-sidebar-profile-name block min-w-0 truncate">{label}</span>
     </Link>
   );
