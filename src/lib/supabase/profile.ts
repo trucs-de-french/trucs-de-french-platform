@@ -6,6 +6,8 @@ import { normalizeUiLang } from "@/lib/ui/product-lang";
 // ui_lang — 0064_profiles_ui_lang.sql, персональна мова кабінету студента
 // (не плутати з products.ui_lang — мовою завдань конкретного продукту).
 // exam_type/exam_date/weekly_goal_scenes — 0065_cabinet_profile_and_activity.sql.
+export type NotificationPrefs = { review: boolean; weekly_goal: boolean; news: boolean };
+
 export type Profile = {
   id: string;
   role: "student" | "teacher";
@@ -14,6 +16,9 @@ export type Profile = {
   exam_type: string | null;
   exam_date: string | null;
   weekly_goal_scenes: number;
+  avatar_url: string | null;
+  avatar_mascot: string | null;
+  notification_prefs: NotificationPrefs;
   created_at: string;
 };
 

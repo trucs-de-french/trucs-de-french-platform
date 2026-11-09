@@ -12345,6 +12345,20 @@ button.cabinet-nav-item {
 .profile-avatar-img {
   object-fit: cover;
 }
+/* Маскот вибраний, але картинка ще не завантажилась (файл не додано) —
+   нейтральний сірий кружок із номером маскота замість indigo-градієнта
+   ініціала, щоб було видно, що це саме відсутня картинка, а не збій
+   збереження вибору. */
+.profile-avatar--placeholder {
+  background: #9a97ab;
+  border-color: #9a97ab;
+  color: #ffffff;
+}
+.dark .profile-avatar--placeholder {
+  background: #4a4766;
+  border-color: #4a4766;
+  color: #cfccdd;
+}
 
 /* Профільний блок бічної панелі (sidebar-profile.tsx) — лінк на
    /cabinet/settings між логотипом і навігацією. Один і той самий
@@ -12888,4 +12902,44 @@ button.cabinet-nav-item {
   outline: none;
   border-color: var(--cabinet-btn-border);
   box-shadow: 0 0 0 2px var(--cabinet-focus-ring);
+}
+
+/* Звичайний текстовий/email <input> (settings/profile-card.tsx) — та сама
+   коробка, що .cabinet-select (висота/радіус/border/фон), але без
+   стрілки-шеврона й без зарезервованого під неї правого падінга. */
+.cabinet-input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--cabinet-line);
+  background-color: var(--cabinet-surface-2);
+  color: var(--cabinet-ink);
+  font-size: 14px;
+  padding: 0 12px;
+}
+.cabinet-input:disabled {
+  cursor: default;
+  color: var(--cabinet-muted);
+}
+.dark .cabinet-input:focus-visible {
+  outline: none;
+  border-color: var(--cabinet-btn-border);
+  box-shadow: 0 0 0 2px var(--cabinet-focus-ring);
+}
+
+/* Кругла опція маскота (settings/mascot-picker.tsx) — рамка-кільце йде
+   через box-shadow (на кнопці, не на самому ProfileAvatar), тому відступ
+   .settings-mascot-option (padding) лишає йому місце зовні картинки. */
+.settings-mascot-option {
+  display: inline-flex;
+  border-radius: 50%;
+  padding: 3px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.settings-mascot-option:focus-visible {
+  outline: 2px solid var(--cabinet-gold);
+  outline-offset: 2px;
 }

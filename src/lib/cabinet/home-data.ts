@@ -103,8 +103,45 @@ export type PointsByDay = { date: string; points: number };
 
 export type ExamInfo = { type: string; date: string; daysLeft: number };
 
+export type ExamSettingsData = { exam: ExamInfo | null; showExamCard: boolean };
+
+// Легкий підзапит лише для картки іспиту в Налаштуваннях (settings/page.tsx)
+// — той самий showExamCard-критерій, що й Home (getCabinetHomeData нижче),
+// але без решти важкого агрегату (сцени/бали/стрік/redo), який сторінці
+// Налаштувань не потрібен. getEnrolledProducts — та сама функція, що й
+// Home/Progress, не копія запиту.
+export async function getExamSettingsData(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<ExamSettingsData> {
+  const todayStr = kyivDateString(new Date());
+  let exam: ExamInfo | null = null;
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("exam_type, exam_date")
+      .eq("id", userId)
+      .single<{ exam_type: string | null; exam_date: string | null }>();
+    if (profile?.exam_type && profile?.exam_date) {
+      const daysLeft = Math.round(
+        (new Date(`${profile.exam_date}T00:00:00Z`).getTime() - new Date(`${todayStr}T00:00:00Z`).getTime()) /
+          86_400_000
+      );
+      exam = { type: profile.exam_type, date: profile.exam_date, daysLeft };
+    }
+  } catch {
+    // немає збереженого іспиту — exam лишається null
+  }
+
+  const enrolledProducts = await getEnrolledProducts(supabase, userId);
+  const hasExamProduct = enrolledProducts.some((p) => isExamProductType(p.type));
+  return { exam, showExamCard: hasExamProduct || exam !== null };
+}
+
 export type CabinetHomeData = {
   fullName: string | null;
+  avatarUrl: string | null;
+  avatarMascot: string | null;
   continueTarget: ContinueTarget | null;
   scenesCompleted: number;
   pointsThisWeek: number;
@@ -120,6 +157,8 @@ export type CabinetHomeData = {
 
 const EMPTY_HOME_DATA: CabinetHomeData = {
   fullName: null,
+  avatarUrl: null,
+  avatarMascot: null,
   continueTarget: null,
   scenesCompleted: 0,
   pointsThisWeek: 0,
@@ -190,20 +229,26 @@ export async function getCabinetHomeData(
   const last7Days: string[] = Array.from({ length: 7 }, (_, i) => addDays(todayStr, i - 6));
 
   let fullName: string | null = null;
+  let avatarUrl: string | null = null;
+  let avatarMascot: string | null = null;
   let weeklyGoalSetting = 3;
   let exam: ExamInfo | null = null;
   try {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, exam_type, exam_date, weekly_goal_scenes")
+      .select("full_name, avatar_url, avatar_mascot, exam_type, exam_date, weekly_goal_scenes")
       .eq("id", userId)
       .single<{
         full_name: string | null;
+        avatar_url: string | null;
+        avatar_mascot: string | null;
         exam_type: string | null;
         exam_date: string | null;
         weekly_goal_scenes: number;
       }>();
     fullName = profile?.full_name ?? null;
+    avatarUrl = profile?.avatar_url ?? null;
+    avatarMascot = profile?.avatar_mascot ?? null;
     weeklyGoalSetting = profile?.weekly_goal_scenes ?? 3;
     if (profile?.exam_type && profile?.exam_date) {
       const daysLeft = Math.round(
@@ -465,6 +510,8 @@ export async function getCabinetHomeData(
 
   return {
     fullName,
+    avatarUrl,
+    avatarMascot,
     continueTarget,
     scenesCompleted,
     pointsThisWeek: Math.round(pointsThisWeek * 10) / 10,
