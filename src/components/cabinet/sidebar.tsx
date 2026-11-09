@@ -42,7 +42,7 @@ export function CabinetSidebar({
           {collapsed ? (
             <PlatformBadge size={46} />
           ) : (
-            <PlatformWordmark size="md" tone="dark" tagline />
+            <PlatformWordmark size="sidebar" tone="dark" tagline align="left" />
           )}
         </Link>
       </div>
