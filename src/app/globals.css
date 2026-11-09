@@ -12189,6 +12189,41 @@ button.cabinet-nav-item {
   background: linear-gradient(135deg, #f6dc8e, #d9b765);
 }
 
+/* Мобільна "Ще" (.cabinet-more, cabinet/more/page.tsx): ті самі
+   .cabinet-lang-pill/--active класи, що desktop sidebar (темний indigo
+   фон — звідти rgba(255,255,255,*) вище), але тут фон кремовий у світлій
+   темі — базові кольори майже невидимі. Переозначаємо лише в обгортці
+   (специфічність 0,3,0/0,4,0 > 0,1,0 базового правила — unlayered CSS,
+   той самий механізм, що й .cabinet-bottom-* вище). :not(--active)
+   навмисно, щоб ці правила ніколи не чіпали вибраний пункт. */
+.cabinet-more .cabinet-lang-pill:not(.cabinet-lang-pill--active) {
+  background: transparent;
+  border: 1.5px solid #c9b57a;
+  color: #2f2c6b;
+  font-weight: 600;
+}
+.cabinet-more .cabinet-lang-pill:not(.cabinet-lang-pill--active) svg {
+  color: #2f2c6b;
+  stroke: currentColor;
+}
+.cabinet-more .cabinet-lang-pill--active {
+  background: #d9b765;
+  border: 1.5px solid #d9b765;
+  color: #1a1640;
+  font-weight: 700;
+}
+.cabinet-more .cabinet-lang-pill--active svg {
+  color: #1a1640;
+  stroke: currentColor;
+}
+.dark .cabinet-more .cabinet-lang-pill:not(.cabinet-lang-pill--active) {
+  border-color: #2e3680;
+  color: #f6f1e3;
+}
+.dark .cabinet-more .cabinet-lang-pill:not(.cabinet-lang-pill--active) svg {
+  color: #f6f1e3;
+}
+
 /* Нижня мобільна навігація — лише іконки, активний пункт розгортається
    в суцільну gold-пігулку з короткою назвою. Власні .cabinet-bottom-*
    класи (НЕ .cabinet-nav-item/>span з desktop sidebar) — та сама колізія

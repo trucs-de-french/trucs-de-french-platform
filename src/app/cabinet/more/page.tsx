@@ -14,7 +14,7 @@ export default async function CabinetMorePage() {
   const { lang, isTeacher } = await getCabinetProfile();
 
   return (
-    <div>
+    <div className="cabinet-more">
       <CabinetMobileHeader />
       <h1 className="font-body text-2xl font-semibold text-[var(--cabinet-ink)]">
         {t(lang, "cabinet.nav.more")}
