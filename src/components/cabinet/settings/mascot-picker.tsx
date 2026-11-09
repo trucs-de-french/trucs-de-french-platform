@@ -18,7 +18,7 @@ export function MascotPicker({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+    <div className="grid grid-cols-3 justify-items-center gap-3 md:grid-cols-6">
       {MASCOTS.map((mascot) => {
         const isSelected = selected === mascot.id;
         return (

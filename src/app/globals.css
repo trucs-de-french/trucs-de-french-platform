@@ -12928,6 +12928,60 @@ button.cabinet-nav-item {
   box-shadow: 0 0 0 2px var(--cabinet-focus-ring);
 }
 
+/* Пілюля мови/теми/тижневої цілі на Налаштуваннях (settings/settings-
+   pill.tsx) — свідомо НЕ .cabinet-lang-pill: той клас рахує на темний
+   indigo-фон сайдбару (неактивна пілюля — rgba(255,255,255,.08) на
+   rgba(255,255,255,.7) тексті), на кремовій/білій картці Налаштувань
+   це було майже невидимим. Тут неактивна пілюля завжди непрозора в
+   обох темах. */
+.settings-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1.5px solid #e4cf94;
+  color: #1a1640;
+}
+.settings-pill:hover:not(:disabled) {
+  border-color: #d9b765;
+  background: #fffaf0;
+}
+.settings-pill:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.settings-pill:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.settings-pill--active {
+  background: linear-gradient(135deg, #f6dc8e, #d9b765);
+  border-color: transparent;
+  color: #1a1640;
+}
+.dark .settings-pill {
+  background: var(--cabinet-surface-2);
+  border-color: #2e3680;
+  color: #f6f1e3;
+}
+.dark .settings-pill:hover:not(:disabled) {
+  border-color: #d9b765;
+  background: rgba(217, 183, 101, 0.1);
+}
+.dark .settings-pill--active {
+  background: linear-gradient(135deg, #f6dc8e, #d9b765);
+  border-color: transparent;
+  color: #1a1640;
+}
+
 /* Кругла опція маскота (settings/mascot-picker.tsx) — рамка-кільце йде
    через box-shadow (на кнопці, не на самому ProfileAvatar), тому відступ
    .settings-mascot-option (padding) лишає йому місце зовні картинки. */

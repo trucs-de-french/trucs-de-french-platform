@@ -12,8 +12,18 @@ import type { ExamInfo } from "@/lib/cabinet/home-data";
 import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveWeeklyGoal, saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
+import { SettingsPill } from "./settings-pill";
 
 const GOAL_OPTIONS = [2, 3, 5, 7];
+
+// Лише 4 фіксовані значення — простіше тримати форму слова тут, ніж
+// заводити загальне правило множини (укр. 2-4 "сцени", 5+ "сцен") для
+// однієї-єдиної пілюлі.
+const GOAL_UNIT: Record<UiLang, Record<number, string>> = {
+  uk: { 2: "сцени", 3: "сцени", 5: "сцен", 7: "сцен" },
+  fr: { 2: "scènes", 3: "scènes", 5: "scènes", 7: "scènes" },
+  en: { 2: "scenes", 3: "scenes", 5: "scenes", 7: "scenes" },
+};
 
 function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
   const [pending, startTransition] = useTransition();
@@ -29,18 +39,11 @@ function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.goal.title")}</span>
-      <div className="flex gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         {GOAL_OPTIONS.map((n) => (
-          <button
-            key={n}
-            type="button"
-            disabled={pending}
-            aria-pressed={n === goal}
-            onClick={() => handleChange(n)}
-            className={`cabinet-lang-pill ${n === goal ? "cabinet-lang-pill--active" : ""}`}
-          >
-            {n}
-          </button>
+          <SettingsPill key={n} active={n === goal} disabled={pending} onClick={() => handleChange(n)}>
+            {n} {GOAL_UNIT[lang][n]}
+          </SettingsPill>
         ))}
       </div>
     </div>
@@ -64,35 +67,42 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.title")}</span>
-        <span className="rounded-full bg-[var(--cabinet-surface-2)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.04em] text-[var(--cabinet-muted)]">
+        <span
+          className="rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-[.04em] text-[#2f2c6b] dark:text-[#d9b765]"
+          style={{ background: "rgba(217, 183, 101, 0.25)" }}
+        >
           {t(lang, "settings.exam.badge")}
         </span>
       </div>
-      <form action={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.type")}</span>
-          <select name="examType" defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]} className="cabinet-select">
-            {EXAM_TYPE_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.date")}</span>
-          <DatePicker name="examDate" min={todayStr} defaultValue={exam?.date ?? null} lang={lang} />
-        </label>
-        <button
-          type="submit"
-          disabled={pending}
-          className="min-h-11 rounded-full px-4 text-sm font-bold text-[var(--cabinet-on-gold)] disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
-        >
-          {t(lang, "home.exam.save")}
-        </button>
+      <form action={handleSubmit} className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.type")}</span>
+            <select name="examType" defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]} className="cabinet-select">
+              {EXAM_TYPE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.date")}</span>
+            <DatePicker name="examDate" min={todayStr} defaultValue={exam?.date ?? null} lang={lang} />
+          </label>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={pending}
+            className="min-h-11 rounded-full px-4 text-sm font-bold text-[var(--cabinet-on-gold)] disabled:opacity-60"
+            style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
+          >
+            {t(lang, "home.exam.save")}
+          </button>
+        </div>
       </form>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
     </div>
   );
 }

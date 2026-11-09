@@ -38,6 +38,7 @@ export function SettingsForm({
   weeklyGoal,
   exam,
   showExamCard,
+  initialIsDark = null,
   onSignOut,
 }: {
   lang: UiLang;
@@ -51,6 +52,7 @@ export function SettingsForm({
   weeklyGoal: number;
   exam: ExamInfo | null;
   showExamCard: boolean;
+  initialIsDark?: boolean | null;
   onSignOut: () => Promise<void>;
 }) {
   const [savedState, setSavedState] = useState<DirtyState>(() => ({
@@ -112,7 +114,7 @@ export function SettingsForm({
           onMascotChange={(mascot) => setState((s) => ({ ...s, mascot }))}
           onAvatarUrlChange={(avatarUrl) => setState((s) => ({ ...s, avatarUrl }))}
         />
-        <InterfaceCard lang={lang} />
+        <InterfaceCard lang={lang} initialIsDark={initialIsDark} />
         <LearningCard lang={lang} goal={weeklyGoal} exam={exam} showExamCard={showExamCard} />
         <NotificationsCard
           lang={lang}
