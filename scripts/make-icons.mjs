@@ -40,11 +40,12 @@ function croissantSvg(scale) {
   return `<g transform="translate(100 102) scale(${scale}) translate(-30 -17)">${ellipses}</g>`;
 }
 
-// Lays out "TDF" in the given Bold font instance, returns a <path> element
-// string centred at (cx, baselineY) at the given font-size, matching the
-// visual position of the live <text x={cx} y={baselineY} font-size={fontSize}
-// text-anchor="middle"> in platform-badge.tsx.
-function tdfPathSvg(boldFont, { cx, baselineY, fontSize, letterSpacing = -1, fill = INK }) {
+// Lays out "TDF" in the given Bold font instance, returns the <path>
+// elements plus the letters' bounding box (in the same SVG coordinate
+// space), matching the visual position of the live
+// <text x={cx} y={baselineY} font-size={fontSize} text-anchor="middle">
+// in platform-badge.tsx.
+function tdfLayout(boldFont, { cx, baselineY, fontSize, letterSpacing = -1 }) {
   const scale = fontSize / boldFont.unitsPerEm;
   const run = boldFont.layout("TDF");
   const glyphs = run.glyphs;
@@ -53,16 +54,43 @@ function tdfPathSvg(boldFont, { cx, baselineY, fontSize, letterSpacing = -1, fil
   const startX = cx - totalWidth / 2;
 
   let cursor = startX;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
   const parts = [];
   for (let i = 0; i < glyphs.length; i++) {
-    const d = glyphs[i].path.toSVG();
+    const glyph = glyphs[i];
+    const d = glyph.path.toSVG();
     // font units are y-up with origin on the baseline; flip y and place.
     parts.push(
       `<path d="${d}" transform="translate(${cursor} ${baselineY}) scale(${scale} ${-scale})"/>`,
     );
+    const bbox = glyph.bbox;
+    minX = Math.min(minX, cursor + bbox.minX * scale);
+    maxX = Math.max(maxX, cursor + bbox.maxX * scale);
+    minY = Math.min(minY, baselineY - bbox.maxY * scale);
+    maxY = Math.max(maxY, baselineY - bbox.minY * scale);
     cursor += advances[i] + letterSpacing;
   }
-  return `<g fill="${fill}">${parts.join("")}</g>`;
+  return { pathElements: parts, bbox: { minX, maxX, minY, maxY } };
+}
+
+// Renders the laid-out paths filled with a userSpace linear gradient
+// (top-left to bottom-right of the letters' own bounding box, same stops
+// as platform-badge.tsx) or a flat fallback colour for small sizes where
+// the gradient would hurt legibility/contrast.
+function tdfPathSvg(boldFont, opts, { gradientId, flatFill } = {}) {
+  const { pathElements, bbox } = tdfLayout(boldFont, opts);
+  if (flatFill) {
+    return `<g fill="${flatFill}">${pathElements.join("")}</g>`;
+  }
+  const defs = `<linearGradient id="${gradientId}" gradientUnits="userSpaceOnUse" x1="${bbox.minX}" y1="${bbox.minY}" x2="${bbox.maxX}" y2="${bbox.maxY}">
+<stop offset="0%" stop-color="#4b46da"/>
+<stop offset="55%" stop-color="#2f2c6b"/>
+<stop offset="100%" stop-color="${INK}"/>
+</linearGradient>`;
+  return `<defs>${defs}</defs><g fill="url(#${gradientId})">${pathElements.join("")}</g>`;
 }
 
 function roundBadgeSvg(tdfPath) {
@@ -121,13 +149,33 @@ async function main() {
   const variableFont = fontkit.create(fontBuffer);
   const boldFont = variableFont.getVariation({ wght: 700 });
 
-  const roundPath78 = tdfPathSvg(boldFont, { cx: 100, baselineY: 128, fontSize: 78 });
-  const appIconPath = tdfPathSvg(boldFont, { cx: 100, baselineY: 124, fontSize: 64 });
+  const roundPath78 = tdfPathSvg(
+    boldFont,
+    { cx: 100, baselineY: 128, fontSize: 78 },
+    { gradientId: "tdf-letters-round" },
+  );
+  // Flat fallback: at 16/32px the gradient loses contrast against the gold
+  // circle, so the favicon's small frames use a flat indigo fill instead.
+  const roundPath78Flat = tdfPathSvg(
+    boldFont,
+    { cx: 100, baselineY: 128, fontSize: 78 },
+    { flatFill: INDIGO },
+  );
+  const appIconPath = tdfPathSvg(
+    boldFont,
+    { cx: 100, baselineY: 124, fontSize: 64 },
+    { gradientId: "tdf-letters-app-icon" },
+  );
 
   const roundSvgFull = roundBadgeSvg(roundPath78);
+  const roundSvgFlat = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<circle cx="100" cy="100" r="90" fill="${GOLD}"/>
+${croissantSvg(2.7)}
+${roundPath78Flat}
+</svg>`;
   const roundSvgNoCroissant = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
 <circle cx="100" cy="100" r="90" fill="${GOLD}"/>
-${roundPath78}
+${roundPath78Flat}
 </svg>`;
   const appIconSvg = appIconBadgeSvg(appIconPath);
 
@@ -143,9 +191,11 @@ ${roundPath78}
   await sharp(Buffer.from(appIconSvg)).resize(512, 512).png().toFile(path.join(ROOT, "public/icon-512.png"));
 
   // 4. src/app/favicon.ico — 16/32/48 from the round badge; croissant omitted
-  //    at 16px so the letters stay legible.
+  //    at 16px so the letters stay legible. 16/32px use a flat indigo fill
+  //    instead of the gradient — at that size the gradient reads as a muddy
+  //    smear and loses contrast against the gold circle.
   const png48 = await sharp(Buffer.from(roundSvgFull)).resize(48, 48).png().toBuffer();
-  const png32 = await sharp(Buffer.from(roundSvgFull)).resize(32, 32).png().toBuffer();
+  const png32 = await sharp(Buffer.from(roundSvgFlat)).resize(32, 32).png().toBuffer();
   const png16 = await sharp(Buffer.from(roundSvgNoCroissant)).resize(16, 16).png().toBuffer();
   const ico = buildIco([
     { size: 16, buffer: png16 },
