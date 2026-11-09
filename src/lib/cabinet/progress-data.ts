@@ -16,8 +16,9 @@ import {
   type TaskRow,
   type SceneRow,
   type ProgressRow,
+  type Achievement,
 } from "@/lib/cabinet/home-data";
-import { kyivDateString, addDays, longestStreak } from "@/lib/cabinet/kyiv-date";
+import { kyivDateString, addDays } from "@/lib/cabinet/kyiv-date";
 import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCENT } from "@/lib/exercises/scene-summary";
 import { GRADABLE_TASK_TYPES } from "@/lib/exercises/gradable-types";
 import { isExamProductType } from "@/lib/cabinet/exam-products";
@@ -39,10 +40,7 @@ export type SceneResultRow = {
   lastActivity: string;
 };
 
-export type Achievement = {
-  key: "firstScene" | "streak7" | "points100";
-  earned: boolean;
-};
+export type { Achievement };
 
 export type DelfSkillRow = {
   section: ExamSection;
@@ -121,16 +119,12 @@ export async function getCabinetProgressData(
   const activityTaskById = new Map(activityTasks.map((t) => [t.id, t]));
 
   const pointsByDayMap = new Map<string, number>();
-  const activityDates = new Set<string>();
-  let totalPointsEver = 0;
   for (const row of activityRows) {
     const task = activityTaskById.get(row.task_id);
     if (!task) continue;
     const pointsPossible = totalPointsPossibleForTask(task.type, task.config);
     const delta = Math.max(0, (pointsPossible * (row.best_after - row.best_before)) / 100);
-    totalPointsEver += delta;
     const dateStr = kyivDateString(new Date(row.created_at));
-    activityDates.add(dateStr);
     pointsByDayMap.set(dateStr, (pointsByDayMap.get(dateStr) ?? 0) + delta);
   }
 
@@ -142,12 +136,6 @@ export async function getCabinetProgressData(
     date,
     points: Math.round((pointsByDayMap.get(date) ?? 0) * 10) / 10,
   }));
-
-  const achievements: Achievement[] = [
-    { key: "firstScene", earned: home.scenesCompleted >= 1 },
-    { key: "streak7", earned: longestStreak(activityDates) >= 7 },
-    { key: "points100", earned: totalPointsEver >= 100 },
-  ];
 
   // Scene results: сцени лише НЕ-екзаменаційних продуктів для студентів
   // без showExamCard (ELIGIBILITY, задача п.3) — у студентів із
@@ -206,6 +194,10 @@ export async function getCabinetProgressData(
     list.push(task);
     tasksByScene.set(task.scene_id, list);
   }
+
+  // Той самий розрахунок, що Home (getCabinetHomeData) — щоб числа й дати
+  // здобуття завжди збігались з Home, а не копія формули тут.
+  const achievements: Achievement[] = home.achievements;
 
   const sceneResults: SceneResultRow[] = [];
   for (const scene of scenes) {
