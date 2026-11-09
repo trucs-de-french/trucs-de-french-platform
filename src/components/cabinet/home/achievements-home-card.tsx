@@ -1,77 +1,17 @@
 import Link from "next/link";
-import { CheckCircle2, Zap, Star, ArrowRight, type LucideIcon } from "lucide-react";
-import { t, type MessageKey } from "@/lib/i18n/t";
+import { ArrowRight } from "lucide-react";
+import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { pickHomeAchievements, type Achievement } from "@/lib/cabinet/home-data";
+import type { AchievementState } from "@/lib/cabinet/achievements";
+import { AchievementBadge } from "@/components/cabinet/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
 
-const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
-
-// Та сама іконна мова, що progress/achievements-card.tsx — свідомо, не
-// нові іконки.
-const ICON_BY_KEY: Record<Achievement["key"], LucideIcon> = {
-  firstScene: CheckCircle2,
-  streak7: Zap,
-  points100: Star,
-};
-const LABEL_KEY_BY_KEY: Record<Achievement["key"], MessageKey> = {
-  firstScene: "progress.achievements.firstScene",
-  streak7: "progress.achievements.streak7",
-  points100: "progress.achievements.points100",
-};
-
-function formatEarnedAt(iso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "Europe/Kyiv" }).format(
-    new Date(iso)
-  );
-}
-
-function AchievementBadge({ lang, achievement }: { lang: UiLang; achievement: Achievement }) {
-  const Icon = ICON_BY_KEY[achievement.key];
-  const label = t(lang, LABEL_KEY_BY_KEY[achievement.key]);
-  const locale = LOCALE_BY_LANG[lang];
-  const inProgress = !achievement.earned && achievement.current > 0;
-  const percent = Math.min(100, Math.round((100 * achievement.current) / achievement.target));
+export function AchievementsHomeCard({ lang, items }: { lang: UiLang; items: AchievementState[] }) {
+  const nextGoal = items.find((a) => !a.earned && a.current > 0);
+  const nextPercent = nextGoal ? Math.min(100, Math.round((100 * nextGoal.current) / nextGoal.threshold)) : 0;
 
   return (
-    <div className="flex w-[76px] flex-col items-center gap-1.5 text-center">
-      <span
-        className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full"
-        style={
-          achievement.earned || inProgress
-            ? { border: "2px solid #e0aa3e", color: "#e0aa3e" }
-            : {
-                border: "2px dashed var(--cabinet-line)",
-                color: "var(--cabinet-muted)",
-                opacity: 0.6,
-              }
-        }
-        aria-hidden="true"
-      >
-        <Icon size={24} />
-      </span>
-      <span className="line-clamp-2 text-xs font-semibold leading-[1.2] text-[var(--cabinet-ink)]">{label}</span>
-      {achievement.earned && achievement.earnedAt ? (
-        <span className="text-[11px] text-[var(--cabinet-muted)]">{formatEarnedAt(achievement.earnedAt, locale)}</span>
-      ) : inProgress ? (
-        <>
-          <span className="text-[11px] text-[var(--cabinet-muted)]">
-            {t(lang, "home.achievements.progress", { current: achievement.current, target: achievement.target })}
-          </span>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--cabinet-track)]">
-            <div className="h-full rounded-full" style={{ width: `${percent}%`, background: "#e0aa3e" }} />
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
-}
-
-export function AchievementsHomeCard({ lang, achievements }: { lang: UiLang; achievements: Achievement[] }) {
-  const items = pickHomeAchievements(achievements);
-
-  return (
-    <div className="cabinet-card flex h-full flex-col gap-3 p-5">
+    <div className="cabinet-card flex h-full flex-col justify-center gap-3 p-5">
       <div className="flex items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
         <Link
@@ -83,13 +23,31 @@ export function AchievementsHomeCard({ lang, achievements }: { lang: UiLang; ach
         </Link>
       </div>
       {items.length === 0 ? (
-        <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
+        <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
       ) : (
-        <div className="flex flex-wrap gap-4">
-          {items.map((achievement) => (
-            <AchievementBadge key={achievement.key} lang={lang} achievement={achievement} />
-          ))}
-        </div>
+        <>
+          <div className="achievement-badge-row">
+            {items.map((achievement) => (
+              <div key={achievement.id} className="achievement-badge-slot">
+                <AchievementBadge lang={lang} achievement={achievement} size={72} />
+              </div>
+            ))}
+          </div>
+          {nextGoal && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs text-[var(--cabinet-muted)]">
+                {t(lang, "home.achievements.next", {
+                  name: t(lang, nextGoal.nameKey),
+                  current: nextGoal.current,
+                  target: nextGoal.threshold,
+                })}
+              </p>
+              <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--cabinet-track)]">
+                <div className="h-full rounded-full" style={{ width: `${nextPercent}%`, background: "#e0aa3e" }} />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

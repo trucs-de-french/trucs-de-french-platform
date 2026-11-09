@@ -13307,6 +13307,64 @@ button.cabinet-nav-item {
   border: 1px solid var(--cabinet-line);
 }
 
+/* Home: ряд бейджів "Останні досягнення" (achievements-home-card.tsx) —
+   горизонтальний скрол зі scroll-snap на мобільному (5×72px не влазить у
+   ширину картки), сітка 5 рівних колонок в один рядок від lg (там картка
+   вже широка, 1fr-колонка поряд з Іспит 320px). */
+.achievement-badge-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 2px;
+}
+.achievement-badge-slot {
+  flex: 0 0 84px;
+  scroll-snap-align: start;
+}
+@media (min-width: 1024px) {
+  .achievement-badge-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .achievement-badge-slot {
+    flex: none;
+  }
+}
+.achievement-badge-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+}
+.achievement-badge-circle--earned {
+  border: 2.5px solid #e0aa3e;
+  color: #e0aa3e;
+}
+.achievement-badge-circle--inProgress {
+  border: 2px solid rgba(224, 170, 62, 0.5);
+  color: #e0aa3e;
+}
+.achievement-badge-circle--locked {
+  border: 2px dashed var(--cabinet-line);
+  color: var(--cabinet-muted);
+  opacity: 0.6;
+}
+.dark .achievement-badge-circle--earned {
+  border-color: #d9b765;
+  color: #d9b765;
+}
+.dark .achievement-badge-circle--inProgress {
+  border-color: rgba(217, 183, 101, 0.5);
+  color: #d9b765;
+}
+.dark .achievement-badge-circle--locked {
+  border-color: #2e3680;
+}
+
 /* Home: карусель "Нове в бібліотеці" (library-carousel.tsx) — scroll-snap
    без автоплею; ширина слайду в% (не px), щоб "наступний підглядає"
    однаково працювало на будь-якій ширині картки. */

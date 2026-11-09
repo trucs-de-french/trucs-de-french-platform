@@ -16,7 +16,7 @@ import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCE
 import { GRADABLE_TASK_TYPES } from "@/lib/exercises/gradable-types";
 import { getDefaultTaskName } from "@/lib/exercises/default-task-labels";
 import { isExamProductType } from "@/lib/cabinet/exam-products";
-import { kyivDateString, addDays, startOfWeekKyiv, computeStreakDays, longestStreak } from "@/lib/cabinet/kyiv-date";
+import { kyivDateString, addDays, startOfWeekKyiv, computeStreakDays } from "@/lib/cabinet/kyiv-date";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -100,34 +100,6 @@ export type RedoItem = {
 };
 
 export type PointsByDay = { date: string; points: number };
-
-export type Achievement = {
-  key: "firstScene" | "streak7" | "points100";
-  earned: boolean;
-  earnedAt: string | null;
-  current: number;
-  target: number;
-};
-
-// Для блоку "Останні досягнення" на Home: до 3 нещодавно здобутих (за
-// earnedAt, найновіші перші), далі найближче "в процесі" (найбільший
-// current/target серед нездобутих), далі наступне "заблоковане". Зараз у
-// проєкті лише 3 ключі досягнень, тож реально показує максимум 3 —
-// свідомо, решта слотів лишаються порожніми, а не вигаданими
-// досягненнями.
-export function pickHomeAchievements(all: Achievement[]): Achievement[] {
-  const earned = [...all]
-    .filter((a) => a.earned)
-    .sort((a, b) => (b.earnedAt ?? "").localeCompare(a.earnedAt ?? ""))
-    .slice(0, 3);
-  const earnedKeys = new Set(earned.map((a) => a.key));
-  const unearned = all.filter((a) => !earnedKeys.has(a.key));
-  const inProgress = [...unearned]
-    .filter((a) => a.current > 0)
-    .sort((a, b) => b.current / b.target - a.current / a.target)[0];
-  const locked = unearned.find((a) => a.key !== inProgress?.key);
-  return [earned, inProgress, locked].flat().filter((a): a is Achievement => !!a);
-}
 
 export type ExamInfo = { type: string; date: string; daysLeft: number };
 
@@ -229,14 +201,7 @@ export type CabinetHomeData = {
   redoCount: number;
   exam: ExamInfo | null;
   showExamCard: boolean;
-  achievements: Achievement[];
 };
-
-const EMPTY_ACHIEVEMENTS: Achievement[] = [
-  { key: "firstScene", earned: false, earnedAt: null, current: 0, target: 1 },
-  { key: "streak7", earned: false, earnedAt: null, current: 0, target: 7 },
-  { key: "points100", earned: false, earnedAt: null, current: 0, target: 100 },
-];
 
 const EMPTY_HOME_DATA: CabinetHomeData = {
   fullName: null,
@@ -253,7 +218,6 @@ const EMPTY_HOME_DATA: CabinetHomeData = {
   redoCount: 0,
   exam: null,
   showExamCard: false,
-  achievements: EMPTY_ACHIEVEMENTS,
 };
 
 export type TaskRow = {
@@ -605,103 +569,6 @@ export async function getCabinetHomeData(
     return rest;
   });
 
-  // Досягнення — рахуються на ПОВНІЙ історії activity_log (без 90-денного
-  // lookback, інакше студент, що здобув їх давно й неактивний останні 90
-  // днів, побачив би "не здобуто"), окремим легким запитом, бо tasks тут
-  // можуть належати продуктам, що вже не в enrolledProducts (архівовані/
-  // відписані) — on-purpose НЕ той самий taskById, що вище.
-  let achievements: Achievement[] = EMPTY_ACHIEVEMENTS;
-  try {
-    const { data } = await supabase
-      .from("activity_log")
-      .select("task_id, score, best_before, best_after, created_at")
-      .eq("user_id", userId);
-    const allActivityRows = (data ?? []) as {
-      task_id: string;
-      score: number;
-      best_before: number;
-      best_after: number;
-      created_at: string;
-    }[];
-    allActivityRows.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
-
-    const allTaskIds = [...new Set(allActivityRows.map((r) => r.task_id))];
-    let allActivityTasks: { id: string; type: string; config: Record<string, unknown> | null }[] = [];
-    if (allTaskIds.length > 0) {
-      const { data: taskData } = await supabase.from("tasks").select("id, type, config").in("id", allTaskIds);
-      allActivityTasks = (taskData ?? []) as typeof allActivityTasks;
-    }
-    const allActivityTaskById = new Map(allActivityTasks.map((t) => [t.id, t]));
-
-    let totalPointsEver = 0;
-    let points100EarnedAt: string | null = null;
-    const allActivityDates = new Set<string>();
-    for (const row of allActivityRows) {
-      const task = allActivityTaskById.get(row.task_id);
-      if (!task) continue;
-      const pointsPossible = totalPointsPossibleForTask(task.type, task.config);
-      const delta = Math.max(0, (pointsPossible * (row.best_after - row.best_before)) / 100);
-      totalPointsEver += delta;
-      allActivityDates.add(kyivDateString(new Date(row.created_at)));
-      if (points100EarnedAt === null && totalPointsEver >= 100) points100EarnedAt = row.created_at;
-    }
-
-    let streak7EarnedAt: string | null = null;
-    {
-      const sortedDates = [...allActivityDates].sort();
-      let runLength = 0;
-      let prev: string | null = null;
-      for (const d of sortedDates) {
-        runLength = prev !== null && addDays(prev, 1) === d ? runLength + 1 : 1;
-        if (runLength >= 7 && streak7EarnedAt === null) streak7EarnedAt = d;
-        prev = d;
-      }
-    }
-
-    let firstSceneEarnedAt: string | null = null;
-    {
-      const completionTimes: string[] = [];
-      for (const scene of scenes) {
-        const sceneTasks = tasksByScene.get(scene.id) ?? [];
-        if (!isSceneCompleted(sceneTasks, progressByTaskId)) continue;
-        let latest = "";
-        for (const task of sceneTasks) {
-          const last = progressByTaskId.get(task.id)?.last_attempt_at;
-          if (last && last > latest) latest = last;
-        }
-        if (latest) completionTimes.push(latest);
-      }
-      completionTimes.sort();
-      firstSceneEarnedAt = completionTimes[0] ?? null;
-    }
-
-    achievements = [
-      {
-        key: "firstScene",
-        earned: scenesCompleted >= 1,
-        earnedAt: firstSceneEarnedAt,
-        current: Math.min(scenesCompleted, 1),
-        target: 1,
-      },
-      {
-        key: "streak7",
-        earned: longestStreak(allActivityDates) >= 7,
-        earnedAt: streak7EarnedAt,
-        current: Math.min(streakDays, 7),
-        target: 7,
-      },
-      {
-        key: "points100",
-        earned: totalPointsEver >= 100,
-        earnedAt: points100EarnedAt,
-        current: Math.round(Math.min(totalPointsEver, 100) * 10) / 10,
-        target: 100,
-      },
-    ];
-  } catch {
-    achievements = EMPTY_ACHIEVEMENTS;
-  }
-
   return {
     fullName,
     avatarUrl,
@@ -717,7 +584,6 @@ export async function getCabinetHomeData(
     redoCount,
     exam,
     showExamCard,
-    achievements,
   };
 }
 

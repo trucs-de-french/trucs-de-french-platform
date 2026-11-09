@@ -16,7 +16,6 @@ import {
   type TaskRow,
   type SceneRow,
   type ProgressRow,
-  type Achievement,
 } from "@/lib/cabinet/home-data";
 import { kyivDateString, addDays } from "@/lib/cabinet/kyiv-date";
 import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCENT } from "@/lib/exercises/scene-summary";
@@ -40,8 +39,6 @@ export type SceneResultRow = {
   lastActivity: string;
 };
 
-export type { Achievement };
-
 export type DelfSkillRow = {
   section: ExamSection;
   label: string;
@@ -61,7 +58,6 @@ export type CabinetProgressData = {
   pointsByWeek: PointsByDay[];
   pointsByMonth: PointsByDay[];
   sceneResults: SceneResultRow[];
-  achievements: Achievement[];
   delfSkills: DelfSkills;
 };
 
@@ -194,10 +190,6 @@ export async function getCabinetProgressData(
     list.push(task);
     tasksByScene.set(task.scene_id, list);
   }
-
-  // Той самий розрахунок, що Home (getCabinetHomeData) — щоб числа й дати
-  // здобуття завжди збігались з Home, а не копія формули тут.
-  const achievements: Achievement[] = home.achievements;
 
   const sceneResults: SceneResultRow[] = [];
   for (const scene of scenes) {
@@ -398,5 +390,5 @@ export async function getCabinetProgressData(
     }
   }
 
-  return { home, pointsByWeek, pointsByMonth, sceneResults, achievements, delfSkills };
+  return { home, pointsByWeek, pointsByMonth, sceneResults, delfSkills };
 }

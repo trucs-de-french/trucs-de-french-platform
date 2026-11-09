@@ -3,6 +3,7 @@ import { t } from "@/lib/i18n/t";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { getCabinetHomeData, getNewLibraryItems } from "@/lib/cabinet/home-data";
+import { getAchievements, pickHomeAchievements, type AchievementState } from "@/lib/cabinet/achievements";
 import { getDailyQuote } from "@/lib/cabinet/quotes";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { ContinueCard } from "@/components/cabinet/home/continue-card";
@@ -34,9 +35,15 @@ export default async function CabinetHomePage() {
     .single<Pick<Profile, "ui_lang">>();
 
   const lang = normalizeUiLang(profile?.ui_lang);
-  const [home, newLibraryItems] = await Promise.all([
+  const [home, newLibraryItems, achievementItems] = await Promise.all([
     getCabinetHomeData(supabase, user.id),
     getNewLibraryItems(supabase),
+    getAchievements(supabase, user.id)
+      .then((r) => pickHomeAchievements(r.items, r.showExamCard))
+      .catch((err): AchievementState[] => {
+        console.error("getAchievements failed on Home", err);
+        return [];
+      }),
   ]);
   const quote = getDailyQuote();
 
@@ -84,7 +91,7 @@ export default async function CabinetHomePage() {
             home.showExamCard ? "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]" : "grid grid-cols-1"
           }
         >
-          <AchievementsHomeCard lang={lang} achievements={home.achievements} />
+          <AchievementsHomeCard lang={lang} items={achievementItems} />
           {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
         </div>
 
@@ -104,7 +111,7 @@ export default async function CabinetHomePage() {
 
       <div className="flex flex-col gap-4 lg:hidden">
         <ContinueCard lang={lang} target={home.continueTarget} />
-        <AchievementsHomeCard lang={lang} achievements={home.achievements} />
+        <AchievementsHomeCard lang={lang} items={achievementItems} />
         {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
         <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
         <QuickActionsCard lang={lang} />

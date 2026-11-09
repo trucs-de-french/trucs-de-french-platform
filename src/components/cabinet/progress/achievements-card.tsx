@@ -1,64 +1,66 @@
-import { CheckCircle2, Zap, Star, type LucideIcon } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import type { Achievement } from "@/lib/cabinet/progress-data";
+import type { AchievementCategory, AchievementState } from "@/lib/cabinet/achievements";
+import { AchievementBadge } from "@/components/cabinet/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
 
-// Та сама іконна мова, що StatTiles (CheckCircle2/Zap/Star) — свідомо, не
-// нові іконки: ці ж три метрики (сцени/streak/бали) тут лише в ролі
-// "досягнуто чи ні", а не живого числа.
-const ICON_BY_KEY: Record<Achievement["key"], LucideIcon> = {
-  firstScene: CheckCircle2,
-  streak7: Zap,
-  points100: Star,
-};
-const LABEL_KEY_BY_KEY: Record<Achievement["key"], MessageKey> = {
-  firstScene: "progress.achievements.firstScene",
-  streak7: "progress.achievements.streak7",
-  points100: "progress.achievements.points100",
+// Той самий порядок категорій, що каталог (achievements.ts) — "dictionary"
+// виключено свідомо: available:false, нема джерела даних, не показуємо її
+// взагалі, навіть locked (щоб не плутати студента неіснуючим словником).
+const CATEGORY_ORDER: AchievementCategory[] = [
+  "scenes",
+  "films",
+  "streak",
+  "points",
+  "exercises",
+  "mistakes",
+  "weeklyGoal",
+  "exam",
+];
+const CATEGORY_LABEL_KEY: Record<AchievementCategory, MessageKey> = {
+  scenes: "achievements.category.scenes",
+  films: "achievements.category.films",
+  streak: "achievements.category.streak",
+  points: "achievements.category.points",
+  exercises: "achievements.category.exercises",
+  mistakes: "achievements.category.mistakes",
+  weeklyGoal: "achievements.category.weeklyGoal",
+  exam: "achievements.category.exam",
+  dictionary: "achievements.category.exam", // недосяжно: dictionary завжди відфільтровано нижче
 };
 
-function AchievementTile({ lang, achievement }: { lang: UiLang; achievement: Achievement }) {
-  const Icon = ICON_BY_KEY[achievement.key];
-  const label = t(lang, LABEL_KEY_BY_KEY[achievement.key]);
+export function AchievementsCard({
+  lang,
+  items,
+  showExamCard,
+}: {
+  lang: UiLang;
+  items: AchievementState[];
+  showExamCard: boolean;
+}) {
+  const visible = items.filter((a) => a.available !== false && (!a.examOnly || showExamCard));
 
   return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      <span
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
-        style={
-          achievement.earned
-            ? { background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)", color: "var(--cabinet-on-gold)" }
-            : {
-                background: "transparent",
-                border: "1.5px dashed var(--cabinet-line)",
-                color: "var(--cabinet-muted)",
-              }
-        }
-        aria-hidden="true"
-      >
-        <Icon size={22} />
-      </span>
-      <span
-        className={`line-clamp-2 text-xs font-semibold leading-[1.2] ${
-          achievement.earned ? "text-[var(--cabinet-ink)]" : "text-[var(--cabinet-muted)]"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
-
-export function AchievementsCard({ lang, items }: { lang: UiLang; items: Achievement[] }) {
-  return (
-    <div className="cabinet-card flex h-full flex-col gap-3 p-5">
+    <div className="cabinet-card flex h-full flex-col gap-5 p-5">
       <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
-      <div className="grid grid-cols-3 gap-3">
-        {items.map((achievement) => (
-          <AchievementTile key={achievement.key} lang={lang} achievement={achievement} />
-        ))}
-      </div>
+      {CATEGORY_ORDER.map((category) => {
+        const categoryItems = visible
+          .filter((a) => a.category === category)
+          .sort((a, b) => Number(b.earned) - Number(a.earned) || a.threshold - b.threshold);
+        if (categoryItems.length === 0) return null;
+        return (
+          <div key={category} className="flex flex-col gap-3">
+            <h4 className="text-xs font-bold uppercase tracking-[0.04em] text-[var(--cabinet-muted)]">
+              {t(lang, CATEGORY_LABEL_KEY[category])}
+            </h4>
+            <div className="flex flex-wrap gap-4">
+              {categoryItems.map((achievement) => (
+                <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} size={56} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
