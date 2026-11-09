@@ -17,7 +17,7 @@ const SIZES = {
   sm: { trucs: 20, french: 22, tagline: 10 },
   md: { trucs: 26, french: 29, tagline: 11.5 },
   lg: { trucs: 34, french: 38, tagline: 15 },
-  mobile: { trucs: 30, french: 33, tagline: 12 },
+  mobile: { trucs: 24, french: 27, tagline: 12 },
   sidebar: { trucs: 21, french: 23, tagline: 10.5 },
 } as const;
 

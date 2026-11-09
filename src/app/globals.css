@@ -11991,6 +11991,16 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
+
+/* Розділювач між мобільним вордмарком і привітанням "Bonjour" —
+   без нього вони візуально зливались. Лише мобільна шапка (md:hidden
+   на обгортці в mobile-header.tsx), тому desktop не торкається. */
+.cabinet-mobile-header-divider {
+  height: 1.5px;
+  margin: 16px 40px 24px;
+  background: linear-gradient(90deg, transparent, #d9b765, transparent);
+}
+
 @media (min-width: 768px) {
   .cabinet-panel {
     min-height: 0;
