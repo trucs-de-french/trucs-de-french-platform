@@ -11818,6 +11818,12 @@ button.scene-bar:active .scene-bar-toggle {
      змінні нічого не змінює у світлій темі. */
   --cabinet-surface-2: var(--cabinet-card-bg);
   --cabinet-track: var(--cabinet-panel-bg);
+  /* Фон позаду панелей (видний лише у проміжках/safe-area, не під самими
+     .cabinet-panel/.cabinet-sidebar) — у світлій темі прозорий, бо раніше
+     тут нічого не малювалось (просвічував фон body), тож перехід на цю
+     змінну нічого не змінює. */
+  --cabinet-page-bg: transparent;
+  background: var(--cabinet-page-bg);
   min-height: 100vh;
   /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
      (CSS2.1 §11.1.1, якщо лише одна з осей не visible) — саме це робило
@@ -11828,13 +11834,16 @@ button.scene-bar:active .scene-bar-toggle {
   overflow-x: clip;
 }
 .dark .cabinet {
-  --cabinet-frame-from: #14187a;
-  --cabinet-frame-to: #2a2fb0;
-  --cabinet-panel-bg: #0d1245;
-  --cabinet-card-bg: #1b2282;
-  --cabinet-line: #3a41b0;
-  --cabinet-surface-2: #232b96;
-  --cabinet-track: #2a31a0;
+  /* Variant 3 "Тихий мінімал" — спокійніша/темніша пласка палітра, без
+     тіней і зайвого контрасту між поверхнями. */
+  --cabinet-frame-from: #0c1042;
+  --cabinet-frame-to: #141a60;
+  --cabinet-panel-bg: #0a0e38;
+  --cabinet-card-bg: #141a52;
+  --cabinet-line: #2e3680;
+  --cabinet-surface-2: #0c1142;
+  --cabinet-track: #222a6c;
+  --cabinet-page-bg: #060829;
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
@@ -11866,13 +11875,12 @@ button.scene-bar:active .scene-bar-toggle {
   border-radius: 22px;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
-/* Тонкий градієнт НАД суцільним --cabinet-card-bg лише в dark — колір
-   картки лишається solid (bg-[var(--cabinet-card-bg)] у Tailwind-класах
-   може тримати лише background-color, не градієнт), глибина додається
-   окремим background-image, що не перебиває background-color вище. */
+/* "Тихий мінімал" (variant 3) — пласкі суцільні кольори, без градієнта
+   глибини й без тіні картки в dark (раніше тут був тонкий overlay-
+   градієнт; прибрано разом із тінню на прохання зробити палітру
+   спокійнішою/пласкішою). */
 .dark .cabinet-card {
-  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 60%);
-  box-shadow: 0 8px 24px rgba(5, 7, 40, 0.5);
+  box-shadow: none;
 }
 
 /* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний
@@ -11956,6 +11964,12 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .cabinet-sidebar::-webkit-scrollbar {
     display: none;
+  }
+  /* dark-only кут градієнта (160deg замість спільних 180deg вище) —
+     override, не зміна спільного правила, щоб світла тема лишилась
+     пікселі-в-піксель тією ж. */
+  .dark .cabinet-sidebar {
+    background: linear-gradient(160deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
   }
 }
 /* Колапс-рейка: overflow:visible в обох напрямках — жодного скролу,

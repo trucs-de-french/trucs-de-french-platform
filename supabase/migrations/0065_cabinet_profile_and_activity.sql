@@ -101,6 +101,7 @@ security definer
 set search_path = public
 as $$
 begin
+  if coalesce(auth.role(), '') <> 'service_role' and p_user_id is distinct from auth.uid() then return; end if;
   insert into public.activity_log (user_id, task_id, scene_id, product_id, score, best_before, best_after)
   select p_user_id, t.id, t.scene_id, t.product_id, p_score, p_best_before, p_best_after
   from public.tasks t

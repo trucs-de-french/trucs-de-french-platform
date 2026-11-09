@@ -94,7 +94,7 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
         href={item.href}
         className={
           isGhost
-            ? "flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+            ? "flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
             : "flex min-h-11 w-full items-center justify-center rounded-full border-[1.5px] border-[var(--cabinet-btn-border)] bg-[var(--cabinet-btn-bg)] text-sm font-bold text-[var(--cabinet-btn-fg)] hover:bg-[var(--cabinet-btn-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
         }
       >
@@ -224,7 +224,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
           <button
             type="button"
             onClick={resetFilters}
-            className="min-h-11 rounded-full border border-[var(--cabinet-line)] px-4 text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+            className="min-h-11 rounded-full border border-[var(--cabinet-line)] px-4 text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
           >
             {t(lang, "library.empty.reset")}
           </button>
