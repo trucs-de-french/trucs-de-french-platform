@@ -393,8 +393,6 @@ export const fr: Record<MessageKey, string> = {
   "home.exam.error": "Impossible d'enregistrer. Vérifiez la date et le type.",
   "home.goal.title": "Objectif de la semaine",
   "home.goal.of": "{done} sur {goal} scènes",
-  "home.role.student": "Étudiante",
-  "home.role.teacher": "Enseignante",
 
   "progress.chart.title": "Points",
   "progress.chart.week": "Semaine",

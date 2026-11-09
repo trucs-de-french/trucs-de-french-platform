@@ -40,7 +40,13 @@ export function CabinetSidebar({
 
   return (
     <aside className={`cabinet-sidebar ${collapsed ? "cabinet-sidebar--collapsed" : ""}`}>
-      <div className={collapsed ? "flex justify-center pb-[18px]" : "cabinet-sidebar-logo pb-[18px]"}>
+      <div
+        className={
+          collapsed
+            ? "cabinet-sidebar-logo-wrap flex justify-center pb-[18px]"
+            : "cabinet-sidebar-logo-wrap cabinet-sidebar-logo pb-[18px]"
+        }
+      >
         <Link href="/cabinet" aria-label="Trucs d’French">
           {collapsed ? (
             <PlatformBadge size={46} />
@@ -50,7 +56,7 @@ export function CabinetSidebar({
         </Link>
       </div>
 
-      <CabinetSidebarProfile lang={lang} fullName={fullName} isTeacher={isTeacher} collapsed={collapsed} />
+      <CabinetSidebarProfile fullName={fullName} collapsed={collapsed} />
 
       <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-col gap-[2px]">
         {CABINET_PRIMARY_NAV.map((item) => (
@@ -63,7 +69,7 @@ export function CabinetSidebar({
           />
         ))}
 
-        <div className="my-2 border-t border-white/15" />
+        <div className="cabinet-sidebar-divider my-2 border-t border-white/15" />
 
         <NavLink
           item={CABINET_SETTINGS_NAV}
@@ -107,8 +113,8 @@ export function CabinetSidebar({
       <div
         className={
           collapsed
-            ? "mt-auto flex flex-col items-center gap-[10px]"
-            : "mt-auto flex flex-col gap-[10px]"
+            ? "cabinet-sidebar-bottom mt-auto flex flex-col items-center gap-[10px]"
+            : "cabinet-sidebar-bottom mt-auto flex flex-col gap-[10px]"
         }
       >
         <button

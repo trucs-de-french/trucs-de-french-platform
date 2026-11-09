@@ -25,12 +25,11 @@ export default async function CabinetHomePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, ui_lang")
+    .select("ui_lang")
     .eq("id", user.id)
-    .single<Pick<Profile, "role" | "ui_lang">>();
+    .single<Pick<Profile, "ui_lang">>();
 
   const lang = normalizeUiLang(profile?.ui_lang);
-  const isTeacher = profile?.role === "teacher";
   const home = await getCabinetHomeData(supabase, user.id);
 
   const firstName = home.fullName?.split(" ")[0] || "";
@@ -56,7 +55,7 @@ export default async function CabinetHomePage() {
           (24px); тут потрібно 12px зверху і 16px знизу, тож віднімаємо
           24: -12 і -8. */}
       <div className="lg:hidden" style={{ marginTop: -12, marginBottom: -8 }}>
-        <ProfileCard lang={lang} fullName={home.fullName} isTeacher={isTeacher} compact />
+        <ProfileCard fullName={home.fullName} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">

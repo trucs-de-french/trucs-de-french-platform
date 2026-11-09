@@ -394,8 +394,6 @@ export const uk = {
   "home.exam.error": "Не вдалося зберегти. Перевір дату й тип.",
   "home.goal.title": "Ціль тижня",
   "home.goal.of": "{done} з {goal} сцен",
-  "home.role.student": "Студентка",
-  "home.role.teacher": "Викладачка",
 
   "progress.chart.title": "Бали",
   "progress.chart.week": "Тиждень",

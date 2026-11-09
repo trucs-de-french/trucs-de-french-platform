@@ -12090,6 +12090,31 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* Низький вьюпорт (ноутбук ~800px висоти): "Тема"/Світла-Темна pills
+   внизу інакше йдуть нижче за екран. overflow-y:auto на .cabinet-sidebar
+   (вище) лишається safety-net'ом, але спершу просто стискаємо вертикальні
+   відступи, щоб скрол і не знадобився в типовому випадку. Лише
+   розгорнута рейка (колапс-рейка і так короткий список іконок). */
+@media (min-width: 768px) and (max-height: 860px) {
+  .cabinet-sidebar:not(.cabinet-sidebar--collapsed) {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .cabinet-sidebar-logo-wrap {
+    padding-bottom: 12px;
+  }
+  .cabinet-nav-item {
+    min-height: 40px;
+  }
+  .cabinet-sidebar-divider {
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+  .cabinet-sidebar-bottom {
+    gap: 8px;
+  }
+}
+
 /* Expanded: padding-right:16px дає лейблу clearance від правого краю,
    margin-right:-12px (= правий inset sidebar) "протікає" через нього до
    справжнього правого краю — пункт (background/border-radius) стикається
@@ -12293,9 +12318,9 @@ button.cabinet-nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  margin: 2px 4px 10px;
-  border-radius: 20px;
+  padding: 6px 10px;
+  margin: 2px 4px 8px;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1.5px solid rgba(217, 183, 101, 0.55);
   text-decoration: none;
@@ -12311,30 +12336,25 @@ button.cabinet-nav-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
   background: linear-gradient(160deg, #f3d98b, #d9b765);
   border: 2px solid rgba(246, 241, 227, 0.85);
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 19px;
+  font-size: 16px;
   color: #1a1640;
 }
 .cabinet-sidebar-profile-name {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   color: #f6f1e3;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.cabinet-sidebar-profile-role {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 13px;
-  color: #d3cff5;
 }
 /* Колапс-рейка: лише аватар, по центру, без фону/рамки контейнера —
    той самий тултіп-механізм, що й інші пункти рейки (position:relative

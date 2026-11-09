@@ -391,8 +391,6 @@ export const en: Record<MessageKey, string> = {
   "home.exam.error": "Couldn't save. Check the date and type.",
   "home.goal.title": "Weekly goal",
   "home.goal.of": "{done} of {goal} scenes",
-  "home.role.student": "Student",
-  "home.role.teacher": "Teacher",
 
   "progress.chart.title": "Points",
   "progress.chart.week": "Week",
