@@ -55,7 +55,7 @@ export function DeleteAccountDialog({
             autoFocus
           />
         </label>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
         <div className="mt-1 flex justify-end gap-2">
           <button
             type="button"
@@ -69,7 +69,7 @@ export function DeleteAccountDialog({
             type="button"
             onClick={onConfirm}
             disabled={!canConfirm || pending}
-            className="min-h-11 rounded-full bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-40"
+            className="min-h-11 rounded-full bg-[#9b4a44] px-4 text-sm font-bold text-[#f6f1e3] disabled:opacity-45 dark:bg-[#b8665e] dark:text-[#1a1640]"
           >
             {t(lang, "settings.account.delete.confirm")}
           </button>

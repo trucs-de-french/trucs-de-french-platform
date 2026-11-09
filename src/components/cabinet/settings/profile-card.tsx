@@ -116,7 +116,7 @@ export function SettingsProfileCard({
             }}
           />
           <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "settings.photo.hint")}</p>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { SlidersHorizontal, ShieldCheck, LogOut, type LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
@@ -6,6 +7,7 @@ import { signOut } from "@/app/login/actions";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { LanguagePills } from "@/components/cabinet/language-pills";
 import { ThemePills } from "@/components/cabinet/theme-switch";
+import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
 
 // Мобільна "Ще" — пункти, що не влізли в нижній tab bar (6 вкладок,
 // Mistakes review тепер серед них напряму): Settings, мова, Admin (лише
@@ -13,6 +15,8 @@ import { ThemePills } from "@/components/cabinet/theme-switch";
 // на десктопі.
 export default async function CabinetMorePage() {
   const { lang, isTeacher } = await getCabinetProfile();
+  const cookieStore = await cookies();
+  const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
 
   return (
     <div className="cabinet-more">
@@ -39,7 +43,7 @@ export default async function CabinetMorePage() {
           <p className="mb-2 text-xs font-semibold text-[var(--cabinet-muted)]">
             {t(lang, "cabinet.theme.label")}
           </p>
-          <ThemePills lang={lang} />
+          <ThemePills lang={lang} initialIsDark={initialIsDark} />
         </div>
 
         <form action={signOut}>

@@ -8,8 +8,14 @@ import type { UiLang } from "@/lib/ui/product-lang";
 // Той самий useTheme() (lib/use-theme.ts), що ThemeToggle — лише інше
 // подання (пілюлі в стилі LanguagePills тут, одна кнопка на collapsed
 // рейці нижче), не окрема копія логіки теми.
-export function ThemePills({ lang }: { lang: UiLang }) {
-  const { isDark, setTheme } = useTheme();
+export function ThemePills({
+  lang,
+  initialIsDark = null,
+}: {
+  lang: UiLang;
+  initialIsDark?: boolean | null;
+}) {
+  const { isDark, setTheme } = useTheme(initialIsDark);
 
   return (
     <div className="flex gap-1.5">
@@ -38,8 +44,14 @@ export function ThemePills({ lang }: { lang: UiLang }) {
 // Collapsed rail: одна кнопка, іконка показує, яку тему УВІМКНЕ клік
 // (Sun у темній темі → клік вмикає світлу, і навпаки) — той самий принцип,
 // що й задача сформулювала явно, не "яка тема активна зараз".
-export function ThemeRailButton({ lang }: { lang: UiLang }) {
-  const { isDark, setTheme } = useTheme();
+export function ThemeRailButton({
+  lang,
+  initialIsDark = null,
+}: {
+  lang: UiLang;
+  initialIsDark?: boolean | null;
+}) {
+  const { isDark, setTheme } = useTheme(initialIsDark);
   const label = t(lang, isDark ? "cabinet.theme.toLight" : "cabinet.theme.toDark");
 
   return (

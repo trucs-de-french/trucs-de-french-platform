@@ -79,7 +79,13 @@ export function AccountCard({
           {t(lang, "settings.account.changePassword")}
         </button>
         {resetMessage && (
-          <p className={`text-xs ${resetError ? "text-red-600" : "text-[var(--cabinet-muted)]"}`}>{resetMessage}</p>
+          <p
+            className={`text-xs ${
+              resetError ? "text-[#9b4a44] dark:text-[#e2a49c]" : "text-[var(--cabinet-muted)]"
+            }`}
+          >
+            {resetMessage}
+          </p>
         )}
       </div>
 
@@ -92,10 +98,14 @@ export function AccountCard({
         </button>
       </form>
 
+      {/* Квітчаста/насичено-червона дія тут не потрібна — видалення й так
+          захищене типізаним підтвердженням у модалці нижче; притлумлений
+          тон (не #c0392b/#ff8f80) тримає контроль "тихим" поряд зі
+          звичними gold-outline кнопками картки. */}
       <button
         type="button"
         onClick={() => setDialogOpen(true)}
-        className="min-h-11 self-start text-sm font-bold text-red-600 hover:underline"
+        className="min-h-11 self-start rounded-full text-sm font-bold text-[#9b4a44] hover:text-[#843c37] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4a44] dark:text-[#e2a49c] dark:hover:text-[#efb8b0] dark:focus-visible:outline-[#e2a49c]"
       >
         {t(lang, "settings.account.delete")}
       </button>

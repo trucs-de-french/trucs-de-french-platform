@@ -23,6 +23,7 @@ export function CabinetSidebar({
   avatarUrl = null,
   avatarMascot = null,
   initialCollapsed,
+  initialIsDark = null,
   onSignOut,
 }: {
   lang: UiLang;
@@ -31,6 +32,7 @@ export function CabinetSidebar({
   avatarUrl?: string | null;
   avatarMascot?: string | null;
   initialCollapsed: boolean;
+  initialIsDark?: boolean | null;
   onSignOut: () => Promise<void>;
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
@@ -147,7 +149,7 @@ export function CabinetSidebar({
 
         {collapsed ? (
           <>
-            <ThemeRailButton lang={lang} />
+            <ThemeRailButton lang={lang} initialIsDark={initialIsDark} />
             <CabinetLangCycle current={lang} />
           </>
         ) : (
@@ -162,7 +164,7 @@ export function CabinetSidebar({
               <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold text-white/70">
                 {t(lang, "cabinet.theme.label")}
               </p>
-              <ThemePills lang={lang} />
+              <ThemePills lang={lang} initialIsDark={initialIsDark} />
             </div>
           </>
         )}

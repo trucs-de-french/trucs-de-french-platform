@@ -11,19 +11,29 @@ import { setThemeCookie } from "@/lib/theme-cookie";
 //
 // isDark читається СИНХРОННО в lazy useState-ініціалізаторі (не в
 // useEffect/після mount) — eslint-правило проєкту react-hooks/set-state-
-// in-effect забороняє прямий setState() у тілі ефекту, тож на сервері
-// (немає document) повертається false, а на клієнті при гідратації функція
+// in-effect забороняє прямий setState() у тілі ефекту. На клієнті функція
 // одразу підхоплює клас, який theme-script.tsx (інлайн-скрипт у <head>)
-// уже виставив на <html> ДО гідратації. Можливий один кадр розбіжності
-// сервер/клієнт — той самий, що раніше в theme-toggle.tsx — лишається на
-// відповідальності кожного рендера (suppressHydrationWarning на елементі,
-// що показує стан).
-function getInitialIsDark() {
-  return typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+// уже виставив на <html> ДО гідратації — тут завжди коректно.
+//
+// На СЕРВЕРІ (немає document) раніше тут завжди повертався false, тобто
+// SSR будь-якого ThemePills/ThemeRailButton малював активною світлу
+// пілюлю незалежно від реальної теми користувача — саме це й було
+// причиною неправильної підсвітки теми в кабінеті (settings/sidebar):
+// клієнтський рендер при гідратації хоч і підхоплював правильне значення,
+// але повторний SSR-прохід (RSC-навігація/Suspense-ревалідація) знову
+// скидав видиме на дефолт. serverIsDark — те саме значення теми, яке
+// сервер уже знає з куки (parseThemeCookieValue, theme-cookie.ts) і
+// передає пропом згори (cabinet/layout.tsx, cabinet/more/page.tsx,
+// cabinet/settings/page.tsx) — SSR тепер завжди збігається з клієнтом.
+function getInitialIsDark(serverIsDark?: boolean | null) {
+  if (typeof document !== "undefined") {
+    return document.documentElement.classList.contains("dark");
+  }
+  return serverIsDark ?? false;
 }
 
-export function useTheme() {
-  const [isDark, setIsDark] = useState(getInitialIsDark);
+export function useTheme(serverIsDark?: boolean | null) {
+  const [isDark, setIsDark] = useState(() => getInitialIsDark(serverIsDark));
 
   function setTheme(dark: boolean) {
     setIsDark(dark);

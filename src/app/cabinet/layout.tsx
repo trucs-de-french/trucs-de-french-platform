@@ -6,6 +6,7 @@ import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { CabinetSidebar } from "@/components/cabinet/sidebar";
 import { CabinetMobileTabBar } from "@/components/cabinet/mobile-tab-bar";
 import type { Profile } from "@/lib/supabase/profile";
+import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
 
 const NAV_COOKIE = "tdf_cabinet_nav";
 
@@ -35,6 +36,7 @@ export default async function CabinetLayout({ children }: { children: React.Reac
 
   const cookieStore = await cookies();
   const initialCollapsed = cookieStore.get(NAV_COOKIE)?.value === "collapsed";
+  const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
 
   // {children} рендериться РІВНО один раз — хром (sidebar/frame/tab bar)
   // навколо нього перемикається чистим CSS (медіа-запити в globals.css),
@@ -49,6 +51,7 @@ export default async function CabinetLayout({ children }: { children: React.Reac
         avatarUrl={profile?.avatar_url ?? null}
         avatarMascot={profile?.avatar_mascot ?? null}
         initialCollapsed={initialCollapsed}
+        initialIsDark={initialIsDark}
         onSignOut={signOut}
       />
       <main className="cabinet-panel">{children}</main>

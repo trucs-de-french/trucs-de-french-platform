@@ -23,7 +23,7 @@ export function SettingsSaveBar({
       <div className="cabinet-card mx-4 flex flex-col gap-2 p-4 sm:mx-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-[var(--cabinet-ink)]">{t(lang, "settings.save.unsaved")}</p>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
         </div>
         <div className="flex gap-2">
           <button
