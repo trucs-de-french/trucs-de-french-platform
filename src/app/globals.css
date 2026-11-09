@@ -11942,11 +11942,20 @@ button.scene-bar:active .scene-bar-toggle {
   /* Desktop: кадр — фіксована висота вьюпорта, а не частина документа, що
      скролиться. Скролить лише .cabinet-panel (нижче); документ на
      десктопі більше не скролиться взагалі, тож рейка (height:100% кадру)
-     завжди на всю висоту без sticky. */
+     завжди на всю висоту без sticky.
+     "Variant C": градієнт тепер малює САМ .cabinet-frame (раніше —
+     .cabinet-sidebar) і заповнює весь в'юпорт одним кольором; рейка сидить
+     прямо на ньому (прозора, без власного фону, нижче), а .cabinet-panel
+     "вирізана" з нього інсетом (margin) — звідси видно градієнт по
+     верху/праворуч/низу панелі. */
   .cabinet-frame {
     flex-direction: row;
     height: 100dvh;
     overflow: hidden;
+    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+  }
+  .dark .cabinet-frame {
+    background: linear-gradient(160deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
   }
 }
 
@@ -11962,6 +11971,13 @@ button.scene-bar:active .scene-bar-toggle {
 @media (min-width: 768px) {
   .cabinet-panel {
     min-height: 0;
+    /* Інсет з кадру: 14px зверху/праворуч/низу, 0 зліва — панель
+       стикається з рейкою без зазору (там, де активний пункт "вливається"
+       в неї, нижче). Радіус на ВСІХ чотирьох кутах, включно з лівими —
+       .cabinet-nav-item--active сама вирізає під себе плавний перехід
+       (fillet-псевдоелементи), не чекаючи прямого кута тут. */
+    margin: 14px 14px 14px 0;
+    border-radius: 28px;
     padding: 26px 28px;
     overscroll-behavior: contain;
   }
@@ -12002,7 +12018,9 @@ button.scene-bar:active .scene-bar-toggle {
        пункту навігації. */
     position: relative;
     z-index: 40;
-    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+    /* Фон тепер малює .cabinet-frame (вище) — рейка прозора, сидить прямо
+       на його градієнті ("Variant C": один суцільний градієнт на весь
+       кадр, без окремого блоку під сайдбар). */
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -12010,12 +12028,6 @@ button.scene-bar:active .scene-bar-toggle {
   }
   .cabinet-sidebar::-webkit-scrollbar {
     display: none;
-  }
-  /* dark-only кут градієнта (160deg замість спільних 180deg вище) —
-     override, не зміна спільного правила, щоб світла тема лишилась
-     пікселі-в-піксель тією ж. */
-  .dark .cabinet-sidebar {
-    background: linear-gradient(160deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
   }
 }
 /* Колапс-рейка: overflow:visible в обох напрямках — жодного скролу,
@@ -12064,6 +12076,10 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 0 16px 0 var(--cabinet-item-pl);
   margin-right: -12px;
   border-radius: 14px;
+  /* position:relative — точка відсіку для ::before/::after fillet-ів
+     активного пункту нижче (right:0/top:-22px мусять рахуватись від
+     самого пункту, а не від рейки чи <nav>). */
+  position: relative;
   font-family: var(--font-heading);
   font-size: 14.5px;
   font-weight: 800;
@@ -12109,10 +12125,34 @@ button.cabinet-nav-item {
 .cabinet-nav-item--active {
   background: var(--cabinet-panel-bg);
   color: var(--cabinet-ink);
-  border-radius: 18px 0 0 18px;
+  border-radius: 25px 0 0 25px;
 }
 .cabinet-nav-item--active:hover {
   background: var(--cabinet-panel-bg);
+}
+/* "Variant C" fillets — вгнуті чвертки кола тим самим кольором, що
+   панель (--cabinet-panel-bg), з'єднують прямий правий край активного
+   пункту з округленим кутом панелі над/під ним, замість різкого стику
+   двох прямих кутів. pointer-events:none — суто декоративні, не мають
+   перехоплювати hover/клік пункту під ними. Лише розгорнута рейка —
+   колапс-рейка має власну плашку (::before нижче) і без fillet-ів, щоб не
+   дублювати псевдоелементи на тому самому вузлі. */
+.cabinet-sidebar:not(.cabinet-sidebar--collapsed) .cabinet-nav-item--active::before,
+.cabinet-sidebar:not(.cabinet-sidebar--collapsed) .cabinet-nav-item--active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+.cabinet-sidebar:not(.cabinet-sidebar--collapsed) .cabinet-nav-item--active::before {
+  top: -22px;
+  background: radial-gradient(circle at 0 0, transparent 21.5px, var(--cabinet-panel-bg) 22px);
+}
+.cabinet-sidebar:not(.cabinet-sidebar--collapsed) .cabinet-nav-item--active::after {
+  bottom: -22px;
+  background: radial-gradient(circle at 0 100%, transparent 21.5px, var(--cabinet-panel-bg) 22px);
 }
 /* Пункт на всю ширину рейки (88px, margin/padding 0) — центр іконки
    = центр пункту = центр рейки за побудовою, без арифметики offset-ів.
@@ -12140,11 +12180,11 @@ button.cabinet-nav-item {
   content: "";
   position: absolute;
   z-index: -1;
-  left: 12px;
+  left: 10px;
   right: 0;
   top: 0;
   bottom: 0;
-  border-radius: 18px 0 0 18px;
+  border-radius: 25px 0 0 25px;
   background: var(--cabinet-panel-bg);
 }
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover,
