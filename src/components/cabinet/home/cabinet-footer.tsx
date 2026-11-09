@@ -1,6 +1,8 @@
+import { ShoppingBag } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { SOCIAL_LINKS, SHOP_URL } from "@/lib/site-links";
+import { PlatformWordmark } from "@/components/platform-wordmark";
 
 // Прості stroke-гліфи — у lucide-react немає брендових іконок (Facebook/
 // Instagram/Youtube/Telegram прибрали ще в ранніх версіях), тож мінімальні
@@ -51,42 +53,36 @@ export function CabinetFooter({ lang }: { lang: UiLang }) {
 
   return (
     <footer className="cabinet-footer flex flex-col items-center gap-3 px-2 py-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-      <div>
-        <div className="font-heading text-base font-black text-[var(--cabinet-ink)]">Trucs d’French</div>
-        <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "footer.tagline")}</p>
-      </div>
+      <PlatformWordmark size="mobile" tagline align="left" />
       <div className="flex flex-col items-center gap-2 sm:items-end">
-        {socials.length > 0 && (
-          <div className="flex gap-2.5">
-            {socials.map((key) => {
-              const Icon = SOCIAL_ICONS[key];
-              return (
-                <a
-                  key={key}
-                  href={SOCIAL_LINKS[key]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={t(lang, `footer.social.${key}`)}
-                  className="cabinet-footer-icon"
-                >
-                  <Icon />
-                </a>
-              );
-            })}
-          </div>
-        )}
-        <p className="text-xs text-[var(--cabinet-muted)]">
-          {t(lang, "footer.copyright", { year })}
-          {" · "}
+        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:justify-end">
           <a
             href={SHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[var(--cabinet-muted)] hover:underline"
+            aria-label={t(lang, "footer.shop.ariaLabel")}
+            className="cabinet-footer-shop-btn"
           >
+            <ShoppingBag size={17} strokeWidth={1.8} aria-hidden="true" />
             {t(lang, "footer.shop")}
           </a>
-        </p>
+          {socials.map((key) => {
+            const Icon = SOCIAL_ICONS[key];
+            return (
+              <a
+                key={key}
+                href={SOCIAL_LINKS[key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t(lang, `footer.social.${key}`)}
+                className="cabinet-footer-icon"
+              >
+                <Icon />
+              </a>
+            );
+          })}
+        </div>
+        <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "footer.copyright", { year })}</p>
       </div>
     </footer>
   );

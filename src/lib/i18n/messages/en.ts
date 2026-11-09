@@ -423,6 +423,7 @@ export const en: Record<MessageKey, string> = {
   "footer.social.facebook": "Our Facebook",
   "footer.social.youtube": "Our YouTube",
   "footer.shop": "Shop",
+  "footer.shop.ariaLabel": "Shop (opens in a new tab)",
 
   "progress.chart.title": "Points",
   "progress.chart.week": "Week",

@@ -426,6 +426,7 @@ export const uk = {
   "footer.social.facebook": "Наш Facebook",
   "footer.social.youtube": "Наш YouTube",
   "footer.shop": "Магазин",
+  "footer.shop.ariaLabel": "Магазин (відкриється в новій вкладці)",
 
   "progress.chart.title": "Бали",
   "progress.chart.week": "Тиждень",

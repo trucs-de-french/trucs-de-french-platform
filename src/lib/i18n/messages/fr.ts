@@ -425,6 +425,7 @@ export const fr: Record<MessageKey, string> = {
   "footer.social.facebook": "Notre Facebook",
   "footer.social.youtube": "Notre YouTube",
   "footer.shop": "Boutique",
+  "footer.shop.ariaLabel": "Boutique (s'ouvre dans un nouvel onglet)",
 
   "progress.chart.title": "Points",
   "progress.chart.week": "Semaine",
