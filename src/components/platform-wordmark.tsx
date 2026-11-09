@@ -14,11 +14,14 @@
 // розгорнутої рейки кабінету (256px, --cabinet-item-pl 14px зліва): рядок
 // TRUCS+d'French мусить лишати мінімум 22px вільного місця з обох боків.
 const SIZES = {
-  sm: { trucs: 20, french: 22, tagline: 10 },
-  md: { trucs: 26, french: 29, tagline: 11.5 },
-  lg: { trucs: 34, french: 38, tagline: 15 },
-  mobile: { trucs: 24, french: 27, tagline: 12 },
-  sidebar: { trucs: 21, french: 23, tagline: 10.5 },
+  sm: { trucs: 20, french: 22, tagline: 12.5 },
+  md: { trucs: 26, french: 29, tagline: 12.5 },
+  lg: { trucs: 34, french: 38, tagline: 12.5 },
+  mobile: { trucs: 24, french: 27, tagline: 12.5 },
+  // Вужчий за всі решта (256px рейка) — підпис не влазить на 12.5px
+  // одним рядком, тож тут 12px (єдиний виняток, інші розміри лишають
+  // базові 12.5px без зміни).
+  sidebar: { trucs: 21, french: 23, tagline: 12 },
 } as const;
 
 type WordmarkSize = keyof typeof SIZES;
@@ -29,7 +32,10 @@ function toneClasses(tone: "light" | "dark" | undefined, part: "trucs" | "apostr
   const map = {
     trucs: { light: "text-[#2f2c6b]", dark: "text-[#f6f1e3]", auto: "text-[#2f2c6b] dark:text-[#f6f1e3]" },
     apostrophe: { light: "text-[#d9b765]", dark: "text-[#f3d98b]", auto: "text-[#d9b765] dark:text-[#f3d98b]" },
-    tagline: { light: "text-[#6a5d40]", dark: "text-[#f3d98b]", auto: "text-[#6a5d40] dark:text-[#f3d98b]" },
+    // Темний золотий (#8a6a1c) на світлому тлі (логін-сторінка), світлий
+    // золотий (#f3d98b) там, де тло завжди indigo (бокова панель) чи в
+    // темній темі сайту — підпис тепер прямий Nunito 700, без курсиву.
+    tagline: { light: "text-[#8a6a1c]", dark: "text-[#f3d98b]", auto: "text-[#8a6a1c] dark:text-[#f3d98b]" },
   } as const;
   return map[part][tone ?? "auto"];
 }
@@ -79,8 +85,8 @@ export function PlatformWordmark({
       </span>
       {tagline && (
         <span
-          className={`font-body font-semibold italic whitespace-normal ${toneClasses(tone, "tagline")}`}
-          style={{ fontSize: taglineSize, marginTop: "0.7em", maxWidth: "100%" }}
+          className={`font-heading font-bold tracking-[0.01em] whitespace-normal ${toneClasses(tone, "tagline")}`}
+          style={{ fontSize: taglineSize, marginTop: 8, maxWidth: "100%" }}
         >
           {TAGLINE_TEXT}
         </span>
