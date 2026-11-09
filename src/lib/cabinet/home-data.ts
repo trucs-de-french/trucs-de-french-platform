@@ -16,52 +16,62 @@ import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCE
 import { GRADABLE_TASK_TYPES } from "@/lib/exercises/gradable-types";
 import { getDefaultTaskName } from "@/lib/exercises/default-task-labels";
 import { isExamProductType } from "@/lib/cabinet/exam-products";
+import { kyivDateString, addDays, startOfWeekKyiv, computeStreakDays } from "@/lib/cabinet/kyiv-date";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 const ACTIVITY_LOOKBACK_DAYS = 90;
-const KYIV_TZ = "Europe/Kyiv";
 
-// YYYY-MM-DD у Europe/Kyiv для довільного моменту — "en-CA" дає готовий
-// ISO-порядок полів без ручного форматування.
-function kyivDateString(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: KYIV_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
+export type EnrolledProduct = {
+  id: string;
+  title: string;
+  type: "film" | "delf";
+  cover_image_url: string | null;
+  levels: string[];
+  purchased_at: string;
+};
 
-// 0=понеділок..6=неділя за календарем Europe/Kyiv.
-function kyivWeekdayIndex(date: Date): number {
-  const short = new Intl.DateTimeFormat("en-US", { timeZone: KYIV_TZ, weekday: "short" }).format(date);
-  const order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const idx = order.indexOf(short);
-  return idx === -1 ? 0 : idx;
-}
-
-// Подальша арифметика — лише над КАЛЕНДАРНИМИ датами (рядок YYYY-MM-DD),
-// тож опівнічний UTC-якір безпечний: нас цікавить лише зсув у ДНЯХ.
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function startOfWeekKyiv(now: Date): string {
-  const today = kyivDateString(now);
-  return addDays(today, -kyivWeekdayIndex(now));
-}
-
-function computeStreakDays(activityDates: Set<string>, todayStr: string): number {
-  let cursor = activityDates.has(todayStr) ? todayStr : addDays(todayStr, -1);
-  let streak = 0;
-  while (activityDates.has(cursor)) {
-    streak += 1;
-    cursor = addDays(cursor, -1);
+// Активні enrollments користувача (архівні/неопубліковані продукти
+// відфільтровані) — винесено з getCabinetHomeData, бо Progress-сторінці
+// (progress-data.ts) потрібен ТОЙ САМИЙ список продуктів для своїх
+// запитів сцен/завдань/DELF-навичок, а не копія запиту.
+export async function getEnrolledProducts(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<EnrolledProduct[]> {
+  try {
+    const { data } = await supabase
+      .from("enrollments")
+      .select(
+        "purchased_at, products!inner(id, title, type, cover_image_url, levels, archived_at, is_published)"
+      )
+      .eq("user_id", userId)
+      .eq("status", "active");
+    type EnrollmentRow = {
+      purchased_at: string;
+      products: {
+        id: string;
+        title: string;
+        type: "film" | "delf";
+        cover_image_url: string | null;
+        levels: string[];
+        archived_at: string | null;
+        is_published: boolean;
+      } | null;
+    };
+    return ((data ?? []) as unknown as EnrollmentRow[])
+      .filter((row) => row.products && row.products.archived_at === null && row.products.is_published)
+      .map((row) => ({
+        id: row.products!.id,
+        title: row.products!.title,
+        type: row.products!.type,
+        cover_image_url: row.products!.cover_image_url,
+        levels: row.products!.levels ?? [],
+        purchased_at: row.purchased_at,
+      }));
+  } catch {
+    return [];
   }
-  return streak;
 }
 
 export type ContinueTarget = {
@@ -206,47 +216,7 @@ export async function getCabinetHomeData(
     // лишається null/дефолт — профільна картка просто не покаже іспит
   }
 
-  let enrolledProducts: {
-    id: string;
-    title: string;
-    type: "film" | "delf";
-    cover_image_url: string | null;
-    levels: string[];
-    purchased_at: string;
-  }[] = [];
-  try {
-    const { data } = await supabase
-      .from("enrollments")
-      .select(
-        "purchased_at, products!inner(id, title, type, cover_image_url, levels, archived_at, is_published)"
-      )
-      .eq("user_id", userId)
-      .eq("status", "active");
-    type EnrollmentRow = {
-      purchased_at: string;
-      products: {
-        id: string;
-        title: string;
-        type: "film" | "delf";
-        cover_image_url: string | null;
-        levels: string[];
-        archived_at: string | null;
-        is_published: boolean;
-      } | null;
-    };
-    enrolledProducts = ((data ?? []) as unknown as EnrollmentRow[])
-      .filter((row) => row.products && row.products.archived_at === null && row.products.is_published)
-      .map((row) => ({
-        id: row.products!.id,
-        title: row.products!.title,
-        type: row.products!.type,
-        cover_image_url: row.products!.cover_image_url,
-        levels: row.products!.levels ?? [],
-        purchased_at: row.purchased_at,
-      }));
-  } catch {
-    enrolledProducts = [];
-  }
+  const enrolledProducts = await getEnrolledProducts(supabase, userId);
 
   const productIds = enrolledProducts.map((p) => p.id);
   const productById = new Map(enrolledProducts.map((p) => [p.id, p]));
