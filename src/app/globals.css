@@ -12189,38 +12189,53 @@ button.cabinet-nav-item {
   background: linear-gradient(135deg, #f6dc8e, #d9b765);
 }
 
-.cabinet-mobile-tabbar {
+/* Нижня мобільна навігація — лише іконки, активний пункт розгортається
+   в суцільну gold-пігулку з короткою назвою. Власні .cabinet-bottom-*
+   класи (НЕ .cabinet-nav-item/>span з desktop sidebar) — та сама колізія
+   специфічності unlayered-класів, що вже задокументована вище для
+   .cabinet-select: якби тут читались ті самі класи, правила sidebar і
+   bottom bar перетиналися б непередбачувано. */
+.cabinet-bottom-bar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 30;
   display: flex;
+  align-items: center;
+  justify-content: space-around;
   height: 64px;
   padding-bottom: env(safe-area-inset-bottom);
   background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
 }
 @media (min-width: 768px) {
-  .cabinet-mobile-tabbar {
+  .cabinet-bottom-bar {
     display: none;
   }
 }
 
-.cabinet-mobile-tab {
-  flex: 1;
+.cabinet-bottom-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 6px;
+  min-width: 48px;
   min-height: 44px;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 700;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #f6f1e3;
 }
-.cabinet-mobile-tab--active {
-  color: #f6dc8e;
+.cabinet-bottom-item:focus-visible {
+  outline: 2px solid #f6dc8e;
+  outline-offset: 2px;
+}
+.cabinet-bottom-item--active {
+  background: #d9b765;
+  color: #1a1640;
+  padding: 0 14px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .cabinet-stub-card {

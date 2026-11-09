@@ -20,6 +20,8 @@ export type CabinetNavItem = {
   labelKey: MessageKey;
 };
 
+export type CabinetMobileNavItem = CabinetNavItem & { shortLabelKey: MessageKey };
+
 export const CABINET_PRIMARY_NAV: CabinetNavItem[] = [
   { href: "/cabinet", icon: Home, labelKey: "cabinet.nav.home" },
   { href: "/cabinet/library", icon: BookOpen, labelKey: "cabinet.nav.library" },
@@ -42,10 +44,15 @@ export const CABINET_ADMIN_NAV: CabinetNavItem = {
 
 // Мобільна нижня панель — підмножина primary-навігації (без "Mistakes
 // review", що переїжджає в "Ще") + вкладка "Ще".
-export const CABINET_MOBILE_TABS: CabinetNavItem[] = [
-  CABINET_PRIMARY_NAV[0],
-  CABINET_PRIMARY_NAV[1],
-  CABINET_PRIMARY_NAV[2],
-  CABINET_PRIMARY_NAV[3],
-  { href: "/cabinet/more", icon: MoreHorizontal, labelKey: "cabinet.nav.more" },
+export const CABINET_MOBILE_TABS: CabinetMobileNavItem[] = [
+  { ...CABINET_PRIMARY_NAV[0], shortLabelKey: "cabinet.nav.short.home" },
+  { ...CABINET_PRIMARY_NAV[1], shortLabelKey: "cabinet.nav.short.library" },
+  { ...CABINET_PRIMARY_NAV[2], shortLabelKey: "cabinet.nav.short.dictionary" },
+  { ...CABINET_PRIMARY_NAV[3], shortLabelKey: "cabinet.nav.short.progress" },
+  {
+    href: "/cabinet/more",
+    icon: MoreHorizontal,
+    labelKey: "cabinet.nav.more",
+    shortLabelKey: "cabinet.nav.short.more",
+  },
 ];
