@@ -7,6 +7,7 @@
 // SettingsPill (settings-pill.tsx/globals.css) непрозорий в обох темах
 // на кремовій/білій картці.
 import { useTransition } from "react";
+import { Sun, Moon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { useTheme } from "@/lib/use-theme";
@@ -53,9 +54,11 @@ export function InterfaceCard({
         </span>
         <div className="flex gap-1.5">
           <SettingsPill active={!isDark} onClick={() => setTheme(false)}>
+            <Sun size={14} aria-hidden="true" />
             {t(lang, "cabinet.theme.light")}
           </SettingsPill>
           <SettingsPill active={isDark} onClick={() => setTheme(true)}>
+            <Moon size={14} aria-hidden="true" />
             {t(lang, "cabinet.theme.dark")}
           </SettingsPill>
         </div>

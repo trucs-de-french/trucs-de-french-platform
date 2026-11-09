@@ -20,13 +20,9 @@ function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
-      style={{ background: checked ? "linear-gradient(135deg, #f6dc8e, #e0aa3e)" : "var(--cabinet-track)" }}
+      className={`settings-toggle ${checked ? "settings-toggle--on" : ""}`}
     >
-      <span
-        className="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform"
-        style={{ transform: checked ? "translateX(22px)" : "translateX(4px)" }}
-      />
+      <span className="settings-toggle-thumb" />
     </button>
   );
 }

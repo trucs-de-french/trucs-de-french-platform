@@ -12457,15 +12457,29 @@ button.cabinet-nav-item {
   color: #2f2c6b;
   stroke: currentColor;
 }
+/* "Ще" сидить на кремовій/білій .cabinet-panel (не на indigo-сайдбарі) —
+   у світлій темі активна пілюля тепер indigo (та ж сім'я кольору, що
+   SettingsPill/toggles), gold лишається лише в темній темі (сайдбарний
+   .cabinet-lang-pill--active без .cabinet-more — вище — досі завжди
+   gold, той фон і справді завжди indigo). */
 .cabinet-more .cabinet-lang-pill--active {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  border: 1.5px solid transparent;
+  color: #f6f1e3;
+  font-weight: 800;
+}
+.dark .cabinet-more .cabinet-lang-pill--active {
   background: #d9b765;
   border: 1.5px solid #d9b765;
   color: #1a1640;
   font-weight: 700;
 }
 .cabinet-more .cabinet-lang-pill--active svg {
-  color: #1a1640;
+  color: #f6f1e3;
   stroke: currentColor;
+}
+.dark .cabinet-more .cabinet-lang-pill--active svg {
+  color: #1a1640;
 }
 .dark .cabinet-more .cabinet-lang-pill:not(.cabinet-lang-pill--active) {
   border-color: #2e3680;
@@ -12962,10 +12976,19 @@ button.cabinet-nav-item {
   cursor: default;
   opacity: 0.6;
 }
+/* Light theme active = indigo (матч toggles/filter pills library-view.tsx,
+   що вже читають --cabinet-pill-selected-bg = --cabinet-primary в
+   світлій темі) — gold лишається дією (Зберегти/Продовжити), не вибором.
+   border: 1.5px solid transparent (не 0) — щоб активна пілюля не стала
+   на 3px (2×1.5px) більшою за неактивну сусідку. */
 .settings-pill--active {
-  background: linear-gradient(135deg, #f6dc8e, #d9b765);
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  border: 1.5px solid transparent;
+  color: #f6f1e3;
+}
+.settings-pill--active:hover:not(:disabled) {
+  background: linear-gradient(160deg, #5a55e6, #36327d);
   border-color: transparent;
-  color: #1a1640;
 }
 .dark .settings-pill {
   background: var(--cabinet-surface-2);
@@ -12980,6 +13003,43 @@ button.cabinet-nav-item {
   background: linear-gradient(135deg, #f6dc8e, #d9b765);
   border-color: transparent;
   color: #1a1640;
+}
+
+/* Перемикач сповіщень (settings/notifications-card.tsx) — ON у світлій
+   темі indigo (та сама пара кольорів/напрямок, що .settings-pill--active
+   вище, "та сама сімʼя кольору, що все вибране у світлій темі"), у
+   темній лишається gold (значення не змінені, лише перенесені з inline
+   style у CSS-клас). */
+.settings-toggle {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--cabinet-track);
+  cursor: pointer;
+}
+.settings-toggle-thumb {
+  position: absolute;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 150ms ease;
+}
+.settings-toggle--on .settings-toggle-thumb {
+  transform: translateX(20px);
+}
+.settings-toggle--on {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+}
+.dark .settings-toggle--on {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
 }
 
 /* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —
