@@ -10,52 +10,6 @@ import { DatePicker } from "@/components/cabinet/date-picker";
 import { CardTitle } from "@/components/cabinet/card-title";
 import { CabinetSelect } from "@/components/cabinet/cabinet-select";
 
-const RING_SIZE = 104;
-const STROKE = 8;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
-function ExamRing({ daysLeft, label }: { daysLeft: number; label: string }) {
-  const fraction = Math.min(Math.max(daysLeft, 0), 90) / 90;
-  const offset = CIRCUMFERENCE * (1 - fraction);
-
-  return (
-    <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} role="img" aria-label={label}>
-      <circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RADIUS}
-        fill="none"
-        stroke="var(--cabinet-line)"
-        strokeWidth={STROKE}
-      />
-      <circle
-        cx={RING_SIZE / 2}
-        cy={RING_SIZE / 2}
-        r={RADIUS}
-        fill="none"
-        stroke="#e0aa3e"
-        strokeWidth={STROKE}
-        strokeLinecap="round"
-        strokeDasharray={CIRCUMFERENCE}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-      />
-      <text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={28}
-        fontWeight={800}
-        fill="var(--cabinet-ink)"
-      >
-        {daysLeft}
-      </text>
-    </svg>
-  );
-}
-
 function ExamForm({
   lang,
   exam,
@@ -109,21 +63,29 @@ function ExamForm({
   );
 }
 
+const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
+
+function formatExamDate(dateStr: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(`${dateStr}T00:00:00Z`)
+  );
+}
+
 export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }) {
   const [editing, setEditing] = useState(false);
-  const showForm = editing || !exam || exam.daysLeft < 0;
+  const showForm = editing || !exam;
 
   return (
-    <div className="cabinet-card flex flex-col items-center gap-3 p-5">
+    <div className="cabinet-card flex h-full flex-col items-center gap-3 p-5">
       <div className="flex w-full items-center justify-between">
         <CardTitle>{t(lang, "home.exam.title")}</CardTitle>
-        {exam && exam.daysLeft >= 0 && !editing && (
+        {exam && !editing && (
           <button
             type="button"
             onClick={() => setEditing(true)}
             className="min-h-11 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
           >
-            {t(lang, "home.exam.edit")}
+            {t(lang, "home.exam.editDate")}
           </button>
         )}
       </div>
@@ -138,14 +100,29 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
       ) : (
         exam && (
           <>
-            <ExamRing daysLeft={exam.daysLeft} label={`${exam.daysLeft} ${t(lang, "home.exam.daysLeft")}`} />
-            <div className="text-center">
-              <div className="text-xs font-semibold text-[var(--cabinet-muted)]">
-                {t(lang, "home.exam.daysLeft")}
-              </div>
-              <div className="font-body text-sm font-semibold text-[var(--cabinet-ink)]">
-                {exam.type} · {exam.date}
-              </div>
+            {exam.daysLeft > 0 ? (
+              <>
+                <div className="font-body text-4xl font-extrabold text-[var(--cabinet-ink)]">{exam.daysLeft}</div>
+                <p className="text-sm font-semibold text-[var(--cabinet-muted)]">
+                  {t(lang, "home.exam.countdown", { n: exam.daysLeft })}
+                </p>
+              </>
+            ) : exam.daysLeft === 0 ? (
+              <p className="font-body text-xl font-extrabold text-[var(--cabinet-ink)]">{t(lang, "home.exam.today")}</p>
+            ) : (
+              <>
+                <p className="font-body text-xl font-extrabold text-[var(--cabinet-ink)]">{t(lang, "home.exam.past")}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline"
+                >
+                  {t(lang, "home.exam.editDate")}
+                </button>
+              </>
+            )}
+            <div className="font-body text-sm font-semibold text-[var(--cabinet-ink)]">
+              {exam.type} · {formatExamDate(exam.date, LOCALE_BY_LANG[lang])}
             </div>
           </>
         )

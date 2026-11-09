@@ -56,7 +56,9 @@ export default async function CabinetProgressPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SceneResults lang={lang} items={data.sceneResults} />
-        <AchievementsCard lang={lang} items={data.achievements} />
+        <div id="achievements">
+          <AchievementsCard lang={lang} items={data.achievements} />
+        </div>
       </div>
     </div>
   );

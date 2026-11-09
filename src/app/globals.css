@@ -13276,6 +13276,166 @@ button.cabinet-nav-item {
   outline-color: #e2a49c;
 }
 
+/* Home: чип стріку в підзаголовку привітання (page.tsx). */
+.cabinet-streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #1a1640;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+}
+.dark .cabinet-streak-chip {
+  color: #1a1640;
+}
+
+/* Home: чип "Скоро" над disabled-кнопкою швидкої дії без маршруту
+   (quick-actions-card.tsx) — абсолютний бейдж у верхньому правому куті. */
+.cabinet-soon-chip {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--cabinet-muted);
+  background: var(--cabinet-surface-2);
+  border: 1px solid var(--cabinet-line);
+}
+
+/* Home: карусель "Нове в бібліотеці" (library-carousel.tsx) — scroll-snap
+   без автоплею; ширина слайду в% (не px), щоб "наступний підглядає"
+   однаково працювало на будь-якій ширині картки. */
+.cabinet-carousel-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  margin: 0 -2px;
+  padding: 2px;
+}
+.cabinet-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.cabinet-carousel-slide {
+  position: relative;
+  flex: 0 0 85%;
+  scroll-snap-align: start;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--cabinet-surface-2);
+}
+@media (min-width: 768px) {
+  .cabinet-carousel-slide {
+    flex: 0 0 46%;
+  }
+}
+.cabinet-carousel-slide-bg {
+  position: absolute;
+  inset: 0;
+}
+.cabinet-carousel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 14, 40, 0.92), rgba(10, 14, 40, 0.15) 55%, transparent);
+}
+.cabinet-carousel-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 16px;
+}
+.cabinet-carousel-tag {
+  display: inline-flex;
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1a1640;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+}
+.cabinet-carousel-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: var(--cabinet-ink);
+  cursor: pointer;
+}
+.cabinet-carousel-arrow:hover:not(:disabled) {
+  border-color: #d9b765;
+}
+.cabinet-carousel-arrow:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.dark .cabinet-carousel-arrow:focus-visible {
+  outline-color: #f3d98b;
+}
+.cabinet-carousel-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cabinet-carousel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: var(--cabinet-line);
+  cursor: pointer;
+}
+.cabinet-carousel-dot--active {
+  width: 20px;
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+}
+
+/* Home: футер кабінету (cabinet-footer.tsx) — та сама gold-рамка-мова, що
+   .settings-account-btn, для кнопок соцмереж. */
+.cabinet-footer {
+  border-top: 1.5px solid var(--cabinet-line);
+  margin-top: 4px;
+  padding-top: 20px;
+}
+.cabinet-footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1.5px solid #d9b765;
+  color: var(--cabinet-ink);
+}
+.cabinet-footer-icon:hover {
+  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #1a1640;
+  border-color: transparent;
+}
+.cabinet-footer-icon:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.dark .cabinet-footer-icon:focus-visible {
+  outline-color: #f3d98b;
+}
+
 /* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —
    position:sticky (не fixed) усередині колонки контенту: природно
    центрується над .cabinet-panel через wrap-flex нижче, без ручного

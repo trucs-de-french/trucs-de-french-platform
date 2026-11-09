@@ -34,7 +34,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
           "linear-gradient(135deg, var(--cabinet-continue-from), var(--cabinet-continue-to))",
       }}
     >
-      <div className="relative h-32 w-28 shrink-0 overflow-hidden rounded-2xl bg-white/10">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-[20px] bg-white/10 sm:aspect-auto sm:h-[210px] sm:w-[300px]">
         {target.productCoverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- зовнішній R2-URL, next/image вимагав би remotePatterns у next.config
           <img src={target.productCoverUrl} alt="" className="h-full w-full object-cover" />
@@ -48,7 +48,7 @@ export function ContinueCard({ lang, target }: { lang: UiLang; target: ContinueT
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
         <div className="text-xs font-bold uppercase tracking-wide text-[#f6dc8e]">
           {t(lang, target.kind === "start" ? "home.continue.start" : "home.continue.label")}
           {" · "}

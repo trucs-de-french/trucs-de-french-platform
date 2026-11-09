@@ -1,16 +1,20 @@
+import { Zap } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
-import { getCabinetHomeData } from "@/lib/cabinet/home-data";
+import { getCabinetHomeData, getNewLibraryItems } from "@/lib/cabinet/home-data";
+import { getDailyQuote } from "@/lib/cabinet/quotes";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
-import { StatTiles } from "@/components/cabinet/home/stat-tiles";
 import { ContinueCard } from "@/components/cabinet/home/continue-card";
-import { ProgressChart } from "@/components/cabinet/home/progress-chart";
-import { RedoList } from "@/components/cabinet/home/redo-list";
 import { ProfileCard } from "@/components/cabinet/home/profile-card";
 import { ExamCard } from "@/components/cabinet/home/exam-card";
-import { CalendarCard } from "@/components/cabinet/home/calendar-card";
 import { WeeklyGoalCard } from "@/components/cabinet/home/weekly-goal-card";
+import { AchievementsHomeCard } from "@/components/cabinet/home/achievements-home-card";
+import { QuoteCard } from "@/components/cabinet/home/quote-card";
+import { QuickActionsCard } from "@/components/cabinet/home/quick-actions-card";
+import { RedoList } from "@/components/cabinet/home/redo-list";
+import { LibraryCarousel } from "@/components/cabinet/home/library-carousel";
+import { CabinetFooter } from "@/components/cabinet/home/cabinet-footer";
 import type { Profile } from "@/lib/supabase/profile";
 
 export default async function CabinetHomePage() {
@@ -30,23 +34,35 @@ export default async function CabinetHomePage() {
     .single<Pick<Profile, "ui_lang">>();
 
   const lang = normalizeUiLang(profile?.ui_lang);
-  const home = await getCabinetHomeData(supabase, user.id);
+  const [home, newLibraryItems] = await Promise.all([
+    getCabinetHomeData(supabase, user.id),
+    getNewLibraryItems(supabase),
+  ]);
+  const quote = getDailyQuote();
 
   const firstName = home.fullName?.split(" ")[0] || "";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-10">
       <CabinetMobileHeader />
 
       <header>
         <h1 className="font-body text-2xl font-semibold text-[var(--cabinet-ink)] sm:text-3xl">
           {t(lang, "cabinet.home.greeting", { name: firstName })}
         </h1>
-        <p className="mt-1 text-sm text-[var(--cabinet-muted)]">
-          {home.continueTarget?.sceneTitle
-            ? t(lang, "home.subtitle.continue", { scene: home.continueTarget.sceneTitle })
-            : t(lang, "home.subtitle.empty")}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <p className="text-sm text-[var(--cabinet-muted)]">
+            {home.continueTarget?.sceneTitle
+              ? t(lang, "home.subtitle.continue", { scene: home.continueTarget.sceneTitle })
+              : t(lang, "home.subtitle.empty")}
+          </p>
+          {home.streakDays > 0 && (
+            <span className="cabinet-streak-chip">
+              <Zap size={13} aria-hidden="true" />
+              {t(lang, "home.streakChip", { n: home.streakDays })}
+            </span>
+          )}
+        </div>
       </header>
 
       {/* Лише мобільний ProfileCard одразу під привітанням — на десктопі
@@ -58,30 +74,46 @@ export default async function CabinetHomePage() {
         <ProfileCard fullName={home.fullName} avatarUrl={home.avatarUrl} avatarMascot={home.avatarMascot} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="flex flex-col gap-6">
-          <StatTiles
-            lang={lang}
-            scenesCompleted={home.scenesCompleted}
-            streakDays={home.streakDays}
-            pointsThisWeek={home.pointsThisWeek}
-            redoCount={home.redoCount}
-          />
-
-          <ContinueCard lang={lang} target={home.continueTarget} />
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <ProgressChart lang={lang} data={home.pointsByDay} />
-            <RedoList lang={lang} items={home.redoList} />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4">
+      {/* Два різні порядки блоків (десктоп/мобільний) з макету v4 — явно
+          продубльовано (hidden lg:flex / lg:hidden), а не одна CSS grid
+          з order: на мобільному "Продовжити" йде першим, на десктопі —
+          лише другим рядком після "Останні досягнення"/"Іспит". */}
+      <div className="hidden flex-col gap-4 lg:flex">
+        <div
+          className={
+            home.showExamCard ? "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]" : "grid grid-cols-1"
+          }
+        >
+          <AchievementsHomeCard lang={lang} achievements={home.achievements} />
           {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
-          <CalendarCard lang={lang} activeDays={home.activeDays} />
-          <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
         </div>
+
+        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]">
+          <ContinueCard lang={lang} target={home.continueTarget} />
+          <QuoteCard lang={lang} quote={quote} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
+          <QuickActionsCard lang={lang} />
+          <RedoList lang={lang} items={home.redoList} />
+        </div>
+
+        <LibraryCarousel lang={lang} items={newLibraryItems} />
       </div>
+
+      <div className="flex flex-col gap-4 lg:hidden">
+        <ContinueCard lang={lang} target={home.continueTarget} />
+        <AchievementsHomeCard lang={lang} achievements={home.achievements} />
+        {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
+        <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
+        <QuickActionsCard lang={lang} />
+        <RedoList lang={lang} items={home.redoList} />
+        <QuoteCard lang={lang} quote={quote} />
+        <LibraryCarousel lang={lang} items={newLibraryItems} />
+      </div>
+
+      <CabinetFooter lang={lang} />
     </div>
   );
 }
