@@ -477,6 +477,9 @@ export const uk = {
   "settings.save.cancel": "Скасувати",
   "settings.save.submit": "Зберегти",
   "settings.save.error": "Не вдалося зберегти. Спробуй ще раз",
+  "settings.save.done": "Збережено",
+  "settings.save.submitAriaLabel": "Зберегти профіль, фото та сповіщення",
+  "settings.exam.saveAriaLabel": "Зберегти дату іспиту",
 } as const;
 
 export type MessageKey = keyof typeof uk;

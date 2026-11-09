@@ -12982,6 +12982,158 @@ button.cabinet-nav-item {
   color: #1a1640;
 }
 
+/* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —
+   position:sticky (не fixed) усередині колонки контенту: природно
+   центрується над .cabinet-panel через wrap-flex нижче, без ручного
+   врахування ширини сайдбару. z-index 35 — вище нормального потоку
+   карток (auto/0) і мобільного .cabinet-bottom-bar (z-index:30), але
+   нижче .cabinet-sidebar/тултіпа (z-index:40) і будь-якої модалки
+   (Z_MODAL, z-index:50). */
+.settings-save-pill-wrap {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+  z-index: 35;
+  display: flex;
+  justify-content: center;
+}
+@media (min-width: 768px) {
+  .settings-save-pill-wrap {
+    bottom: 20px;
+  }
+}
+
+.settings-save-pill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  border-radius: 999px;
+  padding: 10px 12px 10px 22px;
+  background: linear-gradient(160deg, #2f2c6b, #4b46da);
+  color: #f6f1e3;
+  box-shadow: 0 10px 30px rgba(26, 22, 64, 0.35);
+}
+@media (min-width: 768px) {
+  .settings-save-pill {
+    width: auto;
+    max-width: calc(100% - 32px);
+  }
+}
+.dark .settings-save-pill {
+  background: #141a52;
+  border: 1.5px solid #d9b765;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.settings-save-pill-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.settings-save-pill-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f3d98b;
+  flex-shrink: 0;
+}
+.settings-save-pill-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: #f6b4ac;
+}
+.settings-save-pill-actions {
+  display: flex;
+  gap: 8px;
+}
+.settings-save-pill-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(246, 241, 227, 0.55);
+  background: transparent;
+  color: #f6f1e3;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.settings-save-pill-cancel:hover:not(:disabled) {
+  border-color: #f6f1e3;
+}
+.settings-save-pill-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.settings-save-pill-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #f3d98b, #d9b765);
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.settings-save-pill-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.settings-save-pill-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@keyframes settings-save-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes settings-save-pill-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.settings-save-pill--enter {
+  animation: settings-save-pill-in 180ms ease-out;
+}
+.settings-save-pill--exit {
+  animation: settings-save-pill-out 180ms ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-save-pill--enter,
+  .settings-save-pill--exit {
+    animation: none;
+  }
+}
+
 /* Кругла опція маскота (settings/mascot-picker.tsx) — рамка-кільце йде
    через box-shadow (на кнопці, не на самому ProfileAvatar), тому відступ
    .settings-mascot-option (padding) лишає йому місце зовні картинки. */

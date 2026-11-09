@@ -4,7 +4,7 @@
 // йдуть одним збереженням (ім'я/фото-маскот/сповіщення — saveProfileSettings).
 // Мова/тема/тижнева ціль/іспит застосовують свої ВЛАСНІ дії одразу
 // (interface-card.tsx/learning-card.tsx) і сюди не входять.
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
@@ -64,7 +64,6 @@ export function SettingsForm({
     notifNews: initialNotificationPrefs.news,
   }));
   const [state, setState] = useState<DirtyState>(savedState);
-  const [pending, startSave] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const dirty =
@@ -80,24 +79,23 @@ export function SettingsForm({
     setError(null);
   }
 
-  function handleSave() {
+  async function handleSave(): Promise<boolean> {
     setError(null);
-    startSave(async () => {
-      const formData = new FormData();
-      formData.set("name", state.name);
-      formData.set("mascot", state.mascot ?? "");
-      formData.set("avatarUrl", state.avatarUrl ?? "");
-      if (state.notifReview) formData.set("notifReview", "on");
-      if (state.notifWeeklyGoal) formData.set("notifWeeklyGoal", "on");
-      if (state.notifNews) formData.set("notifNews", "on");
+    const formData = new FormData();
+    formData.set("name", state.name);
+    formData.set("mascot", state.mascot ?? "");
+    formData.set("avatarUrl", state.avatarUrl ?? "");
+    if (state.notifReview) formData.set("notifReview", "on");
+    if (state.notifWeeklyGoal) formData.set("notifWeeklyGoal", "on");
+    if (state.notifNews) formData.set("notifNews", "on");
 
-      const result = await saveProfileSettings(formData);
-      if (!result.ok) {
-        setError(t(lang, "settings.save.error"));
-      } else {
-        setSavedState(state);
-      }
-    });
+    const result = await saveProfileSettings(formData);
+    if (!result.ok) {
+      setError(t(lang, "settings.save.error"));
+      return false;
+    }
+    setSavedState(state);
+    return true;
   }
 
   return (
@@ -128,9 +126,7 @@ export function SettingsForm({
         <AccountCard lang={lang} isTeacher={isTeacher} onSignOut={onSignOut} />
       </div>
 
-      {dirty && (
-        <SettingsSaveBar lang={lang} pending={pending} error={error} onCancel={handleCancel} onSave={handleSave} />
-      )}
+      <SettingsSaveBar lang={lang} dirty={dirty} error={error} onCancel={handleCancel} onSave={handleSave} />
     </div>
   );
 }

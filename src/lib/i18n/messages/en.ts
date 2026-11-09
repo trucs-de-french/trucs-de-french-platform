@@ -474,4 +474,7 @@ export const en: Record<MessageKey, string> = {
   "settings.save.cancel": "Cancel",
   "settings.save.submit": "Save",
   "settings.save.error": "Could not save. Try again.",
+  "settings.save.done": "Saved",
+  "settings.save.submitAriaLabel": "Save profile, photo and notifications",
+  "settings.exam.saveAriaLabel": "Save exam date",
 };

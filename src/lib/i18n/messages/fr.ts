@@ -476,4 +476,7 @@ export const fr: Record<MessageKey, string> = {
   "settings.save.cancel": "Annuler",
   "settings.save.submit": "Enregistrer",
   "settings.save.error": "Impossible d'enregistrer. Réessaie.",
+  "settings.save.done": "Enregistré",
+  "settings.save.submitAriaLabel": "Enregistrer le profil, la photo et les notifications",
+  "settings.exam.saveAriaLabel": "Enregistrer la date de l'examen",
 };

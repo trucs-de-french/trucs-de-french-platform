@@ -95,6 +95,7 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
           <button
             type="submit"
             disabled={pending}
+            aria-label={t(lang, "settings.exam.saveAriaLabel")}
             className="min-h-11 rounded-full px-4 text-sm font-bold text-[var(--cabinet-on-gold)] disabled:opacity-60"
             style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
           >

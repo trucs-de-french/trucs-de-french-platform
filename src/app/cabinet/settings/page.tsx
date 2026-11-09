@@ -62,7 +62,10 @@ export default async function CabinetSettingsPage() {
   const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
 
   return (
-    <div className="flex flex-col gap-6">
+    // pb-24 (96px) — місце під плаваючу пілюлю "Є незбережені зміни"
+    // (sticky, settings-form.tsx/save-bar.tsx), щоб вона, прилипнувши
+    // внизу, не перекривала останні картки (Сповіщення/Акаунт).
+    <div className="flex flex-col gap-6 pb-24">
       <CabinetMobileHeader />
 
       <header>
