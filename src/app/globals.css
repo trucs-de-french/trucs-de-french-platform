@@ -11857,8 +11857,11 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-btn-bg-hover: rgba(217, 183, 101, 0.14);
   --cabinet-ghost-fg: #f3d98b;
   --cabinet-ghost-bg-hover: rgba(217, 183, 101, 0.1);
-  --cabinet-pill-selected-bg: rgba(217, 183, 101, 0.18);
-  --cabinet-pill-selected-fg: #f3d98b;
+  /* Суцільне золото (не напівпрозоре — на темно-синьому фоні rgba-золото
+     давало брудний сіро-коричневий відтінок), той самий колір, що й
+     бейдж "ФІЛЬМ"; текст — темний індиго, не кремовий, для контрасту. */
+  --cabinet-pill-selected-bg: #d9b765;
+  --cabinet-pill-selected-fg: #1a1640;
   --cabinet-pill-selected-border: #d9b765;
   --cabinet-link: #f3d98b;
   --cabinet-focus-ring: rgba(217, 183, 101, 0.35);
