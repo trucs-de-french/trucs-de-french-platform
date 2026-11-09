@@ -12691,23 +12691,32 @@ button.cabinet-nav-item {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
-  z-index: 49;
+  z-index: 59;
 }
 
+/* Попап: суцільний непрозорий фон, явно ІНШИЙ колір за --cabinet-card-bg
+   (картка позаду теж біла/темно-синя — та сама змінна читалась би як
+   "видно картку крізь попап", хоча насправді ніде немає opacity/alpha;
+   просто немає контрасту між попапом і тлом). z-index:60 — вище сайдбару/
+   тултіпа/плаваючої пілюлі збереження (40/50/35), нижче справжніх
+   модальних діалогів тут немає сенсу (датапікер ніколи не відкривається
+   ВСЕРЕДИНІ модалки в цьому проєкті), але лишаємо явний запас під
+   Z_MODAL (z-layers.ts), а не привʼязуємось до тієї самої шкали. */
 .cabinet-datepicker-popover {
   position: fixed;
-  width: 304px;
+  z-index: 60;
+  width: 288px;
   max-width: calc(100vw - 16px);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid var(--cabinet-line);
-  background: var(--cabinet-card-bg);
-  box-shadow: 0 14px 30px rgba(26, 22, 64, 0.18);
+  border-radius: 20px;
+  padding: 12px;
+  border: 1.5px solid #e4cf94;
+  background: #fffdf7;
+  box-shadow: 0 12px 32px rgba(26, 22, 64, 0.22);
 }
 .dark .cabinet-datepicker-popover {
-  border-color: #3a43a0;
-  background: #0a0e38;
-  box-shadow: none;
+  border-color: #2e3680;
+  background: #141a52;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 /* Мобільний bottom sheet (<640px, isMobile у компоненті) — той самий
    попап, лише фіксований знизу на всю ширину, із backdrop над ним. */
@@ -12718,7 +12727,7 @@ button.cabinet-nav-item {
   top: auto !important;
   width: 100%;
   max-width: 100%;
-  border-radius: 16px 16px 0 0;
+  border-radius: 20px 20px 0 0;
   max-height: 85vh;
   overflow-y: auto;
 }
@@ -12728,7 +12737,8 @@ button.cabinet-nav-item {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  height: 36px;
+  margin-bottom: 8px;
 }
 .cabinet-datepicker-nav {
   display: grid;
@@ -12747,14 +12757,16 @@ button.cabinet-nav-item {
 .dark .cabinet-datepicker-nav:hover {
   background: var(--cabinet-card-bg);
 }
+/* Без text-transform:capitalize (капіталізує КОЖНЕ слово — "р." теж
+   стане "Р.") — ім'я місяця вже капіталізоване лише посимвольно на рівні
+   компонента (monthLabel вище). */
 .cabinet-datepicker-label {
   border: 0;
   background: transparent;
   font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--cabinet-ink);
-  text-transform: capitalize;
   cursor: pointer;
   border-radius: 8px;
   padding: 2px 8px;
@@ -12769,33 +12781,41 @@ button.cabinet-nav-item {
 .cabinet-datepicker-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
+  height: 24px;
+  margin-bottom: 2px;
 }
 .cabinet-datepicker-weekdays span {
-  display: block;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--cabinet-muted);
+  letter-spacing: 0.05em;
+  color: #6a5d40;
+}
+.dark .cabinet-datepicker-weekdays span {
+  color: #b4b1dd;
 }
 
 .cabinet-datepicker-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  row-gap: 2px;
+  gap: 2px;
 }
 .cabinet-datepicker-day {
   display: grid;
   place-items: center;
   justify-self: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 50%;
   background: transparent;
   color: var(--cabinet-ink);
-  font-size: 13px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 .cabinet-datepicker-day:hover:not(:disabled) {
@@ -12806,29 +12826,30 @@ button.cabinet-nav-item {
 }
 .cabinet-datepicker-day:disabled {
   cursor: default;
-  color: var(--cabinet-muted);
+  opacity: 0.3;
 }
 .cabinet-datepicker-day--outside {
-  color: var(--cabinet-muted);
-}
-.dark .cabinet-datepicker-day--outside,
-.dark .cabinet-datepicker-day:disabled {
-  color: #5d65b0;
+  opacity: 0.45;
 }
 .cabinet-datepicker-day--today {
-  outline: 1.5px solid var(--cabinet-gold);
+  outline: 1.5px solid #d9b765;
   outline-offset: -1.5px;
 }
-.dark .cabinet-datepicker-day--today {
-  color: #f3d98b;
-}
+/* Вибраний день — indigo-градієнт/кремовий текст у світлій темі, gold-
+   градієнт/чорнильний текст у темній (та сама пара, що .settings-pill--
+   active/.settings-toggle--on — "та сама сімʼя кольору, що все вибране
+   у світлій темі"). */
 .cabinet-datepicker-day--selected {
-  background: var(--cabinet-gold);
-  color: var(--cabinet-on-gold);
-  font-weight: 600;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #f6f1e3;
+  font-weight: 800;
+}
+.dark .cabinet-datepicker-day--selected {
+  background: linear-gradient(135deg, #f3d98b, #d9b765);
+  color: #1a1640;
 }
 .cabinet-datepicker-day:focus-visible {
-  outline: 2px solid var(--cabinet-gold);
+  outline: 2px solid #d9b765;
   outline-offset: 1px;
 }
 .dark .cabinet-datepicker-day:focus-visible {
@@ -12894,22 +12915,30 @@ button.cabinet-nav-item {
   font-weight: 600;
 }
 
+/* padding:0 (не негативні відступи) — кнопки лишаються в межах 12px
+   падінга самого попапу (.cabinet-datepicker-popover), раніше їхній
+   власний padding:4px 2px візуально "з'їдав" це відчуття інсету біля
+   правого краю. */
 .cabinet-datepicker-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--cabinet-line);
 }
 .cabinet-datepicker-link {
   border: 0;
   background: transparent;
-  padding: 4px 2px;
+  padding: 0;
+  font-family: var(--font-heading);
   font-size: 13px;
-  font-weight: 700;
-  color: var(--cabinet-link);
+  font-weight: 800;
+  color: #2f2c6b;
   cursor: pointer;
+}
+.dark .cabinet-datepicker-link {
+  color: #d9b765;
 }
 .cabinet-datepicker-link:hover {
   text-decoration: underline;

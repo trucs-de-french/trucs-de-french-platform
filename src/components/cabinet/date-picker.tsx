@@ -4,7 +4,6 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
-import { Z_MODAL } from "@/lib/z-layers";
 import type { UiLang } from "@/lib/ui/product-lang";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
@@ -12,7 +11,7 @@ const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "
 const BOTTOM_SAFE = 84;
 const VIEWPORT_MARGIN = 8;
 const GAP = 6;
-const POPOVER_WIDTH = 304;
+const POPOVER_WIDTH = 288;
 const MOBILE_QUERY = "(max-width: 639px)";
 
 type View = "days" | "months" | "years";
@@ -123,10 +122,14 @@ export function DatePicker({ name, defaultValue, min, max, lang, placeholder, id
     if (!isDisabled(today)) selectDate(today);
   }
 
-  const monthLabel = useMemo(
-    () => new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(viewDate),
-    [locale, viewDate]
-  );
+  // Capitalize лише перший символ усього рядка, не text-transform:
+  // capitalize (той ламає "листопад 2026 р." -> "Листопад 2026 Р." —
+  // капіталізує КОЖНЕ слово, той самий баг, що вже виправлявся в
+  // calendar-card.tsx).
+  const monthLabel = useMemo(() => {
+    const raw = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(viewDate);
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }, [locale, viewDate]);
 
   const weekdayLabels = useMemo(
     () =>
@@ -347,7 +350,7 @@ export function DatePicker({ name, defaultValue, min, max, lang, placeholder, id
               role="dialog"
               aria-label={t(lang, "datepicker.dialogLabel")}
               id={dialogId}
-              className={`cabinet-datepicker-popover ${Z_MODAL} ${isMobile ? "cabinet-datepicker-popover--sheet" : ""}`}
+              className={`cabinet-datepicker-popover ${isMobile ? "cabinet-datepicker-popover--sheet" : ""}`}
               style={popoverStyle}
             >
               {view === "days" && (
