@@ -11887,20 +11887,23 @@ button.scene-bar:active .scene-bar-toggle {
 }
 
 /* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
-   Причина попереднього бага: grid-cols-10 (=repeat(10,minmax(0,1fr))) на
-   auto-width flex-дитині з лише max-width — grid і батько обоє чекали
-   ширину один від одного (батько: "за контентом", grid: "за батьком"),
-   контент порожніх <span> давав 0, тож усе колапсувалось у 0px. Тут —
-   ЯВНА ширина доріжки (repeat(10,14px)=167px, flex:none) замість
-   flex-1/max-width на auto-контейнері; вузький варіант (<420px) — окремий
-   модифікатор з minmax(0,14px) на блоковому контейнері з width:100%
-   (не на auto-width flex-дитині), щоб колонки могли стискатись разом із
-   реальною шириною. */
+   Рядок тепер лише [код][сегменти][відсоток] (повна назва прибрана з
+   видимого UI — задача "DELF skills show codes only"), тож сегменти
+   вільно розтягуються на всю доступну ширину рядка (flex:1;min-width:0)
+   замість фіксованих 167px — батько (.cabinet-delf-row, flex-рядок із
+   реальною шириною картки) більше НЕ auto-width, тож minmax(0,1fr)-
+   колонки мають від чого рахувати відсоткову ширину (попередній баг —
+   grid-cols-10 на auto-width flex-дитині з лише max-width — тут більше
+   не відтворюється, бо колонки резолвляться від flex:1 на реальній
+   ширині, а не від контенту порожніх <span>). Вузького (<420px) варіанту
+   більше не потрібно — нема другого рядка з назвою, який міг би не
+   влізти. */
 .cabinet-delf-segments {
   display: grid;
-  grid-template-columns: repeat(10, 14px);
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 3px;
-  flex: none;
+  flex: 1;
+  min-width: 0;
 }
 .cabinet-delf-segment {
   display: block;
@@ -11917,21 +11920,6 @@ button.scene-bar:active .scene-bar-toggle {
 }
 .dark .cabinet-delf-segment--empty {
   background: var(--cabinet-track);
-}
-@media (max-width: 420px) {
-  .cabinet-delf-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-  .cabinet-delf-row > * {
-    width: 100%;
-  }
-  .cabinet-delf-segments {
-    width: 100%;
-    max-width: 167px;
-    grid-template-columns: repeat(10, minmax(0, 14px));
-  }
 }
 
 /* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний

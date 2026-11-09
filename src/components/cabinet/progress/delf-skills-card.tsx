@@ -37,23 +37,20 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
       </h3>
       <ul className="flex flex-col gap-3">
         {skills.rows.map((row) => {
-          const sectionLabel = `${row.section} ${t(lang, SECTION_NAME_KEY[row.section])}`;
+          const fullName = t(lang, SECTION_NAME_KEY[row.section]);
+          const sectionLabel = `${row.section}, ${fullName}`;
           return (
-            <li key={row.section} className="cabinet-delf-row flex items-center gap-3">
-              <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                <span className="w-7 shrink-0 font-heading text-sm font-extrabold text-[var(--cabinet-ink)]">
-                  {row.section}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-xs text-[var(--cabinet-muted)]">
-                  {t(lang, SECTION_NAME_KEY[row.section])}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DelfSegments percent={row.percent} label={sectionLabel} />
-                <span className="w-10 shrink-0 text-right text-xs font-bold text-[var(--cabinet-ink)]">
-                  {row.percent}%
-                </span>
-              </div>
+            <li key={row.section} className="flex items-center gap-3">
+              <span
+                title={fullName}
+                className="w-9 shrink-0 font-heading text-sm font-extrabold text-[var(--cabinet-ink)]"
+              >
+                {row.section}
+              </span>
+              <DelfSegments percent={row.percent} label={sectionLabel} />
+              <span className="w-11 shrink-0 text-right text-xs font-bold text-[var(--cabinet-ink)]">
+                {row.percent}%
+              </span>
             </li>
           );
         })}
