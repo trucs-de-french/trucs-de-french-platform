@@ -37,7 +37,7 @@ export function WeeklyGoalCard({
           defaultValue={goal}
           disabled={pending}
           onChange={(e) => handleChange(e.target.value)}
-          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] px-2 text-sm text-[var(--cabinet-ink)] disabled:opacity-60 dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
+          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-surface-2)] px-2 text-sm text-[var(--cabinet-ink)] disabled:opacity-60 dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
           aria-label={t(lang, "home.goal.title")}
         >
           {GOAL_OPTIONS.map((n) => (
@@ -49,7 +49,7 @@ export function WeeklyGoalCard({
       </div>
       <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.goal.of", { done, goal })}</p>
       <div
-        className="h-2 w-full overflow-hidden rounded-full bg-[var(--cabinet-panel-bg)]"
+        className="h-2 w-full overflow-hidden rounded-full bg-[var(--cabinet-track)]"
         role="progressbar"
         aria-valuenow={percent}
         aria-valuemin={0}

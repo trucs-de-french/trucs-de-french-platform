@@ -11812,6 +11812,12 @@ button.scene-bar:active .scene-bar-toggle {
   --cabinet-pill-selected-border: transparent;
   --cabinet-link: var(--cabinet-primary);
   --cabinet-focus-ring: transparent;
+  /* Другорядна поверхня (інпути/селекти/дрібні пігулки-бейджі/неактивні
+     піли) і трек прогрес-бару — світлі значення рівні тому, що вже
+     рендериться (--cabinet-card-bg/--cabinet-panel-bg), перехід на ці
+     змінні нічого не змінює у світлій темі. */
+  --cabinet-surface-2: var(--cabinet-card-bg);
+  --cabinet-track: var(--cabinet-panel-bg);
   min-height: 100vh;
   /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
      (CSS2.1 §11.1.1, якщо лише одна з осей не visible) — саме це робило
@@ -11822,11 +11828,13 @@ button.scene-bar:active .scene-bar-toggle {
   overflow-x: clip;
 }
 .dark .cabinet {
-  --cabinet-frame-from: #0e1142;
-  --cabinet-frame-to: #1c2080;
-  --cabinet-panel-bg: #0b0e38;
-  --cabinet-card-bg: rgba(255, 255, 255, 0.06);
-  --cabinet-line: rgba(217, 183, 101, 0.38);
+  --cabinet-frame-from: #14187a;
+  --cabinet-frame-to: #2a2fb0;
+  --cabinet-panel-bg: #0d1245;
+  --cabinet-card-bg: #1b2282;
+  --cabinet-line: #3a41b0;
+  --cabinet-surface-2: #232b96;
+  --cabinet-track: #2a31a0;
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
@@ -11853,10 +11861,18 @@ button.scene-bar:active .scene-bar-toggle {
    calendar/goal) — лише фон+border+radius+тінь, решта (grid/spacing/flex)
    навмисно через Tailwind-утиліти прямо в розмітці (мінімум нового CSS). */
 .cabinet-card {
-  background: var(--cabinet-card-bg);
+  background-color: var(--cabinet-card-bg);
   border: 1.5px solid var(--cabinet-line);
   border-radius: 22px;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
+}
+/* Тонкий градієнт НАД суцільним --cabinet-card-bg лише в dark — колір
+   картки лишається solid (bg-[var(--cabinet-card-bg)] у Tailwind-класах
+   може тримати лише background-color, не градієнт), глибина додається
+   окремим background-image, що не перебиває background-color вище. */
+.dark .cabinet-card {
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 60%);
+  box-shadow: 0 8px 24px rgba(5, 7, 40, 0.5);
 }
 
 /* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний
@@ -12122,6 +12138,14 @@ button.cabinet-nav-item {
   pointer-events: none;
   transition: opacity 150ms ease, transform 150ms ease;
   z-index: 20;
+}
+/* Темна бульбашка лишається темною в обох темах (база вище) — у dark
+   лише підмінюємо хардкод #1a1640/#fff на нові токени (--cabinet-ink
+   у dark — кремовий, не білий), світлу тему це правило не чіпає. */
+.dark .cabinet-tooltip {
+  background: var(--cabinet-panel-bg);
+  color: var(--cabinet-ink);
+  border: 1px solid var(--cabinet-line);
 }
 .cabinet-nav-item:hover .cabinet-tooltip,
 .cabinet-nav-item:focus-visible .cabinet-tooltip {

@@ -55,7 +55,7 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
           {item.type === "film" ? t(lang, "library.type.film") : t(lang, "library.type.delf")}
         </span>
         {level && (
-          <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white dark:border dark:border-[var(--cabinet-line)] dark:bg-[var(--cabinet-track)] dark:text-[var(--cabinet-ink)]">
             {level}
           </span>
         )}
@@ -70,7 +70,7 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
           {t(lang, metaKey, { done: item.unitsDone, total: item.unitsTotal })}
         </p>
         {item.status === "completed" && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--cabinet-panel-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--cabinet-ink)]">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--cabinet-surface-2)] px-2 py-0.5 text-[10px] font-bold text-[var(--cabinet-ink)]">
             <Check size={11} aria-hidden="true" />
             {t(lang, "library.completed")}
           </span>
@@ -78,7 +78,7 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
       </div>
 
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--cabinet-panel-bg)]"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--cabinet-track)]"
         role="progressbar"
         aria-valuenow={progressPercent}
         aria-valuemin={0}
@@ -155,7 +155,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 typeFilter === "all"
                   ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
-                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
+                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
               {t(lang, "library.tab.all")}
@@ -169,7 +169,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
                 className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                   typeFilter === type
                     ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
-                    : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
+                    : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
                 }`}
               >
                 {t(lang, type === "film" ? "library.tab.film" : "library.tab.delf")}
@@ -190,7 +190,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t(lang, "library.search")}
-            className="min-h-11 w-full rounded-full border border-[var(--cabinet-line)] bg-[var(--cabinet-card-bg)] py-2 pl-9 pr-3 text-sm text-[var(--cabinet-ink)] placeholder:text-[var(--cabinet-muted)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
+            className="min-h-11 w-full rounded-full border border-[var(--cabinet-line)] bg-[var(--cabinet-surface-2)] py-2 pl-9 pr-3 text-sm text-[var(--cabinet-ink)] placeholder:text-[var(--cabinet-muted)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
           />
         </label>
       </div>
@@ -209,7 +209,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-sm font-extrabold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 levelFilter === level
                   ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
-                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)]"
+                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
               {level}

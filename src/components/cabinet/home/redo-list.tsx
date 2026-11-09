@@ -28,7 +28,7 @@ export function RedoList({ lang, items }: { lang: UiLang; items: RedoItem[] }) {
                 </div>
                 <div className="truncate text-xs text-[var(--cabinet-muted)]">{item.sceneLabel}</div>
               </div>
-              <span className="whitespace-nowrap rounded-full bg-[var(--cabinet-panel-bg)] px-2.5 py-1 text-xs font-bold text-[var(--cabinet-ink)]">
+              <span className="whitespace-nowrap rounded-full bg-[var(--cabinet-surface-2)] px-2.5 py-1 text-xs font-bold text-[var(--cabinet-ink)]">
                 {item.pointsEarned} / {item.pointsPossible}
               </span>
               <Link
