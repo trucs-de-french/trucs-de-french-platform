@@ -12279,7 +12279,9 @@ button.cabinet-nav-item {
   border-radius: 12px;
   border: 1px solid var(--cabinet-line);
   background: var(--cabinet-surface-2);
-  padding: 0 12px;
+  /* Правий inset — 16px, той самий, що в шеврона .cabinet-select, щоб
+     календар-іконка й шеврон вирівнювались по вертикалі на одній картці. */
+  padding: 0 16px 0 12px;
   font-size: 14px;
   color: var(--cabinet-ink);
   cursor: pointer;
@@ -12526,4 +12528,42 @@ button.cabinet-nav-item {
   color: var(--cabinet-muted);
   cursor: default;
   text-decoration: none;
+}
+
+/* Спільний клас для будь-якого <select> кабінету (home, пізніше
+   settings/profile) — та сама висота/радіус/border, що в трігера
+   DatePicker. Нативна стрілка вимкнена (appearance:none), власна —
+   через background-image (bg-[var()] у Tailwind тримає лише
+   background-color, не image), з тим самим правим inset 16px, що в
+   іконки календаря на тій самій картці. Unlayered-клас перебиває будь-які
+   Tailwind-утиліти border/bg/padding/focus на цьому ж елементі — тож і
+   фокус-кільце нижче задане тут, а не dark:focus:-утилітами в розмітці. */
+.cabinet-select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--cabinet-line);
+  background-color: var(--cabinet-surface-2);
+  color: var(--cabinet-ink);
+  font-size: 14px;
+  padding: 0 2.75rem 0 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b36c4' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+.dark .cabinet-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f3d98b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  accent-color: var(--cabinet-btn-border);
+}
+.cabinet-select:disabled {
+  cursor: default;
+}
+.dark .cabinet-select:focus-visible {
+  outline: none;
+  border-color: var(--cabinet-btn-border);
+  box-shadow: 0 0 0 2px var(--cabinet-focus-ring);
 }
