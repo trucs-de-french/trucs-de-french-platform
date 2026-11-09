@@ -5,6 +5,12 @@
 // Живий <text> (font-family: var(--font-lora)) — лише для рендеру в React;
 // статичні файли іконок (favicon/manifest) не можуть вантажити веб-шрифти,
 // тому там літери заздалегідь конвертовані в контури (scripts/make-icons.mjs).
+//
+// Літери "TDF" мають indigo-градієнт (однаковий у світлій/темній темі);
+// id градієнта робимо через useId(), щоб кілька значків на одній сторінці
+// не ділили один <linearGradient> і щоб id збігався на сервері й клієнті.
+import { useId } from "react";
+
 const CROISSANT_ELLIPSES: [number, number, number, number, number][] = [
   [6, 26, 6, 5.6, -50],
   [54, 26, 6, 5.6, 50],
@@ -41,6 +47,7 @@ export function PlatformBadge({
   variant?: "round" | "app-icon";
 }) {
   const rounded = variant === "app-icon";
+  const gradientId = `tdf-letters-${useId().replace(/:/g, "")}`;
 
   return (
     <svg
@@ -50,6 +57,13 @@ export function PlatformBadge({
       role="img"
       aria-label="TDF"
     >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4b46da" />
+          <stop offset="55%" stopColor="#2f2c6b" />
+          <stop offset="100%" stopColor="#1a1640" />
+        </linearGradient>
+      </defs>
       {rounded ? (
         <>
           <rect width={200} height={200} rx={44} fill="#2f2c6b" />
@@ -62,7 +76,7 @@ export function PlatformBadge({
             style={{ fontFamily: "var(--font-lora), Lora, serif" }}
             fontWeight={700}
             fontSize={64}
-            fill="#1a1640"
+            fill={`url(#${gradientId})`}
             letterSpacing={-1}
           >
             TDF
@@ -79,7 +93,7 @@ export function PlatformBadge({
             style={{ fontFamily: "var(--font-lora), Lora, serif" }}
             fontWeight={700}
             fontSize={78}
-            fill="#1a1640"
+            fill={`url(#${gradientId})`}
             letterSpacing={-1}
           >
             TDF
