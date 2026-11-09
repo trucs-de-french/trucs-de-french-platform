@@ -407,4 +407,11 @@ export const en: Record<MessageKey, string> = {
   "library.empty.title": "You don't have any courses yet",
   "library.empty.nothing": "Nothing found",
   "library.empty.reset": "Reset filters",
+  "datepicker.placeholder": "dd.mm.yyyy",
+  "datepicker.openCalendar": "Open calendar",
+  "datepicker.dialogLabel": "Choose a date",
+  "datepicker.prevMonth": "Previous month",
+  "datepicker.nextMonth": "Next month",
+  "datepicker.clear": "Clear",
+  "datepicker.today": "Today",
 };

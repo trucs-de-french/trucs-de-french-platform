@@ -409,4 +409,11 @@ export const fr: Record<MessageKey, string> = {
   "library.empty.title": "Tu n'as encore aucun cours",
   "library.empty.nothing": "Aucun résultat",
   "library.empty.reset": "Réinitialiser les filtres",
+  "datepicker.placeholder": "jj.mm.aaaa",
+  "datepicker.openCalendar": "Ouvrir le calendrier",
+  "datepicker.dialogLabel": "Choisir une date",
+  "datepicker.prevMonth": "Mois précédent",
+  "datepicker.nextMonth": "Mois suivant",
+  "datepicker.clear": "Effacer",
+  "datepicker.today": "Aujourd'hui",
 };

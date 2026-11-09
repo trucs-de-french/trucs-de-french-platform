@@ -6,6 +6,7 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
 import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveExam } from "@/app/cabinet/actions";
+import { DatePicker } from "@/components/cabinet/date-picker";
 
 const RING_SIZE = 104;
 const STROKE = 8;
@@ -96,13 +97,7 @@ function ExamForm({
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.date")}</span>
-        <input
-          type="date"
-          name="examDate"
-          min={todayStr}
-          defaultValue={exam?.date ?? ""}
-          className="min-h-11 rounded-xl border border-[var(--cabinet-line)] bg-[var(--cabinet-surface-2)] px-3 text-sm text-[var(--cabinet-ink)] dark:accent-[var(--cabinet-btn-border)] dark:focus:border-[var(--cabinet-btn-border)] dark:focus:ring-2 dark:focus:ring-[var(--cabinet-focus-ring)]"
-        />
+        <DatePicker name="examDate" min={todayStr} defaultValue={exam?.date ?? null} lang={lang} />
       </label>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button

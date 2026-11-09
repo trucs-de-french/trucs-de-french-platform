@@ -410,6 +410,13 @@ export const uk = {
   "library.empty.title": "У тебе ще немає матеріалів",
   "library.empty.nothing": "Нічого не знайдено",
   "library.empty.reset": "Скинути фільтри",
+  "datepicker.placeholder": "дд.мм.рррр",
+  "datepicker.openCalendar": "Відкрити календар",
+  "datepicker.dialogLabel": "Виберіть дату",
+  "datepicker.prevMonth": "Попередній місяць",
+  "datepicker.nextMonth": "Наступний місяць",
+  "datepicker.clear": "Очистити",
+  "datepicker.today": "Сьогодні",
 } as const;
 
 export type MessageKey = keyof typeof uk;

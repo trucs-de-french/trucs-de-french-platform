@@ -12264,3 +12264,266 @@ button.cabinet-nav-item {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* DatePicker (date-picker.tsx) — кастомний календар замість <input
+   type="date">. Трігер виглядає як решта .cabinet-інпутів (висота/радіус/
+   border через ті самі змінні); сам попап — через portal у document.body
+   (position:fixed від rect трігера), тож overflow картки його не ріже. */
+.cabinet-datepicker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--cabinet-line);
+  background: var(--cabinet-surface-2);
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+  cursor: pointer;
+}
+.cabinet-datepicker-trigger-text--placeholder {
+  color: var(--cabinet-muted);
+}
+.cabinet-datepicker-icon {
+  flex-shrink: 0;
+  color: var(--cabinet-primary);
+}
+.dark .cabinet-datepicker-icon {
+  color: #f3d98b;
+}
+
+.cabinet-datepicker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 49;
+}
+
+.cabinet-datepicker-popover {
+  position: fixed;
+  width: 304px;
+  max-width: calc(100vw - 16px);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  box-shadow: 0 14px 30px rgba(26, 22, 64, 0.18);
+}
+.dark .cabinet-datepicker-popover {
+  border-color: #3a43a0;
+  background: #0a0e38;
+  box-shadow: none;
+}
+/* Мобільний bottom sheet (<640px, isMobile у компоненті) — той самий
+   попап, лише фіксований знизу на всю ширину, із backdrop над ним. */
+.cabinet-datepicker-popover--sheet {
+  left: 0 !important;
+  right: 0;
+  bottom: 0;
+  top: auto !important;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.cabinet-datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cabinet-datepicker-nav {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--cabinet-link);
+  cursor: pointer;
+}
+.cabinet-datepicker-nav:hover {
+  background: var(--cabinet-panel-bg);
+}
+.dark .cabinet-datepicker-nav:hover {
+  background: var(--cabinet-card-bg);
+}
+.cabinet-datepicker-label {
+  border: 0;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cabinet-ink);
+  text-transform: capitalize;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+.cabinet-datepicker-label:hover {
+  background: var(--cabinet-panel-bg);
+}
+.dark .cabinet-datepicker-label:hover {
+  background: var(--cabinet-card-bg);
+}
+
+.cabinet-datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.cabinet-datepicker-weekdays span {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--cabinet-muted);
+}
+
+.cabinet-datepicker-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+}
+.cabinet-datepicker-day {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cabinet-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.cabinet-datepicker-day:hover:not(:disabled) {
+  background: var(--cabinet-panel-bg);
+}
+.dark .cabinet-datepicker-day:hover:not(:disabled) {
+  background: var(--cabinet-card-bg);
+}
+.cabinet-datepicker-day:disabled {
+  cursor: default;
+  color: var(--cabinet-muted);
+}
+.cabinet-datepicker-day--outside {
+  color: var(--cabinet-muted);
+}
+.dark .cabinet-datepicker-day--outside,
+.dark .cabinet-datepicker-day:disabled {
+  color: #5d65b0;
+}
+.cabinet-datepicker-day--today {
+  outline: 1.5px solid var(--cabinet-gold);
+  outline-offset: -1.5px;
+}
+.dark .cabinet-datepicker-day--today {
+  color: #f3d98b;
+}
+.cabinet-datepicker-day--selected {
+  background: var(--cabinet-gold);
+  color: var(--cabinet-on-gold);
+  font-weight: 600;
+}
+.cabinet-datepicker-day:focus-visible {
+  outline: 2px solid var(--cabinet-gold);
+  outline-offset: 1px;
+}
+.dark .cabinet-datepicker-day:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+.cabinet-datepicker-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.cabinet-datepicker-month {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--cabinet-ink);
+  font-size: 13px;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.cabinet-datepicker-month:hover {
+  background: var(--cabinet-panel-bg);
+}
+.dark .cabinet-datepicker-month:hover {
+  background: var(--cabinet-card-bg);
+}
+.cabinet-datepicker-month--selected {
+  background: var(--cabinet-gold);
+  color: var(--cabinet-on-gold);
+  font-weight: 600;
+}
+
+/* Лише цей внутрішній список має overflow-y:auto (не весь попап) — так
+   overflow-x лишається visible/clip на батьках, без паразитного
+   горизонтального скролу, який overflow-y:auto дає на елементі з
+   overflow-x не visible. */
+.cabinet-datepicker-years {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.cabinet-datepicker-year {
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--cabinet-ink);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.cabinet-datepicker-year:hover {
+  background: var(--cabinet-panel-bg);
+}
+.dark .cabinet-datepicker-year:hover {
+  background: var(--cabinet-card-bg);
+}
+.cabinet-datepicker-year--selected {
+  background: var(--cabinet-gold);
+  color: var(--cabinet-on-gold);
+  font-weight: 600;
+}
+
+.cabinet-datepicker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cabinet-line);
+}
+.cabinet-datepicker-link {
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cabinet-link);
+  cursor: pointer;
+}
+.cabinet-datepicker-link:hover {
+  text-decoration: underline;
+}
+.cabinet-datepicker-link:disabled {
+  color: var(--cabinet-muted);
+  cursor: default;
+  text-decoration: none;
+}
