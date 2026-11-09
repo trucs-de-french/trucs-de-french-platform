@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, LogOut, type LucideIcon } from "lucide-react";
-import { PlatformWordmark, PlatformMark } from "@/components/platform-wordmark";
+import { PlatformWordmark } from "@/components/platform-wordmark";
+import { PlatformBadge } from "@/components/platform-badge";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
@@ -37,11 +38,11 @@ export function CabinetSidebar({
   return (
     <aside className={`cabinet-sidebar ${collapsed ? "cabinet-sidebar--collapsed" : ""}`}>
       <div className={collapsed ? "flex justify-center pb-[18px]" : "cabinet-sidebar-logo pb-[18px]"}>
-        <Link href="/cabinet" aria-label="Trucs d'French">
+        <Link href="/cabinet" aria-label="Trucs d’French">
           {collapsed ? (
-            <PlatformMark size={44} />
+            <PlatformBadge size={46} />
           ) : (
-            <PlatformWordmark size="sm" tone="onDark" />
+            <PlatformWordmark size="md" tone="dark" tagline />
           )}
         </Link>
       </div>

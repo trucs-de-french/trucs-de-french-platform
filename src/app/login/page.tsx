@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signIn } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
+import { PlatformWordmark } from "@/components/platform-wordmark";
 
 export default async function LoginPage({
   searchParams,
@@ -11,6 +12,9 @@ export default async function LoginPage({
 
   return (
     <main className="mx-auto w-full flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
+      <div className="flex justify-center">
+        <PlatformWordmark size="lg" tagline />
+      </div>
       <h1 className="text-2xl font-semibold">Вхід</h1>
 
       {message && (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signUp } from "../login/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { PlatformWordmark } from "@/components/platform-wordmark";
 
 export default async function RegisterPage({
   searchParams,
@@ -11,6 +12,9 @@ export default async function RegisterPage({
 
   return (
     <main className="mx-auto w-full flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
+      <div className="flex justify-center">
+        <PlatformWordmark size="lg" tagline />
+      </div>
       <h1 className="text-2xl font-semibold">Реєстрація</h1>
 
       {error && (

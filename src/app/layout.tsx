@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Nunito, Montserrat, Cormorant_Garamond, Lora } from "next/font/google";
+import { Nunito, Lora } from "next/font/google";
 import { THEME_SCRIPT } from "./theme-script";
 import { ThemeToggleGate } from "@/components/theme-toggle-gate";
 import { THEME_COOKIE } from "@/lib/theme-cookie";
@@ -16,21 +16,6 @@ import "./globals.css";
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin", "latin-ext", "cyrillic"],
-});
-
-// Обидва — лише для вордмарку "Trucs d'French" (platform-wordmark.tsx),
-// фіксованого латинського тексту — кирилиця не потрібна (на відміну від
-// Playfair Display вище, який рендерить реальні українські назви курсів).
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  weight: ["800"],
-  subsets: ["latin"],
-});
-const cormorantGaramond = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  weight: ["500"],
-  style: ["italic"],
-  subsets: ["latin"],
 });
 
 // Lora — шрифт основного тексту сайту (--font-body, globals.css): body за
@@ -64,7 +49,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uk"
-      className={`${nunito.variable} ${montserrat.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
+      className={`${nunito.variable} ${lora.variable} h-full antialiased ${themeClass}`.trim()}
       suppressHydrationWarning
     >
       <head>

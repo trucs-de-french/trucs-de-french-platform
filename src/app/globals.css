@@ -505,9 +505,6 @@
   /* Lora — основний текст: body за замовчуванням (нижче) і .rich-text
      p/li. */
   --font-body: var(--font-lora), ui-serif, Georgia, serif;
-  /* Лише для вордмарку "Trucs d'French" (platform-wordmark.tsx). */
-  --font-brand-sans: var(--font-montserrat);
-  --font-brand-serif: var(--font-cormorant);
   /* Той самий шрифт, що --font-body (Lora), під іншою назвою для вужчого
      призначення — поля навчального контенту (клас font-content: текст
      репліки діалогу, варіанти відповідей вправ), а не весь body. */
