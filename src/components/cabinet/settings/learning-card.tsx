@@ -14,6 +14,7 @@ import { saveWeeklyGoal, saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
 import { SettingsPill } from "./settings-pill";
 import { CardTitle } from "@/components/cabinet/card-title";
+import { CabinetSelect } from "@/components/cabinet/cabinet-select";
 
 const GOAL_OPTIONS = [2, 3, 5, 7];
 
@@ -79,13 +80,12 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
         <div className="flex flex-col gap-2 sm:flex-row">
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.type")}</span>
-            <select name="examType" defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]} className="cabinet-select">
-              {EXAM_TYPE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <CabinetSelect
+              name="examType"
+              defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]}
+              options={EXAM_TYPE_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
+              aria-label={t(lang, "home.exam.type")}
+            />
           </label>
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.date")}</span>

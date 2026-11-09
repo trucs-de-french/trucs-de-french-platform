@@ -5,6 +5,7 @@ import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { saveWeeklyGoal } from "@/app/cabinet/actions";
 import { CardTitle } from "@/components/cabinet/card-title";
+import { CabinetSelect } from "@/components/cabinet/cabinet-select";
 
 const GOAL_OPTIONS = Array.from({ length: 14 }, (_, i) => i + 1);
 
@@ -32,19 +33,13 @@ export function WeeklyGoalCard({
     <div className="cabinet-card flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <CardTitle>{t(lang, "home.goal.title")}</CardTitle>
-        <select
-          defaultValue={goal}
+        <CabinetSelect
+          value={String(goal)}
           disabled={pending}
-          onChange={(e) => handleChange(e.target.value)}
-          className="cabinet-select disabled:opacity-60"
+          onChange={handleChange}
+          options={GOAL_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
           aria-label={t(lang, "home.goal.title")}
-        >
-          {GOAL_OPTIONS.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.goal.of", { done, goal })}</p>
       <div

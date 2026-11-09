@@ -8,6 +8,7 @@ import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
 import { CardTitle } from "@/components/cabinet/card-title";
+import { CabinetSelect } from "@/components/cabinet/cabinet-select";
 
 const RING_SIZE = 104;
 const STROKE = 8;
@@ -84,17 +85,12 @@ function ExamForm({
     <form action={handleSubmit} className="flex flex-col gap-2">
       <label className="flex flex-col gap-1">
         <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.type")}</span>
-        <select
+        <CabinetSelect
           name="examType"
           defaultValue={exam?.type ?? EXAM_TYPE_OPTIONS[0]}
-          className="cabinet-select"
-        >
-          {EXAM_TYPE_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
+          options={EXAM_TYPE_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
+          aria-label={t(lang, "home.exam.type")}
+        />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.date")}</span>

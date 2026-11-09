@@ -12949,42 +12949,113 @@ button.cabinet-nav-item {
   text-decoration: none;
 }
 
-/* Спільний клас для будь-якого <select> кабінету (home, пізніше
-   settings/profile) — та сама висота/радіус/border, що в трігера
-   DatePicker. Нативна стрілка вимкнена (appearance:none), власна —
-   через background-image (bg-[var()] у Tailwind тримає лише
-   background-color, не image), з тим самим правим inset 16px, що в
-   іконки календаря на тій самій картці. Unlayered-клас перебиває будь-які
-   Tailwind-утиліти border/bg/padding/focus на цьому ж елементі — тож і
-   фокус-кільце нижче задане тут, а не dark:focus:-утилітами в розмітці. */
-.cabinet-select {
-  display: block;
+/* Спільний кастомний dropdown кабінету (cabinet-select.tsx) — замінює
+   нативний <select> (та його system-popup) усюди в /cabinet. Трігер —
+   999px-пілюля, gold-контур; панель-портал нижче окремим блоком. */
+.cabinet-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--cabinet-line);
-  background-color: var(--cabinet-surface-2);
+  border-radius: 999px;
+  border: 1.5px solid #e4cf94;
+  background: #ffffff;
   color: var(--cabinet-ink);
   font-size: 14px;
-  padding: 0 2.75rem 0 12px;
-  appearance: none;
-  -webkit-appearance: none;
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 16px 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b36c4' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  padding: 0 14px 0 16px;
+  cursor: pointer;
 }
-.dark .cabinet-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f3d98b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  accent-color: var(--cabinet-btn-border);
-}
-.cabinet-select:disabled {
+.cabinet-select-trigger:disabled {
   cursor: default;
+  opacity: 0.6;
 }
-.dark .cabinet-select:focus-visible {
+.cabinet-select-trigger:focus-visible {
   outline: none;
-  border-color: var(--cabinet-btn-border);
-  box-shadow: 0 0 0 2px var(--cabinet-focus-ring);
+  border-color: #d9b765;
+  box-shadow: 0 0 0 2px rgba(217, 183, 101, 0.35);
+}
+.cabinet-select-trigger-label--placeholder {
+  color: var(--cabinet-muted);
+}
+.cabinet-select-chevron {
+  flex-shrink: 0;
+  color: var(--cabinet-primary);
+  transition: transform 150ms ease;
+}
+.cabinet-select-chevron--open {
+  transform: rotate(180deg);
+}
+.dark .cabinet-select-trigger {
+  border-color: #2e3680;
+  background: #0c1142;
+}
+.dark .cabinet-select-chevron {
+  color: #f3d98b;
+}
+
+/* Панель — непрозора, той самий підхід (окремий колір, не --cabinet-
+   card-bg), що вже застосовано для .cabinet-datepicker-popover вище:
+   інакше знову читалась би як "прозора" на картці того самого кольору. */
+.cabinet-select-panel {
+  position: fixed;
+  z-index: 60;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  margin: 0;
+  border-radius: 18px;
+  padding: 6px;
+  border: 1.5px solid #e4cf94;
+  background: #fffdf7;
+  box-shadow: 0 12px 32px rgba(26, 22, 64, 0.22);
+  scrollbar-width: none;
+}
+.cabinet-select-panel::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.dark .cabinet-select-panel {
+  border-color: #2e3680;
+  background: #141a52;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.cabinet-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--cabinet-ink);
+  cursor: pointer;
+}
+.cabinet-select-option--active {
+  background: #f4efdc;
+}
+.dark .cabinet-select-option--active {
+  background: #1b2268;
+}
+.cabinet-select-option--selected {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #f6f1e3;
+  font-weight: 800;
+}
+.dark .cabinet-select-option--selected {
+  background: linear-gradient(135deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+/* Мобільний — трохи вищий рядок, щоб влазило в тач-зону 44px. */
+@media (max-width: 767px) {
+  .cabinet-select-option {
+    min-height: 44px;
+  }
 }
 
 /* Звичайний текстовий/email <input> (settings/profile-card.tsx) — та сама
