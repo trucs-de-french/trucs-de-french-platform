@@ -50,6 +50,14 @@ export default async function CabinetHomePage() {
         </p>
       </header>
 
+      {/* Мобільна копія ProfileCard одразу під привітанням (десктоп її не
+          бачить — там картка лишається в правій колонці нижче, так само
+          як і раніше). Батьківський flex має gap-6 (24px); тут потрібно
+          12px зверху і 16px знизу, тож віднімаємо 24: -12 і -8. */}
+      <div className="lg:hidden" style={{ marginTop: -12, marginBottom: -8 }}>
+        <ProfileCard lang={lang} fullName={home.fullName} isTeacher={isTeacher} compact />
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-6">
           <StatTiles
@@ -69,7 +77,9 @@ export default async function CabinetHomePage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <ProfileCard lang={lang} fullName={home.fullName} isTeacher={isTeacher} />
+          <div className="hidden lg:block">
+            <ProfileCard lang={lang} fullName={home.fullName} isTeacher={isTeacher} />
+          </div>
           {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
           <CalendarCard lang={lang} activeDays={home.activeDays} />
           <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
