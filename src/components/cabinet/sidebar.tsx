@@ -20,12 +20,16 @@ export function CabinetSidebar({
   lang,
   isTeacher,
   fullName,
+  avatarUrl = null,
+  avatarMascot = null,
   initialCollapsed,
   onSignOut,
 }: {
   lang: UiLang;
   isTeacher: boolean;
   fullName: string | null;
+  avatarUrl?: string | null;
+  avatarMascot?: string | null;
   initialCollapsed: boolean;
   onSignOut: () => Promise<void>;
 }) {
@@ -56,7 +60,12 @@ export function CabinetSidebar({
         </Link>
       </div>
 
-      <CabinetSidebarProfile fullName={fullName} collapsed={collapsed} />
+      <CabinetSidebarProfile
+        fullName={fullName}
+        avatarUrl={avatarUrl}
+        avatarMascot={avatarMascot}
+        collapsed={collapsed}
+      />
 
       <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-col gap-[2px]">
         {CABINET_PRIMARY_NAV.map((item) => (

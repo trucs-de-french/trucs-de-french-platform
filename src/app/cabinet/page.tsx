@@ -55,7 +55,7 @@ export default async function CabinetHomePage() {
           (24px); тут потрібно 12px зверху і 16px знизу, тож віднімаємо
           24: -12 і -8. */}
       <div className="lg:hidden" style={{ marginTop: -12, marginBottom: -8 }}>
-        <ProfileCard fullName={home.fullName} />
+        <ProfileCard fullName={home.fullName} avatarUrl={home.avatarUrl} avatarMascot={home.avatarMascot} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">

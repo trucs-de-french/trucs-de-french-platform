@@ -26,9 +26,9 @@ export default async function CabinetLayout({ children }: { children: React.Reac
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, ui_lang")
+    .select("role, full_name, ui_lang, avatar_url, avatar_mascot")
     .eq("id", user.id)
-    .single<Pick<Profile, "role" | "full_name" | "ui_lang">>();
+    .single<Pick<Profile, "role" | "full_name" | "ui_lang" | "avatar_url" | "avatar_mascot">>();
 
   const isTeacher = profile?.role === "teacher";
   const lang = normalizeUiLang(profile?.ui_lang);
@@ -46,6 +46,8 @@ export default async function CabinetLayout({ children }: { children: React.Reac
         lang={lang}
         isTeacher={isTeacher}
         fullName={profile?.full_name ?? null}
+        avatarUrl={profile?.avatar_url ?? null}
+        avatarMascot={profile?.avatar_mascot ?? null}
         initialCollapsed={initialCollapsed}
         onSignOut={signOut}
       />

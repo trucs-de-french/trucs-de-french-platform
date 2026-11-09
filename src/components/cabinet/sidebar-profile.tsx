@@ -7,9 +7,13 @@ import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 // роль у блоці більше не показується (прибрано на прохання, всім однаково).
 export function CabinetSidebarProfile({
   fullName,
+  avatarUrl = null,
+  avatarMascot = null,
   collapsed,
 }: {
   fullName: string | null;
+  avatarUrl?: string | null;
+  avatarMascot?: string | null;
   collapsed: boolean;
 }) {
   const name = fullName?.trim() || "";
@@ -22,7 +26,7 @@ export function CabinetSidebarProfile({
         aria-label={label}
         className="cabinet-sidebar-profile cabinet-sidebar-profile--collapsed"
       >
-        <ProfileAvatar name={name} size={36} />
+        <ProfileAvatar name={name} size={36} imageUrl={avatarUrl} mascotId={avatarMascot} />
         <span className="cabinet-tooltip" role="tooltip">
           {label}
         </span>
@@ -36,7 +40,7 @@ export function CabinetSidebarProfile({
       aria-label={label}
       className="cabinet-sidebar-profile"
     >
-      <ProfileAvatar name={label} size={36} />
+      <ProfileAvatar name={label} size={36} imageUrl={avatarUrl} mascotId={avatarMascot} />
       <span className="cabinet-sidebar-profile-name block min-w-0 truncate">{label}</span>
     </Link>
   );
