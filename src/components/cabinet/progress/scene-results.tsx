@@ -5,6 +5,59 @@ import type { SceneResultRow } from "@/lib/cabinet/progress-data";
 
 const MAX_ROWS = 6;
 
+const RING_SIZE = 52;
+const RING_STROKE = 6;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function SceneRing({ percent, needsRedo, label }: { percent: number; needsRedo: boolean; label: string }) {
+  const clamped = Math.min(100, Math.max(0, percent));
+  const offset = RING_CIRCUMFERENCE * (1 - clamped / 100);
+
+  return (
+    <svg
+      width={RING_SIZE}
+      height={RING_SIZE}
+      viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+      className="shrink-0"
+      role="img"
+      aria-label={`${label}: ${percent}%`}
+    >
+      <circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_RADIUS}
+        fill="none"
+        stroke="var(--cabinet-track)"
+        strokeWidth={RING_STROKE}
+      />
+      <circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_RADIUS}
+        fill="none"
+        stroke={needsRedo ? "var(--cabinet-gold)" : "var(--cabinet-primary)"}
+        strokeWidth={RING_STROKE}
+        strokeLinecap="round"
+        strokeDasharray={RING_CIRCUMFERENCE}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+      />
+      <text
+        x="50%"
+        y="50%"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={12}
+        fontWeight={700}
+        fill="var(--cabinet-ink)"
+      >
+        {percent}%
+      </text>
+    </svg>
+  );
+}
+
 export function SceneResults({ lang, items }: { lang: UiLang; items: SceneResultRow[] }) {
   const shown = items.slice(0, MAX_ROWS);
 
@@ -16,44 +69,27 @@ export function SceneResults({ lang, items }: { lang: UiLang; items: SceneResult
       {shown.length === 0 ? (
         <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "progress.scenes.empty")}</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col">
           {shown.map((row) => (
-            <li key={row.sceneId} className="flex flex-col gap-1.5 border-b border-[var(--cabinet-line)] pb-3 last:border-0 last:pb-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate font-body text-sm font-semibold text-[var(--cabinet-ink)]">
+            <li
+              key={row.sceneId}
+              className="flex flex-wrap items-center gap-3 border-t border-[var(--cabinet-line)] py-3 first:border-t-0 first:pt-0"
+            >
+              <SceneRing percent={row.percent} needsRedo={row.needsRedo} label={row.title} />
+              <div className="min-w-0 flex-1 basis-40">
+                <div className="truncate font-body text-sm font-semibold text-[var(--cabinet-ink)]">
                   {row.title}
-                </span>
-                <span className="whitespace-nowrap rounded-full bg-[var(--cabinet-surface-2)] px-2.5 py-1 text-xs font-bold text-[var(--cabinet-ink)]">
+                </div>
+                <div className="text-xs text-[var(--cabinet-muted)]">
                   {row.pointsEarned} / {row.pointsPossible}
-                </span>
+                </div>
               </div>
-              <div
-                className="h-2 w-full overflow-hidden rounded-full bg-[var(--cabinet-track)]"
-                role="progressbar"
-                aria-valuenow={row.percent}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={row.title}
+              <Link
+                href={row.href}
+                className="inline-flex min-h-9 shrink-0 items-center text-xs font-bold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
               >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, row.percent)}%`,
-                    background: row.needsRedo
-                      ? "linear-gradient(135deg, #f6dc8e, #e0aa3e)"
-                      : "var(--cabinet-primary)",
-                  }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[var(--cabinet-muted)]">{row.percent}%</span>
-                <Link
-                  href={row.href}
-                  className="inline-flex min-h-9 shrink-0 items-center text-xs font-bold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
-                >
-                  {row.needsRedo ? t(lang, "progress.scenes.redo") : t(lang, "progress.scenes.view")}
-                </Link>
-              </div>
+                {row.needsRedo ? t(lang, "progress.scenes.redo") : t(lang, "progress.scenes.view")}
+              </Link>
             </li>
           ))}
         </ul>
