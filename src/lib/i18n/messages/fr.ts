@@ -348,6 +348,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.nav.short.library": "Bibliothèque",
   "cabinet.nav.short.dictionary": "Dictionnaire",
   "cabinet.nav.short.progress": "Progression",
+  "cabinet.nav.short.mistakes": "Erreurs",
   "cabinet.nav.short.more": "Plus",
   "cabinet.nav.signOut": "Se déconnecter",
   "cabinet.nav.collapse": "Réduire le menu",

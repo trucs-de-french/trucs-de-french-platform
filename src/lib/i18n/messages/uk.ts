@@ -349,6 +349,7 @@ export const uk = {
   "cabinet.nav.short.library": "Бібліотека",
   "cabinet.nav.short.dictionary": "Словник",
   "cabinet.nav.short.progress": "Прогрес",
+  "cabinet.nav.short.mistakes": "Помилки",
   "cabinet.nav.short.more": "Ще",
   "cabinet.nav.signOut": "Вийти",
   "cabinet.nav.collapse": "Згорнути меню",

@@ -20,7 +20,13 @@ export type CabinetNavItem = {
   labelKey: MessageKey;
 };
 
-export type CabinetMobileNavItem = CabinetNavItem & { shortLabelKey: MessageKey };
+export type CabinetMobileNavItem = CabinetNavItem & {
+  shortLabelKey: MessageKey;
+  // Додаткові префікси шляхів, на яких цей пункт теж вважається активним
+  // (наприклад "Ще" активна і на /cabinet/settings, /admin/... — сторінках,
+  // куди можна дістатись лише через неї, а не лише на точному href).
+  extraActivePrefixes?: string[];
+};
 
 export const CABINET_PRIMARY_NAV: CabinetNavItem[] = [
   { href: "/cabinet", icon: Home, labelKey: "cabinet.nav.home" },
@@ -42,17 +48,20 @@ export const CABINET_ADMIN_NAV: CabinetNavItem = {
   labelKey: "cabinet.nav.admin",
 };
 
-// Мобільна нижня панель — підмножина primary-навігації (без "Mistakes
-// review", що переїжджає в "Ще") + вкладка "Ще".
+// Мобільна нижня панель — вся primary-навігація (включно з "Mistakes
+// review") + вкладка "Ще" (Налаштування/Адмінка/мова/тема/вихід сховані
+// за нею — див. cabinet/more/page.tsx).
 export const CABINET_MOBILE_TABS: CabinetMobileNavItem[] = [
   { ...CABINET_PRIMARY_NAV[0], shortLabelKey: "cabinet.nav.short.home" },
   { ...CABINET_PRIMARY_NAV[1], shortLabelKey: "cabinet.nav.short.library" },
   { ...CABINET_PRIMARY_NAV[2], shortLabelKey: "cabinet.nav.short.dictionary" },
   { ...CABINET_PRIMARY_NAV[3], shortLabelKey: "cabinet.nav.short.progress" },
+  { ...CABINET_PRIMARY_NAV[4], shortLabelKey: "cabinet.nav.short.mistakes" },
   {
     href: "/cabinet/more",
     icon: MoreHorizontal,
     labelKey: "cabinet.nav.more",
     shortLabelKey: "cabinet.nav.short.more",
+    extraActivePrefixes: ["/cabinet/settings", "/admin"],
   },
 ];

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RotateCcw, SlidersHorizontal, ShieldCheck, LogOut } from "lucide-react";
+import { SlidersHorizontal, ShieldCheck, LogOut, type LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import { getCabinetProfile } from "@/lib/supabase/profile";
 import { signOut } from "@/app/login/actions";
@@ -7,9 +7,10 @@ import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { LanguagePills } from "@/components/cabinet/language-pills";
 import { ThemePills } from "@/components/cabinet/theme-switch";
 
-// Мобільна "Ще" — пункти, що не влізли в нижній tab bar (5 вкладок):
-// Mistakes review, Settings, мова, Admin (лише вчитель), Sign out — великі
-// рядки, той самий сенс, що пункти sidebar на десктопі.
+// Мобільна "Ще" — пункти, що не влізли в нижній tab bar (6 вкладок,
+// Mistakes review тепер серед них напряму): Settings, мова, Admin (лише
+// вчитель), Sign out — великі рядки, той самий сенс, що пункти sidebar
+// на десктопі.
 export default async function CabinetMorePage() {
   const { lang, isTeacher } = await getCabinetProfile();
 
@@ -21,7 +22,6 @@ export default async function CabinetMorePage() {
       </h1>
 
       <div className="mt-4 flex flex-col gap-2">
-        <MoreRow href="/cabinet/mistakes" icon={RotateCcw} label={t(lang, "cabinet.nav.mistakes")} />
         <MoreRow href="/cabinet/settings" icon={SlidersHorizontal} label={t(lang, "cabinet.nav.settings")} />
 
         {isTeacher && (
@@ -62,7 +62,7 @@ function MoreRow({
   label,
 }: {
   href: string;
-  icon: typeof RotateCcw;
+  icon: LucideIcon;
   label: string;
 }) {
   return (

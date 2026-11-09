@@ -14,7 +14,10 @@ export function CabinetMobileTabBar({ lang }: { lang: UiLang }) {
       {CABINET_MOBILE_TABS.map((item) => {
         const Icon = item.icon;
         const active =
-          item.href === "/cabinet" ? pathname === "/cabinet" : pathname.startsWith(item.href);
+          item.href === "/cabinet"
+            ? pathname === "/cabinet"
+            : pathname.startsWith(item.href) ||
+              (item.extraActivePrefixes?.some((prefix) => pathname.startsWith(prefix)) ?? false);
         const label = t(lang, item.labelKey);
         const shortLabel = t(lang, item.shortLabelKey);
 
