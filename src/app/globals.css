@@ -11912,6 +11912,74 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   box-shadow: none;
 }
 
+/* Stat-картки /cabinet/progress (stat-tiles.tsx) — варіант "C: gold line
+   icon, no tile, big watermark": плитка-іконка прибрана, замість неї
+   голий штриховий icon зліва (градієнт tdf-stat-gold/-dark, defs у
+   cabinet/layout.tsx) і великий водяний знак праворуч позаду тексту. */
+.cabinet-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 899px) {
+  .cabinet-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 519px) {
+  .cabinet-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cabinet-stat-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  min-height: 90px;
+  border-radius: 26px;
+  background-color: var(--cabinet-card-bg);
+  border: 1.5px solid var(--cabinet-line);
+}
+.cabinet-stat-icon {
+  flex-shrink: 0;
+  fill: none;
+  stroke: url(#tdf-stat-gold);
+  position: relative;
+  z-index: 1;
+}
+.dark .cabinet-stat-icon {
+  stroke: url(#tdf-stat-gold-dark);
+}
+.cabinet-stat-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  width: 110px;
+  height: 110px;
+  fill: none;
+  stroke: #d9b765;
+  opacity: 0.12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  z-index: 0;
+}
+.dark .cabinet-stat-watermark {
+  stroke: #8f97d6;
+  opacity: 0.16;
+}
+@media (max-width: 519px) {
+  .cabinet-stat-watermark {
+    right: -8px;
+    bottom: -10px;
+    width: 84px;
+    height: 84px;
+  }
+}
+
 /* Спільний заголовок картки кабінету (card-title.tsx) — коротка gold-
    риска-акцент під текстом (variant A), одна й та сама в обох темах.
    padding-bottom:10px лишає місце для ::after, margin:0 (саме про це

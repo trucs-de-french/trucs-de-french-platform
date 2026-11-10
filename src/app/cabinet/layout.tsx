@@ -77,6 +77,23 @@ export default async function CabinetLayout({ children }: { children: React.Reac
   // заголовок/landmark сторінки з'являвся б у DOM двічі одночасно.
   return (
     <div className="cabinet cabinet-frame">
+      {/* Спільні gradient defs для gold-штрихових іконок (stat-tiles.tsx) —
+          одне місце на весь /cabinet, щоб нові "bare gold icon" місця не
+          дублювали свій <linearGradient>. width=0 height=0 + absolute (НЕ
+          display:none — у Safari defs усередині display:none svg іноді не
+          резолвляться як referenced paint server). */}
+      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+        <defs>
+          <linearGradient id="tdf-stat-gold" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0" stopColor="#e9c870" />
+            <stop offset="1" stopColor="#b8923f" />
+          </linearGradient>
+          <linearGradient id="tdf-stat-gold-dark" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0" stopColor="#f3d98b" />
+            <stop offset="1" stopColor="#d9b765" />
+          </linearGradient>
+        </defs>
+      </svg>
       <CabinetSidebar
         lang={lang}
         isTeacher={isTeacher}

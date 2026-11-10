@@ -1,7 +1,11 @@
-import { CheckCircle2, Zap, Star, RotateCcw, type LucideIcon } from "lucide-react";
+import { Clapperboard, Flame, Star, RotateCcw, type LucideIcon } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 
+// Варіант "C: gold line icon, no tile, big watermark" — ті самі іконки, що
+// в категоріях досягнень (achievement-ui.ts): Сцени/Стрік/Бали/Помилки.
+// Градієнт штриха (tdf-stat-gold/-dark) — спільні <defs> у cabinet/
+// layout.tsx, не дублюються тут.
 function StatTile({
   icon: Icon,
   value,
@@ -12,19 +16,13 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="cabinet-card flex items-center gap-3 p-4">
-      <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[var(--cabinet-on-gold)]"
-        style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
-      >
-        <Icon size={20} aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <div className="font-heading text-2xl font-extrabold leading-tight text-[var(--cabinet-ink)]">
-          {value}
-        </div>
-        <div className="line-clamp-2 text-xs leading-[1.2] text-[var(--cabinet-muted)]">{label}</div>
+    <div className="cabinet-stat-card">
+      <Icon size={34} strokeWidth={2.2} className="cabinet-stat-icon" aria-hidden="true" />
+      <div className="relative z-[1] min-w-0">
+        <div className="font-heading text-[32px] font-black leading-none text-[var(--cabinet-ink)]">{value}</div>
+        <div className="font-body text-sm font-medium leading-[1.2] text-[var(--cabinet-muted)]">{label}</div>
       </div>
+      <Icon strokeWidth={1.4} className="cabinet-stat-watermark" aria-hidden="true" />
     </div>
   );
 }
@@ -43,14 +41,14 @@ export function StatTiles({
   redoCount: number;
 }) {
   const tiles: { icon: LucideIcon; value: number; labelKey: MessageKey }[] = [
-    { icon: CheckCircle2, value: scenesCompleted, labelKey: "home.stat.scenes" },
-    { icon: Zap, value: streakDays, labelKey: "home.stat.streak" },
+    { icon: Clapperboard, value: scenesCompleted, labelKey: "home.stat.scenes" },
+    { icon: Flame, value: streakDays, labelKey: "home.stat.streak" },
     { icon: Star, value: pointsThisWeek, labelKey: "home.stat.points" },
     { icon: RotateCcw, value: redoCount, labelKey: "home.stat.redo" },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="cabinet-stat-grid">
       {tiles.map((tile) => (
         <StatTile key={tile.labelKey} icon={tile.icon} value={tile.value} label={t(lang, tile.labelKey)} />
       ))}
