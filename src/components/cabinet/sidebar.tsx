@@ -155,13 +155,13 @@ export function CabinetSidebar({
         ) : (
           <>
             <div className="px-1">
-              <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold text-white/70">
+              <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold">
                 {t(lang, "cabinet.nav.language")}
               </p>
               <LanguagePills current={lang} />
             </div>
             <div className="px-1">
-              <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold text-white/70">
+              <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold">
                 {t(lang, "cabinet.theme.label")}
               </p>
               <ThemePills lang={lang} initialIsDark={initialIsDark} />
