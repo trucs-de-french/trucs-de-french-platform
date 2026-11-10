@@ -44,12 +44,15 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
         {skills.level ? t(lang, "progress.delf.title", { level: skills.level }) : skills.productTitle}
       </CardTitle>
       <ul className="flex flex-col">
-        {skills.rows.map((row) => {
+        {skills.rows.map((row, idx) => {
           const name = t(lang, SECTION_NAME_KEY[row.section]);
           const frenchName = t(lang, SECTION_FRENCH_KEY[row.section]);
           const sectionLabel = `${row.section}, ${name}`;
           return (
-            <li key={row.section} className="cabinet-delf-row">
+            <li
+              key={row.section}
+              className={`cabinet-delf-row ${idx > 0 ? "cabinet-fade-divider" : ""}`}
+            >
               <span className="cabinet-delf-chip" aria-hidden="true">
                 {row.section}
               </span>

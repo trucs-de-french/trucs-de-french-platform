@@ -85,12 +85,15 @@ export function SceneResults({ lang, items }: { lang: UiLang; items: SceneResult
       ) : (
         <>
           <ul className="flex flex-col">
-            {shown.map((row) => {
+            {shown.map((row, idx) => {
               const meta = row.lastActivity
                 ? `${row.productTitle} · ${formatLastActivity(row.lastActivity, locale)}`
                 : row.productTitle;
               return (
-                <li key={row.sceneId} className="cabinet-scene-row">
+                <li
+                  key={row.sceneId}
+                  className={`cabinet-scene-row ${idx > 0 ? "cabinet-fade-divider" : ""}`}
+                >
                   {row.productCoverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={row.productCoverUrl} alt="" className="cabinet-scene-thumb" />

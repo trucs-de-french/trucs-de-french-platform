@@ -11797,6 +11797,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --cabinet-panel-bg: #f8f3e4;
   --cabinet-card-bg: #ffffff;
   --cabinet-line: #e4cf94;
+  --cabinet-divider: #e4cf94;
   --cabinet-ink: #1a1640;
   --cabinet-muted: #6a5d40;
   --cabinet-gold: #d9b765;
@@ -11862,6 +11863,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --cabinet-panel-bg: #0a0e38;
   --cabinet-card-bg: #141a52;
   --cabinet-line: #2e3680;
+  --cabinet-divider: #3a43a0;
   --cabinet-surface-2: #0c1142;
   --cabinet-track: #222a6c;
   --cabinet-track-strong: #222a6c;
@@ -12165,10 +12167,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   align-items: center;
   gap: 14px;
   padding: 13px 0;
-  border-top: 1.5px solid var(--cabinet-line);
+  overflow: visible;
 }
 .cabinet-scene-row:first-child {
-  border-top: none;
   padding-top: 0;
 }
 .cabinet-scene-thumb {
@@ -12240,11 +12241,34 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   align-items: center;
   gap: 14px;
   padding: 12px 0;
-  border-top: 1.5px solid var(--cabinet-line);
+  overflow: visible;
 }
 .cabinet-delf-row:first-child {
-  border-top: none;
   padding-top: 0;
+}
+
+/* Reusable faded row divider — scoped to the scene results / DELF skills
+   lists only (applied per-row in JSX, skipped on the first row). */
+.cabinet-fade-divider {
+  position: relative;
+  border-top: 0;
+}
+.cabinet-fade-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--cabinet-divider) 18%,
+    var(--cabinet-divider) 82%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 .cabinet-delf-chip {
   flex: none;
