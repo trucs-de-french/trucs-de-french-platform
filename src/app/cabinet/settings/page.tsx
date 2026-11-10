@@ -7,6 +7,7 @@ import { getExamSettingsData } from "@/lib/cabinet/home-data";
 import { signOut } from "@/app/login/actions";
 import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
+import { PageHeader } from "@/components/cabinet/page-header";
 import { SettingsForm } from "@/components/cabinet/settings/settings-form";
 import type { NotificationPrefs, Profile } from "@/lib/supabase/profile";
 
@@ -68,12 +69,7 @@ export default async function CabinetSettingsPage() {
     <div className="flex flex-col gap-6 pb-24">
       <CabinetMobileHeader />
 
-      <header>
-        <h1 className="font-body text-2xl font-semibold text-[var(--cabinet-ink)] sm:text-3xl">
-          {t(lang, "cabinet.nav.settings")}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "cabinet.settings.subtitle")}</p>
-      </header>
+      <PageHeader title={t(lang, "cabinet.nav.settings")} subtitle={t(lang, "cabinet.settings.subtitle")} />
 
       <SettingsForm
         lang={lang}

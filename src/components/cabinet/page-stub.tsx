@@ -1,4 +1,5 @@
 import { CabinetMobileHeader } from "./mobile-header";
+import { PageHeader } from "./page-header";
 
 // Спільний каркас сторінки-заглушки кабінету — заголовок + підзаголовок +
 // картка "Скоро", й окремий named-slot (children) під майбутні віджети,
@@ -17,10 +18,7 @@ export function CabinetPageStub({
   return (
     <div>
       <CabinetMobileHeader />
-      <h1 className="font-body text-2xl font-semibold text-[var(--cabinet-ink)] sm:text-3xl">
-        {title}
-      </h1>
-      <p className="mt-1 text-sm text-[var(--cabinet-muted)]">{subtitle}</p>
+      <PageHeader title={title} subtitle={subtitle} />
 
       {children}
 

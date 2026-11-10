@@ -11947,6 +11947,74 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* Спільний заголовок non-home сторінок кабінету (page-header.tsx,
+   "hero V3") — більша версія gold-риски з .cabinet-card-title (44x4 →
+   56x5, навмисно), плюс м'який gold-відблиск позаду заголовка лише в
+   light темі (dark лишається пласким, без градієнта). */
+.cabinet-page-header {
+  position: relative;
+  padding: 10px 4px 6px;
+  margin-bottom: 20px;
+}
+.cabinet-page-header::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: -26px;
+  width: 340px;
+  height: 150px;
+  background: radial-gradient(ellipse at 20% 30%, rgba(243, 217, 139, 0.42), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.dark .cabinet-page-header::before {
+  display: none;
+}
+.cabinet-page-header > * {
+  position: relative;
+  z-index: 1;
+}
+.cabinet-page-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cabinet-page-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--cabinet-ink);
+  margin: 0;
+}
+.cabinet-page-title::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 5px;
+  border-radius: 5px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, #f3d98b, #d9b765);
+}
+.cabinet-page-subtitle {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--cabinet-muted);
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+@media (min-width: 768px) {
+  .cabinet-page-title {
+    font-size: 38px;
+  }
+  .cabinet-page-subtitle {
+    font-size: 16px;
+  }
+}
+
 /* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
    Рядок тепер лише [код][сегменти][відсоток] (повна назва прибрана з
    видимого UI — задача "DELF skills show codes only"), тож сегменти
