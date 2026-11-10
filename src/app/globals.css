@@ -11838,6 +11838,11 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
      тут нічого не малювалось (просвічував фон body), тож перехід на цю
      змінну нічого не змінює. */
   --cabinet-page-bg: transparent;
+  /* Locked achievement-coin палітра (achievement-badge.tsx) — тьмяне
+     golden-beige замість повноцінного gold/indigo градієнта earned-монет. */
+  --ach-lk: #efe7cf;
+  --ach-lkl: #cdb988;
+  --ach-lkt: #a8966a;
   background: var(--cabinet-page-bg);
   min-height: 100vh;
   /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
@@ -11860,6 +11865,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --cabinet-track: #222a6c;
   --cabinet-track-strong: #222a6c;
   --cabinet-page-bg: #060829;
+  --ach-lk: #1b2268;
+  --ach-lkl: #4a5299;
+  --ach-lkt: #7e86c8;
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
@@ -13551,37 +13559,41 @@ button.cabinet-nav-item {
     flex: none;
   }
 }
-.achievement-badge-circle {
-  display: inline-flex;
+/* "G1 classic coin with indigo ribbons" (achievement-badge.tsx) — одна й
+   та сама SVG-монета в обох темах для earned (gold/indigo градієнт),
+   locked — theme-aware через --ach-lk/-lkl/-lkt, без градієнтів. */
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
+  gap: 4px;
+  text-align: center;
 }
-.achievement-badge-circle--earned {
-  border: 2.5px solid #e0aa3e;
-  color: #e0aa3e;
+.achievement-badge-coin {
+  width: 104px;
+  height: 116px;
 }
-.achievement-badge-circle--inProgress {
-  border: 2px solid rgba(224, 170, 62, 0.5);
-  color: #e0aa3e;
+@media (max-width: 699px) {
+  .achievement-badge-coin {
+    width: 84px;
+    height: 94px;
+  }
 }
-.achievement-badge-circle--locked {
-  border: 2px dashed var(--cabinet-line);
+.achievement-badge-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--cabinet-ink);
+}
+.achievement-badge-title--locked {
   color: var(--cabinet-muted);
-  opacity: 0.6;
 }
-.dark .achievement-badge-circle--earned {
-  border-color: #d9b765;
-  color: #d9b765;
-}
-.dark .achievement-badge-circle--inProgress {
-  border-color: rgba(217, 183, 101, 0.5);
-  color: #d9b765;
-}
-.dark .achievement-badge-circle--locked {
-  border-color: #2e3680;
+.achievement-badge-caption {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--cabinet-muted);
 }
 
 /* Home: карусель "Нове в бібліотеці" (library-carousel.tsx) — scroll-snap

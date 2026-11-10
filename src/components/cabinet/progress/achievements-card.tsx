@@ -1,7 +1,7 @@
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { AchievementCategory, AchievementState } from "@/lib/cabinet/achievements";
-import { AchievementBadge } from "@/components/cabinet/achievement-badge";
+import { AchievementBadge } from "@/components/cabinet/home/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
 
 // Той самий порядок категорій, що каталог (achievements.ts) — "dictionary"
@@ -55,7 +55,7 @@ export function AchievementsCard({
             </h4>
             <div className="flex flex-wrap gap-4">
               {categoryItems.map((achievement) => (
-                <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} size={56} />
+                <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
               ))}
             </div>
           </div>
