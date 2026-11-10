@@ -12075,6 +12075,58 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .dark .cabinet-back-link:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
+
+/* "Усі досягнення →" pill-кнопка (pill-link.tsx) — спільна для картки
+   Home ("Останні досягнення") і компактної картки на /cabinet/progress. */
+.cabinet-pill-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(47, 44, 107, 0.25);
+  transition: transform 150ms, filter 150ms;
+}
+.dark .cabinet-pill-link {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.cabinet-pill-link-icon {
+  transition: transform 150ms;
+}
+.cabinet-pill-link:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.cabinet-pill-link:hover .cabinet-pill-link-icon {
+  transform: translateX(3px);
+}
+.cabinet-pill-link:active {
+  transform: translateY(0);
+}
+.cabinet-pill-link:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .cabinet-pill-link:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (max-width: 519px) {
+  .cabinet-pill-link {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
 .cabinet-page-header-row {
   display: flex;
   align-items: flex-end;
