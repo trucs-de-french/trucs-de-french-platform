@@ -20,7 +20,7 @@ export function QuoteCard({ lang, quote }: { lang: UiLang; quote: Quote }) {
             lineHeight: 0.6,
             height: 28,
             margin: 0,
-            marginTop: 16,
+            marginTop: 30,
             overflow: "visible",
           }}
           aria-hidden="true"
@@ -29,7 +29,7 @@ export function QuoteCard({ lang, quote }: { lang: UiLang; quote: Quote }) {
         </span>
         <p
           className="font-body text-[22px] font-semibold italic leading-[1.35] text-[var(--cabinet-ink)]"
-          style={{ marginTop: 6 }}
+          style={{ marginTop: -9 }}
         >
           {quote.fr}
         </p>
