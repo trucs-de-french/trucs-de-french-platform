@@ -12126,7 +12126,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .achievements-zone-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 18px 12px;
+  gap: 14px 12px;
   justify-items: center;
 }
 
@@ -12139,16 +12139,19 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .achievements-compact-row {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 18px 12px;
+  gap: 14px 12px;
   justify-items: center;
 }
 
 /* Категорійний тег під підписом бейджа — лише в режимі "Усі" на повній
    сторінці (showCategoryTag), щоб різні категорії поряд не плутались. */
 .achievement-badge-category-tag {
+  display: block;
+  margin-top: 2px;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 10.5px;
+  line-height: 1.2;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--cabinet-muted);
@@ -13790,7 +13793,6 @@ button.cabinet-nav-item {
   flex-direction: column;
   align-items: center;
   width: 104px;
-  gap: 4px;
   text-align: center;
 }
 @media (max-width: 699px) {
@@ -13808,18 +13810,29 @@ button.cabinet-nav-item {
     height: 67px;
   }
 }
-/* Заголовок — фіксована 2-рядкова висота (2 × 1.2em), щоб підписи
-   бейджів в одному рядку вирівнювались незалежно від довжини назви;
-   overflow-wrap:anywhere/hyphens:manual розбиває лише на пробілах чи
+/* Заголовок — обгортка з фіксованою 2-рядковою висотою (2 × 1.2em), щоб
+   підписи бейджів в одному рядку вирівнювались незалежно від довжини
+   назви; align-items:flex-end ставить однорядковий заголовок УНИЗУ
+   резервованої висоти (прямо над підписом), а дворядковий заповнює її
+   цілком — "dense column": коін→заголовок ≈2px, а не порожня верхня
+   половина висоти, як була б із justify-content:center. */
+.achievement-badge-title-box {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  min-height: 2.4em;
+  margin-top: 2px;
+}
+/* overflow-wrap:anywhere/hyphens:manual розбиває лише на пробілах чи
    дефісах, що вже є в тексті (напр. "DELF-тренування"), не всередині
    слів навмання. Повна назва — у title="" (hover), якщо рядок все одно
-   зрізаний. */
+   зрізаний (line-clamp:2). */
 .achievement-badge-title {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.4em;
   width: 100%;
   font-family: var(--font-heading);
   font-weight: 800;
@@ -13835,10 +13848,12 @@ button.cabinet-nav-item {
   color: var(--cabinet-muted);
 }
 .achievement-badge-caption {
-  margin-top: 2px;
+  display: block;
+  margin-top: 1px;
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 12px;
+  line-height: 1.25;
   white-space: nowrap;
   color: var(--cabinet-muted);
 }

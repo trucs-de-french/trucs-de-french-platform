@@ -142,12 +142,14 @@ export function AchievementBadge({
   return (
     <div className="achievement-badge">
       <AchievementBadgeCoin earned={achievement.earned} number={number} Icon={Icon} />
-      <span
-        className={`achievement-badge-title ${achievement.earned ? "" : "achievement-badge-title--locked"}`}
-        title={label}
-      >
-        {label}
-      </span>
+      <div className="achievement-badge-title-box">
+        <span
+          className={`achievement-badge-title ${achievement.earned ? "" : "achievement-badge-title--locked"}`}
+          title={label}
+        >
+          {label}
+        </span>
+      </div>
       {caption && <span className="achievement-badge-caption">{caption}</span>}
       {showCategoryTag && (
         <span className="achievement-badge-category-tag">{t(lang, CATEGORY_LABEL_KEY[achievement.category])}</span>
