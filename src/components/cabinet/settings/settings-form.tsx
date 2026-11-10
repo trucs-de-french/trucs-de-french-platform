@@ -109,14 +109,6 @@ export function SettingsForm({
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <AboutMeCard
-        lang={lang}
-        available={aboutMeAvailable}
-        initialGoals={initialLearningGoals}
-        initialLevel={initialFrenchLevel}
-        initialLevelSource={initialFrenchLevelSource}
-      />
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <SettingsProfileCard
           lang={lang}
@@ -128,6 +120,13 @@ export function SettingsForm({
           onNameChange={(name) => setState((s) => ({ ...s, name }))}
           onMascotChange={(mascot) => setState((s) => ({ ...s, mascot }))}
           onAvatarUrlChange={(avatarUrl) => setState((s) => ({ ...s, avatarUrl }))}
+        />
+        <AboutMeCard
+          lang={lang}
+          available={aboutMeAvailable}
+          initialGoals={initialLearningGoals}
+          initialLevel={initialFrenchLevel}
+          initialLevelSource={initialFrenchLevelSource}
         />
         <InterfaceCard lang={lang} initialIsDark={initialIsDark} />
         <LearningCard lang={lang} goal={weeklyGoal} exam={exam} showExamCard={showExamCard} />

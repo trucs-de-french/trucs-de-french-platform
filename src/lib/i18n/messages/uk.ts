@@ -658,6 +658,8 @@ export const uk = {
   "settings.photo.error.size": "Файл більший за 2 МБ",
   "settings.photo.error.upload": "Не вдалося завантажити фото. Спробуй ще раз",
   "settings.mascot.label": "або обери маскота",
+  "settings.mascot.showAll": "Показати всіх ({n})",
+  "settings.mascot.collapse": "Згорнути",
   "settings.name.label": "Ім'я",
   "settings.email.label": "Email",
   "settings.exam.badge": "лише для DELF",

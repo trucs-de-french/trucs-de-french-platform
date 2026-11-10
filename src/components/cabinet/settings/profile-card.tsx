@@ -124,6 +124,7 @@ export function SettingsProfileCard({
           {t(lang, "settings.mascot.label")}
         </p>
         <MascotPicker
+          lang={lang}
           selected={mascot}
           onSelect={(id) => {
             onMascotChange(id);

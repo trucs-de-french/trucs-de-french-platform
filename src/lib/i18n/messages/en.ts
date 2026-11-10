@@ -655,6 +655,8 @@ export const en: Record<MessageKey, string> = {
   "settings.photo.error.size": "File is larger than 2 MB",
   "settings.photo.error.upload": "Could not upload the photo. Try again.",
   "settings.mascot.label": "or pick a mascot",
+  "settings.mascot.showAll": "Show all ({n})",
+  "settings.mascot.collapse": "Collapse",
   "settings.name.label": "Name",
   "settings.email.label": "Email",
   "settings.exam.badge": "DELF only",

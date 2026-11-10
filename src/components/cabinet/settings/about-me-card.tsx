@@ -90,7 +90,7 @@ export function AboutMeCard({
   }
 
   return (
-    <div className="cabinet-card flex flex-col p-[32px_36px]">
+    <div className="cabinet-card flex flex-col p-[32px_36px] md:col-span-2">
       <CardTitle>{t(lang, "settings.section.aboutMe")}</CardTitle>
 
       <div className="mt-7">
