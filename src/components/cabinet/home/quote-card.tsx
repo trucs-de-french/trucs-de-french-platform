@@ -12,19 +12,36 @@ export function QuoteCard({ lang, quote }: { lang: UiLang; quote: Quote }) {
       <div className="flex flex-1 flex-col">
         <span
           className="font-body select-none text-[#d9b765]"
-          style={{ fontSize: 64, fontWeight: 700, opacity: 0.9, height: "auto", lineHeight: 0.65, marginTop: 16, marginBottom: 6 }}
+          style={{
+            fontSize: 64,
+            fontWeight: 700,
+            opacity: 0.9,
+            display: "block",
+            lineHeight: 0.6,
+            height: 28,
+            margin: 0,
+            marginTop: 16,
+            overflow: "visible",
+          }}
           aria-hidden="true"
         >
           “
         </span>
-        <div className="flex flex-col gap-2">
-          <p className="font-body text-[22px] font-semibold italic leading-[1.35] text-[var(--cabinet-ink)]">
-            {quote.fr}
+        <p
+          className="font-body text-[22px] font-semibold italic leading-[1.35] text-[var(--cabinet-ink)]"
+          style={{ marginTop: 6 }}
+        >
+          {quote.fr}
+        </p>
+        {translation && (
+          <p className="font-body text-[15px] text-[var(--cabinet-muted)]" style={{ marginTop: 16 }}>
+            {translation}
           </p>
-          {translation && <p className="font-body text-[15px] text-[var(--cabinet-muted)]">{translation}</p>}
-        </div>
+        )}
+        <p className="text-xs text-[var(--cabinet-muted)]" style={{ marginTop: 24 }}>
+          {t(lang, `home.quote.source.${quote.source}`)}
+        </p>
       </div>
-      <p className="mt-auto text-xs text-[var(--cabinet-muted)]">{t(lang, `home.quote.source.${quote.source}`)}</p>
     </div>
   );
 }
