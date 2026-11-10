@@ -12053,7 +12053,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   border-radius: 26px;
   padding: 22px 26px;
   margin-bottom: -8px;
@@ -12071,8 +12071,51 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: var(--cabinet-ink);
   overflow-wrap: break-word;
 }
-.cabinet-hero-streak-row {
-  margin-top: 12px;
+/* Week-dots (variant C) — замінює колишній окремий .cabinet-streak-chip:
+   тут один ряд, flex-wrap дозволяє тексту стріку з'їхати на свій рядок
+   під кружками, якщо не влазить поруч (мобільний), без горизонтального
+   переповнення. */
+.cabinet-hero-week-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+  gap: 6px;
+}
+.cabinet-week-dots {
+  display: flex;
+  gap: 6px;
+}
+.cabinet-week-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 10.5px;
+  color: var(--cabinet-muted);
+  background: var(--cabinet-track-strong);
+}
+.cabinet-week-dot--active {
+  color: #1a1640;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+}
+/* "Сьогодні" — внутрішнє кільце кольором картки (відділяє від фону
+   героя/активного градієнта), зовнішнє — золоте, незалежно від того,
+   активний сьогоднішній день чи ні. */
+.cabinet-week-dot--today {
+  box-shadow: 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
+}
+.cabinet-week-streak-text {
+  margin-left: 10px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--cabinet-ink);
+  white-space: nowrap;
 }
 .cabinet-hero-side {
   display: flex;
@@ -12115,6 +12158,10 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
     width: 64px !important;
     height: 64px !important;
     font-size: 28px !important;
+  }
+  .cabinet-week-dot {
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -13381,26 +13428,6 @@ button.cabinet-nav-item {
 }
 .dark .settings-account-btn--danger:focus-visible {
   outline-color: #e2a49c;
-}
-
-/* Home: чип стріку в підзаголовку привітання (page.tsx) — переноситься на
-   новий рядок під підзаголовком на мобільному (flex-wrap батьківського
-   контейнера), не окремий колір теми. */
-.cabinet-streak-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 999px;
-  padding: 4px 11px;
-  font-family: var(--font-heading);
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #2f2c6b;
-  background: #ece9fb;
-}
-.dark .cabinet-streak-chip {
-  color: #f3d98b;
-  background: rgba(217, 183, 101, 0.16);
 }
 
 /* Home: чип "Скоро" над disabled-кнопкою швидкої дії без маршруту

@@ -400,7 +400,7 @@ export const fr: Record<MessageKey, string> = {
   "home.goal.change": "Modifier",
   "home.goal.remaining": "Encore {n} {unit} pour atteindre l'objectif",
   "home.goal.complete": "Objectif de la semaine atteint",
-  "home.streakChip": "{n} jours de suite",
+  "home.streakChip": "{n} {unit} d'affilée",
   "home.achievements.title": "Derniers succès",
   "home.achievements.all": "Tous les succès",
   "home.achievements.empty": "Les premiers succès apparaîtront après les premiers exercices",

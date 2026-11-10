@@ -58,6 +58,7 @@ export default async function CabinetHomePage() {
         avatarUrl={home.avatarUrl}
         avatarMascot={home.avatarMascot}
         streakDays={home.streakDays}
+        weekActiveDays={home.weekActiveDays}
         level={home.continueTarget?.productLevel ?? null}
       />
 

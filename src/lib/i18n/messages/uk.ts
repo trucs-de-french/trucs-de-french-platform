@@ -401,7 +401,7 @@ export const uk = {
   "home.goal.change": "Змінити",
   "home.goal.remaining": "Ще {n} {unit} до цілі тижня",
   "home.goal.complete": "Ціль тижня виконано",
-  "home.streakChip": "{n} днів поспіль",
+  "home.streakChip": "{n} {unit} поспіль",
   "home.achievements.title": "Останні досягнення",
   "home.achievements.all": "Усі досягнення",
   "home.achievements.empty": "Перші досягнення зʼявляться після перших вправ",

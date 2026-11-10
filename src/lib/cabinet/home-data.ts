@@ -196,6 +196,7 @@ export type CabinetHomeData = {
   pointsByDay: PointsByDay[];
   streakDays: number;
   activeDays: string[];
+  weekActiveDays: string[];
   weeklyGoal: { done: number; goal: number };
   redoList: RedoItem[];
   redoCount: number;
@@ -213,6 +214,7 @@ const EMPTY_HOME_DATA: CabinetHomeData = {
   pointsByDay: [],
   streakDays: 0,
   activeDays: [],
+  weekActiveDays: [],
   weeklyGoal: { done: 0, goal: 3 },
   redoList: [],
   redoCount: 0,
@@ -516,6 +518,10 @@ export async function getCabinetHomeData(
   const streakDays = computeStreakDays(activityDates, todayStr);
   const currentMonthPrefix = todayStr.slice(0, 7);
   const activeDays = [...activityDates].filter((d) => d.startsWith(currentMonthPrefix)).sort();
+  // week-dots (greeting-hero.tsx) — дні ЦЬОГО тижня (Пн..Нд) з активністю,
+  // той самий activityDates, що й streakDays вище (не окремий запит).
+  const weekEndStr = addDays(weekStartStr, 6);
+  const weekActiveDays = [...activityDates].filter((d) => d >= weekStartStr && d <= weekEndStr).sort();
 
   // weeklyGoal.done — унікальні scene_id з активністю цього тижня.
   const sceneIdsThisWeek = new Set<string>();
@@ -579,6 +585,7 @@ export async function getCabinetHomeData(
     pointsByDay,
     streakDays,
     activeDays,
+    weekActiveDays,
     weeklyGoal,
     redoList,
     redoCount,
