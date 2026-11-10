@@ -193,20 +193,153 @@ function computeThresholdTimestamps(
   return result;
 }
 
-function buildStates(
+// earnedAt-мітки для кожного def у списку — за його threshold у timeline
+// (один timeline, кілька порогів усередині тієї самої категорії, включно
+// з Колекцією II — вищі пороги тієї самої метрики).
+function earnedAtByIdFromTimeline(
   defs: AchievementDef[],
-  current: number,
-  earnedAtByThreshold: Map<number, string>
-): AchievementState[] {
-  return defs.map((def) => ({
-    ...def,
-    earned: current >= def.threshold,
-    earnedAt: earnedAtByThreshold.get(def.threshold) ?? null,
-    current: Math.min(current, def.threshold),
-  }));
+  timeline: { value: number; at: string }[]
+): Partial<Record<string, string | null>> {
+  const thresholds = defs.map((d) => d.threshold);
+  const byThreshold = computeThresholdTimestamps(thresholds, timeline);
+  const result: Partial<Record<string, string | null>> = {};
+  for (const def of defs) result[def.id] = byThreshold.get(def.threshold) ?? null;
+  return result;
 }
 
-export type AchievementsResult = { items: AchievementState[]; showExamCard: boolean };
+// Прості цифри/прапорці студента — без дат чи таймлайнів. getAchievements
+// рахує їх з повної історії activity_log (earnedAt при цьому йде ОКРЕМО,
+// через earnedAtById, бо pure-функція нижче не має доступу до дат подій);
+// адмін-симулятор (симулятор на фронтенді) підставляє сюди довільні
+// значення, не торкаючись БД.
+export type BadgeStats = {
+  scenesCompleted: number;
+  filmsCompleted: number;
+  // streakDays — рекордний (ever-max) пробіг, визначає earned; currentStreakDays
+  // — пробіг "сьогодні" для прогресу незавершеного бейджа (якщо не задано,
+  // дорівнює streakDays — так симулятору достатньо одного поля).
+  streakDays: number;
+  currentStreakDays?: number;
+  totalPoints: number;
+  exercisesDone: number;
+  mistakesFixed: number;
+  weeksGoalDone: number;
+  // examFirst/examDelf25/examDelf100 — усі три пороги тієї самої метрики.
+  delfExercisesDone: number;
+  examDateAdded: boolean;
+};
+
+// Чиста функція каталог+stats → AchievementState[] — ОДНЕ джерело правди
+// для реальної сторінки (getAchievements нижче, earnedAtById з реальних
+// дат) і для адмін-симулятора (без earnedAtById — дати не підставляються,
+// вони не потрібні для перевірки розблокування/банера колекцій).
+export function computeBadges(
+  stats: BadgeStats,
+  showExamCard: boolean,
+  earnedAtById: Partial<Record<string, string | null>> = {}
+): AchievementState[] {
+  const currentStreakDays = stats.currentStreakDays ?? stats.streakDays;
+  const valueByCategory: Record<AchievementCategory, number> = {
+    scenes: stats.scenesCompleted,
+    films: stats.filmsCompleted,
+    streak: stats.streakDays,
+    points: stats.totalPoints,
+    exercises: stats.exercisesDone,
+    mistakes: stats.mistakesFixed,
+    weeklyGoal: stats.weeksGoalDone,
+    exam: stats.delfExercisesDone,
+    dictionary: 0,
+    collection: 0,
+  };
+
+  const items: AchievementState[] = [];
+  for (const def of ACHIEVEMENTS_CATALOG) {
+    if (def.category === "collection") continue;
+    if (def.category === "dictionary") {
+      items.push({ ...def, earned: false, earnedAt: null, current: 0 });
+      continue;
+    }
+    if (def.id === "examDateAdded") {
+      items.push({ ...def, earned: stats.examDateAdded, earnedAt: null, current: stats.examDateAdded ? 1 : 0 });
+      continue;
+    }
+    const value = valueByCategory[def.category];
+    const earned = value >= def.threshold;
+    const current = def.category === "streak" ? Math.min(currentStreakDays, def.threshold) : Math.min(value, def.threshold);
+    items.push({ ...def, earned, earnedAt: earned ? earnedAtById[def.id] ?? null : null, current });
+  }
+
+  // Фінальні бейджі колекцій — рахуються ПІСЛЯ всіх інших items (бо
+  // потребують collectionProgress() по вже побудованому списку). current/
+  // threshold тут перезаписуються на earned/total "інших" бейджів цієї
+  // колекції — так caption заблокованого бейджа ("{current} з {target}")
+  // показує "{earned} з {total}" без окремого рендер-кейсу.
+  for (const def of ACHIEVEMENTS_CATALOG) {
+    if (def.category !== "collection") continue;
+    const progress = collectionProgress(items, showExamCard, def.collection);
+    const earned = progress.total > 0 && progress.earned === progress.total;
+    let earnedAt: string | null = null;
+    if (earned) {
+      for (const member of items) {
+        if (member.collection !== def.collection || member.isCollectionFinal) continue;
+        if (member.earnedAt && (!earnedAt || member.earnedAt > earnedAt)) earnedAt = member.earnedAt;
+      }
+    }
+    items.push({ ...def, threshold: progress.total, earned, earnedAt, current: progress.earned });
+  }
+
+  return items;
+}
+
+export type AchievementsResult = { items: AchievementState[]; showExamCard: boolean; stats: BadgeStats };
+
+// Фолбек на випадок падіння getAchievements (сторінки catch'ають помилку
+// окремо) — нейтральний stats-об'єкт для адмін-симулятора, щоб типи
+// catch-фолбеків не розходились із реальним результатом.
+export const EMPTY_BADGE_STATS: BadgeStats = {
+  scenesCompleted: 0,
+  filmsCompleted: 0,
+  streakDays: 0,
+  currentStreakDays: 0,
+  totalPoints: 0,
+  exercisesDone: 0,
+  mistakesFixed: 0,
+  weeksGoalDone: 0,
+  delfExercisesDone: 0,
+  examDateAdded: false,
+};
+
+// Найвищий порог категорії СЕРЕД записів з collection<=collection — для
+// адмін-симулятора ("Зібрати всю Колекцію N"): значення, що задовольняє
+// ВСІ пороги цієї категорії до вказаної колекції включно (монотонно —
+// пороги Колекції II завжди вищі за Колекції I в тій самій категорії).
+function maxThresholdUpTo(category: AchievementCategory, collection: number): number {
+  let max = 0;
+  for (const def of ACHIEVEMENTS_CATALOG) {
+    if (def.category !== category || def.isCollectionFinal) continue;
+    if (def.collection <= collection && def.threshold > max) max = def.threshold;
+  }
+  return max;
+}
+
+// Stats, що "закриває" колекцію N (і всі попередні — вищі пороги тієї ж
+// категорії домінують над нижчими) — лише для адмін-симулятора, ніколи
+// не торкається БД.
+export function collectionPresetStats(collection: number): BadgeStats {
+  const streak = maxThresholdUpTo("streak", collection);
+  return {
+    scenesCompleted: maxThresholdUpTo("scenes", collection),
+    filmsCompleted: maxThresholdUpTo("films", collection),
+    streakDays: streak,
+    currentStreakDays: streak,
+    totalPoints: maxThresholdUpTo("points", collection),
+    exercisesDone: maxThresholdUpTo("exercises", collection),
+    mistakesFixed: maxThresholdUpTo("mistakes", collection),
+    weeksGoalDone: maxThresholdUpTo("weeklyGoal", collection),
+    delfExercisesDone: maxThresholdUpTo("exam", collection),
+    examDateAdded: true,
+  };
+}
 
 export async function getAchievements(supabase: SupabaseClient, userId: string): Promise<AchievementsResult> {
   const defsByCategory = new Map<AchievementCategory, AchievementDef[]>();
@@ -447,101 +580,56 @@ export async function getAchievements(supabase: SupabaseClient, userId: string):
   }
   qualifyingWeekTimes.sort();
 
-  const items: AchievementState[] = [];
+  // Прості цифри — те, що реально рахувалось і раніше (сума/лічильники),
+  // лише тепер зведені в один stats-об'єкт для чистої computeBadges().
+  const everMax = streakTimeline.reduce((m, p) => Math.max(m, p.value), 0);
+  const stats: BadgeStats = {
+    scenesCompleted: sceneCompletionTimes.length,
+    filmsCompleted: filmCompletionTimes.length,
+    streakDays: everMax,
+    currentStreakDays: currentStreak,
+    totalPoints: Math.round(cumulativePoints * 10) / 10,
+    exercisesDone: firstAttemptByTask.size,
+    mistakesFixed: mistakeCorrectionTimes.length,
+    weeksGoalDone: qualifyingWeekTimes.length,
+    delfExercisesDone: delfExercisesDone,
+    examDateAdded: !!exam,
+  };
 
-  function pushCountCategory(category: AchievementCategory, sortedTimes: string[]) {
-    const defs = defsByCategory.get(category) ?? [];
-    const timeline = sortedTimes.map((at, i) => ({ value: i + 1, at }));
-    const current = sortedTimes.length;
-    const thresholds = defs.map((d) => d.threshold);
-    items.push(...buildStates(defs, current, computeThresholdTimestamps(thresholds, timeline)));
-  }
+  // earnedAt — ОКРЕМО від stats (pure computeBadges() не бачить дат подій,
+  // лише пороги): один timeline на категорію, той самий, що рахував
+  // sortedTimes/pointsTimeline/streakTimeline/delfTimeline раніше.
+  const earnedAtById: Partial<Record<string, string | null>> = {
+    ...earnedAtByIdFromTimeline(
+      defsByCategory.get("scenes") ?? [],
+      sceneCompletionTimes.map((at, i) => ({ value: i + 1, at }))
+    ),
+    ...earnedAtByIdFromTimeline(
+      defsByCategory.get("films") ?? [],
+      filmCompletionTimes.map((at, i) => ({ value: i + 1, at }))
+    ),
+    ...earnedAtByIdFromTimeline(
+      defsByCategory.get("exercises") ?? [],
+      [...firstAttemptByTask.values()].sort().map((at, i) => ({ value: i + 1, at }))
+    ),
+    ...earnedAtByIdFromTimeline(
+      defsByCategory.get("mistakes") ?? [],
+      mistakeCorrectionTimes.map((at, i) => ({ value: i + 1, at }))
+    ),
+    ...earnedAtByIdFromTimeline(
+      defsByCategory.get("weeklyGoal") ?? [],
+      qualifyingWeekTimes.map((at, i) => ({ value: i + 1, at }))
+    ),
+    ...earnedAtByIdFromTimeline(defsByCategory.get("points") ?? [], pointsTimeline),
+    ...earnedAtByIdFromTimeline(defsByCategory.get("streak") ?? [], streakTimeline),
+    ...earnedAtByIdFromTimeline(
+      (defsByCategory.get("exam") ?? []).filter((d) => d.id !== "examDateAdded"),
+      delfTimeline
+    ),
+  };
 
-  pushCountCategory("scenes", sceneCompletionTimes);
-  pushCountCategory("films", filmCompletionTimes);
-  pushCountCategory("exercises", [...firstAttemptByTask.values()].sort());
-  pushCountCategory("mistakes", mistakeCorrectionTimes);
-  pushCountCategory("weeklyGoal", qualifyingWeekTimes);
-
-  // points — кумулятивна сума, не "count".
-  {
-    const defs = defsByCategory.get("points") ?? [];
-    const thresholds = defs.map((d) => d.threshold);
-    items.push(...buildStates(defs, Math.round(cumulativePoints * 10) / 10, computeThresholdTimestamps(thresholds, pointsTimeline)));
-  }
-
-  // streak — earned/earnedAt за ВЕСЬ час (timeline), current — лише
-  // сьогоднішній пробіг (окремо від buildStates, бо дві різні "поточні
-  // величини" для earned-перевірки й для прогрес-бару).
-  {
-    const defs = defsByCategory.get("streak") ?? [];
-    const thresholds = defs.map((d) => d.threshold);
-    const everMax = streakTimeline.reduce((m, p) => Math.max(m, p.value), 0);
-    const earnedAtByThreshold = computeThresholdTimestamps(thresholds, streakTimeline);
-    for (const def of defs) {
-      items.push({
-        ...def,
-        earned: everMax >= def.threshold,
-        earnedAt: earnedAtByThreshold.get(def.threshold) ?? null,
-        current: Math.min(currentStreak, def.threshold),
-      });
-    }
-  }
-
-  // exam — examOnly, 4 різних метрики в одній категорії.
-  {
-    const examDefs = defsByCategory.get("exam") ?? [];
-    for (const def of examDefs) {
-      if (def.id === "examFirst" || def.id === "examDelf25" || def.id === "examDelf100") {
-        const earnedAtByThreshold = computeThresholdTimestamps([def.threshold], delfTimeline);
-        items.push({
-          ...def,
-          earned: delfExercisesDone >= def.threshold,
-          earnedAt: earnedAtByThreshold.get(def.threshold) ?? null,
-          current: Math.min(delfExercisesDone, def.threshold),
-        });
-      } else {
-        // examDateAdded — немає часової мітки "коли збережено", лише факт.
-        items.push({
-          ...def,
-          earned: !!exam,
-          earnedAt: null,
-          current: exam ? 1 : 0,
-        });
-      }
-    }
-  }
-
-  // dictionary — available:false, нема джерела даних: завжди locked.
-  {
-    const dictDefs = defsByCategory.get("dictionary") ?? [];
-    for (const def of dictDefs) {
-      items.push({ ...def, earned: false, earnedAt: null, current: 0 });
-    }
-  }
-
-  // Фінальні бейджі колекцій — рахуються ПІСЛЯ всіх інших items (бо
-  // потребують collectionProgress() по вже побудованому списку). current/
-  // threshold тут перезаписуються на earned/total "інших" бейджів цієї
-  // колекції — так caption заблокованого бейджа ("{current} з {target}")
-  // показує "{earned} з {total}" без окремого рендер-кейсу.
-  {
-    const collectionDefs = defsByCategory.get("collection") ?? [];
-    for (const def of collectionDefs) {
-      const progress = collectionProgress(items, showExamCard, def.collection);
-      const earned = progress.total > 0 && progress.earned === progress.total;
-      let earnedAt: string | null = null;
-      if (earned) {
-        for (const member of items) {
-          if (member.collection !== def.collection || member.isCollectionFinal) continue;
-          if (member.earnedAt && (!earnedAt || member.earnedAt > earnedAt)) earnedAt = member.earnedAt;
-        }
-      }
-      items.push({ ...def, threshold: progress.total, earned, earnedAt, current: progress.earned });
-    }
-  }
-
-  return { items, showExamCard };
+  const items = computeBadges(stats, showExamCard, earnedAtById);
+  return { items, showExamCard, stats };
 }
 
 // Для Home: завжди 5 слотів (якщо каталог має стільки доступних items) —

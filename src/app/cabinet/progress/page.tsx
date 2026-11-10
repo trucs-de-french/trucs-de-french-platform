@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
 import { getCabinetProgressData } from "@/lib/cabinet/progress-data";
-import { getAchievements, type AchievementState } from "@/lib/cabinet/achievements";
+import { getAchievements, EMPTY_BADGE_STATS, type AchievementsResult } from "@/lib/cabinet/achievements";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { StatTiles } from "@/components/cabinet/home/stat-tiles";
@@ -30,9 +30,9 @@ export default async function CabinetProgressPage() {
   const lang = normalizeUiLang(profile?.ui_lang);
   const [data, achievements] = await Promise.all([
     getCabinetProgressData(supabase, user.id),
-    getAchievements(supabase, user.id).catch((err): { items: AchievementState[]; showExamCard: boolean } => {
+    getAchievements(supabase, user.id).catch((err): AchievementsResult => {
       console.error("getAchievements failed on Progress", err);
-      return { items: [], showExamCard: false };
+      return { items: [], showExamCard: false, stats: EMPTY_BADGE_STATS };
     }),
   ]);
   const hasDelfSkills = data.delfSkills !== null;

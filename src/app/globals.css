@@ -12302,6 +12302,124 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* "адмін"/"admin" тег на Колекції II, коли адмін дивиться її без
+   завершеної Колекції I (full-achievements.tsx, collectionChips.adminOnly). */
+.achievements-admin-tag {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1.5px solid #d9b765;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #d9b765;
+}
+
+/* Смужка "Режим перегляду: показано умовні дані" (admin-simulator активний)
+   — вгорі картки, над банером/перемикачем. */
+.achievements-sim-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 1.5px solid #d9b765;
+  background: rgba(217, 183, 101, 0.1);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--cabinet-ink);
+}
+
+/* Адмін-симулятор (admin-simulator.tsx) — gold-пунктирна рамка, щоб було
+   видно, що це інструмент, а не звичайний контент картки. <details>
+   нативно дає collapse/expand без зайвого JS-стейту. */
+.achievements-admin-panel {
+  margin-top: 20px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1.5px dashed #d9b765;
+}
+.achievements-admin-panel-title {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--cabinet-ink);
+}
+.achievements-admin-notice {
+  margin: 10px 0 14px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.achievements-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  margin-bottom: 14px;
+}
+.achievements-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--cabinet-ink);
+}
+.achievements-admin-input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.achievements-admin-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--cabinet-ink);
+}
+.achievements-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.achievements-admin-pill-outline {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  background: transparent;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--cabinet-ink);
+}
+.achievements-admin-pill-outline:hover {
+  border-color: #d9b765;
+}
+@media (max-width: 639px) {
+  .achievements-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .achievements-chip-row {
   display: flex;
   flex-wrap: wrap;
