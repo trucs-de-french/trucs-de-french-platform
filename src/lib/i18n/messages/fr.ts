@@ -506,6 +506,7 @@ export const fr: Record<MessageKey, string> = {
   "progress.scenes.empty": "Pas encore de résultats. Terminez votre première scène.",
   "progress.scenes.redo": "Refaire",
   "progress.scenes.view": "Voir",
+  "progress.scenes.showMore": "Voir plus",
   "progress.achievements.title": "Réussites",
   "progress.achievements.firstScene": "Première scène",
   "progress.achievements.streak7": "7 jours d'affilée",
@@ -515,6 +516,10 @@ export const fr: Record<MessageKey, string> = {
   "progress.delf.ce": "Compréhension écrite",
   "progress.delf.pe": "Production écrite",
   "progress.delf.po": "Production orale",
+  "progress.delf.co.name": "Compréhension orale",
+  "progress.delf.ce.name": "Compréhension écrite",
+  "progress.delf.pe.name": "Production écrite",
+  "progress.delf.po.name": "Production orale",
 
   "library.subtitle": "Tous les cours auxquels tu es inscrite, avec ta progression",
   "library.tab.all": "Tout",

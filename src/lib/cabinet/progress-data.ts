@@ -27,6 +27,8 @@ type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 export type SceneResultRow = {
   sceneId: string;
   productId: string;
+  productTitle: string;
+  productCoverUrl: string | null;
   title: string;
   pointsEarned: number;
   pointsPossible: number;
@@ -112,6 +114,7 @@ export async function getCabinetProgressData(
     }
   }
 
+  const productById = new Map(enrolledProducts.map((p) => [p.id, p]));
   const progressByTaskId = new Map(progressRows.map((p) => [p.task_id, p]));
   const tasksByScene = new Map<string, TaskRow[]>();
   for (const task of tasks) {
@@ -147,9 +150,12 @@ export async function getCabinetProgressData(
     }
     if (pointsPossible <= 0) continue;
     const percent = Math.round((100 * pointsEarned) / pointsPossible);
+    const product = productById.get(scene.product_id);
     sceneResults.push({
       sceneId: scene.id,
       productId: scene.product_id,
+      productTitle: product?.title ?? "",
+      productCoverUrl: product?.cover_image_url ?? null,
       title: scene.title,
       pointsEarned: Math.round(pointsEarned * 10) / 10,
       pointsPossible: Math.round(pointsPossible * 10) / 10,
@@ -295,27 +301,25 @@ export async function getCabinetProgressData(
           bySection.set(section, bucket);
         }
 
-        const rows: DelfSkillRow[] = EXAM_SECTIONS.filter((section) => {
+        // Усі 4 секції завжди показуються, навіть без жодної спроби (0%) —
+        // раніше секції без bucket.possible > 0 пропускались, тож студент
+        // бачив лише CO, якщо ще не починав CE/PE/PO.
+        const rows: DelfSkillRow[] = EXAM_SECTIONS.map((section) => {
           const bucket = bySection.get(section);
-          return bucket && bucket.possible > 0;
-        }).map((section) => {
-          const bucket = bySection.get(section)!;
           return {
             section,
             label: EXAM_SECTION_LABELS[section],
-            pointsEarned: Math.round(bucket.earned * 10) / 10,
-            pointsPossible: Math.round(bucket.possible * 10) / 10,
-            percent: Math.round((100 * bucket.earned) / bucket.possible),
+            pointsEarned: Math.round((bucket?.earned ?? 0) * 10) / 10,
+            pointsPossible: Math.round((bucket?.possible ?? 0) * 10) / 10,
+            percent: bucket && bucket.possible > 0 ? Math.round((100 * bucket.earned) / bucket.possible) : 0,
           };
         });
 
-        if (rows.length > 0) {
-          delfSkills = {
-            level: chosenProduct.levels[0] ?? goalLevel,
-            productTitle: chosenProduct.title,
-            rows,
-          };
-        }
+        delfSkills = {
+          level: chosenProduct.levels[0] ?? goalLevel,
+          productTitle: chosenProduct.title,
+          rows,
+        };
       }
     }
   }

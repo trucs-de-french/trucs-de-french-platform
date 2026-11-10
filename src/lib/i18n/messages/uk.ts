@@ -507,6 +507,7 @@ export const uk = {
   "progress.scenes.empty": "Поки що немає результатів. Пройди першу сцену.",
   "progress.scenes.redo": "Повторити",
   "progress.scenes.view": "Переглянути",
+  "progress.scenes.showMore": "Показати ще",
   "progress.achievements.title": "Досягнення",
   "progress.achievements.firstScene": "Перша сцена",
   "progress.achievements.streak7": "7 днів поспіль",
@@ -516,6 +517,10 @@ export const uk = {
   "progress.delf.ce": "Compréhension écrite",
   "progress.delf.pe": "Production écrite",
   "progress.delf.po": "Production orale",
+  "progress.delf.co.name": "Розуміння на слух",
+  "progress.delf.ce.name": "Читання",
+  "progress.delf.pe.name": "Письмо",
+  "progress.delf.po.name": "Говоріння",
 
   "library.subtitle": "Усі курси, на які ти записана, з твоїм прогресом",
   "library.tab.all": "Усе",

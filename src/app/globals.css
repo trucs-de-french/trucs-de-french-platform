@@ -12157,40 +12157,158 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: var(--cabinet-muted);
 }
 
-/* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
-   Рядок тепер лише [код][сегменти][відсоток] (повна назва прибрана з
-   видимого UI — задача "DELF skills show codes only"), тож сегменти
-   вільно розтягуються на всю доступну ширину рядка (flex:1;min-width:0)
-   замість фіксованих 167px — батько (.cabinet-delf-row, flex-рядок із
-   реальною шириною картки) більше НЕ auto-width, тож minmax(0,1fr)-
-   колонки мають від чого рахувати відсоткову ширину (попередній баг —
-   grid-cols-10 на auto-width flex-дитині з лише max-width — тут більше
-   не відтворюється, бо колонки резолвляться від flex:1 на реальній
-   ширині, а не від контенту порожніх <span>). Вузького (<420px) варіанту
-   більше не потрібно — нема другого рядка з назвою, який міг би не
-   влізти. */
+/* Scene results list (progress/scene-results.tsx) — variant 1: list rows
+   with a film thumbnail (real cover or a gradient+icon fallback), title/
+   meta, points, progress ring and a "Повторити"/"Переглянути" link. */
+.cabinet-scene-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-top: 1.5px solid var(--cabinet-line);
+}
+.cabinet-scene-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.cabinet-scene-thumb {
+  flex: none;
+  width: 64px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  box-shadow: 0 3px 8px rgba(47, 44, 107, 0.18);
+}
+.cabinet-scene-thumb-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* У темній темі справжнє фото зливалось із карткою — додаємо кант і
+   тінь і реальним обкладинкам, і фолбек-градієнту. */
+.dark .cabinet-scene-thumb {
+  border: 1.5px solid rgba(243, 217, 139, 0.28);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.dark .cabinet-scene-thumb-fallback {
+  background: linear-gradient(135deg, #3a42a8, #232a7a);
+}
+.cabinet-scene-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--cabinet-ink);
+}
+.cabinet-scene-meta {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--cabinet-muted);
+}
+.cabinet-scene-score {
+  flex: none;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--cabinet-muted);
+}
+.cabinet-scene-link {
+  flex: none;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  color: var(--cabinet-link);
+}
+.cabinet-scene-more {
+  align-self: center;
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-link);
+}
+
+/* DELF-навички (progress/delf-skills-card.tsx) — усі 4 секції завжди
+   показані (CO/CE/PE/PO), кожна з іменем (локалізованим + французьким)
+   і 10-сегментною шкалою. */
+.cabinet-delf-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1.5px solid var(--cabinet-line);
+}
+.cabinet-delf-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.cabinet-delf-chip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 34px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 14px;
+  color: #1a1640;
+}
+.cabinet-delf-name {
+  flex: none;
+  width: 150px;
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .cabinet-delf-name {
+    width: 110px;
+  }
+}
+.cabinet-delf-name-main {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.cabinet-delf-name-fr {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--cabinet-muted);
+}
 .cabinet-delf-segments {
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 3px;
+  display: flex;
   flex: 1;
   min-width: 0;
+  gap: 4px;
 }
 .cabinet-delf-segment {
   display: block;
-  height: 10px;
-  border-radius: 3px;
-  background: var(--cabinet-gold);
+  flex: 1;
+  height: 14px;
+  border-radius: 5px;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
 }
-/* Порожній сегмент — var(--cabinet-track) у світлій темі дорівнює
-   --cabinet-panel-bg (#fdf8ea), майже невидимий на білій картці
-   (--cabinet-card-bg): окремий трохи темніший кремовий лише для цього
-   елемента, не змінюючи сам --cabinet-track глобально. */
 .cabinet-delf-segment--empty {
-  background: #eadfbd;
+  background: #ece3c4;
 }
 .dark .cabinet-delf-segment--empty {
-  background: var(--cabinet-track);
+  background: #262e78;
+}
+.cabinet-delf-percent {
+  flex: none;
+  width: 40px;
+  text-align: right;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--cabinet-ink);
 }
 
 /* Хром (sidebar/frame/tab bar) мобайл-перший: базові правила — мобільний

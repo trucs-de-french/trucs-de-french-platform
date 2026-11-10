@@ -504,6 +504,7 @@ export const en: Record<MessageKey, string> = {
   "progress.scenes.empty": "No results yet. Finish your first scene.",
   "progress.scenes.redo": "Redo",
   "progress.scenes.view": "View",
+  "progress.scenes.showMore": "Show more",
   "progress.achievements.title": "Achievements",
   "progress.achievements.firstScene": "First scene",
   "progress.achievements.streak7": "7-day streak",
@@ -513,6 +514,10 @@ export const en: Record<MessageKey, string> = {
   "progress.delf.ce": "Compréhension écrite",
   "progress.delf.pe": "Production écrite",
   "progress.delf.po": "Production orale",
+  "progress.delf.co.name": "Listening",
+  "progress.delf.ce.name": "Reading",
+  "progress.delf.pe.name": "Writing",
+  "progress.delf.po.name": "Speaking",
 
   "library.subtitle": "All the courses you're enrolled in, with your progress",
   "library.tab.all": "All",

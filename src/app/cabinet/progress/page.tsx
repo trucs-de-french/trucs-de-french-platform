@@ -56,7 +56,7 @@ export default async function CabinetProgressPage() {
       <div
         className={
           hasDelfSkills
-            ? "grid grid-cols-1 items-stretch gap-[18px] min-[900px]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+            ? "grid grid-cols-1 items-stretch gap-[18px] min-[900px]:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]"
             : ""
         }
       >
