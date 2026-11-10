@@ -93,11 +93,14 @@ export function MascotPicker({
   // рахують КІЛЬКІСТЬ колонок однаково (ResizeObserver стежить саме за
   // шириною цього гріда) і вирівняні по лівому краю, без розтягування
   // останньої неповної колонки.
-  const gridStyle = { gridTemplateColumns: `repeat(auto-fill, ${OPTION_SIZE}px)` };
+  // gridAutoRows fixe рядки на 64px (не auto за вмістом) — без цього
+  // align-items:stretch (дефолт grid) розтягнув би кнопку-опцію по
+  // висоті клітинки, знову роблячи коло овалом.
+  const gridStyle = { gridTemplateColumns: `repeat(auto-fill, ${OPTION_SIZE}px)`, gridAutoRows: `${OPTION_SIZE}px` };
 
   return (
     <div className="flex w-full flex-col items-start gap-2">
-      <div ref={gridRef} className="grid w-full justify-start gap-3" style={gridStyle}>
+      <div ref={gridRef} className="grid w-full items-start justify-start gap-3" style={gridStyle}>
         {firstRow.map((m) => renderOption(m, false))}
       </div>
 
@@ -107,7 +110,7 @@ export function MascotPicker({
           className={`settings-mascot-extra w-full ${expanded ? "settings-mascot-extra--expanded" : ""}`}
           inert={expanded ? undefined : true}
         >
-          <div className="settings-mascot-extra-inner grid w-full justify-start gap-3" style={gridStyle}>
+          <div className="settings-mascot-extra-inner grid w-full items-start justify-start gap-3" style={gridStyle}>
             {rest.map((m) => renderOption(m, true))}
           </div>
         </div>

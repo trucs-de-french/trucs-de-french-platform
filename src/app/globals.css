@@ -13605,6 +13605,7 @@ button.cabinet-nav-item {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   font-family: var(--font-heading);
   font-weight: 900;
@@ -13617,7 +13618,11 @@ button.cabinet-nav-item {
   border-color: #1a1640;
 }
 .profile-avatar-img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 /* Маскот вибраний, але картинка ще не завантажилась (файл не додано) —
    нейтральний сірий кружок із номером маскота замість indigo-градієнта
@@ -15225,13 +15230,27 @@ button.cabinet-nav-item {
   }
 }
 
-/* Кругла опція маскота (settings/mascot-picker.tsx) — рамка-кільце йде
-   через box-shadow (на кнопці, не на самому ProfileAvatar), тому відступ
-   .settings-mascot-option (padding) лишає йому місце зовні картинки. */
+/* Кругла опція маскота (settings/mascot-picker.tsx) — фіксовані 64x64,
+   box-sizing:border-box і padding:0 так, щоб кнопка НІКОЛИ не стала
+   овалом: раніше display:inline-flex без явних width/height/aspect-
+   ratio давав кнопці розмір за вмістом, а <img> усередині — inline за
+   замовчуванням, з "хвостиком" під базовою лінією (baseline) — звідси й
+   овал (трохи вищий, ніж ширший). Кільце обраного тепер box-shadow
+   двома шарами: перший — колір картки (імітує відступ без зміни боксу),
+   другий — сам індиго/gold ring; жодного border/padding, що міг би
+   зробити обраний елемент більшим або не-круглим. */
 .settings-mascot-option {
-  display: inline-flex;
+  display: block;
+  width: 64px;
+  height: 64px;
+  aspect-ratio: 1 / 1;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
   border-radius: 50%;
-  padding: 3px;
+  overflow: hidden;
+  line-height: 0;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -15244,13 +15263,11 @@ button.cabinet-nav-item {
   outline: 2px solid var(--cabinet-gold);
   outline-offset: 2px;
 }
-/* Кільце обраного — indigo у світлій темі, gold у темній (не inline
-   box-shadow: інакше колір не стежить за темою). */
 .settings-mascot-option--selected {
-  box-shadow: 0 0 0 2.5px #4b46da, 0 0 14px 2px rgba(75, 70, 218, 0.5);
+  box-shadow: 0 0 0 3px var(--cabinet-card-bg), 0 0 0 5px #4b46da;
 }
 .dark .settings-mascot-option--selected {
-  box-shadow: 0 0 0 2.5px #d9b765, 0 0 14px 2px rgba(217, 183, 101, 0.5);
+  box-shadow: 0 0 0 3px var(--cabinet-card-bg), 0 0 0 5px #d9b765;
 }
 @media (prefers-reduced-motion: reduce) {
   .settings-mascot-option {
