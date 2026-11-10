@@ -12294,6 +12294,33 @@ button.cabinet-nav-item {
   border-radius: 25px 0 0 25px;
   background: var(--cabinet-panel-bg);
 }
+/* Колапс: ті самі fillet-вирізи, що розгорнута рейка (вгнуті чвертки
+   кола кольором панелі, right:0, над/під активним пунктом — див.
+   .cabinet-nav-item--active::before/::after вище), лише ОДИН ::after
+   замість окремих ::before/::after (::before тут уже зайнятий плашкою-
+   пілюлею вище). overflow:visible на .cabinet-sidebar--collapsed
+   (нижче за текстом файлу) дозволяє одному псевдоелементу вийти і
+   вгору, і вниз за межі власного 44px-блока пункту: прозорий посередині
+   (там уже показує плашку з ::before), і два 22px-градієнтні "кутики"
+   зверху/знизу — той самий радіус (22px), що й розгорнута рейка, бо
+   висота пункту (44px) однакова в обох режимах і масштабувати нема
+   потреби. */
+.cabinet-sidebar--collapsed .cabinet-nav-item--active::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  top: -22px;
+  width: 22px;
+  height: 88px;
+  background-image:
+    radial-gradient(circle at 0 0, transparent 21.5px, var(--cabinet-panel-bg) 22px),
+    radial-gradient(circle at 0 100%, transparent 21.5px, var(--cabinet-panel-bg) 22px);
+  background-position: top right, bottom right;
+  background-size: 22px 22px;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):hover,
 .cabinet-sidebar--collapsed .cabinet-nav-item:not(.cabinet-nav-item--active):focus-visible {
   background: transparent;
