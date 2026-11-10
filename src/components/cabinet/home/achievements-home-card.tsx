@@ -12,7 +12,7 @@ export function AchievementsHomeCard({ lang, items }: { lang: UiLang; items: Ach
       <div className="flex items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
         <Link
-          href="/cabinet/progress#achievements"
+          href="/cabinet/achievements"
           className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
         >
           {t(lang, "home.achievements.all")}

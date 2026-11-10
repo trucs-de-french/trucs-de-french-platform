@@ -1,34 +1,16 @@
-import { t, type MessageKey } from "@/lib/i18n/t";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import type { AchievementCategory, AchievementState } from "@/lib/cabinet/achievements";
+import type { AchievementState } from "@/lib/cabinet/achievements";
+import { pickCompactAchievements } from "@/lib/cabinet/achievements";
 import { AchievementBadge } from "@/components/cabinet/home/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
 
-// Той самий порядок категорій, що каталог (achievements.ts) — "dictionary"
-// виключено свідомо: available:false, нема джерела даних, не показуємо її
-// взагалі, навіть locked (щоб не плутати студента неіснуючим словником).
-const CATEGORY_ORDER: AchievementCategory[] = [
-  "scenes",
-  "films",
-  "streak",
-  "points",
-  "exercises",
-  "mistakes",
-  "weeklyGoal",
-  "exam",
-];
-const CATEGORY_LABEL_KEY: Record<AchievementCategory, MessageKey> = {
-  scenes: "achievements.category.scenes",
-  films: "achievements.category.films",
-  streak: "achievements.category.streak",
-  points: "achievements.category.points",
-  exercises: "achievements.category.exercises",
-  mistakes: "achievements.category.mistakes",
-  weeklyGoal: "achievements.category.weeklyGoal",
-  exam: "achievements.category.exam",
-  dictionary: "achievements.category.exam", // недосяжно: dictionary завжди відфільтровано нижче
-};
-
+// Компактна картка на /cabinet/progress — лише один рядок бейджів
+// (найбільше 8): здобуті найновіші першими, далі по одному найближчому
+// нездобутому з кожної категорії. Повний список з чипами-фільтрами й
+// зонами "Зароблено"/"Попереду" — на окремій сторінці /cabinet/achievements.
 export function AchievementsCard({
   lang,
   items,
@@ -38,31 +20,29 @@ export function AchievementsCard({
   items: AchievementState[];
   showExamCard: boolean;
 }) {
-  const visible = items.filter((a) => a.available !== false && (!a.examOnly || showExamCard));
+  const badges: AchievementState[] = pickCompactAchievements(items, showExamCard, 8);
 
   return (
     <div className="cabinet-card flex flex-col gap-5 p-5">
-      <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
-      <div className="achievements-groups">
-        {CATEGORY_ORDER.map((category) => {
-          const categoryItems = visible
-            .filter((a) => a.category === category)
-            .sort((a, b) => Number(b.earned) - Number(a.earned) || a.threshold - b.threshold);
-          if (categoryItems.length === 0) return null;
-          return (
-            <div key={category} className="flex flex-col gap-3">
-              <h4 className="text-xs font-bold uppercase tracking-[0.04em] text-[var(--cabinet-muted)]">
-                {t(lang, CATEGORY_LABEL_KEY[category])}
-              </h4>
-              <div className="achievements-group-badges">
-                {categoryItems.map((achievement) => (
-                  <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-between gap-3">
+        <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
+        <Link
+          href="/cabinet/achievements"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+        >
+          {t(lang, "home.achievements.all")}
+          <ArrowRight size={13} aria-hidden="true" />
+        </Link>
       </div>
+      {badges.length === 0 ? (
+        <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
+      ) : (
+        <div className="achievements-compact-row">
+          {badges.map((achievement) => (
+            <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

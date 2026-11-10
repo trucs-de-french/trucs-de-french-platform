@@ -11843,6 +11843,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --ach-lk: #efe7cf;
   --ach-lkl: #cdb988;
   --ach-lkt: #a8966a;
+  --ach-lkn: #8a7740;
   background: var(--cabinet-page-bg);
   min-height: 100vh;
   /* clip, не hidden: hidden на .cabinet обчислював би overflow-y в auto
@@ -11868,6 +11869,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --ach-lk: #1b2268;
   --ach-lkl: #4a5299;
   --ach-lkt: #7e86c8;
+  --ach-lkn: #b4bbe8;
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
   --cabinet-gold: #d9b765;
@@ -11996,57 +11998,94 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
-/* Досягнення (progress/achievements-card.tsx) — групи (категорії) у
-   2-колонковій grid-сітці замість вертикального стеку: групи йдуть
-   зліва-праворуч, потім новий рядок (Сцени завжди перша — зліва).
-   "Сцени" — найчисленніша категорія (4 бейджі) — колонка 1.6fr на
-   ≥1100px, щоб бейджі не переносились по одному в вузькій колонці;
-   700–1100px — рівні колонки, <700px — один стовпець (divider
-   прибирається nth-child нижче природно не підходить, тож явний
-   display:none). */
-.achievements-groups {
-  display: grid;
-  grid-template-columns: 1fr;
-  column-gap: 40px;
-  row-gap: 28px;
-  align-items: start;
-}
-@media (min-width: 700px) {
-  .achievements-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1100px) {
-  .achievements-groups {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  }
-}
-/* Тонкий роздільник між колонками — псевдоелемент на кожному елементі
-   другої колонки (nth-child(2n), бо grid auto-flow:row з 2 колонками
-   завжди кладе парні діти у другу колонку), центрований у 40px
-   column-gap (-20px = половина gap), а не власний border+padding, щоб
-   не подвоювати відстань між колонками. */
-.achievements-groups > *:nth-child(2n) {
-  position: relative;
-}
-.achievements-groups > *:nth-child(2n)::before {
-  content: "";
-  position: absolute;
-  left: -20px;
-  top: 0;
-  bottom: 0;
-  width: 1.5px;
-  background: var(--cabinet-line);
-}
-@media (max-width: 699px) {
-  .achievements-groups > *:nth-child(2n)::before {
-    display: none;
-  }
-}
-.achievements-group-badges {
+/* Досягнення — чипи-фільтри категорій (full-achievements.tsx, повна
+   сторінка /cabinet/achievements). Активний чип: light — indigo-градієнт
+   із білим текстом, dark — gold-градієнт із темним текстом (той самий
+   принцип, що .cabinet-lang-pill--active, але своя палітра тут, бо
+   чипи — не мовні пігулки). */
+.achievements-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px 24px;
+  gap: 8px;
+}
+.achievements-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-surface-2);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--cabinet-ink);
+}
+.achievements-chip-count {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--cabinet-muted);
+}
+.achievements-chip--active {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.achievements-chip--active .achievements-chip-count {
+  color: rgba(255, 255, 255, 0.78);
+}
+.dark .achievements-chip--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.dark .achievements-chip--active .achievements-chip-count {
+  color: rgba(26, 22, 64, 0.72);
+}
+
+/* Досягнення — зони "Зароблено"/"Попереду" (повна сторінка) і бейджі в
+   auto-fill сітці, центровані (grid, не flex, щоб останній неповний
+   рядок не розтягувався на всю ширину). */
+.achievements-zone-label {
+  margin: 6px 0 12px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cabinet-muted);
+}
+.achievements-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 16px 10px;
+  justify-items: center;
+}
+@media (max-width: 699px) {
+  .achievements-zone-grid {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  }
+}
+
+/* Досягнення — компактний ряд на /cabinet/progress (achievements-
+   card.tsx): до 8 бейджів, один блок, що переноситься (не scroll/grid,
+   на відміну від Home-ряду — тут завжди лише один горизонтальний блок). */
+.achievements-compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 10px;
+}
+
+/* Категорійний тег під підписом бейджа — лише в режимі "Усі" на повній
+   сторінці (showCategoryTag), щоб різні категорії поряд не плутались. */
+.achievement-badge-category-tag {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cabinet-muted);
 }
 
 /* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
@@ -13664,7 +13703,7 @@ button.cabinet-nav-item {
   padding-bottom: 2px;
 }
 .achievement-badge-slot {
-  flex: 0 0 84px;
+  flex: 0 0 76px;
   scroll-snap-align: start;
 }
 @media (min-width: 1024px) {
@@ -13688,19 +13727,19 @@ button.cabinet-nav-item {
   text-align: center;
 }
 .achievement-badge-coin {
-  width: 104px;
-  height: 108px;
+  width: 72px;
+  height: 75px;
 }
 @media (max-width: 699px) {
   .achievement-badge-coin {
-    width: 84px;
-    height: 87px;
+    width: 64px;
+    height: 67px;
   }
 }
 .achievement-badge-title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 15px;
+  font-size: 12.5px;
   line-height: 1.2;
   color: var(--cabinet-ink);
 }
@@ -13710,7 +13749,7 @@ button.cabinet-nav-item {
 .achievement-badge-caption {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 12px;
   color: var(--cabinet-muted);
 }
 

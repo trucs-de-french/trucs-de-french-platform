@@ -1,9 +1,16 @@
 import { useId } from "react";
+import type { LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { AchievementState } from "@/lib/cabinet/achievements";
+import { CATEGORY_ICON, CATEGORY_LABEL_KEY } from "@/lib/cabinet/achievement-ui";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
+
+// Поріг завжди показаний на монеті (і здобутій, і заблокованій) — лише
+// "Додано дату іспиту" (examDateAdded) без лічильника, бо це разовий факт
+// без порогу-кількості, а не метрика.
+const NO_NUMBER_IDS = new Set(["examDateAdded"]);
 
 function formatEarnedAt(iso: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "Europe/Kyiv" }).format(
@@ -11,41 +18,30 @@ function formatEarnedAt(iso: string, locale: string): string {
   );
 }
 
-function renderGlyph(glyph: string, color: string) {
-  if (glyph === "check") {
-    return <path d="M-13 1 L-4 10 L13 -9" fill="none" stroke={color} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />;
-  }
-  if (glyph === "cap") {
-    return (
-      <>
-        <polygon points="0,-13 20,-4 0,5 -20,-4" fill={color} />
-        <path d="M-11 3 V10 Q0 17 11 10 V3" fill="none" stroke={color} strokeWidth={4} strokeLinecap="round" />
-      </>
-    );
-  }
-  const isWide = glyph.length > 1;
-  return (
-    <text
-      x={0}
-      y={isWide ? 8 : 10}
-      textAnchor="middle"
-      fontFamily="Nunito"
-      fontWeight={900}
-      fontSize={isWide ? 25 : 30}
-      fill={color}
-    >
-      {glyph}
-    </text>
-  );
+const NUMBER_FONT_SIZE_BY_DIGITS: Record<number, number> = { 1: 36, 2: 32, 3: 25, 4: 20 };
+
+function numberFontSize(digitCount: number): number {
+  return NUMBER_FONT_SIZE_BY_DIGITS[digitCount] ?? 18;
 }
 
-// "G1 classic coin with indigo ribbons" — монета-медаль із двома
-// стрічками-хвостиками позаду; earned ідентична в обох темах (gold/indigo
-// градієнти), locked — суто theme-aware CSS-змінні (--ach-lk/-lkl/-lkt),
-// без градієнтів, щоб не виглядала як "майже здобута".
-export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph: string }) {
+// "Gold coin, faded category icon behind a bold number" — одна й та сама
+// монета в обох темах для earned (gold/indigo градієнти), locked — суто
+// theme-aware CSS-змінні (--ach-lk/-lkl/-lkt/-lkn), без градієнтів, щоб не
+// виглядала як "майже здобута". number === null лише для разових
+// спеціальних бейджів (напр. "Додано дату іспиту") — тоді замість
+// приглушеного водяного знаку в центрі показуємо великий суцільний глиф.
+export function AchievementBadgeCoin({
+  earned,
+  number,
+  Icon,
+}: {
+  earned: boolean;
+  number: string | null;
+  Icon: LucideIcon;
+}) {
   const goldId = useId();
   const indigoId = useId();
+  const iconColor = earned ? "#f3d98b" : "var(--ach-lkt)";
 
   return (
     <svg viewBox="0 0 104 108" className="achievement-badge-coin" aria-hidden="true">
@@ -64,23 +60,21 @@ export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph
         <>
           <path d="M38 68 L30 100 L42 93 L48 103 L54 72Z" fill={`url(#${indigoId})`} />
           <path d="M66 68 L74 100 L62 93 L56 103 L50 72Z" fill="#3a35a0" />
-          <circle cx="52" cy="46" r="39" fill={`url(#${goldId})`} stroke="#b8923f" strokeWidth={1.5} />
-          <circle cx="52" cy="46" r="32" fill={`url(#${indigoId})`} stroke="#f8e6a8" strokeWidth={2} />
-          <circle cx="52" cy="46" r="27" fill="none" stroke="#f3d98b" strokeOpacity={0.4} />
-          <g transform="translate(52 46)">{renderGlyph(glyph, "#f3d98b")}</g>
+          <circle cx="52" cy="46" r="39" fill={`url(#${goldId})`} stroke="#b8923f" strokeWidth={2.5} />
+          <circle cx="52" cy="46" r="32" fill={`url(#${indigoId})`} stroke="#f8e6a8" strokeWidth={3} />
         </>
       ) : (
         <>
-          <path d="M38 68 L30 100 L42 93 L48 103 L54 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
-          <path d="M66 68 L74 100 L62 93 L56 103 L50 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
+          <path d="M38 68 L30 100 L42 93 L48 103 L54 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" strokeWidth={2} />
+          <path d="M66 68 L74 100 L62 93 L56 103 L50 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" strokeWidth={2} />
           <circle
             cx="52"
             cy="46"
             r="39"
             fill="var(--ach-lk)"
             stroke="var(--ach-lkl)"
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
+            strokeWidth={2.5}
+            strokeDasharray="6 5"
           />
           <circle
             cx="52"
@@ -88,26 +82,57 @@ export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph
             r="32"
             fill="var(--cabinet-card-bg)"
             stroke="var(--ach-lkl)"
-            strokeWidth={2}
-            strokeDasharray="4 3"
+            strokeWidth={3}
+            strokeDasharray="5 4"
           />
-          <circle cx="52" cy="46" r="27" fill="none" stroke="var(--ach-lkl)" strokeOpacity={0.4} />
-          <g transform="translate(52 46)">{renderGlyph(glyph, "var(--ach-lkt)")}</g>
         </>
+      )}
+      {number !== null ? (
+        <g opacity={0.34}>
+          <Icon x={28} y={22} width={48} height={48} color={iconColor} strokeWidth={1.5} />
+        </g>
+      ) : (
+        <Icon x={34} y={28} width={36} height={36} color={iconColor} strokeWidth={1.9} />
+      )}
+      {number !== null && (
+        <text
+          x={52}
+          y={46 + numberFontSize(number.length) * 0.35}
+          textAnchor="middle"
+          fontFamily="var(--font-heading)"
+          fontWeight={900}
+          fontSize={numberFontSize(number.length)}
+          fill={earned ? "#f8e6a8" : "var(--ach-lkn)"}
+          stroke={earned ? "#2f2c6b" : "var(--cabinet-card-bg)"}
+          strokeWidth={3.2}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+        >
+          {number}
+        </text>
       )}
     </svg>
   );
 }
 
-// Спільний бейдж досягнення — Home (achievements-home-card.tsx) і Progress
-// (progress/achievements-card.tsx) рендерять ОДИН і той самий компонент,
-// щоб вигляд не розходився між сторінками. "Додано дату іспиту" — єдине
-// earned-досягнення без лічильника-порогу, тож у нього свій глиф (cap);
-// решта earned — check, решта locked — число порогу (мета "5 сцен" і т.д.).
-export function AchievementBadge({ lang, achievement }: { lang: UiLang; achievement: AchievementState }) {
+// Спільний бейдж досягнення — Home (achievements-home-card.tsx), Progress
+// (progress/achievements-card.tsx, компактний ряд) і повна сторінка
+// (achievements/full-achievements.tsx) рендерять ОДИН і той самий
+// компонент, щоб вигляд не розходився. showCategoryTag — лише для повної
+// сторінки в режимі "Усі" (бейджі різних категорій поряд без чипа-фільтра).
+export function AchievementBadge({
+  lang,
+  achievement,
+  showCategoryTag = false,
+}: {
+  lang: UiLang;
+  achievement: AchievementState;
+  showCategoryTag?: boolean;
+}) {
   const label = t(lang, achievement.nameKey);
   const locale = LOCALE_BY_LANG[lang];
-  const glyph = achievement.earned ? (achievement.id === "examDateAdded" ? "cap" : "check") : String(achievement.threshold);
+  const Icon = CATEGORY_ICON[achievement.category];
+  const number = NO_NUMBER_IDS.has(achievement.id) ? null : String(achievement.threshold);
   const caption = achievement.earned
     ? achievement.earnedAt
       ? formatEarnedAt(achievement.earnedAt, locale)
@@ -116,11 +141,14 @@ export function AchievementBadge({ lang, achievement }: { lang: UiLang; achievem
 
   return (
     <div className="achievement-badge">
-      <AchievementBadgeCoin earned={achievement.earned} glyph={glyph} />
+      <AchievementBadgeCoin earned={achievement.earned} number={number} Icon={Icon} />
       <span className={`achievement-badge-title ${achievement.earned ? "" : "achievement-badge-title--locked"}`}>
         {label}
       </span>
       {caption && <span className="achievement-badge-caption">{caption}</span>}
+      {showCategoryTag && (
+        <span className="achievement-badge-category-tag">{t(lang, CATEGORY_LABEL_KEY[achievement.category])}</span>
+      )}
     </div>
   );
 }

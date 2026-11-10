@@ -51,9 +51,7 @@ export default async function CabinetProgressPage() {
         redoCount={data.home.redoCount}
       />
 
-      <div id="achievements">
-        <AchievementsCard lang={lang} items={achievements.items} showExamCard={achievements.showExamCard} />
-      </div>
+      <AchievementsCard lang={lang} items={achievements.items} showExamCard={achievements.showExamCard} />
 
       <div
         className={
