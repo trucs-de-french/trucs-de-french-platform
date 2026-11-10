@@ -14524,6 +14524,8 @@ button.cabinet-nav-item {
    вже широка, 1fr-колонка поряд з Іспит 320px). */
 .achievement-badge-row {
   display: flex;
+  flex: 1;
+  align-items: center;
   gap: 14px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -14552,6 +14554,10 @@ button.cabinet-nav-item {
   .achievement-badge-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* stretch (не "normal") — явно, щоб один рядок грід-треку заповнював
+       усю висоту flex:1-контейнера, а не лишав порожнє місце знизу, яке
+       align-items:center вище інакше не мав би де центрувати. */
+    align-content: stretch;
     overflow: visible;
   }
   .achievement-badge-row .achievement-badge-slot {
@@ -14562,6 +14568,7 @@ button.cabinet-nav-item {
   .achievement-badge-row {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-content: stretch;
     overflow: visible;
   }
   .achievement-badge-slot {
