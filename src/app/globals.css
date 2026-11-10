@@ -12028,7 +12028,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   min-width: 0;
   background: var(--cabinet-panel-bg);
   padding: 16px;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 8px);
   overflow-y: auto;
   color: var(--cabinet-ink);
   /* Ховає сам скрол-бар (не скрол) — панель лишається фактичним

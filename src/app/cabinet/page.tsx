@@ -48,7 +48,7 @@ export default async function CabinetHomePage() {
   const firstName = home.fullName?.split(" ")[0] || "";
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-6">
       <CabinetMobileHeader />
 
       <GreetingHero
