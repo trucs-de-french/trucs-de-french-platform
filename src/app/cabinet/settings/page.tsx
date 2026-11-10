@@ -9,7 +9,7 @@ import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { SettingsForm } from "@/components/cabinet/settings/settings-form";
-import type { NotificationPrefs, Profile } from "@/lib/supabase/profile";
+import type { FrenchLevel, FrenchLevelSource, LearningGoal, NotificationPrefs, Profile } from "@/lib/supabase/profile";
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = { review: true, weekly_goal: true, news: false };
 
@@ -57,6 +57,30 @@ export default async function CabinetSettingsPage() {
     // міграція 0066 ще не застосована — лишаємось на дефолтах вище
   }
 
+  // learning_goals/french_level* — 0067_profile_goals_level.sql, ОКРЕМИЙ
+  // запит/try-catch від 0066-полів вище: якщо 0066 вже застосована, а
+  // 0067 ще ні (чи навпаки), один спільний select впав би ЦІЛИМ рядком
+  // через будь-яку відсутню колонку, гублячи й аватар/сповіщення теж.
+  // aboutMeAvailable=false — картка рендериться, але "Зберегти"
+  // дизейблена (settings-form.tsx/about-me-card.tsx), не падає.
+  let aboutMeAvailable = true;
+  let learningGoals: LearningGoal[] = [];
+  let frenchLevel: FrenchLevel | null = null;
+  let frenchLevelSource: FrenchLevelSource | null = null;
+  try {
+    const { data: aboutMe } = await supabase
+      .from("profiles")
+      .select("learning_goals, french_level, french_level_source")
+      .eq("id", user.id)
+      .single<Pick<Profile, "learning_goals" | "french_level" | "french_level_source">>();
+    learningGoals = aboutMe?.learning_goals ?? [];
+    frenchLevel = aboutMe?.french_level ?? null;
+    frenchLevelSource = aboutMe?.french_level_source ?? null;
+  } catch {
+    // міграція 0067 ще не застосована
+    aboutMeAvailable = false;
+  }
+
   const { exam, showExamCard } = await getExamSettingsData(supabase, user.id);
 
   const cookieStore = await cookies();
@@ -83,6 +107,10 @@ export default async function CabinetSettingsPage() {
         weeklyGoal={weeklyGoalScenes}
         exam={exam}
         showExamCard={showExamCard}
+        aboutMeAvailable={aboutMeAvailable}
+        initialLearningGoals={learningGoals}
+        initialFrenchLevel={frenchLevel}
+        initialFrenchLevelSource={frenchLevelSource}
         initialIsDark={initialIsDark}
         onSignOut={signOut}
       />

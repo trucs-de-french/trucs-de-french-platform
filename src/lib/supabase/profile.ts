@@ -8,6 +8,15 @@ import { normalizeUiLang } from "@/lib/ui/product-lang";
 // exam_type/exam_date/weekly_goal_scenes — 0065_cabinet_profile_and_activity.sql.
 export type NotificationPrefs = { review: boolean; weekly_goal: boolean; news: boolean };
 
+// learning_goals/french_level* — 0067_profile_goals_level.sql (ще не
+// застосована на момент написання коду — settings/page.tsx читає їх
+// ОКРЕМИМ запитом у try/catch, деградуючи до порожніх значень, якщо
+// колонок ще нема). Нічого з цих полів поки не читається деінде в
+// кабінеті (явна вимога задачі — лише зберігання).
+export type LearningGoal = "self" | "travel" | "work" | "move" | "exam" | "kids";
+export type FrenchLevel = "A0" | "A1" | "A2" | "B1" | "B2";
+export type FrenchLevelSource = "self" | "test";
+
 export type Profile = {
   id: string;
   role: "student" | "teacher";
@@ -19,6 +28,10 @@ export type Profile = {
   avatar_url: string | null;
   avatar_mascot: string | null;
   notification_prefs: NotificationPrefs;
+  learning_goals: LearningGoal[];
+  french_level: FrenchLevel | null;
+  french_level_source: FrenchLevelSource | null;
+  french_level_set_at: string | null;
   created_at: string;
 };
 

@@ -14444,6 +14444,156 @@ button.cabinet-nav-item {
   color: #f3d98b;
 }
 
+/* "Про мене" (settings/about-me-card.tsx) — мета навчання + рівень
+   французької. Поле-заголовки тут НАВМИСНО більші за .settings-pill-
+   сусідні лейбли (text-xs) — задача просить "mini heading", не дрібний
+   сірий підпис. */
+.settings-field-heading {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.25;
+  color: #1a1640;
+}
+.dark .settings-field-heading {
+  color: #f1eefc;
+}
+@media (min-width: 768px) {
+  .settings-field-heading {
+    font-size: 18px;
+  }
+}
+.settings-field-hint {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: #6b6440;
+}
+.dark .settings-field-hint {
+  color: #aab0e6;
+}
+
+/* Чипи цілі навчання — та сама градієнтна пара, що решта вибраних чипів
+   кабінету, лише своя геометрія (pill з іконкою+текстом, не 44x44 коло
+   .settings-goal-chip і не .cabinet-chip--selected — та без фіксованої
+   pill-висоти .cabinet-pill-link). */
+.about-me-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 2px solid #e4cf94;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--cabinet-ink);
+  cursor: pointer;
+}
+.dark .about-me-chip {
+  border-color: #2e3680;
+}
+.about-me-chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.about-me-chip--active {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .about-me-chip--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+
+/* Рівень французької — 5 карток, адаптивна сітка (мінімум 150px). */
+.about-me-level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.about-me-level-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 2px solid #e4cf94;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.dark .about-me-level-card {
+  border-color: #2e3680;
+}
+.about-me-level-card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.about-me-level-name {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--cabinet-ink);
+}
+.about-me-level-desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.about-me-level-card--active {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+}
+.about-me-level-card--active .about-me-level-name,
+.about-me-level-card--active .about-me-level-desc {
+  color: #ffffff;
+}
+.dark .about-me-level-card--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+}
+.dark .about-me-level-card--active .about-me-level-name,
+.dark .about-me-level-card--active .about-me-level-desc {
+  color: #1a1640;
+}
+.about-me-level-caption {
+  margin-top: 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+
+/* Заглушка тесту рівня — пунктирний бокс, без власної логіки тесту. */
+.about-me-test-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  border: 2px dashed #e4cf94;
+}
+.dark .about-me-test-box {
+  border-color: #2e3680;
+}
+
+.about-me-saved {
+  display: inline-flex;
+  align-items: center;
+  min-width: 110px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: #4b46da;
+}
+.dark .about-me-saved {
+  color: #f3d98b;
+}
+
 /* Перемикач сповіщень (settings/notifications-card.tsx) тепер — той самий
    спільний .switch-toggle (switch-toggle.tsx), що адмін-симулятор, а не
    окремий .settings-toggle* — один клас на весь кабінет замість двох

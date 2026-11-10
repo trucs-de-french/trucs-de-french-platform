@@ -8,9 +8,10 @@ import { useState } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
-import type { NotificationPrefs } from "@/lib/supabase/profile";
+import type { FrenchLevel, FrenchLevelSource, LearningGoal, NotificationPrefs } from "@/lib/supabase/profile";
 import { saveProfileSettings } from "@/app/cabinet/settings/actions";
 import { SettingsProfileCard } from "./profile-card";
+import { AboutMeCard } from "./about-me-card";
 import { InterfaceCard } from "./interface-card";
 import { LearningCard } from "./learning-card";
 import { NotificationsCard } from "./notifications-card";
@@ -38,6 +39,10 @@ export function SettingsForm({
   weeklyGoal,
   exam,
   showExamCard,
+  aboutMeAvailable,
+  initialLearningGoals,
+  initialFrenchLevel,
+  initialFrenchLevelSource,
   initialIsDark = null,
   onSignOut,
 }: {
@@ -52,6 +57,10 @@ export function SettingsForm({
   weeklyGoal: number;
   exam: ExamInfo | null;
   showExamCard: boolean;
+  aboutMeAvailable: boolean;
+  initialLearningGoals: LearningGoal[];
+  initialFrenchLevel: FrenchLevel | null;
+  initialFrenchLevelSource: FrenchLevelSource | null;
   initialIsDark?: boolean | null;
   onSignOut: () => Promise<void>;
 }) {
@@ -100,6 +109,14 @@ export function SettingsForm({
 
   return (
     <div className="flex flex-col gap-4 pb-4">
+      <AboutMeCard
+        lang={lang}
+        available={aboutMeAvailable}
+        initialGoals={initialLearningGoals}
+        initialLevel={initialFrenchLevel}
+        initialLevelSource={initialFrenchLevelSource}
+      />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <SettingsProfileCard
           lang={lang}

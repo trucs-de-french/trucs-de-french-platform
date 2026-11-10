@@ -100,6 +100,52 @@ export async function saveWeeklyGoal(formData: FormData): Promise<{ ok: boolean;
 // "profiles_update_own" (0062_profiles_role_update_guard.sql) вже дозволяє
 // власнику рядка міняти будь-яку колонку, крім role, тож тут достатньо
 // звичайного update під сесійним (anon-key) клієнтом.
+const LEARNING_GOAL_VALUES = ["self", "travel", "work", "move", "exam", "kids"] as const;
+const FRENCH_LEVEL_VALUES = ["A0", "A1", "A2", "B1", "B2"] as const;
+
+// profiles.learning_goals/french_level* (0067_profile_goals_level.sql,
+// ще НЕ застосована на момент написання — update на неіснуючі колонки
+// просто впаде, settings-form.tsx тоді дизейблить саму кнопку "Зберегти"
+// ще ДО виклику цієї дії, а не покладається на try/catch тут). Рівень
+// завжди "self" з клієнта цієї картки — тест (french_level_source=
+// "test") з'явиться окремою дією пізніше (задача №9: "ніде більше поки
+// не використовувати").
+export async function saveAboutMe(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "auth" };
+
+  const goalsRaw = formData.getAll("goals").map(String);
+  const goals = goalsRaw.filter((g): g is (typeof LEARNING_GOAL_VALUES)[number] =>
+    (LEARNING_GOAL_VALUES as readonly string[]).includes(g)
+  );
+  if (goals.length !== goalsRaw.length) {
+    return { ok: false, error: "goals" };
+  }
+
+  const levelRaw = String(formData.get("level") ?? "");
+  if (levelRaw && !(FRENCH_LEVEL_VALUES as readonly string[]).includes(levelRaw)) {
+    return { ok: false, error: "level" };
+  }
+  const level = levelRaw || null;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      learning_goals: goals,
+      french_level: level,
+      french_level_source: level ? "self" : null,
+      french_level_set_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: "db" };
+
+  revalidatePath("/cabinet/settings");
+  return { ok: true };
+}
+
 export async function setCabinetUiLang(lang: string) {
   const supabase = await createClient();
   const {
