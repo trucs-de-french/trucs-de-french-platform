@@ -367,8 +367,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.theme.toLight": "Passer au thème clair",
   "cabinet.theme.toDark": "Passer au thème sombre",
 
-  "home.subtitle.continue": "On continue avec : {scene}",
-  "home.subtitle.empty": "Choisissez un cours dans la bibliothèque",
+  "home.hero.level": "Niveau {level}",
   "home.stat.scenes": "scènes terminées",
   "home.stat.streak": "jours d'affilée",
   "home.stat.points": "points cette semaine",

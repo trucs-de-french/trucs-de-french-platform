@@ -19,11 +19,13 @@ export function ProfileAvatar({
   size,
   imageUrl = null,
   mascotId = null,
+  className = "",
 }: {
   name: string;
   size: number;
   imageUrl?: string | null;
   mascotId?: string | null;
+  className?: string;
 }) {
   const [broken, setBroken] = useState(false);
   const trimmed = name.trim();
@@ -39,7 +41,7 @@ export function ProfileAvatar({
         alt=""
         aria-hidden="true"
         onError={() => setBroken(true)}
-        className="profile-avatar profile-avatar-img"
+        className={`profile-avatar profile-avatar-img ${className}`.trim()}
         style={{ width: size, height: size }}
       />
     );
@@ -52,7 +54,7 @@ export function ProfileAvatar({
   if (!imageUrl && mascotId && broken) {
     return (
       <span
-        className="profile-avatar profile-avatar--placeholder"
+        className={`profile-avatar profile-avatar--placeholder ${className}`.trim()}
         aria-hidden="true"
         style={{ width: size, height: size, fontSize }}
       >
@@ -63,7 +65,7 @@ export function ProfileAvatar({
 
   return (
     <span
-      className="profile-avatar"
+      className={`profile-avatar ${className}`.trim()}
       aria-hidden="true"
       style={{ width: size, height: size, fontSize }}
     >

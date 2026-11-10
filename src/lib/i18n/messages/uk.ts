@@ -368,8 +368,7 @@ export const uk = {
   "cabinet.theme.toLight": "Увімкнути світлу тему",
   "cabinet.theme.toDark": "Увімкнути темну тему",
 
-  "home.subtitle.continue": "Продовжимо з: {scene}",
-  "home.subtitle.empty": "Обери курс у бібліотеці",
+  "home.hero.level": "Рівень {level}",
   "home.stat.scenes": "сцен завершено",
   "home.stat.streak": "днів поспіль",
   "home.stat.points": "балів за тиждень",

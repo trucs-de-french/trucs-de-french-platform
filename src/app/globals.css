@@ -12044,6 +12044,80 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   background: linear-gradient(90deg, transparent, #d9b765, transparent);
 }
 
+/* Привітання "variant E" (greeting-hero.tsx) — акцентна панель замість
+   колишнього плоского h1+підзаголовка. margin-bottom:-8px замість
+   прямих 16px: батьківський flex (page.tsx) уже дає gap-6 (24px) між
+   секціями, -8 зводить сумарний відступ до задуманих 16px, не додаючи
+   його ПОВЕРХ gap. */
+.cabinet-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 26px;
+  padding: 22px 26px;
+  margin-bottom: -8px;
+  border: 1.5px solid var(--cabinet-line);
+  background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+}
+.dark .cabinet-hero {
+  background: linear-gradient(120deg, rgba(217, 183, 101, 0.22), rgba(217, 183, 101, 0.05) 55%, transparent);
+}
+.cabinet-hero-greeting {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.15;
+  color: var(--cabinet-ink);
+  overflow-wrap: break-word;
+}
+.cabinet-hero-streak-row {
+  margin-top: 12px;
+}
+.cabinet-hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+/* Той самий .profile-avatar (кремова рамка/indigo-ініціал уже коректні
+   в обох темах) — тут лише товща рамка (3px замість 2) і золоте кільце
+   довкола неї через box-shadow (не чіпає border, який уже дає потрібний
+   кремовий/темний колір). */
+.cabinet-hero-avatar {
+  border-width: 3px;
+  box-shadow: 0 0 0 3px #d9b765;
+}
+.cabinet-hero-level-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 11.5px;
+  color: #1a1640;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .cabinet-hero {
+    padding: 16px 18px;
+  }
+  .cabinet-hero-greeting {
+    font-size: 26px;
+  }
+  /* ProfileAvatar рахує свій width/height/font-size як inline style
+     (size — пропс числом, не CSS) — єдиний спосіб зменшити той самий
+     DOM-вузол на мобільному без другого рендеру компонента. */
+  .cabinet-hero-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 28px !important;
+  }
+}
+
 @media (min-width: 768px) {
   .cabinet-panel {
     min-height: 0;
