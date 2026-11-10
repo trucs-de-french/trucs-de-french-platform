@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { isMascotId } from "@/lib/cabinet/mascots";
+import { cleanupAvatarFolder } from "@/lib/cabinet/avatar-storage";
 import type { NotificationPrefs } from "@/lib/supabase/profile";
 
 const NAME_MAX_LEN = 40;
@@ -60,6 +61,13 @@ export async function saveProfileSettings(
     .eq("id", user.id);
   if (error) return { ok: false, error: "db" };
 
+  // Прибирання старих файлів Storage — ЛИШЕ після успішного запису рядка
+  // вище (інакше провал запису лишив би аватар зламаним на щойно
+  // видалений файл). keepFileName=null, коли фото нема (маскот/видалено)
+  // — тоді прибирається геть усе в папці користувача.
+  const keepFileName = finalAvatarUrl ? finalAvatarUrl.split("/").pop() ?? null : null;
+  await cleanupAvatarFolder(supabase, user.id, keepFileName);
+
   revalidatePath("/cabinet", "layout");
   return { ok: true };
 }
@@ -108,6 +116,13 @@ export async function deleteAccount(): Promise<{ ok: boolean; error?: string }> 
   }
 
   const admin = createAdminClient();
+
+  // Папка аватара (Storage) не має FK-каскаду до auth.users — прибираємо
+  // її тут окремо, best-effort, ДО видалення самого юзера (не критично,
+  // якщо порядок інший, але так провал прибирання точно не блокує
+  // видалення акаунта, якого студентка й просила).
+  await cleanupAvatarFolder(admin, user.id, null);
+
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return { ok: false, error: "db" };
 
