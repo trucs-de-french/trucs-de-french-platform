@@ -47,7 +47,7 @@ export function WeeklyGoalCard({
       <div className="flex w-full items-center justify-between">
         <CardTitle>{t(lang, "home.goal.title")}</CardTitle>
         <Link
-          href="/cabinet/settings"
+          href="/cabinet/settings#learning"
           className="shrink-0 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
         >
           {t(lang, "home.goal.change")}

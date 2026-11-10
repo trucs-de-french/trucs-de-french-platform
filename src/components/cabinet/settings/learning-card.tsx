@@ -1,34 +1,37 @@
 "use client";
 
-// Тижнева ціль (пілюлі 2/3/5/7) і блок іспиту (тип+дата) — застосовують
+// Тижнева ціль (круглі чипи 1–7 + додатковий, якщо збережено поза
+// діапазоном) і блок іспиту (тип+дата) — застосовують
 // зміну одразу через ті самі дії, що Home (saveWeeklyGoal/saveExam у
 // cabinet/actions.ts), не через нижню панель "Є незбережені зміни": той
 // самий підхід, що мова/тема в interface-card.tsx. Блок іспиту видно лише
 // за тим самим showExamCard-критерієм, що на Home (getExamSettingsData).
 import { useState, useTransition } from "react";
 import { t } from "@/lib/i18n/t";
+import { plural, type PluralForms } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { ExamInfo } from "@/lib/cabinet/home-data";
 import { EXAM_TYPE_OPTIONS } from "@/lib/cabinet/exam-types";
 import { saveWeeklyGoal, saveExam } from "@/app/cabinet/actions";
 import { DatePicker } from "@/components/cabinet/date-picker";
-import { SettingsPill } from "./settings-pill";
 import { CardTitle } from "@/components/cabinet/card-title";
 import { CabinetSelect } from "@/components/cabinet/cabinet-select";
 
-const GOAL_OPTIONS = [2, 3, 5, 7];
+// 1–7 — найпоширеніший діапазон; БД дозволяє 1..14 (CHECK constraint), тож
+// значення поза 1–7 (збережене раніше чи вручну) дописується як ДОДАТКОВИЙ
+// вибраний чип в кінці ряду (options нижче), а не обрізається/перезаписується.
+const GOAL_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
+const RECOMMENDED_GOAL = 3;
 
-// Лише 4 фіксовані значення — простіше тримати форму слова тут, ніж
-// заводити загальне правило множини (укр. 2-4 "сцени", 5+ "сцен") для
-// однієї-єдиної пілюлі.
-const GOAL_UNIT: Record<UiLang, Record<number, string>> = {
-  uk: { 2: "сцени", 3: "сцени", 5: "сцен", 7: "сцен" },
-  fr: { 2: "scènes", 3: "scènes", 5: "scènes", 7: "scènes" },
-  en: { 2: "scenes", 3: "scenes", 5: "scenes", 7: "scenes" },
+const SCENE_UNIT_FORMS: Record<UiLang, PluralForms> = {
+  uk: { one: "сцена", few: "сцени", many: "сцен", other: "сцен" },
+  fr: { one: "scène", other: "scènes" },
+  en: { one: "scene", other: "scenes" },
 };
 
 function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
   const [pending, startTransition] = useTransition();
+  const options = GOAL_OPTIONS.includes(goal) ? GOAL_OPTIONS : [...GOAL_OPTIONS, goal];
 
   function handleChange(value: number) {
     const formData = new FormData();
@@ -40,14 +43,31 @@ function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.goal.title")}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {GOAL_OPTIONS.map((n) => (
-          <SettingsPill key={n} active={n === goal} disabled={pending} onClick={() => handleChange(n)}>
-            {n} {GOAL_UNIT[lang][n]}
-          </SettingsPill>
+      <div>
+        <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.goal.title")}</span>
+        <p className="mt-0.5 font-body text-sm text-[var(--cabinet-muted)]">{t(lang, "settings.goal.helper")}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={pending}
+            aria-pressed={n === goal}
+            aria-label={String(n)}
+            onClick={() => handleChange(n)}
+            className={`settings-goal-chip ${n === goal ? "settings-goal-chip--active" : ""}`}
+          >
+            {n}
+          </button>
         ))}
       </div>
+      <p className="font-body text-sm text-[var(--cabinet-ink)]">
+        {t(lang, "settings.goal.caption", { n: goal, unit: plural(lang, goal, SCENE_UNIT_FORMS[lang]) })}
+        {goal === RECOMMENDED_GOAL && (
+          <span className="settings-goal-recommended-tag">{t(lang, "settings.goal.recommended")}</span>
+        )}
+      </p>
     </div>
   );
 }
@@ -121,7 +141,7 @@ export function LearningCard({
   showExamCard: boolean;
 }) {
   return (
-    <div className="cabinet-card flex flex-col gap-3 p-5">
+    <div id="learning" className="cabinet-card flex flex-col gap-3 p-5">
       <CardTitle>{t(lang, "settings.section.learning")}</CardTitle>
       <WeeklyGoalPills lang={lang} goal={goal} />
       {showExamCard && <ExamSettingsForm lang={lang} exam={exam} />}

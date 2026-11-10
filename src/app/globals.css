@@ -14379,64 +14379,75 @@ button.cabinet-nav-item {
   color: #1a1640;
 }
 
-/* Перемикач сповіщень (settings/notifications-card.tsx) — ON у світлій
-   темі indigo (та сама пара кольорів/напрямок, що .settings-pill--active
-   вище), у темній лишається gold. OFF тепер МАЄ власний контур/заливку/
-   колір повзунка в обох темах (раніше лише порожній --cabinet-track без
-   рамки — ледь видима "вимкнена" пілюля). border завжди 1.5px (на ON
-   лише колір стає transparent, саму рамку не прибираємо) + box-sizing:
-   border-box — зовнішній розмір треку не змінюється при перемиканні,
-   тож повзунок не "стрибає". Повзунок рахує зсув через transform:
-   translateY(-50%) [translateX(N)] — вертикальне центрування окремо від
-   горизонтального руху, не залежить від товщини рамки. */
-.settings-toggle {
-  position: relative;
+/* "Тижнева ціль" 1–7 (settings/learning-card.tsx) — фіксовані круглі
+   чипи (не .settings-pill — та змінної ширини pill-форма під текст
+   "N сцен", тут завжди 44x44 коло з самою цифрою), вибраний стан — той
+   самий стандартний градієнт, що .cabinet-chip--selected/.cabinet-btn-
+   primary (не .settings-pill--active — тут навмисно канонічна пара
+   кольорів 160deg #4b46da/#2f2c6b, а не трохи інша, що лишається в
+   settings-pill--active). */
+.settings-goal-chip {
   display: inline-flex;
-  flex-shrink: 0;
   align-items: center;
-  box-sizing: border-box;
-  width: 46px;
-  height: 26px;
-  border-radius: 999px;
-  border: 1.5px solid #4b46da;
-  background: #efedfa;
-  cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease;
-}
-.settings-toggle-thumb {
-  position: absolute;
-  top: 50%;
-  left: 4px;
-  width: 18px;
-  height: 18px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: #4b46da;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transform: translateY(-50%);
-  transition: transform 150ms ease, background 150ms ease;
+  border: 2px solid #e4cf94;
+  background: var(--cabinet-card-bg);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--cabinet-ink);
+  cursor: pointer;
 }
-.settings-toggle--on {
+.dark .settings-goal-chip {
+  border-color: #2e3680;
+}
+.settings-goal-chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.settings-goal-chip:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .settings-goal-chip:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+.settings-goal-chip--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
 }
-.settings-toggle--on .settings-toggle-thumb {
-  background: #ffffff;
-  transform: translateY(-50%) translateX(17px);
+.dark .settings-goal-chip--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
 }
-.dark .settings-toggle {
-  border-color: #6f78d8;
-  background: var(--cabinet-surface-2);
+
+/* "рекомендовано"-тег біля значення цілі (settings/learning-card.tsx). */
+.settings-goal-recommended-tag {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3ecd6;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #8a6a1c;
 }
-.dark .settings-toggle-thumb {
-  background: #6f78d8;
+.dark .settings-goal-recommended-tag {
+  background: #222a6c;
+  color: #f3d98b;
 }
-.dark .settings-toggle--on {
-  border-color: transparent;
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
-}
-.dark .settings-toggle--on .settings-toggle-thumb {
-  background: #ffffff;
-}
+
+/* Перемикач сповіщень (settings/notifications-card.tsx) тепер — той самий
+   спільний .switch-toggle (switch-toggle.tsx), що адмін-симулятор, а не
+   окремий .settings-toggle* — один клас на весь кабінет замість двох
+   трохи різних градієнтів/розмірів. */
 
 /* Акаунт: три рівноважні кнопки в ряд (settings/account-card.tsx,
    variant C) — ширина по вмісту (НЕ 100%), gold-контур як інші gold-

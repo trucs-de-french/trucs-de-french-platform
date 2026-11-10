@@ -4,29 +4,7 @@
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CardTitle } from "@/components/cabinet/card-title";
-
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`settings-toggle ${checked ? "settings-toggle--on" : ""}`}
-    >
-      <span className="settings-toggle-thumb" />
-    </button>
-  );
-}
+import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
 export function NotificationsCard({
   lang,
@@ -47,15 +25,24 @@ export function NotificationsCard({
 }) {
   return (
     <div className="cabinet-card flex flex-col gap-3 p-5">
-      <CardTitle>{t(lang, "settings.section.notifications")}</CardTitle>
+      <div>
+        <CardTitle>{t(lang, "settings.section.notifications")}</CardTitle>
+        <p className="mt-1 font-body text-sm text-[var(--cabinet-muted)]">
+          {t(lang, "settings.notifications.comingSoon")}
+        </p>
+      </div>
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.review")}</span>
-          <Toggle checked={review} onChange={onReviewChange} label={t(lang, "settings.notifications.review")} />
+          <SwitchToggle
+            checked={review}
+            onChange={onReviewChange}
+            label={t(lang, "settings.notifications.review")}
+          />
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.weeklyGoal")}</span>
-          <Toggle
+          <SwitchToggle
             checked={weeklyGoal}
             onChange={onWeeklyGoalChange}
             label={t(lang, "settings.notifications.weeklyGoal")}
@@ -63,10 +50,9 @@ export function NotificationsCard({
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.news")}</span>
-          <Toggle checked={news} onChange={onNewsChange} label={t(lang, "settings.notifications.news")} />
+          <SwitchToggle checked={news} onChange={onNewsChange} label={t(lang, "settings.notifications.news")} />
         </div>
       </div>
-      <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "settings.notifications.comingSoon")}</p>
     </div>
   );
 }
