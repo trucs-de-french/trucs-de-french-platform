@@ -67,7 +67,7 @@ export function CourseSwitcherSidebar({
   const logo = <AdminLogo onClick={() => setMobileOpen(false)} size="sm" />;
   const backToDashboard = (
     <Link
-      href="/dashboard"
+      href="/cabinet"
       className="border-t border-neutral-200 pt-3 text-sm text-neutral-600 hover:text-neutral-900 dark:border-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100"
     >
       До кабінету

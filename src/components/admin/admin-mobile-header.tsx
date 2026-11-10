@@ -22,7 +22,7 @@ export function AdminMobileHeader({ initialIsDark }: { initialIsDark: boolean | 
       </Link>
       <div className="admin-sidebar-pill-row">
         <span className="admin-sidebar-badge">Адмінка</span>
-        <Link href="/dashboard" className="admin-sidebar-back-pill">
+        <Link href="/cabinet" className="admin-sidebar-back-pill">
           <ChevronLeft size={14} aria-hidden="true" />
           До кабінету
         </Link>
