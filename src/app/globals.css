@@ -14327,20 +14327,25 @@ button.cabinet-nav-item {
    rgba(255,255,255,.7) тексті), на кремовій/білій картці Налаштувань
    це було майже невидимим. Тут неактивна пілюля завжди непрозора в
    обох темах. */
+/* Геометрія/типографіка — та сама, що .about-me-chip (задача "unify
+   headings/chips across settings cards"): padding 11px 20px, Nunito 800
+   15px, border 2px, gap 8px (іконка+текст усередині), вибраний —
+   канонічний indigo/gold градієнт з білим/чорнильним текстом. border:
+   2px solid transparent (не 0) на активній — щоб не змінювало розмір
+   кнопки проти неактивної сусідки. */
 .settings-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 32px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 11px 20px;
   border-radius: 999px;
   font-family: var(--font-heading);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 800;
   cursor: pointer;
   background: #ffffff;
-  border: 1.5px solid #e4cf94;
+  border: 2px solid #e4cf94;
   color: #1a1640;
 }
 .settings-pill:hover:not(:disabled) {
@@ -14355,15 +14360,10 @@ button.cabinet-nav-item {
   cursor: default;
   opacity: 0.6;
 }
-/* Light theme active = indigo (матч .cabinet-chip--selected — вибрані
-   фільтр-чипи library-view.tsx) — gold лишається дією (Зберегти/
-   Продовжити), не вибором. border: 1.5px solid transparent (не 0) — щоб
-   активна пілюля не стала на 3px (2×1.5px) більшою за неактивну
-   сусідку. */
 .settings-pill--active {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
-  border: 1.5px solid transparent;
-  color: #f6f1e3;
+  border: 2px solid transparent;
+  color: #ffffff;
 }
 .settings-pill--active:hover:not(:disabled) {
   background: linear-gradient(160deg, #5a55e6, #36327d);
@@ -14379,7 +14379,7 @@ button.cabinet-nav-item {
   background: rgba(217, 183, 101, 0.1);
 }
 .dark .settings-pill--active {
-  background: linear-gradient(135deg, #f6dc8e, #d9b765);
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
   border-color: transparent;
   color: #1a1640;
 }
@@ -14402,7 +14402,7 @@ button.cabinet-nav-item {
   background: var(--cabinet-card-bg);
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--cabinet-ink);
   cursor: pointer;
 }

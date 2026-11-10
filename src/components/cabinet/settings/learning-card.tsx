@@ -42,12 +42,10 @@ function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div>
-        <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.goal.title")}</span>
-        <p className="mt-0.5 font-body text-sm text-[var(--cabinet-muted)]">{t(lang, "settings.goal.helper")}</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <div>
+      <h3 className="settings-field-heading">{t(lang, "home.goal.title")}</h3>
+      <p className="settings-field-hint">{t(lang, "settings.goal.helper")}</p>
+      <div className="mt-[14px] flex flex-wrap gap-3">
         {options.map((n) => (
           <button
             key={n}
@@ -62,7 +60,7 @@ function WeeklyGoalPills({ lang, goal }: { lang: UiLang; goal: number }) {
           </button>
         ))}
       </div>
-      <p className="font-body text-sm text-[var(--cabinet-ink)]">
+      <p className="mt-2 font-body text-sm text-[var(--cabinet-ink)]">
         {t(lang, "settings.goal.caption", { n: goal, unit: plural(lang, goal, SCENE_UNIT_FORMS[lang]) })}
         {goal === RECOMMENDED_GOAL && (
           <span className="settings-goal-recommended-tag">{t(lang, "settings.goal.recommended")}</span>
@@ -86,9 +84,9 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.title")}</span>
+        <h3 className="settings-field-heading">{t(lang, "home.exam.title")}</h3>
         <span
           className="rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-[.04em] text-[#2f2c6b] dark:text-[#d9b765]"
           style={{ background: "rgba(217, 183, 101, 0.25)" }}
@@ -96,7 +94,8 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
           {t(lang, "settings.exam.badge")}
         </span>
       </div>
-      <form action={handleSubmit} className="flex flex-col gap-2">
+      <p className="settings-field-hint">{t(lang, "settings.exam.hint")}</p>
+      <form action={handleSubmit} className="mt-[14px] flex flex-col gap-2">
         <div className="flex flex-col gap-2 sm:flex-row">
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-xs font-semibold text-[var(--cabinet-muted)]">{t(lang, "home.exam.type")}</span>
@@ -124,7 +123,7 @@ function ExamSettingsForm({ lang, exam }: { lang: UiLang; exam: ExamInfo | null 
           </button>
         </div>
       </form>
-      {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
+      {error && <p className="mt-2 text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
     </div>
   );
 }
@@ -141,10 +140,16 @@ export function LearningCard({
   showExamCard: boolean;
 }) {
   return (
-    <div id="learning" className="cabinet-card flex flex-col gap-3 p-5">
+    <div id="learning" className="cabinet-card flex flex-col p-5">
       <CardTitle>{t(lang, "settings.section.learning")}</CardTitle>
-      <WeeklyGoalPills lang={lang} goal={goal} />
-      {showExamCard && <ExamSettingsForm lang={lang} exam={exam} />}
+      <div className="mt-7">
+        <WeeklyGoalPills lang={lang} goal={goal} />
+      </div>
+      {showExamCard && (
+        <div className="mt-8">
+          <ExamSettingsForm lang={lang} exam={exam} />
+        </div>
+      )}
     </div>
   );
 }

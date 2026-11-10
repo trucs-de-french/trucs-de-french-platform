@@ -619,6 +619,8 @@ export const en: Record<MessageKey, string> = {
 
   "settings.section.profile": "Profile",
   "settings.section.interface": "Interface",
+  "settings.interface.languageHint": "Language of buttons and labels on the platform",
+  "settings.interface.themeHint": "Light or dark, whichever you prefer",
   "settings.section.aboutMe": "About me",
   "settings.aboutMe.goalsTitle": "Learning goal",
   "settings.aboutMe.goalsHint": "You can pick several. This shapes the tips you see in your cabinet",
@@ -670,6 +672,7 @@ export const en: Record<MessageKey, string> = {
   "settings.name.label": "Name",
   "settings.email.label": "Email",
   "settings.exam.badge": "DELF only",
+  "settings.exam.hint": "Type and date are needed to count down to your exam",
   "settings.notifications.review": "Remind me about review exercises",
   "settings.notifications.weeklyGoal": "Remind me about my weekly goal",
   "settings.notifications.news": "Platform news",

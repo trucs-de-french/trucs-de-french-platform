@@ -622,6 +622,8 @@ export const uk = {
 
   "settings.section.profile": "Профіль",
   "settings.section.interface": "Інтерфейс",
+  "settings.interface.languageHint": "Мова кнопок і підписів на платформі",
+  "settings.interface.themeHint": "Світла чи темна, як тобі зручніше",
   "settings.section.aboutMe": "Про мене",
   "settings.aboutMe.goalsTitle": "Мета навчання",
   "settings.aboutMe.goalsHint": "Можна вибрати кілька. Від цього залежать підказки в кабінеті",
@@ -673,6 +675,7 @@ export const uk = {
   "settings.name.label": "Ім'я",
   "settings.email.label": "Email",
   "settings.exam.badge": "лише для DELF",
+  "settings.exam.hint": "Тип і дата потрібні, щоб порахувати дні до іспиту",
   "settings.notifications.review": "Нагадувати про вправи на повторення",
   "settings.notifications.weeklyGoal": "Нагадувати про тижневу ціль",
   "settings.notifications.news": "Новини платформи",

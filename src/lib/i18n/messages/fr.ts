@@ -621,6 +621,8 @@ export const fr: Record<MessageKey, string> = {
 
   "settings.section.profile": "Profil",
   "settings.section.interface": "Interface",
+  "settings.interface.languageHint": "Langue des boutons et des libellés de la plateforme",
+  "settings.interface.themeHint": "Clair ou sombre, comme tu préfères",
   "settings.section.aboutMe": "À propos de moi",
   "settings.aboutMe.goalsTitle": "Objectif d'apprentissage",
   "settings.aboutMe.goalsHint": "Tu peux en choisir plusieurs. Cela influence les conseils dans ton espace",
@@ -672,6 +674,7 @@ export const fr: Record<MessageKey, string> = {
   "settings.name.label": "Nom",
   "settings.email.label": "Email",
   "settings.exam.badge": "DELF uniquement",
+  "settings.exam.hint": "Le type et la date servent à compter les jours avant ton examen",
   "settings.notifications.review": "Me rappeler les exercices de révision",
   "settings.notifications.weeklyGoal": "Me rappeler mon objectif hebdomadaire",
   "settings.notifications.news": "Actualités de la plateforme",

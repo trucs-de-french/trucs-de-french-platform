@@ -28,13 +28,12 @@ export function InterfaceCard({
   const { isDark, setTheme } = useTheme(initialIsDark);
 
   return (
-    <div className="cabinet-card flex flex-col gap-3 p-5">
+    <div className="cabinet-card flex flex-col p-5">
       <CardTitle>{t(lang, "settings.section.interface")}</CardTitle>
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold text-[var(--cabinet-muted)]">
-          {t(lang, "cabinet.nav.language")}
-        </span>
-        <div className="flex gap-1.5">
+      <div className="mt-7">
+        <h3 className="settings-field-heading">{t(lang, "cabinet.nav.language")}</h3>
+        <p className="settings-field-hint">{t(lang, "settings.interface.languageHint")}</p>
+        <div className="mt-[14px] flex flex-wrap gap-3">
           {LANGS.map((l) => (
             <SettingsPill
               key={l}
@@ -47,11 +46,10 @@ export function InterfaceCard({
           ))}
         </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold text-[var(--cabinet-muted)]">
-          {t(lang, "cabinet.theme.label")}
-        </span>
-        <div className="flex gap-1.5">
+      <div className="mt-8">
+        <h3 className="settings-field-heading">{t(lang, "cabinet.theme.label")}</h3>
+        <p className="settings-field-hint">{t(lang, "settings.interface.themeHint")}</p>
+        <div className="mt-[14px] flex flex-wrap gap-3">
           <SettingsPill active={!isDark} onClick={() => setTheme(false)}>
             <Sun size={14} aria-hidden="true" />
             {t(lang, "cabinet.theme.light")}
