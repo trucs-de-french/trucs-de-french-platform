@@ -12,22 +12,20 @@ export function QuickActionsCard({ lang }: { lang: UiLang }) {
   return (
     <div className="cabinet-card flex flex-col gap-3 p-5">
       <CardTitle>{t(lang, "home.quickActions.title")}</CardTitle>
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-        <Link href="/cabinet/mistakes" className="settings-account-btn justify-center">
+      <div className="grid grid-cols-1 gap-2">
+        <Link href="/cabinet/mistakes" className="cabinet-quick-action-btn">
           <RotateCcw size={17} strokeWidth={2} aria-hidden="true" />
-          {t(lang, "home.quickActions.mistakes")}
+          <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.mistakes")}</span>
         </Link>
-        <Link href="/cabinet/dictionary" className="settings-account-btn justify-center">
+        <Link href="/cabinet/dictionary" className="cabinet-quick-action-btn">
           <BookOpen size={17} strokeWidth={2} aria-hidden="true" />
-          {t(lang, "home.quickActions.dictionary")}
+          <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.dictionary")}</span>
         </Link>
-        <span className="relative inline-flex">
-          <button type="button" disabled className="settings-account-btn w-full justify-center">
-            <Timer size={17} strokeWidth={2} aria-hidden="true" />
-            {t(lang, "home.quickActions.training")}
-          </button>
-          <span className="cabinet-soon-chip">{t(lang, "cabinet.soon")}</span>
-        </span>
+        <button type="button" disabled className="cabinet-quick-action-btn">
+          <Timer size={17} strokeWidth={2} aria-hidden="true" />
+          <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.training")}</span>
+          <span className="cabinet-soon-chip cabinet-soon-chip--inline">{t(lang, "cabinet.soon")}</span>
+        </button>
       </div>
     </div>
   );

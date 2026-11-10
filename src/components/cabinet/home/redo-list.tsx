@@ -5,15 +5,29 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import type { RedoItem } from "@/lib/cabinet/home-data";
 import { CardTitle } from "@/components/cabinet/card-title";
 
-export function RedoList({ lang, items }: { lang: UiLang; items: RedoItem[] }) {
+const MAX_VISIBLE = 3;
+
+export function RedoList({ lang, items, totalCount }: { lang: UiLang; items: RedoItem[]; totalCount: number }) {
+  const visible = items.slice(0, MAX_VISIBLE);
   return (
     <div className="cabinet-card flex h-full flex-col gap-3 p-5">
-      <CardTitle>{t(lang, "home.redo.title")}</CardTitle>
-      {items.length === 0 ? (
+      <div className="flex items-center justify-between gap-3">
+        <CardTitle>{t(lang, "home.redo.title")}</CardTitle>
+        {totalCount > MAX_VISIBLE && (
+          <Link
+            href="/cabinet/mistakes"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+          >
+            {t(lang, "home.redo.all")}
+            <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        )}
+      </div>
+      {visible.length === 0 ? (
         <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.redo.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {items.map((item) => (
+          {visible.map((item) => (
             <li key={item.taskId} className="flex items-center gap-3">
               <span
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--cabinet-on-gold)]"

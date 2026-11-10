@@ -43,8 +43,10 @@ export function AchievementBadge({
       <span className="line-clamp-2 font-heading text-[13.5px] font-extrabold leading-[1.2] text-[var(--cabinet-ink)]">
         {label}
       </span>
-      {achievement.earned && achievement.earnedAt ? (
-        <span className="font-body text-xs text-[var(--cabinet-muted)]">{formatEarnedAt(achievement.earnedAt, locale)}</span>
+      {achievement.earned ? (
+        achievement.earnedAt && (
+          <span className="font-body text-xs text-[var(--cabinet-muted)]">{formatEarnedAt(achievement.earnedAt, locale)}</span>
+        )
       ) : inProgress ? (
         <>
           <span className="text-[11px] text-[var(--cabinet-muted)]">

@@ -83,13 +83,18 @@ export function LibraryCarousel({ lang, items }: { lang: UiLang; items: NewLibra
             <div className="cabinet-carousel-slide-bg">
               {item.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- зовнішній R2-URL
-                <img src={item.coverUrl} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={item.coverUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  style={{ objectPosition: "center" }}
+                />
               ) : (
                 <div
                   className="flex h-full w-full items-center justify-center"
                   style={{ background: "linear-gradient(135deg, #4b46da, #2f2c6b)" }}
                 >
-                  <Film size={40} className="text-white/60" aria-hidden="true" />
+                  <Film size={36} className="text-white" style={{ opacity: 0.35 }} aria-hidden="true" />
                 </div>
               )}
               <div className="cabinet-carousel-overlay" />

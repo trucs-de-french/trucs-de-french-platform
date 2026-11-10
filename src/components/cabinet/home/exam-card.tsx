@@ -18,6 +18,12 @@ const DAY_UNIT_FORMS: Record<UiLang, PluralForms> = {
   en: { one: "day", other: "days" },
 };
 
+const RING_SIZE = 132;
+const STROKE = 12;
+const RADIUS = (RING_SIZE - STROKE) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const WINDOW_DAYS = 365;
+
 function ExamForm({
   lang,
   exam,
@@ -99,12 +105,54 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
         </div>
       ) : (
         exam && (
-          <>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2">
             {exam.daysLeft > 0 ? (
               <>
-                <div className="font-body text-4xl font-extrabold text-[var(--cabinet-ink)]">{exam.daysLeft}</div>
-                <p className="text-sm font-semibold text-[var(--cabinet-muted)]">
-                  {t(lang, "home.exam.countdown", { n: exam.daysLeft, unit: plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang]) })}
+                <svg
+                  width={RING_SIZE}
+                  height={RING_SIZE}
+                  viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+                  role="img"
+                  aria-label={t(lang, "home.exam.countdown", {
+                    n: exam.daysLeft,
+                    unit: plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang]),
+                  })}
+                >
+                  <circle
+                    cx={RING_SIZE / 2}
+                    cy={RING_SIZE / 2}
+                    r={RADIUS}
+                    fill="none"
+                    stroke="var(--cabinet-track-strong)"
+                    strokeWidth={STROKE}
+                  />
+                  <circle
+                    cx={RING_SIZE / 2}
+                    cy={RING_SIZE / 2}
+                    r={RADIUS}
+                    fill="none"
+                    stroke="#e0aa3e"
+                    strokeWidth={STROKE}
+                    strokeLinecap="round"
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={CIRCUMFERENCE * (Math.min(exam.daysLeft, WINDOW_DAYS) / WINDOW_DAYS)}
+                    transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+                  />
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontFamily="var(--font-body)"
+                    fontSize={38}
+                    fontWeight={700}
+                    fill="var(--cabinet-ink)"
+                  >
+                    {exam.daysLeft}
+                  </text>
+                </svg>
+                <p className="font-heading text-[15px] font-extrabold text-[var(--cabinet-ink)]">
+                  {plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}
                 </p>
               </>
             ) : exam.daysLeft === 0 ? (
@@ -121,10 +169,10 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
                 </button>
               </>
             )}
-            <div className="font-body text-sm font-semibold text-[var(--cabinet-ink)]">
+            <div className="font-body text-[17px] font-bold text-[var(--cabinet-ink)]">
               {exam.type} · {formatDateNumeric(exam.date, lang)}
             </div>
-          </>
+          </div>
         )
       )}
     </div>

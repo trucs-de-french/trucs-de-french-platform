@@ -475,20 +475,19 @@ export function pickHomeAchievements(items: AchievementState[], showExamCard: bo
   const chosenIds = new Set(earned.map((a) => a.id));
   const result = [...earned];
 
-  // Бере з pool у порядку sortFn, лишаючи ту категорію, що вже є серед
-  // обраних, насамкінець (щоб рядок лишався різноманітним) — поки не
-  // заповнено 5 слотів.
+  // Бере з pool у порядку sortFn, по черзі віддаючи перевагу найкращому
+  // item з ЩЕ не використаної категорії — usedCategories перевіряється
+  // ЗНОВУ на кожній ітерації (а не один раз до циклу), інакше кілька
+  // item того самого першого-побаченого category (напр. scenes5/10/25)
+  // усі потрапляють у "fresh" одночасно й заповнюють увесь рядок.
   function takeVaried(pool: AchievementState[], sortFn: (a: AchievementState, b: AchievementState) => number) {
-    const usedCategories = new Set(result.map((a) => a.category));
-    const sorted = [...pool].sort(sortFn);
-    const fresh = sorted.filter((a) => !usedCategories.has(a.category));
-    const rest = sorted.filter((a) => usedCategories.has(a.category));
-    for (const item of [...fresh, ...rest]) {
-      if (result.length >= 5) break;
-      if (chosenIds.has(item.id)) continue;
-      result.push(item);
-      chosenIds.add(item.id);
-      usedCategories.add(item.category);
+    const sorted = [...pool].sort(sortFn).filter((a) => !chosenIds.has(a.id));
+    while (result.length < 5 && sorted.length > 0) {
+      const usedCategories = new Set(result.map((a) => a.category));
+      const idx = sorted.findIndex((a) => !usedCategories.has(a.category));
+      const picked = sorted.splice(idx >= 0 ? idx : 0, 1)[0];
+      result.push(picked);
+      chosenIds.add(picked.id);
     }
   }
 

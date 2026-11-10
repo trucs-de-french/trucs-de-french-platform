@@ -11828,6 +11828,11 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
      змінні нічого не змінює у світлій темі. */
   --cabinet-surface-2: var(--cabinet-card-bg);
   --cabinet-track: var(--cabinet-panel-bg);
+  /* Трек для кілець "Тижнева ціль"/"Іспит" — окрема лавандова змінна, НЕ
+     --cabinet-track (кремовий, майже невидимий на білій картці): той
+     трек навмисно лишили кремовим раніше (див. .cabinet-delf-segment--
+     empty нижче), тож тут нова змінна, а не зміна глобальної. */
+  --cabinet-track-strong: #e3def5;
   /* Фон позаду панелей (видний лише у проміжках/safe-area, не під самими
      .cabinet-panel/.cabinet-sidebar) — у світлій темі прозорий, бо раніше
      тут нічого не малювалось (просвічував фон body), тож перехід на цю
@@ -11853,6 +11858,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   --cabinet-line: #2e3680;
   --cabinet-surface-2: #0c1142;
   --cabinet-track: #222a6c;
+  --cabinet-track-strong: #222a6c;
   --cabinet-page-bg: #060829;
   --cabinet-ink: #f6f1e3;
   --cabinet-muted: #b4b1dd;
@@ -13276,35 +13282,88 @@ button.cabinet-nav-item {
   outline-color: #e2a49c;
 }
 
-/* Home: чип стріку в підзаголовку привітання (page.tsx). */
+/* Home: чип стріку в підзаголовку привітання (page.tsx) — переноситься на
+   новий рядок під підзаголовком на мобільному (flex-wrap батьківського
+   контейнера), не окремий колір теми. */
 .cabinet-streak-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 11px;
+  padding: 4px 11px;
+  font-family: var(--font-heading);
+  font-size: 12.5px;
   font-weight: 800;
-  color: #1a1640;
-  background: linear-gradient(135deg, #f6dc8e, #e0aa3e);
+  color: #2f2c6b;
+  background: #ece9fb;
 }
 .dark .cabinet-streak-chip {
-  color: #1a1640;
+  color: #f3d98b;
+  background: rgba(217, 183, 101, 0.16);
 }
 
 /* Home: чип "Скоро" над disabled-кнопкою швидкої дії без маршруту
-   (quick-actions-card.tsx) — абсолютний бейдж у верхньому правому куті. */
+   (quick-actions-card.tsx) — інлайн-бейдж у кінці кнопки (margin-left:
+   auto), не абсолютний, щоб не перекривати лейбл. */
 .cabinet-soon-chip {
-  position: absolute;
-  top: -8px;
-  right: -6px;
+  margin-left: auto;
+  flex-shrink: 0;
   border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
   font-weight: 800;
-  color: var(--cabinet-muted);
-  background: var(--cabinet-surface-2);
-  border: 1px solid var(--cabinet-line);
+  color: var(--cabinet-ink);
+  background: rgba(217, 183, 101, 0.25);
+}
+.dark .cabinet-soon-chip {
+  color: #f6f1e3;
+}
+
+/* Home: вертикальний стек кнопок "Швидкі дії" (quick-actions-card.tsx) —
+   grid замість горизонтального ряду, бо три кнопки з довгими лейблами не
+   влазять у ряд без накладання/обгортання. */
+.cabinet-quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid #d9b765;
+  background: transparent;
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+.cabinet-quick-action-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cabinet-quick-action-btn:hover:not(:disabled) {
+  border-color: #4b46da;
+  background: rgba(75, 70, 218, 0.08);
+}
+.cabinet-quick-action-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.cabinet-quick-action-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dark .cabinet-quick-action-btn {
+  color: #f6f1e3;
+}
+.dark .cabinet-quick-action-btn:hover:not(:disabled) {
+  border-color: #f3d98b;
+  background: rgba(243, 217, 139, 0.1);
+}
+.dark .cabinet-quick-action-btn:focus-visible {
+  outline-color: #f3d98b;
 }
 
 /* Home: ряд бейджів "Останні досягнення" (achievements-home-card.tsx) —
@@ -13386,12 +13445,13 @@ button.cabinet-nav-item {
   scroll-snap-align: start;
   border-radius: 20px;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
+  height: 190px;
   background: var(--cabinet-surface-2);
 }
 @media (min-width: 768px) {
   .cabinet-carousel-slide {
     flex: 0 0 46%;
+    height: 220px;
   }
 }
 .cabinet-carousel-slide-bg {
@@ -13401,7 +13461,7 @@ button.cabinet-nav-item {
 .cabinet-carousel-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10, 14, 40, 0.92), rgba(10, 14, 40, 0.15) 55%, transparent);
+  background: linear-gradient(0deg, rgba(10, 8, 40, 0.85) 0%, rgba(10, 8, 40, 0.55) 45%, rgba(10, 8, 40, 0) 80%);
 }
 .cabinet-carousel-content {
   position: absolute;
@@ -13411,6 +13471,9 @@ button.cabinet-nav-item {
   justify-content: flex-end;
   gap: 6px;
   padding: 16px;
+}
+.cabinet-carousel-content h3 {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 .cabinet-carousel-tag {
   display: inline-flex;

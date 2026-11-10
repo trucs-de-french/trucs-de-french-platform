@@ -9,10 +9,10 @@ export function QuoteCard({ lang, quote }: { lang: UiLang; quote: Quote }) {
   return (
     <div className="cabinet-card flex h-full min-h-[260px] flex-col justify-between gap-3 p-5">
       <CardTitle>{t(lang, "home.quote.title")}</CardTitle>
-      <div className="flex flex-1 flex-col justify-center gap-2">
+      <div className="flex flex-1 flex-col gap-2">
         <span
-          className="font-body select-none leading-none text-[#d9b765]"
-          style={{ fontSize: 64, fontWeight: 700, opacity: 0.9 }}
+          className="font-body select-none text-[#d9b765]"
+          style={{ fontSize: 64, fontWeight: 700, opacity: 0.9, height: 34, lineHeight: "34px", marginBottom: 6 }}
           aria-hidden="true"
         >
           “

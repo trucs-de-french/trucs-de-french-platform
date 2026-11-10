@@ -103,7 +103,7 @@ export default async function CabinetHomePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
           <QuickActionsCard lang={lang} />
-          <RedoList lang={lang} items={home.redoList} />
+          <RedoList lang={lang} items={home.redoList} totalCount={home.redoCount} />
         </div>
 
         <LibraryCarousel lang={lang} items={newLibraryItems} />
@@ -115,7 +115,7 @@ export default async function CabinetHomePage() {
         {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
         <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
         <QuickActionsCard lang={lang} />
-        <RedoList lang={lang} items={home.redoList} />
+        <RedoList lang={lang} items={home.redoList} totalCount={home.redoCount} />
         <QuoteCard lang={lang} quote={quote} />
         <LibraryCarousel lang={lang} items={newLibraryItems} />
       </div>
