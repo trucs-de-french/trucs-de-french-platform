@@ -14480,65 +14480,105 @@ button.cabinet-nav-item {
 /* Home: чип "Скоро" над disabled-кнопкою швидкої дії без маршруту
    (quick-actions-card.tsx) — інлайн-бейдж у кінці кнопки (margin-left:
    auto), не абсолютний, щоб не перекривати лейбл. */
+/* "Скоро"-чип (quick-actions-card.tsx, "Тренування 5 хв") — пушиться
+   праворуч margin-left:auto, БЕЗ стрілки поряд (disabled-кнопка стрілку
+   не рендерить взагалі). */
 .cabinet-soon-chip {
   margin-left: auto;
   flex-shrink: 0;
   border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
+  padding: 4px 12px;
+  font-family: var(--font-heading);
+  font-size: 12px;
   font-weight: 800;
-  color: var(--cabinet-ink);
-  background: rgba(217, 183, 101, 0.25);
+  color: #8a8aa8;
+  background: #f3ecd6;
 }
 .dark .cabinet-soon-chip {
-  color: #f6f1e3;
+  color: #8f97d6;
+  background: #222a6c;
 }
 
 /* Home: вертикальний стек кнопок "Швидкі дії" (quick-actions-card.tsx) —
-   grid замість горизонтального ряду, бо три кнопки з довгими лейблами не
-   влазять у ряд без накладання/обгортання. */
+   "Головна дія залита": контекстна дія (DELF/нова сцена) — залита
+   gradient-пілюля, "Відкрити словник" — outline, "Тренування 5 хв" —
+   disabled-вигляд із "Скоро"-чипом. Спільна геометрія в базовому класі,
+   кожен варіант — свій модифікатор. */
 .cabinet-quick-action-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  height: 44px;
-  padding: 0 18px;
+  padding: 13px 18px;
   border-radius: 999px;
-  border: 1.5px solid #d9b765;
+  border: none;
   background: transparent;
-  color: #1a1640;
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
+  text-decoration: none;
   cursor: pointer;
 }
 .cabinet-quick-action-label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: left;
 }
-.cabinet-quick-action-btn:hover:not(:disabled) {
-  border-color: #4b46da;
-  background: rgba(75, 70, 218, 0.08);
+.cabinet-quick-action-arrow {
+  flex: none;
+  opacity: 0.6;
 }
 .cabinet-quick-action-btn:focus-visible {
-  outline: 2px solid #4b46da;
+  outline: 2px solid #d9b765;
   outline-offset: 2px;
 }
-.cabinet-quick-action-btn:disabled {
-  opacity: 0.6;
+.dark .cabinet-quick-action-btn:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+/* Контекстна головна дія — залита gradient-пілюля (indigo світла / gold
+   темна, БЕЗ тіні в темній). */
+.cabinet-quick-action-btn--main {
+  color: #ffffff;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
+  transition: filter 150ms;
+}
+.cabinet-quick-action-btn--main:hover {
+  filter: brightness(1.06);
+}
+.dark .cabinet-quick-action-btn--main {
+  color: #1a1640;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  box-shadow: none;
+}
+
+/* "Відкрити словник" — outline. */
+.cabinet-quick-action-btn--outline {
+  border: 2px solid #d9b765;
+  color: var(--cabinet-ink);
+}
+.cabinet-quick-action-btn--outline:hover {
+  background: #fbf4dc;
+}
+.dark .cabinet-quick-action-btn--outline {
+  border-color: #b8923f;
+}
+.dark .cabinet-quick-action-btn--outline:hover {
+  background: #1b2268;
+}
+
+/* "Тренування 5 хв" — disabled-вигляд, без hover. */
+.cabinet-quick-action-btn--disabled {
+  border: 2px solid var(--cabinet-line);
+  color: #8a8aa8;
   cursor: default;
 }
-.dark .cabinet-quick-action-btn {
-  color: #f6f1e3;
-}
-.dark .cabinet-quick-action-btn:hover:not(:disabled) {
-  border-color: #f3d98b;
-  background: rgba(243, 217, 139, 0.1);
-}
-.dark .cabinet-quick-action-btn:focus-visible {
-  outline-color: #f3d98b;
+.dark .cabinet-quick-action-btn--disabled {
+  color: #8f97d6;
 }
 
 /* Home: ряд бейджів "Останні досягнення" (achievements-home-card.tsx) —

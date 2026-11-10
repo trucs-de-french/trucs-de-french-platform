@@ -202,6 +202,7 @@ export type CabinetHomeData = {
   redoCount: number;
   exam: ExamInfo | null;
   showExamCard: boolean;
+  delfProductId: string | null;
 };
 
 const EMPTY_HOME_DATA: CabinetHomeData = {
@@ -220,6 +221,7 @@ const EMPTY_HOME_DATA: CabinetHomeData = {
   redoCount: 0,
   exam: null,
   showExamCard: false,
+  delfProductId: null,
 };
 
 export type TaskRow = {
@@ -330,6 +332,12 @@ export async function getCabinetHomeData(
   const productById = new Map(enrolledProducts.map((p) => [p.id, p]));
   const hasExamProduct = enrolledProducts.some((p) => isExamProductType(p.type));
   const showExamCard = hasExamProduct || exam !== null;
+  // Для "Швидкі дії" (quick-actions-card.tsx) — пряме посилання на DELF-
+  // продукт лише коли він ОДИН (однозначний; при 0 чи 2+ дій нема сенсу
+  // вгадувати, картка сама впаде на бібліотеку). Жодного зайвого запиту —
+  // той самий enrolledProducts, що вже отримано вище для showExamCard.
+  const delfProducts = enrolledProducts.filter((p) => isExamProductType(p.type));
+  const delfProductId = delfProducts.length === 1 ? delfProducts[0].id : null;
 
   let scenes: SceneRow[] = [];
   let tasks: TaskRow[] = [];
@@ -624,6 +632,7 @@ export async function getCabinetHomeData(
     redoCount,
     exam,
     showExamCard,
+    delfProductId,
   };
 }
 

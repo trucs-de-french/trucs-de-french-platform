@@ -89,7 +89,7 @@ export default async function CabinetHomePage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <WeeklyGoalCard lang={lang} realDone={home.weeklyGoal.done} realGoal={home.weeklyGoal.goal} />
-        <QuickActionsCard lang={lang} />
+        <QuickActionsCard lang={lang} showExamCard={home.showExamCard} delfProductId={home.delfProductId} />
         <RedoList lang={lang} items={home.redoList} totalCount={home.redoCount} />
       </div>
 

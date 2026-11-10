@@ -1,30 +1,64 @@
+"use client";
+
 import Link from "next/link";
-import { RotateCcw, BookOpen, Timer } from "lucide-react";
+import { BookOpen, Clapperboard, GraduationCap, Timer, ArrowRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CardTitle } from "@/components/cabinet/card-title";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 
-// "Тренування 5 хв" без власного маршруту (навіть "Скоро"-заглушки) —
-// disabled-кнопка з чипом; /cabinet/mistakes і /cabinet/dictionary вже
-// існують як реальні сторінки (наразі самі показують "Скоро"), тож
-// лінкуються як звичні переходи, не disabled.
-export function QuickActionsCard({ lang }: { lang: UiLang }) {
+// "Швидкі дії" — 3 кнопки: словник (outline), контекстна головна дія
+// (DELF-практика, якщо є дата іспиту/DELF-продукт — той самий критерій,
+// що показує картку "Іспит" — інакше "Обрати нову сцену"), "Тренування
+// 5 хв" (disabled, "Скоро"). showExamCard/delfProductId — реальні дані з
+// сервера; адмінський override (useAdminPreview, examDateAdded) підміняє
+// лише контекстну дію, щоб вчитель міг прев'юднути обидва варіанти.
+export function QuickActionsCard({
+  lang,
+  showExamCard,
+  delfProductId,
+}: {
+  lang: UiLang;
+  showExamCard: boolean;
+  delfProductId: string | null;
+}) {
+  const { override } = useAdminPreview();
+  const showDelf = override ? !!override.examDateAdded : showExamCard;
+  const delfHref = delfProductId ? `/courses/${delfProductId}` : "/cabinet/library";
+
   return (
     <div className="cabinet-card flex flex-col gap-3 p-5">
       <CardTitle>{t(lang, "home.quickActions.title")}</CardTitle>
-      <div className="grid grid-cols-1 gap-2">
-        <Link href="/cabinet/mistakes" className="cabinet-quick-action-btn">
-          <RotateCcw size={17} strokeWidth={2} aria-hidden="true" />
-          <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.mistakes")}</span>
-        </Link>
-        <Link href="/cabinet/dictionary" className="cabinet-quick-action-btn">
-          <BookOpen size={17} strokeWidth={2} aria-hidden="true" />
+      <div className="grid grid-cols-1 gap-[10px]">
+        <Link href="/cabinet/dictionary" className="cabinet-quick-action-btn cabinet-quick-action-btn--outline">
+          <BookOpen size={20} strokeWidth={1.8} aria-hidden="true" />
           <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.dictionary")}</span>
+          <ArrowRight size={20} className="cabinet-quick-action-arrow" aria-hidden="true" />
         </Link>
-        <button type="button" disabled className="cabinet-quick-action-btn">
-          <Timer size={17} strokeWidth={2} aria-hidden="true" />
+
+        {showDelf ? (
+          <Link href={delfHref} className="cabinet-quick-action-btn cabinet-quick-action-btn--main">
+            <GraduationCap size={20} strokeWidth={1.8} aria-hidden="true" />
+            <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.delf")}</span>
+            <ArrowRight size={20} className="cabinet-quick-action-arrow" aria-hidden="true" />
+          </Link>
+        ) : (
+          <Link href="/cabinet/library" className="cabinet-quick-action-btn cabinet-quick-action-btn--main">
+            <Clapperboard size={20} strokeWidth={1.8} aria-hidden="true" />
+            <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.newScene")}</span>
+            <ArrowRight size={20} className="cabinet-quick-action-arrow" aria-hidden="true" />
+          </Link>
+        )}
+
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          className="cabinet-quick-action-btn cabinet-quick-action-btn--disabled"
+        >
+          <Timer size={20} strokeWidth={1.8} aria-hidden="true" />
           <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.training")}</span>
-          <span className="cabinet-soon-chip cabinet-soon-chip--inline">{t(lang, "cabinet.soon")}</span>
+          <span className="cabinet-soon-chip">{t(lang, "cabinet.soon")}</span>
         </button>
       </div>
     </div>
