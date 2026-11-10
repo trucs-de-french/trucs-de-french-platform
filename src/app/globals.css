@@ -12514,52 +12514,13 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
-.admin-sidebar-badge {
-  display: inline-flex;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: linear-gradient(160deg, #f3d98b, #d9b765);
-  color: #1a1640;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 12px;
-}
-
-/* Верхній блок AdminSidebar (вордмарк + "Адмінка"-пілюля + "До кабінету")
-   — +6px top/bottom понад власний padding:18px 12px .cabinet-sidebar
-   (разом ≈24px), горизонтальний padding той самий, що в .cabinet-nav-
-   item (--cabinet-item-pl зліва, 16px справа), щоб текстова колонка
-   лежала на одній лінії з іконками пунктів нижче. */
-.admin-sidebar-top {
-  padding: 6px 16px 0 var(--cabinet-item-pl);
-}
-.admin-sidebar-pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-.admin-sidebar-back-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  background: transparent;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 13px;
-  color: #ffffff;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.admin-sidebar-back-pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-.admin-sidebar-nav {
-  margin-top: 20px;
+/* Профільна пілюля AdminSidebar (CabinetSidebarProfile, roleTag="ADMIN")
+   — та сама пілюля, що в кабінеті, лише +8px margin-bottom понад її
+   власні 12px (разом 20px до першого пункту навігації — .admin-
+   sidebar-nav сам БЕЗ додаткового margin-top, інакше ці 20px
+   подвоювались би). */
+.admin-sidebar-profile-row {
+  margin-bottom: 8px;
 }
 .admin-sidebar-bottom {
   padding-bottom: 6px;

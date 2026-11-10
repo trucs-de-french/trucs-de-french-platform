@@ -8,6 +8,7 @@ import { ConfirmForm } from "@/components/confirm-form";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
+import { getAdminSidebarProfile } from "@/lib/admin/admin-profile";
 
 const TYPE_ICON: Record<string, LucideIcon> = {
   film: Film,
@@ -28,6 +29,13 @@ export default async function AdminCoursesPage({
   const showArchived = archived === "1";
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const profile = user
+    ? await getAdminSidebarProfile(supabase, user.id)
+    : { fullName: null, avatarUrl: null, avatarMascot: null };
+
   const [activeQuery, archivedQuery] = await Promise.all([
     supabase
       .from("products")
@@ -48,7 +56,12 @@ export default async function AdminCoursesPage({
   const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
 
   return (
-    <AdminShell initialIsDark={initialIsDark}>
+    <AdminShell
+      initialIsDark={initialIsDark}
+      fullName={profile.fullName}
+      avatarUrl={profile.avatarUrl}
+      avatarMascot={profile.avatarMascot}
+    >
       <PageHeader
         title="Курси"
         subtitle="Каталог продуктів платформи"

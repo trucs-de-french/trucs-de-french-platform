@@ -12,21 +12,39 @@ import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
 // сягала самого низу вьюпорта). Фіксований оверлей повністю виходить за
 // межі batьківського padding'а в обох напрямках одразу, рейка/панель —
 // .cabinet-frame/.cabinet-panel (ті самі класи, що /cabinet) всередині
-// нього скролять і заповнюють точно 100dvh. Плаваючу кнопку теми
-// кореневого layout.tsx на цих сторінках ховає ThemeToggleGate (за
-// pathname, не за цим компонентом) — у рейці вже є власний перемикач.
+// нього скролять і заповнюють точно 100dvh.
+//
+// fullName/avatarUrl/avatarMascot — ТІ САМІ поля profiles, що cabinet/
+// layout.tsx читає для CabinetSidebarProfile; кожна сторінка з AdminShell
+// сама фетчить їх (lib/admin/admin-profile.ts) і передає сюди.
 export function AdminShell({
   initialIsDark,
+  fullName,
+  avatarUrl,
+  avatarMascot,
   children,
 }: {
   initialIsDark: boolean | null;
+  fullName: string | null;
+  avatarUrl: string | null;
+  avatarMascot: string | null;
   children: React.ReactNode;
 }) {
   return (
     <div className="cabinet admin-shell-fixed">
       <div className="cabinet-frame">
-        <AdminMobileHeader initialIsDark={initialIsDark} />
-        <AdminSidebar initialIsDark={initialIsDark} />
+        <AdminMobileHeader
+          initialIsDark={initialIsDark}
+          fullName={fullName}
+          avatarUrl={avatarUrl}
+          avatarMascot={avatarMascot}
+        />
+        <AdminSidebar
+          initialIsDark={initialIsDark}
+          fullName={fullName}
+          avatarUrl={avatarUrl}
+          avatarMascot={avatarMascot}
+        />
         <main className="cabinet-panel">{children}</main>
       </div>
     </div>

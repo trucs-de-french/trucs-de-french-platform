@@ -5,38 +5,58 @@ import { usePathname } from "next/navigation";
 import { BookOpen, Trophy, ChevronLeft, type LucideIcon } from "lucide-react";
 import { PlatformWordmark } from "@/components/platform-wordmark";
 import { ThemePills } from "@/components/cabinet/theme-switch";
+import { CabinetSidebarProfile } from "@/components/cabinet/sidebar-profile";
 
 export const ADMIN_NAV_ITEMS: { href: string; icon: LucideIcon; label: string }[] = [
   { href: "/admin/courses", icon: BookOpen, label: "Курси" },
   { href: "/admin/achievements-preview", icon: Trophy, label: "Симулятор досягнень" },
 ];
 
-// Адмінський відповідник CabinetSidebar — ті самі CSS-класи (.cabinet-
-// sidebar/.cabinet-nav-item/...), простіший вміст (без профілю, мовних
-// пігулок, collapse — лише 2 пункти навігації). Рендериться САМЕ на
-// сторінках, що отримали новий shell (courses, achievements-preview), а
-// не в кореневому admin/layout.tsx — глибокий редактор курсу
-// (courses/[id]/**) має власний CourseSwitcherSidebar і full-bleed
-// breakout, які цей shell зламав би, якби сидів у спільному layout.
-export function AdminSidebar({ initialIsDark }: { initialIsDark: boolean | null }) {
+// Адмінський відповідник CabinetSidebar — ТІ САМІ компоненти/CSS-класи
+// (.cabinet-sidebar/.cabinet-nav-item/CabinetSidebarProfile/...), простіший
+// вміст (без мовних пігулок, collapse — лише 2 пункти навігації).
+// Рендериться САМЕ на сторінках, що отримали новий shell (courses,
+// achievements-preview), а не в кореневому admin/layout.tsx — глибокий
+// редактор курсу (courses/[id]/**) має власний CourseSwitcherSidebar і
+// full-bleed breakout, які цей shell зламав би, якби сидів у спільному
+// layout.
+//
+// Верхній блок — .cabinet-sidebar-logo-wrap/.cabinet-sidebar-logo (ТІ
+// САМІ класи, що в CabinetSidebar, лише padding-left, без padding-right)
+// — попередній окремий .admin-sidebar-top з padding-right:16px саме й
+// обрізав ширину настільки, що tagline переносилась на 2 рядки.
+export function AdminSidebar({
+  initialIsDark,
+  fullName,
+  avatarUrl,
+  avatarMascot,
+}: {
+  initialIsDark: boolean | null;
+  fullName: string | null;
+  avatarUrl: string | null;
+  avatarMascot: string | null;
+}) {
   const pathname = usePathname();
 
   return (
     <aside className="cabinet-sidebar admin-sidebar">
-      <div className="admin-sidebar-top">
+      <div className="cabinet-sidebar-logo-wrap cabinet-sidebar-logo pb-4">
         <Link href="/admin/courses" aria-label="Trucs d’French">
           <PlatformWordmark size="sidebar" tone="dark" tagline align="left" />
         </Link>
-        <div className="admin-sidebar-pill-row">
-          <span className="admin-sidebar-badge">Адмінка</span>
-          <Link href="/cabinet" className="admin-sidebar-back-pill">
-            <ChevronLeft size={14} aria-hidden="true" />
-            До кабінету
-          </Link>
-        </div>
       </div>
 
-      <nav aria-label="Адмінка" className="admin-sidebar-nav flex w-full flex-col gap-[2px]">
+      <div className="admin-sidebar-profile-row">
+        <CabinetSidebarProfile
+          fullName={fullName}
+          avatarUrl={avatarUrl}
+          avatarMascot={avatarMascot}
+          collapsed={false}
+          roleTag="ADMIN"
+        />
+      </div>
+
+      <nav aria-label="Адмінка" className="flex w-full flex-col gap-[2px]">
         {ADMIN_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -52,6 +72,13 @@ export function AdminSidebar({ initialIsDark }: { initialIsDark: boolean | null 
             </Link>
           );
         })}
+
+        <div className="cabinet-sidebar-divider mt-4 mb-3 border-t border-white/15" />
+
+        <Link href="/cabinet" className="cabinet-nav-item">
+          <ChevronLeft size={22} aria-hidden="true" />
+          <span>До кабінету</span>
+        </Link>
       </nav>
 
       <div className="cabinet-sidebar-bottom admin-sidebar-bottom mt-auto flex flex-col gap-[10px]">
