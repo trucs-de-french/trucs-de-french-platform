@@ -12483,35 +12483,34 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
-/* Адмінський shell (admin-shell.tsx) — той самий вигляд, що /cabinet
-   (темна рейка + крем/темна панель), лише на сторінках, що свідомо
-   отримали новий дизайн (courses, achievements-preview), не на
-   кореневому admin/layout.tsx (глибокий редактор курсу лишається зі
-   своїм CourseSwitcherSidebar). */
-.admin-shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* Адмінський shell (admin-shell.tsx) — той самий вигляд, що /cabinet,
+   лише на сторінках, що свідомо отримали новий дизайн (courses,
+   achievements-preview), не на кореневому admin/layout.tsx (глибокий
+   редактор курсу лишається зі своїм CourseSwitcherSidebar). position:
+   fixed;inset:0 — виходить за межі mx-auto max-w-4xl p-6 кореневого
+   admin/layout.tsx в ОБОХ напрямках одразу (на відміну від попередньої
+   mx-[calc(50%-50vw)] w-screen — та давала горизонтальний скрол і білі
+   смуги зверху/знизу від padding'а навколо). Усередині — .cabinet-frame/
+   .cabinet-panel, ті самі класи, що й сам /cabinet (рейка-градієнт на
+   всю висоту вьюпорта, панель — єдиний скрол-контейнер). */
+.admin-shell-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  /* Мобільний .cabinet-frame — лише min-height:100vh (не фіксована висота
+     з overflow:hidden, це лише @media(min-width:768px) нижче), тож
+     контент довший за екран рухав би .cabinet-frame вище його
+     власного flex:1/overflow-y:auto на .cabinet-panel без ефекту —
+     сам фіксований оверлей тоді має скролитись цілком, інакше контент
+     нижче першого екрана був би недосяжний. На десктопі навпаки:
+     .cabinet-frame сам overflow:hidden;height:100dvh, скролить лише
+     .cabinet-panel — тут має бути overflow:hidden, щоб не з'явилось
+     двох скролерів одночасно. */
+  overflow-y: auto;
 }
 @media (min-width: 768px) {
-  .admin-shell {
-    flex-direction: row;
-    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
-  }
-  .dark .admin-shell {
-    background: linear-gradient(160deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
-  }
-}
-.admin-shell-panel {
-  flex: 1;
-  min-width: 0;
-  background: var(--cabinet-panel-bg);
-  padding: 24px;
-  color: var(--cabinet-ink);
-}
-@media (max-width: 767px) {
-  .admin-shell-panel {
-    padding: 16px;
+  .admin-shell-fixed {
+    overflow: hidden;
   }
 }
 

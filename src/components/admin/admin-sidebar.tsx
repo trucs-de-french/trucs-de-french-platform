@@ -49,14 +49,14 @@ export function AdminSidebar({ initialIsDark }: { initialIsDark: boolean | null 
       </nav>
 
       <div className="cabinet-sidebar-bottom mt-auto flex flex-col gap-[10px]">
-        <div className="px-1">
-          <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold">Тема</p>
-          <ThemePills lang="uk" initialIsDark={initialIsDark} />
-        </div>
         <Link href="/dashboard" className="cabinet-nav-item w-full">
           <ChevronLeft size={22} aria-hidden="true" />
           <span>До кабінету</span>
         </Link>
+        <div className="px-1">
+          <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold">Тема</p>
+          <ThemePills lang="uk" initialIsDark={initialIsDark} />
+        </div>
       </div>
     </aside>
   );
