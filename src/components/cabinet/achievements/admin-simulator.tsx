@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { t } from "@/lib/i18n/t";
+import { useEffect, useRef, useState } from "react";
+import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { collectionPresetStats, type BadgeStats } from "@/lib/cabinet/achievements";
 
@@ -68,6 +68,26 @@ export function AdminSimulator({
 }) {
   const [form, setForm] = useState<FormState>(() => toForm(realStats));
 
+  // Підтвердження "✓ ..." після кожної кнопки — один спільний слот
+  // (останній клік виграє), автоприховування через 2с; таймер у ref, щоб
+  // повторний клік перезапускав відлік, а не плодив паралельні таймери.
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const confirmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+    };
+  }, []);
+
+  function confirm(key: MessageKey) {
+    setConfirmMessage(t(lang, key));
+    setConfirmVisible(true);
+    if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+    confirmTimeoutRef.current = setTimeout(() => setConfirmVisible(false), 2000);
+  }
+
   function field(key: keyof Omit<FormState, "examDateAdded">, labelKey: Parameters<typeof t>[1]) {
     return (
       <label className="achievements-admin-field">
@@ -84,10 +104,11 @@ export function AdminSimulator({
     );
   }
 
-  function applyPreset(collection: number) {
+  function applyPreset(collection: number, key: MessageKey) {
     const stats = collectionPresetStats(collection);
     setForm(toForm(stats));
     onApply(stats);
+    confirm(key);
   }
 
   return (
@@ -116,7 +137,14 @@ export function AdminSimulator({
       </label>
 
       <div className="achievements-admin-actions">
-        <button type="button" className="cabinet-pill-link" onClick={() => onApply(toStats(form))}>
+        <button
+          type="button"
+          className="cabinet-pill-link"
+          onClick={() => {
+            onApply(toStats(form));
+            confirm("achievements.admin.confirm.apply");
+          }}
+        >
           {t(lang, "achievements.admin.button.apply")}
         </button>
         <button
@@ -125,19 +153,42 @@ export function AdminSimulator({
           onClick={() => {
             setForm(toForm(realStats));
             onReset();
+            confirm("achievements.admin.confirm.resetReal");
           }}
         >
           {t(lang, "achievements.admin.button.resetReal")}
         </button>
-        <button type="button" className="cabinet-pill-link" onClick={() => applyPreset(1)}>
+        <button
+          type="button"
+          className="cabinet-pill-link"
+          onClick={() => applyPreset(1, "achievements.admin.confirm.collectI")}
+        >
           {t(lang, "achievements.admin.button.collectI")}
         </button>
-        <button type="button" className="cabinet-pill-link" onClick={() => applyPreset(2)}>
+        <button
+          type="button"
+          className="cabinet-pill-link"
+          onClick={() => applyPreset(2, "achievements.admin.confirm.collectII")}
+        >
           {t(lang, "achievements.admin.button.collectII")}
         </button>
-        <button type="button" className="achievements-admin-pill-outline" onClick={onResetBanners}>
+        <button
+          type="button"
+          className="achievements-admin-pill-outline"
+          onClick={() => {
+            onResetBanners();
+            confirm("achievements.admin.confirm.showBannerAgain");
+          }}
+        >
           {t(lang, "achievements.admin.button.showBannerAgain")}
         </button>
+        <span
+          role="status"
+          aria-live="polite"
+          className={`achievements-admin-confirm ${confirmVisible ? "achievements-admin-confirm--visible" : ""}`}
+        >
+          {confirmMessage}
+        </span>
       </div>
     </details>
   );

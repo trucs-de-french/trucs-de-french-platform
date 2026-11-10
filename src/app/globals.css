@@ -12420,6 +12420,28 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* "✓ Застосовано" тощо (admin-simulator.tsx) — рендериться завжди (для
+   aria-live), прихована через opacity, не display, щоб кнопки не
+   стрибали при появі/зникненні. */
+.achievements-admin-confirm {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: #4b46da;
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+}
+.dark .achievements-admin-confirm {
+  color: #f3d98b;
+}
+.achievements-admin-confirm--visible {
+  opacity: 1;
+}
+
 .achievements-chip-row {
   display: flex;
   flex-wrap: wrap;
