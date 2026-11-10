@@ -60,56 +60,40 @@ export default async function CabinetHomePage() {
         level={home.continueTarget?.productLevel ?? null}
       />
 
-      {/* Два різні порядки блоків (десктоп/мобільний) з макету v4 — явно
-          продубльовано (hidden lg:flex / lg:hidden), а не одна CSS grid
-          з order: на мобільному "Продовжити" йде першим, на десктопі —
-          лише другим рядком після "Останні досягнення"/"Іспит". */}
-      <div className="hidden flex-col gap-4 lg:flex">
-        <div
-          className={
-            home.showExamCard
-              ? "grid grid-cols-1 items-stretch gap-4 min-[760px]:grid-cols-[1fr_300px]"
-              : "grid grid-cols-1"
-          }
-        >
+      {/* Один спільний grid для обох рядків (досягнення+іспит, продовжити+
+          цитата) — .cabinet-home-split, одна й та сама колонкова сітка
+          (minmax(0,1fr) 300px, <760px — 1 колонка) для обох рядків, щоб
+          вертикальний gutter лежав в одній точці на всю висоту. Порядок
+          завжди [досягнення, іспит, продовжити, цитата] — і на >=760px
+          (2 рядки по 2), і на <760px (1 колонка, той самий порядок);
+          попередній окремий мобільний блок із "Продовжити" першим
+          прибрано — колишня причина дублювання блоків. */}
+      <div className="cabinet-home-split">
+        {/* display:contents, не "без класу", коли є Іспит-картка — щоб
+            обгортка не ставала власним grid-item'ом (тоді align-items:
+            stretch тягнув би ЦЮ порожню обгортку, не саму картку
+            досягнень усередині неї) і сама картка лишалась прямим
+            grid-item'ом, як і раніше. */}
+        <div className={home.showExamCard ? "contents" : "cabinet-home-split-full"}>
           <AchievementsHomeCard
             lang={lang}
             realStats={achievements.stats}
             earnedAtById={achievements.earnedAtById}
             showExamCard={achievements.showExamCard}
           />
-          {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
         </div>
-
-        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]">
-          <ContinueCard lang={lang} target={home.continueTarget} />
-          <QuoteCard lang={lang} quote={quote} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
-          <QuickActionsCard lang={lang} />
-          <RedoList lang={lang} items={home.redoList} totalCount={home.redoCount} />
-        </div>
-
-        <LibraryCarousel lang={lang} items={newLibraryItems} />
+        {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
+        <ContinueCard lang={lang} target={home.continueTarget} />
+        <QuoteCard lang={lang} quote={quote} />
       </div>
 
-      <div className="flex flex-col gap-4 lg:hidden">
-        <ContinueCard lang={lang} target={home.continueTarget} />
-        <AchievementsHomeCard
-          lang={lang}
-          realStats={achievements.stats}
-          earnedAtById={achievements.earnedAtById}
-          showExamCard={achievements.showExamCard}
-        />
-        {home.showExamCard && <ExamCard lang={lang} exam={home.exam} />}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <WeeklyGoalCard lang={lang} done={home.weeklyGoal.done} goal={home.weeklyGoal.goal} />
         <QuickActionsCard lang={lang} />
         <RedoList lang={lang} items={home.redoList} totalCount={home.redoCount} />
-        <QuoteCard lang={lang} quote={quote} />
-        <LibraryCarousel lang={lang} items={newLibraryItems} />
       </div>
+
+      <LibraryCarousel lang={lang} items={newLibraryItems} />
 
       <CabinetFooter lang={lang} />
     </div>
