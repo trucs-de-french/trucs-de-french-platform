@@ -12096,12 +12096,19 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 10.5px;
-  color: var(--cabinet-muted);
-  background: var(--cabinet-track-strong);
+  color: #8a6a1f;
+  background: rgba(217, 183, 101, 0.22);
+  border: 1px solid rgba(217, 183, 101, 0.45);
+}
+.dark .cabinet-week-dot {
+  color: #d9c07a;
+  background: rgba(217, 183, 101, 0.14);
+  border-color: rgba(217, 183, 101, 0.35);
 }
 .cabinet-week-dot--active {
   color: #1a1640;
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  border-color: transparent;
 }
 /* "Сьогодні" — внутрішнє кільце кольором картки (відділяє від фону
    героя/активного градієнта), зовнішнє — золоте, незалежно від того,
