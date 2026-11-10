@@ -12116,7 +12116,18 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: #1a1640;
   font-weight: 900;
   background: linear-gradient(160deg, #f3d98b, #d9b765);
-  border-color: transparent;
+  border: 1.5px solid #d9b765;
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45);
+}
+/* Явний dark-override активного дня — без нього ".dark .cabinet-week-
+   dot" (2 класи, вище за ".cabinet-week-dot--active", лише 1 клас)
+   перебивав би тут background/border/color незалежно від порядку в
+   файлі: специфічність важливіша за порядок. Той самий gold-фон, що й
+   світла тема — активний день однаковий в обох темах. */
+.dark .cabinet-week-dot--active {
+  color: #1a1640;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  border: 1.5px solid #d9b765;
   box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45);
 }
 /* "Сьогодні" — внутрішнє кільце кольором картки (відділяє від фону
