@@ -11955,24 +11955,13 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   position: relative;
   padding: 10px 4px 6px;
   margin-bottom: 20px;
+  background-image: radial-gradient(ellipse at 20% 30%, rgba(243, 217, 139, 0.42), transparent 70%);
+  background-size: 340px 150px;
+  background-position: -20px -26px;
+  background-repeat: no-repeat;
 }
-.cabinet-page-header::before {
-  content: "";
-  position: absolute;
-  left: -20px;
-  top: -26px;
-  width: 340px;
-  height: 150px;
-  background: radial-gradient(ellipse at 20% 30%, rgba(243, 217, 139, 0.42), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-.dark .cabinet-page-header::before {
-  display: none;
-}
-.cabinet-page-header > * {
-  position: relative;
-  z-index: 1;
+.dark .cabinet-page-header {
+  background-image: none;
 }
 .cabinet-page-header-row {
   display: flex;

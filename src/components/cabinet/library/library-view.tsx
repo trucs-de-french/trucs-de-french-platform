@@ -145,8 +145,8 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="task-tabs-scroll">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="task-tabs-scroll min-w-0 flex-1 basis-[200px]">
           <div className="flex items-center gap-2 whitespace-nowrap">
             <button
               type="button"
@@ -178,7 +178,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
           </div>
         </div>
 
-        <label className="relative flex min-h-11 w-full items-center sm:w-64">
+        <label className="relative flex min-h-11 w-full min-w-0 flex-1 basis-[220px] items-center sm:ml-auto sm:max-w-[320px]">
           <span className="sr-only">{t(lang, "library.search")}</span>
           <Search
             size={16}
@@ -200,6 +200,18 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
           <span className="text-xs font-semibold text-[var(--cabinet-muted)]">
             {t(lang, "library.level.label")}
           </span>
+          <button
+            type="button"
+            aria-pressed={levelFilter === null}
+            onClick={() => setLevelFilter(null)}
+            className={`inline-flex h-11 shrink-0 items-center justify-center rounded-full px-4 text-sm font-extrabold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+              levelFilter === null
+                ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
+                : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+            }`}
+          >
+            {t(lang, "library.level.all")}
+          </button>
           {presentLevels.map((level) => (
             <button
               key={level}
