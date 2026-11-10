@@ -12443,6 +12443,250 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   opacity: 1;
 }
 
+/* Кастомний перемикач (switch-toggle.tsx) — замінює native checkbox в
+   адмінці: 48x28 pill, білий гвинт, on = indigo-градієнт (світла) / gold
+   (темна). */
+.switch-toggle {
+  display: inline-flex;
+  align-items: center;
+  width: 48px;
+  height: 28px;
+  padding: 2px;
+  border-radius: 999px;
+  border: none;
+  background: var(--cabinet-track);
+  cursor: pointer;
+  transition: background 150ms;
+}
+.switch-toggle-knob {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 150ms;
+}
+.switch-toggle--on {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+}
+.dark .switch-toggle--on {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+}
+.switch-toggle--on .switch-toggle-knob {
+  transform: translateX(20px);
+}
+.switch-toggle:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .switch-toggle:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+/* Адмінський shell (admin-shell.tsx) — той самий вигляд, що /cabinet
+   (темна рейка + крем/темна панель), лише на сторінках, що свідомо
+   отримали новий дизайн (courses, achievements-preview), не на
+   кореневому admin/layout.tsx (глибокий редактор курсу лишається зі
+   своїм CourseSwitcherSidebar). */
+.admin-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+@media (min-width: 768px) {
+  .admin-shell {
+    flex-direction: row;
+    background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+  }
+  .dark .admin-shell {
+    background: linear-gradient(160deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
+  }
+}
+.admin-shell-panel {
+  flex: 1;
+  min-width: 0;
+  background: var(--cabinet-panel-bg);
+  padding: 24px;
+  color: var(--cabinet-ink);
+}
+@media (max-width: 767px) {
+  .admin-shell-panel {
+    padding: 16px;
+  }
+}
+
+.admin-sidebar-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.admin-mobile-header {
+  padding: 16px;
+  background: var(--cabinet-panel-bg);
+  color: var(--cabinet-ink);
+}
+.admin-mobile-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.admin-mobile-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--cabinet-ink);
+}
+.admin-mobile-nav-item--active {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .admin-mobile-nav-item--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+
+/* Admin courses — primary pill-кнопка ("+ Новий курс"), світла: indigo +
+   тінь; темна: gold, без тіні (на відміну від .cabinet-pill-link, яка
+   має тінь в обох темах — тут навмисно інший варіант). */
+.admin-primary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(47, 44, 107, 0.25);
+}
+.dark .admin-primary-pill {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+  box-shadow: none;
+}
+
+/* Admin courses — рядок курсу як картка (замість border+list), той самий
+   "card language", що решта кабінету. */
+.admin-course-card {
+  border-radius: 22px;
+  border: 1.5px solid var(--cabinet-line);
+  background: #fffdf7;
+  box-shadow: 0 4px 14px rgba(47, 44, 107, 0.1);
+  transition: transform 150ms;
+}
+.dark .admin-course-card {
+  background: var(--cabinet-card-bg);
+  box-shadow: none;
+}
+.admin-course-card:hover {
+  transform: translateY(-2px);
+}
+.admin-course-card-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  text-decoration: none;
+  color: inherit;
+}
+.admin-course-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .admin-course-card-icon {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.admin-course-card-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--cabinet-ink);
+}
+.admin-course-card-subtitle {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cabinet-muted);
+}
+.admin-course-card-chevron {
+  flex: none;
+  color: var(--cabinet-muted);
+}
+.admin-course-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px 16px;
+}
+.admin-course-card-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: var(--cabinet-muted);
+}
+.admin-course-card-delete:hover {
+  background: rgba(217, 183, 101, 0.15);
+  color: #b8923f;
+}
+
+/* Admin status pill — "Опубліковано" (soft indigo) vs "Чернетка"
+   (dashed outline) — ніде немає чистого червоного. */
+.admin-status-pill {
+  flex: none;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.admin-status-pill--published {
+  background: #efe9ff;
+  color: #3a35b0;
+}
+.dark .admin-status-pill--published {
+  background: #222a6c;
+  color: #f3d98b;
+}
+.admin-status-pill--draft {
+  border: 1.5px dashed var(--cabinet-line);
+  color: var(--cabinet-muted);
+}
+
 .achievements-chip-row {
   display: flex;
   flex-wrap: wrap;

@@ -6,6 +6,7 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { collectionPresetStats, type BadgeStats } from "@/lib/cabinet/achievements";
 import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 import { clearAllCollectionBannerDismissals } from "@/lib/cabinet/collection-banners";
+import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
 type FormState = {
   scenesCompleted: string;
@@ -127,14 +128,14 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
         {field("delfExercisesDone", "achievements.admin.field.delf")}
       </div>
 
-      <label className="achievements-admin-checkbox-row">
-        <input
-          type="checkbox"
+      <div className="achievements-admin-checkbox-row">
+        <SwitchToggle
           checked={form.examDateAdded}
-          onChange={(e) => setForm((prev) => ({ ...prev, examDateAdded: e.target.checked }))}
+          onChange={(next) => setForm((prev) => ({ ...prev, examDateAdded: next }))}
+          label={t(lang, "achievements.admin.field.examDateAdded")}
         />
         {t(lang, "achievements.admin.field.examDateAdded")}
-      </label>
+      </div>
 
       <div className="achievements-admin-actions">
         <button

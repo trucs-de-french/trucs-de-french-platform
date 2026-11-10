@@ -1,12 +1,14 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
 import { getAchievements, EMPTY_BADGE_STATS } from "@/lib/cabinet/achievements";
-import { AdminLogo } from "@/components/admin-logo";
-import { ADMIN_PAGE_TITLE } from "@/lib/typography-styles";
+import { AdminShell } from "@/components/admin/admin-shell";
+import { PageHeader } from "@/components/cabinet/page-header";
 import { AdminPreviewProvider } from "@/lib/cabinet/admin-preview";
+import { AdminPreviewBar } from "@/components/cabinet/admin-preview-bar";
 import { AdminSimulatorPanel } from "./simulator-panel";
+import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
 import type { Profile } from "@/lib/supabase/profile";
 
 // Адмін-сторінка симулятора досягнень — лише вчителі (guard: admin/
@@ -33,26 +35,19 @@ export default async function AchievementsPreviewPage() {
   const lang = normalizeUiLang(profile?.ui_lang);
   const { stats } = await getAchievements(supabase, user.id).catch(() => ({ stats: EMPTY_BADGE_STATS }));
 
+  const cookieStore = await cookies();
+  const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
+
   return (
-    <div>
-      <nav className="mb-8 flex items-center justify-between gap-4 border-b border-gray-200 pb-4 pr-14 dark:border-neutral-800">
-        <AdminLogo />
-        <Link
-          href="/admin/courses"
-          className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
-        >
-          До курсів
-        </Link>
-      </nav>
-
-      <h1 className={ADMIN_PAGE_TITLE}>{t(lang, "achievements.admin.page.title")}</h1>
-      <p className="mt-2 text-sm text-slate-500 dark:text-neutral-400">{t(lang, "achievements.admin.page.subtitle")}</p>
-
-      <div className="cabinet mt-6">
-        <AdminPreviewProvider>
-          <AdminSimulatorPanel lang={lang} realStats={stats} />
-        </AdminPreviewProvider>
-      </div>
-    </div>
+    <AdminShell initialIsDark={initialIsDark}>
+      <AdminPreviewProvider>
+        <AdminPreviewBar lang={lang} />
+        <PageHeader
+          title={t(lang, "achievements.admin.page.title")}
+          subtitle={t(lang, "achievements.admin.page.subtitle")}
+        />
+        <AdminSimulatorPanel lang={lang} realStats={stats} />
+      </AdminPreviewProvider>
+    </AdminShell>
   );
 }
