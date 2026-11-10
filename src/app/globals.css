@@ -12130,6 +12130,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: 14px 12px;
   justify-items: center;
+  align-items: start;
 }
 
 /* Досягнення — компактний ряд на /cabinet/progress (achievements-
@@ -12143,6 +12144,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: 14px 12px;
   justify-items: center;
+  align-items: start;
 }
 
 /* Категорійний тег під підписом бейджа — лише в режимі "Усі" на повній
@@ -13952,18 +13954,13 @@ button.cabinet-nav-item {
     height: 67px;
   }
 }
-/* Заголовок — обгортка з фіксованою 2-рядковою висотою (2 × 1.2em), щоб
-   підписи бейджів в одному рядку вирівнювались незалежно від довжини
-   назви; align-items:flex-end ставить однорядковий заголовок УНИЗУ
-   резервованої висоти (прямо над підписом), а дворядковий заповнює її
-   цілком — "dense column": коін→заголовок ≈2px, а не порожня верхня
-   половина висоти, як була б із justify-content:center. */
+/* Заголовок стартує одразу під монетою, без зарезервованої висоти —
+   однорядкові назви починаються на рівні ПЕРШОГО рядка дворядкових (ряд
+   вирівнюється по монетах через align-items:start на .achievements-zone-
+   grid/.achievements-compact-row), а не по низу колонки. */
 .achievement-badge-title-box {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  display: block;
   width: 100%;
-  min-height: 2.4em;
   margin-top: 2px;
 }
 /* overflow-wrap:anywhere/hyphens:manual розбиває лише на пробілах чи
