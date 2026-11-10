@@ -7,6 +7,8 @@ import { CabinetSidebar } from "@/components/cabinet/sidebar";
 import { CabinetMobileTabBar } from "@/components/cabinet/mobile-tab-bar";
 import type { Profile } from "@/lib/supabase/profile";
 import { THEME_COOKIE, parseThemeCookieValue } from "@/lib/theme-cookie";
+import { AdminPreviewProvider } from "@/lib/cabinet/admin-preview";
+import { AdminPreviewBar } from "@/components/cabinet/admin-preview-bar";
 
 const NAV_COOKIE = "tdf_cabinet_nav";
 
@@ -104,7 +106,16 @@ export default async function CabinetLayout({ children }: { children: React.Reac
         initialIsDark={initialIsDark}
         onSignOut={signOut}
       />
-      <main className="cabinet-panel">{children}</main>
+      <main className="cabinet-panel">
+        {isTeacher ? (
+          <AdminPreviewProvider>
+            <AdminPreviewBar lang={lang} />
+            {children}
+          </AdminPreviewProvider>
+        ) : (
+          children
+        )}
+      </main>
       <CabinetMobileTabBar lang={lang} />
     </div>
   );

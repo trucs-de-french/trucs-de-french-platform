@@ -1,8 +1,11 @@
+"use client";
+
 import { t } from "@/lib/i18n/t";
 import { plural, type PluralForms } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 import { kyivDateString, addDays, startOfWeekKyiv } from "@/lib/cabinet/kyiv-date";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 
 // Фіксовані 2-літерні абревіатури днів тижня (Пн..Нд) — не через t(),
 // як DAY_UNIT_FORMS/SCENE_UNIT_FORMS в exam-card.tsx/weekly-goal-card.tsx:
@@ -47,12 +50,21 @@ export function GreetingHero({
   weekActiveDays: string[];
   level: string | null;
 }) {
+  const { override } = useAdminPreview();
   const now = new Date();
   const todayStr = kyivDateString(now);
   const weekStart = startOfWeekKyiv(now);
-  const activeSet = new Set(weekActiveDays);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const unit = plural(lang, streakDays, DAY_UNIT_FORMS[lang]);
+
+  // Адмінський override (useAdminPreview) підмінює і текст стріку, і
+  // week-dots: "останні N днів, що закінчуються сьогодні" (capped на 7),
+  // а не реальний weekActiveDays — реальних дат активності для вигаданого
+  // стріку просто нема.
+  const effectiveStreakDays = override ? override.currentStreakDays ?? override.streakDays : streakDays;
+  const activeSet = override
+    ? new Set(Array.from({ length: Math.min(7, effectiveStreakDays) }, (_, i) => addDays(todayStr, -i)))
+    : new Set(weekActiveDays);
+  const unit = plural(lang, effectiveStreakDays, DAY_UNIT_FORMS[lang]);
 
   return (
     <div className="cabinet-hero">
@@ -75,7 +87,7 @@ export function GreetingHero({
               );
             })}
           </div>
-          <span className="cabinet-week-streak-text">{t(lang, "home.streakChip", { n: streakDays, unit })}</span>
+          <span className="cabinet-week-streak-text">{t(lang, "home.streakChip", { n: effectiveStreakDays, unit })}</span>
         </div>
       </div>
       <div className="cabinet-hero-side">

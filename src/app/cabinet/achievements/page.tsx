@@ -30,7 +30,7 @@ export default async function CabinetAchievementsPage() {
   const isAdmin = profile?.role === "teacher";
   const achievements = await getAchievements(supabase, user.id).catch((err): AchievementsResult => {
     console.error("getAchievements failed on Achievements page", err);
-    return { items: [], showExamCard: false, stats: EMPTY_BADGE_STATS };
+    return { items: [], showExamCard: false, stats: EMPTY_BADGE_STATS, earnedAtById: {} };
   });
 
   return (
@@ -46,9 +46,9 @@ export default async function CabinetAchievementsPage() {
       <div className="cabinet-card flex flex-col gap-5 p-5">
         <FullAchievements
           lang={lang}
-          items={achievements.items}
-          showExamCard={achievements.showExamCard}
           realStats={achievements.stats}
+          earnedAtById={achievements.earnedAtById}
+          showExamCard={achievements.showExamCard}
           isAdmin={isAdmin}
         />
       </div>

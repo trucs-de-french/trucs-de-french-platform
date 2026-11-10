@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { collectionPresetStats, type BadgeStats } from "@/lib/cabinet/achievements";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
+import { clearAllCollectionBannerDismissals } from "@/lib/cabinet/collection-banners";
 
 type FormState = {
   scenesCompleted: string;
@@ -48,29 +50,27 @@ function toStats(form: FormState): BadgeStats {
   };
 }
 
-// Адмін-симулятор (лише isAdmin) — перевірка бейджів/банера колекцій без
-// БД: усе живе в локальному state цього компонента й батьківського
-// FullAchievements (simStats), нічого не читається й не пишеться в
-// Supabase чи localStorage (крім дисмісс-ключів банера — через
-// onResetBanners, той самий механізм, що звичайний дисмісс).
-export function AdminSimulator({
-  lang,
-  realStats,
-  onApply,
-  onReset,
-  onResetBanners,
-}: {
-  lang: UiLang;
-  realStats: BadgeStats;
-  onApply: (stats: BadgeStats) => void;
-  onReset: () => void;
-  onResetBanners: () => void;
-}) {
-  const [form, setForm] = useState<FormState>(() => toForm(realStats));
+// Адмін-симулятор, тепер на /admin/achievements-preview (вчителі лише,
+// guard — admin/layout.tsx) — читає/пише ГЛОБАЛЬНИЙ override через
+// useAdminPreview() (localStorage, lib/cabinet/admin-preview.tsx), тож
+// результат видно на /cabinet/achievements, /cabinet/progress і /cabinet
+// (Home) теж, скрізь, де ці сторінки читають той самий override. Нічого
+// не пишеться в Supabase — лише localStorage цього браузера.
+export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realStats: BadgeStats }) {
+  const { override, setOverride, clear } = useAdminPreview();
+  const [form, setForm] = useState<FormState>(() => toForm(override ?? realStats));
+  // AdminPreviewProvider гідрує override з localStorage у СВОЄМУ effect
+  // (не доступний ще на першому рендері, поки lazy useState вище вже
+  // зафіксував form); якщо на той момент виявиться збережений override —
+  // підхопити його в форму ОДИН раз, не перетираючи подальше редагування.
+  const syncedStoredOverrideRef = useRef(false);
+  useEffect(() => {
+    if (!syncedStoredOverrideRef.current && override) {
+      syncedStoredOverrideRef.current = true;
+      setForm(toForm(override));
+    }
+  }, [override]);
 
-  // Підтвердження "✓ ..." після кожної кнопки — один спільний слот
-  // (останній клік виграє), автоприховування через 2с; таймер у ref, щоб
-  // повторний клік перезапускав відлік, а не плодив паралельні таймери.
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmVisible, setConfirmVisible] = useState(false);
   const confirmTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,7 +88,7 @@ export function AdminSimulator({
     confirmTimeoutRef.current = setTimeout(() => setConfirmVisible(false), 2000);
   }
 
-  function field(key: keyof Omit<FormState, "examDateAdded">, labelKey: Parameters<typeof t>[1]) {
+  function field(key: keyof Omit<FormState, "examDateAdded">, labelKey: MessageKey) {
     return (
       <label className="achievements-admin-field">
         <span>{t(lang, labelKey)}</span>
@@ -107,13 +107,13 @@ export function AdminSimulator({
   function applyPreset(collection: number, key: MessageKey) {
     const stats = collectionPresetStats(collection);
     setForm(toForm(stats));
-    onApply(stats);
+    setOverride(stats);
     confirm(key);
   }
 
   return (
-    <details className="achievements-admin-panel">
-      <summary className="achievements-admin-panel-title">{t(lang, "achievements.admin.panel.title")}</summary>
+    <div className="achievements-admin-panel">
+      <p className="achievements-admin-panel-title">{t(lang, "achievements.admin.panel.title")}</p>
       <p className="achievements-admin-notice">{t(lang, "achievements.admin.panel.notice")}</p>
 
       <div className="achievements-admin-grid">
@@ -141,7 +141,7 @@ export function AdminSimulator({
           type="button"
           className="cabinet-pill-link"
           onClick={() => {
-            onApply(toStats(form));
+            setOverride(toStats(form));
             confirm("achievements.admin.confirm.apply");
           }}
         >
@@ -152,7 +152,7 @@ export function AdminSimulator({
           className="achievements-admin-pill-outline"
           onClick={() => {
             setForm(toForm(realStats));
-            onReset();
+            clear();
             confirm("achievements.admin.confirm.resetReal");
           }}
         >
@@ -176,7 +176,7 @@ export function AdminSimulator({
           type="button"
           className="achievements-admin-pill-outline"
           onClick={() => {
-            onResetBanners();
+            clearAllCollectionBannerDismissals();
             confirm("achievements.admin.confirm.showBannerAgain");
           }}
         >
@@ -190,6 +190,6 @@ export function AdminSimulator({
           {confirmMessage}
         </span>
       </div>
-    </details>
+    </div>
   );
 }

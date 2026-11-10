@@ -291,7 +291,14 @@ export function computeBadges(
   return items;
 }
 
-export type AchievementsResult = { items: AchievementState[]; showExamCard: boolean; stats: BadgeStats };
+export type EarnedAtById = Partial<Record<string, string | null>>;
+
+export type AchievementsResult = {
+  items: AchievementState[];
+  showExamCard: boolean;
+  stats: BadgeStats;
+  earnedAtById: EarnedAtById;
+};
 
 // Фолбек на випадок падіння getAchievements (сторінки catch'ають помилку
 // окремо) — нейтральний stats-об'єкт для адмін-симулятора, щоб типи
@@ -629,7 +636,7 @@ export async function getAchievements(supabase: SupabaseClient, userId: string):
   };
 
   const items = computeBadges(stats, showExamCard, earnedAtById);
-  return { items, showExamCard, stats };
+  return { items, showExamCard, stats, earnedAtById };
 }
 
 // Для Home: завжди 5 слотів (якщо каталог має стільки доступних items) —

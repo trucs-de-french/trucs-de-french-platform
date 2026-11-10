@@ -33,12 +33,20 @@ export default async function AdminCoursesPage({
           кабінету" (admin/layout.tsx більше не рендерить жодного nav). */}
       <nav className="mb-8 flex items-center justify-between gap-4 border-b border-gray-200 pb-4 pr-14 dark:border-neutral-800">
         <AdminLogo />
-        <Link
-          href="/dashboard"
-          className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
-        >
-          До кабінету
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/achievements-preview"
+            className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
+          >
+            Симулятор досягнень
+          </Link>
+          <Link
+            href="/dashboard"
+            className="text-sm text-slate-500 no-underline hover:text-brand dark:text-neutral-400 dark:hover:text-brand"
+          >
+            До кабінету
+          </Link>
+        </div>
       </nav>
       <div className="flex items-center justify-between">
         <h1 className={ADMIN_PAGE_TITLE}>Курси</h1>

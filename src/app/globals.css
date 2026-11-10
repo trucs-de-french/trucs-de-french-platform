@@ -12316,9 +12316,10 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: #d9b765;
 }
 
-/* Смужка "Режим перегляду: показано умовні дані" (admin-simulator активний)
-   — вгорі картки, над банером/перемикачем. */
-.achievements-sim-bar {
+/* Смужка "Режим перегляду · дані симуляції" (admin-preview-bar.tsx) —
+   вгорі БУДЬ-якої /cabinet сторінки, поки активний адмінський override
+   (lib/cabinet/admin-preview.tsx), лише для вчителя. */
+.admin-preview-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12344,7 +12345,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   border: 1.5px dashed #d9b765;
 }
 .achievements-admin-panel-title {
-  cursor: pointer;
+  margin: 0 0 4px;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 15px;

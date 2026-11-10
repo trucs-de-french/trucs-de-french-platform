@@ -1,25 +1,37 @@
+"use client";
+
+import { useMemo } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import type { AchievementState } from "@/lib/cabinet/achievements";
-import { pickCompactAchievements } from "@/lib/cabinet/achievements";
+import { computeBadges, pickCompactAchievements, type BadgeStats, type EarnedAtById } from "@/lib/cabinet/achievements";
 import { AchievementBadge } from "@/components/cabinet/home/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
 import { CabinetPillLink } from "@/components/cabinet/pill-link";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 
 // Компактна картка на /cabinet/progress — лише один рядок бейджів
 // (найбільше 8): здобуті найновіші першими, далі по одному найближчому
 // нездобутому з кожної категорії. Повний список з чипами-фільтрами й
 // зонами "Зароблено"/"Попереду" — на окремій сторінці /cabinet/achievements.
+// items рахуються ТУТ (клієнтськи) з realStats, щоб адмінський override
+// (useAdminPreview) міг підмінити вхідні дані без окремого шляху коду.
 export function AchievementsCard({
   lang,
-  items,
+  realStats,
+  earnedAtById,
   showExamCard,
 }: {
   lang: UiLang;
-  items: AchievementState[];
+  realStats: BadgeStats;
+  earnedAtById: EarnedAtById;
   showExamCard: boolean;
 }) {
-  const badges: AchievementState[] = pickCompactAchievements(items, showExamCard, 8);
+  const { override } = useAdminPreview();
+  const items = useMemo(
+    () => computeBadges(override ?? realStats, showExamCard, override ? {} : earnedAtById),
+    [override, realStats, showExamCard, earnedAtById]
+  );
+  const badges = useMemo(() => pickCompactAchievements(items, showExamCard, 8), [items, showExamCard]);
 
   return (
     <div className="cabinet-card flex flex-col gap-5 p-5">

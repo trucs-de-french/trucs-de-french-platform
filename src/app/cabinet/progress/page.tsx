@@ -32,7 +32,7 @@ export default async function CabinetProgressPage() {
     getCabinetProgressData(supabase, user.id),
     getAchievements(supabase, user.id).catch((err): AchievementsResult => {
       console.error("getAchievements failed on Progress", err);
-      return { items: [], showExamCard: false, stats: EMPTY_BADGE_STATS };
+      return { items: [], showExamCard: false, stats: EMPTY_BADGE_STATS, earnedAtById: {} };
     }),
   ]);
   const hasDelfSkills = data.delfSkills !== null;
@@ -51,7 +51,12 @@ export default async function CabinetProgressPage() {
         redoCount={data.home.redoCount}
       />
 
-      <AchievementsCard lang={lang} items={achievements.items} showExamCard={achievements.showExamCard} />
+      <AchievementsCard
+        lang={lang}
+        realStats={achievements.stats}
+        earnedAtById={achievements.earnedAtById}
+        showExamCard={achievements.showExamCard}
+      />
 
       <div
         className={

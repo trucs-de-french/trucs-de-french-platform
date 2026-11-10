@@ -5,10 +5,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Lock, X, ArrowRight, Trophy } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import type { AchievementCategory, AchievementState, BadgeStats } from "@/lib/cabinet/achievements";
+import type { AchievementCategory, BadgeStats, EarnedAtById } from "@/lib/cabinet/achievements";
 import {
   COLLECTION_NUMBERS,
-  EMPTY_BADGE_STATS,
   collectionProgress,
   computeBadges,
   currentCollection,
@@ -16,14 +15,11 @@ import {
 } from "@/lib/cabinet/achievements";
 import { CATEGORY_LABEL_KEY, CATEGORY_ORDER, COLLECTION_ROMAN } from "@/lib/cabinet/achievement-ui";
 import { AchievementBadge, AchievementBadgeCoin } from "@/components/cabinet/home/achievement-badge";
-import { AdminSimulator } from "@/components/cabinet/achievements/admin-simulator";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
+import { collectionBannerDismissKey } from "@/lib/cabinet/collection-banners";
 
 function isCategory(value: string | null): value is AchievementCategory {
   return !!value && (CATEGORY_ORDER as string[]).includes(value);
-}
-
-function dismissKey(collection: number): string {
-  return `tdf.collectionBannerDismissed.${collection}`;
 }
 
 function roman(n: number): string {
@@ -36,33 +32,38 @@ function roman(n: number): string {
 // скролу); вибір колекції — лише локальний state (не URL). Дисмісс
 // банера "Колекцію зібрано" — localStorage, читається ПІСЛЯ mount
 // (SSR-safe, щоб не блимнути банером при гідратації).
+//
+// realStats/earnedAtById — ЗАВЖДИ сирі (реальні) дані з сервера; items
+// рахується тут, клієнтськи, через ту саму чисту computeBadges(), щоб
+// адмінський override (useAdminPreview, /admin/achievements-preview) міг
+// підмінити вхідні stats без окремого шляху коду.
 export function FullAchievements({
   lang,
-  items,
-  showExamCard,
   realStats,
+  earnedAtById,
+  showExamCard,
   isAdmin = false,
 }: {
   lang: UiLang;
-  items: AchievementState[];
+  realStats: BadgeStats;
+  earnedAtById: EarnedAtById;
   showExamCard: boolean;
-  realStats?: BadgeStats;
   isAdmin?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlCat = searchParams.get("cat");
+  const { override } = useAdminPreview();
+  const items = useMemo(
+    () => computeBadges(override ?? realStats, showExamCard, override ? {} : earnedAtById),
+    [override, realStats, showExamCard, earnedAtById]
+  );
+
   const [selected, setSelected] = useState<AchievementCategory | null>(isCategory(urlCat) ? urlCat : null);
   const [selectedCollection, setSelectedCollection] = useState<number>(() => currentCollection(items, showExamCard));
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
-  // simStats !== null → адмін-симулятор активний: ВСЯ картка (чипи, зони,
-  // банер, фінальні бейджі, розблокування колекцій) рахується з умовних
-  // даних через ту саму чисту computeBadges() — жодного запиту в БД,
-  // жоден інший компонент/сторінка цього не бачить (лише локальний state).
-  const [simStats, setSimStats] = useState<BadgeStats | null>(null);
-  const effectiveItems = simStats ? computeBadges(simStats, showExamCard) : items;
 
   useEffect(() => {
     // SSR-safe localStorage hydration (один раз на mount, не в циклі
@@ -72,7 +73,7 @@ export function FullAchievements({
     const next: Record<number, boolean> = {};
     for (const n of COLLECTION_NUMBERS) {
       try {
-        next[n] = localStorage.getItem(dismissKey(n)) === "1";
+        next[n] = localStorage.getItem(collectionBannerDismissKey(n)) === "1";
       } catch {
         next[n] = false;
       }
@@ -86,29 +87,16 @@ export function FullAchievements({
       (n) => isCollectionComplete(items, showExamCard, n) && !next[n]
     );
     if (attention !== undefined) setSelectedCollection(attention);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: items/showExamCard прийшли одним серверним снепшотом і не змінюються за життя сторінки
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: перший рендер items/showExamCard, відстежувати зміни тут не потрібно
   }, []);
 
   function dismissBanner(n: number) {
     setDismissed((prev) => ({ ...prev, [n]: true }));
     try {
-      localStorage.setItem(dismissKey(n), "1");
+      localStorage.setItem(collectionBannerDismissKey(n), "1");
     } catch {
       // localStorage недоступний (приватний режим тощо) — банер просто
       // з'явиться знову при наступному відкритті, не критично.
-    }
-  }
-
-  // "Показати плашку знову" (адмін-симулятор) — прибирає дисмісс-ключі
-  // всіх колекцій, той самий ключ/механізм, що звичайний dismissBanner.
-  function resetDismissedBanners() {
-    setDismissed({});
-    for (const n of COLLECTION_NUMBERS) {
-      try {
-        localStorage.removeItem(dismissKey(n));
-      } catch {
-        // як і вище — не критично, якщо недоступний.
-      }
     }
   }
 
@@ -130,22 +118,22 @@ export function FullAchievements({
     () =>
       COLLECTION_NUMBERS.map((n, idx) => {
         const prev = idx > 0 ? COLLECTION_NUMBERS[idx - 1] : null;
-        const naturallyUnlocked = prev === null || isCollectionComplete(effectiveItems, showExamCard, prev);
+        const naturallyUnlocked = prev === null || isCollectionComplete(items, showExamCard, prev);
         // Для адміна Колекція II доступна для перегляду навіть якщо
         // Колекція I ще не завершена — лише перегляд UI, не розблокування
         // "насправді" (showExamCard/available фільтри не зняті).
         const unlocked = naturallyUnlocked || isAdmin;
         const adminOnly = unlocked && !naturallyUnlocked;
-        const progress = collectionProgress(effectiveItems, showExamCard, n);
+        const progress = collectionProgress(items, showExamCard, n);
         const complete = progress.total > 0 && progress.earned === progress.total;
         return { n, prev, unlocked, adminOnly, progress, complete };
       }),
-    [effectiveItems, showExamCard, isAdmin]
+    [items, showExamCard, isAdmin]
   );
 
   const allVisible = useMemo(
-    () => effectiveItems.filter((a) => a.available !== false && (!a.examOnly || showExamCard)),
-    [effectiveItems, showExamCard]
+    () => items.filter((a) => a.available !== false && (!a.examOnly || showExamCard)),
+    [items, showExamCard]
   );
   const visible = useMemo(() => allVisible.filter((a) => a.collection === selectedCollection), [allVisible, selectedCollection]);
 
@@ -169,27 +157,19 @@ export function FullAchievements({
         CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category) || a.threshold - b.threshold
     );
 
-  const viewedProgress = collectionProgress(effectiveItems, showExamCard, selectedCollection);
+  const viewedProgress = collectionProgress(items, showExamCard, selectedCollection);
   const viewedComplete = viewedProgress.total > 0 && viewedProgress.earned === viewedProgress.total;
   const selectedIdx = COLLECTION_NUMBERS.indexOf(selectedCollection);
   const nextCollection = selectedIdx >= 0 && selectedIdx < COLLECTION_NUMBERS.length - 1 ? COLLECTION_NUMBERS[selectedIdx + 1] : null;
-  const finalBadge = effectiveItems.find((a) => a.collection === selectedCollection && a.isCollectionFinal);
-  // У симуляції банер показується завжди (ігнорує dismissed), щоб
-  // "Зібрати всю Колекцію I/II" миттєво демонстрував банер адміну навіть
-  // якщо той самий ключ раніше дисмісснуто на реальних даних.
-  const showBanner = mounted && viewedComplete && (simStats !== null || !dismissed[selectedCollection]);
+  const finalBadge = items.find((a) => a.collection === selectedCollection && a.isCollectionFinal);
+  // Під час admin-превʼю банер показується завжди (ігнорує dismissed),
+  // щоб "Зібрати всю Колекцію I/II" на /admin/achievements-preview миттєво
+  // демонстрував банер, навіть якщо той самий ключ раніше дисмісснуто на
+  // реальних даних.
+  const showBanner = mounted && viewedComplete && (override !== null || !dismissed[selectedCollection]);
 
   return (
     <>
-      {simStats !== null && (
-        <div className="achievements-sim-bar">
-          {t(lang, "achievements.admin.simBar")}
-          <button type="button" className="achievements-admin-pill-outline" onClick={() => setSimStats(null)}>
-            {t(lang, "achievements.admin.simBar.reset")}
-          </button>
-        </div>
-      )}
-
       {showBanner && finalBadge && (
         <div className="achievements-banner">
           <div className="achievements-banner-coin">
@@ -303,16 +283,6 @@ export function FullAchievements({
             ))}
           </div>
         </div>
-      )}
-
-      {isAdmin && (
-        <AdminSimulator
-          lang={lang}
-          realStats={realStats ?? EMPTY_BADGE_STATS}
-          onApply={setSimStats}
-          onReset={() => setSimStats(null)}
-          onResetBanners={resetDismissedBanners}
-        />
       )}
     </>
   );
