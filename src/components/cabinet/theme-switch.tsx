@@ -4,7 +4,6 @@ import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/use-theme";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { BevelIcon } from "@/components/cabinet/bevel-icon";
 
 // Той самий useTheme() (lib/use-theme.ts), що ThemeToggle — лише інше
 // подання (пілюлі в стилі LanguagePills тут, одна кнопка на collapsed
@@ -63,7 +62,7 @@ export function ThemeRailButton({
       className="cabinet-nav-item w-full justify-center"
     >
       <span className="cabinet-rail-icon">
-        <BevelIcon icon={isDark ? Sun : Moon} />
+        {isDark ? <Sun size={22} aria-hidden="true" /> : <Moon size={22} aria-hidden="true" />}
       </span>
       <span className="cabinet-tooltip" role="tooltip">
         {label}

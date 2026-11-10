@@ -12634,30 +12634,6 @@ button.cabinet-nav-item {
   outline-offset: 2px;
 }
 
-/* "C. gold bevel" — bevel-icon.tsx: три абсолютно позиційовані копії того
-   самого Lucide-глифа (тінь/градієнт/відблиск) усередині фіксованого
-   square-боксу. Сам .bevel-icon не задає колір — кожен шар отримує
-   stroke інлайном (gradient url() або rgba()) від компонента. */
-.bevel-icon {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-.bevel-icon-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  overflow: visible;
-}
-.bevel-icon-shadow {
-  transform: translateY(1.4px);
-}
-.bevel-icon-highlight {
-  transform: translate(-0.5px, -0.6px);
-}
-
 .cabinet-tooltip {
   position: absolute;
   left: calc(100% + 10px);
