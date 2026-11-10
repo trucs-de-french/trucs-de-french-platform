@@ -12060,8 +12060,15 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   border: 1.5px solid var(--cabinet-line);
   background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
 }
+/* Темна тема: той самий navy-палітра, що решта карток кабінету
+   (--cabinet-panel-bg/--cabinet-card-bg/--cabinet-line), не gold-на-navy
+   (читався брудно-сіро-коричневим) — лише дуже тонке золоте сяйво в
+   верхньому лівому куті (другий шар фону), а не суцільний градієнт. */
 .dark .cabinet-hero {
-  background: linear-gradient(120deg, rgba(217, 183, 101, 0.22), rgba(217, 183, 101, 0.05) 55%, transparent);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(217, 183, 101, 0.14), transparent 45%),
+    linear-gradient(120deg, #1d2468 0%, #161c58 55%, #121850 100%);
+  border-color: #2e3680;
 }
 .cabinet-hero-greeting {
   font-family: var(--font-heading);
@@ -12096,25 +12103,34 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 10.5px;
-  color: #8a6a1f;
-  background: rgba(217, 183, 101, 0.22);
-  border: 1px solid rgba(217, 183, 101, 0.45);
+  color: #9a8a5e;
+  background: transparent;
+  border: 1.5px solid #e4cf94;
 }
 .dark .cabinet-week-dot {
-  color: #d9c07a;
-  background: rgba(217, 183, 101, 0.14);
-  border-color: rgba(217, 183, 101, 0.35);
+  color: #8f97d6;
+  background: transparent;
+  border-color: #2e3680;
 }
 .cabinet-week-dot--active {
   color: #1a1640;
+  font-weight: 900;
   background: linear-gradient(160deg, #f3d98b, #d9b765);
   border-color: transparent;
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45);
 }
 /* "Сьогодні" — внутрішнє кільце кольором картки (відділяє від фону
    героя/активного градієнта), зовнішнє — золоте, незалежно від того,
    активний сьогоднішній день чи ні. */
 .cabinet-week-dot--today {
   box-shadow: 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
+}
+/* Активний+сьогодні разом — обидва box-shadow (ring + gold drop-shadow)
+   не складаються самі (одна властивість), тож тут об'єднані явно вищою
+   специфічністю (2 класи), інакше --today, що йде пізніше, просто
+   перебивав би gold-тінь активного дня. */
+.cabinet-week-dot--active.cabinet-week-dot--today {
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45), 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
 }
 .cabinet-week-streak-text {
   margin-left: 10px;
