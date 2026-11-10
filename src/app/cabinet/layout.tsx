@@ -77,6 +77,27 @@ export default async function CabinetLayout({ children }: { children: React.Reac
   // заголовок/landmark сторінки з'являвся б у DOM двічі одночасно.
   return (
     <div className="cabinet cabinet-frame">
+      {/* Спільні gradient defs для bevel-icon.tsx (sidebar) — рендериться
+          рівно раз тут, а не всередині самого компонента, щоб усі
+          <BevelIcon> у дереві посилались на ОДНІ й ті самі id (url(#...)).
+          width/height=0 + position:absolute (НЕ display:none — це розриває
+          посилання на градієнт) ховає сам SVG з layout, лишаючи <defs>
+          доступними. userSpaceOnUse обов'язковий: прямі штрихи Lucide-
+          іконок мають нульову bounding-box висоту, тож objectBoundingBox
+          градієнт на них не намалювався б. */}
+      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="tdf-bevel-gold" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0" stopColor="#fff3c6" />
+            <stop offset=".5" stopColor="#e6c677" />
+            <stop offset="1" stopColor="#b8923f" />
+          </linearGradient>
+          <linearGradient id="tdf-bevel-indigo" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22">
+            <stop offset="0" stopColor="#5a55e6" />
+            <stop offset="1" stopColor="#1a1640" />
+          </linearGradient>
+        </defs>
+      </svg>
       <CabinetSidebar
         lang={lang}
         isTeacher={isTeacher}
