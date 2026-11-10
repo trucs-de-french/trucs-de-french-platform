@@ -499,12 +499,6 @@ export const fr: Record<MessageKey, string> = {
   "footer.shop": "Boutique",
   "footer.shop.ariaLabel": "Boutique (s'ouvre dans un nouvel onglet)",
 
-  "progress.chart.title": "Points",
-  "progress.chart.week": "Semaine",
-  "progress.chart.month": "Mois",
-  "progress.chart.rangeLabel": "Période du graphique",
-  "progress.chart.empty": "Pas encore de points. Terminez votre première scène.",
-  "progress.chart.ariaLabel": "Graphique des points : {total} au total sur la période",
   "progress.scenes.title": "Résultats par scène",
   "progress.scenes.empty": "Pas encore de résultats. Terminez votre première scène.",
   "progress.scenes.redo": "Refaire",

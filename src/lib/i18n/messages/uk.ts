@@ -500,12 +500,6 @@ export const uk = {
   "footer.shop": "Магазин",
   "footer.shop.ariaLabel": "Магазин (відкриється в новій вкладці)",
 
-  "progress.chart.title": "Бали",
-  "progress.chart.week": "Тиждень",
-  "progress.chart.month": "Місяць",
-  "progress.chart.rangeLabel": "Період графіка",
-  "progress.chart.empty": "Поки що немає балів. Пройди першу сцену.",
-  "progress.chart.ariaLabel": "Графік балів: усього {total} за період",
   "progress.scenes.title": "Результати по сценах",
   "progress.scenes.empty": "Поки що немає результатів. Пройди першу сцену.",
   "progress.scenes.redo": "Повторити",

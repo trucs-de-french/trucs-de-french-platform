@@ -41,26 +41,28 @@ export function AchievementsCard({
   const visible = items.filter((a) => a.available !== false && (!a.examOnly || showExamCard));
 
   return (
-    <div className="cabinet-card flex h-full flex-col gap-5 p-5">
+    <div className="cabinet-card flex flex-col gap-5 p-5">
       <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
-      {CATEGORY_ORDER.map((category) => {
-        const categoryItems = visible
-          .filter((a) => a.category === category)
-          .sort((a, b) => Number(b.earned) - Number(a.earned) || a.threshold - b.threshold);
-        if (categoryItems.length === 0) return null;
-        return (
-          <div key={category} className="flex flex-col gap-3">
-            <h4 className="text-xs font-bold uppercase tracking-[0.04em] text-[var(--cabinet-muted)]">
-              {t(lang, CATEGORY_LABEL_KEY[category])}
-            </h4>
-            <div className="flex flex-wrap gap-4">
-              {categoryItems.map((achievement) => (
-                <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
-              ))}
+      <div className="achievements-groups">
+        {CATEGORY_ORDER.map((category) => {
+          const categoryItems = visible
+            .filter((a) => a.category === category)
+            .sort((a, b) => Number(b.earned) - Number(a.earned) || a.threshold - b.threshold);
+          if (categoryItems.length === 0) return null;
+          return (
+            <div key={category} className="flex flex-col gap-3">
+              <h4 className="text-xs font-bold uppercase tracking-[0.04em] text-[var(--cabinet-muted)]">
+                {t(lang, CATEGORY_LABEL_KEY[category])}
+              </h4>
+              <div className="achievements-group-badges">
+                {categoryItems.map((achievement) => (
+                  <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

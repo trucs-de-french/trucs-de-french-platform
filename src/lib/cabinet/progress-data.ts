@@ -17,15 +17,12 @@ import {
   type SceneRow,
   type ProgressRow,
 } from "@/lib/cabinet/home-data";
-import { kyivDateString, addDays } from "@/lib/cabinet/kyiv-date";
-import { computeTaskBest, totalPointsPossibleForTask, BILAN_REDO_THRESHOLD_PERCENT } from "@/lib/exercises/scene-summary";
+import { computeTaskBest, BILAN_REDO_THRESHOLD_PERCENT } from "@/lib/exercises/scene-summary";
 import { GRADABLE_TASK_TYPES } from "@/lib/exercises/gradable-types";
 import { isExamProductType } from "@/lib/cabinet/exam-products";
 import { EXAM_SECTIONS, EXAM_SECTION_LABELS, type ExamSection } from "@/lib/delf/exam-structure";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
-export type PointsByDay = { date: string; points: number };
 
 export type SceneResultRow = {
   sceneId: string;
@@ -55,19 +52,8 @@ export type DelfSkills = {
 
 export type CabinetProgressData = {
   home: CabinetHomeData;
-  pointsByWeek: PointsByDay[];
-  pointsByMonth: PointsByDay[];
   sceneResults: SceneResultRow[];
   delfSkills: DelfSkills;
-};
-
-type ActivityRow = {
-  task_id: string;
-  product_id: string | null;
-  score: number;
-  best_before: number;
-  best_after: number;
-  created_at: string;
 };
 
 export async function getCabinetProgressData(
@@ -75,63 +61,7 @@ export async function getCabinetProgressData(
   userId: string
 ): Promise<CabinetProgressData> {
   const home = await getCabinetHomeData(supabase, userId);
-  const now = new Date();
-  const todayStr = kyivDateString(now);
-  const last7Days = Array.from({ length: 7 }, (_, i) => addDays(todayStr, i - 6));
-  const last30Days = Array.from({ length: 30 }, (_, i) => addDays(todayStr, i - 29));
-
   const enrolledProducts = await getEnrolledProducts(supabase, userId);
-
-  // Повна історія activity_log (без лімiту lookback, на відміну від Home)
-  // — потрібна для "100 балів"/"7 днів поспіль" (досягнення "КОЛИСЬ", не
-  // лише за останні 90 днів) і для графіка за місяць.
-  let activityRows: ActivityRow[] = [];
-  try {
-    const { data } = await supabase
-      .from("activity_log")
-      .select("task_id, product_id, score, best_before, best_after, created_at")
-      .eq("user_id", userId);
-    activityRows = (data ?? []) as ActivityRow[];
-  } catch {
-    activityRows = [];
-  }
-
-  // Знаменник балів кожного завдання — потрібен лише для tasks, що
-  // реально зустрічаються в activity_log (один пакетний запит, не по
-  // продуктах/сценах).
-  const activityTaskIds = [...new Set(activityRows.map((r) => r.task_id))];
-  let activityTasks: { id: string; type: string; config: Record<string, unknown> | null }[] = [];
-  if (activityTaskIds.length > 0) {
-    try {
-      const { data } = await supabase
-        .from("tasks")
-        .select("id, type, config")
-        .in("id", activityTaskIds);
-      activityTasks = (data ?? []) as typeof activityTasks;
-    } catch {
-      activityTasks = [];
-    }
-  }
-  const activityTaskById = new Map(activityTasks.map((t) => [t.id, t]));
-
-  const pointsByDayMap = new Map<string, number>();
-  for (const row of activityRows) {
-    const task = activityTaskById.get(row.task_id);
-    if (!task) continue;
-    const pointsPossible = totalPointsPossibleForTask(task.type, task.config);
-    const delta = Math.max(0, (pointsPossible * (row.best_after - row.best_before)) / 100);
-    const dateStr = kyivDateString(new Date(row.created_at));
-    pointsByDayMap.set(dateStr, (pointsByDayMap.get(dateStr) ?? 0) + delta);
-  }
-
-  const pointsByWeek: PointsByDay[] = last7Days.map((date) => ({
-    date,
-    points: Math.round((pointsByDayMap.get(date) ?? 0) * 10) / 10,
-  }));
-  const pointsByMonth: PointsByDay[] = last30Days.map((date) => ({
-    date,
-    points: Math.round((pointsByDayMap.get(date) ?? 0) * 10) / 10,
-  }));
 
   // Scene results: сцени лише НЕ-екзаменаційних продуктів для студентів
   // без showExamCard (ELIGIBILITY, задача п.3) — у студентів із
@@ -390,5 +320,5 @@ export async function getCabinetProgressData(
     }
   }
 
-  return { home, pointsByWeek, pointsByMonth, sceneResults, delfSkills };
+  return { home, sceneResults, delfSkills };
 }

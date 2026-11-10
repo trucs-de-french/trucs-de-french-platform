@@ -11996,6 +11996,59 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* Досягнення (progress/achievements-card.tsx) — групи (категорії) у
+   2-колонковій grid-сітці замість вертикального стеку: групи йдуть
+   зліва-праворуч, потім новий рядок (Сцени завжди перша — зліва).
+   "Сцени" — найчисленніша категорія (4 бейджі) — колонка 1.6fr на
+   ≥1100px, щоб бейджі не переносились по одному в вузькій колонці;
+   700–1100px — рівні колонки, <700px — один стовпець (divider
+   прибирається nth-child нижче природно не підходить, тож явний
+   display:none). */
+.achievements-groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 40px;
+  row-gap: 28px;
+  align-items: start;
+}
+@media (min-width: 700px) {
+  .achievements-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .achievements-groups {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+}
+/* Тонкий роздільник між колонками — псевдоелемент на кожному елементі
+   другої колонки (nth-child(2n), бо grid auto-flow:row з 2 колонками
+   завжди кладе парні діти у другу колонку), центрований у 40px
+   column-gap (-20px = половина gap), а не власний border+padding, щоб
+   не подвоювати відстань між колонками. */
+.achievements-groups > *:nth-child(2n) {
+  position: relative;
+}
+.achievements-groups > *:nth-child(2n)::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--cabinet-line);
+}
+@media (max-width: 699px) {
+  .achievements-groups > *:nth-child(2n)::before {
+    display: none;
+  }
+}
+.achievements-group-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 24px;
+}
+
 /* DELF-навички (progress/delf-skills-card.tsx) — 10-сегментна шкала.
    Рядок тепер лише [код][сегменти][відсоток] (повна назва прибрана з
    видимого UI — задача "DELF skills show codes only"), тож сегменти
