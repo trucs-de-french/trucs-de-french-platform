@@ -12137,16 +12137,32 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45);
 }
 /* "Сьогодні" — внутрішнє кільце кольором картки (відділяє від фону
-   героя/активного градієнта), зовнішнє — золоте, незалежно від того,
-   активний сьогоднішній день чи ні. */
+   героя/активного градієнта), зовнішнє — у світлій темі indigo (щоб
+   читалось як "вибраний день", а не ще один gold-акцент), у темній —
+   золоте (явний .dark override нижче), незалежно від того, активний
+   сьогоднішній день чи ні. */
 .cabinet-week-dot--today {
-  box-shadow: 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
+  box-shadow: 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #4b46da;
+  color: #4b46da;
+  font-weight: 900;
 }
 /* Активний+сьогодні разом — обидва box-shadow (ring + gold drop-shadow)
    не складаються самі (одна властивість), тож тут об'єднані явно вищою
    специфічністю (2 класи), інакше --today, що йде пізніше, просто
    перебивав би gold-тінь активного дня. */
 .cabinet-week-dot--active.cabinet-week-dot--today {
+  color: #1a1640;
+  box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45), 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #4b46da;
+}
+/* Темна тема: кільце "сьогодні" лишається золотим (не indigo) — та сама
+   специфічність (1 і 2 класи відповідно), що й світлі правила вище,
+   інакше ".dark .cabinet-week-dot" перебив би color/box-shadow тут. */
+.dark .cabinet-week-dot--today {
+  box-shadow: 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
+  color: #8f97d6;
+  font-weight: 800;
+}
+.dark .cabinet-week-dot--active.cabinet-week-dot--today {
   box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45), 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
 }
 .cabinet-week-streak-text {
