@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { AchievementState } from "@/lib/cabinet/achievements";
-import { CATEGORY_ICON, CATEGORY_LABEL_KEY } from "@/lib/cabinet/achievement-ui";
+import { CATEGORY_ICON } from "@/lib/cabinet/achievement-ui";
 
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
 
@@ -118,16 +118,15 @@ export function AchievementBadgeCoin({
 // Спільний бейдж досягнення — Home (achievements-home-card.tsx), Progress
 // (progress/achievements-card.tsx, компактний ряд) і повна сторінка
 // (achievements/full-achievements.tsx) рендерять ОДИН і той самий
-// компонент, щоб вигляд не розходився. showCategoryTag — лише для повної
-// сторінки в режимі "Усі" (бейджі різних категорій поряд без чипа-фільтра).
+// компонент, щоб вигляд не розходився. Категорія передається водяним
+// знаком-іконкою на монеті, назвою, чипом-фільтром і порядком — окремого
+// текстового тега категорії під бейджем більше нема.
 export function AchievementBadge({
   lang,
   achievement,
-  showCategoryTag = false,
 }: {
   lang: UiLang;
   achievement: AchievementState;
-  showCategoryTag?: boolean;
 }) {
   const label = t(lang, achievement.nameKey);
   const locale = LOCALE_BY_LANG[lang];
@@ -151,9 +150,6 @@ export function AchievementBadge({
         </span>
       </div>
       {caption && <span className="achievement-badge-caption">{caption}</span>}
-      {showCategoryTag && (
-        <span className="achievement-badge-category-tag">{t(lang, CATEGORY_LABEL_KEY[achievement.category])}</span>
-      )}
     </div>
   );
 }

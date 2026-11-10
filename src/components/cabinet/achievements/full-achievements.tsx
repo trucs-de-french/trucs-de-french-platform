@@ -64,8 +64,6 @@ export function FullAchievements({
       (a, b) =>
         CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category) || a.threshold - b.threshold
     );
-  const showCategoryTag = selected === null;
-
   return (
     <>
       <div className="achievements-chip-row">
@@ -96,7 +94,7 @@ export function FullAchievements({
           <p className="achievements-zone-label">{t(lang, "achievements.zone.earned", { count: earnedList.length })}</p>
           <div className="achievements-zone-grid">
             {earnedList.map((achievement) => (
-              <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} showCategoryTag={showCategoryTag} />
+              <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
             ))}
           </div>
         </div>
@@ -109,7 +107,7 @@ export function FullAchievements({
           </p>
           <div className="achievements-zone-grid">
             {upcomingList.map((achievement) => (
-              <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} showCategoryTag={showCategoryTag} />
+              <AchievementBadge key={achievement.id} lang={lang} achievement={achievement} />
             ))}
           </div>
         </div>

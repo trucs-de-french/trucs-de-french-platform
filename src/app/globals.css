@@ -12147,20 +12147,6 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   align-items: start;
 }
 
-/* Категорійний тег під підписом бейджа — лише в режимі "Усі" на повній
-   сторінці (showCategoryTag), щоб різні категорії поряд не плутались. */
-.achievement-badge-category-tag {
-  display: block;
-  margin-top: 2px;
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 10.5px;
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--cabinet-muted);
-}
-
 /* Scene results list (progress/scene-results.tsx) — variant 1: list rows
    with a film thumbnail (real cover or a gradient+icon fallback), title/
    meta, points, progress ring and a "Повторити"/"Переглянути" link. */
