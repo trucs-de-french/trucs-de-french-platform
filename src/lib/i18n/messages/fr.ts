@@ -530,6 +530,8 @@ export const fr: Record<MessageKey, string> = {
   "achievements.admin.field.weeksGoal": "Semaines avec objectif atteint",
   "achievements.admin.field.delf": "Exercices DELF terminés",
   "achievements.admin.field.examDateAdded": "Date d'examen ajoutée",
+  "achievements.admin.field.weekScenesDone": "Scènes faites cette semaine",
+  "achievements.admin.field.weekGoal": "Objectif de la semaine (scènes)",
   "achievements.admin.button.apply": "Appliquer",
   "achievements.admin.button.resetReal": "Revenir aux valeurs réelles",
   "achievements.admin.button.collectI": "Compléter toute la collection I",

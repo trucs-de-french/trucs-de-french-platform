@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { collectionPresetStats, type BadgeStats } from "@/lib/cabinet/achievements";
-import { useAdminPreview } from "@/lib/cabinet/admin-preview";
+import { useAdminPreview, type AdminPreviewStats } from "@/lib/cabinet/admin-preview";
 import { clearAllCollectionBannerDismissals } from "@/lib/cabinet/collection-banners";
 import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
@@ -18,9 +18,14 @@ type FormState = {
   weeksGoalDone: string;
   delfExercisesDone: string;
   examDateAdded: boolean;
+  // "Тижнева ціль" на Home (WeeklyGoalCard) — ОКРЕМА метрика від
+  // weeksGoalDone (кількість ТИЖНІВ із виконаною ціллю, для бейджів
+  // 1/4/8/12): тут — сцени ЦЬОГО тижня / ціль цього тижня.
+  weekScenesDone: string;
+  weekGoal: string;
 };
 
-function toForm(stats: BadgeStats): FormState {
+function toForm(stats: AdminPreviewStats, fallbackWeekScenes: number, fallbackWeekGoal: number): FormState {
   return {
     scenesCompleted: String(stats.scenesCompleted),
     filmsCompleted: String(stats.filmsCompleted),
@@ -31,10 +36,12 @@ function toForm(stats: BadgeStats): FormState {
     weeksGoalDone: String(stats.weeksGoalDone),
     delfExercisesDone: String(stats.delfExercisesDone),
     examDateAdded: stats.examDateAdded,
+    weekScenesDone: String(stats.weekScenes ?? fallbackWeekScenes),
+    weekGoal: String(stats.weekGoal ?? fallbackWeekGoal),
   };
 }
 
-function toStats(form: FormState): BadgeStats {
+function toStats(form: FormState): AdminPreviewStats {
   const num = (v: string) => Math.max(0, Number(v) || 0);
   const streak = num(form.streakDays);
   return {
@@ -48,6 +55,8 @@ function toStats(form: FormState): BadgeStats {
     weeksGoalDone: num(form.weeksGoalDone),
     delfExercisesDone: num(form.delfExercisesDone),
     examDateAdded: form.examDateAdded,
+    weekScenes: num(form.weekScenesDone),
+    weekGoal: Math.min(14, Math.max(1, num(form.weekGoal) || 1)),
   };
 }
 
@@ -55,11 +64,24 @@ function toStats(form: FormState): BadgeStats {
 // guard — admin/layout.tsx) — читає/пише ГЛОБАЛЬНИЙ override через
 // useAdminPreview() (localStorage, lib/cabinet/admin-preview.tsx), тож
 // результат видно на /cabinet/achievements, /cabinet/progress і /cabinet
-// (Home) теж, скрізь, де ці сторінки читають той самий override. Нічого
-// не пишеться в Supabase — лише localStorage цього браузера.
-export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realStats: BadgeStats }) {
+// (Home, включно з карткою "Тижнева ціль") — скрізь, де ці сторінки
+// читають той самий override. Нічого не пишеться в Supabase — лише
+// localStorage цього браузера.
+export function AdminSimulatorPanel({
+  lang,
+  realStats,
+  realWeekScenes,
+  realWeekGoal,
+}: {
+  lang: UiLang;
+  realStats: BadgeStats;
+  realWeekScenes: number;
+  realWeekGoal: number;
+}) {
   const { override, setOverride, clear } = useAdminPreview();
-  const [form, setForm] = useState<FormState>(() => toForm(override ?? realStats));
+  const [form, setForm] = useState<FormState>(() =>
+    toForm(override ?? realStats, realWeekScenes, realWeekGoal)
+  );
   // AdminPreviewProvider гідрує override з localStorage у СВОЄМУ effect
   // (не доступний ще на першому рендері, поки lazy useState вище вже
   // зафіксував form); якщо на той момент виявиться збережений override —
@@ -68,9 +90,9 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
   useEffect(() => {
     if (!syncedStoredOverrideRef.current && override) {
       syncedStoredOverrideRef.current = true;
-      setForm(toForm(override));
+      setForm(toForm(override, realWeekScenes, realWeekGoal));
     }
-  }, [override]);
+  }, [override, realWeekScenes, realWeekGoal]);
 
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -89,13 +111,14 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
     confirmTimeoutRef.current = setTimeout(() => setConfirmVisible(false), 2000);
   }
 
-  function field(key: keyof Omit<FormState, "examDateAdded">, labelKey: MessageKey) {
+  function field(key: keyof Omit<FormState, "examDateAdded">, labelKey: MessageKey, min = 0, max?: number) {
     return (
       <label className="achievements-admin-field">
         <span>{t(lang, labelKey)}</span>
         <input
           type="number"
-          min={0}
+          min={min}
+          max={max}
           inputMode="numeric"
           className="achievements-admin-input"
           value={form[key]}
@@ -106,8 +129,10 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
   }
 
   function applyPreset(collection: number, key: MessageKey) {
-    const stats = collectionPresetStats(collection);
-    setForm(toForm(stats));
+    const preset = collectionPresetStats(collection);
+    const weekGoal = Math.min(14, Math.max(1, Number(form.weekGoal) || realWeekGoal));
+    const stats: AdminPreviewStats = { ...preset, weekGoal, weekScenes: weekGoal };
+    setForm(toForm(stats, realWeekScenes, realWeekGoal));
     setOverride(stats);
     confirm(key);
   }
@@ -126,6 +151,8 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
         {field("mistakesFixed", "achievements.admin.field.mistakes")}
         {field("weeksGoalDone", "achievements.admin.field.weeksGoal")}
         {field("delfExercisesDone", "achievements.admin.field.delf")}
+        {field("weekScenesDone", "achievements.admin.field.weekScenesDone")}
+        {field("weekGoal", "achievements.admin.field.weekGoal", 1, 14)}
       </div>
 
       <div className="achievements-admin-checkbox-row">
@@ -152,7 +179,7 @@ export function AdminSimulatorPanel({ lang, realStats }: { lang: UiLang; realSta
           type="button"
           className="achievements-admin-pill-outline"
           onClick={() => {
-            setForm(toForm(realStats));
+            setForm(toForm(realStats, realWeekScenes, realWeekGoal));
             clear();
             confirm("achievements.admin.confirm.resetReal");
           }}

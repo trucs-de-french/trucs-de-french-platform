@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { t } from "@/lib/i18n/t";
 import { plural, type PluralForms } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { CardTitle } from "@/components/cabinet/card-title";
+import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 
 const RING_SIZE = 96;
 const STROKE = 9;
@@ -17,8 +20,23 @@ const SCENE_UNIT_FORMS: Record<UiLang, PluralForms> = {
 
 // Відображення цілі тижня на Home — редагування переїхало в Settings
 // (learning-card.tsx WeeklyGoalPills); тут лише кільце + "Змінити →"
-// лінк, без своєї дії збереження.
-export function WeeklyGoalCard({ lang, done, goal }: { lang: UiLang; done: number; goal: number }) {
+// лінк, без своєї дії збереження. done/goal рахуються ТУТ (клієнтськи) з
+// realDone/realGoal — адмінський override (useAdminPreview, /admin/
+// achievements-preview, поля weekScenes/weekGoal) підміняє їх, коли
+// активний; для студента override завжди null.
+export function WeeklyGoalCard({
+  lang,
+  realDone,
+  realGoal,
+}: {
+  lang: UiLang;
+  realDone: number;
+  realGoal: number;
+}) {
+  const { override } = useAdminPreview();
+  const done = override?.weekScenes ?? realDone;
+  const goal = override?.weekGoal ?? realGoal;
+
   const percent = goal > 0 ? Math.min(100, Math.round((100 * done) / goal)) : 0;
   const offset = CIRCUMFERENCE * (1 - percent / 100);
   const remaining = Math.max(0, goal - done);

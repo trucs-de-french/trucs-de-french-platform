@@ -531,6 +531,8 @@ export const uk = {
   "achievements.admin.field.weeksGoal": "Тижнів із виконаною ціллю",
   "achievements.admin.field.delf": "DELF-вправ виконано",
   "achievements.admin.field.examDateAdded": "Дата іспиту додана",
+  "achievements.admin.field.weekScenesDone": "Сцен пройдено цього тижня",
+  "achievements.admin.field.weekGoal": "Ціль тижня (сцен)",
   "achievements.admin.button.apply": "Застосувати",
   "achievements.admin.button.resetReal": "Скинути до реальних",
   "achievements.admin.button.collectI": "Зібрати всю Колекцію I",

@@ -528,6 +528,8 @@ export const en: Record<MessageKey, string> = {
   "achievements.admin.field.weeksGoal": "Weeks with goal reached",
   "achievements.admin.field.delf": "DELF exercises done",
   "achievements.admin.field.examDateAdded": "Exam date added",
+  "achievements.admin.field.weekScenesDone": "Scenes done this week",
+  "achievements.admin.field.weekGoal": "Weekly goal (scenes)",
   "achievements.admin.button.apply": "Apply",
   "achievements.admin.button.resetReal": "Reset to real values",
   "achievements.admin.button.collectI": "Complete all of Collection I",

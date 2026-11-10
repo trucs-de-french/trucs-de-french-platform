@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
 import { getAchievements, EMPTY_BADGE_STATS } from "@/lib/cabinet/achievements";
+import { getCabinetHomeData } from "@/lib/cabinet/home-data";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { AdminPreviewProvider } from "@/lib/cabinet/admin-preview";
@@ -36,6 +37,7 @@ export default async function AchievementsPreviewPage() {
   const lang = normalizeUiLang(profile?.ui_lang);
   const { stats } = await getAchievements(supabase, user.id).catch(() => ({ stats: EMPTY_BADGE_STATS }));
   const sidebarProfile = await getAdminSidebarProfile(supabase, user.id);
+  const home = await getCabinetHomeData(supabase, user.id);
 
   const cookieStore = await cookies();
   const initialIsDark = parseThemeCookieValue(cookieStore.get(THEME_COOKIE)?.value);
@@ -53,7 +55,12 @@ export default async function AchievementsPreviewPage() {
           title={t(lang, "achievements.admin.page.title")}
           subtitle={t(lang, "achievements.admin.page.subtitle")}
         />
-        <AdminSimulatorPanel lang={lang} realStats={stats} />
+        <AdminSimulatorPanel
+          lang={lang}
+          realStats={stats}
+          realWeekScenes={home.weeklyGoal.done}
+          realWeekGoal={home.weeklyGoal.goal}
+        />
       </AdminPreviewProvider>
     </AdminShell>
   );
