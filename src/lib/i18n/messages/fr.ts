@@ -660,7 +660,7 @@ export const fr: Record<MessageKey, string> = {
   "settings.photo.error.size": "Le fichier dépasse 15 Mo",
   "settings.photo.error.upload": "Impossible de charger la photo. Réessaie.",
   "settings.mascot.label": "ou choisis une mascotte",
-  "settings.mascot.showAll": "Tout afficher ({n})",
+  "settings.mascot.showAll": "Tout afficher",
   "settings.mascot.collapse": "Réduire",
   "settings.name.label": "Nom",
   "settings.email.label": "Email",

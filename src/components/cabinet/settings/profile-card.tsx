@@ -109,9 +109,13 @@ export function SettingsProfileCard({
     <div className="cabinet-card flex flex-col gap-3 p-5 md:col-span-2">
       <CardTitle>{t(lang, "settings.section.profile")}</CardTitle>
 
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-start gap-4 min-[560px]:flex-row">
         <ProfileAvatar name={name} size={92} imageUrl={previewUrl ?? avatarUrl} mascotId={mascot} />
-        <div className="flex flex-col gap-2">
+        {/* Права колонка: кнопка, підказка, лейбл маскота, грід і тоглер —
+            усі вирівняні по лівому краю кнопки "Завантажити фото" (items-
+            start + w-full на кожному дочірньому блоку, а не центрування
+            рядка, як було раніше). */}
+        <div className="flex w-full flex-col items-start gap-2 min-[560px]:min-w-0 min-[560px]:flex-1">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -146,21 +150,21 @@ export function SettingsProfileCard({
           />
           <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "settings.photo.hint")}</p>
           {error && <p className="text-xs text-[#9b4a44] dark:text-[#e2a49c]">{error}</p>}
-        </div>
-      </div>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold text-[var(--cabinet-muted)]">
-          {t(lang, "settings.mascot.label")}
-        </p>
-        <MascotPicker
-          lang={lang}
-          selected={mascot}
-          onSelect={(id) => {
-            onMascotChange(id);
-            onAvatarUrlChange(null);
-          }}
-        />
+          <div className="mt-2 w-full">
+            <p className="mb-2 text-sm font-semibold text-[var(--cabinet-muted)]">
+              {t(lang, "settings.mascot.label")}
+            </p>
+            <MascotPicker
+              lang={lang}
+              selected={mascot}
+              onSelect={(id) => {
+                onMascotChange(id);
+                onAvatarUrlChange(null);
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

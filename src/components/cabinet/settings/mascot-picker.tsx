@@ -88,21 +88,26 @@ export function MascotPicker({
     );
   }
 
-  const gridStyle = { gridTemplateColumns: `repeat(auto-fill, minmax(${OPTION_SIZE}px, 1fr))` };
+  // Фіксовані 64px-колонки + justify-start (не minmax(..,1fr) +
+  // justify-items-center): так і перший рядок, і розгорнуті рядки
+  // рахують КІЛЬКІСТЬ колонок однаково (ResizeObserver стежить саме за
+  // шириною цього гріда) і вирівняні по лівому краю, без розтягування
+  // останньої неповної колонки.
+  const gridStyle = { gridTemplateColumns: `repeat(auto-fill, ${OPTION_SIZE}px)` };
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div ref={gridRef} className="grid w-full justify-items-center gap-3" style={gridStyle}>
+    <div className="flex w-full flex-col items-start gap-2">
+      <div ref={gridRef} className="grid w-full justify-start gap-3" style={gridStyle}>
         {firstRow.map((m) => renderOption(m, false))}
       </div>
 
       {!allFitOneRow && (
         <div
           id={EXTRA_ID}
-          className={`settings-mascot-extra ${expanded ? "settings-mascot-extra--expanded" : ""}`}
+          className={`settings-mascot-extra w-full ${expanded ? "settings-mascot-extra--expanded" : ""}`}
           inert={expanded ? undefined : true}
         >
-          <div className="settings-mascot-extra-inner grid w-full justify-items-center gap-3" style={gridStyle}>
+          <div className="settings-mascot-extra-inner grid w-full justify-start gap-3" style={gridStyle}>
             {rest.map((m) => renderOption(m, true))}
           </div>
         </div>
@@ -124,7 +129,7 @@ export function MascotPicker({
           ) : (
             <>
               <ChevronDown size={16} aria-hidden="true" />
-              {t(lang, "settings.mascot.showAll", { n: MASCOTS.length })}
+              {t(lang, "settings.mascot.showAll")}
             </>
           )}
         </button>

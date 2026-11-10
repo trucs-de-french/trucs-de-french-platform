@@ -15262,12 +15262,19 @@ button.cabinet-nav-item {
    0fr→1fr "акордеон" (висота з CSS, не JS-вимір), inert у JSX прибирає
    фокус/озвучення під час згорнутого стану; min-height:0 на внутрішній
    обгортці — без нього 1fr-рядок не стискається до 0 (grid-айтем інакше
-   бере min-content як нижню межу). */
+   бере min-content як нижню межу).
+   width:100% ОБОВ'ЯЗКОВО: .settings-mascot-extra сидить у flex-column з
+   items-start, тому без явної ширини цей grid-контейнер сайзиться
+   shrink-to-fit — а в такому контексті repeat(auto-fill, ...) у вкладеному
+   .settings-mascot-extra-inner резолвиться в ОДНУ колонку (спека ширини
+   невизначена → auto-fill рахує мінімально можливу кількість повторів),
+   звідси й був баг "по одному маскоту в рядку" у розгорнутому стані. */
 .settings-mascot-extra {
   display: grid;
   grid-template-rows: 0fr;
   overflow: hidden;
   transition: grid-template-rows 250ms ease;
+  width: 100%;
 }
 .settings-mascot-extra--expanded {
   grid-template-rows: 1fr;
