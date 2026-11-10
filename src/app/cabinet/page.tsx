@@ -67,7 +67,9 @@ export default async function CabinetHomePage() {
       <div className="hidden flex-col gap-4 lg:flex">
         <div
           className={
-            home.showExamCard ? "grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_320px]" : "grid grid-cols-1"
+            home.showExamCard
+              ? "grid grid-cols-1 items-stretch gap-4 min-[760px]:grid-cols-[1fr_300px]"
+              : "grid grid-cols-1"
           }
         >
           <AchievementsHomeCard

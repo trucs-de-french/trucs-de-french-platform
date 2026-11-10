@@ -12118,6 +12118,13 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
 }
+/* Трохи менша версія — лише home "Останні досягнення" (компактна
+   картка), passed via CabinetPillLink compact prop. */
+.cabinet-pill-link--compact {
+  height: auto;
+  padding: 9px 18px;
+  font-size: 14px;
+}
 .dark .cabinet-pill-link:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
@@ -13117,6 +13124,13 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-weight: 800;
 }
 .dark .cabinet-week-dot--active.cabinet-week-dot--today {
+  /* color БУЛО відсутнє тут — ".dark .cabinet-week-dot--today" (теж 2
+     класи, та сама специфічність 0,0,2, що й ".dark .cabinet-week-dot--
+     active") йшло пізніше у файлі й вигравало color за порядком джерела
+     (однакова специфічність), тож активний+сьогоднішній день показував
+     приглушений синьо-сірий лейбл на gold-фоні. 3-класовий селектор тут
+     (0,0,3) гарантовано перебиває обидва. */
+  color: #1a1640;
   box-shadow: 0 2px 6px rgba(217, 183, 101, 0.45), 0 0 0 2px var(--cabinet-card-bg), 0 0 0 3.5px #d9b765;
 }
 .cabinet-week-streak-text {
@@ -14518,6 +14532,31 @@ button.cabinet-nav-item {
 .achievement-badge-slot {
   flex: 0 0 76px;
   scroll-snap-align: start;
+}
+/* Компактна версія для home "Останні досягнення" — 64x67 монета (була
+   72x75) і трохи менший текст, scoped через .achievement-badge-row
+   (клас лише в achievements-home-card.tsx), не торкаючись бейджів на
+   повній сторінці/компактній картці прогресу (ті свого власного розміру
+   не передають, лишаються 72x75/12.5px). */
+.achievement-badge-row .achievement-badge-coin {
+  width: 64px;
+  height: 67px;
+}
+.achievement-badge-row .achievement-badge-title {
+  font-size: 13px;
+}
+.achievement-badge-row .achievement-badge-caption {
+  font-size: 12px;
+}
+@media (max-width: 759px) {
+  .achievement-badge-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .achievement-badge-row .achievement-badge-slot {
+    flex: none;
+  }
 }
 @media (min-width: 1024px) {
   .achievement-badge-row {

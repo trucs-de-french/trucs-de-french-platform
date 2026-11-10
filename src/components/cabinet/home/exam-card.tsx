@@ -18,7 +18,7 @@ const DAY_UNIT_FORMS: Record<UiLang, PluralForms> = {
   en: { one: "day", other: "days" },
 };
 
-const RING_SIZE = 132;
+const RING_SIZE = 104;
 const STROKE = 12;
 const RADIUS = (RING_SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -82,14 +82,14 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
   const showForm = editing || !exam;
 
   return (
-    <div className="cabinet-card flex h-full flex-col items-center gap-3 p-5">
+    <div className="cabinet-card flex flex-col items-center gap-[14px] p-[22px_26px_20px]">
       <div className="flex w-full items-center justify-between">
         <CardTitle>{t(lang, "home.exam.title")}</CardTitle>
         {exam && !editing && (
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="min-h-11 text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+            className="min-h-11 text-[13px] font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
           >
             {t(lang, "home.exam.editDate")}
           </button>
@@ -143,17 +143,22 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
                     y="50%"
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontFamily="var(--font-body)"
+                    fontFamily="var(--font-heading)"
                     fontSize={38}
-                    fontWeight={700}
+                    fontWeight={900}
                     fill="var(--cabinet-ink)"
                   >
                     {exam.daysLeft}
                   </text>
                 </svg>
-                <p className="font-heading text-[15px] font-extrabold text-[var(--cabinet-ink)]">
-                  {plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}
-                </p>
+                <div className="flex flex-col items-center gap-[2px]">
+                  <p className="font-heading text-[13px] font-extrabold text-[var(--cabinet-ink)]">
+                    {plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}
+                  </p>
+                  <div className="font-body text-[15px] font-semibold text-[var(--cabinet-ink)]">
+                    {exam.type} · {formatDateNumeric(exam.date, lang)}
+                  </div>
+                </div>
               </>
             ) : exam.daysLeft === 0 ? (
               <p className="font-body text-xl font-extrabold text-[var(--cabinet-ink)]">{t(lang, "home.exam.today")}</p>
@@ -169,9 +174,11 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
                 </button>
               </>
             )}
-            <div className="font-body text-[17px] font-bold text-[var(--cabinet-ink)]">
-              {exam.type} · {formatDateNumeric(exam.date, lang)}
-            </div>
+            {exam.daysLeft <= 0 && (
+              <div className="font-body text-[15px] font-semibold text-[var(--cabinet-ink)]">
+                {exam.type} · {formatDateNumeric(exam.date, lang)}
+              </div>
+            )}
           </div>
         )
       )}

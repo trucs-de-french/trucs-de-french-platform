@@ -32,10 +32,10 @@ export function AchievementsHomeCard({
   const picked = useMemo(() => pickHomeAchievements(items, showExamCard), [items, showExamCard]);
 
   return (
-    <div className="cabinet-card flex h-full flex-col justify-center gap-3 p-5">
+    <div className="cabinet-card flex flex-col gap-[14px] p-[22px_26px_20px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
-        <CabinetPillLink href="/cabinet/achievements" label={t(lang, "home.achievements.all")} />
+        <CabinetPillLink href="/cabinet/achievements" label={t(lang, "home.achievements.all")} compact />
       </div>
       {picked.length === 0 ? (
         <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
