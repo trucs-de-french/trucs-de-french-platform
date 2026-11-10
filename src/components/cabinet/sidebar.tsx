@@ -10,7 +10,6 @@ import { CabinetSidebarProfile } from "@/components/cabinet/sidebar-profile";
 import { BevelIcon } from "@/components/cabinet/bevel-icon";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { useTheme } from "@/lib/use-theme";
 import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
 import { LanguagePills, CabinetLangCycle } from "./language-pills";
 import { ThemePills, ThemeRailButton } from "./theme-switch";
@@ -39,11 +38,6 @@ export function CabinetSidebar({
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const pathname = usePathname();
-  // Активний пункт сидить на cream-плашці (--cabinet-panel-bg) лише у
-  // світлій темі — там indigo-bevel дає контраст; у темній темі та сама
-  // плашка темно-indigo, тож там лишаємо gold-bevel навіть на активному
-  // пункті (inda на indigo було б майже невидимим).
-  const { isDark } = useTheme(initialIsDark);
 
   function toggle() {
     const next = !collapsed;
@@ -84,7 +78,6 @@ export function CabinetSidebar({
             lang={lang}
             collapsed={collapsed}
             active={pathname === item.href}
-            isDark={isDark}
           />
         ))}
 
@@ -95,7 +88,6 @@ export function CabinetSidebar({
           lang={lang}
           collapsed={collapsed}
           active={pathname === CABINET_SETTINGS_NAV.href}
-          isDark={isDark}
         />
 
         {isTeacher && (
@@ -104,7 +96,6 @@ export function CabinetSidebar({
             lang={lang}
             collapsed={collapsed}
             active={pathname.startsWith("/admin")}
-            isDark={isDark}
           />
         )}
 
@@ -188,20 +179,14 @@ function NavLink({
   lang,
   collapsed,
   active,
-  isDark,
 }: {
   item: { href: string; icon: LucideIcon; labelKey: MessageKey };
   lang: UiLang;
   collapsed: boolean;
   active: boolean;
-  isDark: boolean;
 }) {
   const Icon = item.icon;
   const label = t(lang, item.labelKey);
-  // Indigo-bevel лише коли активний пункт дійсно сидить на світлій
-  // cream-плашці (light тема) — у dark темі та ж плашка темна, тож
-  // лишаємо gold-bevel навіть для активного пункту.
-  const selected = active && !isDark;
 
   return (
     <Link
@@ -212,10 +197,10 @@ function NavLink({
     >
       {collapsed ? (
         <span className="cabinet-rail-icon">
-          <BevelIcon icon={Icon} selected={selected} />
+          <BevelIcon icon={Icon} selected={active} />
         </span>
       ) : (
-        <BevelIcon icon={Icon} selected={selected} />
+        <BevelIcon icon={Icon} selected={active} />
       )}
       {!collapsed && <span>{label}</span>}
       {collapsed && (

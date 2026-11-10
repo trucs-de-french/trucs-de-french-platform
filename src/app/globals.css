@@ -12583,12 +12583,28 @@ button.cabinet-nav-item {
 
 /* "C. gold bevel" — bevel-icon.tsx: три абсолютно позиційовані копії того
    самого Lucide-глифа (тінь/градієнт/відблиск) усередині фіксованого
-   square-боксу. Сам .bevel-icon не задає колір — кожен шар отримує
-   stroke інлайном (gradient url() або rgba()) від компонента. */
+   square-боксу. Колір кожного шару — тут, у CSS (не inline-пропи), саме
+   щоб .bevel-icon--selected міг мати РІЗНИЙ колір per theme (:root.dark
+   нижче) без жодної JS-перевірки теми — інакше був би спалах
+   неправильного bevel-кольору на активному пункті до гідратації. */
 .bevel-icon {
   position: relative;
   display: inline-flex;
   flex-shrink: 0;
+  /* Світла тема (дефолт) і завжди-gold неселектовані іконки: активний
+     пункт у light-темі сидить на cream-плашці — indigo-bevel контрастує
+     краще. */
+  --bevel-sel-stroke: url(#tdf-bevel-indigo);
+  --bevel-sel-shadow: rgba(184, 146, 63, 0.5);
+  --bevel-sel-highlight: rgba(255, 255, 255, 0.35);
+}
+:root.dark .bevel-icon {
+  /* Темна тема: та сама плашка активного пункту тепер темна (cut-out
+     кольору фону сторінки) — indigo-bevel на ній майже невидимий, тож
+     selected лишається gold, як і неселектовані іконки. */
+  --bevel-sel-stroke: url(#tdf-bevel-gold);
+  --bevel-sel-shadow: rgba(10, 8, 50, 0.55);
+  --bevel-sel-highlight: rgba(255, 255, 255, 0.7);
 }
 .bevel-icon-layer {
   position: absolute;
@@ -12599,10 +12615,24 @@ button.cabinet-nav-item {
   overflow: visible;
 }
 .bevel-icon-shadow {
+  stroke: rgba(10, 8, 50, 0.5);
   transform: translateY(1.4px);
 }
+.bevel-icon-main {
+  stroke: url(#tdf-bevel-gold);
+}
 .bevel-icon-highlight {
+  stroke: rgba(255, 255, 255, 0.7);
   transform: translate(-0.5px, -0.6px);
+}
+.bevel-icon--selected .bevel-icon-shadow {
+  stroke: var(--bevel-sel-shadow);
+}
+.bevel-icon--selected .bevel-icon-main {
+  stroke: var(--bevel-sel-stroke);
+}
+.bevel-icon--selected .bevel-icon-highlight {
+  stroke: var(--bevel-sel-highlight);
 }
 
 .cabinet-tooltip {
