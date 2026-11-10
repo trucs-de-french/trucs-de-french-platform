@@ -29,14 +29,20 @@ export function validatePhotoFile(file: File): PhotoValidationError | null {
   return null;
 }
 
-type Drawable = {
+export type Drawable = {
   source: CanvasImageSource;
   width: number;
   height: number;
   dispose: () => void;
 };
 
-async function decodeToDrawable(file: File): Promise<Drawable> {
+// Квадрат кадрування в пікселях ОРИГІНАЛУ (у системі координат ПІСЛЯ
+// decodeToDrawable, тобто вже з виправленою EXIF-орієнтацією) — те саме,
+// що рахує settings/avatar-crop-modal.tsx, і те, що тут підставляється у
+// drawImage замість завжди-центрованого квадрата.
+export type CropRect = { x: number; y: number; size: number };
+
+export async function decodeToDrawable(file: File): Promise<Drawable> {
   if (typeof createImageBitmap === "function") {
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -102,12 +108,16 @@ async function encodeWithQualityLadder(canvas: HTMLCanvasElement): Promise<Blob>
   throw new Error("canvas-encode-failed");
 }
 
-export async function compressImage(file: File): Promise<Blob> {
+// crop — опціональний квадрат у пікселях ОРИГІНАЛУ (settings/avatar-crop-
+// modal.tsx, той самий координатний простір, що повертає decodeToDrawable
+// тут-таки); за замовчуванням лишається старий центрований квадрат, щоб
+// жоден інший викличок (якщо колись з'явиться) не зламався.
+export async function compressImage(file: File, crop?: CropRect): Promise<Blob> {
   const { source, width, height, dispose } = await decodeToDrawable(file);
   try {
-    const side = Math.min(width, height);
-    const sx = (width - side) / 2;
-    const sy = (height - side) / 2;
+    const side = crop ? crop.size : Math.min(width, height);
+    const sx = crop ? crop.x : (width - side) / 2;
+    const sy = crop ? crop.y : (height - side) / 2;
     // Ніколи не апскейлимо — якщо джерело вже менше за 512, target =
     // його власний (обрізаний у квадрат) розмір.
     const targetSize = Math.min(side, MAX_SIDE);

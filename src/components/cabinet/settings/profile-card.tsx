@@ -1,17 +1,20 @@
 "use client";
 
 // Профіль: прев'ю аватара (92px) + завантаження фото/видалення + пікер
-// маскотів + ім'я/email. Фото завантажується в Storage ОДРАЗУ при виборі
-// файлу (crop/resize тут, не на сервері) — лише сам запис avatar_url/
-// avatar_mascot у profiles чекає на загальну кнопку "Зберегти" нижче
-// (settings-form.tsx), як і решта полів цієї картки.
+// маскотів + ім'я/email. Вибір файлу відкриває модалку кадрування
+// (avatar-crop-modal.tsx) — у Storage летить уже вирізаний і стиснутий
+// квадрат, не оригінал. Фото завантажується в Storage ОДРАЗУ після
+// "Застосувати" (crop/resize тут, не на сервері) — лише сам запис
+// avatar_url/avatar_mascot у profiles чекає на загальну кнопку
+// "Зберегти" нижче (settings-form.tsx), як і решта полів цієї картки.
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 import { MascotPicker } from "./mascot-picker";
+import { AvatarCropModal } from "./avatar-crop-modal";
 import { createClient } from "@/lib/supabase/client";
-import { validatePhotoFile, compressImage } from "@/lib/cabinet/avatar-upload";
+import { validatePhotoFile, compressImage, type CropRect } from "@/lib/cabinet/avatar-upload";
 import { CardTitle } from "@/components/cabinet/card-title";
 
 export function SettingsProfileCard({
@@ -21,6 +24,7 @@ export function SettingsProfileCard({
   email,
   mascot,
   avatarUrl,
+  avatarDirty,
   onNameChange,
   onMascotChange,
   onAvatarUrlChange,
@@ -31,14 +35,27 @@ export function SettingsProfileCard({
   email: string;
   mascot: string | null;
   avatarUrl: string | null;
+  // Чи відрізняється поточне avatarUrl від останнього ЗБЕРЕЖЕНОГО
+  // (settings-form.tsx: state.avatarUrl !== savedState.avatarUrl) — лише
+  // поки це true, має сенс показувати "Змінити положення" (п.3 задачі:
+  // доки фото не збережене, лишаємо оригінальний File в пам'яті для
+  // повторного відкриття редактора з тим самим кадром).
+  avatarDirty: boolean;
   onNameChange: (value: string) => void;
   onMascotChange: (value: string | null) => void;
   onAvatarUrlChange: (value: string | null) => void;
 }) {
   const [uploading, setUploading] = useState(false);
-  const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Файл, що редагується в модалці зараз (вибраний щойно, або
+  // повторний відкрив через "Змінити положення") — null, коли модалка
+  // закрита.
+  const [editingFile, setEditingFile] = useState<File | null>(null);
+  // Останній застосований crop для ПОТОЧНОГО незбереженого фото — щоб
+  // "Змінити положення" відкрило редактор з тим самим кадром, а не
+  // заново по центру.
+  const [lastEdit, setLastEdit] = useState<{ file: File; crop: CropRect } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
@@ -57,30 +74,24 @@ export function SettingsProfileCard({
     setPreviewUrl(url);
   }
 
-  async function handleFile(file: File) {
+  function handlePickFile(file: File) {
     setError(null);
     const invalid = validatePhotoFile(file);
     if (invalid) {
       setError(t(lang, invalid === "type" ? "settings.photo.error.type" : "settings.photo.error.size"));
       return;
     }
+    setEditingFile(file);
+  }
 
+  async function handleCropApply(file: File, crop: CropRect) {
+    setEditingFile(null);
+    setError(null);
     setPreview(URL.createObjectURL(file));
-
-    setCompressing(true);
-    let blob: Blob;
-    try {
-      blob = await compressImage(file);
-    } catch {
-      setCompressing(false);
-      setPreview(null);
-      setError(t(lang, "settings.photo.error.upload"));
-      return;
-    }
-    setCompressing(false);
 
     setUploading(true);
     try {
+      const blob = await compressImage(file, crop);
       const supabase = createClient();
       const ext = blob.type === "image/webp" ? "webp" : "jpg";
       // Унікальне ім'я (timestamp) — cache-busting і водночас позначка
@@ -97,6 +108,7 @@ export function SettingsProfileCard({
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
       onAvatarUrlChange(pub.publicUrl);
       onMascotChange(null);
+      setLastEdit({ file, crop });
     } catch {
       setError(t(lang, "settings.photo.error.upload"));
     } finally {
@@ -116,24 +128,37 @@ export function SettingsProfileCard({
             start + w-full на кожному дочірньому блоку, а не центрування
             рядка, як було раніше). */}
         <div className="flex w-full flex-col items-start gap-2 min-[560px]:min-w-0 min-[560px]:flex-1">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={uploading || compressing}
+              disabled={uploading}
               onClick={() => inputRef.current?.click()}
               className="min-h-11 rounded-full px-4 text-sm font-bold text-[var(--cabinet-on-gold)] disabled:opacity-60"
               style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
             >
-              {compressing ? t(lang, "settings.photo.compressing") : t(lang, "settings.photo.upload")}
+              {uploading ? t(lang, "settings.photo.compressing") : t(lang, "settings.photo.upload")}
             </button>
             {avatarUrl && (
               <button
                 type="button"
-                disabled={uploading || compressing}
-                onClick={() => onAvatarUrlChange(null)}
+                disabled={uploading}
+                onClick={() => {
+                  onAvatarUrlChange(null);
+                  setLastEdit(null);
+                }}
                 className="flex min-h-11 items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent px-4 text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] disabled:opacity-60 dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
               >
                 {t(lang, "settings.photo.remove")}
+              </button>
+            )}
+            {avatarDirty && lastEdit && (
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => setEditingFile(lastEdit.file)}
+                className="text-sm font-bold text-[var(--cabinet-ghost-fg)] underline-offset-2 hover:underline disabled:opacity-60"
+              >
+                {t(lang, "settings.photo.reposition")}
               </button>
             )}
           </div>
@@ -145,7 +170,7 @@ export function SettingsProfileCard({
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) void handleFile(file);
+              if (file) handlePickFile(file);
             }}
           />
           <p className="text-xs text-[var(--cabinet-muted)]">{t(lang, "settings.photo.hint")}</p>
@@ -186,6 +211,16 @@ export function SettingsProfileCard({
           <input value={email} readOnly disabled className="cabinet-input opacity-60" />
         </label>
       </div>
+
+      {editingFile && (
+        <AvatarCropModal
+          lang={lang}
+          file={editingFile}
+          initialCrop={lastEdit && lastEdit.file === editingFile ? lastEdit.crop : null}
+          onCancel={() => setEditingFile(null)}
+          onApply={(crop) => void handleCropApply(editingFile, crop)}
+        />
+      )}
     </div>
   );
 }

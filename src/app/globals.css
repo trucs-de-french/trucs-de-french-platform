@@ -15335,3 +15335,88 @@ button.cabinet-nav-item {
 .dark .settings-mascot-toggle:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
+
+/* Модалка кадрування фото (settings/avatar-crop-modal.tsx) — картка
+   кабінету з іншим радіусом/кольором картки, як просила задача (не
+   --cabinet-card-bg, конкретні #fffdf7/#141a52). */
+.avatar-crop-dialog {
+  background: #fffdf7;
+  border: 2px solid #e4cf94;
+  border-radius: 24px;
+}
+.dark .avatar-crop-dialog {
+  background: #141a52;
+  border-color: #2e3680;
+}
+.avatar-crop-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--cabinet-panel-bg);
+  touch-action: none;
+  cursor: grab;
+}
+.avatar-crop-stage:active {
+  cursor: grabbing;
+}
+.avatar-crop-stage:focus-visible {
+  outline: 2px solid var(--cabinet-gold);
+  outline-offset: 2px;
+}
+.avatar-crop-image {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* Темні кути поза колом — box-shadow, що розходиться на 9999px від
+   кола самого .avatar-crop-mask, малюючи все ПОЗА його межами (не
+   mask-image/clip-path — надійніше в усіх браузерах, той самий трюк,
+   що .settings-mascot-option--selected кільце вище). */
+.avatar-crop-mask {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(10, 10, 20, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.85) inset;
+  pointer-events: none;
+}
+.avatar-crop-zoom-btn {
+  display: flex;
+  min-width: 36px;
+  min-height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid #e4cf94;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cabinet-ink);
+  cursor: pointer;
+}
+.dark .avatar-crop-zoom-btn {
+  border-color: #2e3680;
+}
+.avatar-crop-zoom-btn:hover:not(:disabled) {
+  background: #fbf4dc;
+}
+.dark .avatar-crop-zoom-btn:hover:not(:disabled) {
+  background: #1b2268;
+}
+.avatar-crop-zoom-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.avatar-crop-zoom-btn:focus-visible {
+  outline: 2px solid var(--cabinet-gold);
+  outline-offset: 2px;
+}
+.avatar-crop-zoom-slider {
+  flex: 1;
+  accent-color: #d9b765;
+}

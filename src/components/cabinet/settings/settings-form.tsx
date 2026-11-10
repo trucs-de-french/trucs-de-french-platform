@@ -117,6 +117,7 @@ export function SettingsForm({
           email={email}
           mascot={state.mascot}
           avatarUrl={state.avatarUrl}
+          avatarDirty={state.avatarUrl !== savedState.avatarUrl}
           onNameChange={(name) => setState((s) => ({ ...s, name }))}
           onMascotChange={(mascot) => setState((s) => ({ ...s, mascot }))}
           onAvatarUrlChange={(avatarUrl) => setState((s) => ({ ...s, avatarUrl }))}
