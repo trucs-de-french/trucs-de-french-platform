@@ -95,7 +95,7 @@ function LibraryCard({ lang, item }: { lang: UiLang; item: LibraryItem }) {
         className={
           isGhost
             ? "flex min-h-11 w-full items-center justify-center rounded-full border border-[var(--cabinet-line)] bg-transparent text-sm font-bold text-[var(--cabinet-ghost-fg)] hover:bg-[var(--cabinet-ghost-bg-hover)] dark:border-[1.5px] dark:border-[var(--cabinet-btn-border)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
-            : "flex min-h-11 w-full items-center justify-center rounded-full border-[1.5px] border-[var(--cabinet-btn-border)] bg-[var(--cabinet-btn-bg)] text-sm font-bold text-[var(--cabinet-btn-fg)] hover:bg-[var(--cabinet-btn-bg-hover)] dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
+            : "flex min-h-11 w-full items-center justify-center rounded-full text-sm cabinet-btn-primary"
         }
       >
         {t(lang, actionKey)}
@@ -154,7 +154,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               onClick={() => setTypeFilter("all")}
               className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 typeFilter === "all"
-                  ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
+                  ? "cabinet-chip--selected"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
@@ -168,7 +168,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
                 onClick={() => setTypeFilter(type)}
                 className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                   typeFilter === type
-                    ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
+                    ? "cabinet-chip--selected"
                     : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
                 }`}
               >
@@ -206,7 +206,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
             onClick={() => setLevelFilter(null)}
             className={`inline-flex h-11 shrink-0 items-center justify-center rounded-full px-4 text-sm font-extrabold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
               levelFilter === null
-                ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
+                ? "cabinet-chip--selected"
                 : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
             }`}
           >
@@ -220,7 +220,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
               onClick={() => setLevelFilter((cur) => (cur === level ? null : level))}
               className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-sm font-extrabold dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 levelFilter === level
-                  ? "border-[1.5px] border-[var(--cabinet-pill-selected-border)] bg-[var(--cabinet-pill-selected-bg)] text-[var(--cabinet-pill-selected-fg)]"
+                  ? "cabinet-chip--selected"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
