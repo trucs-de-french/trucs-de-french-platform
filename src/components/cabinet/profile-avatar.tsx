@@ -20,12 +20,20 @@ export function ProfileAvatar({
   imageUrl = null,
   mascotId = null,
   className = "",
+  alt,
+  loading = "eager",
 }: {
   name: string;
   size: number;
   imageUrl?: string | null;
   mascotId?: string | null;
   className?: string;
+  // За замовчуванням декоративний (alt="" aria-hidden) — як і скрізь,
+  // де аватар лише ілюструє ім'я/вибір, що вже озвучене поруч. Грід
+  // вибору маскота (mascot-picker.tsx) передає справжній alt=label,
+  // бо там картинка — єдиний спосіб розрізнити варіанти.
+  alt?: string;
+  loading?: "eager" | "lazy";
 }) {
   const [broken, setBroken] = useState(false);
   const trimmed = name.trim();
@@ -38,8 +46,9 @@ export function ProfileAvatar({
     return (
       <img
         src={src}
-        alt=""
-        aria-hidden="true"
+        alt={alt ?? ""}
+        aria-hidden={alt ? undefined : "true"}
+        loading={loading}
         onError={() => setBroken(true)}
         className={`profile-avatar profile-avatar-img ${className}`.trim()}
         style={{ width: size, height: size }}

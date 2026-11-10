@@ -18,7 +18,6 @@ import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 
 const OPTION_SIZE = 64;
 const GRID_GAP = 12;
-const SELECTED_RING = "0 0 0 2.5px #d9b765, 0 0 14px 2px rgba(217, 183, 101, 0.5)";
 const EXTRA_ID = "settings-mascot-extra";
 
 export function MascotPicker({
@@ -67,7 +66,7 @@ export function MascotPicker({
   const rest = MASCOTS.slice(columns);
   const allFitOneRow = rest.length === 0;
 
-  function renderOption(mascot: Mascot) {
+  function renderOption(mascot: Mascot, lazy: boolean) {
     const isSelected = selected === mascot.id;
     return (
       <button
@@ -76,10 +75,15 @@ export function MascotPicker({
         onClick={() => onSelect(mascot.id)}
         aria-pressed={isSelected}
         aria-label={mascot.label}
-        className="settings-mascot-option"
-        style={isSelected ? { boxShadow: SELECTED_RING } : undefined}
+        className={`settings-mascot-option ${isSelected ? "settings-mascot-option--selected" : ""}`}
       >
-        <ProfileAvatar name="" size={OPTION_SIZE} mascotId={mascot.id} />
+        <ProfileAvatar
+          name=""
+          size={OPTION_SIZE}
+          mascotId={mascot.id}
+          alt={mascot.label}
+          loading={lazy ? "lazy" : "eager"}
+        />
       </button>
     );
   }
@@ -89,7 +93,7 @@ export function MascotPicker({
   return (
     <div className="flex flex-col items-start gap-2">
       <div ref={gridRef} className="grid w-full justify-items-center gap-3" style={gridStyle}>
-        {firstRow.map(renderOption)}
+        {firstRow.map((m) => renderOption(m, false))}
       </div>
 
       {!allFitOneRow && (
@@ -99,7 +103,7 @@ export function MascotPicker({
           inert={expanded ? undefined : true}
         >
           <div className="settings-mascot-extra-inner grid w-full justify-items-center gap-3" style={gridStyle}>
-            {rest.map(renderOption)}
+            {rest.map((m) => renderOption(m, true))}
           </div>
         </div>
       )}

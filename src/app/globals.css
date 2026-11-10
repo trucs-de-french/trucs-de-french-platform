@@ -15235,10 +15235,27 @@ button.cabinet-nav-item {
   background: transparent;
   border: none;
   cursor: pointer;
+  transition: transform 150ms ease;
+}
+.settings-mascot-option:hover {
+  transform: scale(1.05);
 }
 .settings-mascot-option:focus-visible {
   outline: 2px solid var(--cabinet-gold);
   outline-offset: 2px;
+}
+/* Кільце обраного — indigo у світлій темі, gold у темній (не inline
+   box-shadow: інакше колір не стежить за темою). */
+.settings-mascot-option--selected {
+  box-shadow: 0 0 0 2.5px #4b46da, 0 0 14px 2px rgba(75, 70, 218, 0.5);
+}
+.dark .settings-mascot-option--selected {
+  box-shadow: 0 0 0 2.5px #d9b765, 0 0 14px 2px rgba(217, 183, 101, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-mascot-option {
+    transition: none;
+  }
 }
 
 /* Приховані рядки маскотів (mascot-picker.tsx) — grid-template-rows
