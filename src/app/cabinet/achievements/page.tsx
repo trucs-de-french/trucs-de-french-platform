@@ -3,7 +3,7 @@ import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
 import { getAchievements, type AchievementState } from "@/lib/cabinet/achievements";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
-import { CardTitle } from "@/components/cabinet/card-title";
+import { PageHeader } from "@/components/cabinet/page-header";
 import { FullAchievements } from "@/components/cabinet/achievements/full-achievements";
 import type { Profile } from "@/lib/supabase/profile";
 
@@ -35,8 +35,13 @@ export default async function CabinetAchievementsPage() {
     <div className="flex flex-col gap-6">
       <CabinetMobileHeader />
 
+      <PageHeader
+        title={t(lang, "progress.achievements.title")}
+        backHref="/cabinet/progress"
+        backLabel={t(lang, "cabinet.nav.progress")}
+      />
+
       <div className="cabinet-card flex flex-col gap-5 p-5">
-        <CardTitle>{t(lang, "progress.achievements.title")}</CardTitle>
         <FullAchievements lang={lang} items={achievements.items} showExamCard={achievements.showExamCard} />
       </div>
     </div>

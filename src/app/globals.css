@@ -12027,6 +12027,54 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   padding: 10px 4px 6px;
   margin-bottom: 20px;
 }
+/* Назад на батьківську сторінку (page-header.tsx) — лише коли
+   backHref/backLabel передані (не top-level sidebar-сторінки). */
+.cabinet-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: #3b37c4;
+}
+.dark .cabinet-back-link {
+  color: #f3d98b;
+}
+.cabinet-back-link-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  transition: border-color 150ms;
+}
+.cabinet-back-link-icon {
+  transition: transform 150ms;
+}
+.cabinet-back-link-label {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+}
+.cabinet-back-link:hover .cabinet-back-link-circle,
+.cabinet-back-link:focus-visible .cabinet-back-link-circle {
+  border-color: #d9b765;
+}
+.cabinet-back-link:hover .cabinet-back-link-icon,
+.cabinet-back-link:focus-visible .cabinet-back-link-icon {
+  transform: translateX(-2px);
+}
+.cabinet-back-link:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+  border-radius: 20px;
+}
+.dark .cabinet-back-link:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
 .cabinet-page-header-row {
   display: flex;
   align-items: flex-end;
