@@ -23,6 +23,7 @@ const LEVEL_OPTIONS: { value: FrenchLevel; nameKey: MessageKey; descKey: Message
   { value: "A2", nameKey: "settings.aboutMe.level.A2.name", descKey: "settings.aboutMe.level.A2.desc" },
   { value: "B1", nameKey: "settings.aboutMe.level.B1.name", descKey: "settings.aboutMe.level.B1.desc" },
   { value: "B2", nameKey: "settings.aboutMe.level.B2.name", descKey: "settings.aboutMe.level.B2.desc" },
+  { value: "C1C2", nameKey: "settings.aboutMe.level.C1C2.name", descKey: "settings.aboutMe.level.C1C2.desc" },
 ];
 
 // "Про мене" (учбова мета + рівень французької, 0067_profile_goals_

@@ -14,7 +14,7 @@ export type NotificationPrefs = { review: boolean; weekly_goal: boolean; news: b
 // колонок ще нема). Нічого з цих полів поки не читається деінде в
 // кабінеті (явна вимога задачі — лише зберігання).
 export type LearningGoal = "self" | "travel" | "work" | "move" | "exam" | "kids";
-export type FrenchLevel = "A0" | "A1" | "A2" | "B1" | "B2";
+export type FrenchLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1C2";
 export type FrenchLevelSource = "self" | "test";
 
 export type Profile = {

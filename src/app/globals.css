@@ -14509,10 +14509,25 @@ button.cabinet-nav-item {
 }
 
 /* Рівень французької — 5 карток, адаптивна сітка (мінімум 150px). */
+/* 6 карток рівня — явні брейкпоїнти (не auto-fill): 2 колонки на
+   телефоні (3 ряди по 2), 3 на планшеті (2 ряди по 3), усі 6 в один ряд
+   на широкому екрані. Рівні висоти в межах ряду — стандартна grid-
+   поведінка (align-items:stretch за замовчуванням), нічого зайвого не
+   треба. */
 .about-me-level-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
   gap: 12px;
+}
+@media (min-width: 640px) {
+  .about-me-level-grid {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .about-me-level-grid {
+    grid-template-columns: repeat(6, minmax(150px, 1fr));
+  }
 }
 .about-me-level-card {
   display: flex;

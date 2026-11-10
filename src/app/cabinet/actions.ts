@@ -101,7 +101,7 @@ export async function saveWeeklyGoal(formData: FormData): Promise<{ ok: boolean;
 // власнику рядка міняти будь-яку колонку, крім role, тож тут достатньо
 // звичайного update під сесійним (anon-key) клієнтом.
 const LEARNING_GOAL_VALUES = ["self", "travel", "work", "move", "exam", "kids"] as const;
-const FRENCH_LEVEL_VALUES = ["A0", "A1", "A2", "B1", "B2"] as const;
+const FRENCH_LEVEL_VALUES = ["A0", "A1", "A2", "B1", "B2", "C1C2"] as const;
 
 // profiles.learning_goals/french_level* (0067_profile_goals_level.sql,
 // ще НЕ застосована на момент написання — update на неіснуючі колонки
