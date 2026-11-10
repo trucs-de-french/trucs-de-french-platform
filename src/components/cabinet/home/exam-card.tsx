@@ -24,6 +24,12 @@ const RADIUS = (RING_SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const WINDOW_DAYS = 365;
 
+// 3+ цифри (напр. 120) при fontSize 38 торкались би штриха кільця на
+// RING_SIZE=104 — трохи менший розмір лише для цього випадку.
+function ringNumberFontSize(value: number): number {
+  return String(value).length >= 3 ? 28 : 38;
+}
+
 function ExamForm({
   lang,
   exam,
@@ -142,10 +148,11 @@ export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }
                     x="50%"
                     y="50%"
                     textAnchor="middle"
-                    dominantBaseline="middle"
+                    dominantBaseline="central"
                     fontFamily="var(--font-heading)"
-                    fontSize={38}
+                    fontSize={ringNumberFontSize(exam.daysLeft)}
                     fontWeight={900}
+                    letterSpacing={0}
                     fill="var(--cabinet-ink)"
                   >
                     {exam.daysLeft}

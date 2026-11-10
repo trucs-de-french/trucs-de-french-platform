@@ -83,7 +83,16 @@ export function WeeklyGoalCard({
             strokeDashoffset={offset}
             transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
           />
-          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize={22} fontWeight={800} fill="var(--cabinet-ink)">
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={22}
+            fontWeight={800}
+            letterSpacing={0}
+            fill="var(--cabinet-ink)"
+          >
             {done}/{goal}
           </text>
         </svg>
