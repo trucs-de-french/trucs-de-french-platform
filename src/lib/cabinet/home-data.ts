@@ -386,6 +386,34 @@ export async function getCabinetHomeData(
     activityRows = [];
   }
 
+  // Тимчасовий додатковий ряд activity-днів з progress.last_attempt_at —
+  // activity_log наразі НЕ пишеться жодному користувачу (перевірено
+  // окремо: 0 рядків для всіх; record_activity_log існує й викликається з
+  // record_task_attempt/record_block_task_attempt, 0065_cabinet_profile_
+  // and_activity.sql, але INSERT туди мовчки не долітає — функція ковтає
+  // будь-яку помилку власним exception-блоком), тож без цього streakDays/
+  // week-dots завжди 0 незалежно від реальної активності студентки.
+  // ВАЖЛИВО: last_attempt_at — це дата ОСТАННЬОЇ спроби НА ЗАВДАННЯ, не
+  // повна історія спроб (повторне виконання того самого завдання зсуває
+  // стару дату на нову, а не додає окрему подію) — тож цей шар наближає
+  // activityDates (можна пропустити день, у який були лише повторні
+  // спроби вже зданих завдань), а не відтворює точну модель activity_log.
+  // Повернутись на activity_log-ЄДИНЕ джерело, коли запис у неї
+  // відновиться. Незалежний try/catch — падіння цього запиту не рве
+  // решту Home (той самий "extras"-паттерн, що й activityRows вище).
+  let progressActivityRows: { last_attempt_at: string | null }[] = [];
+  try {
+    const since = new Date(now.getTime() - ACTIVITY_LOOKBACK_DAYS * 86_400_000).toISOString();
+    const { data } = await supabase
+      .from("progress")
+      .select("last_attempt_at")
+      .eq("user_id", userId)
+      .gte("last_attempt_at", since);
+    progressActivityRows = (data ?? []) as { last_attempt_at: string | null }[];
+  } catch {
+    progressActivityRows = [];
+  }
+
   const taskById = new Map(tasks.map((t) => [t.id, t]));
   const progressByTaskId = new Map(progressRows.map((p) => [p.task_id, p]));
   const scenesByProduct = new Map<string, SceneRow[]>();
@@ -514,7 +542,12 @@ export async function getCabinetHomeData(
 
   // streakDays / activeDays — з дат activity_log (90 днів вистачає і на
   // streak, і на дні активного місяця).
-  const activityDates = new Set(activityRows.map((row) => kyivDateString(new Date(row.created_at))));
+  const activityDates = new Set([
+    ...activityRows.map((row) => kyivDateString(new Date(row.created_at))),
+    ...progressActivityRows
+      .filter((row) => row.last_attempt_at)
+      .map((row) => kyivDateString(new Date(row.last_attempt_at!))),
+  ]);
   const streakDays = computeStreakDays(activityDates, todayStr);
   const currentMonthPrefix = todayStr.slice(0, 7);
   const activeDays = [...activityDates].filter((d) => d.startsWith(currentMonthPrefix)).sort();
