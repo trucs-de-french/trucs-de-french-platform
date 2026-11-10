@@ -12173,6 +12173,135 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
    із білим текстом, dark — gold-градієнт із темним текстом (той самий
    принцип, що .cabinet-lang-pill--active, але своя палітра тут, бо
    чипи — не мовні пігулки). */
+/* Перемикач колекцій (full-achievements.tsx) — та сама палітра, що
+   .achievements-chip--active (світла: indigo-градієнт, темна: gold), +
+   locked-варіант (lucide Lock, муфтований колір) для недоступної
+   Колекції II. */
+.achievements-collection-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.achievements-collection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-surface-2);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.achievements-collection-chip--active {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.achievements-collection-chip--active .achievements-chip-count {
+  color: rgba(255, 255, 255, 0.78);
+}
+.dark .achievements-collection-chip--active {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.dark .achievements-collection-chip--active .achievements-chip-count {
+  color: rgba(26, 22, 64, 0.72);
+}
+.achievements-collection-chip--locked {
+  color: var(--cabinet-muted);
+  cursor: default;
+}
+.achievements-collection-check {
+  color: #d9b765;
+  font-weight: 900;
+}
+
+/* Банер "Колекцію {n} зібрано!" (full-achievements.tsx) — вгорі картки,
+   над перемикачем колекцій. Світла тема: теплий gold-градієнт-відблиск;
+   темна: плаский фон картки (щоб не "сяяло" на темному), лише gold-кант. */
+.achievements-banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 22px;
+  border-radius: 26px;
+  margin-bottom: 16px;
+  background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+  border: 1.5px solid #e4cf94;
+}
+.dark .achievements-banner {
+  background: var(--cabinet-card-bg);
+  border: 1.5px solid rgba(217, 183, 101, 0.45);
+}
+.achievements-banner-coin {
+  flex: none;
+  width: 72px;
+  height: 75px;
+}
+.achievements-banner-coin .achievement-badge-coin {
+  width: 72px;
+  height: 75px;
+}
+.achievements-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+.achievements-banner-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--cabinet-ink);
+}
+.achievements-banner-subtitle {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cabinet-muted);
+}
+.achievements-banner-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+.achievements-banner-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: var(--cabinet-muted);
+}
+.achievements-banner-close:hover {
+  border-color: #d9b765;
+  color: var(--cabinet-ink);
+}
+.achievements-banner-close:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .achievements-banner-close:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (max-width: 639px) {
+  .achievements-banner {
+    flex-wrap: wrap;
+  }
+  .achievements-banner-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .achievements-chip-row {
   display: flex;
   flex-wrap: wrap;

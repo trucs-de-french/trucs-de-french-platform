@@ -37,7 +37,8 @@ export type AchievementCategory =
   | "mistakes"
   | "weeklyGoal"
   | "exam"
-  | "dictionary";
+  | "dictionary"
+  | "collection";
 
 export type AchievementDef = {
   id: string;
@@ -47,6 +48,13 @@ export type AchievementDef = {
   descKey: MessageKey;
   examOnly?: boolean;
   available?: boolean;
+  // Колекція (1, 2, 3...) — ширша "книга" бейджів. Число, не літерал 1|2,
+  // щоб майбутня Колекція III була просто новими записами в каталозі,
+  // без зміни типу.
+  collection: number;
+  // Фінальний бейдж колекції (Trophy, без числа) — виключається з
+  // collectionProgress() як "member", рахується окремо в getAchievements.
+  isCollectionFinal?: boolean;
 };
 
 export type AchievementState = AchievementDef & {
@@ -56,46 +64,113 @@ export type AchievementState = AchievementDef & {
 };
 
 export const ACHIEVEMENTS_CATALOG: AchievementDef[] = [
-  { id: "scenes1", category: "scenes", threshold: 1, nameKey: "achievements.scenes1.name", descKey: "achievements.scenes1.desc" },
-  { id: "scenes5", category: "scenes", threshold: 5, nameKey: "achievements.scenes5.name", descKey: "achievements.scenes5.desc" },
-  { id: "scenes10", category: "scenes", threshold: 10, nameKey: "achievements.scenes10.name", descKey: "achievements.scenes10.desc" },
-  { id: "scenes25", category: "scenes", threshold: 25, nameKey: "achievements.scenes25.name", descKey: "achievements.scenes25.desc" },
-  { id: "scenes50", category: "scenes", threshold: 50, nameKey: "achievements.scenes50.name", descKey: "achievements.scenes50.desc" },
+  { id: "scenes1", category: "scenes", collection: 1, threshold: 1, nameKey: "achievements.scenes1.name", descKey: "achievements.scenes1.desc" },
+  { id: "scenes5", category: "scenes", collection: 1, threshold: 5, nameKey: "achievements.scenes5.name", descKey: "achievements.scenes5.desc" },
+  { id: "scenes10", category: "scenes", collection: 1, threshold: 10, nameKey: "achievements.scenes10.name", descKey: "achievements.scenes10.desc" },
+  { id: "scenes25", category: "scenes", collection: 1, threshold: 25, nameKey: "achievements.scenes25.name", descKey: "achievements.scenes25.desc" },
+  { id: "scenes50", category: "scenes", collection: 1, threshold: 50, nameKey: "achievements.scenes50.name", descKey: "achievements.scenes50.desc" },
 
-  { id: "films1", category: "films", threshold: 1, nameKey: "achievements.films1.name", descKey: "achievements.films1.desc" },
-  { id: "films3", category: "films", threshold: 3, nameKey: "achievements.films3.name", descKey: "achievements.films3.desc" },
+  { id: "films1", category: "films", collection: 1, threshold: 1, nameKey: "achievements.films1.name", descKey: "achievements.films1.desc" },
+  { id: "films3", category: "films", collection: 1, threshold: 3, nameKey: "achievements.films3.name", descKey: "achievements.films3.desc" },
 
-  { id: "streak3", category: "streak", threshold: 3, nameKey: "achievements.streak3.name", descKey: "achievements.streak3.desc" },
-  { id: "streak7", category: "streak", threshold: 7, nameKey: "achievements.streak7.name", descKey: "achievements.streak7.desc" },
-  { id: "streak14", category: "streak", threshold: 14, nameKey: "achievements.streak14.name", descKey: "achievements.streak14.desc" },
-  { id: "streak30", category: "streak", threshold: 30, nameKey: "achievements.streak30.name", descKey: "achievements.streak30.desc" },
+  { id: "streak3", category: "streak", collection: 1, threshold: 3, nameKey: "achievements.streak3.name", descKey: "achievements.streak3.desc" },
+  { id: "streak7", category: "streak", collection: 1, threshold: 7, nameKey: "achievements.streak7.name", descKey: "achievements.streak7.desc" },
+  { id: "streak14", category: "streak", collection: 1, threshold: 14, nameKey: "achievements.streak14.name", descKey: "achievements.streak14.desc" },
+  { id: "streak30", category: "streak", collection: 1, threshold: 30, nameKey: "achievements.streak30.name", descKey: "achievements.streak30.desc" },
 
-  { id: "points100", category: "points", threshold: 100, nameKey: "achievements.points100.name", descKey: "achievements.points100.desc" },
-  { id: "points500", category: "points", threshold: 500, nameKey: "achievements.points500.name", descKey: "achievements.points500.desc" },
-  { id: "points1000", category: "points", threshold: 1000, nameKey: "achievements.points1000.name", descKey: "achievements.points1000.desc" },
-  { id: "points5000", category: "points", threshold: 5000, nameKey: "achievements.points5000.name", descKey: "achievements.points5000.desc" },
+  { id: "points100", category: "points", collection: 1, threshold: 100, nameKey: "achievements.points100.name", descKey: "achievements.points100.desc" },
+  { id: "points500", category: "points", collection: 1, threshold: 500, nameKey: "achievements.points500.name", descKey: "achievements.points500.desc" },
+  { id: "points1000", category: "points", collection: 1, threshold: 1000, nameKey: "achievements.points1000.name", descKey: "achievements.points1000.desc" },
+  { id: "points5000", category: "points", collection: 1, threshold: 5000, nameKey: "achievements.points5000.name", descKey: "achievements.points5000.desc" },
 
-  { id: "exercises10", category: "exercises", threshold: 10, nameKey: "achievements.exercises10.name", descKey: "achievements.exercises10.desc" },
-  { id: "exercises50", category: "exercises", threshold: 50, nameKey: "achievements.exercises50.name", descKey: "achievements.exercises50.desc" },
-  { id: "exercises100", category: "exercises", threshold: 100, nameKey: "achievements.exercises100.name", descKey: "achievements.exercises100.desc" },
-  { id: "exercises250", category: "exercises", threshold: 250, nameKey: "achievements.exercises250.name", descKey: "achievements.exercises250.desc" },
+  { id: "exercises10", category: "exercises", collection: 1, threshold: 10, nameKey: "achievements.exercises10.name", descKey: "achievements.exercises10.desc" },
+  { id: "exercises50", category: "exercises", collection: 1, threshold: 50, nameKey: "achievements.exercises50.name", descKey: "achievements.exercises50.desc" },
+  { id: "exercises100", category: "exercises", collection: 1, threshold: 100, nameKey: "achievements.exercises100.name", descKey: "achievements.exercises100.desc" },
+  { id: "exercises250", category: "exercises", collection: 1, threshold: 250, nameKey: "achievements.exercises250.name", descKey: "achievements.exercises250.desc" },
 
-  { id: "mistakes1", category: "mistakes", threshold: 1, nameKey: "achievements.mistakes1.name", descKey: "achievements.mistakes1.desc" },
-  { id: "mistakes10", category: "mistakes", threshold: 10, nameKey: "achievements.mistakes10.name", descKey: "achievements.mistakes10.desc" },
-  { id: "mistakes50", category: "mistakes", threshold: 50, nameKey: "achievements.mistakes50.name", descKey: "achievements.mistakes50.desc" },
+  { id: "mistakes1", category: "mistakes", collection: 1, threshold: 1, nameKey: "achievements.mistakes1.name", descKey: "achievements.mistakes1.desc" },
+  { id: "mistakes10", category: "mistakes", collection: 1, threshold: 10, nameKey: "achievements.mistakes10.name", descKey: "achievements.mistakes10.desc" },
+  { id: "mistakes50", category: "mistakes", collection: 1, threshold: 50, nameKey: "achievements.mistakes50.name", descKey: "achievements.mistakes50.desc" },
 
-  { id: "weeklyGoal1", category: "weeklyGoal", threshold: 1, nameKey: "achievements.weeklyGoal1.name", descKey: "achievements.weeklyGoal1.desc" },
-  { id: "weeklyGoal4", category: "weeklyGoal", threshold: 4, nameKey: "achievements.weeklyGoal4.name", descKey: "achievements.weeklyGoal4.desc" },
+  { id: "weeklyGoal1", category: "weeklyGoal", collection: 1, threshold: 1, nameKey: "achievements.weeklyGoal1.name", descKey: "achievements.weeklyGoal1.desc" },
+  { id: "weeklyGoal4", category: "weeklyGoal", collection: 1, threshold: 4, nameKey: "achievements.weeklyGoal4.name", descKey: "achievements.weeklyGoal4.desc" },
 
-  { id: "examFirst", category: "exam", threshold: 1, nameKey: "achievements.examFirst.name", descKey: "achievements.examFirst.desc", examOnly: true },
-  { id: "examDateAdded", category: "exam", threshold: 1, nameKey: "achievements.examDateAdded.name", descKey: "achievements.examDateAdded.desc", examOnly: true },
-  { id: "examDelf25", category: "exam", threshold: 25, nameKey: "achievements.examDelf25.name", descKey: "achievements.examDelf25.desc", examOnly: true },
-  { id: "examDelf100", category: "exam", threshold: 100, nameKey: "achievements.examDelf100.name", descKey: "achievements.examDelf100.desc", examOnly: true },
+  { id: "examFirst", category: "exam", collection: 1, threshold: 1, nameKey: "achievements.examFirst.name", descKey: "achievements.examFirst.desc", examOnly: true },
+  { id: "examDateAdded", category: "exam", collection: 1, threshold: 1, nameKey: "achievements.examDateAdded.name", descKey: "achievements.examDateAdded.desc", examOnly: true },
+  { id: "examDelf25", category: "exam", collection: 1, threshold: 25, nameKey: "achievements.examDelf25.name", descKey: "achievements.examDelf25.desc", examOnly: true },
+  { id: "examDelf100", category: "exam", collection: 1, threshold: 100, nameKey: "achievements.examDelf100.name", descKey: "achievements.examDelf100.desc", examOnly: true },
 
-  { id: "dict10", category: "dictionary", threshold: 10, nameKey: "achievements.dict10.name", descKey: "achievements.dict10.desc", available: false },
-  { id: "dict50", category: "dictionary", threshold: 50, nameKey: "achievements.dict50.name", descKey: "achievements.dict50.desc", available: false },
-  { id: "dict100", category: "dictionary", threshold: 100, nameKey: "achievements.dict100.name", descKey: "achievements.dict100.desc", available: false },
+  { id: "dict10", category: "dictionary", collection: 1, threshold: 10, nameKey: "achievements.dict10.name", descKey: "achievements.dict10.desc", available: false },
+  { id: "dict50", category: "dictionary", collection: 1, threshold: 50, nameKey: "achievements.dict50.name", descKey: "achievements.dict50.desc", available: false },
+  { id: "dict100", category: "dictionary", collection: 1, threshold: 100, nameKey: "achievements.dict100.name", descKey: "achievements.dict100.desc", available: false },
+
+  // Колекція II "Майстерність" — вищі рівні, розблоковуються після
+  // завершення Колекції I (isCollectionComplete). Ті самі категорії, нові
+  // пороги.
+  { id: "scenes100", category: "scenes", collection: 2, threshold: 100, nameKey: "achievements.scenes100.name", descKey: "achievements.scenes100.desc" },
+  { id: "scenes250", category: "scenes", collection: 2, threshold: 250, nameKey: "achievements.scenes250.name", descKey: "achievements.scenes250.desc" },
+
+  { id: "films5", category: "films", collection: 2, threshold: 5, nameKey: "achievements.films5.name", descKey: "achievements.films5.desc" },
+  { id: "films10", category: "films", collection: 2, threshold: 10, nameKey: "achievements.films10.name", descKey: "achievements.films10.desc" },
+
+  { id: "streak60", category: "streak", collection: 2, threshold: 60, nameKey: "achievements.streak60.name", descKey: "achievements.streak60.desc" },
+  { id: "streak100", category: "streak", collection: 2, threshold: 100, nameKey: "achievements.streak100.name", descKey: "achievements.streak100.desc" },
+
+  { id: "points10000", category: "points", collection: 2, threshold: 10000, nameKey: "achievements.points10000.name", descKey: "achievements.points10000.desc" },
+
+  { id: "exercises500", category: "exercises", collection: 2, threshold: 500, nameKey: "achievements.exercises500.name", descKey: "achievements.exercises500.desc" },
+  { id: "exercises1000", category: "exercises", collection: 2, threshold: 1000, nameKey: "achievements.exercises1000.name", descKey: "achievements.exercises1000.desc" },
+
+  { id: "mistakes100", category: "mistakes", collection: 2, threshold: 100, nameKey: "achievements.mistakes100.name", descKey: "achievements.mistakes100.desc" },
+  { id: "mistakes250", category: "mistakes", collection: 2, threshold: 250, nameKey: "achievements.mistakes250.name", descKey: "achievements.mistakes250.desc" },
+
+  { id: "weeklyGoal8", category: "weeklyGoal", collection: 2, threshold: 8, nameKey: "achievements.weeklyGoal8.name", descKey: "achievements.weeklyGoal8.desc" },
+  { id: "weeklyGoal12", category: "weeklyGoal", collection: 2, threshold: 12, nameKey: "achievements.weeklyGoal12.name", descKey: "achievements.weeklyGoal12.desc" },
+
+  // Фінальні бейджі колекцій — category "collection", threshold лише
+  // placeholder (перезаписується в getAchievements на earned/total
+  // "інших" бейджів колекції); isCollectionFinal виключає їх із
+  // collectionProgress(), щоб не рахувати бейдж сам на себе.
+  { id: "collection1Complete", category: "collection", collection: 1, threshold: 0, nameKey: "achievements.collection1.name", descKey: "achievements.collection1.desc", isCollectionFinal: true },
+  { id: "collection2Complete", category: "collection", collection: 2, threshold: 0, nameKey: "achievements.collection2.name", descKey: "achievements.collection2.desc", isCollectionFinal: true },
 ];
+
+// Усі номери колекцій, що реально є в каталозі (відсортовано) — звідси
+// Колекція III в майбутньому стане видимою скрізь (чипи, currentCollection,
+// isCollectionComplete) лише через додавання записів у каталог вище, без
+// зміни коду нижче.
+export const COLLECTION_NUMBERS: number[] = [...new Set(ACHIEVEMENTS_CATALOG.map((d) => d.collection))].sort(
+  (a, b) => a - b
+);
+
+// "Інші" бейджі колекції — усі, окрім isCollectionFinal (бейдж не рахує
+// сам себе), з урахуванням тих самих правил видимості, що й решта UI
+// (available!==false, examOnly лише якщо showExamCard) — інакше студент
+// без увімкненого іспиту ніколи не побачив би DELF-бейджі колекції I, але
+// міг би застрягти на "неповній" колекції назавжди.
+export function collectionProgress(
+  items: AchievementState[],
+  showExamCard: boolean,
+  collection: number
+): { earned: number; total: number } {
+  const members = items.filter(
+    (a) => a.collection === collection && !a.isCollectionFinal && a.available !== false && (!a.examOnly || showExamCard)
+  );
+  return { earned: members.filter((a) => a.earned).length, total: members.length };
+}
+
+export function isCollectionComplete(items: AchievementState[], showExamCard: boolean, collection: number): boolean {
+  const { earned, total } = collectionProgress(items, showExamCard, collection);
+  return total > 0 && earned === total;
+}
+
+// Перша неповна колекція; якщо всі повні — остання (найвища).
+export function currentCollection(items: AchievementState[], showExamCard: boolean): number {
+  for (const n of COLLECTION_NUMBERS) {
+    if (!isCollectionComplete(items, showExamCard, n)) return n;
+  }
+  return COLLECTION_NUMBERS[COLLECTION_NUMBERS.length - 1] ?? 1;
+}
 
 // earnedAt по кожному порогу категорії — для "count"-метрик timeline[i] =
 // момент, коли i-та за часом подія сталась (значення метрики в цей момент
@@ -445,6 +520,27 @@ export async function getAchievements(supabase: SupabaseClient, userId: string):
     }
   }
 
+  // Фінальні бейджі колекцій — рахуються ПІСЛЯ всіх інших items (бо
+  // потребують collectionProgress() по вже побудованому списку). current/
+  // threshold тут перезаписуються на earned/total "інших" бейджів цієї
+  // колекції — так caption заблокованого бейджа ("{current} з {target}")
+  // показує "{earned} з {total}" без окремого рендер-кейсу.
+  {
+    const collectionDefs = defsByCategory.get("collection") ?? [];
+    for (const def of collectionDefs) {
+      const progress = collectionProgress(items, showExamCard, def.collection);
+      const earned = progress.total > 0 && progress.earned === progress.total;
+      let earnedAt: string | null = null;
+      if (earned) {
+        for (const member of items) {
+          if (member.collection !== def.collection || member.isCollectionFinal) continue;
+          if (member.earnedAt && (!earnedAt || member.earnedAt > earnedAt)) earnedAt = member.earnedAt;
+        }
+      }
+      items.push({ ...def, threshold: progress.total, earned, earnedAt, current: progress.earned });
+    }
+  }
+
   return { items, showExamCard };
 }
 
@@ -454,7 +550,10 @@ export async function getAchievements(supabase: SupabaseClient, userId: string):
 // "заблоковані" (threshold asc, різні категорії пріоритетні). available:
 // false і examOnly без showExamCard — виключені одразу.
 export function pickHomeAchievements(items: AchievementState[], showExamCard: boolean): AchievementState[] {
-  const visible = items.filter((a) => a.available !== false && (!a.examOnly || showExamCard));
+  const cur = currentCollection(items, showExamCard);
+  const visible = items.filter(
+    (a) => a.collection === cur && !a.isCollectionFinal && a.available !== false && (!a.examOnly || showExamCard)
+  );
 
   const earned = [...visible]
     .filter((a) => a.earned)
@@ -497,7 +596,10 @@ export function pickCompactAchievements(
   showExamCard: boolean,
   limit = 8
 ): AchievementState[] {
-  const visible = items.filter((a) => a.available !== false && (!a.examOnly || showExamCard));
+  const cur = currentCollection(items, showExamCard);
+  const visible = items.filter(
+    (a) => a.collection === cur && !a.isCollectionFinal && a.available !== false && (!a.examOnly || showExamCard)
+  );
 
   const earned = [...visible]
     .filter((a) => a.earned)

@@ -8,9 +8,14 @@ import { CATEGORY_ICON } from "@/lib/cabinet/achievement-ui";
 const LOCALE_BY_LANG: Record<UiLang, string> = { uk: "uk-UA", fr: "fr-FR", en: "en-US" };
 
 // Поріг завжди показаний на монеті (і здобутій, і заблокованій) — лише
-// "Додано дату іспиту" (examDateAdded) без лічильника, бо це разовий факт
-// без порогу-кількості, а не метрика.
-const NO_NUMBER_IDS = new Set(["examDateAdded"]);
+// "Додано дату іспиту" (examDateAdded, разовий факт без порогу-кількості)
+// і фінальні трофейні бейджі колекцій (великий Trophy замість числа) —
+// без лічильника.
+const NO_NUMBER_IDS = new Set(["examDateAdded", "collection1Complete", "collection2Complete"]);
+
+// Компактний запис порогу на монеті — лише для чисел, які не влазять
+// у відведений розмір шрифту без скорочення (напр. 10000 → "10K").
+const NUMBER_LABEL_OVERRIDE: Record<string, string> = { points10000: "10K" };
 
 function formatEarnedAt(iso: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "Europe/Kyiv" }).format(
@@ -131,7 +136,9 @@ export function AchievementBadge({
   const label = t(lang, achievement.nameKey);
   const locale = LOCALE_BY_LANG[lang];
   const Icon = CATEGORY_ICON[achievement.category];
-  const number = NO_NUMBER_IDS.has(achievement.id) ? null : String(achievement.threshold);
+  const number = NO_NUMBER_IDS.has(achievement.id)
+    ? null
+    : NUMBER_LABEL_OVERRIDE[achievement.id] ?? String(achievement.threshold);
   const caption = achievement.earned
     ? achievement.earnedAt
       ? formatEarnedAt(achievement.earnedAt, locale)
