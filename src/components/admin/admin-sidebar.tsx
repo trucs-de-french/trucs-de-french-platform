@@ -23,14 +23,20 @@ export function AdminSidebar({ initialIsDark }: { initialIsDark: boolean | null 
 
   return (
     <aside className="cabinet-sidebar admin-sidebar">
-      <div className="cabinet-sidebar-logo-wrap cabinet-sidebar-logo flex flex-col items-start gap-1.5 pb-[18px]">
+      <div className="admin-sidebar-top">
         <Link href="/admin/courses" aria-label="Trucs d’French">
           <PlatformWordmark size="sidebar" tone="dark" tagline align="left" />
         </Link>
-        <span className="admin-sidebar-badge">Адмінка</span>
+        <div className="admin-sidebar-pill-row">
+          <span className="admin-sidebar-badge">Адмінка</span>
+          <Link href="/dashboard" className="admin-sidebar-back-pill">
+            <ChevronLeft size={14} aria-hidden="true" />
+            До кабінету
+          </Link>
+        </div>
       </div>
 
-      <nav aria-label="Адмінка" className="flex w-full flex-col gap-[2px]">
+      <nav aria-label="Адмінка" className="admin-sidebar-nav flex w-full flex-col gap-[2px]">
         {ADMIN_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -48,11 +54,7 @@ export function AdminSidebar({ initialIsDark }: { initialIsDark: boolean | null 
         })}
       </nav>
 
-      <div className="cabinet-sidebar-bottom mt-auto flex flex-col gap-[10px]">
-        <Link href="/dashboard" className="cabinet-nav-item w-full">
-          <ChevronLeft size={22} aria-hidden="true" />
-          <span>До кабінету</span>
-        </Link>
+      <div className="cabinet-sidebar-bottom admin-sidebar-bottom mt-auto flex flex-col gap-[10px]">
         <div className="px-1">
           <p className="cabinet-sidebar-section-label mb-1.5 text-xs font-semibold">Тема</p>
           <ThemePills lang="uk" initialIsDark={initialIsDark} />
