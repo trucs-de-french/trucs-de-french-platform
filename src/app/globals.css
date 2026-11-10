@@ -12125,24 +12125,22 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 }
 .achievements-zone-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 16px 10px;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 18px 12px;
   justify-items: center;
-}
-@media (max-width: 699px) {
-  .achievements-zone-grid {
-    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  }
 }
 
 /* Досягнення — компактний ряд на /cabinet/progress (achievements-
-   card.tsx): до 8 бейджів, один блок, що переноситься (не scroll/grid,
-   на відміну від Home-ряду — тут завжди лише один горизонтальний блок). */
+   card.tsx): до 8 бейджів у фіксованих 104px-колонках — grid, не flex,
+   щоб довга назва одного бейджа не розтягувала всю колонку (попередній
+   flex-рядок з auto-width item'ами робив кожен бейдж таким же широким,
+   як найдовший заголовок); на desktop вони лягають в ОДИН рядок, коли
+   ширина картки дозволяє (≈900px), інакше природно переносяться. */
 .achievements-compact-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 18px 12px;
+  justify-items: center;
 }
 
 /* Категорійний тег під підписом бейджа — лише в режимі "Усі" на повній
@@ -13791,8 +13789,14 @@ button.cabinet-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 104px;
   gap: 4px;
   text-align: center;
+}
+@media (max-width: 699px) {
+  .achievement-badge {
+    width: 96px;
+  }
 }
 .achievement-badge-coin {
   width: 72px;
@@ -13804,20 +13808,38 @@ button.cabinet-nav-item {
     height: 67px;
   }
 }
+/* Заголовок — фіксована 2-рядкова висота (2 × 1.2em), щоб підписи
+   бейджів в одному рядку вирівнювались незалежно від довжини назви;
+   overflow-wrap:anywhere/hyphens:manual розбиває лише на пробілах чи
+   дефісах, що вже є в тексті (напр. "DELF-тренування"), не всередині
+   слів навмання. Повна назва — у title="" (hover), якщо рядок все одно
+   зрізаний. */
 .achievement-badge-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.4em;
+  width: 100%;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 12.5px;
   line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: manual;
   color: var(--cabinet-ink);
 }
 .achievement-badge-title--locked {
   color: var(--cabinet-muted);
 }
 .achievement-badge-caption {
+  margin-top: 2px;
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 12px;
+  white-space: nowrap;
   color: var(--cabinet-muted);
 }
 
