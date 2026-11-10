@@ -456,7 +456,7 @@ export const fr: Record<MessageKey, string> = {
   "achievements.exercises100.desc": "Termine 100 exercices.",
   "achievements.exercises250.name": "250 exercices",
   "achievements.exercises250.desc": "Termine 250 exercices.",
-  "achievements.mistakes1.name": "Première erreur corrigée",
+  "achievements.mistakes1.name": "1re erreur corrigée",
   "achievements.mistakes1.desc": "Corrige ta première erreur.",
   "achievements.mistakes10.name": "10 erreurs corrigées",
   "achievements.mistakes10.desc": "Corrige 10 erreurs.",
