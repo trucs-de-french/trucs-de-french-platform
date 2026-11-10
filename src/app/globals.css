@@ -13587,12 +13587,12 @@ button.cabinet-nav-item {
 }
 .achievement-badge-coin {
   width: 104px;
-  height: 116px;
+  height: 108px;
 }
 @media (max-width: 699px) {
   .achievement-badge-coin {
     width: 84px;
-    height: 94px;
+    height: 87px;
   }
 }
 .achievement-badge-title {

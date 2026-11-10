@@ -48,7 +48,7 @@ export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph
   const indigoId = useId();
 
   return (
-    <svg viewBox="0 0 104 116" className="achievement-badge-coin" aria-hidden="true">
+    <svg viewBox="0 0 104 108" className="achievement-badge-coin" aria-hidden="true">
       <defs>
         <linearGradient id={goldId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#f8e6a8" />
@@ -62,8 +62,8 @@ export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph
       </defs>
       {earned ? (
         <>
-          <path d="M36 66 L26 110 L40 101 L47 114 L54 70Z" fill={`url(#${indigoId})`} />
-          <path d="M68 66 L78 110 L64 101 L57 114 L50 70Z" fill="#3a35a0" />
+          <path d="M38 68 L30 100 L42 93 L48 103 L54 72Z" fill={`url(#${indigoId})`} />
+          <path d="M66 68 L74 100 L62 93 L56 103 L50 72Z" fill="#3a35a0" />
           <circle cx="52" cy="46" r="39" fill={`url(#${goldId})`} stroke="#b8923f" strokeWidth={1.5} />
           <circle cx="52" cy="46" r="32" fill={`url(#${indigoId})`} stroke="#f8e6a8" strokeWidth={2} />
           <circle cx="52" cy="46" r="27" fill="none" stroke="#f3d98b" strokeOpacity={0.4} />
@@ -71,8 +71,8 @@ export function AchievementBadgeCoin({ earned, glyph }: { earned: boolean; glyph
         </>
       ) : (
         <>
-          <path d="M36 66 L26 110 L40 101 L47 114 L54 70Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
-          <path d="M68 66 L78 110 L64 101 L57 114 L50 70Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
+          <path d="M38 68 L30 100 L42 93 L48 103 L54 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
+          <path d="M66 68 L74 100 L62 93 L56 103 L50 72Z" fill="var(--ach-lk)" stroke="var(--ach-lkl)" />
           <circle
             cx="52"
             cy="46"
