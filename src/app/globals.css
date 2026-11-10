@@ -12060,15 +12060,13 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   border: 1.5px solid var(--cabinet-line);
   background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
 }
-/* Темна тема: той самий navy-палітра, що решта карток кабінету
-   (--cabinet-panel-bg/--cabinet-card-bg/--cabinet-line), не gold-на-navy
-   (читався брудно-сіро-коричневим) — лише дуже тонке золоте сяйво в
-   верхньому лівому куті (другий шар фону), а не суцільний градієнт. */
+/* Темна тема: той самий плоский фон, що інші картки кабінету
+   (--cabinet-card-bg) — без градієнтів і золотого сяйва (ті читались
+   брудно-сіро-коричневим на цій панелі). */
 .dark .cabinet-hero {
-  background:
-    radial-gradient(circle at 0% 0%, rgba(217, 183, 101, 0.14), transparent 45%),
-    linear-gradient(120deg, #1d2468 0%, #161c58 55%, #121850 100%);
-  border-color: #2e3680;
+  background: var(--cabinet-card-bg);
+  background-image: none;
+  border-color: var(--cabinet-line);
 }
 .cabinet-hero-greeting {
   font-family: var(--font-heading);
