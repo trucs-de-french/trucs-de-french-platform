@@ -61,7 +61,7 @@ export function WeeklyGoalCard({
           viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
           role="img"
           aria-label={t(lang, "home.goal.of", { done, goal })}
-          className="shrink-0"
+          className="shrink-0 cabinet-weekly-ring"
         >
           <circle
             cx={RING_SIZE / 2}

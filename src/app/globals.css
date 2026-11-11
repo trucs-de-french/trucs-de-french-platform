@@ -13682,6 +13682,242 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* Тонкий однорядковий варіант .cabinet-hero — лише >=1024px (lg:flex у
+   JSX, пара до .cabinet-hero.lg:hidden вище): аватар+чіп рівня зліва
+   поруч із привітанням (не стовпцем під ним), гнучкий spacer, week-dots+
+   стрік праворуч (не під привітанням) — інше угруповання дітей, не
+   лише інший CSS-розклад тих самих, тому окремий блок JSX, не медіа. */
+.cabinet-hero-slim {
+  align-items: center;
+  gap: 16px;
+  border-radius: 26px;
+  padding: 14px 22px;
+  border: 1.5px solid var(--cabinet-line);
+  background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+}
+.dark .cabinet-hero-slim {
+  background: var(--cabinet-card-bg);
+  background-image: none;
+  border-color: var(--cabinet-line);
+}
+.cabinet-hero-slim-avatar {
+  flex-shrink: 0;
+  border-width: 3px;
+  box-shadow: 0 0 0 3px #d9b765;
+}
+.cabinet-hero-slim-greeting {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 26px;
+  color: var(--cabinet-ink);
+}
+.cabinet-hero-slim-spacer {
+  flex: 1;
+}
+.cabinet-hero-slim-dots {
+  gap: 8px;
+}
+.cabinet-hero-slim-dots .cabinet-week-dot {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+/* Новий десктоп/планшет розклад Home (cabinet/page.tsx) — 3 нові
+   контейнери, >=640px: .cabinet-home-hero-row ("Продовжити"+"Цитата
+   дня"), .cabinet-home-row3 (десктоп: стек | досягнення | швидкі дії),
+   .cabinet-home-tablet-row2 (планшет: стек | швидкі дії),
+   .cabinet-home-stack (ціль тижня + іспит/рівень одна під одною,
+   рівна висота). <640px лишається .cabinet-home-split (не торкались). */
+.cabinet-home-hero-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  align-items: stretch;
+  gap: 18px;
+}
+.cabinet-home-row3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
+}
+.cabinet-home-tablet-row2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 18px;
+}
+.cabinet-home-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 18px;
+  min-height: 0;
+}
+/* Компактний стиль карток у стеку (ціль тижня/іспит/рівень) — лише тут,
+   не торкаючись тих самих карток у мобільній розкладці (ті лишаються
+   на своєму стандартному p-5/.cabinet-card без переозначення). Шар
+   Tailwind-утиліт (p-5 на корені картки) програє цьому незашарованому
+   правилу незалежно від порядку в файлі — задокументована каскадна
+   особливість (@layer utilities програє unlayered CSS на тому самому
+   селекторі), тож перевизначення padding тут спрацює. */
+.cabinet-home-stack > .cabinet-card {
+  padding: 16px 20px;
+  min-height: 0;
+}
+.cabinet-home-stack .cabinet-weekly-ring {
+  width: 70px;
+  height: 70px;
+}
+.cabinet-card-link {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--cabinet-link);
+}
+.cabinet-card-link:hover,
+.cabinet-card-link:focus-visible {
+  text-decoration: underline;
+}
+/* Швидкі дії — кнопки тепер самі розтягуються на всю висоту картки
+   (grid-auto-rows:1fr замість просто gap), щоб порожній простір знизу,
+   коли сусідні картки в рядку вищі, заповнювався кнопками, а не лишався
+   порожнім під ними. */
+.cabinet-quick-actions-grid {
+  flex: 1;
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 10px;
+}
+
+/* Картка "Мій рівень" (level-card.tsx) — показується в тому самому
+   слоті стеку, що й Іспит, коли немає дати іспиту. */
+.cabinet-level-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cabinet-level-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cabinet-level-card-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.cabinet-level-card-body .placement-level-coin {
+  width: 62px;
+  height: 62px;
+}
+.cabinet-level-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cabinet-level-card-name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--cabinet-ink);
+}
+.cabinet-level-card-source,
+.cabinet-level-card-empty {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cabinet-muted);
+}
+
+/* Компактний (variant="compact") текстовий Іспит (exam-card.tsx) — лише
+   планшет/десктоп стек; <640px лишає старий ring-дизайн (variant=
+   "default", нічого в ньому не змінено). */
+.cabinet-exam-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cabinet-exam-card-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.cabinet-exam-card-left {
+  min-width: 0;
+  flex: 1;
+}
+.cabinet-exam-card-right {
+  flex-shrink: 0;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+}
+.cabinet-exam-card-small-label {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cabinet-muted);
+}
+.cabinet-exam-card-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+}
+.cabinet-exam-card-number {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 46px;
+  color: var(--cabinet-ink);
+}
+.cabinet-exam-card-unit {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--cabinet-ink);
+}
+.cabinet-exam-card-today {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--cabinet-ink);
+  margin-top: 2px;
+}
+.cabinet-exam-card-past-question {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--cabinet-ink);
+  margin-top: 2px;
+}
+.cabinet-exam-card-hint {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  color: var(--cabinet-muted);
+  margin-top: 2px;
+}
+.cabinet-exam-card-name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--cabinet-ink);
+}
+.cabinet-exam-card-date {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--cabinet-muted);
+}
+
 @media (min-width: 768px) {
   .cabinet-panel {
     min-height: 0;
@@ -15285,21 +15521,19 @@ button.cabinet-nav-item {
 }
 
 /* Home: ряд бейджів "Останні досягнення" (achievements-home-card.tsx) —
-   горизонтальний скрол зі scroll-snap на мобільному (5×72px не влазить у
-   ширину картки), сітка 5 рівних колонок в один рядок від lg (там картка
-   вже широка, 1fr-колонка поряд з Іспит 320px). */
+   завжди сітка 3 рівних колонок (картка тепер завжди вузька, одна з 3
+   колонок рядка на десктопі/планшеті, не широка 1fr-колонка поряд з
+   Іспит 320px, як було раніше) — той самий розклад, що й колишній
+   мобільний <760px варіант, тепер на всіх брейкпоінтах. */
 .achievement-badge-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: stretch;
   flex: 1;
-  align-items: center;
   gap: 14px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 2px;
 }
 .achievement-badge-slot {
-  flex: 0 0 76px;
-  scroll-snap-align: start;
+  flex: none;
 }
 /* Компактна версія для home "Останні досягнення" — 64x67 монета (була
    72x75) і трохи менший текст, scoped через .achievement-badge-row
@@ -15315,31 +15549,6 @@ button.cabinet-nav-item {
 }
 .achievement-badge-row .achievement-badge-caption {
   font-size: 12px;
-}
-@media (max-width: 759px) {
-  .achievement-badge-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    /* stretch (не "normal") — явно, щоб один рядок грід-треку заповнював
-       усю висоту flex:1-контейнера, а не лишав порожнє місце знизу, яке
-       align-items:center вище інакше не мав би де центрувати. */
-    align-content: stretch;
-    overflow: visible;
-  }
-  .achievement-badge-row .achievement-badge-slot {
-    flex: none;
-  }
-}
-@media (min-width: 1024px) {
-  .achievement-badge-row {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    align-content: stretch;
-    overflow: visible;
-  }
-  .achievement-badge-slot {
-    flex: none;
-  }
 }
 /* "G1 classic coin with indigo ribbons" (achievement-badge.tsx) — одна й
    та сама SVG-монета в обох темах для earned (gold/indigo градієнт),
@@ -15410,19 +15619,13 @@ button.cabinet-nav-item {
 }
 
 /* "Усі досягнення" як кругла кнопка в останній клітинці грід-ряду
-   бейджів (achievements-home-card.tsx) — ЛИШЕ мобільний (<640px)
-   варіант картки, заміна пілюлі під заголовком, яка на desktop
-   (>=640px) лишається як є. Клітинка — звичайний наступний grid-item
-   після бейджів: менше 5 бейджів — йде одразу за останнім у тому ж
-   ряду; 6+ — сама починає новий ряд, усе через стандартний grid
-   auto-flow, без додаткової логіки. */
+   бейджів (achievements-home-card.tsx) — тепер на ВСІХ брейкпоінтах
+   (колишня пілюля під заголовком прибрана з коду зовсім). Клітинка —
+   звичайний наступний grid-item після бейджів: менше 5 бейджів — йде
+   одразу за останнім у тому ж ряду; 6+ — сама починає новий ряд, усе
+   через стандартний grid auto-flow, без додаткової логіки. */
 .achievement-badge-all-slot {
-  display: none;
-}
-@media (max-width: 639px) {
-  .achievement-badge-all-slot {
-    display: flex;
-  }
+  display: flex;
 }
 .achievement-badge-all-link {
   display: flex;
@@ -15430,9 +15633,9 @@ button.cabinet-nav-item {
   align-items: center;
   gap: 6px;
   width: 100%;
-  /* ~4px офсет — щоб центр 68px кола опинився на тій самій висоті, що
+  /* ~5px офсет — щоб центр 56px кола опинився на тій самій висоті, що
      центр монет-сусідів (64x67) у цьому ж ряду. */
-  margin-top: 4px;
+  margin-top: 5px;
   text-decoration: none;
 }
 .achievement-badge-all-circle {
@@ -15440,8 +15643,8 @@ button.cabinet-nav-item {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 68px;
-  height: 68px;
+  width: 56px;
+  height: 56px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   padding: 0;

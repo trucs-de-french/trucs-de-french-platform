@@ -66,40 +66,67 @@ export function GreetingHero({
     : new Set(weekActiveDays);
   const unit = plural(lang, effectiveStreakDays, DAY_UNIT_FORMS[lang]);
 
+  const weekDots = weekDays.map((d, i) => {
+    const isActive = activeSet.has(d);
+    const isToday = d === todayStr;
+    return (
+      <span
+        key={d}
+        className={`cabinet-week-dot${isActive ? " cabinet-week-dot--active" : ""}${
+          isToday ? " cabinet-week-dot--today" : ""
+        }`}
+      >
+        {WEEKDAY_LABELS[lang][i]}
+      </span>
+    );
+  });
+  const levelChip = level && <span className="cabinet-hero-level-chip">{t(lang, "home.hero.level", { level })}</span>;
+  const streakText = (
+    <span className="cabinet-week-streak-text">{t(lang, "home.streakChip", { n: effectiveStreakDays, unit })}</span>
+  );
+
   return (
-    <div className="cabinet-hero">
-      <div className="min-w-0">
-        <h1 className="cabinet-hero-greeting">{t(lang, "cabinet.home.greeting", { name: firstName })}</h1>
-        <div className="cabinet-hero-week-row">
-          <div className="cabinet-week-dots">
-            {weekDays.map((d, i) => {
-              const isActive = activeSet.has(d);
-              const isToday = d === todayStr;
-              return (
-                <span
-                  key={d}
-                  className={`cabinet-week-dot${isActive ? " cabinet-week-dot--active" : ""}${
-                    isToday ? " cabinet-week-dot--today" : ""
-                  }`}
-                >
-                  {WEEKDAY_LABELS[lang][i]}
-                </span>
-              );
-            })}
+    <>
+      {/* <1024px (мобільний і планшет) — колишній розклад без змін:
+          привітання+week-dots зліва, аватар+чіп рівня праворуч, стовпцем.
+          >=1024px — окремий "тонкий" однорядковий варіант нижче
+          (hidden/lg:hidden пара, не медіа-запит усередині одного дерева,
+          бо аватар+чіп і week-dots+стрік переставлені в інший угруповання
+          дітей, не лише інший CSS-розклад тих самих). */}
+      <div className="cabinet-hero lg:hidden">
+        <div className="min-w-0">
+          <h1 className="cabinet-hero-greeting">{t(lang, "cabinet.home.greeting", { name: firstName })}</h1>
+          <div className="cabinet-hero-week-row">
+            <div className="cabinet-week-dots">{weekDots}</div>
+            {streakText}
           </div>
-          <span className="cabinet-week-streak-text">{t(lang, "home.streakChip", { n: effectiveStreakDays, unit })}</span>
+        </div>
+        <div className="cabinet-hero-side">
+          <ProfileAvatar
+            name={fullName?.trim() || ""}
+            size={88}
+            imageUrl={avatarUrl}
+            mascotId={avatarMascot}
+            className="cabinet-hero-avatar"
+          />
+          {levelChip}
         </div>
       </div>
-      <div className="cabinet-hero-side">
+
+      <div className="cabinet-hero-slim hidden lg:flex">
         <ProfileAvatar
           name={fullName?.trim() || ""}
-          size={88}
+          size={56}
           imageUrl={avatarUrl}
           mascotId={avatarMascot}
-          className="cabinet-hero-avatar"
+          className="cabinet-hero-slim-avatar"
         />
-        {level && <span className="cabinet-hero-level-chip">{t(lang, "home.hero.level", { level })}</span>}
+        <h1 className="cabinet-hero-slim-greeting">{t(lang, "cabinet.home.greeting", { name: firstName })}</h1>
+        {levelChip}
+        <div className="cabinet-hero-slim-spacer" />
+        <div className="cabinet-week-dots cabinet-hero-slim-dots">{weekDots}</div>
+        {streakText}
       </div>
-    </div>
+    </>
   );
 }
