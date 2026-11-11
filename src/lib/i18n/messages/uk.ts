@@ -411,6 +411,7 @@ export const uk = {
   "home.achievements.next": "Наступне: {name} — {current} з {target}",
   "achievements.locked": "заблоковано",
   "achievements.filter.all": "Усі",
+  "achievements.category.label": "Категорія",
   "achievements.zone.earned": "Зароблено · {count}",
   "achievements.zone.upcoming": "Попереду · {count}",
   "achievements.category.scenes": "Сцени",

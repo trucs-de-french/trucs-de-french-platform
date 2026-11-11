@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Lock, X, ArrowRight, Trophy } from "lucide-react";
+import { X, ArrowRight, Trophy } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { AchievementCategory, BadgeStats, EarnedAtById } from "@/lib/cabinet/achievements";
@@ -13,8 +13,9 @@ import {
   currentCollection,
   isCollectionComplete,
 } from "@/lib/cabinet/achievements";
-import { CATEGORY_LABEL_KEY, CATEGORY_ORDER, COLLECTION_ROMAN } from "@/lib/cabinet/achievement-ui";
+import { CATEGORY_ORDER, COLLECTION_ROMAN } from "@/lib/cabinet/achievement-ui";
 import { AchievementBadge, AchievementBadgeCoin } from "@/components/cabinet/home/achievement-badge";
+import { CategoryDropdown } from "@/components/cabinet/achievements/category-dropdown";
 import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 import { collectionBannerDismissKey } from "@/lib/cabinet/collection-banners";
 
@@ -131,6 +132,12 @@ export function FullAchievements({
     [items, showExamCard, isAdmin]
   );
 
+  // Видимі вкладки колекцій — лише unlocked (той самий "unlocked" з
+  // collectionChips, адмінська видимість Колекції II не зачеплена): нова
+  // "Б"-верстка не має locked-варіанта вкладки, недоступна колекція
+  // просто не рендериться (замість сірого чипа з замком раніше).
+  const visibleCollectionTabs = useMemo(() => collectionChips.filter((c) => c.unlocked), [collectionChips]);
+
   const allVisible = useMemo(
     () => items.filter((a) => a.available !== false && (!a.examOnly || showExamCard)),
     [items, showExamCard]
@@ -144,6 +151,18 @@ export function FullAchievements({
         return { category, earned: categoryItems.filter((a) => a.earned).length, total: categoryItems.length };
       }),
     [visible]
+  );
+
+  // Dropdown-опції — "Усі" першою (сума по всьому visible, старий чип
+  // "Усі" рахунку не показував, тут показуємо агреговано, бо в новому
+  // уніфікованому списку кожен рядок має свій слот для "earned/total"),
+  // далі ті самі categories/рахунки, що й старі чипи, у тому ж порядку.
+  const categoryOptions = useMemo(
+    () => [
+      { category: null, earned: visible.filter((a) => a.earned).length, total: visible.length },
+      ...chips,
+    ],
+    [visible, chips]
   );
 
   const filtered = selected ? visible.filter((a) => a.category === selected) : visible;
@@ -204,62 +223,42 @@ export function FullAchievements({
         </div>
       )}
 
-      <div className="achievements-collection-row">
-        {collectionChips.map(({ n, prev, unlocked, adminOnly, progress, complete }) =>
-          unlocked ? (
-            <button
-              key={n}
-              type="button"
-              className={`achievements-collection-chip ${selectedCollection === n ? "achievements-collection-chip--active" : ""}`}
-              onClick={() => selectCollection(n)}
-            >
-              {t(lang, "achievements.collection.chip", { n: roman(n) })}
-              {adminOnly && <span className="achievements-admin-tag">{t(lang, "achievements.admin.tag")}</span>}
-              <span className="achievements-chip-count">
-                {progress.earned}/{progress.total}
-              </span>
-              {complete && mounted && dismissed[n] && (
-                <span className="achievements-collection-check" aria-hidden="true">
-                  ✓
-                </span>
-              )}
-            </button>
-          ) : (
-            <span
-              key={n}
-              className="achievements-collection-chip achievements-collection-chip--locked"
-              aria-disabled="true"
-              title={t(lang, "achievements.collection.locked", { prev: prev !== null ? roman(prev) : "" })}
-            >
-              <Lock size={14} aria-hidden="true" />
-              {t(lang, "achievements.collection.chip", { n: roman(n) })}
-            </span>
-          )
-        )}
-      </div>
-
-      <div className="achievements-chip-row">
-        <button
-          type="button"
-          className={`achievements-chip ${selected === null ? "achievements-chip--active" : ""}`}
-          onClick={() => selectCategory(null)}
+      {visibleCollectionTabs.length > 0 && (
+        <div
+          className={`achievements-collection-tabs ${
+            visibleCollectionTabs.length === 1 ? "achievements-collection-tabs--single" : ""
+          }`}
         >
-          {t(lang, "achievements.filter.all")}
-        </button>
-        {chips.map(({ category, earned, total }) => (
-          <button
-            key={category}
-            type="button"
-            className={`achievements-chip ${selected === category ? "achievements-chip--active" : ""}`}
-            onClick={() => selectCategory(category)}
-          >
-            {t(lang, CATEGORY_LABEL_KEY[category])}
-            <span className="achievements-chip-count">
-              {earned}/{total}
-            </span>
-          </button>
-        ))}
-      </div>
+          {visibleCollectionTabs.map(({ n, adminOnly, progress }) => {
+            const active = selectedCollection === n;
+            const pct = progress.total > 0 ? Math.min(100, (progress.earned / progress.total) * 100) : 0;
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={active}
+                className={`achievements-collection-tab ${active ? "achievements-collection-tab--active" : ""}`}
+                onClick={() => selectCollection(n)}
+              >
+                <span className="achievements-collection-tab-row">
+                  <span className="achievements-collection-tab-name">
+                    {t(lang, "achievements.collection.chip", { n: roman(n) })}
+                    {adminOnly && <span className="achievements-admin-tag">{t(lang, "achievements.admin.tag")}</span>}
+                  </span>
+                  <span className="achievements-collection-tab-count">
+                    {progress.earned}/{progress.total}
+                  </span>
+                </span>
+                <span className="achievements-collection-tab-track">
+                  <span className="achievements-collection-tab-fill" style={{ width: `${pct}%` }} />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <CategoryDropdown lang={lang} options={categoryOptions} selected={selected} onSelect={selectCategory} />
 
       {earnedList.length > 0 && (
         <div>

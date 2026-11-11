@@ -410,6 +410,7 @@ export const fr: Record<MessageKey, string> = {
   "home.achievements.next": "Suivant : {name} — {current} sur {target}",
   "achievements.locked": "verrouillé",
   "achievements.filter.all": "Tous",
+  "achievements.category.label": "Catégorie",
   "achievements.zone.earned": "Obtenus · {count}",
   "achievements.zone.upcoming": "À venir · {count}",
   "achievements.category.scenes": "Scènes",

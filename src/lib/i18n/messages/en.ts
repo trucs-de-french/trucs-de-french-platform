@@ -408,6 +408,7 @@ export const en: Record<MessageKey, string> = {
   "home.achievements.next": "Next: {name} — {current} of {target}",
   "achievements.locked": "locked",
   "achievements.filter.all": "All",
+  "achievements.category.label": "Category",
   "achievements.zone.earned": "Earned · {count}",
   "achievements.zone.upcoming": "Upcoming · {count}",
   "achievements.category.scenes": "Scenes",
