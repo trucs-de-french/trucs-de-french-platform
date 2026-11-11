@@ -146,6 +146,33 @@ export async function saveAboutMe(formData: FormData): Promise<{ ok: boolean; er
   return { ok: true };
 }
 
+// Рівень з теста (/cabinet/placement-test) — рахується на клієнті
+// (низький ризик для короткого orientation-теста, без анти-чіт), сюди
+// приходить лише готовий рядок рівня. french_level_source завжди 'test'
+// тут (на відміну від saveAboutMe, де завжди 'self') — два різних шляхи
+// запису в ОДНІ й ті самі колонки.
+export async function savePlacementLevel(level: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "auth" };
+
+  if (!(FRENCH_LEVEL_VALUES as readonly string[]).includes(level)) {
+    return { ok: false, error: "level" };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ french_level: level, french_level_source: "test", french_level_set_at: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: "db" };
+
+  revalidatePath("/cabinet/settings");
+  revalidatePath("/cabinet");
+  return { ok: true };
+}
+
 export async function setCabinetUiLang(lang: string) {
   const supabase = await createClient();
   const {

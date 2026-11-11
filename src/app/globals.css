@@ -14586,7 +14586,8 @@ button.cabinet-nav-item {
   color: var(--cabinet-muted);
 }
 
-/* Заглушка тесту рівня — пунктирний бокс, без власної логіки тесту. */
+/* Запрошення пройти тест рівня (/cabinet/placement-test) — лінк на
+   сторінку тесту, не власна логіка тесту тут. */
 .about-me-test-box {
   display: flex;
   align-items: center;
@@ -14595,7 +14596,7 @@ button.cabinet-nav-item {
   margin-top: 28px;
   padding: 16px 20px;
   border-radius: 20px;
-  border: 2px dashed #e4cf94;
+  border: 2px solid #e4cf94;
 }
 .dark .about-me-test-box {
   border-color: #2e3680;
@@ -15419,4 +15420,206 @@ button.cabinet-nav-item {
 .avatar-crop-zoom-slider {
   flex: 1;
   accent-color: #d9b765;
+}
+
+/* Тест рівня (/cabinet/placement-test) — вступ/питання/результат.
+   Макет/логіка портовані з інтерактивного прототипу (артефакт "Тест
+   рівня французької"); кольори/градієнти тут — та сама палітра, що
+   .about-me-chip/.cabinet-btn-primary/achievement-badge-coin (нова
+   feature, не перевизначення). */
+.placement-fact {
+  border: 1.5px solid var(--cabinet-line);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+.placement-fact b {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--cabinet-ink);
+}
+.placement-fact span {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+
+.placement-tips {
+  margin: 0;
+  padding-left: 20px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cabinet-muted);
+  line-height: 1.7;
+}
+
+/* 5-сегментний прогрес (один сегмент на частину тесту) — заповнена
+   частина/поточна (пропорційно до питання)/ще не пройдена. */
+.placement-seg {
+  display: flex;
+  gap: 6px;
+}
+.placement-seg-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--cabinet-track-strong);
+  overflow: hidden;
+  position: relative;
+  display: block;
+}
+.placement-seg-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: linear-gradient(90deg, #d9b765, #f3d98b);
+  border-radius: 4px;
+  transition: width 250ms;
+}
+
+.placement-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  border: 2px solid var(--cabinet-line);
+  background: transparent;
+  color: var(--cabinet-ink);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+.placement-option:hover {
+  background: rgba(75, 70, 218, 0.06);
+}
+.dark .placement-option:hover {
+  background: rgba(243, 217, 139, 0.08);
+}
+.placement-option-badge {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--cabinet-track-strong);
+  color: var(--cabinet-ink);
+}
+.placement-option--selected {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.placement-option--selected:hover {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+}
+.placement-option--selected .placement-option-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+.dark .placement-option--selected {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.dark .placement-option--selected:hover {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+}
+.dark .placement-option--selected .placement-option-badge {
+  background: rgba(26, 22, 64, 0.2);
+  color: #1a1640;
+}
+
+/* Геометрія primary-кнопки тесту — колір/шрифт/тінь від .cabinet-btn-
+   primary (додається поруч у розмітці), цей клас лише розмір/форма. */
+.placement-btn-primary {
+  border: 0;
+  padding: 14px 30px;
+  border-radius: 999px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.placement-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none !important;
+}
+.placement-btn-ghost {
+  border: 2px solid var(--cabinet-line);
+  background: transparent;
+  color: var(--cabinet-ink);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 13px 26px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.placement-text-link {
+  background: none;
+  border: 0;
+  padding: 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.placement-text-link--accent {
+  color: var(--cabinet-link);
+}
+
+.placement-level-coin {
+  width: 104px;
+  height: 104px;
+  flex-shrink: 0;
+}
+
+.placement-parts {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.placement-part-tile {
+  border: 1.5px solid var(--cabinet-line);
+  border-radius: 16px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.placement-part-tile b {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--cabinet-ink);
+}
+.placement-part-tile span {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.placement-part-tile--passed {
+  border-color: var(--cabinet-gold);
+}
+.placement-part-tile--unreached {
+  opacity: 0.5;
+}
+
+.placement-save-msg {
+  min-height: 22px;
+  margin-top: 12px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-link);
 }
