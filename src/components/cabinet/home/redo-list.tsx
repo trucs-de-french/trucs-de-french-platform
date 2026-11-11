@@ -26,33 +26,35 @@ export function RedoList({ lang, items, totalCount }: { lang: UiLang; items: Red
       {visible.length === 0 ? (
         <p className="flex-1 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.redo.empty")}</p>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {visible.map((item) => (
-            <li key={item.taskId} className="flex items-center gap-3">
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--cabinet-on-gold)]"
-                style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
-              >
-                <RotateCcw size={16} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-body text-sm font-semibold text-[var(--cabinet-ink)]">
-                  {item.taskTypeName}
+        <ul className="flex flex-col">
+          {visible.map((item) => {
+            const redoLabel = t(lang, "home.redo.action");
+            return (
+              <li key={item.taskId} className="cabinet-redo-row">
+                <span
+                  className="cabinet-redo-tile flex shrink-0 items-center justify-center rounded-xl text-[var(--cabinet-on-gold)]"
+                  style={{ background: "linear-gradient(135deg, #f6dc8e, #e0aa3e)" }}
+                >
+                  <RotateCcw size={16} aria-hidden="true" />
+                </span>
+                <div className="cabinet-redo-text">
+                  <div className="cabinet-redo-title">{item.taskTypeName}</div>
+                  <div className="cabinet-redo-subtitle">{item.sceneLabel}</div>
                 </div>
-                <div className="truncate text-xs text-[var(--cabinet-muted)]">{item.sceneLabel}</div>
-              </div>
-              <span className="whitespace-nowrap rounded-full bg-[var(--cabinet-surface-2)] px-2.5 py-1 text-xs font-bold text-[var(--cabinet-ink)]">
-                {item.pointsEarned} / {item.pointsPossible}
-              </span>
-              <Link
-                href={item.href}
-                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-bold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
-              >
-                {t(lang, "home.redo.action")}
-                <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-            </li>
-          ))}
+                <span className="cabinet-redo-score">
+                  {item.pointsEarned} / {item.pointsPossible}
+                </span>
+                <Link
+                  href={item.href}
+                  aria-label={redoLabel}
+                  title={redoLabel}
+                  className="cabinet-redo-arrow-btn"
+                >
+                  <ArrowRight strokeWidth={2.4} aria-hidden="true" />
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
