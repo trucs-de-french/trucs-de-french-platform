@@ -189,7 +189,15 @@ export async function saveAboutMe(
 // приходить лише готовий рядок рівня. french_level_source завжди 'test'
 // тут (на відміну від saveAboutMe, де завжди 'self') — два різних шляхи
 // запису в ОДНІ й ті самі колонки.
-export async function savePlacementLevel(level: string): Promise<{ ok: boolean; error?: string }> {
+export async function savePlacementLevel(
+  level: string,
+  attempt: {
+    grammarCorrect: number;
+    vocabCorrect: number;
+    partScores: Record<string, number>;
+    durationSeconds: number | null;
+  }
+): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -200,11 +208,36 @@ export async function savePlacementLevel(level: string): Promise<{ ok: boolean; 
     return { ok: false, error: "level" };
   }
 
+  // previous_level читається з БД ПЕРЕД update (а не з клієнта) — той самий
+  // принцип, що в saveAboutMe: джерело правди для "було до цього" — стан у
+  // БД на момент виклику, не те, що клієнт показував при завантаженні сторінки.
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("french_level")
+    .eq("id", user.id)
+    .single();
+  const previousLevel = (before?.french_level ?? null) as FrenchLevel | null;
+
   const { error } = await supabase
     .from("profiles")
     .update({ french_level: level, french_level_source: "test", french_level_set_at: new Date().toISOString() })
     .eq("id", user.id);
   if (error) return { ok: false, error: "db" };
+
+  // placement_attempts (0068) — журнал спроб, best-effort: помилка вставки
+  // лише логується, рівень у профілі вже збережено і це головний результат.
+  const { error: logError } = await supabase.from("placement_attempts").insert({
+    user_id: user.id,
+    level,
+    previous_level: previousLevel,
+    grammar_correct: attempt.grammarCorrect,
+    vocab_correct: attempt.vocabCorrect,
+    part_scores: attempt.partScores,
+    duration_seconds: attempt.durationSeconds,
+  });
+  if (logError) {
+    console.error("placement_attempts insert failed:", logError);
+  }
 
   revalidatePath("/cabinet/settings");
   revalidatePath("/cabinet");

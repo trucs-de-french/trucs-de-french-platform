@@ -24,7 +24,7 @@ const STORAGE_KEY = "tdf_placement_test_state_v1";
 const LETTERS = ["A", "B", "C", "D"];
 
 type Screen = "intro" | "question" | "result";
-type Result = { level: FrenchLevel; scores: number[]; totals: TestTotals };
+type Result = { level: FrenchLevel; scores: number[]; totals: TestTotals; durationSeconds: number | null };
 
 const LEVEL_META: Record<FrenchLevel, { label: string; titleKey: MessageKey; descKey: MessageKey }> = {
   A0: { label: "A0", titleKey: "placementTest.level.A0.title", descKey: "placementTest.level.A0.desc" },
@@ -79,6 +79,11 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  // Тривалість тесту — лише для журналу спроб (placement_attempts.
+  // duration_seconds), не переживає рефреш (ref, не sessionStorage):
+  // рефреш під час тесту трапляється рідко, недооцінена тривалість у
+  // такому випадку прийнятна, адже це не впливає на сам рівень.
+  const startedAtRef = useRef<number | null>(null);
 
   // Персистимо в sessionStorage ПІСЛЯ кожної зміни стану (не всередині
   // setState-updater'а, щоб лишатись чистою функцією під Strict Mode).
@@ -87,6 +92,7 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   }, [state]);
 
   const start = useCallback(() => {
+    startedAtRef.current = Date.now();
     setState(createInitialPlacementTestState(cryptoRandom));
     setScreen("question");
   }, []);
@@ -94,9 +100,10 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   const finishWith = useCallback((finalState: TestState) => {
     const level = evaluateLevel(BANK, finalState.scores);
     const totals = computeTotals(finalState);
+    const durationSeconds = startedAtRef.current !== null ? Math.round((Date.now() - startedAtRef.current) / 1000) : null;
     writeStoredState(null);
     setState(null);
-    setResult({ level, scores: finalState.scores, totals });
+    setResult({ level, scores: finalState.scores, totals, durationSeconds });
     setSaved(false);
     setSaveError(false);
     setScreen("result");
@@ -150,7 +157,16 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
     setSaving(true);
     setSaveError(false);
     (async () => {
-      const res = await savePlacementLevel(result.level);
+      const partScores: Record<string, number> = {};
+      result.scores.forEach((score, i) => {
+        partScores[BANK.levels[i]] = score;
+      });
+      const res = await savePlacementLevel(result.level, {
+        grammarCorrect: result.totals.grammarCorrect,
+        vocabCorrect: result.totals.vocabCorrect,
+        partScores,
+        durationSeconds: result.durationSeconds,
+      });
       setSaving(false);
       if (!res.ok) {
         setSaveError(true);
