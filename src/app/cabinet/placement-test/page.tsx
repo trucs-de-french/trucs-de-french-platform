@@ -13,7 +13,6 @@ export default async function PlacementTestPage() {
 
       <PageHeader
         title={t(lang, "cabinet.nav.placementTest")}
-        subtitle={t(lang, "placementTest.subtitle")}
         backHref="/cabinet"
         backLabel={t(lang, "cabinet.nav.home")}
       />

@@ -220,7 +220,6 @@ function IntroCard({ lang, onStart }: { lang: UiLang; onStart: () => void }) {
         <li>{t(lang, "placementTest.intro.tip1")}</li>
         <li>{t(lang, "placementTest.intro.tip2")}</li>
         <li>{t(lang, "placementTest.intro.tip3")}</li>
-        <li>{t(lang, "placementTest.intro.tip4")}</li>
       </ul>
       <button type="button" onClick={onStart} className="placement-btn-primary cabinet-btn-primary self-start">
         {t(lang, "placementTest.intro.start")}
