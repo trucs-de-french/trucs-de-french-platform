@@ -31,25 +31,25 @@ export function NotificationsCard({
           {t(lang, "settings.notifications.comingSoon")}
         </p>
       </div>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.review")}</span>
+      <div className="flex flex-col">
+        <div className="settings-switch-row">
+          <span className="settings-switch-label">{t(lang, "settings.notifications.review")}</span>
           <SwitchToggle
             checked={review}
             onChange={onReviewChange}
             label={t(lang, "settings.notifications.review")}
           />
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.weeklyGoal")}</span>
+        <div className="settings-switch-row cabinet-fade-divider">
+          <span className="settings-switch-label">{t(lang, "settings.notifications.weeklyGoal")}</span>
           <SwitchToggle
             checked={weeklyGoal}
             onChange={onWeeklyGoalChange}
             label={t(lang, "settings.notifications.weeklyGoal")}
           />
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-[var(--cabinet-ink)]">{t(lang, "settings.notifications.news")}</span>
+        <div className="settings-switch-row cabinet-fade-divider">
+          <span className="settings-switch-label">{t(lang, "settings.notifications.news")}</span>
           <SwitchToggle checked={news} onChange={onNewsChange} label={t(lang, "settings.notifications.news")} />
         </div>
       </div>

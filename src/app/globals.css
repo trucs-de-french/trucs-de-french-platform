@@ -11792,6 +11792,10 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 }
 
 .cabinet {
+  /* Висота мобільного .cabinet-bottom-bar (bottom-bar.tsx) — спільна
+     змінна, щоб будь-який плаваючий елемент над ним (напр.
+     .settings-save-pill-wrap) рахував офсет від того самого числа. */
+  --cabinet-bottom-bar-height: 64px;
   --cabinet-frame-from: #2f2c6b;
   --cabinet-frame-to: #4b46da;
   --cabinet-panel-bg: #f8f3e4;
@@ -12489,6 +12493,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .switch-toggle {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   width: 48px;
   height: 28px;
   padding: 2px;
@@ -12519,6 +12524,29 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
 }
+/* Рядок перемикача (notifications-card.tsx) — лейбл Nunito 700/16px
+   (ink), явно жирніший/крупніший за підказку картки під заголовком
+   (font-body 14px muted), щоб вони не зливались; перемикач завжди
+   48x28 (flex-shrink:0 вище) і вертикально по центру лейбла, тож усі
+   три перемикачі лежать на одній правій межі. */
+.settings-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+}
+.settings-switch-row:first-child {
+  padding-top: 0;
+}
+.settings-switch-label {
+  min-width: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--cabinet-ink);
+}
+
 .dark .switch-toggle:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
@@ -13826,7 +13854,7 @@ button.cabinet-nav-item {
   align-items: center;
   justify-content: space-between;
   gap: 2px;
-  height: 64px;
+  height: var(--cabinet-bottom-bar-height);
   padding: 0 4px;
   padding-bottom: env(safe-area-inset-bottom);
   background: linear-gradient(180deg, var(--cabinet-frame-from), var(--cabinet-frame-to));
@@ -14563,8 +14591,16 @@ button.cabinet-nav-item {
    треба. */
 .about-me-level-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  /* minmax(0,1fr), not minmax(150px,1fr): the card's own padding is
+     32px/36px (about-me-card.tsx), so on a ~360-400px phone 2x150px
+     floor + gap already exceeds the card's inner width and clipped the
+     right column — 0-floor columns let the grid actually fit, text
+     wraps instead (overflow-wrap below). */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  box-sizing: border-box;
   gap: 12px;
+  align-items: stretch;
 }
 @media (min-width: 640px) {
   .about-me-level-grid {
@@ -14581,6 +14617,9 @@ button.cabinet-nav-item {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding: 14px 16px;
   border-radius: 16px;
   border: 2px solid #e4cf94;
@@ -14600,11 +14639,13 @@ button.cabinet-nav-item {
   font-weight: 900;
   font-size: 20px;
   color: var(--cabinet-ink);
+  overflow-wrap: anywhere;
 }
 .about-me-level-desc {
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--cabinet-muted);
+  overflow-wrap: anywhere;
 }
 .about-me-level-card--active {
   border-color: transparent;
@@ -14642,6 +14683,15 @@ button.cabinet-nav-item {
 }
 .dark .about-me-test-box {
   border-color: #2e3680;
+}
+/* Mobile: text was squeezed into a narrow column next to the button —
+   stack title/text full-width, button below, left-aligned. */
+@media (max-width: 639px) {
+  .about-me-test-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
 }
 
 .about-me-saved {
@@ -15162,6 +15212,19 @@ button.cabinet-nav-item {
   }
 }
 
+/* Коли пілюля "Є незбережені зміни" видима на мобільному (fixed, поза
+   потоком — settings-save-pill-wrap нижче) — додатковий відступ під
+   останніми картками, інакше пілюля лягає зверху на Сповіщення/Акаунт.
+   ~104px — приблизна висота стовпчикового вигляду пілюлі на мобільному
+   (текст + gap + ряд кнопок + padding), +24px запас. */
+@media (max-width: 767px) {
+  .settings-cards-grid--bar-visible {
+    padding-bottom: calc(
+      var(--cabinet-bottom-bar-height) + env(safe-area-inset-bottom) + 12px + 104px + 24px
+    );
+  }
+}
+
 /* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —
    position:sticky (не fixed) усередині колонки контенту: природно
    центрується над .cabinet-panel через wrap-flex нижче, без ручного
@@ -15171,7 +15234,7 @@ button.cabinet-nav-item {
    (Z_MODAL, z-index:50). */
 .settings-save-pill-wrap {
   position: sticky;
-  bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+  bottom: calc(var(--cabinet-bottom-bar-height) + env(safe-area-inset-bottom) + 12px);
   z-index: 35;
   display: flex;
   justify-content: center;
@@ -15179,6 +15242,23 @@ button.cabinet-nav-item {
 @media (min-width: 768px) {
   .settings-save-pill-wrap {
     bottom: 20px;
+  }
+}
+/* Mobile: sticky (above) tracks the page's own scroll container, which
+   on narrow screens let the pill drift down far enough to sit on top of
+   .cabinet-bottom-bar and cover page content — switch to fixed +
+   viewport-centered here instead, pinned above the bottom bar by the
+   shared --cabinet-bottom-bar-height var. Desktop keeps the sticky
+   behavior above unchanged. */
+@media (max-width: 767px) {
+  .settings-save-pill-wrap {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: calc(var(--cabinet-bottom-bar-height) + env(safe-area-inset-bottom) + 12px);
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 420px;
   }
 }
 
@@ -15200,6 +15280,28 @@ button.cabinet-nav-item {
   .settings-save-pill {
     width: auto;
     max-width: calc(100% - 32px);
+  }
+}
+@media (max-width: 767px) {
+  .settings-save-pill {
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+  }
+  .settings-save-pill-text {
+    justify-content: center;
+    width: 100%;
+  }
+  .settings-save-pill-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  .settings-save-pill-cancel,
+  .settings-save-pill-submit {
+    flex: 1;
+    max-width: 140px;
   }
 }
 .dark .settings-save-pill {
