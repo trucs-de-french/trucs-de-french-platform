@@ -1,0 +1,625 @@
+{
+ "version": 2,
+ "levels": [
+  "A1",
+  "A2",
+  "B1",
+  "B2",
+  "C1C2"
+ ],
+ "perPart": 10,
+ "passMark": 7,
+ "order": "fixed question order (easiest to hardest inside each part); 'answer' is the index of the correct option in 'options'; options are ALSO shuffled at runtime",
+ "parts": {
+  "A1": [
+   {
+    "id": "a1-g1",
+    "kind": "grammar",
+    "q": "Elle ___ deux frères et une sœur.",
+    "options": [
+     "est",
+     "a",
+     "ont",
+     "as"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "a1-v1",
+    "kind": "vocab",
+    "q": "Je prends le bus pour aller au travail. Le bus est un moyen de ___.",
+    "options": [
+     "transport",
+     "voyage",
+     "chemin",
+     "route"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "a1-g2",
+    "kind": "grammar",
+    "q": "Marie invite ___ amis à dîner.",
+    "options": [
+     "leurs",
+     "son",
+     "ses",
+     "sa"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "a1-v2",
+    "kind": "vocab",
+    "q": "Un endroit où on achète des médicaments, c'est une ___.",
+    "options": [
+     "pharmacie",
+     "bibliothèque",
+     "mairie",
+     "boulangerie"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "a1-g3",
+    "kind": "grammar",
+    "q": "Il n'y a ___ lait dans le frigo.",
+    "options": [
+     "plus de",
+     "plus un",
+     "plus le",
+     "plus du"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "a1-v3",
+    "kind": "vocab",
+    "q": "Le ___ est le repas du soir.",
+    "options": [
+     "déjeuner",
+     "dîner",
+     "goûter",
+     "petit déjeuner"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "a1-g4",
+    "kind": "grammar",
+    "q": "Vous ___ quel âge ?",
+    "options": [
+     "avez",
+     "allez",
+     "faites",
+     "êtes"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "a1-v4",
+    "kind": "vocab",
+    "q": "Je n'aime pas le froid, je préfère le ___.",
+    "options": [
+     "bas",
+     "tôt",
+     "chaud",
+     "vite"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "a1-g5",
+    "kind": "grammar",
+    "q": "Hier soir, nous ___ une pizza au restaurant.",
+    "options": [
+     "mangeons",
+     "avons mangé",
+     "mangerons",
+     "sommes mangé"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "a1-v5",
+    "kind": "vocab",
+    "q": "Quel mot n'est pas un jour de la semaine ?",
+    "options": [
+     "jeudi",
+     "samedi",
+     "mardi",
+     "juillet"
+    ],
+    "answer": 3
+   }
+  ],
+  "A2": [
+   {
+    "id": "a2-g1",
+    "kind": "grammar",
+    "q": "Il faut ___ le courrier avant midi.",
+    "options": [
+     "envoie",
+     "envoyé",
+     "envoyant",
+     "envoyer"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "a2-v1",
+    "kind": "vocab",
+    "q": "Elle a un rhume : elle éternue et elle ___.",
+    "options": [
+     "saute",
+     "tousse",
+     "court",
+     "chante"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "a2-g2",
+    "kind": "grammar",
+    "q": "Marie ___ tombée dans l'escalier hier.",
+    "options": [
+     "a",
+     "sera",
+     "est",
+     "soit"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "a2-v2",
+    "kind": "vocab",
+    "q": "Le contraire d'« arriver » est ___.",
+    "options": [
+     "partir",
+     "monter",
+     "entrer",
+     "rester"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "a2-g3",
+    "kind": "grammar",
+    "q": "Quand j'étais enfant, je ___ souvent chez mes grands-parents.",
+    "options": [
+     "passe",
+     "ai passé",
+     "passais",
+     "passerai"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "a2-v3",
+    "kind": "vocab",
+    "q": "Le médecin m'a donné une ___ pour acheter des médicaments.",
+    "options": [
+     "recette",
+     "facture",
+     "ordonnée",
+     "ordonnance"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "a2-g4",
+    "kind": "grammar",
+    "q": "C'est le restaurant le ___ de la ville.",
+    "options": [
+     "mieux",
+     "bon",
+     "meilleur",
+     "plus bon"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "a2-v4",
+    "kind": "vocab",
+    "q": "Je n'ai plus d'argent liquide. Je vais en retirer au ___ de billets.",
+    "options": [
+     "ascenseur",
+     "distributeur",
+     "compteur",
+     "moteur"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "a2-g5",
+    "kind": "grammar",
+    "q": "Tu as vu Marie ? — Oui, je ___ ai parlé hier.",
+    "options": [
+     "la",
+     "le",
+     "leur",
+     "lui"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "a2-v5",
+    "kind": "vocab",
+    "q": "Quand on a très peu dormi, on est ___.",
+    "options": [
+     "épaissi",
+     "épuisé",
+     "épargné",
+     "épicé"
+    ],
+    "answer": 1
+   }
+  ],
+  "B1": [
+   {
+    "id": "b1-g1",
+    "kind": "grammar",
+    "q": "Si j'avais le temps, je ___ plus souvent.",
+    "options": [
+     "voyage",
+     "voyagerai",
+     "voyagerais",
+     "voyageais"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-v1",
+    "kind": "vocab",
+    "q": "Le train a eu une heure de ___ à cause de la neige.",
+    "options": [
+     "retraite",
+     "départ",
+     "retard",
+     "avance"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-g2",
+    "kind": "grammar",
+    "q": "Le livre ___ tu m'as parlé est introuvable.",
+    "options": [
+     "qui",
+     "que",
+     "dont",
+     "où"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-v2",
+    "kind": "vocab",
+    "q": "Mon voisin est très ___ : il aide toujours tout le monde.",
+    "options": [
+     "bavard",
+     "serviable",
+     "têtu",
+     "paresseux"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b1-g3",
+    "kind": "grammar",
+    "q": "Je pense qu'il ___ raison.",
+    "options": [
+     "ayant",
+     "ait",
+     "a",
+     "avoir"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-v3",
+    "kind": "vocab",
+    "q": "Elle a ___ son permis de conduire du premier coup.",
+    "options": [
+     "rendu",
+     "obtenu",
+     "gagné",
+     "trouvé"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b1-g4",
+    "kind": "grammar",
+    "q": "Hier, il pleuvait quand je ___ de la maison.",
+    "options": [
+     "sortais",
+     "sortirai",
+     "suis sorti(e)",
+     "sors"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-v4",
+    "kind": "vocab",
+    "q": "Le directeur a ___ la réunion à lundi prochain.",
+    "options": [
+     "apporté",
+     "emporté",
+     "rapporté",
+     "reporté"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "b1-g5",
+    "kind": "grammar",
+    "q": "Il faut que nous ___ prendre une décision rapidement.",
+    "options": [
+     "pourrons",
+     "pouvoir",
+     "puissions",
+     "pouvons"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b1-v5",
+    "kind": "vocab",
+    "q": "Pour réussir ses études, il faut être ___ : travailler régulièrement.",
+    "options": [
+     "ardu",
+     "aigu",
+     "assis",
+     "assidu"
+    ],
+    "answer": 3
+   }
+  ],
+  "B2": [
+   {
+    "id": "b2-g1",
+    "kind": "grammar",
+    "q": "Bien que le projet ___ difficile, nous allons le terminer.",
+    "options": [
+     "sera",
+     "soit",
+     "serait",
+     "est"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b2-v1",
+    "kind": "vocab",
+    "q": "Les négociations ont ___ : les deux parties n'ont pas réussi à s'entendre.",
+    "options": [
+     "abouti",
+     "échoué",
+     "réussi",
+     "progressé"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b2-g2",
+    "kind": "grammar",
+    "q": "Si j'avais su, je ne ___ pas venu(e).",
+    "options": [
+     "suis",
+     "serais",
+     "étais",
+     "serai"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b2-v2",
+    "kind": "vocab",
+    "q": "Cette mesure vise à ___ la pollution dans les grandes villes.",
+    "options": [
+     "construire",
+     "conduire",
+     "réduire",
+     "produire"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b2-g3",
+    "kind": "grammar",
+    "q": "Les fleurs que j'ai ___ hier sont magnifiques.",
+    "options": [
+     "achetés",
+     "acheté",
+     "achetées",
+     "acheter"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "b2-v3",
+    "kind": "vocab",
+    "q": "Cette entreprise a connu une forte ___ de ses ventes l'an dernier.",
+    "options": [
+     "hauteur",
+     "haine",
+     "halte",
+     "hausse"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "b2-g4",
+    "kind": "grammar",
+    "q": "Je doute qu'il ___ à temps.",
+    "options": [
+     "arrivera",
+     "arrive",
+     "arriverait",
+     "est arrivé"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "b2-v4",
+    "kind": "vocab",
+    "q": "Malgré les critiques, il a ___ sa décision.",
+    "options": [
+     "maintenu",
+     "manqué",
+     "manipulé",
+     "maintenant"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "b2-g5",
+    "kind": "grammar",
+    "q": "Il m'a demandé ___ je pensais de son projet.",
+    "options": [
+     "ce dont",
+     "ce qui",
+     "quoi",
+     "ce que"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "b2-v5",
+    "kind": "vocab",
+    "q": "Après le scandale, le ministre a été ___ de ses fonctions.",
+    "options": [
+     "promis",
+     "démis",
+     "remis",
+     "permis"
+    ],
+    "answer": 1
+   }
+  ],
+  "C1C2": [
+   {
+    "id": "c1-g1",
+    "kind": "grammar",
+    "q": "Quelles que ___ les raisons, cette décision est injustifiable.",
+    "options": [
+     "soit",
+     "seront",
+     "soient",
+     "sont"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "c1-v1",
+    "kind": "vocab",
+    "q": "Ses arguments sont ___ : personne n'a pu les réfuter.",
+    "options": [
+     "irréprochables",
+     "irréfutables",
+     "irrésistibles",
+     "irréguliers"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "c1-g2",
+    "kind": "grammar",
+    "q": "Il a parlé comme si de rien ___.",
+    "options": [
+     "n'est",
+     "n'était",
+     "n'avait",
+     "ne soit"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "c1-v2",
+    "kind": "vocab",
+    "q": "Il a un caractère ___ : on ne sait jamais comment il va réagir.",
+    "options": [
+     "imprudent",
+     "imprévisible",
+     "impatient",
+     "imprévoyant"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "c1-g3",
+    "kind": "grammar",
+    "q": "Je regrette que vous n'___ pas pu venir hier.",
+    "options": [
+     "aviez",
+     "auriez",
+     "ayez",
+     "avez"
+    ],
+    "answer": 2
+   },
+   {
+    "id": "c1-v3",
+    "kind": "vocab",
+    "q": "Ce journaliste a été accusé d'avoir ___ les faits pour servir son opinion.",
+    "options": [
+     "conformé",
+     "informé",
+     "transformé",
+     "déformé"
+    ],
+    "answer": 3
+   },
+   {
+    "id": "c1-g4",
+    "kind": "grammar",
+    "q": "Pour peu qu'il ___ un effort, il réussira.",
+    "options": [
+     "fasse",
+     "fait",
+     "fera",
+     "ferait"
+    ],
+    "answer": 0
+   },
+   {
+    "id": "c1-v4",
+    "kind": "vocab",
+    "q": "Les experts mettent en garde contre un risque de ___ économique.",
+    "options": [
+     "répression",
+     "récession",
+     "rémission",
+     "recension"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "c1-g5",
+    "kind": "grammar",
+    "q": "Tout riche ___ il soit, il n'est pas heureux.",
+    "options": [
+     "quoi",
+     "qu'",
+     "que",
+     "dont"
+    ],
+    "answer": 1
+   },
+   {
+    "id": "c1-v5",
+    "kind": "vocab",
+    "q": "« Mettre les pieds dans le plat » signifie :",
+    "options": [
+     "dire une chose gênante sans ménagement",
+     "se baigner tout habillé",
+     "aider quelqu'un à cuisiner",
+     "refuser de manger"
+    ],
+    "answer": 0
+   }
+  ]
+ }
+}
