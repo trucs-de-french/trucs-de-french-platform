@@ -29,7 +29,7 @@ export function QuickActionsCard({
   return (
     <div className="cabinet-card flex flex-col gap-3 p-5">
       <CardTitle>{t(lang, "home.quickActions.title")}</CardTitle>
-      <div className="grid grid-cols-1 gap-[10px]">
+      <div className="cabinet-quick-actions-grid">
         <Link href="/cabinet/dictionary" className="cabinet-quick-action-btn cabinet-quick-action-btn--outline">
           <BookOpen size={20} strokeWidth={1.8} aria-hidden="true" />
           <span className="cabinet-quick-action-label">{t(lang, "home.quickActions.dictionary")}</span>

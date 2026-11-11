@@ -8,7 +8,6 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { computeBadges, pickHomeAchievements, type BadgeStats, type EarnedAtById } from "@/lib/cabinet/achievements";
 import { AchievementBadge } from "@/components/cabinet/home/achievement-badge";
 import { CardTitle } from "@/components/cabinet/card-title";
-import { CabinetPillLink } from "@/components/cabinet/pill-link";
 import { useAdminPreview } from "@/lib/cabinet/admin-preview";
 
 // Картка "Останні досягнення" на Home — items рахуються ТУТ (клієнтськи)
@@ -37,13 +36,6 @@ export function AchievementsHomeCard({
     <div className="cabinet-card flex flex-col gap-[14px] p-[22px_26px_20px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
-        {/* Мобільний (<640px) варіант цього лінка переїжджає ВСЕРЕДИНУ
-            грід бейджів нижче (остання клітинка, achievement-badge-all-
-            slot) — тут лишається прихованим на <640px, не прибраний із
-            DOM, щоб desktop (>=640px) не змінився. */}
-        <span className="hidden sm:inline-flex">
-          <CabinetPillLink href="/cabinet/achievements" label={t(lang, "home.achievements.all")} compact />
-        </span>
       </div>
       {picked.length === 0 ? (
         <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
@@ -62,7 +54,7 @@ export function AchievementsHomeCard({
               className="achievement-badge-all-link"
             >
               <span className="achievement-badge-all-circle">
-                <ArrowRight size={26} strokeWidth={2.4} aria-hidden="true" />
+                <ArrowRight size={22} strokeWidth={2.4} aria-hidden="true" />
               </span>
               <span className="achievement-badge-all-label">{t(lang, "home.achievements.all")}</span>
             </Link>
