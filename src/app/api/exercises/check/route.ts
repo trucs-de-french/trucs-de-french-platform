@@ -4,6 +4,8 @@ import { gradeAnswer } from "@/lib/exercises/grade";
 import { recordTaskAttempt } from "@/lib/progress";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 
+const DUPLICATE_SUBMIT_WINDOW_MS = 5_000;
+
 export async function POST(request: Request) {
   const body = await request.json();
   const taskId = body.taskId as string | undefined;
@@ -52,31 +54,27 @@ export async function POST(request: Request) {
   const blockKey =
     blockIndex !== undefined && result.totalPointsPossible !== undefined ? String(blockIndex) : null;
 
-  // Guard against re-scoring a block/task that already has a stored result
-  // (the client now removes the check button once locked, so this only
-  // matters for a stale tab, direct API call, or a second tab on the same
-  // task — defense in depth, not the primary enforcement).
-  // NOTE: block_progress only stores {pointsEarned, pointsPossible,
-  // attempts} per block (0052_block_progress.sql), not the full detail/
-  // studentAnswer needed to reconstruct the GradeResult the UI renders —
-  // returning the ORIGINAL stored result would need a migration to persist
-  // that too. Until then: skip persisting (score/attempts/block_progress/
-  // mistakes stay exactly as they were), but still return the freshly
-  // computed (deterministic) `result` so the caller has something to
-  // render. Left as a known gap rather than writing that migration here.
+  // Guard against double-recording the SAME submission (stale tab, direct
+  // API call, or a second tab sending the same check within the same
+  // click) — narrowed to a short time window on last_attempt_at instead of
+  // "a stored entry exists at all": the old version treated any previous
+  // attempt (even a 0-point one) as "already scored" and silently dropped
+  // every later re-attempt forever, losing progress/best_score/attempts/
+  // mistakes/activity_log for every redo. A genuine new attempt more than
+  // DUPLICATE_SUBMIT_WINDOW_MS after the last one now always goes through
+  // recordTaskAttempt, for both block and non-block tasks.
   const { data: existingProgress } = await supabase
     .from("progress")
-    .select("block_progress, attempts")
+    .select("last_attempt_at")
     .eq("user_id", user.id)
     .eq("task_id", task.id)
     .maybeSingle();
 
-  const alreadyScored =
-    blockKey !== null
-      ? !!(existingProgress?.block_progress as Record<string, unknown> | null)?.[blockKey]
-      : (existingProgress?.attempts ?? 0) > 0;
+  const isDuplicateSubmit =
+    !!existingProgress?.last_attempt_at &&
+    Date.now() - new Date(existingProgress.last_attempt_at).getTime() < DUPLICATE_SUBMIT_WINDOW_MS;
 
-  if (!alreadyScored) {
+  if (!isDuplicateSubmit) {
     await recordTaskAttempt(supabase, user.id, task.id, {
       correct: result.correct,
       score: result.score,
