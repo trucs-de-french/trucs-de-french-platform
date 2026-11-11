@@ -2,7 +2,7 @@
 // кнопка цієї мережі просто не рендериться, нічого не ламається. Без
 // трекінг-параметрів (?igsh=.../?si=...) — прибрано свідомо.
 export const SOCIAL_LINKS = {
-  telegram: "https://telegram.me/m/gJRITm3MN2U6",
+  telegram: "https://t.me/trucs_de_french",
   instagram: "https://www.instagram.com/trucs_de_french",
   facebook: "https://www.facebook.com/trucs.de.french",
   youtube: "https://youtube.com/@trucs-de-french",
