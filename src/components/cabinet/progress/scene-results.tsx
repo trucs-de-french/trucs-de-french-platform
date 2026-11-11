@@ -106,13 +106,15 @@ export function SceneResults({ lang, items }: { lang: UiLang; items: SceneResult
                     <div className="cabinet-scene-title truncate">{row.title}</div>
                     <div className="cabinet-scene-meta truncate">{meta}</div>
                   </div>
-                  <span className="cabinet-scene-score">
-                    {row.pointsEarned} / {row.pointsPossible}
-                  </span>
-                  <SceneRing percent={row.percent} label={row.title} />
-                  <Link href={row.href} className="cabinet-scene-link">
-                    {row.needsRedo ? t(lang, "progress.scenes.redo") : t(lang, "progress.scenes.view")}
-                  </Link>
+                  <div className="cabinet-scene-trailing">
+                    <span className="cabinet-scene-score">
+                      {row.pointsEarned} / {row.pointsPossible}
+                    </span>
+                    <SceneRing percent={row.percent} label={row.title} />
+                    <Link href={row.href} className="cabinet-scene-link">
+                      {row.needsRedo ? t(lang, "progress.scenes.redo") : t(lang, "progress.scenes.view")}
+                    </Link>
+                  </div>
                 </li>
               );
             })}

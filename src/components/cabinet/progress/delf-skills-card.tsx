@@ -17,20 +17,12 @@ const SECTION_FRENCH_KEY: Record<string, MessageKey> = {
   PO: "progress.delf.po",
 };
 
-const SEGMENT_COUNT = 10;
-
-function DelfSegments({ percent, label }: { percent: number; label: string }) {
-  const filled = percent <= 0 ? 0 : Math.min(SEGMENT_COUNT, Math.ceil(percent / 10));
+function DelfBar({ percent, label }: { percent: number; label: string }) {
+  const clamped = Math.min(100, Math.max(0, percent));
 
   return (
-    <div className="cabinet-delf-segments" role="img" aria-label={`${label}: ${percent}%`}>
-      {Array.from({ length: SEGMENT_COUNT }, (_, i) => (
-        <span
-          key={i}
-          className={`cabinet-delf-segment ${i < filled ? "" : "cabinet-delf-segment--empty"}`}
-          aria-hidden="true"
-        />
-      ))}
+    <div className="cabinet-delf-bar-track" role="img" aria-label={`${label}: ${percent}%`}>
+      <div className="cabinet-delf-bar-fill" style={{ width: `${clamped}%` }} aria-hidden="true" />
     </div>
   );
 }
@@ -60,7 +52,7 @@ export function DelfSkillsCard({ lang, skills }: { lang: UiLang; skills: DelfSki
                 <div className="cabinet-delf-name-main">{name}</div>
                 <div className="cabinet-delf-name-fr truncate">{frenchName}</div>
               </div>
-              <DelfSegments percent={row.percent} label={sectionLabel} />
+              <DelfBar percent={row.percent} label={sectionLabel} />
               <span className="cabinet-delf-percent">{row.percent}%</span>
             </li>
           );

@@ -55,7 +55,7 @@ export function CabinetFooter({ lang }: { lang: UiLang }) {
     <footer className="cabinet-footer flex flex-col items-center gap-3 px-2 pt-6 pb-4 text-center sm:flex-row sm:items-center sm:justify-between sm:pb-6 sm:text-left">
       <PlatformWordmark size="mobile" tagline align="left" />
       <div className="flex flex-col items-center gap-2 sm:items-end">
-        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:justify-end">
+        <div className="cabinet-footer-row flex flex-wrap items-center justify-center gap-2.5 sm:justify-end">
           <a
             href={SHOP_URL}
             target="_blank"

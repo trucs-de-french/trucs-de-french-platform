@@ -12849,6 +12849,15 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-size: 13.5px;
   color: var(--cabinet-muted);
 }
+/* Score+ring+link grouped so they can shrink/wrap together on narrow
+   screens without touching the thumb/title layout (min-width:0 override
+   below lets this shrink past its content's natural min-width, which is
+   what lets flex-wrap actually kick in on mobile). */
+.cabinet-scene-trailing {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 .cabinet-scene-score {
   flex: none;
   font-family: var(--font-body);
@@ -12865,6 +12874,27 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-size: 15px;
   white-space: nowrap;
   color: var(--cabinet-link);
+}
+@media (max-width: 767px) {
+  .cabinet-scene-row {
+    gap: 10px;
+  }
+  .cabinet-scene-trailing {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    column-gap: 8px;
+    row-gap: 4px;
+  }
+  .cabinet-scene-score {
+    font-size: 11px;
+    white-space: normal;
+    text-align: right;
+    max-width: 72px;
+  }
+  .cabinet-scene-link {
+    font-size: 13.5px;
+  }
 }
 .cabinet-scene-more {
   align-self: center;
@@ -12948,24 +12978,36 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   font-size: 12.5px;
   color: var(--cabinet-muted);
 }
-.cabinet-delf-segments {
-  display: flex;
+/* Continuous bar (was 10 discrete tick segments — on mobile the row is
+   narrow enough that each segment + its 4px gap shrank to a sliver,
+   reading as loose tick marks instead of a progress bar; a single
+   track+fill pair keeps the same colors/rounding at any width). */
+.cabinet-delf-bar-track {
   flex: 1;
   min-width: 0;
-  gap: 4px;
-}
-.cabinet-delf-segment {
-  display: block;
-  flex: 1;
   height: 14px;
-  border-radius: 5px;
+  border-radius: 7px;
+  background: #ece3c4;
+  overflow: hidden;
+}
+.dark .cabinet-delf-bar-track {
+  background: #262e78;
+}
+.cabinet-delf-bar-fill {
+  height: 100%;
+  min-width: 14px;
+  border-radius: 7px;
   background: linear-gradient(160deg, #f3d98b, #d9b765);
 }
-.cabinet-delf-segment--empty {
-  background: #ece3c4;
-}
-.dark .cabinet-delf-segment--empty {
-  background: #262e78;
+@media (max-width: 767px) {
+  .cabinet-delf-bar-track {
+    height: 8px;
+    border-radius: 4px;
+  }
+  .cabinet-delf-bar-fill {
+    border-radius: 4px;
+    min-width: 8px;
+  }
 }
 .cabinet-delf-percent {
   flex: none;
@@ -15077,6 +15119,47 @@ button.cabinet-nav-item {
 }
 .dark .cabinet-footer-shop-btn:focus-visible {
   outline-color: #f3d98b;
+}
+/* Mobile (~360-400px): "Магазин" + 4 соц-кнопки мали розбивалися на два
+   рядки (YouTube лишався сам на другому) — тут примушуємо один рядок:
+   flex-nowrap + менший gap, кнопки звужено (icons flex-shrink:0, pill
+   min-w-0 + nowrap-текст), щоб рядок завжди влазив у падінг картки. */
+@media (max-width: 767px) {
+  .cabinet-footer-row {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  .cabinet-footer-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+  .cabinet-footer-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .cabinet-footer-shop-btn {
+    height: 40px;
+    padding: 0 14px;
+    gap: 6px;
+    font-size: 14px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .cabinet-footer-shop-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+@media (max-width: 359px) {
+  .cabinet-footer-row {
+    gap: 6px;
+  }
+  .cabinet-footer-icon {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* Плаваюча пілюля "Є незбережені зміни" (settings/save-bar.tsx) —
