@@ -188,16 +188,10 @@ export async function saveAboutMe(
 // (низький ризик для короткого orientation-теста, без анти-чіт), сюди
 // приходить лише готовий рядок рівня. french_level_source завжди 'test'
 // тут (на відміну від saveAboutMe, де завжди 'self') — два різних шляхи
-// запису в ОДНІ й ті самі колонки.
-export async function savePlacementLevel(
-  level: string,
-  attempt: {
-    grammarCorrect: number;
-    vocabCorrect: number;
-    partScores: Record<string, number>;
-    durationSeconds: number | null;
-  }
-): Promise<{ ok: boolean; error?: string }> {
+// запису в ОДНІ й ті самі колонки. Журнал спроб (placement_attempts)
+// сюди більше НЕ пишеться — те окремо й завжди робить logPlacementAttempt
+// одразу по завершенню тесту, незалежно від того, чи натиснуть "Зберегти".
+export async function savePlacementLevel(level: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -208,9 +202,40 @@ export async function savePlacementLevel(
     return { ok: false, error: "level" };
   }
 
-  // previous_level читається з БД ПЕРЕД update (а не з клієнта) — той самий
-  // принцип, що в saveAboutMe: джерело правди для "було до цього" — стан у
-  // БД на момент виклику, не те, що клієнт показував при завантаженні сторінки.
+  const { error } = await supabase
+    .from("profiles")
+    .update({ french_level: level, french_level_source: "test", french_level_set_at: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: "db" };
+
+  revalidatePath("/cabinet/settings");
+  revalidatePath("/cabinet");
+  return { ok: true };
+}
+
+// Журнал спроб (0068_placement_attempts.sql) — один рядок на КОЖЕН
+// завершений тест, незалежно від того, чи буде збережено рівень у
+// профіль ("Зберегти" — окрема дія savePlacementLevel, що більше НЕ
+// пише сюди). Клієнт викликає це рівно один раз одразу по завершенню
+// тесту (на самому переході до екрана результату), з ref-guard'ом від
+// повторного виклику при React Strict Mode / ре-рендері.
+export async function logPlacementAttempt(attempt: {
+  level: string;
+  grammarCorrect: number;
+  vocabCorrect: number;
+  partScores: Record<string, number>;
+  durationSeconds: number | null;
+}): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "auth" };
+
+  if (!(FRENCH_LEVEL_VALUES as readonly string[]).includes(attempt.level)) {
+    return { ok: false, error: "level" };
+  }
+
   const { data: before } = await supabase
     .from("profiles")
     .select("french_level")
@@ -218,29 +243,20 @@ export async function savePlacementLevel(
     .single();
   const previousLevel = (before?.french_level ?? null) as FrenchLevel | null;
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ french_level: level, french_level_source: "test", french_level_set_at: new Date().toISOString() })
-    .eq("id", user.id);
-  if (error) return { ok: false, error: "db" };
-
-  // placement_attempts (0068) — журнал спроб, best-effort: помилка вставки
-  // лише логується, рівень у профілі вже збережено і це головний результат.
-  const { error: logError } = await supabase.from("placement_attempts").insert({
+  const { error } = await supabase.from("placement_attempts").insert({
     user_id: user.id,
-    level,
+    level: attempt.level,
     previous_level: previousLevel,
     grammar_correct: attempt.grammarCorrect,
     vocab_correct: attempt.vocabCorrect,
     part_scores: attempt.partScores,
     duration_seconds: attempt.durationSeconds,
   });
-  if (logError) {
-    console.error("placement_attempts insert failed:", logError);
+  if (error) {
+    console.error("placement_attempts insert failed:", error);
+    return { ok: false, error: "db" };
   }
 
-  revalidatePath("/cabinet/settings");
-  revalidatePath("/cabinet");
   return { ok: true };
 }
 

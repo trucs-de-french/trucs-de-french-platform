@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { FrenchLevel } from "@/lib/supabase/profile";
-import { savePlacementLevel } from "@/app/cabinet/actions";
+import { logPlacementAttempt, savePlacementLevel } from "@/app/cabinet/actions";
 import { BANK } from "@/lib/cabinet/placement-test/bank";
 import {
   answerQuestion,
@@ -24,7 +24,7 @@ const STORAGE_KEY = "tdf_placement_test_state_v1";
 const LETTERS = ["A", "B", "C", "D"];
 
 type Screen = "intro" | "question" | "result";
-type Result = { level: FrenchLevel; scores: number[]; totals: TestTotals; durationSeconds: number | null };
+type Result = { level: FrenchLevel; scores: number[]; totals: TestTotals };
 
 const LEVEL_META: Record<FrenchLevel, { label: string; titleKey: MessageKey; descKey: MessageKey }> = {
   A0: { label: "A0", titleKey: "placementTest.level.A0.title", descKey: "placementTest.level.A0.desc" },
@@ -88,6 +88,11 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   // рефреш під час тесту трапляється рідко, недооцінена тривалість у
   // такому випадку прийнятна, адже це не впливає на сам рівень.
   const startedAtRef = useRef<number | null>(null);
+  // Запобігає повторному insert'у в placement_attempts при повторному
+  // виклику finishWith (швидкий дубль-клік "Далі" зі застарілим closure-
+  // станом, React Strict Mode тощо) — лише ПЕРШИЙ викик для цієї спроби
+  // справді пише журнал.
+  const attemptLoggedRef = useRef(false);
 
   // Відновлення збереженої спроби — лише після монтування (після
   // гідратації), один раз: синхронізація з зовнішньою системою
@@ -113,6 +118,7 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   }, [state]);
 
   const start = useCallback(() => {
+    attemptLoggedRef.current = false;
     startedAtRef.current = Date.now();
     setState(createInitialPlacementTestState(cryptoRandom));
     setScreen("question");
@@ -124,10 +130,27 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
     const durationSeconds = startedAtRef.current !== null ? Math.round((Date.now() - startedAtRef.current) / 1000) : null;
     writeStoredState(null);
     setState(null);
-    setResult({ level, scores: finalState.scores, totals, durationSeconds });
+    setResult({ level, scores: finalState.scores, totals });
     setSaved(false);
     setSaveError(false);
     setScreen("result");
+
+    if (!attemptLoggedRef.current) {
+      attemptLoggedRef.current = true;
+      const partScores: Record<string, number> = {};
+      finalState.scores.forEach((score, i) => {
+        partScores[BANK.levels[i]] = score;
+      });
+      logPlacementAttempt({
+        level,
+        grammarCorrect: totals.grammarCorrect,
+        vocabCorrect: totals.vocabCorrect,
+        partScores,
+        durationSeconds,
+      }).catch((err) => {
+        console.error("logPlacementAttempt failed:", err);
+      });
+    }
   }, []);
 
   const submit = useCallback(
@@ -178,16 +201,7 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
     setSaving(true);
     setSaveError(false);
     (async () => {
-      const partScores: Record<string, number> = {};
-      result.scores.forEach((score, i) => {
-        partScores[BANK.levels[i]] = score;
-      });
-      const res = await savePlacementLevel(result.level, {
-        grammarCorrect: result.totals.grammarCorrect,
-        vocabCorrect: result.totals.vocabCorrect,
-        partScores,
-        durationSeconds: result.durationSeconds,
-      });
+      const res = await savePlacementLevel(result.level);
       setSaving(false);
       if (!res.ok) {
         setSaveError(true);
