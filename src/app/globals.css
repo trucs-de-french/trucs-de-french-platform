@@ -12106,10 +12106,20 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .cabinet-chip--selected {
   border: 1.5px solid transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  /* origin:border-box (not default padding-box) — без цього градієнт
+     рахується лише від padding-box, і прозора рамка над ним показує
+     суцільний найближчий stop-колір замість продовження градієнта,
+     читаючись як темніший обвід/тінь. */
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .dark .cabinet-chip--selected {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 
@@ -12243,6 +12253,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .achievements-collection-chip--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .achievements-collection-chip--active .achievements-chip-count {
@@ -12250,6 +12263,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 }
 .dark .achievements-collection-chip--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 .dark .achievements-collection-chip--active .achievements-chip-count {
@@ -12782,6 +12798,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .achievements-chip--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .achievements-chip--active .achievements-chip-count {
@@ -12789,6 +12808,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 }
 .dark .achievements-chip--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 .dark .achievements-chip--active .achievements-chip-count {
@@ -13813,7 +13835,10 @@ button.cabinet-nav-item {
    gold, той фон і справді завжди indigo). */
 .cabinet-more .cabinet-lang-pill--active {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
   border: 1.5px solid transparent;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #f6f1e3;
   font-weight: 800;
 }
@@ -14432,11 +14457,16 @@ button.cabinet-nav-item {
 }
 .settings-pill--active {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
   border: 2px solid transparent;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .settings-pill--active:hover:not(:disabled) {
   background: linear-gradient(160deg, #5a55e6, #36327d);
+  background-origin: border-box;
+  background-clip: border-box;
   border-color: transparent;
 }
 .dark .settings-pill {
@@ -14450,7 +14480,10 @@ button.cabinet-nav-item {
 }
 .dark .settings-pill--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
   border-color: transparent;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 
@@ -14493,10 +14526,16 @@ button.cabinet-nav-item {
 .settings-goal-chip--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .dark .settings-goal-chip--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 
@@ -14576,10 +14615,16 @@ button.cabinet-nav-item {
 .about-me-chip--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .dark .about-me-chip--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 
@@ -14650,6 +14695,9 @@ button.cabinet-nav-item {
 .about-me-level-card--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
 }
 .about-me-level-card--active .about-me-level-name,
 .about-me-level-card--active .about-me-level-desc {
@@ -14657,6 +14705,9 @@ button.cabinet-nav-item {
 }
 .dark .about-me-level-card--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
 }
 .dark .about-me-level-card--active .about-me-level-name,
 .dark .about-me-level-card--active .about-me-level-desc {
@@ -15702,10 +15753,15 @@ button.cabinet-nav-item {
 .placement-option--selected {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
   color: #ffffff;
 }
 .placement-option--selected:hover {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
 }
 .placement-option--selected .placement-option-badge {
   background: rgba(255, 255, 255, 0.25);
@@ -15713,10 +15769,15 @@ button.cabinet-nav-item {
 }
 .dark .placement-option--selected {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.25);
   color: #1a1640;
 }
 .dark .placement-option--selected:hover {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
 }
 .dark .placement-option--selected .placement-option-badge {
   background: rgba(26, 22, 64, 0.2);
@@ -15822,6 +15883,8 @@ button.cabinet-nav-item {
 .placement-part-tile--selected {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
   box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
 }
 .placement-part-tile--selected b,
@@ -15836,6 +15899,8 @@ button.cabinet-nav-item {
 }
 .dark .placement-part-tile--selected {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
   box-shadow: none;
 }
 .dark .placement-part-tile--selected b,
