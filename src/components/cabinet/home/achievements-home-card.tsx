@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { computeBadges, pickHomeAchievements, type BadgeStats, type EarnedAtById } from "@/lib/cabinet/achievements";
@@ -35,7 +37,13 @@ export function AchievementsHomeCard({
     <div className="cabinet-card flex flex-col gap-[14px] p-[22px_26px_20px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
-        <CabinetPillLink href="/cabinet/achievements" label={t(lang, "home.achievements.all")} compact />
+        {/* Мобільний (<640px) варіант цього лінка переїжджає ВСЕРЕДИНУ
+            грід бейджів нижче (остання клітинка, achievement-badge-all-
+            slot) — тут лишається прихованим на <640px, не прибраний із
+            DOM, щоб desktop (>=640px) не змінився. */}
+        <span className="hidden sm:inline-flex">
+          <CabinetPillLink href="/cabinet/achievements" label={t(lang, "home.achievements.all")} compact />
+        </span>
       </div>
       {picked.length === 0 ? (
         <p className="text-sm text-[var(--cabinet-muted)]">{t(lang, "home.achievements.empty")}</p>
@@ -46,6 +54,19 @@ export function AchievementsHomeCard({
               <AchievementBadge lang={lang} achievement={achievement} />
             </div>
           ))}
+          <div className="achievement-badge-slot achievement-badge-all-slot">
+            <Link
+              href="/cabinet/achievements"
+              aria-label={t(lang, "home.achievements.all")}
+              title={t(lang, "home.achievements.all")}
+              className="achievement-badge-all-link"
+            >
+              <span className="achievement-badge-all-circle">
+                <ArrowRight size={26} strokeWidth={2.4} aria-hidden="true" />
+              </span>
+              <span className="achievement-badge-all-label">{t(lang, "home.achievements.all")}</span>
+            </Link>
+          </div>
         </div>
       )}
     </div>

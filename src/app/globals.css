@@ -15064,6 +15064,86 @@ button.cabinet-nav-item {
   color: var(--cabinet-muted);
 }
 
+/* "Усі досягнення" як кругла кнопка в останній клітинці грід-ряду
+   бейджів (achievements-home-card.tsx) — ЛИШЕ мобільний (<640px)
+   варіант картки, заміна пілюлі під заголовком, яка на desktop
+   (>=640px) лишається як є. Клітинка — звичайний наступний grid-item
+   після бейджів: менше 5 бейджів — йде одразу за останнім у тому ж
+   ряду; 6+ — сама починає новий ряд, усе через стандартний grid
+   auto-flow, без додаткової логіки. */
+.achievement-badge-all-slot {
+  display: none;
+}
+@media (max-width: 639px) {
+  .achievement-badge-all-slot {
+    display: flex;
+  }
+}
+.achievement-badge-all-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  /* ~4px офсет — щоб центр 68px кола опинився на тій самій висоті, що
+     центр монет-сусідів (64x67) у цьому ж ряду. */
+  margin-top: 4px;
+  text-decoration: none;
+}
+.achievement-badge-all-circle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  padding: 0;
+  border: 2px solid #e4cf94;
+  background: transparent;
+  color: var(--cabinet-ink);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms, color 150ms;
+}
+.dark .achievement-badge-all-circle {
+  border-color: #2e3680;
+}
+.achievement-badge-all-link:hover .achievement-badge-all-circle,
+.achievement-badge-all-link:focus-visible .achievement-badge-all-circle,
+.achievement-badge-all-link:active .achievement-badge-all-circle {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.28);
+  color: #ffffff;
+}
+.dark .achievement-badge-all-link:hover .achievement-badge-all-circle,
+.dark .achievement-badge-all-link:focus-visible .achievement-badge-all-circle,
+.dark .achievement-badge-all-link:active .achievement-badge-all-circle {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  box-shadow: 0 6px 14px rgba(217, 183, 101, 0.28);
+  color: #1a1640;
+}
+.achievement-badge-all-link:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+.dark .achievement-badge-all-link:focus-visible {
+  outline-color: #f3d98b;
+}
+.achievement-badge-all-label {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14.5px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--cabinet-ink);
+}
+
 /* Home: карусель "Нове в бібліотеці" (library-carousel.tsx) — scroll-snap
    без автоплею; ширина слайду в% (не px), щоб "наступний підглядає"
    однаково працювало на будь-якій ширині картки. */
