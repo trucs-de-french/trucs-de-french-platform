@@ -465,7 +465,7 @@ export function DatePicker({ name, defaultValue, min, max, lang, placeholder, id
               )}
 
               {view === "years" && (
-                <div className="cabinet-datepicker-years" ref={yearsListRef}>
+                <div className="cabinet-datepicker-years themed-scroll" ref={yearsListRef}>
                   {yearRange.map((y) => (
                     <button
                       key={y}

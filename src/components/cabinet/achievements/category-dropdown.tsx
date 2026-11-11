@@ -149,15 +149,18 @@ export function CategoryDropdown({
         />
       </button>
       {open && (
-        <ul
-          ref={listRef}
-          role="listbox"
-          tabIndex={0}
-          aria-activedescendant={`${baseId}-${activeIndex}`}
+        <div
           className={`achievements-category-menu ${openUpward ? "achievements-category-menu--up" : ""}`}
-          onKeyDown={handleListKeyDown}
         >
-          {options.map((opt, index) => {
+          <ul
+            ref={listRef}
+            role="listbox"
+            tabIndex={0}
+            aria-activedescendant={`${baseId}-${activeIndex}`}
+            className="achievements-category-menu-scroll themed-scroll"
+            onKeyDown={handleListKeyDown}
+          >
+            {options.map((opt, index) => {
             const Icon = opt.category ? CATEGORY_ICON[opt.category] : LayoutGrid;
             const label = categoryLabel(lang, opt.category);
             const isSelected = opt.category === selected;
@@ -194,7 +197,8 @@ export function CategoryDropdown({
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </div>
       )}
     </div>
   );
