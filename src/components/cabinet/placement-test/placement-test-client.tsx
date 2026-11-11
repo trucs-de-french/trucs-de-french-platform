@@ -70,11 +70,15 @@ function writeStoredState(state: TestState | null): void {
 // питання/результат) як проста машина станів на useState, рушій тесту
 // повністю в engine.ts (чисті функції, тестовані окремо від DOM).
 export function PlacementTestClient({ lang }: { lang: UiLang }) {
-  // Ліниві ініціалізатори (не mount-ефект із setState) — читання
-  // sessionStorage відбувається раз, синхронно, до першого рендеру,
-  // замість cascading setState в ефекті (react-hooks/set-state-in-effect).
-  const [state, setState] = useState<TestState | null>(() => readStoredState());
-  const [screen, setScreen] = useState<Screen>(() => (readStoredState() !== null ? "question" : "intro"));
+  // Початковий рендер ЗАВЖДИ нейтральний (state=null, screen="intro") —
+  // однаково на сервері й на клієнті. sessionStorage недоступний на
+  // сервері, тож лінивий ініціалізатор, що читає його синхронно, дає на
+  // клієнті інший перший рендер за наявності збереженого стану (одразу
+  // "question"), ніж на сервері (завжди "intro") — це і є hydration
+  // mismatch. Відновлення з sessionStorage тому відкладене в ефект нижче
+  // (виконується вже ПІСЛЯ гідратації, коли server/client HTML уже зійшлись).
+  const [state, setState] = useState<TestState | null>(null);
+  const [screen, setScreen] = useState<Screen>("intro");
   const [result, setResult] = useState<Result | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -84,6 +88,23 @@ export function PlacementTestClient({ lang }: { lang: UiLang }) {
   // рефреш під час тесту трапляється рідко, недооцінена тривалість у
   // такому випадку прийнятна, адже це не впливає на сам рівень.
   const startedAtRef = useRef<number | null>(null);
+
+  // Відновлення збереженої спроби — лише після монтування (після
+  // гідратації), один раз: синхронізація з зовнішньою системою
+  // (sessionStorage), а не похідний стан — саме той дозволений випадок
+  // з опису правила нижче ("calling setState ... when external state
+  // changes"). Лінивий ініціалізатор тут неможливий: він читав би
+  // sessionStorage синхронно під час першого рендеру, який на сервері
+  // й на клієнті дає РІЗНИЙ результат (сервер не бачить sessionStorage
+  // узагалі) — це і спричиняло hydration mismatch, який ця зміна фіксить.
+  useEffect(() => {
+    const restored = readStoredState();
+    if (restored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState(restored);
+      setScreen("question");
+    }
+  }, []);
 
   // Персистимо в sessionStorage ПІСЛЯ кожної зміни стану (не всередині
   // setState-updater'а, щоб лишатись чистою функцією під Strict Mode).
