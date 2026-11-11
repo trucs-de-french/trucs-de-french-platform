@@ -13682,18 +13682,41 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
-/* Тонкий однорядковий варіант .cabinet-hero — лише >=1024px (lg:flex у
-   JSX, пара до .cabinet-hero.lg:hidden вище): аватар+чіп рівня зліва
-   поруч із привітанням (не стовпцем під ним), гнучкий spacer, week-dots+
-   стрік праворуч (не під привітанням) — інше угруповання дітей, не
-   лише інший CSS-розклад тих самих, тому окремий блок JSX, не медіа. */
+/* Тонкий однорядковий варіант .cabinet-hero — >=640px: аватар+чіп рівня
+   зліва поруч із привітанням (не стовпцем під ним), week-dots+стрік
+   праворуч (margin-left:auto, не під привітанням) — інше угруповання
+   дітей, не лише інший CSS-розклад тих самих, тому окремий блок JSX,
+   не медіа всередині ОДНОГО дерева.
+   Перемикання видимості — ТУТ, не через Tailwind lg:hidden/hidden lg:
+   flex у className: .cabinet-hero нижче задає display:flex напряму в
+   незашарованому (unlayered) правилі, а Tailwind-утиліти живуть у
+   @layer utilities — незашаровані правила завжди перебивають шаровані
+   для ТОГО САМОГО елемента незалежно від специфічності/медіа (та сама
+   каскадна особливість, що задокументована вище для .hidden/sm:inline-
+   flex), тож display:none від lg:hidden НІКОЛИ не спрацьовував би на
+   елементі, що сам встановлює display:flex в незашарованому правилі —
+   стара картка показувалась на ВСІХ ширинах одночасно з новою смужкою.
+   Тому обидва display керуються тут явними unlayered-медіа-правилами
+   (нижче, фізично ПІЗНІШЕ за визначення .cabinet-hero вище — при
+   однаковій специфічності перемагає порядок джерела). */
+@media (min-width: 640px) {
+  .cabinet-hero {
+    display: none;
+  }
+}
 .cabinet-hero-slim {
+  display: none;
   align-items: center;
   gap: 16px;
   border-radius: 26px;
   padding: 14px 22px;
   border: 1.5px solid var(--cabinet-line);
   background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+}
+@media (min-width: 640px) {
+  .cabinet-hero-slim {
+    display: flex;
+  }
 }
 .dark .cabinet-hero-slim {
   background: var(--cabinet-card-bg);
@@ -13707,13 +13730,18 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 }
 .cabinet-hero-slim-greeting {
   flex-shrink: 0;
+  min-width: 0;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 26px;
   color: var(--cabinet-ink);
 }
-.cabinet-hero-slim-spacer {
-  flex: 1;
+.cabinet-hero-slim-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 .cabinet-hero-slim-dots {
   gap: 8px;
@@ -13722,6 +13750,22 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   width: 34px;
   height: 34px;
   font-size: 12px;
+}
+/* 640–1023px (планшет) — смужка вже тонка, але аватар+ім'я+чіп+7
+   кружків+стрік в один рядок не влазять у вузьку ширину: тут рядок
+   переноситься (flex-wrap), а week-dots+стрік (.cabinet-hero-slim-
+   right) переходять на свій рядок на всю ширину — замість
+   горизонтального переповнення картки. */
+@media (max-width: 1023px) {
+  .cabinet-hero-slim {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .cabinet-hero-slim-right {
+    flex-basis: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
 }
 
 /* Новий десктоп/планшет розклад Home (cabinet/page.tsx) — 3 нові

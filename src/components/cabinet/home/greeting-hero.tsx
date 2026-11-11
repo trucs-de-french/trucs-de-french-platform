@@ -87,13 +87,20 @@ export function GreetingHero({
 
   return (
     <>
-      {/* <1024px (мобільний і планшет) — колишній розклад без змін:
-          привітання+week-dots зліва, аватар+чіп рівня праворуч, стовпцем.
-          >=1024px — окремий "тонкий" однорядковий варіант нижче
-          (hidden/lg:hidden пара, не медіа-запит усередині одного дерева,
-          бо аватар+чіп і week-dots+стрік переставлені в інший угруповання
-          дітей, не лише інший CSS-розклад тих самих). */}
-      <div className="cabinet-hero lg:hidden">
+      {/* <640px — колишній розклад без змін: привітання+week-dots зліва,
+          аватар+чіп рівня праворуч, стовпцем. >=640px — "тонкий"
+          однорядковий варіант нижче: інше угруповання дітей (аватар+чіп
+          поруч із привітанням, не стовпцем; week-dots+стрік праворуч,
+          не під привітанням), тому окремий блок JSX, не медіа всередині
+          одного дерева. Видимість кожного блоку — у globals.css
+          (.cabinet-hero/.cabinet-hero-slim, unlayered display:none/flex
+          за медіа-запитом), НЕ через Tailwind lg:hidden/hidden lg:flex
+          тут: .cabinet-hero сам встановлює display:flex в unlayered
+          правилі, яке завжди перебиває Tailwind-утиліту (@layer
+          utilities) на тому самому елементі незалежно від брейкпоінта —
+          лишившись у className, lg:hidden ніколи не ховав би стару
+          картку, і обидві показувались би одночасно. */}
+      <div className="cabinet-hero">
         <div className="min-w-0">
           <h1 className="cabinet-hero-greeting">{t(lang, "cabinet.home.greeting", { name: firstName })}</h1>
           <div className="cabinet-hero-week-row">
@@ -113,7 +120,7 @@ export function GreetingHero({
         </div>
       </div>
 
-      <div className="cabinet-hero-slim hidden lg:flex">
+      <div className="cabinet-hero-slim">
         <ProfileAvatar
           name={fullName?.trim() || ""}
           size={56}
@@ -123,9 +130,10 @@ export function GreetingHero({
         />
         <h1 className="cabinet-hero-slim-greeting">{t(lang, "cabinet.home.greeting", { name: firstName })}</h1>
         {levelChip}
-        <div className="cabinet-hero-slim-spacer" />
-        <div className="cabinet-week-dots cabinet-hero-slim-dots">{weekDots}</div>
-        {streakText}
+        <div className="cabinet-hero-slim-right">
+          <div className="cabinet-week-dots cabinet-hero-slim-dots">{weekDots}</div>
+          {streakText}
+        </div>
       </div>
     </>
   );
