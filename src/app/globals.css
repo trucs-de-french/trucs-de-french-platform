@@ -15590,11 +15590,26 @@ button.cabinet-nav-item {
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
+/* A0 — 6-й тайл ("Початок") додається ПЕРЕД A1, лише коли жодну частину
+   не пройдено. 3x2 на вузьких екранах (не repeat(6,1fr) — тайли були б
+   задушені на 360px), 6 в один ряд від 560px. */
+.placement-parts--six {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width: 560px) {
+  .placement-parts--six {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
 .placement-part-tile {
   border: 1.5px solid var(--cabinet-line);
   border-radius: 16px;
   padding: 10px 6px;
   text-align: center;
+  /* min-width:0 — тайл ніколи не росте за межі своєї grid-колонки
+     (клітинка лишається тією ж, що в сусідів) навіть у підсвіченому
+     стані з іконкою поруч із лейблом. */
+  min-width: 0;
 }
 .placement-part-tile b {
   display: block;
@@ -15604,6 +15619,7 @@ button.cabinet-nav-item {
   color: var(--cabinet-ink);
 }
 .placement-part-tile span {
+  display: block;
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--cabinet-muted);
@@ -15613,6 +15629,36 @@ button.cabinet-nav-item {
 }
 .placement-part-tile--unreached {
   opacity: 0.5;
+}
+
+/* Визначений рівень — та сама "вибрана" пара градієнтів, що .cabinet-
+   chip--selected/.about-me-chip--active по всьому кабінету, НЕ просто
+   gold-border, що лишається у вже пройдених (--passed) сусідів. */
+.placement-part-tile--selected {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  box-shadow: 0 6px 14px rgba(75, 70, 218, 0.25);
+}
+.placement-part-tile--selected b,
+.placement-part-tile--selected span {
+  color: #ffffff;
+}
+.placement-part-tile--selected b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.dark .placement-part-tile--selected {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  box-shadow: none;
+}
+.dark .placement-part-tile--selected b,
+.dark .placement-part-tile--selected span {
+  color: #1a1640;
+}
+.placement-part-tile-check {
+  flex-shrink: 0;
 }
 
 .placement-save-msg {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { FrenchLevel } from "@/lib/supabase/profile";
@@ -342,6 +343,47 @@ function ResultCard({
   onRetry: () => void;
 }) {
   const meta = LEVEL_META[level];
+  const isA0 = level === "A0";
+
+  // Один з тайлів підсвічується (визначений рівень): A0 — окремий 6-й
+  // тайл на початку ряду (жодну частину не пройдено, нема що підсвічувати
+  // серед A1..C1C2); інакше — тайл частини, що дорівнює рівню (вона ЗАВЖДИ
+  // серед пройдених scores, бо evaluateLevel бере останню пройдену).
+  const tiles: {
+    key: string;
+    label: string;
+    caption: string;
+    selected: boolean;
+    passed: boolean;
+    reached: boolean;
+  }[] = [];
+
+  if (isA0) {
+    tiles.push({
+      key: "A0",
+      label: LEVEL_META.A0.label,
+      caption: t(lang, "placementTest.result.start"),
+      selected: true,
+      passed: false,
+      reached: true,
+    });
+  }
+  for (let i = 0; i < BANK.levels.length; i++) {
+    const levelId = BANK.levels[i];
+    const score = scores[i];
+    const reached = score !== undefined;
+    const passed = reached && score >= BANK.passMark;
+    tiles.push({
+      key: levelId,
+      label: LEVEL_META[levelId].label,
+      caption: reached
+        ? t(lang, "placementTest.result.scoreFormat", { n: score, total: BANK.perPart })
+        : t(lang, "placementTest.result.notReached"),
+      selected: levelId === level,
+      passed,
+      reached,
+    });
+  }
 
   return (
     <div className="cabinet-card flex flex-col p-[22px_20px] min-[560px]:p-[30px_34px]">
@@ -357,27 +399,23 @@ function ResultCard({
         </div>
       </div>
 
-      <div className="placement-parts mt-5">
-        {BANK.levels.map((levelId, i) => {
-          const score = scores[i];
-          const reached = score !== undefined;
-          const passed = reached && score >= BANK.passMark;
-          return (
-            <div
-              key={levelId}
-              className={`placement-part-tile ${passed ? "placement-part-tile--passed" : ""} ${
-                !reached ? "placement-part-tile--unreached" : ""
-              }`}
-            >
-              <b>{LEVEL_META[levelId].label}</b>
-              <span>
-                {reached
-                  ? t(lang, "placementTest.result.scoreFormat", { n: score, total: BANK.perPart })
-                  : t(lang, "placementTest.result.notReached")}
-              </span>
-            </div>
-          );
-        })}
+      <div className={`placement-parts mt-5 ${isA0 ? "placement-parts--six" : ""}`}>
+        {tiles.map((tile) => (
+          <div
+            key={tile.key}
+            aria-current={tile.selected ? "true" : undefined}
+            className={`placement-part-tile ${tile.selected ? "placement-part-tile--selected" : tile.passed ? "placement-part-tile--passed" : ""} ${
+              !tile.reached ? "placement-part-tile--unreached" : ""
+            }`}
+          >
+            <b>
+              {tile.selected && <Check size={16} aria-hidden="true" className="placement-part-tile-check" />}
+              {tile.label}
+              {tile.selected && <span className="sr-only"> — {t(lang, "placementTest.result.yourLevelSr")}</span>}
+            </b>
+            <span>{tile.caption}</span>
+          </div>
+        ))}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">

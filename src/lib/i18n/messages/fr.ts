@@ -726,6 +726,8 @@ export const fr: Record<MessageKey, string> = {
   "placementTest.result.heading": "Ton niveau : {level}",
   "placementTest.result.scoreFormat": "{n} sur {total}",
   "placementTest.result.notReached": "—",
+  "placementTest.result.start": "Départ",
+  "placementTest.result.yourLevelSr": "ton niveau",
   "placementTest.result.grammarLabel": "Grammaire",
   "placementTest.result.vocabLabel": "Vocabulaire",
   "placementTest.result.note": "C'est une estimation basée sur un test court. Si tu sens que ton niveau est différent, tu peux le modifier manuellement dans ton profil.",

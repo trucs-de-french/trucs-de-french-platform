@@ -727,6 +727,8 @@ export const uk = {
   "placementTest.result.heading": "Твій рівень: {level}",
   "placementTest.result.scoreFormat": "{n} з {total}",
   "placementTest.result.notReached": "—",
+  "placementTest.result.start": "Початок",
+  "placementTest.result.yourLevelSr": "твій рівень",
   "placementTest.result.grammarLabel": "Граматика",
   "placementTest.result.vocabLabel": "Лексика",
   "placementTest.result.note": "Це орієнтовна оцінка за короткий тест. Якщо відчуваєш, що рівень інший, можеш змінити його вручну в профілі.",
