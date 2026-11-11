@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { FrenchLevel, FrenchLevelSource } from "@/lib/supabase/profile";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { isExamType } from "@/lib/cabinet/exam-types";
 import { isExamProductType } from "@/lib/cabinet/exam-products";
@@ -107,10 +108,20 @@ const FRENCH_LEVEL_VALUES = ["A0", "A1", "A2", "B1", "B2", "C1C2"] as const;
 // ще НЕ застосована на момент написання — update на неіснуючі колонки
 // просто впаде, settings-form.tsx тоді дизейблить саму кнопку "Зберегти"
 // ще ДО виклику цієї дії, а не покладається на try/catch тут). Рівень
-// завжди "self" з клієнта цієї картки — тест (french_level_source=
-// "test") з'явиться окремою дією пізніше (задача №9: "ніде більше поки
-// не використовувати").
-export async function saveAboutMe(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+// з цієї картки — завжди "self", АЛЕ лише коли рівень справді змінився:
+// картка вміє зберігати goals без торкання рівня (щоб не перебивати
+// свіжіший french_level_source="test" з іншої вкладки, де щойно пройшли
+// тест) — звідси читання поточного рядка ПЕРЕД update і порівняння зі
+// збереженим значенням, а не з тим, що клієнт вважав початковим.
+export async function saveAboutMe(
+  formData: FormData
+): Promise<{
+  ok: boolean;
+  error?: string;
+  level?: FrenchLevel | null;
+  levelSource?: FrenchLevelSource | null;
+  levelSetAt?: string | null;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -129,21 +140,48 @@ export async function saveAboutMe(formData: FormData): Promise<{ ok: boolean; er
   if (levelRaw && !(FRENCH_LEVEL_VALUES as readonly string[]).includes(levelRaw)) {
     return { ok: false, error: "level" };
   }
-  const level = levelRaw || null;
+  const submittedLevel = (levelRaw || null) as FrenchLevel | null;
 
-  const { error } = await supabase
+  const { data: current, error: readError } = await supabase
     .from("profiles")
-    .update({
-      learning_goals: goals,
-      french_level: level,
-      french_level_source: level ? "self" : null,
-      french_level_set_at: new Date().toISOString(),
-    })
-    .eq("id", user.id);
+    .select("french_level, french_level_source, french_level_set_at")
+    .eq("id", user.id)
+    .single();
+  if (readError) return { ok: false, error: "db" };
+
+  const storedLevel = (current.french_level ?? null) as FrenchLevel | null;
+
+  const update: {
+    learning_goals: typeof goals;
+    french_level?: FrenchLevel | null;
+    french_level_source?: FrenchLevelSource | null;
+    french_level_set_at?: string | null;
+  } = { learning_goals: goals };
+
+  let levelSource = current.french_level_source as FrenchLevelSource | null;
+  let levelSetAt = current.french_level_set_at as string | null;
+
+  if (submittedLevel !== storedLevel) {
+    if (submittedLevel === null) {
+      update.french_level = null;
+      update.french_level_source = null;
+      update.french_level_set_at = null;
+      levelSource = null;
+      levelSetAt = null;
+    } else {
+      update.french_level = submittedLevel;
+      update.french_level_source = "self";
+      update.french_level_set_at = new Date().toISOString();
+      levelSource = "self";
+      levelSetAt = update.french_level_set_at;
+    }
+  }
+
+  const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
   if (error) return { ok: false, error: "db" };
 
   revalidatePath("/cabinet/settings");
-  return { ok: true };
+  return { ok: true, level: submittedLevel, levelSource, levelSetAt };
 }
 
 // Рівень з теста (/cabinet/placement-test) — рахується на клієнті

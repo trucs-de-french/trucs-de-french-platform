@@ -65,6 +65,7 @@ export function AboutMeCard({
   const [goals, setGoals] = useState<Set<LearningGoal>>(() => new Set(initialGoals));
   const [level, setLevel] = useState<FrenchLevel | null>(initialLevel);
   const [levelSource, setLevelSource] = useState<FrenchLevelSource | null>(initialLevelSource);
+  const [levelSetAt, setLevelSetAt] = useState<string | null>(initialLevelSetAt);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -100,7 +101,8 @@ export function AboutMeCard({
         setError(t(lang, "settings.save.error"));
         return;
       }
-      setLevelSource(level ? "self" : null);
+      setLevelSource(result.levelSource ?? null);
+      setLevelSetAt(result.levelSetAt ?? null);
       setSaved(true);
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
       savedTimeoutRef.current = setTimeout(() => setSaved(false), 2000);
@@ -158,8 +160,8 @@ export function AboutMeCard({
         {levelSource && (
           <p className="about-me-level-caption">
             {t(lang, levelSource === "test" ? "settings.aboutMe.levelSource.test" : "settings.aboutMe.levelSource.self")}
-            {levelSource === "test" && initialLevelSetAt && (
-              <> · {t(lang, "settings.aboutMe.test.setAt", { date: formatSetAtDate(initialLevelSetAt) })}</>
+            {levelSource === "test" && levelSetAt && (
+              <> · {t(lang, "settings.aboutMe.test.setAt", { date: formatSetAtDate(levelSetAt) })}</>
             )}
           </p>
         )}
