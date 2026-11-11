@@ -364,6 +364,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.settings.subtitle": "Profil, langue, thème et apprentissage",
   "cabinet.theme.label": "Thème",
   "cabinet.theme.light": "Claire",
+  "cabinet.theme.system": "Système",
   "cabinet.theme.dark": "Sombre",
   "cabinet.theme.toLight": "Passer au thème clair",
   "cabinet.theme.toDark": "Passer au thème sombre",

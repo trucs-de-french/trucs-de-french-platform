@@ -15,6 +15,15 @@ export function setThemeCookie(value: "dark" | "light") {
   document.cookie = `${THEME_COOKIE}=${value}; path=/; max-age=${THEME_COOKIE_MAX_AGE}; samesite=lax`;
 }
 
+// Вибір "Системна" (use-theme.ts setThemeMode) прибирає explicit-кукі,
+// а не пише в неї "system" — відсутність куки й так означає "система"
+// для і сервера (parseThemeCookieValue нижче), і інлайн-скрипта
+// (theme-script.tsx), без нового стану для парсити.
+export function clearThemeCookie() {
+  if (typeof document === "undefined") return;
+  document.cookie = `${THEME_COOKIE}=; path=/; max-age=0; samesite=lax`;
+}
+
 // Чистий парсер (без next/headers — цей модуль ділять і клієнтський, і
 // серверний код) для серверних компонентів кабінету: дає useTheme()
 // той самий isDark, що вже є в куці, замінюючи SSR-дефолт "не темна"

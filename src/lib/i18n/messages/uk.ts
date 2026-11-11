@@ -365,6 +365,7 @@ export const uk = {
   "cabinet.settings.subtitle": "Профіль, мова, тема та навчання",
   "cabinet.theme.label": "Тема",
   "cabinet.theme.light": "Світла",
+  "cabinet.theme.system": "Системна",
   "cabinet.theme.dark": "Темна",
   "cabinet.theme.toLight": "Увімкнути світлу тему",
   "cabinet.theme.toDark": "Увімкнути темну тему",

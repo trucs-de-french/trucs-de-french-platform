@@ -362,6 +362,7 @@ export const en: Record<MessageKey, string> = {
   "cabinet.settings.subtitle": "Profile, language, theme and learning",
   "cabinet.theme.label": "Theme",
   "cabinet.theme.light": "Light",
+  "cabinet.theme.system": "System",
   "cabinet.theme.dark": "Dark",
   "cabinet.theme.toLight": "Switch to light theme",
   "cabinet.theme.toDark": "Switch to dark theme",
