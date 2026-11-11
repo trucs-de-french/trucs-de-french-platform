@@ -4,7 +4,10 @@ import { gradeAnswer } from "@/lib/exercises/grade";
 import { recordTaskAttempt } from "@/lib/progress";
 import { isGradableTaskType } from "@/lib/exercises/gradable-types";
 
-const DUPLICATE_SUBMIT_WINDOW_MS = 5_000;
+// 2s — only meant to filter a double click / duplicate request firing
+// twice for the same submission; a legitimate next block submitted soon
+// after the previous one must still be recorded, so this must stay short.
+const DUPLICATE_SUBMIT_WINDOW_MS = 2_000;
 
 export async function POST(request: Request) {
   const body = await request.json();
