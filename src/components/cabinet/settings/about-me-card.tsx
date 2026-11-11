@@ -1,12 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { Heart, Plane, Briefcase, House, GraduationCap, Baby, type LucideIcon } from "lucide-react";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { FrenchLevel, FrenchLevelSource, LearningGoal } from "@/lib/supabase/profile";
 import { saveAboutMe } from "@/app/cabinet/actions";
 import { CardTitle } from "@/components/cabinet/card-title";
+
+// dd.mm.yyyy, той самий Europe/Kyiv часовий пояс, що інші дати кабінету
+// (напр. todayStr в exam-формі) — formatToParts, а не локаль-залежний
+// toLocaleDateString, щоб порядок day/month/year не залежав від locale.
+function formatSetAtDate(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Kyiv",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")}.${get("month")}.${get("year")}`;
+}
 
 const GOAL_OPTIONS: { value: LearningGoal; icon: LucideIcon; labelKey: MessageKey }[] = [
   { value: "self", icon: Heart, labelKey: "settings.aboutMe.goal.self" },
@@ -38,12 +53,14 @@ export function AboutMeCard({
   initialGoals,
   initialLevel,
   initialLevelSource,
+  initialLevelSetAt,
 }: {
   lang: UiLang;
   available: boolean;
   initialGoals: LearningGoal[];
   initialLevel: FrenchLevel | null;
   initialLevelSource: FrenchLevelSource | null;
+  initialLevelSetAt: string | null;
 }) {
   const [goals, setGoals] = useState<Set<LearningGoal>>(() => new Set(initialGoals));
   const [level, setLevel] = useState<FrenchLevel | null>(initialLevel);
@@ -141,6 +158,9 @@ export function AboutMeCard({
         {levelSource && (
           <p className="about-me-level-caption">
             {t(lang, levelSource === "test" ? "settings.aboutMe.levelSource.test" : "settings.aboutMe.levelSource.self")}
+            {levelSource === "test" && initialLevelSetAt && (
+              <> · {t(lang, "settings.aboutMe.test.setAt", { date: formatSetAtDate(initialLevelSetAt) })}</>
+            )}
           </p>
         )}
       </div>
@@ -152,7 +172,9 @@ export function AboutMeCard({
           </p>
           <p className="mt-1 font-body text-sm text-[var(--cabinet-muted)]">{t(lang, "settings.aboutMe.test.hint")}</p>
         </div>
-        <span className="cabinet-soon-chip">{t(lang, "cabinet.soon")}</span>
+        <Link href="/cabinet/placement-test" className="placement-btn-primary cabinet-btn-primary whitespace-nowrap">
+          {t(lang, "settings.aboutMe.test.cta")}
+        </Link>
       </div>
 
       <div className="mt-8 flex items-center justify-end gap-3">

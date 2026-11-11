@@ -4,6 +4,7 @@ import {
   BookMarked,
   LineChart,
   RotateCcw,
+  ClipboardCheck,
   SlidersHorizontal,
   MoreHorizontal,
   ShieldCheck,
@@ -35,6 +36,16 @@ export const CABINET_PRIMARY_NAV: CabinetNavItem[] = [
   { href: "/cabinet/progress", icon: LineChart, labelKey: "cabinet.nav.progress" },
   { href: "/cabinet/mistakes", icon: RotateCcw, labelKey: "cabinet.nav.mistakes" },
 ];
+
+// Окремий від CABINET_PRIMARY_NAV (не в мобільному tab bar — там лише 5
+// вкладок + "Ще") — у десктопному sidebar рендериться NavLink'ом одразу
+// після primary-списку, ПЕРЕД розділювачем/Налаштуваннями; на мобільному
+// — рядок у "Ще" (cabinet/more/page.tsx), перед Налаштуваннями.
+export const CABINET_PLACEMENT_TEST_NAV: CabinetNavItem = {
+  href: "/cabinet/placement-test",
+  icon: ClipboardCheck,
+  labelKey: "cabinet.nav.placementTest",
+};
 
 export const CABINET_SETTINGS_NAV: CabinetNavItem = {
   href: "/cabinet/settings",

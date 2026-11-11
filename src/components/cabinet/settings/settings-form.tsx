@@ -43,6 +43,7 @@ export function SettingsForm({
   initialLearningGoals,
   initialFrenchLevel,
   initialFrenchLevelSource,
+  initialFrenchLevelSetAt,
   initialIsDark = null,
   onSignOut,
 }: {
@@ -61,6 +62,7 @@ export function SettingsForm({
   initialLearningGoals: LearningGoal[];
   initialFrenchLevel: FrenchLevel | null;
   initialFrenchLevelSource: FrenchLevelSource | null;
+  initialFrenchLevelSetAt: string | null;
   initialIsDark?: boolean | null;
   onSignOut: () => Promise<void>;
 }) {
@@ -128,6 +130,7 @@ export function SettingsForm({
           initialGoals={initialLearningGoals}
           initialLevel={initialFrenchLevel}
           initialLevelSource={initialFrenchLevelSource}
+          initialLevelSetAt={initialFrenchLevelSetAt}
         />
         <InterfaceCard lang={lang} initialIsDark={initialIsDark} />
         <LearningCard lang={lang} goal={weeklyGoal} exam={exam} showExamCard={showExamCard} />

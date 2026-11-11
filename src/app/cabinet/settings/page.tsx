@@ -67,15 +67,17 @@ export default async function CabinetSettingsPage() {
   let learningGoals: LearningGoal[] = [];
   let frenchLevel: FrenchLevel | null = null;
   let frenchLevelSource: FrenchLevelSource | null = null;
+  let frenchLevelSetAt: string | null = null;
   try {
     const { data: aboutMe } = await supabase
       .from("profiles")
-      .select("learning_goals, french_level, french_level_source")
+      .select("learning_goals, french_level, french_level_source, french_level_set_at")
       .eq("id", user.id)
-      .single<Pick<Profile, "learning_goals" | "french_level" | "french_level_source">>();
+      .single<Pick<Profile, "learning_goals" | "french_level" | "french_level_source" | "french_level_set_at">>();
     learningGoals = aboutMe?.learning_goals ?? [];
     frenchLevel = aboutMe?.french_level ?? null;
     frenchLevelSource = aboutMe?.french_level_source ?? null;
+    frenchLevelSetAt = aboutMe?.french_level_set_at ?? null;
   } catch {
     // міграція 0067 ще не застосована
     aboutMeAvailable = false;
@@ -111,6 +113,7 @@ export default async function CabinetSettingsPage() {
         initialLearningGoals={learningGoals}
         initialFrenchLevel={frenchLevel}
         initialFrenchLevelSource={frenchLevelSource}
+        initialFrenchLevelSetAt={frenchLevelSetAt}
         initialIsDark={initialIsDark}
         onSignOut={signOut}
       />

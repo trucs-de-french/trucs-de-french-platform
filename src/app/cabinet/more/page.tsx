@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { SlidersHorizontal, ShieldCheck, LogOut, type LucideIcon } from "lucide-react";
+import { SlidersHorizontal, ClipboardCheck, ShieldCheck, LogOut, type LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import { getCabinetProfile } from "@/lib/supabase/profile";
 import { signOut } from "@/app/login/actions";
@@ -26,6 +26,7 @@ export default async function CabinetMorePage() {
       </h1>
 
       <div className="mt-4 flex flex-col gap-2">
+        <MoreRow href="/cabinet/placement-test" icon={ClipboardCheck} label={t(lang, "cabinet.nav.placementTest")} />
         <MoreRow href="/cabinet/settings" icon={SlidersHorizontal} label={t(lang, "cabinet.nav.settings")} />
 
         {isTeacher && (

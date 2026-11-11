@@ -9,7 +9,7 @@ import { PlatformBadge } from "@/components/platform-badge";
 import { CabinetSidebarProfile } from "@/components/cabinet/sidebar-profile";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { CABINET_PRIMARY_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
+import { CABINET_PRIMARY_NAV, CABINET_PLACEMENT_TEST_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
 import { LanguagePills, CabinetLangCycle } from "./language-pills";
 import { ThemePills, ThemeRailButton } from "./theme-switch";
 
@@ -79,6 +79,13 @@ export function CabinetSidebar({
             active={pathname === item.href}
           />
         ))}
+
+        <NavLink
+          item={CABINET_PLACEMENT_TEST_NAV}
+          lang={lang}
+          collapsed={collapsed}
+          active={pathname === CABINET_PLACEMENT_TEST_NAV.href}
+        />
 
         <div className="cabinet-sidebar-divider my-2 border-t border-white/15" />
 
