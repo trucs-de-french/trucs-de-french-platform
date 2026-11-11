@@ -243,11 +243,15 @@ export function FullAchievements({
                 <span className="achievements-collection-tab-row">
                   <span className="achievements-collection-tab-name">
                     {t(lang, "achievements.collection.chip", { n: roman(n) })}
-                    {adminOnly && <span className="achievements-admin-tag">{t(lang, "achievements.admin.tag")}</span>}
                   </span>
                   <span className="achievements-collection-tab-count">
                     {progress.earned}/{progress.total}
                   </span>
+                  {adminOnly && (
+                    <span className="achievements-admin-tag achievements-collection-tab-admin">
+                      {t(lang, "achievements.admin.tag")}
+                    </span>
+                  )}
                 </span>
                 <span className="achievements-collection-tab-track">
                   <span className="achievements-collection-tab-fill" style={{ width: `${pct}%` }} />

@@ -12245,6 +12245,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .achievements-collection-tabs--single {
   grid-template-columns: 1fr;
 }
+.achievements-collection-tabs {
+  align-items: stretch;
+}
 .achievements-collection-tab {
   display: flex;
   flex-direction: column;
@@ -12258,29 +12261,66 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   text-align: left;
   cursor: pointer;
 }
+/* Grid, не flex: з однаковими дочірніми елементами (name/count/tag) і
+   двома різними розкладками area на мобільному/десктопі (name-tag-
+   count в один рядок на >=640px; name окремим рядком, count+tag другим
+   рядком на мобільному) — так "АДМІН" ніколи не перетинається ні з
+   назвою (вона тепер одна в своєму рядку/колонці), ні з лічильником
+   (окрема grid-область). */
 .achievements-collection-tab-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "name name"
+    "count tag";
+  column-gap: 8px;
+  row-gap: 4px;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   min-width: 0;
 }
 .achievements-collection-tab-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  grid-area: name;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 15px;
   color: var(--cabinet-ink);
 }
+@media (max-width: 360px) {
+  .achievements-collection-tab-name {
+    font-size: 14px;
+  }
+}
 .achievements-collection-tab-count {
+  grid-area: count;
+  justify-self: start;
   flex-shrink: 0;
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 13px;
   color: var(--cabinet-muted);
+}
+.achievements-collection-tab-admin {
+  grid-area: tag;
+  justify-self: end;
+  flex-shrink: 0;
+  padding: 1px 6px;
+  font-size: 10px;
+}
+@media (min-width: 640px) {
+  .achievements-collection-tab-row {
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: "name tag count";
+  }
+  .achievements-collection-tab-count {
+    justify-self: end;
+  }
+  .achievements-collection-tab-admin {
+    justify-self: start;
+  }
 }
 .achievements-collection-tab-track {
   display: block;
@@ -12345,6 +12385,9 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .themed-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) transparent;
+  /* Інерційний скрол на iOS Safari/мобільних WebKit — без цього деякі
+     мобільні WebKit-вузли все одно показують дефолтну "гумову" смугу. */
+  -webkit-overflow-scrolling: touch;
 }
 .themed-scroll::-webkit-scrollbar {
   width: 10px;
@@ -12465,12 +12508,21 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   bottom: calc(100% + 8px);
 }
 .achievements-category-menu-scroll {
-  max-height: 380px;
+  /* Мобільний ліміт: менше з 60vh/380px і "скільки лишається над
+     фіксованою нижньою навігацією" (--cabinet-bottom-bar-height, та сама
+     змінна, що й .settings-save-pill-wrap) — JS-розрахунок openUpward
+     вище лише вирішує "вгору чи вниз", висоту саму рахує CSS. */
+  max-height: min(60vh, 380px, calc(100dvh - var(--cabinet-bottom-bar-height, 0px) - 140px));
   overflow-y: auto;
   scrollbar-gutter: stable;
   margin: 0;
   padding: 8px 6px 8px 8px;
   list-style: none;
+}
+@media (min-width: 640px) {
+  .achievements-category-menu-scroll {
+    max-height: 380px;
+  }
 }
 .achievements-category-option {
   display: flex;

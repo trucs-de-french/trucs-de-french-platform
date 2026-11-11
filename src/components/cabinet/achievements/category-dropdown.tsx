@@ -67,8 +67,17 @@ export function CategoryDropdown({
     const trigger = triggerRef.current;
     if (trigger) {
       const rect = trigger.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUpward(spaceBelow < MENU_MAX_HEIGHT && rect.top > spaceBelow);
+      // На мобільному (<640px, той самий брейкпоінт, що в globals.css)
+      // фіксована нижня навігація (.cabinet-bottom-bar) перекриває частину
+      // в'юпорта — віднімаємо її висоту з доступного простору знизу, інакше
+      // меню могло б відкритись "вниз" під неї замість вгору.
+      const isMobile = window.innerWidth < 640;
+      const barHeight = isMobile
+        ? parseFloat(getComputedStyle(trigger).getPropertyValue("--cabinet-bottom-bar-height")) || 0
+        : 0;
+      const effectiveMaxHeight = Math.min(MENU_MAX_HEIGHT, window.innerHeight * 0.6);
+      const spaceBelow = window.innerHeight - rect.bottom - barHeight;
+      setOpenUpward(spaceBelow < effectiveMaxHeight && rect.top > spaceBelow);
     }
     listRef.current?.focus();
   }, [open, selectedIndex]);
