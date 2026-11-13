@@ -35,7 +35,7 @@ export default async function CoursePage({
   if (previewBlocked) {
     return (
       <main className="mx-auto w-full max-w-2xl p-6">
-        <Link href="/dashboard" className="text-sm underline">
+        <Link href="/cabinet" className="text-sm underline">
           ← До кабінету
         </Link>
         <h1 className={`mt-2 ${STUDENT_PAGE_TITLE}`}>{product.title}</h1>
@@ -47,7 +47,7 @@ export default async function CoursePage({
   if (product.type === "delf") {
     return (
       <main className="mx-auto w-full max-w-4xl p-6">
-        <Link href="/dashboard" className="text-sm underline">
+        <Link href="/cabinet" className="text-sm underline">
           ← До кабінету
         </Link>
         {isPreviewing && <PreviewBanner productId={productId} />}
@@ -72,7 +72,7 @@ export default async function CoursePage({
 
   return (
     <main className="mx-auto w-full max-w-2xl p-6">
-      <Link href="/dashboard" className="text-sm underline">
+      <Link href="/cabinet" className="text-sm underline">
         ← До кабінету
       </Link>
       {isPreviewing && <PreviewBanner productId={productId} />}

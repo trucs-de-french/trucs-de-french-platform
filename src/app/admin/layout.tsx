@@ -23,7 +23,7 @@ export default async function AdminLayout({
 
   if (profile?.role !== "teacher") {
     redirect(
-      "/dashboard?error=" + encodeURIComponent("Доступ до адмінки лише для викладача")
+      "/cabinet?error=" + encodeURIComponent("Доступ до адмінки лише для викладача")
     );
   }
 
