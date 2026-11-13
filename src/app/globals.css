@@ -15590,6 +15590,19 @@ button.cabinet-nav-item {
   color: #8f97d6;
 }
 
+/* Картка "Останні досягнення" (achievements-home-card.tsx) — симетричний
+   padding-inline (був p-[22px_26px_20px] inline-Tailwind — рівний з
+   обох боків і раніше, але тут явний клас простіше перевірити й звести
+   до рекомендованого в задачі значення на мобільному). */
+.achievements-home-card {
+  padding: 22px 20px 20px;
+}
+@media (min-width: 640px) {
+  .achievements-home-card {
+    padding: 22px 26px 20px;
+  }
+}
+
 /* Home: ряд бейджів "Останні досягнення" (achievements-home-card.tsx) —
    завжди сітка 3 рівних колонок (картка тепер завжди вузька, одна з 3
    колонок рядка на десктопі/планшеті, не широка 1fr-колонка поряд з
@@ -15598,13 +15611,23 @@ button.cabinet-nav-item {
 .achievement-badge-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-content: stretch;
+  justify-items: center;
+  align-items: start;
   flex: 1;
-  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  column-gap: 8px;
+  row-gap: 16px;
 }
 .achievement-badge-slot {
   flex: none;
   min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 /* Компактна версія для home "Останні досягнення" — 64x67 монета (була
    72x75) і трохи менший текст, scoped через .achievement-badge-row
@@ -15615,8 +15638,11 @@ button.cabinet-nav-item {
    нижче) — на вузькій 3-колонковій сітці (360px) колонка часом тонша за
    96px, і довгі FR/EN лейбли ("Première scène", "Date d'examen ajoutée")
    торкались сусідньої колонки. Тут колонка сама диктує ширину
-   (width:100%; min-width:0) замість фіксованого px. */
+   (width:100%; min-width:0) замість фіксованого px. box-sizing:border-
+   box — без нього padding-inline нижче додавав би 8px ПОНАД 100% ширини
+   (content-box, дефолт), і бейдж вилазив би за межі своєї колонки. */
 .achievement-badge-row .achievement-badge {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   padding-inline: 4px;
@@ -15624,6 +15650,7 @@ button.cabinet-nav-item {
 .achievement-badge-row .achievement-badge-coin {
   width: 64px;
   height: 67px;
+  margin-inline: auto;
 }
 .achievement-badge-row .achievement-badge-title {
   font-size: 13.5px;

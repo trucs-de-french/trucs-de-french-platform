@@ -33,7 +33,7 @@ export function AchievementsHomeCard({
   const picked = useMemo(() => pickHomeAchievements(items, showExamCard), [items, showExamCard]);
 
   return (
-    <div className="cabinet-card flex flex-col gap-[14px] p-[22px_26px_20px]">
+    <div className="cabinet-card achievements-home-card flex flex-col gap-[14px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle>{t(lang, "home.achievements.title")}</CardTitle>
       </div>
