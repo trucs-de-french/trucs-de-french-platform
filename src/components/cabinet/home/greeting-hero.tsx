@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { t } from "@/lib/i18n/t";
 import { plural, type PluralForms } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
+import type { FrenchLevel } from "@/lib/supabase/profile";
 import { ProfileAvatar } from "@/components/cabinet/profile-avatar";
 import { kyivDateString, addDays, startOfWeekKyiv } from "@/lib/cabinet/kyiv-date";
 import { useAdminPreview } from "@/lib/cabinet/admin-preview";
+import { LEVEL_COIN_LABEL } from "@/components/cabinet/home/level-card";
 
 // Фіксовані 2-літерні абревіатури днів тижня (Пн..Нд) — не через t(),
 // як DAY_UNIT_FORMS/SCENE_UNIT_FORMS в exam-card.tsx/weekly-goal-card.tsx:
@@ -48,7 +51,7 @@ export function GreetingHero({
   avatarMascot: string | null;
   streakDays: number;
   weekActiveDays: string[];
-  level: string | null;
+  level: FrenchLevel | null;
 }) {
   const { override } = useAdminPreview();
   const now = new Date();
@@ -80,7 +83,18 @@ export function GreetingHero({
       </span>
     );
   });
-  const levelChip = level && <span className="cabinet-hero-level-chip">{t(lang, "home.hero.level", { level })}</span>;
+  // Рівень тут — завжди profiles.french_level (єдине джерело істини для
+  // "рівня студента" в кабінеті, окремо від productLevel курсу, що
+  // показується деінде як рівень КУРСУ, не студента). Адмінський
+  // override (useAdminPreview) цього чіпа не торкається — лише стріку/
+  // week-dots вище, тож симулятор лишається як був.
+  const levelChip = level ? (
+    <span className="cabinet-hero-level-chip">{t(lang, "home.hero.level", { level: LEVEL_COIN_LABEL[level] })}</span>
+  ) : (
+    <Link href="/cabinet/placement-test" className="cabinet-hero-level-chip cabinet-hero-level-chip--unset">
+      {t(lang, "home.level.empty")}
+    </Link>
+  );
   const streakText = (
     <span className="cabinet-week-streak-text">{t(lang, "home.streakChip", { n: effectiveStreakDays, unit })}</span>
   );

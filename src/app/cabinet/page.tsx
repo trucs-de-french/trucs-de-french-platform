@@ -99,7 +99,7 @@ export default async function CabinetHomePage() {
         avatarMascot={home.avatarMascot}
         streakDays={home.streakDays}
         weekActiveDays={home.weekActiveDays}
-        level={home.continueTarget?.productLevel ?? null}
+        level={profile?.french_level ?? null}
       />
 
       {/* <640px — попередня розкладка БЕЗ ЗМІН (byte-for-byte), лише

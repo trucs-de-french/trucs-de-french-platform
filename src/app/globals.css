@@ -13522,24 +13522,27 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 
+/* Звичайна біла картка (variant "card"), як сусідні .cabinet-card —
+   колишній кремово-золотий градієнт-панель прибрано (просили зробити
+   однаковий фон/рамку/радіус/тінь з іншими картками); золоте кільце
+   довкола аватара, золотий чіп рівня й gold/today week-dots лишились
+   без змін (не фон картки). radius/shadow тут буквально ЗІ значень
+   .cabinet-card (22px, та сама тінь), не власні числа, щоб не розійтись
+   при майбутній зміні токена. */
 .cabinet-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border-radius: 26px;
+  border-radius: 22px;
   padding: 22px 26px;
   margin-bottom: -8px;
   border: 1.5px solid var(--cabinet-line);
-  background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+  background-color: var(--cabinet-card-bg);
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
-/* Темна тема: той самий плоский фон, що інші картки кабінету
-   (--cabinet-card-bg) — без градієнтів і золотого сяйва (ті читались
-   брудно-сіро-коричневим на цій панелі). */
 .dark .cabinet-hero {
-  background: var(--cabinet-card-bg);
-  background-image: none;
-  border-color: var(--cabinet-line);
+  box-shadow: none;
 }
 .cabinet-hero-greeting {
   font-family: var(--font-heading);
@@ -13672,6 +13675,23 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
   white-space: nowrap;
 }
+/* Рівень ще не вказано — приглушений контурний чіп-посилання на тест
+   замість вигаданого gold-рівня (той самий колір тексту/рамки, що
+   .cabinet-level-card-empty на картці "Мій рівень"). */
+.cabinet-hero-level-chip--unset {
+  color: var(--cabinet-muted);
+  background: transparent;
+  border: 1.5px solid var(--cabinet-line);
+  text-decoration: none;
+}
+.cabinet-hero-level-chip--unset:hover {
+  border-color: #d9b765;
+  color: var(--cabinet-ink);
+}
+.dark .cabinet-hero-level-chip--unset:hover {
+  border-color: #d9b765;
+  color: #f6dc8e;
+}
 @media (max-width: 639px) {
   .cabinet-hero {
     padding: 16px 18px;
@@ -13719,10 +13739,11 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   display: none;
   align-items: center;
   gap: 16px;
-  border-radius: 26px;
+  border-radius: 22px;
   padding: 14px 22px;
   border: 1.5px solid var(--cabinet-line);
-  background: linear-gradient(120deg, rgba(243, 217, 139, 0.38), rgba(217, 183, 101, 0.1) 55%, transparent);
+  background-color: var(--cabinet-card-bg);
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
 @media (min-width: 640px) {
   .cabinet-hero-slim {
@@ -13730,9 +13751,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   }
 }
 .dark .cabinet-hero-slim {
-  background: var(--cabinet-card-bg);
-  background-image: none;
-  border-color: var(--cabinet-line);
+  box-shadow: none;
 }
 .cabinet-hero-slim-avatar {
   flex-shrink: 0;

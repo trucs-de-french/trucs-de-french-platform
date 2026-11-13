@@ -181,6 +181,7 @@ export async function saveAboutMe(
   if (error) return { ok: false, error: "db" };
 
   revalidatePath("/cabinet/settings");
+  revalidatePath("/cabinet");
   return { ok: true, level: submittedLevel, levelSource, levelSetAt };
 }
 

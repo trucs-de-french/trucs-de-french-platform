@@ -15,7 +15,7 @@ const LEVEL_TITLE_KEY: Record<FrenchLevel, MessageKey> = {
   B2: "placementTest.level.B2.title",
   C1C2: "placementTest.level.C1C2.title",
 };
-const LEVEL_COIN_LABEL: Record<FrenchLevel, string> = {
+export const LEVEL_COIN_LABEL: Record<FrenchLevel, string> = {
   A0: "A0",
   A1: "A1",
   A2: "A2",
