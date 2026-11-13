@@ -39,7 +39,7 @@ export function QuoteCard({ lang, quote }: { lang: UiLang; quote: Quote }) {
           </p>
         )}
         <p className="text-xs text-[var(--cabinet-muted)]" style={{ marginTop: 24 }}>
-          {t(lang, `home.quote.source.${quote.source}`)}
+          {quote.author ? `— ${quote.author}` : t(lang, `home.quote.source.${quote.source}`)}
         </p>
       </div>
     </div>
