@@ -13500,21 +13500,20 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
    секціями, -8 зводить сумарний відступ до задуманих 16px, не додаючи
    його ПОВЕРХ gap. */
 /* Спільна колонкова сітка для обох рядків Home — "Останні досягнення"/
-   "Іспит" і "Продовжити"/"Цитата дня" (cabinet/page.tsx): 4 прямі діти,
-   grid-auto-flow:row (за замовчуванням) сам розкладає їх по 2 в рядок,
-   тож висоти рядків лишаються незалежними (кожен тягнеться по своєму
-   найвищому елементу), а вертикальний gutter — один і той самий x на всю
-   висоту обох рядків, бо колонки ОДНІ й ті самі. .cabinet-home-split-
-   full — коли іспит-картки нема, "Останні досягнення" займає весь
-   рядок замість пари з порожньою коміркою. */
+   "Ціль тижня+Іспит/Рівень" і "Продовжити"/"Цитата дня" (cabinet/
+   page.tsx): 4 прямі діти, grid-auto-flow:row (за замовчуванням) сам
+   розкладає їх по 2 в рядок, тож висоти рядків лишаються незалежними
+   (кожен тягнеться по своєму найвищому елементу), а вертикальний
+   gutter — один і той самий на всю висоту обох рядків, бо колонки ОДНІ
+   й ті самі. Другий слот ніколи не порожній (Іспит або картка "Мій
+   рівень" — той самий єдиний прапор home.showExamCard, що на десктопі),
+   тож колишній .cabinet-home-split-full (full-width span, коли іспиту
+   нема) більше не потрібен. */
 .cabinet-home-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
   align-items: stretch;
   gap: 18px;
-}
-.cabinet-home-split-full {
-  grid-column: 1 / -1;
 }
 @media (max-width: 759px) {
   .cabinet-home-split {
@@ -13828,18 +13827,16 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   gap: 18px;
   min-height: 0;
 }
-/* Компактний стиль карток у стеку (ціль тижня/іспит/рівень) — лише тут,
-   не торкаючись тих самих карток у мобільній розкладці (ті лишаються
-   на своєму стандартному p-5/.cabinet-card без переозначення). Шар
-   Tailwind-утиліт (p-5 на корені картки) програє цьому незашарованому
-   правилу незалежно від порядку в файлі — задокументована каскадна
-   особливість (@layer utilities програє unlayered CSS на тому самому
-   селекторі), тож перевизначення padding тут спрацює. */
-.cabinet-home-stack > .cabinet-card {
+/* Компактний padding/розмір кільця ціль-тижня — на самому компоненті
+   (не лише на дітях .cabinet-home-stack): тепер той самий компактний
+   вигляд на мобільному Home (де ця картка стоїть поруч з Іспитом/
+   Рівнем у своєму .cabinet-home-stack, без сусідньої картки такої ж
+   висоти через grid-row stretch), а не лише на планшеті/десктопі. */
+.cabinet-weekly-goal-card {
   padding: 16px 20px;
   min-height: 0;
 }
-.cabinet-home-stack .cabinet-weekly-ring {
+.cabinet-weekly-goal-card .cabinet-weekly-ring {
   width: 70px;
   height: 70px;
 }
@@ -13873,6 +13870,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 16px 20px;
 }
 .cabinet-level-card-head {
   display: flex;
@@ -13918,6 +13916,7 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 16px 20px;
 }
 .cabinet-exam-card-body {
   display: flex;

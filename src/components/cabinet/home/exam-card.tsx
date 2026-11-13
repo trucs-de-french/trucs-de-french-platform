@@ -18,18 +18,6 @@ const DAY_UNIT_FORMS: Record<UiLang, PluralForms> = {
   en: { one: "day", other: "days" },
 };
 
-const RING_SIZE = 104;
-const STROKE = 12;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const WINDOW_DAYS = 365;
-
-// 3+ цифри (напр. 120) при fontSize 38 торкались би штриха кільця на
-// RING_SIZE=104 — трохи менший розмір лише для цього випадку.
-function ringNumberFontSize(value: number): number {
-  return String(value).length >= 3 ? 28 : 38;
-}
-
 function ExamForm({
   lang,
   exam,
@@ -83,186 +71,69 @@ function ExamForm({
   );
 }
 
-// variant="default" — незмінний ring-дизайн (<640px, той самий код, що
-// був завжди). variant="compact" — новий текстовий дизайн (планшет/
-// десктоп стек, cabinet/page.tsx examOrLevelCard) — та сама форма
-// редагування (ExamForm), інший лише read-view. Два окремих блоки
-// JSX замість медіа-запиту: угруповання/порядок дітей відрізняється
-// (лейбл/число/слово зліва, назва+дата справа — не лише інший CSS над
-// тим самим DOM).
-export function ExamCard({
-  lang,
-  exam,
-  variant = "default",
-}: {
-  lang: UiLang;
-  exam: ExamInfo | null;
-  variant?: "default" | "compact";
-}) {
+// Компактний текстовий дизайн — єдиний варіант цієї картки на ВСІХ
+// ширинах (<640px теж, не лише планшет/десктоп): колишній окремий
+// ring-дизайн (variant="default") прибрано — мобільний Home тепер бере
+// той самий компонент/стан/копірайт/i18n, що й десктоп, через
+// examOrLevelCard у cabinet/page.tsx.
+export function ExamCard({ lang, exam }: { lang: UiLang; exam: ExamInfo | null }) {
   const [editing, setEditing] = useState(false);
   const showForm = editing || !exam;
   const isPast = !!exam && exam.daysLeft < 0;
-  const editLabelKey = variant === "compact" && isPast ? "home.exam.newDate" : "home.exam.editDate";
-
-  if (variant === "compact") {
-    return (
-      <div className="cabinet-card cabinet-exam-card">
-        <div className="cabinet-level-card-head">
-          <CardTitle>{t(lang, isPast ? "home.exam.past" : "home.exam.title")}</CardTitle>
-          {exam && !editing && (
-            <button type="button" onClick={() => setEditing(true)} className="cabinet-card-link">
-              {t(lang, editLabelKey)}
-            </button>
-          )}
-        </div>
-        {showForm ? (
-          <div className="w-full">
-            {!exam && <p className="mb-2 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.exam.setup")}</p>}
-            <ExamForm lang={lang} exam={exam} onDone={() => setEditing(false)} />
-          </div>
-        ) : (
-          exam && (
-            <div className="cabinet-exam-card-body">
-              {exam.daysLeft > 0 ? (
-                <>
-                  <div className="cabinet-exam-card-left">
-                    <p className="cabinet-exam-card-small-label">
-                      {t(lang, exam.daysLeft === 1 ? "home.exam.daysLeftLabelOne" : "home.exam.daysLeftLabel")}
-                    </p>
-                    <div className="cabinet-exam-card-countdown">
-                      <span className="cabinet-exam-card-number">{exam.daysLeft}</span>
-                      <span className="cabinet-exam-card-unit">{plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}</span>
-                    </div>
-                  </div>
-                  <div className="cabinet-exam-card-right">
-                    <p className="cabinet-exam-card-name">{exam.type}</p>
-                    <p className="cabinet-exam-card-date">{formatDateNumeric(exam.date, lang)}</p>
-                  </div>
-                </>
-              ) : exam.daysLeft === 0 ? (
-                <div className="cabinet-exam-card-left">
-                  <p className="cabinet-exam-card-small-label">{t(lang, "home.exam.title")}</p>
-                  <p className="cabinet-exam-card-today">{t(lang, "home.exam.todayBig")}</p>
-                  <p className="cabinet-exam-card-hint">{t(lang, "home.exam.todayHint")}</p>
-                </div>
-              ) : (
-                <>
-                  <div className="cabinet-exam-card-left">
-                    <p className="cabinet-exam-card-small-label">{t(lang, "home.exam.past")}</p>
-                    <p className="cabinet-exam-card-past-question">{t(lang, "home.exam.pastQuestion")}</p>
-                    <p className="cabinet-exam-card-hint">{t(lang, "home.exam.pastHint")}</p>
-                  </div>
-                  <div className="cabinet-exam-card-right">
-                    <p className="cabinet-exam-card-name">{exam.type}</p>
-                    <p className="cabinet-exam-card-date">{formatDateNumeric(exam.date, lang)}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          )
-        )}
-      </div>
-    );
-  }
+  const editLabelKey = isPast ? "home.exam.newDate" : "home.exam.editDate";
 
   return (
-    <div className="cabinet-card flex flex-col items-center gap-[14px] p-[22px_26px_20px]">
-      <div className="flex w-full items-center justify-between">
-        <CardTitle>{t(lang, "home.exam.title")}</CardTitle>
+    <div className="cabinet-card cabinet-exam-card">
+      <div className="cabinet-level-card-head">
+        <CardTitle>{t(lang, isPast ? "home.exam.past" : "home.exam.title")}</CardTitle>
         {exam && !editing && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="min-h-11 text-[13px] font-semibold text-[var(--cabinet-link)] dark:hover:underline dark:focus-visible:outline-2 dark:focus-visible:outline-offset-2 dark:focus-visible:outline-[var(--cabinet-focus-ring)]"
-          >
-            {t(lang, "home.exam.editDate")}
+          <button type="button" onClick={() => setEditing(true)} className="cabinet-card-link">
+            {t(lang, editLabelKey)}
           </button>
         )}
       </div>
-
       {showForm ? (
         <div className="w-full">
-          {!exam && (
-            <p className="mb-2 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.exam.setup")}</p>
-          )}
+          {!exam && <p className="mb-2 text-sm text-[var(--cabinet-muted)]">{t(lang, "home.exam.setup")}</p>}
           <ExamForm lang={lang} exam={exam} onDone={() => setEditing(false)} />
         </div>
       ) : (
         exam && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <div className="cabinet-exam-card-body">
             {exam.daysLeft > 0 ? (
               <>
-                <svg
-                  width={RING_SIZE}
-                  height={RING_SIZE}
-                  viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
-                  role="img"
-                  aria-label={t(lang, "home.exam.countdown", {
-                    n: exam.daysLeft,
-                    unit: plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang]),
-                  })}
-                >
-                  <circle
-                    cx={RING_SIZE / 2}
-                    cy={RING_SIZE / 2}
-                    r={RADIUS}
-                    fill="none"
-                    stroke="var(--cabinet-track-strong)"
-                    strokeWidth={STROKE}
-                  />
-                  <circle
-                    cx={RING_SIZE / 2}
-                    cy={RING_SIZE / 2}
-                    r={RADIUS}
-                    fill="none"
-                    stroke="#e0aa3e"
-                    strokeWidth={STROKE}
-                    strokeLinecap="round"
-                    strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={CIRCUMFERENCE * (Math.min(exam.daysLeft, WINDOW_DAYS) / WINDOW_DAYS)}
-                    transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-                  />
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontFamily="var(--font-heading)"
-                    fontSize={ringNumberFontSize(exam.daysLeft)}
-                    fontWeight={900}
-                    letterSpacing={0}
-                    fill="var(--cabinet-ink)"
-                  >
-                    {exam.daysLeft}
-                  </text>
-                </svg>
-                <div className="flex flex-col items-center gap-[2px]">
-                  <p className="font-heading text-[13px] font-extrabold text-[var(--cabinet-ink)]">
-                    {plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}
+                <div className="cabinet-exam-card-left">
+                  <p className="cabinet-exam-card-small-label">
+                    {t(lang, exam.daysLeft === 1 ? "home.exam.daysLeftLabelOne" : "home.exam.daysLeftLabel")}
                   </p>
-                  <div className="font-body text-[15px] font-semibold text-[var(--cabinet-ink)]">
-                    {exam.type} · {formatDateNumeric(exam.date, lang)}
+                  <div className="cabinet-exam-card-countdown">
+                    <span className="cabinet-exam-card-number">{exam.daysLeft}</span>
+                    <span className="cabinet-exam-card-unit">{plural(lang, exam.daysLeft, DAY_UNIT_FORMS[lang])}</span>
                   </div>
+                </div>
+                <div className="cabinet-exam-card-right">
+                  <p className="cabinet-exam-card-name">{exam.type}</p>
+                  <p className="cabinet-exam-card-date">{formatDateNumeric(exam.date, lang)}</p>
                 </div>
               </>
             ) : exam.daysLeft === 0 ? (
-              <p className="font-body text-xl font-extrabold text-[var(--cabinet-ink)]">{t(lang, "home.exam.today")}</p>
+              <div className="cabinet-exam-card-left">
+                <p className="cabinet-exam-card-small-label">{t(lang, "home.exam.title")}</p>
+                <p className="cabinet-exam-card-today">{t(lang, "home.exam.todayBig")}</p>
+                <p className="cabinet-exam-card-hint">{t(lang, "home.exam.todayHint")}</p>
+              </div>
             ) : (
               <>
-                <p className="font-body text-xl font-extrabold text-[var(--cabinet-ink)]">{t(lang, "home.exam.past")}</p>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="text-xs font-semibold text-[var(--cabinet-link)] dark:hover:underline"
-                >
-                  {t(lang, "home.exam.editDate")}
-                </button>
+                <div className="cabinet-exam-card-left">
+                  <p className="cabinet-exam-card-small-label">{t(lang, "home.exam.past")}</p>
+                  <p className="cabinet-exam-card-past-question">{t(lang, "home.exam.pastQuestion")}</p>
+                  <p className="cabinet-exam-card-hint">{t(lang, "home.exam.pastHint")}</p>
+                </div>
+                <div className="cabinet-exam-card-right">
+                  <p className="cabinet-exam-card-name">{exam.type}</p>
+                  <p className="cabinet-exam-card-date">{formatDateNumeric(exam.date, lang)}</p>
+                </div>
               </>
-            )}
-            {exam.daysLeft <= 0 && (
-              <div className="font-body text-[15px] font-semibold text-[var(--cabinet-ink)]">
-                {exam.type} · {formatDateNumeric(exam.date, lang)}
-              </div>
             )}
           </div>
         )

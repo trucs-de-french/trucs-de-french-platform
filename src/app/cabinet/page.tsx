@@ -60,17 +60,12 @@ export default async function CabinetHomePage() {
       levelSetAt={profile?.french_level_set_at ?? null}
     />
   );
-  // Мобільний (<640px, variant="default" — старий ring-дизайн, незмінний)
-  // і планшет/десктоп (variant="compact" — новий текстовий дизайн) —
-  // окремі елементи ExamCard, не той самий, бо на мобільному ця картка
-  // взагалі не показує "Мій рівень" (там і раніше showExamCard=false
-  // просто не рендерив нічого в цьому слоті — лишено без змін).
-  const examOrLevelCardMobile = home.showExamCard ? <ExamCard lang={lang} exam={home.exam} /> : null;
-  const examOrLevelCardCompact = home.showExamCard ? (
-    <ExamCard lang={lang} exam={home.exam} variant="compact" />
-  ) : (
-    levelCard
-  );
+  // Той самий компактний Іспит/Рівень на ВСІХ ширинах (<640px теж) —
+  // колишній окремий ring-дизайн мобільного ExamCard (variant="default")
+  // прибрано разом із тим, що мобільний Home раніше не показував "Мій
+  // рівень" зовсім, коли іспиту нема (тепер той самий єдиний прапор
+  // home.showExamCard, що й QuickActionsCard/AchievementsHomeCard).
+  const examOrLevelCard = home.showExamCard ? <ExamCard lang={lang} exam={home.exam} /> : levelCard;
   const achievementsCard = (
     <AchievementsHomeCard
       lang={lang}
@@ -102,19 +97,27 @@ export default async function CabinetHomePage() {
         level={profile?.french_level ?? null}
       />
 
-      {/* <640px — попередня розкладка БЕЗ ЗМІН (byte-for-byte), лише
-          sm:hidden зверху: >=640px замінюється новими планшетним/
-          десктопним деревами нижче (інше угруповання карток за
-          макетом, не лише інший CSS поверх тих самих контейнерів). */}
+      {/* <640px: той самий порядок блоків, що й раніше ("Продовжити"
+          лишається на своєму місці), але "Ціль тижня"+"Іспит/Рівень"
+          тепер той самий компактний cabinet-home-stack, що на планшеті/
+          десктопі (той самий компонент/стан/копірайт/i18n), замість
+          старого великого ring-дизайну. Дві картки стоять ОДНА ПІД
+          ОДНОЮ (full-width), не поруч: .cabinet-exam-card-body вже
+          впритул заповнює ~290px контенту картки на 360px екрані
+          (46px-цифра+підпис зліва, назва типу іспиту+дата справа) —
+          удвічі вужча колонка "поруч" переповнила б довгу FR/EN назву
+          типу іспиту (DALF C1/C2) чи дату. */}
       <div className="flex flex-col gap-6 sm:hidden">
         <div className="cabinet-home-split">
-          <div className={home.showExamCard ? "contents" : "cabinet-home-split-full"}>{achievementsCard}</div>
-          {examOrLevelCardMobile}
+          {achievementsCard}
+          <div className="cabinet-home-stack">
+            {weeklyGoalCard}
+            {examOrLevelCard}
+          </div>
           {continueCard}
           {quoteCard}
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {weeklyGoalCard}
           {quickActionsCard}
           {redoList}
         </div>
@@ -130,7 +133,7 @@ export default async function CabinetHomePage() {
         <div className="cabinet-home-tablet-row2">
           <div className="cabinet-home-stack">
             {weeklyGoalCard}
-            {examOrLevelCardCompact}
+            {examOrLevelCard}
           </div>
           {quickActionsCard}
         </div>
@@ -148,7 +151,7 @@ export default async function CabinetHomePage() {
         <div className="cabinet-home-row3">
           <div className="cabinet-home-stack">
             {weeklyGoalCard}
-            {examOrLevelCardCompact}
+            {examOrLevelCard}
           </div>
           {achievementsCard}
           {quickActionsCard}

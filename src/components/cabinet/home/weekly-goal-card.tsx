@@ -43,7 +43,7 @@ export function WeeklyGoalCard({
   const reached = goal > 0 && done >= goal;
 
   return (
-    <div className="cabinet-card flex flex-col gap-3 p-5">
+    <div className="cabinet-card cabinet-weekly-goal-card flex flex-col gap-3">
       <div className="flex w-full items-center justify-between">
         <CardTitle>{t(lang, "home.goal.title")}</CardTitle>
         <Link

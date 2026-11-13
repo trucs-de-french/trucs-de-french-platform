@@ -393,8 +393,6 @@ export const fr: Record<MessageKey, string> = {
   "home.exam.save": "Enregistrer",
   "home.exam.edit": "Modifier",
   "home.exam.editDate": "Modifier la date",
-  "home.exam.countdown": "{n} {unit} avant l'examen",
-  "home.exam.today": "Examen aujourd'hui",
   "home.exam.past": "Examen passé",
   "home.exam.error": "Impossible d'enregistrer. Vérifiez la date et le type.",
   "home.exam.newDate": "Nouvelle date",

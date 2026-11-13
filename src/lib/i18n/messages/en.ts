@@ -391,8 +391,6 @@ export const en: Record<MessageKey, string> = {
   "home.exam.save": "Save",
   "home.exam.edit": "Edit",
   "home.exam.editDate": "Change date",
-  "home.exam.countdown": "{n} {unit} to the exam",
-  "home.exam.today": "Exam today",
   "home.exam.past": "Exam has passed",
   "home.exam.error": "Couldn't save. Check the date and type.",
   "home.exam.newDate": "New date",
