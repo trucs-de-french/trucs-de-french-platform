@@ -33,14 +33,14 @@ export default async function CabinetMorePage() {
           <MoreRow href="/admin/courses" icon={ShieldCheck} label={t(lang, "cabinet.nav.admin")} />
         )}
 
-        <div className="rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 py-4">
+        <div className="cabinet-more-card rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 py-4">
           <p className="mb-2 text-xs font-semibold text-[var(--cabinet-muted)]">
             {t(lang, "cabinet.nav.language")}
           </p>
           <LanguagePills current={lang} />
         </div>
 
-        <div className="rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 py-4">
+        <div className="cabinet-more-card rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 py-4">
           <p className="mb-2 text-xs font-semibold text-[var(--cabinet-muted)]">
             {t(lang, "cabinet.theme.label")}
           </p>
@@ -50,7 +50,7 @@ export default async function CabinetMorePage() {
         <form action={signOut}>
           <button
             type="submit"
-            className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 text-left font-heading text-sm font-bold text-[var(--cabinet-ink)]"
+            className="cabinet-more-card flex min-h-[56px] w-full items-center gap-3 rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 text-left font-heading text-sm font-bold text-[var(--cabinet-ink)]"
           >
             <LogOut size={20} aria-hidden="true" />
             {t(lang, "cabinet.nav.signOut")}
@@ -73,7 +73,7 @@ function MoreRow({
   return (
     <Link
       href={href}
-      className="flex min-h-[56px] items-center gap-3 rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 font-heading text-sm font-bold text-[var(--cabinet-ink)]"
+      className="cabinet-more-card flex min-h-[56px] items-center gap-3 rounded-2xl border-[1.5px] border-[var(--cabinet-line)] px-4 font-heading text-sm font-bold text-[var(--cabinet-ink)]"
     >
       <Icon size={20} aria-hidden="true" />
       {label}

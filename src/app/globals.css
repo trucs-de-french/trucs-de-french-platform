@@ -14519,6 +14519,30 @@ button.cabinet-nav-item {
   color: #f6f1e3;
 }
 
+/* Мобільна "Ще" (<640px, СВІТЛА тема лише) — рядки (Тест рівня/
+   Налаштування/Адмінка/Вийти) і картки мови/теми не мали власного фону,
+   тож крізь них було видно кремову .cabinet-panel (той самий кремовий
+   відтінок, що описаний вище для пілюль) — мали виглядати звичайними
+   білими картками, як сусідні .cabinet-card (greeting-картка тощо).
+   .border/.rounded-2xl з JSX (Tailwind-утиліти, @layer utilities)
+   лишаються візуально тими самими значеннями (1.5px/16px) в темній
+   темі — цей unlayered блок їх не чіпає там, лише у світлій. Десктопний
+   сайдбар показує ті самі пункти через ЗОВСІМ ІНШИЙ компонент
+   (.cabinet-nav-item у .cabinet-sidebar, не .cabinet-more-card) —
+   не торкається цим правилом незалежно від ширини екрана. */
+@media (max-width: 639px) {
+  .cabinet-more-card {
+    background-color: var(--cabinet-card-bg);
+    border-radius: 22px;
+    box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
+  }
+  .dark .cabinet-more-card {
+    background-color: transparent;
+    border-radius: 1rem;
+    box-shadow: none;
+  }
+}
+
 /* Нижня мобільна навігація — лише іконки, активний пункт розгортається
    в суцільну gold-пігулку з короткою назвою. Власні .cabinet-bottom-*
    класи (НЕ .cabinet-nav-item/>span з desktop sidebar) — та сама колізія
