@@ -303,6 +303,9 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.panelTranslationLabel": "Ma traduction (facultatif)",
   "dictionary.panelSave": "Enregistrer le mot",
   "dictionary.panelCancel": "Annuler",
+  "dictionary.panelClose": "Fermer",
+  "dictionary.panelSavedConfirm": "✓ Enregistré",
+  "dictionary.panelRemovedConfirm": "✓ Retiré",
 
   "vocabSection.collapseVocab": "Réduire le vocabulaire",
   "vocabSection.downloadPdf": "Télécharger le PDF",

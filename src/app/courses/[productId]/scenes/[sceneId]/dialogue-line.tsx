@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
@@ -203,14 +203,49 @@ function PlainWordPanel({
   const { t } = useT();
   const saved = useSavedWords();
   const [value, setValue] = useState("");
+  // justSaved/justRemoved — лише короткий підпис ПЕРЕД автозакриттям
+  // (onClose викликає ScriptSection, яка прибирає openPlainKey й
+  // анмаунтить цю панель — не animation/transition, тож нема що вимикати
+  // під prefers-reduced-motion, лише сам факт "зачекати 1с і закритись").
   const [justSaved, setJustSaved] = useState(false);
+  const [justRemoved, setJustRemoved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
+  // Автозакриття через 1с після успіху — той самий ефект і для save, і
+  // для remove (лише інший прапорець/лейбл). Таймер чиститься, якщо
+  // панель закриють вручну (ще один рендер із justSaved/justRemoved=false
+  // не трапиться — компонент до того часу вже анмаунтиться) АБО якщо
+  // компонент анмаунтиться сам (клік на інше слово/інша панель відкрилась) —
+  // саме unmount і викликає cleanup нижче в обох випадках.
   useEffect(() => {
-    if (!justSaved) return;
-    const timer = setTimeout(() => setJustSaved(false), 1000);
+    if (!justSaved && !justRemoved) return;
+    const timer = setTimeout(onClose, 1000);
     return () => clearTimeout(timer);
-  }, [justSaved]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose зі ScriptSection стабільний між рендерами лише за формою виклику, не за ідентичністю; залежність від justSaved/justRemoved навмисно єдина, що має перезапускати таймер
+  }, [justSaved, justRemoved]);
+
+  // Клік/тап ПОЗА панеллю закриває її — mousedown/touchstart (не click),
+  // той самий принцип, що VocabWord-тултіп (script-section.tsx) і
+  // category-dropdown.tsx: спрацьовує РАНІШЕ за click, тож клік на інше
+  // звичайне слово (.plain-word-btn) тут навмисно пропускається — його
+  // ВЛАСНИЙ onClick (DialogueLine) сам відкриє нову панель/закриє цю,
+  // без подвійного перемикання.
+  useEffect(() => {
+    function handlePointerDown(e: Event) {
+      const target = e.target as Element | null;
+      if (panelRef.current?.contains(target)) return;
+      if (target?.closest(".plain-word-btn")) return;
+      onClose();
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose зі ScriptSection стабільний за формою виклику; переприв'язка на кожен рендер непотрібна
+  }, []);
 
   function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") onClose();
@@ -223,7 +258,19 @@ function PlainWordPanel({
   const pending = saved.isPending(word);
 
   async function handleRemove() {
-    await saved!.remove(word);
+    const result = await saved!.remove(word);
+    if (result.ok) setJustRemoved(true);
+  }
+
+  if (justSaved || justRemoved) {
+    return (
+      <div className="plain-word-panel" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        <p className="save-word-pill save-word-pill--saved inline-flex">
+          {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
+        </p>
+      </div>
+    );
   }
 
   if (teacherItem) {
@@ -242,7 +289,7 @@ function PlainWordPanel({
       contextUk,
     };
     return (
-      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+      <div className="plain-word-panel" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
         <p className="plain-word-panel-word">{word}</p>
         <p className="plain-word-panel-translation">{teacherItem.translation}</p>
         {posLabel && <p className="plain-word-panel-pos">{posLabel}</p>}
@@ -250,7 +297,7 @@ function PlainWordPanel({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <SaveWordButton snapshot={snapshot} variant="pill" />
           <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-            {t("dictionary.panelCancel")}
+            {t("dictionary.panelClose")}
           </button>
         </div>
       </div>
@@ -259,7 +306,7 @@ function PlainWordPanel({
 
   if (existing) {
     return (
-      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+      <div className="plain-word-panel" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
         <p className="plain-word-panel-word">{word}</p>
         <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
         {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
@@ -268,7 +315,7 @@ function PlainWordPanel({
             {t("dictionary.removeAction")}
           </button>
           <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-            {t("dictionary.panelCancel")}
+            {t("dictionary.panelClose")}
           </button>
         </div>
         {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
@@ -289,17 +336,8 @@ function PlainWordPanel({
     if (result.ok) setJustSaved(true);
   }
 
-  if (justSaved) {
-    return (
-      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
-        <p className="plain-word-panel-word">{word}</p>
-        <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+    <div className="plain-word-panel" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
       <p className="plain-word-panel-word">{word}</p>
       {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
       <label className="plain-word-panel-label" htmlFor={inputId}>
@@ -311,6 +349,12 @@ function PlainWordPanel({
         value={value}
         maxLength={200}
         onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void handleSave();
+          }
+        }}
         className="plain-word-panel-input"
       />
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -380,6 +424,10 @@ export function DialogueLine({
   const saved = useSavedWords();
   const teacherVariantMap = useMemo(() => buildVariantMap(sceneVocab ?? []), [sceneVocab]);
   const plainKeyPrefix = `${lineIndex}-plain-`;
+  // Щоб повернути фокус на кнопку слова, яка відкрила панель, коли та
+  // закривається (Esc/автозакриття/Скасувати/клік поза) — ключ той самий
+  // формат, що openPlainKey.
+  const wordButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Токенізація "text"-частин ОКРЕМО від рендеру (чиста функція, без
   // мутації зовнішньої змінної зсередини .map()) — нижче і визначення
@@ -441,6 +489,10 @@ export function DialogueLine({
           return (
             <button
               key={j}
+              ref={(el) => {
+                if (el) wordButtonRefs.current.set(key, el);
+                else wordButtonRefs.current.delete(key);
+              }}
               type="button"
               onClick={() => onPlainWordClick?.(isOpen ? "" : key)}
               aria-expanded={isOpen}
@@ -455,6 +507,18 @@ export function DialogueLine({
   });
 
   const teacherItem = openPlainWord ? teacherVariantMap.get(normalizeWordForMatch(openPlainWord)) ?? null : null;
+
+  // Закриває панель і повертає фокус на кнопку слова, яка її відкрила —
+  // rAF, бо сама кнопка все ще в DOM у момент виклику (панель
+  // анмаунтиться лише на НАСТУПНОМУ рендері ScriptSection, після
+  // onPlainWordClick), фокусити її одразу безпечно й без затримки для ока.
+  function closePlainPanel() {
+    const key = openPlainKey;
+    onPlainWordClick?.("");
+    if (key) {
+      requestAnimationFrame(() => wordButtonRefs.current.get(key)?.focus());
+    }
+  }
 
   return (
     <div>
@@ -474,7 +538,7 @@ export function DialogueLine({
           contextUk={translationUk ?? null}
           teacherItem={teacherItem ?? null}
           inputId={`plain-word-translation-${lineIndex}`}
-          onClose={() => onPlainWordClick?.("")}
+          onClose={closePlainPanel}
         />
       )}
     </div>

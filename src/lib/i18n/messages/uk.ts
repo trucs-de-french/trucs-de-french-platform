@@ -304,6 +304,9 @@ export const uk = {
   "dictionary.panelTranslationLabel": "Мій переклад (за бажанням)",
   "dictionary.panelSave": "Зберегти слово",
   "dictionary.panelCancel": "Скасувати",
+  "dictionary.panelClose": "Закрити",
+  "dictionary.panelSavedConfirm": "✓ Збережено",
+  "dictionary.panelRemovedConfirm": "✓ Прибрано",
 
   "vocabSection.collapseVocab": "Згорнути вокабуляр",
   "vocabSection.downloadPdf": "Завантажити PDF",

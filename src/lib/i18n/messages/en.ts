@@ -301,6 +301,9 @@ export const en: Record<MessageKey, string> = {
   "dictionary.panelTranslationLabel": "My translation (optional)",
   "dictionary.panelSave": "Save word",
   "dictionary.panelCancel": "Cancel",
+  "dictionary.panelClose": "Close",
+  "dictionary.panelSavedConfirm": "✓ Saved",
+  "dictionary.panelRemovedConfirm": "✓ Removed",
 
   "vocabSection.collapseVocab": "Collapse vocabulary",
   "vocabSection.downloadPdf": "Download PDF",
