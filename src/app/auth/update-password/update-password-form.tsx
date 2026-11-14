@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { t } from "@/lib/i18n/t";
-import { updatePassword, MIN_PASSWORD_LENGTH, type UpdatePasswordError } from "./actions";
+import { updatePassword } from "./actions";
+import { MIN_PASSWORD_LENGTH, type UpdatePasswordError } from "./constants";
 
 const lang = "uk" as const;
 

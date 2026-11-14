@@ -3,16 +3,7 @@
 import type { AuthError } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-
-export const MIN_PASSWORD_LENGTH = 8;
-
-export type UpdatePasswordError =
-  | "too_short"
-  | "mismatch"
-  | "same_password"
-  | "weak_password"
-  | "session_missing"
-  | "generic";
+import { MIN_PASSWORD_LENGTH, type UpdatePasswordError } from "./constants";
 
 // Мапить сирі повідомлення/коди Supabase на наші ключі — ніколи не
 // показуємо студенту сирий текст Supabase напряму (різні версії API
