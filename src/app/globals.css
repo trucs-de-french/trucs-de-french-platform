@@ -17131,28 +17131,21 @@ button.cabinet-nav-item {
   opacity: 0.6;
   cursor: default;
 }
+/* primary — ЗАВЖДИ indigo/білий: усі викликачі variant="pill" БЕЗ
+   surface="dark" (тултіп VocabWord, панель звичайного слова) сидять на
+   світлій/лавандовій поверхні в ОБОХ темах сайту (vocab-chip-tooltip
+   нижче лишається світлим незалежно від теми) — перемикання на
+   золотий градієнт за темою сайту (як було) давало золоту кнопку на
+   світлій поверхні в темній темі, що саме й читалось як "ніби та сама
+   бліда картка". Дуальна поведінка "за темою сайту" лишається лише для
+   .save-word-pill--primary-on-dark (картка відео, завжди темне скло,
+   нижче). */
 .save-word-pill--primary {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
   background-origin: border-box;
   background-clip: border-box;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(75, 70, 218, 0.3);
-}
-.dark .save-word-pill--primary {
-  background: linear-gradient(160deg, #f3d98b, #d9b765);
-  background-origin: border-box;
-  background-clip: border-box;
-  color: #1a1640;
-  box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-pill--primary {
-    background: linear-gradient(160deg, #f3d98b, #d9b765);
-    background-origin: border-box;
-    background-clip: border-box;
-    color: #1a1640;
-    box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
-  }
 }
 @media (hover: hover) {
   .save-word-pill--primary:hover {
@@ -17164,26 +17157,51 @@ button.cabinet-nav-item {
   outline-offset: 2px;
 }
 
-/* "✓ У словнику" — м'яка картка, не градієнт (стан "уже збережено", не
-   дія). border/bg — ті самі --glass-item-bg/--glass-item-border, що решта
-   карток скрипту/вокабуляру (vocab-section.tsx коментарі вище). */
-.save-word-pill--saved {
-  background: var(--glass-item-bg, #fff);
-  border-color: var(--glass-item-border, rgba(75, 70, 218, 0.16));
-  color: var(--glass-text, #1a1640);
-  cursor: default;
+/* Темна поверхня (картка відео, video-player.tsx surface="dark") — та
+   сама стара поведінка "за темою сайту", що primary мав раніше: золотий
+   градієнт у темній темі ВСЕ ЩЕ доречний тут, бо сама картка завжди
+   темна (напівпрозоре скло на відео), не залежно від поверхні скрипту. */
+.save-word-pill--primary-on-dark {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #ffffff;
 }
-.dark .save-word-pill--saved {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(246, 220, 142, 0.35);
-  color: #f6dc8e;
+.dark .save-word-pill--primary-on-dark {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #1a1640;
+  box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-pill--saved {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(246, 220, 142, 0.35);
-    color: #f6dc8e;
+  :root:not(.light) .save-word-pill--primary-on-dark {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    background-origin: border-box;
+    background-clip: border-box;
+    color: #1a1640;
+    box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
   }
+}
+
+/* "✓ У словнику" — стилі ФІКСОВАНІ під поверхню (prop surface у
+   SaveWordButton), НЕ під тему сайту: тултіп/панель/рядок таблиці завжди
+   світла/лавандова поверхня в обох темах (той самий принцип, що
+   .vocab-chip-tooltip нижче — звідти й узято колір рамки/тексту), картка
+   відео — завжди темне скло. Раніше .dark-варіант малював бліде золото
+   на (все ще) світлій поверхні панелі/тултіпа — саме це виправляє ця
+   зміна. Текст/рамка мають контраст ≥4.5:1/≥3:1 на своїй поверхні. */
+.save-word-pill--saved {
+  background: rgba(75, 70, 218, 0.08);
+  border-color: rgba(75, 70, 218, 0.55);
+  color: #1a1640;
+  cursor: default;
+}
+.save-word-pill--saved-on-dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(246, 220, 142, 0.55);
+  color: #f6f1e0;
+  cursor: default;
 }
 
 .save-word-remove-link {
@@ -17194,8 +17212,11 @@ button.cabinet-nav-item {
   font-size: 13px;
   font-weight: 600;
   text-decoration: underline;
-  color: var(--glass-text-secondary, #55546b);
+  color: #55546b;
   cursor: pointer;
+}
+.save-word-remove-link--on-dark {
+  color: #d8d6f0;
 }
 .save-word-remove-link:disabled {
   opacity: 0.6;
@@ -17206,17 +17227,16 @@ button.cabinet-nav-item {
   outline-offset: 2px;
   border-radius: 4px;
 }
-.dark .save-word-remove-link:focus-visible {
+.save-word-remove-link--on-dark:focus-visible {
   outline-color: #f3d98b;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-remove-link:focus-visible {
-    outline-color: #f3d98b;
-  }
 }
 
 /* Кругла іконка-закладка (рядок таблиці "Вокабуляр") — 36px, той самий
    принцип стану saved/not-saved, що .save-word-pill, лише без тексту. */
+/* Фіксовано на світлу поверхню (vocab-section.tsx рядок — та сама
+   поверхня, що тултіп/панель в обох темах сайту) — раніше колір іконки
+   перемикався на бліде золото за темою САЙТУ (.dark), хоча сама поверхня
+   рядка не темніє, що й давало бліду іконку на світлому фоні. */
 .save-word-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -17225,8 +17245,8 @@ button.cabinet-nav-item {
   height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1.5px solid var(--glass-item-border, rgba(75, 70, 218, 0.16));
-  background: var(--glass-item-bg, #fff);
+  border: 1.5px solid rgba(75, 70, 218, 0.4);
+  background: #ffffff;
   color: #4b46da;
   cursor: pointer;
   transition: border-color 150ms, background-color 150ms, color 150ms;
@@ -17249,34 +17269,6 @@ button.cabinet-nav-item {
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
   border-color: transparent;
   color: #ffffff;
-}
-.dark .save-word-icon-btn {
-  color: #f3d98b;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-icon-btn {
-    color: #f3d98b;
-  }
-}
-.dark .save-word-icon-btn--saved {
-  background: linear-gradient(160deg, #f3d98b, #d9b765);
-  border-color: transparent;
-  color: #1a1640;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-icon-btn--saved {
-    background: linear-gradient(160deg, #f3d98b, #d9b765);
-    border-color: transparent;
-    color: #1a1640;
-  }
-}
-.dark .save-word-icon-btn:focus-visible {
-  outline-color: #f3d98b;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-icon-btn:focus-visible {
-    outline-color: #f3d98b;
-  }
 }
 
 /* Інлайн-помилка збереження (ліміт 1000 слів/збій мережі) — ніколи не
@@ -17355,14 +17347,28 @@ button.cabinet-nav-item {
 }
 
 /* Панель звичайного слова — ПІД реплікою (DialogueLine сама рендерить її
-   сиблінгом <p>, не floating-тултіп), той самий --glass-item-bg/-border,
-   що картки Скрипту/Вокабуляру навколо (vocab-section.tsx коментарі). */
+   сиблінгом <p>, не floating-тултіп). Поверхня ТЕПЕР буквально та сама,
+   що .vocab-chip-tooltip (не --glass-item-bg/-text, які змінювались і за
+   темою САЙТУ, і за тим, чи є спільний предок .glass-block-panel — звідти
+   й була непередбачувана світла/темна поверхня): білий у світлій темі,
+   лавандовий #dcdbf3 у темній — панель виглядає як частина тієї самої
+   тултіп-мови скрипту в обох темах, текст завжди темний (як у тултіпі). */
 .plain-word-panel {
   margin-top: 6px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--glass-item-bg, #fff);
-  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border, rgba(75, 70, 218, 0.16));
+  background: #fff;
+  border: 1px solid var(--gold-border-55);
+}
+.dark .plain-word-panel {
+  background: #dcdbf3;
+  border-color: rgba(150, 125, 240, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel {
+    background: #dcdbf3;
+    border-color: rgba(150, 125, 240, 0.5);
+  }
 }
 .plain-word-panel-word {
   margin: 0;
@@ -17370,13 +17376,13 @@ button.cabinet-nav-item {
   font-style: italic;
   font-weight: 600;
   font-size: 18px;
-  color: var(--glass-text, #1a1640);
+  color: #1a1640;
 }
 .plain-word-panel-translation {
   margin: 4px 0 0;
   font-family: var(--font-body);
   font-size: 15px;
-  color: var(--glass-text, #1a1640);
+  color: #1a1640;
 }
 .plain-word-panel-pos {
   margin: 2px 0 0;
@@ -17386,27 +17392,19 @@ button.cabinet-nav-item {
   text-transform: uppercase;
   color: #4b46da;
 }
-.dark .plain-word-panel-pos {
-  color: #f6dc8e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .plain-word-panel-pos {
-    color: #f6dc8e;
-  }
-}
 .plain-word-panel-note {
   margin: 4px 0 0;
   font-family: var(--font-body);
   font-style: italic;
   font-size: 13px;
-  color: var(--glass-text-secondary, #55546b);
+  color: #55546b;
 }
 .plain-word-panel-context {
   margin: 4px 0 0;
   font-family: var(--font-body);
   font-style: italic;
   font-size: 13px;
-  color: var(--glass-text-secondary, #55546b);
+  color: #55546b;
 }
 .plain-word-panel-label {
   display: block;
@@ -17414,7 +17412,7 @@ button.cabinet-nav-item {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 700;
-  color: var(--glass-text-secondary, #55546b);
+  color: #55546b;
 }
 .plain-word-panel-input {
   display: block;
@@ -17449,7 +17447,7 @@ button.cabinet-nav-item {
   font-size: 13px;
   font-weight: 600;
   text-decoration: underline;
-  color: var(--glass-text-secondary, #55546b);
+  color: #55546b;
   cursor: pointer;
 }
 

@@ -14,6 +14,14 @@ import { useSavedWords, type SaveWordSnapshot } from "./saved-words-provider";
 export function SaveWordButton({
   snapshot,
   variant = "pill",
+  // Яка поверхня під кнопкою — НЕ тема сайту: VocabWord/панель звичайного
+  // слова/рядок таблиці завжди сидять на світлій/лавандовій поверхні
+  // (vocab-chip-tooltip лишається світлим в обох темах сайту), а картка
+  // відео — завжди темне напівпрозоре скло, незалежно від теми сайту.
+  // Кольори "збережено"/текстових дій зав'язані на ЦЕ, а не на .dark —
+  // інакше бліді dark-theme кольори опинялись на світлій поверхні
+  // (нечитабельно) там, де сама поверхня не стала темнішою.
+  surface = "light",
   className = "",
 }: {
   snapshot: SaveWordSnapshot;
@@ -21,6 +29,7 @@ export function SaveWordButton({
   // звичайного слова). "icon" — кругла 36px іконка-закладка (рядок
   // таблиці "Вокабуляр" — там немає місця під текстову кнопку).
   variant?: "pill" | "icon";
+  surface?: "light" | "dark";
   className?: string;
 }) {
   const { t } = useT();
@@ -60,15 +69,24 @@ export function SaveWordButton({
     );
   }
 
+  const onDark = surface === "dark" ? " save-word-pill--saved-on-dark" : "";
+  const removeOnDark = surface === "dark" ? " save-word-remove-link--on-dark" : "";
+  const primaryOnDark = surface === "dark" ? " save-word-pill--primary-on-dark" : "";
+
   return (
     <div className={`flex flex-col items-start gap-1 ${className}`}>
       {isSaved ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="save-word-pill save-word-pill--saved">
+          <span className={`save-word-pill save-word-pill--saved${onDark}`}>
             <Bookmark size={14} fill="currentColor" aria-hidden="true" />
             {t("dictionary.savedState")}
           </span>
-          <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={pending}
+            className={`save-word-remove-link${removeOnDark}`}
+          >
             {t("dictionary.removeAction")}
           </button>
         </div>
@@ -78,7 +96,7 @@ export function SaveWordButton({
           onClick={handleSave}
           disabled={pending}
           aria-label={t("dictionary.saveWordAria", { word: snapshot.word })}
-          className="save-word-pill save-word-pill--primary"
+          className={`save-word-pill save-word-pill--primary${primaryOnDark}`}
         >
           <Bookmark size={14} aria-hidden="true" />
           {t("dictionary.saveAction")}

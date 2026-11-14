@@ -1229,6 +1229,7 @@ function VideoWordCard({
             contextUk: item.example?.translationUk ?? null,
           } satisfies SaveWordSnapshot}
           variant="pill"
+          surface="dark"
         />
       </div>
     </div>
