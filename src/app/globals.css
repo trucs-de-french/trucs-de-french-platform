@@ -17307,3 +17307,187 @@ button.cabinet-nav-item {
   text-transform: uppercase;
   color: #4b46da;
 }
+
+/* Звичайне (не підсвічене вчителькою) клікабельне слово скрипту —
+   кнопка, що виглядає точно як звичайний текст: без підкреслення/зміни
+   кольору за замовчуванням (вимога задачі), лише легкий фон на
+   hover/focus-visible. font: inherit — той самий прийом, що .vocab-chip
+   вище (глобальне button{font-family:var(--font-heading)} інакше
+   перебило б успадкований Lora репліки). */
+.plain-word-btn {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0 1px;
+  margin: 0 -1px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .plain-word-btn:hover {
+    background: rgba(75, 70, 218, 0.08);
+  }
+}
+.dark .plain-word-btn:hover {
+  background: rgba(246, 220, 142, 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-btn:hover {
+    background: rgba(246, 220, 142, 0.14);
+  }
+}
+.plain-word-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(75, 70, 218, 0.35);
+  background: rgba(75, 70, 218, 0.08);
+}
+.dark .plain-word-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(246, 220, 142, 0.4);
+  background: rgba(246, 220, 142, 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-btn:focus-visible {
+    box-shadow: 0 0 0 2px rgba(246, 220, 142, 0.4);
+    background: rgba(246, 220, 142, 0.14);
+  }
+}
+
+/* Панель звичайного слова — ПІД реплікою (DialogueLine сама рендерить її
+   сиблінгом <p>, не floating-тултіп), той самий --glass-item-bg/-border,
+   що картки Скрипту/Вокабуляру навколо (vocab-section.tsx коментарі). */
+.plain-word-panel {
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--glass-item-bg, #fff);
+  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border, rgba(75, 70, 218, 0.16));
+}
+.plain-word-panel-word {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--glass-text, #1a1640);
+}
+.plain-word-panel-translation {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--glass-text, #1a1640);
+}
+.plain-word-panel-pos {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4b46da;
+}
+.dark .plain-word-panel-pos {
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel-pos {
+    color: #f6dc8e;
+  }
+}
+.plain-word-panel-note {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--glass-text-secondary, #55546b);
+}
+.plain-word-panel-context {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--glass-text-secondary, #55546b);
+}
+.plain-word-panel-label {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--glass-text-secondary, #55546b);
+}
+.plain-word-panel-input {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 4px;
+  border-radius: var(--glass-input-radius, 8px);
+  border: var(--glass-input-border-width, 1px) solid var(--glass-input-border, rgba(75, 70, 218, 0.16));
+  background: var(--glass-input-bg, #fff);
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--glass-input-text, #1a1640);
+}
+.plain-word-panel-input:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 1px;
+}
+.dark .plain-word-panel-input:focus-visible {
+  outline-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel-input:focus-visible {
+    outline-color: #f3d98b;
+  }
+}
+.plain-word-panel-cancel {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  color: var(--glass-text-secondary, #55546b);
+  cursor: pointer;
+}
+
+/* Одноразова підказка над скриптом (dict-hint.tsx) — слимова плашка, не
+   банер: та сама --glass-item-bg/-border родина, золотий акцент зліва. */
+.dict-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--glass-item-bg, #fff);
+  border: var(--glass-item-border-width, 1px) solid var(--glass-item-border, rgba(75, 70, 218, 0.16));
+  border-left: 3px solid #d9b765;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--glass-text, #1a1640);
+}
+.dict-hint-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  color: var(--glass-text-secondary, #55546b);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .dict-hint-close:hover {
+    background: rgba(75, 70, 218, 0.1);
+  }
+}
+.dict-hint-close:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}

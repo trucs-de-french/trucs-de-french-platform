@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
-import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
+import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
 import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
+import { useT } from "@/lib/i18n/context";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
-import type { SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
+import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -140,22 +142,218 @@ export function normalizeSpeakerForCompare(speaker: string): string {
   return speaker.trim().toLowerCase();
 }
 
+type PlainToken =
+  | { type: "literal"; text: string }
+  | { type: "word"; text: string; clickable: boolean };
+
+// Токенізація ЗВИЧАЙНОГО (не підсвіченого вчителькою) тексту репліки — на
+// літерні групи /[\p{L}\p{M}]+/gu, усе решта (пробіли, розділові знаки,
+// апострофи, дефіси, цифри) лишається "literal" (не клікабельне за
+// визначенням — дефіс/апостроф самі НЕ входять у \p{L}\p{M}, тож "peut-
+// être"/"qu'il" вже природно розпадаються на окремі літерні групи навколо
+// них, без додаткової логіки). Токен, за яким ОДРАЗУ йде апостроф
+// (l'/d'/j'/qu'/jusqu'...), навмисно позначається неклікабельним — це
+// службова частка, не самостійне слово для словника.
+const APOSTROPHE_CHARS = new Set(["'", "’", "‘", "ʼ"]);
+
+function tokenizePlainText(text: string): PlainToken[] {
+  const regex = /[\p{L}\p{M}]+/gu;
+  const tokens: PlainToken[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text))) {
+    if (match.index > lastIndex) {
+      tokens.push({ type: "literal", text: text.slice(lastIndex, match.index) });
+    }
+    const word = match[0];
+    const endIndex = match.index + word.length;
+    const nextChar = text[endIndex];
+    const clickable = !APOSTROPHE_CHARS.has(nextChar);
+    tokens.push({ type: "word", text: word, clickable });
+    lastIndex = endIndex;
+  }
+  if (lastIndex < text.length) {
+    tokens.push({ type: "literal", text: text.slice(lastIndex) });
+  }
+  return tokens;
+}
+
+// Снімок/панель звичайного слова, відкрита під реплікою (ПІД <p>, не
+// floating-тултіп — щоб на телефоні не перекривала текст скрипту).
+// Пріоритет "вчительських" даних: якщо це слово десь у сцені позначене
+// вчителькою як vocab (teacherItem !== null), показуємо її переклад/
+// частину мови/примітку й SaveWordButton з ТІЄЮ ж логікою, що бульбашка
+// VocabWord, замість форми ручного перекладу.
+function PlainWordPanel({
+  word,
+  contextFr,
+  contextUk,
+  teacherItem,
+  inputId,
+  onClose,
+}: {
+  word: string;
+  contextFr: string;
+  contextUk: string | null;
+  teacherItem: VocabItem | null;
+  inputId: string;
+  onClose: () => void;
+}) {
+  const { t } = useT();
+  const saved = useSavedWords();
+  const [value, setValue] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!justSaved) return;
+    const timer = setTimeout(() => setJustSaved(false), 1000);
+    return () => clearTimeout(timer);
+  }, [justSaved]);
+
+  function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") onClose();
+  }
+
+  if (!saved) return null;
+
+  const existing = saved.getSaved(word);
+  const error = saved.getError(word);
+  const pending = saved.isPending(word);
+
+  async function handleRemove() {
+    await saved!.remove(word);
+  }
+
+  if (teacherItem) {
+    const pos = normalizePartOfSpeech(teacherItem.partOfSpeech);
+    const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
+    const note = teacherItem.note?.trim() || null;
+    const snapshot: SaveWordSnapshot = {
+      word,
+      translation: teacherItem.translation,
+      translationSource: "teacher",
+      partOfSpeech: teacherItem.partOfSpeech ?? null,
+      note,
+      imageUrl: teacherItem.image_url ?? null,
+      vocabId: teacherItem.id ?? null,
+      contextFr,
+      contextUk,
+    };
+    return (
+      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        <p className="plain-word-panel-translation">{teacherItem.translation}</p>
+        {posLabel && <p className="plain-word-panel-pos">{posLabel}</p>}
+        {note && <p className="plain-word-panel-note">{note}</p>}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <SaveWordButton snapshot={snapshot} variant="pill" />
+          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+            {t("dictionary.panelCancel")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (existing) {
+    return (
+      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
+        {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+            {t("dictionary.removeAction")}
+          </button>
+          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+            {t("dictionary.panelCancel")}
+          </button>
+        </div>
+        {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
+      </div>
+    );
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    const result = await saved!.save({
+      word,
+      translation: value.trim() || null,
+      translationSource: value.trim() ? "own" : "none",
+      contextFr,
+      contextUk,
+    });
+    setSaving(false);
+    if (result.ok) setJustSaved(true);
+  }
+
+  if (justSaved) {
+    return (
+      <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="plain-word-panel" role="region" onKeyDown={handleKeyDown}>
+      <p className="plain-word-panel-word">{word}</p>
+      {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
+      <label className="plain-word-panel-label" htmlFor={inputId}>
+        {t("dictionary.panelTranslationLabel")}
+      </label>
+      <input
+        id={inputId}
+        type="text"
+        value={value}
+        maxLength={200}
+        onChange={(e) => setValue(e.target.value)}
+        className="plain-word-panel-input"
+      />
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="save-word-pill save-word-pill--primary"
+        >
+          {t("dictionary.panelSave")}
+        </button>
+        <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+          {t("dictionary.panelCancel")}
+        </button>
+      </div>
+      {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
+    </div>
+  );
+}
+
 export function DialogueLine({
   lineIndex,
   speaker,
   text,
   vocab,
+  sceneVocab,
   start,
   videoLink,
   translationUk,
   openId,
   onWordClick,
+  openPlainKey,
+  onPlainWordClick,
   showSpeaker = true,
 }: {
   lineIndex: number;
   speaker: string;
   text: string;
   vocab: VocabItem[];
+  // Повна лексика СЦЕНИ (не лише цієї репліки) — для пріоритету
+  // "вчительських" даних у панелі звичайного слова: те саме слово могло
+  // бути позначене вчителькою в ІНШІЙ репліці сцени.
+  sceneVocab?: VocabItem[];
   start?: number | null;
   videoLink?: string | null;
   // Переклад репліки (translationUk з scenes.dialogue) — потрібен лише як
@@ -165,6 +363,11 @@ export function DialogueLine({
   translationUk?: string | null;
   openId: string | null;
   onWordClick: (id: string) => void;
+  // Окремий від openId/onWordClick стан — панель звичайного слова НЕ
+  // закриває/не закривається тултіпом VocabWord і навпаки (свідомо: не
+  // чіпаємо поведінку підсвічених слів).
+  openPlainKey?: string | null;
+  onPlainWordClick?: (key: string) => void;
   // false — та сама репліка спікера, що й на попередньому рядку: ім'я не
   // повторюємо і НЕ лишаємо місця під нього (ні invisible-підпису, ні
   // відступу) — текст починається з лівого краю колонки, як рядок без
@@ -174,32 +377,106 @@ export function DialogueLine({
 }) {
   const parts = matchVocabInText(text, vocab);
   const label = speaker.trim();
+  const saved = useSavedWords();
+  const teacherVariantMap = useMemo(() => buildVariantMap(sceneVocab ?? []), [sceneVocab]);
+  const plainKeyPrefix = `${lineIndex}-plain-`;
+
+  // Токенізація "text"-частин ОКРЕМО від рендеру (чиста функція, без
+  // мутації зовнішньої змінної зсередини .map()) — нижче і визначення
+  // openPlainWord, і сам рендер читають з цього самого масиву, щоб не
+  // токенізувати двічі.
+  const tokenizedTextParts = useMemo(
+    () => parts.map((part) => (part.type === "text" ? tokenizePlainText(part.text) : null)),
+    [parts]
+  );
+
+  const openPlainWord = useMemo(() => {
+    if (!openPlainKey || !openPlainKey.startsWith(plainKeyPrefix)) return null;
+    for (let i = 0; i < tokenizedTextParts.length; i++) {
+      const tokens = tokenizedTextParts[i];
+      if (!tokens) continue;
+      for (let j = 0; j < tokens.length; j++) {
+        const token = tokens[j];
+        if (token.type === "word" && token.clickable && `${plainKeyPrefix}${i}-${j}` === openPlainKey) {
+          return token.text;
+        }
+      }
+    }
+    return null;
+  }, [tokenizedTextParts, openPlainKey, plainKeyPrefix]);
+
+  const content = parts.map((part, i) => {
+    if (part.type === "match") {
+      const id = `${lineIndex}-${i}`;
+      return (
+        <VocabWord
+          key={i}
+          id={id}
+          displayWord={part.text}
+          item={part.item}
+          contextFr={text}
+          contextUk={translationUk ?? null}
+          isOpen={openId === id}
+          onClick={onWordClick}
+        />
+      );
+    }
+
+    // Без SavedWordsProvider (сторінка без контексту сцени/незалогінений
+    // студент) звичайні слова лишаються звичайним текстом — без кнопок,
+    // точно як до Етапу 2.
+    const tokens = tokenizedTextParts[i];
+    if (!saved || !tokens) {
+      return <span key={i}>{part.text}</span>;
+    }
+
+    return (
+      <span key={i}>
+        {tokens.map((token, j) => {
+          if (token.type === "literal" || !token.clickable) {
+            return <span key={j}>{token.text}</span>;
+          }
+          const key = `${plainKeyPrefix}${i}-${j}`;
+          const isOpen = openPlainKey === key;
+          return (
+            <button
+              key={j}
+              type="button"
+              onClick={() => onPlainWordClick?.(isOpen ? "" : key)}
+              aria-expanded={isOpen}
+              className="plain-word-btn"
+            >
+              {token.text}
+            </button>
+          );
+        })}
+      </span>
+    );
+  });
+
+  const teacherItem = openPlainWord ? teacherVariantMap.get(normalizeWordForMatch(openPlainWord)) ?? null : null;
 
   return (
-    <p>
-      <TimecodeBadge start={start} videoLink={videoLink} />
-      {showSpeaker && label && (
-        <>
-          <span className="font-semibold">{label}:</span>{" "}
-        </>
+    <div>
+      <p>
+        <TimecodeBadge start={start} videoLink={videoLink} />
+        {showSpeaker && label && (
+          <>
+            <span className="font-semibold">{label}:</span>{" "}
+          </>
+        )}
+        {content}
+      </p>
+      {openPlainWord && (
+        <PlainWordPanel
+          word={openPlainWord}
+          contextFr={text}
+          contextUk={translationUk ?? null}
+          teacherItem={teacherItem ?? null}
+          inputId={`plain-word-translation-${lineIndex}`}
+          onClose={() => onPlainWordClick?.("")}
+        />
       )}
-      {parts.map((part, i) => {
-        const id = `${lineIndex}-${i}`;
-        return part.type === "match" ? (
-          <VocabWord
-            key={i}
-            id={id}
-            displayWord={part.text}
-            item={part.item}
-            contextFr={text}
-            contextUk={translationUk ?? null}
-            isOpen={openId === id}
-            onClick={onWordClick}
-          />
-        ) : (
-          <span key={i}>{part.text}</span>
-        );
-      })}
-    </p>
+    </div>
   );
 }

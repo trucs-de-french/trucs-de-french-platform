@@ -37,6 +37,11 @@ export type SavedWordsContextValue = {
   isPending: (word: string) => boolean;
   getError: (word: string) => string | null;
   clearError: (word: string) => void;
+  // true після ПЕРШОГО успішного save() за цю сесію провайдера — читає
+  // підказка над скриптом (script-section.tsx DictHint), щоб сховатись
+  // одразу після першого збереження, без чекання наступного завантаження
+  // сторінки.
+  hasSavedAny: boolean;
 };
 
 const SavedWordsContext = createContext<SavedWordsContextValue | null>(null);
@@ -70,6 +75,7 @@ export function SavedWordsProvider({
   );
   const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
   const [errorByKey, setErrorByKey] = useState<Map<string, string>>(new Map());
+  const [hasSavedAny, setHasSavedAny] = useState(false);
 
   const isSaved = useCallback((word: string) => savedByKey.has(computeWordKey(word)), [savedByKey]);
   const getSaved = useCallback((word: string) => savedByKey.get(computeWordKey(word)) ?? null, [savedByKey]);
@@ -126,6 +132,7 @@ export function SavedWordsProvider({
           next.set(key, { id: result.id as string, translation: snapshot.translation ?? null });
           return next;
         });
+        setHasSavedAny(true);
         return { ok: true };
       }
 
@@ -166,8 +173,8 @@ export function SavedWordsProvider({
   );
 
   const value = useMemo(
-    () => ({ isSaved, getSaved, save, remove, isPending, getError, clearError }),
-    [isSaved, getSaved, save, remove, isPending, getError, clearError]
+    () => ({ isSaved, getSaved, save, remove, isPending, getError, clearError, hasSavedAny }),
+    [isSaved, getSaved, save, remove, isPending, getError, clearError, hasSavedAny]
   );
 
   return <SavedWordsContext.Provider value={value}>{children}</SavedWordsContext.Provider>;

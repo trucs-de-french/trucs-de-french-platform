@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
-import type { VocabItem } from "@/lib/vocab";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { collectSceneVocab, type VocabItem } from "@/lib/vocab";
 import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeakerForCompare } from "./dialogue-line";
 import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 import { resolveBlockIcon } from "@/lib/block-icons";
 import { useT } from "@/lib/i18n/context";
+import { DictHint } from "./dict-hint";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
 // section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
@@ -88,11 +89,25 @@ export function ScriptSection({
 }) {
   const { t } = useT();
   const [openId, setOpenId] = useState<string | null>(null);
+  // Панель звичайного (не підсвіченого) слова — окремий від openId стан
+  // (коментар при DialogueLine-пропах у dialogue-line.tsx: свідомо не
+  // ділить стан із бульбашкою VocabWord). "" від DialogueLine означає
+  // "закрити" (другий клік/Esc/Скасувати/закрито іншою панеллю).
+  const [openPlainKey, setOpenPlainKey] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasTranslation = dialogue.some((line) => line.translationUk);
   const isOpen = !title || !collapsed;
+  // Лексика всієї сцени (не лише видимих рядків showTranslation-розкладки)
+  // — для пріоритету "вчительських" даних у панелі звичайного слова, той
+  // самий collectSceneVocab, що вже рахує page.tsx для sceneVocab (Крок 2
+  // глосарію/блок "Словник").
+  const sceneVocab = useMemo(() => collectSceneVocab(dialogue), [dialogue]);
+
+  function handlePlainWordClick(key: string) {
+    setOpenPlainKey(key === "" ? null : key);
+  }
 
   // Кнопка "Згорнути скрипт" під вмістом — та сама дія, що тогл-заголовок
   // (нижче), без дубльованого стану: headerToggleRef вказує на АКТУАЛЬНИЙ
@@ -183,11 +198,14 @@ export function ScriptSection({
                 speaker={line.speaker}
                 text={line.text}
                 vocab={line.vocab ?? []}
+                sceneVocab={sceneVocab}
                 start={line.start}
                 videoLink={line.videoLink}
                 translationUk={line.translationUk ?? null}
                 openId={openId}
                 onWordClick={openWord}
+                openPlainKey={openPlainKey}
+                onPlainWordClick={handlePlainWordClick}
                 showSpeaker={showSpeakerFlags[i]}
               />
               <div className="text-neutral-600 sm:pl-6 dark:text-[var(--glass-text)]">
@@ -208,11 +226,14 @@ export function ScriptSection({
             speaker={line.speaker}
             text={line.text}
             vocab={line.vocab ?? []}
+            sceneVocab={sceneVocab}
             start={line.start}
             videoLink={line.videoLink}
             translationUk={line.translationUk ?? null}
             openId={openId}
             onWordClick={openWord}
+            openPlainKey={openPlainKey}
+            onPlainWordClick={handlePlainWordClick}
             showSpeaker={showSpeakerFlags[i]}
           />
         ))
@@ -229,6 +250,9 @@ export function ScriptSection({
   if (useBar) {
     return (
       <div className="flex flex-col gap-[14px]">
+        {/* Лише фіксований блок "Скрипт" (title) — не додаткові script-
+            блоки нижче на сторінці, щоб підказка не дублювалась. */}
+        <DictHint />
         <SectionHeaderBar
           title={title!}
           icon={resolveBlockIcon("script")}

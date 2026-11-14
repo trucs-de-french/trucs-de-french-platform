@@ -298,6 +298,11 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.saveWordAria": "Enregistrer « {word} » dans le dictionnaire",
   "dictionary.removeWordAria": "Retirer « {word} » du dictionnaire",
   "dictionary.saveError": "Échec de l'enregistrement. Réessayez.",
+  "dictionary.hintText": "Cliquez sur n'importe quel mot pour l'ajouter au dictionnaire",
+  "dictionary.panelLineLabel": "Phrase : « {line} »",
+  "dictionary.panelTranslationLabel": "Ma traduction (facultatif)",
+  "dictionary.panelSave": "Enregistrer le mot",
+  "dictionary.panelCancel": "Annuler",
 
   "vocabSection.collapseVocab": "Réduire le vocabulaire",
   "vocabSection.downloadPdf": "Télécharger le PDF",

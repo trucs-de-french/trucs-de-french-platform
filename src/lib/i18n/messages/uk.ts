@@ -299,6 +299,11 @@ export const uk = {
   "dictionary.saveWordAria": "Зберегти «{word}» у словник",
   "dictionary.removeWordAria": "Прибрати «{word}» зі словника",
   "dictionary.saveError": "Не вдалося зберегти. Спробуйте ще раз.",
+  "dictionary.hintText": "Натисніть на будь-яке слово, щоб додати його до словника",
+  "dictionary.panelLineLabel": "Репліка: «{line}»",
+  "dictionary.panelTranslationLabel": "Мій переклад (за бажанням)",
+  "dictionary.panelSave": "Зберегти слово",
+  "dictionary.panelCancel": "Скасувати",
 
   "vocabSection.collapseVocab": "Згорнути вокабуляр",
   "vocabSection.downloadPdf": "Завантажити PDF",
