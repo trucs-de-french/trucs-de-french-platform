@@ -17612,12 +17612,16 @@ button.cabinet-nav-item {
   }
 }
 
-/* Сторінки відновлення пароля (/auth/forgot-password, /auth/update-
-   password) — ПОЗА /cabinet, тож --cabinet-* токени (визначені лише
-   всередині .cabinet, cabinet/layout.tsx) тут недоступні; кольори нижче
-   буквально повторюють світлі/темні значення тих токенів (кремова
-   панель/картка/рамка/чорнило), щоб сторінка виглядала як частина того
-   самого кабінетного стилю без прив'язки до .cabinet-обгортки. */
+/* Сторінки входу/реєстрації/відновлення пароля (/login, /register,
+   /auth/forgot-password, /auth/update-password) — ПОЗА /cabinet, тож
+   --cabinet-* токени (визначені лише всередині .cabinet,
+   cabinet/layout.tsx) тут недоступні; кольори нижче — власні літерали,
+   не нові custom properties. Карта розбита на дві колонки: ліва — 36%,
+   градієнтна декоративна панель (бренд, таби вхід/реєстрація або
+   короткий заголовок для відновлення пароля); права — форма на
+   var(--card)-кольорі (тут буквально #fff/#141a52). Панель і форма
+   використовують однакові "формбг"-кольори в кількох місцях (активний
+   таб, фаски) — тримати їх в синхроні, якщо колір картки зміниться. */
 .auth-shell-page {
   min-height: 100vh;
   display: flex;
@@ -17637,34 +17641,215 @@ button.cabinet-nav-item {
 
 .auth-shell-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 900px;
+  min-height: 540px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 32px 28px;
-  background: #ffffff;
+  border-radius: 28px;
+  overflow: hidden;
   border: 1.5px solid #e4cf94;
-  border-radius: 22px;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
 .dark .auth-shell-card {
-  background: #141a52;
   border-color: #2e3680;
   box-shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .auth-shell-card {
-    background: #141a52;
     border-color: #2e3680;
     box-shadow: none;
   }
 }
 
-.auth-shell-title {
-  margin: 20px 0 0;
+/* ЛІВА панель — суцільний градієнт, без смуг/фігур/картинок. */
+.auth-shell-panel {
+  flex: 0 0 36%;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 28px 28px;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #fff;
+}
+.dark .auth-shell-panel {
+  background: linear-gradient(160deg, #0f1450, #0a0e38);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-panel {
+    background: linear-gradient(160deg, #0f1450, #0a0e38);
+  }
+}
+
+.auth-shell-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.auth-shell-brand-rule {
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #d9b765, #f3d98b);
+}
+
+.auth-shell-tagline {
+  margin-top: auto;
+  padding-top: 24px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Короткий заголовок посередині панелі для forgot-password/
+   update-password (замість табів вхід/реєстрація). */
+.auth-shell-heading-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 28px 0;
+}
+.auth-shell-heading-title {
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 22px;
+  font-size: 17px;
+  color: #fff;
+}
+.auth-shell-heading-lead {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Таби "Вхід"/"Реєстрація" — вертикально посередині панелі, посилання
+   (не role=tab), активний таб "дотягується" до правого краю панелі
+   (negative margin-right бленд на ширину padding панелі, 28px) і
+   набуває кольору форми (var(--card) буквально), щоб візуально злитись
+   з правою колонкою; врізані фаски (26px) на верхньому/нижньому
+   правому куті вирізають чвертьколо градієнта панелі навколо цього
+   краю, довершуючи злиття. */
+.auth-shell-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 28px 0;
+}
+.auth-shell-tab {
+  position: relative;
+  display: block;
+  padding: 14px 44px 14px 20px;
+  margin-right: -28px;
+  border-radius: 999px 0 0 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.85);
+}
+.auth-shell-tab--active {
+  background: #ffffff;
+  color: #1a1640;
+  font-weight: 800;
+}
+.dark .auth-shell-tab--active {
+  background: #141a52;
+  color: #f6f1e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-tab--active {
+    background: #141a52;
+    color: #f6f1e3;
+  }
+}
+.auth-shell-tab--active::before,
+.auth-shell-tab--active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  background: radial-gradient(circle at 0 0, transparent 26px, #ffffff 26px);
+}
+.auth-shell-tab--active::before {
+  top: -26px;
+}
+.auth-shell-tab--active::after {
+  bottom: -26px;
+  background: radial-gradient(circle at 0 100%, transparent 26px, #ffffff 26px);
+}
+.dark .auth-shell-tab--active::before,
+.dark .auth-shell-tab--active::after {
+  background: radial-gradient(circle at 0 0, transparent 26px, #141a52 26px);
+}
+.dark .auth-shell-tab--active::after {
+  background: radial-gradient(circle at 0 100%, transparent 26px, #141a52 26px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-tab--active::before,
+  :root:not(.light) .auth-shell-tab--active::after {
+    background: radial-gradient(circle at 0 0, transparent 26px, #141a52 26px);
+  }
+  :root:not(.light) .auth-shell-tab--active::after {
+    background: radial-gradient(circle at 0 100%, transparent 26px, #141a52 26px);
+  }
+}
+.auth-shell-tab:focus-visible {
+  outline: 2px solid #f3d98b;
+  outline-offset: 2px;
+}
+
+/* ПРАВА колонка — форма. */
+.auth-shell-form-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+.dark .auth-shell-form-area {
+  background: #141a52;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-form-area {
+    background: #141a52;
+  }
+}
+
+.auth-shell-form-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 40px 24px;
+}
+
+.auth-shell-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .auth-shell-avatar {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-avatar {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    color: #1a1640;
+  }
+}
+
+.auth-shell-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 26px;
   text-align: center;
   color: #1a1640;
 }
@@ -17677,16 +17862,27 @@ button.cabinet-nav-item {
   }
 }
 
-.auth-shell-rule {
-  display: block;
-  width: 44px;
-  height: 4px;
-  margin: 10px auto 18px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #d9b765, #f3d98b);
+.auth-shell-lead {
+  max-width: 360px;
+  margin: 8px 0 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-align: center;
+  color: #55546b;
+}
+.dark .auth-shell-lead {
+  color: #b4b1dd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-lead {
+    color: #b4b1dd;
+  }
 }
 
 .auth-shell-body {
+  width: 100%;
+  max-width: 420px;
+  margin: 24px auto 0;
   font-family: var(--font-body);
   font-size: 15px;
   color: #1a1640;
@@ -17700,84 +17896,190 @@ button.cabinet-nav-item {
   }
 }
 
-/* Поля форми — pill, не native-look. */
+.auth-shell-footer {
+  padding: 16px 40px;
+  border-top: 1.5px solid #e4cf94;
+  text-align: center;
+}
+.dark .auth-shell-footer {
+  border-top-color: #2e3680;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-footer {
+    border-top-color: #2e3680;
+  }
+}
+.auth-shell-footer-link {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #8a6a1f;
+  text-decoration: underline;
+}
+.dark .auth-shell-footer-link {
+  color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-footer-link {
+    color: #f3d98b;
+  }
+}
+
+/* ТЕЛЕФОН (<640px): ліва панель стає верхнім банером, таби — рядком
+   рівних вкладок на його нижньому краю (без фасок — на телефоні немає
+   бокового злиття), тег-лайн прибирається, картка на всю ширину з 16px
+   гаттером, форма з меншим паддінгом. Власні @media-правила — не
+   Tailwind-утиліти (unlayered CSS тут переважає @layer utilities). */
+@media (max-width: 640px) {
+  .auth-shell-page {
+    padding: 0;
+  }
+  .auth-shell-card {
+    flex-direction: column;
+    max-width: 100%;
+    min-height: 0;
+    margin: 0 16px;
+    width: calc(100% - 32px);
+    border-radius: 22px;
+  }
+  .auth-shell-panel {
+    flex: none;
+    padding: 24px 20px 0;
+  }
+  .auth-shell-tagline {
+    display: none;
+  }
+  .auth-shell-heading-block {
+    margin: 16px 0 20px;
+  }
+  .auth-shell-tabs {
+    flex-direction: row;
+    gap: 0;
+    margin: 16px 0 0;
+  }
+  .auth-shell-tab {
+    flex: 1;
+    margin-right: 0;
+    padding: 12px 10px;
+    border-radius: 16px 16px 0 0;
+    text-align: center;
+  }
+  .auth-shell-tab--active::before,
+  .auth-shell-tab--active::after {
+    display: none;
+  }
+  .auth-shell-form-scroll {
+    padding: 24px 22px;
+  }
+  .auth-shell-footer {
+    padding: 14px 22px;
+  }
+}
+
+/* Поля форми — підкреслення (underline), не pill: золота іконка зліва,
+   borderless input, 1.5px нижня межа, що стає золотою у фокусі. Видимий
+   <label> лишається в DOM для доступності, але сховано візуально
+   (.auth-label--sr) — дизайн показує лише іконку + placeholder. */
 .auth-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.auth-label {
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 700;
-  color: #6a5d40;
-}
-.dark .auth-label {
-  color: #b4b1dd;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .auth-label {
-    color: #b4b1dd;
-  }
+.auth-label--sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .auth-input-wrap {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #e4cf94;
 }
+.dark .auth-input-wrap {
+  border-bottom-color: #2e3680;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-input-wrap {
+    border-bottom-color: #2e3680;
+  }
+}
+.auth-input-wrap:focus-within {
+  border-bottom-color: #d9b765;
+}
+.dark .auth-input-wrap:focus-within {
+  border-bottom-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-input-wrap:focus-within {
+    border-bottom-color: #f3d98b;
+  }
+}
+
+.auth-input-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #8a6a1f;
+}
+.dark .auth-input-icon {
+  color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-input-icon {
+    color: #f3d98b;
+  }
+}
+
 .auth-input {
-  width: 100%;
-  min-height: 46px;
-  border-radius: 999px;
-  border: 1.5px solid #e4cf94;
-  background: #fff;
-  padding: 10px 18px;
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
   font-family: var(--font-body);
   font-size: 15px;
   color: #1a1640;
 }
-/* Пароль-поле має праворуч кнопку показу/сховання — зайвий padding, щоб
-   текст не ліз під неї. */
-.auth-input--with-toggle {
-  padding-right: 48px;
+.auth-input::placeholder {
+  color: #9a8f6a;
 }
 .dark .auth-input {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: #2e3680;
   color: #f6f1e3;
+}
+.dark .auth-input::placeholder {
+  color: #7d7aa8;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .auth-input {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: #2e3680;
     color: #f6f1e3;
+  }
+  :root:not(.light) .auth-input::placeholder {
+    color: #7d7aa8;
   }
 }
 .auth-input:focus-visible {
-  outline: 2px solid #4b46da;
-  outline-offset: 2px;
-}
-.dark .auth-input:focus-visible {
-  outline-color: #f3d98b;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .auth-input:focus-visible {
-    outline-color: #f3d98b;
-  }
+  outline: none;
 }
 
-/* Кругла кнопка показу/сховання пароля — усередині .auth-input-wrap,
-   праворуч від поля; не native (жодного input[type] trick), звичайна
-   кнопка з іконкою-оком, aria-pressed передає стан. */
+/* Кругла кнопка показу/сховання пароля — звичайний flex-item праворуч
+   від поля (НЕ absolute — .auth-input-wrap тепер сам flex-row). */
 .auth-field-toggle {
-  position: absolute;
-  right: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -17913,6 +18215,8 @@ button.cabinet-nav-item {
   }
 }
 
+/* Успіх — спокійний зелений (НЕ чорнило/indigo — відрізняється від
+   нейтрального тексту так само, як помилка відрізняється винним). */
 .auth-success {
   display: flex;
   align-items: flex-start;
@@ -17920,14 +18224,14 @@ button.cabinet-nav-item {
   margin: 2px 0;
   font-family: var(--font-body);
   font-size: 14px;
-  color: #1a1640;
+  color: #2f6b4f;
 }
 .dark .auth-success {
-  color: #f6f1e3;
+  color: #9fe0bd;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .auth-success {
-    color: #f6f1e3;
+    color: #9fe0bd;
   }
 }
 

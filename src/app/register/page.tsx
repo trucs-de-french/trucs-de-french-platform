@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { UserPlus, User, Mail, Lock } from "lucide-react";
 import { signUp } from "../login/actions";
 import { SubmitButton } from "@/components/submit-button";
-import { PlatformWordmark } from "@/components/platform-wordmark";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { t } from "@/lib/i18n/t";
+
+const lang = "uk" as const;
 
 export default async function RegisterPage({
   searchParams,
@@ -11,73 +15,94 @@ export default async function RegisterPage({
   const { error } = await searchParams;
 
   return (
-    <main className="mx-auto w-full flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
-      <div className="flex justify-center">
-        <PlatformWordmark size="lg" tagline />
-      </div>
-      <h1 className="text-2xl font-semibold">Реєстрація</h1>
-
+    <AuthShell
+      variant="tabs"
+      activeTab="register"
+      icon={<UserPlus size={32} aria-hidden="true" />}
+      iconAriaLabel={t(lang, "auth.register.avatarAria")}
+      title={t(lang, "auth.register.title")}
+    >
       {error && (
-        <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
-          {error}
+        <p className="auth-error" role="alert">
+          <span aria-hidden="true">⚠</span>
+          <span>{error}</span>
         </p>
       )}
 
-      <form action={signUp} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="fullName" className="text-sm font-medium">
-            Ім&apos;я
+      <form action={signUp} className="flex flex-col gap-5">
+        <div className="auth-field">
+          <label htmlFor="fullName" className="auth-label--sr">
+            {t(lang, "auth.register.fullNameLabel")}
           </label>
-          <input
-            id="fullName"
-            name="fullName"
-            type="text"
-            required
-            className="rounded-md border px-3 py-2"
-          />
+          <div className="auth-input-wrap">
+            <span className="auth-input-icon" aria-hidden="true">
+              <User size={17} />
+            </span>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              required
+              autoComplete="name"
+              placeholder={t(lang, "auth.register.fullNameLabel")}
+              className="auth-input"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
+        <div className="auth-field">
+          <label htmlFor="email" className="auth-label--sr">
+            {t(lang, "auth.register.emailLabel")}
           </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="rounded-md border px-3 py-2"
-          />
+          <div className="auth-input-wrap">
+            <span className="auth-input-icon" aria-hidden="true">
+              <Mail size={17} />
+            </span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder={t(lang, "auth.register.emailLabel")}
+              className="auth-input"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium">
-            Пароль
+        <div className="auth-field">
+          <label htmlFor="password" className="auth-label--sr">
+            {t(lang, "auth.register.passwordLabel")}
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="rounded-md border px-3 py-2"
-          />
+          <div className="auth-input-wrap">
+            <span className="auth-input-icon" aria-hidden="true">
+              <Lock size={17} />
+            </span>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder={t(lang, "auth.register.passwordLabel")}
+              className="auth-input"
+            />
+          </div>
+          <p className="auth-hint">{t(lang, "auth.register.passwordHint")}</p>
         </div>
 
-        <SubmitButton
-          pendingChildren="Реєструю..."
-          className="rounded-md bg-black px-4 py-2 text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-        >
-          Зареєструватися
+        <SubmitButton pendingChildren={t(lang, "auth.register.submitPending")} className="auth-btn-primary">
+          {t(lang, "auth.register.submit")}
         </SubmitButton>
       </form>
 
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-        Вже є акаунт?{" "}
-        <Link href="/login" className="underline">
-          Увійти
+      <p className="mt-5 text-center text-sm">
+        {t(lang, "auth.register.haveAccount")}{" "}
+        <Link href="/login" className="auth-link">
+          {t(lang, "auth.register.loginLink")}
         </Link>
       </p>
-    </main>
+    </AuthShell>
   );
 }

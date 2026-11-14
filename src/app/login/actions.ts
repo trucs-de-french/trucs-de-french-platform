@@ -27,6 +27,10 @@ export async function signUp(formData: FormData) {
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
 
+  if (password.length < 8) {
+    redirect(`/register?error=${encodeURIComponent("Пароль має містити щонайменше 8 символів")}`);
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
