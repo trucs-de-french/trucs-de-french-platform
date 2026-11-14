@@ -17696,10 +17696,10 @@ button.cabinet-nav-item {
 .auth-shell-tagline {
   margin-top: auto;
   padding-top: 24px;
-  font-family: var(--font-body);
-  font-style: italic;
+  font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #f3d98b;
 }
 
 /* Короткий заголовок посередині панелі для forgot-password/

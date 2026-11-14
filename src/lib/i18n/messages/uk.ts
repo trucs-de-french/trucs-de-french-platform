@@ -686,7 +686,6 @@ export const uk = {
   "home.library.prev": "Попередній курс",
   "home.library.next": "Наступний курс",
   "home.library.goToSlide": "Перейти до слайду {n}",
-  "footer.tagline": "tout devient possible avec le français",
   "footer.copyright": "© {year} Trucs d’French",
   "footer.social.telegram": "Наш Telegram",
   "footer.social.instagram": "Наш Instagram",

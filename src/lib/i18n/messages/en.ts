@@ -683,7 +683,6 @@ export const en: Record<MessageKey, string> = {
   "home.library.prev": "Previous course",
   "home.library.next": "Next course",
   "home.library.goToSlide": "Go to slide {n}",
-  "footer.tagline": "tout devient possible avec le français",
   "footer.copyright": "© {year} Trucs d’French",
   "footer.social.telegram": "Our Telegram",
   "footer.social.instagram": "Our Instagram",
