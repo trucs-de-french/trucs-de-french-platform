@@ -8,6 +8,7 @@ import {
   type SavedWord,
   type SavedWordInput,
 } from "@/lib/cabinet/saved-words";
+import { normalizePartOfSpeech } from "@/lib/vocab-categories";
 
 const MAX_SAVED_WORDS = 1000;
 
@@ -79,7 +80,11 @@ export async function saveWord(
       word_key: wordKey,
       translation: trimmedOrNull(input.translation),
       translation_source: input.translationSource,
-      part_of_speech: input.partOfSpeech ?? null,
+      // Єдина точка нормалізації partOfSpeech (легасі-ключі типу
+      // "adverbe_locution" -> канонічне значення) — усе, що читає цю
+      // колонку далі (dictionary/page.tsx, dictionary-view.tsx), довіряє,
+      // що тут уже лежить канонічний PartOfSpeech або null.
+      part_of_speech: normalizePartOfSpeech(input.partOfSpeech),
       note: trimmedOrNull(input.note),
       image_url: input.imageUrl ?? null,
       context_fr: trimmedOrNull(input.contextFr),

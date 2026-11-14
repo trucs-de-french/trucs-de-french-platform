@@ -293,6 +293,13 @@ export const uk = {
   "script.showTranslation": "Показати переклад",
   "script.collapseScript": "Згорнути скрипт",
 
+  "dictionary.saveAction": "Зберегти в словник",
+  "dictionary.savedState": "✓ У словнику",
+  "dictionary.removeAction": "Прибрати",
+  "dictionary.saveWordAria": "Зберегти «{word}» у словник",
+  "dictionary.removeWordAria": "Прибрати «{word}» зі словника",
+  "dictionary.saveError": "Не вдалося зберегти. Спробуйте ще раз.",
+
   "vocabSection.collapseVocab": "Згорнути вокабуляр",
   "vocabSection.downloadPdf": "Завантажити PDF",
   "vocabSection.otherCategory": "Інше",

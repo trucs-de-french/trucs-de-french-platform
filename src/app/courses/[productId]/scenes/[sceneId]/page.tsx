@@ -58,6 +58,8 @@ import { VideoFrame } from "@/components/video-frame";
 import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
+import { SavedWordsProvider } from "@/components/dictionary/saved-words-provider";
+import { listSavedWordsForSource } from "@/lib/cabinet/saved-words";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";
@@ -366,6 +368,12 @@ export default async function ScenePage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // "Мій словник" Етап 2 — слова, які студент УЖЕ зберіг саме з цієї сцени
+  // (для SavedWordsProvider нижче). Лише коли студент залогінений — інакше
+  // пустий масив, і провайдер нижче взагалі не рендериться (SaveWordButton
+  // сама ховається без нього).
+  const savedWordsForScene = user ? await listSavedWordsForSource(sceneId) : [];
 
   // Плоский список УСІХ задач сцени для mistakes/progress — у два джерела:
   // (1) sceneRows — top-level задачі й ГРУПИ, прив'язані напряму через
@@ -979,8 +987,12 @@ export default async function ScenePage({
     vocab: vocabNode,
   };
 
-  return (
-    <LangProvider lang={lang}>
+  // "Мій словник" Етап 2 — SavedWordsProvider (Context.Provider, без
+  // власного DOM) монтується лише коли студент залогінений, інакше
+  // useSavedWords() усередині SaveWordButton/VocabGroupTable повертає null
+  // і кнопки збереження просто не рендеряться (без провайдера взагалі,
+  // не з прапорцем isLoggedIn).
+  const pageBody = (
     <div className="student-bg-wrapper" data-scene-bg={bgMode ?? undefined}>
       <SceneBackground desktopUrl={bgDesktopUrl} mobileUrl={bgMobileUrl} fillColor={bgFillColor} />
       <main className="student-bg-content mx-auto w-full max-w-3xl p-6">
@@ -1064,6 +1076,23 @@ export default async function ScenePage({
         </div>
       </main>
     </div>
+  );
+
+  return (
+    <LangProvider lang={lang}>
+      {user ? (
+        <SavedWordsProvider
+          sourceType="scene"
+          sourceId={sceneId}
+          productId={productId}
+          sourceTitle={scene.title}
+          initialSaved={savedWordsForScene}
+        >
+          {pageBody}
+        </SavedWordsProvider>
+      ) : (
+        pageBody
+      )}
     </LangProvider>
   );
 }

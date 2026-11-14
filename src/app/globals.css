@@ -3970,10 +3970,18 @@ button.scene-bar:active .scene-bar-toggle {
 .vocab-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
   column-gap: 24px;
   padding: 6px 8px;
   line-height: 1.35;
   border-bottom: 1px solid var(--glass-divider);
+}
+/* Третя колонка — кнопка-закладка SaveWordButton variant="icon" (Етап 2
+   "Мій словник"): клас додається лише коли є SavedWordsProvider
+   (vocab-section.tsx сам перевіряє useSavedWords() перед рендером кнопки),
+   щоб сторінки без контексту сцени не отримали порожню 24px-колонку. */
+.vocab-row--with-save {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
 }
 .vocab-row:last-child {
   border-bottom: none;
@@ -17095,4 +17103,207 @@ button.cabinet-nav-item {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* "Мій словник" Етап 2 — кнопка збереження слова (save-word-button.tsx),
+   на всіх сторінках сцени (бульбашка вокабуляру/картка відео/рядок
+   таблиці/панель звичайного слова). На відміну від /cabinet/* ці сторінки
+   НЕ мають явного .dark-класу-гарантії без системної теми — тож кожне
+   кольорове правило дублюється класом (.dark) і системною медіа-
+   перевіркою (:root:not(.light)), той самий принцип, що .vocab-chip/
+   .btn-check вище. Базове (світле) правило — без префікса, те саме, що
+   решта кнопок цього файлу. */
+.save-word-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: filter 150ms, box-shadow 150ms;
+}
+.save-word-pill:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.save-word-pill--primary {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(75, 70, 218, 0.3);
+}
+.dark .save-word-pill--primary {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #1a1640;
+  box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-pill--primary {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    background-origin: border-box;
+    background-clip: border-box;
+    color: #1a1640;
+    box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
+  }
+}
+@media (hover: hover) {
+  .save-word-pill--primary:hover {
+    filter: brightness(1.06);
+  }
+}
+.save-word-pill--primary:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+
+/* "✓ У словнику" — м'яка картка, не градієнт (стан "уже збережено", не
+   дія). border/bg — ті самі --glass-item-bg/--glass-item-border, що решта
+   карток скрипту/вокабуляру (vocab-section.tsx коментарі вище). */
+.save-word-pill--saved {
+  background: var(--glass-item-bg, #fff);
+  border-color: var(--glass-item-border, rgba(75, 70, 218, 0.16));
+  color: var(--glass-text, #1a1640);
+  cursor: default;
+}
+.dark .save-word-pill--saved {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(246, 220, 142, 0.35);
+  color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-pill--saved {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(246, 220, 142, 0.35);
+    color: #f6dc8e;
+  }
+}
+
+.save-word-remove-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  color: var(--glass-text-secondary, #55546b);
+  cursor: pointer;
+}
+.save-word-remove-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.save-word-remove-link:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.dark .save-word-remove-link:focus-visible {
+  outline-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-remove-link:focus-visible {
+    outline-color: #f3d98b;
+  }
+}
+
+/* Кругла іконка-закладка (рядок таблиці "Вокабуляр") — 36px, той самий
+   принцип стану saved/not-saved, що .save-word-pill, лише без тексту. */
+.save-word-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--glass-item-border, rgba(75, 70, 218, 0.16));
+  background: var(--glass-item-bg, #fff);
+  color: #4b46da;
+  cursor: pointer;
+  transition: border-color 150ms, background-color 150ms, color 150ms;
+}
+.save-word-icon-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+@media (hover: hover) {
+  .save-word-icon-btn:hover {
+    border-color: #4b46da;
+    background: rgba(75, 70, 218, 0.1);
+  }
+}
+.save-word-icon-btn:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.save-word-icon-btn--saved {
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  border-color: transparent;
+  color: #ffffff;
+}
+.dark .save-word-icon-btn {
+  color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-icon-btn {
+    color: #f3d98b;
+  }
+}
+.dark .save-word-icon-btn--saved {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  border-color: transparent;
+  color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-icon-btn--saved {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    border-color: transparent;
+    color: #1a1640;
+  }
+}
+.dark .save-word-icon-btn:focus-visible {
+  outline-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-icon-btn:focus-visible {
+    outline-color: #f3d98b;
+  }
+}
+
+/* Інлайн-помилка збереження (ліміт 1000 слів/збій мережі) — ніколи не
+   alert(), ніколи чистий червоний (amber, той самий принцип, що italic
+   text-amber-700 в інших місцях коду). */
+.save-word-error {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+}
+.dark .save-word-error {
+  color: #fbbf86;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-error {
+    color: #fbbf86;
+  }
+}
+
+/* Маленький лейбл частини мови всередині тултіпа VocabWord
+   (dialogue-line.tsx) — тултіп сам завжди світлий (.vocab-chip-tooltip,
+   обидві теми), тож один колір без .dark-варіанту достатньо. */
+.vocab-chip-tooltip-pos {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4b46da;
 }

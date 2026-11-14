@@ -30,6 +30,8 @@ import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
 import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech } from "@/lib/vocab-categories";
 import { useT } from "@/lib/i18n/context";
+import { SaveWordButton } from "@/components/dictionary/save-word-button";
+import type { SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -1207,6 +1209,28 @@ function VideoWordCard({
           {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
         </div>
       )}
+
+      {/* SaveWordButton сама ховається, якщо немає SavedWordsProvider
+          (сторінки матеріалів/DELF рендерять VideoPlayer поза контекстом
+          сцени) — рендериться завжди в розмітці картки (а не в portal), щоб
+          лишатись усередині wrapperRef і працювати й у fullscreen/iOS
+          pseudo-fullscreen (коментар при useFullscreenWrapper вище). */}
+      <div className="mt-3">
+        <SaveWordButton
+          snapshot={{
+            word: firstVocabVariant(item.word),
+            translation: item.translation,
+            translationSource: "teacher",
+            partOfSpeech: item.partOfSpeech ?? null,
+            note: item.note?.trim() || null,
+            imageUrl: item.image_url ?? null,
+            vocabId: item.id ?? null,
+            contextFr: item.example?.text ?? null,
+            contextUk: item.example?.translationUk ?? null,
+          } satisfies SaveWordSnapshot}
+          variant="pill"
+        />
+      </div>
     </div>
   );
 }

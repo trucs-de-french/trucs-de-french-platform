@@ -290,6 +290,13 @@ export const en: Record<MessageKey, string> = {
   "script.showTranslation": "Show translation",
   "script.collapseScript": "Collapse script",
 
+  "dictionary.saveAction": "Save to dictionary",
+  "dictionary.savedState": "✓ In dictionary",
+  "dictionary.removeAction": "Remove",
+  "dictionary.saveWordAria": "Save “{word}” to the dictionary",
+  "dictionary.removeWordAria": "Remove “{word}” from the dictionary",
+  "dictionary.saveError": "Couldn't save. Try again.",
+
   "vocabSection.collapseVocab": "Collapse vocabulary",
   "vocabSection.downloadPdf": "Download PDF",
   "vocabSection.otherCategory": "Other",

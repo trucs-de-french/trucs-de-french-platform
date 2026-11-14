@@ -29,6 +29,13 @@ export type SavedWord = {
   contextUk: string | null;
 };
 
+// partOfSpeech — СИРИЙ рядок (не PartOfSpeech): джерело цього поля —
+// VocabItem.partOfSpeech, яке саме може бути легасі-ключем
+// ("adverbe_locution") чи довільним порожнім значенням. Єдина точка
+// нормалізації — normalizePartOfSpeech усередині saveWord
+// (src/app/cabinet/dictionary/actions.ts), щоб у БД завжди лежало те саме
+// канонічне значення, яке потім без додаткової обробки читає
+// /cabinet/dictionary (rowToSavedWord просто кастить його в PartOfSpeech).
 export type SavedWordInput = {
   sourceType: SavedWordSourceType;
   sourceId?: string | null;
@@ -38,7 +45,7 @@ export type SavedWordInput = {
   word: string;
   translation?: string | null;
   translationSource: SavedWordTranslationSource;
-  partOfSpeech?: PartOfSpeech | null;
+  partOfSpeech?: string | null;
   note?: string | null;
   imageUrl?: string | null;
   contextFr?: string | null;
@@ -96,21 +103,27 @@ export function computeWordKey(word: string): string {
   return normalizeWordForMatch(word);
 }
 
-// Для Етапу 2 (кнопка-закладка в скрипті/відео): які word_key студент уже
-// зберіг із конкретного джерела — щоб показати "вже збережено" без
-// повторного запиту на кожне слово.
-export async function listSavedWordKeysForSource(sourceId: string): Promise<Set<string>> {
+export type SavedWordSourceEntry = { wordKey: string; id: string; translation: string | null };
+
+// Для SavedWordsProvider (сторінка сцени) — які слова студент уже зберіг
+// із конкретного джерела, з id (щоб "Прибрати" міг видалити рядок без
+// додаткового запиту) і поточним перекладом (щоб показати його одразу,
+// без повторного читання з БД).
+export async function listSavedWordsForSource(sourceId: string): Promise<SavedWordSourceEntry[]> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return new Set();
+  if (!user) return [];
 
   const { data } = await supabase
     .from("saved_words")
-    .select("word_key")
+    .select("id, word_key, translation")
     .eq("user_id", user.id)
     .eq("source_id", sourceId);
 
-  return new Set((data ?? []).map((row) => (row as { word_key: string }).word_key));
+  return (data ?? []).map((row) => {
+    const r = row as { id: string; word_key: string; translation: string | null };
+    return { id: r.id, wordKey: r.word_key, translation: r.translation };
+  });
 }

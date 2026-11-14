@@ -185,6 +185,7 @@ export function ScriptSection({
                 vocab={line.vocab ?? []}
                 start={line.start}
                 videoLink={line.videoLink}
+                translationUk={line.translationUk ?? null}
                 openId={openId}
                 onWordClick={openWord}
                 showSpeaker={showSpeakerFlags[i]}
@@ -209,6 +210,7 @@ export function ScriptSection({
             vocab={line.vocab ?? []}
             start={line.start}
             videoLink={line.videoLink}
+            translationUk={line.translationUk ?? null}
             openId={openId}
             onWordClick={openWord}
             showSpeaker={showSpeakerFlags[i]}

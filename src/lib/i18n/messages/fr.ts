@@ -292,6 +292,13 @@ export const fr: Record<MessageKey, string> = {
   "script.showTranslation": "Afficher la traduction",
   "script.collapseScript": "Réduire le script",
 
+  "dictionary.saveAction": "Enregistrer dans le dictionnaire",
+  "dictionary.savedState": "✓ Dans le dictionnaire",
+  "dictionary.removeAction": "Retirer",
+  "dictionary.saveWordAria": "Enregistrer « {word} » dans le dictionnaire",
+  "dictionary.removeWordAria": "Retirer « {word} » du dictionnaire",
+  "dictionary.saveError": "Échec de l'enregistrement. Réessayez.",
+
   "vocabSection.collapseVocab": "Réduire le vocabulaire",
   "vocabSection.downloadPdf": "Télécharger le PDF",
   "vocabSection.otherCategory": "Autre",

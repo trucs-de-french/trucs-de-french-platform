@@ -15,6 +15,8 @@ import { resolveBlockIcon } from "@/lib/block-icons";
 import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import type { UiLang } from "@/lib/ui/product-lang";
+import { SaveWordButton } from "@/components/dictionary/save-word-button";
+import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 
 // uk: три форми mod10/mod100 (та сама логіка, що pluralizeWords); fr/en —
 // one/other через Intl.PluralRules, plural() helper (той самий принцип, що
@@ -127,6 +129,10 @@ function VocabGroupTable({
   // нейтральний сірий, не колір жодної реальної категорії.
   const palette = categoryPalette(partOfSpeech ? PART_OF_SPEECH_COLORS[partOfSpeech].rgb : [0.42, 0.447, 0.502]);
   const word = pluralizeVocabWords(lang, items.length);
+  // Null — немає SavedWordsProvider (сторінка без контексту сцени): третя
+  // колонка/кнопка-закладка просто не рендериться, рядок лишається
+  // 2-колонковим (.vocab-row без модифікатора --with-save).
+  const saved = useSavedWords();
 
   return (
     <div style={{ "--cat-rgb": palette.rgbTriplet } as CSSProperties}>
@@ -151,34 +157,55 @@ function VocabGroupTable({
           {items.length} {word}
         </span>
       </div>
-      {items.map((v) => (
-        <div key={v.id ?? v.word} className="vocab-row">
-          {/* 16px — той самий розмір, що EXERCISE_BODY (typography-styles.ts,
-              text-base/Lora) — текст вправ на цій же сторінці сцени;
-              500 (не 600), бо EXERCISE_BODY сам БЕЗ font-weight класу
-              (звичайні 400) — 500 лишає FR-слово трохи жирнішим за
-              переклад, не настільки важким, як колишні 600. Колір —
-              --glass-text/--glass-text-secondary (globals.css), не
-              фіксований hex: рядок тепер сидить або на світлій, або на
-              темній скляній панелі (data-scene-bg), фіксований темний
-              колір на темній панелі був би нечитабельним.
-              --glass-text-secondary (переклад) переозначений у темній темі
-              на .vocab-translation нижче — .glass-block-panel сам НЕ має
-              .dark-перевизначення (Скрипт/Вокабуляр свідомо лишені
-              "скляними" й у темній темі, панель лишається світлою), тож без
-              цього класу переклад мав би той самий сірий колір, що й у
-              світлій темі, й зливався б із такою ж світлою панеллю. */}
-          <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}>
-            {firstVocabVariant(v.word)}
-          </span>
-          <span
-            className="font-heading vocab-translation"
-            style={{ fontWeight: 400, fontSize: "16px" }}
-          >
-            {v.translation}
-          </span>
-        </div>
-      ))}
+      {items.map((v) => {
+        const word = firstVocabVariant(v.word);
+        // Контекст (репліка, звідки взято слово) тут недешевий: VocabSection
+        // отримує лише deduped vocab[] (collectSceneVocab), не весь dialogue
+        // сцени — щоб дешево знайти першу репліку зі словом, довелось би
+        // протягнути весь dialogue через VocabSection/VocabGroupTable лише
+        // для цього. Тому contextFr/contextUk тут null (дозволено
+        // завданням: "else null").
+        const snapshot: SaveWordSnapshot = {
+          word,
+          translation: v.translation,
+          translationSource: "teacher",
+          partOfSpeech: v.partOfSpeech ?? null,
+          note: v.note?.trim() || null,
+          imageUrl: v.image_url ?? null,
+          vocabId: v.id ?? null,
+          contextFr: null,
+          contextUk: null,
+        };
+        return (
+          <div key={v.id ?? v.word} className={`vocab-row${saved ? " vocab-row--with-save" : ""}`}>
+            {/* 16px — той самий розмір, що EXERCISE_BODY (typography-styles.ts,
+                text-base/Lora) — текст вправ на цій же сторінці сцени;
+                500 (не 600), бо EXERCISE_BODY сам БЕЗ font-weight класу
+                (звичайні 400) — 500 лишає FR-слово трохи жирнішим за
+                переклад, не настільки важким, як колишні 600. Колір —
+                --glass-text/--glass-text-secondary (globals.css), не
+                фіксований hex: рядок тепер сидить або на світлій, або на
+                темній скляній панелі (data-scene-bg), фіксований темний
+                колір на темній панелі був би нечитабельним.
+                --glass-text-secondary (переклад) переозначений у темній темі
+                на .vocab-translation нижче — .glass-block-panel сам НЕ має
+                .dark-перевизначення (Скрипт/Вокабуляр свідомо лишені
+                "скляними" й у темній темі, панель лишається світлою), тож без
+                цього класу переклад мав би той самий сірий колір, що й у
+                світлій темі, й зливався б із такою ж світлою панеллю. */}
+            <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}>
+              {word}
+            </span>
+            <span
+              className="font-heading vocab-translation"
+              style={{ fontWeight: 400, fontSize: "16px" }}
+            >
+              {v.translation}
+            </span>
+            {saved && <SaveWordButton snapshot={snapshot} variant="icon" />}
+          </div>
+        );
+      })}
     </div>
   );
 }

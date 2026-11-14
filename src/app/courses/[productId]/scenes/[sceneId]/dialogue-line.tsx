@@ -3,6 +3,9 @@
 import type { VocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
+import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
+import { SaveWordButton } from "@/components/dictionary/save-word-button";
+import type { SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -46,32 +49,64 @@ export function TranslatedText({ text, vocab }: { text: string; vocab: VocabItem
 // Контрольований ззовні (ScriptSection) — сам не тримає стан "показано чи
 // ні", щоб клік на інше слово десь-інде на сторінці міг миттєво закрити цей
 // переклад (лише одне слово відкрите одночасно на весь скрипт).
+//
+// Тултип тепер СИБЛІНГ кнопки слова, не її дитина: усередині з'явилась
+// SaveWordButton (теж <button>), а HTML не дозволяє вкладати interactive-
+// елемент в <button> — обгортка .relative перенесена на зовнішній span,
+// саму кнопку-слово лишає без relative (їй воно більше не потрібне).
 function VocabWord({
   id,
-  word,
-  translation,
+  displayWord,
+  item,
+  contextFr,
+  contextUk,
   isOpen,
   onClick,
 }: {
   id: string;
-  word: string;
-  translation: string;
+  displayWord: string;
+  item: VocabItem;
+  contextFr: string;
+  contextUk: string | null;
   isOpen: boolean;
   onClick: (id: string) => void;
 }) {
+  const pos = normalizePartOfSpeech(item.partOfSpeech);
+  const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
+  const note = item.note?.trim() || null;
+
+  const snapshot: SaveWordSnapshot = {
+    word: displayWord,
+    translation: item.translation,
+    translationSource: "teacher",
+    partOfSpeech: item.partOfSpeech ?? null,
+    note,
+    imageUrl: item.image_url ?? null,
+    vocabId: item.id ?? null,
+    contextFr,
+    contextUk,
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => onClick(id)}
-      className="vocab-chip vocab-chip--interactive relative rounded px-1"
-    >
-      {word}
+    <span className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => onClick(id)}
+        className="vocab-chip vocab-chip--interactive rounded px-1"
+      >
+        {displayWord}
+      </button>
       {isOpen && (
         <span className="vocab-chip-tooltip absolute left-1/2 top-full z-10 mt-1 w-max max-w-56 -translate-x-1/2 rounded px-2 py-1 text-xs">
-          {translation}
+          <span className="block">{item.translation}</span>
+          {posLabel && <span className="vocab-chip-tooltip-pos mt-0.5 block">{posLabel}</span>}
+          {note && <span className="mt-0.5 block italic">{note}</span>}
+          <span className="mt-1.5 block">
+            <SaveWordButton snapshot={snapshot} variant="pill" />
+          </span>
         </span>
       )}
-    </button>
+    </span>
   );
 }
 
@@ -112,6 +147,7 @@ export function DialogueLine({
   vocab,
   start,
   videoLink,
+  translationUk,
   openId,
   onWordClick,
   showSpeaker = true,
@@ -122,6 +158,11 @@ export function DialogueLine({
   vocab: VocabItem[];
   start?: number | null;
   videoLink?: string | null;
+  // Переклад репліки (translationUk з scenes.dialogue) — потрібен лише як
+  // контекст для снімка збереженого слова (contextUk), саму репліку й без
+  // цього пропу вже показує окрема колонка/TranslationCell у
+  // script-section.tsx, коли студент тогглить "Показати переклад".
+  translationUk?: string | null;
   openId: string | null;
   onWordClick: (id: string) => void;
   // false — та сама репліка спікера, що й на попередньому рядку: ім'я не
@@ -148,8 +189,10 @@ export function DialogueLine({
           <VocabWord
             key={i}
             id={id}
-            word={part.text}
-            translation={part.item.translation}
+            displayWord={part.text}
+            item={part.item}
+            contextFr={text}
+            contextUk={translationUk ?? null}
             isOpen={openId === id}
             onClick={onWordClick}
           />
