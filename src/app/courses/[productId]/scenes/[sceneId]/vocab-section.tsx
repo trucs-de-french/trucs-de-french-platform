@@ -193,7 +193,10 @@ function VocabGroupTable({
                 "скляними" й у темній темі, панель лишається світлою), тож без
                 цього класу переклад мав би той самий сірий колір, що й у
                 світлій темі, й зливався б із такою ж світлою панеллю. */}
-            <span className="font-body" style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}>
+            <span
+              className="font-body vocab-row-word"
+              style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}
+            >
               {word}
             </span>
             <span

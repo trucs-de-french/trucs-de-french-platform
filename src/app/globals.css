@@ -3979,9 +3979,13 @@ button.scene-bar:active .scene-bar-toggle {
 /* Третя колонка — кнопка-закладка SaveWordButton variant="icon" (Етап 2
    "Мій словник"): клас додається лише коли є SavedWordsProvider
    (vocab-section.tsx сам перевіряє useSavedWords() перед рендером кнопки),
-   щоб сторінки без контексту сцени не отримали порожню 24px-колонку. */
+   щоб сторінки без контексту сцени не отримали порожню 24px-колонку.
+   36px (не auto) — ФІКСОВАНА колонка під кнопку: з auto довгий переклад
+   (3+ рядки) міг візуально "наїжджати" під кнопку, бо .vocab-translation
+   раніше не мала overflow-wrap і просто переповнювала свою клітинку
+   замість переносу всередині неї. */
 .vocab-row--with-save {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) 36px;
 }
 .vocab-row:last-child {
   border-bottom: none;
@@ -4018,6 +4022,18 @@ button.scene-bar:active .scene-bar-toggle {
    цей клас міг його перевизначити без !important. */
 .vocab-translation {
   color: var(--glass-text-secondary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* Те саме для FR-слова (друга клітинка, vocab-section.tsx) — довгі
+   дефісні слова мають переноситись усередині СВОЄЇ клітинки, а не
+   переповнювати її й виглядати так, ніби лежать "під" кнопкою-закладкою
+   в третій колонці. */
+.vocab-row-word {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .dark .vocab-translation {
   color: var(--glass-text);
@@ -17145,7 +17161,6 @@ button.cabinet-nav-item {
   background-origin: border-box;
   background-clip: border-box;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(75, 70, 218, 0.3);
 }
 @media (hover: hover) {
   .save-word-pill--primary:hover {
@@ -17172,7 +17187,6 @@ button.cabinet-nav-item {
   background-origin: border-box;
   background-clip: border-box;
   color: #1a1640;
-  box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .save-word-pill--primary-on-dark {
@@ -17180,7 +17194,6 @@ button.cabinet-nav-item {
     background-origin: border-box;
     background-clip: border-box;
     color: #1a1640;
-    box-shadow: 0 4px 12px rgba(217, 183, 101, 0.3);
   }
 }
 
@@ -17231,23 +17244,30 @@ button.cabinet-nav-item {
   outline-color: #f3d98b;
 }
 
-/* Кругла іконка-закладка (рядок таблиці "Вокабуляр") — 36px, той самий
-   принцип стану saved/not-saved, що .save-word-pill, лише без тексту. */
-/* Фіксовано на світлу поверхню (vocab-section.tsx рядок — та сама
-   поверхня, що тултіп/панель в обох темах сайту) — раніше колір іконки
-   перемикався на бліде золото за темою САЙТУ (.dark), хоча сама поверхня
-   рядка не темніє, що й давало бліду іконку на світлому фоні. */
+/* Кругла іконка-закладка (рядок таблиці "Вокабуляр") — 36px, фіксована на
+   світлу поверхню (vocab-section.tsx рядок — завжди біла/кремова в обох
+   темах сайту, на відміну від тултіпа/панелі, які в темній темі стають
+   лавандовими). Невибраний стан — приглушена чорнильна (НЕ індиго):
+   прозорий фон, тонка рамка через color-mix(currentColor), контур
+   закладки тим самим кольором. Вибраний стан — плаский золотий: суцільна
+   заливка/рамка/глиф, БЕЗ градієнта й БЕЗ тіні (раніше градієнт на такому
+   маленькому колі читався як темна "клякса" біля рамки, і був індиго,
+   якого вчителька не хотіла бачити тут взагалі). flex-shrink/align-self —
+   щоб колонка .vocab-row--with-save (36px) ніколи не стискала кнопку й
+   завжди центрувала її по вертикалі, навіть коли переклад розтягнувся на
+   3 рядки. */
 .save-word-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1.5px solid rgba(75, 70, 218, 0.4);
-  background: #ffffff;
-  color: #4b46da;
+  border: 1.5px solid color-mix(in srgb, currentColor 70%, transparent);
+  background: transparent;
+  color: #55546b;
   cursor: pointer;
   transition: border-color 150ms, background-color 150ms, color 150ms;
 }
@@ -17257,18 +17277,30 @@ button.cabinet-nav-item {
 }
 @media (hover: hover) {
   .save-word-icon-btn:hover {
-    border-color: #4b46da;
-    background: rgba(75, 70, 218, 0.1);
+    border-color: color-mix(in srgb, currentColor 90%, transparent);
+    background: rgba(85, 84, 107, 0.12);
   }
 }
 .save-word-icon-btn:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+/* Темніший золотий (#8a6a1f) — на кремовій/білій поверхні рядка таблиці
+   контраст глифа й рамки проти самого рядка ~4.1:1/~5.0:1 (non-text UI
+   вимагає ≥3:1 у обох випадках, рахунок — у звіті коміту); світліший
+   золотий (#f3d98b/#d9b765) на цій ЗАВЖДИ світлій поверхні радше злився б
+   із фоном, тож тут він НЕ використовується (лише на лавандовій поверхні
+   тултіпа/панелі чи на темному склі картки відео — там не рендериться
+   variant="icon" взагалі, лише variant="pill"). */
 .save-word-icon-btn--saved {
-  background: linear-gradient(160deg, #4b46da, #2f2c6b);
-  border-color: transparent;
-  color: #ffffff;
+  background: rgba(138, 106, 31, 0.16);
+  border-color: #8a6a1f;
+  color: #8a6a1f;
+}
+@media (hover: hover) {
+  .save-word-icon-btn--saved:hover {
+    background: rgba(138, 106, 31, 0.24);
+  }
 }
 
 /* Інлайн-помилка збереження (ліміт 1000 слів/збій мережі) — ніколи не
