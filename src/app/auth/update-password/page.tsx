@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { t } from "@/lib/i18n/t";
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -22,7 +23,16 @@ export default async function UpdatePasswordPage() {
   }
 
   return (
-    <AuthShell title={t(lang, "auth.updatePassword.title")}>
+    <AuthShell
+      variant="heading"
+      heading={{
+        title: t(lang, "auth.updatePassword.heading"),
+        lead: t(lang, "auth.updatePassword.headingLead"),
+      }}
+      icon={<Lock size={32} aria-hidden="true" />}
+      iconAriaLabel={t(lang, "auth.updatePassword.avatarAria")}
+      title={t(lang, "auth.updatePassword.title")}
+    >
       <UpdatePasswordForm />
     </AuthShell>
   );

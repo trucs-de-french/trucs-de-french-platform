@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import { updatePassword, MIN_PASSWORD_LENGTH, type UpdatePasswordError } from "./actions";
 
@@ -40,10 +40,13 @@ function PasswordField({
 
   return (
     <div className="auth-field">
-      <label htmlFor={id} className="auth-label">
+      <label htmlFor={id} className="auth-label--sr">
         {label}
       </label>
       <div className="auth-input-wrap">
+        <span className="auth-input-icon" aria-hidden="true">
+          <Lock size={17} />
+        </span>
         <input
           id={id}
           name={id}
@@ -53,7 +56,8 @@ function PasswordField({
           autoComplete={autoComplete}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="auth-input auth-input--with-toggle"
+          placeholder={label}
+          className="auth-input"
         />
         <button
           type="button"
@@ -97,9 +101,9 @@ export function UpdatePasswordForm() {
   if (success) {
     return (
       <div className="flex flex-col items-center gap-4 text-center">
+        <CheckCircle2 size={40} className="auth-success" aria-hidden="true" />
         <p className="auth-success" role="status">
-          <span aria-hidden="true">✓</span>
-          <span>{t(lang, "auth.updatePassword.success")}</span>
+          {t(lang, "auth.updatePassword.success")}
         </p>
         <Link href="/cabinet" className="auth-btn-primary">
           {t(lang, "auth.updatePassword.goToCabinet")}
