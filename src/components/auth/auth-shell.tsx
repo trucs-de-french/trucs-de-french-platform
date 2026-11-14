@@ -41,7 +41,7 @@ export function AuthShell({
       <div className="auth-shell-card">
         <aside className="auth-shell-panel">
           <div className="auth-shell-brand">
-            <PlatformWordmark size="md" tone="light" />
+            <PlatformWordmark size="md" tone="indigo" />
             <span className="auth-shell-brand-rule" aria-hidden="true" />
           </div>
 

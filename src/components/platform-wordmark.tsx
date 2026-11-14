@@ -28,14 +28,45 @@ type WordmarkSize = keyof typeof SIZES;
 
 const TAGLINE_TEXT = "tout devient possible avec le français";
 
-function toneClasses(tone: "light" | "dark" | undefined, part: "trucs" | "apostrophe" | "tagline") {
+function toneClasses(
+  tone: "light" | "dark" | "indigo" | undefined,
+  part: "trucs" | "french" | "apostrophe" | "tagline"
+) {
   const map = {
-    trucs: { light: "text-[#2f2c6b]", dark: "text-[#f6f1e3]", auto: "text-[#2f2c6b] dark:text-[#f6f1e3]" },
-    apostrophe: { light: "text-[#d9b765]", dark: "text-[#f3d98b]", auto: "text-[#d9b765] dark:text-[#f3d98b]" },
+    trucs: {
+      light: "text-[#2f2c6b]",
+      dark: "text-[#f6f1e3]",
+      auto: "text-[#2f2c6b] dark:text-[#f6f1e3]",
+      // Крем на завжди-indigo панелі авторизації (AuthShell) — відмінний
+      // від "dark" (#f6f1e3), щоб не чіпати існуючі місця з tone="dark"
+      // (бокова рейка кабінету/адмінки).
+      indigo: "text-[#f8f3e4]",
+    },
+    // "d'French" (курсивна частина) — окремий ключ від "trucs": у всіх
+    // існуючих tone лишається того ж кольору, що й TRUCS (як було), лише
+    // для нового "indigo" (AuthShell) стає золотим, щоб відрізнятись від
+    // кремового TRUCS на indigo-градієнті.
+    french: {
+      light: "text-[#2f2c6b]",
+      dark: "text-[#f6f1e3]",
+      auto: "text-[#2f2c6b] dark:text-[#f6f1e3]",
+      indigo: "text-[#f3d98b]",
+    },
+    apostrophe: {
+      light: "text-[#d9b765]",
+      dark: "text-[#f3d98b]",
+      auto: "text-[#d9b765] dark:text-[#f3d98b]",
+      indigo: "text-[#f3d98b]",
+    },
     // Темний золотий (#8a6a1c) на світлому тлі (логін-сторінка), світлий
     // золотий (#f3d98b) там, де тло завжди indigo (бокова панель) чи в
     // темній темі сайту — підпис тепер прямий Nunito 700, без курсиву.
-    tagline: { light: "text-[#8a6a1c]", dark: "text-[#f3d98b]", auto: "text-[#8a6a1c] dark:text-[#f3d98b]" },
+    tagline: {
+      light: "text-[#8a6a1c]",
+      dark: "text-[#f3d98b]",
+      auto: "text-[#8a6a1c] dark:text-[#f3d98b]",
+      indigo: "text-[#f3d98b]",
+    },
   } as const;
   return map[part][tone ?? "auto"];
 }
@@ -47,7 +78,7 @@ export function PlatformWordmark({
   align = "center",
 }: {
   size?: WordmarkSize;
-  tone?: "light" | "dark";
+  tone?: "light" | "dark" | "indigo";
   tagline?: boolean;
   // "left" — рядок і підпис лишаються лівим краєм на одній лінії з іконками
   // навігації замість взаємного центрування (вузька рейка кабінету, де
@@ -70,7 +101,7 @@ export function PlatformWordmark({
           TRUCS
         </span>
         <span
-          className={`font-body font-semibold italic ${toneClasses(tone, "trucs")}`}
+          className={`font-body font-semibold italic ${toneClasses(tone, "french")}`}
           style={{ fontSize: french, marginLeft: "0.28em" }}
         >
           d
