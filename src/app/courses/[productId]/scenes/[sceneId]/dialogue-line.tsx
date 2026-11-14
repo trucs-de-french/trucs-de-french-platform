@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { VocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
@@ -99,6 +99,63 @@ function VocabWord({
   const pos = normalizePartOfSpeech(item.partOfSpeech);
   const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
   const note = item.note?.trim() || null;
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+  // null — ще не виміряно (перший кадр, тултіп невидимий); після
+  // useLayoutEffect — реальна локальна left-координата (px, від
+  // wrapperRef — того самого .relative, що лишається containing block:
+  // жоден предок тут не має overflow:hidden/transform, портал не
+  // потрібен) + above/below.
+  const [placement, setPlacement] = useState<{ left: number; above: boolean } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPlacement(null);
+      return;
+    }
+
+    function reposition() {
+      const wrapper = wrapperRef.current;
+      const tooltip = tooltipRef.current;
+      if (!wrapper || !tooltip) return;
+
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const GAP = 8;
+
+      // Центр слова (viewport-координати) -> бажаний лівий край картки,
+      // потім clamp так, щоб з обох боків лишалось ≥8px до краю
+      // viewport. maxLeft може вийти меншим за minLeft лише коли сама
+      // картка ширша за viewport-16px — max-width у CSS це вже не
+      // допускає, Math.max тут лише захист від'ємного проміжку.
+      const wordCenterX = wrapperRect.left + wrapperRect.width / 2;
+      const desiredLeft = wordCenterX - tooltipRect.width / 2;
+      const minLeft = GAP;
+      const maxLeft = Math.max(GAP, viewportWidth - tooltipRect.width - GAP);
+      const clampedViewportLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
+      const localLeft = clampedViewportLeft - wrapperRect.left;
+
+      // Сторінка сцени не має жодного fixed-бару знизу (на відміну від
+      // мобільного таббара кабінету) — просте порівняння доступного
+      // простору знизу/зверху, без додаткового офсету.
+      const spaceBelow = viewportHeight - wrapperRect.bottom;
+      const spaceAbove = wrapperRect.top;
+      const above = spaceBelow < tooltipRect.height + GAP && spaceAbove > spaceBelow;
+
+      setPlacement({ left: localLeft, above });
+    }
+
+    reposition();
+    window.addEventListener("resize", reposition);
+    window.addEventListener("orientationchange", reposition);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("orientationchange", reposition);
+    };
+  }, [isOpen]);
 
   const snapshot: SaveWordSnapshot = {
     word: displayWord,
@@ -113,7 +170,7 @@ function VocabWord({
   };
 
   return (
-    <span className="relative inline-block">
+    <span className="relative inline-block" ref={wrapperRef}>
       <button
         type="button"
         onClick={() => onClick(id)}
@@ -122,7 +179,11 @@ function VocabWord({
         {displayWord}
       </button>
       {isOpen && (
-        <span className="vocab-chip-tooltip absolute left-1/2 top-full z-10 mt-1 w-max max-w-56 -translate-x-1/2 rounded px-2 py-1 text-xs">
+        <span
+          ref={tooltipRef}
+          className={`vocab-chip-tooltip ${placement?.above ? "vocab-chip-tooltip--above" : "vocab-chip-tooltip--below"}`}
+          style={placement ? { left: `${placement.left}px`, visibility: "visible" } : { visibility: "hidden" }}
+        >
           <span className="block">{item.translation}</span>
           {posLabel && <span className="vocab-chip-tooltip-pos mt-0.5 block">{posLabel}</span>}
           {note && <span className="mt-0.5 block italic">{note}</span>}

@@ -6358,7 +6358,25 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 
+/* Позиціювання — JS (dialogue-line.tsx VocabWord), не Tailwind-утиліти:
+   `left` (px, рахується від .relative-обгортки слова — того самого
+   елемента, що й був завжди containing block, портал не потрібен: жодний
+   предок тут не має overflow:hidden/transform/filter, що зробило б його
+   containing block для position:fixed — коментар при .glass-block-panel
+   нижче навмисно про це ж). visibility:hidden до першого вимірювання
+   (useLayoutEffect, до фарби) — тултіп НЕ блимає в старій
+   лівій/нецентрованій позиції на кадр. width:max-content+max-width —
+   текст переноситься всередині картки, вона сама ніколи не ширша за
+   view port - 16px. min-width — під кнопку збереження всередині. */
 .vocab-chip-tooltip {
+  position: absolute;
+  z-index: 10;
+  width: max-content;
+  min-width: 160px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 8px;
   background: #fff;
   color: #1a1640;
   opacity: 1;
@@ -6367,6 +6385,17 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow:
     0 8px 20px -6px rgba(120, 90, 20, 0.35),
     0 2px 6px rgba(0, 0, 0, 0.12);
+}
+/* Вертикаль — клас, не inline top/bottom (щоб margin-top/-bottom лишався
+   декларативним у CSS, а JS рахував лише те, що МУСИТЬ бути числом:
+   горизонтальний left і сам вибір below/above). */
+.vocab-chip-tooltip--below {
+  top: 100%;
+  margin-top: 8px;
+}
+.vocab-chip-tooltip--above {
+  bottom: 100%;
+  margin-bottom: 8px;
 }
 .dark .vocab-chip-tooltip {
   background: #dcdbf3;
