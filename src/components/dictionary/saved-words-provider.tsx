@@ -8,6 +8,7 @@ import {
   type SavedWordSourceType,
   type SavedWordTranslationSource,
 } from "@/lib/cabinet/saved-words";
+import { normalizePartOfSpeech, type PartOfSpeech } from "@/lib/vocab-categories";
 
 // Снімок слова для save() — без джерельних полів (sourceType/sourceId/
 // productId/sourceTitle): провайдер сам додає їх з власних пропів, щоб
@@ -27,7 +28,7 @@ export type SaveWordSnapshot = {
   contextUk?: string | null;
 };
 
-type SavedEntry = { id: string; translation: string | null };
+type SavedEntry = { id: string; translation: string | null; partOfSpeech: PartOfSpeech | null };
 
 export type SavedWordsContextValue = {
   isSaved: (word: string) => boolean;
@@ -71,7 +72,10 @@ export function SavedWordsProvider({
   children: React.ReactNode;
 }) {
   const [savedByKey, setSavedByKey] = useState<Map<string, SavedEntry>>(
-    () => new Map(initialSaved.map((w) => [w.wordKey, { id: w.id, translation: w.translation }]))
+    () =>
+      new Map(
+        initialSaved.map((w) => [w.wordKey, { id: w.id, translation: w.translation, partOfSpeech: w.partOfSpeech }])
+      )
   );
   const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
   const [errorByKey, setErrorByKey] = useState<Map<string, string>>(new Map());
@@ -129,7 +133,15 @@ export function SavedWordsProvider({
       if (result.ok && result.id) {
         setSavedByKey((prev) => {
           const next = new Map(prev);
-          next.set(key, { id: result.id as string, translation: snapshot.translation ?? null });
+          next.set(key, {
+            id: result.id as string,
+            translation: snapshot.translation ?? null,
+            // normalizePartOfSpeech тут лише для ЛОКАЛЬНОГО кешу (щоб
+            // PlainWordPanel показувала те саме канонічне значення, яке
+            // реально лежить у БД) — єдина точка нормалізації для самого
+            // ЗАПИСУ лишається saveWord (actions.ts).
+            partOfSpeech: normalizePartOfSpeech(snapshot.partOfSpeech ?? null),
+          });
           return next;
         });
         setHasSavedAny(true);

@@ -111,4 +111,13 @@ export function computeWordKey(word: string): string {
   return normalizeWordForMatch(word);
 }
 
-export type SavedWordSourceEntry = { wordKey: string; id: string; translation: string | null };
+export type SavedWordSourceEntry = {
+  wordKey: string;
+  id: string;
+  translation: string | null;
+  // Для панелі звичайного слова (dialogue-line.tsx) — показати ЗБЕРЕЖЕНУ
+  // частину мови як read-only лейбл, коли слово вже збережене. Вже
+  // канонічне значення (0069_saved_words.sql + normalizePartOfSpeech
+  // усередині saveWord), читається напряму, без повторної нормалізації.
+  partOfSpeech: PartOfSpeech | null;
+};

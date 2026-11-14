@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import type { SavedWordSourceEntry } from "./saved-words";
+import type { PartOfSpeech } from "@/lib/vocab-categories";
 
 // Усе, що торкається Supabase server-клієнта (next/headers), живе ЛИШЕ
 // тут — import "server-only" провалює збірку з чітким повідомленням,
@@ -21,12 +22,17 @@ export async function listSavedWordsForSource(sourceId: string): Promise<SavedWo
 
   const { data } = await supabase
     .from("saved_words")
-    .select("id, word_key, translation")
+    .select("id, word_key, translation, part_of_speech")
     .eq("user_id", user.id)
     .eq("source_id", sourceId);
 
   return (data ?? []).map((row) => {
-    const r = row as { id: string; word_key: string; translation: string | null };
-    return { id: r.id, wordKey: r.word_key, translation: r.translation };
+    const r = row as {
+      id: string;
+      word_key: string;
+      translation: string | null;
+      part_of_speech: PartOfSpeech | null;
+    };
+    return { id: r.id, wordKey: r.word_key, translation: r.translation, partOfSpeech: r.part_of_speech };
   });
 }

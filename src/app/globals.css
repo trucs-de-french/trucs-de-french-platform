@@ -17489,3 +17489,64 @@ button.cabinet-nav-item {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
 }
+
+/* Чипи "Частина мови" у формі ЩЕ не збереженого звичайного слова
+   (dialogue-line.tsx PosChipGroup) — та сама поверхня, що весь
+   .plain-word-panel (світла/лавандова в обох темах), тож невибраний чип
+   фіксований (без .dark-варіанту); вибраний — градієнт за темою САЙТУ
+   (опаційна заливка, контраст не залежить від поверхні під кнопкою). */
+.plain-word-pos-field {
+  margin-top: 10px;
+}
+.plain-word-pos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.plain-word-pos-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(75, 70, 218, 0.45);
+  background: #ffffff;
+  color: #1a1640;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 150ms;
+}
+.plain-word-pos-chip--more {
+  border-style: dashed;
+  border-color: rgba(85, 84, 107, 0.45);
+  color: #55546b;
+}
+.plain-word-pos-chip:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.plain-word-pos-chip--selected {
+  border: 1.5px solid transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #ffffff;
+}
+.dark .plain-word-pos-chip--selected {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-pos-chip--selected {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    background-origin: border-box;
+    background-clip: border-box;
+    color: #1a1640;
+  }
+}

@@ -4,10 +4,33 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import type { VocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
-import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
+import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
 import { useT } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages/uk";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
+
+// Ті самі 8 категорій/порядок, що вчительський конструктор
+// (vocab-item-row.tsx) і студентська сторінка "Вокабуляр" — канонічне
+// джерело лишається ТІЛЬКИ vocab-categories.ts, тут лише розбиття на
+// "4 основні" (видно завжди) і "решта" (під чипом "Інше") для панелі
+// звичайного слова.
+const MAIN_POS = PART_OF_SPEECH_ORDER.slice(0, 4);
+
+// Короткі українські підписи чипів (не ті самі, що cabinet.dictionary.
+// filter.* на /cabinet/dictionary — ті множинні "Іменники"/"Дієслова" для
+// фільтра списку, тут однина "іменник" для вибору ОДНІЄЇ частини мови
+// одного слова).
+const POS_CHIP_LABEL_KEY: Record<PartOfSpeech, MessageKey> = {
+  nom: "dictionary.pos.nom",
+  verbe: "dictionary.pos.verbe",
+  adjectif: "dictionary.pos.adjectif",
+  adverbe: "dictionary.pos.adverbe",
+  prepositions_conjonctions: "dictionary.pos.prepositions_conjonctions",
+  locutions: "dictionary.pos.locutions",
+  phrase: "dictionary.pos.phrase",
+  idiome: "dictionary.pos.idiome",
+};
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -179,6 +202,72 @@ function tokenizePlainText(text: string): PlainToken[] {
   return tokens;
 }
 
+// Група чипів "Частина мови" у формі ЩЕ не збереженого звичайного слова —
+// 4 основні завжди видимі + чип "Інше", що розгортає решту INLINE (без
+// popover). role="radiogroup"/role="radio" + роблячий tabindex (стрілки
+// рухають ФОКУС між чипами, Enter/Space — як клік; сам клік на вже
+// вибраному чипі знімає вибір, що не є чистою native-radio поведінкою,
+// тож tabIndex керується вручну, а не native input[type=radio]).
+function PosChipGroup({
+  value,
+  onChange,
+  groupId,
+}: {
+  value: PartOfSpeech | null;
+  onChange: (pos: PartOfSpeech | null) => void;
+  groupId: string;
+}) {
+  const { t } = useT();
+  const [showMore, setShowMore] = useState(false);
+  const visible = showMore ? PART_OF_SPEECH_ORDER : MAIN_POS;
+
+  function handleKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
+    if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) return;
+    e.preventDefault();
+    const dir = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+    const nextIndex = (index + dir + visible.length) % visible.length;
+    document.getElementById(`${groupId}-${visible[nextIndex]}`)?.focus();
+  }
+
+  return (
+    <div className="plain-word-pos-field">
+      <span id={`${groupId}-label`} className="plain-word-panel-label">
+        {t("dictionary.posLabel")}
+      </span>
+      <div role="radiogroup" aria-labelledby={`${groupId}-label`} className="plain-word-pos-chips">
+        {visible.map((pos, index) => {
+          const isChecked = value === pos;
+          return (
+            <button
+              key={pos}
+              id={`${groupId}-${pos}`}
+              type="button"
+              role="radio"
+              aria-checked={isChecked}
+              tabIndex={isChecked || (!value && index === 0) ? 0 : -1}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              onClick={() => onChange(isChecked ? null : pos)}
+              className={`plain-word-pos-chip${isChecked ? " plain-word-pos-chip--selected" : ""}`}
+            >
+              {t(POS_CHIP_LABEL_KEY[pos])}
+            </button>
+          );
+        })}
+        {!showMore && (
+          <button
+            type="button"
+            onClick={() => setShowMore(true)}
+            aria-label={t("dictionary.posOtherAria")}
+            className="plain-word-pos-chip plain-word-pos-chip--more"
+          >
+            {t("dictionary.posOther")}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Снімок/панель звичайного слова, відкрита під реплікою (ПІД <p>, не
 // floating-тултіп — щоб на телефоні не перекривала текст скрипту).
 // Пріоритет "вчительських" даних: якщо це слово десь у сцені позначене
@@ -203,6 +292,9 @@ function PlainWordPanel({
   const { t } = useT();
   const saved = useSavedWords();
   const [value, setValue] = useState("");
+  // Нічого не вибрано за замовчуванням; absent (не null) у снепшоті, якщо
+  // студент нічого не обрав — та сама поведінка, що й до цього чипа.
+  const [partOfSpeech, setPartOfSpeech] = useState<PartOfSpeech | null>(null);
   // justSaved/justRemoved — лише короткий підпис ПЕРЕД автозакриттям
   // (onClose викликає ScriptSection, яка прибирає openPlainKey й
   // анмаунтить цю панель — не animation/transition, тож нема що вимикати
@@ -305,11 +397,15 @@ function PlainWordPanel({
   }
 
   if (existing) {
+    // Та сама FR-назва, що читає /cabinet/dictionary (PART_OF_SPEECH_LABELS_FR,
+    // dictionary-view.tsx) — read-only лейбл, без чипів/редагування тут.
+    const existingPosLabel = existing.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[existing.partOfSpeech] : null;
     return (
       <div className="plain-word-panel" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
         <p className="plain-word-panel-word">{word}</p>
         <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
         {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
+        {existingPosLabel && <p className="plain-word-panel-pos">{existingPosLabel}</p>}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
             {t("dictionary.removeAction")}
@@ -331,6 +427,7 @@ function PlainWordPanel({
       translationSource: value.trim() ? "own" : "none",
       contextFr,
       contextUk,
+      ...(partOfSpeech ? { partOfSpeech } : {}),
     });
     setSaving(false);
     if (result.ok) setJustSaved(true);
@@ -357,6 +454,7 @@ function PlainWordPanel({
         }}
         className="plain-word-panel-input"
       />
+      <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           type="button"
