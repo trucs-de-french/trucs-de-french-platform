@@ -59,7 +59,7 @@ import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player"
 import { ScriptSection } from "./script-section";
 import { VocabSection } from "./vocab-section";
 import { SavedWordsProvider } from "@/components/dictionary/saved-words-provider";
-import { listSavedWordsForSource } from "@/lib/cabinet/saved-words";
+import { listSavedWordsForSource } from "@/lib/cabinet/saved-words.server";
 import type { ExerciseTask } from "../../exercise-block";
 import { TaskGroupBlock, type TaskGroupData } from "../../task-group-block";
 import { H1_TO_CONTENT, H2_TO_CONTENT, EXERCISE_LIST_GAP, EXERCISE_STACK } from "@/lib/spacing";

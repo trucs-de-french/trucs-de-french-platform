@@ -1,6 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import { normalizeWordForMatch } from "@/lib/vocab-match";
 import type { PartOfSpeech } from "@/lib/vocab-categories";
+
+// ЛИШЕ чисті типи й хелпери без побічних ефектів — жодного імпорту
+// next/headers/@/lib/supabase/server тут навмисно: цей файл імпортують і
+// клієнтські компоненти (SavedWordsProvider, dictionary-view.tsx), а
+// Next.js бандлить МОДУЛЬ цілком, не лише використаний експорт — один
+// імпорт createClient на верхньому рівні файла затягнув би next/headers у
+// клієнтський бандл для всіх, хто бере звідси хоч computeWordKey.
+// Серверні функції (listSavedWordsForSource) — окремо, у
+// saved-words.server.ts (import "server-only").
 
 // Типи таблиці public.saved_words (0069_saved_words.sql) — читає і
 // src/app/cabinet/dictionary/actions.ts, і (пізніше, Етап 2) компоненти
@@ -104,26 +112,3 @@ export function computeWordKey(word: string): string {
 }
 
 export type SavedWordSourceEntry = { wordKey: string; id: string; translation: string | null };
-
-// Для SavedWordsProvider (сторінка сцени) — які слова студент уже зберіг
-// із конкретного джерела, з id (щоб "Прибрати" міг видалити рядок без
-// додаткового запиту) і поточним перекладом (щоб показати його одразу,
-// без повторного читання з БД).
-export async function listSavedWordsForSource(sourceId: string): Promise<SavedWordSourceEntry[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const { data } = await supabase
-    .from("saved_words")
-    .select("id, word_key, translation")
-    .eq("user_id", user.id)
-    .eq("source_id", sourceId);
-
-  return (data ?? []).map((row) => {
-    const r = row as { id: string; word_key: string; translation: string | null };
-    return { id: r.id, wordKey: r.word_key, translation: r.translation };
-  });
-}

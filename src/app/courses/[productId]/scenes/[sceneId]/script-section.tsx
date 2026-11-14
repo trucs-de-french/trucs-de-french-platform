@@ -7,6 +7,7 @@ import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-hea
 import { resolveBlockIcon } from "@/lib/block-icons";
 import { useT } from "@/lib/i18n/context";
 import { DictHint } from "./dict-hint";
+import { useSavedWords } from "@/components/dictionary/saved-words-provider";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
 // section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
@@ -104,6 +105,12 @@ export function ScriptSection({
   // самий collectSceneVocab, що вже рахує page.tsx для sceneVocab (Крок 2
   // глосарію/блок "Словник").
   const sceneVocab = useMemo(() => collectSceneVocab(dialogue), [dialogue]);
+  // Є SavedWordsProvider -> тултіп VocabWord містить SaveWordButton і не
+  // має автозакриватись таймером (повільний клік по кнопці інакше
+  // обрізався б) — openWord/ефект нижче перемикаються на toggle/Esc/клік
+  // зовні, той самий принцип, що панель звичайного слова. Без провайдера
+  // (сторінка без контексту сцени) — стара поведінка, без змін.
+  const saved = useSavedWords();
 
   function handlePlainWordClick(key: string) {
     setOpenPlainKey(key === "" ? null : key);
@@ -144,6 +151,13 @@ export function ScriptSection({
   }, []);
 
   function openWord(id: string) {
+    if (saved) {
+      // SaveWordButton усередині тултіпа — без автозакриття таймером.
+      // Другий клік на те саме слово закриває (toggle), клік на інше —
+      // відкриває нову (replace), клік поза/Esc — ефект нижче.
+      setOpenId((prev) => (prev === id ? null : id));
+      return;
+    }
     if (timerRef.current) clearTimeout(timerRef.current);
     setOpenId(id);
     // Той самий виклик і для нового слова, і для повторного кліку на вже
@@ -152,6 +166,28 @@ export function ScriptSection({
     // змінюється, а повторний клік на те саме слово якраз такий випадок).
     timerRef.current = setTimeout(() => setOpenId(null), HIDE_DELAY_MS);
   }
+
+  // Клік поза тултіпом/Esc — лише коли є SaveWordButton (saved !== null) і
+  // щось відкрите; mousedown (не click), той самий принцип, що
+  // category-dropdown.tsx, щоб клік на САМЕ слово спершу закрив (toggle у
+  // openWord вище), а не "закрито кліком зовні, потім відкрито знову".
+  useEffect(() => {
+    if (!saved || openId === null) return;
+    function handlePointerDown(e: MouseEvent) {
+      const target = e.target as Element | null;
+      if (target?.closest(".vocab-chip-tooltip, .vocab-chip--interactive")) return;
+      setOpenId(null);
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenId(null);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [saved, openId]);
 
   // Скляний бар (SectionHeaderBar) замінює звичайний тогл-заголовок лише
   // коли є сам заголовок (title — фіксований блок "Скрипт" сторінки сцени,
