@@ -104,11 +104,27 @@ export function rowToSavedWord(row: SavedWordRow): SavedWord {
   };
 }
 
+// Провідний артикль — ЛИШЕ для дедуп-ключа (ніколи для відображеного
+// слова): таблиця "Вокабуляр" зберігає слово З артиклем ("un formulaire"),
+// а бульбашка/панель звичайного слова зі скрипту — без нього, точно як
+// воно написане в самій репліці ("formulaire"). Без цього кроку те саме
+// реальне слово, збережене з двох різних місць, створювало б ДВА різних
+// рядки saved_words (різні word_key) замість того, щоб друге збереження
+// розпізнавалось як "уже збережено". "de la" — двослівний, перевіряється
+// першим; l' — без пробілу після (l'ordre, не l' ordre).
+const LEADING_ARTICLE_RE = /^(?:de la\s+|les\s+|des\s+|une\s+|un\s+|la\s+|le\s+|du\s+|l['’‘ʼ])/i;
+
+function stripLeadingArticle(normalized: string): string {
+  const stripped = normalized.replace(LEADING_ARTICLE_RE, "");
+  return stripped.length > 0 ? stripped : normalized;
+}
+
 // Той самий normalizeWordForMatch, що вже використовують dialogue-line.tsx/
 // video-player.tsx для зіставлення слів у тексті — єдина нормалізація
-// слова в усьому проєкті, дедуп-ключ саме на ній, а не на власній копії.
+// слова в усьому проєкті, дедуп-ключ рахується ПОВЕРХ неї (стрип артикля),
+// не власною копією.
 export function computeWordKey(word: string): string {
-  return normalizeWordForMatch(word);
+  return stripLeadingArticle(normalizeWordForMatch(word));
 }
 
 export type SavedWordSourceEntry = {

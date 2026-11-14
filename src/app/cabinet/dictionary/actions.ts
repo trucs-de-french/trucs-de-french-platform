@@ -14,6 +14,30 @@ const MAX_SAVED_WORDS = 1000;
 
 type ActionError = "auth" | "validation" | "limit" | "db" | "not_found";
 
+// Той самий пошук "уже збережено" (user+source+word_key), що й у 23505-
+// фолбеку нижче — винесено, щоб saveWord міг спитати ПРОАКТИВНО (GET, до
+// insert), а не лише реагувати на unique-violation ПІСЛЯ POST-у.
+// computeWordKey тепер знімає провідний артикль лише для ключа, тож те
+// саме слово, збережене раніше з ІНШОЮ поверхневою формою (скрипт —
+// "formulaire", таблиця "Вокабуляр" — "un formulaire"), дає ТОЙ САМИЙ
+// word_key і знаходиться тут.
+async function findExistingSavedWord(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  sourceType: SavedWordInput["sourceType"],
+  sourceId: string | null,
+  wordKey: string
+) {
+  let query = supabase
+    .from("saved_words")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("source_type", sourceType)
+    .eq("word_key", wordKey);
+  query = sourceId === null ? query.is("source_id", null) : query.eq("source_id", sourceId);
+  return query.maybeSingle();
+}
+
 function trimmedOrNull(value: string | null | undefined): string | null {
   if (value == null) return null;
   const trimmed = value.trim();
@@ -67,6 +91,29 @@ export async function saveWord(
   const wordKey = computeWordKey(word);
   const sourceId = input.sourceId ?? null;
 
+  // Проактивна перевірка ДО insert (GET, не POST) — слово вже збережене з
+  // ІНШОЇ поверхневої форми (той самий word_key) має виглядати як успіх,
+  // не як дубльований рядок/помилка.
+  const { data: existingBeforeInsert, error: existingBeforeInsertError } = await findExistingSavedWord(
+    supabase,
+    user.id,
+    input.sourceType,
+    sourceId,
+    wordKey
+  );
+  if (existingBeforeInsertError) {
+    console.error("[saveWord] already-saved pre-check failed", {
+      code: existingBeforeInsertError.code,
+      message: existingBeforeInsertError.message,
+      sourceType: input.sourceType,
+      wordKey,
+    });
+    return { ok: false, error: "db" };
+  }
+  if (existingBeforeInsert) {
+    return { ok: true, id: existingBeforeInsert.id, alreadySaved: true };
+  }
+
   const { data, error } = await supabase
     .from("saved_words")
     .insert({
@@ -95,15 +142,16 @@ export async function saveWord(
 
   if (error) {
     if (error.code === "23505") {
-      let existingQuery = supabase
-        .from("saved_words")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("source_type", input.sourceType)
-        .eq("word_key", wordKey);
-      existingQuery =
-        sourceId === null ? existingQuery.is("source_id", null) : existingQuery.eq("source_id", sourceId);
-      const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+      // Перегони: інший запит встиг вставити той самий word_key між нашою
+      // проактивною перевіркою вище й цим insert — той самий пошук, тепер
+      // як фолбек ПІСЛЯ POST-у (а не замість перевірки вище).
+      const { data: existing, error: existingError } = await findExistingSavedWord(
+        supabase,
+        user.id,
+        input.sourceType,
+        sourceId,
+        wordKey
+      );
       if (existingError) {
         console.error("[saveWord] already-saved lookup failed after 23505", {
           code: existingError.code,
