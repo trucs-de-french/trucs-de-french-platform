@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Bookmark } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
 import { useSavedWords, type SaveWordSnapshot } from "./saved-words-provider";
@@ -34,11 +35,24 @@ export function SaveWordButton({
 }) {
   const { t } = useT();
   const saved = useSavedWords();
+  const error = saved?.getError(snapshot.word) ?? null;
+
+  // Токен-тост у 36px-колонці таблиці "Вокабуляр" (variant="icon") сам
+  // ховається через ~4с, на відміну від pill-варіанта (бульбашка/картка
+  // відео/панель звичайного слова) — там помилка лишається видимою, поки
+  // студент сам не повторить спробу чи не закриє панель. Ефект (не хук
+  // після умовного return — Rules of Hooks) мусить викликатись завжди,
+  // навіть коли saved===null — тоді просто нічого не робить.
+  useEffect(() => {
+    if (variant !== "icon" || !error || !saved) return;
+    const timer = setTimeout(() => saved.clearError(snapshot.word), 4000);
+    return () => clearTimeout(timer);
+  }, [variant, error, saved, snapshot.word]);
+
   if (!saved) return null;
 
   const isSaved = saved.isSaved(snapshot.word);
   const pending = saved.isPending(snapshot.word);
-  const error = saved.getError(snapshot.word);
 
   async function handleSave() {
     await saved!.save(snapshot);
@@ -64,7 +78,15 @@ export function SaveWordButton({
         >
           <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} aria-hidden="true" />
         </button>
-        {error && <span className="save-word-error">{t("dictionary.saveError")}</span>}
+        {/* position:absolute (анкерується на .vocab-row, не на цю 36px-
+            колонку — див. .save-word-error-toast у globals.css) — НЕ в
+            потоці grid-колонки, тож рядок/колонки ніколи не змінюють
+            розмір/не стискають переклад, коли з'являється помилка. */}
+        {error && (
+          <span className="save-word-error-toast" role="status" aria-live="polite">
+            {t("dictionary.saveError")}
+          </span>
+        )}
       </div>
     );
   }

@@ -3975,6 +3975,10 @@ button.scene-bar:active .scene-bar-toggle {
   padding: 6px 8px;
   line-height: 1.35;
   border-bottom: 1px solid var(--glass-divider);
+  /* Якір для .save-word-error-toast (SaveWordButton variant="icon") —
+     абсолютно позиційований тост має розкриватись на всю ширину РЯДКА,
+     не лише на 36px-колонку кнопки-закладки. */
+  position: relative;
 }
 /* Третя колонка — кнопка-закладка SaveWordButton variant="icon" (Етап 2
    "Мій словник"): клас додається лише коли є SavedWordsProvider
@@ -17347,6 +17351,36 @@ button.cabinet-nav-item {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .save-word-error {
     color: #fbbf86;
+  }
+}
+
+/* Тост помилки збереження у таблиці "Вокабуляр" (SaveWordButton
+   variant="icon") — position:absolute, анкерується на .vocab-row (не на
+   36px-колонку кнопки): рядок/колонки ніколи не змінюють розмір/не
+   стискають переклад, коли з'являється помилка (сам зникає через ~4с,
+   SaveWordButton). Винний (не amber — amber тут читався б як колір
+   категорії "Noms", а не помилка) — той самий принцип контрасту (≥4.5:1),
+   що .save-word-error вище. */
+.save-word-error-toast {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  text-align: right;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #a23b4f;
+  pointer-events: none;
+  z-index: 1;
+}
+.dark .save-word-error-toast {
+  color: #f0a3b0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .save-word-error-toast {
+    color: #f0a3b0;
   }
 }
 

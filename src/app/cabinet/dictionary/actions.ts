@@ -104,9 +104,38 @@ export async function saveWord(
       existingQuery =
         sourceId === null ? existingQuery.is("source_id", null) : existingQuery.eq("source_id", sourceId);
       const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+      if (existingError) {
+        console.error("[saveWord] already-saved lookup failed after 23505", {
+          code: existingError.code,
+          message: existingError.message,
+          sourceType: input.sourceType,
+          wordKey,
+        });
+      }
       if (existingError || !existing) return { ok: false, error: "db" };
       return { ok: true, id: existing.id, alreadySaved: true };
     }
+    // Логуємо РЕАЛЬНУ причину в Netlify function logs (ніколи не
+    // показуємо студенту — SaveWordButton лишає загальний текст
+    // dictionary.saveError незалежно від коду) — без user_id/контенту
+    // перекладу, лише форма вхідних даних, достатня для діагностики
+    // (довжини/наявність полів), той самий принцип, що вже validateInput
+    // вище звіряє проти 0069_saved_words.sql CHECK-обмежень.
+    console.error("[saveWord] insert failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      sourceType: input.sourceType,
+      wordLength: word.length,
+      translationLength: trimmedOrNull(input.translation)?.length ?? 0,
+      partOfSpeechRaw: input.partOfSpeech ?? null,
+      hasVocabId: input.vocabId != null,
+      hasSourceId: sourceId !== null,
+      hasProductId: input.productId != null,
+      contextFrLength: trimmedOrNull(input.contextFr)?.length ?? 0,
+      contextUkLength: trimmedOrNull(input.contextUk)?.length ?? 0,
+    });
     return { ok: false, error: "db" };
   }
 
