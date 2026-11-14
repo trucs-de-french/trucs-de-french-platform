@@ -300,7 +300,7 @@ export const uk = {
   "dictionary.removeWordAria": "Прибрати «{word}» зі словника",
   "dictionary.saveError": "Не вдалося зберегти. Спробуйте ще раз.",
   "dictionary.hintText": "Натисніть на будь-яке слово, щоб додати його до словника",
-  "dictionary.panelLineLabel": "Репліка: «{line}»",
+  "dictionary.panelLineLabel": "Приклад: «{line}»",
   "dictionary.panelTranslationLabel": "Мій переклад (за бажанням)",
   "dictionary.panelSave": "Зберегти слово",
   "dictionary.panelCancel": "Скасувати",

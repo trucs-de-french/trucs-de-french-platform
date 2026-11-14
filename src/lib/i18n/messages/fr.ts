@@ -299,7 +299,7 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.removeWordAria": "Retirer « {word} » du dictionnaire",
   "dictionary.saveError": "Échec de l'enregistrement. Réessayez.",
   "dictionary.hintText": "Cliquez sur n'importe quel mot pour l'ajouter au dictionnaire",
-  "dictionary.panelLineLabel": "Phrase : « {line} »",
+  "dictionary.panelLineLabel": "Exemple : « {line} »",
   "dictionary.panelTranslationLabel": "Ma traduction (facultatif)",
   "dictionary.panelSave": "Enregistrer le mot",
   "dictionary.panelCancel": "Annuler",

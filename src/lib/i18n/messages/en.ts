@@ -297,7 +297,7 @@ export const en: Record<MessageKey, string> = {
   "dictionary.removeWordAria": "Remove “{word}” from the dictionary",
   "dictionary.saveError": "Couldn't save. Try again.",
   "dictionary.hintText": "Click any word to add it to your dictionary",
-  "dictionary.panelLineLabel": "Line: “{line}”",
+  "dictionary.panelLineLabel": "Example: “{line}”",
   "dictionary.panelTranslationLabel": "My translation (optional)",
   "dictionary.panelSave": "Save word",
   "dictionary.panelCancel": "Cancel",

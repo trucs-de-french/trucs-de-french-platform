@@ -1,5 +1,6 @@
 import { normalizePartOfSpeech, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "./vocab-categories";
 import { matchVocabInText, normalizeWordForMatch } from "./vocab-match";
+import { extractAlignedContext } from "./cabinet/saved-words";
 
 export type { PartOfSpeech };
 
@@ -87,9 +88,22 @@ export function collectVideoVocab(dialogue: VideoDialogueLine[]): VideoVocabItem
 
   return [...seen.values()].map((item) => {
     const line = dialogue.find((l) => matchVocabInText(l.text, [item]).some((p) => p.type === "match"));
-    const example: VocabExample | null = line
-      ? { text: line.text, translationUk: line.translationUk ?? null }
-      : null;
+    let example: VocabExample | null = null;
+    if (line) {
+      // Офсет першого збігу слова в рядку — щоб extractAlignedContext
+      // лишив лише РЕЧЕННЯ з цим словом (не всю репліку), той самий
+      // принцип, що й у dialogue-line.tsx, тут лише через offset першого
+      // "match"-сегмента (line.text тут завжди ОДИН раз токенізується, не
+      // для кожного кліку — приклад обчислюється один раз для всієї
+      // картки слова).
+      let offset = 0;
+      for (const part of matchVocabInText(line.text, [item])) {
+        if (part.type === "match") break;
+        offset += part.text.length;
+      }
+      const { contextFr, contextUk } = extractAlignedContext(line.text, offset, line.translationUk ?? null, item.word);
+      example = { text: contextFr, translationUk: contextUk };
+    }
     return { ...item, example };
   });
 }

@@ -5,6 +5,7 @@ import type { VocabItem } from "@/lib/vocab";
 import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
 import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
+import { extractAlignedContext } from "@/lib/cabinet/saved-words";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
@@ -228,7 +229,7 @@ export function normalizeSpeakerForCompare(speaker: string): string {
 
 type PlainToken =
   | { type: "literal"; text: string }
-  | { type: "word"; text: string; clickable: boolean };
+  | { type: "word"; text: string; clickable: boolean; start: number };
 
 // Токенізація ЗВИЧАЙНОГО (не підсвіченого вчителькою) тексту репліки — на
 // літерні групи /[\p{L}\p{M}]+/gu, усе решта (пробіли, розділові знаки,
@@ -254,7 +255,7 @@ function tokenizePlainText(text: string): PlainToken[] {
     const endIndex = match.index + word.length;
     const nextChar = text[endIndex];
     const clickable = !APOSTROPHE_CHARS.has(nextChar);
-    tokens.push({ type: "word", text: word, clickable });
+    tokens.push({ type: "word", text: word, clickable, start: match.index });
     lastIndex = endIndex;
   }
   if (lastIndex < text.length) {
@@ -597,7 +598,26 @@ export function DialogueLine({
     [parts]
   );
 
-  const openPlainWord = useMemo(() => {
+  // Абсолютний офсет початку кожної частини (parts) у повному тексті
+  // репліки — потрібен, щоб extractAlignedContext знав, у якому РЕЧЕННІ
+  // саме лежить клікнуте слово (суцільний прохід, бо parts = text.split()
+  // у тому самому порядку, що й у вхідному рядку).
+  const partOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let acc = 0;
+    for (const part of parts) {
+      offsets.push(acc);
+      acc += part.text.length;
+    }
+    return offsets;
+  }, [parts]);
+
+  // Не useMemo: прохід по невеликому масиву токенів однієї репліки —
+  // дешевий на кожен рендер, а повернення об'єкта (text+offset) із useMemo
+  // тут не узгоджується з ручною мемоізацією React Compiler (той самий
+  // клас хибного зрацювання евристики, що вже описано в
+  // task-type-combobox.tsx) — простіше рахувати напряму.
+  function findOpenPlainWord(): { text: string; offset: number } | null {
     if (!openPlainKey || !openPlainKey.startsWith(plainKeyPrefix)) return null;
     for (let i = 0; i < tokenizedTextParts.length; i++) {
       const tokens = tokenizedTextParts[i];
@@ -605,24 +625,26 @@ export function DialogueLine({
       for (let j = 0; j < tokens.length; j++) {
         const token = tokens[j];
         if (token.type === "word" && token.clickable && `${plainKeyPrefix}${i}-${j}` === openPlainKey) {
-          return token.text;
+          return { text: token.text, offset: partOffsets[i] + token.start };
         }
       }
     }
     return null;
-  }, [tokenizedTextParts, openPlainKey, plainKeyPrefix]);
+  }
+  const openPlainWord = findOpenPlainWord();
 
   const content = parts.map((part, i) => {
     if (part.type === "match") {
       const id = `${lineIndex}-${i}`;
+      const { contextFr, contextUk } = extractAlignedContext(text, partOffsets[i], translationUk ?? null, part.text);
       return (
         <VocabWord
           key={i}
           id={id}
           displayWord={part.text}
           item={part.item}
-          contextFr={text}
-          contextUk={translationUk ?? null}
+          contextFr={contextFr}
+          contextUk={contextUk}
           isOpen={openId === id}
           onClick={onWordClick}
         />
@@ -665,7 +687,7 @@ export function DialogueLine({
     );
   });
 
-  const teacherItem = openPlainWord ? teacherVariantMap.get(normalizeWordForMatch(openPlainWord)) ?? null : null;
+  const teacherItem = openPlainWord ? teacherVariantMap.get(normalizeWordForMatch(openPlainWord.text)) ?? null : null;
 
   // Закриває панель і повертає фокус на кнопку слова, яка її відкрила —
   // rAF, бо сама кнопка все ще в DOM у момент виклику (панель
@@ -690,16 +712,25 @@ export function DialogueLine({
         )}
         {content}
       </p>
-      {openPlainWord && (
-        <PlainWordPanel
-          word={openPlainWord}
-          contextFr={text}
-          contextUk={translationUk ?? null}
-          teacherItem={teacherItem ?? null}
-          inputId={`plain-word-translation-${lineIndex}`}
-          onClose={closePlainPanel}
-        />
-      )}
+      {openPlainWord &&
+        (() => {
+          const { contextFr, contextUk } = extractAlignedContext(
+            text,
+            openPlainWord.offset,
+            translationUk ?? null,
+            openPlainWord.text
+          );
+          return (
+            <PlainWordPanel
+              word={openPlainWord.text}
+              contextFr={contextFr}
+              contextUk={contextUk}
+              teacherItem={teacherItem ?? null}
+              inputId={`plain-word-translation-${lineIndex}`}
+              onClose={closePlainPanel}
+            />
+          );
+        })()}
     </div>
   );
 }

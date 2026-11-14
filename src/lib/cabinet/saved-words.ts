@@ -121,3 +121,174 @@ export type SavedWordSourceEntry = {
   // усередині saveWord), читається напряму, без повторної нормалізації.
   partOfSpeech: PartOfSpeech | null;
 };
+
+// --- Приклад-речення для context_fr/context_uk (не вся репліка) --------
+//
+// Раніше saveWord отримував ЦІЛУ репліку як контекст — для довгих реплік
+// (кілька речень) це давало невідповідний/задовгий приклад. Нижче — чисті
+// хелпери (жодних серверних імпортів), що виокремлюють лише РЕЧЕННЯ з
+// клікнутим словом за його символьним офсетом у рядку (не текстовим
+// пошуком — слово могло повторюватись у різних реченнях).
+
+// Скорочення, після яких крапка НЕ означає кінець речення.
+const ABBREVIATIONS = new Set(["M", "Mme", "Mlle", "Mr", "Mrs", "Dr", "St", "Ste", "Pr", "Mgr", "etc"]);
+
+// Закривні лапки/дужки одразу після розділового знаку лишаються частиною
+// того самого речення (напр. «Non ! »).
+const SENTENCE_CLOSERS = new Set(['"', "'", "’", "”", "»", ")", "]", "}"]);
+
+function isTerminatorChar(ch: string | undefined): boolean {
+  return ch === "." || ch === "!" || ch === "?" || ch === "…";
+}
+
+type SentenceRange = { text: string; start: number; end: number };
+
+// Розбиває РЯДОК повністю (без втрати символів) на суміжні діапазони — на
+// відміну від .filter(Boolean) після trim(), кожен символ вхідного тексту
+// належить рівно одному діапазону, тож offset клікнутого слова завжди
+// потрапляє в один з них (потрібно для extractSentence/extractAlignedContext
+// нижче).
+function splitSentenceRanges(text: string): SentenceRange[] {
+  const ranges: SentenceRange[] = [];
+  const n = text.length;
+  let start = 0;
+  let i = 0;
+
+  while (i < n) {
+    if (!isTerminatorChar(text[i])) {
+      i++;
+      continue;
+    }
+
+    let j = i;
+    while (j < n && isTerminatorChar(text[j])) j++;
+    const run = text.slice(i, j);
+    const isSingleDot = run === ".";
+
+    // Десятковий дріб (3.14) — крапка між цифрами, не кінець речення.
+    if (isSingleDot && /[0-9]/.test(text[i - 1] ?? "") && /[0-9]/.test(text[j] ?? "")) {
+      i = j;
+      continue;
+    }
+
+    // Скорочення типу "M.", "Dr." — слово безпосередньо перед крапкою.
+    if (isSingleDot) {
+      const before = text.slice(0, i).match(/([A-Za-zÀ-ÖØ-öø-ÿ]+)$/);
+      if (before && ABBREVIATIONS.has(before[1])) {
+        i = j;
+        continue;
+      }
+    }
+
+    // Три крапки/« … » перед малою літерою — пауза всередині речення, не
+    // його кінець (напр. "attends... je sais pas").
+    const isEllipsis = run === "…" || /^\.{3,}$/.test(run);
+    if (isEllipsis) {
+      const rest = text.slice(j).match(/^\s*(\S)/);
+      if (rest && /[a-zà-ÿ]/.test(rest[1])) {
+        i = j;
+        continue;
+      }
+    }
+
+    // Закривні лапки/дужки — зокрема французькі « » пишуться з пробілом
+    // перед закривною лапкою ("Non ! »") — тож пробіл(и) перед закривним
+    // знаком теж належать цьому реченню, якщо після них таки йде закривний
+    // символ (інакше пробіл — звичайний роздільник слів, не чіпаємо).
+    let k = j;
+    for (;;) {
+      if (k < n && SENTENCE_CLOSERS.has(text[k])) {
+        k++;
+        continue;
+      }
+      if (k < n && /\s/.test(text[k])) {
+        let p = k;
+        while (p < n && /\s/.test(text[p])) p++;
+        if (p < n && SENTENCE_CLOSERS.has(text[p])) {
+          k = p + 1;
+          continue;
+        }
+      }
+      break;
+    }
+
+    // Межа речення лише якщо після розділового знака (+ закривних лапок)
+    // йде пробіл або кінець рядка — інакше це не була справжня межа,
+    // продовжуємо шукати далі.
+    if (k >= n || /\s/.test(text[k])) {
+      ranges.push({ text: text.slice(start, k), start, end: k });
+      while (k < n && /\s/.test(text[k])) k++;
+      start = k;
+      i = k;
+      continue;
+    }
+
+    i = j;
+  }
+
+  if (start < n || ranges.length === 0) {
+    ranges.push({ text: text.slice(start, n), start, end: n });
+  }
+
+  return ranges;
+}
+
+// Для зовнішнього використання (вирівнювання кількості речень FR/UK) —
+// самі трим(нуті)і текстові речення, без діапазонів.
+export function splitIntoSentences(text: string): string[] {
+  return splitSentenceRanges(text)
+    .map((r) => r.text.trim())
+    .filter((s) => s.length > 0);
+}
+
+// ~200 символів — щоб приклад лишався в межах лімітів БД (600) і не
+// займав увесь рядок; обрізає на межі слова, додає "…".
+const MAX_CONTEXT_LENGTH = 200;
+
+function capContext(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= MAX_CONTEXT_LENGTH) return trimmed;
+  const slice = trimmed.slice(0, MAX_CONTEXT_LENGTH);
+  const lastSpace = slice.lastIndexOf(" ");
+  const cut = lastSpace > 0 ? slice.slice(0, lastSpace) : slice;
+  return `${cut.trim()}…`;
+}
+
+// Повертає речення, що містить символ за офсетом offset у text (не
+// текстовий пошук — одне й те саме слово може повторюватись у кількох
+// реченнях репліки). word — опційний резервний текстовий пошук, лише якщо
+// офсет не вдалось розв'язати (напр. розбіжність даних); якщо й він не
+// знайшов речення — повертається весь рядок.
+export function extractSentence(text: string, offset: number, word?: string): string {
+  const ranges = splitSentenceRanges(text);
+  if (ranges.length <= 1) return capContext(text);
+
+  let match = ranges.find((r) => offset >= r.start && offset < r.end);
+  if (!match && word) {
+    match = ranges.find((r) => r.text.includes(word));
+  }
+  return capContext(match ? match.text : text);
+}
+
+// FR+UK разом: FR завжди через extractSentence вище. UK — переклад, межі
+// речень можуть не збігатись 1:1 із FR, тож речення з тим самим ІНДЕКСОМ
+// береться лише коли кількість речень FR і UK однакова; інакше краще
+// показати цілий (коректний) переклад, ніж хибний фрагмент.
+export function extractAlignedContext(
+  textFr: string,
+  offsetFr: number,
+  textUk: string | null,
+  word?: string
+): { contextFr: string; contextUk: string | null } {
+  const contextFr = extractSentence(textFr, offsetFr, word);
+  if (!textUk || !textUk.trim()) return { contextFr, contextUk: null };
+
+  const frRanges = splitSentenceRanges(textFr);
+  const ukSentences = splitIntoSentences(textUk);
+  const frIndex = frRanges.findIndex((r) => offsetFr >= r.start && offsetFr < r.end);
+
+  if (frIndex !== -1 && frRanges.length === ukSentences.length) {
+    return { contextFr, contextUk: ukSentences[frIndex] };
+  }
+  return { contextFr, contextUk: textUk.trim() };
+}
