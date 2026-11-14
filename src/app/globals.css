@@ -17582,3 +17582,341 @@ button.cabinet-nav-item {
     color: #1a1640;
   }
 }
+
+/* Сторінки відновлення пароля (/auth/forgot-password, /auth/update-
+   password) — ПОЗА /cabinet, тож --cabinet-* токени (визначені лише
+   всередині .cabinet, cabinet/layout.tsx) тут недоступні; кольори нижче
+   буквально повторюють світлі/темні значення тих токенів (кремова
+   панель/картка/рамка/чорнило), щоб сторінка виглядала як частина того
+   самого кабінетного стилю без прив'язки до .cabinet-обгортки. */
+.auth-shell-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: #f8f3e4;
+}
+.dark .auth-shell-page {
+  background: #0a0e38;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-page {
+    background: #0a0e38;
+  }
+}
+
+.auth-shell-card {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 32px 28px;
+  background: #ffffff;
+  border: 1.5px solid #e4cf94;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
+}
+.dark .auth-shell-card {
+  background: #141a52;
+  border-color: #2e3680;
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-card {
+    background: #141a52;
+    border-color: #2e3680;
+    box-shadow: none;
+  }
+}
+
+.auth-shell-title {
+  margin: 20px 0 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 22px;
+  text-align: center;
+  color: #1a1640;
+}
+.dark .auth-shell-title {
+  color: #f6f1e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-title {
+    color: #f6f1e3;
+  }
+}
+
+.auth-shell-rule {
+  display: block;
+  width: 44px;
+  height: 4px;
+  margin: 10px auto 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d9b765, #f3d98b);
+}
+
+.auth-shell-body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: #1a1640;
+}
+.dark .auth-shell-body {
+  color: #f6f1e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-shell-body {
+    color: #f6f1e3;
+  }
+}
+
+/* Поля форми — pill, не native-look. */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-label {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: #6a5d40;
+}
+.dark .auth-label {
+  color: #b4b1dd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-label {
+    color: #b4b1dd;
+  }
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.auth-input {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 999px;
+  border: 1.5px solid #e4cf94;
+  background: #fff;
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: #1a1640;
+}
+/* Пароль-поле має праворуч кнопку показу/сховання — зайвий padding, щоб
+   текст не ліз під неї. */
+.auth-input--with-toggle {
+  padding-right: 48px;
+}
+.dark .auth-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #2e3680;
+  color: #f6f1e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-input {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #2e3680;
+    color: #f6f1e3;
+  }
+}
+.auth-input:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.dark .auth-input:focus-visible {
+  outline-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-input:focus-visible {
+    outline-color: #f3d98b;
+  }
+}
+
+/* Кругла кнопка показу/сховання пароля — усередині .auth-input-wrap,
+   праворуч від поля; не native (жодного input[type] trick), звичайна
+   кнопка з іконкою-оком, aria-pressed передає стан. */
+.auth-field-toggle {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #6a5d40;
+  cursor: pointer;
+}
+.dark .auth-field-toggle {
+  color: #b4b1dd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-field-toggle {
+    color: #b4b1dd;
+  }
+}
+@media (hover: hover) {
+  .auth-field-toggle:hover {
+    background: rgba(75, 70, 218, 0.1);
+  }
+}
+.auth-field-toggle:focus-visible {
+  outline: 2px solid #4b46da;
+  outline-offset: 2px;
+}
+.dark .auth-field-toggle:focus-visible {
+  outline-color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-field-toggle:focus-visible {
+    outline-color: #f3d98b;
+  }
+}
+
+.auth-hint {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: #6a5d40;
+}
+.dark .auth-hint {
+  color: #b4b1dd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-hint {
+    color: #b4b1dd;
+  }
+}
+
+/* Основна кнопка — той самий градієнт, що save-word-pill--primary, але
+   БЕЗ box-shadow (пряме прохання задачі — жодного "ореолу"/glow). */
+.auth-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 4px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+.dark .auth-btn-primary {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
+  color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-btn-primary {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    background-origin: border-box;
+    background-clip: border-box;
+    color: #1a1640;
+  }
+}
+.auth-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.auth-btn-primary:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .auth-btn-primary:focus-visible {
+  outline-color: #f6dc8e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-btn-primary:focus-visible {
+    outline-color: #f6dc8e;
+  }
+}
+
+/* Текстовий лінк (напр. "Повернутися до входу") — indigo світла тема,
+   золото темна, той самий принцип, що решта кабінетних лінків. */
+.auth-link {
+  color: #3b37c4;
+  text-decoration: underline;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.dark .auth-link {
+  color: #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-link {
+    color: #f3d98b;
+  }
+}
+
+/* Помилка — НІКОЛИ чистий червоний: приглушений винний, завжди з
+   текстовим/іконковим префіксом (колір — не єдиний сигнал). Контраст
+   ≥4.5:1 на картці (світла #fff/темна #141a52) в обох темах. */
+.auth-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: #a23b4f;
+}
+.dark .auth-error {
+  color: #f0a3b0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-error {
+    color: #f0a3b0;
+  }
+}
+
+.auth-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: #1a1640;
+}
+.dark .auth-success {
+  color: #f6f1e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-success {
+    color: #f6f1e3;
+  }
+}
+
+.auth-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-skeleton-bar {
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(75, 70, 218, 0.12);
+}
+.dark .auth-skeleton-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-skeleton-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

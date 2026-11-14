@@ -316,6 +316,16 @@ export const en: Record<MessageKey, string> = {
   "dictionary.pos.phrase": "useful phrase",
   "dictionary.pos.idiome": "idiom",
 
+  "auth.forgotPassword.title": "Reset password",
+  "auth.forgotPassword.emailLabel": "Email",
+  "auth.forgotPassword.submit": "Send link",
+  "auth.forgotPassword.submitPending": "Sending...",
+  "auth.forgotPassword.successGeneric": "If that account exists, we've sent an email with a link",
+  "auth.forgotPassword.rateLimited": "Too many attempts, try again in a few minutes",
+  "auth.forgotPassword.linkExpired": "The link expired or was already used. Request a new one.",
+  "auth.forgotPassword.invalidEmail": "Enter a valid email address",
+  "auth.forgotPassword.backToLogin": "Back to login",
+
   "vocabSection.collapseVocab": "Collapse vocabulary",
   "vocabSection.downloadPdf": "Download PDF",
   "vocabSection.otherCategory": "Other",

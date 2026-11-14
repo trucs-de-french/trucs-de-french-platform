@@ -319,6 +319,16 @@ export const uk = {
   "dictionary.pos.phrase": "фраза",
   "dictionary.pos.idiome": "ідіома",
 
+  "auth.forgotPassword.title": "Відновлення пароля",
+  "auth.forgotPassword.emailLabel": "Email",
+  "auth.forgotPassword.submit": "Надіслати посилання",
+  "auth.forgotPassword.submitPending": "Надсилаю...",
+  "auth.forgotPassword.successGeneric": "Якщо такий акаунт існує, ми надіслали лист із посиланням",
+  "auth.forgotPassword.rateLimited": "Забагато спроб, спробуйте за кілька хвилин",
+  "auth.forgotPassword.linkExpired": "Посилання застаріло або вже використане. Запросіть нове.",
+  "auth.forgotPassword.invalidEmail": "Введіть дійсну email-адресу",
+  "auth.forgotPassword.backToLogin": "Повернутися до входу",
+
   "vocabSection.collapseVocab": "Згорнути вокабуляр",
   "vocabSection.downloadPdf": "Завантажити PDF",
   "vocabSection.otherCategory": "Інше",

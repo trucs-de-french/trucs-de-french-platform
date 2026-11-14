@@ -318,6 +318,16 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.pos.phrase": "phrase",
   "dictionary.pos.idiome": "idiome",
 
+  "auth.forgotPassword.title": "Réinitialiser le mot de passe",
+  "auth.forgotPassword.emailLabel": "Email",
+  "auth.forgotPassword.submit": "Envoyer le lien",
+  "auth.forgotPassword.submitPending": "Envoi...",
+  "auth.forgotPassword.successGeneric": "Si ce compte existe, nous avons envoyé un email avec un lien",
+  "auth.forgotPassword.rateLimited": "Trop de tentatives, réessayez dans quelques minutes",
+  "auth.forgotPassword.linkExpired": "Le lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.",
+  "auth.forgotPassword.invalidEmail": "Saisissez une adresse email valide",
+  "auth.forgotPassword.backToLogin": "Retour à la connexion",
+
   "vocabSection.collapseVocab": "Réduire le vocabulaire",
   "vocabSection.downloadPdf": "Télécharger le PDF",
   "vocabSection.otherCategory": "Autre",
