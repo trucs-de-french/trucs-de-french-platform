@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KeyRound, MailCheck, Mail } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { SubmitButton } from "@/components/submit-button";
@@ -17,7 +18,20 @@ export default async function ForgotPasswordPage({
   const { error, sent } = await searchParams;
 
   return (
-    <AuthShell title={t(lang, "auth.forgotPassword.title")}>
+    <AuthShell
+      variant="heading"
+      heading={{
+        title: t(lang, "auth.forgotPassword.heading"),
+        lead: t(lang, "auth.forgotPassword.headingLead"),
+      }}
+      icon={
+        sent ? <MailCheck size={32} aria-hidden="true" /> : <KeyRound size={32} aria-hidden="true" />
+      }
+      iconAriaLabel={
+        sent ? t(lang, "auth.forgotPassword.sentAvatarAria") : t(lang, "auth.forgotPassword.avatarAria")
+      }
+      title={sent ? t(lang, "auth.forgotPassword.sentTitle") : t(lang, "auth.forgotPassword.title")}
+    >
       {sent ? (
         <p className="auth-success" role="status">
           <span aria-hidden="true">✓</span>
@@ -44,13 +58,25 @@ export default async function ForgotPasswordPage({
             </p>
           )}
 
-          <form action={requestPasswordResetByEmail} className="flex flex-col gap-4">
+          <form action={requestPasswordResetByEmail} className="flex flex-col gap-5">
             <div className="auth-field">
-              <label htmlFor="email" className="auth-label">
+              <label htmlFor="email" className="auth-label--sr">
                 {t(lang, "auth.forgotPassword.emailLabel")}
               </label>
               <div className="auth-input-wrap">
-                <input id="email" name="email" type="email" required autoFocus className="auth-input" />
+                <span className="auth-input-icon" aria-hidden="true">
+                  <Mail size={17} />
+                </span>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  placeholder={t(lang, "auth.forgotPassword.emailLabel")}
+                  className="auth-input"
+                />
               </div>
             </div>
 
