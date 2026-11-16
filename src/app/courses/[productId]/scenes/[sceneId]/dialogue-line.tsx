@@ -102,6 +102,11 @@ function VocabWord({
   const note = item.note?.trim() || null;
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
+  // Координати кліку (viewport) — щоб вибрати ТОЙ рядок слова, по якому
+  // тапнули, коли підсвічена фраза ("mange toujours sur le pouce") сама
+  // розбита на 2+ рядки: getBoundingClientRect() wrapperRef дав би union-
+  // бокс (ширину ОБОХ рядків), і центр по ньому був би хибним.
+  const lastClickPointRef = useRef<{ x: number; y: number } | null>(null);
   // null — ще не виміряно (перший кадр, тултіп невидимий); після
   // useLayoutEffect — реальна локальна left-координата (px, від
   // wrapperRef — того самого .relative, що лишається containing block:
@@ -116,34 +121,59 @@ function VocabWord({
       return;
     }
 
+    const wrapper = wrapperRef.current;
+    const tooltip = tooltipRef.current;
+    if (!wrapper || !tooltip) return;
+
     function reposition() {
-      const wrapper = wrapperRef.current;
-      const tooltip = tooltipRef.current;
       if (!wrapper || !tooltip) return;
 
-      const wrapperRect = wrapper.getBoundingClientRect();
+      // getClientRects() — один рядок-рект на кожен фрагмент інлайн-
+      // елемента, якщо слово/фраза сама розбита на кілька рядків; рект, що
+      // містить точку кліку, — анкер для ЦЕНТРУВАННЯ (якщо точка невідома
+      // чи не потрапила в жоден рект — перший рядок, той самий дефолт, що
+      // просить задача). Для above/below — весь діапазон: below = низ
+      // ОСТАННЬОГО рядка, above = верх ПЕРШОГО (тултіп не має перекривати
+      // жоден рядок слова).
+      const rectList = wrapper.getClientRects();
+      const rects = rectList.length > 0 ? Array.from(rectList) : [wrapper.getBoundingClientRect()];
+      const point = lastClickPointRef.current;
+      const anchorRect =
+        (point &&
+          rects.find((r) => point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom)) ??
+        rects[0];
+      const firstRect = rects[0];
+      const lastRect = rects[rects.length - 1];
+
       const tooltipRect = tooltip.getBoundingClientRect();
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      // documentElement.clientWidth (не window.innerWidth) — ігнорує
+      // смугу скролу/pinch-zoom, тож clamp не дає хибний запас праворуч
+      // на деяких мобільних браузерах.
+      const viewportWidth = document.documentElement.clientWidth;
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       const GAP = 8;
 
       // Центр слова (viewport-координати) -> бажаний лівий край картки,
       // потім clamp так, щоб з обох боків лишалось ≥8px до краю
-      // viewport. maxLeft може вийти меншим за minLeft лише коли сама
-      // картка ширша за viewport-16px — max-width у CSS це вже не
-      // допускає, Math.max тут лише захист від'ємного проміжку.
-      const wordCenterX = wrapperRect.left + wrapperRect.width / 2;
+      // viewport. tooltipRect.width — РЕАЛЬНА поточна ширина після
+      // рендеру (ефект перераховує її й при зміні вмісту тултіпа —
+      // ResizeObserver нижче — не лише при відкритті), тож clamp не
+      // спирається на застарілий, вузькіший за фактичний, вимір. maxLeft
+      // може вийти меншим за minLeft лише коли сама картка ширша за
+      // viewport-16px — max-width у CSS це вже не допускає, Math.max тут
+      // лише захист від'ємного проміжку.
+      const wordCenterX = anchorRect.left + anchorRect.width / 2;
       const desiredLeft = wordCenterX - tooltipRect.width / 2;
       const minLeft = GAP;
       const maxLeft = Math.max(GAP, viewportWidth - tooltipRect.width - GAP);
       const clampedViewportLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
-      const localLeft = clampedViewportLeft - wrapperRect.left;
+      const localLeft = clampedViewportLeft - wrapper.getBoundingClientRect().left;
 
       // Сторінка сцени не має жодного fixed-бару знизу (на відміну від
       // мобільного таббара кабінету) — просте порівняння доступного
       // простору знизу/зверху, без додаткового офсету.
-      const spaceBelow = viewportHeight - wrapperRect.bottom;
-      const spaceAbove = wrapperRect.top;
+      const spaceBelow = viewportHeight - lastRect.bottom;
+      const spaceAbove = firstRect.top;
       const above = spaceBelow < tooltipRect.height + GAP && spaceAbove > spaceBelow;
 
       setPlacement({ left: localLeft, above });
@@ -152,9 +182,15 @@ function VocabWord({
     reposition();
     window.addEventListener("resize", reposition);
     window.addEventListener("orientationchange", reposition);
+    // Вміст тултіпа може змінити РОЗМІР після першого вимірювання (напр.
+    // SaveWordButton переходить у стан "✓ У словнику" після збереження) —
+    // без цього clamp лишався б рахований проти старої, вужчої ширини.
+    const resizeObserver = new ResizeObserver(reposition);
+    resizeObserver.observe(tooltip);
     return () => {
       window.removeEventListener("resize", reposition);
       window.removeEventListener("orientationchange", reposition);
+      resizeObserver.disconnect();
     };
   }, [isOpen]);
 
@@ -174,7 +210,10 @@ function VocabWord({
     <span className="relative inline-block" ref={wrapperRef}>
       <button
         type="button"
-        onClick={() => onClick(id)}
+        onClick={(e) => {
+          lastClickPointRef.current = { x: e.clientX, y: e.clientY };
+          onClick(id);
+        }}
         className="vocab-chip vocab-chip--interactive rounded px-1"
       >
         {displayWord}

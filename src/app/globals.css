@@ -6378,6 +6378,7 @@ button.scene-bar:active .scene-bar-toggle {
   width: max-content;
   min-width: 160px;
   max-width: min(320px, calc(100vw - 16px));
+  box-sizing: border-box;
   padding: 8px 10px;
   font-size: 12px;
   border-radius: 8px;
@@ -6389,6 +6390,9 @@ button.scene-bar:active .scene-bar-toggle {
   box-shadow:
     0 8px 20px -6px rgba(120, 90, 20, 0.35),
     0 2px 6px rgba(0, 0, 0, 0.12);
+  /* Довгий переклад без пробілів не має розтягувати картку за max-width
+     (успадковується дітьми — тексту перекладу/примітки всередині). */
+  overflow-wrap: anywhere;
 }
 /* Вертикаль — клас, не inline top/bottom (щоб margin-top/-bottom лишався
    декларативним у CSS, а JS рахував лише те, що МУСИТЬ бути числом:
