@@ -181,6 +181,20 @@ export function PlainWordPanel({
   const [justRemoved, setJustRemoved] = useState(false);
   const [saving, setSaving] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Автозакриття компактного "уже збережено" стану (existing-гілка нижче,
+  // НЕ justSaved/justRemoved — ті лишаються з власним 1с-таймером вище) —
+  // задача-виправлення "saved card actions row and 3s auto-close".
+  // interacting — наведення/фокус/дотик СТАВИТЬ таймер на паузу (ефект
+  // нижче просто не стартує новий, поки interacting===true); щойно
+  // взаємодія закінчується (pointerleave/blur/pointerup), ефект
+  // перезапускається ПОВНИМИ 3с — не "продовжує" попередній відлік.
+  const [interacting, setInteracting] = useState(false);
+  // closing — короткий fade (150мс) ПЕРЕД самим onClose, лише для
+  // автозакриття (ручний клік "Закрити" лишається миттєвим, як і раніше);
+  // prefers-reduced-motion пропускає цей крок і закриває одразу.
+  const [closing, setClosing] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Автозакриття через 1с після успіху — той самий ефект і для save, і
   // для remove (лише інший прапорець/лейбл). Таймер чиститься, якщо
@@ -230,14 +244,50 @@ export function PlainWordPanel({
   // !teacherItem — та сама гілка-пріоритет, що нижче (if (teacherItem)
   // рендериться ПЕРШИМ, перед if (existing)): слово, яке вчителька
   // позначила як vocab, завжди показує повну вчительську форму, навіть
-  // якщо воно вже збережене студентом — isSavedCompact мусить повторювати
-  // цю ж умову пріоритету, інакше повідомляв би "compact" для гілки, що
-  // насправді рендерить повну форму.
-  const isSavedCompact = Boolean(justSaved || justRemoved || (!teacherItem && existing));
+  // якщо воно вже збережене студентом. isPersistentCompact — САМЕ "existing"
+  // гілка нижче (не транзитні justSaved/justRemoved, в яких уже є власний
+  // 1с-таймер вище) — за цим прапорцем вирішує, коли стартувати 3с-таймер
+  // автозакриття нижче.
+  const isPersistentCompact = Boolean(!teacherItem && existing);
+  const isSavedCompact = Boolean(justSaved || justRemoved || isPersistentCompact);
   useEffect(() => {
     onLayoutChange?.(isSavedCompact ? "compact" : "form");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onLayoutChange з викликача стабільний лише за формою виклику, не за ідентичністю; залежність від isSavedCompact навмисно єдина, що має перевикликати ефект
   }, [isSavedCompact]);
+
+  // 3с автозакриття компактного "уже збережено" стану — лише коли
+  // isPersistentCompact і студент зараз НЕ взаємодіє (interacting===false).
+  // Залежність від interacting — саме той механізм, що "ставить на паузу"
+  // (ефект виходить одразу, без запуску таймера) і "перезапускає ПОВНИМИ
+  // 3с" (зміна interacting false->true->false відмонтовує/монтовує цей
+  // ефект заново через cleanup/повторний виклик, новий setTimeout(3000)
+  // щоразу з нуля, а не "залишок" попереднього відліку).
+  useEffect(() => {
+    if (!isPersistentCompact || interacting) return;
+    closeTimerRef.current = setTimeout(() => {
+      const prefersReducedMotion =
+        typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
+        onClose();
+        return;
+      }
+      setClosing(true);
+      fadeTimerRef.current = setTimeout(onClose, 150);
+    }, 3000);
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose з викликача стабільний лише за формою виклику; залежність навмисно лише isPersistentCompact/interacting
+  }, [isPersistentCompact, interacting]);
+
+  // Таймер fade-перед-закриттям (150мс) живе довше за сам 3с-ефект вище
+  // (стартує ВСЕРЕДИНІ його колбека, не в ефекті з власним cleanup) —
+  // чистимо його окремо, лише на анмаунт.
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, []);
 
   if (!saved) return null;
 
@@ -317,24 +367,45 @@ export function PlainWordPanel({
   }
 
   if (existing) {
-    // Один компактний рядок — слово · (переклад, якщо студент його вписав)
-    // · "✓ У словнику" · Прибрати · Закрити. Частина мови (existingPosLabel
-    // у попередній версії) свідомо не показуємо тут — другорядна деталь,
-    // яка й так лишається видимою на /cabinet/dictionary; у компактному
-    // рядку лише те, що потрібно для швидкого погляду/дії.
+    // Рядок 1 — слово + "✓ У словнику"; переклад (якщо студент його
+    // вписав) — своїм рядком під ним; ОСТАННІЙ рядок — Прибрати/Закрити
+    // РАЗОМ (gap 16px, НІКОЛИ не переноситься між собою — задача-
+    // виправлення "saved card actions row and 3s auto-close": раніше всі
+    // елементи були в ОДНОМУ flex-wrap рядку, і "Закрити" міг сам
+    // зіскочити на другий рядок окремо від пілюлі/"Прибрати"). Частина
+    // мови (existingPosLabel у попередній версії) свідомо не показуємо
+    // тут — другорядна деталь, яка й так лишається видимою на
+    // /cabinet/dictionary. onPointer*/onFocus/onBlur — ставлять 3с-таймер
+    // автозакриття (ефект вище) на паузу, поки студент наводить/фокусує/
+    // торкається картки.
     return (
-      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <p className="plain-word-panel-word">{word}</p>
+      <div
+        className={`plain-word-panel plain-word-panel--compact-saved${closing ? " plain-word-panel--closing" : ""}`}
+        role="region"
+        ref={panelRef}
+        onKeyDown={handleKeyDown}
+        onPointerEnter={() => setInteracting(true)}
+        onPointerLeave={() => setInteracting(false)}
+        onPointerDown={() => setInteracting(true)}
+        onPointerUp={() => setInteracting(false)}
+        onFocus={() => setInteracting(true)}
+        onBlur={() => setInteracting(false)}
+      >
+        <div className="plain-word-panel-compact-row">
+          <p className="plain-word-panel-word">{word}</p>
+          <p className="save-word-pill save-word-pill--saved save-word-pill--compact">{t("dictionary.savedState")}</p>
+        </div>
         {existing.translation && (
           <span className="plain-word-panel-compact-translation">{existing.translation}</span>
         )}
-        <p className="save-word-pill save-word-pill--saved save-word-pill--compact">{t("dictionary.savedState")}</p>
-        <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
-          {t("dictionary.removeAction")}
-        </button>
-        <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-          {t("dictionary.panelClose")}
-        </button>
+        <div className="plain-word-panel-compact-actions">
+          <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+            {t("dictionary.removeAction")}
+          </button>
+          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+            {t("dictionary.panelClose")}
+          </button>
+        </div>
         {error && <p className="save-word-error plain-word-panel-compact-error">{t("dictionary.saveError")}</p>}
       </div>
     );

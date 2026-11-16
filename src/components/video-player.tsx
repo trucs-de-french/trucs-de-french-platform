@@ -1665,11 +1665,46 @@ function VideoWordCard({
   const saved = useSavedWords();
   const isSavedWord = saved?.isSaved(wordKey) ?? false;
   const pending = saved?.isPending(wordKey) ?? false;
+  // interacting/closing/таймери — той самий механізм 3с автозакриття
+  // компактного стану, що plain-word-panel.tsx (задача-виправлення "saved
+  // card actions row and 3s auto-close"): на відміну від PlainWordPanel
+  // тут немає окремого "щойно збережено"-підтвердження — isSavedWord сама
+  // й стає "persistent compact" станом, щойно слово збережено (SaveWordButton
+  // у несвеженому стані нижче зберігає напряму, без власного кроку
+  // підтвердження в цьому компоненті).
+  const [interacting, setInteracting] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onCompactChange?.(isSavedWord);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onCompactChange з VideoPlayer стабільний лише за формою виклику, не за ідентичністю; залежність від isSavedWord навмисно єдина, що має перевикликати ефект
   }, [isSavedWord]);
+
+  useEffect(() => {
+    if (!isSavedWord || interacting) return;
+    closeTimerRef.current = setTimeout(() => {
+      const prefersReducedMotion =
+        typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
+        onClose();
+        return;
+      }
+      setClosing(true);
+      fadeTimerRef.current = setTimeout(onClose, 150);
+    }, 3000);
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose стабільний лише за формою виклику; залежність навмисно лише isSavedWord/interacting
+  }, [isSavedWord, interacting]);
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, []);
 
   async function handleRemove() {
     await saved?.remove(wordKey);
@@ -1686,11 +1721,14 @@ function VideoWordCard({
   }
 
   // Слово вже збережене — компактний рядок замість повної картки (задача-
-  // виправлення "compact teacher card in saved state"): рядок 1 — слово +
-  // (якщо влазить, інакше переноситься на свій рядок) тег частини мови +
+  // виправлення "compact teacher card in saved state" / "saved card
+  // actions row and 3s auto-close"): рядок 1 — слово + тег частини мови +
   // пілюля "✓ У словнику"; рядок 2 — переклад (до 2 рядків, з "…");
-  // рядок 3 — Прибрати/Закрити. "З репліки" і фото НЕ показуємо тут —
-  // лишаються лише в несвеженому стані нижче.
+  // ОСТАННІЙ рядок — Прибрати/Закрити РАЗОМ (.video-word-card-compact-
+  // actions, не той самий клас, що рядок 1 — там flex-wrap, тут НІКОЛИ не
+  // переноситься між собою). "З репліки" і фото НЕ показуємо тут —
+  // лишаються лише в несвеженому стані нижче. onPointer*/onFocus/onBlur —
+  // ставлять 3с-таймер автозакриття (ефект вище) на паузу.
   if (isSavedWord) {
     return (
       <div
@@ -1698,13 +1736,19 @@ function VideoWordCard({
         role="dialog"
         aria-label={t("videoPlayer.wordCardAria", { word: wordKey })}
         onKeyDown={handleKeyDown}
-        className="video-word-card video-word-card--compact-saved"
+        className={`video-word-card video-word-card--compact-saved${closing ? " video-word-card--closing" : ""}`}
         style={{
           bottom: anchorTop ? undefined : `${bottomPx}px`,
           top: anchorTop ? "8px" : undefined,
           left: leftPx != null ? `${leftPx}px` : undefined,
           maxHeight: `${maxHeight}px`,
         }}
+        onPointerEnter={() => setInteracting(true)}
+        onPointerLeave={() => setInteracting(false)}
+        onPointerDown={() => setInteracting(true)}
+        onPointerUp={() => setInteracting(false)}
+        onFocus={() => setInteracting(true)}
+        onBlur={() => setInteracting(false)}
       >
         <div className="video-word-card-compact-row">
           <p className="video-word-card-compact-word">{wordKey}</p>
@@ -1718,7 +1762,7 @@ function VideoWordCard({
           </span>
         </div>
         {item.translation && <p className="video-word-card-compact-translation">{item.translation}</p>}
-        <div className="video-word-card-compact-row">
+        <div className="video-word-card-compact-actions">
           <button
             type="button"
             onClick={handleRemove}

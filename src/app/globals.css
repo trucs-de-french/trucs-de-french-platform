@@ -2007,7 +2007,7 @@ button, input, textarea, select, label, nav, aside {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  transition: width 120ms ease-in-out, height 120ms ease-in-out;
+  transition: width 120ms ease-in-out, height 120ms ease-in-out, opacity 150ms ease-in-out;
 }
 .video-word-card-header {
   flex: 0 0 auto;
@@ -2064,6 +2064,29 @@ button, input, textarea, select, label, nav, aside {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+/* Прибрати + Закрити — ЗАВЖДИ разом на останньому рядку (gap 16px, без
+   flex-wrap — той самий принцип, що .plain-word-panel-compact-actions;
+   раніше ця дія-пара повторно використовувала .video-word-card-compact-row
+   (flex-wrap:wrap), через що "Закрити" міг сам зіскочити на другий рядок
+   окремо від "Прибрати" — задача-виправлення "saved card actions row and
+   3s auto-close"). */
+.video-word-card-compact-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
+}
+/* Фейд перед автозакриттям (3с-таймер) — НЕ при ручному кліку "Закрити".
+   prefers-reduced-motion пропускає фейд на рівні JS (onClose викликається
+   одразу); @media тут — захист про всяк випадок. */
+.video-word-card--closing {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-word-card {
+    transition: none;
+  }
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-word-card {
@@ -17914,38 +17937,67 @@ button.cabinet-nav-item {
 }
 
 /* Компактний стан "уже збережено"/"щойно збережено-прибрано"
-   (plain-word-panel.tsx — justSaved/justRemoved/existing-гілки) — ОДИН
-   рядок замість header/scrollarea/footer-структури форми: слово · (опц.
-   переклад) · пілюля "✓ У словнику" · дії, все впритул, переноситься на
-   другий рядок лише якщо не влазить (задача-виправлення "compact panel
-   in saved state" — панель до цього завжди була шириною/висотою цілої
-   форми, хоча тут майже нема чого показувати). width:max-content — сама
-   відповідає вмісту (video-player.tsx дає обгортці таку саму поведінку
-   через .video-plain-word-panel-wrap--compact-saved), не фіксована/
-   мінімальна ширина. transition — лише opacity (fade відкриття/закриття
-   лишається на самому компоненті/CSS), жодних box-shadow. */
+   (plain-word-panel.tsx — justSaved/justRemoved/existing-гілки) —
+   СТОВПЕЦЬ фіксованих рядків замість header/scrollarea/footer-структури
+   форми (задача-виправлення "saved card actions row and 3s auto-close":
+   раніше все (слово/переклад/пілюля/дії) жило в ОДНОМУ flex-wrap рядку,
+   і "Закрити" міг сам зіскочити на другий рядок окремо від "Прибрати"):
+   рядок 1 (.plain-word-panel-compact-row) — слово + пілюля; переклад
+   (якщо є) — окремим рядком; .plain-word-panel-compact-actions — ЗАВЖДИ
+   свій окремий рядок, Прибрати/Закрити РАЗОМ, між собою не переноситься
+   (звичайний flex без wrap). width:max-content — сама відповідає вмісту
+   (video-player.tsx дає обгортці таку саму поведінку через
+   .video-plain-word-panel-wrap--compact-saved), не фіксована/мінімальна
+   ширина. box-shadow:none, transition — лише opacity (fade перед
+   автозакриттям, --closing нижче). */
 .plain-word-panel--compact-saved {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 10px;
-  row-gap: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   width: max-content;
   max-width: min(360px, calc(100% - 16px));
   padding: 10px 14px;
   box-shadow: none;
+  transition: opacity 150ms ease-in-out;
 }
 .plain-word-panel--compact-saved .plain-word-panel-word {
   margin: 0;
+}
+.plain-word-panel-compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 .plain-word-panel-compact-translation {
   font-family: var(--font-body);
   font-size: 13px;
   color: #55546b;
 }
+/* Прибрати + Закрити — ЗАВЖДИ разом на останньому рядку (gap 16px, без
+   flex-wrap — звичайний inline-рядок із двох коротких лінків завжди
+   влазить у max-width:360px, тож переносити між собою нема чого). */
+.plain-word-panel-compact-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
+}
 .plain-word-panel-compact-error {
-  flex: 1 0 100%;
   margin: 0;
+}
+/* Фейд перед автозакриттям (3с-таймер, лише existing-гілка) — НЕ при
+   ручному кліку "Закрити" (той лишається миттєвим). prefers-reduced-
+   motion пропускає фейд на рівні JS (onClose викликається одразу, клас
+   --closing взагалі не встигає застосуватись), цей @media — захист про
+   всяк випадок, якщо браузер усе ж встиг застосувати клас. */
+.plain-word-panel--closing {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plain-word-panel--compact-saved {
+    transition: none;
+  }
 }
 
 /* ОДНА колонка завжди (задача-виправлення "single-column plain-word
