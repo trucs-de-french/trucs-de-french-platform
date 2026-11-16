@@ -403,20 +403,6 @@ export function VideoPlayer({
         anchorLeftPx: number | null;
       };
   const [openCard, setOpenCard] = useState<OpenCard | null>(null);
-  // Компактна розкладка форми ручного перекладу (plain-word-panel.tsx,
-  // проп compact) — вузький landscape-fullscreen, де звичайного
-  // вертикального потоку бракує місця: сам VideoPlayer вирішує, не CSS-
-  // медіа-запит усередині панелі (той самий компонент лишається простим,
-  // без власної логіки видимого в'юпорта).
-  const [isCompactLandscape, setIsCompactLandscape] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(max-height: 420px) and (orientation: landscape)");
-    const update = () => setIsCompactLandscape(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
 
   // Підказка "слова в субтитрах можна тапнути" — pause-чип (кожна пауза,
   // поки не збережено слово з відео й не показано VIDEO_WORD_HINT_MAX_SEEN
@@ -1056,17 +1042,24 @@ export function VideoPlayer({
   // overflow-hidden) інакше обрізав би довге меню зверху.
   const menuMaxHeight = containerHeight ? Math.max(120, containerHeight - overlayHeight - 16) : undefined;
 
-  // Горизонтальне "затискання" картки слова (desktop-анкор): лишає мінімум
-  // 12px до кожного краю відео, навіть коли слово клікнуте біля самого
-  // краю рядка субтитрів. На мобільному (video-word-card, max-width 639px)
-  // CSS сам ігнорує left/transform — картка стає сторінкою знизу на всю
-  // ширину, тож clampedCardLeft там без ефекту.
+  // Горизонтальне "затискання" картки/панелі слова (desktop-анкор): лишає
+  // мінімум 12px до кожного краю відео, навіть коли слово клікнуте біля
+  // самого краю рядка субтитрів. На мобільному (<640px) CSS сам ігнорує
+  // left/transform — картка/панель стає сторінкою знизу на всю ширину,
+  // тож clampedCardLeft там без ефекту. Ширина РІЗНА для двох kind:
+  // VideoWordCard лишається фіксованих 300px (WORD_CARD_WIDTH), а панель
+  // звичайного слова тепер clamp(280px, 100%-16px, 420px) у CSS
+  // (.video-plain-word-panel-wrap) — plainPanelWidth рахує той САМИЙ
+  // результат у JS, інакше затискання малювалось би проти старої ширини
+  // 300px, і ширша панель (до 420px) могла б вилізти за край відео.
   const WORD_CARD_WIDTH = 300;
+  const plainPanelWidth = Math.min(420, Math.max(280, containerWidth - 16));
+  const cardWidth = openCard?.kind === "plain" ? plainPanelWidth : WORD_CARD_WIDTH;
   const clampedCardLeft =
     openCard?.anchorLeftPx != null && containerWidth > 0
       ? Math.min(
-          Math.max(openCard.anchorLeftPx, WORD_CARD_WIDTH / 2 + 12),
-          Math.max(WORD_CARD_WIDTH / 2 + 12, containerWidth - WORD_CARD_WIDTH / 2 - 12)
+          Math.max(openCard.anchorLeftPx, cardWidth / 2 + 12),
+          Math.max(cardWidth / 2 + 12, containerWidth - cardWidth / 2 - 12)
         )
       : null;
   // Вертикальний якір картки/панелі — ПОВНІСТЮ реактивний (не знімок на
@@ -1098,23 +1091,24 @@ export function VideoPlayer({
       ? Math.max(100, containerHeight - 16)
       : Math.min(roomAbovePlate, 480)
     : undefined;
-  // Компактна (двоколонкова) розкладка форми ручного перекладу
-  // (plain-word-panel.tsx, проп compact) — не лише вузький landscape-
-  // fullscreen (isCompactLandscape, медіа-запит вище), а БУДЬ-ЯКЕ
-  // вимірене місце замало для звичайної однієї колонки (задача "panel
-  // stacking, scroll frame and compact layout on desktop", п.3).
-  // SINGLE_COLUMN_FORM_HEIGHT — стала оцінка природної висоти однієї
-  // колонки форми (слово+контекст+лейбл+інпут+чипи у 2 рядки+кнопки), НЕ
-  // жива ResizeObserver-висота самої панелі: порівнювати поточну ВИМІРЕНУ
-  // висоту панелі з доступним місцем і перемикати compact за цим
-  // результатом створило б коливання (compact зменшує висоту -> знову
-  // "влізає" -> вимикає compact -> знову завелика -> знову compact...).
-  // roomAbovePlate (знаменник) лишається повністю реактивним — лише
-  // чисельник (форма) узятий фіксованим, бо її вміст завжди один і той
-  // самий набір полів, без значної варіації висоти.
-  const SINGLE_COLUMN_FORM_HEIGHT = 340;
-  const isCompactByRoom = !cardAnchorTop && roomAbovePlate < SINGLE_COLUMN_FORM_HEIGHT;
-  const isCompact = isCompactLandscape || isCompactByRoom;
+  // Компактні відступи/розміри форми ручного перекладу (plain-word-
+  // panel.tsx, проп compact) — ОДНА колонка завжди (задача-виправлення
+  // "single-column plain-word panel with vertical scroll only" —
+  // двоколонковий грід прибрано остаточно, compact більше НЕ перемикає
+  // розкладку, лише стискає падінги/розміри полів для малого вільного
+  // місця). PANEL_HEIGHT_ESTIMATE — стала оцінка природної висоти панелі
+  // (слово+приклад+лейбл+інпут+чипи+кнопки), НЕ жива ResizeObserver-висота
+  // самої панелі: порівнювати поточну ВИМІРЕНУ висоту з доступним місцем і
+  // перемикати compact за цим результатом створило б коливання (compact
+  // зменшує висоту -> знову "влізає" -> вимикає compact -> знову завелика
+  // -> знову compact...). roomAbovePlate (знаменник) лишається повністю
+  // реактивним — лише чисельник (форма) узятий фіксованим, бо її вміст
+  // завжди один і той самий набір полів, без значної варіації висоти.
+  // cardAnchorTop (матчив раніше окремий matchMedia-хук isCompactLandscape,
+  // прибраний — те саме "мало місця" вже рахує roomAbovePlate) теж
+  // лишається всередині того самого chip-якоря нижче.
+  const PANEL_HEIGHT_ESTIMATE = 340;
+  const isCompact = !cardAnchorTop && roomAbovePlate < PANEL_HEIGHT_ESTIMATE;
 
   if (loadError) {
     return (
@@ -1194,9 +1188,9 @@ export function VideoPlayer({
         {chipKind && (
           <div
             className={`video-word-hint-chip ${chipVisible ? "video-word-hint-chip--visible" : ""} ${
-              isCompactLandscape ? "video-word-hint-chip--top" : ""
+              cardAnchorTop ? "video-word-hint-chip--top" : ""
             }`}
-            style={!isCompactLandscape ? { bottom: `${chipBottomPx}px` } : undefined}
+            style={!cardAnchorTop ? { bottom: `${chipBottomPx}px` } : undefined}
             role="status"
             aria-live="polite"
           >

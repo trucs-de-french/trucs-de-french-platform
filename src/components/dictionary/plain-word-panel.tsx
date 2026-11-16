@@ -134,10 +134,13 @@ function PosChipGroup({
 // її переклад/частину мови/примітку й SaveWordButton з ТІЄЮ ж логікою, що
 // бульбашка VocabWord, замість форми ручного перекладу.
 //
-// compact — лише перемикає внутрішню розкладку форми ручного перекладу на
-// дві колонки (ліворуч — переклад+дії, праворуч — чипи частини мови); сам
-// викликач вирішує, коли передавати true (video-player.tsx — вузький
-// landscape-fullscreen), тут немає власної медіа-логіки.
+// compact — ОДНА колонка завжди (задача-виправлення "single-column
+// plain-word panel with vertical scroll only" — попередній двоколонковий
+// режим прибрано: горизонтальний скрол/обрізані чипи були гіршими за
+// просто довшу вертикальну панель); проп лише стискає відступи/розміри
+// (менші падінги, example в 2 рядки, менші чипи) для малого вільного
+// місця. Сам викликач вирішує, коли передавати true (video-player.tsx —
+// рахує з вимірюваного вільного місця), тут немає власної медіа-логіки.
 export function PlainWordPanel({
   word,
   contextFr,
@@ -333,29 +336,25 @@ export function PlainWordPanel({
         <p className="plain-word-panel-word">{word}</p>
       </div>
       <div className="plain-word-panel-scrollarea">
-        <div className="plain-word-panel-col plain-word-panel-col--left">
-          {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
-          <label className="plain-word-panel-label" htmlFor={inputId}>
-            {t("dictionary.panelTranslationLabel")}
-          </label>
-          <input
-            id={inputId}
-            type="text"
-            value={value}
-            maxLength={200}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void handleSave();
-              }
-            }}
-            className="plain-word-panel-input"
-          />
-        </div>
-        <div className="plain-word-panel-col plain-word-panel-col--right">
-          <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
-        </div>
+        {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
+        <label className="plain-word-panel-label" htmlFor={inputId}>
+          {t("dictionary.panelTranslationLabel")}
+        </label>
+        <input
+          id={inputId}
+          type="text"
+          value={value}
+          maxLength={200}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void handleSave();
+            }
+          }}
+          className="plain-word-panel-input"
+        />
+        <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
       </div>
       <div className="plain-word-panel-footer">
         <div className="flex flex-wrap items-center gap-2">

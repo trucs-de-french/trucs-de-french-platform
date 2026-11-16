@@ -2100,7 +2100,14 @@ button, input, textarea, select, label, nav, aside {
   position: absolute;
   z-index: var(--video-card-z);
   transform: translateX(-50%);
-  width: min(300px, calc(100% - 24px));
+  /* clamp — завжди однокоонкова панель (задача-виправлення "single-
+     column plain-word panel with vertical scroll only"): ідеально ширина
+     контейнера мінус 16px запасу з кожного боку, але не вужче за 280px
+     (чипи/інпут лишаються читабельними) і не ширше за 420px (не
+     розтягується на весь величезний fullscreen). На вузькому плеєрі
+     (<640px, медіа-запит нижче) left/right/width перевизначені під
+     bottom sheet, це правило там без ефекту. */
+  width: clamp(280px, calc(100% - 16px), 420px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -17687,6 +17694,7 @@ button.cabinet-nav-item {
 .plain-word-panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
   margin-top: 6px;
   padding: 12px 14px;
@@ -17724,7 +17732,9 @@ button.cabinet-nav-item {
    округленого кута картки). */
 .plain-word-panel-scrollarea {
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -17802,6 +17812,7 @@ button.cabinet-nav-item {
 }
 .plain-word-panel-input {
   display: block;
+  box-sizing: border-box;
   width: 100%;
   max-width: 320px;
   margin-top: 4px;
@@ -17837,34 +17848,14 @@ button.cabinet-nav-item {
   cursor: pointer;
 }
 
-/* Обгортки навколо "переклад+поле вводу" і "чипи частини мови" у формі
-   ручного перекладу (plain-word-panel.tsx) — самі по собі звичайні блоки,
-   жодного власного вигляду: за замовчуванням scrollarea лишається тим
-   самим вертикальним потоком, що й до розбиття на обгортки. Слово
-   (header) і кнопки дій (footer) тепер СТРУКТУРНО поза scrollarea —
-   .plain-word-panel--compact (video-player.tsx — компонент приймає
-   рішення через проп `compact`, рахований з вимірюваного вільного місця,
-   не лише з власного медіа-запиту) перетворює саму scrollarea на 2
-   колонки, без потреби окремо "розтягувати" слово/дії на всю ширину
-   (вони вже сиблінги scrollarea, не її грід-діти). */
-.plain-word-panel-col {
-  display: block;
-}
-.plain-word-panel--compact .plain-word-panel-scrollarea {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 10px;
-  align-items: start;
-}
-.plain-word-panel--compact .plain-word-panel-col--left {
-  grid-column: 1;
-}
-.plain-word-panel--compact .plain-word-panel-col--right {
-  grid-column: 2;
-}
-/* Компактний розмір полів форми (задача-виправлення "bounded scroll area
-   and sticky actions in word panels", п.2) — ціль: ~220-260px загальної
-   висоти панелі в компактному режимі. */
+/* ОДНА колонка завжди (задача-виправлення "single-column plain-word
+   panel with vertical scroll only" — попередній двоколонковий
+   .plain-word-panel--compact грід прибрано: на вузькому плеєрі він давав
+   горизонтальний скрол і обрізані чипи праворуч, а не допомагав).
+   .plain-word-panel--compact (video-player.tsx — проп рахований з
+   вимірюваного вільного місця) лише стискає відступи/розміри нижче, НЕ
+   чіпає порядок/розкладку — слово (header) → приклад → переклад → чипи →
+   дії (footer), завжди вертикально. */
 .plain-word-panel--compact .plain-word-panel-context {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -17873,16 +17864,13 @@ button.cabinet-nav-item {
 }
 .plain-word-panel--compact .plain-word-panel-label {
   margin-top: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .plain-word-panel--compact .plain-word-panel-input {
   height: 40px;
   margin-top: 2px;
 }
 .plain-word-panel--compact .plain-word-pos-field {
-  margin-top: 0;
+  margin-top: 6px;
 }
 .plain-word-panel--compact .plain-word-pos-chip {
   padding: 6px 12px;
