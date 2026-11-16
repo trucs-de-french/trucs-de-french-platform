@@ -149,6 +149,7 @@ export function PlainWordPanel({
   inputId,
   onClose,
   compact = false,
+  surface = "light",
   onLayoutChange,
 }: {
   word: string;
@@ -158,6 +159,17 @@ export function PlainWordPanel({
   inputId: string;
   onClose: () => void;
   compact?: boolean;
+  // "light" (за замовчуванням) — скрипт сцени (dialogue-line.tsx), та сама
+  // світла/лавандова поверхня в обох темах сайту, що й раніше. "dark" —
+  // лише video-player.tsx: задача-виправлення "unify plain-word panel with
+  // teacher card on dark glass" — панель переходить на те саме темне скло,
+  // що VideoWordCard (раніше лишалась світлою навмисно, тепер цю вимогу
+  // скасовано на користь візуальної єдності двох карток слова над відео).
+  // Сам проп лише додає/прибирає клас-модифікатор (.plain-word-panel--video,
+  // globals.css) і forward-ить surface="dark" у спільні -on-dark варіанти
+  // (SaveWordButton/save-word-pill/save-word-remove-link) — структура й
+  // розмітка компонента не форкаються.
+  surface?: "light" | "dark";
   // Повідомляє викликача, яка розмітка зараз рендериться — "compact"
   // (вже збережено / щойно збережено-прибрано) чи "form" (форма ручного
   // перекладу/вчительська картка) — лише video-player.tsx слухає, щоб
@@ -328,7 +340,14 @@ export function PlainWordPanel({
     if (result.ok) setJustRemoved(true);
   }
 
-  const panelClassName = `plain-word-panel${compact ? " plain-word-panel--compact" : ""}`;
+  const videoModifier = surface === "dark" ? " plain-word-panel--video" : "";
+  // Той самий набір -on-dark модифікаторів, що вже використовує VideoWordCard
+  // (save-word-pill.tsx CSS, globals.css) — тут лише дзеркально застосовані
+  // до елементів, які PlainWordPanel малює сама (не через SaveWordButton).
+  const savedPillOnDark = surface === "dark" ? " save-word-pill--saved-on-dark" : "";
+  const primaryPillOnDark = surface === "dark" ? " save-word-pill--primary-on-dark" : "";
+  const removeLinkOnDark = surface === "dark" ? " save-word-remove-link--on-dark" : "";
+  const panelClassName = `plain-word-panel${compact ? " plain-word-panel--compact" : ""}${videoModifier}`;
 
   // justSaved/justRemoved/existing (уже збережене слово) — ОДИН компактний
   // рядок (слово · пілюля · дії), не header/scrollarea/footer-структура
@@ -339,9 +358,9 @@ export function PlainWordPanel({
   // wrap/width:max-content замість flex-колонки на всю висоту обгортки.
   if (justSaved || justRemoved) {
     return (
-      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
+      <div className={`plain-word-panel plain-word-panel--compact-saved${videoModifier}`} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <p className="plain-word-panel-word">{word}</p>
-        <p className="save-word-pill save-word-pill--saved save-word-pill--compact">
+        <p className={`save-word-pill save-word-pill--saved save-word-pill--compact${savedPillOnDark}`}>
           {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
         </p>
       </div>
@@ -385,7 +404,7 @@ export function PlainWordPanel({
         </div>
         <div className="plain-word-panel-footer">
           <div className="flex flex-wrap items-center gap-2">
-            <SaveWordButton snapshot={snapshot} variant="pill" />
+            <SaveWordButton snapshot={snapshot} variant="pill" surface={surface} />
             <button type="button" onClick={onClose} className="plain-word-panel-cancel">
               {t("dictionary.panelClose")}
             </button>
@@ -409,7 +428,7 @@ export function PlainWordPanel({
     // торкається картки.
     return (
       <div
-        className={`plain-word-panel plain-word-panel--compact-saved${closing ? " plain-word-panel--closing" : ""}`}
+        className={`plain-word-panel plain-word-panel--compact-saved${videoModifier}${closing ? " plain-word-panel--closing" : ""}`}
         role="region"
         ref={panelRef}
         onKeyDown={handleKeyDown}
@@ -423,13 +442,13 @@ export function PlainWordPanel({
       >
         <div className="plain-word-panel-compact-row">
           <p className="plain-word-panel-word">{word}</p>
-          <p className="save-word-pill save-word-pill--saved save-word-pill--compact">{t("dictionary.savedState")}</p>
+          <p className={`save-word-pill save-word-pill--saved save-word-pill--compact${savedPillOnDark}`}>{t("dictionary.savedState")}</p>
         </div>
         {existing.translation && (
           <span className="plain-word-panel-compact-translation">{existing.translation}</span>
         )}
         <div className="plain-word-panel-compact-actions">
-          <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+          <button type="button" onClick={handleRemove} disabled={pending} className={`save-word-remove-link${removeLinkOnDark}`}>
             {t("dictionary.removeAction")}
           </button>
           <button type="button" onClick={onClose} className="plain-word-panel-cancel">
@@ -497,7 +516,7 @@ export function PlainWordPanel({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="save-word-pill save-word-pill--primary"
+            className={`save-word-pill save-word-pill--primary${primaryPillOnDark}`}
           >
             {t("dictionary.panelSave")}
           </button>

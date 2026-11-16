@@ -1648,9 +1648,12 @@ export function VideoPlayer({
             раніше; "plain" (звичайне слово субтитрів) — та сама
             PlainWordPanel, що панель звичайного слова скрипту
             (dialogue-line.tsx), лише в плаваючій позиційній обгортці
-            (.video-plain-word-panel-wrap) — сама панель лишається у своїй
-            світлій/лавандовій поверхні (вимога задачі — та сама палітра,
-            що панель скрипту), не темне скло VideoWordCard. */}
+            (.video-plain-word-panel-wrap) ТА з surface="dark" — задача-
+            виправлення "unify plain-word panel with teacher card on dark
+            glass": обидві картки слова над відео тепер те саме темне скло
+            (.video-word-card/.plain-word-panel--video, globals.css), а не
+            дві різні поверхні. Скрипт (dialogue-line.tsx) не передає
+            surface — лишається світлим/лавандовим, як і раніше. */}
         {openCard?.kind === "vocab" && (
           <VideoWordCard
             key={openCard.item.word}
@@ -1684,6 +1687,7 @@ export function VideoPlayer({
               inputId="video-plain-word-translation"
               onClose={closeWordCard}
               compact={isCompact}
+              surface="dark"
               onLayoutChange={(mode) => setIsPanelCompactSaved(mode === "compact")}
             />
           </div>
