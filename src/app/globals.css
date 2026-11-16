@@ -17573,6 +17573,35 @@ button.cabinet-nav-item {
   cursor: pointer;
 }
 
+/* Обгортки навколо "переклад+поле вводу" і "чипи частини мови" у формі
+   ручного перекладу (plain-word-panel.tsx) — самі по собі звичайні блоки,
+   жодного власного вигляду: за замовчуванням панель лишається тим самим
+   вертикальним потоком, що й до розбиття на обгортки. .plain-word-panel--
+   compact (video-player.tsx, вузький landscape-fullscreen — компонент
+   приймає рішення через проп `compact`, не через власний медіа-запит)
+   переставляє ці дві обгортки поряд: слово — на всю ширину зверху, дії —
+   на всю ширину знизу. */
+.plain-word-panel-col {
+  display: block;
+}
+.plain-word-panel--compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 14px;
+  align-items: start;
+}
+.plain-word-panel--compact .plain-word-panel-word,
+.plain-word-panel--compact .plain-word-panel-actions,
+.plain-word-panel--compact .save-word-error {
+  grid-column: 1 / -1;
+}
+.plain-word-panel--compact .plain-word-panel-col--left {
+  grid-column: 1;
+}
+.plain-word-panel--compact .plain-word-panel-col--right {
+  grid-column: 2;
+}
+
 /* Одноразова підказка над скриптом (dict-hint.tsx) — слимова плашка, не
    банер: та сама --glass-item-bg/-border родина, золотий акцент зліва. */
 .dict-hint {
