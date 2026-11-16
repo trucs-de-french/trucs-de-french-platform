@@ -2039,14 +2039,17 @@ button, input, textarea, select, label, nav, aside {
 .video-word-card--compact-saved {
   width: max-content;
   max-width: min(360px, calc(100% - 16px));
-  padding: 10px 14px;
+  padding: 12px 20px;
   gap: 6px;
+  align-items: center;
+  text-align: center;
   box-shadow: none;
 }
 .video-word-card-compact-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 .video-word-card-compact-word {
@@ -2070,10 +2073,13 @@ button, input, textarea, select, label, nav, aside {
    раніше ця дія-пара повторно використовувала .video-word-card-compact-row
    (flex-wrap:wrap), через що "Закрити" міг сам зіскочити на другий рядок
    окремо від "Прибрати" — задача-виправлення "saved card actions row and
-   3s auto-close"). */
+   3s auto-close"). justify-content:center — задача-виправлення "centre
+   compact saved cards": увесь вміст компактної картки тепер центрований
+   по горизонталі, не притиснутий до лівого краю. */
 .video-word-card-compact-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
   margin-top: 6px;
 }
@@ -17952,11 +17958,12 @@ button.cabinet-nav-item {
    автозакриттям, --closing нижче). */
 .plain-word-panel--compact-saved {
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   gap: 4px;
   width: max-content;
   max-width: min(360px, calc(100% - 16px));
-  padding: 10px 14px;
+  padding: 12px 20px;
   box-shadow: none;
   transition: opacity 150ms ease-in-out;
 }
@@ -17967,6 +17974,7 @@ button.cabinet-nav-item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 .plain-word-panel-compact-translation {
@@ -17976,10 +17984,13 @@ button.cabinet-nav-item {
 }
 /* Прибрати + Закрити — ЗАВЖДИ разом на останньому рядку (gap 16px, без
    flex-wrap — звичайний inline-рядок із двох коротких лінків завжди
-   влазить у max-width:360px, тож переносити між собою нема чого). */
+   влазить у max-width:360px, тож переносити між собою нема чого).
+   justify-content:center — задача-виправлення "centre compact saved
+   cards": увесь вміст компактної картки центрований по горизонталі. */
 .plain-word-panel-compact-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
   margin-top: 6px;
 }
