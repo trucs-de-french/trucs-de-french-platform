@@ -385,9 +385,13 @@ export function VideoPlayer({
   // from video subtitles"). anchorLeftPx/bottomPx — пікселі від краю
   // wrapperRef, обчислені в computeAnchor нижче з positions клікнутого
   // слова — спільні для обох kind, щоб і картка, і панель анкорились
-  // однаково.
+  // однаково. anchorTop — замало місця НАД плашкою субтитрів (не лише
+  // landscape-fullscreen з CSS-медіа-запиту нижче, а будь-яке закоротке
+  // desktop-вікно — задача "panel stacking, scroll frame and compact
+  // layout on desktop", п.4): якір перемикається на верх контейнера
+  // (top:8px) замість bottomPx.
   type OpenCard =
-    | { kind: "vocab"; item: VideoVocabItem; anchorLeftPx: number | null; bottomPx: number }
+    | { kind: "vocab"; item: VideoVocabItem; anchorLeftPx: number | null; bottomPx: number; anchorTop: boolean }
     | {
         kind: "plain";
         word: string;
@@ -396,6 +400,7 @@ export function VideoPlayer({
         teacherItem: VocabItem | null;
         anchorLeftPx: number | null;
         bottomPx: number;
+        anchorTop: boolean;
       };
   const [openCard, setOpenCard] = useState<OpenCard | null>(null);
   // Компактна розкладка форми ручного перекладу (plain-word-panel.tsx,
@@ -742,22 +747,31 @@ export function VideoPlayer({
   // рядок УА, коли показані і FR, і UA; аудит "save any word from video
   // subtitles" п.1/п.7) +8px — та сама величина автоматично тримає картку
   // над усією плашкою і над панеллю керування, без окремого вимірювання
-  // висоти кожної.
-  function computeAnchor(wordEl: HTMLElement): { anchorLeftPx: number | null; bottomPx: number } {
+  // висоти кожної. anchorTop — замало місця НАД плашкою (<120px) навіть
+  // на звичайному desktop-вікні (не лише вузький landscape-fullscreen,
+  // куди цей самий якір форсує CSS-медіа-запит нижче) — якір перемикається
+  // на верх контейнера. "Перевернути під плашку" (у зону контролів) свідомо
+  // не рахуємо: клікабельні слова з'являються лише на паузі, а пауза
+  // завжди показує повну панель керування (prevPlaying-ефект нижче), тож
+  // там ніколи немає вільного місця для картки — ця гілка була б мертвим
+  // кодом.
+  function computeAnchor(wordEl: HTMLElement): { anchorLeftPx: number | null; bottomPx: number; anchorTop: boolean } {
     const wrapper = wrapperRef.current;
-    if (!wrapper) return { anchorLeftPx: null, bottomPx: 88 };
+    if (!wrapper) return { anchorLeftPx: null, bottomPx: 88, anchorTop: false };
     const wordRect = wordEl.getBoundingClientRect();
     const wrapperRect = wrapper.getBoundingClientRect();
     const plateRect = subtitlePlateRef.current?.getBoundingClientRect() ?? wordRect;
+    const roomAbove = plateRect.top - wrapperRect.top - 8;
     return {
       anchorLeftPx: wordRect.left + wordRect.width / 2 - wrapperRect.left,
       bottomPx: wrapperRect.bottom - plateRect.top + 8,
+      anchorTop: roomAbove < 120,
     };
   }
 
   function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
-    const { anchorLeftPx, bottomPx } = computeAnchor(e.currentTarget);
-    openWordCard({ kind: "vocab", item, anchorLeftPx, bottomPx });
+    const { anchorLeftPx, bottomPx, anchorTop } = computeAnchor(e.currentTarget);
+    openWordCard({ kind: "vocab", item, anchorLeftPx, bottomPx, anchorTop });
   }
 
   // Той самий словник сцени/блоку, що вже в collectVideoVocab (унікальна
@@ -796,8 +810,8 @@ export function VideoPlayer({
       contextUk = result.contextUk;
     }
     const teacherItem = teacherVariantMap.get(normalizeWordForMatch(word)) ?? null;
-    const { anchorLeftPx, bottomPx } = computeAnchor(e.currentTarget);
-    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx, bottomPx });
+    const { anchorLeftPx, bottomPx, anchorTop } = computeAnchor(e.currentTarget);
+    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx, bottomPx, anchorTop });
   }
 
   // Закриття картки/панелі слова кліком поза нею й по Escape — той самий
@@ -1063,8 +1077,23 @@ export function VideoPlayer({
       : null;
   // bottomPx уже рахується від плашки субтитрів (computeAnchor) — тут лише
   // обмежуємо висоту картки/панелі, щоб із цим bottom вона не вилізла за
-  // верхній край контейнера.
-  const cardMaxHeight = openCard ? Math.max(100, containerHeight - openCard.bottomPx - 16) : undefined;
+  // верхній край контейнера. anchorTop — своя формула (від верху
+  // контейнера, а не від bottomPx — той орієнтир більше не застосовний,
+  // коли якір уже перемкнутий на top:8px).
+  const cardMaxHeight = openCard
+    ? openCard.anchorTop
+      ? Math.max(100, containerHeight - 16)
+      : Math.max(100, containerHeight - openCard.bottomPx - 16)
+    : undefined;
+  // Компактна (двоколонкова) розкладка форми ручного перекладу
+  // (plain-word-panel.tsx, проп compact) — не лише вузький landscape-
+  // fullscreen (isCompactLandscape, медіа-запит вище), а БУДЬ-ЯКЕ
+  // вимірене місце замало для звичайної однієї колонки (задача "panel
+  // stacking, scroll frame and compact layout on desktop", п.3): 320px —
+  // приблизна висота однієй колонки форми (слово+контекст+лейбл+інпут+
+  // чипи+кнопки) без скролу.
+  const isCompactByRoom = cardMaxHeight !== undefined && cardMaxHeight < 320;
+  const isCompact = isCompactLandscape || isCompactByRoom;
 
   if (loadError) {
     return (
@@ -1160,7 +1189,7 @@ export function VideoPlayer({
             залізти під градієнт чи на кнопки. pointer-events:none на стеку
             (субтитри не мають бути клікабельні), auto — лише на самій
             панелі нижче. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex flex-col items-center">
           {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
             <div
               ref={attachSubtitlePlateRef}
@@ -1492,6 +1521,7 @@ export function VideoPlayer({
             item={openCard.item}
             leftPx={clampedCardLeft}
             bottomPx={openCard.bottomPx}
+            anchorTop={openCard.anchorTop}
             maxHeight={cardMaxHeight ?? 240}
             onClose={closeWordCard}
           />
@@ -1501,20 +1531,23 @@ export function VideoPlayer({
             ref={plainPanelWrapRef}
             className="video-plain-word-panel-wrap"
             style={{
-              bottom: `${openCard.bottomPx}px`,
+              bottom: openCard.anchorTop ? undefined : `${openCard.bottomPx}px`,
+              top: openCard.anchorTop ? "8px" : undefined,
               left: clampedCardLeft != null ? `${clampedCardLeft}px` : undefined,
               maxHeight: `${cardMaxHeight ?? 240}px`,
             }}
           >
-            <PlainWordPanel
-              word={openCard.word}
-              contextFr={openCard.contextFr}
-              contextUk={openCard.contextUk}
-              teacherItem={openCard.teacherItem}
-              inputId="video-plain-word-translation"
-              onClose={closeWordCard}
-              compact={isCompactLandscape}
-            />
+            <div className="video-plain-word-panel-scroll">
+              <PlainWordPanel
+                word={openCard.word}
+                contextFr={openCard.contextFr}
+                contextUk={openCard.contextUk}
+                teacherItem={openCard.teacherItem}
+                inputId="video-plain-word-translation"
+                onClose={closeWordCard}
+                compact={isCompact}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -1552,6 +1585,7 @@ function VideoWordCard({
   item,
   leftPx,
   bottomPx,
+  anchorTop,
   maxHeight,
   onClose,
   cardRef,
@@ -1559,6 +1593,7 @@ function VideoWordCard({
   item: VideoVocabItem;
   leftPx: number | null;
   bottomPx: number;
+  anchorTop: boolean;
   maxHeight: number;
   onClose: () => void;
   cardRef: React.RefObject<HTMLDivElement | null>;
@@ -1586,69 +1621,72 @@ function VideoWordCard({
       onKeyDown={handleKeyDown}
       className="video-word-card"
       style={{
-        bottom: `${bottomPx}px`,
+        bottom: anchorTop ? undefined : `${bottomPx}px`,
+        top: anchorTop ? "8px" : undefined,
         left: leftPx != null ? `${leftPx}px` : undefined,
         maxHeight: `${maxHeight}px`,
       }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-heading pr-2 text-lg font-bold text-white">{firstVocabVariant(item.word)}</p>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t("button.closeAria")}
-          className={`-m-1 shrink-0 rounded p-1 text-white/70 hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      {posLabel && posDotClass && (
-        <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${posDotClass}`}>
-          {posLabel}
-        </span>
-      )}
-
-      <p className="mt-2 text-sm text-white/90">{item.translation}</p>
-
-      {item.note?.trim() && <p className="mt-1 text-xs italic text-white/60">{item.note}</p>}
-
-      {item.image_url && (
-        // Невелике фото прикладу/ілюстрації слова — те саме поле, що
-        // vocab-item-row.tsx (адмінський конструктор), тут лише читається.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.image_url} alt="" className="mt-2 h-16 w-16 rounded object-cover" />
-      )}
-
-      {item.example && (
-        <div className="mt-3 border-t border-white/15 pt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">{t("videoPlayer.fromLine")}</p>
-          <p className="mt-1 text-sm text-white/90">{renderHighlightedExample(item.example.text, item)}</p>
-          {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
+      <div className="video-word-card-scroll">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-heading pr-2 text-lg font-bold text-white">{firstVocabVariant(item.word)}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("button.closeAria")}
+            className={`-m-1 shrink-0 rounded p-1 text-white/70 hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+          >
+            <X size={16} />
+          </button>
         </div>
-      )}
 
-      {/* SaveWordButton сама ховається, якщо немає SavedWordsProvider
-          (сторінки матеріалів/DELF рендерять VideoPlayer поза контекстом
-          сцени) — рендериться завжди в розмітці картки (а не в portal), щоб
-          лишатись усередині wrapperRef і працювати й у fullscreen/iOS
-          pseudo-fullscreen (коментар при useFullscreenWrapper вище). */}
-      <div className="mt-3">
-        <SaveWordButton
-          snapshot={{
-            word: firstVocabVariant(item.word),
-            translation: item.translation,
-            translationSource: "teacher",
-            partOfSpeech: item.partOfSpeech ?? null,
-            note: item.note?.trim() || null,
-            imageUrl: item.image_url ?? null,
-            vocabId: item.id ?? null,
-            contextFr: item.example?.text ?? null,
-            contextUk: item.example?.translationUk ?? null,
-          } satisfies SaveWordSnapshot}
-          variant="pill"
-          surface="dark"
-        />
+        {posLabel && posDotClass && (
+          <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${posDotClass}`}>
+            {posLabel}
+          </span>
+        )}
+
+        <p className="mt-2 text-sm text-white/90">{item.translation}</p>
+
+        {item.note?.trim() && <p className="mt-1 text-xs italic text-white/60">{item.note}</p>}
+
+        {item.image_url && (
+          // Невелике фото прикладу/ілюстрації слова — те саме поле, що
+          // vocab-item-row.tsx (адмінський конструктор), тут лише читається.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.image_url} alt="" className="mt-2 h-16 w-16 rounded object-cover" />
+        )}
+
+        {item.example && (
+          <div className="mt-3 border-t border-white/15 pt-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">{t("videoPlayer.fromLine")}</p>
+            <p className="mt-1 text-sm text-white/90">{renderHighlightedExample(item.example.text, item)}</p>
+            {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
+          </div>
+        )}
+
+        {/* SaveWordButton сама ховається, якщо немає SavedWordsProvider
+            (сторінки матеріалів/DELF рендерять VideoPlayer поза контекстом
+            сцени) — рендериться завжди в розмітці картки (а не в portal), щоб
+            лишатись усередині wrapperRef і працювати й у fullscreen/iOS
+            pseudo-fullscreen (коментар при useFullscreenWrapper вище). */}
+        <div className="mt-3">
+          <SaveWordButton
+            snapshot={{
+              word: firstVocabVariant(item.word),
+              translation: item.translation,
+              translationSource: "teacher",
+              partOfSpeech: item.partOfSpeech ?? null,
+              note: item.note?.trim() || null,
+              imageUrl: item.image_url ?? null,
+              vocabId: item.id ?? null,
+              contextFr: item.example?.text ?? null,
+              contextUk: item.example?.translationUk ?? null,
+            } satisfies SaveWordSnapshot}
+            variant="pill"
+            surface="dark"
+          />
+        </div>
       </div>
     </div>
   );

@@ -1840,7 +1840,22 @@ button, input, textarea, select, label, nav, aside {
 
 /* video-player.tsx — власний плеєр (аналогічно .video-frame вище): той
    самий принцип, своя обгортка, бо video-frame — чужий iframe, тут —
-   наш <video> зі своєю панеллю/субтитрами всередині того ж контейнера. */
+   наш <video> зі своєю панеллю/субтитрами всередині того ж контейнера.
+   --video-card-z — єдине число, яким картка слова (.video-word-card)/
+   панель звичайного слова (.video-plain-word-panel-wrap) гарантовано
+   лягають НАД усіма кнопками панелі керування (нижній стек субтитрів+
+   контролів нижче отримує явний z-index:1 — задача "panel stacking,
+   scroll frame and compact layout on desktop": округла кнопка controls
+   (⏭ тощо) малювалась НАД заголовком картки, попри те, що картка йде
+   пізніше в DOM — обидва .video-player (position:relative, без власного
+   z-index) і нижній стек (position:absolute, теж без z-index) не
+   утворюють власного стекінг-контексту, тож порядок фарбування залежав
+   від того, чи opacity-перехід контролів випадково створював контекст
+   стекінгу стороннім способом; явний z-index на обох сторонах прибирає
+   цю залежність остаточно). */
+.video-player {
+  --video-card-z: 30;
+}
 .video-player:fullscreen,
 .video-player:-webkit-full-screen,
 .video-player--pseudo-fullscreen {
@@ -1962,23 +1977,38 @@ button, input, textarea, select, label, nav, aside {
 /* Картка слова (Крок 2 глосарію) — той самий скляний стиль, що
    video-subtitle-plate вище (темне скло, той самий radius), прикладена
    всередину wrapperRef (не portal) — працює і у fullscreen/pseudo-
-   fullscreen. --video-word-card-left/bottom виставляються inline зі
+   fullscreen. left/bottom/top/max-height виставляються inline зі
    video-player.tsx (пікселі від краю контейнера, обчислені з positions
    клікнутого слова); left/transform на мобільному нижче перевизначені під
-   bottom sheet на всю ширину, inline left там просто ігнорується. */
+   bottom sheet на всю ширину, inline left там просто ігнорується.
+   .video-word-card САМА — лише рамка (радіус/бордер/фон/тінь) з
+   overflow:hidden — ніякого overflow-y/padding тут: скрол і падінг
+   перенесені на ВНУТРІШНІЙ .video-word-card-scroll (задача "panel
+   stacking, scroll frame and compact layout on desktop", п.2) — інакше
+   нативний скролбар (і білий/темний фон під ним) міг намалюватись ПОЗА
+   округленим кутом рамки, бо overflow:auto й border-radius на тому самому
+   елементі не гарантують обрізання скролбару в усіх браузерах. */
 .video-word-card {
   position: absolute;
-  z-index: 20;
+  z-index: var(--video-card-z);
   transform: translateX(-50%);
   width: min(300px, calc(100% - 24px));
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(10, 9, 28, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.video-word-card-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
   padding: 12px 14px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #e4cf94 transparent;
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-word-card {
@@ -2031,19 +2061,51 @@ button, input, textarea, select, label, nav, aside {
 
 /* Плаваюча обгортка панелі звичайного слова (PlainWordPanel,
    plain-word-panel.tsx) усередині відео — та сама позиційна логіка
-   (left/bottom/max-height), що .video-word-card вище (computeAnchor,
+   (left/bottom/top/max-height), що .video-word-card вище (computeAnchor,
    video-player.tsx), але сама панель лишається у власній світлій/
    лавандовій поверхні (вимога задачі — та сама палітра, що панель
-   звичайного слова скрипту), не темне скло картки вчительського слова. */
+   звичайного слова скрипту), не темне скло картки вчительського слова.
+   Той самий принцип "рамка з overflow:hidden + внутрішній скрол", що
+   .video-word-card/-scroll вище: сама .plain-word-panel малює власний
+   білий/лавандовий фон і border-radius:14px, тому ТУТ border-radius
+   збігається з тим самим значенням (14px) — інакше overflow:hidden
+   обрізав би рамку інакше, ніж видимий край самої панелі. */
 .video-plain-word-panel-wrap {
   position: absolute;
-  z-index: 20;
+  z-index: var(--video-card-z);
   transform: translateX(-50%);
   width: min(300px, calc(100% - 24px));
+  border-radius: 14px;
+  overflow: hidden;
+}
+.video-plain-word-panel-scroll {
   overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #e4cf94 transparent;
 }
 .video-plain-word-panel-wrap .plain-word-panel {
   margin-top: 0;
+}
+
+/* Тонкий стилізований скролбар (тему палітри — трек прозорий, бігунок
+   #e4cf94) для обох внутрішніх скрол-контейнерів вище — лише WebKit/
+   Blink (Firefox уже вкритий scrollbar-width/scrollbar-color у кожному
+   з них окремо). */
+.video-word-card-scroll::-webkit-scrollbar,
+.video-plain-word-panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.video-word-card-scroll::-webkit-scrollbar-track,
+.video-plain-word-panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.video-word-card-scroll::-webkit-scrollbar-thumb,
+.video-plain-word-panel-scroll::-webkit-scrollbar-thumb {
+  background: #e4cf94;
+  border-radius: 999px;
 }
 @media (max-width: 639px) {
   .video-plain-word-panel-wrap {
