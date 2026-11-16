@@ -95,16 +95,65 @@ export function matchVocabInText<T extends VocabItem>(text: string, vocab: T[]):
   });
 }
 
+// Межа українського "слова" для розширення збігу translatedForm до повних
+// слів — та сама літерна група, що tokenizePlainText (plain-word-panel.tsx)
+// використовує для FR, тут додано апостроф/дефіс (по-перше, м'яч), щоб
+// розширення не зупинялось посередині складеного слова чи слова з
+// апострофом.
+const UK_WORD_CHAR = /[\p{L}\p{M}'-]/u;
+
 // Те саме для перекладеної репліки — зіставлення за translatedForm, не word.
+//
+// Задача-виправлення "highlight whole Ukrainian words in subtitles":
+// translatedForm навмисно толерантний до відмінків/дієвідмін — вчителька
+// часто вписує лише ОСНОВУ слова (напр. "смак" для "смакових"), і
+// buildHighlightRegex (вище) НЕ ставить межі слова (\b з Cyrillic працює
+// ненадійно), тож регулярка матчила "смак" як ПІДРЯДОК будь-де в тексті,
+// зупиняючись одразу після основи — підсвічувались лише перші кілька
+// літер довшого слова ("сма…"), а решта ("ових") лишалась звичайним
+// текстом. Виправлення: після того, як регулярка знайшла позицію збігу
+// (match.index/match[0].length), розширюємо його межі в ОБИДВА боки по
+// UK_WORD_CHAR, поки не дійдемо до реальної межі слова (пробіл/
+// пунктуація/кінець рядка) — підсвічується ЦІЛЕ слово ("смакових"), а
+// НЕ сусіднє слово ("рецепторів" лишається звичайним текстом, бо після
+// пробілу після "смакових" символ уже не UK_WORD_CHAR). Якщо
+// translatedForm — фраза з кількох слів ("смакових рецепторів"), вона й
+// раніше матчилась як ОДНА суцільна альтернатива регулярки (пробіл
+// усередині форми — частина самого рядка, не розбивається на окремі
+// слова), тож розширення тут лише підтверджує, що фраза вже закінчується
+// на межі слова — без зміни поведінки для такого випадку.
 export function matchTranslatedFormInText<T extends VocabItem>(text: string, vocab: T[]): VocabMatchPart<T>[] {
   const withForm = vocab.filter((v) => v.translatedForm?.trim());
   const regex = buildHighlightRegex(withForm.map((v) => v.translatedForm as string));
   if (!regex) return [{ type: "text", text }];
 
-  return text.split(regex).map((part) => {
-    const match = part
-      ? withForm.find((v) => normalizeWordForMatch(v.translatedForm as string) === normalizeWordForMatch(part))
-      : undefined;
-    return match ? { type: "match", text: part, item: match } : { type: "text", text: part };
-  });
+  const parts: VocabMatchPart<T>[] = [];
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  regex.lastIndex = 0;
+  while ((match = regex.exec(text))) {
+    let start = match.index;
+    let end = start + match[0].length;
+    // Регулярка (global) могла знайти наступний збіг РАНІШЕ за cursor —
+    // усередині ділянки, яку попередній збіг уже "забрав" розширенням
+    // меж слова нижче (напр. друга альтернатива-коротший стем усередині
+    // вже підсвіченого довшого слова) — пропускаємо, продовжуємо пошук
+    // від cursor, а не дублюємо/перекриваємо вже відданий шматок.
+    if (start < cursor) {
+      regex.lastIndex = cursor;
+      continue;
+    }
+    while (start > cursor && UK_WORD_CHAR.test(text[start - 1])) start--;
+    while (end < text.length && UK_WORD_CHAR.test(text[end])) end++;
+
+    const item = withForm.find(
+      (v) => normalizeWordForMatch(v.translatedForm as string) === normalizeWordForMatch(match![0])
+    );
+    if (cursor < start) parts.push({ type: "text", text: text.slice(cursor, start) });
+    parts.push(item ? { type: "match", text: text.slice(start, end), item } : { type: "text", text: text.slice(start, end) });
+    cursor = end;
+    regex.lastIndex = end;
+  }
+  if (cursor < text.length) parts.push({ type: "text", text: text.slice(cursor) });
+  return parts;
 }
