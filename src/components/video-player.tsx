@@ -50,8 +50,24 @@ type SubtitlesMode = "fr_uk" | "fr" | "uk" | "off";
 // що й у AudioPlayer (лише між екземплярами AudioPlayer).
 let currentlyPlaying: HTMLVideoElement | null = null;
 
+// Єдина точка входу для .pause() — аудит "stop spontaneous pauses": усі
+// три місця в цьому файлі, що ставлять відео на паузу програмно
+// (openWordCard/togglePlay/stopOthersAndRegister), проходять через цю
+// функцію, щороку викликається з коротким рядком-причиною (reason) у
+// коментарі виклику нижче. Під час самого аудиту тут стояв
+// console.trace(reason), яким перевірялось, яка причина спрацьовує без
+// жодної дії студента — сам лог прибрано перед комітом (reason тут більше
+// не трапляється в рантаймі, лише орієнтир для читача коду), pauseSafely
+// лишена як єдина точка, де РЕАЛЬНО викликається video.pause() у цьому
+// файлі.
+function pauseSafely(video: HTMLVideoElement) {
+  video.pause();
+}
+
 function stopOthersAndRegister(el: HTMLVideoElement) {
-  if (currentlyPlaying && currentlyPlaying !== el) currentlyPlaying.pause();
+  // reason: "stopOthersAndRegister" — інший екземпляр VideoPlayer щойно
+  // почав грати.
+  if (currentlyPlaying && currentlyPlaying !== el) pauseSafely(currentlyPlaying);
   currentlyPlaying = el;
 }
 
@@ -162,11 +178,20 @@ function writeVideoWordHintState(state: VideoWordHintState) {
 function SubtitleFrLine({
   text,
   vocab,
+  playing,
   onWordClick,
   onPlainWordClick,
 }: {
   text: string;
   vocab: VideoVocabItem[];
+  // Задача-виправлення "stop spontaneous pauses": tabIndex={-1}, поки
+  // відео грає — кнопка звичайного слова НЕ має лишатись у Tab-порядку
+  // (і тим паче ЗБЕРІГАТИ вже отриманий раніше фокус) під час
+  // відтворення. pointer-events:none (CSS, .video-player--playing) сам НЕ
+  // знімає фокус із кнопки, яка його отримала РАНІШЕ (ще на паузі) —
+  // tabIndex=-1 разом із примусовим blur() (ефект у VideoPlayer, нижче)
+  // закривають саме цю прогалину.
+  playing: boolean;
   onWordClick: (item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) => void;
   onPlainWordClick: (word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
@@ -213,6 +238,7 @@ function SubtitleFrLine({
                   key={j}
                   type="button"
                   data-plain-word-trigger
+                  tabIndex={playing ? -1 : 0}
                   onClick={(e) => {
                     e.stopPropagation();
                     onPlainWordClick(token.text, partOffset + token.start, e);
@@ -361,6 +387,21 @@ export function VideoPlayer({
   } = useFullscreenWrapper();
 
   const [playing, setPlaying] = useState(false);
+  // Задача-виправлення "stop spontaneous pauses" — щойно відео РЕАЛЬНО
+  // почало грати, знімаємо фокус із будь-якого звичайного слова
+  // (.video-plain-word), якщо воно досі в фокусі (отриманому РАНІШЕ, на
+  // паузі, коли тулиться tabIndex=0): CSS pointer-events:none сам НЕ
+  // знімає фокус, тож ТАКА кнопка лишалась би активованою Enter/Space,
+  // відкриваючи картку (і ставлячи відео на паузу) без жодного кліку —
+  // саме цей розрив закривають tabIndex={-1} (SubtitleFrLine вище) і
+  // явний blur() тут.
+  useEffect(() => {
+    if (!playing) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.classList.contains("video-plain-word")) {
+      active.blur();
+    }
+  }, [playing]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
@@ -736,7 +777,10 @@ export function VideoPlayer({
       const video = videoRef.current;
       if (video && !video.paused) {
         wasPlayingBeforeCardRef.current = true;
-        video.pause();
+        // reason: "openWordCard" — картка/панель слова відкрилась (явний
+        // клік на вчительське слово, завжди, або на звичайне слово — лише
+        // коли відео реально на паузі, перевірка в handlePlainWordClick).
+        pauseSafely(video);
       } else {
         wasPlayingBeforeCardRef.current = false;
       }
@@ -797,6 +841,16 @@ export function VideoPlayer({
   }
 
   function handlePlainWordClick(word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) {
+    // Задача-виправлення "stop spontaneous pauses": звичайне слово
+    // ІГНОРУЄТЬСЯ, якщо відео РЕАЛЬНО (videoRef.current.paused, не React-
+    // стан playing, який оновлюється на рендер пізніше за сам DOM) грає —
+    // друга лінія оборони ОКРІМ CSS pointer-events:none/tabIndex=-1
+    // вище: навіть якщо клік усе ж дійшов до кнопки (CSS не встигла
+    // застосуватись, ghost-клік після скролу/трекпада, активація з уже
+    // отриманого раніше фокусу тощо), сам хендлер відмовляється відкривати
+    // картку й ставити на паузу відео, яке насправді грає без жодної
+    // участі студента.
+    if (videoRef.current && !videoRef.current.paused) return;
     const normalizedCue = (activeFrCue?.text ?? "").replace(/\n+/g, " ");
     const line = findDialogueLineForCue(normalizedCue);
     let contextFr: string;
@@ -947,7 +1001,9 @@ export function VideoPlayer({
       stopOthersAndRegister(video);
       void video.play();
     } else {
-      video.pause();
+      // reason: "togglePlay" — клік на відео/кнопку play-pause або
+      // Пробіл (handleWrapperKeyDown) — завжди пряма дія студента.
+      pauseSafely(video);
     }
   }
 
@@ -1274,6 +1330,7 @@ export function VideoPlayer({
                   <SubtitleFrLine
                     text={activeFrCue.text}
                     vocab={vocab ?? []}
+                    playing={playing}
                     onWordClick={handleWordClick}
                     onPlainWordClick={handlePlainWordClick}
                   />
