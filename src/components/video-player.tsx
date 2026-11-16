@@ -679,6 +679,47 @@ export function VideoPlayer({
     };
   }, []);
 
+  // Фікс "0:00 / 0:00 на першому завантаженні": duration раніше оновлювався
+  // лише з onLoadedMetadata на самому <video> — якщо браузер встигав
+  // віддати цю подію ДО монтування React (кешоване відео, швидкий
+  // readyState), слухач просто не встигав приєднатись, і duration
+  // лишався null назавжди (до перезавантаження сторінки). Тут при
+  // монтуванні/зміні src одразу читаємо readyState/duration напряму з
+  // елемента (той самий readyState, що й у подіях), а durationchange/
+  // loadeddata слухаємо поряд із loadedmetadata — усі три ведуть до одного
+  // обробника, бо в різних браузерах/кодеках саме durationchange буває
+  // першою подією, де duration вже скінченне.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setDuration(null);
+    setCurrentTime(0);
+
+    function syncDuration() {
+      const value = video!.duration;
+      if (Number.isFinite(value) && value > 0) setDuration(value);
+    }
+
+    function syncCurrentTime() {
+      setCurrentTime(video!.currentTime);
+    }
+
+    if (video.readyState >= 1) {
+      syncDuration();
+      syncCurrentTime();
+    }
+
+    video.addEventListener("loadedmetadata", syncDuration);
+    video.addEventListener("durationchange", syncDuration);
+    video.addEventListener("loadeddata", syncDuration);
+    return () => {
+      video.removeEventListener("loadedmetadata", syncDuration);
+      video.removeEventListener("durationchange", syncDuration);
+      video.removeEventListener("loadeddata", syncDuration);
+    };
+  }, [src]);
+
   // Реальна висота оверлея (ResizeObserver, не константа) — рядок кнопок
   // переноситься на вузьких екранах, фіксоване число розійшлося б із
   // фактичною висотою й або лишало зазор, або субтитри перекривались би.
@@ -1312,7 +1353,6 @@ export function VideoPlayer({
               e.currentTarget.currentTime = lockedCueRef.current.start;
             }
           }}
-          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
           onError={() => setLoadError(true)}
         />
 
