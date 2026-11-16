@@ -3994,17 +3994,22 @@ button.scene-bar:active .scene-bar-toggle {
 .vocab-row:last-child {
   border-bottom: none;
 }
-@media (max-width: 380px) {
-  .vocab-row {
-    column-gap: 14px;
-  }
-}
-/* "Мобільна" ширина (ширша за 380px поріг column-gap вище) — ті самі
-   компактні рядки, лише горизонтальний padding вужчий; НЕ збільшувати
-   вертикальний padding тут. */
+/* "Мобільна" ширина — переклад (друга колонка) отримує БІЛЬШЕ за FR-слово
+   (1.2fr проти 1fr): кирилічний переклад у середньому довший за французьке
+   слово, а на вузькому екрані саме йому бракувало місця ("заслуговуват" +
+   самотнє "и" на новому рядку). column-gap звужений з 24px до 10px (той
+   самий простір віддано колонкам), 36px-колонка закладки звужена до 32px
+   (.save-word-icon-btn нижче) — лише тут, 44px тач-таргет лишається через
+   ::after. Padding рядка лишається тим, що був (6px 4px) — уже мінімальний,
+   звужувати нема куди без зникнення самого відступу від країв картки. */
 @media (max-width: 640px) {
   .vocab-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    column-gap: 10px;
     padding: 6px 4px;
+  }
+  .vocab-row--with-save {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 32px;
   }
 }
 /* Підсвітка рядка кольором категорії лише на пристроях із hover — на
@@ -4024,20 +4029,24 @@ button.scene-bar:active .scene-bar-toggle {
    на темному фоні сторінки навколо панелі це читалось як "світло-сірий,
    зливається". inline style на елементі (vocab-section.tsx) прибрано, щоб
    цей клас міг його перевизначити без !important. */
-.vocab-translation {
-  color: var(--glass-text-secondary);
-  min-width: 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-/* Те саме для FR-слова (друга клітинка, vocab-section.tsx) — довгі
-   дефісні слова мають переноситись усередині СВОЄЇ клітинки, а не
-   переповнювати її й виглядати так, ніби лежать "під" кнопкою-закладкою
-   в третій колонці. */
+/* overflow-wrap:anywhere різало довгі кирилічні слова будь-де ("заслугову-
+   ват" + самотнє "и" на новому рядку) — break-word переносить лише коли
+   слово справді не влазить у свій рядок, word-break:normal забороняє
+   розрив посеред звичайного короткого слова, hyphens:auto додає дефіс на
+   такому вимушеному розриві (потребує lang="uk"/"fr" на елементі —
+   vocab-section.tsx). hyphenate-limit-chars — де підтримується (Chromium),
+   м'яко радить мінімум 6 символів слова й по 3 з кожного боку дефіса. */
+.vocab-translation,
 .vocab-row-word {
   min-width: 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+  text-wrap: pretty;
+}
+.vocab-translation {
+  color: var(--glass-text-secondary);
 }
 .dark .vocab-translation {
   color: var(--glass-text);
@@ -17298,6 +17307,7 @@ button.cabinet-nav-item {
   align-items: center;
   justify-content: center;
   align-self: center;
+  position: relative;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
@@ -17307,6 +17317,21 @@ button.cabinet-nav-item {
   color: #55546b;
   cursor: pointer;
   transition: border-color 150ms, background-color 150ms, color 150ms;
+}
+/* Мобільна колонка закладки звужена до 32px (.vocab-row--with-save вище)
+   — сама кнопка теж 32px тут, без зміни кольору/стилю/тіні, але торкний
+   таргет лишається ≥44px через прозорий ::after (не впливає на видимий
+   розмір кола). */
+@media (max-width: 640px) {
+  .save-word-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .save-word-icon-btn::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
 }
 .save-word-icon-btn:disabled {
   opacity: 0.6;

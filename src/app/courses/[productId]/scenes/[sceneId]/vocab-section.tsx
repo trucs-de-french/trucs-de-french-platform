@@ -18,6 +18,16 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 
+// Лише для ВІДОБРАЖЕННЯ (не для збереженого/надісланого значення — snapshot
+// нижче бере ОРИГІНАЛЬНІ word/v.translation) — вузька колонка перекладу на
+// телефоні інакше лишає "!"/"?"/":"/";"/"»" самотнім символом на новому
+// рядку. NBSP перед цими знаками (і після «) робить попередній пробіл
+// нерозривним, тож перенос рядка стається на ІНШОМУ, звичайному пробілі.
+const NBSP = " ";
+function nbspPunctuation(text: string): string {
+  return text.replace(/ (?=[!?:;»])/g, NBSP).replace(/(«) /g, `$1${NBSP}`);
+}
+
 // uk: три форми mod10/mod100 (та сама логіка, що pluralizeWords); fr/en —
 // one/other через Intl.PluralRules, plural() helper (той самий принцип, що
 // pluralizeAnswers у task-result.tsx).
@@ -194,16 +204,18 @@ function VocabGroupTable({
                 цього класу переклад мав би той самий сірий колір, що й у
                 світлій темі, й зливався б із такою ж світлою панеллю. */}
             <span
+              lang="fr"
               className="font-body vocab-row-word"
               style={{ fontWeight: 500, fontSize: "16px", color: "var(--glass-text)" }}
             >
-              {word}
+              {nbspPunctuation(word)}
             </span>
             <span
+              lang="uk"
               className="font-heading vocab-translation"
               style={{ fontWeight: 400, fontSize: "16px" }}
             >
-              {v.translation}
+              {nbspPunctuation(v.translation)}
             </span>
             {saved && <SaveWordButton snapshot={snapshot} variant="icon" />}
           </div>
