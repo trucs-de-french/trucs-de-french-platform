@@ -410,6 +410,10 @@ export function VideoPlayer({
   // ще не встигла сповістити свій реальний стан (задача-виправлення
   // "compact panel in saved state").
   const [isPanelCompactSaved, setIsPanelCompactSaved] = useState(false);
+  // Той самий принцип, що isPanelCompactSaved вище, але для VideoWordCard
+  // (вчительське слово) — задача-виправлення "compact teacher card in
+  // saved state".
+  const [isTeacherCardCompactSaved, setIsTeacherCardCompactSaved] = useState(false);
 
   // Підказка "слова в субтитрах можна тапнути" — pause-чип (кожна пауза,
   // поки не збережено слово з відео й не показано VIDEO_WORD_HINT_MAX_SEEN
@@ -751,6 +755,10 @@ export function VideoPlayer({
   }
 
   function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
+    // Найкраще припущення ДО монтування VideoWordCard (те саме, що
+    // isPanelCompactSaved у handlePlainWordClick) — уникає миттєвого
+    // блимання повною карткою для вже збереженого слова.
+    setIsTeacherCardCompactSaved(saved?.isSaved(firstVocabVariant(item.word)) ?? false);
     openWordCard({ kind: "vocab", item, anchorLeftPx: computeAnchorLeft(e.currentTarget) });
   }
 
@@ -1057,23 +1065,25 @@ export function VideoPlayer({
   const menuMaxHeight = containerHeight ? Math.max(120, containerHeight - overlayHeight - 16) : undefined;
 
   // Горизонтальне "затискання" картки/панелі слова (desktop-анкор): лишає
-  // мінімум 12px (8px для компактного "уже збережено" рядка — задача-
-  // виправлення "compact panel in saved state", п.2) до кожного краю
-  // відео, навіть коли слово клікнуте біля самого краю рядка субтитрів. На
-  // мобільному (<640px) CSS сам ігнорує left/transform — картка/панель
-  // стає сторінкою знизу на всю ширину, тож clampedCardLeft там без
-  // ефекту. Ширина РІЗНА для трьох випадків: VideoWordCard лишається
-  // фіксованих 300px (WORD_CARD_WIDTH), форма звичайного слова —
-  // clamp(280px, 100%-16px, 420px) у CSS (.video-plain-word-panel-wrap), а
-  // компактний "уже збережено" рядок — clamp(0, 100%-16px, 360px) (.--
+  // мінімум 12px (8px для компактного "уже збережено" рядка, обидва
+  // kind — задача-виправлення "compact panel in saved state"/"compact
+  // teacher card in saved state", п.2) до кожного краю відео, навіть коли
+  // слово клікнуте біля самого краю рядка субтитрів. На мобільному
+  // (<640px) CSS сам ігнорує left/transform — картка/панель стає
+  // сторінкою знизу на всю ширину, тож clampedCardLeft там без ефекту.
+  // Ширина: VideoWordCard (не збережене) — фіксованих 300px
+  // (WORD_CARD_WIDTH), форма звичайного слова — clamp(280px, 100%-16px,
+  // 420px) у CSS (.video-plain-word-panel-wrap), а БУДЬ-ЯКИЙ компактний
+  // "уже збережено" рядок (обидва kind) — clamp(0, 100%-16px, 360px) (.--
   // compact-saved) — plainPanelWidth/compactSavedWidth рахують ті САМІ
   // результати у JS, інакше затискання малювалось би проти чужої ширини.
   const WORD_CARD_WIDTH = 300;
   const plainPanelWidth = Math.min(420, Math.max(280, containerWidth - 16));
   const compactSavedWidth = Math.min(360, Math.max(0, containerWidth - 16));
   const isPlainCard = openCard?.kind === "plain";
-  const cardWidth = isPlainCard ? (isPanelCompactSaved ? compactSavedWidth : plainPanelWidth) : WORD_CARD_WIDTH;
-  const cardEdgeMargin = isPlainCard && isPanelCompactSaved ? 8 : 12;
+  const isCompactSavedCard = (isPlainCard && isPanelCompactSaved) || (!isPlainCard && isTeacherCardCompactSaved && Boolean(openCard));
+  const cardWidth = isCompactSavedCard ? compactSavedWidth : isPlainCard ? plainPanelWidth : WORD_CARD_WIDTH;
+  const cardEdgeMargin = isCompactSavedCard ? 8 : 12;
   const clampedCardLeft =
     openCard?.anchorLeftPx != null && containerWidth > 0
       ? Math.min(
@@ -1558,6 +1568,7 @@ export function VideoPlayer({
             що панель скрипту), не темне скло VideoWordCard. */}
         {openCard?.kind === "vocab" && (
           <VideoWordCard
+            key={openCard.item.word}
             cardRef={wordCardRef}
             item={openCard.item}
             leftPx={clampedCardLeft}
@@ -1565,6 +1576,7 @@ export function VideoPlayer({
             anchorTop={cardAnchorTop}
             maxHeight={cardMaxHeight ?? 240}
             onClose={closeWordCard}
+            onCompactChange={setIsTeacherCardCompactSaved}
           />
         )}
         {openCard?.kind === "plain" && (
@@ -1630,6 +1642,7 @@ function VideoWordCard({
   maxHeight,
   onClose,
   cardRef,
+  onCompactChange,
 }: {
   item: VideoVocabItem;
   leftPx: number | null;
@@ -1638,11 +1651,29 @@ function VideoWordCard({
   maxHeight: number;
   onClose: () => void;
   cardRef: React.RefObject<HTMLDivElement | null>;
+  // Повідомляє VideoPlayer, чи зараз рендериться компактний "уже
+  // збережено" рядок (для спільної горизонтальної clamp-математики, та
+  // сама роль, що onLayoutChange у plain-word-panel.tsx) — задача-
+  // виправлення "compact teacher card in saved state".
+  onCompactChange?: (compact: boolean) => void;
 }) {
   const { t } = useT();
   const pos = normalizePartOfSpeech(item.partOfSpeech);
   const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
   const posDotClass = pos ? PART_OF_SPEECH_COLORS[pos].dot : null;
+  const wordKey = firstVocabVariant(item.word);
+  const saved = useSavedWords();
+  const isSavedWord = saved?.isSaved(wordKey) ?? false;
+  const pending = saved?.isPending(wordKey) ?? false;
+
+  useEffect(() => {
+    onCompactChange?.(isSavedWord);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onCompactChange з VideoPlayer стабільний лише за формою виклику, не за ідентичністю; залежність від isSavedWord навмисно єдина, що має перевикликати ефект
+  }, [isSavedWord]);
+
+  async function handleRemove() {
+    await saved?.remove(wordKey);
+  }
 
   // stopPropagation — щоб Space/←/→, натиснуті поки фокус усередині картки
   // (напр. на кнопці "×"), не спливли до onKeyDown обгортки плеєра й не
@@ -1652,6 +1683,56 @@ function VideoWordCard({
   function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
     e.stopPropagation();
     if (e.key === "Escape") onClose();
+  }
+
+  // Слово вже збережене — компактний рядок замість повної картки (задача-
+  // виправлення "compact teacher card in saved state"): рядок 1 — слово +
+  // (якщо влазить, інакше переноситься на свій рядок) тег частини мови +
+  // пілюля "✓ У словнику"; рядок 2 — переклад (до 2 рядків, з "…");
+  // рядок 3 — Прибрати/Закрити. "З репліки" і фото НЕ показуємо тут —
+  // лишаються лише в несвеженому стані нижче.
+  if (isSavedWord) {
+    return (
+      <div
+        ref={cardRef}
+        role="dialog"
+        aria-label={t("videoPlayer.wordCardAria", { word: wordKey })}
+        onKeyDown={handleKeyDown}
+        className="video-word-card video-word-card--compact-saved"
+        style={{
+          bottom: anchorTop ? undefined : `${bottomPx}px`,
+          top: anchorTop ? "8px" : undefined,
+          left: leftPx != null ? `${leftPx}px` : undefined,
+          maxHeight: `${maxHeight}px`,
+        }}
+      >
+        <div className="video-word-card-compact-row">
+          <p className="video-word-card-compact-word">{wordKey}</p>
+          {posLabel && posDotClass && (
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${posDotClass}`}>
+              {posLabel}
+            </span>
+          )}
+          <span className="save-word-pill save-word-pill--saved save-word-pill--saved-on-dark save-word-pill--compact">
+            {t("dictionary.savedState")}
+          </span>
+        </div>
+        {item.translation && <p className="video-word-card-compact-translation">{item.translation}</p>}
+        <div className="video-word-card-compact-row">
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={pending}
+            className="save-word-remove-link save-word-remove-link--on-dark"
+          >
+            {t("dictionary.removeAction")}
+          </button>
+          <button type="button" onClick={onClose} className="text-xs font-semibold text-white/70 underline hover:text-white">
+            {t("dictionary.panelClose")}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

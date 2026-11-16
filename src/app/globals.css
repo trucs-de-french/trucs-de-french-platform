@@ -2007,6 +2007,7 @@ button, input, textarea, select, label, nav, aside {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: width 120ms ease-in-out, height 120ms ease-in-out;
 }
 .video-word-card-header {
   flex: 0 0 auto;
@@ -2028,6 +2029,41 @@ button, input, textarea, select, label, nav, aside {
   flex: 0 0 auto;
   padding: 8px 14px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Компактний "уже збережено" стан картки вчительського слова (задача-
+   виправлення "compact teacher card in saved state") — той самий
+   принцип, що .plain-word-panel--compact-saved: падінг прямо на самій
+   картці (не на -header/-scroll/-footer, тут вони взагалі не
+   рендеряться), ширина — лише вміст, без footer-рамки/"З репліки"/фото. */
+.video-word-card--compact-saved {
+  width: max-content;
+  max-width: min(360px, calc(100% - 16px));
+  padding: 10px 14px;
+  gap: 6px;
+  box-shadow: none;
+}
+.video-word-card-compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.video-word-card-compact-word {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+}
+.video-word-card-compact-translation {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-word-card {
