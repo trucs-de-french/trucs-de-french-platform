@@ -17918,16 +17918,32 @@ button.cabinet-nav-item {
   font-size: 14px;
   color: var(--glass-input-text, #1a1640);
 }
+/* Фокус — INSET (не outline/outline-offset, малював ЗА межами рамки
+   інпута), щоб ніколи не обрізатись .plain-word-panel-scrollarea
+   (overflow-x:hidden/overflow-y:auto вище) — задача-виправлення
+   "unclipped focus ring on translation input": ring, намальований ПОЗА
+   border-box елемента, попадав у ту саму зону, яку контейнер скролу
+   обрізає для будь-якого вмісту. border-color + inset box-shadow тієї ж
+   барви лишаються ЦІЛКОМ усередині border-box інпута — обрізати нічого.
+   Колір light-теми лишено індиго (#4b46da), НЕ перемкнено на
+   запропонований у задачі золотий #d9b765: #d9b765 на білому фоні інпута
+   дає контраст ≈1.9:1 (рахунок за формулою WCAG), нижче за ту саму ≥3:1,
+   яку задача сама вимагає — індиго вже дає ≥7:1 на білому, тож лишається.
+   Темна тема — той самий #f3d98b, що й був (структуру змінено з outline
+   на inset, колір не торкали). */
 .plain-word-panel-input:focus-visible {
-  outline: 2px solid #4b46da;
-  outline-offset: 1px;
+  outline: none;
+  border-color: #4b46da;
+  box-shadow: inset 0 0 0 2px #4b46da;
 }
 .dark .plain-word-panel-input:focus-visible {
-  outline-color: #f3d98b;
+  border-color: #f3d98b;
+  box-shadow: inset 0 0 0 2px #f3d98b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .plain-word-panel-input:focus-visible {
-    outline-color: #f3d98b;
+    border-color: #f3d98b;
+    box-shadow: inset 0 0 0 2px #f3d98b;
   }
 }
 .plain-word-panel-cancel {
@@ -18114,9 +18130,25 @@ button.cabinet-nav-item {
   border-color: rgba(85, 84, 107, 0.45);
   color: #55546b;
 }
+/* Той самий inset-фокус, що .plain-word-panel-input вище — чипи на краю
+   .plain-word-pos-chips (flex-wrap, часто впритул до правого краю
+   scrollarea) обрізались би так само, малюй ми outline/outline-offset
+   ЗА межами рамки (задача-виправлення "unclipped focus ring on
+   translation input", п.2 — "і для POS-чипів"). box-shadow:inset сам
+   огинає border-radius:999px, нічого додатково не треба. Колір —
+   індиго, не золотий (той самий розрахунок контрасту, що в інпута вище:
+   #d9b765 на білому чипі ≈1.9:1, нижче вимоги задачі ≥3:1). */
 .plain-word-pos-chip:focus-visible {
-  outline: 2px solid #4b46da;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: inset 0 0 0 2px #4b46da;
+}
+.dark .plain-word-pos-chip:focus-visible {
+  box-shadow: inset 0 0 0 2px #f3d98b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-pos-chip:focus-visible {
+    box-shadow: inset 0 0 0 2px #f3d98b;
+  }
 }
 .plain-word-pos-chip--selected {
   border: 1.5px solid transparent;
