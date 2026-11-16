@@ -17021,7 +17021,6 @@ button.cabinet-nav-item {
 .dictionary-word {
   margin: 0;
   font-family: var(--font-body);
-  font-style: italic;
   font-weight: 600;
   font-size: 23px;
   color: var(--cabinet-ink);
@@ -17497,7 +17496,6 @@ button.cabinet-nav-item {
 .plain-word-panel-word {
   margin: 0;
   font-family: var(--font-body);
-  font-style: italic;
   font-weight: 600;
   font-size: 18px;
   color: #1a1640;
