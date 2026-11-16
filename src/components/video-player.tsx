@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -33,7 +34,7 @@ import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech 
 import { extractAlignedContext } from "@/lib/cabinet/saved-words";
 import { useT } from "@/lib/i18n/context";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
-import type { SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
+import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
 import { tokenizePlainText, PlainWordPanel } from "@/components/dictionary/plain-word-panel";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -86,6 +87,39 @@ function readStoredPauseOnWordOpen(): boolean | null {
     return raw === "true" ? true : raw === "false" ? false : null;
   } catch {
     return null;
+  }
+}
+
+// Підказка "слова в субтитрах можна тапнути" (pause-чип/play-чип нижче) —
+// власний localStorage-ключ, ОКРЕМИЙ від tdf.dictHint.v1 (одноразова
+// підказка над скриптом, dict-hint.tsx — лишається без змін). seen —
+// скільки разів показано pause-чип (до 8, після — більше не показуємо);
+// saved — чи студент уже зберіг слово САМЕ з цього відео (після цього
+// pause-чип теж більше не показуємо, навіть якщо seen<8). Відсутність
+// самого ключа в localStorage ("null" від readVideoWordHintState) — ознака
+// "студент ще взагалі не бачив жодної підказки відео", за якою вирішує,
+// чи показати один раз play-чип при першому відтворенні.
+type VideoWordHintState = { seen: number; saved: boolean };
+const VIDEO_WORD_HINT_KEY = "tdf.videoWordHint.v1";
+const VIDEO_WORD_HINT_MAX_SEEN = 8;
+
+function readVideoWordHintState(): VideoWordHintState | null {
+  try {
+    const raw = localStorage.getItem(VIDEO_WORD_HINT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<VideoWordHintState>;
+    return { seen: Number(parsed.seen) || 0, saved: Boolean(parsed.saved) };
+  } catch {
+    return null;
+  }
+}
+
+function writeVideoWordHintState(state: VideoWordHintState) {
+  try {
+    localStorage.setItem(VIDEO_WORD_HINT_KEY, JSON.stringify(state));
+  } catch {
+    // localStorage недоступний (приватний режим тощо) — підказка просто
+    // показуватиметься знову наступного разу, не критично.
   }
 }
 
@@ -249,6 +283,11 @@ export function VideoPlayer({
   className?: string;
 }) {
   const { t } = useT();
+  // Лише для "студент уже зберіг слово з ЦЬОГО відео" (підказка-чип
+  // нижче) — null без SavedWordsProvider/незалогіненого студента, тоді
+  // підказка про збереження просто ніколи не вимикається самостійно
+  // (seen-лічильник усе одно зупинить її після VIDEO_WORD_HINT_MAX_SEEN).
+  const saved = useSavedWords();
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const speedWrapRef = useRef<HTMLDivElement>(null);
@@ -266,6 +305,33 @@ export function VideoPlayer({
   // video subtitles", п.1 — причина видимого "clipping" картки в
   // landscape-fullscreen).
   const subtitlePlateRef = useRef<HTMLDivElement>(null);
+  // Та сама плашка, але вимірювана висота (ResizeObserver, не константа —
+  // плашка то з 1, то з 2 рядків, то відсутня взагалі) — потрібна лише для
+  // позиціонування pause/play-чипа (підказка "слова можна тапнути") ТОЧНО
+  // над плашкою, без власного layout shift: чип завжди position:absolute,
+  // а не живий сиблінг у flex-колонці субтитрів, тож поява/зникнення
+  // плашки саму по собі не зсуває чип і навпаки. callback-ref (не просто
+  // useEffect від subtitlePlateRef.current — ref.current не є залежністю,
+  // що тригерить React) приєднує/відключає ResizeObserver щоразу, коли
+  // сам DOM-вузол плашки з'являється/зникає (умовний рендер — showFr/
+  // showUk/activeFrCue/activeUkCue).
+  const [plateHeight, setPlateHeight] = useState(0);
+  const plateObserverRef = useRef<ResizeObserver | null>(null);
+  const attachSubtitlePlateRef = useCallback((node: HTMLDivElement | null) => {
+    subtitlePlateRef.current = node;
+    plateObserverRef.current?.disconnect();
+    plateObserverRef.current = null;
+    if (!node) {
+      setPlateHeight(0);
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.target.getBoundingClientRect().height;
+      if (height !== undefined) setPlateHeight(height);
+    });
+    observer.observe(node);
+    plateObserverRef.current = observer;
+  }, []);
   // Пам'ятає, чи відео грало ДО відкриття картки слова (лише коли "Пауза
   // при відкритті слова" увімкнена) — щоб закриття картки відновлювало
   // відтворення ЛИШЕ якщо воно й справді йшло, а не завжди.
@@ -346,6 +412,130 @@ export function VideoPlayer({
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
+
+  // Підказка "слова в субтитрах можна тапнути" — pause-чип (кожна пауза,
+  // поки не збережено слово з відео й не показано VIDEO_WORD_HINT_MAX_SEEN
+  // разів) або play-чип (лише ОДИН раз у житті, при першому відтворенні
+  // цього чи будь-якого відео на сайті — ключ tdf.videoWordHint.v1
+  // спільний для всіх відео). chipKind===null — чип не рендериться
+  // взагалі; chipVisible — окремий прапорець для CSS fade (150мс), щоб
+  // DOM-вузол лишався змонтованим ще trохи ПІСЛЯ початку fade-out
+  // (інакше opacity-перехід не встигав би відпрацювати).
+  const [chipKind, setChipKind] = useState<"pause" | "play" | null>(null);
+  const [chipVisible, setChipVisible] = useState(false);
+  const hintStateRef = useRef<VideoWordHintState | null>(null);
+  const hintStateLoadedRef = useRef(false);
+  const hasStartedOnceRef = useRef(false);
+  const chipHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chipUnmountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevHasSavedAnyRef = useRef(false);
+
+  function clearChipTimers() {
+    if (chipHideTimerRef.current) clearTimeout(chipHideTimerRef.current);
+    if (chipUnmountTimerRef.current) clearTimeout(chipUnmountTimerRef.current);
+  }
+
+  // queueMicrotask навколо setState — обидві функції викликаються з ефектів
+  // нижче (не з event-хендлерів), react-hooks/set-state-in-effect забороняє
+  // синхронний setState прямо в тілі ефекту; той самий прийом, що вже в
+  // ефекті відновлення speed/mode вище.
+  function hideChipNow() {
+    clearChipTimers();
+    queueMicrotask(() => setChipVisible(false));
+    // 200мс — трохи більше за сам перехід (150мс, globals.css), щоб
+    // opacity встигла дійти до 0 ДО того, як вузол зникне з DOM.
+    chipUnmountTimerRef.current = setTimeout(() => setChipKind(null), 200);
+  }
+
+  function showChip(kind: "pause" | "play", durationMs: number) {
+    clearChipTimers();
+    queueMicrotask(() => {
+      setChipKind(kind);
+      setChipVisible(true);
+    });
+    chipHideTimerRef.current = setTimeout(() => {
+      setChipVisible(false);
+      chipUnmountTimerRef.current = setTimeout(() => setChipKind(null), 200);
+    }, durationMs);
+  }
+
+  // SSR-safe завантаження стану підказки — лише після монтування (не в
+  // ініціалізаторі useState), той самий принцип, що відновлення speed/
+  // mode/pauseOnWordOpen вище. Ref (не state) — читання/запис миттєві, без
+  // чекання на ререндер між швидкими play/pause.
+  useEffect(() => {
+    hintStateRef.current = readVideoWordHintState();
+    hintStateLoadedRef.current = true;
+  }, []);
+
+  // Чип ховається одразу, щойно відкрилась картка/панель слова — студент
+  // уже побачив, що слово можна тапнути, підказка стає зайвою.
+  useEffect(() => {
+    if (openCard) hideChipNow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openCard]);
+
+  // Основна логіка показу — реагує на кожну зміну playing. hasStartedOnceRef
+  // відсікає "спрацювання" цього ефекту на самому монтуванні (playing
+  // стартує з false, але відео ще взагалі не починало грати — показувати
+  // pause-чип тут не треба).
+  useEffect(() => {
+    if (!hintStateLoadedRef.current) return;
+    if (playing) {
+      hideChipNow();
+      if (!hasStartedOnceRef.current) {
+        hasStartedOnceRef.current = true;
+        // hintStateRef.current === null — ключа в localStorage ще не було
+        // взагалі (студент НІКОЛИ не бачив жодної підказки відео) — лише
+        // тоді показуємо play-чип, і лише один раз: записуємо стан одразу,
+        // щоб наступний запуск (це чи інше відео на сайті) уже бачив ключ.
+        if (hintStateRef.current === null) {
+          const initial: VideoWordHintState = { seen: 0, saved: false };
+          hintStateRef.current = initial;
+          writeVideoWordHintState(initial);
+          showChip("play", 4000);
+        }
+      }
+      return;
+    }
+    // Пауза. Не на самому монтуванні (ще не починало грати) і не коли
+    // пауза — наслідок відкриття картки/панелі слова (openCard).
+    if (!hasStartedOnceRef.current || openCard) return;
+    const state = hintStateRef.current ?? { seen: 0, saved: false };
+    if (state.saved || state.seen >= VIDEO_WORD_HINT_MAX_SEEN) return;
+    const next: VideoWordHintState = { ...state, seen: state.seen + 1 };
+    hintStateRef.current = next;
+    writeVideoWordHintState(next);
+    showChip("pause", state.seen === 0 ? 5000 : 3000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing]);
+
+  // Збереження слова, поки відкрита картка/панель відео (openCard!==null —
+  // проактивна перевірка: сама подія hasSavedAny глобальна на всю сторінку
+  // (та сама SavedWordsProvider, що й скрипт), тож дивимось на неї лише в
+  // момент, коли студент ТОЧНО взаємодіє з карткою САМЕ відео) — позначає
+  // "з відео вже збережено" назавжди, pause-чип більше не показується,
+  // незалежно від лічильника seen.
+  useEffect(() => {
+    const now = saved?.hasSavedAny ?? false;
+    if (now && !prevHasSavedAnyRef.current && openCard && hintStateLoadedRef.current) {
+      const state = hintStateRef.current ?? { seen: 0, saved: false };
+      if (!state.saved) {
+        const next: VideoWordHintState = { ...state, saved: true };
+        hintStateRef.current = next;
+        writeVideoWordHintState(next);
+      }
+    }
+    prevHasSavedAnyRef.current = now;
+  }, [saved?.hasSavedAny, openCard]);
+
+  // chipBottomPx — завжди над УСІМ, що зараз показано знизу (панель
+  // керування + плашка субтитрів, якщо є): overlayHeight уже рахує панель
+  // керування, plateHeight (ResizeObserver, 0 коли плашки немає) додає
+  // точну висоту плашки замість фіксованого запасу, тож чип ніколи не
+  // перекриває ні панель, ні плашку, якою б довгою вона не була (1 чи 2
+  // рядки). +8px — проміжок між чипом і тим, що під ним.
+  const chipBottomPx = overlayHeight + (plateHeight > 0 ? plateHeight + 8 : 0) + 8;
 
   const frUrl = subtitles?.find((s) => s.lang === "fr")?.url ?? null;
   const ukUrl = subtitles?.find((s) => s.lang === "uk")?.url ?? null;
@@ -943,6 +1133,27 @@ export function VideoPlayer({
           </span>
         )}
 
+        {/* Чип-підказка "слова можна тапнути" (pause/play-чип) —
+            position:absolute, НЕ сиблінг у flex-колонці субтитрів нижче:
+            її появу/зникнення не має зсувати ні плашку субтитрів, ні
+            панель керування (вимога задачі — без layout shift).
+            chipBottomPx (overlayHeight + plateHeight, обидва вимірені
+            ResizeObserver) тримає її завжди НАД усім, що зараз показано
+            знизу. pointer-events:none — сама підказка ніколи не блокує тап
+            по слову під нею. */}
+        {chipKind && (
+          <div
+            className={`video-word-hint-chip ${chipVisible ? "video-word-hint-chip--visible" : ""} ${
+              isCompactLandscape ? "video-word-hint-chip--top" : ""
+            }`}
+            style={!isCompactLandscape ? { bottom: `${chipBottomPx}px` } : undefined}
+            role="status"
+            aria-live="polite"
+          >
+            {t(chipKind === "pause" ? "videoPlayer.pauseHint" : "videoPlayer.playHint")}
+          </div>
+        )}
+
         {/* Єдиний нижній стек: субтитри йдуть у потоці ПЕРЕД панеллю
             керування (document order), тож перекриття кнопками структурно
             неможливе — немає абсолютного bottom, яким субтитри могли б
@@ -952,7 +1163,7 @@ export function VideoPlayer({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
           {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
             <div
-              ref={subtitlePlateRef}
+              ref={attachSubtitlePlateRef}
               className={`video-subtitle-plate mb-2 flex flex-col items-center text-center ${
                 isFullscreen || isPseudoFullscreen ? "video-subtitle-plate--fullscreen" : ""
               }`}

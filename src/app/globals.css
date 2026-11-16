@@ -2069,6 +2069,45 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Чип-підказка "слова можна тапнути" (pause/play-чип, video-player.tsx) —
+   та сама темна скляна мова, що video-subtitle-plate/video-word-card
+   (rgba(10,9,28,...)), крем/золотий текст #f6dc8e (контраст ≥4.5:1 на
+   rgba(10,9,28,0.82) — та сама пара, що вже .video-subtitle-uk використовує
+   для жовтого тексту на темному склі). pointer-events:none завжди — чип
+   НІКОЛИ не має блокувати тап по слову під ним; fade — лише opacity
+   150мс, жодних transform/scale (не привертає зайвої уваги). bottom
+   виставляється inline зі video-player.tsx (chipBottomPx) — тут лише
+   fallback, якщо стиль з якоїсь причини не застосувався. */
+.video-word-hint-chip {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  z-index: 15;
+  max-width: min(86%, 420px);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(10, 9, 28, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #f6dc8e;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease-in-out;
+}
+.video-word-hint-chip--visible {
+  opacity: 1;
+}
+.video-word-hint-chip--top {
+  top: 8px;
+  bottom: auto;
+}
+
 /* Mute-кнопка video-player.tsx — звук на дотикових пристроях регулюють
    апаратні кнопки, ховаємо саме за типом вказівника, не за шириною
    екрана (вузьке мишаче вікно лишає кнопку доступною). */
