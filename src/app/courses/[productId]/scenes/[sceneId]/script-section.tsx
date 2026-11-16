@@ -84,9 +84,15 @@ function TranslationCell({ text, vocab }: { text: string; vocab: VocabItem[] }) 
 export function ScriptSection({
   dialogue,
   title,
+  sceneId,
 }: {
   dialogue: DialogueEntry[];
   title?: string;
+  // Відсутній лише для інлайн-скрипт-блоків без заголовка-бару
+  // (scene-content-block.tsx, content_type "script" усередині
+  // constructor-блоків) — там useBar нижче й так false (немає title), тож
+  // підказка не рендериться незалежно від sceneId.
+  sceneId?: string;
 }) {
   const { t } = useT();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -205,7 +211,7 @@ export function ScriptSection({
   // "Скрипт" сторінки сцени, не додаткові script-блоки без заголовка) і
   // секція розгорнута (isOpen): підказка про клік по слову в тексті не
   // має смислу, поки сам текст згорнутий і не показаний.
-  const hint = useBar && isOpen && <DictHint variant="script" />;
+  const hint = useBar && isOpen && sceneId && <DictHint variant="script" sceneId={sceneId} />;
 
   const body = isOpen && (
     <div className={`script-body flex flex-col gap-2 ${useBar ? "glass-block-panel" : ""}`}>

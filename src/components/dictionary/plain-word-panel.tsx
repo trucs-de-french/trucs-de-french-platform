@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Pencil } from "lucide-react";
 import type { VocabItem } from "@/lib/vocab";
 import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
+import { normalizeWordForMatch } from "@/lib/vocab-match";
+import {
+  extractPhrase,
+  validatePhraseInput,
+  toggleNeighborSelection,
+  MAX_PHRASE_LENGTH,
+  type PhraseSelection,
+} from "@/lib/cabinet/saved-words";
 import { useT } from "@/lib/i18n/context";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
@@ -63,6 +72,26 @@ export function tokenizePlainText(text: string): PlainToken[] {
   return tokens;
 }
 
+// Токен-кандидат на сусідній chip (задача "save multi-word phrase..."):
+// лише клікабельні word-токени тієї ж речення, в порядку появи в тексті —
+// той самий набір, що вже рендериться як кнопки .plain-word-btn/
+// .video-plain-word (dialogue-line.tsx/video-player.tsx), не довільна
+// підмножина tokenizePlainText.
+export type PhraseWordToken = { text: string; start: number };
+
+// Type guard для фільтрації tokenizePlainText()-токенів до кандидатів-
+// сусідів (dialogue-line.tsx/video-player.tsx) — без нього .filter(tok =>
+// tok.type === "word" && tok.clickable) не вузить тип для .map() (звичайний
+// boolean-callback, не предикат), і довелось би приводити тип вручну.
+export function isClickableWordToken(tok: PlainToken): tok is { type: "word"; text: string; clickable: true; start: number } {
+  return tok.type === "word" && tok.clickable;
+}
+
+// До 3 сусідів з КОЖНОГО боку (задача, п.1) — єдина константа, не магічне
+// число в кількох місцях (вікно для рендеру чипів і межі toggleNeighborSelection
+// нижче рахуються від неї).
+const MAX_NEIGHBORS_EACH_SIDE = 3;
+
 // Група чипів "Частина мови" у формі ЩЕ не збереженого звичайного слова —
 // 4 основні завжди видимі + чип "Інше", що розгортає решту INLINE (без
 // popover). role="radiogroup"/role="radio" + роблячий tabindex (стрілки
@@ -73,13 +102,28 @@ function PosChipGroup({
   value,
   onChange,
   groupId,
+  defaultExpanded = false,
 }: {
   value: PartOfSpeech | null;
   onChange: (pos: PartOfSpeech | null) => void;
   groupId: string;
+  // true — лише коли "value" уже є дефолтним "phrase" (фраза з 2+ слів,
+  // задача п.3), а не основним чипом (MAIN_POS): без цього вибраний
+  // "phrase" лишався б ПРИХОВАНИМ за "Інше" до першого кліку — студент не
+  // бачив би, що якась частина мови вже обрана.
+  defaultExpanded?: boolean;
 }) {
   const { t } = useT();
-  const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] = useState(defaultExpanded);
+  // defaultExpanded стає true ПІЗНІШЕ за монтування (фраза виростає до 2+
+  // слів лише після того, як студент тапнув сусідній chip, вже ПІСЛЯ
+  // першого рендеру цієї групи з showMore=false) — useState-ініціалізатор
+  // вище сам цього не підхопить, тож ефект розгортає "Інше" ОДНОРАЗОВО,
+  // коли дефолт "phrase" з'являється (ніколи назад — студент сам міг уже
+  // розгорнути список).
+  useEffect(() => {
+    if (defaultExpanded) setShowMore(true);
+  }, [defaultExpanded]);
   const visible = showMore ? PART_OF_SPEECH_ORDER : MAIN_POS;
 
   function handleKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
@@ -105,7 +149,7 @@ function PosChipGroup({
               type="button"
               role="radio"
               aria-checked={isChecked}
-              tabIndex={isChecked || (!value && index === 0) ? 0 : -1}
+              tabIndex={isChecked || (index === 0 && !visible.includes(value as PartOfSpeech)) ? 0 : -1}
               onKeyDown={(e) => handleKeyDown(e, index)}
               onClick={() => onChange(isChecked ? null : pos)}
               className={`plain-word-pos-chip${isChecked ? " plain-word-pos-chip--selected" : ""}`}
@@ -145,17 +189,39 @@ export function PlainWordPanel({
   word,
   contextFr,
   contextUk,
-  teacherItem,
+  phraseTokens,
+  phraseCenterIndex,
+  phraseSourceText,
+  teacherVariantMap,
   inputId,
   onClose,
   compact = false,
   surface = "light",
   onLayoutChange,
 }: {
+  // Слово, по якому тапнули — завжди в підсумковій фразі, ніколи не
+  // прибирається сусіднім chip-ом (воно й саме входить у phraseTokens на
+  // позиції phraseCenterIndex).
   word: string;
   contextFr: string;
   contextUk: string | null;
-  teacherItem: VocabItem | null;
+  // Контекстне речення (contextFr/contextUk вище) рахується ОДИН раз при
+  // відкритті панелі (той самий offset тапнутого слова, що й раніше) і НЕ
+  // перерахунковується, коли студент додає/прибирає сусідів — усі
+  // кандидати-сусіди за побудовою з того самого речення.
+  phraseTokens: PhraseWordToken[];
+  phraseCenterIndex: number;
+  // Текст, офсети якого використовує phraseTokens (частина репліки між
+  // вчительськими збігами — скрипт; нормалізована FR-кью — відео) —
+  // extractPhrase рахує символьний слайс САМЕ в ньому.
+  phraseSourceText: string;
+  // Пріоритет "вчительських" даних (задача, п.4) тепер РЕАКТИВНИЙ до
+  // поточної фрази (не фіксований на момент відкриття, як старий проп
+  // teacherItem): якщо студент додає/прибирає сусідів так, що фраза
+  // починає/перестає збігатися з якимось вчительським словом/виразом у
+  // сцені — панель одразу перемикається між формою ручного перекладу й
+  // вчительською карткою.
+  teacherVariantMap: Map<string, VocabItem>;
   inputId: string;
   onClose: () => void;
   compact?: boolean;
@@ -181,6 +247,54 @@ export function PlainWordPanel({
 }) {
   const { t } = useT();
   const saved = useSavedWords();
+
+  // --- Вибір фрази (задача "save multi-word phrase...") ------------------
+  // selection — суцільний діапазон ВІДНОСНО phraseCenterIndex (0 — лише
+  // тапнуте слово, той самий стан, що й раніше для одного слова).
+  // manualOverride — ручне редагування title-інпута ПЕРЕКРИВАЄ фразу,
+  // побудовану з чипів, доти, доки студент знову не тапне чип (тоді
+  // повертається на обчислену з виділення — "останній жест вирішує").
+  const [selection, setSelection] = useState<PhraseSelection>({ min: 0, max: 0 });
+  const [manualOverride, setManualOverride] = useState<string | null>(null);
+
+  // Вікно чипів — до 3 кандидатів із кожного боку phraseCenterIndex, в
+  // межах реально наявних токенів (caller уже обмежив phraseTokens тим
+  // самим реченням, що й тапнуте слово).
+  const neighborWindow = useMemo(() => {
+    const lo = Math.max(0, phraseCenterIndex - MAX_NEIGHBORS_EACH_SIDE);
+    const hi = Math.min(phraseTokens.length - 1, phraseCenterIndex + MAX_NEIGHBORS_EACH_SIDE);
+    const list: { token: PhraseWordToken; rel: number }[] = [];
+    for (let idx = lo; idx <= hi; idx++) {
+      list.push({ token: phraseTokens[idx], rel: idx - phraseCenterIndex });
+    }
+    return list;
+  }, [phraseTokens, phraseCenterIndex]);
+
+  const selectedTokens = neighborWindow.filter((w) => w.rel >= selection.min && w.rel <= selection.max);
+  const computedPhrase =
+    selectedTokens.length > 0
+      ? extractPhrase(
+          phraseSourceText,
+          selectedTokens[0].token.start,
+          selectedTokens[selectedTokens.length - 1].token.start + selectedTokens[selectedTokens.length - 1].token.text.length
+        )
+      : word;
+  const rawPhrase = manualOverride ?? computedPhrase;
+  const phraseValidation = validatePhraseInput(rawPhrase);
+  const phraseWordCount = rawPhrase.trim() ? rawPhrase.trim().split(/\s+/).length : 0;
+  // effectiveWord — те, з чим реально працює решта компонента (дедуп/
+  // збереження/вчительський пошук): валідована фраза, якщо валідна, інакше
+  // тримний сирий текст (щоб getSaved/teacherVariantMap.get не впали на
+  // порожньому рядку) — саме збереження нижче (handleSave) окремо
+  // перевіряє phraseValidation.ok і НЕ відправляє невалідну фразу.
+  const effectiveWord = phraseValidation.ok ? phraseValidation.phrase : rawPhrase.trim() || word;
+
+  function handleNeighborClick(rel: number) {
+    if (rel === 0) return;
+    setSelection((cur) => toggleNeighborSelection(cur, rel));
+    setManualOverride(null);
+  }
+
   const [value, setValue] = useState("");
   // Нічого не вибрано за замовчуванням; absent (не null) у снепшоті, якщо
   // студент нічого не обрав — та сама поведінка, що й до цього чипа.
@@ -281,15 +395,18 @@ export function PlainWordPanel({
   // виклик хука (useEffect нижче) ПІСЛЯ умовного return, навіть якщо
   // saved===null на практиці ніколи не змінюється протягом життя цього
   // компонента.
-  const existing = saved?.getSaved(word) ?? null;
-  // !teacherItem — та сама гілка-пріоритет, що нижче (if (teacherItem)
-  // рендериться ПЕРШИМ, перед if (existing)): слово, яке вчителька
-  // позначила як vocab, завжди показує повну вчительську форму, навіть
-  // якщо воно вже збережене студентом. isPersistentCompact — САМЕ "existing"
-  // гілка нижче (не транзитні justSaved/justRemoved, в яких уже є власний
-  // 1с-таймер вище) — за цим прапорцем вирішує, коли стартувати 3с-таймер
-  // автозакриття нижче.
-  const isPersistentCompact = Boolean(!teacherItem && existing);
+  const existing = saved?.getSaved(effectiveWord) ?? null;
+  // dynamicTeacherItem — пошук ПОТОЧНОЇ фрази (не фіксованого word), щоб
+  // додавання/прибирання сусідів могло перемкнути панель у вчительську
+  // картку чи назад (задача, п.4). !dynamicTeacherItem — та сама гілка-
+  // пріоритет, що нижче (if (dynamicTeacherItem) рендериться ПЕРШИМ, перед
+  // if (existing)): слово/фраза, яку вчителька позначила як vocab, завжди
+  // показує повну вчительську форму, навіть якщо вже збережена студентом.
+  // isPersistentCompact — САМЕ "existing" гілка нижче (не транзитні
+  // justSaved/justRemoved, в яких уже є власний 1с-таймер вище) — за цим
+  // прапорцем вирішує, коли стартувати 3с-таймер автозакриття нижче.
+  const dynamicTeacherItem = teacherVariantMap.get(normalizeWordForMatch(effectiveWord)) ?? null;
+  const isPersistentCompact = Boolean(!dynamicTeacherItem && existing);
   const isSavedCompact = Boolean(justSaved || justRemoved || isPersistentCompact);
   useEffect(() => {
     onLayoutChange?.(isSavedCompact ? "compact" : "form");
@@ -332,12 +449,71 @@ export function PlainWordPanel({
 
   if (!saved) return null;
 
-  const error = saved.getError(word);
-  const pending = saved.isPending(word);
+  const error = saved.getError(effectiveWord);
+  const pending = saved.isPending(effectiveWord);
 
   async function handleRemove() {
-    const result = await saved!.remove(word);
+    const result = await saved!.remove(effectiveWord);
     if (result.ok) setJustRemoved(true);
+  }
+
+  // Частина мови за замовчуванням для фрази з 2+ слів — "phrase" (задача,
+  // п.3), лише коли студент ще не вибрав ЩОСЬ сам (partOfSpeech !== null);
+  // явний клік (у т.ч. деселект того самого чипа, PosChipGroup) завжди
+  // перекриває цей дефолт.
+  const effectivePartOfSpeech = partOfSpeech ?? (phraseWordCount >= 2 ? "phrase" : null);
+
+  // Рядок-заголовок (редагований інпут "фрази" + олівець-підказка +
+  // сусідні chip-и) — ОДНАКОВИЙ у всіх трьох гілках нижче (вчителька/
+  // existing/форма): чипи мають лишатись тапабельними навіть коли панель
+  // зараз показує вчительський переклад чи "уже збережено", інакше студент
+  // не зміг би вийти назад із цього збігу, розширивши/звузивши фразу.
+  function renderPhraseHeader() {
+    return (
+      <div className="plain-word-panel-header">
+        <div className="plain-word-panel-title-row">
+          <Pencil size={12} aria-hidden="true" className="plain-word-panel-title-pencil" />
+          <input
+            type="text"
+            value={rawPhrase}
+            size={Math.min(40, Math.max(rawPhrase.length, 3) + 1)}
+            maxLength={MAX_PHRASE_LENGTH}
+            onChange={(e) => setManualOverride(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape" && !e.nativeEvent.isComposing) e.stopPropagation();
+            }}
+            onKeyUp={(e) => {
+              if (e.key !== "Escape" && !e.nativeEvent.isComposing) e.stopPropagation();
+            }}
+            aria-label={t("dictionary.phraseTitleAria")}
+            className="plain-word-panel-word plain-word-panel-title-input"
+          />
+        </div>
+        {!phraseValidation.ok && (
+          <p className="save-word-error plain-word-panel-title-error">
+            {t(phraseValidation.error === "tooManyWords" ? "dictionary.phraseTooManyWords" : "dictionary.phraseTooLong")}
+          </p>
+        )}
+        {neighborWindow.length > 1 && (
+          <div className="plain-word-neighbor-row" role="group" aria-label={t("dictionary.phraseNeighborsAria")}>
+            {neighborWindow.map(({ token, rel }) => {
+              const selected = rel >= selection.min && rel <= selection.max;
+              return (
+                <button
+                  key={rel}
+                  type="button"
+                  onClick={() => handleNeighborClick(rel)}
+                  aria-pressed={selected}
+                  className={`plain-word-pos-chip plain-word-neighbor-chip${selected ? " plain-word-pos-chip--selected" : ""}`}
+                >
+                  {token.text}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   }
 
   const videoModifier = surface === "dark" ? " plain-word-panel--video" : "";
@@ -359,7 +535,7 @@ export function PlainWordPanel({
   if (justSaved || justRemoved) {
     return (
       <div className={`plain-word-panel plain-word-panel--compact-saved${videoModifier}`} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
-        <p className="plain-word-panel-word">{word}</p>
+        <p className="plain-word-panel-word">{effectiveWord}</p>
         <p className={`save-word-pill save-word-pill--saved save-word-pill--compact${savedPillOnDark}`}>
           {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
         </p>
@@ -377,28 +553,26 @@ export function PlainWordPanel({
   // скролить (overflow:auto без max-height не дає скролбару) — та сама
   // поведінка, що й до цього рефакторингу.
 
-  if (teacherItem) {
-    const pos = normalizePartOfSpeech(teacherItem.partOfSpeech);
+  if (dynamicTeacherItem) {
+    const pos = normalizePartOfSpeech(dynamicTeacherItem.partOfSpeech);
     const posLabel = pos ? PART_OF_SPEECH_LABELS_FR[pos] : null;
-    const note = teacherItem.note?.trim() || null;
+    const note = dynamicTeacherItem.note?.trim() || null;
     const snapshot: SaveWordSnapshot = {
-      word,
-      translation: teacherItem.translation,
+      word: effectiveWord,
+      translation: dynamicTeacherItem.translation,
       translationSource: "teacher",
-      partOfSpeech: teacherItem.partOfSpeech ?? null,
+      partOfSpeech: dynamicTeacherItem.partOfSpeech ?? null,
       note,
-      imageUrl: teacherItem.image_url ?? null,
-      vocabId: teacherItem.id ?? null,
+      imageUrl: dynamicTeacherItem.image_url ?? null,
+      vocabId: dynamicTeacherItem.id ?? null,
       contextFr,
       contextUk,
     };
     return (
       <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
-        <div className="plain-word-panel-header">
-          <p className="plain-word-panel-word">{word}</p>
-        </div>
+        {renderPhraseHeader()}
         <div className="plain-word-panel-scrollarea">
-          <p className="plain-word-panel-translation">{teacherItem.translation}</p>
+          <p className="plain-word-panel-translation">{dynamicTeacherItem.translation}</p>
           {posLabel && <p className="plain-word-panel-pos">{posLabel}</p>}
           {note && <p className="plain-word-panel-note">{note}</p>}
         </div>
@@ -440,8 +614,8 @@ export function PlainWordPanel({
         onFocus={() => setInteracting(true)}
         onBlur={() => setInteracting(false)}
       >
+        {renderPhraseHeader()}
         <div className="plain-word-panel-compact-row">
-          <p className="plain-word-panel-word">{word}</p>
           <p className={`save-word-pill save-word-pill--saved save-word-pill--compact${savedPillOnDark}`}>{t("dictionary.savedState")}</p>
         </div>
         {existing.translation && (
@@ -461,14 +635,15 @@ export function PlainWordPanel({
   }
 
   async function handleSave() {
+    if (!phraseValidation.ok) return;
     setSaving(true);
     const result = await saved!.save({
-      word,
+      word: phraseValidation.phrase,
       translation: value.trim() || null,
       translationSource: value.trim() ? "own" : "none",
       contextFr,
       contextUk,
-      ...(partOfSpeech ? { partOfSpeech } : {}),
+      ...(effectivePartOfSpeech ? { partOfSpeech: effectivePartOfSpeech } : {}),
     });
     setSaving(false);
     if (result.ok) setJustSaved(true);
@@ -476,9 +651,7 @@ export function PlainWordPanel({
 
   return (
     <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
-      <div className="plain-word-panel-header">
-        <p className="plain-word-panel-word">{word}</p>
-      </div>
+      {renderPhraseHeader()}
       <div className="plain-word-panel-scrollarea">
         {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
         <label className="plain-word-panel-label" htmlFor={inputId}>
@@ -508,14 +681,19 @@ export function PlainWordPanel({
           }}
           className="plain-word-panel-input"
         />
-        <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
+        <PosChipGroup
+          value={effectivePartOfSpeech}
+          onChange={setPartOfSpeech}
+          groupId={`${inputId}-pos`}
+          defaultExpanded={partOfSpeech === null && effectivePartOfSpeech === "phrase"}
+        />
       </div>
       <div className="plain-word-panel-footer">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !phraseValidation.ok}
             className={`save-word-pill save-word-pill--primary${primaryPillOnDark}`}
           >
             {t("dictionary.panelSave")}

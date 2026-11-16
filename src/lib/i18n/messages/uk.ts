@@ -301,6 +301,7 @@ export const uk = {
   "dictionary.saveError": "Не вдалося зберегти. Спробуйте ще раз.",
   "dictionary.hintTextVideo": "Хочете додати слово до словника? Поставте відео на паузу й торкніться будь-якого слова в субтитрах.",
   "dictionary.hintTextScript": "Натисніть на будь-яке слово в тексті, щоб додати його до словника.",
+  "dictionary.hintCloseAria": "Закрити підказку",
   "dictionary.panelLineLabel": "Приклад: «{line}»",
   "dictionary.panelTranslationLabel": "Мій переклад (за бажанням)",
   "dictionary.panelSave": "Зберегти слово",
@@ -319,6 +320,10 @@ export const uk = {
   "dictionary.pos.locutions": "вислів",
   "dictionary.pos.phrase": "фраза",
   "dictionary.pos.idiome": "ідіома",
+  "dictionary.phraseTitleAria": "Редагувати слово чи фразу для збереження",
+  "dictionary.phraseNeighborsAria": "Додати сусіднє слово до фрази",
+  "dictionary.phraseTooManyWords": "Фраза занадто довга — максимум 6 слів.",
+  "dictionary.phraseTooLong": "Фраза занадто довга — максимум 80 символів.",
 
   "auth.shell.tagline": "Французька через кіно",
   "auth.shell.tabLogin": "Вхід",

@@ -725,13 +725,14 @@ export default async function ScenePage({
           VideoPlayer/VideoFrame. */}
       <div className="flex flex-col gap-[14px]">
         <SectionHeaderBar title={t(lang, "video.videoLabel")} icon={resolveBlockIcon("video")} />
-        {/* Одноразова підказка "торкніться слова" — лише для ВІДЕО (задача-
-            виправлення "split dictionary hint into video and script
-            hints"): раніше одна спільна підказка лежала над усією
-            сторінкою й згадувала і скрипт, і відео одразу; тепер окремо
+        {/* Підказка "торкніться слова" — лише для ВІДЕО (задача-виправлення
+            "split dictionary hint into video and script hints"): окремо
             під кожним заголовком-баром, тим самим gap-[14px], що вже
-            розділяє бар і панель нижче. */}
-        <DictHint variant="video" />
+            розділяє бар і панель нижче. Показується на КОЖНОМУ відкритті
+            сцени (задача-виправлення "per-scene dismissible hints shown
+            on every visit") — sceneId у ключі sessionStorage ізолює
+            закриття однієї сцени від іншої. */}
+        <DictHint variant="video" sceneId={sceneId} />
         <div className="glass-block-panel glass-panel--video">{videoBody}</div>
       </div>
     </section>
@@ -739,7 +740,7 @@ export default async function ScenePage({
 
   const scriptNode = (
     <section>
-      <ScriptSection dialogue={dialogue} title={t(lang, "sceneSection.script")} />
+      <ScriptSection dialogue={dialogue} title={t(lang, "sceneSection.script")} sceneId={sceneId} />
     </section>
   );
 

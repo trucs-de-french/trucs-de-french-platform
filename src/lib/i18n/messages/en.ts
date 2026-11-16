@@ -298,6 +298,7 @@ export const en: Record<MessageKey, string> = {
   "dictionary.saveError": "Couldn't save. Try again.",
   "dictionary.hintTextVideo": "Want to add a word to your dictionary? Pause the video and tap any word in the subtitles.",
   "dictionary.hintTextScript": "Tap any word in the text to add it to your dictionary.",
+  "dictionary.hintCloseAria": "Close tip",
   "dictionary.panelLineLabel": "Example: “{line}”",
   "dictionary.panelTranslationLabel": "My translation (optional)",
   "dictionary.panelSave": "Save word",
@@ -316,6 +317,10 @@ export const en: Record<MessageKey, string> = {
   "dictionary.pos.locutions": "set phrase",
   "dictionary.pos.phrase": "useful phrase",
   "dictionary.pos.idiome": "idiom",
+  "dictionary.phraseTitleAria": "Edit the word or phrase to save",
+  "dictionary.phraseNeighborsAria": "Add neighbouring word to phrase",
+  "dictionary.phraseTooManyWords": "Phrase is too long — 6 words maximum.",
+  "dictionary.phraseTooLong": "Phrase is too long — 80 characters maximum.",
 
   "auth.shell.tagline": "French through cinema",
   "auth.shell.tabLogin": "Log in",

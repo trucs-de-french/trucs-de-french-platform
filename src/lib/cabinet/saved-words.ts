@@ -308,3 +308,78 @@ export function extractAlignedContext(
   }
   return { contextFr, contextUk: textUk.trim() };
 }
+
+// Межі речення, що містить offset у text — для PlainWordPanel: обмежує
+// кандидатів-сусідів (chips навколо тапнутого слова) тим самим реченням,
+// що й сам тапнутий слово, не всім parts/cue (той самий splitSentenceRanges,
+// що extractSentence вище, лише повертає межі, а не текст).
+export function findSentenceBounds(text: string, offset: number): { start: number; end: number } {
+  const ranges = splitSentenceRanges(text);
+  const match = ranges.find((r) => offset >= r.start && offset < r.end);
+  return match ? { start: match.start, end: match.end } : { start: 0, end: text.length };
+}
+
+// --- Фраза (кілька слів) зі скрипту/субтитрів -----------------------------
+//
+// Задача "save multi-word phrase from script and video subtitles": студент
+// може розширити тапнуте слово сусідніми словами (chips у PlainWordPanel) в
+// обидва боки, до 6 слів/80 символів, і вручну відредагувати результат
+// (для розривних виразів типу "ne ... pas", які не можна зібрати простим
+// діапазоном токенів). Нижче — ЛИШЕ чисті хелпери (без React/DOM) для цього:
+// вирізання фрази з вихідного тексту за символьними офсетами, валідація
+// довжини, і reducer для toggle сусіднього chip-а (тримає виділення
+// суцільним діапазоном навколо центру — задача вимагає саме це, не
+// довільний набір індексів).
+
+export const MAX_PHRASE_WORDS = 6;
+export const MAX_PHRASE_LENGTH = 80;
+
+// Прибирає ЛИШЕ кінцеву пунктуацію/пробіли (вимога задачі — середина фрази
+// лишається точно як написана, включно з апострофами/дефісами: "l'unanimité"
+// слайсом від офсету "l" до офсету кінця "unanimité" дає рядок із апострофом
+// усередині незмінним, tokenizePlainText (plain-word-panel.tsx) трактує їх
+// як окрему пару токенів лише для визначення клікабельності, не для цього
+// слайсу — символьні офсети тут завжди офсети В ОРИГІНАЛЬНОМУ рядку).
+const PHRASE_TRAILING_TRIM_RE = /[\s.,;:!?…»""''’)\]}]+$/u;
+
+export function extractPhrase(text: string, start: number, end: number): string {
+  return text.slice(start, end).replace(PHRASE_TRAILING_TRIM_RE, "");
+}
+
+export type PhraseValidationError = "empty" | "tooManyWords" | "tooLong";
+export type PhraseValidation = { ok: true; phrase: string } | { ok: false; error: PhraseValidationError };
+
+// raw — як є (ручне редагування title-інпута панелі МОЖЕ містити зайві
+// пробіли/перенос, chips-рух ніколи не дає такого, тож нормалізація
+// (collapse пробілів) тут безпечна для обох джерел. wordCount — за
+// пробілами, навмисно НЕ прив'язаний до tokenizePlainText: розривний вираз
+// "ne ... pas", вписаний студентом вручну, має рахуватись як 3 "слова" й
+// проходити валідацію так само просто, без спроб розпізнати, що "..." не
+// справжнє слово.
+export function validatePhraseInput(raw: string): PhraseValidation {
+  const phrase = raw.trim().replace(/\s+/g, " ");
+  if (!phrase) return { ok: false, error: "empty" };
+  if (phrase.length > MAX_PHRASE_LENGTH) return { ok: false, error: "tooLong" };
+  if (phrase.split(" ").length > MAX_PHRASE_WORDS) return { ok: false, error: "tooManyWords" };
+  return { ok: true, phrase };
+}
+
+// Виділення сусіднім chip-ом — завжди суцільний діапазон [min, max] офсетів
+// ВІДНОСНО центру (тапнутого слова, offset 0, ніколи не прибирається).
+// tapped — offset чипа, по якому клікнули: якщо це вже КРАЙ поточного
+// діапазону (і не центр) — прибирає його (стискає діапазон); якщо він за
+// межами поточного діапазону — розширює діапазон ДО нього (включно з усім,
+// що між ними — чипи між центром і tapped вже були видимі й тому вже
+// вибрані неявно); клік по вже вибраному НЕ-крайньому чипу — без ефекту
+// (задача: "tapping an end word of the range removes it", не середину).
+export type PhraseSelection = { min: number; max: number };
+
+export function toggleNeighborSelection(current: PhraseSelection, tapped: number): PhraseSelection {
+  if (tapped === 0) return current;
+  if (tapped > 0) {
+    if (tapped > current.max) return { ...current, max: tapped };
+    return tapped === current.max ? { ...current, max: tapped - 1 } : current;
+  }
+  if (tapped < current.min) return { ...current, min: tapped };
+  return tapped === current.min ? { ...current, min: tapped + 1 } : current;
+}

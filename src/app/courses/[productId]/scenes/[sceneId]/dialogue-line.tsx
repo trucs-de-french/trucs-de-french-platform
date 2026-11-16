@@ -2,13 +2,13 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { VocabItem } from "@/lib/vocab";
-import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
+import { matchVocabInText, matchTranslatedFormInText, buildVariantMap } from "@/lib/vocab-match";
 import { formatTimecode } from "@/lib/format-timecode";
 import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-categories";
-import { extractAlignedContext } from "@/lib/cabinet/saved-words";
+import { extractAlignedContext, findSentenceBounds } from "@/lib/cabinet/saved-words";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
-import { tokenizePlainText, PlainWordPanel } from "@/components/dictionary/plain-word-panel";
+import { tokenizePlainText, PlainWordPanel, isClickableWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -326,7 +326,7 @@ export function DialogueLine({
   // тут не узгоджується з ручною мемоізацією React Compiler (той самий
   // клас хибного зрацювання евристики, що вже описано в
   // task-type-combobox.tsx) — простіше рахувати напряму.
-  function findOpenPlainWord(): { text: string; offset: number } | null {
+  function findOpenPlainWord(): { text: string; offset: number; partIndex: number } | null {
     if (!openPlainKey || !openPlainKey.startsWith(plainKeyPrefix)) return null;
     for (let i = 0; i < tokenizedTextParts.length; i++) {
       const tokens = tokenizedTextParts[i];
@@ -334,13 +334,34 @@ export function DialogueLine({
       for (let j = 0; j < tokens.length; j++) {
         const token = tokens[j];
         if (token.type === "word" && token.clickable && `${plainKeyPrefix}${i}-${j}` === openPlainKey) {
-          return { text: token.text, offset: partOffsets[i] + token.start };
+          return { text: token.text, offset: partOffsets[i] + token.start, partIndex: i };
         }
       }
     }
     return null;
   }
   const openPlainWord = findOpenPlainWord();
+
+  // Кандидати-сусіди для PlainWordPanel (задача "save multi-word phrase
+  // from script and video subtitles") — лише клікабельні word-токени ТІЄЇ
+  // Ж PART (між вчительськими збігами) і ТОГО Ж речення, що тапнуте слово
+  // (findSentenceBounds — межі речення в межах саме цієї part.text, не
+  // всієї репліки: фраза не має перетинати вчительську підсвітку).
+  const phrasePlainWord = openPlainWord
+    ? (() => {
+        const tokens = tokenizedTextParts[openPlainWord.partIndex];
+        const partText = parts[openPlainWord.partIndex].text;
+        if (!tokens) return null;
+        const localOffset = openPlainWord.offset - partOffsets[openPlainWord.partIndex];
+        const bounds = findSentenceBounds(partText, localOffset);
+        const sentenceTokens: PhraseWordToken[] = tokens
+          .filter(isClickableWordToken)
+          .filter((tok) => tok.start >= bounds.start && tok.start < bounds.end)
+          .map((tok) => ({ text: tok.text, start: tok.start }));
+        const centerIndex = sentenceTokens.findIndex((tok) => tok.start === localOffset);
+        return { tokens: sentenceTokens, centerIndex, sourceText: partText };
+      })()
+    : null;
 
   const content = parts.map((part, i) => {
     if (part.type === "match") {
@@ -396,8 +417,6 @@ export function DialogueLine({
     );
   });
 
-  const teacherItem = openPlainWord ? teacherVariantMap.get(normalizeWordForMatch(openPlainWord.text)) ?? null : null;
-
   // Закриває панель і повертає фокус на кнопку слова, яка її відкрила —
   // rAF, бо сама кнопка все ще в DOM у момент виклику (панель
   // анмаунтиться лише на НАСТУПНОМУ рендері ScriptSection, після
@@ -422,6 +441,7 @@ export function DialogueLine({
         {content}
       </p>
       {openPlainWord &&
+        phrasePlainWord &&
         (() => {
           const { contextFr, contextUk } = extractAlignedContext(
             text,
@@ -431,10 +451,14 @@ export function DialogueLine({
           );
           return (
             <PlainWordPanel
+              key={openPlainKey}
               word={openPlainWord.text}
               contextFr={contextFr}
               contextUk={contextUk}
-              teacherItem={teacherItem ?? null}
+              phraseTokens={phrasePlainWord.tokens}
+              phraseCenterIndex={phrasePlainWord.centerIndex}
+              phraseSourceText={phrasePlainWord.sourceText}
+              teacherVariantMap={teacherVariantMap}
               inputId={`plain-word-translation-${lineIndex}`}
               onClose={closePlainPanel}
             />

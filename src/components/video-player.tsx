@@ -28,14 +28,14 @@ import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
 import { FullscreenExitButton } from "@/components/fullscreen-exit-button";
 import { Z_MODAL } from "@/lib/z-layers";
-import { firstVocabVariant, type VideoVocabItem, type VocabItem } from "@/lib/vocab";
-import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
+import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
+import { matchVocabInText, matchTranslatedFormInText, buildVariantMap } from "@/lib/vocab-match";
 import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech } from "@/lib/vocab-categories";
-import { extractAlignedContext } from "@/lib/cabinet/saved-words";
+import { extractAlignedContext, findSentenceBounds } from "@/lib/cabinet/saved-words";
 import { useT } from "@/lib/i18n/context";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
-import { tokenizePlainText, PlainWordPanel } from "@/components/dictionary/plain-word-panel";
+import { tokenizePlainText, PlainWordPanel, isClickableWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -193,7 +193,14 @@ function SubtitleFrLine({
   // закривають саме цю прогалину.
   playing: boolean;
   onWordClick: (item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) => void;
-  onPlainWordClick: (word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) => void;
+  // partText/localOffset — та сама part.text (сегмент між вчительськими
+  // збігами) і офсет тапнутого слова В НІЙ, що й сама SubtitleFrLine уже
+  // токенізує нижче — передається напряму (не перераховується в
+  // VideoPlayer.handlePlainWordClick), щоб кандидати-сусіди (задача "save
+  // multi-word phrase...") рахувались з ТОЧНО тих самих токенів, що вже
+  // відрендерені як кнопки .video-plain-word, без дублювання
+  // tokenizePlainText/matchVocabInText.
+  onPlainWordClick: (word: string, offsetInCue: number, partText: string, localOffset: number, e: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   const parts = matchVocabInText(text.replace(/\n+/g, " "), vocab);
   // Офсети кожної частини рахуються ОКРЕМИМ проходом ПЕРЕД .map(), що
@@ -241,7 +248,7 @@ function SubtitleFrLine({
                   tabIndex={playing ? -1 : 0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onPlainWordClick(token.text, partOffset + token.start, e);
+                    onPlainWordClick(token.text, partOffset + token.start, part.text, token.start, e);
                   }}
                   className="video-plain-word"
                 >
@@ -455,7 +462,15 @@ export function VideoPlayer({
         word: string;
         contextFr: string;
         contextUk: string | null;
-        teacherItem: VocabItem | null;
+        // Кандидати-сусіди (задача "save multi-word phrase..." — той самий
+        // принцип, що dialogue-line.tsx): клікабельні word-токени ТІЄЇ Ж
+        // part.text (між вчительськими збігами кью) і ТОГО Ж речення, що
+        // тапнуте слово. teacherItem (фіксований на момент кліку) прибрано —
+        // PlainWordPanel сама реактивно шукає в teacherVariantMap за
+        // ПОТОЧНОЮ фразою (задача, п.4).
+        phraseTokens: PhraseWordToken[];
+        phraseCenterIndex: number;
+        phraseSourceText: string;
         anchorLeftPx: number | null;
       };
   const [openCard, setOpenCard] = useState<OpenCard | null>(null);
@@ -840,7 +855,13 @@ export function VideoPlayer({
     return dialogue.find((line) => line.text.includes(normalizedCueText)) ?? null;
   }
 
-  function handlePlainWordClick(word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) {
+  function handlePlainWordClick(
+    word: string,
+    offsetInCue: number,
+    partText: string,
+    localOffset: number,
+    e: ReactMouseEvent<HTMLButtonElement>
+  ) {
     // Задача-виправлення "stop spontaneous pauses": звичайне слово
     // ІГНОРУЄТЬСЯ, якщо відео РЕАЛЬНО (videoRef.current.paused, не React-
     // стан playing, який оновлюється на рендер пізніше за сам DOM) грає —
@@ -866,15 +887,32 @@ export function VideoPlayer({
       contextFr = result.contextFr;
       contextUk = result.contextUk;
     }
-    const teacherItem = teacherVariantMap.get(normalizeWordForMatch(word)) ?? null;
+    // Кандидати-сусіди (задача "save multi-word phrase...") — лише
+    // клікабельні word-токени ТІЄЇ Ж part.text (вже передана з
+    // SubtitleFrLine, та сама, що й сам тапнутий токен) і ТОГО Ж речення,
+    // що тапнуте слово (той самий принцип, що dialogue-line.tsx).
+    const bounds = findSentenceBounds(partText, localOffset);
+    const sentenceTokens: PhraseWordToken[] = tokenizePlainText(partText)
+      .filter(isClickableWordToken)
+      .filter((tok) => tok.start >= bounds.start && tok.start < bounds.end)
+      .map((tok) => ({ text: tok.text, start: tok.start }));
+    const centerIndex = sentenceTokens.findIndex((tok) => tok.start === localOffset);
     // Найкраще припущення ДО того, як сама PlainWordPanel встигне
     // змонтуватись і сповістити реальний стан через onLayoutChange —
     // уникає миттєвого "блимання" повною формою для вже збереженого
-    // слова (teacherItem має пріоритет над "уже збережено" всередині
-    // самого компонента, тож це лише здогад, не остаточне джерело
-    // правди).
+    // слова (вчительський пріоритет рахує сама PlainWordPanel реактивно,
+    // тож це лише здогад за ОДНИМ словом, не остаточне джерело правди).
     setIsPanelCompactSaved(saved?.isSaved(word) ?? false);
-    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx: computeAnchorLeft(e.currentTarget) });
+    openWordCard({
+      kind: "plain",
+      word,
+      contextFr,
+      contextUk,
+      phraseTokens: sentenceTokens,
+      phraseCenterIndex: centerIndex,
+      phraseSourceText: partText,
+      anchorLeftPx: computeAnchorLeft(e.currentTarget),
+    });
   }
 
   // Закриття картки/панелі слова кліком поза нею й по Escape — той самий
@@ -1695,11 +1733,14 @@ export function VideoPlayer({
             }}
           >
             <PlainWordPanel
-              key={openCard.word}
+              key={`${openCard.phraseSourceText}-${openCard.phraseCenterIndex}`}
               word={openCard.word}
               contextFr={openCard.contextFr}
               contextUk={openCard.contextUk}
-              teacherItem={openCard.teacherItem}
+              phraseTokens={openCard.phraseTokens}
+              phraseCenterIndex={openCard.phraseCenterIndex}
+              phraseSourceText={openCard.phraseSourceText}
+              teacherVariantMap={teacherVariantMap}
               inputId="video-plain-word-translation"
               onClose={closeWordCard}
               compact={isCompact}

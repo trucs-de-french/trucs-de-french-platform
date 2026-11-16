@@ -1,89 +1,60 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
 import { useSavedWords } from "@/components/dictionary/saved-words-provider";
 
-const DISMISS_KEY = "tdf.dictHint.v1";
-
-// Задача-виправлення "split dictionary hint into video and script hints":
-// раніше ОДНА підказка (page.tsx, над заголовком "ВІДЕО") мала текст, що
-// згадував і скрипт, і відео одразу. Тепер два окремих монтування —
-// <DictHint variant="video"/> під баром "ВІДЕО", <DictHint
-// variant="script"/> під баром "Скрипт" (ScriptSection) — АЛЕ з однією
-// СПІЛЬНОЮ "закрито"-подією: закриття БУДЬ-ЯКОЇ з двох миттєво ховає
-// ОБИДВІ (і будь-які інші екземпляри на сторінці), без перезавантаження.
-// useState+useEffect (як було раніше) дає КОЖНОМУ екземпляру власний,
-// незалежний стан — закриття одного не зачепило б інший, поки сторінку не
-// перезавантажити. Замість цього — крихітний модульний "зовнішній стор"
-// (той самий патерн, що useSyncExternalStore очікує): один кеш і один набір
-// підписників НА ВЕСЬ МОДУЛЬ (не на компонент), localStorage лишається
-// джерелом правди між завантаженнями сторінки, підписники — між
-// екземплярами в ПОТОЧНОМУ завантаженні. useSyncExternalStore сам вирішує
-// проблему гідратації (getServerSnapshot нижче), яку раніше розв'язував
-// окремий mounted-стан + queueMicrotask.
-type Listener = () => void;
-let dismissedCache: boolean | null = null;
-const listeners = new Set<Listener>();
-
-function readDismissed(): boolean {
-  try {
-    return localStorage.getItem(DISMISS_KEY) === "1";
-  } catch {
-    return false;
-  }
+// Задача-виправлення "per-scene dismissible hints shown on every visit":
+// вчителька НЕ хоче спільного/постійного приховування (попередня версія,
+// commit d62f01c, ховала ОБИДВІ підказки НАЗАВЖДИ після закриття будь-якої
+// чи після першого збереження слова, через localStorage + модульний
+// зовнішній стор). Тепер кожен варіант — цілком НЕЗАЛЕЖНИЙ: свій
+// sessionStorage-ключ (не localStorage — підказка має з'являтись знову в
+// НОВІЙ вкладці/сесії і в КОЖНІЙ сцені), закриття одного варіанта не
+// торкається іншого, і hasSavedAny більше НЕ ховає підказку. Без спільного
+// стану між екземплярами більше не потрібен useSyncExternalStore — звичний
+// useState+useEffect (ефект лише ЧИТАЄ sessionStorage після монтування,
+// щоб SSR і перший клієнтський рендер лишались однаковими: підказка
+// завжди "показана" в обох, доки ефект не перевірить реальне значення —
+// той самий принцип, що localStorage-версія мала раніше для SSR).
+function storageKey(variant: "video" | "script", sceneId: string): string {
+  return `tdf.hint.${variant}.${sceneId}`;
 }
 
-function getSnapshot(): boolean {
-  if (dismissedCache === null) dismissedCache = readDismissed();
-  return dismissedCache;
-}
-
-// SSR/перший клієнтський рендер (до гідратації) — завжди "закрито" (як і
-// раніше), щоб підказка не блимнула, поки localStorage ще не прочитано.
-function getServerSnapshot(): boolean {
-  return true;
-}
-
-function subscribe(listener: Listener): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function dismiss(): void {
-  if (dismissedCache === true) return;
-  dismissedCache = true;
-  try {
-    localStorage.setItem(DISMISS_KEY, "1");
-  } catch {
-    // localStorage недоступний (приватний режим тощо) — підказка(и) просто
-    // з'являться знову при наступному завантаженні, не критично.
-  }
-  listeners.forEach((l) => l());
-}
-
-// Одноразова підказка над відео/скриптом — лише для залогінених студентів
-// (useSavedWords() !== null означає, що SavedWordsProvider змонтований, а
-// він рендериться лише коли є user, page.tsx). Зникає одразу після першого
-// успішного збереження слова ЗА ЦЮ СЕСІЮ, з БУДЬ-ЯКОГО джерела (відео чи
-// скрипт — saved.hasSavedAny спільний на всю сторінку) — saved.hasSavedAny
-// рахує лише save(), не читання початкового списку.
-export function DictHint({ variant }: { variant: "video" | "script" }) {
+export function DictHint({ variant, sceneId }: { variant: "video" | "script"; sceneId: string }) {
   const { t } = useT();
   const saved = useSavedWords();
-  const dismissed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [dismissed, setDismissed] = useState(false);
+  const key = storageKey(variant, sceneId);
 
   useEffect(() => {
-    if (saved?.hasSavedAny) dismiss();
-  }, [saved?.hasSavedAny]);
+    try {
+      if (sessionStorage.getItem(key) === "1") setDismissed(true);
+    } catch {
+      // sessionStorage недоступний (приватний режим тощо) — підказка
+      // просто лишається показаною, як і вимагає задача ("keep it in React
+      // state only" тут означає "не впало", не "сховати достроково").
+    }
+  }, [key]);
+
+  function handleClose() {
+    setDismissed(true);
+    try {
+      sessionStorage.setItem(key, "1");
+    } catch {
+      // Без sessionStorage дозакриття лишається лише в React-стані цього
+      // монтування — React-розмонтування сторінки знову покаже підказку,
+      // що й так узгоджується з "лише на поточну сесію".
+    }
+  }
 
   if (!saved || dismissed) return null;
 
   return (
     <div className="dict-hint">
       <span>{t(variant === "video" ? "dictionary.hintTextVideo" : "dictionary.hintTextScript")}</span>
-      <button type="button" onClick={dismiss} aria-label={t("button.closeAria")} className="dict-hint-close">
+      <button type="button" onClick={handleClose} aria-label={t("dictionary.hintCloseAria")} className="dict-hint-close">
         <X size={14} aria-hidden="true" />
       </button>
     </div>

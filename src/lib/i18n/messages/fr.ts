@@ -300,6 +300,7 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.saveError": "Échec de l'enregistrement. Réessayez.",
   "dictionary.hintTextVideo": "Envie d'ajouter un mot à votre dictionnaire ? Mettez la vidéo en pause et touchez n'importe quel mot des sous-titres.",
   "dictionary.hintTextScript": "Touchez n'importe quel mot du texte pour l'ajouter à votre dictionnaire.",
+  "dictionary.hintCloseAria": "Fermer l'astuce",
   "dictionary.panelLineLabel": "Exemple : « {line} »",
   "dictionary.panelTranslationLabel": "Ma traduction (facultatif)",
   "dictionary.panelSave": "Enregistrer le mot",
@@ -318,6 +319,10 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.pos.locutions": "locution",
   "dictionary.pos.phrase": "phrase",
   "dictionary.pos.idiome": "idiome",
+  "dictionary.phraseTitleAria": "Modifier le mot ou l'expression à enregistrer",
+  "dictionary.phraseNeighborsAria": "Ajouter le mot voisin à l'expression",
+  "dictionary.phraseTooManyWords": "L'expression est trop longue — 6 mots maximum.",
+  "dictionary.phraseTooLong": "L'expression est trop longue — 80 caractères maximum.",
 
   "auth.shell.tagline": "Le français à travers le cinéma",
   "auth.shell.tabLogin": "Connexion",

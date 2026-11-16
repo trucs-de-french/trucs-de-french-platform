@@ -17853,6 +17853,52 @@ button.cabinet-nav-item {
   font-size: 18px;
   color: #1a1640;
 }
+/* Редагований "заголовок" фрази (задача "save multi-word phrase...") —
+   олівець-підказка + input, що ЗАМІНЮЄ статичний <p class="plain-word-
+   panel-word"> (той самий клас лишається на самому input, тож колір/
+   шрифт/розмір, включно з .plain-word-panel--video override нижче,
+   успадковуються автоматично — тут лише reset рамки/фону самого
+   <input>, БЕЗ жодного кольору). */
+.plain-word-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.plain-word-panel-title-pencil {
+  flex: 0 0 auto;
+  opacity: 0.5;
+}
+.plain-word-panel-title-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  max-width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+}
+.plain-word-panel-title-input:focus-visible {
+  outline: 1px dashed currentColor;
+  outline-offset: 2px;
+}
+.plain-word-panel-title-error {
+  margin-top: 2px;
+}
+/* Чипи сусідніх слів (до 3 з кожного боку тапнутого) — переиспользует
+   .plain-word-pos-chip (колір/рамка/selected-стан уже мають light/dark/
+   --video варіанти вище й нижче), лише мінімальний touch target і відступ
+   від заголовка/перекладу тут, БЕЗ нових кольорів. */
+.plain-word-neighbor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.plain-word-neighbor-chip {
+  min-height: 36px;
+  min-width: 36px;
+}
 /* Змінний вміст (переклад/контекст/чипи тощо) — ЄДИНЕ, що скролиться:
    flex:1 1 auto дозволяє йому стиснутись до доступного місця (замість
    природної висоти), min-height:0 — класичний фікс для флекс-елемента з
@@ -18159,6 +18205,16 @@ button.cabinet-nav-item {
 .dict-hint-close:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
+}
+/* ≥44px tap target на телефоні (задача-виправлення "per-scene dismissible
+   hints shown on every visit", п.5) — та сама межа 768px, що й решта
+   проєкту (CLAUDE.md "768px on viewport width"). Іконка лишається 14px
+   (не росте разом із хіт-зоною) — лише клікабельна площа навколо неї. */
+@media (max-width: 767px) {
+  .dict-hint-close {
+    width: 44px;
+    height: 44px;
+  }
 }
 .dark .dict-hint-close {
   color: #f8f3e4;
