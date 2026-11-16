@@ -222,13 +222,27 @@ export function PlainWordPanel({
 
   const panelClassName = `plain-word-panel${compact ? " plain-word-panel--compact" : ""}`;
 
+  // Структура ОДНАКОВА в усіх 4 гілках нижче — header (слово, завжди
+  // видиме, НІКОЛИ не скролиться) / scrollarea (змінний вміст, скролиться,
+  // коли бракує місця — задача-виправлення "bounded scroll area and
+  // sticky actions in word panels") / footer (кнопки дій — "липкий", теж
+  // поза скролом, тож Зберегти/Скасувати завжди доступні). Для
+  // justSaved/justRemoved footer не рендериться взагалі — там немає дій.
+  // Коли компонент рендериться БЕЗ обмеженої висоти (скрипт, не відео) —
+  // flex-колонка просто розтягується під вміст, scrollarea ніколи не
+  // скролить (overflow:auto без max-height не дає скролбару) — та сама
+  // поведінка, що й до цього рефакторингу.
   if (justSaved || justRemoved) {
     return (
       <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <p className="plain-word-panel-word">{word}</p>
-        <p className="save-word-pill save-word-pill--saved inline-flex">
-          {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
-        </p>
+        <div className="plain-word-panel-header">
+          <p className="plain-word-panel-word">{word}</p>
+        </div>
+        <div className="plain-word-panel-scrollarea">
+          <p className="save-word-pill save-word-pill--saved inline-flex">
+            {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -250,15 +264,21 @@ export function PlainWordPanel({
     };
     return (
       <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <p className="plain-word-panel-word">{word}</p>
-        <p className="plain-word-panel-translation">{teacherItem.translation}</p>
-        {posLabel && <p className="plain-word-panel-pos">{posLabel}</p>}
-        {note && <p className="plain-word-panel-note">{note}</p>}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <SaveWordButton snapshot={snapshot} variant="pill" />
-          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-            {t("dictionary.panelClose")}
-          </button>
+        <div className="plain-word-panel-header">
+          <p className="plain-word-panel-word">{word}</p>
+        </div>
+        <div className="plain-word-panel-scrollarea">
+          <p className="plain-word-panel-translation">{teacherItem.translation}</p>
+          {posLabel && <p className="plain-word-panel-pos">{posLabel}</p>}
+          {note && <p className="plain-word-panel-note">{note}</p>}
+        </div>
+        <div className="plain-word-panel-footer">
+          <div className="flex flex-wrap items-center gap-2">
+            <SaveWordButton snapshot={snapshot} variant="pill" />
+            <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+              {t("dictionary.panelClose")}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -270,19 +290,25 @@ export function PlainWordPanel({
     const existingPosLabel = existing.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[existing.partOfSpeech] : null;
     return (
       <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <p className="plain-word-panel-word">{word}</p>
-        <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
-        {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
-        {existingPosLabel && <p className="plain-word-panel-pos">{existingPosLabel}</p>}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
-            {t("dictionary.removeAction")}
-          </button>
-          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-            {t("dictionary.panelClose")}
-          </button>
+        <div className="plain-word-panel-header">
+          <p className="plain-word-panel-word">{word}</p>
         </div>
-        {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
+        <div className="plain-word-panel-scrollarea">
+          <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
+          {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
+          {existingPosLabel && <p className="plain-word-panel-pos">{existingPosLabel}</p>}
+        </div>
+        <div className="plain-word-panel-footer">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+              {t("dictionary.removeAction")}
+            </button>
+            <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+              {t("dictionary.panelClose")}
+            </button>
+          </div>
+          {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
+        </div>
       </div>
     );
   }
@@ -303,44 +329,50 @@ export function PlainWordPanel({
 
   return (
     <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-      <p className="plain-word-panel-word">{word}</p>
-      <div className="plain-word-panel-col plain-word-panel-col--left">
-        {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
-        <label className="plain-word-panel-label" htmlFor={inputId}>
-          {t("dictionary.panelTranslationLabel")}
-        </label>
-        <input
-          id={inputId}
-          type="text"
-          value={value}
-          maxLength={200}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void handleSave();
-            }
-          }}
-          className="plain-word-panel-input"
-        />
+      <div className="plain-word-panel-header">
+        <p className="plain-word-panel-word">{word}</p>
       </div>
-      <div className="plain-word-panel-col plain-word-panel-col--right">
-        <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
+      <div className="plain-word-panel-scrollarea">
+        <div className="plain-word-panel-col plain-word-panel-col--left">
+          {contextUk && <p className="plain-word-panel-context">{t("dictionary.panelLineLabel", { line: contextUk })}</p>}
+          <label className="plain-word-panel-label" htmlFor={inputId}>
+            {t("dictionary.panelTranslationLabel")}
+          </label>
+          <input
+            id={inputId}
+            type="text"
+            value={value}
+            maxLength={200}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void handleSave();
+              }
+            }}
+            className="plain-word-panel-input"
+          />
+        </div>
+        <div className="plain-word-panel-col plain-word-panel-col--right">
+          <PosChipGroup value={partOfSpeech} onChange={setPartOfSpeech} groupId={`${inputId}-pos`} />
+        </div>
       </div>
-      <div className="plain-word-panel-actions mt-2 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="save-word-pill save-word-pill--primary"
-        >
-          {t("dictionary.panelSave")}
-        </button>
-        <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-          {t("dictionary.panelCancel")}
-        </button>
+      <div className="plain-word-panel-footer">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="save-word-pill save-word-pill--primary"
+          >
+            {t("dictionary.panelSave")}
+          </button>
+          <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+            {t("dictionary.panelCancel")}
+          </button>
+        </div>
+        {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
       </div>
-      {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
     </div>
   );
 }

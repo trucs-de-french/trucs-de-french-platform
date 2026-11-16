@@ -1082,19 +1082,21 @@ export function VideoPlayer({
   // попередній варіант брав getBoundingClientRect() ОДНОРАЗОВО в момент
   // кліку й міг зафіксувати перехідне/застаріле значення.
   const roomAbovePlate = containerHeight > 0 ? Math.max(0, containerHeight - chipBottomPx - 8) : 0;
-  // Замало місця НАД плашкою (<200px — "крихітний плеєр", той самий
-  // порядок величини, що й forced top:8px у landscape-fullscreen CSS-
-  // медіа-запиті нижче, тепер рахується так само на БУДЬ-якому desktop-
-  // вікні) — якір перемикається на верх контейнера. "Перевернути під
-  // плашку" (у зону контролів) свідомо не рахуємо: клікабельні слова
-  // з'являються лише на паузі, а пауза завжди показує повну панель
-  // керування (prevPlaying-ефект вище), тож там ніколи немає вільного
-  // місця для картки — ця гілка була б мертвим кодом.
-  const cardAnchorTop = containerHeight > 0 && roomAbovePlate < 200;
+  // Замало місця НАД плашкою (<180px — "крихітний плеєр", задача-
+  // виправлення "bounded scroll area and sticky actions in word panels",
+  // п.4) — якір перемикається на верх контейнера, max-height = вся висота
+  // контейнера −16px. "Перевернути під плашку" (у зону контролів) свідомо
+  // не рахуємо: клікабельні слова з'являються лише на паузі, а пауза
+  // завжди показує повну панель керування (prevPlaying-ефект вище), тож
+  // там ніколи немає вільного місця для картки — ця гілка була б мертвим
+  // кодом. Коли місця ВИСТАЧАЄ — максимум 480px (та сама висота ще й
+  // захищає від картки, вищої за реально потрібно, на величезному
+  // 1920×1080 fullscreen).
+  const cardAnchorTop = containerHeight > 0 && roomAbovePlate < 180;
   const cardMaxHeight = openCard
     ? cardAnchorTop
       ? Math.max(100, containerHeight - 16)
-      : Math.max(100, roomAbovePlate)
+      : Math.min(roomAbovePlate, 480)
     : undefined;
   // Компактна (двоколонкова) розкладка форми ручного перекладу
   // (plain-word-panel.tsx, проп compact) — не лише вузький landscape-
@@ -1332,18 +1334,25 @@ export function VideoPlayer({
                   >
                     <Rewind size={16} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      skip(10);
-                      wakeOverlay();
-                    }}
-                    aria-label={t("videoPlayer.forward10")}
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
-                    style={{ background: "rgba(255,255,255,0.16)" }}
-                  >
-                    <FastForward size={16} />
-                  </button>
+                  {/* Прибирається, поки відкрита картка/панель слова —
+                      задача-виправлення "bounded scroll area and sticky
+                      actions in word panels", п.5: округла кнопка-"скіп"
+                      (⏭/+10с) не потрібна, доки студент читає/зберігає
+                      слово, і не тулиться до краю картки/панелі. */}
+                  {!openCard && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        skip(10);
+                        wakeOverlay();
+                      }}
+                      aria-label={t("videoPlayer.forward10")}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
+                      style={{ background: "rgba(255,255,255,0.16)" }}
+                    >
+                      <FastForward size={16} />
+                    </button>
+                  )}
                   {hasAnySubtitles && (
                     <button
                       type="button"
@@ -1556,17 +1565,15 @@ export function VideoPlayer({
               maxHeight: `${cardMaxHeight ?? 240}px`,
             }}
           >
-            <div className="video-plain-word-panel-scroll">
-              <PlainWordPanel
-                word={openCard.word}
-                contextFr={openCard.contextFr}
-                contextUk={openCard.contextUk}
-                teacherItem={openCard.teacherItem}
-                inputId="video-plain-word-translation"
-                onClose={closeWordCard}
-                compact={isCompact}
-              />
-            </div>
+            <PlainWordPanel
+              word={openCard.word}
+              contextFr={openCard.contextFr}
+              contextUk={openCard.contextUk}
+              teacherItem={openCard.teacherItem}
+              inputId="video-plain-word-translation"
+              onClose={closeWordCard}
+              compact={isCompact}
+            />
           </div>
         )}
       </div>
@@ -1646,7 +1653,7 @@ function VideoWordCard({
         maxHeight: `${maxHeight}px`,
       }}
     >
-      <div className="video-word-card-scroll">
+      <div className="video-word-card-header">
         <div className="flex items-start justify-between gap-2">
           <p className="font-heading pr-2 text-lg font-bold text-white">{firstVocabVariant(item.word)}</p>
           <button
@@ -1658,7 +1665,9 @@ function VideoWordCard({
             <X size={16} />
           </button>
         </div>
+      </div>
 
+      <div className="video-word-card-scroll">
         {posLabel && posDotClass && (
           <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${posDotClass}`}>
             {posLabel}
@@ -1683,29 +1692,33 @@ function VideoWordCard({
             {item.example.translationUk && <p className="mt-0.5 text-xs text-white/60">{item.example.translationUk}</p>}
           </div>
         )}
+      </div>
 
-        {/* SaveWordButton сама ховається, якщо немає SavedWordsProvider
-            (сторінки матеріалів/DELF рендерять VideoPlayer поза контекстом
-            сцени) — рендериться завжди в розмітці картки (а не в portal), щоб
-            лишатись усередині wrapperRef і працювати й у fullscreen/iOS
-            pseudo-fullscreen (коментар при useFullscreenWrapper вище). */}
-        <div className="mt-3">
-          <SaveWordButton
-            snapshot={{
-              word: firstVocabVariant(item.word),
-              translation: item.translation,
-              translationSource: "teacher",
-              partOfSpeech: item.partOfSpeech ?? null,
-              note: item.note?.trim() || null,
-              imageUrl: item.image_url ?? null,
-              vocabId: item.id ?? null,
-              contextFr: item.example?.text ?? null,
-              contextUk: item.example?.translationUk ?? null,
-            } satisfies SaveWordSnapshot}
-            variant="pill"
-            surface="dark"
-          />
-        </div>
+      {/* SaveWordButton сама ховається, якщо немає SavedWordsProvider
+          (сторінки матеріалів/DELF рендерять VideoPlayer поза контекстом
+          сцени) — рендериться завжди в розмітці картки (а не в portal), щоб
+          лишатись усередині wrapperRef і працювати й у fullscreen/iOS
+          pseudo-fullscreen (коментар при useFullscreenWrapper вище). "Липкий"
+          футер (video-word-card-footer, flex:0 0 auto, поза video-word-card-
+          scroll) — кнопка завжди видима, навіть коли вміст вище скролить
+          (задача-виправлення "bounded scroll area and sticky actions in word
+          panels"). */}
+      <div className="video-word-card-footer">
+        <SaveWordButton
+          snapshot={{
+            word: firstVocabVariant(item.word),
+            translation: item.translation,
+            translationSource: "teacher",
+            partOfSpeech: item.partOfSpeech ?? null,
+            note: item.note?.trim() || null,
+            imageUrl: item.image_url ?? null,
+            vocabId: item.id ?? null,
+            contextFr: item.example?.text ?? null,
+            contextUk: item.example?.translationUk ?? null,
+          } satisfies SaveWordSnapshot}
+          variant="pill"
+          surface="dark"
+        />
       </div>
     </div>
   );

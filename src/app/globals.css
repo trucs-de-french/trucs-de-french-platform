@@ -1982,17 +1982,24 @@ button, input, textarea, select, label, nav, aside {
    клікнутого слова); left/transform на мобільному нижче перевизначені під
    bottom sheet на всю ширину, inline left там просто ігнорується.
    .video-word-card САМА — лише рамка (радіус/бордер/фон/тінь) з
-   overflow:hidden — ніякого overflow-y/padding тут: скрол і падінг
-   перенесені на ВНУТРІШНІЙ .video-word-card-scroll (задача "panel
-   stacking, scroll frame and compact layout on desktop", п.2) — інакше
-   нативний скролбар (і білий/темний фон під ним) міг намалюватись ПОЗА
-   округленим кутом рамки, бо overflow:auto й border-radius на тому самому
-   елементі не гарантують обрізання скролбару в усіх браузерах. */
+   overflow:hidden, ТЕПЕР ще й flex-колонка з трьох прямих дітей
+   (video-player.tsx VideoWordCard): -header (слово+хрестик закриття,
+   flex:0 0 auto, НЕ скролиться) / -scroll (змінний вміст — частина мови/
+   переклад/примітка/фото/"З репліки", flex:1 1 auto — єдине, що
+   скролиться) / -footer (кнопка збереження, flex:0 0 auto, "липка" —
+   завжди видима; задача-виправлення "bounded scroll area and sticky
+   actions in word panels" — РАНІШЕ .video-word-card-scroll обгортав ВСЕ
+   (header+футер разом), не мав власної обмеженої висоти (лише
+   max-height:100% без flex-розтягування батька) і просто ріс під
+   контент, а зовнішній overflow:hidden його обрізав БЕЗ скролбару. */
 .video-word-card {
   position: absolute;
   z-index: var(--video-card-z);
   transform: translateX(-50%);
   width: min(300px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -2001,14 +2008,26 @@ button, input, textarea, select, label, nav, aside {
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
+.video-word-card-header {
+  flex: 0 0 auto;
+  padding: 12px 14px 0;
+}
 .video-word-card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: 100%;
-  padding: 12px 14px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 18px 8px 14px;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: #e4cf94 transparent;
+}
+.video-word-card-footer {
+  flex: 0 0 auto;
+  padding: 8px 14px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 @supports not (backdrop-filter: blur(1px)) {
   .video-word-card {
@@ -2065,47 +2084,55 @@ button, input, textarea, select, label, nav, aside {
    video-player.tsx), але сама панель лишається у власній світлій/
    лавандовій поверхні (вимога задачі — та сама палітра, що панель
    звичайного слова скрипту), не темне скло картки вчительського слова.
-   Той самий принцип "рамка з overflow:hidden + внутрішній скрол", що
-   .video-word-card/-scroll вище: сама .plain-word-panel малює власний
-   білий/лавандовий фон і border-radius:14px, тому ТУТ border-radius
-   збігається з тим самим значенням (14px) — інакше overflow:hidden
-   обрізав би рамку інакше, ніж видимий край самої панелі. */
+   Той самий принцип "рамка з overflow:hidden", що .video-word-card вище —
+   сама .plain-word-panel малює власний білий/лавандовий фон і
+   border-radius:14px, тому ТУТ border-radius збігається з тим самим
+   значенням. На відміну від video-word-card тут НЕМАЄ власного
+   -header/-scroll/-footer на РІВНІ обгортки — <PlainWordPanel> рендериться
+   ПРЯМО всередину (без зайвого .video-plain-word-panel-scroll
+   контейнера, який раніше обгортав ВСЮ панель одним недоскролюваним
+   блоком, задача-виправлення "bounded scroll area and sticky actions in
+   word panels"): сама .plain-word-panel ВЖЕ flex-колонка з власними
+   header/scrollarea/footer (plain-word-panel.tsx + CSS вище), тут лише
+   розтягуємо її на всю висоту обгортки (flex:1 1 auto; height:100%), щоб
+   її внутрішня scrollarea отримала реальне обмеження висоти для скролу. */
 .video-plain-word-panel-wrap {
   position: absolute;
   z-index: var(--video-card-z);
   transform: translateX(-50%);
   width: min(300px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border-radius: 14px;
   overflow: hidden;
 }
-.video-plain-word-panel-scroll {
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-height: 100%;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #e4cf94 transparent;
-}
 .video-plain-word-panel-wrap .plain-word-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   margin-top: 0;
 }
 
 /* Тонкий стилізований скролбар (тему палітри — трек прозорий, бігунок
-   #e4cf94) для обох внутрішніх скрол-контейнерів вище — лише WebKit/
-   Blink (Firefox уже вкритий scrollbar-width/scrollbar-color у кожному
-   з них окремо). */
-.video-word-card-scroll::-webkit-scrollbar,
-.video-plain-word-panel-scroll::-webkit-scrollbar {
+   #e4cf94, темніший #d9b765 на hover) для обох внутрішніх скрол-
+   контейнерів — .video-word-card-scroll і .plain-word-panel-scrollarea
+   (та сама панель всередині відео й усередині скрипту, стилі спільні) —
+   лише WebKit/Blink (Firefox уже вкритий scrollbar-width/scrollbar-color
+   у кожному з них окремо, ::-webkit-scrollbar-thumb:hover у Firefox не
+   підтримується — лишається без hover-ефекту там). */
+.video-word-card-scroll::-webkit-scrollbar {
   width: 6px;
 }
-.video-word-card-scroll::-webkit-scrollbar-track,
-.video-plain-word-panel-scroll::-webkit-scrollbar-track {
+.video-word-card-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
-.video-word-card-scroll::-webkit-scrollbar-thumb,
-.video-plain-word-panel-scroll::-webkit-scrollbar-thumb {
+.video-word-card-scroll::-webkit-scrollbar-thumb {
   background: #e4cf94;
   border-radius: 999px;
+}
+.video-word-card-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d9b765;
 }
 @media (max-width: 639px) {
   .video-plain-word-panel-wrap {
@@ -17651,7 +17678,16 @@ button.cabinet-nav-item {
    й була непередбачувана світла/темна поверхня): білий у світлій темі,
    лавандовий #dcdbf3 у темній — панель виглядає як частина тієї самої
    тултіп-мови скрипту в обох темах, текст завжди темний (як у тултіпі). */
+/* flex-колонка — header (слово)/scrollarea (змінний вміст)/footer (дії)
+   рендеряться як три прямі діти (plain-word-panel.tsx, задача-виправлення
+   "bounded scroll area and sticky actions in word panels"). Без обмеженої
+   висоти (скрипт, dialogue-line.tsx) просто розтягується під вміст, як і
+   раніше — min-height:0 потрібен ЛИШЕ коли батько (video-player.tsx,
+   .video-plain-word-panel-wrap) дає панелі flex:1/height:100%. */
 .plain-word-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   margin-top: 6px;
   padding: 12px 14px;
   border-radius: 14px;
@@ -17668,12 +17704,65 @@ button.cabinet-nav-item {
     border-color: rgba(150, 125, 240, 0.5);
   }
 }
+.plain-word-panel-header {
+  flex: 0 0 auto;
+}
 .plain-word-panel-word {
   margin: 0;
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 18px;
   color: #1a1640;
+}
+/* Змінний вміст (переклад/контекст/чипи тощо) — ЄДИНЕ, що скролиться:
+   flex:1 1 auto дозволяє йому стиснутись до доступного місця (замість
+   природної висоти), min-height:0 — класичний фікс для флекс-елемента з
+   overflow:auto (без нього браузер інакше не стискає elementy нижче його
+   контенту). padding-right трохи більший за ліву/верхню/нижню — запас під
+   скролбар (scrollbar-gutter:stable уже резервує місце, цей padding —
+   додатковий відступ самого ТЕКСТУ від краю, щоб бігунок не торкався
+   округленого кута картки). */
+.plain-word-panel-scrollarea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #e4cf94 transparent;
+}
+.plain-word-panel-scrollarea::-webkit-scrollbar {
+  width: 6px;
+}
+.plain-word-panel-scrollarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.plain-word-panel-scrollarea::-webkit-scrollbar-thumb {
+  background: #e4cf94;
+  border-radius: 999px;
+}
+.plain-word-panel-scrollarea::-webkit-scrollbar-thumb:hover {
+  background: #d9b765;
+}
+/* "Липкий" футер дій (Зберегти/Скасувати, Прибрати тощо) — ЗАВЖДИ поза
+   scrollarea (flex:0 0 auto), тож лишається видимим незалежно від того,
+   чи скролить вміст над ним. border-top відділяє його від scrollarea
+   візуально навіть коли та НЕ скролить (контент короткий). */
+.plain-word-panel-footer {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gold-border-55);
+}
+.dark .plain-word-panel-footer {
+  border-top-color: rgba(150, 125, 240, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel-footer {
+    border-top-color: rgba(150, 125, 240, 0.5);
+  }
 }
 .plain-word-panel-translation {
   margin: 4px 0 0;
@@ -17750,31 +17839,54 @@ button.cabinet-nav-item {
 
 /* Обгортки навколо "переклад+поле вводу" і "чипи частини мови" у формі
    ручного перекладу (plain-word-panel.tsx) — самі по собі звичайні блоки,
-   жодного власного вигляду: за замовчуванням панель лишається тим самим
-   вертикальним потоком, що й до розбиття на обгортки. .plain-word-panel--
-   compact (video-player.tsx, вузький landscape-fullscreen — компонент
-   приймає рішення через проп `compact`, не через власний медіа-запит)
-   переставляє ці дві обгортки поряд: слово — на всю ширину зверху, дії —
-   на всю ширину знизу. */
+   жодного власного вигляду: за замовчуванням scrollarea лишається тим
+   самим вертикальним потоком, що й до розбиття на обгортки. Слово
+   (header) і кнопки дій (footer) тепер СТРУКТУРНО поза scrollarea —
+   .plain-word-panel--compact (video-player.tsx — компонент приймає
+   рішення через проп `compact`, рахований з вимірюваного вільного місця,
+   не лише з власного медіа-запиту) перетворює саму scrollarea на 2
+   колонки, без потреби окремо "розтягувати" слово/дії на всю ширину
+   (вони вже сиблінги scrollarea, не її грід-діти). */
 .plain-word-panel-col {
   display: block;
 }
-.plain-word-panel--compact {
+.plain-word-panel--compact .plain-word-panel-scrollarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 14px;
+  column-gap: 10px;
   align-items: start;
-}
-.plain-word-panel--compact .plain-word-panel-word,
-.plain-word-panel--compact .plain-word-panel-actions,
-.plain-word-panel--compact .save-word-error {
-  grid-column: 1 / -1;
 }
 .plain-word-panel--compact .plain-word-panel-col--left {
   grid-column: 1;
 }
 .plain-word-panel--compact .plain-word-panel-col--right {
   grid-column: 2;
+}
+/* Компактний розмір полів форми (задача-виправлення "bounded scroll area
+   and sticky actions in word panels", п.2) — ціль: ~220-260px загальної
+   висоти панелі в компактному режимі. */
+.plain-word-panel--compact .plain-word-panel-context {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.plain-word-panel--compact .plain-word-panel-label {
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plain-word-panel--compact .plain-word-panel-input {
+  height: 40px;
+  margin-top: 2px;
+}
+.plain-word-panel--compact .plain-word-pos-field {
+  margin-top: 0;
+}
+.plain-word-panel--compact .plain-word-pos-chip {
+  padding: 6px 12px;
+  font-size: 14px;
 }
 
 /* Одноразова підказка над скриптом (dict-hint.tsx) — слимова плашка, не
