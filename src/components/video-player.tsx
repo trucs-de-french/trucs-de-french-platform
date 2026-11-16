@@ -382,16 +382,18 @@ export function VideoPlayer({
   // Відкрита картка/панель слова — лише ОДНА одночасно (openCard=null —
   // нічого не відкрито), "vocab" (підсвічене вчителькою, VideoWordCard) чи
   // "plain" (звичайне слово субтитрів, PlainWordPanel, Крок "save any word
-  // from video subtitles"). anchorLeftPx/bottomPx — пікселі від краю
-  // wrapperRef, обчислені в computeAnchor нижче з positions клікнутого
-  // слова — спільні для обох kind, щоб і картка, і панель анкорились
-  // однаково. anchorTop — замало місця НАД плашкою субтитрів (не лише
-  // landscape-fullscreen з CSS-медіа-запиту нижче, а будь-яке закоротке
-  // desktop-вікно — задача "panel stacking, scroll frame and compact
-  // layout on desktop", п.4): якір перемикається на верх контейнера
-  // (top:8px) замість bottomPx.
+  // from video subtitles"). anchorLeftPx — горизонтальний центр клікнутого
+  // слова (пікселі від краю wrapperRef) — знімок на момент кліку, слово
+  // більше не рухається, доки картка відкрита. Вертикальний якір
+  // (bottomPx/top/max-height/compact) навмисно НЕ зберігається тут —
+  // рахується реактивно нижче (bottomAnchorPx/cardAnchorTop/cardMaxHeight)
+  // з живих ResizeObserver-станів (containerHeight/overlayHeight/
+  // plateHeight), а не як одноразовий знімок getBoundingClientRect() на
+  // момент кліку: знімок міг зафіксувати застаріле/перехідне значення
+  // (задача-виправлення "place panel above subtitles and keep it open
+  // while seeking", п.A — "панель лишається приклеєною до верху").
   type OpenCard =
-    | { kind: "vocab"; item: VideoVocabItem; anchorLeftPx: number | null; bottomPx: number; anchorTop: boolean }
+    | { kind: "vocab"; item: VideoVocabItem; anchorLeftPx: number | null }
     | {
         kind: "plain";
         word: string;
@@ -399,8 +401,6 @@ export function VideoPlayer({
         contextUk: string | null;
         teacherItem: VocabItem | null;
         anchorLeftPx: number | null;
-        bottomPx: number;
-        anchorTop: boolean;
       };
   const [openCard, setOpenCard] = useState<OpenCard | null>(null);
   // Компактна розкладка форми ручного перекладу (plain-word-panel.tsx,
@@ -539,7 +539,12 @@ export function VideoPlayer({
   // керування, plateHeight (ResizeObserver, 0 коли плашки немає) додає
   // точну висоту плашки замість фіксованого запасу, тож чип ніколи не
   // перекриває ні панель, ні плашку, якою б довгою вона не була (1 чи 2
-  // рядки). +8px — проміжок між чипом і тим, що під ним.
+  // рядки). +8px — проміжок між чипом і тим, що під ним. Та сама величина
+  // тепер і для bottom картки/панелі слова (roomAbovePlate/cardAnchorTop/
+  // cardMaxHeight нижче) — "bottom edge = верх плашки − 8px" (задача-
+  // виправлення "place panel above subtitles and keep it open while
+  // seeking", п.1), повністю реактивна, без одноразового знімка на момент
+  // кліку.
   const chipBottomPx = overlayHeight + (plateHeight > 0 ? plateHeight + 8 : 0) + 8;
 
   const frUrl = subtitles?.find((s) => s.lang === "fr")?.url ?? null;
@@ -740,38 +745,20 @@ export function VideoPlayer({
     wasPlayingBeforeCardRef.current = null;
   }
 
-  // Позиція картки/панелі — від самого клікнутого слова: anchorLeftPx —
-  // його горизонтальний центр (для desktop-анкора), bottomPx — відстань
-  // від низу wrapperRef до ВЕРХУ ВСІЄЇ плашки субтитрів (subtitlePlateRef,
-  // не лише рядка клікнутого слова — інакше картка перекривала другий
-  // рядок УА, коли показані і FR, і UA; аудит "save any word from video
-  // subtitles" п.1/п.7) +8px — та сама величина автоматично тримає картку
-  // над усією плашкою і над панеллю керування, без окремого вимірювання
-  // висоти кожної. anchorTop — замало місця НАД плашкою (<120px) навіть
-  // на звичайному desktop-вікні (не лише вузький landscape-fullscreen,
-  // куди цей самий якір форсує CSS-медіа-запит нижче) — якір перемикається
-  // на верх контейнера. "Перевернути під плашку" (у зону контролів) свідомо
-  // не рахуємо: клікабельні слова з'являються лише на паузі, а пауза
-  // завжди показує повну панель керування (prevPlaying-ефект нижче), тож
-  // там ніколи немає вільного місця для картки — ця гілка була б мертвим
-  // кодом.
-  function computeAnchor(wordEl: HTMLElement): { anchorLeftPx: number | null; bottomPx: number; anchorTop: boolean } {
+  // Горизонтальний центр клікнутого слова (пікселі від лівого краю
+  // wrapperRef) — одноразовий знімок на момент кліку (саме слово в тексті
+  // субтитра не рухається, доки картка відкрита). Вертикальний якір більше
+  // не рахується тут — bottomAnchorPx/cardAnchorTop/cardMaxHeight нижче.
+  function computeAnchorLeft(wordEl: HTMLElement): number | null {
     const wrapper = wrapperRef.current;
-    if (!wrapper) return { anchorLeftPx: null, bottomPx: 88, anchorTop: false };
+    if (!wrapper) return null;
     const wordRect = wordEl.getBoundingClientRect();
     const wrapperRect = wrapper.getBoundingClientRect();
-    const plateRect = subtitlePlateRef.current?.getBoundingClientRect() ?? wordRect;
-    const roomAbove = plateRect.top - wrapperRect.top - 8;
-    return {
-      anchorLeftPx: wordRect.left + wordRect.width / 2 - wrapperRect.left,
-      bottomPx: wrapperRect.bottom - plateRect.top + 8,
-      anchorTop: roomAbove < 120,
-    };
+    return wordRect.left + wordRect.width / 2 - wrapperRect.left;
   }
 
   function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
-    const { anchorLeftPx, bottomPx, anchorTop } = computeAnchor(e.currentTarget);
-    openWordCard({ kind: "vocab", item, anchorLeftPx, bottomPx, anchorTop });
+    openWordCard({ kind: "vocab", item, anchorLeftPx: computeAnchorLeft(e.currentTarget) });
   }
 
   // Той самий словник сцени/блоку, що вже в collectVideoVocab (унікальна
@@ -810,8 +797,7 @@ export function VideoPlayer({
       contextUk = result.contextUk;
     }
     const teacherItem = teacherVariantMap.get(normalizeWordForMatch(word)) ?? null;
-    const { anchorLeftPx, bottomPx, anchorTop } = computeAnchor(e.currentTarget);
-    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx, bottomPx, anchorTop });
+    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx: computeAnchorLeft(e.currentTarget) });
   }
 
   // Закриття картки/панелі слова кліком поза нею й по Escape — той самий
@@ -823,13 +809,20 @@ export function VideoPlayer({
   // принцип, що wordCardRef, для плаваючої обгортки PlainWordPanel
   // (сам компонент МАЄ й власний такий слухач — для використання в
   // script-section.tsx — цей тут лише дублює для контейнера-обгортки,
-  // якого PlainWordPanel не знає).
+  // якого PlainWordPanel не знає). overlayRef/trackRef — жодна кнопка
+  // панелі керування (play/±10с/повтор/повільно/швидкість/субтитри/звук/
+  // fullscreen) чи сама смуга прогресу НЕ закриває картку/панель (задача-
+  // виправлення "place panel above subtitles and keep it open while
+  // seeking", п.2) — студент може керувати відтворенням, не втрачаючи
+  // відкрите слово.
   useEffect(() => {
     if (!openCard) return;
     function handlePointerDown(e: globalThis.PointerEvent) {
       const target = e.target as Element | null;
       if (wordCardRef.current?.contains(target)) return;
       if (plainPanelWrapRef.current?.contains(target)) return;
+      if (overlayRef.current?.contains(target)) return;
+      if (trackRef.current?.contains(target)) return;
       if (target?.closest?.("[data-vocab-trigger], [data-plain-word-trigger]")) return;
       closeWordCard();
     }
@@ -954,10 +947,11 @@ export function VideoPlayer({
 
   function handleTrackPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (!metadataLoaded) return;
-    // Скрабінг смуги прогресу зі відкритою карткою/панеллю слова — контекст
-    // (слово, репліка) миттєво застаріває, закриваємо, щоб не лишати
-    // "призрака" зі старого моменту відео.
-    if (openCard) closeWordCard();
+    // Скрабінг смуги прогресу НЕ закриває відкриту картку/панель слова —
+    // слово й контекст уже зафіксовані в openCard-стані, збереження
+    // лишається коректним і після перемотування (задача-виправлення
+    // "place panel above subtitles and keep it open while seeking", п.2 —
+    // раніше тут був closeWordCard(), прибрано навмисно).
     seekToClientX(e.clientX);
     trackRef.current?.setPointerCapture(e.pointerId);
     wakeOverlay();
@@ -1075,24 +1069,49 @@ export function VideoPlayer({
           Math.max(WORD_CARD_WIDTH / 2 + 12, containerWidth - WORD_CARD_WIDTH / 2 - 12)
         )
       : null;
-  // bottomPx уже рахується від плашки субтитрів (computeAnchor) — тут лише
-  // обмежуємо висоту картки/панелі, щоб із цим bottom вона не вилізла за
-  // верхній край контейнера. anchorTop — своя формула (від верху
-  // контейнера, а не від bottomPx — той орієнтир більше не застосовний,
-  // коли якір уже перемкнутий на top:8px).
+  // Вертикальний якір картки/панелі — ПОВНІСТЮ реактивний (не знімок на
+  // момент кліку): bottomAnchorPx — та сама формула, що chipBottomPx вище
+  // (відстань від низу контейнера до ВЕРХУ плашки субтитрів, +8px — висота
+  // панелі керування вже входить в overlayHeight), рахується з живих
+  // ResizeObserver-станів (containerHeight/overlayHeight/plateHeight), тож
+  // реагує сама на resize/fullscreen/зміну режиму субтитрів (FR/FR+UA/
+  // вимкнено — plateHeight стає 0 чи змінюється, щойно плашка зникає/
+  // з'являється/міняє висоту, через attachSubtitlePlateRef). Виправляє
+  // "панель лишається приклеєною до верху" (задача-виправлення "place
+  // panel above subtitles and keep it open while seeking", п.A) —
+  // попередній варіант брав getBoundingClientRect() ОДНОРАЗОВО в момент
+  // кліку й міг зафіксувати перехідне/застаріле значення.
+  const roomAbovePlate = containerHeight > 0 ? Math.max(0, containerHeight - chipBottomPx - 8) : 0;
+  // Замало місця НАД плашкою (<200px — "крихітний плеєр", той самий
+  // порядок величини, що й forced top:8px у landscape-fullscreen CSS-
+  // медіа-запиті нижче, тепер рахується так само на БУДЬ-якому desktop-
+  // вікні) — якір перемикається на верх контейнера. "Перевернути під
+  // плашку" (у зону контролів) свідомо не рахуємо: клікабельні слова
+  // з'являються лише на паузі, а пауза завжди показує повну панель
+  // керування (prevPlaying-ефект вище), тож там ніколи немає вільного
+  // місця для картки — ця гілка була б мертвим кодом.
+  const cardAnchorTop = containerHeight > 0 && roomAbovePlate < 200;
   const cardMaxHeight = openCard
-    ? openCard.anchorTop
+    ? cardAnchorTop
       ? Math.max(100, containerHeight - 16)
-      : Math.max(100, containerHeight - openCard.bottomPx - 16)
+      : Math.max(100, roomAbovePlate)
     : undefined;
   // Компактна (двоколонкова) розкладка форми ручного перекладу
   // (plain-word-panel.tsx, проп compact) — не лише вузький landscape-
   // fullscreen (isCompactLandscape, медіа-запит вище), а БУДЬ-ЯКЕ
   // вимірене місце замало для звичайної однієї колонки (задача "panel
-  // stacking, scroll frame and compact layout on desktop", п.3): 320px —
-  // приблизна висота однієй колонки форми (слово+контекст+лейбл+інпут+
-  // чипи+кнопки) без скролу.
-  const isCompactByRoom = cardMaxHeight !== undefined && cardMaxHeight < 320;
+  // stacking, scroll frame and compact layout on desktop", п.3).
+  // SINGLE_COLUMN_FORM_HEIGHT — стала оцінка природної висоти однієї
+  // колонки форми (слово+контекст+лейбл+інпут+чипи у 2 рядки+кнопки), НЕ
+  // жива ResizeObserver-висота самої панелі: порівнювати поточну ВИМІРЕНУ
+  // висоту панелі з доступним місцем і перемикати compact за цим
+  // результатом створило б коливання (compact зменшує висоту -> знову
+  // "влізає" -> вимикає compact -> знову завелика -> знову compact...).
+  // roomAbovePlate (знаменник) лишається повністю реактивним — лише
+  // чисельник (форма) узятий фіксованим, бо її вміст завжди один і той
+  // самий набір полів, без значної варіації висоти.
+  const SINGLE_COLUMN_FORM_HEIGHT = 340;
+  const isCompactByRoom = !cardAnchorTop && roomAbovePlate < SINGLE_COLUMN_FORM_HEIGHT;
   const isCompact = isCompactLandscape || isCompactByRoom;
 
   if (loadError) {
@@ -1520,8 +1539,8 @@ export function VideoPlayer({
             cardRef={wordCardRef}
             item={openCard.item}
             leftPx={clampedCardLeft}
-            bottomPx={openCard.bottomPx}
-            anchorTop={openCard.anchorTop}
+            bottomPx={chipBottomPx}
+            anchorTop={cardAnchorTop}
             maxHeight={cardMaxHeight ?? 240}
             onClose={closeWordCard}
           />
@@ -1531,8 +1550,8 @@ export function VideoPlayer({
             ref={plainPanelWrapRef}
             className="video-plain-word-panel-wrap"
             style={{
-              bottom: openCard.anchorTop ? undefined : `${openCard.bottomPx}px`,
-              top: openCard.anchorTop ? "8px" : undefined,
+              bottom: cardAnchorTop ? undefined : `${chipBottomPx}px`,
+              top: cardAnchorTop ? "8px" : undefined,
               left: clampedCardLeft != null ? `${clampedCardLeft}px` : undefined,
               maxHeight: `${cardMaxHeight ?? 240}px`,
             }}
