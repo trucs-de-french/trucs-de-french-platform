@@ -149,6 +149,7 @@ export function PlainWordPanel({
   inputId,
   onClose,
   compact = false,
+  onLayoutChange,
 }: {
   word: string;
   contextFr: string;
@@ -157,6 +158,14 @@ export function PlainWordPanel({
   inputId: string;
   onClose: () => void;
   compact?: boolean;
+  // Повідомляє викликача, яка розмітка зараз рендериться — "compact"
+  // (вже збережено / щойно збережено-прибрано) чи "form" (форма ручного
+  // перекладу/вчительська картка) — лише video-player.tsx слухає, щоб
+  // підігнати РОЗМІР власної позиційної обгортки (.video-plain-word-
+  // panel-wrap) під цей самий стан: обгортка сама не знає, яка гілка
+  // зараз відмальована всередині. Задача-виправлення "compact panel in
+  // saved state".
+  onLayoutChange?: (mode: "form" | "compact") => void;
 }) {
   const { t } = useT();
   const saved = useSavedWords();
@@ -212,9 +221,26 @@ export function PlainWordPanel({
     if (e.key === "Escape") onClose();
   }
 
+  // existing/isSavedCompact рахуються ТУТ (до "if (!saved) return null"
+  // нижче, з optional chaining) — react-hooks/rules-of-hooks забороняє
+  // виклик хука (useEffect нижче) ПІСЛЯ умовного return, навіть якщо
+  // saved===null на практиці ніколи не змінюється протягом життя цього
+  // компонента.
+  const existing = saved?.getSaved(word) ?? null;
+  // !teacherItem — та сама гілка-пріоритет, що нижче (if (teacherItem)
+  // рендериться ПЕРШИМ, перед if (existing)): слово, яке вчителька
+  // позначила як vocab, завжди показує повну вчительську форму, навіть
+  // якщо воно вже збережене студентом — isSavedCompact мусить повторювати
+  // цю ж умову пріоритету, інакше повідомляв би "compact" для гілки, що
+  // насправді рендерить повну форму.
+  const isSavedCompact = Boolean(justSaved || justRemoved || (!teacherItem && existing));
+  useEffect(() => {
+    onLayoutChange?.(isSavedCompact ? "compact" : "form");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onLayoutChange з викликача стабільний лише за формою виклику, не за ідентичністю; залежність від isSavedCompact навмисно єдина, що має перевикликати ефект
+  }, [isSavedCompact]);
+
   if (!saved) return null;
 
-  const existing = saved.getSaved(word);
   const error = saved.getError(word);
   const pending = saved.isPending(word);
 
@@ -225,30 +251,33 @@ export function PlainWordPanel({
 
   const panelClassName = `plain-word-panel${compact ? " plain-word-panel--compact" : ""}`;
 
-  // Структура ОДНАКОВА в усіх 4 гілках нижче — header (слово, завжди
-  // видиме, НІКОЛИ не скролиться) / scrollarea (змінний вміст, скролиться,
-  // коли бракує місця — задача-виправлення "bounded scroll area and
-  // sticky actions in word panels") / footer (кнопки дій — "липкий", теж
-  // поза скролом, тож Зберегти/Скасувати завжди доступні). Для
-  // justSaved/justRemoved footer не рендериться взагалі — там немає дій.
+  // justSaved/justRemoved/existing (уже збережене слово) — ОДИН компактний
+  // рядок (слово · пілюля · дії), не header/scrollarea/footer-структура
+  // форми нижче: тут майже нема чого показувати, а стара структура все
+  // одно розтягувала панель на всю ширину/висоту форми (задача-виправлення
+  // "compact panel in saved state"). .plain-word-panel--compact-saved
+  // (globals.css) перемикає сам .plain-word-panel на flex-ряд із
+  // wrap/width:max-content замість flex-колонки на всю висоту обгортки.
+  if (justSaved || justRemoved) {
+    return (
+      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        <p className="save-word-pill save-word-pill--saved save-word-pill--compact">
+          {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
+        </p>
+      </div>
+    );
+  }
+
+  // Структура ОДНАКОВА в обох гілках нижче (вчителька/форма) — header
+  // (слово, завжди видиме, НІКОЛИ не скролиться) / scrollarea (змінний
+  // вміст, скролиться, коли бракує місця — задача-виправлення "bounded
+  // scroll area and sticky actions in word panels") / footer (кнопки дій —
+  // "липкий", теж поза скролом, тож Зберегти/Скасувати завжди доступні).
   // Коли компонент рендериться БЕЗ обмеженої висоти (скрипт, не відео) —
   // flex-колонка просто розтягується під вміст, scrollarea ніколи не
   // скролить (overflow:auto без max-height не дає скролбару) — та сама
   // поведінка, що й до цього рефакторингу.
-  if (justSaved || justRemoved) {
-    return (
-      <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <div className="plain-word-panel-header">
-          <p className="plain-word-panel-word">{word}</p>
-        </div>
-        <div className="plain-word-panel-scrollarea">
-          <p className="save-word-pill save-word-pill--saved inline-flex">
-            {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (teacherItem) {
     const pos = normalizePartOfSpeech(teacherItem.partOfSpeech);
@@ -288,30 +317,25 @@ export function PlainWordPanel({
   }
 
   if (existing) {
-    // Та сама FR-назва, що читає /cabinet/dictionary (PART_OF_SPEECH_LABELS_FR,
-    // dictionary-view.tsx) — read-only лейбл, без чипів/редагування тут.
-    const existingPosLabel = existing.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[existing.partOfSpeech] : null;
+    // Один компактний рядок — слово · (переклад, якщо студент його вписав)
+    // · "✓ У словнику" · Прибрати · Закрити. Частина мови (existingPosLabel
+    // у попередній версії) свідомо не показуємо тут — другорядна деталь,
+    // яка й так лишається видимою на /cabinet/dictionary; у компактному
+    // рядку лише те, що потрібно для швидкого погляду/дії.
     return (
-      <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
-        <div className="plain-word-panel-header">
-          <p className="plain-word-panel-word">{word}</p>
-        </div>
-        <div className="plain-word-panel-scrollarea">
-          <p className="save-word-pill save-word-pill--saved inline-flex">{t("dictionary.savedState")}</p>
-          {existing.translation && <p className="plain-word-panel-translation">{existing.translation}</p>}
-          {existingPosLabel && <p className="plain-word-panel-pos">{existingPosLabel}</p>}
-        </div>
-        <div className="plain-word-panel-footer">
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
-              {t("dictionary.removeAction")}
-            </button>
-            <button type="button" onClick={onClose} className="plain-word-panel-cancel">
-              {t("dictionary.panelClose")}
-            </button>
-          </div>
-          {error && <p className="save-word-error">{t("dictionary.saveError")}</p>}
-        </div>
+      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+        <p className="plain-word-panel-word">{word}</p>
+        {existing.translation && (
+          <span className="plain-word-panel-compact-translation">{existing.translation}</span>
+        )}
+        <p className="save-word-pill save-word-pill--saved save-word-pill--compact">{t("dictionary.savedState")}</p>
+        <button type="button" onClick={handleRemove} disabled={pending} className="save-word-remove-link">
+          {t("dictionary.removeAction")}
+        </button>
+        <button type="button" onClick={onClose} className="plain-word-panel-cancel">
+          {t("dictionary.panelClose")}
+        </button>
+        {error && <p className="save-word-error plain-word-panel-compact-error">{t("dictionary.saveError")}</p>}
       </div>
     );
   }

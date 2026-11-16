@@ -403,6 +403,13 @@ export function VideoPlayer({
         anchorLeftPx: number | null;
       };
   const [openCard, setOpenCard] = useState<OpenCard | null>(null);
+  // Чи зараз PlainWordPanel рендерить компактний "уже збережено" рядок —
+  // саме слово цього не знає ззовні, тож компонент сам повідомляє через
+  // onLayoutChange (plain-word-panel.tsx). false за замовчуванням — та
+  // сама "форма" ширина/висота, доки панель(новий виклик openWordCard)
+  // ще не встигла сповістити свій реальний стан (задача-виправлення
+  // "compact panel in saved state").
+  const [isPanelCompactSaved, setIsPanelCompactSaved] = useState(false);
 
   // Підказка "слова в субтитрах можна тапнути" — pause-чип (кожна пауза,
   // поки не збережено слово з відео й не показано VIDEO_WORD_HINT_MAX_SEEN
@@ -783,6 +790,13 @@ export function VideoPlayer({
       contextUk = result.contextUk;
     }
     const teacherItem = teacherVariantMap.get(normalizeWordForMatch(word)) ?? null;
+    // Найкраще припущення ДО того, як сама PlainWordPanel встигне
+    // змонтуватись і сповістити реальний стан через onLayoutChange —
+    // уникає миттєвого "блимання" повною формою для вже збереженого
+    // слова (teacherItem має пріоритет над "уже збережено" всередині
+    // самого компонента, тож це лише здогад, не остаточне джерело
+    // правди).
+    setIsPanelCompactSaved(saved?.isSaved(word) ?? false);
     openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx: computeAnchorLeft(e.currentTarget) });
   }
 
@@ -1043,23 +1057,28 @@ export function VideoPlayer({
   const menuMaxHeight = containerHeight ? Math.max(120, containerHeight - overlayHeight - 16) : undefined;
 
   // Горизонтальне "затискання" картки/панелі слова (desktop-анкор): лишає
-  // мінімум 12px до кожного краю відео, навіть коли слово клікнуте біля
-  // самого краю рядка субтитрів. На мобільному (<640px) CSS сам ігнорує
-  // left/transform — картка/панель стає сторінкою знизу на всю ширину,
-  // тож clampedCardLeft там без ефекту. Ширина РІЗНА для двох kind:
-  // VideoWordCard лишається фіксованих 300px (WORD_CARD_WIDTH), а панель
-  // звичайного слова тепер clamp(280px, 100%-16px, 420px) у CSS
-  // (.video-plain-word-panel-wrap) — plainPanelWidth рахує той САМИЙ
-  // результат у JS, інакше затискання малювалось би проти старої ширини
-  // 300px, і ширша панель (до 420px) могла б вилізти за край відео.
+  // мінімум 12px (8px для компактного "уже збережено" рядка — задача-
+  // виправлення "compact panel in saved state", п.2) до кожного краю
+  // відео, навіть коли слово клікнуте біля самого краю рядка субтитрів. На
+  // мобільному (<640px) CSS сам ігнорує left/transform — картка/панель
+  // стає сторінкою знизу на всю ширину, тож clampedCardLeft там без
+  // ефекту. Ширина РІЗНА для трьох випадків: VideoWordCard лишається
+  // фіксованих 300px (WORD_CARD_WIDTH), форма звичайного слова —
+  // clamp(280px, 100%-16px, 420px) у CSS (.video-plain-word-panel-wrap), а
+  // компактний "уже збережено" рядок — clamp(0, 100%-16px, 360px) (.--
+  // compact-saved) — plainPanelWidth/compactSavedWidth рахують ті САМІ
+  // результати у JS, інакше затискання малювалось би проти чужої ширини.
   const WORD_CARD_WIDTH = 300;
   const plainPanelWidth = Math.min(420, Math.max(280, containerWidth - 16));
-  const cardWidth = openCard?.kind === "plain" ? plainPanelWidth : WORD_CARD_WIDTH;
+  const compactSavedWidth = Math.min(360, Math.max(0, containerWidth - 16));
+  const isPlainCard = openCard?.kind === "plain";
+  const cardWidth = isPlainCard ? (isPanelCompactSaved ? compactSavedWidth : plainPanelWidth) : WORD_CARD_WIDTH;
+  const cardEdgeMargin = isPlainCard && isPanelCompactSaved ? 8 : 12;
   const clampedCardLeft =
     openCard?.anchorLeftPx != null && containerWidth > 0
       ? Math.min(
-          Math.max(openCard.anchorLeftPx, cardWidth / 2 + 12),
-          Math.max(cardWidth / 2 + 12, containerWidth - cardWidth / 2 - 12)
+          Math.max(openCard.anchorLeftPx, cardWidth / 2 + cardEdgeMargin),
+          Math.max(cardWidth / 2 + cardEdgeMargin, containerWidth - cardWidth / 2 - cardEdgeMargin)
         )
       : null;
   // Вертикальний якір картки/панелі — ПОВНІСТЮ реактивний (не знімок на
@@ -1551,7 +1570,7 @@ export function VideoPlayer({
         {openCard?.kind === "plain" && (
           <div
             ref={plainPanelWrapRef}
-            className="video-plain-word-panel-wrap"
+            className={`video-plain-word-panel-wrap${isPanelCompactSaved ? " video-plain-word-panel-wrap--compact-saved" : ""}`}
             style={{
               bottom: cardAnchorTop ? undefined : `${chipBottomPx}px`,
               top: cardAnchorTop ? "8px" : undefined,
@@ -1560,6 +1579,7 @@ export function VideoPlayer({
             }}
           >
             <PlainWordPanel
+              key={openCard.word}
               word={openCard.word}
               contextFr={openCard.contextFr}
               contextUk={openCard.contextUk}
@@ -1567,6 +1587,7 @@ export function VideoPlayer({
               inputId="video-plain-word-translation"
               onClose={closeWordCard}
               compact={isCompact}
+              onLayoutChange={(mode) => setIsPanelCompactSaved(mode === "compact")}
             />
           </div>
         )}

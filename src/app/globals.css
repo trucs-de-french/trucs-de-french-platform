@@ -2113,12 +2113,28 @@ button, input, textarea, select, label, nav, aside {
   min-height: 0;
   border-radius: 14px;
   overflow: hidden;
+  transition: width 120ms ease-in-out, height 120ms ease-in-out;
 }
 .video-plain-word-panel-wrap .plain-word-panel {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
   margin-top: 0;
+}
+/* Компактний "уже збережено" стан (video-player.tsx передає isPanelCompactSaved
+   через onLayoutChange назад від PlainWordPanel) — обгортка перестає
+   нав'язувати ширину/висоту форми (clamp(280-420px)/height:100% вище) і
+   сама стискається до вмісту: .plain-word-panel--compact-saved усередині
+   вже сама по собі width:max-content/max-width:min(360px,...), обгортці
+   лишається не заважати їй — задача-виправлення "compact panel in saved
+   state", п.2 ("wrapper must follow the content"). */
+.video-plain-word-panel-wrap--compact-saved {
+  width: max-content;
+  max-width: min(360px, calc(100% - 16px));
+}
+.video-plain-word-panel-wrap--compact-saved .plain-word-panel {
+  height: auto;
+  flex: 0 0 auto;
 }
 
 /* Тонкий стилізований скролбар (тему палітри — трек прозорий, бігунок
@@ -17471,6 +17487,19 @@ button.cabinet-nav-item {
   cursor: default;
 }
 
+/* Менша пілюля для компактних "уже збережено" станів (панель звичайного
+   слова, картка відео, тултіп VocabWord — задачі-виправлення "compact
+   panel in saved state" / "compact teacher card in saved state") —
+   та сама пара кольорів (--saved/--saved-on-dark), лише менші
+   padding/min-height/font-size, тонша рамка. */
+.save-word-pill--compact {
+  min-height: 22px;
+  padding: 3px 10px;
+  font-size: 11px;
+  gap: 4px;
+  border-width: 1px;
+}
+
 .save-word-remove-link {
   border: none;
   background: none;
@@ -17846,6 +17875,41 @@ button.cabinet-nav-item {
   text-decoration: underline;
   color: #55546b;
   cursor: pointer;
+}
+
+/* Компактний стан "уже збережено"/"щойно збережено-прибрано"
+   (plain-word-panel.tsx — justSaved/justRemoved/existing-гілки) — ОДИН
+   рядок замість header/scrollarea/footer-структури форми: слово · (опц.
+   переклад) · пілюля "✓ У словнику" · дії, все впритул, переноситься на
+   другий рядок лише якщо не влазить (задача-виправлення "compact panel
+   in saved state" — панель до цього завжди була шириною/висотою цілої
+   форми, хоча тут майже нема чого показувати). width:max-content — сама
+   відповідає вмісту (video-player.tsx дає обгортці таку саму поведінку
+   через .video-plain-word-panel-wrap--compact-saved), не фіксована/
+   мінімальна ширина. transition — лише opacity (fade відкриття/закриття
+   лишається на самому компоненті/CSS), жодних box-shadow. */
+.plain-word-panel--compact-saved {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  width: max-content;
+  max-width: min(360px, calc(100% - 16px));
+  padding: 10px 14px;
+  box-shadow: none;
+}
+.plain-word-panel--compact-saved .plain-word-panel-word {
+  margin: 0;
+}
+.plain-word-panel-compact-translation {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #55546b;
+}
+.plain-word-panel-compact-error {
+  flex: 1 0 100%;
+  margin: 0;
 }
 
 /* ОДНА колонка завжди (задача-виправлення "single-column plain-word
