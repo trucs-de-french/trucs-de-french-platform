@@ -18205,12 +18205,34 @@ button.cabinet-nav-item {
    текст, та сама пара, що .dark .plain-word-pos-chip--selected нижче),
    кремові лінки. Скрипт (dialogue-line.tsx) не передає surface="dark" —
    лишається на своїй світлій/лавандовій поверхні без змін.
-   Усі селектори нижче навмисно повторюють кореневий клас двічі
-   (.plain-word-panel.plain-word-panel--video) — специфічність (0,0,2,0+)
-   гарантовано переважає .dark-/:root:not(.light)-варіанти ТІЄЇ Ж
-   властивості вище (теж (0,0,2,0) чи (0,0,3,0) для :focus-visible), тож
-   порядок у файлі більше не має значення, а темна поверхня панелі лишається
-   темною незалежно від теми сайту. */
+
+   Задача-виправлення "dark-glass panel overrides site dark theme": перша
+   версія (комміт 3438eb3) писала .plain-word-panel.plain-word-panel--video
+   (специфічність (0,0,2,0)) сподіваючись, що порядок у файлі (цей блок
+   ПІСЛЯ .dark .plain-word-panel) розв'яже рівність на її користь — для
+   .dark-класу це й справді так, АЛЕ системна темна тема йде через
+   :root:not(.light) .plain-word-panel усередині @media
+   (prefers-color-scheme:dark) (рядок вище), а це 3 простих селектори
+   (:root + :not(.light)→.light + .plain-word-panel) = специфічність
+   (0,0,3,0) — СТРОГО вища за (0,0,2,0) мого правила, тож воно ПРОГРАВАЛО
+   кореневий фон/рамку завжди, коли студент на системній темній темі (не
+   на явному перемикачі), і панель лишалась лавандовою — звідти
+   нечитабельний кремовий текст на кремовому ж (майже) тлі. Те саме
+   стосувалось footer/input:focus-visible/pos-chip:focus-visible/
+   pos-chip--selected/save-word-error нижче — там специфічність хоч і
+   збігалась з конкуруючим правилом (а не була нижчою), але перемога й
+   досі залежала від порядку в файлі, а не від специфічності (чого явно
+   вимагає ця задача).
+   Виправлення: для КОЖНОЇ властивості, де існує .dark/медіа-варіант
+   конкурента, додано ДВІ окремі версії — .dark .plain-word-panel.plain-
+   word-panel--video (бʼє .dark-конкурента простим додаванням іще одного
+   класу) і :root:not(.light) .plain-word-panel.plain-word-panel--video
+   УСЕРЕДИНІ того самого @media-блоку (бʼє медіа-конкурента тим самим
+   прийомом) — обидві гарантовано перемагають за СПЕЦИФІЧНІСТЮ, незалежно
+   від порядку в файлі, без жодного !important. Властивості БЕЗ
+   конкуруючого .dark/медіа-правила (word/translation/pos/note/context/
+   label/cancel/compact-translation/pos-chip база/--more) лишились на
+   простому .plain-word-panel--video — там нема з чим боротись. */
 .plain-word-panel.plain-word-panel--video {
   background: rgba(10, 9, 28, 0.92);
   border-color: rgba(255, 255, 255, 0.14);
@@ -18220,22 +18242,41 @@ button.cabinet-nav-item {
   box-shadow: none;
   /* Темний напівпрозорий інпут/рамка/текст — через ті самі CSS-змінні, що
      .plain-word-panel-input уже читає (var(--glass-input-*, ...)
-     fallback). Жодна інша --video-непов'язана поверхня ці змінні на
-     .plain-word-panel не визначає (--glass-input-* сайтово заданий лише
-     .light .glass-block/:root вище, видно звідти, не сюди), тож просте
-     визначення тут не потребує боротьби за специфічність взагалі. Фокус-
-     кільце (:focus-visible нижче) лишається окремим правилом — базове
-     .plain-word-panel-input:focus-visible малює колір напряму (не через
-     var), не через кастомну властивість. */
+     fallback). Конкуруючі --glass-input-* визначені лише на предку
+     .glass-block-panel (.light .glass-block.../медіа-лайт вище), НЕ на
+     самому .plain-word-panel — пряме визначення на елементі завжди
+     перемагає успадкований зі предка варіант незалежно від специфічності
+     обох правил, тож ці 5 рядків безпечні в обох темах без дублювання.
+     Фокус-кільце (:focus-visible нижче) лишається окремим правилом —
+     базове .plain-word-panel-input:focus-visible малює колір напряму (не
+     через var). */
   --glass-input-bg: rgba(255, 255, 255, 0.08);
   --glass-input-border: rgba(243, 217, 139, 0.55);
   --glass-input-border-width: 1px;
   --glass-input-text: #f6f1e0;
   --glass-input-radius: 8px;
 }
+.dark .plain-word-panel.plain-word-panel--video {
+  background: rgba(10, 9, 28, 0.92);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video {
+    background: rgba(10, 9, 28, 0.92);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+}
 @supports not (backdrop-filter: blur(1px)) {
   .plain-word-panel.plain-word-panel--video {
     background: rgba(10, 9, 28, 0.97);
+  }
+  .dark .plain-word-panel.plain-word-panel--video {
+    background: rgba(10, 9, 28, 0.97);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .plain-word-panel.plain-word-panel--video {
+      background: rgba(10, 9, 28, 0.97);
+    }
   }
 }
 .plain-word-panel--video .plain-word-panel-word {
@@ -18257,8 +18298,14 @@ button.cabinet-nav-item {
      .video-word-card-compact-translation (white/60) використовує. */
   color: rgba(255, 255, 255, 0.6);
 }
-.plain-word-panel.plain-word-panel--video .plain-word-panel-footer {
+.plain-word-panel.plain-word-panel--video .plain-word-panel-footer,
+.dark .plain-word-panel.plain-word-panel--video .plain-word-panel-footer {
   border-top-color: rgba(255, 255, 255, 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video .plain-word-panel-footer {
+    border-top-color: rgba(255, 255, 255, 0.15);
+  }
 }
 .plain-word-panel--video .plain-word-panel-cancel {
   /* ≈13.9:1 — той самий кремовий, що .save-word-remove-link--on-dark
@@ -18266,7 +18313,8 @@ button.cabinet-nav-item {
      слова. */
   color: #d8d6f0;
 }
-.plain-word-panel.plain-word-panel--video .plain-word-panel-input:focus-visible {
+.plain-word-panel.plain-word-panel--video .plain-word-panel-input:focus-visible,
+.dark .plain-word-panel.plain-word-panel--video .plain-word-panel-input:focus-visible {
   /* ≈14.2:1 для рамки/кільця на rgba(10,9,28,.92) — та сама пара, що
      .dark .plain-word-panel-input:focus-visible нижче вже використовує;
      тут лише гарантує той самий колір і в СВІТЛІЙ темі сайту (де базове
@@ -18275,11 +18323,23 @@ button.cabinet-nav-item {
   border-color: #f3d98b;
   box-shadow: inset 0 0 0 2px #f3d98b;
 }
-.plain-word-panel.plain-word-panel--video .save-word-error {
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video .plain-word-panel-input:focus-visible {
+    border-color: #f3d98b;
+    box-shadow: inset 0 0 0 2px #f3d98b;
+  }
+}
+.plain-word-panel.plain-word-panel--video .save-word-error,
+.dark .plain-word-panel.plain-word-panel--video .save-word-error {
   /* ≈8.9:1 — той самий світлий янтар, що .dark .save-word-error вище
      використовує на темних поверхнях (базовий #b45309 — амбер для
      світлого фону, нечитабельний на темному склі). */
   color: #fbbf86;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video .save-word-error {
+    color: #fbbf86;
+  }
 }
 
 .plain-word-panel--video .plain-word-panel-compact-translation {
@@ -18295,15 +18355,31 @@ button.cabinet-nav-item {
   border-color: rgba(246, 241, 224, 0.45);
   color: #d8d6f0;
 }
-.plain-word-panel.plain-word-panel--video .plain-word-pos-chip:focus-visible {
+.plain-word-panel.plain-word-panel--video .plain-word-pos-chip:focus-visible,
+.dark .plain-word-panel.plain-word-panel--video .plain-word-pos-chip:focus-visible {
   box-shadow: inset 0 0 0 2px #f3d98b;
 }
-.plain-word-panel.plain-word-panel--video .plain-word-pos-chip--selected {
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video .plain-word-pos-chip:focus-visible {
+    box-shadow: inset 0 0 0 2px #f3d98b;
+  }
+}
+.plain-word-panel.plain-word-panel--video .plain-word-pos-chip--selected,
+.dark .plain-word-panel.plain-word-panel--video .plain-word-pos-chip--selected {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
   background-origin: border-box;
   background-clip: border-box;
   border-color: transparent;
   color: #1a1640;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .plain-word-panel.plain-word-panel--video .plain-word-pos-chip--selected {
+    background: linear-gradient(160deg, #f3d98b, #d9b765);
+    background-origin: border-box;
+    background-clip: border-box;
+    border-color: transparent;
+    color: #1a1640;
+  }
 }
 
 /* Сторінки входу/реєстрації/відновлення пароля (/login, /register,
