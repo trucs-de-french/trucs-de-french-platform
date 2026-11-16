@@ -7,6 +7,7 @@ import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-hea
 import { resolveBlockIcon } from "@/lib/block-icons";
 import { useT } from "@/lib/i18n/context";
 import { useSavedWords } from "@/components/dictionary/saved-words-provider";
+import { DictHint } from "./dict-hint";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
 // section.tsx) — inline SVG, бо лейбл+іконка мають різний колір штриха
@@ -196,6 +197,16 @@ export function ScriptSection({
   // світлий лишається дефолтом без фону.
   const useBar = Boolean(title);
 
+  // Задача-виправлення "split dictionary hint into video and script hints":
+  // підказка "торкніться слова" лише для СКРИПТУ — рендериться тут, НЕ
+  // всередині .script-body (тому не в тій самій "скляній" панелі, що
+  // самі репліки), той самий принцип розташування "під баром, над
+  // панеллю", що відео (page.tsx) — АЛЕ лише коли useBar (фіксований блок
+  // "Скрипт" сторінки сцени, не додаткові script-блоки без заголовка) і
+  // секція розгорнута (isOpen): підказка про клік по слову в тексті не
+  // має смислу, поки сам текст згорнутий і не показаний.
+  const hint = useBar && isOpen && <DictHint variant="script" />;
+
   const body = isOpen && (
     <div className={`script-body flex flex-col gap-2 ${useBar ? "glass-block-panel" : ""}`}>
       {hasTranslation && (
@@ -293,6 +304,7 @@ export function ScriptSection({
           onToggle={() => setCollapsed((c) => !c)}
           toggleRef={headerToggleRef}
         />
+        {hint}
         {body}
       </div>
     );

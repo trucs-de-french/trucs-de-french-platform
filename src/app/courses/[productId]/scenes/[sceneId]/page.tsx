@@ -725,6 +725,13 @@ export default async function ScenePage({
           VideoPlayer/VideoFrame. */}
       <div className="flex flex-col gap-[14px]">
         <SectionHeaderBar title={t(lang, "video.videoLabel")} icon={resolveBlockIcon("video")} />
+        {/* Одноразова підказка "торкніться слова" — лише для ВІДЕО (задача-
+            виправлення "split dictionary hint into video and script
+            hints"): раніше одна спільна підказка лежала над усією
+            сторінкою й згадувала і скрипт, і відео одразу; тепер окремо
+            під кожним заголовком-баром, тим самим gap-[14px], що вже
+            розділяє бар і панель нижче. */}
+        <DictHint variant="video" />
         <div className="glass-block-panel glass-panel--video">{videoBody}</div>
       </div>
     </section>
@@ -1011,13 +1018,6 @@ export default async function ScenePage({
             але це не заважає: React не створює DOM-вузол для false/null,
             тож flex-gap коректно рахує лише те, що справді відображається. */}
         <div className={`${H1_TO_CONTENT} flex flex-col gap-8`}>
-          {/* Одна підказка на всю сторінку (dict-hint.tsx) — раніше жила
-              лише над заголовком "Скрипт" (script-section.tsx); піднята
-              сюди, щоб покрити й відео (Крок "save any word from video
-              subtitles"), незалежно від порядку блоків відео/скрипт
-              (config.blockOrder). Сама себе ховає без SavedWordsProvider/
-              для незалогінених студентів, без додаткової умови тут. */}
-          <DictHint />
           {orderedBlockRows.map((row, i) => {
             if (row.block_type === "content") {
               const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;
