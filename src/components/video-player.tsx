@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -26,12 +27,14 @@ import { parseWebVtt, type WebVttCue } from "@/lib/webvtt";
 import { useFullscreenWrapper } from "@/hooks/use-fullscreen-wrapper";
 import { FullscreenExitButton } from "@/components/fullscreen-exit-button";
 import { Z_MODAL } from "@/lib/z-layers";
-import { firstVocabVariant, type VideoVocabItem } from "@/lib/vocab";
-import { matchVocabInText, matchTranslatedFormInText } from "@/lib/vocab-match";
+import { firstVocabVariant, type VideoVocabItem, type VocabItem } from "@/lib/vocab";
+import { matchVocabInText, matchTranslatedFormInText, buildVariantMap, normalizeWordForMatch } from "@/lib/vocab-match";
 import { PART_OF_SPEECH_LABELS_FR, PART_OF_SPEECH_COLORS, normalizePartOfSpeech } from "@/lib/vocab-categories";
+import { extractAlignedContext } from "@/lib/cabinet/saved-words";
 import { useT } from "@/lib/i18n/context";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import type { SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
+import { tokenizePlainText, PlainWordPanel } from "@/components/dictionary/plain-word-panel";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -98,33 +101,82 @@ function readStoredPauseOnWordOpen(): boolean | null {
 // рендеру (не може статично довести, що викликається пізніше, в event-
 // хендлері) — як проп дочірнього КОМПОНЕНТА те саме дозволено (той самий
 // принцип, що вже onWordClick у DialogueLine, dialogue-line.tsx).
+// Звичайні (не підсвічені вчителькою) слова в тексті репліки — та сама
+// токенізація, що панель звичайного слова скрипту (tokenizePlainText,
+// plain-word-panel.tsx), щоб word_key/дедуп лишались ідентичними між обома
+// поверхнями. БЕЗ підкреслення/фону в будь-якому стані (вимога задачі,
+// навмисно відрізняється від .video-word-fr — учительське слово лишається
+// підкресленим завжди) — лише легкий hover/focus-visible, керується CSS.
+// Клікабельні лише на паузі: pointer-events на .video-plain-word
+// перемикається CSS-класом на обгортці (.video-player--playing), не тут —
+// SubtitleFrLine сама не знає стан playing.
 function SubtitleFrLine({
   text,
   vocab,
   onWordClick,
+  onPlainWordClick,
 }: {
   text: string;
   vocab: VideoVocabItem[];
   onWordClick: (item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) => void;
+  onPlainWordClick: (word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   const parts = matchVocabInText(text.replace(/\n+/g, " "), vocab);
+  // Офсети кожної частини рахуються ОКРЕМИМ проходом ПЕРЕД .map(), що
+  // рендерить JSX (не мутацією змінної всередині самого цього .map() —
+  // React Compiler забороняє переприв'язку такої змінної після рендеру,
+  // той самий принцип, що partOffsets у dialogue-line.tsx).
+  const partOffsets: number[] = [];
+  {
+    let acc = 0;
+    for (const part of parts) {
+      partOffsets.push(acc);
+      acc += part.text.length;
+    }
+  }
   return (
     <>
-      {parts.map((part, i) =>
-        part.type === "match" ? (
-          <button
-            key={i}
-            type="button"
-            data-vocab-trigger
-            onClick={(e) => onWordClick(part.item, e)}
-            className="video-word-fr"
-          >
-            {part.text}
-          </button>
-        ) : (
-          <span key={i}>{part.text}</span>
-        )
-      )}
+      {parts.map((part, i) => {
+        const partOffset = partOffsets[i];
+
+        if (part.type === "match") {
+          return (
+            <button
+              key={i}
+              type="button"
+              data-vocab-trigger
+              onClick={(e) => onWordClick(part.item, e)}
+              className="video-word-fr"
+            >
+              {part.text}
+            </button>
+          );
+        }
+
+        const tokens = tokenizePlainText(part.text);
+        return (
+          <span key={i}>
+            {tokens.map((token, j) =>
+              token.type === "literal" || !token.clickable ? (
+                <span key={j}>{token.text}</span>
+              ) : (
+                <button
+                  key={j}
+                  type="button"
+                  data-plain-word-trigger
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPlainWordClick(token.text, partOffset + token.start, e);
+                  }}
+                  className="video-plain-word"
+                >
+                  {token.text}
+                </button>
+              )
+            )}
+          </span>
+        );
+      })}
     </>
   );
 }
@@ -172,6 +224,7 @@ export function VideoPlayer({
   src,
   subtitles,
   vocab,
+  dialogue = [],
   title,
   poster,
   className = "",
@@ -183,6 +236,14 @@ export function VideoPlayer({
   // сервері, разом із прикладом репліки для кожного слова. Відсутній —
   // субтитри рендеряться як звичайний текст (жодних клікабельних слів).
   vocab?: VideoVocabItem[];
+  // Повний dialogue сцени/блоку (ті самі рядки, що передали в
+  // collectVideoVocab вище) — потрібен лише для ЗВИЧАЙНИХ (не
+  // підсвічених) слів: щоб extractAlignedContext узяв РЕЧЕННЯ з повної
+  // репліки скрипту, а не лише з фрагмента .vtt-кью (кью може розбивати
+  // репліку на кілька рядків субтитрів, не по межі речення). Відсутній —
+  // контекст звичайного слова рахується прямо з тексту кью (гірша, але
+  // робоча апроксимація).
+  dialogue?: { text: string; translationUk?: string | null }[];
   title?: string;
   poster?: string;
   className?: string;
@@ -197,6 +258,14 @@ export function VideoPlayer({
   const hideOverlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const wordCardRef = useRef<HTMLDivElement>(null);
+  const plainPanelWrapRef = useRef<HTMLDivElement>(null);
+  // Сама плашка субтитрів (FR+UA разом) — потрібна лише для розрахунку
+  // bottomPx картки/панелі слова (computeAnchor нижче): від ВЕРХУ ВСІЄЇ
+  // плашки, не лише рядка клікнутого слова, інакше картка перекривала
+  // другий рядок (UA), коли ввімкнено "FR+UA" (аудит "save any word from
+  // video subtitles", п.1 — причина видимого "clipping" картки в
+  // landscape-fullscreen).
+  const subtitlePlateRef = useRef<HTMLDivElement>(null);
   // Пам'ятає, чи відео грало ДО відкриття картки слова (лише коли "Пауза
   // при відкритті слова" увімкнена) — щоб закриття картки відновлювало
   // відтворення ЛИШЕ якщо воно й справді йшло, а не завжди.
@@ -244,14 +313,39 @@ export function VideoPlayer({
   // mode вище — збережене значення з localStorage застосовується лише після
   // монтування, в ефекті нижче.
   const [pauseOnWordOpen, setPauseOnWordOpen] = useState(true);
-  // Відкрита картка слова — лише ОДНА одночасно (openWord=null — нічого не
-  // відкрито). anchorLeftPx/bottomPx — пікселі від краю wrapperRef,
-  // обчислені в handleWordClick із positions клікнутого слова.
-  const [openWord, setOpenWord] = useState<{
-    item: VideoVocabItem;
-    anchorLeftPx: number | null;
-    bottomPx: number;
-  } | null>(null);
+  // Відкрита картка/панель слова — лише ОДНА одночасно (openCard=null —
+  // нічого не відкрито), "vocab" (підсвічене вчителькою, VideoWordCard) чи
+  // "plain" (звичайне слово субтитрів, PlainWordPanel, Крок "save any word
+  // from video subtitles"). anchorLeftPx/bottomPx — пікселі від краю
+  // wrapperRef, обчислені в computeAnchor нижче з positions клікнутого
+  // слова — спільні для обох kind, щоб і картка, і панель анкорились
+  // однаково.
+  type OpenCard =
+    | { kind: "vocab"; item: VideoVocabItem; anchorLeftPx: number | null; bottomPx: number }
+    | {
+        kind: "plain";
+        word: string;
+        contextFr: string;
+        contextUk: string | null;
+        teacherItem: VocabItem | null;
+        anchorLeftPx: number | null;
+        bottomPx: number;
+      };
+  const [openCard, setOpenCard] = useState<OpenCard | null>(null);
+  // Компактна розкладка форми ручного перекладу (plain-word-panel.tsx,
+  // проп compact) — вузький landscape-fullscreen, де звичайного
+  // вертикального потоку бракує місця: сам VideoPlayer вирішує, не CSS-
+  // медіа-запит усередині панелі (той самий компонент лишається простим,
+  // без власної логіки видимого в'юпорта).
+  const [isCompactLandscape, setIsCompactLandscape] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-height: 420px) and (orientation: landscape)");
+    const update = () => setIsCompactLandscape(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const frUrl = subtitles?.find((s) => s.lang === "fr")?.url ?? null;
   const ukUrl = subtitles?.find((s) => s.lang === "uk")?.url ?? null;
@@ -419,12 +513,14 @@ export function VideoPlayer({
     });
   }
 
-  // openWord === null у перевірці нижче — "був уже грав" запам'ятовується
-  // ЛИШЕ на першому відкритті картки, не на кожному перемиканні між словами
-  // (інакше друге слово побачило би відео вже на паузі від першого й хибно
-  // запам'ятало б "не грало").
-  function openWordCard(item: VideoVocabItem, anchorLeftPx: number | null, bottomPx: number) {
-    if (pauseOnWordOpen && openWord === null) {
+  // openCard === null у перевірці нижче — "був уже грав" запам'ятовується
+  // ЛИШЕ на першому відкритті картки/панелі, не на кожному перемиканні між
+  // словами (інакше друге слово побачило би відео вже на паузі від
+  // першого й хибно запам'ятало б "не грало"). wakeOverlay() тут — щоб
+  // панель керування лишалась видимою одночасно з карткою/панеллю слова
+  // (раніше відкриття картки саме по собі не "будило" оверлей).
+  function openWordCard(card: OpenCard) {
+    if (pauseOnWordOpen && openCard === null) {
       const video = videoRef.current;
       if (video && !video.paused) {
         wasPlayingBeforeCardRef.current = true;
@@ -433,11 +529,12 @@ export function VideoPlayer({
         wasPlayingBeforeCardRef.current = false;
       }
     }
-    setOpenWord({ item, anchorLeftPx, bottomPx });
+    setOpenCard(card);
+    wakeOverlay();
   }
 
   function closeWordCard() {
-    setOpenWord(null);
+    setOpenCard(null);
     if (pauseOnWordOpen && wasPlayingBeforeCardRef.current) {
       const video = videoRef.current;
       if (video) {
@@ -448,33 +545,88 @@ export function VideoPlayer({
     wasPlayingBeforeCardRef.current = null;
   }
 
-  // Позиція картки — від самого клікнутого слова: anchorLeftPx — його
-  // горизонтальний центр (для desktop-анкора), bottomPx — відстань від низу
-  // wrapperRef до ВЕРХУ слова (+8px) — та сама величина автоматично тримає
-  // картку і над субтитрами, і над панеллю керування (обидва вище цього
-  // слова в document order), без окремого вимірювання висоти жодного з них.
-  function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
+  // Позиція картки/панелі — від самого клікнутого слова: anchorLeftPx —
+  // його горизонтальний центр (для desktop-анкора), bottomPx — відстань
+  // від низу wrapperRef до ВЕРХУ ВСІЄЇ плашки субтитрів (subtitlePlateRef,
+  // не лише рядка клікнутого слова — інакше картка перекривала другий
+  // рядок УА, коли показані і FR, і UA; аудит "save any word from video
+  // subtitles" п.1/п.7) +8px — та сама величина автоматично тримає картку
+  // над усією плашкою і над панеллю керування, без окремого вимірювання
+  // висоти кожної.
+  function computeAnchor(wordEl: HTMLElement): { anchorLeftPx: number | null; bottomPx: number } {
     const wrapper = wrapperRef.current;
-    if (!wrapper) {
-      openWordCard(item, null, 88);
-      return;
-    }
-    const wordRect = e.currentTarget.getBoundingClientRect();
+    if (!wrapper) return { anchorLeftPx: null, bottomPx: 88 };
+    const wordRect = wordEl.getBoundingClientRect();
     const wrapperRect = wrapper.getBoundingClientRect();
-    openWordCard(item, wordRect.left + wordRect.width / 2 - wrapperRect.left, wrapperRect.bottom - wordRect.top + 8);
+    const plateRect = subtitlePlateRef.current?.getBoundingClientRect() ?? wordRect;
+    return {
+      anchorLeftPx: wordRect.left + wordRect.width / 2 - wrapperRect.left,
+      bottomPx: wrapperRect.bottom - plateRect.top + 8,
+    };
   }
 
-  // Закриття картки слова кліком поза нею й по Escape — той самий рецепт,
-  // що вже в ефекті меню швидкості/субтитрів нижче, окремий ефект (інша
-  // умова відкриття). data-vocab-trigger — клік на ІНШЕ слово (перемикання
-  // відкритої картки) не має спершу закрити поточну картку цим слухачем:
-  // відкриття нового слова й так замінює openWord, без проміжного null.
+  function handleWordClick(item: VideoVocabItem, e: ReactMouseEvent<HTMLButtonElement>) {
+    const { anchorLeftPx, bottomPx } = computeAnchor(e.currentTarget);
+    openWordCard({ kind: "vocab", item, anchorLeftPx, bottomPx });
+  }
+
+  // Той самий словник сцени/блоку, що вже в collectVideoVocab (унікальна
+  // лексика по normalizeWordForMatch) — пріоритет "вчительських" даних для
+  // звичайного слова: якщо студент тапнув слово, яке вчителька деінде в
+  // сцені позначила як vocab, панель показує її переклад, а не форму
+  // ручного вводу (той самий принцип, що teacherVariantMap у
+  // dialogue-line.tsx).
+  const teacherVariantMap = useMemo(() => buildVariantMap(vocab ?? []), [vocab]);
+
+  // Репліка скрипту, що відповідає активній FR-кью — потрібна лише для
+  // ТОЧНІШОГО контексту звичайного слова (ціле речення з повної репліки,
+  // не з фрагмента .vtt-кью, яка може розбивати репліку не по межі
+  // речення). .includes — апроксимація (кью не завжди буквально підрядок
+  // репліки, якщо .vtt переносив рядки інакше); не знайдено — викликач
+  // падає на текст самої кью.
+  function findDialogueLineForCue(normalizedCueText: string): { text: string; translationUk?: string | null } | null {
+    if (!normalizedCueText) return null;
+    return dialogue.find((line) => line.text.includes(normalizedCueText)) ?? null;
+  }
+
+  function handlePlainWordClick(word: string, offsetInCue: number, e: ReactMouseEvent<HTMLButtonElement>) {
+    const normalizedCue = (activeFrCue?.text ?? "").replace(/\n+/g, " ");
+    const line = findDialogueLineForCue(normalizedCue);
+    let contextFr: string;
+    let contextUk: string | null;
+    if (line) {
+      const idx = line.text.indexOf(normalizedCue);
+      const absoluteOffset = idx >= 0 ? idx + offsetInCue : offsetInCue;
+      const result = extractAlignedContext(line.text, absoluteOffset, line.translationUk ?? null, word);
+      contextFr = result.contextFr;
+      contextUk = result.contextUk;
+    } else {
+      const result = extractAlignedContext(normalizedCue, offsetInCue, activeUkCue?.text ?? null, word);
+      contextFr = result.contextFr;
+      contextUk = result.contextUk;
+    }
+    const teacherItem = teacherVariantMap.get(normalizeWordForMatch(word)) ?? null;
+    const { anchorLeftPx, bottomPx } = computeAnchor(e.currentTarget);
+    openWordCard({ kind: "plain", word, contextFr, contextUk, teacherItem, anchorLeftPx, bottomPx });
+  }
+
+  // Закриття картки/панелі слова кліком поза нею й по Escape — той самий
+  // рецепт, що вже в ефекті меню швидкості/субтитрів нижче, окремий ефект
+  // (інша умова відкриття). data-vocab-trigger/data-plain-word-trigger —
+  // клік на ІНШЕ слово (перемикання відкритої картки/панелі) не має
+  // спершу закрити поточну цим слухачем: відкриття нового слова й так
+  // замінює openCard, без проміжного null. plainPanelWrapRef — той самий
+  // принцип, що wordCardRef, для плаваючої обгортки PlainWordPanel
+  // (сам компонент МАЄ й власний такий слухач — для використання в
+  // script-section.tsx — цей тут лише дублює для контейнера-обгортки,
+  // якого PlainWordPanel не знає).
   useEffect(() => {
-    if (!openWord) return;
+    if (!openCard) return;
     function handlePointerDown(e: globalThis.PointerEvent) {
       const target = e.target as Element | null;
       if (wordCardRef.current?.contains(target)) return;
-      if (target?.closest?.("[data-vocab-trigger]")) return;
+      if (plainPanelWrapRef.current?.contains(target)) return;
+      if (target?.closest?.("[data-vocab-trigger], [data-plain-word-trigger]")) return;
       closeWordCard();
     }
     function handleKeyDown(e: globalThis.KeyboardEvent) {
@@ -487,7 +639,7 @@ export function VideoPlayer({
       document.removeEventListener("keydown", handleKeyDown);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openWord]);
+  }, [openCard]);
 
   const activeFrCue = frCues ? findActiveCue(frCues, currentTime) : null;
   const activeUkCue = ukCues ? findActiveCue(ukCues, currentTime) : null;
@@ -502,6 +654,23 @@ export function VideoPlayer({
   const currentPrimaryCue = primaryCues ? findActiveCue(primaryCues, currentTime) : null;
   useEffect(() => {
     if (currentPrimaryCue) lastCueRef.current = currentPrimaryCue;
+  }, [currentPrimaryCue]);
+
+  // Картка/панель слова лишається відкритою ЛИШЕ доти, доки показана кью,
+  // з якої вона відкрита, не змінилась, поки відео грає — трапляється лише
+  // якщо студент вимкнув "Пауза при відкритті слова" (pauseOnWordOpen):
+  // відео продовжує йти з відкритою карткою, контекст слова застаріває на
+  // наступній репліці. Коли pauseOnWordOpen увімкнена (дефолт) — відео й
+  // так на паузі, кью не може змінитись, цей ефект практично не
+  // спрацьовує. closeWordCard читає ref'и (videoRef/wasPlayingBeforeCardRef)
+  // — не можна викликати прямо в тілі рендеру (react-hooks/refs), тож тут
+  // звичайний ефект; queueMicrotask — той самий прийом, що вже в ефекті
+  // відновлення speed/mode вище, щоб react-hooks/set-state-in-effect не
+  // забороняв синхронний setState у тілі ефекту.
+  useEffect(() => {
+    if (!openCard || !playing) return;
+    queueMicrotask(() => closeWordCard());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPrimaryCue]);
 
   function toggleLoopLine() {
@@ -581,6 +750,10 @@ export function VideoPlayer({
 
   function handleTrackPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (!metadataLoaded) return;
+    // Скрабінг смуги прогресу зі відкритою карткою/панеллю слова — контекст
+    // (слово, репліка) миттєво застаріває, закриваємо, щоб не лишати
+    // "призрака" зі старого моменту відео.
+    if (openCard) closeWordCard();
     seekToClientX(e.clientX);
     trackRef.current?.setPointerCapture(e.pointerId);
     wakeOverlay();
@@ -692,16 +865,16 @@ export function VideoPlayer({
   // ширину, тож clampedCardLeft там без ефекту.
   const WORD_CARD_WIDTH = 300;
   const clampedCardLeft =
-    openWord?.anchorLeftPx != null && containerWidth > 0
+    openCard?.anchorLeftPx != null && containerWidth > 0
       ? Math.min(
-          Math.max(openWord.anchorLeftPx, WORD_CARD_WIDTH / 2 + 12),
+          Math.max(openCard.anchorLeftPx, WORD_CARD_WIDTH / 2 + 12),
           Math.max(WORD_CARD_WIDTH / 2 + 12, containerWidth - WORD_CARD_WIDTH / 2 - 12)
         )
       : null;
-  // bottomPx уже рахується від слова (handleWordClick) — тут лише обмежуємо
-  // висоту картки, щоб із цим bottom вона не вилізла за верхній край
-  // контейнера.
-  const cardMaxHeight = openWord ? Math.max(100, containerHeight - openWord.bottomPx - 16) : undefined;
+  // bottomPx уже рахується від плашки субтитрів (computeAnchor) — тут лише
+  // обмежуємо висоту картки/панелі, щоб із цим bottom вона не вилізла за
+  // верхній край контейнера.
+  const cardMaxHeight = openCard ? Math.max(100, containerHeight - openCard.bottomPx - 16) : undefined;
 
   if (loadError) {
     return (
@@ -727,7 +900,7 @@ export function VideoPlayer({
         onFocus={wakeOverlay}
         className={`video-player relative aspect-video w-full overflow-hidden rounded-[14px] ${
           isPseudoFullscreen ? `video-player--pseudo-fullscreen ${Z_MODAL}` : ""
-        }`}
+        } ${playing ? "video-player--playing" : ""}`}
         style={{ background: "linear-gradient(135deg, #14132b, #2b2a52)" }}
       >
         <video
@@ -779,13 +952,19 @@ export function VideoPlayer({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center">
           {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
             <div
+              ref={subtitlePlateRef}
               className={`video-subtitle-plate mb-2 flex flex-col items-center text-center ${
                 isFullscreen || isPseudoFullscreen ? "video-subtitle-plate--fullscreen" : ""
               }`}
             >
               {showFr && activeFrCue && (
                 <p className="font-heading video-subtitle-fr">
-                  <SubtitleFrLine text={activeFrCue.text} vocab={vocab ?? []} onWordClick={handleWordClick} />
+                  <SubtitleFrLine
+                    text={activeFrCue.text}
+                    vocab={vocab ?? []}
+                    onWordClick={handleWordClick}
+                    onPlainWordClick={handlePlainWordClick}
+                  />
                 </p>
               )}
               {showUk && activeUkCue && (
@@ -1086,18 +1265,46 @@ export function VideoPlayer({
           <FullscreenExitButton onClick={() => void exitAnyFullscreen()} label={t("videoPlayer.closeFullscreen")} />
         )}
 
-        {/* Картка слова — ВСЕРЕДИНІ wrapperRef (не portal у body), щоб
-            працювала і в справжньому fullscreen, і в iOS pseudo-fullscreen
-            (wrapperRef сам стає fullscreen-елементом в обох випадках). */}
-        {openWord && (
+        {/* Картка/панель слова — ВСЕРЕДИНІ wrapperRef (не portal у body),
+            щоб працювала і в справжньому fullscreen, і в iOS pseudo-
+            fullscreen (wrapperRef сам стає fullscreen-елементом в обох
+            випадках). "vocab" (підсвічене вчителькою) — VideoWordCard, як і
+            раніше; "plain" (звичайне слово субтитрів) — та сама
+            PlainWordPanel, що панель звичайного слова скрипту
+            (dialogue-line.tsx), лише в плаваючій позиційній обгортці
+            (.video-plain-word-panel-wrap) — сама панель лишається у своїй
+            світлій/лавандовій поверхні (вимога задачі — та сама палітра,
+            що панель скрипту), не темне скло VideoWordCard. */}
+        {openCard?.kind === "vocab" && (
           <VideoWordCard
             cardRef={wordCardRef}
-            item={openWord.item}
+            item={openCard.item}
             leftPx={clampedCardLeft}
-            bottomPx={openWord.bottomPx}
+            bottomPx={openCard.bottomPx}
             maxHeight={cardMaxHeight ?? 240}
             onClose={closeWordCard}
           />
+        )}
+        {openCard?.kind === "plain" && (
+          <div
+            ref={plainPanelWrapRef}
+            className="video-plain-word-panel-wrap"
+            style={{
+              bottom: `${openCard.bottomPx}px`,
+              left: clampedCardLeft != null ? `${clampedCardLeft}px` : undefined,
+              maxHeight: `${cardMaxHeight ?? 240}px`,
+            }}
+          >
+            <PlainWordPanel
+              word={openCard.word}
+              contextFr={openCard.contextFr}
+              contextUk={openCard.contextUk}
+              teacherItem={openCard.teacherItem}
+              inputId="video-plain-word-translation"
+              onClose={closeWordCard}
+              compact={isCompactLandscape}
+            />
+          </div>
         )}
       </div>
 

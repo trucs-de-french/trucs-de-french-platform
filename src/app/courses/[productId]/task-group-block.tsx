@@ -172,6 +172,7 @@ export function TaskGroupBlock({
             src={group.media_url}
             subtitles={group.subtitles ?? undefined}
             vocab={collectVideoVocab(sceneDialogue ?? [])}
+            dialogue={sceneDialogue ?? []}
             title={t("video.videoLabel")}
           />
         ) : (

@@ -57,6 +57,7 @@ import { toEmbedUrl } from "@/lib/video";
 import { VideoFrame } from "@/components/video-frame";
 import { VideoPlayer, type VideoSubtitleTrack } from "@/components/video-player";
 import { ScriptSection } from "./script-section";
+import { DictHint } from "./dict-hint";
 import { VocabSection } from "./vocab-section";
 import { SavedWordsProvider } from "@/components/dictionary/saved-words-provider";
 import { listSavedWordsForSource } from "@/lib/cabinet/saved-words.server";
@@ -701,6 +702,7 @@ export default async function ScenePage({
         src={scene.video_url}
         subtitles={(scene.subtitles as VideoSubtitleTrack[] | null) ?? undefined}
         vocab={collectVideoVocab(dialogue)}
+        dialogue={dialogue}
         title={scene.title}
       />
     ) : (
@@ -1009,6 +1011,13 @@ export default async function ScenePage({
             але це не заважає: React не створює DOM-вузол для false/null,
             тож flex-gap коректно рахує лише те, що справді відображається. */}
         <div className={`${H1_TO_CONTENT} flex flex-col gap-8`}>
+          {/* Одна підказка на всю сторінку (dict-hint.tsx) — раніше жила
+              лише над заголовком "Скрипт" (script-section.tsx); піднята
+              сюди, щоб покрити й відео (Крок "save any word from video
+              subtitles"), незалежно від порядку блоків відео/скрипт
+              (config.blockOrder). Сама себе ховає без SavedWordsProvider/
+              для незалогінених студентів, без додаткової умови тут. */}
+          <DictHint />
           {orderedBlockRows.map((row, i) => {
             if (row.block_type === "content") {
               const content = row.ref_id ? contentBlocksById.get(row.ref_id) : undefined;

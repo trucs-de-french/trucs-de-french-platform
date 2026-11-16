@@ -6,7 +6,6 @@ import { DialogueLine, TranslatedText, splitTranslationSpeaker, normalizeSpeaker
 import { SectionHeaderBar, scrollToHeaderAndFocus } from "@/components/scene-header-bar";
 import { resolveBlockIcon } from "@/lib/block-icons";
 import { useT } from "@/lib/i18n/context";
-import { DictHint } from "./dict-hint";
 import { useSavedWords } from "@/components/dictionary/saved-words-provider";
 
 // Шеврон "вгору" для кнопки "Згорнути..." (script-section.tsx/vocab-
@@ -286,9 +285,6 @@ export function ScriptSection({
   if (useBar) {
     return (
       <div className="flex flex-col gap-[14px]">
-        {/* Лише фіксований блок "Скрипт" (title) — не додаткові script-
-            блоки нижче на сторінці, щоб підказка не дублювалась. */}
-        <DictHint />
         <SectionHeaderBar
           title={title!}
           icon={resolveBlockIcon("script")}

@@ -1995,6 +1995,80 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Звичайні (не підсвічені вчителькою) клікабельні слова в FR-субтитрах
+   (video-player.tsx, "save any word from video subtitles") — НІКОЛИ без
+   підкреслення/фону (вимога задачі, навмисно відрізняється від
+   .video-word-fr — учительське слово лишається підкресленим завжди),
+   лише легкий hover на pointer:fine і focus-visible outline.
+   pointer-events:auto — той самий принцип, що .video-word-fr (предок
+   .pointer-events-none стек); .video-player--playing нижче вимикає його
+   назад на none, поки відео грає — слова клікабельні лише на паузі, тап
+   "крізь" них перемикає play/pause, як і сьогодні для решти субтитрів. */
+.video-plain-word {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.video-player--playing .video-plain-word {
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .video-plain-word:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 3px;
+  }
+}
+.video-plain-word:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+/* Плаваюча обгортка панелі звичайного слова (PlainWordPanel,
+   plain-word-panel.tsx) усередині відео — та сама позиційна логіка
+   (left/bottom/max-height), що .video-word-card вище (computeAnchor,
+   video-player.tsx), але сама панель лишається у власній світлій/
+   лавандовій поверхні (вимога задачі — та сама палітра, що панель
+   звичайного слова скрипту), не темне скло картки вчительського слова. */
+.video-plain-word-panel-wrap {
+  position: absolute;
+  z-index: 20;
+  transform: translateX(-50%);
+  width: min(300px, calc(100% - 24px));
+  overflow-y: auto;
+}
+.video-plain-word-panel-wrap .plain-word-panel {
+  margin-top: 0;
+}
+@media (max-width: 639px) {
+  .video-plain-word-panel-wrap {
+    left: 10px !important;
+    right: 10px;
+    width: auto;
+    transform: none;
+  }
+}
+
+/* Landscape-fullscreen на короткому екрані (телефон лежачи) — замало
+   вертикального місця, щоб рахувати bottom від плашки субтитрів (аудит
+   "save any word from video subtitles" п.8): якір перемикається на
+   верх контейнера замість низу, картка/панель ніколи не перекриває ні
+   плашку субтитрів, ні панель керування, незалежно від того, яке слово
+   клікнули. */
+@media (max-height: 420px) and (orientation: landscape) {
+  .video-word-card,
+  .video-plain-word-panel-wrap {
+    top: 8px !important;
+    bottom: auto !important;
+    max-height: calc(100% - 16px) !important;
+  }
+}
+
 /* Mute-кнопка video-player.tsx — звук на дотикових пристроях регулюють
    апаратні кнопки, ховаємо саме за типом вказівника, не за шириною
    екрана (вузьке мишаче вікно лишає кнопку доступною). */

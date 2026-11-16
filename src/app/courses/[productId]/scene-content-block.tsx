@@ -108,7 +108,8 @@ export function SceneContentBlockContent({
 }) {
   // Власний dialogue блоку (якщо колись заповнять і для "video") виграє над
   // сценою; інакше — dialogue сцени, якщо є.
-  const videoVocab = collectVideoVocab(block.dialogue?.length ? block.dialogue : sceneDialogue ?? []);
+  const videoDialogue = block.dialogue?.length ? block.dialogue : sceneDialogue ?? [];
+  const videoVocab = collectVideoVocab(videoDialogue);
   const textNode = !isBlankHtml(block.content_text) && (
     // rich-text + EXERCISE_BODY (Lora, text-base, звичайна вага) — НЕ
     // InstructionsText/EXERCISE_INSTRUCTION: це вільний пояснювальний текст
@@ -196,6 +197,7 @@ export function SceneContentBlockContent({
             src={block.media_url}
             subtitles={block.subtitles ?? undefined}
             vocab={videoVocab}
+            dialogue={videoDialogue}
             title={t(lang, "video.videoLabel")}
           />
         ) : (
