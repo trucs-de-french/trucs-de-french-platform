@@ -195,6 +195,19 @@ export function PlainWordPanel({
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Автофокус поля перекладу — ЛИШЕ форма ручного перекладу має цей інпут
+  // (teacherItem/existing/justSaved/justRemoved — ні), тож ref.current тут
+  // буде null у трьох з чотирьох гілок, ефект нижче просто нічого не
+  // робить. pointer:fine (не "десктоп" за шириною екрана) — на телефоні/
+  // планшеті з сенсорним вводом автофокус висмикнув би клавіатуру одразу
+  // при відкритті панелі (задача-виправлення "ignore player shortcuts
+  // while typing in word panel", п.5).
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    inputRef.current?.focus();
+  }, []);
 
   // Автозакриття через 1с після успіху — той самий ефект і для save, і
   // для remove (лише інший прапорець/лейбл). Таймер чиститься, якщо
@@ -231,8 +244,24 @@ export function PlainWordPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose з викликача стабільний за формою викликання; переприв'язка на кожен рендер непотрібна
   }, []);
 
+  // Escape закриває (той самий onClose, що й документний слухач
+  // video-player.tsx — панель лише дублює для фокусу всередині себе).
+  // Будь-яка ІНША клавіша — stopPropagation, щоб клавіатурні скорочення
+  // плеєра (Пробіл=play/pause, ←/→=перемотка — handleWrapperKeyDown,
+  // video-player.tsx) НІКОЛИ не спрацьовували, поки фокус десь усередині
+  // цієї панелі (поле вводу, чипи частини мови, кнопки Зберегти/
+  // Скасувати) — задача-виправлення "ignore player shortcuts while
+  // typing in word panel". isComposing — IME-композиція (напр. вибір
+  // ієрогліфа) ще не завершена, не чіпаємо event.
   function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
-    if (e.key === "Escape") onClose();
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+    if (!e.nativeEvent.isComposing) e.stopPropagation();
+  }
+  function handleKeyUp(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Escape" && !e.nativeEvent.isComposing) e.stopPropagation();
   }
 
   // existing/isSavedCompact рахуються ТУТ (до "if (!saved) return null"
@@ -310,7 +339,7 @@ export function PlainWordPanel({
   // wrap/width:max-content замість flex-колонки на всю висоту обгортки.
   if (justSaved || justRemoved) {
     return (
-      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+      <div className="plain-word-panel plain-word-panel--compact-saved" role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <p className="plain-word-panel-word">{word}</p>
         <p className="save-word-pill save-word-pill--saved save-word-pill--compact">
           {justSaved ? t("dictionary.panelSavedConfirm") : t("dictionary.panelRemovedConfirm")}
@@ -345,7 +374,7 @@ export function PlainWordPanel({
       contextUk,
     };
     return (
-      <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+      <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
         <div className="plain-word-panel-header">
           <p className="plain-word-panel-word">{word}</p>
         </div>
@@ -384,6 +413,7 @@ export function PlainWordPanel({
         role="region"
         ref={panelRef}
         onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
         onPointerEnter={() => setInteracting(true)}
         onPointerLeave={() => setInteracting(false)}
         onPointerDown={() => setInteracting(true)}
@@ -426,7 +456,7 @@ export function PlainWordPanel({
   }
 
   return (
-    <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown}>
+    <div className={panelClassName} role="region" ref={panelRef} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
       <div className="plain-word-panel-header">
         <p className="plain-word-panel-word">{word}</p>
       </div>
@@ -437,6 +467,7 @@ export function PlainWordPanel({
         </label>
         <input
           id={inputId}
+          ref={inputRef}
           type="text"
           value={value}
           maxLength={200}
@@ -446,6 +477,15 @@ export function PlainWordPanel({
               e.preventDefault();
               void handleSave();
             }
+            // "Belt and braces" — та сама логіка, що panelRef-обгортки
+            // handleKeyDown вище, продубльована прямо на самому полі:
+            // клавіатурні скорочення плеєра НІКОЛИ не бачать жодної
+            // клавіші, набраної тут (крім Escape — закриває панель через
+            // bubbling до handleKeyDown вище).
+            if (e.key !== "Escape" && !e.nativeEvent.isComposing) e.stopPropagation();
+          }}
+          onKeyUp={(e) => {
+            if (e.key !== "Escape" && !e.nativeEvent.isComposing) e.stopPropagation();
           }}
           className="plain-word-panel-input"
         />

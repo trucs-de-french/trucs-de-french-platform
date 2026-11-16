@@ -62,6 +62,21 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+// Клавіатурні скорочення плеєра (Пробіл/←/→ — handleWrapperKeyDown нижче)
+// не мають спрацьовувати, поки студент друкує — задача-виправлення
+// "ignore player shortcuts while typing in word panel". INPUT/TEXTAREA/
+// SELECT/contenteditable/role=textbox — звичайні текстові поля будь-де в
+// плеєрі (сьогодні єдине таке поле — "Мій переклад" у PlainWordPanel, але
+// перевірка загальна, не прив'язана до конкретного компонента).
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if ((target as HTMLElement).isContentEditable) return true;
+  if (target.getAttribute("role") === "textbox") return true;
+  return false;
+}
+
 function readStoredSpeed(): number {
   try {
     const raw = localStorage.getItem("videoPlayer:speed");
@@ -1039,8 +1054,21 @@ export function VideoPlayer({
   }, [speedOpen, subsOpen]);
 
   // Пробіл (play/pause) і ←/→ (±5с) — слухач на всій обгортці, спрацьовує
-  // незалежно від того, який саме дочірній елемент (смуга, кнопка) у фокусі.
+  // незалежно від того, який саме дочірній елемент (смуга, кнопка) у
+  // фокусі. isTypingTarget/data-vocab-trigger-ish closest — НЕ діємо,
+  // поки фокус у текстовому полі (PlainWordPanel/VideoWordCard) чи десь
+  // усередині самої картки/панелі слова (POS-чипи, кнопки Зберегти/
+  // Скасувати/Прибрати/Закрити — Пробіл на фокусованій КНОПЦІ має лише
+  // натиснути її, не перемикати відтворення) — задача-виправлення
+  // "ignore player shortcuts while typing in word panel". isComposing —
+  // IME-композиція (ще не завершений ввід) теж не чіпаємо. PlainWordPanel/
+  // VideoWordCard самі ДОДАТКОВО зупиняють bubbling (stopPropagation) —
+  // ця перевірка тут лише "друга лінія оборони".
   function handleWrapperKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.nativeEvent.isComposing) return;
+    const target = e.target as Element | null;
+    if (isTypingTarget(target)) return;
+    if (target?.closest?.(".video-plain-word-panel-wrap, .video-word-card")) return;
     if (e.key === " " || e.key === "Spacebar") {
       e.preventDefault();
       togglePlay();
