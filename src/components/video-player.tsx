@@ -1446,7 +1446,23 @@ export function VideoPlayer({
                       задача-виправлення "bounded scroll area and sticky
                       actions in word panels", п.5: округла кнопка-"скіп"
                       (⏭/+10с) не потрібна, доки студент читає/зберігає
-                      слово, і не тулиться до краю картки/панелі. */}
+                      слово, і не тулиться до краю картки/панелі.
+                      Задача-виправлення "relocate top-centre skip button":
+                      аудит показав, що це ЄДИНА така кнопка в компоненті
+                      (git log -p 81f1162^..HEAD — жоден коміт не додавав
+                      другої/дубльованої), і {"{!openCard}"} логічно коректна
+                      (card/панель і ця кнопка читають один і той самий стан
+                      в одному рендері, не можуть розійтися). Клас
+                      video-control-skip-forward нижче — ЧИСТО CSS-рівень
+                      "belt and braces" ПОВЕРХ цієї JS-умови (globals.css,
+                      :has()): якщо скріншот показав кнопку видимою поруч
+                      із відкритою карткою, це або інший екземпляр
+                      VideoPlayer на тій самій сторінці (своя власна
+                      openCard — коректно, не баг), або майбутній
+                      регрес/гонка цього самого стану — CSS-правило
+                      гарантує, що кнопка ніколи не намалюється НАД жодною
+                      з двох карток САМЕ ЦЬОГО екземпляра, незалежно від
+                      причини. */}
                   {!openCard && (
                     <button
                       type="button"
@@ -1455,7 +1471,7 @@ export function VideoPlayer({
                         wakeOverlay();
                       }}
                       aria-label={t("videoPlayer.forward10")}
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
+                      className={`video-control-skip-forward flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white min-[560px]:h-[34px] min-[560px]:w-[34px] ${FOCUS_RING}`}
                       style={{ background: "rgba(255,255,255,0.16)" }}
                     >
                       <FastForward size={16} />
