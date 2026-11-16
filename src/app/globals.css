@@ -17692,20 +17692,38 @@ button.cabinet-nav-item {
 
 /* Інлайн-помилка збереження (ліміт 1000 слів/збій мережі) — ніколи не
    alert(), ніколи чистий червоний (amber, той самий принцип, що italic
-   text-amber-700 в інших місцях коду). */
+   text-amber-700 в інших місцях коду).
+   Задача-виправлення "dark theme colours for the hint banner", п.6 —
+   .save-word-error рендериться (plain-word-panel.tsx/save-word-button.tsx)
+   на ДВОХ принципово різних поверхнях: (а) завжди світла/лавандова
+   (скрипт — PlainWordPanel без surface="dark", VocabWord-тултіп) — та
+   сама "поверхня завжди світла в обох темах сайту" причина, що вже
+   задокументована в .save-word-icon-btn вище; (б) завжди темне скло
+   (VideoWordCard/SaveWordButton surface="dark", .plain-word-panel--video
+   вище) — там .save-word-error--on-dark нижче ЗАВЖДИ (не залежно від
+   теми сайту) дає світлий янтар. Колишній .dark/медіа-варіант ТУТ
+   (світлий янтар #fbbf86) вважав, що .dark/системна темна тема сама
+   означає темну поверхню під текстом — для (а) це НЕПРАВДА (поверхня
+   лишається світлою/лавандовою й у темній темі сайту), тож світлий
+   янтар на світлому фоні давав контраст ≈1.2:1 замість потрібних ≥4.5:1.
+   Базовий колір тепер ЄДИНИЙ, незалежний від теми сайту (узгоджено з
+   (а), контраст ≈6.4:1 на білому/≈3.7:1 на лавандовому — та сама
+   лавандова поверхня, що вже прийнята для .plain-word-panel у темній
+   темі сайту); (б) отримує світлий янтар через ОКРЕМИЙ клас, що
+   SaveWordButton/PlainWordPanel додають САМІ за surface="dark" (та сама
+   -on-dark конвенція, що save-word-pill--saved-on-dark/
+   save-word-remove-link--on-dark вище), а не за темою сайту. */
 .save-word-error {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
   color: #b45309;
 }
-.dark .save-word-error {
+.save-word-error--on-dark {
+  /* ≈8.9:1 на rgba(10,9,28,.92)/.video-word-card — той самий колір, що
+     .plain-word-panel.plain-word-panel--video .save-word-error уже
+     використовує для панелі звичайного слова всередині відео. */
   color: #fbbf86;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-error {
-    color: #fbbf86;
-  }
 }
 
 /* Тост помилки збереження у таблиці "Вокабуляр" (SaveWordButton
@@ -17714,7 +17732,11 @@ button.cabinet-nav-item {
    стискають переклад, коли з'являється помилка (сам зникає через ~4с,
    SaveWordButton). Винний (не amber — amber тут читався б як колір
    категорії "Noms", а не помилка) — той самий принцип контрасту (≥4.5:1),
-   що .save-word-error вище. */
+   що .save-word-error вище. .vocab-row (globals.css, без .dark-варіанту)
+   лишається білою/кремовою в ОБОХ темах сайту (та сама причина, що
+   .save-word-icon-btn/.save-word-error вище) — колишній .dark/медіа-
+   варіант (світло-рожевий #f0a3b0) давав ≈2:1 на цьому тлі замість
+   потрібних ≥4.5:1; тепер колір єдиний, не залежить від теми сайту. */
 .save-word-error-toast {
   position: absolute;
   left: 0;
@@ -17728,14 +17750,6 @@ button.cabinet-nav-item {
   color: #a23b4f;
   pointer-events: none;
   z-index: 1;
-}
-.dark .save-word-error-toast {
-  color: #f0a3b0;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .save-word-error-toast {
-    color: #f0a3b0;
-  }
 }
 
 /* Маленький лейбл частини мови всередині тултіпа VocabWord
@@ -18080,7 +18094,22 @@ button.cabinet-nav-item {
 }
 
 /* Одноразова підказка над скриптом (dict-hint.tsx) — слимова плашка, не
-   банер: та сама --glass-item-bg/-border родина, золотий акцент зліва. */
+   банер: та сама --glass-item-bg/-border родина, золотий акцент зліва.
+   --glass-item-*/--glass-text* читаються з НАЙБЛИЖЧОГО предка, що їх
+   визначає — а темні значення цих токенів (вище, .dark .glass-block/
+   .dark .scene-bar і медіа-пара) навмисно обмежені САМЕ цими двома
+   класами-контейнерами (щоб текст поза реальною скляною панеллю не
+   став білим на білому). .dict-hint рендериться (page.tsx) ПРЯМО в
+   обгортці секцій, БЕЗ жодного предка .glass-block/.scene-bar — тому в
+   темній темі (і .dark, і системній) ці токени так і лишаються
+   світлими зі :root (дефолт), і підказка завжди виглядала світлою,
+   незалежно від теми сайту. Задача-виправлення "dark theme colours for
+   the hint banner": замість боротьби за той самий успадкований
+   ланцюжок — прямі .dark .dict-hint/медіа-пара нижче, ТІ САМІ кольори,
+   що .dark .fullscreen-btn/.dark .scene-bar вище використовують для
+   "На весь екран"/бару секції (rgba(10,16,48,.82) + --gold-border-
+   dark-50 + #f6dc8e-родина), щоб підказка виглядала як СУСІДНІ темні
+   елементи, а не як окремий світлий острівець. */
 .dict-hint {
   display: flex;
   align-items: center;
@@ -18094,6 +18123,20 @@ button.cabinet-nav-item {
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--glass-text, #1a1640);
+}
+.dark .dict-hint {
+  background: rgba(10, 16, 48, 0.82);
+  border-color: var(--gold-border-dark-50);
+  border-left-color: #d9b765;
+  color: #f8f3e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .dict-hint {
+    background: rgba(10, 16, 48, 0.82);
+    border-color: var(--gold-border-dark-50);
+    border-left-color: #d9b765;
+    color: #f8f3e4;
+  }
 }
 .dict-hint-close {
   display: inline-flex;
@@ -18116,6 +18159,34 @@ button.cabinet-nav-item {
 .dict-hint-close:focus-visible {
   outline: 2px solid #4b46da;
   outline-offset: 2px;
+}
+.dark .dict-hint-close {
+  color: #f8f3e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .dict-hint-close {
+    color: #f8f3e4;
+  }
+}
+@media (hover: hover) {
+  .dark .dict-hint-close:hover {
+    background: rgba(243, 217, 139, 0.16);
+    color: #f3d98b;
+  }
+}
+@media (hover: hover) and (prefers-color-scheme: dark) {
+  :root:not(.light) .dict-hint-close:hover {
+    background: rgba(243, 217, 139, 0.16);
+    color: #f3d98b;
+  }
+}
+.dark .dict-hint-close:focus-visible {
+  outline-color: #e8c46a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .dict-hint-close:focus-visible {
+    outline-color: #e8c46a;
+  }
 }
 
 /* Чипи "Частина мови" у формі ЩЕ не збереженого звичайного слова

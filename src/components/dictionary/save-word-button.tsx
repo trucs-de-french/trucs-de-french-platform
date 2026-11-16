@@ -94,6 +94,12 @@ export function SaveWordButton({
   const onDark = surface === "dark" ? " save-word-pill--saved-on-dark" : "";
   const removeOnDark = surface === "dark" ? " save-word-remove-link--on-dark" : "";
   const primaryOnDark = surface === "dark" ? " save-word-pill--primary-on-dark" : "";
+  // Задача-виправлення "dark theme colours for the hint banner", п.6:
+  // .save-word-error сама не була surface-обізнаною (на відміну від
+  // трьох варіантів вище) — VideoWordCard (surface="dark", завжди темне
+  // скло) показував темно-янтарний текст, калібрований під БІЛИЙ фон, у
+  // світлій темі сайту (≈3.9:1 замість ≥4.5:1). Той самий принцип -on-dark.
+  const errorOnDark = surface === "dark" ? " save-word-error--on-dark" : "";
 
   return (
     <div className={`flex flex-col items-start gap-1 ${className}`}>
@@ -124,7 +130,7 @@ export function SaveWordButton({
           {t("dictionary.saveAction")}
         </button>
       )}
-      {error && <span className="save-word-error">{t("dictionary.saveError")}</span>}
+      {error && <span className={`save-word-error${errorOnDark}`}>{t("dictionary.saveError")}</span>}
     </div>
   );
 }
