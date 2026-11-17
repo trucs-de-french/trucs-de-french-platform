@@ -179,7 +179,7 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
         {t(lang, "cabinet.dictionary.count", { count: words.length })}
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="dictionary-filter-bar">
         <label className="relative flex min-h-11 w-full min-w-0 flex-1 basis-[220px] items-center sm:max-w-[320px]">
           <span className="sr-only">{t(lang, "cabinet.dictionary.search")}</span>
           <Search
@@ -196,36 +196,54 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
           />
         </label>
 
-        {hasCategoryFilter && (
+        <div className="dictionary-filter-actions">
+          {hasCategoryFilter && (
+            <button
+              type="button"
+              aria-expanded={panelVisible}
+              aria-controls="dictionary-categories-panel"
+              onClick={() => setPanelOpen((open) => !open)}
+              className={`flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                isCategoryActive
+                  ? "cabinet-chip--selected"
+                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+              }`}
+            >
+              {toggleLabel}
+              {panelVisible ? (
+                <ChevronUp size={14} aria-hidden="true" />
+              ) : (
+                <ChevronDown size={14} aria-hidden="true" />
+              )}
+            </button>
+          )}
+
           <button
             type="button"
-            aria-expanded={panelVisible}
-            aria-controls="dictionary-categories-panel"
-            onClick={() => setPanelOpen((open) => !open)}
-            className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
-              isCategoryActive
-                ? "cabinet-chip--selected"
-                : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
-            }`}
+            onClick={handleDownloadPdf}
+            disabled={filtered.length === 0 || pdfStatus === "loading"}
+            aria-busy={pdfStatus === "loading"}
+            aria-label={t(lang, "cabinet.dictionary.pdf.button")}
+            className="cabinet-btn-primary flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm disabled:opacity-50"
           >
-            {toggleLabel}
-            {panelVisible ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+            <Download size={16} aria-hidden="true" />
+            {t(lang, pdfStatus === "loading" ? "cabinet.dictionary.pdf.loading" : "cabinet.dictionary.pdf.button")}
           </button>
-        )}
+        </div>
 
         {hasCategoryFilter && panelVisible && (
-          <div id="dictionary-categories-panel" className="flex w-full flex-wrap items-center gap-2">
+          <div id="dictionary-categories-panel" className="dictionary-categories-panel">
             <button
               type="button"
               aria-pressed={posFilter === "all"}
               onClick={() => setPosFilter("all")}
-              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+              className={`dictionary-chip dictionary-chip--all min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                 posFilter === "all"
                   ? "cabinet-chip--selected"
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
-              {t(lang, "cabinet.dictionary.filter.all")}
+              <span className="dictionary-chip-label">{t(lang, "cabinet.dictionary.filter.all")}</span>
             </button>
             {presentPos.map((pos) => (
               <button
@@ -233,13 +251,13 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
                 type="button"
                 aria-pressed={posFilter === pos}
                 onClick={() => setPosFilter(pos)}
-                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                className={`dictionary-chip min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                   posFilter === pos
                     ? "cabinet-chip--selected"
                     : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
                 }`}
               >
-                {t(lang, POS_LABEL_KEY[pos])}
+                <span className="dictionary-chip-label">{t(lang, POS_LABEL_KEY[pos])}</span>
               </button>
             ))}
             {hasUncategorized && (
@@ -247,29 +265,17 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
                 type="button"
                 aria-pressed={posFilter === "none"}
                 onClick={() => setPosFilter("none")}
-                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                className={`dictionary-chip min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
                   posFilter === "none"
                     ? "cabinet-chip--selected"
                     : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
                 }`}
               >
-                {t(lang, "cabinet.dictionary.category.none")}
+                <span className="dictionary-chip-label">{t(lang, "cabinet.dictionary.category.none")}</span>
               </button>
             )}
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={handleDownloadPdf}
-          disabled={filtered.length === 0 || pdfStatus === "loading"}
-          aria-busy={pdfStatus === "loading"}
-          aria-label={t(lang, "cabinet.dictionary.pdf.button")}
-          className="cabinet-btn-primary flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm disabled:opacity-50"
-        >
-          <Download size={16} aria-hidden="true" />
-          {t(lang, pdfStatus === "loading" ? "cabinet.dictionary.pdf.loading" : "cabinet.dictionary.pdf.button")}
-        </button>
       </div>
 
       {pdfStatus === "error" && <p className="dictionary-edit-error">{t(lang, "cabinet.dictionary.error")}</p>}

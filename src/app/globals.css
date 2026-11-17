@@ -17976,11 +17976,81 @@ button.cabinet-nav-item {
   }
 }
 
-/* /cabinet/dictionary ("Мій словник") — картки збережених слів
-   (dictionary-view.tsx). Grid-колонки через окремий клас із власними
-   @media (не Tailwind sm:/lg:grid-cols-* утиліти поряд з .cabinet-card-
-   style unlayered класами — та сама причина, що й в інших gri-блоках
-   кабінету, напр. .cabinet-stat-grid вище). */
+/* /cabinet/dictionary ("Мій словник") — рядок пошук+фільтр+PDF і панель
+   чіпів категорій. На мобільному (<768px) чіпи раніше текли вільним
+   text-wrap (flex-wrap) і лишали порожній "хвіст" праворуч у кожному
+   рядку — тут замінено на 2-колонковий grid, що завжди заповнює ширину;
+   .dictionary-filter-actions (тоггл+PDF) лишається flex, щоб на
+   мобільному дві кнопки влізли рівно по половині, якщо влазять, інакше
+   самі склались у стовпчик (flex-basis+min-width без flex-shrink нижче
+   min-width — природне flex-wrap). Unlayered клас, той самий принцип, що
+   .dictionary-grid нижче — не Tailwind-утиліти для gap/grid-colums. */
+.dictionary-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dictionary-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 767px) {
+  .dictionary-filter-actions {
+    width: 100%;
+  }
+  .dictionary-filter-actions > * {
+    flex: 1 1 150px;
+    min-width: 150px;
+  }
+}
+
+.dictionary-categories-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+@media (max-width: 767px) {
+  .dictionary-categories-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  /* "Усі" на весь перший рядок — обрано замість "першим у гріді" (задача
+     дозволяла обидва): так решта категорій лишається чистим 2-колонковим
+     блоком під окремим "скидання" зверху, а не впереміш з ним. */
+  .dictionary-categories-panel .dictionary-chip--all {
+    grid-column: 1 / -1;
+  }
+  .dictionary-categories-panel .dictionary-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    min-width: 0;
+  }
+  /* 2-рядковий ellipsis (-webkit-line-clamp) — довгі підписи
+     ("Прийменники / Сполучники") вкорочуються власним "…" замість
+     розтягування клітинки чи вильоту за межі чіпа. */
+  .dictionary-categories-panel .dictionary-chip-label {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.25;
+  }
+}
+
+/* картки збережених слів (dictionary-view.tsx). Grid-колонки через окремий
+   клас із власними @media (не Tailwind sm:/lg:grid-cols-* утиліти поряд з
+   .cabinet-card-style unlayered класами — та сама причина, що й в інших
+   gri-блоках кабінету, напр. .cabinet-stat-grid вище). */
 .dictionary-grid {
   display: grid;
   grid-template-columns: 1fr;
