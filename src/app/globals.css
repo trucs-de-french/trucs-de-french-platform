@@ -2317,6 +2317,192 @@ button, input, textarea, select, label, nav, aside {
   }
 }
 
+/* Вертикальний мобільний розклад плеєра (video-player.tsx, isStacked,
+   задача "mobile stacked layout, variant A") — ЛИШЕ <768px і НЕ fullscreen
+   (JS уже гейтить рендер усієї цієї розмітки, тут немає потреби дублювати
+   @media-гейт на класах). Темна палітра фіксована (та сама темна скляна
+   картка, що й video-word-card/plain-word-panel--video нижче — незалежна
+   від теми сайту .dark/.light, тож світла/темна тема сайту тут НЕ потребує
+   окремих перевизначень контрасту: кожен елемент малює свій колір
+   напряму з hex, а не з токенів сайту). svh з фолбеком на vh для
+   браузерів без підтримки (Safari <15.4 тощо). */
+.video-stacked-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: clamp(520px, 72vh, 640px);
+  background: #141a52;
+  border-radius: 16px;
+  overflow: hidden;
+}
+@supports (height: 1svh) {
+  .video-stacked-card {
+    height: clamp(520px, 72svh, 640px);
+  }
+}
+
+.video-stacked-bar {
+  flex: 0 0 52px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: #0a0e38;
+  border-bottom: 1px solid #2e3680;
+  overflow-x: auto;
+}
+.video-stacked-bar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.video-stacked-bar-btn--active {
+  background: #f6dc8e;
+  border-color: #f6dc8e;
+  color: #14132b;
+}
+.video-stacked-bar-btn--icon {
+  min-width: 36px;
+  justify-content: center;
+  padding: 0;
+}
+
+.video-stacked-progress-row {
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: #0a0e38;
+  border-bottom: 1px solid #2e3680;
+}
+
+.video-stacked-subtitle-zone {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #141a52;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.video-stacked-subtitle-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 16px;
+  text-align: center;
+  overflow-y: auto;
+}
+.video-stacked-subtitle-text .video-subtitle-fr {
+  font-size: 21px;
+  line-height: 1.3;
+  text-shadow: none;
+}
+.video-stacked-subtitle-text .video-subtitle-uk {
+  font-size: 17px;
+  line-height: 1.3;
+  text-shadow: none;
+}
+
+/* Хост відкритої картки/панелі слова В ПОТОЦІ (не оверлеєм) — ТІ Ж
+   .video-word-card/.video-plain-word-panel-wrap компоненти з тими самими
+   пропсами (renderOpenCardHost, video-player.tsx), лише позиціонування
+   скасоване: position:static замінює absolute, ширина/висота — 100%
+   хоста замість clamp/px, рахованих для абсолютного якоря. !important і
+   вища специфічність (2 класи) навмисно переважають і базові правила
+   (.video-word-card { position:absolute }), і @media (max-width:639px)
+   bottom-sheet-перевизначення (left:10px!important тощо) — наш селектор
+   специфічніший, тож виграє незалежно від порядку в файлі. Сама картка/
+   панель лишається внутрішньо flex-колонкою з header/scrollarea/footer
+   (компонент не чіпається) — scrollarea отримує реальне обмеження висоти
+   від height:100% тут, тож довгий переклад/приклад усередині скролиться,
+   а кнопки Зберегти/Скасувати (footer) лишаються "липкими" знизу хоста. */
+.video-stacked-panel-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.video-stacked-panel-host .video-word-card,
+.video-stacked-panel-host .video-plain-word-panel-wrap {
+  position: static !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  flex: 1 1 auto;
+  border-radius: 12px;
+}
+.video-stacked-panel-host .video-word-card--compact-saved,
+.video-stacked-panel-host .video-plain-word-panel-wrap--compact-saved {
+  flex: 0 0 auto;
+  height: auto !important;
+  margin: auto;
+}
+
+.video-stacked-controls-row {
+  flex: 0 0 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 16px;
+  background: #0a0e38;
+  border-top: 1px solid #2e3680;
+  /* Відступ знизу на телефонах із "островом"/жестовою панеллю (iPhone) —
+     рядок контролів лишається над системним жестовим ареалом, не під
+     ним. env() з фолбеком 0, якщо недоступний. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.video-stacked-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.video-stacked-ctrl-btn--active {
+  background: #f6dc8e;
+  color: #14132b;
+}
+.video-stacked-ctrl-btn--play {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  color: var(--play-icon);
+}
+.video-stacked-ctrl-btn:focus-visible,
+.video-stacked-bar-btn:focus-visible {
+  outline: 2px solid #f6dc8e;
+  outline-offset: -2px;
+}
+
 /* embed-frame.tsx — спільна обгортка embed/гра-iframe (Wordwall, власні
    HTML-ігри тощо) для студентської частини. На відміну від video-frame,
    базова (десктоп/планшет) висота лишається фіксованою в пікселях —

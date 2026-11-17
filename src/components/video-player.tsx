@@ -42,6 +42,41 @@ const OVERLAY_HIDE_DELAY_MS = 2500;
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#14132b]";
 
+// Задача "mobile stacked layout, variant A": на тапі звичайного слова (не
+// вчительського — .video-word-fr уже й так клікабельне завжди) у
+// вертикальному мобільному розкладі ОДИН тап має і ПОСТАВИТИ відео на
+// паузу, і одразу відкрити панель слова (без потреби спершу тапнути саме
+// відео) — на відміну від десктопу/fullscreen, де звичайне слово
+// клікабельне лише вже на паузі (stopOthersAndRegister/pauseSafely-аудит
+// "stop spontaneous pauses"). Один явно названий прапорець — щоб цю
+// поведінку можна було відкотити одним рядком, не шукаючи розкидані
+// умови.
+const STACKED_TAP_PAUSES_AND_OPENS = true;
+
+// max-width:767px — той самий breakpoint, що й "md:" у Tailwind-конфігу
+// проєкту (CLAUDE.md, "Responsive breakpoint: 768px"). matchMedia в
+// ефекті (не в ініціалізаторі useState) — SSR-safe: перший рендер і на
+// сервері, і на клієнті бачить false, фактичний стан застосовується лише
+// після монтування (той самий принцип, що відновлення speed/mode вище),
+// без ризику hydration mismatch.
+function useIsStackedViewport(): boolean {
+  const [stacked, setStacked] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    // queueMicrotask — той самий прийом, що вже в ефекті відновлення
+    // speed/mode вище: react-hooks/set-state-in-effect проєкту забороняє
+    // прямий синхронний setState() у тілі ефекту, навіть одноразового.
+    queueMicrotask(() => setStacked(mq.matches));
+    function handleChange(e: MediaQueryListEvent) {
+      setStacked(e.matches);
+    }
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+  return stacked;
+}
+
 export type VideoSubtitleTrack = { lang: "fr" | "uk"; url: string };
 type SubtitlesMode = "fr_uk" | "fr" | "uk" | "off";
 
@@ -346,6 +381,13 @@ export function VideoPlayer({
   const overlayRef = useRef<HTMLDivElement>(null);
   const wordCardRef = useRef<HTMLDivElement>(null);
   const plainPanelWrapRef = useRef<HTMLDivElement>(null);
+  // Верхня сервісна панель вертикального мобільного розкладу (FR+UA/
+  // Повільно/швидкість/fullscreen-іконка) — та сама роль, що overlayRef/
+  // trackRef нижче в ефекті "клік поза карткою закриває її": клік по цій
+  // панелі, поки відкрита картка/панель слова, НЕ має закривати її (той
+  // самий принцип, що п.2 "place panel above subtitles and keep it open
+  // while seeking" для десктопної панелі керування).
+  const stackedServiceBarRef = useRef<HTMLDivElement>(null);
   // Сама плашка субтитрів (FR+UA разом) — потрібна лише для розрахунку
   // bottomPx картки/панелі слова (computeAnchor нижче): від ВЕРХУ ВСІЄЇ
   // плашки, не лише рядка клікнутого слова, інакше картка перекривала
@@ -392,6 +434,15 @@ export function VideoPlayer({
     toggle: toggleFullscreen,
     exitAnyFullscreen,
   } = useFullscreenWrapper();
+
+  // Вертикальний мобільний розклад (задача "mobile stacked layout, variant
+  // A") — лише на телефоні в портреті/загальному вузькому вікні (<768px) і
+  // ЛИШЕ коли НЕ fullscreen: справжній/pseudo-fullscreen завжди лишає
+  // старий розклад незмінним, незалежно від ширини екрана (вимога задачі
+  // "Fullscreen mode: keep the existing fullscreen layout... the stacked
+  // layout applies only when not fullscreen").
+  const isStackedViewport = useIsStackedViewport();
+  const isStacked = isStackedViewport && !isAnyFullscreen;
 
   const [playing, setPlaying] = useState(false);
   // Задача-виправлення "stop spontaneous pauses" — щойно відео РЕАЛЬНО
@@ -911,8 +962,13 @@ export function VideoPlayer({
     // застосуватись, ghost-клік після скролу/трекпада, активація з уже
     // отриманого раніше фокусу тощо), сам хендлер відмовляється відкривати
     // картку й ставити на паузу відео, яке насправді грає без жодної
-    // участі студента.
-    if (videoRef.current && !videoRef.current.paused) return;
+    // участі студента. Виняток — вертикальний мобільний розклад із
+    // STACKED_TAP_PAUSES_AND_OPENS: там ОДИН тап на слово МАЄ і поставити
+    // на паузу, і відкрити панель одразу (вимога задачі "mobile stacked
+    // layout, variant A"); саму паузу й wasPlayingBeforeCardRef коректно
+    // виставляє openWordCard нижче (бачить відео ще РЕАЛЬНО граючим і сам
+    // викликає pauseSafely) — тут лише пропускаємо ранній return.
+    if (videoRef.current && !videoRef.current.paused && !(isStacked && STACKED_TAP_PAUSES_AND_OPENS)) return;
     const normalizedCue = (activeFrCue?.text ?? "").replace(/\n+/g, " ");
     const line = findDialogueLineForCue(normalizedCue);
     let contextFr: string;
@@ -979,6 +1035,7 @@ export function VideoPlayer({
       if (plainPanelWrapRef.current?.contains(target)) return;
       if (overlayRef.current?.contains(target)) return;
       if (trackRef.current?.contains(target)) return;
+      if (stackedServiceBarRef.current?.contains(target)) return;
       if (target?.closest?.("[data-vocab-trigger], [data-plain-word-trigger]")) return;
       closeWordCard();
     }
@@ -1437,7 +1494,128 @@ export function VideoPlayer({
   }
 
   return (
-    <div className={`flex w-full flex-col gap-2 ${className}`}>
+    <div className={`${isStacked ? "video-stacked-card" : "flex w-full flex-col gap-2"} ${className}`}>
+      {/* Сервісна панель вертикального мобільного розкладу (52px) — ЗАВЖДИ
+          сиблінг ПЕРЕД wrapperRef (не дитина), на тій самій позиції в
+          дереві дітей цього контейнера на кожному рендері (просто
+          falsy, коли !isStacked) — React так ніколи не переосмислює й не
+          перемонтовує сам wrapperRef/<video> нижче лише через те, що цей
+          сиблінг з'являється/зникає. */}
+      {isStacked && (
+        <div ref={stackedServiceBarRef} className="video-stacked-bar">
+          {hasAnySubtitles && (
+            <div ref={subsWrapRef} className="relative shrink-0">
+              <button
+                ref={subsButtonRef}
+                type="button"
+                onClick={() => {
+                  setSubsOpen((v) => !v);
+                  setSpeedOpen(false);
+                }}
+                aria-label={t("videoPlayer.subtitlesAria", { label: subsLabel })}
+                aria-haspopup="menu"
+                aria-expanded={subsOpen}
+                className={`video-stacked-bar-btn ${FOCUS_RING}`}
+              >
+                <Captions size={14} />
+                <span>{subsLabel}</span>
+              </button>
+              {subsOpen && (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-10 mt-1 flex flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                  style={{ maxHeight: menuMaxHeight }}
+                >
+                  {hasFr && hasUk && <SubsMenuItem label="FR+UA" active={mode === "fr_uk"} onClick={() => changeMode("fr_uk")} />}
+                  {hasFr && <SubsMenuItem label="FR" active={mode === "fr"} onClick={() => changeMode("fr")} />}
+                  {hasUk && <SubsMenuItem label="UA" active={mode === "uk"} onClick={() => changeMode("uk")} />}
+                  <SubsMenuItem label={t("videoPlayer.subtitlesOff")} active={mode === "off"} onClick={() => changeMode("off")} />
+                  <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+                  <button
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={pauseOnWordOpen}
+                    onClick={togglePauseOnWordOpen}
+                    className="flex min-h-10 items-center justify-between gap-3 whitespace-nowrap px-3 text-left text-xs text-neutral-600 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  >
+                    <span>{t("videoPlayer.pauseOnWordOpen")}</span>
+                    <span
+                      aria-hidden
+                      className={`inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                        pauseOnWordOpen ? "bg-brand" : "bg-gray-300 dark:bg-neutral-600"
+                      }`}
+                    >
+                      <span
+                        className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                          pauseOnWordOpen ? "translate-x-4" : "translate-x-0.5"
+                        }`}
+                      />
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={toggleSlow}
+            aria-label={t("videoPlayer.slow")}
+            aria-pressed={speed === 0.75}
+            className={`video-stacked-bar-btn ${FOCUS_RING} ${speed === 0.75 ? "video-stacked-bar-btn--active" : ""}`}
+          >
+            <Turtle size={14} />
+          </button>
+
+          <div ref={speedWrapRef} className="relative shrink-0">
+            <button
+              ref={speedButtonRef}
+              type="button"
+              onClick={() => {
+                setSpeedOpen((v) => !v);
+                setSubsOpen(false);
+              }}
+              aria-label={t("videoPlayer.playbackSpeed", { speed })}
+              aria-haspopup="menu"
+              aria-expanded={speedOpen}
+              className={`video-stacked-bar-btn ${FOCUS_RING}`}
+            >
+              {speed}×▾
+            </button>
+            {speedOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-full z-10 mt-1 flex flex-col overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+                style={{ maxHeight: menuMaxHeight }}
+              >
+                {SPEEDS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={s === speed}
+                    onClick={() => setRate(s)}
+                    className={`flex min-h-10 min-w-24 items-center whitespace-nowrap px-3 text-left text-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 ${
+                      s === speed ? "font-semibold text-brand" : "text-neutral-600 dark:text-neutral-300"
+                    }`}
+                  >
+                    {s}×
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleFullscreenToggle()}
+            aria-label={isFullscreen || isPseudoFullscreen ? t("videoPlayer.exitFullscreen") : t("videoPlayer.fullscreen")}
+            className={`video-stacked-bar-btn video-stacked-bar-btn--icon ml-auto ${FOCUS_RING}`}
+          >
+            {isFullscreen || isPseudoFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+          </button>
+        </div>
+      )}
       <div
         ref={wrapperRef}
         tabIndex={-1}
@@ -1497,7 +1675,17 @@ export function VideoPlayer({
             ResizeObserver) тримає її завжди НАД усім, що зараз показано
             знизу. pointer-events:none — сама підказка ніколи не блокує тап
             по слову під нею. */}
-        {chipKind && (
+        {/* Чип-підказка/нижній оверлей-стек субтитрів+панелі керування —
+            лише в НЕ-стековому розкладі (десктоп/fullscreen): вертикальний
+            мобільний розклад (isStacked, нижче в цьому ж дереві) малює
+            прогрес/субтитри/контроли ВЖЕ не оверлеєм, а власними сиблінгами
+            ПІСЛЯ wrapperRef (document-order flex-колонка картки), не
+            всередині самого відео. <video>/PlaybackTicker вище лишаються
+            ОДНИМ і тим самим DOM-вузлом незалежно від isStacked (жодної
+            умови на самому <video> чи на wrapperRef) — перемикання
+            isStacked (resize/fullscreen-toggle) НЕ ремонтує відео й не
+            втрачає позицію відтворення. */}
+        {!isStacked && chipKind && (
           <div
             className={`video-word-hint-chip ${chipVisible ? "video-word-hint-chip--visible" : ""} ${
               cardAnchorTop ? "video-word-hint-chip--top" : ""
@@ -1516,6 +1704,7 @@ export function VideoPlayer({
             залізти під градієнт чи на кнопки. pointer-events:none на стеку
             (субтитри не мають бути клікабельні), auto — лише на самій
             панелі нижче. */}
+        {!isStacked && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex flex-col items-center">
           {Boolean(showFr && activeFrCue) || Boolean(showUk && activeUkCue) ? (
             <div
@@ -1799,6 +1988,7 @@ export function VideoPlayer({
             </div>
           </div>
         </div>
+        )}
 
         {/* Завжди видима кнопка-хрестик виходу (задача "always-visible
             top-left X exit button") — ВСЕРЕДИНІ wrapperRef (той самий
@@ -1824,8 +2014,84 @@ export function VideoPlayer({
             (.video-word-card/.plain-word-panel--video, globals.css), а не
             дві різні поверхні. Скрипт (dialogue-line.tsx) не передає
             surface — лишається світлим/лавандовим, як і раніше. */}
-        {renderOpenCardHost()}
+        {!isStacked && renderOpenCardHost()}
       </div>
+
+      {/* Решта вертикальної картки (прогрес/зона субтитрів/контроли) —
+          ЗАВЖДИ сиблінги ПІСЛЯ wrapperRef, та сама причина, що сервісна
+          панель вище: порядок дітей цього контейнера лишається стабільним
+          незалежно від isStacked, <video> вище не перемонтовується. */}
+      {isStacked && (
+        <>
+          <div className="video-stacked-progress-row">{renderSeekBar()}</div>
+
+          {/* Зона субтитрів (flex:1, скрол, якщо не влазить) — показує
+              АБО звичайний текст активної репліки (FR/UA, та сама
+              SubtitleFrLine/renderUkSubtitleLine, клікабельні слова
+              лишаються клікабельними), АБО (поки відкрита картка/панель
+              слова) ТУ Ж пару компонентів, що на десктопі (renderOpenCardHost),
+              лише в потоці, а не плаваючою абсолютною обгорткою — CSS
+              (.video-stacked-panel-host, globals.css) перевизначає
+              position/width/height компонентів усередині цього хоста. */}
+          <div className="video-stacked-subtitle-zone">
+            {openCard ? (
+              <div className="video-stacked-panel-host">{renderOpenCardHost()}</div>
+            ) : (
+              <div className="video-stacked-subtitle-text">{renderSubtitleLines()}</div>
+            )}
+          </div>
+
+          {/* Контроли (76px) — приховані, поки відкрита картка/панель
+              слова (вимога задачі): студент бачить панель на всю зону
+              субтитрів, без зайвих кнопок попід нею. */}
+          {!openCard && (
+            <div className="video-stacked-controls-row">
+              <button
+                type="button"
+                onClick={() => skip(-10)}
+                aria-label={t("videoPlayer.back10")}
+                className={`video-stacked-ctrl-btn ${FOCUS_RING}`}
+              >
+                <Rewind size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={togglePlay}
+                aria-label={playing ? t("videoPlayer.pause") : t("videoPlayer.play")}
+                aria-pressed={playing}
+                className={`video-stacked-ctrl-btn video-stacked-ctrl-btn--play ${FOCUS_RING}`}
+              >
+                {playing ? (
+                  <Pause size={24} fill="currentColor" />
+                ) : (
+                  <span className="play-icon-offset">
+                    <Play size={24} fill="currentColor" />
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => skip(10)}
+                aria-label={t("videoPlayer.forward10")}
+                className={`video-stacked-ctrl-btn ${FOCUS_RING}`}
+              >
+                <FastForward size={20} />
+              </button>
+              {hasAnySubtitles && (
+                <button
+                  type="button"
+                  onClick={toggleLoopLine}
+                  aria-label={t("videoPlayer.repeatLine")}
+                  aria-pressed={loopLine}
+                  className={`video-stacked-ctrl-btn ${FOCUS_RING} ${loopLine ? "video-stacked-ctrl-btn--active" : ""}`}
+                >
+                  <Repeat size={20} />
+                </button>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Та сама кнопка, що й під iframe-плеєрами (video-frame.tsx,
           embed-frame.tsx, клас "fullscreen-btn") — лише на телефоні
