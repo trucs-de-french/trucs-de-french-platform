@@ -2106,7 +2106,7 @@ export function VideoPlayer({
             {openCard ? (
               <div
                 ref={stackedPanelHostRef}
-                className="video-stacked-panel-host"
+                className={`video-stacked-panel-host${isCompactSavedCard ? " video-stacked-panel-host--compact-saved" : ""}`}
                 style={
                   stackedPanelMaxHeight != null
                     ? ({ "--stacked-panel-max-h": `${stackedPanelMaxHeight}px` } as CSSProperties)

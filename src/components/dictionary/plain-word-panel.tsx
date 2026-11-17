@@ -25,6 +25,11 @@ import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/sa
 
 const MAIN_POS = PART_OF_SPEECH_ORDER.slice(0, 4);
 
+// Задача-виправлення "polish compact saved card": іменована константа
+// замість буквального 3000 у таймері нижче (3с автозакриття компактного
+// "уже збережено" стану, existing-гілка).
+const SAVED_CARD_AUTOCLOSE_MS = 3000;
+
 const POS_CHIP_LABEL_KEY: Record<PartOfSpeech, MessageKey> = {
   nom: "dictionary.pos.nom",
   verbe: "dictionary.pos.verbe",
@@ -431,7 +436,7 @@ export function PlainWordPanel({
       }
       setClosing(true);
       fadeTimerRef.current = setTimeout(onClose, 150);
-    }, 3000);
+    }, SAVED_CARD_AUTOCLOSE_MS);
     return () => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };

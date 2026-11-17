@@ -2652,6 +2652,95 @@ button, input, textarea, select, label, nav, aside {
   height: auto !important;
   margin: auto;
 }
+/* Задача-виправлення "polish compact saved card": хост отримує модифікатор
+   --compact-saved (video-player.tsx, isCompactSavedCard) ЛИШЕ для трьох
+   компактних станів PlainWordPanel (justSaved/justRemoved/existing —
+   isSavedCompact, plain-word-panel.tsx) чи компактного VideoWordCard —
+   align-items/justify-content:center центрують маленьку картку В ЦЕНТРІ
+   зони субтитрів (не лівий верхній кут, як коли host просто стискався до
+   вмісту без зайвого простору для центрування); min-height:7.5rem — той
+   самий розмір, що .video-stacked-subtitle-text (звичайний текст
+   субтитрів) — без цього падіння висоти зони збігалось би з падінням
+   висоти самої картки, і margin:auto вище не мав би звідки брати вільне
+   місце для центрування. */
+.video-stacked-panel-host--compact-saved {
+  align-items: center;
+  justify-content: center;
+  min-height: 7.5rem;
+}
+/* Компактніша "Збережено"-картка (плоский однорядковий вигляд, задача-
+   виправлення "polish compact saved card") — flex-direction:row+wrap
+   (замість стовпця з десктопної версії, plain-word-panel.tsx CSS вище):
+   заголовок (слово) і пілюля "✓ У словнику"/"✓ Збережено" стають
+   елементами ОДНОГО рядка, що переносяться ЯК ЦІЛІ групи лише коли не
+   влазять (переклад і .plain-word-panel-compact-actions — кожен своя
+   власна група, Прибрати/Закрити всередині лишаються РАЗОМ, бо та group-
+   обгортка НЕ зачіпається, лише зовнішній контейнер). max-width:86% від
+   зони (не фіксовані 360px десктопної версії) — задача просила відсоток
+   від ширини зони, не px. */
+.video-stacked-panel-host .plain-word-panel--compact-saved {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  padding: 8px 14px;
+  max-width: 86%;
+}
+.video-stacked-panel-host .plain-word-panel-word,
+.video-stacked-panel-host .plain-word-panel-title-input {
+  font-size: 15px;
+}
+/* Слово/фраза, що тапнули/зберегли — обрізається "..." замість розтягу
+   картки чи переносу в другий рядок (задача "the saved word truncated with
+   ellipsis"); min-width:0 — без нього flex-елемент не стискається нижче
+   свого вмісту (інпут має атрибут size, що задає intrinsic-ширину за
+   кількістю символів — тут CSS max-width/min-width свідомо перебивають
+   його для довгих фраз). */
+.video-stacked-panel-host .plain-word-panel-word,
+.video-stacked-panel-host .plain-word-panel-title-input,
+.video-stacked-panel-host .plain-word-panel-header,
+.video-stacked-panel-host .plain-word-panel-title-row {
+  min-width: 0;
+  max-width: 100%;
+}
+.video-stacked-panel-host .plain-word-panel-word,
+.video-stacked-panel-host .plain-word-panel-title-input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.video-stacked-panel-host .save-word-pill--compact {
+  font-size: 15px;
+  padding: 3px 8px;
+}
+.video-stacked-panel-host .plain-word-panel-compact-translation {
+  width: 100%;
+  font-size: 13px;
+}
+.video-stacked-panel-host .plain-word-panel-compact-actions {
+  width: 100%;
+  margin-top: 4px;
+  gap: 12px;
+}
+/* Кнопки Прибрати/Закрити — видима висота ~32px (padding, не min-height
+   на самій кнопці — та лишається текстовим лінком, не прямокутником),
+   реальна область тапу ≥40px через невидимий ::before із негативним inset
+   (той самий прийом, що й чипи сусідніх слів вище). */
+.video-stacked-panel-host .save-word-remove-link,
+.video-stacked-panel-host .plain-word-panel-cancel {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 2px 10px;
+}
+.video-stacked-panel-host .save-word-remove-link::before,
+.video-stacked-panel-host .plain-word-panel-cancel::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
 
 /* Компактніша панель звичайного слова в стековому розкладі (задача-
    виправлення "word panel too big in stacked mode") — перевизначено
