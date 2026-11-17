@@ -123,13 +123,12 @@ function PosChipGroup({
   // defaultExpanded стає true ПІЗНІШЕ за монтування (фраза виростає до 2+
   // слів лише після того, як студент тапнув сусідній chip, вже ПІСЛЯ
   // першого рендеру цієї групи з showMore=false) — useState-ініціалізатор
-  // вище сам цього не підхопить, тож ефект розгортає "Інше" ОДНОРАЗОВО,
-  // коли дефолт "phrase" з'являється (ніколи назад — студент сам міг уже
-  // розгорнути список).
-  useEffect(() => {
-    if (defaultExpanded) setShowMore(true);
-  }, [defaultExpanded]);
-  const visible = showMore ? PART_OF_SPEECH_ORDER : MAIN_POS;
+  // вище сам цього не підхопить, тож "Інше" тримається розгорнутим, як
+  // тільки дефолт "phrase" з'являється (похідне значення нижче, не
+  // синхронізація через ефект — нема кнопки "згорнути назад", тож showMore
+  // || defaultExpanded ніколи не ховає список, який студент сам розгорнув).
+  const expanded = showMore || defaultExpanded;
+  const visible = expanded ? PART_OF_SPEECH_ORDER : MAIN_POS;
 
   function handleKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
     if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) return;
@@ -163,7 +162,7 @@ function PosChipGroup({
             </button>
           );
         })}
-        {!showMore && (
+        {!expanded && (
           <button
             type="button"
             onClick={() => setShowMore(true)}
