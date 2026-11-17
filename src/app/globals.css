@@ -2529,19 +2529,25 @@ button, input, textarea, select, label, nav, aside {
   padding: 20px 16px;
   overflow-y: auto;
 }
-/* Задача-виправлення "justified subtitle text": центрований текст
-   замінено на justify з рівними боковими відступами (16px, успадковані
-   від padding .video-stacked-subtitle-text вище) — text-align-last:left
-   лишає ОСТАННІЙ рядок кожного абзацу зліва (justify на ньому дав би
-   розтягнуті проріхи між останніми 1-2 словами). hyphens:auto — м'які
-   переноси там, де мова дозволяє (lang="fr"/"uk" на самих <p>,
-   video-player.tsx), щоб justify не розтягував міжслівні проміжки на
-   короткому рядку з довгим словом. */
+/* Задача-виправлення "justify leaves huge gaps / hyphens split UA words":
+   justify на вузькій телефонній колонці розтягував міжслівні проміжки у
+   FR-рядку до помітних "дірок", а hyphens:auto з lang="uk" ламало
+   українські слова навпіл ("бестселе-ром", "ром." саме на наступному
+   рядку) — обидва побічні ефекти саме justify-вирівнювання/автопереносу,
+   не самого компактного стековому розкладу. text-align:left (рівні 16px
+   відступи — padding .video-stacked-subtitle-text вище, без змін) +
+   hyphens:manual (явний м'який перенос &shy; й далі працював би, просто
+   без АВТОМАТичного) прибирають обидва ефекти. overflow-wrap:break-word —
+   лише страхування від аномально довгого слова/URL, що не влазить у
+   рядок жодним іншим чином; text-wrap:pretty — просить браузер (де
+   підтримується; безпечно ігнорується інакше, властивість не ламає
+   рендер) не лишати самотнє слово на останньому рядку абзацу. */
 .video-stacked-subtitle-text .video-subtitle-fr,
 .video-stacked-subtitle-text .video-subtitle-uk {
-  text-align: justify;
-  text-align-last: left;
-  hyphens: auto;
+  text-align: left;
+  hyphens: manual;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 .video-stacked-subtitle-text .video-subtitle-fr {
   font-size: 21px;
