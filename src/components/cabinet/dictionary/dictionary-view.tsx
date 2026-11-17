@@ -332,6 +332,11 @@ function WordCard({
 }) {
   const posLabel = word.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[word.partOfSpeech] : null;
   const sourceLink = word.productId && word.sourceId ? `/courses/${word.productId}/scenes/${word.sourceId}` : null;
+  // Переклад прикладу — згорнутий за замовчуванням, власний стан на картку
+  // (WordCard — окремий компонент на кожне слово, keyed по word.id у
+  // dictionary-grid вище), щоб розгортання одної картки не зачіпало інші.
+  const [ukExpanded, setUkExpanded] = useState(false);
+  const contextUkId = `dictionary-context-uk-${word.id}`;
 
   return (
     <div className="dictionary-word-card">
@@ -385,14 +390,42 @@ function WordCard({
         </>
       ) : (
         <>
-          {word.contextUk && <p className="dictionary-context">{word.contextUk}</p>}
           <button type="button" className="dictionary-add-translation-btn" onClick={onStartEdit}>
             {t(lang, "cabinet.dictionary.addTranslation")}
           </button>
         </>
       )}
 
-      {word.contextFr && word.translation && !isEditing && <p className="dictionary-context">{word.contextFr}</p>}
+      {/* Приклад — завжди французький (слово французьке, переклад прикладу
+          це ДОПОМІЖНЕ, не замінник): раніше тут показувався contextUk
+          замість contextFr, коли переклад слова ще не додано — виправлено,
+          тепер contextFr завжди основний рядок, а contextUk лише за
+          тогглом нижче, незалежно від того, чи є переклад САМОГО СЛОВА. */}
+      {!isEditing && word.contextFr && <p className="dictionary-context">{word.contextFr}</p>}
+
+      {!isEditing && word.contextUk && (
+        <div className="dictionary-context-uk-wrap">
+          <button
+            type="button"
+            aria-expanded={ukExpanded}
+            aria-controls={contextUkId}
+            onClick={() => setUkExpanded((e) => !e)}
+            className="dictionary-context-toggle"
+          >
+            {t(lang, ukExpanded ? "cabinet.dictionary.context.hide" : "cabinet.dictionary.context.show")}
+            {ukExpanded ? (
+              <ChevronUp size={12} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={12} aria-hidden="true" />
+            )}
+          </button>
+          {ukExpanded && (
+            <p id={contextUkId} className="dictionary-context-uk">
+              {word.contextUk}
+            </p>
+          )}
+        </div>
+      )}
 
       {word.sourceTitle &&
         (sourceLink ? (
