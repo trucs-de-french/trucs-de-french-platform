@@ -46,13 +46,39 @@ export type PlainToken =
   | { type: "word"; text: string; clickable: boolean; start: number };
 
 // Токенізація на літерні групи /[\p{L}\p{M}]+/gu — усе решта (пробіли,
-// розділові знаки, апострофи, дефіси, цифри) лишається "literal" (не
-// клікабельне за визначенням — дефіс/апостроф самі НЕ входять у
-// \p{L}\p{M}, тож "peut-être"/"qu'il" вже природно розпадаються на окремі
-// літерні групи навколо них, без додаткової логіки). Токен, за яким ОДРАЗУ
-// йде апостроф (l'/d'/j'/qu'/jusqu'...), навмисно позначається
-// неклікабельним — це службова частка, не самостійне слово для словника.
+// розділові знаки, дефіси, цифри) лишається "literal". Апостроф — особливий
+// випадок, розведений на два різні смисли нижче (задача "elided clitics
+// selectable as part of a saved phrase"):
+//
+// 1. ЕЛІЗІЯ (l'/d'/j'/m'/t'/s'/n'/c'/qu'/jusqu'/lorsqu'/puisqu' — закритий
+//    список ELISION_PREFIXES) — апостроф ВХОДИТЬ у текст цього токена
+//    ("l'", не просто "l"), токен лишається неклікабельним (НЕ самостійне
+//    слово для пошуку/збереження — тап на "eau" у "l'eau" шукає/зберігає
+//    рівно "eau", як і раніше), але це ТАК САМО word-токен (не "literal"),
+//    тож isPhraseWordToken (нижче) пропускає його як кандидата на сусідній
+//    chip у PlainWordPanel — студент може додати "l'" до фрази поруч з
+//    "eau", і результат "l'eau" складається сам (extractPhrase,
+//    saved-words.ts, просто слайсить суцільний діапазон вихідного тексту
+//    між першим і останнім вибраним токеном — апостроф між ними вже й так
+//    там, жодного окремого "join" зі вставкою пробілу не існує).
+// 2. НЕ елізія, а апостроф УСЕРЕДИНІ самого слова (aujourd'hui,
+//    prud'homme — префікс до апострофа не входить у ELISION_PREFIXES, і
+//    після апострофа йдуть ще літери) — апостроф і "хвіст" зливаються в
+//    ОДИН звичайний клікабельний токен ("aujourd'hui" цілком), слово НЕ
+//    розпадається на "aujourd" + "hui" (без цього "hui" шукалось/
+//    зберігалось би окремо від dictionary-форми "aujourd'hui").
+//
+// "peut-être" та інші дефісовані конструкції далі природно розпадаються на
+// окремі літерні групи навколо дефіса (дефіс не входить у \p{L}\p{M}) —
+// без змін.
 const APOSTROPHE_CHARS = new Set(["'", "’", "‘", "ʼ"]);
+
+// Закритий список елізованих часток — лише ЦІ префікси перед апострофом
+// вважаються елізією (не "будь-яке слово перед апострофом", як було
+// раніше) — саме це відрізняє "l'eau"/"qu'est-ce"/"jusqu'à" від
+// "aujourd'hui"/"prud'homme", де апостроф — частина самого слова.
+// Регістронезалежно (Qu'est-ce — як qu).
+const ELISION_PREFIXES = new Set(["l", "d", "j", "m", "t", "s", "n", "c", "qu", "jusqu", "lorsqu", "puisqu"]);
 
 export function tokenizePlainText(text: string): PlainToken[] {
   const regex = /[\p{L}\p{M}]+/gu;
@@ -65,11 +91,31 @@ export function tokenizePlainText(text: string): PlainToken[] {
       tokens.push({ type: "literal", text: text.slice(lastIndex, match.index) });
     }
     const word = match[0];
-    const endIndex = match.index + word.length;
-    const nextChar = text[endIndex];
-    const clickable = !APOSTROPHE_CHARS.has(nextChar);
-    tokens.push({ type: "word", text: word, clickable, start: match.index });
-    lastIndex = endIndex;
+    const wordStart = match.index;
+    const afterWord = wordStart + word.length;
+    const apostrophe = text[afterWord];
+
+    if (apostrophe && APOSTROPHE_CHARS.has(apostrophe)) {
+      if (ELISION_PREFIXES.has(word.toLowerCase())) {
+        // "l'", "qu'", "jusqu'"... — апостроф у ЦЬОМУ токені, неклікабельний.
+        tokens.push({ type: "word", text: word + apostrophe, clickable: false, start: wordStart });
+        lastIndex = afterWord + 1;
+        regex.lastIndex = lastIndex;
+        continue;
+      }
+      const tailMatch = /^[\p{L}\p{M}]+/u.exec(text.slice(afterWord + 1));
+      if (tailMatch) {
+        // "aujourd'hui", "prud'homme"... — одне звичайне клікабельне слово.
+        const whole = word + apostrophe + tailMatch[0];
+        tokens.push({ type: "word", text: whole, clickable: true, start: wordStart });
+        lastIndex = afterWord + 1 + tailMatch[0].length;
+        regex.lastIndex = lastIndex;
+        continue;
+      }
+    }
+
+    tokens.push({ type: "word", text: word, clickable: true, start: wordStart });
+    lastIndex = afterWord;
   }
   if (lastIndex < text.length) {
     tokens.push({ type: "literal", text: text.slice(lastIndex) });
@@ -90,6 +136,19 @@ export type PhraseWordToken = { text: string; start: number };
 // boolean-callback, не предикат), і довелось би приводити тип вручну.
 export function isClickableWordToken(tok: PlainToken): tok is { type: "word"; text: string; clickable: true; start: number } {
   return tok.type === "word" && tok.clickable;
+}
+
+// Той самий filter, що isClickableWordToken, але ТАКОЖ пропускає елізовані
+// частки (l'/qu'/jusqu'..., clickable:false за побудовою tokenizePlainText
+// вище) — задача "elided clitics selectable as part of a saved phrase":
+// частка сама НІКОЛИ не стає окремою кнопкою в основному тексті (це й далі
+// вирішує clickable у dialogue-line.tsx/video-player.tsx), але має бути
+// серед кандидатів на сусідній chip у PlainWordPanel, щоб "l'" можна було
+// додати до фрази поруч із "eau" ("l'eau"). Єдина причина, з якої
+// tokenizePlainText взагалі видає word-токен з clickable:false, — саме
+// елізія, тож тут достатньо перевірити лише type.
+export function isPhraseWordToken(tok: PlainToken): tok is { type: "word"; text: string; clickable: boolean; start: number } {
+  return tok.type === "word";
 }
 
 // До 3 сусідів з КОЖНОГО боку (задача, п.1) — єдина константа, не магічне

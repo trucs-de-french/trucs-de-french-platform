@@ -8,7 +8,7 @@ import { normalizePartOfSpeech, PART_OF_SPEECH_LABELS_FR } from "@/lib/vocab-cat
 import { extractAlignedContext, findSentenceBounds } from "@/lib/cabinet/saved-words";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
-import { tokenizePlainText, PlainWordPanel, isClickableWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
+import { tokenizePlainText, PlainWordPanel, isPhraseWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
 
 // "Ім'я:" на початку перекладеного тексту репліки — самостійний дублікат
 // тієї самої евристики, що вже в script-import/parse.ts (там — для
@@ -402,7 +402,7 @@ export function DialogueLine({
         const localOffset = openPlainWord.offset - partOffsets[openPlainWord.partIndex];
         const bounds = findSentenceBounds(partText, localOffset);
         const sentenceTokens: PhraseWordToken[] = tokens
-          .filter(isClickableWordToken)
+          .filter(isPhraseWordToken)
           .filter((tok) => tok.start >= bounds.start && tok.start < bounds.end)
           .map((tok) => ({ text: tok.text, start: tok.start }));
         const centerIndex = sentenceTokens.findIndex((tok) => tok.start === localOffset);

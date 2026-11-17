@@ -36,7 +36,7 @@ import { extractAlignedContext, findSentenceBounds } from "@/lib/cabinet/saved-w
 import { useT } from "@/lib/i18n/context";
 import { SaveWordButton } from "@/components/dictionary/save-word-button";
 import { useSavedWords, type SaveWordSnapshot } from "@/components/dictionary/saved-words-provider";
-import { tokenizePlainText, PlainWordPanel, isClickableWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
+import { tokenizePlainText, PlainWordPanel, isPhraseWordToken, type PhraseWordToken } from "@/components/dictionary/plain-word-panel";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const OVERLAY_HIDE_DELAY_MS = 2500;
@@ -999,7 +999,7 @@ export function VideoPlayer({
     // що тапнуте слово (той самий принцип, що dialogue-line.tsx).
     const bounds = findSentenceBounds(partText, localOffset);
     const sentenceTokens: PhraseWordToken[] = tokenizePlainText(partText)
-      .filter(isClickableWordToken)
+      .filter(isPhraseWordToken)
       .filter((tok) => tok.start >= bounds.start && tok.start < bounds.end)
       .map((tok) => ({ text: tok.text, start: tok.start }));
     const centerIndex = sentenceTokens.findIndex((tok) => tok.start === localOffset);
