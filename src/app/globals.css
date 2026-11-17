@@ -5421,23 +5421,38 @@ button.scene-bar:active .scene-bar-toggle {
    TranslatedText-span (там hover у світлій темі раніше й не було).
 
    Шрифт — ОКРЕМЕ правило, незалежне від теми: VocabWord (французька
-   колонка) — це <button>, а глобальне `button, input, ... { font-family:
-   var(--font-heading) }` (тегова специфічність) перемагало успадкований
-   Lora від тексту репліки — звідси французькі підсвітки виглядали
-   "іншим шрифтом" (Nunito), хоча TranslatedText (переклад) — звичайний
-   <span>, тим правилом не зачеплений, і коректно успадковував шрифт.
-   Класова специфічність .vocab-chip перебиває тегове правило й повертає
-   успадкування явно для всіх властивостей шрифту — однакова поведінка
-   для кнопки й span, в обох колонках, в обох темах. */
-/* Задача-виправлення "render long vocabulary expressions inline": раніше
-   цей клас (і button-дефолт display:inline-block самої кнопки,
-   dialogue-line.tsx) не задавав display взагалі — довга багатослівна
-   фраза ("nous sommes ce que nous mangeons"), що не влазила в залишок
-   рядка, малювалась ЯК ОДИН АТОМАРНИЙ inline-block-бокс і йшла ЦІЛИМ
-   блоком на новий рядок (розбиваючи речення), замість переносу по словах
-   усередині самої підсвітки, як короткі "vol"/"point de vue" тощо.
-   display:inline дозволяє фразі переноситись звичайним текстовим
-   потоком; box-decoration-break:clone — щоб фон/рамка/padding
+   колонка) — клікабельний елемент (раніше <button>, тепер <a
+   role="button"> — див. коментар при display нижче), а глобальне
+   `button, input, ... { font-family: var(--font-heading) }` (тегова
+   специфічність) перемагало б успадкований Lora від тексту репліки —
+   звідси французькі підсвітки виглядали б "іншим шрифтом" (Nunito), якби
+   елемент лишався <button>. Явне font-family:inherit тут лишене і для
+   <a> (той селектор на нього й так не діє) — про всяк випадок, без
+   жодної шкоди, і однакова поведінка з TranslatedText-span. */
+/* Задача-виправлення "render long vocabulary expressions inline" (46b11b1)
+   + follow-up "really render long vocabulary phrases inline" — СПРАВЖНЯ
+   причина, чому 46b11b1 (саме лише display:inline на класі) НЕ спрацював
+   на production: VocabWord-тригер БУВ <button>. Browser-репродукція поза
+   цим кодом (headless Chromium, та сама скомпільована CSS) показала: не
+   лише Tailwind preflight примусово ставить getComputedStyle(display) у
+   "inline-block" для кнопки НЕЗАЛЕЖНО від явного display:inline у
+   правилі (частина CSS Basic UI — native-appearance form controls
+   "inlinify" не застосовується) — НАВІТЬ після appearance:none (що таки
+   повертає display:inline у computed style), САМ БОКС <button> лишається
+   АТОМАРНИМ для розбиття рядка: getClientRects() завжди повертав РІВНО 1
+   рект на будь-якій ширині контейнера — текст усередині кнопки переноситься
+   на 2+ рядки, але сусідній текст ("Si", ", alors...") ніколи не стає на
+   той самий рядок, що перший/останній рядок кнопки. Це властивість самого
+   layout-механізму кнопок у Chromium (form control replaced-like box),
+   не властивість, керована CSS display/appearance. <a role="button"
+   tabIndex={0}> (dialogue-line.tsx) — СПРАВЖНІЙ інлайновий елемент: та
+   сама репродукція підтвердила getClientRects() повертає N ректів (по
+   одному на кожен рядок-фрагмент) і фраза ділить перший/останній рядок із
+   сусіднім текстом, як короткі "vol"/"point de vue". Фокус/Tab/Enter/
+   Space/клік — усі окремо перевірені на <a role="button" tabIndex={0}>
+   без href (keydown Enter/Space у VocabWord дублює активацію кнопки,
+   display:contents як альтернатива ВІДКИНУТА — ламає Tab-фокус в тій же
+   репродукції). box-decoration-break:clone — щоб фон/рамка/padding
    застосовувались ОКРЕМО до кожного рядка-фрагмента переносу (інакше
    лише першому/останньому фрагменту дістався б закруглений край). */
 .vocab-chip {
@@ -5445,12 +5460,24 @@ button.scene-bar:active .scene-bar-toggle {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   white-space: normal;
+  text-align: inherit;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
   letter-spacing: inherit;
   font-style: inherit;
   font-weight: 700;
+}
+/* .vocab-chip--interactive — ЛИШЕ <a role="button"> (клікабельне слово):
+   на відміну від <a href>, <a> без href не дістає курсор-покажчик і
+   text-decoration:none за умовчанням браузера сам по собі непотрібен
+   (немає href — немає й підкреслення), тож лише cursor:pointer тут явно
+   потрібен (без href браузер трактує елемент як звичайний текст і для
+   курсора теж). */
+.vocab-chip--interactive {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 .light .vocab-chip {
   background-color: #e9e4fb;

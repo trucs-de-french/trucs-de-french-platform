@@ -203,16 +203,37 @@ function VocabWord({
 
   return (
     <span className="relative inline" ref={wrapperRef}>
-      <button
-        type="button"
+      {/* Задача-виправлення "really render long vocabulary phrases inline":
+          БУВ <button> — Chromium-репродукція (поза цим кодом) показала, що
+          <button> лишається АТОМАРНИМ інлайн-боксом для розбиття РЯДКА
+          (getClientRects() завжди 1 рект, незалежно від display/appearance
+          у CSS: text-wrap усередині кнопки працює, але сусідній текст
+          ніколи не стає на той самий рядок, що перший/останній рядок самої
+          кнопки) — звідси довга фраза йшла ОКРЕМИМ блоком, розриваючи
+          речення, навіть після display:inline (46b11b1). <a role="button">
+          — СПРАВЖНІЙ інлайновий елемент (getClientRects() повертає N
+          ректів, по одному на рядок-фрагмент, перевірено тією ж
+          репродукцією) — без href (не навігація), tabIndex={0} —
+          фокусується по Tab (href не потрібен для цього), onKeyDown нижче
+          дублює Enter/Space, які <button> обробляв нативно. */}
+      <a
+        role="button"
+        tabIndex={0}
         onClick={(e) => {
           lastClickPointRef.current = { x: e.clientX, y: e.clientY };
           onClick(id);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            lastClickPointRef.current = null;
+            onClick(id);
+          }
+        }}
         className="vocab-chip vocab-chip--interactive rounded px-1"
       >
         {displayWord}
-      </button>
+      </a>
       {isOpen && (
         <span
           ref={tooltipRef}
