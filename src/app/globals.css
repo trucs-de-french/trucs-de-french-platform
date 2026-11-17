@@ -18077,7 +18077,14 @@ button.cabinet-nav-item {
   border-radius: 22px;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
+/* "Скляна" картка лише в dark — світла лишається незмінною (var(--cabinet-
+   card-bg)/var(--cabinet-line) вище). Насичений індиго-фон+яскравий
+   синій бордер (ті самі токени, що решта /cabinet) читались різко поряд
+   із темним фоном сторінки — тут майже прозорий білий вош замість
+   суцільної заливки, щоб фон сторінки просвічував; без тіні/блюру. */
 .dark .dictionary-word-card {
+  background-color: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: none;
 }
 
@@ -18108,7 +18115,8 @@ button.cabinet-nav-item {
   white-space: nowrap;
 }
 .dark .dictionary-pos-label {
-  color: #f3d98b;
+  background: rgba(243, 217, 139, 0.13);
+  color: #f0d78f;
 }
 .dictionary-pos-label-text {
   min-width: 0;
@@ -18181,25 +18189,35 @@ button.cabinet-nav-item {
   color: #3b37c4;
 }
 .dark .dictionary-edit-btn {
-  color: #f3d98b;
+  color: #d9d4f0;
 }
 .dictionary-edit-btn:hover {
   border-color: #3b37c4;
   background: rgba(59, 55, 196, 0.1);
 }
 .dark .dictionary-edit-btn:hover {
-  border-color: #f3d98b;
-  background: rgba(243, 217, 139, 0.1);
+  border-color: #d9d4f0;
+  background: rgba(217, 212, 240, 0.12);
 }
 
 /* #ef4444 — той самий "wrong/incorrect"-токен, що й у вправах (однаковий
-   в обох темах), тут позначає руйнівну дію, не статус правильності. */
+   в обох темах), тут позначає руйнівну дію, не статус правильності. У
+   dark — трохи світліший #f0706c: #ef4444 на новому напівпрозорому
+   склі-картці (rgba(255,255,255,.045) поверх темної панелі) падав нижче
+   4.5:1. */
 .dictionary-delete-btn {
   color: #ef4444;
+}
+.dark .dictionary-delete-btn {
+  color: #f0706c;
 }
 .dictionary-delete-btn:hover {
   border-color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+.dark .dictionary-delete-btn:hover {
+  border-color: #f0706c;
+  background: rgba(240, 112, 108, 0.12);
 }
 
 .dictionary-edit-error {
@@ -18235,6 +18253,13 @@ button.cabinet-nav-item {
   font-size: 14px;
   color: var(--cabinet-muted);
 }
+/* Приглушений ліловий-сірий, окремий від глобального --cabinet-muted
+   (той лишається лавандовим і спільний з рештою /cabinet — міняти його
+   тут зачепило б інші сторінки) — лише для другорядного тексту картки
+   словника: приклад, переклад прикладу, джерело-чіп нижче. */
+.dark .dictionary-context {
+  color: #aaa8c2;
+}
 
 /* Переклад прикладу-речення — згорнутий за замовчуванням тоггл під
    французьким dictionary-context вище. Option 1: звичайний текстовий
@@ -18268,7 +18293,7 @@ button.cabinet-nav-item {
   transition: color 150ms;
 }
 .dark .dictionary-context-toggle {
-  color: #f3d98b;
+  color: #f0d78f;
 }
 .dictionary-context-toggle:hover {
   color: var(--cabinet-ink);
@@ -18296,6 +18321,9 @@ button.cabinet-nav-item {
   line-height: 1.4;
   color: var(--cabinet-muted);
 }
+.dark .dictionary-context-uk {
+  color: #aaa8c2;
+}
 
 .dictionary-source-chip {
   align-self: flex-start;
@@ -18310,6 +18338,10 @@ button.cabinet-nav-item {
   color: var(--cabinet-muted);
   text-decoration: none;
   transition: border-color 150ms, color 150ms;
+}
+.dark .dictionary-source-chip {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #aaa8c2;
 }
 .dictionary-source-chip:hover,
 .dictionary-source-chip:focus-visible {
@@ -18327,6 +18359,10 @@ button.cabinet-nav-item {
   font-weight: 700;
   color: var(--cabinet-muted);
 }
+.dark .dictionary-mine-tag {
+  border-color: rgba(240, 215, 143, 0.4);
+  color: #f0d78f;
+}
 
 .dictionary-add-translation-btn {
   align-self: flex-start;
@@ -18340,7 +18376,7 @@ button.cabinet-nav-item {
   cursor: pointer;
 }
 .dark .dictionary-add-translation-btn {
-  color: #f3d98b;
+  color: #f0d78f;
 }
 .dictionary-add-translation-btn:focus-visible {
   outline: 2px solid #d9b765;
@@ -18358,12 +18394,30 @@ button.cabinet-nav-item {
   font-size: 14px;
   color: var(--cabinet-ink);
 }
+/* Той самий склянистий вош, що .dictionary-word-card вище — трохи
+   світліший (0.06 проти 0.045 картки), щоб поле читалось як окрема
+   поверхня НАД склом, а не злите з ним. */
+.dark .dictionary-translation-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
 .dictionary-translation-input:focus-visible {
   outline: 2px solid #d9b765;
   outline-offset: 1px;
 }
 .dark .dictionary-translation-input:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
+}
+
+/* CabinetSelect (категорія слова) усередині інлайн-редактора картки —
+   той самий глянцевий вош, що .dictionary-translation-input вище,
+   СКОПОВАНО лише під .dictionary-word-card: той самий компонент
+   рендериться і на інших сторінках /cabinet (тип іспиту, тижнева ціль),
+   де має лишитись дефолтний .dark .cabinet-select-trigger (#0c1142) —
+   змінювати глобальне правило тут не можна. */
+.dark .dictionary-word-card .cabinet-select-trigger {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dictionary-empty {
