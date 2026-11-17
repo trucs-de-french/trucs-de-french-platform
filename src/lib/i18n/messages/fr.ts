@@ -324,7 +324,7 @@ export const fr: Record<MessageKey, string> = {
   "dictionary.phraseTooManyWords": "L'expression est trop longue — 6 mots maximum.",
   "dictionary.phraseTooLong": "L'expression est trop longue — 80 caractères maximum.",
 
-  "auth.shell.tagline": "Le français à travers le cinéma",
+  "auth.shell.tagline": "Tout devient possible avec le français",
   "auth.shell.tabLogin": "Connexion",
   "auth.shell.tabRegister": "Inscription",
   "auth.shell.tabsAriaLabel": "Connexion ou inscription",

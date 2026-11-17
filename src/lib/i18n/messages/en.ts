@@ -322,7 +322,7 @@ export const en: Record<MessageKey, string> = {
   "dictionary.phraseTooManyWords": "Phrase is too long — 6 words maximum.",
   "dictionary.phraseTooLong": "Phrase is too long — 80 characters maximum.",
 
-  "auth.shell.tagline": "French through cinema",
+  "auth.shell.tagline": "Tout devient possible avec le français",
   "auth.shell.tabLogin": "Log in",
   "auth.shell.tabRegister": "Sign up",
   "auth.shell.tabsAriaLabel": "Log in or sign up",

@@ -325,7 +325,10 @@ export const uk = {
   "dictionary.phraseTooManyWords": "Фраза занадто довга — максимум 6 слів.",
   "dictionary.phraseTooLong": "Фраза занадто довга — максимум 80 символів.",
 
-  "auth.shell.tagline": "Французька через кіно",
+  // Задача "use French brand tagline on auth pages": бренд-гасло ЗАВЖДИ
+  // французькою в усіх локалях (не перекладається, на відміну від решти
+  // цього файлу) — auth-shell.tsx.
+  "auth.shell.tagline": "Tout devient possible avec le français",
   "auth.shell.tabLogin": "Вхід",
   "auth.shell.tabRegister": "Реєстрація",
   "auth.shell.tabsAriaLabel": "Вхід або реєстрація",
