@@ -1407,7 +1407,7 @@ export function VideoPlayer({
     return (
       <>
         {showFr && activeFrCue && (
-          <p className="font-heading video-subtitle-fr">
+          <p className="font-heading video-subtitle-fr" lang="fr">
             <SubtitleFrLine
               text={activeFrCue.text}
               vocab={vocab ?? []}
@@ -1418,7 +1418,7 @@ export function VideoPlayer({
           </p>
         )}
         {showUk && activeUkCue && (
-          <p className="font-heading video-subtitle-uk">{renderUkSubtitleLine(activeUkCue.text, vocab ?? [])}</p>
+          <p className="font-heading video-subtitle-uk" lang="uk">{renderUkSubtitleLine(activeUkCue.text, vocab ?? [])}</p>
         )}
       </>
     );
@@ -2103,7 +2103,16 @@ export function VideoPlayer({
           (globals.css, .scene-fullscreen-btn-row) — кнопка лишається
           повністю всередині .glass-panel--video (page.tsx), не впритул до
           його нижнього округленого кута (панель без власного padding). */}
-      {!(isFullscreen || isPseudoFullscreen) && (
+      {/* Задача-виправлення "hide big fullscreen button in stacked mode":
+          вертикальний мобільний розклад уже має власну малу fullscreen-
+          іконку в сервісній панелі (video-stacked-bar вище) — цей великий
+          рядок-кнопка під карткою став би дублем. !isStacked тут — та сама
+          умова, що гейтить решту стекового дерева; десктоп/landscape/
+          fullscreen (isStacked завжди false там) і далі бачать цей рядок
+          без жодної зміни. Нічого іншого на нього не посилається (своєї
+          aria-live/фокус-пастки/якоря скролу немає — просте показати/
+          приховати). */}
+      {!(isFullscreen || isPseudoFullscreen) && !isStacked && (
         <div className="scene-fullscreen-btn-row md:hidden">
           <button type="button" onClick={() => void handleFullscreenToggle()} className="fullscreen-btn">
             <span className="glass-bar-badge" aria-hidden="true">
