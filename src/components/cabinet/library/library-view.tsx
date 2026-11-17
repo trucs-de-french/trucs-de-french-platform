@@ -144,7 +144,7 @@ export function LibraryView({ lang, items }: { lang: UiLang; items: LibraryItem[
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 library-filters">
       <div className="flex flex-wrap items-center gap-3">
         <div className="task-tabs-scroll min-w-0 flex-1 basis-[200px]">
           <div className="flex items-center gap-2 whitespace-nowrap">

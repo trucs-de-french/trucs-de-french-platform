@@ -13121,6 +13121,15 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: #1a1640;
 }
 
+/* Бібліотека (library-view.tsx): плоскі вибрані чипи — без зовнішньої
+   тіні/ореолу. .task-tabs-scroll (тип-фільтр) має overflow-y:hidden,
+   тож ця тінь на "Усе" зрізалась по вертикалі, читаючись як глітч.
+   Scoped до .library-filters, щоб не зачепити той самий
+   .cabinet-chip--selected у dictionary-view.tsx. */
+.library-filters .cabinet-chip--selected {
+  box-shadow: none;
+}
+
 /* "Усі досягнення →" pill-кнопка (pill-link.tsx) — спільна для картки
    Home ("Останні досягнення") і компактної картки на /cabinet/progress. */
 .cabinet-pill-link {
