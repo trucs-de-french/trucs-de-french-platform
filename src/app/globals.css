@@ -18086,12 +18086,18 @@ button.cabinet-nav-item {
    nowrap в один рядок). Один rgba-відтінок золота для фону працює в ОБОХ
    темах без окремого dark-значення (світла картка — світлий тінт, темна
    картка — темний тінт, той самий принцип, що вже є в інших місцях цього
-   файлу) — лише текстовий колір міняється під темою. */
+   файлу) — лише текстовий колір міняється під темою. flex:0 1 auto +
+   min-width:0 — чіп стискається (а не кнопки) першим, коли не влазить
+   обидва на вузькій картці; .dictionary-pos-label-text несе сам
+   overflow/ellipsis (не контейнер — текст іде поруч із тег-іконкою,
+   ellipsis на контейнері міг би зрізати й саму іконку). */
 .dictionary-pos-label {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   align-self: flex-start;
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 3px 10px 3px 8px;
   border-radius: 999px;
   background: rgba(217, 183, 101, 0.2);
@@ -18104,51 +18110,37 @@ button.cabinet-nav-item {
 .dark .dictionary-pos-label {
   color: #f3d98b;
 }
-
-/* Хедер картки — chip+кнопки: Tailwind flex-wrap на .dictionary-card-
-   header (потрібен на мобільному, щоб кнопки опускались під чіп, коли не
-   влазять) лишався ЗАВЖДИ ввімкненим — на вужчих десктопних ширинах
-   (2-колонкова сітка .dictionary-grid, ~640-1023px в'юпорта, картка там
-   вужча за "повну" 640px+) довгий підпис категорії + обидві кнопки
-   справді не влазили в один рядок, і flexbox чесно переносив ВСЮ групу
-   кнопок на другий рядок. Unlayered-override нижче (б'є Tailwind-утиліту
-   незалежно від порядку/специфічності — той самий принцип, що решта
-   .dictionary-* класів цього файлу) вимикає wrap від 768px: чіп тепер
-   стискається сам (flex-shrink+ellipsis як останній засіб) замість того,
-   щоб переносити кнопки. */
-@media (min-width: 768px) {
-  .dictionary-card-header {
-    flex-wrap: nowrap;
-    align-items: center;
-  }
-  .dictionary-pos-label {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-  .dictionary-pos-label-text {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .dictionary-card-actions {
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    gap: 2px;
-  }
+.dictionary-pos-label-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Картка слова: пензлик/відро — раніше icon-only кружечки (бульбашка-
-   bookmark читалась студентам як "закладка", не "видалити" — звідси й
-   задача). Тепер pill з видимим підписом ("Редагувати"/"Видалити"),
-   flat (без тіні/dark rim, той самий принцип, що бібліотечні чіпи),
-   min-height 44px для тач-таргету; .dictionary-card-actions wrap-ає на
-   вузькій картці замість стиснення в один рядок. На десктопі (>=768px)
-   нижче ці самі кнопки стають безрамковими "ghost" — менші, без бордера/
-   тіні, лише колір тексту+легкий тінт на hover. */
+/* Хедер картки — chip+кнопки завжди в один рядок (НІКОЛИ не переносити
+   кнопки під чіп, на будь-якій ширині — вимога задачі): nowrap тут
+   безумовний (не лише >=768px, як у попередній версії), unlayered-клас
+   б'є Tailwind-утиліту flex-wrap у розмітці незалежно від порядку/
+   специфічності, той самий принцип, що решта .dictionary-* класів
+   файлу. Якщо чіп+2 кнопки не влазять на дуже вузькому телефоні
+   (<360px) — стискається/ellipsis-ується ЛИШЕ чіп (.dictionary-pos-
+   label вище), кнопки (.dictionary-card-actions нижче, flex:0 0 auto)
+   завжди лишаються своїм природним розміром. */
+.dictionary-card-header {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+/* Кнопки-дії картки — лише іконки (Pencil/Trash2) на ВСІХ ширинах,
+   текстового підпису більше нема (a11y лишається через aria-label/
+   title — ЛОКАЛІЗОВАНІ "Редагувати"/"Видалити" так само читаються
+   скрінрідером і з'являються в підказці на hover): лейбл-піли з
+   видимим текстом не влазили в один рядок з довгим підписом категорії
+   навіть коли й самі кнопки, і хедер стали nowrap. Мобільний варіант —
+   round 44×44 з тонким бордером (тач-таргет); десктоп (>=768px) —
+   безрамковий ghost 32×32, менший, бо миша не потребує 44px. */
 .dictionary-card-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   flex-shrink: 0;
   align-items: center;
   gap: 6px;
@@ -18158,26 +18150,23 @@ button.cabinet-nav-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 44px;
-  padding: 0 11px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
-  border-radius: 999px;
+  border-radius: 50%;
   border: 1.5px solid var(--cabinet-line);
   background: var(--cabinet-card-bg);
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 12px;
-  white-space: nowrap;
   transition: border-color 150ms, background-color 150ms;
 }
 @media (min-width: 768px) {
+  .dictionary-card-actions {
+    gap: 2px;
+  }
   .dictionary-action-btn {
-    min-height: 28px;
-    padding: 0 7px;
+    width: 32px;
+    height: 32px;
     border: none;
     background: transparent;
-    font-weight: 600;
   }
 }
 .dictionary-action-btn:focus-visible {

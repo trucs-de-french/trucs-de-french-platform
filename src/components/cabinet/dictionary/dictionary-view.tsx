@@ -224,7 +224,7 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
             disabled={filtered.length === 0 || pdfStatus === "loading"}
             aria-busy={pdfStatus === "loading"}
             aria-label={t(lang, "cabinet.dictionary.pdf.button")}
-            className="cabinet-btn-primary flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm disabled:opacity-50"
+            className="cabinet-btn-primary flex min-h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm disabled:opacity-50"
           >
             <Download size={16} aria-hidden="true" />
             {t(lang, pdfStatus === "loading" ? "cabinet.dictionary.pdf.loading" : "cabinet.dictionary.pdf.button")}
@@ -357,8 +357,7 @@ function WordCard({
             onClick={onStartEdit}
             className="dictionary-action-btn dictionary-edit-btn"
           >
-            <Pencil size={14} aria-hidden="true" />
-            <span>{t(lang, "cabinet.dictionary.edit")}</span>
+            <Pencil size={16} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -378,8 +377,7 @@ function WordCard({
             }}
             className="dictionary-action-btn dictionary-delete-btn"
           >
-            <Trash2 size={14} aria-hidden="true" />
-            <span>{t(lang, "cabinet.dictionary.remove")}</span>
+            <Trash2 size={16} aria-hidden="true" />
           </button>
         </div>
       </div>
