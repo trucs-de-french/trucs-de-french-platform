@@ -484,6 +484,8 @@ export const en: Record<MessageKey, string> = {
   "cabinet.dictionary.pdf.loading": "Generating PDF…",
   "cabinet.dictionary.pdf.title": "My dictionary — {date}",
   "cabinet.dictionary.pdf.empty": "No words to export",
+  "cabinet.dictionary.filter.more": "More categories",
+  "cabinet.dictionary.filter.less": "Less",
   "cabinet.progress.subtitle": "Points, progress and skills.",
   "cabinet.mistakes.subtitle": "Review and fix mistakes from past exercises",
   "cabinet.settings.subtitle": "Profile, language, theme and learning",

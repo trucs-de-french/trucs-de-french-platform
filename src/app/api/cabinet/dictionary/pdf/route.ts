@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUiLang } from "@/lib/ui/product-lang";
 import { t } from "@/lib/i18n/t";
-import { filterSavedWords, rowToSavedWord, type SavedWord } from "@/lib/cabinet/saved-words";
-import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
+import { filterSavedWords, rowToSavedWord, type DictionaryPosFilter, type SavedWord } from "@/lib/cabinet/saved-words";
+import { PART_OF_SPEECH_ORDER } from "@/lib/vocab-categories";
 import { buildVocabPdf } from "@/lib/pdf/vocab-pdf";
 import type { Profile } from "@/lib/supabase/profile";
 
@@ -10,9 +10,15 @@ import type { Profile } from "@/lib/supabase/profile";
 // той самий принцип, що /api/scenes/[sceneId]/vocab-pdf/route.ts.
 export const runtime = "nodejs";
 
-function parsePos(raw: string | null): PartOfSpeech | "all" {
-  if (!raw) return "all";
-  return (PART_OF_SPEECH_ORDER as readonly string[]).includes(raw) ? (raw as PartOfSpeech) : "all";
+// Сервер не довіряє клієнтському ?pos= напряму (той самий принцип, що
+// validateInput у actions.ts) — лише "all", "none" чи значення з
+// PART_OF_SPEECH_ORDER проходять, будь-що інше тихо падає до "all" (а не
+// 400 — PDF-експорт лише ЧИТАЄ, невалідний параметр найбезпечніше звести до
+// "без фільтра", не до помилки).
+function parsePos(raw: string | null): DictionaryPosFilter {
+  if (!raw || raw === "all") return "all";
+  if (raw === "none") return "none";
+  return (PART_OF_SPEECH_ORDER as readonly string[]).includes(raw) ? (raw as DictionaryPosFilter) : "all";
 }
 
 export async function GET(request: Request) {

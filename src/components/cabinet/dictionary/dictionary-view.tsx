@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark, Pencil, Download } from "lucide-react";
+import { Search, Bookmark, Pencil, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
-import { filterSavedWords, type SavedWord } from "@/lib/cabinet/saved-words";
+import { filterSavedWords, type DictionaryPosFilter, type SavedWord } from "@/lib/cabinet/saved-words";
 import { removeWord, saveWord, updateSavedWordDetails } from "@/app/cabinet/dictionary/actions";
 import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 
@@ -18,6 +18,14 @@ import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/ca
 // коді немає — не додаємо їх; слова з цими категоріями лишаються видимими
 // під "Усі" (дефолтний фільтр не звіряє partOfSpeech взагалі).
 const FILTER_POS = ["nom", "verbe", "adjectif", "adverbe"] as const satisfies readonly PartOfSpeech[];
+
+// Прихована (друга) група чіпів — решта PART_OF_SPEECH_ORDER, що не входить
+// у FILTER_POS вище; обчислено з того самого канонічного масиву (не
+// хардкод другого списку), щоб порядок/склад завжди лишався синхронним із
+// vocab-categories.ts, навіть якщо туди додадуть ще категорію.
+const EXTRA_POS = PART_OF_SPEECH_ORDER.filter(
+  (p) => !(FILTER_POS as readonly PartOfSpeech[]).includes(p)
+);
 
 // Підписи для чіпів і для select-а категорії в WordEditor нижче — ОДНЕ
 // джерело на весь PART_OF_SPEECH_ORDER (а не лише 4 чіпи), щоб студент міг
@@ -43,7 +51,8 @@ const POS_LABEL_KEY = {
 export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWords: SavedWord[] }) {
   const [words, setWords] = useState(initialWords);
   const [search, setSearch] = useState("");
-  const [posFilter, setPosFilter] = useState<PartOfSpeech | "all">("all");
+  const [posFilter, setPosFilter] = useState<DictionaryPosFilter>("all");
+  const [moreExpanded, setMoreExpanded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ word: SavedWord } | null>(null);
   const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -53,6 +62,23 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
     const present = new Set(words.map((w) => w.partOfSpeech).filter((p): p is PartOfSpeech => !!p));
     return FILTER_POS.filter((p) => present.has(p));
   }, [words]);
+
+  // Друга група чіпів — лише категорії, що справді мають бодай одне
+  // збережене слово (той самий принцип, що presentPos вище), плюс окремий
+  // прапорець для "Без категорії" (не PartOfSpeech, тож рахується окремо).
+  const presentExtraPos = useMemo(() => {
+    const present = new Set(words.map((w) => w.partOfSpeech).filter((p): p is PartOfSpeech => !!p));
+    return EXTRA_POS.filter((p) => present.has(p));
+  }, [words]);
+  const hasUncategorized = useMemo(() => words.some((w) => w.partOfSpeech === null), [words]);
+  const hasExtraGroup = presentExtraPos.length > 0 || hasUncategorized;
+
+  // Активний фільтр у ПРИХОВАНІЙ групі — тоггл примусово лишається
+  // розгорнутим (students never see a hidden active filter), а сам тоггл
+  // отримує вигляд "вибрано", той самий клас, що й активний чіп.
+  const isExtraActive =
+    posFilter === "none" || (posFilter !== "all" && (EXTRA_POS as readonly string[]).includes(posFilter));
+  const moreVisible = moreExpanded || isExtraActive;
 
   const filtered = useMemo(() => filterSavedWords(words, { search, pos: posFilter }), [words, search, posFilter]);
 
@@ -200,7 +226,61 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
               {t(lang, POS_LABEL_KEY[pos])}
             </button>
           ))}
+          {hasExtraGroup && (
+            <button
+              type="button"
+              aria-expanded={moreVisible}
+              aria-controls="dictionary-extra-categories"
+              onClick={() => setMoreExpanded((e) => !e)}
+              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                isExtraActive
+                  ? "cabinet-chip--selected"
+                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+              }`}
+            >
+              {t(lang, moreVisible ? "cabinet.dictionary.filter.less" : "cabinet.dictionary.filter.more")}
+              {moreVisible ? (
+                <ChevronUp size={14} aria-hidden="true" />
+              ) : (
+                <ChevronDown size={14} aria-hidden="true" />
+              )}
+            </button>
+          )}
         </div>
+
+        {hasExtraGroup && moreVisible && (
+          <div id="dictionary-extra-categories" className="flex w-full flex-wrap items-center gap-2">
+            {presentExtraPos.map((pos) => (
+              <button
+                key={pos}
+                type="button"
+                aria-pressed={posFilter === pos}
+                onClick={() => setPosFilter(pos)}
+                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                  posFilter === pos
+                    ? "cabinet-chip--selected"
+                    : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+                }`}
+              >
+                {t(lang, POS_LABEL_KEY[pos])}
+              </button>
+            ))}
+            {hasUncategorized && (
+              <button
+                type="button"
+                aria-pressed={posFilter === "none"}
+                onClick={() => setPosFilter("none")}
+                className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                  posFilter === "none"
+                    ? "cabinet-chip--selected"
+                    : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+                }`}
+              >
+                {t(lang, "cabinet.dictionary.category.none")}
+              </button>
+            )}
+          </div>
+        )}
 
         <button
           type="button"

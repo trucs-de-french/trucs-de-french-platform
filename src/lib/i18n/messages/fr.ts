@@ -486,6 +486,8 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.dictionary.pdf.loading": "Génération du PDF…",
   "cabinet.dictionary.pdf.title": "Mon dictionnaire — {date}",
   "cabinet.dictionary.pdf.empty": "Aucun mot à exporter",
+  "cabinet.dictionary.filter.more": "Plus de catégories",
+  "cabinet.dictionary.filter.less": "Moins",
   "cabinet.progress.subtitle": "Points, évolution et compétences.",
   "cabinet.mistakes.subtitle": "Revoyez et corrigez vos erreurs des exercices précédents",
   "cabinet.settings.subtitle": "Profil, langue, thème et apprentissage",

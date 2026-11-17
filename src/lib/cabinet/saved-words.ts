@@ -93,14 +93,21 @@ export function normalizeForSearch(value: string): string {
     .toLowerCase();
 }
 
+// "none" — окрема позначка (не PartOfSpeech) для чіпа "Без категорії"
+// (dictionary-view.tsx, прихована група): фільтрує слова з partOfSpeech
+// === null, той самий сенс, що легасі-група null у groupVocabByPartOfSpeech
+// (vocab.ts), але тут це явний вибір студента, а не автоматичне групування.
+export type DictionaryPosFilter = PartOfSpeech | "all" | "none";
+
 export function filterSavedWords(
   words: SavedWord[],
-  opts: { search?: string; pos?: PartOfSpeech | "all" }
+  opts: { search?: string; pos?: DictionaryPosFilter }
 ): SavedWord[] {
   const q = normalizeForSearch((opts.search ?? "").trim());
   const pos = opts.pos ?? "all";
   return words.filter((w) => {
-    if (pos !== "all" && w.partOfSpeech !== pos) return false;
+    if (pos === "none" && w.partOfSpeech !== null) return false;
+    if (pos !== "all" && pos !== "none" && w.partOfSpeech !== pos) return false;
     if (!q) return true;
     return (
       normalizeForSearch(w.word).includes(q) || (!!w.translation && normalizeForSearch(w.translation).includes(q))
