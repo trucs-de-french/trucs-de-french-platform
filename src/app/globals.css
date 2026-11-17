@@ -2617,15 +2617,34 @@ button, input, textarea, select, label, nav, aside {
      чіпається), footer (Зберегти/Скасувати) лишається "липким" і завжди
      видимим — той самий принцип, що вже є всередині самого компонента. */
   height: auto !important;
-  max-height: 70vh !important;
+  /* Задача-виправлення "keep mobile word panel inside the viewport":
+     --stacked-panel-max-h — inline custom property, що video-player.tsx
+     ставить на .video-stacked-panel-host (предок) ПІСЛЯ вимірювання
+     window.visualViewport.height мінус позиція хоста — РЕАЛЬНО видима
+     висота під панеллю на телефоні (враховує адресний рядок/клавіатуру,
+     на відміну від layout vh/svh). 70vh — фолбек ДО першого вимірювання
+     (перший рендер, ефект ще не відпрацював) або якщо viewport API
+     недоступне. */
+  max-height: var(--stacked-panel-max-h, 70vh) !important;
   flex: 0 0 auto;
   border-radius: 12px;
 }
 @supports (height: 1svh) {
   .video-stacked-panel-host .video-word-card,
   .video-stacked-panel-host .video-plain-word-panel-wrap {
-    max-height: 70svh !important;
+    max-height: var(--stacked-panel-max-h, 70svh) !important;
   }
+}
+/* Задача-виправлення "stop scroll chaining from panel to page": власна
+   scrollarea картки/панелі (header/scrollarea/footer-структура компонента,
+   не чіпається) — overscroll-behavior:contain зупиняє жест СВАЙПУ на межі
+   скролу панелі (переклад/приклад прогорнуто до кінця) від "перетікання" в
+   скрол сторінки позаду; touch-action:pan-y лишає вертикальний свайп (сам
+   скрол панелі) робочим, не заважає кнопкам/інпуту всередині. */
+.video-stacked-panel-host .plain-word-panel-scrollarea,
+.video-stacked-panel-host .video-word-card-scroll {
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .video-stacked-panel-host .video-word-card--compact-saved,
 .video-stacked-panel-host .video-plain-word-panel-wrap--compact-saved {

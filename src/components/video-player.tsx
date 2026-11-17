@@ -9,6 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type MouseEvent as ReactMouseEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type CSSProperties,
 } from "react";
 import {
   Play,
@@ -388,6 +389,14 @@ export function VideoPlayer({
   // самий принцип, що п.2 "place panel above subtitles and keep it open
   // while seeking" для десктопної панелі керування).
   const stackedServiceBarRef = useRef<HTMLDivElement>(null);
+  // Задача-виправлення "keep mobile word panel inside the viewport": сама
+  // стекова картка (для scrollIntoView при відкритті слова) і хост
+  // відкритої картки/панелі (для вимірювання РЕАЛЬНО видимої висоти
+  // в'юпорта під ним — window.visualViewport, не layout-vh, яке включає
+  // приховану під адресним рядком/клавіатурою частину екрана).
+  const stackedCardRef = useRef<HTMLDivElement>(null);
+  const stackedPanelHostRef = useRef<HTMLDivElement>(null);
+  const [stackedPanelMaxHeight, setStackedPanelMaxHeight] = useState<number | null>(null);
   // Сама плашка субтитрів (FR+UA разом) — потрібна лише для розрахунку
   // bottomPx картки/панелі слова (computeAnchor нижче): від ВЕРХУ ВСІЄЇ
   // плашки, не лише рядка клікнутого слова, інакше картка перекривала
@@ -1051,6 +1060,63 @@ export function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openCard]);
 
+  // Задача-виправлення "keep mobile word panel inside the viewport": коли
+  // відкривається картка/панель слова в стековому розкладі — (1) підняти
+  // карту в поле зору (window.scrollBy, не scrollIntoView — потрібен
+  // контрольований ВЕРХНІЙ відступ, а не впритул до краю), (2) замінити
+  // статичний max-height:70vh/70svh (globals.css) на РЕАЛЬНО видиму висоту
+  // під хостом: window.visualViewport.height (фолбек innerHeight) МІНУС
+  // позиція верху хоста МІНУС невеликий запас (12px) — саме це 100%
+  // відрізняється від layout vh на телефоні (адресний рядок/клавіатура
+  // змінюють visualViewport.height, не innerHeight). Жодного закриття
+  // картки тут немає — лише перерахунок max-height; саме це й було
+  // справжньою причиною бага (сторінка/картка не програмно "закривались",
+  // а просто виходили за межі видимого в'юпорта, і студент бачив звичайний
+  // контент сторінки нижче — враження "плеєр закрився"). Перелічувачі на
+  // visualViewport.resize/scroll (клавіатура) і window.resize/scroll
+  // (ручний скрол/адресний рядок) тримають max-height актуальним, замикання
+  // ефекту на [isStacked, openCard] — повторний запуск і для кожного нового
+  // слова (інший розмір вмісту), і при закритті (прибирає обмеження).
+  useEffect(() => {
+    if (!isStacked || !openCard) {
+      queueMicrotask(() => setStackedPanelMaxHeight(null));
+      return;
+    }
+    const card = stackedCardRef.current;
+    if (card) {
+      const topOffset = 8;
+      const rect = card.getBoundingClientRect();
+      const delta = rect.top - topOffset;
+      if (Math.abs(delta) > 1) {
+        window.scrollBy({ top: delta, behavior: "smooth" });
+      }
+    }
+    function recomputeMaxHeight() {
+      const host = stackedPanelHostRef.current;
+      if (!host) return;
+      const rect = host.getBoundingClientRect();
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const available = Math.max(viewportHeight - rect.top - 12, 160);
+      queueMicrotask(() => setStackedPanelMaxHeight(available));
+    }
+    recomputeMaxHeight();
+    // після smooth-скролу вище (приблизно встигає завершитись) — ще один
+    // перерахунок, бо rect.top хоста змінюється під час самого скролу.
+    const settleTimer = window.setTimeout(recomputeMaxHeight, 350);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", recomputeMaxHeight);
+    vv?.addEventListener("scroll", recomputeMaxHeight);
+    window.addEventListener("resize", recomputeMaxHeight);
+    window.addEventListener("scroll", recomputeMaxHeight, { passive: true });
+    return () => {
+      window.clearTimeout(settleTimer);
+      vv?.removeEventListener("resize", recomputeMaxHeight);
+      vv?.removeEventListener("scroll", recomputeMaxHeight);
+      window.removeEventListener("resize", recomputeMaxHeight);
+      window.removeEventListener("scroll", recomputeMaxHeight);
+    };
+  }, [isStacked, openCard]);
+
   const activeFrCue = frCues ? findActiveCue(frCues, currentTime) : null;
   const activeUkCue = ukCues ? findActiveCue(ukCues, currentTime) : null;
   const showFr = (mode === "fr_uk" || mode === "fr") && activeFrCue;
@@ -1494,7 +1560,10 @@ export function VideoPlayer({
   }
 
   return (
-    <div className={`${isStacked ? "video-stacked-card" : "flex w-full flex-col gap-2"} ${className}`}>
+    <div
+      ref={stackedCardRef}
+      className={`${isStacked ? "video-stacked-card" : "flex w-full flex-col gap-2"} ${className}`}
+    >
       {/* Сервісна панель вертикального мобільного розкладу (52px) — ЗАВЖДИ
           сиблінг ПЕРЕД wrapperRef (не дитина), на тій самій позиції в
           дереві дітей цього контейнера на кожному рендері (просто
@@ -2035,7 +2104,17 @@ export function VideoPlayer({
               position/width/height компонентів усередині цього хоста. */}
           <div className="video-stacked-subtitle-zone">
             {openCard ? (
-              <div className="video-stacked-panel-host">{renderOpenCardHost()}</div>
+              <div
+                ref={stackedPanelHostRef}
+                className="video-stacked-panel-host"
+                style={
+                  stackedPanelMaxHeight != null
+                    ? ({ "--stacked-panel-max-h": `${stackedPanelMaxHeight}px` } as CSSProperties)
+                    : undefined
+                }
+              >
+                {renderOpenCardHost()}
+              </div>
             ) : (
               <div className="video-stacked-subtitle-text">{renderSubtitleLines()}</div>
             )}
