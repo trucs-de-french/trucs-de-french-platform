@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { t } from "@/lib/i18n/t";
+import { PasswordInput } from "@/components/auth/password-input";
 import { updatePassword } from "./actions";
 import { MIN_PASSWORD_LENGTH, type UpdatePasswordError } from "./constants";
 
@@ -18,10 +19,8 @@ const ERROR_KEY: Record<UpdatePasswordError, Parameters<typeof t>[1]> = {
   generic: "auth.updatePassword.error.generic",
 };
 
-// Кругла кнопка показу/сховання — НЕ native control (type="button", не
-// checkbox/input), aria-pressed передає стан. Той самий компонент для
-// обох полів (новий пароль/повторіть пароль), id переданий зовні —
-// стабільний, не генерується випадково (без hydration-різниці).
+// id переданий зовні — стабільний, не генерується випадково (без
+// hydration-різниці); показ/сховання пароля — спільний PasswordInput.
 function PasswordField({
   id,
   label,
@@ -37,41 +36,21 @@ function PasswordField({
   autoFocus?: boolean;
   autoComplete: string;
 }) {
-  const [visible, setVisible] = useState(false);
-
   return (
     <div className="auth-field">
       <label htmlFor={id} className="auth-label--sr">
         {label}
       </label>
-      <div className="auth-input-wrap">
-        <span className="auth-input-icon" aria-hidden="true">
-          <Lock size={17} />
-        </span>
-        <input
-          id={id}
-          name={id}
-          type={visible ? "text" : "password"}
-          required
-          autoFocus={autoFocus}
-          autoComplete={autoComplete}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={label}
-          className="auth-input"
-        />
-        <button
-          type="button"
-          aria-pressed={visible}
-          aria-label={
-            visible ? t(lang, "auth.updatePassword.hidePasswordAria") : t(lang, "auth.updatePassword.showPasswordAria")
-          }
-          onClick={() => setVisible((v) => !v)}
-          className="auth-field-toggle"
-        >
-          {visible ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
-        </button>
-      </div>
+      <PasswordInput
+        id={id}
+        name={id}
+        required
+        autoFocus={autoFocus}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={label}
+      />
     </div>
   );
 }

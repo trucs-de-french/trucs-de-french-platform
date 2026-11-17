@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { UserPlus, User, Mail, Lock } from "lucide-react";
+import { UserPlus, User, Mail } from "lucide-react";
 import { signUp } from "../login/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { t } from "@/lib/i18n/t";
 
 const lang = "uk" as const;
@@ -74,21 +75,14 @@ export default async function RegisterPage({
           <label htmlFor="password" className="auth-label--sr">
             {t(lang, "auth.register.passwordLabel")}
           </label>
-          <div className="auth-input-wrap">
-            <span className="auth-input-icon" aria-hidden="true">
-              <Lock size={17} />
-            </span>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              placeholder={t(lang, "auth.register.passwordLabel")}
-              className="auth-input"
-            />
-          </div>
+          <PasswordInput
+            id="password"
+            name="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder={t(lang, "auth.register.passwordLabel")}
+          />
           <p className="auth-hint">{t(lang, "auth.register.passwordHint")}</p>
         </div>
 

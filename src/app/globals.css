@@ -19666,6 +19666,9 @@ button.cabinet-nav-item {
 .auth-input:focus-visible {
   outline: none;
 }
+.auth-input::-ms-reveal {
+  display: none;
+}
 
 /* Кругла кнопка показу/сховання пароля — звичайний flex-item праворуч
    від поля (НЕ absolute — .auth-input-wrap тепер сам flex-row). */
@@ -19705,6 +19708,14 @@ button.cabinet-nav-item {
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .auth-field-toggle:focus-visible {
     outline-color: #f3d98b;
+  }
+}
+/* Тач-таргет >=40x40 на мобільних — на десктопі 30x30 (тонша рамка,
+   поряд з коротшим .auth-input-wrap) лишається як є. */
+@media (max-width: 767px) {
+  .auth-field-toggle {
+    width: 40px;
+    height: 40px;
   }
 }
 

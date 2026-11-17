@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { User, Mail, Lock } from "lucide-react";
+import { User, Mail } from "lucide-react";
 import { signIn } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
 import { t } from "@/lib/i18n/t";
 
 const lang = "uk" as const;
@@ -60,20 +61,13 @@ export default async function LoginPage({
           <label htmlFor="password" className="auth-label--sr">
             {t(lang, "auth.login.passwordLabel")}
           </label>
-          <div className="auth-input-wrap">
-            <span className="auth-input-icon" aria-hidden="true">
-              <Lock size={17} />
-            </span>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              placeholder={t(lang, "auth.login.passwordLabel")}
-              className="auth-input"
-            />
-          </div>
+          <PasswordInput
+            id="password"
+            name="password"
+            required
+            autoComplete="current-password"
+            placeholder={t(lang, "auth.login.passwordLabel")}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-3">
