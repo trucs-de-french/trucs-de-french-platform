@@ -18045,6 +18045,68 @@ button.cabinet-nav-item {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
+.dictionary-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: #3b37c4;
+  transition: border-color 150ms, background-color 150ms;
+}
+.dark .dictionary-edit-btn {
+  color: #f3d98b;
+}
+.dictionary-edit-btn:hover {
+  border-color: #3b37c4;
+  background: rgba(59, 55, 196, 0.1);
+}
+.dark .dictionary-edit-btn:hover {
+  border-color: #f3d98b;
+  background: rgba(243, 217, 139, 0.1);
+}
+.dictionary-edit-btn:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .dictionary-edit-btn:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+.dictionary-category-select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-surface-2);
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cabinet-ink);
+}
+.dictionary-category-select:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 1px;
+}
+.dark .dictionary-category-select:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+.dictionary-edit-error {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+}
+.dark .dictionary-edit-error {
+  color: #fbbf24;
+}
+
 .dictionary-word {
   margin: 0;
   font-family: var(--font-body);

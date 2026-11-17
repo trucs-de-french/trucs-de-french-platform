@@ -1,19 +1,22 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark } from "lucide-react";
+import { Search, Bookmark, Pencil } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
+import { PART_OF_SPEECH_LABELS_FR, STUDENT_EDITABLE_POS, type PartOfSpeech } from "@/lib/vocab-categories";
 import type { SavedWord } from "@/lib/cabinet/saved-words";
-import { removeWord, saveWord, updateWordTranslation } from "@/app/cabinet/dictionary/actions";
+import { removeWord, saveWord, updateSavedWordDetails } from "@/app/cabinet/dictionary/actions";
 
-// Чіпи фільтра — лише ці 4 частини мови (не весь PART_OF_SPEECH_ORDER
-// vocab-categories.ts), за явним запитом задачі; чіп з'являється тільки
-// якщо серед збережених слів студента є бодай одне з цією partOfSpeech.
-const FILTER_POS = ["nom", "verbe", "adjectif", "adverbe"] as const satisfies readonly PartOfSpeech[];
+// Чіпи фільтра — лише ці 4 частини мови (STUDENT_EDITABLE_POS,
+// vocab-categories.ts, не весь PART_OF_SPEECH_ORDER), за явним запитом
+// задачі; чіп з'являється тільки якщо серед збережених слів студента є
+// бодай одне з цією partOfSpeech. Той самий масив використовує WordEditor
+// нижче для опцій select-а — "студент сам обирає категорію" редагує слово
+// в межах тих самих 4 категорій, що він бачить як фільтри.
+const FILTER_POS = STUDENT_EDITABLE_POS;
 
 const FILTER_POS_LABEL_KEY = {
   nom: "cabinet.dictionary.filter.nom",
@@ -95,11 +98,9 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
     }
   }
 
-  function handleTranslationSaved(id: string, translation: string | null) {
+  function handleDetailsSaved(id: string, translation: string, partOfSpeech: PartOfSpeech | null) {
     setWords((prev) =>
-      prev.map((w) =>
-        w.id === id ? { ...w, translation, translationSource: translation === null ? "none" : "own" } : w
-      )
+      prev.map((w) => (w.id === id ? { ...w, translation, translationSource: "own", partOfSpeech } : w))
     );
     setEditingId(null);
   }
@@ -184,7 +185,7 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
               isEditing={editingId === word.id}
               onStartEdit={() => setEditingId(word.id)}
               onCancelEdit={() => setEditingId(null)}
-              onSaved={(translation) => handleTranslationSaved(word.id, translation)}
+              onSaved={(translation, partOfSpeech) => handleDetailsSaved(word.id, translation, partOfSpeech)}
               onRemove={() => handleRemove(word)}
             />
           ))}
@@ -217,7 +218,7 @@ function WordCard({
   isEditing: boolean;
   onStartEdit: () => void;
   onCancelEdit: () => void;
-  onSaved: (translation: string | null) => void;
+  onSaved: (translation: string, partOfSpeech: PartOfSpeech | null) => void;
   onRemove: () => void;
 }) {
   const posLabel = word.partOfSpeech ? PART_OF_SPEECH_LABELS_FR[word.partOfSpeech] : null;
@@ -226,28 +227,38 @@ function WordCard({
   return (
     <div className="dictionary-word-card">
       <div className="flex items-start justify-between gap-2">
-        {posLabel ? <span className="dictionary-pos-label">{posLabel}</span> : <span />}
-        <button
-          type="button"
-          aria-label={t(lang, "cabinet.dictionary.remove")}
-          onClick={onRemove}
-          className="dictionary-bookmark-btn"
-        >
-          <Bookmark size={16} fill="currentColor" aria-hidden="true" />
-        </button>
+        {!isEditing && posLabel ? <span className="dictionary-pos-label">{posLabel}</span> : <span />}
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            aria-label={t(lang, "cabinet.dictionary.edit")}
+            onClick={onStartEdit}
+            className="dictionary-edit-btn"
+          >
+            <Pencil size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={t(lang, "cabinet.dictionary.remove")}
+            onClick={onRemove}
+            className="dictionary-bookmark-btn"
+          >
+            <Bookmark size={16} fill="currentColor" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       <p className="dictionary-word">{word.word}</p>
 
-      {word.translation ? (
+      {isEditing ? (
+        <WordEditor lang={lang} word={word} onSaved={onSaved} onCancel={onCancelEdit} />
+      ) : word.translation ? (
         <>
           <p className="dictionary-translation">{word.translation}</p>
           {word.translationSource === "own" && (
             <span className="dictionary-mine-tag">{t(lang, "cabinet.dictionary.myTranslation")}</span>
           )}
         </>
-      ) : isEditing ? (
-        <TranslationEditor lang={lang} wordId={word.id} onSaved={onSaved} onCancel={onCancelEdit} />
       ) : (
         <>
           {word.contextUk && <p className="dictionary-context">{word.contextUk}</p>}
@@ -257,7 +268,7 @@ function WordCard({
         </>
       )}
 
-      {word.contextFr && word.translation && <p className="dictionary-context">{word.contextFr}</p>}
+      {word.contextFr && word.translation && !isEditing && <p className="dictionary-context">{word.contextFr}</p>}
 
       {word.sourceTitle &&
         (sourceLink ? (
@@ -271,49 +282,107 @@ function WordCard({
   );
 }
 
-function TranslationEditor({
+// Інлайн-редактор категорії+перекладу прямо на картці ("пензлик" у WordCard
+// вище, завжди доступний, і "додайте переклад" для ще не перекладеного
+// слова — обидва ведуть у ТОЙ САМИЙ редактор) — "студент сам вирішує
+// категорію" (задача): select обмежений STUDENT_EDITABLE_POS, ті самі 4
+// підписи, що й чіпи фільтра (FILTER_POS_LABEL_KEY), плюс варіант "без
+// категорії" для слів, які ще не мають partOfSpeech. Escape скасовує,
+// Enter у текстовому полі зберігає — обробник на зовнішньому div ловить
+// Escape з обох полів (select теж фокусований елемент), Enter — лише з
+// input (у select Enter розкриває список опцій, не повинен зберігати).
+function WordEditor({
   lang,
-  wordId,
+  word,
   onSaved,
   onCancel,
 }: {
   lang: UiLang;
-  wordId: string;
-  onSaved: (translation: string | null) => void;
+  word: SavedWord;
+  onSaved: (translation: string, partOfSpeech: PartOfSpeech | null) => void;
   onCancel: () => void;
 }) {
-  const [value, setValue] = useState("");
+  const [translation, setTranslation] = useState(word.translation ?? "");
+  const [partOfSpeech, setPartOfSpeech] = useState<PartOfSpeech | "">(word.partOfSpeech ?? "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   async function handleSave() {
+    if (translation.trim().length === 0) {
+      setError(true);
+      return;
+    }
     setSaving(true);
-    const result = await updateWordTranslation(wordId, value);
+    const result = await updateSavedWordDetails(word.id, { translation, partOfSpeech });
     setSaving(false);
     if (result.ok) {
-      onSaved(result.translation ?? null);
+      onSaved(result.translation ?? translation.trim(), result.partOfSpeech ?? null);
+    } else {
+      setError(true);
     }
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="sr-only" htmlFor={`translation-${wordId}`}>
+    <div
+      className="flex flex-col gap-2"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onCancel();
+        }
+      }}
+    >
+      <label className="sr-only" htmlFor={`category-${word.id}`}>
+        {t(lang, "cabinet.dictionary.categoryLabel")}
+      </label>
+      <select
+        id={`category-${word.id}`}
+        value={partOfSpeech}
+        onChange={(e) => setPartOfSpeech(e.target.value as PartOfSpeech | "")}
+        className="dictionary-category-select"
+      >
+        <option value="">{t(lang, "cabinet.dictionary.category.none")}</option>
+        {FILTER_POS.map((pos) => (
+          <option key={pos} value={pos}>
+            {t(lang, FILTER_POS_LABEL_KEY[pos])}
+          </option>
+        ))}
+      </select>
+
+      <label className="sr-only" htmlFor={`translation-${word.id}`}>
         {t(lang, "cabinet.dictionary.translationLabel")}
       </label>
       <input
-        id={`translation-${wordId}`}
+        ref={inputRef}
+        id={`translation-${word.id}`}
         type="text"
-        value={value}
+        value={translation}
         maxLength={200}
-        autoFocus
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setTranslation(e.target.value);
+          setError(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSave();
+          }
+        }}
         placeholder={t(lang, "cabinet.dictionary.translationPlaceholder")}
         className="dictionary-translation-input"
       />
+      {error && <p className="dictionary-edit-error">{t(lang, "cabinet.dictionary.error")}</p>}
+
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || value.trim().length === 0}
+          disabled={saving || translation.trim().length === 0}
           className="cabinet-btn-primary min-h-9 rounded-full px-4 text-xs disabled:opacity-50"
         >
           {t(lang, "cabinet.dictionary.save")}

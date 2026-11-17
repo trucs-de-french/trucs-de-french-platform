@@ -57,6 +57,15 @@ export const PART_OF_SPEECH_COLORS: Record<PartOfSpeech, { dot: string; rgb: [nu
   idiome: { dot: "bg-cyan-500", rgb: [0.024, 0.714, 0.831] },
 };
 
+// Підмножина категорій, яку студент може сам обрати для збереженого слова
+// (/cabinet/dictionary, WordEditor) — рівно ті самі 4, що чіпи фільтра там
+// (dictionary-view.tsx: Іменники/Дієслова/Прикметники/Прислівники), а НЕ
+// весь PART_OF_SPEECH_ORDER — решта категорій (locutions/phrase/idiome/
+// prepositions_conjonctions) лишаються вчительськими, студент не розставляє
+// їх сам через цей інтерфейс. Та сама константа валідує вибір і на сервері
+// (updateSavedWordDetails, dictionary/actions.ts), і будує опції select-а.
+export const STUDENT_EDITABLE_POS = ["nom", "verbe", "adjectif", "adverbe"] as const satisfies readonly PartOfSpeech[];
+
 const KNOWN = new Set<string>(PART_OF_SPEECH_ORDER);
 
 // Читає partOfSpeech так, як він міг бути записаний і ДО, і ПІСЛЯ міграції

@@ -8,7 +8,7 @@ import {
   type SavedWord,
   type SavedWordInput,
 } from "@/lib/cabinet/saved-words";
-import { normalizePartOfSpeech } from "@/lib/vocab-categories";
+import { normalizePartOfSpeech, STUDENT_EDITABLE_POS, type PartOfSpeech } from "@/lib/vocab-categories";
 
 const MAX_SAVED_WORDS = 1000;
 
@@ -191,27 +191,38 @@ export async function saveWord(
   return { ok: true, id: data.id, alreadySaved: false };
 }
 
-// Інлайн-редагування перекладу з картки (стаб Етапу 1 показує context_uk з
-// кнопкою "додайте переклад" — ця дія і є тим збереженням). Порожній
-// рядок явно очищає переклад (translation_source повертається до 'none'),
-// будь-що інше позначає його як 'own' — студентський, не вчительський.
-export async function updateWordTranslation(
+// Студент сам редагує категорію й переклад прямо на картці слова ("пензлик"
+// і "додайте переклад" у dictionary-view.tsx ведуть у той самий редактор) —
+// переклад тут ОБОВ'ЯЗКОВИЙ (студент редагує вже існуюче чи додає нове
+// значення разом із категорією, очищення перекладу через цю дію не
+// передбачено). Категорія — лише
+// одна з STUDENT_EDITABLE_POS (ті самі 4, що чіпи фільтра) або порожній
+// рядок ("без категорії" -> null); будь-що інше (вчительська категорія типу
+// "idiome", довільний сторонній рядок) — validation error, той самий
+// принцип "сервер не довіряє клієнтському select", що вже validateInput
+// вище застосовує до saveWord.
+export async function updateSavedWordDetails(
   id: string,
-  translation: string
-): Promise<{ ok: boolean; translation?: string | null; error?: ActionError }> {
+  input: { translation: string; partOfSpeech: string }
+): Promise<{ ok: boolean; translation?: string; partOfSpeech?: PartOfSpeech | null; error?: ActionError }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "auth" };
 
-  const trimmed = translation.trim();
-  if (trimmed.length > 200) return { ok: false, error: "validation" };
-  const value = trimmed.length === 0 ? null : trimmed;
+  const translation = input.translation.trim();
+  if (translation.length < 1 || translation.length > 200) return { ok: false, error: "validation" };
+
+  const posRaw = input.partOfSpeech.trim();
+  if (posRaw.length > 0 && !(STUDENT_EDITABLE_POS as readonly string[]).includes(posRaw)) {
+    return { ok: false, error: "validation" };
+  }
+  const partOfSpeech: PartOfSpeech | null = posRaw.length === 0 ? null : (posRaw as PartOfSpeech);
 
   const { data, error } = await supabase
     .from("saved_words")
-    .update({ translation: value, translation_source: value === null ? "none" : "own" })
+    .update({ translation, translation_source: "own", part_of_speech: partOfSpeech })
     .eq("id", id)
     .eq("user_id", user.id)
     .select("id")
@@ -221,7 +232,7 @@ export async function updateWordTranslation(
   if (!data) return { ok: false, error: "not_found" };
 
   revalidatePath("/cabinet/dictionary");
-  return { ok: true, translation: value };
+  return { ok: true, translation, partOfSpeech };
 }
 
 // Повертає знятий снімок, щоб UI міг запропонувати "Скасувати" (undo =
