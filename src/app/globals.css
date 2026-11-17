@@ -2381,6 +2381,21 @@ button, input, textarea, select, label, nav, aside {
   aspect-ratio: 16 / 9;
   width: 100%;
   height: auto;
+  /* Задача-виправлення "square video corners on mobile": .video-player
+     несе rounded-[14px] (Tailwind, @layer utilities) — на мобільному
+     стекованому розкладі відео-кадр має бути прямокутним (сам відеофайл —
+     завжди прямий прямокутник, закруглення overflow:hidden-обгортки
+     давало видиму чорну округлу рамку навколо нього, особливо в темній
+     темі). .video-stacked-card лишається з власним border-radius:16px
+     (ЗОВНІШНЯ картка, не чіпаємо) — цей селектор специфічний лише для
+     ВІДЕО-дитини картки, що існує ЛИШЕ в isStacked-розкладі
+     (video-player.tsx), тож десктоп/fullscreen (.video-player:fullscreen/
+     --pseudo-fullscreen вже самі ставлять border-radius:0 окремим
+     правилом вище) тут не зачіпаються. Без @media — сам клас-предок
+     .video-stacked-card вже є хуком лише для мобільного вертикального
+     розкладу. Unlayered-правило нижче в каскаді за Tailwind-utilities,
+     тож перебиває rounded-[14px] без !important. */
+  border-radius: 0;
 }
 
 .video-stacked-bar {
