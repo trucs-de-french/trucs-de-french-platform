@@ -82,6 +82,32 @@ type SavedWordRow = {
   context_uk: string | null;
 };
 
+// Пошук/фільтр "Мого словника" — одна точка правди для dictionary-view.tsx
+// (клієнтський список) і для /api/cabinet/dictionary/pdf (серверний
+// експорт), щоб PDF завжди містив РІВНО те, що студент бачить на екрані
+// під тим самим пошуком/чіпом, а не окрему копію логіки.
+export function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+export function filterSavedWords(
+  words: SavedWord[],
+  opts: { search?: string; pos?: PartOfSpeech | "all" }
+): SavedWord[] {
+  const q = normalizeForSearch((opts.search ?? "").trim());
+  const pos = opts.pos ?? "all";
+  return words.filter((w) => {
+    if (pos !== "all" && w.partOfSpeech !== pos) return false;
+    if (!q) return true;
+    return (
+      normalizeForSearch(w.word).includes(q) || (!!w.translation && normalizeForSearch(w.translation).includes(q))
+    );
+  });
+}
+
 export function rowToSavedWord(row: SavedWordRow): SavedWord {
   return {
     id: row.id,

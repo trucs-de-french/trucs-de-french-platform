@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark, Pencil } from "lucide-react";
+import { Search, Bookmark, Pencil, Download } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
 import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
-import type { SavedWord } from "@/lib/cabinet/saved-words";
+import { filterSavedWords, type SavedWord } from "@/lib/cabinet/saved-words";
 import { removeWord, saveWord, updateSavedWordDetails } from "@/app/cabinet/dictionary/actions";
 import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 
@@ -40,19 +40,13 @@ const POS_LABEL_KEY = {
   idiome: "cabinet.dictionary.pos.idiome",
 } as const satisfies Record<PartOfSpeech, MessageKey>;
 
-function normalizeForSearch(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-}
-
 export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWords: SavedWord[] }) {
   const [words, setWords] = useState(initialWords);
   const [search, setSearch] = useState("");
   const [posFilter, setPosFilter] = useState<PartOfSpeech | "all">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ word: SavedWord } | null>(null);
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const presentPos = useMemo(() => {
@@ -60,16 +54,39 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
     return FILTER_POS.filter((p) => present.has(p));
   }, [words]);
 
-  const filtered = useMemo(() => {
-    const q = normalizeForSearch(search.trim());
-    return words.filter((w) => {
-      if (posFilter !== "all" && w.partOfSpeech !== posFilter) return false;
-      if (!q) return true;
-      return (
-        normalizeForSearch(w.word).includes(q) || (!!w.translation && normalizeForSearch(w.translation).includes(q))
-      );
-    });
-  }, [words, search, posFilter]);
+  const filtered = useMemo(() => filterSavedWords(words, { search, pos: posFilter }), [words, search, posFilter]);
+
+  // Завантаження PDF — fetch+blob (не простий <a href>, як у vocab-pdf
+  // сцени): кнопці тут потрібні disabled/завантаження/помилка станів, які
+  // звичайна навігація по посиланню не дає JS перехопити. Експортує РІВНО
+  // filtered (поточний пошук+чіп) — та сама filterSavedWords, що й список
+  // нижче, застосована СЕРВЕРОМ (query-параметри q/pos) до ТИХ САМИХ
+  // saved_words, а не список client-side id, щоб не передавати переклади/
+  // слова через URL.
+  async function handleDownloadPdf() {
+    if (filtered.length === 0 || pdfStatus === "loading") return;
+    setPdfStatus("loading");
+    try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("q", search.trim());
+      if (posFilter !== "all") params.set("pos", posFilter);
+      const res = await fetch(`/api/cabinet/dictionary/pdf?${params.toString()}`);
+      if (!res.ok) throw new Error("pdf fetch failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const date = new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `trucs-de-french-dictionary-${date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setPdfStatus("idle");
+    } catch {
+      setPdfStatus("error");
+    }
+  }
 
   function showUndoToast(snapshot: SavedWord) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -184,7 +201,21 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
             </button>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={filtered.length === 0 || pdfStatus === "loading"}
+          aria-busy={pdfStatus === "loading"}
+          aria-label={t(lang, "cabinet.dictionary.pdf.button")}
+          className="cabinet-btn-primary flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm disabled:opacity-50"
+        >
+          <Download size={16} aria-hidden="true" />
+          {t(lang, pdfStatus === "loading" ? "cabinet.dictionary.pdf.loading" : "cabinet.dictionary.pdf.button")}
+        </button>
       </div>
+
+      {pdfStatus === "error" && <p className="dictionary-edit-error">{t(lang, "cabinet.dictionary.error")}</p>}
 
       {filtered.length === 0 ? (
         <div className="dictionary-empty">
