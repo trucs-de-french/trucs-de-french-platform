@@ -10,6 +10,8 @@ import { formatTimecode } from "@/lib/format-timecode";
 import { BUTTON_SECONDARY } from "@/lib/button-styles";
 import { INPUT_BORDER } from "@/lib/input-styles";
 import { HINT_TEXT } from "@/lib/typography-styles";
+import { getTranslatedForms } from "@/lib/vocab";
+import { normalizeWordForMatch } from "@/lib/vocab-match";
 import { useDialogueState, type Line } from "./dialogue-state";
 import { useVideoSubtitlesUrls } from "./video-subtitles-state";
 import { VocabItemRow } from "./vocab-item-row";
@@ -200,13 +202,20 @@ export function DialogueEditor() {
     );
   }
 
-  // Виділення в textarea перекладу цієї репліки -> translatedForm КОНКРЕТНОГО
-  // vocab-запису. Без виділення — нічого не робимо (підтверджено з учителькою,
-  // без спливаючої підказки).
+  // Виділення в textarea перекладу цієї репліки -> ДОДАЄТЬСЯ до форм
+  // перекладу КОНКРЕТНОГО vocab-запису (не перезаписує — скрипт і субтитри
+  // часто використовують різні відмінки того самого слова, задача
+  // "multiple translatedForm values"), дублікат (регістронезалежно) не
+  // додається повторно. Без виділення — нічого не робимо (підтверджено з
+  // учителькою, без спливаючої підказки).
   function takeTranslationSelection(i: number, vi: number) {
-    const selected = getSelectedText(translationRefs.current[i]);
+    const selected = getSelectedText(translationRefs.current[i]).trim();
     if (!selected) return;
-    updateVocab(i, vi, "translatedForm", selected);
+    const current = getTranslatedForms(lines[i].vocab[vi]);
+    if (current.some((f) => normalizeWordForMatch(f) === normalizeWordForMatch(selected))) return;
+    const forms = [...current, selected];
+    updateVocab(i, vi, "translatedForms", forms);
+    updateVocab(i, vi, "translatedForm", forms[0]);
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {

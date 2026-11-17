@@ -21,12 +21,43 @@ export type VocabItem = {
   // вручну, використовується лише для підсвітки в перекладеній колонці
   // (dialogue-line.tsx), ніяк не пов'язана з автоматичним зіставленням.
   translatedForm?: string | null;
+  // Кілька форм того самого слова/фрази в перекладі (задача "multiple
+  // translatedForm values") — скрипт (translationUk) і субтитри (VTT uk)
+  // пишуться вчителькою НЕЗАЛЕЖНО й часто використовують різні відмінки/
+  // дієвідміни того самого слова, тож однієї translatedForm не завжди
+  // достатньо для підсвітки в обох місцях. Коли непорожній — переважає
+  // над translatedForm (getTranslatedForms нижче); legacy-записи зі
+  // старим translatedForm і БЕЗ translatedForms лишаються робочими без
+  // жодної міграції даних (jsonb, нове поле просто відсутнє в старих
+  // рядках).
+  translatedForms?: string[] | null;
   // Частина мови — обирається вручну в конструкторі (vocab-item-row.tsx),
   // використовується для групування студентської таблиці/PDF
   // (groupVocabByPartOfSpeech нижче). Відсутнє/порожній рядок — легасі-
   // записи без класифікації, потрапляють в окрему групу "Інше".
   partOfSpeech?: PartOfSpeech | null;
 };
+
+// Єдина точка читання форм перекладу — translatedForms (новий масив), якщо
+// там є хоч одне непорожнє значення, інакше одноелементний масив зі старого
+// translatedForm (якщо він є), інакше []. Трим + відсів порожніх +
+// регістронезалежний дедуп (normalizeWordForMatch — та сама нормалізація,
+// що й зіставлення нижче) — щоб випадковий дубль форми (через кому в
+// адмінці чи повторне "Взяти виділене") не породжував зайву альтернативу в
+// регулярці matchTranslatedFormInText.
+export function getTranslatedForms(v: VocabItem): string[] {
+  const fromArray = (v.translatedForms ?? []).map((f) => f.trim()).filter((f) => f.length > 0);
+  const source = fromArray.length > 0 ? fromArray : v.translatedForm?.trim() ? [v.translatedForm.trim()] : [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const form of source) {
+    const key = normalizeWordForMatch(form);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(form);
+  }
+  return result;
+}
 
 type DialogueLine = {
   vocab?: VocabItem[];

@@ -76,10 +76,23 @@ export function VocabItemRow({
         {line.translationUk && (
           <>
             <input
-              placeholder="Форма в перекладі"
-              value={v.translatedForm ?? ""}
-              onChange={(e) => updateVocab(lineIndex, vocabIndex, "translatedForm", e.target.value)}
-              className={`${INPUT_BORDER} w-32 px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
+              placeholder="Форма(и) в перекладі, через кому"
+              title="Кілька форм того самого слова (напр. для скрипту й субтитрів) — через кому"
+              // Відображення — СИРИЙ масив (translatedForms, якщо непорожній,
+              // інакше одноелементний з translatedForm), а не через
+              // getTranslatedForms (та фільтрує порожні токени) — інакше
+              // щойно вчителька набирає кому для другої форми, порожній
+              // "хвіст" одразу відфільтрувався б і onChange перезаписав
+              // value БЕЗ щойно введеної коми, не даючи її набрати взагалі.
+              // Порожні токени відсіюються лише на читанні (getTranslatedForms,
+              // vocab.ts), не тут.
+              value={(v.translatedForms && v.translatedForms.length > 0 ? v.translatedForms : v.translatedForm ? [v.translatedForm] : []).join(", ")}
+              onChange={(e) => {
+                const forms = e.target.value.split(",").map((f) => f.trim());
+                updateVocab(lineIndex, vocabIndex, "translatedForms", forms);
+                updateVocab(lineIndex, vocabIndex, "translatedForm", forms.find((f) => f.length > 0) ?? "");
+              }}
+              className={`${INPUT_BORDER} w-40 px-2 py-2 text-xs text-neutral-600 dark:text-neutral-400`}
             />
             {onTakeTranslationSelection && (
               <button

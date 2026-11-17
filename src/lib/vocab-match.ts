@@ -1,4 +1,5 @@
 import type { VocabItem } from "./vocab";
+import { getTranslatedForms } from "./vocab";
 
 // Спільний модуль для зіставлення vocab[].word/translatedForm у довільному
 // тексті — раніше ця логіка (regex з найдовшим варіантом першим,
@@ -123,8 +124,8 @@ const UK_WORD_CHAR = /[\p{L}\p{M}'-]/u;
 // слова), тож розширення тут лише підтверджує, що фраза вже закінчується
 // на межі слова — без зміни поведінки для такого випадку.
 export function matchTranslatedFormInText<T extends VocabItem>(text: string, vocab: T[]): VocabMatchPart<T>[] {
-  const withForm = vocab.filter((v) => v.translatedForm?.trim());
-  const regex = buildHighlightRegex(withForm.map((v) => v.translatedForm as string));
+  const withForm = vocab.filter((v) => getTranslatedForms(v).length > 0);
+  const regex = buildHighlightRegex(withForm.flatMap((v) => getTranslatedForms(v)));
   if (!regex) return [{ type: "text", text }];
 
   const parts: VocabMatchPart<T>[] = [];
@@ -146,8 +147,8 @@ export function matchTranslatedFormInText<T extends VocabItem>(text: string, voc
     while (start > cursor && UK_WORD_CHAR.test(text[start - 1])) start--;
     while (end < text.length && UK_WORD_CHAR.test(text[end])) end++;
 
-    const item = withForm.find(
-      (v) => normalizeWordForMatch(v.translatedForm as string) === normalizeWordForMatch(match![0])
+    const item = withForm.find((v) =>
+      getTranslatedForms(v).some((form) => normalizeWordForMatch(form) === normalizeWordForMatch(match![0]))
     );
     if (cursor < start) parts.push({ type: "text", text: text.slice(cursor, start) });
     parts.push(item ? { type: "match", text: text.slice(start, end), item } : { type: "text", text: text.slice(start, end) });
