@@ -2334,10 +2334,28 @@ button, input, textarea, select, label, nav, aside {
   background: #141a52;
   border-radius: 16px;
   overflow: hidden;
+  /* Безпечна зона знизу (iPhone "острів"/жестова панель) — ОДИН padding
+     ТУТ, на всій картці (не на controls-row/subtitle-zone окремо), щоб не
+     додавати відступ двічі залежно від того, який саме останній рядок
+     зараз видимий (контроли сховані, поки відкрита картка/панель слова —
+     тоді останній видимий рядок — сама зона субтитрів). env() з фолбеком
+     0, якщо недоступний (Android/старі браузери). */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+/* dvh (враховує появу/зникнення хрому браузера на мобільному — точніше за
+   svh на деяких Android-браузерах) переважає svh нижче лише коли
+   підтримується (той самий @supports-каскад, dvh-правило йде ПІСЛЯ svh у
+   файлі — за однакової специфічності виграє пізніше); svh переважає
+   базовий vh-фолбек вище для браузерів без підтримки жодного з сучасних
+   динамічних в'юпорт-юнітів (Safari <15.4 тощо). */
 @supports (height: 1svh) {
   .video-stacked-card {
     height: clamp(520px, 72svh, 640px);
+  }
+}
+@supports (height: 1dvh) {
+  .video-stacked-card {
+    height: clamp(520px, 72dvh, 640px);
   }
 }
 
@@ -2394,8 +2412,12 @@ button, input, textarea, select, label, nav, aside {
   display: flex;
   flex-direction: column;
   background: #141a52;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* overflow:hidden, НЕ auto — сам скрол належить ОДНОМУ з двох дітей
+     (.video-stacked-subtitle-text чи .video-stacked-panel-host/внутрішня
+     scrollarea картки/панелі всередині нього), не цій обгортці: два
+     вкладені overflow:auto-контейнери одне в одному дають вкладені
+     скролбари й "перехват" скролу жестом, якого не очікує студент. */
+  overflow: hidden;
 }
 .video-stacked-subtitle-text {
   flex: 1 1 auto;
@@ -2470,10 +2492,6 @@ button, input, textarea, select, label, nav, aside {
   padding: 0 16px;
   background: #0a0e38;
   border-top: 1px solid #2e3680;
-  /* Відступ знизу на телефонах із "островом"/жестовою панеллю (iPhone) —
-     рядок контролів лишається над системним жестовим ареалом, не під
-     ним. env() з фолбеком 0, якщо недоступний. */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .video-stacked-ctrl-btn {
   display: flex;
