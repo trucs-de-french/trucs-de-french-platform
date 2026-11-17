@@ -213,14 +213,14 @@ export const uk = {
   "karaoke.clickCorrectWord": "Клікніть на правильне слово",
   "karaoke.emptyAnswerPlaceholder": "(порожньо)",
   "karaoke.legendCorrect": "✓ правильно",
-  "karaoke.legendWrong": "✗ неправильно: ваша відповідь → правильне слово",
+  "karaoke.legendWrong": "✗ неправильно: Ваша відповідь → правильне слово",
 
   "cbg.stateCorrectAria": "правильно",
   "cbg.stateWrongAria": "помилково",
   "cbg.stateMissedAria": "правильна відповідь, не позначена",
   "cbg.legendCorrect": "правильно",
   "cbg.legendWrong": "позначено помилково",
-  "cbg.legendMissed": "правильна відповідь, яку ви пропустили",
+  "cbg.legendMissed": "правильна відповідь, яку Ви пропустили",
 
   "checkConfirm.unansweredCount": "Незаповнено: {n}. Перевірити все одно?",
 
@@ -457,8 +457,8 @@ export const uk = {
   "cabinet.nav.language": "Мова інтерфейсу",
   "cabinet.soon": "Скоро",
   "cabinet.home.greeting": "Bonjour, {name}",
-  "cabinet.library.subtitle": "Усі курси, до яких у вас є доступ",
-  "cabinet.dictionary.subtitle": "Слова, які ви зберегли під час навчання",
+  "cabinet.library.subtitle": "Усі курси, до яких у Вас є доступ",
+  "cabinet.dictionary.subtitle": "Слова, які Ви зберегли під час навчання",
   "cabinet.dictionary.count": "Збережених слів: {count}",
   "cabinet.dictionary.search": "Пошук слова чи перекладу",
   "cabinet.dictionary.filter.all": "Усі",

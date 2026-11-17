@@ -96,7 +96,7 @@ export default async function CoursePage({
 
       {(!scenes || scenes.length === 0) && (
         <p className="mt-6 text-neutral-500 dark:text-neutral-400">
-          У цьому курсі поки немає сцен, або у вас немає до нього доступу.
+          У цьому курсі поки немає сцен, або у Вас немає до нього доступу.
         </p>
       )}
     </main>

@@ -53,7 +53,7 @@ export function CourseTabs({ enrollments }: { enrollments: Enrollment[] }) {
         </ul>
       ) : (
         <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-          У вас поки немає активних курсів цього треку.
+          У Вас поки немає активних курсів цього треку.
         </p>
       )}
     </div>

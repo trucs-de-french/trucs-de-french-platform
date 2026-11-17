@@ -446,7 +446,7 @@ export function TaskDragList({
                   ) : resetOpenId === row.id ? (
                     <span className="flex flex-wrap items-center gap-1.5">
                       <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                        Скинути ваш прогрес у цьому завданні? Бали, підказки та помилки буде видалено.
+                        Скинути Ваш прогрес у цьому завданні? Бали, підказки та помилки буде видалено.
                       </span>
                       <button
                         type="button"
@@ -469,7 +469,7 @@ export function TaskDragList({
                       type="button"
                       onClick={() => setResetOpenId(row.id)}
                       aria-label="Скинути мій прогрес"
-                      title="Видаляє лише ваш власний прогрес з цього завдання"
+                      title="Видаляє лише Ваш власний прогрес з цього завдання"
                       className="rounded p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
                     >
                       <RotateCcw size={16} />
