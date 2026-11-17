@@ -17,16 +17,6 @@ import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/ca
 // Існуючого паттерну для довільної кількості чіпів (решта 4 категорій) у
 // коді немає — не додаємо їх; слова з цими категоріями лишаються видимими
 // під "Усі" (дефолтний фільтр не звіряє partOfSpeech взагалі).
-const FILTER_POS = ["nom", "verbe", "adjectif", "adverbe"] as const satisfies readonly PartOfSpeech[];
-
-// Прихована (друга) група чіпів — решта PART_OF_SPEECH_ORDER, що не входить
-// у FILTER_POS вище; обчислено з того самого канонічного масиву (не
-// хардкод другого списку), щоб порядок/склад завжди лишався синхронним із
-// vocab-categories.ts, навіть якщо туди додадуть ще категорію.
-const EXTRA_POS = PART_OF_SPEECH_ORDER.filter(
-  (p) => !(FILTER_POS as readonly PartOfSpeech[]).includes(p)
-);
-
 // Підписи для чіпів і для select-а категорії в WordEditor нижче — ОДНЕ
 // джерело на весь PART_OF_SPEECH_ORDER (а не лише 4 чіпи), щоб студент міг
 // обрати будь-яку категорію, що насправді існує на платформі (адмінський
@@ -52,33 +42,41 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
   const [words, setWords] = useState(initialWords);
   const [search, setSearch] = useState("");
   const [posFilter, setPosFilter] = useState<DictionaryPosFilter>("all");
-  const [moreExpanded, setMoreExpanded] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ word: SavedWord } | null>(null);
   const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Усі категорії панелі — повний канонічний PART_OF_SPEECH_ORDER (не
+  // окремий під-список), лише ті, де в студента є бодай одне збережене
+  // слово — рахується над УСІМА words (не над filtered), щоб набір чіпів
+  // не мерехтів під час набору пошукового запиту.
   const presentPos = useMemo(() => {
     const present = new Set(words.map((w) => w.partOfSpeech).filter((p): p is PartOfSpeech => !!p));
-    return FILTER_POS.filter((p) => present.has(p));
-  }, [words]);
-
-  // Друга група чіпів — лише категорії, що справді мають бодай одне
-  // збережене слово (той самий принцип, що presentPos вище), плюс окремий
-  // прапорець для "Без категорії" (не PartOfSpeech, тож рахується окремо).
-  const presentExtraPos = useMemo(() => {
-    const present = new Set(words.map((w) => w.partOfSpeech).filter((p): p is PartOfSpeech => !!p));
-    return EXTRA_POS.filter((p) => present.has(p));
+    return PART_OF_SPEECH_ORDER.filter((p) => present.has(p));
   }, [words]);
   const hasUncategorized = useMemo(() => words.some((w) => w.partOfSpeech === null), [words]);
-  const hasExtraGroup = presentExtraPos.length > 0 || hasUncategorized;
+  // Тоггл/панель має сенс лише якщо є ХОЧ ЯКАСЬ категорія для фільтрації —
+  // якщо в студента всі слова без категорії й "Без категорії" теж немає
+  // (тобто й той чіп не з'явиться), лишається тільки "Усі", а воно й так
+  // дефолтний стан — ховаємо тоггл повністю.
+  const hasCategoryFilter = presentPos.length > 0 || hasUncategorized;
 
-  // Активний фільтр у ПРИХОВАНІЙ групі — тоггл примусово лишається
-  // розгорнутим (students never see a hidden active filter), а сам тоггл
-  // отримує вигляд "вибрано", той самий клас, що й активний чіп.
-  const isExtraActive =
-    posFilter === "none" || (posFilter !== "all" && (EXTRA_POS as readonly string[]).includes(posFilter));
-  const moreVisible = moreExpanded || isExtraActive;
+  // Немає прихованого активного фільтра: поки вибрано щось крім "Усі",
+  // панель лишається розгорнутою незалежно від panelOpen (OR нижче) —
+  // аналогічно попередній "Ще категорії" групі, тепер для всієї панелі.
+  // Вибір "Усі" НЕ згортає панель назад (найпростіший варіант з вимоги
+  // задачі) — panelOpen далі керує видимістю сам.
+  const isCategoryActive = posFilter !== "all";
+  const panelVisible = panelOpen || isCategoryActive;
+
+  const toggleLabel =
+    posFilter === "all"
+      ? t(lang, "cabinet.dictionary.filter.toggle")
+      : t(lang, "cabinet.dictionary.filter.toggleWithValue", {
+          value: posFilter === "none" ? t(lang, "cabinet.dictionary.category.none") : t(lang, POS_LABEL_KEY[posFilter]),
+        });
 
   const filtered = useMemo(() => filterSavedWords(words, { search, pos: posFilter }), [words, search, posFilter]);
 
@@ -198,59 +196,38 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
           />
         </label>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {hasCategoryFilter && (
           <button
             type="button"
-            aria-pressed={posFilter === "all"}
-            onClick={() => setPosFilter("all")}
-            className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
-              posFilter === "all"
+            aria-expanded={panelVisible}
+            aria-controls="dictionary-categories-panel"
+            onClick={() => setPanelOpen((open) => !open)}
+            className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+              isCategoryActive
                 ? "cabinet-chip--selected"
                 : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
             }`}
           >
-            {t(lang, "cabinet.dictionary.filter.all")}
+            {toggleLabel}
+            {panelVisible ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
           </button>
-          {presentPos.map((pos) => (
-            <button
-              key={pos}
-              type="button"
-              aria-pressed={posFilter === pos}
-              onClick={() => setPosFilter(pos)}
-              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
-                posFilter === pos
-                  ? "cabinet-chip--selected"
-                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
-              }`}
-            >
-              {t(lang, POS_LABEL_KEY[pos])}
-            </button>
-          ))}
-          {hasExtraGroup && (
-            <button
-              type="button"
-              aria-expanded={moreVisible}
-              aria-controls="dictionary-extra-categories"
-              onClick={() => setMoreExpanded((e) => !e)}
-              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
-                isExtraActive
-                  ? "cabinet-chip--selected"
-                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
-              }`}
-            >
-              {t(lang, moreVisible ? "cabinet.dictionary.filter.less" : "cabinet.dictionary.filter.more")}
-              {moreVisible ? (
-                <ChevronUp size={14} aria-hidden="true" />
-              ) : (
-                <ChevronDown size={14} aria-hidden="true" />
-              )}
-            </button>
-          )}
-        </div>
+        )}
 
-        {hasExtraGroup && moreVisible && (
-          <div id="dictionary-extra-categories" className="flex w-full flex-wrap items-center gap-2">
-            {presentExtraPos.map((pos) => (
+        {hasCategoryFilter && panelVisible && (
+          <div id="dictionary-categories-panel" className="flex w-full flex-wrap items-center gap-2">
+            <button
+              type="button"
+              aria-pressed={posFilter === "all"}
+              onClick={() => setPosFilter("all")}
+              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cabinet-gold)] dark:focus-visible:outline-[var(--cabinet-focus-ring)] ${
+                posFilter === "all"
+                  ? "cabinet-chip--selected"
+                  : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
+              }`}
+            >
+              {t(lang, "cabinet.dictionary.filter.all")}
+            </button>
+            {presentPos.map((pos) => (
               <button
                 key={pos}
                 type="button"
