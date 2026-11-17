@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { parseWebVtt } from "@/lib/webvtt";
 import { pairVttCues, groupCuesIntoSentences } from "./vtt-pairing";
+import { isLegacyR2DevHost } from "@/lib/validate-r2-url";
 
 const MAX_SPEAKER_LENGTH = 60;
 
@@ -18,13 +19,20 @@ const MAX_VTT_SIZE = 1024 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
 
 // SSRF-захист: фетчимо лише з нашого публічного R2-хоста (той самий
-// NEXT_PUBLIC_... базовий URL, яким підписуються завантажені файли в
-// r2-upload-url/route.ts) — довільний URL з форми НЕ приймаємо.
+// R2_PUBLIC_URL базовий URL, яким підписуються завантажені файли в
+// r2-upload-url/route.ts) — довільний URL з форми НЕ приймаємо. Задача-
+// виправлення "use custom R2 domains for media, images and games":
+// R2_PUBLIC_URL тепер media.trucsdefrench.com, але старі субтитри в БД
+// (до міграції даних) ще посилаються на тимчасовий pub-<hex>.r2.dev —
+// isLegacyR2DevHost (validate-r2-url.ts) пускає й той фіксований формат
+// Cloudflare-хоста, поки старі r2.dev-хости не вимкнені.
 function isAllowedSubtitleUrl(url: string): boolean {
   const base = process.env.R2_PUBLIC_URL;
   if (!base) return false;
   try {
-    return new URL(url).origin === new URL(base).origin;
+    const parsed = new URL(url);
+    if (parsed.origin === new URL(base).origin) return true;
+    return parsed.protocol === "https:" && isLegacyR2DevHost(parsed.hostname);
   } catch {
     return false;
   }
