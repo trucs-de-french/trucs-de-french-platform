@@ -18081,13 +18081,28 @@ button.cabinet-nav-item {
   box-shadow: none;
 }
 
+/* Філлед gold-пігулка з тег-іконкою (замінює колишній дрібний small-caps
+   текст, що переносився на 2 рядки на десктопі — "Noms / Pronoms" тепер
+   nowrap в один рядок). Один rgba-відтінок золота для фону працює в ОБОХ
+   темах без окремого dark-значення (світла картка — світлий тінт, темна
+   картка — темний тінт, той самий принцип, що вже є в інших місцях цього
+   файлу) — лише текстовий колір міняється під темою. */
 .dictionary-pos-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: rgba(217, 183, 101, 0.2);
+  color: var(--cabinet-muted);
   font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  font-variant: small-caps;
-  color: var(--cabinet-gold);
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.dark .dictionary-pos-label {
+  color: #f3d98b;
 }
 
 /* Картка слова: пензлик/відро — раніше icon-only кружечки (бульбашка-
@@ -18095,7 +18110,9 @@ button.cabinet-nav-item {
    задача). Тепер pill з видимим підписом ("Редагувати"/"Видалити"),
    flat (без тіні/dark rim, той самий принцип, що бібліотечні чіпи),
    min-height 44px для тач-таргету; .dictionary-card-actions wrap-ає на
-   вузькій картці замість стиснення в один рядок. */
+   вузькій картці замість стиснення в один рядок. На десктопі (>=768px)
+   нижче ці самі кнопки стають безрамковими "ghost" — менші, без бордера/
+   тіні, лише колір тексту+легкий тінт на hover. */
 .dictionary-card-actions {
   display: flex;
   flex-wrap: wrap;
@@ -18120,6 +18137,15 @@ button.cabinet-nav-item {
   font-size: 12px;
   white-space: nowrap;
   transition: border-color 150ms, background-color 150ms;
+}
+@media (min-width: 768px) {
+  .dictionary-action-btn {
+    min-height: 28px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+  }
 }
 .dictionary-action-btn:focus-visible {
   outline: 2px solid #d9b765;

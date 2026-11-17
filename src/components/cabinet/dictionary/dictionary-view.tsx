@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark, Pencil, Trash2, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Bookmark, Pencil, Trash2, Download, ChevronDown, ChevronUp, Tag } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -340,8 +340,15 @@ function WordCard({
 
   return (
     <div className="dictionary-word-card">
-      <div className="flex items-start justify-between gap-2">
-        {!isEditing && posLabel ? <span className="dictionary-pos-label">{posLabel}</span> : <span />}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        {!isEditing && posLabel ? (
+          <span className="dictionary-pos-label">
+            <Tag size={13} aria-hidden="true" />
+            {posLabel}
+          </span>
+        ) : (
+          <span />
+        )}
         <div className="dictionary-card-actions">
           <button
             type="button"
