@@ -2330,10 +2330,23 @@ button, input, textarea, select, label, nav, aside {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: clamp(520px, 72vh, 640px);
+  /* Задача-виправлення "mobile stacked layout polish": картка мала
+     займати більшу частину вʼюпорта (раніше 72%, лишало забагато
+     порожнього місця знизу на реальному телефоні) — 86% і вищий максимум
+     (820px замість 640px). */
+  height: clamp(560px, 86vh, 820px);
   background: #141a52;
   border-radius: 16px;
   overflow: hidden;
+  /* Chrome на Android інколи "роздуває" дрібний текст у вузьких
+     колонках (font boosting/text autosizing) — непередбачувано збільшує
+     рендерений розмір попри точний font-size у CSS (саме це й спричиняло
+     "заголовок слова ~36px" замість заданих у plain-word-panel.tsx
+     ~18px). Вимикаємо для всієї картки — кожен розмір нижче (чипи/
+     заголовок/лейбл/приклад) тепер рендериться РІВНО тим пікселем, що
+     заданий у CSS. */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
   /* Безпечна зона знизу (iPhone "острів"/жестова панель) — ОДИН padding
      ТУТ, на всій картці (не на controls-row/subtitle-zone окремо), щоб не
      додавати відступ двічі залежно від того, який саме останній рядок
@@ -2350,13 +2363,35 @@ button, input, textarea, select, label, nav, aside {
    динамічних в'юпорт-юнітів (Safari <15.4 тощо). */
 @supports (height: 1svh) {
   .video-stacked-card {
-    height: clamp(520px, 72svh, 640px);
+    height: clamp(560px, 86svh, 820px);
   }
 }
 @supports (height: 1dvh) {
   .video-stacked-card {
-    height: clamp(520px, 72dvh, 640px);
+    height: clamp(560px, 86dvh, 820px);
   }
+}
+
+/* Відео заповнює ПОВНУ ширину картки (задача-виправлення "video letterboxed
+   with side bands"): wrapperRef (.video-player, спільний із десктопом)
+   лишається flex-елементом картки БЕЗ явного flex-basis — за замовчуванням
+   flex-shrink:1 дозволяв йому СТИСКАТИСЬ по висоті, коли сумарна природна
+   висота всіх рядків картки (сервісна панель + відео-за-aspect-ratio +
+   прогрес + зона субтитрів + контроли) перевищувала фіксовану height
+   картки вище: ширина (w-full, крос-вісь flex-колонки) лишалась
+   розтягнутою на всю картку, а ВИСОТА стискалась — <video> із
+   object-fit:contain тоді вписував 16:9-кадр у ВУЖЧИЙ за свою природну
+   пропорцію бокс і додавав порожні боковІ смуги (колір --video-player's
+   власного градієнтного фону, видимий як "світліший індиго" збоку).
+   flex:0 0 auto тут гарантує: жодного стиску/росту, висота рахується
+   ЛИШЕ з aspect-ratio+100% ширини, завжди на всю ширину картки без
+   бокових смуг; зона субтитрів (flex:1 1 auto) забирає все, що
+   лишається, замість відео. */
+.video-stacked-card > .video-player {
+  flex: 0 0 auto;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: auto;
 }
 
 .video-stacked-bar {
@@ -2404,6 +2439,64 @@ button, input, textarea, select, label, nav, aside {
   padding: 0 12px;
   background: #0a0e38;
   border-bottom: 1px solid #2e3680;
+}
+/* Задача-виправлення "seek track invisible, thumb between labels":
+   renderSeekBar() (video-player.tsx, спільна з десктопом функція)
+   повертає ОДИН <div class="flex items-center gap-2"> — на десктопі він
+   уже стискається/розтягується всередині свого контексту коректно, але
+   тут, прямим дитям .video-stacked-progress-row (flex-рядок), він сам
+   НЕ мав width:100%/flex:1 і тому сідав на ширину СВОГО вмісту (мінімальну
+   ширину двох лейблів часу + якийсь мінімум track), а не на всю ширину
+   рядка — трек (.flex-1 усередині НЬОГО) рахував "1" від уже стиснутого
+   батька, тож фактично не мав куди розтягуватись. width:100% тут —
+   єдине, що треба було додати, без зміни самої функції (не ламає
+   десктопний рендер, що тим самим деревом не користується). */
+.video-stacked-progress-row > div {
+  width: 100%;
+}
+/* Колір/розмір треку/заповнення/бігунка — inline style (track) і
+   Tailwind bg-white (заповнення/бігунок) на десктопі лишаються білими
+   навмисно (контраст на темному відео) — тут перефарбовуємо в палітру
+   картки (!important обов'язковий ЛИШЕ для фону треку — inline-style
+   завжди переважає звичайне правило без !important; заповнення/бігунок
+   беруть колір із className, де !important не обов'язковий за
+   специфічністю, але лишений тут так само для симетрії й стійкості до
+   майбутніх правок className). */
+.video-stacked-progress-row [role="slider"] {
+  background: #2e3680 !important;
+}
+.video-stacked-progress-row [role="slider"] > div {
+  background: linear-gradient(90deg, #d9b765, #f3d98b) !important;
+}
+.video-stacked-progress-row [role="slider"] > span {
+  width: 16px !important;
+  height: 16px !important;
+  background: #f3d98b !important;
+  box-shadow: none !important;
+}
+/* Невидимий розширений хіт-ареал (той самий прийом, що чипи сусідів
+   нижче) — трек лишається 4px/3px візуально (h-1/max-[420px]:h-[3px],
+   Tailwind-клас самого елемента, не чіпаємо), але реально ловить тап у
+   смузі ≥44px по висоті навколо себе. */
+.video-stacked-progress-row [role="slider"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+/* Лейбли часу — фіксована ширина (замість "сідає на вміст"), щоб перехід
+   між, напр., "9:59" і "10:00" не зсував трек на кілька пікселів. */
+.video-stacked-progress-row > div > span:first-child,
+.video-stacked-progress-row > div > span:last-child {
+  display: inline-block;
+  width: 40px;
+  flex-shrink: 0;
+}
+.video-stacked-progress-row > div > span:last-child {
+  text-align: right;
 }
 
 .video-stacked-subtitle-zone {
@@ -2481,6 +2574,67 @@ button, input, textarea, select, label, nav, aside {
   flex: 0 0 auto;
   height: auto !important;
   margin: auto;
+}
+
+/* Компактніша панель звичайного слова в стековому розкладі (задача-
+   виправлення "word panel too big in stacked mode") — перевизначено
+   БЕЗУМОВНО (не через plain-word-panel.tsx-проп compact, рахований з
+   measurements відео-бокса, які в стековому розкладі не відображають
+   реальну висоту зони субтитрів): заголовок/приклад/лейбл/інпут/чипи
+   менші, відступи тугіші, щоб "Зберегти слово"/"Скасувати" лишались
+   видимими без скролу в типовому випадку. Структуру компонента/логіку
+   (header/scrollarea/footer, валідація фрази, автозакриття, клавіатурні
+   guard'и) НЕ чіпаємо — лише розміри. */
+.video-stacked-panel-host .plain-word-panel {
+  margin-top: 0;
+  padding: 12px 14px;
+  gap: 2px;
+}
+.video-stacked-panel-host .plain-word-panel-word,
+.video-stacked-panel-host .plain-word-panel-title-input {
+  font-size: 27px;
+}
+.video-stacked-panel-host .plain-word-panel-context {
+  font-size: 15px;
+  margin-top: 6px;
+}
+.video-stacked-panel-host .plain-word-panel-label {
+  font-size: 14px;
+  margin-top: 8px;
+}
+.video-stacked-panel-host .plain-word-panel-input {
+  height: 44px;
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+.video-stacked-panel-host .plain-word-pos-field {
+  margin-top: 8px;
+}
+/* Чипи сусідніх слів — ОДИН рядок на фразу з кількох слів на 360px-
+   телефоні ("est la cuisine française" тощо): nowrap усередині кожного
+   чипа (текст слова ніколи не ламається навпіл), перенесення лишається
+   МІЖ чипами (.plain-word-neighbor-row уже flex-wrap). ::before —
+   невидимий розширений хіт-ареал (4px з кожного боку = 44px висоти при
+   36px видимій висоті чипа), той самий прийом, що й у треку прогресу
+   вище — не змінює візуальний розмір, лише реальну область тапу. */
+.video-stacked-panel-host .plain-word-neighbor-row {
+  gap: 6px;
+}
+.video-stacked-panel-host .plain-word-neighbor-chip {
+  position: relative;
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.video-stacked-panel-host .plain-word-neighbor-chip::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+.video-stacked-panel-host .plain-word-panel-footer {
+  margin-top: 6px;
+  padding-top: 6px;
 }
 
 .video-stacked-controls-row {
