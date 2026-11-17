@@ -13125,9 +13125,15 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
    тіні/ореолу. .task-tabs-scroll (тип-фільтр) має overflow-y:hidden,
    тож ця тінь на "Усе" зрізалась по вертикалі, читаючись як глітч.
    Scoped до .library-filters, щоб не зачепити той самий
-   .cabinet-chip--selected у dictionary-view.tsx. */
-.library-filters .cabinet-chip--selected {
+   .cabinet-chip--selected у dictionary-view.tsx.
+   Клас продубльовано (.library-filters.library-filters), щоб
+   специфічність (0,0,3,0) безумовно перебивала .dark .cabinet-chip--
+   selected (0,0,2,0) — без залежності від порядку правил у вихідному
+   файлі, який build-тулінг (Lightning CSS/Tailwind v4 shaking) не
+   гарантовано збереже для правил з однаковою специфічністю. */
+.library-filters.library-filters .cabinet-chip--selected {
   box-shadow: none;
+  filter: none;
 }
 
 /* "Усі досягнення →" pill-кнопка (pill-link.tsx) — спільна для картки
