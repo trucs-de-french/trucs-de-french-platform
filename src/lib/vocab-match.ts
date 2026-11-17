@@ -1,5 +1,6 @@
 import type { VocabItem } from "./vocab";
 import { getTranslatedForms } from "./vocab";
+import { isFallbackEligibleForm, matchesUkAlternation } from "./uk-alternation";
 
 // Спільний модуль для зіставлення vocab[].word/translatedForm у довільному
 // тексті — раніше ця логіка (regex з найдовшим варіантом першим,
@@ -123,6 +124,45 @@ const UK_WORD_CHAR = /[\p{L}\p{M}'-]/u;
 // усередині форми — частина самого рядка, не розбивається на окремі
 // слова), тож розширення тут лише підтверджує, що фраза вже закінчується
 // на межі слова — без зміни поведінки для такого випадку.
+// Токенізація "хвостів", що лишились НЕпідсвіченими після кроку 1 (точний
+// підрядковий збіг вище) — для кроку 2 (uk-alternation.ts, fallback по
+// чергуванню). Та сама літерна група, що UK_WORD_CHAR, лише як "global"
+// regex для пошуку цілих слів-кандидатів одразу, а не по одній літері.
+const UK_TOKEN_RE = /[\p{L}\p{M}'-]+/gu;
+
+// Крок 2 — ЛИШЕ над одним "text"-шматком (проміжок, який крок 1 НЕ зловив
+// жодним точним збігом) — шукає кожне кириличне слово-кандидат у цьому
+// шматку й перевіряє його через matchesUkAlternation проти кожної
+// fallback-придатної форми (isFallbackEligibleForm — уже відфільтровано
+// викликачем). Перший candidate, що підходить slову, виграє (детерміновано
+// за порядком items/forms, той самий принцип "перший за порядком
+// виграє", що buildVariantMap вище) — підсвічується ЦІЛЕ слово-кандидат
+// (токен уже є цілим словом за побудовою UK_TOKEN_RE, додаткове
+// розширення меж тут не потрібне, на відміну від кроку 1).
+function applyAlternationFallback<T extends VocabItem>(
+  text: string,
+  candidates: { item: T; form: string }[]
+): VocabMatchPart<T>[] {
+  if (candidates.length === 0) return [{ type: "text", text }];
+
+  const parts: VocabMatchPart<T>[] = [];
+  let cursor = 0;
+  let m: RegExpExecArray | null;
+  UK_TOKEN_RE.lastIndex = 0;
+  while ((m = UK_TOKEN_RE.exec(text))) {
+    const token = m[0];
+    const start = m.index;
+    const end = start + token.length;
+    const hit = candidates.find((c) => matchesUkAlternation(c.form, token));
+    if (!hit) continue;
+    if (cursor < start) parts.push({ type: "text", text: text.slice(cursor, start) });
+    parts.push({ type: "match", text: token, item: hit.item });
+    cursor = end;
+  }
+  if (cursor < text.length) parts.push({ type: "text", text: text.slice(cursor) });
+  return parts;
+}
+
 export function matchTranslatedFormInText<T extends VocabItem>(text: string, vocab: T[]): VocabMatchPart<T>[] {
   const withForm = vocab.filter((v) => getTranslatedForms(v).length > 0);
   const regex = buildHighlightRegex(withForm.flatMap((v) => getTranslatedForms(v)));
@@ -156,5 +196,18 @@ export function matchTranslatedFormInText<T extends VocabItem>(text: string, voc
     regex.lastIndex = end;
   }
   if (cursor < text.length) parts.push({ type: "text", text: text.slice(cursor) });
-  return parts;
+
+  // Крок 2 (fallback, uk-alternation.ts) — ЛИШЕ над частинами, які крок 1
+  // (вище, НЕ ЗМІНЕНИЙ) лишив звичайним текстом; фразові (з пробілом)
+  // форми та форми коротші за 3 літери сюди не потрапляють взагалі
+  // (isFallbackEligibleForm) — для них далі лишається тільки точний збіг.
+  const fallbackCandidates = withForm.flatMap((v) =>
+    getTranslatedForms(v)
+      .filter(isFallbackEligibleForm)
+      .map((form) => ({ item: v, form }))
+  );
+  if (fallbackCandidates.length === 0) return parts;
+  return parts.flatMap((part) =>
+    part.type === "text" ? applyAlternationFallback(part.text, fallbackCandidates) : [part]
+  );
 }
