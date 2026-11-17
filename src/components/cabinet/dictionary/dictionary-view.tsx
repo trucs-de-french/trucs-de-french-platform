@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark, Pencil, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Bookmark, Pencil, Trash2, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -337,22 +337,37 @@ function WordCard({
     <div className="dictionary-word-card">
       <div className="flex items-start justify-between gap-2">
         {!isEditing && posLabel ? <span className="dictionary-pos-label">{posLabel}</span> : <span />}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="dictionary-card-actions">
           <button
             type="button"
             aria-label={t(lang, "cabinet.dictionary.edit")}
+            title={t(lang, "cabinet.dictionary.edit")}
             onClick={onStartEdit}
-            className="dictionary-edit-btn"
+            className="dictionary-action-btn dictionary-edit-btn"
           >
             <Pencil size={14} aria-hidden="true" />
+            <span>{t(lang, "cabinet.dictionary.edit")}</span>
           </button>
           <button
             type="button"
             aria-label={t(lang, "cabinet.dictionary.remove")}
-            onClick={onRemove}
-            className="dictionary-bookmark-btn"
+            title={t(lang, "cabinet.dictionary.remove")}
+            onClick={() => {
+              // window.confirm — та сама механіка, що ConfirmForm (confirm-
+              // form.tsx) використовує для руйнівних дій в адмінці, лише
+              // без обгортки у <form>: видалення тут клієнтський onClick з
+              // оптимістичним оновленням+undo-тостом (handleRemove вище), а
+              // не сабміт справжньої форми, тож ConfirmForm (onSubmit) сюди
+              // не підходить напряму — підтвердження лише inline-перевірка
+              // перед викликом onRemove.
+              if (window.confirm(t(lang, "cabinet.dictionary.confirmDelete", { word: word.word }))) {
+                onRemove();
+              }
+            }}
+            className="dictionary-action-btn dictionary-delete-btn"
           >
-            <Bookmark size={16} fill="currentColor" aria-hidden="true" />
+            <Trash2 size={14} aria-hidden="true" />
+            <span>{t(lang, "cabinet.dictionary.remove")}</span>
           </button>
         </div>
       </div>

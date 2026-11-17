@@ -18090,43 +18090,47 @@ button.cabinet-nav-item {
   color: var(--cabinet-gold);
 }
 
-.dictionary-bookmark-btn {
+/* Картка слова: пензлик/відро — раніше icon-only кружечки (бульбашка-
+   bookmark читалась студентам як "закладка", не "видалити" — звідси й
+   задача). Тепер pill з видимим підписом ("Редагувати"/"Видалити"),
+   flat (без тіні/dark rim, той самий принцип, що бібліотечні чіпи),
+   min-height 44px для тач-таргету; .dictionary-card-actions wrap-ає на
+   вузькій картці замість стиснення в один рядок. */
+.dictionary-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.dictionary-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 11px;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1.5px solid var(--cabinet-line);
   background: var(--cabinet-card-bg);
-  color: #d9b765;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
   transition: border-color 150ms, background-color 150ms;
 }
-.dictionary-bookmark-btn:hover {
-  border-color: #d9b765;
-  background: rgba(217, 183, 101, 0.1);
-}
-.dictionary-bookmark-btn:focus-visible {
+.dictionary-action-btn:focus-visible {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
 }
-.dark .dictionary-bookmark-btn:focus-visible {
+.dark .dictionary-action-btn:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
 .dictionary-edit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 1.5px solid var(--cabinet-line);
-  background: var(--cabinet-card-bg);
   color: #3b37c4;
-  transition: border-color 150ms, background-color 150ms;
 }
 .dark .dictionary-edit-btn {
   color: #f3d98b;
@@ -18139,12 +18143,15 @@ button.cabinet-nav-item {
   border-color: #f3d98b;
   background: rgba(243, 217, 139, 0.1);
 }
-.dictionary-edit-btn:focus-visible {
-  outline: 2px solid #d9b765;
-  outline-offset: 2px;
+
+/* #ef4444 — той самий "wrong/incorrect"-токен, що й у вправах (однаковий
+   в обох темах), тут позначає руйнівну дію, не статус правильності. */
+.dictionary-delete-btn {
+  color: #ef4444;
 }
-.dark .dictionary-edit-btn:focus-visible {
-  outline: 2px solid var(--cabinet-focus-ring);
+.dictionary-delete-btn:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .dictionary-edit-error {
