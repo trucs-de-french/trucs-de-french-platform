@@ -13973,10 +13973,19 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
 .admin-mobile-nav-item--active {
   border-color: transparent;
   background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  /* background-origin:border-box — без цього градієнт рахується лише від
+     padding-box, і прозора 1.5px рамка над ним показує суцільний
+     найближчий stop-колір замість продовження градієнта, читаючись як
+     темніший обвід по краю (той самий фікс, що й .cabinet-chip--selected/
+     .achievements-chip--active трохи нижче). */
+  background-origin: border-box;
+  background-clip: border-box;
   color: #ffffff;
 }
 .dark .admin-mobile-nav-item--active {
   background: linear-gradient(160deg, #f3d98b, #d9b765);
+  background-origin: border-box;
+  background-clip: border-box;
   color: #1a1640;
 }
 
