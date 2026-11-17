@@ -13980,6 +13980,99 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   color: #1a1640;
 }
 
+/* Задача-виправлення "make the theme toggle visible in the cabinet header
+   on mobile": ThemeRailButton (cabinet/theme-switch.tsx) рендериться тут
+   класом .cabinet-nav-item — той самий клас, що й у .cabinet-sidebar
+   (десктопна рейка), де він навмисно білий (color:#fff) і на всю ширину
+   (w-full), бо сайдбар сам завжди темний (--cabinet-panel-bg рейки), а
+   пункт — рядок на всю її ширину. У .admin-mobile-header той самий клас
+   потрапляє на КРЕМОВИЙ фон світлої теми (--cabinet-panel-bg тут
+   #f8f3e4) — білий Moon-контур на кремовому практично зникає, і сама
+   кнопка без рамки/фону візуально не читається як кнопка (на відміну від
+   сусідніх .admin-mobile-nav-item — у тих рамка/padding є). Правило нижче
+   лише для ЦЬОГО local-контексту (.admin-mobile-nav — хук, що існує лише
+   в admin-mobile-header.tsx) повертає кнопку до компактного круглого
+   вигляду з власною рамкою/фоном замість повнорядкового сайдбар-пункту;
+   .cabinet-sidebar десь-інде цей клас не чіпається (там свого правила
+   немає — нижче й не могло б, бо завжди під @media max-width:767px). */
+@media (max-width: 767px) {
+  .admin-mobile-nav .cabinet-nav-item {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: none;
+    padding: 0;
+    margin-right: 0;
+    border-radius: 999px;
+  }
+  .light .admin-mobile-nav .cabinet-nav-item {
+    background: #fdf8ea;
+    border: 1.5px solid var(--cabinet-line);
+    color: #2f2c6b;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .admin-mobile-nav .cabinet-nav-item {
+      background: #fdf8ea;
+      border: 1.5px solid var(--cabinet-line);
+      color: #2f2c6b;
+    }
+  }
+  @media (hover: hover) {
+    .light .admin-mobile-nav .cabinet-nav-item:hover {
+      background: #f6efd9;
+      color: #4b46da;
+    }
+  }
+  @media (hover: hover) and (prefers-color-scheme: light) {
+    :root:not(.dark) .admin-mobile-nav .cabinet-nav-item:hover {
+      background: #f6efd9;
+      color: #4b46da;
+    }
+  }
+  .light .admin-mobile-nav .cabinet-nav-item:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px #4b46da;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .admin-mobile-nav .cabinet-nav-item:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 2px #4b46da;
+    }
+  }
+  .dark .admin-mobile-nav .cabinet-nav-item {
+    background: #141a52;
+    border: 1.5px solid var(--cabinet-line);
+    color: var(--cabinet-ink);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .admin-mobile-nav .cabinet-nav-item {
+      background: #141a52;
+      border: 1.5px solid var(--cabinet-line);
+      color: var(--cabinet-ink);
+    }
+  }
+  @media (hover: hover) {
+    .dark .admin-mobile-nav .cabinet-nav-item:hover {
+      background: #1b2266;
+    }
+  }
+  @media (hover: hover) and (prefers-color-scheme: dark) {
+    :root:not(.light) .admin-mobile-nav .cabinet-nav-item:hover {
+      background: #1b2266;
+    }
+  }
+  .dark .admin-mobile-nav .cabinet-nav-item:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px #f6dc8e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .admin-mobile-nav .cabinet-nav-item:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 2px #f6dc8e;
+    }
+  }
+}
+
 /* Admin courses — primary pill-кнопка ("+ Новий курс"), світла: indigo +
    тінь; темна: gold, без тіні (на відміну від .cabinet-pill-link, яка
    має тінь в обох темах — тут навмисно інший варіант). */
