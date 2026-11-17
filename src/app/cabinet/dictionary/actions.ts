@@ -8,7 +8,7 @@ import {
   type SavedWord,
   type SavedWordInput,
 } from "@/lib/cabinet/saved-words";
-import { normalizePartOfSpeech, STUDENT_EDITABLE_POS, type PartOfSpeech } from "@/lib/vocab-categories";
+import { normalizePartOfSpeech, PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
 
 const MAX_SAVED_WORDS = 1000;
 
@@ -195,12 +195,16 @@ export async function saveWord(
 // і "додайте переклад" у dictionary-view.tsx ведуть у той самий редактор) —
 // переклад тут ОБОВ'ЯЗКОВИЙ (студент редагує вже існуюче чи додає нове
 // значення разом із категорією, очищення перекладу через цю дію не
-// передбачено). Категорія — лише
-// одна з STUDENT_EDITABLE_POS (ті самі 4, що чіпи фільтра) або порожній
-// рядок ("без категорії" -> null); будь-що інше (вчительська категорія типу
-// "idiome", довільний сторонній рядок) — validation error, той самий
-// принцип "сервер не довіряє клієнтському select", що вже validateInput
-// вище застосовує до saveWord.
+// передбачено). Категорія — будь-яка з ПОВНОГО PART_OF_SPEECH_ORDER (той
+// самий набір, що й адмінський select vocab-item-row.tsx) або порожній
+// рядок ("без категорії" -> null); будь-що інше — validation error, ТОЙ
+// САМИЙ принцип "сервер не довіряє клієнтському select", що вже
+// validateInput вище застосовує до saveWord. Виняток: якщо надіслане
+// значення дорівнює вже збереженому в рядку (студент лишив select
+// незмінним і редагував лише переклад) — пропускаємо навіть якщо воно
+// легасі/чуже (не входить у PART_OF_SPEECH_ORDER) — це НЕ новий запис
+// студента, лише те саме значення повертається назад, тож "мовчки не
+// затирати" дотримано без потреби розширювати дозволений список.
 export async function updateSavedWordDetails(
   id: string,
   input: { translation: string; partOfSpeech: string }
@@ -214,10 +218,19 @@ export async function updateSavedWordDetails(
   const translation = input.translation.trim();
   if (translation.length < 1 || translation.length > 200) return { ok: false, error: "validation" };
 
+  const { data: existing, error: existingError } = await supabase
+    .from("saved_words")
+    .select("part_of_speech")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle<{ part_of_speech: string | null }>();
+  if (existingError) return { ok: false, error: "db" };
+  if (!existing) return { ok: false, error: "not_found" };
+
   const posRaw = input.partOfSpeech.trim();
-  if (posRaw.length > 0 && !(STUDENT_EDITABLE_POS as readonly string[]).includes(posRaw)) {
-    return { ok: false, error: "validation" };
-  }
+  const isKnown = posRaw.length === 0 || (PART_OF_SPEECH_ORDER as readonly string[]).includes(posRaw);
+  const isUnchanged = posRaw === (existing.part_of_speech ?? "");
+  if (!isKnown && !isUnchanged) return { ok: false, error: "validation" };
   const partOfSpeech: PartOfSpeech | null = posRaw.length === 0 ? null : (posRaw as PartOfSpeech);
 
   const { data, error } = await supabase

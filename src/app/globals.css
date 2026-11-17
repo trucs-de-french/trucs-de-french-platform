@@ -18077,25 +18077,6 @@ button.cabinet-nav-item {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
-.dictionary-category-select {
-  width: 100%;
-  border-radius: 12px;
-  border: 1.5px solid var(--cabinet-line);
-  background: var(--cabinet-surface-2);
-  padding: 8px 10px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--cabinet-ink);
-}
-.dictionary-category-select:focus-visible {
-  outline: 2px solid #d9b765;
-  outline-offset: 1px;
-}
-.dark .dictionary-category-select:focus-visible {
-  outline: 2px solid var(--cabinet-focus-ring);
-}
-
 .dictionary-edit-error {
   margin: 0;
   font-family: var(--font-body);

@@ -6,24 +6,39 @@ import { Search, Bookmark, Pencil } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { PART_OF_SPEECH_LABELS_FR, STUDENT_EDITABLE_POS, type PartOfSpeech } from "@/lib/vocab-categories";
+import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
 import type { SavedWord } from "@/lib/cabinet/saved-words";
 import { removeWord, saveWord, updateSavedWordDetails } from "@/app/cabinet/dictionary/actions";
+import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 
-// Чіпи фільтра — лише ці 4 частини мови (STUDENT_EDITABLE_POS,
-// vocab-categories.ts, не весь PART_OF_SPEECH_ORDER), за явним запитом
-// задачі; чіп з'являється тільки якщо серед збережених слів студента є
-// бодай одне з цією partOfSpeech. Той самий масив використовує WordEditor
-// нижче для опцій select-а — "студент сам обирає категорію" редагує слово
-// в межах тих самих 4 категорій, що він бачить як фільтри.
-const FILTER_POS = STUDENT_EDITABLE_POS;
+// Чіпи фільтра — лише ці 4 частини мови (не весь PART_OF_SPEECH_ORDER
+// vocab-categories.ts), за явним запитом задачі: чіп з'являється тільки
+// якщо серед збережених слів студента є бодай одне з цією partOfSpeech.
+// Існуючого паттерну для довільної кількості чіпів (решта 4 категорій) у
+// коді немає — не додаємо їх; слова з цими категоріями лишаються видимими
+// під "Усі" (дефолтний фільтр не звіряє partOfSpeech взагалі).
+const FILTER_POS = ["nom", "verbe", "adjectif", "adverbe"] as const satisfies readonly PartOfSpeech[];
 
-const FILTER_POS_LABEL_KEY = {
+// Підписи для чіпів і для select-а категорії в WordEditor нижче — ОДНЕ
+// джерело на весь PART_OF_SPEECH_ORDER (а не лише 4 чіпи), щоб студент міг
+// обрати будь-яку категорію, що насправді існує на платформі (адмінський
+// select vocab-item-row.tsx, групи на студентській сторінці vocab-
+// section.tsx, і сама позначка на картці словника нижче — всі читають
+// PART_OF_SPEECH_LABELS_FR). nom/verbe/adjectif/adverbe вже мають власний
+// локалізований (uk/fr/en) підпис чіпа — лишаємо його й для select-а, щоб
+// не було двох різних підписів для тієї самої категорії в одному
+// інтерфейсі; решта 4 (без чіпа) отримують нові локалізовані ключі
+// cabinet.dictionary.pos.*.
+const POS_LABEL_KEY = {
   nom: "cabinet.dictionary.filter.nom",
   verbe: "cabinet.dictionary.filter.verbe",
   adjectif: "cabinet.dictionary.filter.adjectif",
   adverbe: "cabinet.dictionary.filter.adverbe",
-} as const satisfies Record<(typeof FILTER_POS)[number], MessageKey>;
+  prepositions_conjonctions: "cabinet.dictionary.pos.prepositions_conjonctions",
+  locutions: "cabinet.dictionary.pos.locutions",
+  phrase: "cabinet.dictionary.pos.phrase",
+  idiome: "cabinet.dictionary.pos.idiome",
+} as const satisfies Record<PartOfSpeech, MessageKey>;
 
 function normalizeForSearch(value: string): string {
   return value
@@ -165,7 +180,7 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
                   : "border border-[var(--cabinet-line)] text-[var(--cabinet-ink)] dark:bg-[var(--cabinet-surface-2)]"
               }`}
             >
-              {t(lang, FILTER_POS_LABEL_KEY[pos])}
+              {t(lang, POS_LABEL_KEY[pos])}
             </button>
           ))}
         </div>
@@ -285,12 +300,17 @@ function WordCard({
 // Інлайн-редактор категорії+перекладу прямо на картці ("пензлик" у WordCard
 // вище, завжди доступний, і "додайте переклад" для ще не перекладеного
 // слова — обидва ведуть у ТОЙ САМИЙ редактор) — "студент сам вирішує
-// категорію" (задача): select обмежений STUDENT_EDITABLE_POS, ті самі 4
-// підписи, що й чіпи фільтра (FILTER_POS_LABEL_KEY), плюс варіант "без
-// категорії" для слів, які ще не мають partOfSpeech. Escape скасовує,
+// категорію" (задача): select пропонує ВЕСЬ PART_OF_SPEECH_ORDER (ту саму
+// повну множину й порядок, що й адмінський select vocab-item-row.tsx і
+// групи на студентській сторінці vocab-section.tsx), не лише 4 чіпи
+// фільтра вище, плюс варіант "без категорії". Кастомний CabinetSelect
+// (замінює нативний OS-попап) — той самий компонент, що вже рендерить усі
+// select-и /cabinet (тип іспиту, тижнева ціль): клавіатура/ARIA/portal/
+// outside-click уже готові, нічого дублювати не треба. Escape скасовує,
 // Enter у текстовому полі зберігає — обробник на зовнішньому div ловить
-// Escape з обох полів (select теж фокусований елемент), Enter — лише з
-// input (у select Enter розкриває список опцій, не повинен зберігати).
+// Escape, що випливає з самого CabinetSelect (closePanel на Escape),
+// подальший keydown bubbed сюди закриває весь редактор; Enter — лише з
+// input нижче.
 function WordEditor({
   lang,
   word,
@@ -303,7 +323,7 @@ function WordEditor({
   onCancel: () => void;
 }) {
   const [translation, setTranslation] = useState(word.translation ?? "");
-  const [partOfSpeech, setPartOfSpeech] = useState<PartOfSpeech | "">(word.partOfSpeech ?? "");
+  const [partOfSpeech, setPartOfSpeech] = useState<string>(word.partOfSpeech ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -311,6 +331,22 @@ function WordEditor({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Якщо збережене значення не входить у PART_OF_SPEECH_ORDER (не повинно
+  // траплятись — normalizePartOfSpeech у saveWord/updateSavedWordDetails
+  // завжди пише лише канонічне значення чи null — але якщо раптом
+  // трапиться легасі/чуже значення), додаємо його як окрему опцію замість
+  // того, щоб select мовчки показав порожнє "без категорії": студент
+  // бачить/лишає СВОЄ значення, поки сам явно не обере інше (вимога
+  // задачі — ніколи не затирати мовчки, коли редагується лише переклад).
+  const categoryOptions: CabinetSelectOption[] = useMemo(() => {
+    const known = PART_OF_SPEECH_ORDER.map((pos) => ({ value: pos, label: t(lang, POS_LABEL_KEY[pos]) }));
+    const extra =
+      word.partOfSpeech && !(PART_OF_SPEECH_ORDER as readonly string[]).includes(word.partOfSpeech)
+        ? [{ value: word.partOfSpeech, label: word.partOfSpeech }]
+        : [];
+    return [...extra, { value: "", label: t(lang, "cabinet.dictionary.category.none") }, ...known];
+  }, [lang, word.partOfSpeech]);
 
   async function handleSave() {
     if (translation.trim().length === 0) {
@@ -340,19 +376,13 @@ function WordEditor({
       <label className="sr-only" htmlFor={`category-${word.id}`}>
         {t(lang, "cabinet.dictionary.categoryLabel")}
       </label>
-      <select
+      <CabinetSelect
         id={`category-${word.id}`}
+        aria-label={t(lang, "cabinet.dictionary.categoryLabel")}
         value={partOfSpeech}
-        onChange={(e) => setPartOfSpeech(e.target.value as PartOfSpeech | "")}
-        className="dictionary-category-select"
-      >
-        <option value="">{t(lang, "cabinet.dictionary.category.none")}</option>
-        {FILTER_POS.map((pos) => (
-          <option key={pos} value={pos}>
-            {t(lang, FILTER_POS_LABEL_KEY[pos])}
-          </option>
-        ))}
-      </select>
+        onChange={setPartOfSpeech}
+        options={categoryOptions}
+      />
 
       <label className="sr-only" htmlFor={`translation-${word.id}`}>
         {t(lang, "cabinet.dictionary.translationLabel")}
