@@ -5429,7 +5429,22 @@ button.scene-bar:active .scene-bar-toggle {
    Класова специфічність .vocab-chip перебиває тегове правило й повертає
    успадкування явно для всіх властивостей шрифту — однакова поведінка
    для кнопки й span, в обох колонках, в обох темах. */
+/* Задача-виправлення "render long vocabulary expressions inline": раніше
+   цей клас (і button-дефолт display:inline-block самої кнопки,
+   dialogue-line.tsx) не задавав display взагалі — довга багатослівна
+   фраза ("nous sommes ce que nous mangeons"), що не влазила в залишок
+   рядка, малювалась ЯК ОДИН АТОМАРНИЙ inline-block-бокс і йшла ЦІЛИМ
+   блоком на новий рядок (розбиваючи речення), замість переносу по словах
+   усередині самої підсвітки, як короткі "vol"/"point de vue" тощо.
+   display:inline дозволяє фразі переноситись звичайним текстовим
+   потоком; box-decoration-break:clone — щоб фон/рамка/padding
+   застосовувались ОКРЕМО до кожного рядка-фрагмента переносу (інакше
+   лише першому/останньому фрагменту дістався б закруглений край). */
 .vocab-chip {
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  white-space: normal;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -7217,7 +7232,23 @@ button.scene-bar:active .scene-bar-toggle {
    (useLayoutEffect, до фарби) — тултіп НЕ блимає в старій
    лівій/нецентрованій позиції на кадр. width:max-content+max-width —
    текст переноситься всередині картки, вона сама ніколи не ширша за
-   view port - 16px. min-width — під кнопку збереження всередині. */
+   view port - 16px. min-width — під кнопку збереження всередині.
+
+   Задача-виправлення "render long vocabulary expressions inline": тепер,
+   коли .relative-обгортка сама може переноситись на 2+ рядки (display:
+   inline вище), контейнинг-блок для position:absolute-дитини (цього
+   тултіпа) браузер формує за ОСТАННІМ фрагментом обгортки (той рядок, де
+   тултіп фактично йде у потоці — він останній DOM-сиблінг), не за union-
+   рамкою getBoundingClientRect() усієї фрази. `left` рахується саме від
+   цього — dialogue-line.tsx reposition() бере lastRect (не
+   wrapper.getBoundingClientRect()). Для --below це вже й так збігалось
+   (low rect = lastRect), тож top:100%/margin-top нижче лишені як є. Для
+   --above цього б НЕ вистачило на фразі з 2+ рядків (bottom:100% дав би
+   верх ОСТАННЬОГО рядка, а картка має стояти над ПЕРШИМ) — на цей
+   випадок dialogue-line.tsx рахує явний числовий `top` (від firstRect) і
+   передає його інлайн-стилем, що й перебиває bottom:100%/margin-bottom
+   нижче (bottom:auto поряд). Для однорядкового слова firstRect===lastRect,
+   різниці немає — короткі слова виглядають так само, як і раніше. */
 .vocab-chip-tooltip {
   position: absolute;
   z-index: 10;

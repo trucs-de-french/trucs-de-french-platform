@@ -88,8 +88,12 @@ function VocabWord({
   // useLayoutEffect — реальна локальна left-координата (px, від
   // wrapperRef — того самого .relative, що лишається containing block:
   // жоден предок тут не має overflow:hidden/transform, портал не
-  // потрібен) + above/below.
-  const [placement, setPlacement] = useState<{ left: number; above: boolean } | null>(null);
+  // потрібен) + above/below. top — ЛИШЕ для above (задача-виправлення
+  // "render long vocabulary expressions inline": потрібен явний
+  // числовий зсув від firstRect, коли фраза сама розбита на 2+ рядки,
+  // CSS bottom:100% (globals.css) недостатньо — див. коментар там же);
+  // null для below, де декларативний CSS top:100% і далі коректний.
+  const [placement, setPlacement] = useState<{ left: number; top: number | null; above: boolean } | null>(null);
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -144,7 +148,14 @@ function VocabWord({
       const minLeft = GAP;
       const maxLeft = Math.max(GAP, viewportWidth - tooltipRect.width - GAP);
       const clampedViewportLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
-      const localLeft = clampedViewportLeft - wrapper.getBoundingClientRect().left;
+      // lastRect (не union-рамка wrapper.getBoundingClientRect()) — задача-
+      // виправлення "render long vocabulary expressions inline": тепер, коли
+      // wrapper сам може перенестись на 2+ рядки (display:inline, globals.css
+      // .vocab-chip), containing block для position:absolute-тултіпа браузер
+      // формує за ОСТАННІМ рядком-фрагментом обгортки (той, де тултіп
+      // реально йде в потоці), не за union-рамкою getBoundingClientRect()
+      // усієї фрази — детальніше в коментарі при .vocab-chip-tooltip.
+      const localLeft = clampedViewportLeft - lastRect.left;
 
       // Сторінка сцени не має жодного fixed-бару знизу (на відміну від
       // мобільного таббара кабінету) — просте порівняння доступного
@@ -152,8 +163,15 @@ function VocabWord({
       const spaceBelow = viewportHeight - lastRect.bottom;
       const spaceAbove = firstRect.top;
       const above = spaceBelow < tooltipRect.height + GAP && spaceAbove > spaceBelow;
+      // below лишається декларативним (CSS top:100%, globals.css — вже
+      // збігається з lastRect-containing-block); лише above потребує
+      // явного числового top від firstRect — на фразі з 2+ рядків CSS
+      // bottom:100% дав би верх ОСТАННЬОГО рядка, а картка має стояти над
+      // ПЕРШИМ. Для однорядкового слова firstRect===lastRect, localTop тут
+      // виходить тим самим, що й CSS дав би сам — без візуальної різниці.
+      const localTop = above ? firstRect.top - tooltipRect.height - GAP - lastRect.top : null;
 
-      setPlacement({ left: localLeft, above });
+      setPlacement({ left: localLeft, top: localTop, above });
     }
 
     reposition();
@@ -184,7 +202,7 @@ function VocabWord({
   };
 
   return (
-    <span className="relative inline-block" ref={wrapperRef}>
+    <span className="relative inline" ref={wrapperRef}>
       <button
         type="button"
         onClick={(e) => {
@@ -199,7 +217,15 @@ function VocabWord({
         <span
           ref={tooltipRef}
           className={`vocab-chip-tooltip ${placement?.above ? "vocab-chip-tooltip--above" : "vocab-chip-tooltip--below"}`}
-          style={placement ? { left: `${placement.left}px`, visibility: "visible" } : { visibility: "hidden" }}
+          style={
+            placement
+              ? {
+                  left: `${placement.left}px`,
+                  visibility: "visible",
+                  ...(placement.above && placement.top != null ? { top: `${placement.top}px`, bottom: "auto" } : {}),
+                }
+              : { visibility: "hidden" }
+          }
         >
           <span className="block">{item.translation}</span>
           {posLabel && <span className="vocab-chip-tooltip-pos mt-0.5 block">{posLabel}</span>}
