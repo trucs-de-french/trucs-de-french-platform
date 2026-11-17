@@ -1302,6 +1302,127 @@ export function VideoPlayer({
   const PANEL_HEIGHT_ESTIMATE = 340;
   const isCompact = !cardAnchorTop && roomAbovePlate < PANEL_HEIGHT_ESTIMATE;
 
+  // Рядок "час + смуга прогресу" — вилучено в окрему функцію (задача
+  // "mobile stacked layout", коміт 1/3: "split into layout slots"), щоб
+  // вертикальний мобільний розклад (коміт 2/3) міг використати ТУ САМУ
+  // розмітку/логіку прогресу у власному рядку, без дублювання JSX. Чистий
+  // рефакторинг — десктопний рендер нижче лишається побайтово тим самим.
+  function renderSeekBar() {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+          {metadataLoaded ? formatTime(currentTime) : "0:00"}
+        </span>
+        <div
+          ref={trackRef}
+          role="slider"
+          tabIndex={0}
+          aria-label={t("videoPlayer.seekSlider")}
+          aria-valuemin={0}
+          aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
+          aria-valuenow={Math.round(currentTime)}
+          aria-disabled={!metadataLoaded}
+          onPointerDown={handleTrackPointerDown}
+          onPointerMove={handleTrackPointerMove}
+          className={`relative h-1 flex-1 touch-none rounded-full max-[420px]:h-[3px] ${FOCUS_RING} ${
+            metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
+          }`}
+          style={{ background: "rgba(255,255,255,0.3)" }}
+        >
+          <div className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
+          <span
+            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+            style={{ left: `${progress * 100}%` }}
+          />
+        </div>
+        <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
+          {metadataLoaded ? formatTime(duration!) : "0:00"}
+        </span>
+      </div>
+    );
+  }
+
+  // FR/UA рядки активної кью — вилучено так само (та сама причина, що
+  // renderSeekBar вище): вертикальний мобільний розклад показує субтитри
+  // В ПОТОЦІ (не плашкою-оверлеєм), але САМ текст (SubtitleFrLine/
+  // renderUkSubtitleLine, клікабельні слова) має лишитись ідентичним.
+  function renderSubtitleLines() {
+    return (
+      <>
+        {showFr && activeFrCue && (
+          <p className="font-heading video-subtitle-fr">
+            <SubtitleFrLine
+              text={activeFrCue.text}
+              vocab={vocab ?? []}
+              playing={playing}
+              onWordClick={handleWordClick}
+              onPlainWordClick={handlePlainWordClick}
+            />
+          </p>
+        )}
+        {showUk && activeUkCue && (
+          <p className="font-heading video-subtitle-uk">{renderUkSubtitleLine(activeUkCue.text, vocab ?? [])}</p>
+        )}
+      </>
+    );
+  }
+
+  // Картка/панель слова — вилучено так само: вертикальний мобільний
+  // розклад рендерить ТУ Ж пару компонентів (VideoWordCard/PlainWordPanel,
+  // з тими самими пропсами) усередині зони субтитрів замість плаваючої
+  // абсолютної обгортки (CSS в globals.css перевизначає позиціонування
+  // лише в межах .video-stacked-panel-host, самі компоненти/пропси —
+  // без змін, тож компактний "уже збережено" стан/клавіатурні
+  // guard'и/чипи сусідніх слів/редагований заголовок лишаються робочими
+  // без жодного дублювання логіки).
+  function renderOpenCardHost() {
+    return (
+      <>
+        {openCard?.kind === "vocab" && (
+          <VideoWordCard
+            key={openCard.item.word}
+            cardRef={wordCardRef}
+            item={openCard.item}
+            leftPx={clampedCardLeft}
+            bottomPx={chipBottomPx}
+            anchorTop={cardAnchorTop}
+            maxHeight={cardMaxHeight ?? 240}
+            onClose={closeWordCard}
+            onCompactChange={setIsTeacherCardCompactSaved}
+          />
+        )}
+        {openCard?.kind === "plain" && (
+          <div
+            ref={plainPanelWrapRef}
+            className={`video-plain-word-panel-wrap${isPanelCompactSaved ? " video-plain-word-panel-wrap--compact-saved" : ""}`}
+            style={{
+              bottom: cardAnchorTop ? undefined : `${chipBottomPx}px`,
+              top: cardAnchorTop ? "8px" : undefined,
+              left: clampedCardLeft != null ? `${clampedCardLeft}px` : undefined,
+              maxHeight: `${cardMaxHeight ?? 240}px`,
+            }}
+          >
+            <PlainWordPanel
+              key={`${openCard.phraseSourceText}-${openCard.phraseCenterIndex}`}
+              word={openCard.word}
+              contextFr={openCard.contextFr}
+              contextUk={openCard.contextUk}
+              phraseTokens={openCard.phraseTokens}
+              phraseCenterIndex={openCard.phraseCenterIndex}
+              phraseSourceText={openCard.phraseSourceText}
+              teacherVariantMap={teacherVariantMap}
+              inputId="video-plain-word-translation"
+              onClose={closeWordCard}
+              compact={isCompact}
+              surface="dark"
+              onLayoutChange={(mode) => setIsPanelCompactSaved(mode === "compact")}
+            />
+          </div>
+        )}
+      </>
+    );
+  }
+
   if (loadError) {
     return (
       <div className={`w-full ${className}`}>
@@ -1403,20 +1524,7 @@ export function VideoPlayer({
                 isFullscreen || isPseudoFullscreen ? "video-subtitle-plate--fullscreen" : ""
               }`}
             >
-              {showFr && activeFrCue && (
-                <p className="font-heading video-subtitle-fr">
-                  <SubtitleFrLine
-                    text={activeFrCue.text}
-                    vocab={vocab ?? []}
-                    playing={playing}
-                    onWordClick={handleWordClick}
-                    onPlainWordClick={handlePlainWordClick}
-                  />
-                </p>
-              )}
-              {showUk && activeUkCue && (
-                <p className="font-heading video-subtitle-uk">{renderUkSubtitleLine(activeUkCue.text, vocab ?? [])}</p>
-              )}
+              {renderSubtitleLines()}
             </div>
           ) : null}
 
@@ -1444,39 +1552,7 @@ export function VideoPlayer({
               }}
             >
               {/* Рядок 1: час + смуга */}
-              <div className="flex items-center gap-2">
-                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-                  {metadataLoaded ? formatTime(currentTime) : "0:00"}
-                </span>
-                <div
-                  ref={trackRef}
-                  role="slider"
-                  tabIndex={0}
-                  aria-label={t("videoPlayer.seekSlider")}
-                  aria-valuemin={0}
-                  aria-valuemax={metadataLoaded ? Math.round(duration!) : 0}
-                  aria-valuenow={Math.round(currentTime)}
-                  aria-disabled={!metadataLoaded}
-                  onPointerDown={handleTrackPointerDown}
-                  onPointerMove={handleTrackPointerMove}
-                  className={`relative h-1 flex-1 touch-none rounded-full max-[420px]:h-[3px] ${FOCUS_RING} ${
-                    metadataLoaded ? "cursor-pointer" : "cursor-default opacity-60"
-                  }`}
-                  style={{ background: "rgba(255,255,255,0.3)" }}
-                >
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-white"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                  <span
-                    className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
-                    style={{ left: `${progress * 100}%` }}
-                  />
-                </div>
-                <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-white/90">
-                  {metadataLoaded ? formatTime(duration!) : "0:00"}
-                </span>
-              </div>
+              {renderSeekBar()}
 
               {/* Рядок 2: зліва play/±10с/повтор, справа повільно/швидкість/
                   субтитри/mute/fullscreen. На <560px кнопки лівого кластера
@@ -1748,47 +1824,7 @@ export function VideoPlayer({
             (.video-word-card/.plain-word-panel--video, globals.css), а не
             дві різні поверхні. Скрипт (dialogue-line.tsx) не передає
             surface — лишається світлим/лавандовим, як і раніше. */}
-        {openCard?.kind === "vocab" && (
-          <VideoWordCard
-            key={openCard.item.word}
-            cardRef={wordCardRef}
-            item={openCard.item}
-            leftPx={clampedCardLeft}
-            bottomPx={chipBottomPx}
-            anchorTop={cardAnchorTop}
-            maxHeight={cardMaxHeight ?? 240}
-            onClose={closeWordCard}
-            onCompactChange={setIsTeacherCardCompactSaved}
-          />
-        )}
-        {openCard?.kind === "plain" && (
-          <div
-            ref={plainPanelWrapRef}
-            className={`video-plain-word-panel-wrap${isPanelCompactSaved ? " video-plain-word-panel-wrap--compact-saved" : ""}`}
-            style={{
-              bottom: cardAnchorTop ? undefined : `${chipBottomPx}px`,
-              top: cardAnchorTop ? "8px" : undefined,
-              left: clampedCardLeft != null ? `${clampedCardLeft}px` : undefined,
-              maxHeight: `${cardMaxHeight ?? 240}px`,
-            }}
-          >
-            <PlainWordPanel
-              key={`${openCard.phraseSourceText}-${openCard.phraseCenterIndex}`}
-              word={openCard.word}
-              contextFr={openCard.contextFr}
-              contextUk={openCard.contextUk}
-              phraseTokens={openCard.phraseTokens}
-              phraseCenterIndex={openCard.phraseCenterIndex}
-              phraseSourceText={openCard.phraseSourceText}
-              teacherVariantMap={teacherVariantMap}
-              inputId="video-plain-word-translation"
-              onClose={closeWordCard}
-              compact={isCompact}
-              surface="dark"
-              onLayoutChange={(mode) => setIsPanelCompactSaved(mode === "compact")}
-            />
-          </div>
-        )}
+        {renderOpenCardHost()}
       </div>
 
       {/* Та сама кнопка, що й під iframe-плеєрами (video-frame.tsx,
