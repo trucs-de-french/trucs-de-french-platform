@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Bookmark, Pencil, Trash2, Download, ChevronDown, ChevronUp, Tag } from "lucide-react";
+import { Search, Bookmark, Pencil, Trash2, Download, ChevronDown, ChevronUp, ChevronRight, Tag } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -340,11 +340,11 @@ function WordCard({
 
   return (
     <div className="dictionary-word-card">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="dictionary-card-header flex flex-wrap items-start justify-between gap-2">
         {!isEditing && posLabel ? (
           <span className="dictionary-pos-label">
             <Tag size={13} aria-hidden="true" />
-            {posLabel}
+            <span className="dictionary-pos-label-text">{posLabel}</span>
           </span>
         ) : (
           <span />
@@ -419,12 +419,12 @@ function WordCard({
             onClick={() => setUkExpanded((e) => !e)}
             className="dictionary-context-toggle"
           >
-            {t(lang, ukExpanded ? "cabinet.dictionary.context.hide" : "cabinet.dictionary.context.show")}
             {ukExpanded ? (
-              <ChevronUp size={12} aria-hidden="true" />
-            ) : (
               <ChevronDown size={12} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={12} aria-hidden="true" />
             )}
+            {t(lang, ukExpanded ? "cabinet.dictionary.context.hide" : "cabinet.dictionary.context.show")}
           </button>
           {ukExpanded && (
             <p id={contextUkId} className="dictionary-context-uk">

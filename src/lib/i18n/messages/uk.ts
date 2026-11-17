@@ -475,7 +475,7 @@ export const uk = {
   "cabinet.dictionary.pos.idiome": "Ідіоми",
   "cabinet.dictionary.remove": "Видалити",
   "cabinet.dictionary.confirmDelete": "Видалити слово «{word}» зі словника?",
-  "cabinet.dictionary.context.show": "Переклад речення",
+  "cabinet.dictionary.context.show": "Показати переклад",
   "cabinet.dictionary.context.hide": "Сховати переклад",
   "cabinet.dictionary.removedToast": "Слово «{word}» видалено зі словника",
   "cabinet.dictionary.undo": "Скасувати",

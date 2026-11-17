@@ -18105,6 +18105,39 @@ button.cabinet-nav-item {
   color: #f3d98b;
 }
 
+/* Хедер картки — chip+кнопки: Tailwind flex-wrap на .dictionary-card-
+   header (потрібен на мобільному, щоб кнопки опускались під чіп, коли не
+   влазять) лишався ЗАВЖДИ ввімкненим — на вужчих десктопних ширинах
+   (2-колонкова сітка .dictionary-grid, ~640-1023px в'юпорта, картка там
+   вужча за "повну" 640px+) довгий підпис категорії + обидві кнопки
+   справді не влазили в один рядок, і flexbox чесно переносив ВСЮ групу
+   кнопок на другий рядок. Unlayered-override нижче (б'є Tailwind-утиліту
+   незалежно від порядку/специфічності — той самий принцип, що решта
+   .dictionary-* класів цього файлу) вимикає wrap від 768px: чіп тепер
+   стискається сам (flex-shrink+ellipsis як останній засіб) замість того,
+   щоб переносити кнопки. */
+@media (min-width: 768px) {
+  .dictionary-card-header {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .dictionary-pos-label {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .dictionary-pos-label-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dictionary-card-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 2px;
+  }
+}
+
 /* Картка слова: пензлик/відро — раніше icon-only кружечки (бульбашка-
    bookmark читалась студентам як "закладка", не "видалити" — звідси й
    задача). Тепер pill з видимим підписом ("Редагувати"/"Видалити"),
@@ -18141,7 +18174,7 @@ button.cabinet-nav-item {
 @media (min-width: 768px) {
   .dictionary-action-btn {
     min-height: 28px;
-    padding: 0 8px;
+    padding: 0 7px;
     border: none;
     background: transparent;
     font-weight: 600;
@@ -18215,9 +18248,13 @@ button.cabinet-nav-item {
 }
 
 /* Переклад прикладу-речення — згорнутий за замовчуванням тоггл під
-   французьким dictionary-context вище; flat (без тіні/dark rim, той самий
-   принцип, що й інші чіпи кабінету), менший за dictionary-context і
-   НЕ курсивом — щоб однозначно читався як переклад, не як другий приклад. */
+   французьким dictionary-context вище. Option 1: звичайний текстовий
+   лінк (та сама колірна мова, що .dictionary-add-translation-btn —
+   #3b37c4/#f3d98b indigo-акцент), не піл/чіп — без бордера/фону/тіні,
+   пунктирне підкреслення + шеврон відрізняють його від звичайного
+   абзацу. На мобільному клікабельна зона розтягнута до 44px (min-height,
+   без padding з боків — не відео-зона "pill", лише вища зона кліку),
+   видимий текст лишається тим самим маленьким лінком. */
 .dictionary-context-uk-wrap {
   display: flex;
   flex-direction: column;
@@ -18229,24 +18266,28 @@ button.cabinet-nav-item {
   align-self: flex-start;
   align-items: center;
   gap: 4px;
-  min-height: 28px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--cabinet-line);
-  background: transparent;
-  font-family: var(--font-heading);
+  padding: 4px 0;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
   font-weight: 600;
-  font-size: 11px;
-  color: var(--cabinet-muted);
-  transition: border-color 150ms, background-color 150ms, color 150ms;
+  font-size: 12px;
+  color: #3b37c4;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 150ms;
+}
+.dark .dictionary-context-toggle {
+  color: #f3d98b;
 }
 .dictionary-context-toggle:hover {
-  border-color: #d9b765;
   color: var(--cabinet-ink);
 }
 .dictionary-context-toggle:focus-visible {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
+  border-radius: 4px;
 }
 .dark .dictionary-context-toggle:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
@@ -18254,7 +18295,7 @@ button.cabinet-nav-item {
 @media (max-width: 767px) {
   .dictionary-context-toggle {
     min-height: 44px;
-    padding: 0 12px;
+    padding: 0;
   }
 }
 

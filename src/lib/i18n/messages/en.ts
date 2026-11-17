@@ -469,7 +469,7 @@ export const en: Record<MessageKey, string> = {
   "cabinet.dictionary.pos.idiome": "Idioms",
   "cabinet.dictionary.remove": "Delete",
   "cabinet.dictionary.confirmDelete": "Delete the word “{word}” from the dictionary?",
-  "cabinet.dictionary.context.show": "Sentence translation",
+  "cabinet.dictionary.context.show": "Show translation",
   "cabinet.dictionary.context.hide": "Hide translation",
   "cabinet.dictionary.removedToast": "The word “{word}” was removed from the dictionary",
   "cabinet.dictionary.undo": "Undo",

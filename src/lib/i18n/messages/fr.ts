@@ -471,7 +471,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.dictionary.pos.idiome": "Idiomes",
   "cabinet.dictionary.remove": "Supprimer",
   "cabinet.dictionary.confirmDelete": "Supprimer le mot « {word} » du dictionnaire ?",
-  "cabinet.dictionary.context.show": "Traduction de la phrase",
+  "cabinet.dictionary.context.show": "Afficher la traduction",
   "cabinet.dictionary.context.hide": "Masquer la traduction",
   "cabinet.dictionary.removedToast": "Le mot « {word} » a été retiré du dictionnaire",
   "cabinet.dictionary.undo": "Annuler",
