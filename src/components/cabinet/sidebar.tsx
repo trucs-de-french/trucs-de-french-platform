@@ -9,7 +9,13 @@ import { PlatformBadge } from "@/components/platform-badge";
 import { CabinetSidebarProfile } from "@/components/cabinet/sidebar-profile";
 import { t, type MessageKey } from "@/lib/i18n/t";
 import type { UiLang } from "@/lib/ui/product-lang";
-import { CABINET_PRIMARY_NAV, CABINET_PLACEMENT_TEST_NAV, CABINET_SETTINGS_NAV, CABINET_ADMIN_NAV } from "./nav-items";
+import {
+  CABINET_PRIMARY_NAV,
+  CABINET_PLACEMENT_TEST_NAV,
+  CABINET_SETTINGS_NAV,
+  CABINET_ADMIN_NAV,
+  isNavItemActive,
+} from "./nav-items";
 import { LanguagePills, CabinetLangCycle } from "./language-pills";
 import { ThemePills, ThemeRailButton } from "./theme-switch";
 
@@ -71,18 +77,7 @@ export function CabinetSidebar({
 
       <nav aria-label={t(lang, "cabinet.nav.home")} className="flex w-full flex-col gap-[2px]">
         {CABINET_PRIMARY_NAV.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            lang={lang}
-            collapsed={collapsed}
-            // Той самий startsWith-прийом, що вже використовує мобільний
-            // таб-бар (mobile-tab-bar.tsx) — підсторінки (/cabinet/mistakes/
-            // [sceneId], /cabinet/dictionary/train/...) лишають батьківський
-            // пункт меню підсвіченим. "/cabinet" — виняток (exact match),
-            // інакше ВСІ підсторінки кабінету підсвічували б "Головна".
-            active={item.href === "/cabinet" ? pathname === "/cabinet" : pathname.startsWith(item.href)}
-          />
+          <NavLink key={item.href} item={item} lang={lang} collapsed={collapsed} active={isNavItemActive(item.href, pathname)} />
         ))}
 
         <NavLink

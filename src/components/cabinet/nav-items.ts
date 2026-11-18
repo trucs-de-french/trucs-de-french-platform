@@ -29,6 +29,20 @@ export type CabinetMobileNavItem = CabinetNavItem & {
   extraActivePrefixes?: string[];
 };
 
+// Правило "активний пункт" для CABINET_PRIMARY_NAV (desktop sidebar.tsx) —
+// чиста функція, щоб бути тестованою окремо (nav-items.test.ts) без
+// рендеру React. "/cabinet" (Головна) — єдиний виняток із точним
+// збігом: усі інші пункти кабінету теж починаються на "/cabinet/...",
+// тож pathname.startsWith("/cabinet") підсвічував би Головну на КОЖНІЙ
+// сторінці кабінету без цього винятку. Інші пункти (library/dictionary/
+// progress/mistakes) не перетинаються префіксами одне з одним, тож
+// startsWith тут безпечний і підсвічує й підсторінки (/cabinet/mistakes/
+// [sceneId], /cabinet/dictionary/train/...), не лише точний href — той
+// самий прийом, що вже був у CABINET_MOBILE_TABS (mobile-tab-bar.tsx).
+export function isNavItemActive(href: string, pathname: string): boolean {
+  return href === "/cabinet" ? pathname === "/cabinet" : pathname.startsWith(href);
+}
+
 export const CABINET_PRIMARY_NAV: CabinetNavItem[] = [
   { href: "/cabinet", icon: Home, labelKey: "cabinet.nav.home" },
   { href: "/cabinet/library", icon: BookOpen, labelKey: "cabinet.nav.library" },

@@ -48,10 +48,28 @@ async function loadOverview(userId: string): Promise<MistakesOverview> {
   // enrollment неактивний/відсутній, тут просто не прийдуть (не помилка).
   const { data: taskRows, error: tasksError } = await supabase
     .from("tasks")
-    .select("id, type, title, config, scene_id, product_id, order_index")
+    .select("id, type, title, config, scene_id, task_group_id, product_id, order_index")
     .in("id", taskIds);
   if (tasksError) throw tasksError;
   if (!taskRows || taskRows.length === 0) return EMPTY_MISTAKES_OVERVIEW;
+
+  // Ефективний scene_id (крок 2, виправлення): tasks.scene_id напряму, або,
+  // якщо задача — член групи (scene_id обнулений, 0031_task_groups.sql),
+  // scene_id САМОЇ ГРУПИ — resolveSceneId у mistakes-overview.ts робить це
+  // так само, як scene-error-review.ts (сторінка /cabinet/mistakes/[sceneId]),
+  // тож список тут не пропускає задачі, які та сторінка вже показує. ОДИН
+  // додатковий запит (.in на унікальні task_group_id), без N+1.
+  const groupIds = [...new Set(taskRows.map((r) => r.task_group_id).filter((id): id is string => !!id))];
+  const { data: groupRows, error: groupsError } = groupIds.length
+    ? await supabase.from("task_groups").select("id, scene_id").in("id", groupIds)
+    : { data: [], error: null };
+  if (groupsError) throw groupsError;
+
+  const taskGroups: { id: string; sceneId: string | null }[] = (groupRows ?? []).map((g) => ({
+    id: g.id,
+    sceneId: g.scene_id,
+  }));
+  const groupSceneById = new Map(taskGroups.map((g) => [g.id, g.sceneId]));
 
   const tasks: MistakeTaskRow[] = taskRows.map((r) => ({
     id: r.id,
@@ -59,11 +77,14 @@ async function loadOverview(userId: string): Promise<MistakesOverview> {
     title: r.title,
     config: r.config as Record<string, unknown> | null,
     sceneId: r.scene_id,
+    taskGroupId: r.task_group_id,
     productId: r.product_id,
     orderIndex: r.order_index,
   }));
 
-  const sceneIds = [...new Set(tasks.map((t2) => t2.sceneId).filter((id): id is string => !!id))];
+  const effectiveSceneId = (task: MistakeTaskRow): string | null =>
+    task.sceneId ?? (task.taskGroupId ? groupSceneById.get(task.taskGroupId) ?? null : null);
+  const sceneIds = [...new Set(tasks.map(effectiveSceneId).filter((id): id is string => !!id))];
   const productIds = [...new Set(tasks.map((t2) => t2.productId))];
 
   // pilotTaskIds — той самий фільтр, що сценова сторінка (pilotTaskIds,
@@ -100,6 +121,7 @@ async function loadOverview(userId: string): Promise<MistakesOverview> {
   return buildMistakesOverview({
     mistakeRows: mistakeRows.map((m) => ({ taskId: m.task_id, createdAt: m.created_at, detail: m.ai_feedback })),
     tasks,
+    taskGroups,
     scenes: (sceneRows ?? []).map((s) => ({ id: s.id, title: s.title, productId: s.product_id, orderIndex: s.order_index })),
     products: (productRows ?? []).map((p) => ({ id: p.id, title: p.title })),
     progress: (progressRows ?? []).map((p) => ({ taskId: p.task_id, score: p.score })),
