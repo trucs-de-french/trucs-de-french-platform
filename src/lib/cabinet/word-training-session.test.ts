@@ -2,13 +2,17 @@
 // скрипт, той самий принцип, що src/lib/exercises/format-points.test.ts.
 // Запуск вручну: npx tsx src/lib/cabinet/word-training-session.test.ts
 import {
+  accuracyBand,
   buildChoiceOptions,
   buildGapOptions,
   buildSession,
+  buildTypeBreakdown,
   cardsEligible,
   findGapMatch,
   scrambleWord,
+  selectWordsByIds,
   unscrambleEligible,
+  wrongSavedWordIds,
   type SessionWord,
 } from "./word-training-session";
 
@@ -290,6 +294,59 @@ assert(
     questions.length === 0 && skippedCount === 1,
     "buildSession+pool: gap без жодного придатного дистрактора в пулі (лише саме слово) пропускається"
   );
+}
+
+// --- accuracyBand -------------------------------------------------
+assert(accuracyBand(0, 0) === "high", "accuracyBand: zero total -> high (nothing answered, not a bad score)");
+assert(accuracyBand(1, 10) === "low", "accuracyBand: 10% -> low");
+assert(accuracyBand(4, 10) === "low", "accuracyBand: 40% -> low (just under 50%)");
+assert(accuracyBand(5, 10) === "mid", "accuracyBand: 50% -> mid (boundary included)");
+assert(accuracyBand(7, 10) === "mid", "accuracyBand: 70% -> mid");
+assert(accuracyBand(8, 10) === "high", "accuracyBand: 80% -> high (boundary included)");
+assert(accuracyBand(10, 10) === "high", "accuracyBand: 100% -> high");
+
+// --- buildTypeBreakdown ---------------------------------------------
+{
+  const results = [
+    { type: "cards" as const, correct: true },
+    { type: "choice" as const, correct: false },
+    { type: "cards" as const, correct: false },
+    { type: "choice" as const, correct: true },
+    { type: "choice" as const, correct: true },
+  ];
+  const breakdown = buildTypeBreakdown(results);
+  assert(breakdown.length === 2, "buildTypeBreakdown: only types that appeared");
+  assert(breakdown[0].type === "cards", "buildTypeBreakdown: order = first appearance");
+  assert(breakdown[0].correct === 1 && breakdown[0].total === 2, "buildTypeBreakdown: cards 1/2");
+  assert(breakdown[1].type === "choice" && breakdown[1].correct === 2 && breakdown[1].total === 3, "buildTypeBreakdown: choice 2/3");
+  assert(buildTypeBreakdown([]).length === 0, "buildTypeBreakdown: empty results -> empty breakdown");
+}
+
+// --- wrongSavedWordIds ------------------------------------------------
+{
+  const results = [
+    { savedWordId: "1", correct: true },
+    { savedWordId: "2", correct: false },
+    { savedWordId: "3", correct: false },
+    { savedWordId: "2", correct: false }, // дублікат id — має лишитись один раз
+  ];
+  const wrong = wrongSavedWordIds(results);
+  assert(wrong.length === 2, "wrongSavedWordIds: dedupes repeated ids");
+  assert(wrong.includes("2") && wrong.includes("3") && !wrong.includes("1"), "wrongSavedWordIds: only incorrect ids, correct excluded");
+  assert(wrongSavedWordIds([{ savedWordId: "1", correct: true }]).length === 0, "wrongSavedWordIds: all correct -> empty");
+}
+
+// --- selectWordsByIds (repeat-mistakes round) --------------------------
+{
+  const words: SessionWord[] = [
+    word({ id: "1", word: "chat", translation: "cat" }),
+    word({ id: "2", word: "chien", translation: "dog" }),
+    word({ id: "3", word: "table", translation: "table" }),
+  ];
+  const selected = selectWordsByIds(words, ["2", "3", "nope"]);
+  assert(selected.length === 2, "selectWordsByIds: keeps only matching ids, ignores unknown ids");
+  assert(selected.every((w) => w.id === "2" || w.id === "3"), "selectWordsByIds: correct subset");
+  assert(selectWordsByIds(words, []).length === 0, "selectWordsByIds: empty ids -> empty subset");
 }
 
 if (failures > 0) {

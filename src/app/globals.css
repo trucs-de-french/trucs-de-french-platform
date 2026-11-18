@@ -19490,6 +19490,174 @@ button.cabinet-nav-item {
   font-size: 28px;
   color: var(--cabinet-ink);
 }
+.train-play-summary-score:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.dark .train-play-summary-score:focus-visible {
+  outline-color: var(--cabinet-focus-ring);
+}
+
+/* Крок 4 — екран результатів (.train-play-summary лишається зовнішньою
+   обгорткою вище; .train-results лише вирівнює вміст по лівому краю —
+   на відміну від .train-play-summary (center, короткий простий підсумок)
+   список/розбивка типів читаються природніше вліво вирівняними, headline
+   і заохочувальне речення лишаються центрованими окремими класами). */
+.train-results {
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+}
+.train-results .train-play-summary-score,
+.train-results-encouragement,
+.train-results-congrats {
+  text-align: center;
+}
+.train-results-encouragement {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--cabinet-muted);
+}
+.dark .train-results-encouragement {
+  color: #cfcde0;
+}
+
+.train-results-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+}
+.train-results-breakdown-item {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--cabinet-panel-bg);
+  border: 1px solid var(--cabinet-line);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--cabinet-ink);
+}
+.dark .train-results-breakdown-item {
+  background: rgba(47, 61, 168, 0.12);
+  border-color: #27338f;
+  color: #f0f0fa;
+}
+
+.train-results-congrats {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: #15803d;
+}
+.dark .train-results-congrats {
+  color: #4ade80;
+}
+
+.train-results-review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.train-results-review-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.train-results-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.train-results-review-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--cabinet-panel-bg);
+  border: 1px solid var(--cabinet-line);
+}
+.dark .train-results-review-item {
+  background: rgba(47, 61, 168, 0.1);
+  border-color: #27338f;
+}
+.train-results-review-icon {
+  flex-shrink: 0;
+  color: var(--cabinet-muted);
+}
+.dark .train-results-review-icon {
+  color: #aaa8c2;
+}
+.train-results-review-word {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.train-results-review-translation {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.dark .train-results-review-translation {
+  color: #aaa8c2;
+}
+
+.train-results-save-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Друга кнопка в CTA-барі результатів — обрис, не заливка (лише
+   "Повторити помилки" лишається primary): та сама пілюля-рамка, що
+   .train-play-back, лише full-width/52px-висота, той самий геометричний
+   клас, що .train-cta-button. */
+.train-cta-secondary {
+  background: var(--cabinet-card-bg);
+  border: 1.5px solid var(--cabinet-line);
+  color: var(--cabinet-ink);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  transition: border-color 150ms, background-color 150ms;
+}
+.dark .train-cta-secondary {
+  background: rgba(47, 61, 168, 0.12);
+  border-color: #27338f;
+  color: #f0f0fa;
+}
+.train-cta-secondary:hover {
+  border-color: #d9b765;
+}
+.train-cta-secondary:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-cta-secondary:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+.train-cta-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.train-results-settings-link {
+  align-self: center;
+}
 
 /* "Мій словник" Етап 2 — кнопка збереження слова (save-word-button.tsx),
    на всіх сторінках сцени (бульбашка вокабуляру/картка відео/рядок

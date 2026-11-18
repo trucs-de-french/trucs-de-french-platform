@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { rowToSavedWord, type SavedWord } from "@/lib/cabinet/saved-words";
 import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
@@ -241,6 +242,13 @@ export async function recordTrainingResults(
     .from(TRAINING_STATS_TABLE)
     .upsert(upsertRows, { onConflict: "user_id,saved_word_id" });
   if (upsertError) return { ok: false, error: isUndefinedTableError(upsertError) ? "unavailable" : "db" };
+
+  // "Нових"/"слабких" чіпів на вході словника (train-entry-card.tsx) і
+  // лічильника "Почати · N" на setup-екрані залежать від ЦІЄЇ таблиці
+  // (getTrainingOverview/loadTrainingWords) — без revalidate вони б
+  // лишились застарілими в router cache до наступного hard-навігейта.
+  revalidatePath("/cabinet/dictionary");
+  revalidatePath("/cabinet/dictionary/train");
 
   return { ok: true };
 }

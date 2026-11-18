@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { X, ArrowLeft, ChevronDown, ChevronRight, Layers, Languages, Shuffle, AlignLeft } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -10,13 +10,18 @@ import type { PartOfSpeech } from "@/lib/vocab-categories";
 import type { TrainingFilter, TrainingLimit } from "@/lib/cabinet/word-training";
 import { SortableTileRow } from "@/components/exercises/sortable-tile-row";
 import {
+  accuracyBand,
   buildSession,
+  buildTypeBreakdown,
+  selectWordsByIds,
+  wrongSavedWordIds,
+  type AccuracyBand,
   type BuildSessionResult,
   type Question,
   type QuestionType,
   type SessionWord,
 } from "@/lib/cabinet/word-training-session";
-import type { TrainingWord } from "@/app/cabinet/dictionary/train/actions";
+import { loadTrainingWords, recordTrainingResults, type TrainingWord } from "@/app/cabinet/dictionary/train/actions";
 import type { TrainingPoolWord } from "@/lib/cabinet/word-training";
 
 // Параметри, з якими відкрилась ЦЯ сесія (play/page.tsx) — той самий
@@ -39,8 +44,27 @@ const TYPE_CHIP_KEY: Record<QuestionType, MessageKey> = {
   gap: "cabinet.dictionary.train.setup.exercise.sentenceGap.name",
 };
 
+// Та сама іконка-мапа, що EXERCISE_TYPES у train-setup-view.tsx (окрема
+// копія навмисно — звідти не експортується, а переносити цілий масив
+// сюди заради 4 іконок не варто) — для рядків "Слова для повторення" на
+// екрані результатів.
+const TYPE_ICON: Record<QuestionType, typeof Layers> = {
+  cards: Layers,
+  choice: Languages,
+  unscramble: Shuffle,
+  gap: AlignLeft,
+};
+
+const ENCOURAGEMENT_KEY: Record<AccuracyBand, MessageKey> = {
+  low: "cabinet.dictionary.train.results.encouragementLow",
+  mid: "cabinet.dictionary.train.results.encouragementMid",
+  high: "cabinet.dictionary.train.results.encouragementHigh",
+};
+
 type Phase = "answering" | "checked";
 type Result = { savedWordId: string; type: QuestionType; correct: boolean };
+type SaveState = "idle" | "saving" | "error" | "saved";
+type RoundState = "playing" | "empty";
 
 export function TrainPlayView({
   lang,
@@ -87,19 +111,112 @@ export function TrainPlayView({
   const [ukExpanded, setUkExpanded] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const optionRefs = useRef<HTMLButtonElement[]>([]);
+  const resultsHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  // "Ще раунд"/"Повторити помилки" будують НОВУ сесію з ІНШОГО набору
+  // слів (перезавантажених через loadTrainingWords, чи звужених до
+  // неправильних) — activeWords/activePool тримають слова/пул ПОТОЧНОГО
+  // раунду (спершу — пропси сторінки), на відміну від words/pool пропсів,
+  // які лишаються тими самими, з якими сторінка вперше відкрилась.
+  const [activeWords, setActiveWords] = useState<TrainingWord[]>(words);
+  const [activePool, setActivePool] = useState<TrainingPoolWord[]>(pool);
+  const [roundState, setRoundState] = useState<RoundState>("playing");
+  const [isRoundLoading, setIsRoundLoading] = useState(false);
+
+  // Статистика (recordTrainingResults) — рівно ОДИН збережений виклик на
+  // завершений раунд: savedRef.current=true ставиться синхронно перед
+  // await (не лише після відповіді сервера), тож React Strict Mode
+  // double-effect чи швидкий повторний рендер того самого "кінець
+  // раунду" стану не запускає другий upsert. Помилка знімає флаг назад —
+  // кнопка "Спробувати ще раз" викликає saveResults() заново.
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const savedRef = useRef(false);
+
+  function toSessionWords(poolInput: TrainingPoolWord[]): SessionWord[] {
+    return poolInput.map((w) => ({ ...w, contextFr: null, contextUk: null }));
+  }
 
   useEffect(() => {
     if (builtRef.current) return;
     builtRef.current = true;
-    const poolWords: SessionWord[] = pool.map((w) => ({ ...w, contextFr: null, contextUk: null }));
-    setSession(buildSession(words, enabledTypes, undefined, poolWords));
-  }, [words, enabledTypes, pool]);
+    setSession(buildSession(activeWords, enabledTypes, undefined, toSessionWords(activePool)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- лише початкова збірка (builtRef), activeWords/activePool ще дорівнюють words/pool пропсам тут
+  }, [enabledTypes]);
 
   const questions = session?.questions ?? [];
   const skippedCount = session?.skippedCount ?? 0;
   const question = questions[index];
   const total = questions.length;
   const isLast = index === total - 1;
+
+  async function saveResults() {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    setSaveState("saving");
+    const res = await recordTrainingResults(results.map((r) => ({ savedWordId: r.savedWordId, correct: r.correct })));
+    if (!res.ok) {
+      savedRef.current = false;
+      setSaveState("error");
+      return;
+    }
+    setSaveState("saved");
+  }
+
+  // Фокус на заголовок екрана результатів щойно він з'являється (і після
+  // кожного "Ще раунд"/"Повторити помилки" — новий session-об'єкт теж
+  // спричиняє перехід question->undefined->визначено-новий, тож цей
+  // ефект спрацьовує знову природно).
+  useEffect(() => {
+    if (session && !question) {
+      resultsHeadingRef.current?.focus();
+    }
+  }, [session, question]);
+
+  // Загальний рестарт раунду — "Ще раунд"/"Повторити помилки": нова
+  // сесія, index/results/фаза збереження скидаються, lastQuestion-блок
+  // нижче сам підхопить нове перше питання й скине робочий стан картки
+  // (selected/tiles/flipped/...), бо воно відрізняється за REFERENCE від
+  // попереднього.
+  function startRound(roundWords: TrainingWord[], roundPool: TrainingPoolWord[]) {
+    const newSession = buildSession(roundWords, enabledTypes, undefined, toSessionWords(roundPool));
+    if (newSession.questions.length === 0) {
+      setRoundState("empty");
+      return;
+    }
+    setActiveWords(roundWords);
+    setActivePool(roundPool);
+    setSession(newSession);
+    setIndex(0);
+    setResults([]);
+    setRoundState("playing");
+    savedRef.current = false;
+    setSaveState("idle");
+  }
+
+  async function handleAnotherRound() {
+    if (isRoundLoading) return;
+    setIsRoundLoading(true);
+    const result = await loadTrainingWords({
+      filter: setupParams.filter,
+      category: setupParams.category,
+      limit: setupParams.limit,
+    });
+    setIsRoundLoading(false);
+    if (!result.ok || result.words.length === 0) {
+      setRoundState("empty");
+      return;
+    }
+    startRound(result.words, result.pool);
+  }
+
+  function handleRetryMistakes() {
+    const wrongIds = wrongSavedWordIds(results);
+    startRound(selectWordsByIds(activeWords, wrongIds), activePool);
+  }
+
+  function handleToSetup() {
+    router.push(`/cabinet/dictionary/train?${setupParamsQuery()}`);
+  }
 
   // "Запам'ятати інформацію з попереднього рендеру" — офіційний React-
   // паттерн через useState, НЕ useRef (react-hooks/refs забороняє читати/
@@ -135,14 +252,18 @@ export function TrainPlayView({
   // одне питання вже має відповідь (results.length>0) — порожня сесія
   // (нічого не відповідали) повертається без запитання, нічого й не
   // втрачається.
-  function handleBack() {
-    if (results.length > 0 && !window.confirm(t(lang, "cabinet.dictionary.train.play.backConfirm"))) return;
+  function setupParamsQuery(): string {
     const params = new URLSearchParams();
     params.set("filter", setupParams.filter);
     params.set("category", setupParams.category);
     params.set("limit", String(setupParams.limit));
     params.set("types", setupParams.types.join(","));
-    router.push(`/cabinet/dictionary/train?${params.toString()}`);
+    return params.toString();
+  }
+
+  function handleBack() {
+    if (results.length > 0 && !window.confirm(t(lang, "cabinet.dictionary.train.play.backConfirm"))) return;
+    router.push(`/cabinet/dictionary/train?${setupParamsQuery()}`);
   }
 
   function recordResult(correct: boolean) {
@@ -173,8 +294,15 @@ export function TrainPlayView({
   // render-time блок вище (lastQuestionRef) сам, щойно question (за
   // новим index) відрізняється від попереднього — тут лише просування
   // індексу, навіть за межі questions (рендер підсумку нижче тоді й
-  // подбає).
+  // подбає). Збереження статистики — САМЕ ТУТ (клік "Завершити" на
+  // останньому питанні), не в ефекті, що реагує на "question зник": лінт
+  // (react-hooks/set-state-in-effect) справедливо забороняє синхронний
+  // setState усередині ефекту — а тут це й логічно чистіше, бо це пряма
+  // користувацька дія, не похідний стан, і results уже остаточний
+  // (recordResult відбувся синхронно в handleCheck/handleCardAnswer, ДО
+  // того, як кнопка "Завершити" взагалі стала клікабельною).
   function handleNext() {
+    if (isLast) saveResults();
     setIndex((i) => i + 1);
   }
 
@@ -204,6 +332,20 @@ export function TrainPlayView({
     }
   }
 
+  // "Ще раунд" (чи порожня категорія/фільтр узагалі) не лишило жодного
+  // придатного слова — дружній екран замість результатів, кнопка веде на
+  // setup (той самий query string, що й "Назад"/"Змінити налаштування").
+  if (roundState === "empty") {
+    return (
+      <div className="train-card train-play-summary">
+        <p className="train-status-text">{t(lang, "cabinet.dictionary.train.results.noWordsLeftTitle")}</p>
+        <button type="button" className="cabinet-btn-primary train-cta-button" onClick={handleToSetup}>
+          {t(lang, "cabinet.dictionary.train.results.toSetup")}
+        </button>
+      </div>
+    );
+  }
+
   // Сесія ще не побудована (ефект щойно відпрацював на клієнті) —
   // нейтральний плейсхолдер, що рендериться ОДНАКОВО на сервері й
   // клієнті (жодної залежності від Math.random/самих слів): reuse
@@ -220,23 +362,100 @@ export function TrainPlayView({
   // Кінець сесії — index вийшов за межі questions (handleNext вище).
   if (!question) {
     const correctCount = results.filter((r) => r.correct).length;
+    const band = accuracyBand(correctCount, results.length);
+    const breakdown = buildTypeBreakdown(results);
+    const wrongIds = wrongSavedWordIds(results);
+    const wrongWords = wrongIds
+      .map((id) => {
+        const w = activeWords.find((aw) => aw.id === id);
+        return w ? { ...w, type: results.find((r) => r.savedWordId === id)!.type } : null;
+      })
+      .filter((v): v is TrainingWord & { type: QuestionType } => v !== null);
+
     return (
-      <div className="train-card train-play-summary">
-        <p className="train-play-summary-score">
+      <div
+        className="train-card train-play-summary train-results"
+        aria-live="polite"
+        aria-label={t(lang, "cabinet.dictionary.train.results.heading")}
+      >
+        <h2 ref={resultsHeadingRef} tabIndex={-1} className="train-play-summary-score">
           {t(lang, "cabinet.dictionary.train.play.summaryScore", { correct: correctCount, total: results.length })}
-        </p>
-        {skippedCount > 0 && (
-          <p className="train-status-text">
-            {t(lang, "cabinet.dictionary.train.play.summarySkipped", { count: skippedCount })}
-          </p>
+        </h2>
+        <p className="train-results-encouragement">{t(lang, ENCOURAGEMENT_KEY[band])}</p>
+
+        {breakdown.length > 0 && (
+          <ul className="train-results-breakdown">
+            {breakdown.map((entry) => (
+              <li key={entry.type} className="train-results-breakdown-item">
+                {t(lang, TYPE_CHIP_KEY[entry.type])} {entry.correct}/{entry.total}
+              </li>
+            ))}
+          </ul>
         )}
-        <button
-          type="button"
-          className="cabinet-btn-primary train-cta-button"
-          onClick={() => router.push("/cabinet/dictionary")}
-        >
-          {t(lang, "cabinet.nav.dictionary")}
-        </button>
+
+        {wrongWords.length === 0 ? (
+          <p className="train-results-congrats">{t(lang, "cabinet.dictionary.train.results.allCorrect")}</p>
+        ) : (
+          <div className="train-results-review">
+            <h3 className="train-results-review-title">{t(lang, "cabinet.dictionary.train.results.reviewListTitle")}</h3>
+            <ul className="train-results-review-list">
+              {wrongWords.map((w) => {
+                const Icon = TYPE_ICON[w.type];
+                return (
+                  <li key={w.id} className="train-results-review-item">
+                    <Icon size={16} aria-hidden="true" className="train-results-review-icon" />
+                    <span className="train-results-review-word">{w.word}</span>
+                    {w.translation && <span className="train-results-review-translation">{w.translation}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {skippedCount > 0 && (
+          <p className="train-status-text">{t(lang, "cabinet.dictionary.train.results.skipped", { count: skippedCount })}</p>
+        )}
+
+        {saveState === "error" && (
+          <div className="train-results-save-error">
+            <p className="train-status-text">{t(lang, "cabinet.dictionary.train.results.saveError")}</p>
+            <button type="button" className="dictionary-context-toggle" onClick={saveResults}>
+              {t(lang, "cabinet.dictionary.train.results.retrySave")}
+            </button>
+          </div>
+        )}
+
+        <div className="train-cta-bar">
+          {wrongWords.length > 0 && (
+            <button
+              type="button"
+              className="cabinet-btn-primary train-cta-button"
+              disabled={saveState === "saving"}
+              onClick={handleRetryMistakes}
+            >
+              {t(lang, "cabinet.dictionary.train.results.retryMistakes")}
+            </button>
+          )}
+          <button
+            type="button"
+            className="train-cta-secondary train-cta-button"
+            disabled={saveState === "saving" || isRoundLoading}
+            onClick={handleAnotherRound}
+          >
+            {t(lang, "cabinet.dictionary.train.results.anotherRound")}
+          </button>
+          <button
+            type="button"
+            className="train-cta-secondary train-cta-button"
+            onClick={() => router.push("/cabinet/dictionary")}
+          >
+            {t(lang, "cabinet.nav.dictionary")}
+          </button>
+          <button type="button" className="dictionary-context-toggle train-results-settings-link" onClick={handleToSetup}>
+            {t(lang, "cabinet.dictionary.train.results.changeSettings")}
+          </button>
+        </div>
       </div>
     );
   }

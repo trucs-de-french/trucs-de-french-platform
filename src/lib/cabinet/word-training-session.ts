@@ -438,3 +438,60 @@ export function countEligibleWords(
   const enabled = new Set(enabledTypes);
   return words.filter((w) => QUESTION_TYPES.some((t) => enabled.has(t) && isEligible(t, w, pool, rng))).length;
 }
+
+// --- Крок 4: результати сесії -----------------------------------------
+
+// "Заохочувальне речення" на екрані результатів вибирається з точністю
+// (correct/total): <50% — low, 50-79% — mid, >=80% — high. total===0
+// (нічого не відповідали — усі слова пропущені) трактується як high, щоб
+// не показувати "низьку" точність там, де відповідей не було взагалі.
+export type AccuracyBand = "low" | "mid" | "high";
+
+export function accuracyBand(correct: number, total: number): AccuracyBand {
+  if (total === 0) return "high";
+  const ratio = correct / total;
+  if (ratio < 0.5) return "low";
+  if (ratio < 0.8) return "mid";
+  return "high";
+}
+
+// Розбивка "Картки 3/4" по кожному типу вправи, що РЕАЛЬНО з'явився в
+// сесії (не всі QUESTION_TYPES) — порядок лишається порядком першої
+// появи типу в results, не канонічним QUESTION_TYPES-порядком, тож
+// відображає реальний плин сесії для студента.
+export type TypeBreakdownEntry = { type: QuestionType; correct: number; total: number };
+
+export function buildTypeBreakdown(
+  results: { type: QuestionType; correct: boolean }[]
+): TypeBreakdownEntry[] {
+  const order: QuestionType[] = [];
+  const counts = new Map<QuestionType, { correct: number; total: number }>();
+  for (const r of results) {
+    let entry = counts.get(r.type);
+    if (!entry) {
+      entry = { correct: 0, total: 0 };
+      counts.set(r.type, entry);
+      order.push(r.type);
+    }
+    entry.total++;
+    if (r.correct) entry.correct++;
+  }
+  return order.map((type) => ({ type, ...counts.get(type)! }));
+}
+
+// Унікальні id слів, відповідь на які була неправильна (включно з
+// самооцінкою "Ще вчу" у cards, яка рахується тут як і будь-яка інша
+// неправильна відповідь) — для списку "Слова для повторення" й для
+// побудови раунду "Повторити помилки".
+export function wrongSavedWordIds(results: { savedWordId: string; correct: boolean }[]): string[] {
+  return [...new Set(results.filter((r) => !r.correct).map((r) => r.savedWordId))];
+}
+
+// "Повторити помилки" — новий раунд лише зі слів, відповідь на які була
+// неправильна: той самий пул дистракторів (пул не залежить від того,
+// які слова самої сесії обрані) лишається чинним, тож викликач просто
+// бере words.filter через цей хелпер і передає в buildSession як є.
+export function selectWordsByIds<T extends { id: string }>(words: T[], ids: string[]): T[] {
+  const idSet = new Set(ids);
+  return words.filter((w) => idSet.has(w.id));
+}
