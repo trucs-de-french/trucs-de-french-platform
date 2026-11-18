@@ -18078,13 +18078,15 @@ button.cabinet-nav-item {
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
 }
 /* "Скляна" картка лише в dark — світла лишається незмінною (var(--cabinet-
-   card-bg)/var(--cabinet-line) вище). Насичений індиго-фон+яскравий
-   синій бордер (ті самі токени, що решта /cabinet) читались різко поряд
-   із темним фоном сторінки — тут майже прозорий білий вош замість
-   суцільної заливки, щоб фон сторінки просвічував; без тіні/блюру. */
+   card-bg)/var(--cabinet-line) вище). Перша версія (напівпрозорий білий
+   вош) не поєднувалась з кнопками-діями нижче (ті лишались насичено-
+   синіми з яскравим кільцем) — тут обидва переведено на ОДНУ синю
+   родину (rgba(47,61,168,*) / #2f3da8), лише картка прозоріша (.12),
+   кнопки щільніші (.22 на мобільному бордері, .18 у полях редактора),
+   щоб читались як той самий матеріал, не два різних. */
 .dark .dictionary-word-card {
-  background-color: rgba(255, 255, 255, 0.045);
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(47, 61, 168, 0.12);
+  border-color: #2f3da8;
   box-shadow: none;
 }
 
@@ -18177,6 +18179,20 @@ button.cabinet-nav-item {
     background: transparent;
   }
 }
+/* Dark: кнопки переведено на ту саму синю родину, що картка вище (не
+   білий вош) — .22 щільніше за .12 картки, щоб кружечок з іконкою
+   лишався помітним колом НА картці, не злитим з нею. На десктопі
+   (>=768px) border:none/background:transparent від теми-незалежного
+   правила вище лишаються чинними (borderless ghost) — тут лише
+   mobile-заливка+бордер, і єдиний синій hover-тінт для обох кнопок на
+   БУДЬ-якій ширині (замінює колишній різнокольоровий indigo/red hover —
+   "одна синя родина" картки й кнопок, не два різних акценти). */
+@media (max-width: 767px) {
+  .dark .dictionary-action-btn {
+    background: rgba(47, 61, 168, 0.22);
+    border-color: #2f3da8;
+  }
+}
 .dictionary-action-btn:focus-visible {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
@@ -18196,15 +18212,14 @@ button.cabinet-nav-item {
   background: rgba(59, 55, 196, 0.1);
 }
 .dark .dictionary-edit-btn:hover {
-  border-color: #d9d4f0;
-  background: rgba(217, 212, 240, 0.12);
+  border-color: #2f3da8;
+  background: rgba(47, 61, 168, 0.22);
 }
 
 /* #ef4444 — той самий "wrong/incorrect"-токен, що й у вправах (однаковий
    в обох темах), тут позначає руйнівну дію, не статус правильності. У
-   dark — трохи світліший #f0706c: #ef4444 на новому напівпрозорому
-   склі-картці (rgba(255,255,255,.045) поверх темної панелі) падав нижче
-   4.5:1. */
+   dark — трохи світліший #f0706c: #ef4444 на синьому фоні кнопки
+   (rgba(47,61,168,.22)) падав нижче 4.5:1, #f0706c там дає ~5.7:1. */
 .dictionary-delete-btn {
   color: #ef4444;
 }
@@ -18216,8 +18231,8 @@ button.cabinet-nav-item {
   background: rgba(239, 68, 68, 0.1);
 }
 .dark .dictionary-delete-btn:hover {
-  border-color: #f0706c;
-  background: rgba(240, 112, 108, 0.12);
+  border-color: #2f3da8;
+  background: rgba(47, 61, 168, 0.22);
 }
 
 .dictionary-edit-error {
@@ -18394,12 +18409,12 @@ button.cabinet-nav-item {
   font-size: 14px;
   color: var(--cabinet-ink);
 }
-/* Той самий склянистий вош, що .dictionary-word-card вище — трохи
-   світліший (0.06 проти 0.045 картки), щоб поле читалось як окрема
-   поверхня НАД склом, а не злите з ним. */
+/* Та сама синя родина, що .dictionary-word-card/.dictionary-action-btn
+   вище — трохи щільніша (.18 проти .12 картки), щоб поле читалось як
+   окрема поверхня НАД склом, а не злите з ним. */
 .dark .dictionary-translation-input {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(47, 61, 168, 0.18);
+  border-color: #2f3da8;
 }
 .dictionary-translation-input:focus-visible {
   outline: 2px solid #d9b765;
@@ -18416,8 +18431,8 @@ button.cabinet-nav-item {
    де має лишитись дефолтний .dark .cabinet-select-trigger (#0c1142) —
    змінювати глобальне правило тут не можна. */
 .dark .dictionary-word-card .cabinet-select-trigger {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(47, 61, 168, 0.18);
+  border-color: #2f3da8;
 }
 
 .dictionary-empty {
