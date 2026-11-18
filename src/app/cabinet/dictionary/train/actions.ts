@@ -4,12 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { rowToSavedWord, type SavedWord } from "@/lib/cabinet/saved-words";
 import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
 import {
+  buildDistractorPool,
   computeTrainingOverview,
   selectTrainingWords,
   TRAINING_LIMITS,
   type TrainingFilter,
   type TrainingLimit,
   type TrainingOverview,
+  type TrainingPoolWord,
   type WordTrainingStats,
 } from "@/lib/cabinet/word-training";
 
@@ -116,7 +118,7 @@ export async function loadTrainingWords(input: {
   filter?: TrainingFilter;
   category?: PartOfSpeech | "none" | "all";
   limit?: TrainingLimit;
-}): Promise<{ ok: true; words: TrainingWord[] } | { ok: false; error: ActionError }> {
+}): Promise<{ ok: true; words: TrainingWord[]; pool: TrainingPoolWord[] } | { ok: false; error: ActionError }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -142,7 +144,12 @@ export async function loadTrainingWords(input: {
     imageUrl: w.imageUrl,
   }));
 
-  return { ok: true, words };
+  // Пул дистракторів — з ПОВНОГО loaded.words (до selectTrainingWords),
+  // тож незалежний від filter/category/limit, що студент обрав для самої
+  // сесії (задача: пул "regardless of the selected filter/category/limit").
+  const pool = buildDistractorPool(loaded.words);
+
+  return { ok: true, words, pool };
 }
 
 export type TrainingResultInput = { savedWordId: string; correct: boolean };

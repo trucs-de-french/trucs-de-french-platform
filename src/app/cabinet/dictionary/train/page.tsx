@@ -66,6 +66,7 @@ export default async function TrainSetupPage({
           lang={lang}
           overview={overviewResult.overview}
           initialWords={wordsResult.words}
+          initialPool={wordsResult.pool}
           initialFilter={initialFilter}
           initialCategory={initialCategory}
           initialLimit={initialLimit}

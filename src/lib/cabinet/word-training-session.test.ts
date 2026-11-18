@@ -206,6 +206,92 @@ assert(
   assert(skippedCount === words.length, "buildSession: [] enabled types skips every word");
 }
 
+// --- buildSession: окремий пул дистракторів (choice/gap завжди 4
+// варіанти, якщо пул великий, навіть коли сама сесія мала) ------------
+{
+  const words: SessionWord[] = [
+    word({ id: "s1", word: "chat", translation: "cat", partOfSpeech: "nom" }),
+    word({ id: "s2", word: "chien", translation: "dog", partOfSpeech: "nom" }),
+    word({ id: "s3", word: "table", translation: "table", partOfSpeech: "nom" }),
+  ];
+  const pool: SessionWord[] = Array.from({ length: 10 }, (_, i) =>
+    word({ id: `p${i}`, word: `motp${i}`, translation: `tradp${i}`, partOfSpeech: "nom" })
+  );
+  const { questions } = buildSession(words, ["choice"], seededRng(20), pool);
+  assert(questions.length === 3, "buildSession+pool: все ще по одному питанню на слово сесії");
+  for (const q of questions) {
+    if (q.type !== "choice") continue;
+    assert(q.options.length === 4, `buildSession+pool: choice "${q.word}" завжди 4 варіанти з великим пулом`);
+    const normalized = q.options.map((o) => o.trim().toLowerCase());
+    assert(new Set(normalized).size === normalized.length, `buildSession+pool: choice "${q.word}" без дублікатів-варіантів`);
+    assert(
+      q.options.filter((o) => o.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()).length === 1,
+      `buildSession+pool: choice "${q.word}" правильна відповідь зустрічається рівно один раз`
+    );
+  }
+}
+
+// --- buildChoiceOptions: пул замалий (лише 2 інших переклади) -> 3
+// варіанти; порожній пул -> ineligible (choice пропускається) --------
+{
+  const target = word({ id: "1", word: "chat", translation: "cat", partOfSpeech: "nom" });
+  const smallPool = [
+    target,
+    word({ id: "2", word: "chien", translation: "dog", partOfSpeech: "nom" }),
+    word({ id: "3", word: "souris", translation: "mouse", partOfSpeech: "nom" }),
+  ];
+  const options = buildChoiceOptions(target, smallPool, seededRng(21));
+  assert(!!options && options.length === 3, "buildChoiceOptions+pool: лише 2 інших переклади -> 3 варіанти");
+
+  const emptyPool = [target];
+  assert(
+    buildChoiceOptions(target, emptyPool, seededRng(22)) === null,
+    "buildChoiceOptions+pool: порожній пул -> ineligible"
+  );
+
+  const words: SessionWord[] = [target];
+  const { questions, skippedCount } = buildSession(words, ["choice"], seededRng(23), emptyPool);
+  assert(questions.length === 0 && skippedCount === 1, "buildSession+pool: порожній пул дистракторів пропускає choice");
+}
+
+// --- buildChoiceOptions: дистрактор не дублює правильну відповідь після
+// нормалізації (регістр/діакритика/пробіли), і не ховає її як частину
+// кома-розділеного перекладу ------------------------------------------
+{
+  const target = word({ id: "1", word: "ecole", translation: "школа", partOfSpeech: "nom" });
+  const pool = [
+    target,
+    word({ id: "2", word: "x", translation: "  ШКОЛА  ", partOfSpeech: "nom" }), // той самий переклад, інший регістр/пробіли
+    word({ id: "3", word: "y", translation: "школа, установа", partOfSpeech: "nom" }), // містить правильну відповідь як частину
+    word({ id: "4", word: "z", translation: "будинок", partOfSpeech: "nom" }),
+  ];
+  const options = buildChoiceOptions(target, pool, seededRng(24));
+  assert(!!options && options.length === 2, "buildChoiceOptions: виключає нормалізований дублікат і кома-замасковану відповідь");
+  assert(!!options && options.includes("будинок"), "buildChoiceOptions: лишає справжній дистрактор");
+}
+
+// --- buildGapOptions: окремий пул (не слова сесії) дає 4 варіанти; малий
+// пул дає менше; порожній -> ineligible --------------------------------
+{
+  const target = word({ id: "1", word: "chat", partOfSpeech: "nom" });
+  const pool: SessionWord[] = Array.from({ length: 10 }, (_, i) =>
+    word({ id: `p${i}`, word: `motp${i}`, partOfSpeech: "nom" })
+  );
+  const options = buildGapOptions("chat", target, pool, seededRng(25));
+  assert(!!options && options.length === 4, "buildGapOptions+pool: 4 варіанти з великим пулом");
+
+  const smallPool = [target, word({ id: "2", word: "chien", partOfSpeech: "nom" })];
+  const smallOptions = buildGapOptions("chat", target, smallPool, seededRng(26));
+  assert(!!smallOptions && smallOptions.length === 2, "buildGapOptions+pool: малий пул -> менше варіантів");
+
+  const gapTarget = word({ id: "1", word: "chat", partOfSpeech: "nom", contextFr: "Le chat dort." });
+  const { questions, skippedCount } = buildSession([gapTarget], ["gap"], seededRng(27), [gapTarget]);
+  assert(
+    questions.length === 0 && skippedCount === 1,
+    "buildSession+pool: gap без жодного придатного дистрактора в пулі (лише саме слово) пропускається"
+  );
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed`);
   process.exitCode = 1;

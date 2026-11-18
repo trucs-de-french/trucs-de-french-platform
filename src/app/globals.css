@@ -19266,12 +19266,29 @@ button.cabinet-nav-item {
 }
 
 /* choice / gap options ----------------------------------------------- */
+.train-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
 .train-choice-word {
   margin: 0;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 26px;
   color: var(--cabinet-ink);
+}
+/* Відступ слово -> варіанти — 24px desktop/20px mobile, ТІЛЬКИ тут (не
+   загальний .train-play-card gap), щоб не роздувати відступи решти
+   елементів картки (тип-чіп тощо). */
+.train-choice-word + .train-options {
+  margin-top: 24px;
+}
+@media (max-width: 479px) {
+  .train-choice-word + .train-options {
+    margin-top: 20px;
+  }
 }
 .train-options {
   display: grid;
@@ -19285,7 +19302,13 @@ button.cabinet-nav-item {
   }
 }
 .train-option {
-  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+  min-height: 56px;
   padding: 8px 14px;
   border-radius: 14px;
   border: 1.5px solid var(--cabinet-line);
@@ -19352,7 +19375,6 @@ button.cabinet-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
   width: 100%;
 }
 .train-gap-sentence {
@@ -19361,6 +19383,44 @@ button.cabinet-nav-item {
   font-size: 17px;
   line-height: 1.6;
   color: var(--cabinet-ink);
+  text-align: center;
+}
+/* Вертикальний ритм: речення -> перемикач перекладу (12-16px) ->
+   варіанти (20-24px) — через margin на сусідах, не загальний flex gap,
+   бо відступ після речення різний залежно від того, чи є перемикач
+   (contextUk може бути відсутнім). */
+.train-gap-sentence + .train-gap-toggle-wrap {
+  margin-top: 14px;
+}
+.train-gap-sentence + .train-options,
+.train-gap-toggle-wrap + .train-options {
+  margin-top: 24px;
+}
+@media (max-width: 479px) {
+  .train-gap-sentence + .train-options,
+  .train-gap-toggle-wrap + .train-options {
+    margin-top: 20px;
+  }
+}
+/* Перемикач "Показати переклад" — ліве вирівнювання по лівому краю
+   сітки варіантів нижче (не центрування, яке давав успадкований
+   align-items:center із .train-gap): wrap розтягується на всю ширину
+   рядка (як .train-options), align-items:flex-start лівим краєм
+   позиціонує і сам текст-лінк, і розкритий .train-gap-uk-text під ним,
+   з ОДНИМ тим самим лівим краєм. white-space:nowrap — щоб короткий
+   напис не ламався навіть на 360px (задача явно вимагає "stay on its
+   own line"), скоуплено до цього місця, не глобально на
+   .dictionary-context-toggle (інші вживання можуть хотіти обгортання). */
+.train-gap-toggle-wrap {
+  width: 100%;
+  align-items: flex-start;
+  text-align: left;
+}
+.train-gap-toggle-wrap .dictionary-context-toggle {
+  white-space: nowrap;
+}
+.train-gap-uk-text {
+  text-align: left;
 }
 .train-gap-blank {
   display: inline-block;

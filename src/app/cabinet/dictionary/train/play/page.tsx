@@ -69,6 +69,7 @@ export default async function TrainPlayPage({
       <TrainPlayView
         lang={lang}
         words={result.words}
+        pool={result.pool}
         enabledTypes={types}
         setupParams={{ filter, category, limit, types }}
       />

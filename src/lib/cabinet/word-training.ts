@@ -180,6 +180,28 @@ export function selectTrainingWords(
   return shuffle(sorted.slice(0, opts.limit));
 }
 
+// Легкий пул дистракторів для choice/gap (train/actions.ts) — УСІ слова
+// студента з непорожнім перекладом, НЕЗАЛЕЖНО від filter/category/limit
+// самої сесії (selectTrainingWords вище вже звузив words до сесії —
+// пул будується з повного масиву ДО того звуження), капований до
+// POOL_CAP випадкових рядків, щоб запит/payload лишався дешевим навіть
+// при сотнях збережених слів. Платформо-широкого fallback (поза
+// власними словами студента) НЕМА — єдине кандидатне джерело,
+// VocabItem/scene vocab, живе лише як JSONB-поле dialogue у сценах
+// (collectSceneVocab у vocab.ts), без власної таблиці й без дешевого
+// RLS-безпечного способу взяти з нього випадкову вибірку — короткий
+// запит сюди or зчитав би зайві сцени чи вимагав складного SQL, якого
+// задача просила уникати, якщо джерело не "чисте/дешеве/RLS-безпечне".
+export const TRAINING_POOL_CAP = 200;
+
+export type TrainingPoolWord = Pick<SavedWord, "id" | "word" | "translation" | "partOfSpeech">;
+
+export function buildDistractorPool(words: SavedWord[], cap: number = TRAINING_POOL_CAP): TrainingPoolWord[] {
+  const eligible = words.filter((w) => !!w.translation && w.translation.trim().length > 0);
+  const sampled = eligible.length <= cap ? eligible : shuffle(eligible).slice(0, cap);
+  return sampled.map((w) => ({ id: w.id, word: w.word, translation: w.translation, partOfSpeech: w.partOfSpeech }));
+}
+
 // "Якщо зіставлення складне — просто вимагай непорожній context_fr" (сама
 // задача дозволяє цю спрощену версію): пошук слова В ТОЧНІЙ формі всередині
 // context_fr ненадійний (той самий клас проблем, що getTranslatedForms/

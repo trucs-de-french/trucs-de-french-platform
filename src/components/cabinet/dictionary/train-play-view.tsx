@@ -9,8 +9,15 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import type { PartOfSpeech } from "@/lib/vocab-categories";
 import type { TrainingFilter, TrainingLimit } from "@/lib/cabinet/word-training";
 import { SortableTileRow } from "@/components/exercises/sortable-tile-row";
-import { buildSession, type BuildSessionResult, type Question, type QuestionType } from "@/lib/cabinet/word-training-session";
+import {
+  buildSession,
+  type BuildSessionResult,
+  type Question,
+  type QuestionType,
+  type SessionWord,
+} from "@/lib/cabinet/word-training-session";
 import type { TrainingWord } from "@/app/cabinet/dictionary/train/actions";
+import type { TrainingPoolWord } from "@/lib/cabinet/word-training";
 
 // Параметри, з якими відкрилась ЦЯ сесія (play/page.tsx) — той самий
 // канонічний QuestionType-словник, що enabledTypes/buildSession (раніше
@@ -38,11 +45,19 @@ type Result = { savedWordId: string; type: QuestionType; correct: boolean };
 export function TrainPlayView({
   lang,
   words,
+  pool,
   enabledTypes,
   setupParams,
 }: {
   lang: UiLang;
   words: TrainingWord[];
+  // Окремий (зазвичай більший) пул дистракторів для choice/gap — УСІ
+  // слова студента з перекладом, незалежно від filter/category/limit
+  // цієї сесії (train/actions.ts, buildDistractorPool). contextFr/
+  // contextUk тут не потрібні (пул лише дає переклади/форми слів для
+  // варіантів, не контекст) — додаються нижче як null, щоб відповідати
+  // SessionWord.
+  pool: TrainingPoolWord[];
   enabledTypes: QuestionType[];
   setupParams: TrainSetupParams;
 }) {
@@ -76,8 +91,9 @@ export function TrainPlayView({
   useEffect(() => {
     if (builtRef.current) return;
     builtRef.current = true;
-    setSession(buildSession(words, enabledTypes));
-  }, [words, enabledTypes]);
+    const poolWords: SessionWord[] = pool.map((w) => ({ ...w, contextFr: null, contextUk: null }));
+    setSession(buildSession(words, enabledTypes, undefined, poolWords));
+  }, [words, enabledTypes, pool]);
 
   const questions = session?.questions ?? [];
   const skippedCount = session?.skippedCount ?? 0;
@@ -162,22 +178,29 @@ export function TrainPlayView({
     setIndex((i) => i + 1);
   }
 
+  // 2x2-сітка (≥480px, .train-options) — Ліво/Право рухають на 1 (сусід у
+  // тому ж рядку), Вверх/Вниз на GRID_COLUMNS (сусід у тому ж стовпці);
+  // на мобільному (1 колонка) сітка візуально лінійна, тож Ліво/Право й
+  // далі рухають по порядку DOM, а Вверх/Вниз (крок 2 на 3-4 елементах)
+  // лишається найближчим наближенням без запиту ширини в'юпорту.
+  const GRID_COLUMNS = 2;
   function handleOptionsKeyDown(e: React.KeyboardEvent, options: string[]) {
     if (phase !== "answering") return;
     const currentIdx = selected ? options.indexOf(selected) : -1;
-    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-      e.preventDefault();
-      const next = (currentIdx + 1 + options.length) % options.length;
-      setSelected(options[next]);
-      optionRefs.current[next]?.focus();
-    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      const prev = (currentIdx - 1 + options.length) % options.length;
-      setSelected(options[prev]);
-      optionRefs.current[prev]?.focus();
-    } else if (e.key === "Enter") {
+    let next: number | null = null;
+    if (e.key === "ArrowRight") next = (currentIdx + 1 + options.length) % options.length;
+    else if (e.key === "ArrowLeft") next = (currentIdx - 1 + options.length) % options.length;
+    else if (e.key === "ArrowDown") next = (currentIdx + GRID_COLUMNS + options.length) % options.length;
+    else if (e.key === "ArrowUp") next = (currentIdx - GRID_COLUMNS + options.length) % options.length;
+    else if (e.key === "Enter") {
       e.preventDefault();
       handleCheck();
+      return;
+    }
+    if (next !== null) {
+      e.preventDefault();
+      setSelected(options[next]);
+      optionRefs.current[next]?.focus();
     }
   }
 
@@ -372,7 +395,7 @@ export function TrainPlayView({
               {question.sentenceAfter}
             </p>
             {question.contextUk && (
-              <div className="dictionary-context-uk-wrap">
+              <div className="dictionary-context-uk-wrap train-gap-toggle-wrap">
                 <button
                   type="button"
                   aria-expanded={ukExpanded}
@@ -388,7 +411,7 @@ export function TrainPlayView({
                   {t(lang, ukExpanded ? "cabinet.dictionary.context.hide" : "cabinet.dictionary.context.show")}
                 </button>
                 {ukExpanded && (
-                  <p id="train-gap-context-uk" className="dictionary-context-uk">
+                  <p id="train-gap-context-uk" className="dictionary-context-uk train-gap-uk-text">
                     {question.contextUk}
                   </p>
                 )}

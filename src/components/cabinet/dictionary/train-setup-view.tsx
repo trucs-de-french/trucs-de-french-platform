@@ -15,8 +15,9 @@ import {
   type TrainingLimit,
   type TrainingOverview,
 } from "@/lib/cabinet/word-training";
-import { QUESTION_TYPES, countEligibleWords, type QuestionType } from "@/lib/cabinet/word-training-session";
+import { QUESTION_TYPES, countEligibleWords, type QuestionType, type SessionWord } from "@/lib/cabinet/word-training-session";
 import { loadTrainingWords, type TrainingWord } from "@/app/cabinet/dictionary/train/actions";
+import type { TrainingPoolWord } from "@/lib/cabinet/word-training";
 import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
@@ -100,6 +101,7 @@ export function TrainSetupView({
   lang,
   overview,
   initialWords,
+  initialPool,
   initialFilter = "all",
   initialCategory = "all",
   initialLimit = 10,
@@ -108,6 +110,13 @@ export function TrainSetupView({
   lang: UiLang;
   overview: TrainingOverview;
   initialWords: TrainingWord[];
+  // Пул дистракторів choice/gap (train/actions.ts, buildDistractorPool) —
+  // НЕЗАЛЕЖНИЙ від filter/category/limit, тож лічильник "Почати · N"
+  // тут рахує ЦЕ САМЕ, що буде на /train/play (countEligibleWords з
+  // тим самим пулом) — без цього "N" могло б показувати менше слів,
+  // ніж сесія насправді прийме (слово ineligible лише якщо й пул
+  // замалий, не сама вузька вибірка сесії).
+  initialPool: TrainingPoolWord[];
   // Query string ("Назад" із сесії /train/play) — вже провалідовано
   // сервером (train/page.tsx, ті самі parseTrainingFilterParam/... з
   // word-training.ts); тут лише дефолти на випадок прямого відкриття
@@ -131,6 +140,7 @@ export function TrainSetupView({
     };
   });
   const [candidateWords, setCandidateWords] = useState<TrainingWord[]>(initialWords);
+  const [candidatePool, setCandidatePool] = useState<TrainingPoolWord[]>(initialPool);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -158,6 +168,7 @@ export function TrainSetupView({
         return;
       }
       setCandidateWords(result.words);
+      setCandidatePool(result.pool);
     });
   }, [filter]);
 
@@ -235,9 +246,13 @@ export function TrainSetupView({
   // категорію) — "Почати · N" більше не вводить в оману, коли, напр.,
   // лише "Речення з пропуском" увімкнено, а в категорії лише 2 слова з
   // прикладом речення.
+  const poolSessionWords = useMemo<SessionWord[]>(
+    () => candidatePool.map((w) => ({ ...w, contextFr: null, contextUk: null })),
+    [candidatePool]
+  );
   const eligibleCount = useMemo(
-    () => countEligibleWords(categoryFiltered, selectedTypeIds),
-    [categoryFiltered, selectedTypeIds]
+    () => countEligibleWords(categoryFiltered, selectedTypeIds, undefined, poolSessionWords),
+    [categoryFiltered, selectedTypeIds, poolSessionWords]
   );
   const startCount = limit === "all" ? eligibleCount : Math.min(limit, eligibleCount);
   const startWord = plural(lang, startCount, START_WORD_FORMS[lang]);
