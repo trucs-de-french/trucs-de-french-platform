@@ -455,7 +455,6 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.home.greeting": "Bonjour, {name}",
   "cabinet.library.subtitle": "Tous les cours auxquels vous avez accès",
   "cabinet.dictionary.subtitle": "Les mots que vous avez enregistrés en apprenant",
-  "cabinet.dictionary.count": "Mots enregistrés : {count}",
   "cabinet.dictionary.search": "Rechercher un mot ou une traduction",
   "cabinet.dictionary.filter.all": "Tous",
   "cabinet.dictionary.filter.nom": "Noms",

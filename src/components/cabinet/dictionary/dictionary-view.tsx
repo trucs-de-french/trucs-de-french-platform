@@ -175,10 +175,6 @@ export function DictionaryView({ lang, initialWords }: { lang: UiLang; initialWo
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="font-body text-sm text-[var(--cabinet-muted)]">
-        {t(lang, "cabinet.dictionary.count", { count: words.length })}
-      </p>
-
       <div className="dictionary-filter-bar">
         <label className="relative flex min-h-11 w-full min-w-0 flex-1 basis-[220px] items-center sm:max-w-[320px]">
           <span className="sr-only">{t(lang, "cabinet.dictionary.search")}</span>

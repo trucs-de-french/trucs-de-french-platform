@@ -459,7 +459,6 @@ export const uk = {
   "cabinet.home.greeting": "Bonjour, {name}",
   "cabinet.library.subtitle": "Усі курси, до яких у Вас є доступ",
   "cabinet.dictionary.subtitle": "Слова, які Ви зберегли під час навчання",
-  "cabinet.dictionary.count": "Збережених слів: {count}",
   "cabinet.dictionary.search": "Пошук слова чи перекладу",
   "cabinet.dictionary.filter.all": "Усі",
   "cabinet.dictionary.filter.nom": "Іменники",

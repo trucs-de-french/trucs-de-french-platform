@@ -453,7 +453,6 @@ export const en: Record<MessageKey, string> = {
   "cabinet.home.greeting": "Bonjour, {name}",
   "cabinet.library.subtitle": "All the courses you have access to",
   "cabinet.dictionary.subtitle": "Words you've saved while learning",
-  "cabinet.dictionary.count": "Saved words: {count}",
   "cabinet.dictionary.search": "Search a word or translation",
   "cabinet.dictionary.filter.all": "All",
   "cabinet.dictionary.filter.nom": "Nouns",
