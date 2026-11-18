@@ -21800,14 +21800,18 @@ button.cabinet-nav-item {
   min-width: 0;
 }
 .mistakes-task-title {
+  /* Лише коротка назва типу (+ порядковий номер) — French-назви на кшталт
+     "Lettres en désordre" помістяться в один рядок майже завжди, але
+     однорядкове обрізання (ellipsis) тут більше не потрібне: назва типу
+     ніколи не настільки довга, щоб втрачати зміст при переносі на другий
+     рядок, тож переносимо замість обрізання (без горизонтального
+     overflow). */
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 14px;
   color: var(--cabinet-ink);
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 .mistakes-task-subtitle {
   font-family: var(--font-body);

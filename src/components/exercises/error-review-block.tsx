@@ -146,7 +146,13 @@ function ErrorReviewCard({
         </span>
         <TaskTypeIconBadge type={entry.taskType} size="sm" />
         <div className="error-review-text-col min-w-0 flex-1">
-          <p className="error-review-title truncate font-heading font-medium" title={entry.title}>
+          <p
+            className="error-review-title truncate font-heading font-medium"
+            // title-атрибут (hover/truncated-текст) дзеркалить ВІДОБРАЖЕНУ
+            // назву (ніколи сирий entry.title — студент не повинен бачити
+            // автогенерований tasks.title з "хвостом" навіть на hover).
+            title={`${entry.displayTitle}${ordinal !== null ? ` · ${ordinal}` : ""}`}
+          >
             {entry.displayTitle}
             {ordinal !== null && ` · ${ordinal}`}
           </p>

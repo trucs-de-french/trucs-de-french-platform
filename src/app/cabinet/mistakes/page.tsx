@@ -144,6 +144,23 @@ function mistakesWord(lang: UiLang, n: number): string {
   }
   return plural(lang, n, lang === "fr" ? { one: "erreur", other: "erreurs" } : { one: "mistake", other: "mistakes" });
 }
+// Ординал для рядків з ОДНАКОВОЮ назвою (typeNames) в межах однієї сцени —
+// null, якщо назва унікальна; інакше 1,2,3... за порядком (вхідний масив
+// уже в порядку задач сцени, scene.tasks із mistakes-overview.ts). Той
+// самий принцип, що вже є в error-review-block.tsx (групування за
+// фінальною назвою, не за taskType).
+function withOrdinals(typeNames: string[]): (number | null)[] {
+  const counts = new Map<string, number>();
+  for (const name of typeNames) counts.set(name, (counts.get(name) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return typeNames.map((name) => {
+    if ((counts.get(name) ?? 0) <= 1) return null;
+    const next = (seen.get(name) ?? 0) + 1;
+    seen.set(name, next);
+    return next;
+  });
+}
+
 function scenesWord(lang: UiLang, n: number): string {
   if (lang === "uk") {
     const abs = Math.abs(n);
@@ -236,28 +253,40 @@ export default async function CabinetMistakesPage() {
                 </span>
               </div>
               <ul className="mistakes-task-list">
-                {scene.tasks.map((task) => {
-                  const Icon = TASK_TYPE_ICON[task.taskType];
-                  const typeName = getTaskBarText({ type: task.taskType, config: task.config });
-                  return (
-                    <li key={task.taskId} className="mistakes-task-row">
-                      <span className="mistakes-task-icon" aria-hidden="true">
-                        {Icon && <Icon size={17} />}
-                      </span>
-                      <div className="mistakes-task-text">
-                        <p className="mistakes-task-title" title={task.title}>
-                          {task.title}
-                        </p>
-                        <p className="mistakes-task-subtitle">
-                          {typeName} · {task.unresolvedCount} {mistakesWord(lang, task.unresolvedCount)}
-                        </p>
-                      </div>
-                      <Link href={`/cabinet/mistakes/${task.sceneId}?task=${task.taskId}`} className="mistakes-fix-btn">
-                        {t(lang, "cabinet.mistakes.fix")}
-                      </Link>
-                    </li>
-                  );
-                })}
+                {(() => {
+                  // Назва рядка — ЛИШЕ назва типу (той самий getTaskBarText,
+                  // що другий рядок і плашка типу на сторінці сцени), НІКОЛИ
+                  // сирий task.title (автогенерований "<укр. назва>: слова…"
+                  // просочувався сюди до цього виправлення). Ординал — коли
+                  // та сама назва трапляється кілька разів у цій сцені,
+                  // нумерується за порядком задач у сцені (той самий принцип,
+                  // що error-review-block.tsx: групування за фінальною
+                  // назвою, не за taskType — два різні типи з однаковим
+                  // cardTitle теж мають ділити нумерацію).
+                  const typeNames = scene.tasks.map((task) => getTaskBarText({ type: task.taskType, config: task.config }));
+                  const ordinals = withOrdinals(typeNames);
+                  return scene.tasks.map((task, i) => {
+                    const Icon = TASK_TYPE_ICON[task.taskType];
+                    const ordinal = ordinals[i];
+                    const rowTitle = ordinal ? `${typeNames[i]} · ${ordinal}` : typeNames[i];
+                    return (
+                      <li key={task.taskId} className="mistakes-task-row">
+                        <span className="mistakes-task-icon" aria-hidden="true">
+                          {Icon && <Icon size={17} />}
+                        </span>
+                        <div className="mistakes-task-text">
+                          <p className="mistakes-task-title">{rowTitle}</p>
+                          <p className="mistakes-task-subtitle">
+                            {task.unresolvedCount} {mistakesWord(lang, task.unresolvedCount)}
+                          </p>
+                        </div>
+                        <Link href={`/cabinet/mistakes/${task.sceneId}?task=${task.taskId}`} className="mistakes-fix-btn">
+                          {t(lang, "cabinet.mistakes.fix")}
+                        </Link>
+                      </li>
+                    );
+                  });
+                })()}
               </ul>
             </div>
           ))}
