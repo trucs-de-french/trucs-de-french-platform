@@ -18848,6 +18848,359 @@ button.cabinet-nav-item {
   cursor: not-allowed;
 }
 
+/* Крок 3 — сесія вправ /cabinet/dictionary/train/play (train-play-
+   view.tsx). Хедер (X+прогрес), тип-чіп, картка питання (.train-card,
+   той самий глянцевий рецепт, що решта фічі) і стани 4 типів вправ.
+   Кольори "правильно/неправильно" — ті самі #22c55e/#ef4444, що вже
+   усюди на платформі (вправи курсів, видалення слова в словнику), не
+   окремі "вправні" токени — ця сесія лишається в кабінетній мові
+   (train-card/cabinet-chip--selected/cabinet-btn-primary), не в мові
+   курсових вправ (ANSWER_CARD_*/--dark-surface-fill тощо): той набір
+   надто зав'язаний на конфіг завдань і інший dark-палет, перенесення
+   дало б візуальний шов поруч із уже збудованим setup-екраном. */
+.train-play {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.train-play-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.train-play-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: var(--cabinet-ink);
+  transition: border-color 150ms, background-color 150ms;
+}
+.dark .train-play-close {
+  background: rgba(47, 61, 168, 0.12);
+  border-color: #27338f;
+}
+.train-play-close:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.train-play-close:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-play-close:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+.train-play-progress-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.train-play-progress-track {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cabinet-track);
+  overflow: hidden;
+}
+.train-play-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  transition: width 200ms ease;
+}
+.dark .train-play-progress-fill {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+}
+.train-play-progress-count {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--cabinet-muted);
+  white-space: nowrap;
+}
+.dark .train-play-progress-count {
+  color: #aaa8c2;
+}
+
+/* Тип-чіп — та сама gold-пігулка, що .dictionary-pos-label (dictionary-
+   view.tsx), окремий клас лише бо тут немає тег-іконки/ellipsis потреби. */
+.train-type-chip {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: rgba(217, 183, 101, 0.2);
+  color: var(--cabinet-muted);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 12px;
+}
+.dark .train-type-chip {
+  background: rgba(243, 217, 139, 0.13);
+  color: #f0d78f;
+}
+
+.train-play-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-align: center;
+  min-height: 220px;
+  justify-content: center;
+}
+
+/* cards ------------------------------------------------------------- */
+.train-cards-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.train-cards-tap-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 16px;
+}
+.train-cards-tap-area:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-cards-tap-area:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+.train-cards-word {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--cabinet-ink);
+}
+.train-cards-translation {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--cabinet-muted);
+}
+.dark .train-cards-translation {
+  color: #aaa8c2;
+}
+.train-cards-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--cabinet-muted);
+}
+.dark .train-cards-hint {
+  color: #aaa8c2;
+}
+.train-cards-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.train-know-btn {
+  flex: 1 1 auto;
+  min-height: 48px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  border: 1.5px solid;
+  background: transparent;
+  transition: background-color 150ms, border-color 150ms, color 150ms;
+}
+.train-know-btn:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-know-btn:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+.train-know-btn--no {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.train-know-btn--yes {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.train-know-btn--chosen.train-know-btn--no {
+  background: rgba(239, 68, 68, 0.12);
+}
+.train-know-btn--chosen.train-know-btn--yes {
+  background: rgba(34, 197, 94, 0.12);
+}
+.train-know-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* choice / gap options ----------------------------------------------- */
+.train-choice-word {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--cabinet-ink);
+}
+.train-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+@media (max-width: 479px) {
+  .train-options {
+    grid-template-columns: 1fr;
+  }
+}
+.train-option {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: var(--cabinet-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: border-color 150ms, background-color 150ms, color 150ms;
+}
+.dark .train-option {
+  background: rgba(47, 61, 168, 0.12);
+  border-color: #27338f;
+}
+.train-option:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-option:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+.train-option--selected {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .train-option--selected {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.train-option--correct {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.14);
+  color: var(--cabinet-ink);
+}
+.train-option--wrong {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--cabinet-ink);
+}
+.train-option--disabled {
+  opacity: 0.55;
+}
+
+/* unscramble ---------------------------------------------------------- */
+.train-unscramble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.train-unscramble-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--cabinet-muted);
+}
+.dark .train-unscramble-hint {
+  color: #aaa8c2;
+}
+
+/* gap-fill ------------------------------------------------------------ */
+.train-gap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.train-gap-sentence {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--cabinet-ink);
+}
+.train-gap-blank {
+  display: inline-block;
+  min-width: 56px;
+  border-bottom: 2px solid #d9b765;
+  font-weight: 700;
+  color: var(--cabinet-ink);
+  text-align: center;
+}
+
+/* feedback ------------------------------------------------------------ */
+.train-feedback {
+  margin: 0;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+.train-feedback--correct {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+}
+.dark .train-feedback--correct {
+  color: #4ade80;
+}
+.train-feedback--wrong {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+}
+.dark .train-feedback--wrong {
+  color: #f0706c;
+}
+
+/* summary --------------------------------------------------------------- */
+.train-play-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 32px 18px;
+}
+.train-play-summary-score {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--cabinet-ink);
+}
+
 /* "Мій словник" Етап 2 — кнопка збереження слова (save-word-button.tsx),
    на всіх сторінках сцени (бульбашка вокабуляру/картка відео/рядок
    таблиці/панель звичайного слова). На відміну від /cabinet/* ці сторінки
