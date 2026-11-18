@@ -18086,8 +18086,21 @@ button.cabinet-nav-item {
    щоб читались як той самий матеріал, не два різних. */
 .dark .dictionary-word-card {
   background-color: rgba(47, 61, 168, 0.12);
-  border-color: #2f3da8;
+  border: 1px solid #27338f;
   box-shadow: none;
+}
+/* 1x-екрани не можуть рендерити 0.5px — тут трохи темніший (~15%)
+   #27338f компенсує те, що сама лінія вдвічі товща за 2x-варіант нижче,
+   щоб обидва тони "читались" однаково легкими. На 2x+ (Retina/більшість
+   телефонів) border-color йде в transparent, А ШИРИНА БОРДЕРА лишається
+   1px (нічого не зрушується) — видиму лінію замінює inset box-shadow
+   0.5px, єдиний спосіб намалювати субпіксельну лінію однаково чітко і в
+   Chrome, і в Safari без зміни розмірів картки. */
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .dictionary-word-card {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
 }
 
 /* Філлед gold-пігулка з тег-іконкою (замінює колишній дрібний small-caps
@@ -18190,7 +18203,17 @@ button.cabinet-nav-item {
 @media (max-width: 767px) {
   .dark .dictionary-action-btn {
     background: rgba(47, 61, 168, 0.22);
-    border-color: #2f3da8;
+    border: 1px solid #27338f;
+  }
+}
+/* Той самий 1x/2x волосяний прийом, що .dictionary-word-card вище —
+   лише на мобільному, де кнопка ще має бордер (десктопний ghost-варіант
+   border:none, хairline йому не потрібен). */
+@media (max-width: 767px) and (min-resolution: 2dppx),
+  (max-width: 767px) and (-webkit-min-device-pixel-ratio: 2) {
+  .dark .dictionary-action-btn {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
   }
 }
 .dictionary-action-btn:focus-visible {
@@ -18212,7 +18235,11 @@ button.cabinet-nav-item {
   background: rgba(59, 55, 196, 0.1);
 }
 .dark .dictionary-edit-btn:hover {
-  border-color: #2f3da8;
+  /* border-color навмисно не перезаписується тут — волосяну лінію
+     (1x border-color/2x inset box-shadow, обидва вище) задає лише
+     .dictionary-action-btn; якщо встановити border-color і на hover,
+     на 2x-екранах border повертається з transparent в #2f3da8 й лінія
+     малюється ДВІЧІ (сам бордер + inset box-shadow) — злегка товщою. */
   background: rgba(47, 61, 168, 0.22);
 }
 
@@ -18231,7 +18258,8 @@ button.cabinet-nav-item {
   background: rgba(239, 68, 68, 0.1);
 }
 .dark .dictionary-delete-btn:hover {
-  border-color: #2f3da8;
+  /* Та сама причина, що .dark .dictionary-edit-btn:hover вище — border-
+     color не чіпаємо, щоб не здвоїти волосяну лінію на 2x. */
   background: rgba(47, 61, 168, 0.22);
 }
 
@@ -18414,7 +18442,13 @@ button.cabinet-nav-item {
    окрема поверхня НАД склом, а не злите з ним. */
 .dark .dictionary-translation-input {
   background: rgba(47, 61, 168, 0.18);
-  border-color: #2f3da8;
+  border: 1px solid #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .dictionary-translation-input {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
 }
 .dictionary-translation-input:focus-visible {
   outline: 2px solid #d9b765;
@@ -18432,7 +18466,17 @@ button.cabinet-nav-item {
    змінювати глобальне правило тут не можна. */
 .dark .dictionary-word-card .cabinet-select-trigger {
   background: rgba(47, 61, 168, 0.18);
-  border-color: #2f3da8;
+  border: 1px solid #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  /* :not(:focus-visible) — .cabinet-select-trigger:focus-visible (base
+     правило файлу) теж малює свій box-shadow (зовнішнє золоте кільце
+     фокуса); без цього застереження інсет-волосинка тут (вища
+     специфічність, 3 класи проти 2) перебила б кільце фокуса на 2x. */
+  .dark .dictionary-word-card .cabinet-select-trigger:not(:focus-visible) {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
 }
 
 .dictionary-empty {
