@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ArrowLeft, ChevronDown, ChevronRight, Layers, Languages, Shuffle, AlignLeft } from "lucide-react";
+import { X, Check, ArrowLeft, ChevronDown, ChevronRight, Layers, Languages, Shuffle, AlignLeft } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
@@ -537,17 +537,25 @@ export function TrainPlayView({
                 <button
                   type="button"
                   disabled={phase === "checked"}
+                  aria-pressed={cardKnown === false}
                   onClick={() => handleCardAnswer(false)}
-                  className={`train-know-btn train-know-btn--no ${cardKnown === false ? "train-know-btn--chosen" : ""}`}
+                  className={`train-know-btn train-know-btn--no ${cardKnown === false ? "train-know-btn--chosen" : ""} ${
+                    phase === "checked" && cardKnown !== false ? "train-know-btn--unchosen" : ""
+                  }`}
                 >
+                  <X size={18} aria-hidden="true" className="train-know-btn-icon train-know-btn-icon--no" />
                   {t(lang, "cabinet.dictionary.train.play.stillLearning")}
                 </button>
                 <button
                   type="button"
                   disabled={phase === "checked"}
+                  aria-pressed={cardKnown === true}
                   onClick={() => handleCardAnswer(true)}
-                  className={`train-know-btn train-know-btn--yes ${cardKnown === true ? "train-know-btn--chosen" : ""}`}
+                  className={`train-know-btn train-know-btn--yes ${cardKnown === true ? "train-know-btn--chosen" : ""} ${
+                    phase === "checked" && cardKnown !== true ? "train-know-btn--unchosen" : ""
+                  }`}
                 >
+                  <Check size={18} aria-hidden="true" className="train-know-btn-icon train-know-btn-icon--yes" />
                   {t(lang, "cabinet.dictionary.train.play.know")}
                 </button>
               </div>
