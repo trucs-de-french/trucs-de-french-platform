@@ -76,7 +76,12 @@ export function CabinetSidebar({
             item={item}
             lang={lang}
             collapsed={collapsed}
-            active={pathname === item.href}
+            // Той самий startsWith-прийом, що вже використовує мобільний
+            // таб-бар (mobile-tab-bar.tsx) — підсторінки (/cabinet/mistakes/
+            // [sceneId], /cabinet/dictionary/train/...) лишають батьківський
+            // пункт меню підсвіченим. "/cabinet" — виняток (exact match),
+            // інакше ВСІ підсторінки кабінету підсвічували б "Головна".
+            active={item.href === "/cabinet" ? pathname === "/cabinet" : pathname.startsWith(item.href)}
           />
         ))}
 

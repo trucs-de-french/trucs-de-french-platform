@@ -203,6 +203,11 @@ export default async function CabinetMistakesPage() {
                     {scene.sceneTitle}
                   </p>
                   <p className="mistakes-scene-course">{scene.courseTitle}</p>
+                  {scene.tasks.length > 1 && (
+                    <Link href={`/cabinet/mistakes/${scene.sceneId}`} className="mistakes-scene-all-link">
+                      {t(lang, "cabinet.mistakes.allMistakesLink")}
+                    </Link>
+                  )}
                 </div>
                 <span className="mistakes-scene-count">
                   {scene.totalUnresolved} {mistakesWord(lang, scene.totalUnresolved)}
@@ -225,10 +230,7 @@ export default async function CabinetMistakesPage() {
                           {typeName} · {task.unresolvedCount} {mistakesWord(lang, task.unresolvedCount)}
                         </p>
                       </div>
-                      <Link
-                        href={`/courses/${task.productId}/scenes/${task.sceneId}?fix=${task.taskId}#error-review`}
-                        className="mistakes-fix-btn"
-                      >
+                      <Link href={`/cabinet/mistakes/${task.sceneId}?task=${task.taskId}`} className="mistakes-fix-btn">
                         {t(lang, "cabinet.mistakes.fix")}
                       </Link>
                     </li>
