@@ -19148,19 +19148,36 @@ button.cabinet-nav-item {
 }
 
 /* Тип-чіп — та сама gold-пігулка, що .dictionary-pos-label (dictionary-
-   view.tsx), окремий клас лише бо тут немає тег-іконки/ellipsis потреби. */
+   view.tsx), окремий клас лише бо тут немає тег-іконки/ellipsis потреби.
+   Світла тема: напівпрозорий rgba(217,183,101,.2) на --cabinet-muted
+   (бежевий текст) майже зливався і з кремовою .cabinet-panel-bg, і з
+   білими картками (замір контрасту текст/фон ~2:1) — непрозорий
+   gold-tinted фон + gold-рамка натомість (border — transparent/inset
+   box-shadow на Retina, той самий прийом, що .train-play-close/.train-
+   play-back вище в цьому файлі). */
 .train-type-chip {
   align-self: flex-start;
   border-radius: 999px;
   padding: 3px 10px;
-  background: rgba(217, 183, 101, 0.2);
-  color: var(--cabinet-muted);
+  background: #f3e1a0;
+  border: 1px solid #d9c06a;
+  color: #4a3d17;
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 12px;
 }
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .train-type-chip {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #d9c06a;
+  }
+  .dark .train-type-chip {
+    box-shadow: none;
+  }
+}
 .dark .train-type-chip {
   background: rgba(243, 217, 139, 0.13);
+  border: none;
   color: #f0d78f;
 }
 
