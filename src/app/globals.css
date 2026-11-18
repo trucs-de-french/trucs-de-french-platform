@@ -19010,9 +19010,19 @@ button.cabinet-nav-item {
   gap: 14px;
 }
 
+/* Хедер сесії — два рядки: кнопки (Назад/X) зверху, прогрес-смужка+
+   лічильник під ними (раніше X+прогрес сиділи в ОДНОМУ рядку; варіант A
+   макета розводить їх на два, щоб прогрес-смужка могла займати всю
+   ширину). */
 .train-play-header {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.train-play-header-row {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
@@ -19033,6 +19043,12 @@ button.cabinet-nav-item {
   background: rgba(47, 61, 168, 0.12);
   border-color: #27338f;
 }
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-play-close {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
 .train-play-close:hover {
   border-color: #ef4444;
   color: #ef4444;
@@ -19045,19 +19061,69 @@ button.cabinet-nav-item {
   outline: 2px solid var(--cabinet-focus-ring);
 }
 
+/* "Назад" — та сама флет-рамка синьої родини, що X праворуч, лише
+   пілюля з іконкою+текстом замість кола (несе видимий підпис). Hover —
+   gold (нейтральний "ще один варіант"), не червоний: на відміну від X,
+   "Назад" не завжди руйнівна дія (повертає з порожньої сесії без
+   підтвердження взагалі). */
+.train-play-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cabinet-line);
+  background: var(--cabinet-card-bg);
+  color: var(--cabinet-ink);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: border-color 150ms, background-color 150ms;
+}
+.dark .train-play-back {
+  background: rgba(47, 61, 168, 0.12);
+  border-color: #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-play-back {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.train-play-back:hover {
+  border-color: #d9b765;
+}
+.train-play-back:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-play-back:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
 .train-play-progress-wrap {
   display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
   align-items: center;
   gap: 10px;
 }
+/* Світла тема раніше сиділа на var(--cabinet-track) = var(--cabinet-
+   panel-bg) (#f8f3e4) — майже той самий колір, що й фон сторінки під
+   нею, тож смужка прогресу читалась як "немає смужки взагалі". Темна
+   лишається на своєму окремому синьому — тут дається явним літералом
+   (не через --cabinet-track), щоб обидві теми мали однозначний,
+   задокументований тут колір треку, не залежний від спільної змінної. */
 .train-play-progress-track {
   flex: 1 1 auto;
-  height: 8px;
+  height: 6px;
   border-radius: 999px;
-  background: var(--cabinet-track);
+  background: #e6dcb8;
   overflow: hidden;
+}
+.dark .train-play-progress-track {
+  background: #1b2260;
 }
 .train-play-progress-fill {
   height: 100%;
@@ -19071,8 +19137,9 @@ button.cabinet-nav-item {
 .train-play-progress-count {
   flex-shrink: 0;
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 500;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
   color: var(--cabinet-muted);
   white-space: nowrap;
 }

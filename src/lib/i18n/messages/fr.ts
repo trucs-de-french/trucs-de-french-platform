@@ -523,6 +523,8 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.dictionary.train.play.backLink": "Retour aux réglages",
   "cabinet.dictionary.train.play.exitAria": "Quitter l'entraînement",
   "cabinet.dictionary.train.play.exitConfirm": "Quitter l'entraînement ? La progression de cette session ne sera pas enregistrée.",
+  "cabinet.dictionary.train.play.back": "Retour",
+  "cabinet.dictionary.train.play.backConfirm": "Revenir aux réglages ? Les résultats de cette session ne seront pas enregistrés.",
   "cabinet.dictionary.train.play.flipAria": "Retourner la carte",
   "cabinet.dictionary.train.play.flipHint": "Touchez pour voir la traduction",
   "cabinet.dictionary.train.play.know": "Je connais",

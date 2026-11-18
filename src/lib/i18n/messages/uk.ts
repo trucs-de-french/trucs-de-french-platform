@@ -527,6 +527,8 @@ export const uk = {
   "cabinet.dictionary.train.play.backLink": "Назад до налаштувань",
   "cabinet.dictionary.train.play.exitAria": "Вийти з тренування",
   "cabinet.dictionary.train.play.exitConfirm": "Вийти з тренування? Прогрес цієї сесії не збережеться.",
+  "cabinet.dictionary.train.play.back": "Назад",
+  "cabinet.dictionary.train.play.backConfirm": "Повернутися до налаштувань? Результати цієї сесії не збережуться.",
   "cabinet.dictionary.train.play.flipAria": "Перевернути картку",
   "cabinet.dictionary.train.play.flipHint": "Торкніться, щоб побачити переклад",
   "cabinet.dictionary.train.play.know": "Знаю",

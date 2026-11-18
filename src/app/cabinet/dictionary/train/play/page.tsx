@@ -3,39 +3,28 @@ import { getCabinetProfile } from "@/lib/supabase/profile";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { loadTrainingWords } from "@/app/cabinet/dictionary/train/actions";
-import { TRAINING_LIMITS, type TrainingFilter, type TrainingLimit } from "@/lib/cabinet/word-training";
-import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
+import {
+  parseTrainingFilterParam,
+  parseTrainingCategoryParam,
+  parseTrainingLimitParam,
+  parseTrainingExerciseTypesParam,
+} from "@/lib/cabinet/word-training";
 import type { QuestionType } from "@/lib/cabinet/word-training-session";
 import { TrainPlayView } from "@/components/cabinet/dictionary/train-play-view";
 
-const ALL_TYPES: QuestionType[] = ["cards", "choice", "unscramble", "gap"];
+// buildSession (word-training-session.ts) словник вправ — QuestionType
+// ("cards"/"choice"/"unscramble"/"gap") — НЕ той самий словник, що setup-
+// екран видає (TrainingExerciseType: "flip_cards"/"translation_choice"/
+// "unscramble"/"sentence_gap", word-training.ts). "types" із query парситься
+// ОБОМА валідаторами нижче окремо — для buildSession (questionTypes) і для
+// URL "Назад" на setup (parseTrainingExerciseTypesParam, передається у
+// TrainPlayView як є, той самий словник, що setup сам породжує).
+const QUESTION_TYPES: QuestionType[] = ["cards", "choice", "unscramble", "gap"];
 
-// Сервер не довіряє query-параметрам напряму (той самий принцип, що решта
-// кабінету) — loadTrainingWords ВЖЕ сам перевіряє filter/category/limit
-// (train/actions.ts), валідатори тут лише щоб задовольнити типи на межі
-// викличу й мати один явний, передбачуваний дефолт для кожного параметра.
-function parseFilter(raw: string | undefined): TrainingFilter {
-  return raw === "new" || raw === "weak" ? raw : "all";
-}
-
-function parseCategory(raw: string | undefined): PartOfSpeech | "none" | "all" {
-  if (!raw || raw === "all") return "all";
-  if (raw === "none") return "none";
-  return (PART_OF_SPEECH_ORDER as readonly string[]).includes(raw) ? (raw as PartOfSpeech) : "all";
-}
-
-function parseLimit(raw: string | undefined): TrainingLimit {
-  if (raw === "all") return "all";
-  const n = Number(raw);
-  return (TRAINING_LIMITS as readonly (number | "all")[]).includes(n) ? (n as TrainingLimit) : "all";
-}
-
-// Невідомий/порожній types — усі 4 типи (найширший безпечний дефолт, та
-// сама логіка, що інші query-валідатори тут).
-function parseTypes(raw: string | undefined): QuestionType[] {
-  if (!raw) return ALL_TYPES;
-  const picked = raw.split(",").filter((v): v is QuestionType => (ALL_TYPES as readonly string[]).includes(v));
-  return picked.length > 0 ? picked : ALL_TYPES;
+function parseQuestionTypesParam(raw: string | undefined): QuestionType[] {
+  if (!raw) return QUESTION_TYPES;
+  const picked = raw.split(",").filter((v): v is QuestionType => (QUESTION_TYPES as readonly string[]).includes(v));
+  return picked.length > 0 ? picked : QUESTION_TYPES;
 }
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -50,10 +39,14 @@ export default async function TrainPlayPage({
   const sp = await searchParams;
   const { lang } = await getCabinetProfile();
 
-  const filter = parseFilter(first(sp.filter));
-  const category = parseCategory(first(sp.category));
-  const limit = parseLimit(first(sp.limit));
-  const types = parseTypes(first(sp.types));
+  const filter = parseTrainingFilterParam(first(sp.filter));
+  const category = parseTrainingCategoryParam(first(sp.category));
+  const limit = parseTrainingLimitParam(first(sp.limit));
+  const questionTypes = parseQuestionTypesParam(first(sp.types));
+  // Той самий сирий "types", лише розібраний у словнику setup-екрана —
+  // для кнопки "Назад" усередині TrainPlayView (та сама форма, що
+  // handleStart у train-setup-view.tsx сам кладе в query string).
+  const setupTypes = parseTrainingExerciseTypesParam(first(sp.types));
 
   const result = await loadTrainingWords({ filter, category, limit });
 
@@ -88,7 +81,12 @@ export default async function TrainPlayPage({
   return (
     <div className="train-page flex flex-col gap-4">
       <CabinetMobileHeader />
-      <TrainPlayView lang={lang} words={result.words} enabledTypes={types} />
+      <TrainPlayView
+        lang={lang}
+        words={result.words}
+        enabledTypes={questionTypes}
+        setupParams={{ filter, category, limit, types: setupTypes }}
+      />
     </div>
   );
 }

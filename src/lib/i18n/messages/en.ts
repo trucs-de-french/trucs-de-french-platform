@@ -521,6 +521,8 @@ export const en: Record<MessageKey, string> = {
   "cabinet.dictionary.train.play.backLink": "Back to setup",
   "cabinet.dictionary.train.play.exitAria": "Exit training",
   "cabinet.dictionary.train.play.exitConfirm": "Exit training? This session's progress won't be saved.",
+  "cabinet.dictionary.train.play.back": "Back",
+  "cabinet.dictionary.train.play.backConfirm": "Return to settings? This session's results won't be saved.",
   "cabinet.dictionary.train.play.flipAria": "Flip the card",
   "cabinet.dictionary.train.play.flipHint": "Tap to see the translation",
   "cabinet.dictionary.train.play.know": "I know it",

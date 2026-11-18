@@ -2,13 +2,27 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ChevronDown, ChevronRight } from "lucide-react";
+import { X, ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
+import type { PartOfSpeech } from "@/lib/vocab-categories";
+import type { TrainingFilter, TrainingLimit, TrainingExerciseType } from "@/lib/cabinet/word-training";
 import { SortableTileRow } from "@/components/exercises/sortable-tile-row";
 import { buildSession, type Question, type QuestionType } from "@/lib/cabinet/word-training-session";
 import type { TrainingWord } from "@/app/cabinet/dictionary/train/actions";
+
+// Параметри, з якими відкрилась ЦЯ сесія (play/page.tsx) — у словнику
+// setup-екрана (TrainingExerciseType, не QuestionType buildSession) так
+// само, як handleStart у train-setup-view.tsx сам кладе їх у query
+// string: "Назад" нижче просто повертає рівно ці самі значення назад,
+// setup відкриється з тим самим вибором, не з дефолтом.
+export type TrainSetupParams = {
+  filter: TrainingFilter;
+  category: PartOfSpeech | "none" | "all";
+  limit: TrainingLimit;
+  types: TrainingExerciseType[];
+};
 
 const TYPE_CHIP_KEY: Record<QuestionType, MessageKey> = {
   cards: "cabinet.dictionary.train.setup.exercise.flipCards.name",
@@ -24,10 +38,12 @@ export function TrainPlayView({
   lang,
   words,
   enabledTypes,
+  setupParams,
 }: {
   lang: UiLang;
   words: TrainingWord[];
   enabledTypes: QuestionType[];
+  setupParams: TrainSetupParams;
 }) {
   const router = useRouter();
   // buildSession раз, лінивим ініціалізатором useState (не useMemo без
@@ -56,6 +72,22 @@ export function TrainPlayView({
     if (window.confirm(t(lang, "cabinet.dictionary.train.play.exitConfirm"))) {
       router.push("/cabinet/dictionary");
     }
+  }
+
+  // "Назад" на setup — ТІ САМІ filter/category/limit/types, з якими
+  // відкрилась ця сесія (setupParams, play/page.tsx), у query string, щоб
+  // setup відкрився з тим самим вибором. Підтвердження лише якщо бодай
+  // одне питання вже має відповідь (results.length>0) — порожня сесія
+  // (нічого не відповідали) повертається без запитання, нічого й не
+  // втрачається.
+  function handleBack() {
+    if (results.length > 0 && !window.confirm(t(lang, "cabinet.dictionary.train.play.backConfirm"))) return;
+    const params = new URLSearchParams();
+    params.set("filter", setupParams.filter);
+    params.set("category", setupParams.category);
+    params.set("limit", String(setupParams.limit));
+    params.set("types", setupParams.types.join(","));
+    router.push(`/cabinet/dictionary/train?${params.toString()}`);
   }
 
   function resetForQuestion(q: Question | undefined) {
@@ -149,14 +181,20 @@ export function TrainPlayView({
   return (
     <div className="train-play">
       <div className="train-play-header">
-        <button
-          type="button"
-          aria-label={t(lang, "cabinet.dictionary.train.play.exitAria")}
-          onClick={handleClose}
-          className="train-play-close"
-        >
-          <X size={18} aria-hidden="true" />
-        </button>
+        <div className="train-play-header-row">
+          <button type="button" onClick={handleBack} className="train-play-back">
+            <ArrowLeft size={18} aria-hidden="true" />
+            {t(lang, "cabinet.dictionary.train.play.back")}
+          </button>
+          <button
+            type="button"
+            aria-label={t(lang, "cabinet.dictionary.train.play.exitAria")}
+            onClick={handleClose}
+            className="train-play-close"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
         <div className="train-play-progress-wrap">
           <div className="train-play-progress-track">
             <div className="train-play-progress-fill" style={{ width: `${progressPct}%` }} />

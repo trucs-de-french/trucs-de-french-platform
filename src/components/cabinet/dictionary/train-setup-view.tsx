@@ -10,6 +10,7 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
 import {
   TRAINING_LIMITS,
+  TRAINING_EXERCISE_TYPES,
   hasSentenceGapFill,
   type TrainingFilter,
   type TrainingLimit,
@@ -20,7 +21,7 @@ import { loadTrainingWords, type TrainingWord } from "@/app/cabinet/dictionary/t
 import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
-const ALL_TYPE_IDS: TrainingExerciseType[] = ["flip_cards", "translation_choice", "unscramble", "sentence_gap"];
+const ALL_TYPE_IDS = TRAINING_EXERCISE_TYPES;
 
 // Icon-мапінг — flip_cards/Shuffle(unscramble) той самий, що адмінський
 // TASK_TYPE_ICONS (task-type-meta.ts), для візуальної узгодженості з
@@ -98,20 +99,35 @@ export function TrainSetupView({
   lang,
   overview,
   initialWords,
+  initialFilter = "all",
+  initialCategory = "all",
+  initialLimit = 10,
+  initialTypes,
 }: {
   lang: UiLang;
   overview: TrainingOverview;
   initialWords: TrainingWord[];
+  // Query string ("Назад" із сесії /train/play) — вже провалідовано
+  // сервером (train/page.tsx, ті самі parseTrainingFilterParam/... з
+  // word-training.ts); тут лише дефолти на випадок прямого відкриття
+  // /cabinet/dictionary/train без жодних параметрів.
+  initialFilter?: TrainingFilter;
+  initialCategory?: PartOfSpeech | "none" | "all";
+  initialLimit?: TrainingLimit;
+  initialTypes?: TrainingExerciseType[];
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<TrainingFilter>("all");
-  const [category, setCategory] = useState<PartOfSpeech | "none" | "all">("all");
-  const [limit, setLimit] = useState<TrainingLimit>(10);
-  const [userTypes, setUserTypes] = useState<Record<TrainingExerciseType, boolean>>({
-    flip_cards: true,
-    translation_choice: true,
-    unscramble: true,
-    sentence_gap: true,
+  const [filter, setFilter] = useState<TrainingFilter>(initialFilter);
+  const [category, setCategory] = useState<PartOfSpeech | "none" | "all">(initialCategory);
+  const [limit, setLimit] = useState<TrainingLimit>(initialLimit);
+  const [userTypes, setUserTypes] = useState<Record<TrainingExerciseType, boolean>>(() => {
+    const enabled = new Set(initialTypes ?? ALL_TYPE_IDS);
+    return {
+      flip_cards: enabled.has("flip_cards"),
+      translation_choice: enabled.has("translation_choice"),
+      unscramble: enabled.has("unscramble"),
+      sentence_gap: enabled.has("sentence_gap"),
+    };
   });
   const [candidateWords, setCandidateWords] = useState<TrainingWord[]>(initialWords);
   const [loading, setLoading] = useState(false);

@@ -1,4 +1,4 @@
-import type { PartOfSpeech } from "@/lib/vocab-categories";
+import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
 import type { SavedWord } from "@/lib/cabinet/saved-words";
 
 // ЛИШЕ чисті типи й хелпери (без next/headers/@/lib/supabase/server) —
@@ -20,6 +20,45 @@ export type TrainingLimit = (typeof TRAINING_LIMITS)[number];
 // Типи вправ кроку 3-4 (продуктове рішення, зафіксоване тут — єдине
 // джерело id-ів, щоб майбутній UI не вигадував свої рядкові літерали).
 export type TrainingExerciseType = "flip_cards" | "translation_choice" | "unscramble" | "sentence_gap";
+export const TRAINING_EXERCISE_TYPES: TrainingExerciseType[] = [
+  "flip_cards",
+  "translation_choice",
+  "unscramble",
+  "sentence_gap",
+];
+
+// Валідатори query-параметрів setup/play-екранів (train/page.tsx,
+// train/play/page.tsx) — ОДНА точка правди, щоб "Назад" із сесії на
+// setup і прямий перехід на /train/play з тим самим query string
+// розбирали filter/category/limit/types ОДНАКОВО (раніше обидві
+// сторінки тримали власні копії тих самих трьох перевірок). "types" тут
+// — словник TrainingExerciseType (той, що видає setup-екран у своєму
+// handleStart), НЕ QuestionType з word-training-session.ts (словник
+// buildSession) — вони different і НЕ взаємозамінні; play/page.tsx
+// парсить "types" двічі, окремо в кожному словнику.
+export function parseTrainingFilterParam(raw: string | null | undefined): TrainingFilter {
+  return raw === "new" || raw === "weak" ? raw : "all";
+}
+
+export function parseTrainingCategoryParam(raw: string | null | undefined): PartOfSpeech | "none" | "all" {
+  if (!raw || raw === "all") return "all";
+  if (raw === "none") return "none";
+  return (PART_OF_SPEECH_ORDER as readonly string[]).includes(raw) ? (raw as PartOfSpeech) : "all";
+}
+
+export function parseTrainingLimitParam(raw: string | null | undefined): TrainingLimit {
+  if (raw === "all") return "all";
+  const n = Number(raw);
+  return (TRAINING_LIMITS as readonly (number | "all")[]).includes(n) ? (n as TrainingLimit) : "all";
+}
+
+export function parseTrainingExerciseTypesParam(raw: string | null | undefined): TrainingExerciseType[] {
+  if (!raw) return TRAINING_EXERCISE_TYPES;
+  const picked = raw
+    .split(",")
+    .filter((v): v is TrainingExerciseType => (TRAINING_EXERCISE_TYPES as readonly string[]).includes(v));
+  return picked.length > 0 ? picked : TRAINING_EXERCISE_TYPES;
+}
 
 // Знятий з word_training_stats рядок (camelCase, той самий підхід, що
 // SavedWord у saved-words.ts) — attempts/correct завжди накопичувальні
