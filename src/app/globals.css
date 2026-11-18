@@ -18579,6 +18579,16 @@ button.cabinet-nav-item {
   text-decoration: none;
   cursor: pointer;
   transition: border-color 150ms;
+  /* margin-bottom (не margin-top на .dictionary-filter-bar нижче) — щоб
+     прогалина зникала разом із карткою, коли вона не рендериться (нема
+     збережених слів / міграція 0070 ще не застосована): dictionary/
+     page.tsx тоді взагалі не вставляє .train-entry-card у DOM. */
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .train-entry-card {
+    margin-bottom: 20px;
+  }
 }
 .train-entry-icon {
   display: flex;
