@@ -19625,8 +19625,8 @@ button.cabinet-nav-item {
   height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid #e0c680;
+  background: #f4ecd0;
+  border: 1px solid #e0cf94;
   font-family: var(--font-heading);
   font-weight: 500;
   font-size: 13px;
@@ -19638,16 +19638,14 @@ button.cabinet-nav-item {
   border: 1px solid rgba(230, 200, 120, 0.55);
   color: #e6e3f7;
 }
-/* 1x-рамка вище (#e0c680/rgba(230,200,120,.55)) — свідомо м'якіша за
-   справжній gold-акцент (#d4b25a/rgba(230,200,120,.75)): на 1x-екрані
-   повна 1px-рамка в "справжньому" кольорі виглядала б важче, ніж
-   задумано, тож fallback трохи приглушений, а hairline (0.5px, Retina)
-   нижче вже несе точний колір. */
+/* 1x-рамка вище (rgba(230,200,120,.55)) — свідомо м'якіша за справжній
+   gold-акцент (rgba(230,200,120,.75)): на 1x-екрані повна 1px-рамка в
+   "справжньому" кольорі виглядала б важче, ніж задумано, тож fallback
+   трохи приглушений, а hairline (0.5px, Retina) нижче вже несе точний
+   колір. Світла тема лишається на простій 1px-рамці без retina-
+   hairline варіанту (той самий стан, що був ДО коміту d8f3115, — лише
+   темна тема отримала gold-рамку). */
 @media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
-  .train-results-breakdown-item {
-    border-color: transparent;
-    box-shadow: inset 0 0 0 0.5px #d4b25a;
-  }
   .dark .train-results-breakdown-item {
     border-color: transparent;
     box-shadow: inset 0 0 0 0.5px rgba(230, 200, 120, 0.75);
@@ -19720,8 +19718,8 @@ button.cabinet-nav-item {
   padding: 0 14px;
   min-height: 44px;
   border-radius: 12px;
-  background: #f8f3e4;
-  border: 1px solid #e0cf94;
+  background: #ffffff;
+  border: 1px solid #e0c680;
   overflow: hidden;
 }
 .dark .train-results-review-item {
@@ -19729,6 +19727,10 @@ button.cabinet-nav-item {
   border: 1px solid #27338f;
 }
 @media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .train-results-review-item {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #d4b25a;
+  }
   .dark .train-results-review-item {
     border-color: transparent;
     box-shadow: inset 0 0 0 0.5px #2f3da8;
