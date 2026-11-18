@@ -18783,6 +18783,33 @@ button.cabinet-nav-item {
 .dark .train-segment:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
 }
+/* БАГ (9bebdcb): .train-segment і .cabinet-chip--selected — обидва
+   однокласові селектори (специфічність 0,0,1,0), а .train-segment
+   визначений у файлі ПІЗНІШЕ за .cabinet-chip--selected — тож на
+   вибраному сегменті (клас "train-segment cabinet-chip--selected"
+   РАЗОМ) .train-segment-івський transparent-фон/прозора рамка/темний
+   текст перебивали градієнт/білий текст ПОВНІСТЮ, незалежно від теми:
+   вибраний сегмент візуально не відрізнявся від невибраного в ОБОХ
+   темах (не лише світлій, як повідомив студент — темна мала той самий
+   дефект, .dark .train-segment теж пізніше за .dark .cabinet-chip--
+   selected). Клік і стейт працювали коректно весь час — це був ЛИШЕ
+   візуальний баг, не behavioral. Нижче — комбінований селектор (2+
+   класи), що безумовно переважує .train-segment/.dark .train-segment
+   незалежно від порядку правил: той самий принцип спеціфічності, що й
+   .library-filters.library-filters/.train-segmented.train-segmented
+   трюки вище, лише тут об'єднує ДВА різних класи замість дублювання
+   одного. */
+.train-segment.cabinet-chip--selected {
+  border-color: transparent;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .train-segment.cabinet-chip--selected {
+  border-color: transparent;
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+
 /* Знімає тінь-ореол .cabinet-chip--selected (вибраний сегмент) в ОБОХ
    темах — сам градієнт (світлий indigo/темний gold) лишається, лише без
    box-shadow/filter навколо. */
