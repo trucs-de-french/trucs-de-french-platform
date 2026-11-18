@@ -8732,6 +8732,53 @@ button.scene-bar:active .scene-bar-toggle {
   gap: 3.4px;
 }
 
+/* Пальцем-перетягування плиток (sortable-tile-row.tsx, touchDrag=true,
+   зараз лише train-play-view.tsx "Склади слово") — лише три нові класи,
+   застосовані ВИКЛЮЧНО коли touchDrag увімкнено (jsx-умова там), тож
+   сценові вправи (reorder/letter_rearrangement, без цього пропу) цих
+   класів ніколи не отримують. touch-action/user-select/-webkit-touch-
+   callout none — щоб тягнучий жест не скролив сторінку й не викликав
+   системне меню "копіювати" на довгому натисканні. */
+.touch-drag-tile {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.touch-drag-source {
+  opacity: 0.35;
+}
+.touch-drag-target {
+  border-color: #3b36c4;
+  background-color: rgba(59, 54, 196, 0.1);
+}
+.dark .touch-drag-target {
+  border-color: #8a88f5;
+  background-color: rgba(75, 70, 218, 0.22);
+}
+.touch-drag-ghost {
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 36px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid #3b36c4;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 18px;
+  color: #1a1640;
+}
+.dark .touch-drag-ghost {
+  background: var(--dark-surface-fill);
+  border-color: #8a88f5;
+  color: #ffffff;
+}
+
 /* letter_gaps: пакування одиниць переносу (артикль/"se"/слово,
    letter-gaps.tsx, units.map) у рядки за реальною шириною — блоковий
    inline-formatting контекст (не flex: flex-wrap не дає браузеру текстово

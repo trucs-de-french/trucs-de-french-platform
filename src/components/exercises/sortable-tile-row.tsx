@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type DragEvent } from "react";
+import { useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { SELECTED_TILE_CLASS, LIVE_CORRECT_CLASS, LIVE_INCORRECT_CLASS } from "./selection-style";
 import { arrayMove, computeInsertIndex, resolveDropSide } from "@/lib/sortable-list";
 
@@ -11,6 +11,20 @@ import { arrayMove, computeInsertIndex, resolveDropSide } from "@/lib/sortable-l
 // курсором визначає "до" чи "після"), решта зсувається — не обмін місцями
 // парами, як було раніше. Нічого не знає про послідовності/слова/бали/
 // підказки — лише "рядок тайлів, які можна переставляти".
+//
+// touchDrag (опційний, вимкнений за замовчуванням) — справжнє пальцем-
+// перетягування для тач-пристроїв, додане для "Склади слово" тренування
+// слів (train-play-view.tsx): draggable/onDragStart НІКОЛИ не спрацьовує
+// від дотику (мобільні браузери не емітять HTML5 DnD-події для touch),
+// тож без цього на телефоні лишався тільки tap-to-select-then-move.
+// Наскрізно opt-in — коли проп не передано (reorder.tsx/letter-
+// rearrangement.tsx), жодний новий хендлер/DOM/CSS-клас не додається,
+// поведінка сценових вправ лишається байтово тією самою. Семантика
+// РІЗНА від move() вище: тут відпуск над іншою плиткою МІНЯЄ їх місцями
+// (swap), а не вставляє/зсуває решту — та сама різниця, що задача явно
+// вимагає для цього режиму.
+const TOUCH_DRAG_THRESHOLD_PX = 6;
+
 export function SortableTileRow({
   items,
   onChange,
@@ -22,6 +36,7 @@ export function SortableTileRow({
   lockedCount = 0,
   extraContainerClassName = "",
   extraTileClassName = "",
+  touchDrag = false,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
@@ -59,6 +74,9 @@ export function SortableTileRow({
   // без зміни спільного вигляду плиток тут для letter_rearrangement.
   extraContainerClassName?: string;
   extraTileClassName?: string;
+  // Пальцем-перетягування (нижче) — лише коли true; миша/перо завжди
+  // йдуть нативним draggable-шляхом вище, без змін.
+  touchDrag?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -67,11 +85,30 @@ export function SortableTileRow({
   // елементом", як раніше dragOverIndex.
   const [dropTarget, setDropTarget] = useState<{ index: number; side: "before" | "after" } | null>(null);
 
+  // Тач-перетягування — окремий стан від dropTarget/draggingIndex вище
+  // (той нативний механізм для миші/пера лишається недоторканим):
+  // touchDragState — лише коли реально перетнуто TOUCH_DRAG_THRESHOLD_PX
+  // (менший рух = звичайний тап, обробляється нижче як завжди).
+  const touchStartRef = useRef<{ index: number; x: number; y: number; dragging: boolean } | null>(null);
+  const suppressClickRef = useRef(false);
+  const [touchDragState, setTouchDragState] = useState<{ index: number; x: number; y: number; overIndex: number | null } | null>(
+    null
+  );
+
   function move(from: number, to: number) {
     if (locked || from < lockedCount) return;
     const clampedTo = Math.max(to, lockedCount);
     if (from === clampedTo) return;
     onChange(arrayMove(items, from, clampedTo));
+  }
+
+  // Обмін МІСЦЯМИ (не arrayMove-вставка, що move() вище робить для
+  // native drag/click-fallback) — вимога задачі саме для тач-режиму.
+  function swapTiles(a: number, b: number) {
+    if (locked || a < lockedCount || b < lockedCount || a === b) return;
+    const next = [...items];
+    [next[a], next[b]] = [next[b], next[a]];
+    onChange(next);
   }
 
   function clickTile(i: number) {
@@ -90,6 +127,62 @@ export function SortableTileRow({
     }
   }
 
+  function handleTileClick(i: number) {
+    // Клік ПІСЛЯ завершеного тач-перетягування (якщо браузер усе ж
+    // синтезує click після pointerup з переміщенням) — ігнорується рівно
+    // один раз; звичайний тап (рух < порогу) сюди доходить незміненим.
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    clickTile(i);
+  }
+
+  function handleTouchPointerDown(e: ReactPointerEvent<HTMLButtonElement>, i: number) {
+    if (!touchDrag || e.pointerType !== "touch" || locked || i < lockedCount) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchStartRef.current = { index: i, x: e.clientX, y: e.clientY, dragging: false };
+  }
+
+  function handleTouchPointerMove(e: ReactPointerEvent<HTMLButtonElement>, i: number) {
+    const st = touchStartRef.current;
+    if (!touchDrag || !st || st.index !== i) return;
+    const dx = e.clientX - st.x;
+    const dy = e.clientY - st.y;
+    if (!st.dragging) {
+      if (Math.hypot(dx, dy) < TOUCH_DRAG_THRESHOLD_PX) return;
+      st.dragging = true;
+      setSelected(null); // перетягування і click-select — взаємовиключні режими
+    }
+    e.preventDefault();
+    const overEl = document.elementFromPoint(e.clientX, e.clientY);
+    const overTile = (overEl as HTMLElement | null)?.closest<HTMLElement>("[data-tile-index]");
+    const overIndexRaw = overTile ? Number(overTile.dataset.tileIndex) : NaN;
+    const overIndex = !Number.isNaN(overIndexRaw) && overIndexRaw >= lockedCount ? overIndexRaw : null;
+    setTouchDragState({ index: i, x: e.clientX, y: e.clientY, overIndex });
+  }
+
+  function handleTouchPointerUp(e: ReactPointerEvent<HTMLButtonElement>, i: number) {
+    const st = touchStartRef.current;
+    if (!touchDrag || !st || st.index !== i) return;
+    touchStartRef.current = null;
+    if (st.dragging) {
+      e.preventDefault();
+      suppressClickRef.current = true;
+      const dropIndex = touchDragState?.overIndex ?? null;
+      setTouchDragState(null);
+      if (dropIndex !== null) swapTiles(i, dropIndex);
+    }
+    // Звичайний тап (st.dragging лишився false) — нічого тут не робимо,
+    // природний click, що йде слідом, сам викличе handleTileClick/
+    // clickTile, той самий шлях, що без touchDrag взагалі.
+  }
+
+  function handleTouchPointerCancel(i: number) {
+    if (touchStartRef.current?.index === i) touchStartRef.current = null;
+    setTouchDragState(null);
+  }
+
   // Задача "Tile rows (reorder, letters): neutral start, blue selected
   // tile, live green/red after manipulation" — пріоритет станів плитки,
   // найвищий спочатку: обрана (click-to-select) чи зараз тягнута (drag) —
@@ -100,11 +193,12 @@ export function SortableTileRow({
   // логіки для "повернення" кольору не потрібно.
   function tileClass(i: number) {
     const state = tileState?.(i);
-    const held = selected === i || draggingIndex === i;
-    const shadow = draggingIndex === i ? "" : "shadow-sm";
+    const held = selected === i || draggingIndex === i || touchDragState?.index === i;
+    const shadow = draggingIndex === i || touchDragState?.index === i ? "" : "shadow-sm";
     if (i < lockedCount)
       return `${shadow} border-sky-400 bg-sky-100 text-sky-700 dark:border-sky-600 dark:bg-sky-950/40 dark:text-sky-400`;
     if (held) return `${shadow} ${SELECTED_TILE_CLASS}`;
+    if (touchDragState?.overIndex === i) return `${shadow} touch-drag-target`;
     if (state === "correct") return `${shadow} ${LIVE_CORRECT_CLASS}`;
     if (state === "incorrect") return `${shadow} ${LIVE_INCORRECT_CLASS}`;
     // letterTile (letter_rearrangement) — ті самі токени поля, що й пропуск
@@ -129,7 +223,7 @@ export function SortableTileRow({
   }
 
   return (
-    <div className={`flex flex-wrap items-stretch ${gapClassName} ${extraContainerClassName}`}>
+    <div className={`relative flex flex-wrap items-stretch ${gapClassName} ${extraContainerClassName}`}>
       {items.map((text, i) => (
         <div key={i} className="relative flex items-stretch">
           {/* Індикатор вставки — тонка вертикальна лінія кольору brand між
@@ -142,6 +236,7 @@ export function SortableTileRow({
           )}
           <button
             type="button"
+            data-tile-index={i}
             draggable={!locked && i >= lockedCount}
             onDragStart={(e: DragEvent) => {
               e.dataTransfer.setData("text/plain", String(i));
@@ -174,7 +269,11 @@ export function SortableTileRow({
               }
               setDropTarget(null);
             }}
-            onClick={() => clickTile(i)}
+            onPointerDown={touchDrag ? (e) => handleTouchPointerDown(e, i) : undefined}
+            onPointerMove={touchDrag ? (e) => handleTouchPointerMove(e, i) : undefined}
+            onPointerUp={touchDrag ? (e) => handleTouchPointerUp(e, i) : undefined}
+            onPointerCancel={touchDrag ? () => handleTouchPointerCancel(i) : undefined}
+            onClick={() => handleTileClick(i)}
             disabled={locked}
             // aria-pressed — лише "обрано для обміну" (click-to-select,
             // п.9 задачі), не для drag (тягнута плитка не є "pressed"-
@@ -182,7 +281,7 @@ export function SortableTileRow({
             aria-pressed={selected === i}
             className={`select-none border-[1.5px] dark:border text-center transition-[box-shadow,transform,background-color,border-color] disabled:cursor-not-allowed disabled:opacity-70 ${
               i < lockedCount ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-            } ${
+            } ${touchDrag ? "touch-drag-tile" : ""} ${touchDragState?.index === i ? "touch-drag-source" : ""} ${
               // letterTile (letter_rearrangement) — фіксована w/h, однакова
               // для будь-якого символу, по центру, через спільний клас
               // .letter-tile-cell (globals.css, читає --cell) — той самий
@@ -206,6 +305,28 @@ export function SortableTileRow({
           )}
         </div>
       ))}
+      {/* Ghost-клон, що слідує за пальцем — лише під час активного тач-
+          перетягування (touchDragState.dragging по суті, виставляється
+          лише ПІСЛЯ порогу в handleTouchPointerMove); position:fixed не
+          потребує порталу (жодний із предків тут не має transform/contain,
+          що створив би новий containing block). pointer-events:none —
+          ghost ніколи не повинен перехоплювати elementFromPoint нижче
+          СЕБЕ, інакше оригінальні плитки не визначались би як drop-ціль. */}
+      {touchDragState && (
+        <span
+          aria-hidden="true"
+          className="touch-drag-ghost"
+          style={{
+            position: "fixed",
+            left: touchDragState.x,
+            top: touchDragState.y,
+            transform: "translate(-50%, -120%) scale(1.12)",
+            pointerEvents: "none",
+          }}
+        >
+          {items[touchDragState.index]}
+        </span>
+      )}
     </div>
   );
 }

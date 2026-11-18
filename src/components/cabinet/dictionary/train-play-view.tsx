@@ -271,6 +271,7 @@ export function TrainPlayView({
                 onChange={setTiles}
                 locked={phase === "checked"}
                 letterTile
+                touchDrag
                 gapClassName="letter-tile-row-gap"
                 tileState={(i) => {
                   if (phase !== "checked") return undefined;
