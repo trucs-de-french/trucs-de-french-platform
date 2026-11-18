@@ -5,6 +5,8 @@ import { rowToSavedWord, type SavedWord } from "@/lib/cabinet/saved-words";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import { DictionaryView } from "@/components/cabinet/dictionary/dictionary-view";
+import { TrainEntryCard } from "@/components/cabinet/dictionary/train-entry-card";
+import { getTrainingOverview } from "@/app/cabinet/dictionary/train/actions";
 import type { Profile } from "@/lib/supabase/profile";
 
 export default async function CabinetDictionaryPage() {
@@ -37,10 +39,18 @@ export default async function CabinetDictionaryPage() {
 
   const words: SavedWord[] = (rows ?? []).map(rowToSavedWord);
 
+  // "Тренувати мої слова" — картка-вхід рендериться лише коли фіча
+  // реально доступна (міграція 0070 застосована — overviewResult.ok) і є
+  // бодай одне збережене слово; інакше сторінка словника лишається
+  // точно такою, як до цієї фічі (жодного частково-зламаного стану).
+  const overviewResult = await getTrainingOverview();
+  const showTrainEntry = overviewResult.ok && overviewResult.overview.total >= 1;
+
   return (
     <div>
       <CabinetMobileHeader />
       <PageHeader title={t(lang, "cabinet.nav.dictionary")} subtitle={t(lang, "cabinet.dictionary.subtitle")} />
+      {showTrainEntry && overviewResult.ok && <TrainEntryCard lang={lang} overview={overviewResult.overview} />}
       <DictionaryView lang={lang} initialWords={words} />
     </div>
   );

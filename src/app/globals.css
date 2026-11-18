@@ -13891,6 +13891,10 @@ html:has(.cabinet-frame)::-webkit-scrollbar {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
 }
+.switch-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 /* Рядок перемикача (notifications-card.tsx) — лейбл Nunito 700/16px
    (ink), явно жирніший/крупніший за підказку картки під заголовком
    (font-body 14px muted), щоб вони не зливались; перемикач завжди
@@ -18533,6 +18537,279 @@ button.cabinet-nav-item {
   outline: 2px solid #d9b765;
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* "Тренувати мої слова" — вхід на /cabinet/dictionary (train-entry-
+   card.tsx) і setup-екран /cabinet/dictionary/train (train-setup-
+   view.tsx). .train-card — та сама картка-"скло", що .dictionary-word-
+   card: світла — білий фон/gold-бордер/м'яка тінь; темна — синій вош
+   (rgba(47,61,168,.12)) з 1px #27338f на 1x-екранах і 0.5px hairline
+   (#2f3da8, inset box-shadow) на 2x+ — той самий прийом, що там, щоб
+   нова фіча виглядала частиною тієї самої "скляної" мови кабінету, не
+   окремим стилем. */
+.train-card {
+  background-color: var(--cabinet-card-bg);
+  border: 1.5px solid var(--cabinet-line);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.25);
+  padding: 18px;
+}
+.dark .train-card {
+  background-color: rgba(47, 61, 168, 0.12);
+  border: 1px solid #27338f;
+  box-shadow: none;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-card {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+
+/* Картка-вхід (dictionary/page.tsx, над рядком пошуку/фільтра) — ціла
+   картка один <Link>, не кнопка в картці (один інтерактивний елемент,
+   не вкладені), .train-entry-cta лише ВИГЛЯДАЄ кнопкою
+   (.cabinet-btn-primary). flex-wrap — на вузькому екрані icon+title
+   лишаються в рядку, текст/чіпи/CTA спускаються нижче на всю ширину. */
+.train-entry-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.train-entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+}
+.dark .train-entry-icon {
+  background: linear-gradient(160deg, #f3d98b, #d9b765);
+  color: #1a1640;
+}
+.train-entry-body {
+  display: flex;
+  flex: 1 1 220px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.train-entry-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--cabinet-ink);
+}
+.train-entry-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.dark .train-entry-text {
+  color: #aaa8c2;
+}
+.train-entry-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.train-entry-chip {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--cabinet-muted);
+  background: var(--cabinet-surface-2);
+}
+.dark .train-entry-chip {
+  color: #aaa8c2;
+  background: rgba(47, 61, 168, 0.18);
+}
+.train-entry-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+@media (max-width: 479px) {
+  .train-entry-cta {
+    width: 100%;
+  }
+}
+
+/* Setup-екран /cabinet/dictionary/train (train-setup-view.tsx) —
+   центрована колонка на десктопі, повна ширина на мобільному (інакше
+   жодних особливих правил ширини не потрібно — max-width просто не
+   спрацьовує, поки контейнер вужчий за 560px). */
+.train-page {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.train-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.train-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.train-section-label {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+
+/* Сегментований тоггл (Які слова / Скільки слів) — ті самі чіпи, що
+   фільтри словника (.cabinet-chip--selected), лише обгорнуті як
+   radiogroup; невибраний варіант — звичайна флет-рамка, той самий
+   принцип, що .dictionary-chip. */
+.train-segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.train-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cabinet-line);
+  background: var(--cabinet-surface-2);
+  color: var(--cabinet-ink);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: border-color 150ms, background-color 150ms;
+}
+.train-segment:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.train-segment:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .train-segment:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+/* Типи вправ — icon+назва+опис зліва, перемикач (SwitchToggle) справа;
+   рядки розділені тонкою лінією (border-top, не окремі картки — так
+   чотири рядки читаються як один список, не чотири картки). */
+.train-exercise-list {
+  display: flex;
+  flex-direction: column;
+}
+.train-exercise-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--cabinet-line);
+}
+.dark .train-exercise-row {
+  border-top-color: #27338f;
+}
+.train-exercise-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.train-exercise-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(217, 183, 101, 0.2);
+  color: var(--cabinet-muted);
+}
+.dark .train-exercise-icon {
+  background: rgba(243, 217, 139, 0.13);
+  color: #f0d78f;
+}
+.train-exercise-text {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.train-exercise-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+}
+.train-exercise-desc {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--cabinet-muted);
+}
+.dark .train-exercise-desc {
+  color: #aaa8c2;
+}
+
+.train-status-text {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cabinet-muted);
+}
+.dark .train-status-text {
+  color: #aaa8c2;
+}
+
+/* Нижня панель з кнопкою "Почати" — не position:sticky (елементарна
+   верстка без залежності від висоти .cabinet-bottom-bar на мобільному,
+   простіше й надійніше за розрахунок offset'ів); просто остання секція
+   колонки, завжди під усім іншим контентом. */
+.train-cta-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.train-cta-note {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cabinet-muted);
+}
+.dark .train-cta-note {
+  color: #aaa8c2;
+}
+.train-cta-button {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 999px;
+  font-size: 16px;
+}
+.train-cta-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* "Мій словник" Етап 2 — кнопка збереження слова (save-word-button.tsx),

@@ -8,10 +8,16 @@ export function SwitchToggle({
   checked,
   onChange,
   label,
+  disabled,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   label?: string;
+  // Задача "Тренувати мої слова" (setup-екран, train-setup-view.tsx):
+  // останній увімкнений тип вправи й gap-fill без достатньої кількості
+  // прикладів мають виглядати ВИМКНЕНИМИ, не просто ігнорувати клік —
+  // звичайний disabled на <button>, той самий підхід, що решта кабінету.
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -19,6 +25,7 @@ export function SwitchToggle({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`switch-toggle ${checked ? "switch-toggle--on" : ""}`}
     >
