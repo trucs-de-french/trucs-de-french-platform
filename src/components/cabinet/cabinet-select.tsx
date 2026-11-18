@@ -33,7 +33,13 @@ export interface CabinetSelectProps {
 const BOTTOM_SAFE = 84;
 const VIEWPORT_MARGIN = 8;
 const GAP = 6;
-const MAX_HEIGHT = 280;
+// min(320px, 60vh) — той самий ліміт, що .cabinet-select-panel у
+// globals.css (статичний max-height там — лише фолбек/документація,
+// цей рядок інлайн-стилем завжди перебиває його для конкретного
+// триґера/в'юпорта). VIEWPORT_HEIGHT_RATIO — окремо, бо залежить від
+// window.innerHeight, не фіксоване число.
+const MAX_HEIGHT = 320;
+const VIEWPORT_HEIGHT_RATIO = 0.6;
 
 type PanelStyle = { top: number; left: number; width: number; maxHeight: number; openUpward: boolean };
 
@@ -171,7 +177,10 @@ export function CabinetSelect({
       const spaceAbove = rect.top;
       const openUpward = spaceBelow < 160 && spaceAbove > spaceBelow;
       const available = openUpward ? spaceAbove : spaceBelow;
-      const maxHeight = Math.max(120, Math.min(available - GAP, MAX_HEIGHT));
+      const maxHeight = Math.max(
+        120,
+        Math.min(available - GAP, MAX_HEIGHT, viewportHeight * VIEWPORT_HEIGHT_RATIO)
+      );
       const left = Math.max(
         VIEWPORT_MARGIN,
         Math.min(rect.left, viewportWidth - rect.width - VIEWPORT_MARGIN)
@@ -220,10 +229,20 @@ export function CabinetSelect({
     };
   }, [open]);
 
+  // panelStyle у залежностях (не лише open/highlighted) — панель
+  // монтується в DOM (і li-рефи з'являються) ЛИШЕ коли reposition()
+  // вище вже встиг виставити panelStyle (requestAnimationFrame, інший
+  // ефект); без цього цей ефект спершу спрацьовує на САМЕ ВІДКРИТТЯ, коли
+  // панелі ще нема в DOM (optionRefs порожні, scrollIntoView німо
+  // нічого не робить), і вдруге вже не викликається, бо open/highlighted
+  // після монтування не змінюються — обрана опція ніколи не скролилась
+  // у видиму зону при відкритті. Повторний виклик при кожному
+  // reposition (ресайз) — безпечний: scrollIntoView("nearest") не робить
+  // нічого, якщо елемент уже видимий.
   useEffect(() => {
     if (!open) return;
     optionRefs.current.get(highlighted)?.scrollIntoView({ block: "nearest" });
-  }, [open, highlighted]);
+  }, [open, highlighted, panelStyle]);
 
   return (
     <>
