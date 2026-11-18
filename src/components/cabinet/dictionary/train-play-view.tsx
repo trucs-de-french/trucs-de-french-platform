@@ -55,6 +55,17 @@ const TYPE_ICON: Record<QuestionType, typeof Layers> = {
   gap: AlignLeft,
 };
 
+// Короткі назви лише для пілюль розбивки на екрані результатів (рядок
+// "Слова для повторення" і решта фічі лишаються на довгих TYPE_CHIP_KEY
+// назвах) — пілюлі в один рядок без wrap, довге "Речення з пропуском"
+// там не влізло б навіть на 4 типи.
+const SHORT_TYPE_KEY: Record<QuestionType, MessageKey> = {
+  cards: "cabinet.dictionary.train.results.shortCards",
+  choice: "cabinet.dictionary.train.results.shortChoice",
+  unscramble: "cabinet.dictionary.train.results.shortUnscramble",
+  gap: "cabinet.dictionary.train.results.shortGap",
+};
+
 const ENCOURAGEMENT_KEY: Record<AccuracyBand, MessageKey> = {
   low: "cabinet.dictionary.train.results.encouragementLow",
   mid: "cabinet.dictionary.train.results.encouragementMid",
@@ -339,7 +350,7 @@ export function TrainPlayView({
     return (
       <div className="train-card train-play-summary">
         <p className="train-status-text">{t(lang, "cabinet.dictionary.train.results.noWordsLeftTitle")}</p>
-        <button type="button" className="cabinet-btn-primary train-cta-button" onClick={handleToSetup}>
+        <button type="button" className="train-cta-secondary train-cta-button" onClick={handleToSetup}>
           {t(lang, "cabinet.dictionary.train.results.toSetup")}
         </button>
       </div>
@@ -385,11 +396,23 @@ export function TrainPlayView({
 
         {breakdown.length > 0 && (
           <ul className="train-results-breakdown">
-            {breakdown.map((entry) => (
-              <li key={entry.type} className="train-results-breakdown-item">
-                {t(lang, TYPE_CHIP_KEY[entry.type])} {entry.correct}/{entry.total}
-              </li>
-            ))}
+            {breakdown.map((entry) => {
+              const Icon = TYPE_ICON[entry.type];
+              const ariaLabel = t(lang, "cabinet.dictionary.train.results.breakdownAria", {
+                type: t(lang, TYPE_CHIP_KEY[entry.type]),
+                correct: entry.correct,
+                total: entry.total,
+              });
+              return (
+                <li key={entry.type} className="train-results-breakdown-item" aria-label={ariaLabel}>
+                  <Icon size={15} aria-hidden="true" className="train-results-breakdown-icon" />
+                  <span className="train-results-breakdown-name">{t(lang, SHORT_TYPE_KEY[entry.type])}</span>
+                  <span>
+                    {entry.correct}/{entry.total}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -401,11 +424,14 @@ export function TrainPlayView({
             <ul className="train-results-review-list">
               {wrongWords.map((w) => {
                 const Icon = TYPE_ICON[w.type];
+                const fullText = w.translation ? `${w.word} — ${w.translation}` : w.word;
                 return (
-                  <li key={w.id} className="train-results-review-item">
+                  <li key={w.id} className="train-results-review-item" title={fullText}>
                     <Icon size={16} aria-hidden="true" className="train-results-review-icon" />
-                    <span className="train-results-review-word">{w.word}</span>
-                    {w.translation && <span className="train-results-review-translation">{w.translation}</span>}
+                    <span className="train-results-review-text">
+                      <span className="train-results-review-word">{w.word}</span>
+                      {w.translation && <span className="train-results-review-translation"> · {w.translation}</span>}
+                    </span>
                   </li>
                 );
               })}
@@ -437,21 +463,23 @@ export function TrainPlayView({
               {t(lang, "cabinet.dictionary.train.results.retryMistakes")}
             </button>
           )}
-          <button
-            type="button"
-            className="train-cta-secondary train-cta-button"
-            disabled={saveState === "saving" || isRoundLoading}
-            onClick={handleAnotherRound}
-          >
-            {t(lang, "cabinet.dictionary.train.results.anotherRound")}
-          </button>
-          <button
-            type="button"
-            className="train-cta-secondary train-cta-button"
-            onClick={() => router.push("/cabinet/dictionary")}
-          >
-            {t(lang, "cabinet.nav.dictionary")}
-          </button>
+          <div className="train-results-secondary-row">
+            <button
+              type="button"
+              className="train-cta-secondary train-cta-button"
+              disabled={saveState === "saving" || isRoundLoading}
+              onClick={handleAnotherRound}
+            >
+              {t(lang, "cabinet.dictionary.train.results.anotherRound")}
+            </button>
+            <button
+              type="button"
+              className="train-cta-secondary train-cta-button"
+              onClick={() => router.push("/cabinet/dictionary")}
+            >
+              {t(lang, "cabinet.nav.dictionary")}
+            </button>
+          </div>
           <button type="button" className="dictionary-context-toggle train-results-settings-link" onClick={handleToSetup}>
             {t(lang, "cabinet.dictionary.train.results.changeSettings")}
           </button>

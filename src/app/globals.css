@@ -19574,6 +19574,16 @@ button.cabinet-nav-item {
   align-items: stretch;
   text-align: left;
   width: 100%;
+  gap: 0;
+  /* Контейнер-запит (не viewport-медіа): ЦЕЙ блок завжди лишається в
+     560px-колонці .train-page незалежно від ширини вікна (десктоп ≠
+     широкий вміст тут) — пілюлі/плитки нижче мають реагувати на РЕАЛЬНО
+     доступну ширину колонки, не на ширину вікна, тож інакше, ніж
+     стандартний 768px viewport-breakpoint ("UI rules" у CLAUDE.md),
+     container query тут коректніший: той самий прийом (container-type:
+     inline-size + @container), що вже є в цьому файлі (наприклад,
+     .grid-zoom-wrap), лише вперше застосований у цій фічі. */
+  container-type: inline-size;
 }
 .train-results .train-play-summary-score,
 .train-results-encouragement,
@@ -19581,7 +19591,7 @@ button.cabinet-nav-item {
   text-align: center;
 }
 .train-results-encouragement {
-  margin: 0;
+  margin: 10px 0 0;
   font-family: var(--font-body);
   font-size: 15px;
   color: var(--cabinet-muted);
@@ -19590,33 +19600,68 @@ button.cabinet-nav-item {
   color: #cfcde0;
 }
 
+/* Пілюлі розбивки за типом — ОДИН рядок, НІКОЛИ не wrap-ляться
+   (flex-wrap: nowrap), навіть на 4 типи при 320px: icon(15px)+коротка
+   назва+рахунок на padding 0 12px/32px висоти разом важать менше, ніж
+   320px/4 ≈ 80px на пілюлю. На вузькому контейнері коротка назва
+   ховається візуально (@container нижче) — лишається лише icon+рахунок,
+   повна назва й рахунок завжди йдуть через aria-label на самому <li>
+   (екранний читач бачить ОДНАКОВО на будь-якій ширині, не лише на
+   вузькій). */
 .train-results-breakdown {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  margin: 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
   justify-content: center;
 }
 .train-results-breakdown-item {
-  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
-  background: var(--cabinet-panel-bg);
-  border: 1px solid var(--cabinet-line);
+  background: #f4ecd0;
+  border: 1px solid #e0cf94;
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 13px;
-  color: var(--cabinet-ink);
+  color: #4a3d17;
+  white-space: nowrap;
 }
 .dark .train-results-breakdown-item {
-  background: rgba(47, 61, 168, 0.12);
-  border-color: #27338f;
-  color: #f0f0fa;
+  background: rgba(47, 61, 168, 0.28);
+  border: 1px solid #27338f;
+  color: #e6e3f7;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-results-breakdown-item {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.train-results-breakdown-icon {
+  flex-shrink: 0;
+}
+/* Коротка назва (з SHORT_TYPE_KEY, train-play-view.tsx) — видима лише
+   коли контейнер досить широкий (не мобільний viewport, а реальна
+   ширина .train-results, завжди ≤560px); на вузькому лишається
+   icon+рахунок, повна назва й далі доступна через aria-label на <li>. */
+.train-results-breakdown-name {
+  display: none;
+}
+@container (min-width: 520px) {
+  .train-results-breakdown-name {
+    display: inline;
+  }
 }
 
 .train-results-congrats {
-  margin: 0;
+  margin: 20px 0 0;
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 14px;
@@ -19630,6 +19675,7 @@ button.cabinet-nav-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 20px;
 }
 .train-results-review-title {
   margin: 0;
@@ -19638,48 +19684,78 @@ button.cabinet-nav-item {
   font-size: 14px;
   color: var(--cabinet-ink);
 }
+/* Компактні плитки "Слова для повторення" — CSS grid (не flex-column):
+   1 колонка вузько, 2 колонки на ширшому контейнері (той самий @container
+   520px-порог, що пілюлі вище). Grid, а не flex-wrap, навмисно — так
+   непарна остання плитка природно лишається в ЛІВІЙ колонці й не
+   розтягується на всю ширину (grid НЕ стретчить одинокий елемент
+   останнього ряду на кілька колонок сам по собі, на відміну від
+   flex-wrap, де остання плитка могла б зайняти залишок ряду). */
 .train-results-review-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+@container (min-width: 520px) {
+  .train-results-review-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 .train-results-review-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 0 14px;
   min-height: 44px;
   border-radius: 12px;
-  background: var(--cabinet-panel-bg);
-  border: 1px solid var(--cabinet-line);
+  background: #f8f3e4;
+  border: 1px solid #e0cf94;
+  overflow: hidden;
 }
 .dark .train-results-review-item {
-  background: rgba(47, 61, 168, 0.1);
-  border-color: #27338f;
+  background: rgba(47, 61, 168, 0.22);
+  border: 1px solid #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-results-review-item {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
 }
 .train-results-review-icon {
   flex-shrink: 0;
+  opacity: 0.7;
   color: var(--cabinet-muted);
 }
 .dark .train-results-review-icon {
   color: #aaa8c2;
 }
+/* Слово+переклад — ОДИН текстовий рядок, що тронкується ellipsis'ом як
+   ЦІЛЕ (не кожен span окремо): white-space/overflow/text-overflow на
+   обгортці, різні вага/колір усередині (word/translation spans) не
+   заважають браузеру рахувати їх одним рядком для обрізання. title на
+   <li> (train-play-view.tsx) несе повний нетронкований текст. */
+.train-results-review-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .train-results-review-word {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 14px;
   color: var(--cabinet-ink);
 }
 .train-results-review-translation {
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--cabinet-muted);
-}
-.dark .train-results-review-translation {
-  color: #aaa8c2;
+  color: var(--cabinet-ink);
+  opacity: 0.65;
 }
 
 .train-results-save-error {
@@ -19687,27 +19763,48 @@ button.cabinet-nav-item {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  margin-top: 16px;
 }
 
-/* Друга кнопка в CTA-барі результатів — обрис, не заливка (лише
-   "Повторити помилки" лишається primary): та сама пілюля-рамка, що
-   .train-play-back, лише full-width/52px-висота, той самий геометричний
-   клас, що .train-cta-button. */
+/* CTA-бар результатів — той самий .train-cta-bar клас, що й решта фічі
+   (setup/play), gap:8px там лишається ЗАГАЛЬНИМ правилом для всіх екранів
+   — тут, усередині .train-results, ритм між секціями (18px до primary,
+   10px до другого ряду, 14px до лінка) замінює той уніфікований gap
+   власними margin-top на кожному елементі, тож gap скидається в 0 лише
+   в ЦЬОМУ контексті. */
+.train-results .train-cta-bar {
+  gap: 0;
+  margin-top: 18px;
+}
+
+/* Друга пара кнопок — виразна gold-рамка (на відміну від "Повторити
+   помилки", яка лишається заливкою .cabinet-btn-primary), щоб явно
+   відрізнятись від сусідніх блоків: світла — біле тло/темний текст;
+   темна — прозоре тло/gold текст. 48px-висота/округлення успадковуються
+   від .train-cta-button (той самий геометричний клас), лише тут
+   явно повторені, бо .train-cta-secondary у стильовому порядку файлу
+   йде ПІЗНІШЕ за .train-cta-button (та сама специфічність) — порядок
+   визначає, чиє значення переможе, тож 48px тут свідомо перекриває
+   52px звідти. */
 .train-cta-secondary {
-  background: var(--cabinet-card-bg);
-  border: 1.5px solid var(--cabinet-line);
-  color: var(--cabinet-ink);
+  min-height: 48px;
+  background: #ffffff;
+  border: 1.5px solid #c9a43c;
+  color: #1a1740;
   font-family: var(--font-heading);
   font-weight: 700;
   transition: border-color 150ms, background-color 150ms;
 }
 .dark .train-cta-secondary {
-  background: rgba(47, 61, 168, 0.12);
-  border-color: #27338f;
-  color: #f0f0fa;
+  background: transparent;
+  border-color: #e6c878;
+  color: #f0d78f;
 }
 .train-cta-secondary:hover {
-  border-color: #d9b765;
+  border-color: #b8923a;
+}
+.dark .train-cta-secondary:hover {
+  border-color: #f0d78f;
 }
 .train-cta-secondary:focus-visible {
   outline: 2px solid #d9b765;
@@ -19721,8 +19818,33 @@ button.cabinet-nav-item {
   cursor: not-allowed;
 }
 
+/* "Ще раунд"+"Мій словник" — стовпець вузько, ряд на ширшому контейнері
+   (той самий 520px-порiг, що пілюлі/плитки вище). :first-child-гілка —
+   коли "Повторити помилки" відсутній (усі відповіді правильні), цей ряд
+   стає ПЕРШИМ у CTA-барі й отримує той самий 18px, що вже дав
+   .train-cta-bar margin-top вище, без додаткового 10px "між primary і
+   цим рядом". */
+.train-results-secondary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.train-cta-bar > .train-results-secondary-row:first-child {
+  margin-top: 0;
+}
+@container (min-width: 520px) {
+  .train-results-secondary-row {
+    flex-direction: row;
+  }
+  .train-results-secondary-row > .train-cta-secondary {
+    flex: 1 1 0;
+  }
+}
+
 .train-results-settings-link {
   align-self: center;
+  margin-top: 14px;
 }
 
 /* "Мій словник" Етап 2 — кнопка збереження слова (save-word-button.tsx),
