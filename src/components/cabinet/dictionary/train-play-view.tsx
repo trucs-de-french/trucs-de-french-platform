@@ -1,27 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { t } from "@/lib/i18n/t";
 import type { MessageKey } from "@/lib/i18n/messages/uk";
 import type { UiLang } from "@/lib/ui/product-lang";
 import type { PartOfSpeech } from "@/lib/vocab-categories";
-import type { TrainingFilter, TrainingLimit, TrainingExerciseType } from "@/lib/cabinet/word-training";
+import type { TrainingFilter, TrainingLimit } from "@/lib/cabinet/word-training";
 import { SortableTileRow } from "@/components/exercises/sortable-tile-row";
-import { buildSession, type Question, type QuestionType } from "@/lib/cabinet/word-training-session";
+import { buildSession, type BuildSessionResult, type Question, type QuestionType } from "@/lib/cabinet/word-training-session";
 import type { TrainingWord } from "@/app/cabinet/dictionary/train/actions";
 
-// Параметри, з якими відкрилась ЦЯ сесія (play/page.tsx) — у словнику
-// setup-екрана (TrainingExerciseType, не QuestionType buildSession) так
-// само, як handleStart у train-setup-view.tsx сам кладе їх у query
-// string: "Назад" нижче просто повертає рівно ці самі значення назад,
-// setup відкриється з тим самим вибором, не з дефолтом.
+// Параметри, з якими відкрилась ЦЯ сесія (play/page.tsx) — той самий
+// канонічний QuestionType-словник, що enabledTypes/buildSession (раніше
+// тут був окремий TrainingExerciseType-словник setup-екрана — звідси й
+// баг "перемикачі майже не впливають на сесію", виправлений об'єднанням
+// словників в ОДИН): handleStart у train-setup-view.tsx сам кладе ці
+// значення в query string, "Назад" нижче просто повертає їх назад.
 export type TrainSetupParams = {
   filter: TrainingFilter;
   category: PartOfSpeech | "none" | "all";
   limit: TrainingLimit;
-  types: TrainingExerciseType[];
+  types: QuestionType[];
 };
 
 const TYPE_CHIP_KEY: Record<QuestionType, MessageKey> = {
@@ -46,27 +47,65 @@ export function TrainPlayView({
   setupParams: TrainSetupParams;
 }) {
   const router = useRouter();
-  // buildSession раз, лінивим ініціалізатором useState (не useMemo без
-  // залежностей і не ефект) — rng викликається РІВНО один раз за життя
-  // компонента, той самий принцип, що "не робити побічний ефект під час
-  // рендеру", лише через ліниву ініціалізацію стейту, а не useEffect+
-  // setState (чого react-hooks/set-state-in-effect тут не дозволив би).
-  const [session] = useState(() => buildSession(words, enabledTypes));
-  const { questions, skippedCount } = session;
+
+  // Сесія будується ЛИШЕ на клієнті, у ефекті після монтування (НЕ в
+  // лінивому ініціалізаторі useState, як було раніше) — buildSession
+  // усередині кличе Math.random (shuffleWith/scrambleWord) для порядку
+  // слів/типів/варіантів/перемішаних літер; useState-ініціалізатор
+  // виконується і під час SSR, і ПОВТОРНО під час першого клієнтського
+  // рендеру гідрації — два НЕЗАЛЕЖНІ викличи Math.random дають РІЗНИЙ
+  // результат, тож сервер і клієнт малювали різні слова/варіанти (саме
+  // це й було "Hydration failed: ... потрібно ... каструля"). builtRef
+  // — buildSession викликається РІВНО один раз: React Strict Mode в dev
+  // монтує/демонтує/монтує ефекти заново, і без ref-застереження другий
+  // виклик переписав би сесію ІНШОЮ випадковою, що виглядало б як
+  // спалах різних питань одразу після першого рендеру.
+  const [session, setSession] = useState<BuildSessionResult | null>(null);
+  const builtRef = useRef(false);
 
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("answering");
   const [selected, setSelected] = useState<string | null>(null);
-  const [tiles, setTiles] = useState<string[]>(() => (questions[0]?.type === "unscramble" ? questions[0].tiles : []));
+  const [tiles, setTiles] = useState<string[]>([]);
   const [flipped, setFlipped] = useState(false);
   const [cardKnown, setCardKnown] = useState<boolean | null>(null);
   const [ukExpanded, setUkExpanded] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const optionRefs = useRef<HTMLButtonElement[]>([]);
 
+  useEffect(() => {
+    if (builtRef.current) return;
+    builtRef.current = true;
+    setSession(buildSession(words, enabledTypes));
+  }, [words, enabledTypes]);
+
+  const questions = session?.questions ?? [];
+  const skippedCount = session?.skippedCount ?? 0;
   const question = questions[index];
   const total = questions.length;
   const isLast = index === total - 1;
+
+  // "Запам'ятати інформацію з попереднього рендеру" — офіційний React-
+  // паттерн через useState, НЕ useRef (react-hooks/refs забороняє читати/
+  // писати ref.current під час рендеру в цій версії лінтера) — той самий
+  // принцип, що lastPage у flip-cards.tsx/lastHintText у task-panel-
+  // header.tsx: щойно question (за REFERENCE, не лише index — так само
+  // ловить "сесія щойно з'явилась") відрізняється від lastQuestion,
+  // одноразово зкидаємо робочий стан картки під НЬОГО, НЕ в ефекті. Під
+  // час SSR question завжди undefined (session завжди null — ефект вище
+  // на сервері не виконується взагалі), тож ця гілка там ніколи не
+  // виконується — спрацьовує лише після монтування на клієнті, коли
+  // сесія вже реально готова.
+  const [lastQuestion, setLastQuestion] = useState<Question | undefined>(undefined);
+  if (question && lastQuestion !== question) {
+    setLastQuestion(question);
+    setSelected(null);
+    setTiles(question.type === "unscramble" ? question.tiles : []);
+    setFlipped(false);
+    setCardKnown(null);
+    setUkExpanded(false);
+    setPhase("answering");
+  }
 
   function handleClose() {
     if (window.confirm(t(lang, "cabinet.dictionary.train.play.exitConfirm"))) {
@@ -88,15 +127,6 @@ export function TrainPlayView({
     params.set("limit", String(setupParams.limit));
     params.set("types", setupParams.types.join(","));
     router.push(`/cabinet/dictionary/train?${params.toString()}`);
-  }
-
-  function resetForQuestion(q: Question | undefined) {
-    setSelected(null);
-    setTiles(q?.type === "unscramble" ? q.tiles : []);
-    setFlipped(false);
-    setCardKnown(null);
-    setUkExpanded(false);
-    setPhase("answering");
   }
 
   function recordResult(correct: boolean) {
@@ -123,14 +153,13 @@ export function TrainPlayView({
     setPhase("checked");
   }
 
+  // Робочий стан під нове питання (tiles/selected/phase тощо) скидає
+  // render-time блок вище (lastQuestionRef) сам, щойно question (за
+  // новим index) відрізняється від попереднього — тут лише просування
+  // індексу, навіть за межі questions (рендер підсумку нижче тоді й
+  // подбає).
   function handleNext() {
-    const nextIndex = index + 1;
-    if (nextIndex >= total) {
-      setIndex(nextIndex); // виходить за межі questions -> рендер підсумку нижче
-      return;
-    }
-    setIndex(nextIndex);
-    resetForQuestion(questions[nextIndex]);
+    setIndex((i) => i + 1);
   }
 
   function handleOptionsKeyDown(e: React.KeyboardEvent, options: string[]) {
@@ -150,6 +179,19 @@ export function TrainPlayView({
       e.preventDefault();
       handleCheck();
     }
+  }
+
+  // Сесія ще не побудована (ефект щойно відпрацював на клієнті) —
+  // нейтральний плейсхолдер, що рендериться ОДНАКОВО на сервері й
+  // клієнті (жодної залежності від Math.random/самих слів): reuse
+  // існуючого ключа "Завантаження…" (додано в кроці 2, ніким досі не
+  // використовувався).
+  if (!session) {
+    return (
+      <div className="train-card train-play-summary">
+        <p className="train-status-text">{t(lang, "cabinet.dictionary.train.setup.loading")}</p>
+      </div>
+    );
   }
 
   // Кінець сесії — index вийшов за межі questions (handleNext вище).

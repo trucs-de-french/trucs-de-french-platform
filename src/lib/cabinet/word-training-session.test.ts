@@ -137,6 +137,75 @@ assert(
   assert(questions.length === 0 && skippedCount === 1, "buildSession: skips when enabled type is ineligible for the word");
 }
 
+// --- buildSession: один тип увімкнено — усі питання ТІЛЬКИ цього типу ---
+{
+  const words: SessionWord[] = [
+    word({ id: "1", word: "chat", translation: "cat" }),
+    word({ id: "2", word: "chien", translation: "dog" }),
+    word({ id: "3", word: "souris", translation: "mouse" }),
+    word({ id: "4", word: "qu'il", translation: null }), // ineligible для cards (нема перекладу)
+  ];
+  const { questions, skippedCount } = buildSession(words, ["cards"], seededRng(9));
+  assert(questions.length === 3, "buildSession: ['cards'] only produces questions for cards-eligible words");
+  assert(questions.every((q) => q.type === "cards"), "buildSession: ['cards'] never produces another type");
+  assert(skippedCount === 1, "buildSession: ['cards'] skips the word with no translation");
+}
+{
+  const words: SessionWord[] = [
+    word({ id: "1", word: "maison", translation: "house" }), // unscramble-eligible (4-14 літер, просте слово)
+    word({ id: "2", word: "chat", translation: "cat" }), // теж eligible — довжина 4
+    word({ id: "3", word: "qu'il", translation: "that he" }), // ineligible для unscramble (апостроф лишається після зняття артикля)
+    word({ id: "4", word: "va", translation: "goes" }), // ineligible для unscramble (2 літери, <4)
+  ];
+  const { questions, skippedCount } = buildSession(words, ["unscramble"], seededRng(10));
+  assert(questions.length === 2, "buildSession: ['unscramble'] only produces questions for unscramble-eligible words");
+  assert(questions.every((q) => q.type === "unscramble"), "buildSession: ['unscramble'] never produces another type");
+  assert(skippedCount === 2, "buildSession: ['unscramble'] skips both ineligible words (apostrophe, too short)");
+}
+
+// --- buildSession: усі 4 типи, великий набір — усі типи з'являються,
+// розподіл рівний ---------------------------------------------------
+{
+  function makeBalancedWord(i: number): SessionWord {
+    const suffix = String.fromCharCode(97 + (i % 26)) + String.fromCharCode(97 + Math.floor(i / 26));
+    const w = `mangue${suffix}`;
+    return word({
+      id: `w${i}`,
+      word: w,
+      translation: `fruit${suffix}`,
+      partOfSpeech: "nom",
+      contextFr: `J'aime ${w} beaucoup.`,
+    });
+  }
+  const words40 = Array.from({ length: 40 }, (_, i) => makeBalancedWord(i));
+  const { questions, skippedCount } = buildSession(words40, ["cards", "choice", "unscramble", "gap"], seededRng(11));
+  assert(questions.length === 40 && skippedCount === 0, "buildSession: all 4 types enabled, nothing skipped on a fully-eligible set");
+  const usage = { cards: 0, choice: 0, unscramble: 0, gap: 0 };
+  for (const q of questions) usage[q.type]++;
+  assert(
+    usage.cards > 0 && usage.choice > 0 && usage.unscramble > 0 && usage.gap > 0,
+    "buildSession: all 4 types appear when all are enabled and eligible"
+  );
+  // Коли всі 4 типи eligible для КОЖНОГО слова, балансування
+  // (buildSession: завжди найменш використаний тип) дає рівно по 10 на
+  // кожен тип для будь-якого seed, не лише "приблизно".
+  assert(
+    usage.cards === 10 && usage.choice === 10 && usage.unscramble === 10 && usage.gap === 10,
+    `buildSession: exactly balanced across 4 types on a 40-word fully-eligible set (got ${JSON.stringify(usage)})`
+  );
+}
+
+// --- buildSession: enabledTypes=[] -> нуль питань, усе пропущено ------
+{
+  const words: SessionWord[] = [
+    word({ id: "1", word: "chat", translation: "cat" }),
+    word({ id: "2", word: "chien", translation: "dog" }),
+  ];
+  const { questions, skippedCount } = buildSession(words, [], seededRng(12));
+  assert(questions.length === 0, "buildSession: [] enabled types produces zero questions");
+  assert(skippedCount === words.length, "buildSession: [] enabled types skips every word");
+}
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) failed`);
   process.exitCode = 1;

@@ -10,37 +10,38 @@ import type { UiLang } from "@/lib/ui/product-lang";
 import { PART_OF_SPEECH_ORDER, PART_OF_SPEECH_LABELS_FR, type PartOfSpeech } from "@/lib/vocab-categories";
 import {
   TRAINING_LIMITS,
-  TRAINING_EXERCISE_TYPES,
   hasSentenceGapFill,
   type TrainingFilter,
   type TrainingLimit,
-  type TrainingExerciseType,
   type TrainingOverview,
 } from "@/lib/cabinet/word-training";
+import { QUESTION_TYPES, countEligibleWords, type QuestionType } from "@/lib/cabinet/word-training-session";
 import { loadTrainingWords, type TrainingWord } from "@/app/cabinet/dictionary/train/actions";
 import { CabinetSelect, type CabinetSelectOption } from "@/components/cabinet/cabinet-select";
 import { SwitchToggle } from "@/components/cabinet/switch-toggle";
 
-const ALL_TYPE_IDS = TRAINING_EXERCISE_TYPES;
+const ALL_TYPE_IDS = QUESTION_TYPES;
 
-// Icon-мапінг — flip_cards/Shuffle(unscramble) той самий, що адмінський
+// Icon-мапінг — cards/Shuffle(unscramble) той самий, що адмінський
 // TASK_TYPE_ICONS (task-type-meta.ts), для візуальної узгодженості з
 // рештою платформи; Languages/AlignLeft — нові, для типів вправ, яких у
-// адмінці немає.
+// адмінці немає. id — канонічний QuestionType (buildSession,
+// word-training-session.ts); nameKey/descKey лишаються тими самими
+// i18n-ключами, що й раніше (задача: "лише id-и міняються").
 const EXERCISE_TYPES: {
-  id: TrainingExerciseType;
+  id: QuestionType;
   Icon: typeof Layers;
   nameKey: MessageKey;
   descKey: MessageKey;
 }[] = [
   {
-    id: "flip_cards",
+    id: "cards",
     Icon: Layers,
     nameKey: "cabinet.dictionary.train.setup.exercise.flipCards.name",
     descKey: "cabinet.dictionary.train.setup.exercise.flipCards.desc",
   },
   {
-    id: "translation_choice",
+    id: "choice",
     Icon: Languages,
     nameKey: "cabinet.dictionary.train.setup.exercise.translationChoice.name",
     descKey: "cabinet.dictionary.train.setup.exercise.translationChoice.desc",
@@ -52,7 +53,7 @@ const EXERCISE_TYPES: {
     descKey: "cabinet.dictionary.train.setup.exercise.unscramble.desc",
   },
   {
-    id: "sentence_gap",
+    id: "gap",
     Icon: AlignLeft,
     nameKey: "cabinet.dictionary.train.setup.exercise.sentenceGap.name",
     descKey: "cabinet.dictionary.train.setup.exercise.sentenceGap.desc",
@@ -114,19 +115,19 @@ export function TrainSetupView({
   initialFilter?: TrainingFilter;
   initialCategory?: PartOfSpeech | "none" | "all";
   initialLimit?: TrainingLimit;
-  initialTypes?: TrainingExerciseType[];
+  initialTypes?: QuestionType[];
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<TrainingFilter>(initialFilter);
   const [category, setCategory] = useState<PartOfSpeech | "none" | "all">(initialCategory);
   const [limit, setLimit] = useState<TrainingLimit>(initialLimit);
-  const [userTypes, setUserTypes] = useState<Record<TrainingExerciseType, boolean>>(() => {
+  const [userTypes, setUserTypes] = useState<Record<QuestionType, boolean>>(() => {
     const enabled = new Set(initialTypes ?? ALL_TYPE_IDS);
     return {
-      flip_cards: enabled.has("flip_cards"),
-      translation_choice: enabled.has("translation_choice"),
+      cards: enabled.has("cards"),
+      choice: enabled.has("choice"),
       unscramble: enabled.has("unscramble"),
-      sentence_gap: enabled.has("sentence_gap"),
+      gap: enabled.has("gap"),
     };
   });
   const [candidateWords, setCandidateWords] = useState<TrainingWord[]>(initialWords);
@@ -205,15 +206,14 @@ export function TrainSetupView({
     );
   }, [candidateWords, effectiveCategory]);
 
-  const candidateCount = categoryFiltered.length;
   const gapFillEligibleCount = useMemo(
     () => categoryFiltered.filter((w) => hasSentenceGapFill(w)).length,
     [categoryFiltered]
   );
   const gapFillAvailable = gapFillEligibleCount >= 3;
 
-  function isEffectivelyOn(id: TrainingExerciseType): boolean {
-    if (id === "sentence_gap" && !gapFillAvailable) return false;
+  function isEffectivelyOn(id: QuestionType): boolean {
+    if (id === "gap" && !gapFillAvailable) return false;
     return userTypes[id];
   }
 
@@ -221,7 +221,7 @@ export function TrainSetupView({
   // увімкнених (враховує й авто-вимкнений gap-fill), не лише userTypes,
   // інакше можна було б вимкнути останній РЕАЛЬНО активний тип, лишивши
   // тільки недоступний gap-fill.
-  function handleToggleType(id: TrainingExerciseType, next: boolean) {
+  function handleToggleType(id: QuestionType, next: boolean) {
     if (!next) {
       const othersOn = ALL_TYPE_IDS.filter((other) => other !== id && isEffectivelyOn(other)).length;
       if (othersOn === 0) return;
@@ -230,7 +230,16 @@ export function TrainSetupView({
   }
 
   const selectedTypeIds = ALL_TYPE_IDS.filter(isEffectivelyOn);
-  const startCount = limit === "all" ? candidateCount : Math.min(limit, candidateCount);
+  // Скільки з categoryFiltered реально отримають питання з обраними
+  // типами (не лише довжина categoryFiltered, яка рахує тільки filter+
+  // категорію) — "Почати · N" більше не вводить в оману, коли, напр.,
+  // лише "Речення з пропуском" увімкнено, а в категорії лише 2 слова з
+  // прикладом речення.
+  const eligibleCount = useMemo(
+    () => countEligibleWords(categoryFiltered, selectedTypeIds),
+    [categoryFiltered, selectedTypeIds]
+  );
+  const startCount = limit === "all" ? eligibleCount : Math.min(limit, eligibleCount);
   const startWord = plural(lang, startCount, START_WORD_FORMS[lang]);
   const startLabel = t(lang, "cabinet.dictionary.train.setup.startButton", { count: startCount, word: startWord });
 
@@ -305,7 +314,7 @@ export function TrainSetupView({
         <h2 className="train-section-label">{t(lang, "cabinet.dictionary.train.setup.exerciseTypesLabel")}</h2>
         <div className="train-exercise-list">
           {EXERCISE_TYPES.map(({ id, Icon, nameKey, descKey }) => {
-            const disabled = id === "sentence_gap" && !gapFillAvailable;
+            const disabled = id === "gap" && !gapFillAvailable;
             return (
               <div className="train-exercise-row" key={id}>
                 <span className="train-exercise-icon" aria-hidden="true">

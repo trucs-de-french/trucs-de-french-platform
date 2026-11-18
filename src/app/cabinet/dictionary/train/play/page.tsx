@@ -9,23 +9,7 @@ import {
   parseTrainingLimitParam,
   parseTrainingExerciseTypesParam,
 } from "@/lib/cabinet/word-training";
-import type { QuestionType } from "@/lib/cabinet/word-training-session";
 import { TrainPlayView } from "@/components/cabinet/dictionary/train-play-view";
-
-// buildSession (word-training-session.ts) словник вправ — QuestionType
-// ("cards"/"choice"/"unscramble"/"gap") — НЕ той самий словник, що setup-
-// екран видає (TrainingExerciseType: "flip_cards"/"translation_choice"/
-// "unscramble"/"sentence_gap", word-training.ts). "types" із query парситься
-// ОБОМА валідаторами нижче окремо — для buildSession (questionTypes) і для
-// URL "Назад" на setup (parseTrainingExerciseTypesParam, передається у
-// TrainPlayView як є, той самий словник, що setup сам породжує).
-const QUESTION_TYPES: QuestionType[] = ["cards", "choice", "unscramble", "gap"];
-
-function parseQuestionTypesParam(raw: string | undefined): QuestionType[] {
-  if (!raw) return QUESTION_TYPES;
-  const picked = raw.split(",").filter((v): v is QuestionType => (QUESTION_TYPES as readonly string[]).includes(v));
-  return picked.length > 0 ? picked : QUESTION_TYPES;
-}
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -42,11 +26,12 @@ export default async function TrainPlayPage({
   const filter = parseTrainingFilterParam(first(sp.filter));
   const category = parseTrainingCategoryParam(first(sp.category));
   const limit = parseTrainingLimitParam(first(sp.limit));
-  const questionTypes = parseQuestionTypesParam(first(sp.types));
-  // Той самий сирий "types", лише розібраний у словнику setup-екрана —
-  // для кнопки "Назад" усередині TrainPlayView (та сама форма, що
-  // handleStart у train-setup-view.tsx сам кладе в query string).
-  const setupTypes = parseTrainingExerciseTypesParam(first(sp.types));
+  // ОДИН словник (QuestionType, buildSession) — той самий масив
+  // іде і в TrainPlayView.enabledTypes (buildSession), і в setupParams.types
+  // ("Назад" на setup) — раніше тут були ДВА окремі розбори "types" у
+  // двох різних словниках (звіт 379d493), тому перемикачі на setup майже
+  // не впливали на сесію.
+  const types = parseTrainingExerciseTypesParam(first(sp.types));
 
   const result = await loadTrainingWords({ filter, category, limit });
 
@@ -84,8 +69,8 @@ export default async function TrainPlayPage({
       <TrainPlayView
         lang={lang}
         words={result.words}
-        enabledTypes={questionTypes}
-        setupParams={{ filter, category, limit, types: setupTypes }}
+        enabledTypes={types}
+        setupParams={{ filter, category, limit, types }}
       />
     </div>
   );

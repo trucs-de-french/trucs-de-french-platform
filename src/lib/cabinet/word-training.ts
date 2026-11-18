@@ -1,5 +1,6 @@
 import { PART_OF_SPEECH_ORDER, type PartOfSpeech } from "@/lib/vocab-categories";
 import type { SavedWord } from "@/lib/cabinet/saved-words";
+import { QUESTION_TYPES, type QuestionType } from "@/lib/cabinet/word-training-session";
 
 // ЛИШЕ чисті типи й хелпери (без next/headers/@/lib/supabase/server) —
 // той самий принцип, що saved-words.ts: і клієнтський майбутній UI (крок
@@ -17,25 +18,22 @@ export const TRAINING_WEAK_ACCURACY_THRESHOLD = 0.6;
 export const TRAINING_LIMITS = [10, 20, 30, 40, "all"] as const;
 export type TrainingLimit = (typeof TRAINING_LIMITS)[number];
 
-// Типи вправ кроку 3-4 (продуктове рішення, зафіксоване тут — єдине
-// джерело id-ів, щоб майбутній UI не вигадував свої рядкові літерали).
-export type TrainingExerciseType = "flip_cards" | "translation_choice" | "unscramble" | "sentence_gap";
-export const TRAINING_EXERCISE_TYPES: TrainingExerciseType[] = [
-  "flip_cards",
-  "translation_choice",
-  "unscramble",
-  "sentence_gap",
-];
+// Легасі id-и типів вправ (крок 2, до об'єднання словників — звіт
+// комміту 379d493) — setup-екран колись сам видавав ці рядки в query
+// "types", не канонічні QuestionType з word-training-session.ts;
+// мапляться нижче, щоб старі збережені посилання/закладки з
+// types=flip_cards,... і т.п. й далі працювали.
+const LEGACY_TRAINING_TYPE_ALIASES: Record<string, QuestionType> = {
+  flip_cards: "cards",
+  translation_choice: "choice",
+  sentence_gap: "gap",
+};
 
 // Валідатори query-параметрів setup/play-екранів (train/page.tsx,
 // train/play/page.tsx) — ОДНА точка правди, щоб "Назад" із сесії на
 // setup і прямий перехід на /train/play з тим самим query string
 // розбирали filter/category/limit/types ОДНАКОВО (раніше обидві
-// сторінки тримали власні копії тих самих трьох перевірок). "types" тут
-// — словник TrainingExerciseType (той, що видає setup-екран у своєму
-// handleStart), НЕ QuestionType з word-training-session.ts (словник
-// buildSession) — вони different і НЕ взаємозамінні; play/page.tsx
-// парсить "types" двічі, окремо в кожному словнику.
+// сторінки тримали власні копії тих самих трьох перевірок).
 export function parseTrainingFilterParam(raw: string | null | undefined): TrainingFilter {
   return raw === "new" || raw === "weak" ? raw : "all";
 }
@@ -52,12 +50,17 @@ export function parseTrainingLimitParam(raw: string | null | undefined): Trainin
   return (TRAINING_LIMITS as readonly (number | "all")[]).includes(n) ? (n as TrainingLimit) : "all";
 }
 
-export function parseTrainingExerciseTypesParam(raw: string | null | undefined): TrainingExerciseType[] {
-  if (!raw) return TRAINING_EXERCISE_TYPES;
+// "types" — той самий канонічний QuestionType-словник, що buildSession
+// (word-training-session.ts) сам використовує, тож setup-перемикачі,
+// query-параметр і сесія завжди говорять ОДНОЮ мовою; легасі-назви
+// (LEGACY_TRAINING_TYPE_ALIASES вище) мапляться ДО фільтрації.
+export function parseTrainingExerciseTypesParam(raw: string | null | undefined): QuestionType[] {
+  if (!raw) return QUESTION_TYPES;
   const picked = raw
     .split(",")
-    .filter((v): v is TrainingExerciseType => (TRAINING_EXERCISE_TYPES as readonly string[]).includes(v));
-  return picked.length > 0 ? picked : TRAINING_EXERCISE_TYPES;
+    .map((v) => LEGACY_TRAINING_TYPE_ALIASES[v] ?? v)
+    .filter((v): v is QuestionType => (QUESTION_TYPES as readonly string[]).includes(v));
+  return picked.length > 0 ? picked : QUESTION_TYPES;
 }
 
 // Знятий з word_training_stats рядок (camelCase, той самий підхід, що

@@ -234,7 +234,15 @@ export function buildGapOptions(
 
 // --- Побудова сесії -----------------------------------------------------
 
-const TYPE_ORDER: QuestionType[] = ["cards", "choice", "unscramble", "gap"];
+// Канонічний словник і порядок типів вправ — ЄДИНЕ джерело правди
+// (експортований, бо setup/play-екрани теж мають на нього посилатись:
+// перемикачі setup-екрана, query-параметр "types", валідатор
+// parseTrainingExerciseTypesParam у word-training.ts). Раніше setup
+// тримав ОКРЕМИЙ словник (TrainingExerciseType: flip_cards/
+// translation_choice/sentence_gap) — types-перемикачі майже не впливали
+// на сесію, бо лише "unscramble" збігався з тим, що тут очікує
+// buildSession.
+export const QUESTION_TYPES: QuestionType[] = ["cards", "choice", "unscramble", "gap"];
 
 function buildQuestion(type: QuestionType, word: SessionWord, pool: SessionWord[], rng: () => number): Question | null {
   switch (type) {
@@ -325,7 +333,7 @@ export function buildSession(
   let skippedCount = 0;
 
   for (const word of shuffleWith(words, rng)) {
-    const eligibleTypes = TYPE_ORDER.filter((t) => enabled.has(t) && isEligible(t, word, words, rng));
+    const eligibleTypes = QUESTION_TYPES.filter((t) => enabled.has(t) && isEligible(t, word, words, rng));
     if (eligibleTypes.length === 0) {
       skippedCount++;
       continue;
@@ -345,4 +353,27 @@ export function buildSession(
   }
 
   return { questions, skippedCount };
+}
+
+// Скільки слів ОТРИМАЮТЬ питання з принаймні одним з enabledTypes — для
+// "Почати · N слів" на setup-екрані: лічильник там раніше рахував лише
+// filter+category (candidateCount), ігноруючи, чи слово взагалі
+// eligible бодай для ОДНОГО обраного типу вправи — число могло
+// показувати, напр., "20 слів", хоча пів із них не мали жодного
+// придатного типу й опинилися б у skippedCount під час самої сесії.
+// Той самий isEligible, що buildSession використовує для призначення
+// типу, тож число завжди узгоджене з тим, що студент реально побачить.
+// rng тут фіксований (не Math.random) — не впливає на САМ вердикт
+// eligible/ineligible (лише на порядок перемішування дистракторів
+// усередині buildChoiceOptions/buildGapOptions, не на їх КІЛЬКІСТЬ),
+// але явний детермінізм тут безпечніший і очевидніше чистий для
+// SSR-рендеру setup-екрана (жодного Math.random узагалі).
+export function countEligibleWords(
+  words: SessionWord[],
+  enabledTypes: QuestionType[],
+  rng: () => number = () => 0.5
+): number {
+  if (enabledTypes.length === 0) return 0;
+  const enabled = new Set(enabledTypes);
+  return words.filter((w) => QUESTION_TYPES.some((t) => enabled.has(t) && isEligible(t, w, words, rng))).length;
 }
