@@ -18855,9 +18855,10 @@ button.cabinet-nav-item {
    усюди на платформі (вправи курсів, видалення слова в словнику), не
    окремі "вправні" токени — ця сесія лишається в кабінетній мові
    (train-card/cabinet-chip--selected/cabinet-btn-primary), не в мові
-   курсових вправ (ANSWER_CARD_*/--dark-surface-fill тощо): той набір
+   курсових вправ (ANSWER_CARD_* / --dark-surface-fill тощо): той набір
    надто зав'язаний на конфіг завдань і інший dark-палет, перенесення
-   дало б візуальний шов поруч із уже збудованим setup-екраном. */
+   дало б візуальний шов поруч із уже збудованим setup-екраном.
+*/
 .train-play {
   display: flex;
   flex-direction: column;
