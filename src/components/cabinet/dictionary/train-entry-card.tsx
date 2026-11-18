@@ -20,13 +20,13 @@ export function TrainEntryCard({ lang, overview }: { lang: UiLang; overview: Tra
         <span className="train-entry-title">{t(lang, "cabinet.dictionary.train.entry.title")}</span>
         <span className="train-entry-text">{t(lang, "cabinet.dictionary.train.entry.text")}</span>
         <span className="train-entry-chips">
-          <span className="train-entry-chip">
+          <span className={`train-entry-chip${overview.total === 0 ? " train-entry-chip--zero" : ""}`}>
             {t(lang, "cabinet.dictionary.train.entry.chipAll", { count: overview.total })}
           </span>
-          <span className="train-entry-chip">
+          <span className={`train-entry-chip${overview.newCount === 0 ? " train-entry-chip--zero" : ""}`}>
             {t(lang, "cabinet.dictionary.train.entry.chipNew", { count: overview.newCount })}
           </span>
-          <span className="train-entry-chip">
+          <span className={`train-entry-chip${overview.weakCount === 0 ? " train-entry-chip--zero" : ""}`}>
             {t(lang, "cabinet.dictionary.train.entry.chipWeak", { count: overview.weakCount })}
           </span>
         </span>
