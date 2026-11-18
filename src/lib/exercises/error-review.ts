@@ -67,6 +67,19 @@ export function isWholePracticeTaskType(taskType: string): taskType is WholePrac
   return (WHOLE_MODE_TASK_TYPES as readonly string[]).includes(taskType);
 }
 
+// Єдине правило "цей тип має РЕАЛЬНУ практику" (не лише reviewMode !== "none") —
+// той самий критерій, що inline-фільтр pilotTaskIds у сценовій сторінці
+// (scenes/[sceneId]/page.tsx), звідси й винесено: обидва місця МАЮТЬ лишатись
+// синхронізованими (той самий isPracticeItemsTaskType(t) || isWholePracticeTaskType(t)),
+// бо лише ці типи мають гілку практики в error-review-block.tsx/practice/check —
+// reviewMode()==="whole" для НЕпідтримуваних типів (open_answer тощо) теж
+// true, але практики для них немає. Використовується standalone-сторінкою
+// "Робота над помилками" (mistakes-overview.ts) для того самого списку, що
+// вже рендерить сценова сторінка.
+export function isMistakePracticeSupported(taskType: string): boolean {
+  return isPracticeItemsTaskType(taskType) || isWholePracticeTaskType(taskType);
+}
+
 // Сурогатний ідентифікатор "елемента" для whole-режиму — усе завдання є
 // ОДНИМ елементом з точки зору mistake_corrections (corrected_item_ids/
 // failed_attempts), той самий механізм зберігання, що й items-режим, просто

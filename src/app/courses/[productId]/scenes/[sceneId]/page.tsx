@@ -126,10 +126,17 @@ type SceneBlockRow = { block_type: SceneBlockType | "content"; ref_id: string | 
 
 export default async function ScenePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ productId: string; sceneId: string }>;
+  // fix=<taskId> — приходить з /cabinet/mistakes ("Виправити"): автоматично
+  // розгортає відповідну картку всередині існуючого ErrorReviewBlock (якщо
+  // в цій сцені є task.type==="error_correction"), #error-review у href
+  // забезпечує нативний scroll-to-anchor браузера до самого блоку.
+  searchParams: Promise<{ fix?: string }>;
 }) {
   const { productId, sceneId } = await params;
+  const { fix: fixTaskId } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: scene }, { data: product }] = await Promise.all([
@@ -933,9 +940,15 @@ export default async function ScenePage({
                     )}
 
                     {task.type === "error_correction" && (
-                      <ExerciseErrorBoundary>
-                        <ErrorReviewBlock entries={errorReviewEntries} emptyState={errorReviewEmptyState} />
-                      </ExerciseErrorBoundary>
+                      <div id="error-review">
+                        <ExerciseErrorBoundary>
+                          <ErrorReviewBlock
+                            entries={errorReviewEntries}
+                            emptyState={errorReviewEmptyState}
+                            initialExpandedTaskId={fixTaskId ?? null}
+                          />
+                        </ExerciseErrorBoundary>
+                      </div>
                     )}
 
                     {task.type === "flip_cards" && (

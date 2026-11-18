@@ -21540,3 +21540,288 @@ button.cabinet-nav-item {
     background: rgba(255, 255, 255, 0.1);
   }
 }
+
+/* ============================================================================
+   /cabinet/mistakes — "Робота над помилками", крок 1 (список, згрупований
+   по сценах). Пілюлі підсумку — той самий вигляд, що .train-results-
+   breakdown-item (тренування слів): той самий warm-cream/blue-glass і той
+   самий 0.5px Retina-hairline прийом для dark-рамки картки/кнопки нижче
+   (@media min-resolution: 2dppx — transparent border-color + inset
+   box-shadow), повторений тут буквально тими самими кольорами, де задача
+   явно просила ті самі #2f3da8/#27338f, що вже встановлені для review-
+   тайлів тренування.
+   ============================================================================ */
+.mistakes-summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mistakes-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f4ecd0;
+  border: 1px solid #e0cf94;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 13px;
+  color: #4a3d17;
+  white-space: nowrap;
+}
+.dark .mistakes-summary-pill {
+  background: rgba(47, 61, 168, 0.28);
+  border: 1px solid rgba(230, 200, 120, 0.55);
+  color: #e6e3f7;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .mistakes-summary-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px rgba(230, 200, 120, 0.75);
+  }
+}
+
+.mistakes-load-error {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cabinet-muted);
+  margin-top: 16px;
+}
+
+.mistakes-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 24px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid var(--cabinet-line);
+}
+.dark .mistakes-empty-card {
+  background: rgba(47, 61, 168, 0.12);
+  border: 1px solid #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .mistakes-empty-card {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.mistakes-empty-icon {
+  color: #2f9e5e;
+}
+.dark .mistakes-empty-icon {
+  color: #4ade80;
+}
+.mistakes-empty-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--cabinet-ink);
+  margin: 0;
+}
+.mistakes-empty-text {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--cabinet-muted);
+  margin: 0;
+}
+.mistakes-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  background: #ffffff;
+  color: #1a1640;
+  border: 1.5px solid #c9a43c;
+  transition: filter 150ms;
+}
+.mistakes-empty-btn:hover {
+  filter: brightness(0.97);
+}
+.mistakes-empty-btn:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .mistakes-empty-btn {
+  background: transparent;
+  color: #f0d78f;
+  border: 1.5px solid #e6c878;
+}
+.dark .mistakes-empty-btn:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+
+.mistakes-scenes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+@media (min-width: 768px) {
+  .mistakes-scenes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+.mistakes-scene-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1.5px solid var(--cabinet-line);
+}
+.dark .mistakes-scene-card {
+  background: rgba(47, 61, 168, 0.12);
+  border: 1px solid #27338f;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .mistakes-scene-card {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+
+.mistakes-scene-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #efe3bd;
+}
+.dark .mistakes-scene-card-head {
+  border-bottom-color: #262d70;
+}
+.mistakes-scene-card-head-text {
+  min-width: 0;
+}
+.mistakes-scene-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--cabinet-ink);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mistakes-scene-course {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--cabinet-muted);
+  margin: 2px 0 0;
+}
+.mistakes-scene-count {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  /* Приглушений "destructive" тон, НЕ чистий червоний (за вимогою
+     задачі) — та сама пара світла/темна, що вже рекомендована для м'яких
+     error-акцентів цього кабінету. */
+  color: #9b4a44;
+}
+.dark .mistakes-scene-count {
+  color: #e2a49c;
+}
+
+.mistakes-task-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mistakes-task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.mistakes-task-row + .mistakes-task-row {
+  border-top: 1px solid #efe3bd;
+}
+.dark .mistakes-task-row + .mistakes-task-row {
+  border-top-color: #262d70;
+}
+.mistakes-task-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f4ecd0;
+  color: #4a3d17;
+}
+.dark .mistakes-task-icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0d78f;
+}
+.mistakes-task-text {
+  flex: 1;
+  min-width: 0;
+}
+.mistakes-task-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--cabinet-ink);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mistakes-task-subtitle {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--cabinet-muted);
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mistakes-fix-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  background: linear-gradient(160deg, #4b46da, #2f2c6b);
+  color: #ffffff;
+  transition: filter 150ms;
+}
+.mistakes-fix-btn:hover {
+  filter: brightness(1.06);
+}
+.mistakes-fix-btn:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .mistakes-fix-btn {
+  background: #e6c878;
+  color: #1a1640;
+}
+.dark .mistakes-fix-btn:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}

@@ -350,12 +350,18 @@ function ErrorReviewCard({
 export function ErrorReviewBlock({
   entries,
   emptyState,
+  initialExpandedTaskId,
 }: {
   entries: ErrorReviewEntryData[];
   emptyState: ErrorReviewEmptyState;
+  // Прийшли з /cabinet/mistakes ("Виправити") через ?fix=<taskId> — картка
+  // цього taskId розгортається вже на першому рендері, без додаткового
+  // кліку. null/undefined/taskId, якого немає серед entries, — звичайна
+  // поведінка (нічого не розгорнуто).
+  initialExpandedTaskId?: string | null;
 }) {
   const { t } = useT();
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(initialExpandedTaskId ?? null);
 
   return (
     <div className="flex flex-col gap-3">
