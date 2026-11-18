@@ -18714,13 +18714,31 @@ button.cabinet-nav-item {
   color: var(--cabinet-ink);
 }
 
-/* Сегментований тоггл (Які слова / Скільки слів) — ті самі чіпи, що
-   фільтри словника (.cabinet-chip--selected), лише обгорнуті як
-   radiogroup; невибраний варіант — звичайна флет-рамка, той самий
-   принцип, що .dictionary-chip. */
+/* Сегментований тоггл (Які слова / Скільки слів) — макет сегмент-
+   контролу: світла тема сидить на теплому кремовому "треку"
+   (.train-segmented), невибрані сегменти прозорі, вибраний — та сама
+   градієнтна пара, що .cabinet-chip--selected/.cabinet-btn-primary
+   (існуючий primary-токен кабінету, нова своя не вигадана), БЕЗ тіні-
+   ореолу (знято нижче — той самий прийом, що .library-filters.library-
+   filters .cabinet-chip--selected вище, з тих самих причин: специфічність
+   (0,0,3,0), що безумовно перебиває .dark .cabinet-chip--selected
+   (0,0,2,0) незалежно від порядку правил/теми). Темна тема НЕ отримує
+   кремовий трек — лишається на тій самій синій "скляній" родині, що
+   .train-card/.train-option (rgba(47,61,168,*) / #27338f 1x / #2f3da8
+   0.5px-hairline на 2x), сегмент тут просто ще не мав цього рецепту
+   раніше (був на дженерик var(--cabinet-line)/var(--cabinet-surface-2),
+   не на фактичних синіх токенах феатура). */
 .train-segmented {
   display: flex;
   flex-wrap: wrap;
+  gap: 4px;
+  background: #f1ead2;
+  border-radius: 999px;
+  padding: 4px;
+}
+.dark .train-segmented {
+  background: transparent;
+  padding: 0;
   gap: 6px;
 }
 .train-segment {
@@ -18730,17 +18748,32 @@ button.cabinet-nav-item {
   flex: 1 1 auto;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid var(--cabinet-line);
-  background: var(--cabinet-surface-2);
-  color: var(--cabinet-ink);
+  border: none;
+  background: transparent;
+  color: #1a1740;
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
-  transition: border-color 150ms, background-color 150ms;
+  transition: border-color 150ms, background-color 150ms, color 150ms;
+}
+.dark .train-segment {
+  border: 1px solid #27338f;
+  background: rgba(47, 61, 168, 0.12);
+  color: var(--cabinet-ink);
+  font-weight: 700;
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .train-segment {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
 }
 .train-segment:disabled {
   cursor: not-allowed;
+  color: #a5a3b8;
+}
+.dark .train-segment:disabled {
   opacity: 0.4;
 }
 .train-segment:focus-visible {
@@ -18749,6 +18782,20 @@ button.cabinet-nav-item {
 }
 .dark .train-segment:focus-visible {
   outline: 2px solid var(--cabinet-focus-ring);
+}
+/* Знімає тінь-ореол .cabinet-chip--selected (вибраний сегмент) в ОБОХ
+   темах — сам градієнт (світлий indigo/темний gold) лишається, лише без
+   box-shadow/filter навколо. */
+.train-segmented.train-segmented .cabinet-chip--selected {
+  box-shadow: none;
+  filter: none;
+}
+/* Сесія вправ (train-play-view.tsx) .cabinet-chip--selected зараз не
+   використовує — лишено про всяк випадок, той самий прийом, той самий
+   захист від тіні, якщо колись з'явиться. */
+.train-play.train-play .cabinet-chip--selected {
+  box-shadow: none;
+  filter: none;
 }
 
 /* Типи вправ — icon+назва+опис зліва, перемикач (SwitchToggle) справа;
