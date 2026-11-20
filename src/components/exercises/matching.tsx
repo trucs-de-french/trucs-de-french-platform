@@ -16,6 +16,7 @@ import { headerPointsState } from "@/lib/exercises/header-points";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { useCheckConfirm, CheckConfirmBar } from "./check-confirm";
 import { useT } from "@/lib/i18n/context";
+import { buildMatchingPairRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 
@@ -453,7 +454,12 @@ export function MatchingExercise({
   // Рядки статусу під дошкою — спільне для плаского режиму (інлайн-картка
   // сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4): та сама розмітка,
   // лише інший leftItems (config.left проти активного блоку, нижче).
-  function renderPracticeStatusList(leftItems: string[]) {
+  // hideReveal — лише сцена-вигляд (крок 3b): інлайн-кнопка "Показати
+  // відповідь"+розкритий текст замінюються на спільну панель "Правильні
+  // пари" під блоком (showToggle-картка TaskResult, той самий компонент,
+  // що звичайна вправа); лічильник спроб лишається — у звичайної вправи
+  // нема свого еквівалента цього рядка.
+  function renderPracticeStatusList(leftItems: string[], hideReveal = false) {
     return (
       <div className="flex flex-col gap-1.5">
         {leftItems.map((left) => {
@@ -462,7 +468,13 @@ export function MatchingExercise({
           const isCorrect = practiceResultByLeft[left];
           const attempts = practiceFailedAttempts[id] ?? 0;
           const itemRevealed = practiceCheck.revealed[id];
-          if (isCorrect === undefined && !itemRevealed) return null;
+          // hideReveal (сцена-вигляд) — itemRevealed тут ігнорується
+          // (панель нижче й сама запускає reveal на ВЕСЬ блок, щойно
+          // відкрита, незалежно від того, перевірявся цей left чи ні) —
+          // лише isCorrect вирішує, чи рядок статусу взагалі потрібен,
+          // інакше ненадрукований left показав би порожній рядок одразу
+          // після відкриття панелі.
+          if (hideReveal ? isCorrect === undefined : isCorrect === undefined && !itemRevealed) return null;
           return (
             <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
               {isCorrect === true && (
@@ -475,7 +487,7 @@ export function MatchingExercise({
                   <span className="text-red-600 dark:text-red-400">
                     {t("matching.leftIncorrectRetry", { left, n: attempts })}
                   </span>
-                  {!itemRevealed && (
+                  {!hideReveal && !itemRevealed && (
                     <button
                       type="button"
                       onClick={() => practiceCheck.reveal(id, true)}
@@ -487,7 +499,7 @@ export function MatchingExercise({
                   )}
                 </>
               )}
-              {itemRevealed && (
+              {!hideReveal && itemRevealed && (
                 <span className="italic text-amber-700 dark:text-amber-400">
                   <span className="exercise-answer-label">{t("answer.correctPairLabel")}</span> {left} →{" "}
                   {itemRevealed.join(", ")}
@@ -505,12 +517,19 @@ export function MatchingExercise({
     const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : config.right;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
     const activeItemIds = activeLeft.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
-    const activeAllAnswered = activeLeft.every((left) => !!practicePairs[left]);
+    // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
+    // нижче) — disabled лише поки запит у польоті (activeBlockPending
+    // там), БЕЗ вимоги "усі left з'єднані": повнота там лише показує
+    // CheckConfirmBar (попередження, не блокер) — практика її не має
+    // (immediate check). !activeAllAnswered тут раніше хибно блокував
+    // кнопку в блоках без жодної з'єднаної пари (задача "owner report":
+    // Перевірити блок недоступна в блоках 1/2, доступна лише в 3-му, де
+    // щось уже було з'єднано).
     const sceneCheckButtonEl = (
       <button
         type="button"
         onClick={() => submitPractice(activeLeft, activeItemIds, activeBlockIndex)}
-        disabled={practiceCheck.pending || !activeAllAnswered}
+        disabled={practiceCheck.pending}
         className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
       >
         {practiceCheck.pending ? t("button.checking") : practiceUseBlocks ? t("button.checkBlock") : t("button.check")}
@@ -532,6 +551,40 @@ export function MatchingExercise({
         usedRights={usedRightsPractice}
       />
     );
+    // Панель "Правильні пари" (крок 3b) — та сама TaskResult/
+    // TaskResultPairRows, що звичайна вправа (renderBlock() вище), лише
+    // right бере /api/exercises/practice/reveal по pair.id (лениво, коли
+    // студент розгортає панель), не blockDetail.correctPairs (практика
+    // його не має).
+    function revealBlockAnswers(ids: string[]) {
+      for (const id of ids) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const answersLoading = activeItemIds.some((id) => practiceCheck.revealPending[id]);
+    const allCorrectInBlock =
+      activeLeft.length > 0 && activeLeft.every((left) => practiceResultByLeft[left] === true);
+    const answersPanel = practiceBlockAttempted[activeBlockIndex] ? (
+      <TaskResult
+        key={activeBlockIndex}
+        correct={allCorrectInBlock}
+        toggleTitle={t("panel.correctPairsTitle")}
+        toggleCount={activeLeft.length}
+        onOpenChange={(open) => {
+          if (open) revealBlockAnswers(activeItemIds);
+        }}
+      >
+        {answersLoading ? (
+          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+            {t("panel.loadingAnswers")}
+          </p>
+        ) : (
+          <TaskResultPairRows
+            pairs={buildMatchingPairRowsFromReveal(activeLeft, idByLeft, practiceCheck.revealed)}
+          />
+        )}
+      </TaskResult>
+    ) : null;
     return (
       <div className={EXERCISE_STACK}>
         <BlockTabs
@@ -561,13 +614,15 @@ export function MatchingExercise({
           >
             <div className="flex flex-col gap-[14px] md:gap-[16px]">
               {board}
-              {renderPracticeStatusList(activeLeft)}
+              {renderPracticeStatusList(activeLeft, true)}
+              {answersPanel}
             </div>
           </BlockNavigation>
         ) : (
           <div className="flex flex-col gap-[14px] md:gap-[16px]">
             {board}
-            {renderPracticeStatusList(activeLeft)}
+            {renderPracticeStatusList(activeLeft, true)}
+            {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </div>
         )}

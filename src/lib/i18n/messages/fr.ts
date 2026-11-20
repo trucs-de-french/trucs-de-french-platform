@@ -83,6 +83,7 @@ export const fr: Record<MessageKey, string> = {
   "panel.withHint": "Avec indice",
   "panel.withHintCount": "Avec indice : {n} {word}",
   "panel.halfPointsSuffix": ", demi-points",
+  "panel.loadingAnswers": "Chargement des réponses…",
 
   "pool.drag": "Mots à glisser",
   "pool.crossOut": "Mots à barrer",

@@ -20,6 +20,7 @@ import { EXERCISE_BLOCK_SIZE, chunk } from "@/lib/exercises/exercise-blocks";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BlockNavigation, BlockTabs } from "./block-navigation";
 import { usePracticeCheck } from "./use-practice-check";
+import { buildTableFillAnswerRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 function cellKey(rowId: string, side: "left" | "right") {
   return `${rowId}:${side}`;
@@ -335,7 +336,12 @@ export function TableFillExercise({
     }
   }
 
-  function renderPracticeRow(row: Row) {
+  // hideReveal — лише сцена-вигляд (крок 3b): інлайн-кнопка "Показати
+  // відповідь"+розкритий текст замінюються на спільну панель "Правильні
+  // відповіді" під блоком (showToggle-картка TaskResult, той самий
+  // компонент, що звичайна вправа); лічильник спроб лишається — у
+  // звичайної вправи нема свого еквівалента цього рядка.
+  function renderPracticeRow(row: Row, hideReveal = false) {
     const isCorrect = practiceResults[row.id];
     const locked = isCorrect !== undefined;
     const attempts = practiceFailedAttempts[row.id] ?? 0;
@@ -383,7 +389,7 @@ export function TableFillExercise({
             <span className="text-red-600 dark:text-red-400">
               {tt("status.incorrectRetryCount", { n: attempts })}
             </span>
-            {!revealedAnswer && (
+            {!hideReveal && !revealedAnswer && (
               <button
                 type="button"
                 onClick={() => practiceCheck.reveal(row.id, true)}
@@ -395,7 +401,7 @@ export function TableFillExercise({
             )}
           </div>
         )}
-        {revealedAnswer && (
+        {!hideReveal && revealedAnswer && (
           <p className="text-xs italic text-amber-700 dark:text-amber-400">
             <span className="exercise-answer-label">{tt("answer.correctAnswerLabel")}</span> {revealedAnswer.join(" / ")}
           </p>
@@ -740,6 +746,48 @@ export function TableFillExercise({
         {practiceCheck.pending ? tt("button.checking") : practiceUseBlocks ? tt("button.checkBlock") : tt("button.check")}
       </button>
     );
+    // Панель "Правильні відповіді" (крок 3b) — та сама TaskResult/
+    // TaskResultAnswerRows, що звичайна вправа (renderBlock() вище), лише
+    // дані беруть /api/exercises/practice/reveal по рядку (лениво, коли
+    // студент розгортає панель), не detail. numberOffset — той самий
+    // принцип, що blockBase звичайної вправи (сума довжин ПОПЕРЕДНІХ
+    // блоків).
+    function revealBlockAnswers(ids: string[]) {
+      for (const id of ids) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const activeRowIds = activeRows.map((r) => r.id);
+    const answersLoading = activeRowIds.some((id) => practiceCheck.revealPending[id]);
+    const allCorrectInBlock = activeRowIds.length > 0 && activeRowIds.every((id) => practiceResults[id] === true);
+    const practiceBlockBase = practiceUseBlocks
+      ? practiceRowBlocks.slice(0, practiceActiveBlock).reduce((n, b) => n + b.length, 0)
+      : 0;
+    const answersPanel = practiceBlockAttempted[activeBlockIndex] ? (
+      <TaskResult
+        key={activeBlockIndex}
+        correct={allCorrectInBlock}
+        toggleTitle={tt("panel.correctAnswers")}
+        toggleCount={activeRows.length}
+        onOpenChange={(open) => {
+          if (open) revealBlockAnswers(activeRowIds);
+        }}
+      >
+        {answersLoading ? (
+          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+            {tt("panel.loadingAnswers")}
+          </p>
+        ) : (
+          <TaskResultAnswerRows
+            rows={buildTableFillAnswerRowsFromReveal(
+              activeRows,
+              practiceBlockBase,
+              Object.fromEntries(activeRowIds.map((id) => [id, practiceCheck.revealed[id]]))
+            )}
+          />
+        )}
+      </TaskResult>
+    ) : null;
     return (
       <div className={EXERCISE_STACK}>
         <BlockTabs
@@ -767,11 +815,13 @@ export function TableFillExercise({
             onChangeBlock={setPracticeActiveBlock}
             checkButton={sceneCheckButtonEl}
           >
-            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row))}</div>
+            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row, true))}</div>
+            {answersPanel}
           </BlockNavigation>
         ) : (
           <>
-            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row))}</div>
+            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row, true))}</div>
+            {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
         )}

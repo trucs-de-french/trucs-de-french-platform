@@ -84,6 +84,7 @@ export const uk = {
   "panel.withHint": "З підказкою",
   "panel.withHintCount": "З підказкою: {n} {word}",
   "panel.halfPointsSuffix": ", половина балів",
+  "panel.loadingAnswers": "Завантаження відповідей…",
 
   "pool.drag": "Mots à glisser",
   "pool.crossOut": "Mots à barrer",

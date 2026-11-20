@@ -28,6 +28,7 @@ import { useWorkingTileLayout, TWO_COLUMN_GRID_CLASS } from "./use-working-tile-
 import { splitIntoSyllableChunks, reconstructUnitWord, sliceUnitByChunks } from "@/lib/exercises/syllable-split";
 import { groupChars } from "@/lib/exercises/letter-cell-groups";
 import { estimateLetterGapsCardRows, orderByEstimatedRows } from "@/lib/exercises/estimate-card-rows";
+import { buildGapRowsFromReveal } from "@/lib/exercises/format-reveal-answer";
 
 // Плитки toggle-картки "Правильні відповіді" — одна плитка на СЛОВО
 // (природна одиниця letter_gaps, на відміну від fill_blank/drag_drop):
@@ -686,8 +687,13 @@ export function LetterGapsExercise({
   // Одна картка практики + рядок статусу під нею — спільне для плаского
   // режиму (інлайн-картка сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4):
   // та сама розмітка, лише інше джерело gapOrder/списку (practiceGapOrder
-  // проти gapOrderFor активного блоку, нижче).
-  function renderPracticeItem(wi: number, pos: number, gapOrder: GapKey[]) {
+  // проти gapOrderFor активного блоку, нижче). hideReveal — лише
+  // сцена-вигляд (крок 3b): інлайн-кнопка "Показати відповідь"+розкритий
+  // текст замінюються на спільну панель "Правильні відповіді" під блоком
+  // (showToggle-картка TaskResult, той самий компонент, що звичайна
+  // вправа), щоб не дублювати відповідь у двох місцях; лічильник спроб
+  // лишається — у звичайної вправи нема свого еквівалента цього рядка.
+  function renderPracticeItem(wi: number, pos: number, gapOrder: GapKey[], hideReveal = false) {
     const key = String(wi);
     const isCorrect = practiceResults[key];
     const attempts = practiceFailedAttempts[key] ?? 0;
@@ -709,7 +715,7 @@ export function LetterGapsExercise({
             <span className="text-red-600 dark:text-red-400">
               {t("status.incorrectRetryCount", { n: attempts })}
             </span>
-            {!itemRevealed && (
+            {!hideReveal && !itemRevealed && (
               <button
                 type="button"
                 onClick={() => practiceCheck.reveal(key, true)}
@@ -721,7 +727,7 @@ export function LetterGapsExercise({
             )}
           </div>
         )}
-        {itemRevealed && (
+        {!hideReveal && itemRevealed && (
           <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
             <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
           </p>
@@ -734,16 +740,67 @@ export function LetterGapsExercise({
     const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
     const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
     const activeGapOrder = gapOrderFor(activeIndices);
+    // Та сама умова, що checkButtonEl звичайної вправи (useBlocks-гілка,
+    // нижче) — disabled лише поки запит у польоті (activeBlockPending
+    // там), БЕЗ вимоги "усі слова заповнені": заповненість лише показує
+    // CheckConfirmBar (попередження, не блокер) там, де вона є взагалі —
+    // практика її не має (immediate check, той самий принцип, що плаский
+    // режим практики). !activeIndices.every(isWordFilled) тут раніше
+    // хибно блокував кнопку в ЩОЙНО відкритому блоці без жодної введеної
+    // літери (задача "owner report": Перевірити блок недоступна, доки
+    // блок не заповнений цілком).
     const sceneCheckButtonEl = (
       <button
         type="button"
         onClick={() => submitPractice(activeIndices, activeBlockIndex)}
-        disabled={practiceCheck.pending || !activeIndices.every(isWordFilled)}
+        disabled={practiceCheck.pending}
         className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
       >
         {practiceCheck.pending ? t("button.checking") : practiceUseBlocks ? t("button.checkBlock") : t("button.check")}
       </button>
     );
+    // Панель "Правильні відповіді" (крок 3b) — та сама TaskResult/
+    // TaskResultGapRows, що звичайна вправа (renderBlock() вище), лише
+    // дані беруть /api/exercises/practice/reveal по елементу (лениво,
+    // лише коли студент розгортає панель — onOpenChange, не на монтуванні
+    // блоку), не detail (практика його не має). Кеш — practiceCheck.revealed
+    // (той самий, що індивідуальна кнопка "Показати відповідь"), тож
+    // згортання/розгортання і router.refresh() нічого не перезапитують
+    // (ЗНОВУ дзвонить лише для СПРАВДІ ще не розкритих id).
+    function revealBlockAnswers(ids: string[]) {
+      for (const id of ids) {
+        if (!practiceCheck.revealed[id]) practiceCheck.reveal(id, true);
+      }
+    }
+    const activeKeys = activeIndices.map(String);
+    const answersLoading = activeKeys.some((key) => practiceCheck.revealPending[key]);
+    const allCorrectInBlock = activeKeys.length > 0 && activeKeys.every((key) => practiceResults[key] === true);
+    const answersPanel = practiceBlockAttempted[activeBlockIndex] ? (
+      <TaskResult
+        key={activeBlockIndex}
+        correct={allCorrectInBlock}
+        toggleTitle={t("panel.correctAnswers")}
+        toggleCount={activeIndices.length}
+        onOpenChange={(open) => {
+          if (open) revealBlockAnswers(activeKeys);
+        }}
+      >
+        {answersLoading ? (
+          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+            {t("panel.loadingAnswers")}
+          </p>
+        ) : (
+          <TaskResultGapRows
+            rows={buildGapRowsFromReveal(
+              activeIndices,
+              config.words.map((w) => w.chars),
+              Object.fromEntries(activeIndices.map((wi) => [wi, practiceCheck.revealed[String(wi)]?.[0]]))
+            )}
+            twoColumn
+          />
+        )}
+      </TaskResult>
+    ) : null;
     return (
       <div className={EXERCISE_STACK}>
         <BlockTabs
@@ -772,14 +829,16 @@ export function LetterGapsExercise({
             checkButton={sceneCheckButtonEl}
           >
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder, true))}
             </div>
+            {answersPanel}
           </BlockNavigation>
         ) : (
           <>
             <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
-              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder))}
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos, activeGapOrder, true))}
             </div>
+            {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </>
         )}

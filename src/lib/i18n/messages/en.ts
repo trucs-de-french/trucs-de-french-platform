@@ -81,6 +81,7 @@ export const en: Record<MessageKey, string> = {
   "panel.withHint": "With hint",
   "panel.withHintCount": "With hint: {n} {word}",
   "panel.halfPointsSuffix": ", half points",
+  "panel.loadingAnswers": "Loading answers…",
 
   "pool.drag": "Words to drag",
   "pool.crossOut": "Words to cross out",
