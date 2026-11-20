@@ -182,7 +182,20 @@ export async function loadSceneErrorReviewEntries(
         config:
           review.mode === "items"
             ? taskType === "matching"
-              ? sanitizeMatchingForPractice(config as unknown as MatchingConfig, review.remainingItemIds)
+              ? // "Робота над помилками", сцена-вигляд (крок 4, мистейки-
+                // сторінка) — wrongItemIds (ПОВНИЙ, стабільний набір пар, що
+                // колись були помилкою), не remainingItemIds (живий,
+                // звужується щоразу, коли студент виправляє пару): інакше
+                // вже виправлена пара зникала б із config.left/right/pairs
+                // після router.refresh(), і блок, у якому вона сиділа, не
+                // міг би й далі показати її як "вирішену" (ErrorReviewBlock,
+                // openMode="scene" — знімок remainingItemIds-НА-МОМЕНТ-
+                // ВІДКРИТТЯ визначає МЕЖІ блоків, а не те, які пари взагалі
+                // присутні в config). perBlockShuffle=true — right
+                // перемішується в межах кожного блоку (sanitize.ts), щоб
+                // matching.tsx міг позиційно нарізати config.right тим самим
+                // chunk(), що config.left.
+                sanitizeMatchingForPractice(config as unknown as MatchingConfig, review.wrongItemIds, true)
               : taskType === "drag_drop"
                 ? sanitizeDragDropForPractice(config as unknown as DragDropConfig, review.remainingItemIds)
                 : taskType === "image_match"

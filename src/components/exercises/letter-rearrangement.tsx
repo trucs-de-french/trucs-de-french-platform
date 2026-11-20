@@ -40,6 +40,16 @@ type LetterRearrangementResult = Extract<GradeResult, { detail: LetterRearrangem
 export type LetterRearrangementPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
+  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
+  // error-review-block.tsx передає: onlyItemIds вище стає ЗАМОРОЖЕНИМ
+  // знімком помилок на момент відкриття задачі (стабільне членство блоку
+  // на всю сесію, не live remainingItemIds), а плашка+заголовок+блоки
+  // (нижче) замінюють плаский одноколонковий список. correctedItemIds —
+  // підмножина onlyItemIds, вже виправлена ПІСЛЯ знімку (цього сеансу) —
+  // показується "вирішеною" в своєму блоці замість зникнення. Інлайн-
+  // картка сцени (error_correction, без цього поля) лишається пласким
+  // списком без плашки, НЕЗМІННО.
+  scene?: { correctedItemIds: string[] };
 };
 
 export function LetterRearrangementExercise({
@@ -223,7 +233,16 @@ export function LetterRearrangementExercise({
     ? config.words.map((_, wi) => wi).filter((wi) => practice!.onlyItemIds.includes(String(wi)))
     : [];
   const practiceCheck = usePracticeCheck(taskId);
-  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
+  // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
+  // error-review-block.tsx) засіюються як correct:true одразу при
+  // монтуванні — той самий вигляд ("Правильно" під карткою), що й щойно
+  // перевірений елемент, без повторного запиту.
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>(() => {
+    const seed: Record<string, boolean> = {};
+    for (const id of practice?.scene?.correctedItemIds ?? []) seed[id] = true;
+    return seed;
+  });
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
@@ -234,14 +253,31 @@ export function LetterRearrangementExercise({
     setPracticeResults({});
   }
 
-  async function submitPractice() {
-    const practiceSet = new Set(practiceWordIndices);
+  // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE слів, той самий
+  // chunk(), що звичайна вправа (wordBlocks вище), лише на
+  // practiceWordIndices (знімок помилок, не всю вправу). blockCount<=1 —
+  // БЕЗ вкладок/футера нижче (той самий built-in захист, що BlockTabs/
+  // BlockNavigation уже мають для звичайної вправи), плашка+заголовок
+  // лишаються завжди.
+  const isSceneMode = !!practice?.scene;
+  const practiceBlocks = isSceneMode ? chunk(practiceWordIndices, EXERCISE_BLOCK_SIZE) : [];
+  const practiceBlockCount = practiceBlocks.length;
+  const practiceUseBlocks = practiceBlockCount > 1;
+  const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
+  const [practiceBlockAttempted, setPracticeBlockAttempted] = useState<Record<number, boolean>>({});
+
+  // indices — всі слова практики (плаский режим) чи лише активного блоку
+  // (сцена-вигляд); blockIndex — лише сцена-вигляд, позначає цей блок
+  // "спробуваним" (чекмарк на вкладці, той самий принцип, що
+  // isBlockChecked={(i) => i in blockResults} звичайної вправи).
+  async function submitPractice(indices: number[], blockIndex?: number) {
+    const practiceSet = new Set(indices);
     const words: (string[] | null)[] = config.words.map((_, wi) => (practiceSet.has(wi) ? orders[wi] : null));
     const answer: Omit<LetterRearrangementAnswer, "words"> & { words: (string[] | null)[] } = {
       words,
       hintedWordIndices: [...hintedWordIndices],
     };
-    const result = await practiceCheck.check(practiceWordIndices.map(String), answer);
+    const result = await practiceCheck.check(indices.map(String), answer);
     if (!result) return;
     setPracticeResults((prev) => {
       const next = { ...prev };
@@ -249,6 +285,7 @@ export function LetterRearrangementExercise({
       return next;
     });
     setPracticeFailedAttempts(result.failedAttempts);
+    if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
     for (const r of result.results) {
       if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
         practiceCheck.reveal(r.itemId, false);
@@ -491,6 +528,115 @@ export function LetterRearrangementExercise({
     );
   }
 
+  // Одна картка практики + рядок статусу під нею — спільне для плаского
+  // режиму (інлайн-картка сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4):
+  // та сама розмітка, лише інше джерело списку (practiceWordIndices
+  // проти одного блоку, нижче).
+  function renderPracticeItem(wi: number, pos: number) {
+    const key = String(wi);
+    const isCorrect = practiceResults[key];
+    const attempts = practiceFailedAttempts[key] ?? 0;
+    const itemRevealed = practiceCheck.revealed[key];
+    return (
+      <div key={wi} className="flex flex-col gap-1.5">
+        {renderWordCard(wi, {
+          detail: undefined,
+          locked: false,
+          hintDisabled: true,
+          cardNumber: pos + 1,
+        })}
+        {isCorrect === true && (
+          <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
+        )}
+        {isCorrect === false && (
+          <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+            <span className="text-red-600 dark:text-red-400">
+              {t("status.incorrectRetryCount", { n: attempts })}
+            </span>
+            {!itemRevealed && (
+              <button
+                type="button"
+                onClick={() => practiceCheck.reveal(key, true)}
+                disabled={!!practiceCheck.revealPending[key]}
+                className={STUDENT_BUTTON_SECONDARY_TOUCH}
+              >
+                {t("button.showAnswer")}
+              </button>
+            )}
+          </div>
+        )}
+        {itemRevealed && (
+          <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
+            <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (isPractice && isSceneMode) {
+    const activeIndices = practiceUseBlocks ? (practiceBlocks[practiceActiveBlock] ?? []) : practiceWordIndices;
+    const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
+    const sceneCheckButtonEl = (
+      <button
+        type="button"
+        onClick={() => submitPractice(activeIndices, activeBlockIndex)}
+        disabled={practiceCheck.pending}
+        className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
+      >
+        {practiceCheck.pending ? t("button.checking") : practiceUseBlocks ? t("button.checkBlock") : t("button.check")}
+      </button>
+    );
+    return (
+      <div className={EXERCISE_STACK}>
+        <BlockTabs
+          plaqueText={plaqueText}
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+        />
+        <TaskPanelHeader
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+          instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.letter_rearrangement.instruction}
+          subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
+            uk: DEFAULT_INSTRUCTIONS.letter_rearrangement.subInstruction,
+            en: DEFAULT_TRANSLATION_EN.letter_rearrangement,
+          })}
+        />
+        <p className="tap-swap-hint text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+          {t("letterrearr.swapHint")}
+        </p>
+        <p className="tap-swap-hint-desktop text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+          {t("letterrearr.swapHintDesktop")}
+        </p>
+        {practiceUseBlocks ? (
+          <BlockNavigation
+            blockCount={practiceBlockCount}
+            activeBlock={practiceActiveBlock}
+            onChangeBlock={setPracticeActiveBlock}
+            checkButton={sceneCheckButtonEl}
+          >
+            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+            </div>
+          </BlockNavigation>
+        ) : (
+          <>
+            <div ref={gridRef} className={`grid gap-3 ${TWO_COLUMN_GRID_CLASS}`}>
+              {activeIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
+            </div>
+            <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
+          </>
+        )}
+        {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+      </div>
+    );
+  }
+
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
@@ -511,47 +657,7 @@ export function LetterRearrangementExercise({
           {t("letterrearr.swapHintDesktop")}
         </p>
         <div className="flex flex-col gap-3">
-          {practiceWordIndices.map((wi, pos) => {
-            const key = String(wi);
-            const isCorrect = practiceResults[key];
-            const attempts = practiceFailedAttempts[key] ?? 0;
-            const itemRevealed = practiceCheck.revealed[key];
-            return (
-              <div key={wi} className="flex flex-col gap-1.5">
-                {renderWordCard(wi, {
-                  detail: undefined,
-                  locked: false,
-                  hintDisabled: true,
-                  cardNumber: pos + 1,
-                })}
-                {isCorrect === true && (
-                  <p className="pl-1 text-xs font-medium text-green-600 dark:text-green-400">{t("status.correct")}</p>
-                )}
-                {isCorrect === false && (
-                  <div className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("status.incorrectRetryCount", { n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(key, true)}
-                        disabled={!!practiceCheck.revealPending[key]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
-                      >
-                        {t("button.showAnswer")}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {itemRevealed && (
-                  <p className="pl-1 text-xs italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctWordLabel")}</span> {itemRevealed.join(", ")}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+          {practiceWordIndices.map((wi, pos) => renderPracticeItem(wi, pos))}
         </div>
 
         {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
@@ -559,7 +665,7 @@ export function LetterRearrangementExercise({
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={submitPractice}
+            onClick={() => submitPractice(practiceWordIndices)}
             disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >

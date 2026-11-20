@@ -128,6 +128,18 @@ function errorReviewFlags(entry: ErrorReviewEntryData) {
   return { isItems, isWhole, isInteractive, isDone, remaining: entry.remainingItemIds.length };
 }
 
+// Типи, що в сцена-вигляді (openMode="scene") отримують справжні блоки
+// (плашка+заголовок+BlockTabs+BlockNavigation, той самий поріг/chunk, що
+// звичайна вправа сцени) — крок 4. Решта практико-підтримуваних типів тут
+// НЕ зачіпаються (лишаються пласким списком, лише з плашкою/заголовком
+// від кроку 3) — наступні кроки.
+const SCENE_BLOCKABLE_TASK_TYPES = new Set([
+  "letter_rearrangement",
+  "letter_gaps",
+  "matching",
+  "table_fill",
+]);
+
 // Сама вправа режиму практики (перероблка лише неправильних елементів/
 // цілого завдання, той самий компонент, що сцена) — єдине місце цього
 // перемикача за типом, спільне для інлайн-розгортання картки
@@ -137,8 +149,48 @@ function errorReviewFlags(entry: ErrorReviewEntryData) {
 // цей пропс і сам малює BlockTabs/плашку як ПЕРШИЙ елемент свого дерева
 // (той самий механізм, що ExerciseCard/сторінка сцени), тож інлайн-виклик
 // (plaqueText не передано) лишається БЕЗ жодної плашки, як і раніше.
-function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryData; plaqueText?: string }) {
+//
+// snapshotIds — лише сцена-вигляд передає (ErrorReviewBlock, ЗАМОРОЖЕНИЙ
+// знімок помилок на момент відкриття задачі, крок 4) — для 4 chunk-based
+// типів (SCENE_BLOCKABLE_TASK_TYPES) замінює ЖИВИЙ entry.remainingItemIds
+// на цей знімок (стабільне членство блоку на всю сесію) і додає `scene`
+// (correctedItemIds — підмножина знімку, вже виправлена ПІСЛЯ нього,
+// показується "вирішеною" в своєму блоці замість зникнення). Інші 11
+// типів і далі отримують live entry.remainingItemIds без змін — наступні
+// кроки.
+function ErrorReviewPractice({
+  entry,
+  plaqueText,
+  snapshotIds,
+}: {
+  entry: ErrorReviewEntryData;
+  plaqueText?: string;
+  snapshotIds?: string[];
+}) {
   if (!entry.config) return null;
+  const isSceneBlockable = !!snapshotIds && SCENE_BLOCKABLE_TASK_TYPES.has(entry.taskType);
+  const onlyItemIds = isSceneBlockable ? snapshotIds! : entry.remainingItemIds;
+  // matching — виняток: entry.config.pairs (sanitizeMatchingForPractice,
+  // wrongItemIds, НЕ remainingItemIds — sanitize.ts) уже сам є СТАБІЛЬНИМ
+  // на всю історію завдання (не лише на цю сесію) пулом, з якого
+  // matching.tsx чанкує блоки НАПРЯМУ (не через знімок, config.left/right
+  // мають лишатись позиційно узгодженими з тим, що реально прочанкував
+  // сервер) — тож "вирішені" тут мають рахуватись від УСЬОГО config.pairs,
+  // а не лише від знімку цієї сесії, інакше пара, виправлена в
+  // ПОПЕРЕДНІЙ сесії (до цього відкриття — не входить у знімок), знову
+  // зʼявилась би в блоці як "ще не виправлена". Інші 3 типи — від знімку
+  // (їхній config НЕ скоуплений за id, тож лише знімок визначає і членство
+  // блоку, і що вважати "цією сесією виправленим").
+  const scene = isSceneBlockable
+    ? {
+        correctedItemIds:
+          entry.taskType === "matching"
+            ? ((entry.config as unknown as { pairs?: { id: string }[] }).pairs ?? [])
+                .map((p) => p.id)
+                .filter((id) => !entry.remainingItemIds.includes(id))
+            : snapshotIds!.filter((id) => !entry.remainingItemIds.includes(id)),
+      }
+    : undefined;
   switch (entry.taskType) {
     case "multiple_choice":
       return (
@@ -192,7 +244,7 @@ function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryDat
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
         />
       );
     case "letter_rearrangement":
@@ -203,7 +255,7 @@ function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryDat
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
         />
       );
     case "matching":
@@ -214,7 +266,7 @@ function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryDat
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
         />
       );
     case "table_fill":
@@ -225,7 +277,7 @@ function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryDat
           pointsVisible={false}
           hidePoints
           plaqueText={plaqueText}
-          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+          practice={{ onlyItemIds, failedAttempts: entry.failedAttempts, scene }}
         />
       );
     case "drag_drop":
@@ -413,7 +465,7 @@ function prefersReducedMotion(): boolean {
 // (та сама розмітка, що в ErrorReviewCard), без плашки: вправа з
 // onlyItemIds:[] (усе вже виправлено) не монтується взагалі, щоб не
 // годувати 15 різних компонентів порожнім списком елементів.
-function ErrorReviewOpenedTask({ entry }: { entry: ErrorReviewEntryData }) {
+function ErrorReviewOpenedTask({ entry, snapshotIds }: { entry: ErrorReviewEntryData; snapshotIds: string[] }) {
   const { t } = useT();
   const { isDone } = errorReviewFlags(entry);
 
@@ -426,7 +478,7 @@ function ErrorReviewOpenedTask({ entry }: { entry: ErrorReviewEntryData }) {
     );
   }
 
-  return <ErrorReviewPractice entry={entry} plaqueText={entry.displayTitle} />;
+  return <ErrorReviewPractice entry={entry} plaqueText={entry.displayTitle} snapshotIds={snapshotIds} />;
 }
 
 // Блок "Робота над помилками" (пілот, частина 2) — заголовок+список карток
@@ -465,6 +517,27 @@ export function ErrorReviewBlock({
 }) {
   const { t } = useT();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(initialExpandedTaskId ?? null);
+
+  // Знімок помилок "на момент відкриття задачі" (openMode="scene", крок 4
+  // — стабільне членство блоку) — "запам'ятай інформацію з попереднього
+  // рендеру" (React-паттерн, той самий, що lastHintText у task-panel-
+  // header.tsx): prevExpandedTaskId ловить КОЖЕН перехід expandedTaskId
+  // (null→A, A→null, A→null→A знову), а не лише "інший taskId" — інакше
+  // повторне відкриття ТІЄЇ Ж задачі після повернення до списку не взяло
+  // би новий знімок (вимога "reset при поверненні до списку і повторному
+  // відкритті"). Залежить лише від entries/expandedTaskId у момент самого
+  // переходу — router.refresh() (що й далі оновлює entries.remainingItemIds
+  // живцем) НЕ перетирає вже взятий знімок, бо prevExpandedTaskId вже
+  // дорівнює expandedTaskId й умова більше не спрацьовує.
+  const [snapshot, setSnapshot] = useState<{ taskId: string; ids: string[] } | null>(null);
+  const [prevExpandedTaskId, setPrevExpandedTaskId] = useState<string | null>(expandedTaskId);
+  if (expandedTaskId !== prevExpandedTaskId) {
+    setPrevExpandedTaskId(expandedTaskId);
+    if (expandedTaskId) {
+      const freshEntry = entries.find((e) => e.taskId === expandedTaskId);
+      setSnapshot({ taskId: expandedTaskId, ids: freshEntry ? [...freshEntry.remainingItemIds] : [] });
+    }
+  }
 
   const listContent = (
     <div className="flex flex-col gap-3">
@@ -542,7 +615,10 @@ export function ErrorReviewBlock({
           </button>
           <GlassBlock>
             <div className={EXERCISE_STACK}>
-              <ErrorReviewOpenedTask entry={openEntry} />
+              <ErrorReviewOpenedTask
+                entry={openEntry}
+                snapshotIds={snapshot?.taskId === openEntry.taskId ? snapshot.ids : openEntry.remainingItemIds}
+              />
             </div>
           </GlassBlock>
         </>

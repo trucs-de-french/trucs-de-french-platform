@@ -28,6 +28,22 @@ type MatchingResult = Extract<GradeResult, { detail: MatchingDetail }>;
 export type MatchingPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
+  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
+  // error-review-block.tsx передає. На відміну від решти 3 chunk-based
+  // типів, membership блоку тут НЕ йде через onlyItemIds — config.left/
+  // right/pairs (scene-error-review.ts: wrongItemIds, НЕ remainingItemIds,
+  // sanitizeMatchingForPractice з perBlockShuffle=true) уже сам стабільний
+  // пул на ВСЮ історію завдання, і matching.tsx чанкує НАПРЯМУ з нього
+  // (інакше client-side фільтр за onlyItemIds розсинхронив би позиції
+  // config.left із позиціями, під які сервер УЖЕ розподілив per-block
+  // шафл config.right). onlyItemIds вище лишається лише для реакції на
+  // зміну набору (onlyItemIdsKey нижче) — плашка+заголовок+блоки заміняють
+  // плаский список пар. correctedItemIds — error-review-block.tsx рахує
+  // їх від УСЬОГО config.pairs (не від onlyItemIds), бо виправлена пара з
+  // МИНУЛОЇ сесії теж мусить лишитись "вирішеною", не зникнути — показується
+  // замість зникнення. Інлайн-картка сцени (error_correction, без цього
+  // поля) лишається пласким списком без плашки, НЕЗМІННО.
+  scene?: { correctedItemIds: string[] };
 };
 
 export function MatchingExercise({
@@ -94,7 +110,19 @@ export function MatchingExercise({
   const leftById = useMemo(() => new Map(config.pairs.map((p) => [p.id, p.left])), [config.pairs]);
   const [practicePairs, setPracticePairs] = useState<Record<string, string>>({});
   const [selectedLeftPractice, setSelectedLeftPractice] = useState<string | null>(null);
-  const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>({});
+  // Сцена-вигляд (крок 4) — попередньо "вирішені" ліві елементи
+  // (виправлені ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds
+  // — pair.id, мапуються на left-текст через leftById вище) засіюються як
+  // correct:true одразу при монтуванні — та сама зелена підсвітка на
+  // MatchingBoard, що й щойно перевірена пара.
+  const [practiceResultByLeft, setPracticeResultByLeft] = useState<Record<string, boolean>>(() => {
+    const seed: Record<string, boolean> = {};
+    for (const id of practice?.scene?.correctedItemIds ?? []) {
+      const left = leftById.get(id);
+      if (left) seed[left] = true;
+    }
+    return seed;
+  });
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
@@ -105,6 +133,20 @@ export function MatchingExercise({
     setPrevOnlyItemIdsKey(onlyItemIdsKey);
     setPracticeResultByLeft({});
   }
+
+  // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE/2 пар, той самий
+  // chunk(), що звичайна вправа (leftBlocks/rightBlocks вище), лише тут —
+  // на config.left/config.right (уже звужено сервером до pairIds=знімок,
+  // scene-error-review.ts). blockCount<=1 — БЕЗ вкладок/футера нижче (той
+  // самий built-in захист, що BlockTabs/BlockNavigation уже мають),
+  // плашка+заголовок лишаються завжди.
+  const isSceneMode = !!practice?.scene;
+  const practiceLeftBlocks = isSceneMode ? chunk(config.left, EXERCISE_BLOCK_SIZE / 2) : [];
+  const practiceRightBlocks = isSceneMode ? chunk(config.right, EXERCISE_BLOCK_SIZE / 2) : [];
+  const practiceBlockCount = practiceLeftBlocks.length;
+  const practiceUseBlocks = practiceBlockCount > 1;
+  const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
+  const [practiceBlockAttempted, setPracticeBlockAttempted] = useState<Record<number, boolean>>({});
 
   const usedRightsPractice = new Set(Object.values(practicePairs));
   const practiceAllAnswered = config.left.every((left) => !!practicePairs[left]);
@@ -144,9 +186,16 @@ export function MatchingExercise({
     }
   }
 
-  async function submitPractice() {
-    const itemIds = config.pairs.map((p) => p.id);
-    const answer: MatchingAnswer = Object.entries(practicePairs).map(([left, right]) => ({ left, right }));
+  // leftItems/itemIds — усі пари практики (плаский режим) чи лише
+  // активного блоку (сцена-вигляд); answer бере лише ВЖЕ відповідені lefts
+  // цього підмножини (той самий принцип, що плаский режим — ненадіслані
+  // lefts просто не входять у answer, а не йдуть як right:""). blockIndex —
+  // лише сцена-вигляд, позначає цей блок "спробуваним".
+  async function submitPractice(leftItems: string[], itemIds: string[], blockIndex?: number) {
+    const leftSet = new Set(leftItems);
+    const answer: MatchingAnswer = Object.entries(practicePairs)
+      .filter(([left]) => leftSet.has(left))
+      .map(([left, right]) => ({ left, right }));
     const result = await practiceCheck.check(itemIds, answer);
     if (!result) return;
     setPracticeResultByLeft((prev) => {
@@ -158,6 +207,7 @@ export function MatchingExercise({
       return next;
     });
     setPracticeFailedAttempts(result.failedAttempts);
+    if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
     for (const r of result.results) {
       if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
         practiceCheck.reveal(r.itemId, false);
@@ -400,6 +450,131 @@ export function MatchingExercise({
     );
   }
 
+  // Рядки статусу під дошкою — спільне для плаского режиму (інлайн-картка
+  // сцени, НЕЗМІННО) і сцена-вигляду блоків (крок 4): та сама розмітка,
+  // лише інший leftItems (config.left проти активного блоку, нижче).
+  function renderPracticeStatusList(leftItems: string[]) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {leftItems.map((left) => {
+          const id = idByLeft.get(left);
+          if (!id) return null;
+          const isCorrect = practiceResultByLeft[left];
+          const attempts = practiceFailedAttempts[id] ?? 0;
+          const itemRevealed = practiceCheck.revealed[id];
+          if (isCorrect === undefined && !itemRevealed) return null;
+          return (
+            <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
+              {isCorrect === true && (
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  {t("matching.leftCorrect", { left })}
+                </span>
+              )}
+              {isCorrect === false && (
+                <>
+                  <span className="text-red-600 dark:text-red-400">
+                    {t("matching.leftIncorrectRetry", { left, n: attempts })}
+                  </span>
+                  {!itemRevealed && (
+                    <button
+                      type="button"
+                      onClick={() => practiceCheck.reveal(id, true)}
+                      disabled={!!practiceCheck.revealPending[id]}
+                      className={STUDENT_BUTTON_SECONDARY_TOUCH}
+                    >
+                      {t("button.showAnswer")}
+                    </button>
+                  )}
+                </>
+              )}
+              {itemRevealed && (
+                <span className="italic text-amber-700 dark:text-amber-400">
+                  <span className="exercise-answer-label">{t("answer.correctPairLabel")}</span> {left} →{" "}
+                  {itemRevealed.join(", ")}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (isPractice && isSceneMode) {
+    const activeLeft = practiceUseBlocks ? (practiceLeftBlocks[practiceActiveBlock] ?? []) : config.left;
+    const activeRight = practiceUseBlocks ? (practiceRightBlocks[practiceActiveBlock] ?? []) : config.right;
+    const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
+    const activeItemIds = activeLeft.map((left) => idByLeft.get(left)).filter((id): id is string => !!id);
+    const activeAllAnswered = activeLeft.every((left) => !!practicePairs[left]);
+    const sceneCheckButtonEl = (
+      <button
+        type="button"
+        onClick={() => submitPractice(activeLeft, activeItemIds, activeBlockIndex)}
+        disabled={practiceCheck.pending || !activeAllAnswered}
+        className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
+      >
+        {practiceCheck.pending ? t("button.checking") : practiceUseBlocks ? t("button.checkBlock") : t("button.check")}
+      </button>
+    );
+    const board = (
+      <MatchingBoard
+        leftItems={activeLeft}
+        rightItems={activeRight}
+        pairs={practicePairs}
+        selectedLeft={selectedLeftPractice}
+        onClickLeft={practiceClickLeft}
+        onClickRight={practiceClickRight}
+        disabled={false}
+        statusForLeft={(left) => {
+          const isCorrect = practiceResultByLeft[left];
+          return isCorrect === true ? "correct" : isCorrect === false ? "incorrect" : undefined;
+        }}
+        usedRights={usedRightsPractice}
+      />
+    );
+    return (
+      <div className={EXERCISE_STACK}>
+        <BlockTabs
+          plaqueText={plaqueText}
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+        />
+        <TaskPanelHeader
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+          instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.matching.instruction}
+          subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
+            uk: DEFAULT_INSTRUCTIONS.matching.subInstruction,
+            en: DEFAULT_TRANSLATION_EN.matching,
+          })}
+        />
+        {practiceUseBlocks ? (
+          <BlockNavigation
+            blockCount={practiceBlockCount}
+            activeBlock={practiceActiveBlock}
+            onChangeBlock={setPracticeActiveBlock}
+            checkButton={sceneCheckButtonEl}
+          >
+            <div className="flex flex-col gap-[14px] md:gap-[16px]">
+              {board}
+              {renderPracticeStatusList(activeLeft)}
+            </div>
+          </BlockNavigation>
+        ) : (
+          <div className="flex flex-col gap-[14px] md:gap-[16px]">
+            {board}
+            {renderPracticeStatusList(activeLeft)}
+            <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
@@ -418,53 +593,12 @@ export function MatchingExercise({
           usedRights={usedRightsPractice}
         />
 
-        <div className="flex flex-col gap-1.5">
-          {config.left.map((left) => {
-            const id = idByLeft.get(left);
-            if (!id) return null;
-            const isCorrect = practiceResultByLeft[left];
-            const attempts = practiceFailedAttempts[id] ?? 0;
-            const itemRevealed = practiceCheck.revealed[id];
-            if (isCorrect === undefined && !itemRevealed) return null;
-            return (
-              <div key={left} className="flex flex-wrap items-center gap-2 pl-1 text-xs">
-                {isCorrect === true && (
-                  <span className="font-medium text-green-600 dark:text-green-400">
-                    {t("matching.leftCorrect", { left })}
-                  </span>
-                )}
-                {isCorrect === false && (
-                  <>
-                    <span className="text-red-600 dark:text-red-400">
-                      {t("matching.leftIncorrectRetry", { left, n: attempts })}
-                    </span>
-                    {!itemRevealed && (
-                      <button
-                        type="button"
-                        onClick={() => practiceCheck.reveal(id, true)}
-                        disabled={!!practiceCheck.revealPending[id]}
-                        className={STUDENT_BUTTON_SECONDARY_TOUCH}
-                      >
-                        {t("button.showAnswer")}
-                      </button>
-                    )}
-                  </>
-                )}
-                {itemRevealed && (
-                  <span className="italic text-amber-700 dark:text-amber-400">
-                    <span className="exercise-answer-label">{t("answer.correctPairLabel")}</span> {left} →{" "}
-                    {itemRevealed.join(", ")}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {renderPracticeStatusList(config.left)}
 
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={submitPractice}
+            onClick={() => submitPractice(config.left, config.pairs.map((p) => p.id))}
             disabled={practiceCheck.pending || !practiceAllAnswered}
             className={`self-start ${BUTTON_CHECK}`}
           >

@@ -94,6 +94,23 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+// Детерміноване "перемішування" (sort за хешем стабільного ключа, не
+// Math.random) — лише для sanitizeMatchingForPractice(perBlockShuffle),
+// мистейки-сторінка: той самий config/pairIds мусить дати ТОЙ САМИЙ
+// порядок right на КОЖЕН виклик (router.refresh() після перевірки блоку
+// заново викликає цю функцію на сервері) — звичайний shuffle() вище
+// тасував би правий стовпець заново щоразу, і вже розставлені (чи просто
+// видимі) плитки стрибали б місцями під студентом.
+function stableHash(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
+  return h;
+}
+
+function stableShuffleBy<T>(items: T[], keyOf: (item: T) => string): T[] {
+  return [...items].sort((a, b) => stableHash(keyOf(a)) - stableHash(keyOf(b)));
+}
+
 // Пілот системи балів, Група B, останній тип (див. resolveTrueFalsePoints)
 // — дефолт 1. На відміну від решти resolveXxxPoints, приймає ЦІЛИЙ config,
 // не елемент масиву — тут узагалі нема масиву, бали на всю вправу.
@@ -504,16 +521,33 @@ export function sanitizeMatching(config: MatchingConfig): MatchingPublic {
 // ЛИШЕ пари pairIds (невиправлені помилки): left/right/pairs містять ТІЛЬКИ
 // ці пари. right перемішується в межах цього малого набору (shuffle, той
 // самий принцип, що chunk-шафл у sanitizeMatching) — лишається секретом,
-// яке саме right відповідає якому left, попри вузький скоуп.
-export function sanitizeMatchingForPractice(config: MatchingConfig, pairIds: string[]): MatchingPublic {
+// яке саме right відповідає якому left, попри вузький скоуп. Викликач —
+// scenes/[sceneId]/page.tsx (інлайн-картка error_correction, без 3-го
+// аргументу, поведінка НЕЗМІННА) і scene-error-review.ts (мистейки-
+// сторінка, "Робота над помилками", крок 4 — сцена-вигляд блоків).
+//
+// perBlockShuffle=true (лише мистейки-сторінка) — right перемішується В
+// МЕЖАХ кожного блоку по EXERCISE_BLOCK_SIZE/2 пар, той самий принцип, що
+// sanitizeMatching для звичайної (не практичної) вправи: глобальний шафл
+// міг би закинути ВСІ правильні відповіді блоку в ІНШИЙ блок, лишивши
+// поточний нерозв'язним — без цього matching.tsx (сцена-вигляд) не зможе
+// позиційно нарізати config.right тим самим chunk(), що й config.left.
+export function sanitizeMatchingForPractice(
+  config: MatchingConfig,
+  pairIds: string[],
+  perBlockShuffle = false
+): MatchingPublic {
   const idSet = new Set(pairIds);
   const pairs = getMatchingPairs(config).filter((p) => idSet.has(p.id));
+  const right = perBlockShuffle
+    ? chunk(pairs, EXERCISE_BLOCK_SIZE / 2).flatMap((group) => stableShuffleBy(group, (p) => p.id).map((p) => p.right))
+    : shuffle(pairs.map((p) => p.right));
   return {
     instructions: config.instructions,
     subInstructions: config.subInstructions,
     subInstructionsEn: config.subInstructionsEn,
     left: pairs.map((p) => p.left),
-    right: shuffle(pairs.map((p) => p.right)),
+    right,
     pairs: pairs.map((p) => ({ id: p.id, left: p.left, points: resolveMatchingPoints(p) })),
   };
 }

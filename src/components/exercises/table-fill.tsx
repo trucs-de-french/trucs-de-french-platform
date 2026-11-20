@@ -130,6 +130,16 @@ function TableFillColumnsGrid({ multiColumn, children }: { multiColumn: boolean;
 export type TableFillPracticeProps = {
   onlyItemIds: string[];
   failedAttempts: Record<string, number>;
+  // Сцена-вигляд (openMode="scene", мистейки-сторінка, крок 4) — лише
+  // error-review-block.tsx передає: onlyItemIds вище стає ЗАМОРОЖЕНИМ
+  // знімком помилок на момент відкриття задачі (стабільне членство блоку
+  // на всю сесію, не live remainingItemIds), а плашка+заголовок+блоки
+  // (нижче) замінюють плаский список рядків-карток. correctedItemIds —
+  // підмножина onlyItemIds, вже виправлена ПІСЛЯ знімку (цього сеансу) —
+  // показується "вирішеною" в своєму блоці замість зникнення. Інлайн-
+  // картка сцени (error_correction, без цього поля) лишається пласким
+  // списком без плашки, НЕЗМІННО.
+  scene?: { correctedItemIds: string[] };
 };
 
 export function TableFillExercise({
@@ -255,7 +265,16 @@ export function TableFillExercise({
     : [];
   const practiceRows = config.rows.filter((r) => practiceRowIds.includes(r.id));
   const practiceCheck = usePracticeCheck(taskId);
-  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>({});
+  // Сцена-вигляд (крок 4) — попередньо "вирішені" елементи (виправлені
+  // ПІСЛЯ знімку onlyItemIds, practice.scene.correctedItemIds,
+  // error-review-block.tsx) засіюються як correct:true одразу при
+  // монтуванні — той самий вигляд ("Правильно" під карткою), що й щойно
+  // перевірений елемент, без повторного запиту.
+  const [practiceResults, setPracticeResults] = useState<Record<string, boolean>>(() => {
+    const seed: Record<string, boolean> = {};
+    for (const id of practice?.scene?.correctedItemIds ?? []) seed[id] = true;
+    return seed;
+  });
   const [practiceFailedAttempts, setPracticeFailedAttempts] = useState<Record<string, number>>(
     practice?.failedAttempts ?? {}
   );
@@ -266,10 +285,27 @@ export function TableFillExercise({
     setPracticeResults({});
   }
 
-  async function submitPractice() {
-    const practiceSet = new Set(practiceRowIds);
+  // Сцена-вигляд (крок 4) — блоки по EXERCISE_BLOCK_SIZE рядків, той самий
+  // chunk(), що звичайна вправа (rowBlocks вище), лише на practiceRowIds
+  // (знімок помилок, не всю вправу). blockCount<=1 — БЕЗ вкладок/футера
+  // нижче (той самий built-in захист, що BlockTabs/BlockNavigation уже
+  // мають для звичайної вправи), плашка+заголовок лишаються завжди.
+  const isSceneMode = !!practice?.scene;
+  const practiceRowBlocks = isSceneMode ? chunk(practiceRows, EXERCISE_BLOCK_SIZE) : [];
+  const practiceBlockCount = practiceRowBlocks.length;
+  const practiceUseBlocks = practiceBlockCount > 1;
+  const [practiceActiveBlock, setPracticeActiveBlock] = useState(0);
+  const [practiceBlockAttempted, setPracticeBlockAttempted] = useState<Record<number, boolean>>({});
+
+  // rows — усі рядки практики (плаский режим) чи лише активного блоку
+  // (сцена-вигляд); blockIndex — лише сцена-вигляд, позначає цей блок
+  // "спробуваним" (чекмарк на вкладці, той самий принцип, що
+  // isBlockChecked={(i) => i in blockResults} звичайної вправи).
+  async function submitPractice(rows: Row[], blockIndex?: number) {
+    const rowIds = rows.map((r) => r.id);
+    const practiceSet = new Set(rowIds);
     const cells: TableFillAnswer["cells"] = [];
-    for (const row of practiceRows) {
+    for (const row of rows) {
       (["left", "right"] as const).forEach((side) => {
         const hidden = side === "left" ? row.left === null : row.right === null;
         if (!hidden) return;
@@ -283,7 +319,7 @@ export function TableFillExercise({
       })
       .filter((h) => practiceSet.has(h.rowId));
     const answer: TableFillAnswer = { cells, hintedCells: hintedCellsList };
-    const result = await practiceCheck.check(practiceRowIds, answer);
+    const result = await practiceCheck.check(rowIds, answer);
     if (!result) return;
     setPracticeResults((prev) => {
       const next = { ...prev };
@@ -291,6 +327,7 @@ export function TableFillExercise({
       return next;
     });
     setPracticeFailedAttempts(result.failedAttempts);
+    if (blockIndex !== undefined) setPracticeBlockAttempted((prev) => ({ ...prev, [blockIndex]: true }));
     for (const r of result.results) {
       if (!r.correct && (result.failedAttempts[r.itemId] ?? 0) >= 2 && !practiceCheck.revealed[r.itemId]) {
         practiceCheck.reveal(r.itemId, false);
@@ -690,6 +727,58 @@ export function TableFillExercise({
     );
   }
 
+  if (isPractice && isSceneMode) {
+    const activeRows = practiceUseBlocks ? (practiceRowBlocks[practiceActiveBlock] ?? []) : practiceRows;
+    const activeBlockIndex = practiceUseBlocks ? practiceActiveBlock : 0;
+    const sceneCheckButtonEl = (
+      <button
+        type="button"
+        onClick={() => submitPractice(activeRows, activeBlockIndex)}
+        disabled={practiceCheck.pending}
+        className={practiceUseBlocks ? "exercise-block-check-btn btn-check" : `self-start ${BUTTON_CHECK}`}
+      >
+        {practiceCheck.pending ? tt("button.checking") : practiceUseBlocks ? tt("button.checkBlock") : tt("button.check")}
+      </button>
+    );
+    return (
+      <div className={EXERCISE_STACK}>
+        <BlockTabs
+          plaqueText={plaqueText}
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+        />
+        <TaskPanelHeader
+          blockCount={practiceBlockCount}
+          activeBlock={practiceActiveBlock}
+          onChangeBlock={setPracticeActiveBlock}
+          isBlockChecked={(i) => !!practiceBlockAttempted[i]}
+          instructionText={config.instructions ?? DEFAULT_INSTRUCTIONS.table_fill.instruction}
+          subInstructionText={taskTranslationLine({ uk: config.subInstructions, en: config.subInstructionsEn }, lang, {
+            uk: DEFAULT_INSTRUCTIONS.table_fill.subInstruction,
+            en: DEFAULT_TRANSLATION_EN.table_fill,
+          })}
+        />
+        {practiceUseBlocks ? (
+          <BlockNavigation
+            blockCount={practiceBlockCount}
+            activeBlock={practiceActiveBlock}
+            onChangeBlock={setPracticeActiveBlock}
+            checkButton={sceneCheckButtonEl}
+          >
+            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row))}</div>
+          </BlockNavigation>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">{activeRows.map((row) => renderPracticeRow(row))}</div>
+            <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   if (isPractice) {
     return (
       <div className={EXERCISE_STACK}>
@@ -697,7 +786,7 @@ export function TableFillExercise({
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={submitPractice}
+            onClick={() => submitPractice(practiceRows)}
             disabled={practiceCheck.pending}
             className={`self-start ${BUTTON_CHECK}`}
           >
