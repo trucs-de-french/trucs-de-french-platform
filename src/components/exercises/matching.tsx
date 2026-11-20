@@ -614,14 +614,12 @@ export function MatchingExercise({
           >
             <div className="flex flex-col gap-[14px] md:gap-[16px]">
               {board}
-              {renderPracticeStatusList(activeLeft, true)}
               {answersPanel}
             </div>
           </BlockNavigation>
         ) : (
           <div className="flex flex-col gap-[14px] md:gap-[16px]">
             {board}
-            {renderPracticeStatusList(activeLeft, true)}
             {answersPanel}
             <div className="flex flex-col gap-2">{sceneCheckButtonEl}</div>
           </div>
