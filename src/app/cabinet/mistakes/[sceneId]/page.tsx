@@ -8,6 +8,8 @@ import { LangProvider } from "@/lib/i18n/context";
 import { loadSceneErrorReviewEntries } from "@/lib/cabinet/scene-error-review";
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
+import { GlassBlock } from "@/components/glass-block";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import type { Profile } from "@/lib/supabase/profile";
@@ -65,22 +67,45 @@ export default async function CabinetMistakesScenePage({
         backLabel={t(lang, "cabinet.nav.mistakes")}
       />
 
-      {hasRemaining ? (
-        <LangProvider lang={lang}>
-          <ExerciseErrorBoundary>
-            <ErrorReviewBlock entries={entries} emptyState={emptyState} initialExpandedTaskId={fixTaskId ?? null} />
-          </ExerciseErrorBoundary>
-        </LangProvider>
-      ) : (
-        <div className="mistakes-empty-card">
-          <CheckCircle2 size={28} aria-hidden="true" className="mistakes-empty-icon" />
-          <p className="mistakes-empty-title">{t(lang, "cabinet.mistakes.scene.emptyTitle")}</p>
-          <p className="mistakes-empty-text">{t(lang, "cabinet.mistakes.scene.emptyText")}</p>
-          <Link href="/cabinet/mistakes" className="mistakes-empty-btn">
-            {t(lang, "cabinet.mistakes.scene.backToList")}
-          </Link>
-        </div>
-      )}
+      {/* Та сама ширина/центрування, що <main className="mx-auto w-full
+          max-w-3xl p-6"> сторінки сцени (scenes/[sceneId]/page.tsx) — без
+          цього вправи в ErrorReviewBlock рахують свою ширину (плитки
+          letter_rearrangement/matching/table_fill/image_match тощо) від
+          повної ширини .cabinet-panel (без max-width), а не 768px сторінки
+          сцени, і виглядають значно більшими. GlassBlock+EXERCISE_STACK —
+          та сама панель-обгортка, що сторінка сцени дає error_correction-
+          задачі (той самий .glass-block-panel padding, що й там) — разом
+          забезпечують ІДЕНТИЧНУ доступну ширину для внутрішніх гридів
+          вправ. BlockTabs-плашку типу (сторінка сцени) свідомо НЕ
+          відтворено тут — ця сторінка вже має власний заголовок (назва
+          сцени, PageHeader вище), друга плашка типу була б зайвою. */}
+      <div className="mx-auto w-full max-w-3xl">
+        {hasRemaining ? (
+          <LangProvider lang={lang}>
+            <GlassBlock>
+              <div className={EXERCISE_STACK}>
+                <ExerciseErrorBoundary>
+                  <ErrorReviewBlock
+                    entries={entries}
+                    emptyState={emptyState}
+                    initialExpandedTaskId={fixTaskId ?? null}
+                    compactCollapse
+                  />
+                </ExerciseErrorBoundary>
+              </div>
+            </GlassBlock>
+          </LangProvider>
+        ) : (
+          <div className="mistakes-empty-card">
+            <CheckCircle2 size={28} aria-hidden="true" className="mistakes-empty-icon" />
+            <p className="mistakes-empty-title">{t(lang, "cabinet.mistakes.scene.emptyTitle")}</p>
+            <p className="mistakes-empty-text">{t(lang, "cabinet.mistakes.scene.emptyText")}</p>
+            <Link href="/cabinet/mistakes" className="mistakes-empty-btn">
+              {t(lang, "cabinet.mistakes.scene.backToList")}
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

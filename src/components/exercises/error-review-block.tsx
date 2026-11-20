@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronUp } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
@@ -121,6 +121,7 @@ function ErrorReviewCard({
   ordinal,
   expanded,
   onToggleExpanded,
+  compactCollapse = false,
 }: {
   entry: ErrorReviewEntryData;
   index: number;
@@ -130,6 +131,13 @@ function ErrorReviewCard({
   ordinal: number | null;
   expanded: boolean;
   onToggleExpanded: () => void;
+  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — компактна пілюля
+  // "Згорнути" (chevron-up) у заголовку картки, праворуч від StatusPill,
+  // замість великого індиго-бару знизу; великий бар "Виправити N"/
+  // "Спробувати ще раз" (НЕ розгорнуто) лишається як є скрізь. false/
+  // undefined (сценова сторінка) — жодних змін, той самий великий бар для
+  // обох станів, як і раніше.
+  compactCollapse?: boolean;
 }) {
   const { t, lang } = useT();
   const isItems = entry.mode === "items";
@@ -139,7 +147,9 @@ function ErrorReviewCard({
   const remaining = entry.remainingItemIds.length;
 
   return (
-    <div className="rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
+    <div
+      className={`rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)] ${compactCollapse ? "error-review-card--compact" : ""}`}
+    >
       <div className={`error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
         <span className="item-number-badge" aria-hidden>
           {index + 1}
@@ -170,6 +180,17 @@ function ErrorReviewCard({
           )}
         </div>
         <StatusPill status={isInteractive ? entry.status : "not_started"} />
+        {compactCollapse && isInteractive && !isDone && expanded && (
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            aria-label={t("button.collapse")}
+            className="error-review-collapse-pill"
+          >
+            <ChevronUp size={18} aria-hidden="true" />
+            <span className="error-review-collapse-pill-label">{t("button.collapse")}</span>
+          </button>
+        )}
       </div>
 
       {isItems && entry.status === "partial" && (
@@ -183,7 +204,7 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {isInteractive && !isDone && (
+      {isInteractive && !isDone && !(compactCollapse && expanded) && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-[var(--card-border)]">
           <button
             type="button"
@@ -357,6 +378,7 @@ export function ErrorReviewBlock({
   entries,
   emptyState,
   initialExpandedTaskId,
+  compactCollapse = false,
 }: {
   entries: ErrorReviewEntryData[];
   emptyState: ErrorReviewEmptyState;
@@ -365,6 +387,10 @@ export function ErrorReviewBlock({
   // кліку. null/undefined/taskId, якого немає серед entries, — звичайна
   // поведінка (нічого не розгорнуто).
   initialExpandedTaskId?: string | null;
+  // Мистейки-сторінка — компактна пілюля "Згорнути" в заголовку замість
+  // великого бару знизу (ErrorReviewCard, детальний коментар там); сценова
+  // сторінка не передає цей пропс, її вигляд не змінюється.
+  compactCollapse?: boolean;
 }) {
   const { t } = useT();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(initialExpandedTaskId ?? null);
@@ -414,6 +440,7 @@ export function ErrorReviewBlock({
                   onToggleExpanded={() =>
                     setExpandedTaskId((prev) => (prev === entry.taskId ? null : entry.taskId))
                   }
+                  compactCollapse={compactCollapse}
                 />
               );
             });

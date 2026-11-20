@@ -8682,6 +8682,86 @@ button.scene-bar:active .scene-bar-toggle {
     line-height: 1.3;
   }
 }
+/* Компактна пілюля "Згорнути" (мистейки-сторінка /cabinet/mistakes/
+   [sceneId] лише — error-review-block.tsx: compactCollapse пропс,
+   .error-review-card--compact модифікатор; сценова сторінка цей пропс не
+   передає, тож жодне з цих правил на ній ніколи не застосовується) —
+   заміна великого індиго-бару "Згорнути" знизу на компактний outline-пілл
+   із chevron-up праворуч у заголовку картки. */
+.error-review-collapse-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  background: #ffffff;
+  border: 1px solid #d9b765;
+  color: #1a1640;
+  transition: filter 150ms;
+}
+.error-review-collapse-pill:hover {
+  filter: brightness(0.97);
+}
+.error-review-collapse-pill:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .error-review-collapse-pill {
+  background: transparent;
+  border: 1px solid #27338f;
+  color: #e6e3f7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-collapse-pill {
+    background: transparent;
+    border: 1px solid #27338f;
+    color: #e6e3f7;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .error-review-collapse-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+.dark .error-review-collapse-pill:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-collapse-pill:focus-visible {
+    outline: 2px solid var(--cabinet-focus-ring);
+  }
+}
+/* Телефон — лише іконка, зона дотику 44×44 (задача "icon-only 44x44
+   button"), текстовий label прибраний з потоку (aria-label несе назву
+   для читачів екрана). У мобільному grid-рядку заголовка (правило вище,
+   .error-review-row — 3 явні колонки) пілюля стає ЯВНОЮ 4-ю колонкою
+   ПЕРШОГО рядка (поруч із номером/іконкою типу) — лише під модифікатором
+   .error-review-card--compact, сценова сторінка цей клас не отримує.
+   grid-column:4 на відсутній у grid-template-columns колонці створює
+   НЕЯВНУ колонку (auto) — .error-review-row шареного grid-template тут не
+   чіпаємо взагалі. */
+@media (max-width: 640px) {
+  .error-review-collapse-pill {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .error-review-collapse-pill-label {
+    display: none;
+  }
+  .error-review-card--compact .error-review-collapse-pill {
+    grid-column: 4;
+    grid-row: 1;
+    align-self: start;
+  }
+}
 .drag-drop-row-number {
   margin-top: 7px;
 }
