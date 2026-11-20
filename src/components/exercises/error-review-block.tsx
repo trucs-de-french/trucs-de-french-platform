@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronUp } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { frenchNbsp } from "@/lib/text/french-typography";
 import { BUTTON_CHECK } from "@/lib/button-styles";
 import { TaskTypeIconBadge } from "@/lib/exercises/task-type-icon-badge";
@@ -9,6 +9,8 @@ import { useT } from "@/lib/i18n/context";
 import { plural } from "@/lib/i18n/plural";
 import { isWholePracticeTaskType } from "@/lib/exercises/error-review";
 import type { ReviewMode, ErrorReviewStatus } from "@/lib/exercises/error-review";
+import { GlassBlock } from "@/components/glass-block";
+import { EXERCISE_STACK } from "@/lib/spacing";
 import { MultipleChoiceExercise } from "./multiple-choice";
 import { FillBlankExercise } from "./fill-blank";
 import { TrueFalseExercise } from "./true-false";
@@ -115,13 +117,205 @@ function StatusPill({ status }: { status: ErrorReviewStatus }) {
   );
 }
 
+// Три прапорці, що й картка (ErrorReviewCard), і сцена-вигляд відкритої
+// задачі (ErrorReviewOpenedTask нижче) рахують ОДНАКОВО з entry — єдине
+// місце цієї логіки, щоб обидва рендери не розійшлись.
+function errorReviewFlags(entry: ErrorReviewEntryData) {
+  const isItems = entry.mode === "items";
+  const isWhole = entry.mode === "whole" && isWholePracticeTaskType(entry.taskType);
+  const isInteractive = isItems || isWhole;
+  const isDone = isInteractive && entry.status === "done";
+  return { isItems, isWhole, isInteractive, isDone, remaining: entry.remainingItemIds.length };
+}
+
+// Сама вправа режиму практики (перероблка лише неправильних елементів/
+// цілого завдання, той самий компонент, що сцена) — єдине місце цього
+// перемикача за типом, спільне для інлайн-розгортання картки
+// (ErrorReviewCard) і сцена-вигляду відкритої задачі (ErrorReviewOpenedTask).
+// plaqueText — лише сцена-вигляд передає (getTaskBarText-назва, та сама,
+// що плашка на сторінці сцени): кожен з 15 компонентів нижче вже приймає
+// цей пропс і сам малює BlockTabs/плашку як ПЕРШИЙ елемент свого дерева
+// (той самий механізм, що ExerciseCard/сторінка сцени), тож інлайн-виклик
+// (plaqueText не передано) лишається БЕЗ жодної плашки, як і раніше.
+function ErrorReviewPractice({ entry, plaqueText }: { entry: ErrorReviewEntryData; plaqueText?: string }) {
+  if (!entry.config) return null;
+  switch (entry.taskType) {
+    case "multiple_choice":
+      return (
+        <MultipleChoiceExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as MultipleChoicePublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "fill_blank":
+      return (
+        <FillBlankExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as FillBlankPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "true_false":
+      return (
+        <TrueFalseExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as TrueFalsePublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "word_choice":
+      return (
+        <WordChoiceExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as WordChoicePublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "letter_gaps":
+      return (
+        <LetterGapsExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as LetterGapsPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "letter_rearrangement":
+      return (
+        <LetterRearrangementExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as LetterRearrangementPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "matching":
+      return (
+        <MatchingExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as MatchingPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "table_fill":
+      return (
+        <TableFillExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as TableFillPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "drag_drop":
+      return (
+        <DragDropExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as DragDropPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "image_match":
+      return (
+        <ImageMatchExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as ImageMatchPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "listening":
+      return (
+        <ListeningExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as ListeningPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "reorder":
+      return (
+        <ReorderExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as ReorderPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "chronological_order":
+      return (
+        <ChronologicalOrderExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as ChronologicalOrderPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "sort_columns":
+      return (
+        <SortColumnsExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as SortColumnsPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    case "checkbox_grid":
+      return (
+        <CheckboxGridExercise
+          taskId={entry.taskId}
+          config={entry.config as unknown as CheckboxGridPublic}
+          pointsVisible={false}
+          hidePoints
+          plaqueText={plaqueText}
+          practice={{ whole: true, failedAttempts: entry.failedAttempts }}
+        />
+      );
+    default:
+      return null;
+  }
+}
+
 function ErrorReviewCard({
   entry,
   index,
   ordinal,
   expanded,
   onToggleExpanded,
-  flat = false,
 }: {
   entry: ErrorReviewEntryData;
   index: number;
@@ -131,89 +325,17 @@ function ErrorReviewCard({
   ordinal: number | null;
   expanded: boolean;
   onToggleExpanded: () => void;
-  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — "пласкі секції"
-  // (варіант A): без картки-в-картці, лише тонкий gold-роздільник між
-  // задачами; назва+кількість на ОДНОМУ рядку заголовка; обидві дії
-  // ("Виправити N"/"Спробувати ще раз" і "Згорнути") теж у заголовку —
-  // замість великого бару знизу. false/undefined (сценова сторінка) —
-  // жодних змін, той самий картковий вигляд, що й раніше.
-  flat?: boolean;
 }) {
   const { t, lang } = useT();
-  const isItems = entry.mode === "items";
-  const isWhole = entry.mode === "whole" && isWholePracticeTaskType(entry.taskType);
-  const isInteractive = isItems || isWhole;
-  const isDone = isInteractive && entry.status === "done";
-  const remaining = entry.remainingItemIds.length;
-  const countText =
-    entry.status === "partial"
-      ? t("errReview.remainingOfTotal", { n: remaining, total: entry.total })
-      : isDone
-        ? t("errReview.allFixed")
-        : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`;
-  const actionLabel = isWhole ? t("button.retry") : t("button.fixCount", { n: remaining });
+  const { isItems, isWhole, isInteractive, isDone, remaining } = errorReviewFlags(entry);
 
   return (
-    <div
-      className={
-        flat
-          ? `error-review-flat-section ${isDone ? "opacity-60" : ""}`
-          : "rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]"
-      }
-    >
-      <div
-        className={
-          flat
-            ? "error-review-flat-header flex flex-wrap items-center gap-2"
-            : `error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`
-        }
-      >
-        {flat && (
-          <div className="error-review-flat-header-main flex min-w-0 flex-1 items-center gap-2">
-            <span className="item-number-badge" aria-hidden>
-              {index + 1}
-            </span>
-            <TaskTypeIconBadge type={entry.taskType} size="sm" />
-            <p
-              className="error-review-flat-title truncate font-heading font-medium"
-              title={`${entry.displayTitle}${ordinal !== null ? ` · ${ordinal}` : ""} · ${countText}`}
-            >
-              {entry.displayTitle}
-              {ordinal !== null && ` · ${ordinal}`}
-              <span className="error-review-flat-count"> · {countText}</span>
-            </p>
-          </div>
-        )}
-        {flat && (
-          <div className="error-review-flat-header-meta flex shrink-0 items-center gap-2">
-            <span className="error-review-flat-count-mobile">{countText}</span>
-            <StatusPill status={isInteractive ? entry.status : "not_started"} />
-            {isInteractive &&
-              !isDone &&
-              (expanded ? (
-                <button
-                  type="button"
-                  onClick={onToggleExpanded}
-                  aria-label={t("button.collapse")}
-                  className="error-review-collapse-pill"
-                >
-                  <ChevronUp size={18} aria-hidden="true" />
-                  <span className="error-review-collapse-pill-label">{t("button.collapse")}</span>
-                </button>
-              ) : (
-                <button type="button" onClick={onToggleExpanded} className="error-review-fix-pill">
-                  {actionLabel}
-                </button>
-              ))}
-          </div>
-        )}
-        {!flat && (
-          <span className="item-number-badge" aria-hidden>
-            {index + 1}
-          </span>
-        )}
-        {!flat && <TaskTypeIconBadge type={entry.taskType} size="sm" />}
-        {!flat && (
+    <div className="rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]">
+      <div className={`error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
+        <span className="item-number-badge" aria-hidden>
+          {index + 1}
+        </span>
+        <TaskTypeIconBadge type={entry.taskType} size="sm" />
         <div className="error-review-text-col min-w-0 flex-1">
           <p
             className="error-review-title truncate font-heading font-medium"
@@ -234,16 +356,15 @@ function ErrorReviewCard({
                 ? t("errReview.remainingOfTotal", { n: remaining, total: entry.total })
                 : isDone
                   ? t("errReview.allFixed")
-                  : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`}
+                  : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`}
             </p>
           )}
         </div>
-        )}
-        {!flat && <StatusPill status={isInteractive ? entry.status : "not_started"} />}
+        <StatusPill status={isInteractive ? entry.status : "not_started"} />
       </div>
 
       {isItems && entry.status === "partial" && (
-        <div className={flat ? "pb-1" : "px-3 pb-1"}>
+        <div className="px-3 pb-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-[var(--card-field-bg)] dark:shadow-[inset_0_0_0_1px_rgba(130,160,240,.28)]">
             <div
               className="h-full rounded-full bg-brand error-review-progress-fill"
@@ -253,19 +374,19 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {!flat && isInteractive && !isDone && (
+      {isInteractive && !isDone && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-[var(--card-border)]">
           <button
             type="button"
             onClick={onToggleExpanded}
             className={`${BUTTON_CHECK} min-h-11 error-review-fix-button`}
           >
-            {expanded ? t("button.collapse") : actionLabel}
+            {expanded ? t("button.collapse") : isWhole ? t("button.retry") : t("button.fixCount", { n: remaining })}
           </button>
         </div>
       )}
 
-      {!flat && isDone && (
+      {isDone && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-[var(--card-border)] dark:text-green-400">
           <Check size={16} aria-hidden />
           {t("errReview.allFixedBanner")}
@@ -273,152 +394,39 @@ function ErrorReviewCard({
       )}
 
       {expanded && isInteractive && !isDone && entry.config && (
-        <div
-          className={
-            flat
-              ? "error-review-flat-body"
-              : "border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50"
-          }
-        >
-          {entry.taskType === "multiple_choice" && (
-            <MultipleChoiceExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as MultipleChoicePublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "fill_blank" && (
-            <FillBlankExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as FillBlankPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "true_false" && (
-            <TrueFalseExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as TrueFalsePublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "word_choice" && (
-            <WordChoiceExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as WordChoicePublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "letter_gaps" && (
-            <LetterGapsExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as LetterGapsPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "letter_rearrangement" && (
-            <LetterRearrangementExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as LetterRearrangementPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "matching" && (
-            <MatchingExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as MatchingPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "table_fill" && (
-            <TableFillExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as TableFillPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "drag_drop" && (
-            <DragDropExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as DragDropPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "image_match" && (
-            <ImageMatchExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as ImageMatchPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "listening" && (
-            <ListeningExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as ListeningPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ onlyItemIds: entry.remainingItemIds, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "reorder" && (
-            <ReorderExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as ReorderPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "chronological_order" && (
-            <ChronologicalOrderExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as ChronologicalOrderPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "sort_columns" && (
-            <SortColumnsExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as SortColumnsPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
-            />
-          )}
-          {entry.taskType === "checkbox_grid" && (
-            <CheckboxGridExercise
-              taskId={entry.taskId}
-              config={entry.config as unknown as CheckboxGridPublic}
-              pointsVisible={false}
-              hidePoints
-              practice={{ whole: true, failedAttempts: entry.failedAttempts }}
-            />
-          )}
+        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50">
+          <ErrorReviewPractice entry={entry} />
         </div>
       )}
     </div>
   );
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Сцена-вигляд ВІДКРИТОЇ задачі (openMode="scene", ErrorReviewBlock нижче)
+// — та сама вправа (ErrorReviewPractice), але з plaqueText (назва типу у
+// плашці, як на сторінці сцени) і БЕЗ картки-списку навколо (викликач
+// ховає список цілком, доки щось відкрито). Завдання "done" — лише банер
+// (та сама розмітка, що в ErrorReviewCard), без плашки: вправа з
+// onlyItemIds:[] (усе вже виправлено) не монтується взагалі, щоб не
+// годувати 15 різних компонентів порожнім списком елементів.
+function ErrorReviewOpenedTask({ entry }: { entry: ErrorReviewEntryData }) {
+  const { t } = useT();
+  const { isDone } = errorReviewFlags(entry);
+
+  if (isDone) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+        <Check size={16} aria-hidden />
+        {t("errReview.allFixedBanner")}
+      </div>
+    );
+  }
+
+  return <ErrorReviewPractice entry={entry} plaqueText={entry.displayTitle} />;
 }
 
 // Блок "Робота над помилками" (пілот, частина 2) — заголовок+список карток
@@ -433,7 +441,7 @@ export function ErrorReviewBlock({
   entries,
   emptyState,
   initialExpandedTaskId,
-  flat = false,
+  openMode,
 }: {
   entries: ErrorReviewEntryData[];
   emptyState: ErrorReviewEmptyState;
@@ -442,33 +450,37 @@ export function ErrorReviewBlock({
   // кліку. null/undefined/taskId, якого немає серед entries, — звичайна
   // поведінка (нічого не розгорнуто).
   initialExpandedTaskId?: string | null;
-  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — "пласкі секції"
-  // (ErrorReviewCard, детальний коментар там) замість картки-в-картці, і
-  // ховає заголовок "Corrigez vos erreurs."+підказку нижче (власний
-  // PageHeader сторінки вже пояснює, що це за сторінка). Сценова сторінка
-  // не передає цей пропс, її вигляд не змінюється.
-  flat?: boolean;
+  // "scene" — мистейки-сторінка (/cabinet/mistakes/[sceneId]): коли
+  // якась задача відкрита (expandedTaskId), список ховається ЦІЛКОМ і
+  // замінюється сцена-виглядом ЦІЄЇ задачі (плашка типу + біла панель,
+  // ErrorReviewOpenedTask) із бек-лінком над панеллю — замість інлайн-
+  // розгортання картки (яке лишається для undefined/дефолту нижче). Сама
+  // панель (GlassBlock+EXERCISE_STACK) тепер рендериться ЦИМ компонентом
+  // (а не викликачем) для ОБОХ станів ("scene"), щоб список і відкрита
+  // задача мали рівно ОДНУ панель, без вкладеності. undefined (сценова
+  // сторінка, error_correction-задача) — жодних змін, той самий інлайн-
+  // вигляд і БЕЗ власної GlassBlock-обгортки (сценова сторінка обгортає
+  // сама, scenes/[sceneId]/page.tsx).
+  openMode?: "scene";
 }) {
   const { t } = useT();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(initialExpandedTaskId ?? null);
 
-  return (
+  const listContent = (
     <div className="flex flex-col gap-3">
-      {!flat && (
-        <div>
-          <h3 className="font-heading text-lg font-semibold max-[640px]:leading-[1.3]">{frenchNbsp("Corrigez vos erreurs.")}</h3>
-          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-            {t("errReview.reviewHint")}
-          </p>
-        </div>
-      )}
+      <div>
+        <h3 className="font-heading text-lg font-semibold max-[640px]:leading-[1.3]">{frenchNbsp("Corrigez vos erreurs.")}</h3>
+        <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+          {t("errReview.reviewHint")}
+        </p>
+      </div>
 
       {entries.length === 0 ? (
         <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {frenchNbsp(EMPTY_STATE_TEXT[emptyState])}
         </p>
       ) : (
-        <div className={flat ? "flex flex-col" : "flex flex-col gap-2"}>
+        <div className="flex flex-col gap-2">
           {(() => {
             // Кілька карток з ОДНАКОВОЮ фінальною назвою (entry.displayTitle —
             // та сама назва, що на плашці типу над вправою) у блоці —
@@ -499,7 +511,6 @@ export function ErrorReviewBlock({
                   onToggleExpanded={() =>
                     setExpandedTaskId((prev) => (prev === entry.taskId ? null : entry.taskId))
                   }
-                  flat={flat}
                 />
               );
             });
@@ -508,4 +519,42 @@ export function ErrorReviewBlock({
       )}
     </div>
   );
+
+  if (openMode === "scene") {
+    const openEntry = expandedTaskId ? entries.find((e) => e.taskId === expandedTaskId) ?? null : null;
+
+    if (openEntry) {
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setExpandedTaskId(null);
+              window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+            }}
+            aria-label={t("cabinet.mistakes.scene.backToExercises")}
+            className="cabinet-back-link border-0 bg-transparent p-0 cursor-pointer"
+          >
+            <span className="cabinet-back-link-circle">
+              <ArrowLeft size={18} strokeWidth={2} className="cabinet-back-link-icon" aria-hidden="true" />
+            </span>
+            <span className="cabinet-back-link-label">{t("cabinet.mistakes.scene.backToExercises")}</span>
+          </button>
+          <GlassBlock>
+            <div className={EXERCISE_STACK}>
+              <ErrorReviewOpenedTask entry={openEntry} />
+            </div>
+          </GlassBlock>
+        </>
+      );
+    }
+
+    return (
+      <GlassBlock>
+        <div className={EXERCISE_STACK}>{listContent}</div>
+      </GlassBlock>
+    );
+  }
+
+  return listContent;
 }

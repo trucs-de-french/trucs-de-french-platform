@@ -70,11 +70,13 @@ export default async function CabinetMistakesScenePage({
           цього вправи в ErrorReviewBlock рахують свою ширину (плитки
           letter_rearrangement/matching/table_fill/image_match тощо) від
           повної ширини .cabinet-panel (без max-width), а не 768px сторінки
-          сцени, і виглядають значно більшими. БЕЗ GlassBlock-панелі
-          навколо — затверджений вигляд "пласкі секції" (варіант A):
-          кожна задача — секція просто на фоні сторінки, без картки-в-
-          картці (ErrorReviewBlock flat пропс, детальний коментар у
-          error-review-block.tsx). */}
+          сцени, і виглядають значно більшими. GlassBlock+EXERCISE_STACK
+          тепер рендерить САМ ErrorReviewBlock (openMode="scene" нижче) —
+          і для списку карток, і для відкритої задачі (сцена-вигляд,
+          плашка типу + панель, як на сторінці сцени) потрібна РІВНО одна
+          панель без вкладеності, а яка саме це панель — залежить від
+          клієнтського expandedTaskId-стану, якого тут, на сервері, ще
+          немає. */}
       <div className="mx-auto w-full max-w-3xl">
         {hasRemaining ? (
           <LangProvider lang={lang}>
@@ -83,7 +85,7 @@ export default async function CabinetMistakesScenePage({
                 entries={entries}
                 emptyState={emptyState}
                 initialExpandedTaskId={fixTaskId ?? null}
-                flat
+                openMode="scene"
               />
             </ExerciseErrorBoundary>
           </LangProvider>

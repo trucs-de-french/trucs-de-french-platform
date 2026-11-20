@@ -570,6 +570,7 @@ export const uk = {
   "cabinet.mistakes.scene.emptyTitle": "У цій сцені помилок не лишилось",
   "cabinet.mistakes.scene.emptyText": "Нові помилки з'являться тут, коли Ви їх зробите.",
   "cabinet.mistakes.scene.backToList": "До списку помилок",
+  "cabinet.mistakes.scene.backToExercises": "До списку вправ",
   "cabinet.settings.subtitle": "Профіль, мова, тема та навчання",
   "cabinet.theme.label": "Тема",
   "cabinet.theme.light": "Світла",

@@ -564,6 +564,7 @@ export const en: Record<MessageKey, string> = {
   "cabinet.mistakes.scene.emptyTitle": "No mistakes left in this scene",
   "cabinet.mistakes.scene.emptyText": "New mistakes will show up here when you make them.",
   "cabinet.mistakes.scene.backToList": "Back to the mistakes list",
+  "cabinet.mistakes.scene.backToExercises": "Back to the exercises list",
   "cabinet.settings.subtitle": "Profile, language, theme and learning",
   "cabinet.theme.label": "Theme",
   "cabinet.theme.light": "Light",

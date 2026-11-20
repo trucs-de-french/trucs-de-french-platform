@@ -566,6 +566,7 @@ export const fr: Record<MessageKey, string> = {
   "cabinet.mistakes.scene.emptyTitle": "Plus aucune erreur dans cette scène",
   "cabinet.mistakes.scene.emptyText": "Les nouvelles erreurs apparaîtront ici quand vous en ferez.",
   "cabinet.mistakes.scene.backToList": "Retour à la liste des erreurs",
+  "cabinet.mistakes.scene.backToExercises": "Retour à la liste des exercices",
   "cabinet.settings.subtitle": "Profil, langue, thème et apprentissage",
   "cabinet.theme.label": "Thème",
   "cabinet.theme.light": "Claire",
