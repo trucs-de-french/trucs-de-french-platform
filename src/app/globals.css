@@ -8683,11 +8683,10 @@ button.scene-bar:active .scene-bar-toggle {
   }
 }
 /* Компактна пілюля "Згорнути" (мистейки-сторінка /cabinet/mistakes/
-   [sceneId] лише — error-review-block.tsx: compactCollapse пропс,
-   .error-review-card--compact модифікатор; сценова сторінка цей пропс не
-   передає, тож жодне з цих правил на ній ніколи не застосовується) —
-   заміна великого індиго-бару "Згорнути" знизу на компактний outline-пілл
-   із chevron-up праворуч у заголовку картки. */
+   [sceneId] лише — error-review-block.tsx: flat пропс; сценова сторінка
+   цей пропс не передає, тож жодне з цих правил на ній ніколи не
+   застосовується) — заміна великого індиго-бару "Згорнути" знизу на
+   компактний outline-пілл із chevron-up у заголовку секції. */
 .error-review-collapse-pill {
   display: inline-flex;
   align-items: center;
@@ -8739,13 +8738,9 @@ button.scene-bar:active .scene-bar-toggle {
 }
 /* Телефон — лише іконка, зона дотику 44×44 (задача "icon-only 44x44
    button"), текстовий label прибраний з потоку (aria-label несе назву
-   для читачів екрана). У мобільному grid-рядку заголовка (правило вище,
-   .error-review-row — 3 явні колонки) пілюля стає ЯВНОЮ 4-ю колонкою
-   ПЕРШОГО рядка (поруч із номером/іконкою типу) — лише під модифікатором
-   .error-review-card--compact, сценова сторінка цей клас не отримує.
-   grid-column:4 на відсутній у grid-template-columns колонці створює
-   НЕЯВНУ колонку (auto) — .error-review-row шареного grid-template тут не
-   чіпаємо взагалі. */
+   для читачів екрана). Розташування пілюлі на мобільному — усередині
+   .error-review-flat-header-meta (flex, не grid), природний flex-wrap
+   переносить цю групу на свій рядок, без ручного grid-column. */
 @media (max-width: 640px) {
   .error-review-collapse-pill {
     width: 44px;
@@ -8756,10 +8751,168 @@ button.scene-bar:active .scene-bar-toggle {
   .error-review-collapse-pill-label {
     display: none;
   }
-  .error-review-card--compact .error-review-collapse-pill {
-    grid-column: 4;
-    grid-row: 1;
-    align-self: start;
+}
+
+/* "Пласкі секції" (варіант A) — мистейки-сторінка /cabinet/mistakes/
+   [sceneId] лише (error-review-block.tsx: flat пропс). Кожна задача —
+   секція ПРОСТО на фоні сторінки (жодних фону/рамки/радіуса на самій
+   секції), відділена від наступної тонкою gold-рискою (верхній бордюр
+   НАСТУПНОЇ секції — суміжний селектор, тож перша секція списку риски не
+   отримує). */
+.error-review-flat-section + .error-review-flat-section {
+  border-top: 1px solid #d9b765;
+}
+.dark .error-review-flat-section + .error-review-flat-section {
+  border-top-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-flat-section + .error-review-flat-section {
+    border-top-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .error-review-flat-section + .error-review-flat-section {
+    border-top-color: transparent;
+    box-shadow: inset 0 0.5px 0 0 #2f3da8;
+  }
+}
+
+/* Заголовок секції — один рядок (номер, іконка типу, назва+кількість,
+   гнучкий простір, статус-пілюля, дія); ~14px відступ згори/знизу
+   (задача "вертикальний ритм секцій") тримає весь список компактним. */
+.error-review-flat-header {
+  padding: 14px 0;
+}
+.error-review-flat-header-main {
+  overflow: hidden;
+}
+.error-review-flat-title {
+  color: var(--glass-text);
+}
+/* Приглушена кількість ("· N помилок") — та сама назва типу на одному
+   рядку з лічильником (задача), лише світліша/дрібніша за саму назву. */
+.error-review-flat-count {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-muted-caption);
+}
+/* Мобільний дублікат лічильника — десктопна версія (у .error-review-
+   flat-title вище) ховається ≤640px, ця — навпаки, видима лише там, щоб
+   "N помилок" опинилось на ДРУГОМУ рядку разом зі статус-пілюлею
+   (задача), а не лишилось у першому рядку з назвою. */
+.error-review-flat-count-mobile {
+  display: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted-caption);
+}
+@media (max-width: 640px) {
+  .error-review-flat-count {
+    display: none;
+  }
+  .error-review-flat-count-mobile {
+    display: inline;
+  }
+}
+
+/* Статус-пілюля у пласких секціях — тонкий gold-контур замість звичайної
+   1px-рамки (задача "small, gold 0.5px outline, light fill"); колір
+   тексту/акценту стану (not_started/partial/done) лишається тим самим,
+   що визначає STATUS_PILL_CLASS у error-review-block.tsx — тут лише
+   рамка. */
+.error-review-flat-header .error-review-status-pill {
+  border-width: 1px;
+  border-color: #d9b765;
+}
+.dark .error-review-flat-header .error-review-status-pill {
+  border-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-flat-header .error-review-status-pill {
+    border-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .error-review-flat-header .error-review-status-pill {
+    border-color: transparent;
+    box-shadow: inset 0 0 0 0.5px #2f3da8;
+  }
+}
+
+/* Пілюля "Виправити N"/"Спробувати ще раз" (collapsed-стан) — той самий
+   індиго-градієнт, що .error-review-fix-button, лише у формі пілюлі
+   (rounded-full) замість прямокутної .btn-check кнопки — компактніша,
+   бо тепер сидить У ЗАГОЛОВКУ секції (не окремим рядком знизу). */
+.error-review-fix-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  border: none;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #5a55e6, #3b36c4);
+  color: #fff;
+  transition: filter 150ms;
+}
+.error-review-fix-pill:hover {
+  filter: brightness(1.06);
+}
+.error-review-fix-pill:focus-visible {
+  outline: 2px solid #d9b765;
+  outline-offset: 2px;
+}
+.dark .error-review-fix-pill {
+  background: linear-gradient(135deg, #2f2c6b, #4b46da);
+  color: #eef0ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-fix-pill {
+    background: linear-gradient(135deg, #2f2c6b, #4b46da);
+    color: #eef0ff;
+  }
+}
+.dark .error-review-fix-pill:focus-visible {
+  outline: 2px solid var(--cabinet-focus-ring);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-fix-pill:focus-visible {
+    outline: 2px solid var(--cabinet-focus-ring);
+  }
+}
+/* Мобільний — задача "'Виправити' pill keeps a 44px minimum tap height". */
+@media (max-width: 640px) {
+  .error-review-fix-pill {
+    height: 44px;
+    padding: 0 18px;
+  }
+}
+
+/* Тіло розгорнутої задачі в пласких секціях — без фону-"вставки" (немає
+   панелі, у яку вставляти), лише тонка gold-риска згори (той самий
+   retina-прийом, що роздільник секцій вище) і внутрішній відступ для
+   самої вправи. */
+.error-review-flat-body {
+  padding: 12px 0 4px;
+  border-top: 1px solid #d9b765;
+}
+.dark .error-review-flat-body {
+  border-top-color: #27338f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .error-review-flat-body {
+    border-top-color: #27338f;
+  }
+}
+@media (min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2) {
+  .dark .error-review-flat-body {
+    border-top-color: transparent;
+    box-shadow: inset 0 0.5px 0 0 #2f3da8;
   }
 }
 .drag-drop-row-number {

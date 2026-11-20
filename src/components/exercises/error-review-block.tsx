@@ -121,7 +121,7 @@ function ErrorReviewCard({
   ordinal,
   expanded,
   onToggleExpanded,
-  compactCollapse = false,
+  flat = false,
 }: {
   entry: ErrorReviewEntryData;
   index: number;
@@ -131,13 +131,13 @@ function ErrorReviewCard({
   ordinal: number | null;
   expanded: boolean;
   onToggleExpanded: () => void;
-  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — компактна пілюля
-  // "Згорнути" (chevron-up) у заголовку картки, праворуч від StatusPill,
-  // замість великого індиго-бару знизу; великий бар "Виправити N"/
-  // "Спробувати ще раз" (НЕ розгорнуто) лишається як є скрізь. false/
-  // undefined (сценова сторінка) — жодних змін, той самий великий бар для
-  // обох станів, як і раніше.
-  compactCollapse?: boolean;
+  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — "пласкі секції"
+  // (варіант A): без картки-в-картці, лише тонкий gold-роздільник між
+  // задачами; назва+кількість на ОДНОМУ рядку заголовка; обидві дії
+  // ("Виправити N"/"Спробувати ще раз" і "Згорнути") теж у заголовку —
+  // замість великого бару знизу. false/undefined (сценова сторінка) —
+  // жодних змін, той самий картковий вигляд, що й раніше.
+  flat?: boolean;
 }) {
   const { t, lang } = useT();
   const isItems = entry.mode === "items";
@@ -145,16 +145,75 @@ function ErrorReviewCard({
   const isInteractive = isItems || isWhole;
   const isDone = isInteractive && entry.status === "done";
   const remaining = entry.remainingItemIds.length;
+  const countText =
+    entry.status === "partial"
+      ? t("errReview.remainingOfTotal", { n: remaining, total: entry.total })
+      : isDone
+        ? t("errReview.allFixed")
+        : `${entry.total} ${pluralizeMistakes(lang, entry.total)}`;
+  const actionLabel = isWhole ? t("button.retry") : t("button.fixCount", { n: remaining });
 
   return (
     <div
-      className={`rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)] ${compactCollapse ? "error-review-card--compact" : ""}`}
+      className={
+        flat
+          ? `error-review-flat-section ${isDone ? "opacity-60" : ""}`
+          : "rounded-lg border-[1.5px] dark:border-[1.5px] glass-gold-edge bg-white glass-card-shadow error-review-card-shadow dark:border-[var(--card-border)] dark:bg-[var(--error-review-card-bg)]"
+      }
     >
-      <div className={`error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`}>
-        <span className="item-number-badge" aria-hidden>
-          {index + 1}
-        </span>
-        <TaskTypeIconBadge type={entry.taskType} size="sm" />
+      <div
+        className={
+          flat
+            ? "error-review-flat-header flex flex-wrap items-center gap-2"
+            : `error-review-row flex flex-wrap items-center gap-3 p-3 ${isDone ? "opacity-60" : ""}`
+        }
+      >
+        {flat && (
+          <div className="error-review-flat-header-main flex min-w-0 flex-1 items-center gap-2">
+            <span className="item-number-badge" aria-hidden>
+              {index + 1}
+            </span>
+            <TaskTypeIconBadge type={entry.taskType} size="sm" />
+            <p
+              className="error-review-flat-title truncate font-heading font-medium"
+              title={`${entry.displayTitle}${ordinal !== null ? ` · ${ordinal}` : ""} · ${countText}`}
+            >
+              {entry.displayTitle}
+              {ordinal !== null && ` · ${ordinal}`}
+              <span className="error-review-flat-count"> · {countText}</span>
+            </p>
+          </div>
+        )}
+        {flat && (
+          <div className="error-review-flat-header-meta flex shrink-0 items-center gap-2">
+            <span className="error-review-flat-count-mobile">{countText}</span>
+            <StatusPill status={isInteractive ? entry.status : "not_started"} />
+            {isInteractive &&
+              !isDone &&
+              (expanded ? (
+                <button
+                  type="button"
+                  onClick={onToggleExpanded}
+                  aria-label={t("button.collapse")}
+                  className="error-review-collapse-pill"
+                >
+                  <ChevronUp size={18} aria-hidden="true" />
+                  <span className="error-review-collapse-pill-label">{t("button.collapse")}</span>
+                </button>
+              ) : (
+                <button type="button" onClick={onToggleExpanded} className="error-review-fix-pill">
+                  {actionLabel}
+                </button>
+              ))}
+          </div>
+        )}
+        {!flat && (
+          <span className="item-number-badge" aria-hidden>
+            {index + 1}
+          </span>
+        )}
+        {!flat && <TaskTypeIconBadge type={entry.taskType} size="sm" />}
+        {!flat && (
         <div className="error-review-text-col min-w-0 flex-1">
           <p
             className="error-review-title truncate font-heading font-medium"
@@ -179,22 +238,12 @@ function ErrorReviewCard({
             </p>
           )}
         </div>
-        <StatusPill status={isInteractive ? entry.status : "not_started"} />
-        {compactCollapse && isInteractive && !isDone && expanded && (
-          <button
-            type="button"
-            onClick={onToggleExpanded}
-            aria-label={t("button.collapse")}
-            className="error-review-collapse-pill"
-          >
-            <ChevronUp size={18} aria-hidden="true" />
-            <span className="error-review-collapse-pill-label">{t("button.collapse")}</span>
-          </button>
         )}
+        {!flat && <StatusPill status={isInteractive ? entry.status : "not_started"} />}
       </div>
 
       {isItems && entry.status === "partial" && (
-        <div className="px-3 pb-1">
+        <div className={flat ? "pb-1" : "px-3 pb-1"}>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-[var(--card-field-bg)] dark:shadow-[inset_0_0_0_1px_rgba(130,160,240,.28)]">
             <div
               className="h-full rounded-full bg-brand error-review-progress-fill"
@@ -204,19 +253,19 @@ function ErrorReviewCard({
         </div>
       )}
 
-      {isInteractive && !isDone && !(compactCollapse && expanded) && (
+      {!flat && isInteractive && !isDone && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 dark:border-[var(--card-border)]">
           <button
             type="button"
             onClick={onToggleExpanded}
             className={`${BUTTON_CHECK} min-h-11 error-review-fix-button`}
           >
-            {expanded ? t("button.collapse") : isWhole ? t("button.retry") : t("button.fixCount", { n: remaining })}
+            {expanded ? t("button.collapse") : actionLabel}
           </button>
         </div>
       )}
 
-      {isDone && (
+      {!flat && isDone && (
         <div className="flex items-center gap-2 border-t border-[#e6e6f0] p-3 text-sm text-green-600 dark:border-[var(--card-border)] dark:text-green-400">
           <Check size={16} aria-hidden />
           {t("errReview.allFixedBanner")}
@@ -224,7 +273,13 @@ function ErrorReviewCard({
       )}
 
       {expanded && isInteractive && !isDone && entry.config && (
-        <div className="border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50">
+        <div
+          className={
+            flat
+              ? "error-review-flat-body"
+              : "border-t border-[#e6e6f0] glass-inset-bg bg-neutral-50 p-3 dark:border-[var(--card-border)] dark:bg-neutral-900/50"
+          }
+        >
           {entry.taskType === "multiple_choice" && (
             <MultipleChoiceExercise
               taskId={entry.taskId}
@@ -378,7 +433,7 @@ export function ErrorReviewBlock({
   entries,
   emptyState,
   initialExpandedTaskId,
-  compactCollapse = false,
+  flat = false,
 }: {
   entries: ErrorReviewEntryData[];
   emptyState: ErrorReviewEmptyState;
@@ -387,29 +442,33 @@ export function ErrorReviewBlock({
   // кліку. null/undefined/taskId, якого немає серед entries, — звичайна
   // поведінка (нічого не розгорнуто).
   initialExpandedTaskId?: string | null;
-  // Мистейки-сторінка — компактна пілюля "Згорнути" в заголовку замість
-  // великого бару знизу (ErrorReviewCard, детальний коментар там); сценова
-  // сторінка не передає цей пропс, її вигляд не змінюється.
-  compactCollapse?: boolean;
+  // Мистейки-сторінка (/cabinet/mistakes/[sceneId]) — "пласкі секції"
+  // (ErrorReviewCard, детальний коментар там) замість картки-в-картці, і
+  // ховає заголовок "Corrigez vos erreurs."+підказку нижче (власний
+  // PageHeader сторінки вже пояснює, що це за сторінка). Сценова сторінка
+  // не передає цей пропс, її вигляд не змінюється.
+  flat?: boolean;
 }) {
   const { t } = useT();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(initialExpandedTaskId ?? null);
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
-        <h3 className="font-heading text-lg font-semibold max-[640px]:leading-[1.3]">{frenchNbsp("Corrigez vos erreurs.")}</h3>
-        <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
-          {t("errReview.reviewHint")}
-        </p>
-      </div>
+      {!flat && (
+        <div>
+          <h3 className="font-heading text-lg font-semibold max-[640px]:leading-[1.3]">{frenchNbsp("Corrigez vos erreurs.")}</h3>
+          <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
+            {t("errReview.reviewHint")}
+          </p>
+        </div>
+      )}
 
       {entries.length === 0 ? (
         <p className="text-sm text-[var(--text-muted-caption)] dark:text-[var(--text-muted-caption)]">
           {frenchNbsp(EMPTY_STATE_TEXT[emptyState])}
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className={flat ? "flex flex-col" : "flex flex-col gap-2"}>
           {(() => {
             // Кілька карток з ОДНАКОВОЮ фінальною назвою (entry.displayTitle —
             // та сама назва, що на плашці типу над вправою) у блоці —
@@ -440,7 +499,7 @@ export function ErrorReviewBlock({
                   onToggleExpanded={() =>
                     setExpandedTaskId((prev) => (prev === entry.taskId ? null : entry.taskId))
                   }
-                  compactCollapse={compactCollapse}
+                  flat={flat}
                 />
               );
             });

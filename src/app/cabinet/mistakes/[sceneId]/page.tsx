@@ -8,8 +8,6 @@ import { LangProvider } from "@/lib/i18n/context";
 import { loadSceneErrorReviewEntries } from "@/lib/cabinet/scene-error-review";
 import { ErrorReviewBlock } from "@/components/exercises/error-review-block";
 import { ExerciseErrorBoundary } from "@/components/exercises/exercise-error-boundary";
-import { GlassBlock } from "@/components/glass-block";
-import { EXERCISE_STACK } from "@/lib/spacing";
 import { CabinetMobileHeader } from "@/components/cabinet/mobile-header";
 import { PageHeader } from "@/components/cabinet/page-header";
 import type { Profile } from "@/lib/supabase/profile";
@@ -72,28 +70,22 @@ export default async function CabinetMistakesScenePage({
           цього вправи в ErrorReviewBlock рахують свою ширину (плитки
           letter_rearrangement/matching/table_fill/image_match тощо) від
           повної ширини .cabinet-panel (без max-width), а не 768px сторінки
-          сцени, і виглядають значно більшими. GlassBlock+EXERCISE_STACK —
-          та сама панель-обгортка, що сторінка сцени дає error_correction-
-          задачі (той самий .glass-block-panel padding, що й там) — разом
-          забезпечують ІДЕНТИЧНУ доступну ширину для внутрішніх гридів
-          вправ. BlockTabs-плашку типу (сторінка сцени) свідомо НЕ
-          відтворено тут — ця сторінка вже має власний заголовок (назва
-          сцени, PageHeader вище), друга плашка типу була б зайвою. */}
+          сцени, і виглядають значно більшими. БЕЗ GlassBlock-панелі
+          навколо — затверджений вигляд "пласкі секції" (варіант A):
+          кожна задача — секція просто на фоні сторінки, без картки-в-
+          картці (ErrorReviewBlock flat пропс, детальний коментар у
+          error-review-block.tsx). */}
       <div className="mx-auto w-full max-w-3xl">
         {hasRemaining ? (
           <LangProvider lang={lang}>
-            <GlassBlock>
-              <div className={EXERCISE_STACK}>
-                <ExerciseErrorBoundary>
-                  <ErrorReviewBlock
-                    entries={entries}
-                    emptyState={emptyState}
-                    initialExpandedTaskId={fixTaskId ?? null}
-                    compactCollapse
-                  />
-                </ExerciseErrorBoundary>
-              </div>
-            </GlassBlock>
+            <ExerciseErrorBoundary>
+              <ErrorReviewBlock
+                entries={entries}
+                emptyState={emptyState}
+                initialExpandedTaskId={fixTaskId ?? null}
+                flat
+              />
+            </ExerciseErrorBoundary>
           </LangProvider>
         ) : (
           <div className="mistakes-empty-card">
